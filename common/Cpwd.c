@@ -13,6 +13,7 @@
 #include <pwd.h>
 
 #include <Cglobals.h>
+#include <errno.h>
 #include <serrno.h>
 #include <Cpwd.h>
 #include <osdep.h>
@@ -48,7 +49,9 @@ CONST char *name;
         serrno = SEINTERNAL;
         return(NULL);
     }
+    errno = 0;
     rc = getpwnam_r(name,pwd,pwdbuf,pwdbuflen,&result);
+    serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
     return(result);
 #endif
 }
@@ -84,7 +87,9 @@ uid_t uid;
         serrno = SEINTERNAL;
         return(NULL);
     }
+    errno = 0;
     rc = getpwuid_r(uid,pwd,pwdbuf,pwdbuflen,&result);
+    serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
     return(result);
 #endif
 }

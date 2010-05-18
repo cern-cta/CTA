@@ -14,6 +14,7 @@
 #include <grp.h>
 
 #include <Cglobals.h>
+#include <errno.h>
 #include <serrno.h>
 #include <Cgrp.h>
 #include <osdep.h>
@@ -49,7 +50,9 @@ CONST char *name;
         serrno = SEINTERNAL;
         return(NULL);
     }
+    errno = 0;
     rc = getgrnam_r(name,grp,grpbuf,grpbuflen,&result);
+    serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
     return(result);
 #endif
 }
@@ -85,7 +88,9 @@ gid_t gid;
         serrno = SEINTERNAL;
         return(NULL);
     }
+    errno = 0;
     rc = getgrgid_r(gid,grp,grpbuf,grpbuflen,&result);
+    serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
     return(result);
 #endif
 }

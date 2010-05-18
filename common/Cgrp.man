@@ -10,15 +10,25 @@
 .P
 .BI "struct group *Cgetgrgid(gid_t " gid ");"
 
-.SH ERRORS
-If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable.
-
 .SH DESCRIPTION
 
-\fBCgrp\fP is a common Thread-Safe API interface to get entries in the group file vs.
+\fBCgrp\fP is a common Thread-Safe API interface to get entries in the group file by
 .BI name
 or
 .BI gid.
+
+.SH RETURN VALUE
+These routines return a group struct for the given name/gid.
+In case of error, 0 is returned and the \fBserrno\fP variable is set.
+
+.SH ERRORS
+possible values for serrno and their meaning :
+.TP 1.2i
+.B SEGROUPUNKN
+the requested group/gid was not found
+.TP
+.B SEINTERNAL
+an error occured while attempting to retrieve the group structure. More details are given in the errno variable.
 
 .SH SEE ALSO
 \fBserrno\fP, \fBgetgrnam\fP, \fBgetgrgid\fP
