@@ -176,5 +176,12 @@ create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,
  * considered as targets by the Makefile. Thus in this approach, all .d
  * files would be checked and built if necessary for each call to make,
  * even if you called make clean for example.
+ * Another trick is the presence of the "fileThatDoesNotExist" item.
+ * This is a workaround for the "no file name for `include'" warning that
+ * SLC4 gives when the wildcard expression returns an empty string.
+ * The workaround is to make sure there is something, even if this file
+ * does not exist and remove the "No such file or directory" error
+ * using the -include directive rather than the include. Note that this
+ * does not remove any checks as wildcard will list only existing files.
  */
-include $(wildcard *.d)
+-include fileThatDoesNotExist $(wildcard *.d)
