@@ -3440,3 +3440,19 @@ How to browse DLF via the web
 Open the web page at the following url:
 
 http://c2adm.cern.ch/dlf
+
+
+How to compile all INVALID procedures in your schema
+====================================================
+
+BEGIN
+  FOR obj in (
+    SELECT object_name
+      FROM user_objects
+      WHERE
+            object_type = 'PROCEDURE'
+        AND status = 'INVALID') LOOP
+     EXECUTE IMMEDIATE 'ALTER PROCEDURE ' || obj.object_name || ' COMPILE';
+   END LOOP;
+END;
+/
