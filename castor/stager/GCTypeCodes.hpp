@@ -40,14 +40,17 @@ namespace castor {
      */
     enum GCTypeCodes {
       GCTYPE_AUTO = 0,
-      GCTYPE_USER = 1
+      GCTYPE_USER = 1,
+      GCTYPE_TOO_MANY_REPLICAS = 2,
+      GCTYPE_DRAINING_FS = 3,
+      GCTYPE_NS_SYNCH = 4
     }; /* end of enum GCTypeCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the GCTypeCodes enum
      */
-    extern const char* GCTypeCodesStrings[2];
+    extern const char* GCTypeCodesStrings[5];
 
 #ifdef __cplusplus
   } /* end of namespace stager */

@@ -1979,7 +1979,8 @@ END;
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
-                                           nh IN VARCHAR2) AS
+                                           nh IN VARCHAR2,
+                                           inGcType IN INTEGER DEFAULT NULL) AS
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
@@ -2016,7 +2017,9 @@ BEGIN
   END LOOP;
   -- Set selected DiskCopies to INVALID
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
-    UPDATE DiskCopy SET status = 7 -- INVALID
+    UPDATE DiskCopy
+       SET status = 7, -- INVALID
+           gcType = inGcType
      WHERE id = dcsToRm(i);
 END;
 /

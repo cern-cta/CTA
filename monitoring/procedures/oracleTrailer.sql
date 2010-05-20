@@ -192,7 +192,7 @@ BEGIN
                AND params.timestamp <= now - 5/1440
              GROUP BY messages.id, messages.hostid
           ) results
-        -- Attach the gctye to the results collected above
+        -- Attach the gctype to the results collected above
         INNER JOIN &dlfschema..dlf_str_param_values params
            ON results.id = params.id
           AND params.name = 'GcType'

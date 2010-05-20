@@ -166,6 +166,9 @@ CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGE
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 2, 'GCTYPE_TOO_MANY_REPLICAS');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING_FS');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 4, 'GCTYPE_NS_SYNCH');
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
@@ -449,5 +452,6 @@ INSERT INTO Type2Obj (type, object) VALUES (187, 'MigrationPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (188, 'StreamPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (189, 'RetryPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (190, 'VdqmTapeGatewayRequest');
+INSERT INTO Type2Obj (type, object) VALUES (191, 'StageQueryResult');
 COMMIT;
 

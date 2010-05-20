@@ -32,8 +32,11 @@
 //------------------------------------------------------------------------------
 // GCTypeCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::GCTypeCodesStrings[2] = {
+const char* castor::stager::GCTypeCodesStrings[5] = {
   "GCTYPE_AUTO",
-  "GCTYPE_USER"
+  "GCTYPE_USER",
+  "GCTYPE_TOO_MANY_REPLICAS",
+  "GCTYPE_DRAINING_FS",
+  "GCTYPE_NS_SYNCH"
 };
 

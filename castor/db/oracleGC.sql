@@ -261,7 +261,7 @@ BEGIN
     -- Process diskcopies that are in an INVALID state.
     UPDATE DiskCopy
        SET status = 9, -- BEINGDELETED
-           gcType = decode(gcType, NULL, 1, gcType) -- USER
+           gcType = decode(gcType, NULL, 1, gcType)
      WHERE fileSystem = fs.id
        AND status = 7  -- INVALID
        AND NOT EXISTS
@@ -336,7 +336,7 @@ BEGIN
           -- Mark the DiskCopy
           UPDATE DiskCopy
              SET status = 9, -- BEINGDELETED
-                 gcType = 0  -- AUTO
+                 gcType = 0  -- GCTYPE_AUTO
            WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
           totalCount := totalCount + 1;
           -- Update freed space
@@ -363,6 +363,7 @@ BEGIN
                 WHEN DiskCopy.gcType = 1 THEN 'User Requested'
                 WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
                 WHEN DiskCopy.gcType = 3 THEN 'Draining filesystem'
+                WHEN DiskCopy.gcType = 4 THEN 'NS synchronization'
                 ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
@@ -543,7 +544,7 @@ BEGIN
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
-      stageForcedRm(fileIds(fid), nsHostName);
+      stageForcedRm(fileIds(fid), nsHostName, 4);  -- GCTYPE_NS_SYNCH
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
