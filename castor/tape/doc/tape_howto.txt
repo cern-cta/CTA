@@ -3456,3 +3456,72 @@ BEGIN
    END LOOP;
 END;
 /
+
+
+How to restart recalls which are stuck due to repack
+====================================================
+
+A recall can get stuck because repack moved its tape segments to one or more
+other tapes.  To reset a set of such stuck recalls do the following.
+
+Create a table of the castor files that are involved.  In the following
+example tape T01537 was repacked.  Please puts OPS_ at the beginning of the
+table name so that automated scripts looking for schema irregularities ignore
+the table.
+
+SQL> create table ops_steve_T01537_castorfile as select * from castorfile
+where id in (select tapecopy.castorfile from tapecopy where tapecopy.status =
+4 and id in (select distinct copy from segment where tape in (select id from
+tape where vid = 'T01537' and tpmode = 0)));
+
+Table created.
+
+SQL>
+
+Run the following PL/SQL block modified to use your table as opposed to the
+one of this example.  This script deletes the out-of-date tape copies and
+their associated segments. It fails the associated recall disk-copies and
+restarts the associated recall sub-requests. 
+
+BEGIN
+
+  FOR cf in (SELECT * from ops_steve_T01537_castorfile) LOOP
+    deleteTapeCopies(cf.id);
+
+    UPDATE DiskCopy
+      SET
+        status = 4 -- DISKCOPY_FAILED
+      WHERE
+        status = 2 -- DISKCOPY_WAITTAPERECALL
+        AND castorFile = cf.id;
+
+    UPDATE SubRequest
+      SET
+         status = 0 -- SUBREQUEST_START
+      WHERE
+        castorFile = cf.id
+        AND status = 4; -- SUBREQUEST_WAITTAPERECALL
+  END LOOP;
+
+END;
+/
+
+Your done.
+
+Another way to identify stuck recalls is to create a tape of the involved
+castor files based on recalls that have taken far too long to complete, e.g.
+over 1 week:
+
+CREATE TABLE OPS_STEVE_STUCK_RECALL_CFS AS
+  SELECT DISTINCT
+    CastorFile.id,
+    CastorFile.FileId,
+    CastorFile.nsHost,
+    CastorFile.lastKnownFilename
+    FROM TapeCopy
+    INNER JOIN DiskCopy ON (TapeCopy.castorFile = DiskCopy.castorFile)
+    INNER JOIN CASTORFILE ON (TapeCopy.castorFile = CastorFile.id)
+    WHERE
+      TapeCopy.status = 4 -- TAPECOPY_TOBERECALLED
+      AND DiskCopy.status = 2 -- DISKCOPY_WAITTAPERECALL
+      AND DiskCopy.creationtime < getTime() - (7 * 24 * 3600);
