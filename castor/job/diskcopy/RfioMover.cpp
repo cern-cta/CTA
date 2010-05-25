@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/job/RfioMover.hpp"
+#include "castor/job/diskcopy/RfioMover.hpp"
 #include "getconfent.h"
 #include "rfio_api.h"
 #include "Cns_api.h"
@@ -43,7 +43,7 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::RfioMover::RfioMover() :
+castor::job::diskcopy::RfioMover::RfioMover() :
   m_outputFile(""),
   m_inputFile(""),
   m_outputFD(0),
@@ -58,7 +58,7 @@ castor::job::RfioMover::RfioMover() :
 //-----------------------------------------------------------------------------
 // Destructor
 //-----------------------------------------------------------------------------
-castor::job::RfioMover::~RfioMover() throw() {
+castor::job::diskcopy::RfioMover::~RfioMover() throw() {
 
   // Close the source file descriptor
   if (m_inputFD > 0) {
@@ -77,7 +77,7 @@ castor::job::RfioMover::~RfioMover() throw() {
 //-----------------------------------------------------------------------------
 // Source
 //-----------------------------------------------------------------------------
-void castor::job::RfioMover::source()
+void castor::job::diskcopy::RfioMover::source()
   throw(castor::exception::Exception) {
 
 }
@@ -86,7 +86,7 @@ void castor::job::RfioMover::source()
 //-----------------------------------------------------------------------------
 // Destination
 //-----------------------------------------------------------------------------
-void castor::job::RfioMover::destination
+void castor::job::diskcopy::RfioMover::destination
 (castor::stager::DiskCopyInfo *diskCopy,
  castor::stager::DiskCopyInfo *sourceDiskCopy)
   throw(castor::exception::Exception) {
@@ -109,7 +109,7 @@ void castor::job::RfioMover::destination
   if (m_inputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_open64 the source: "
-		   << m_inputFile << " : " << rfio_serror() << std::endl;
+                   << m_inputFile << " : " << rfio_serror() << std::endl;
     throw e;
   }
 
@@ -119,7 +119,7 @@ void castor::job::RfioMover::destination
   if (rfio_fstat64(m_inputFD, &statbuf) != 0) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_fstat64 the source: "
-		   << m_inputFile << " : " << rfio_serror() << std::endl;
+                   << m_inputFile << " : " << rfio_serror() << std::endl;
     throw e;
   }
 
@@ -132,11 +132,11 @@ void castor::job::RfioMover::destination
   // Open the destination file
   rfio_errno = serrno = 0;
   m_outputFD = rfio_open64((char *)m_outputFile.c_str(),
-			   O_WRONLY|O_CREAT|O_TRUNC, 0644);
+                           O_WRONLY|O_CREAT|O_TRUNC, 0644);
   if (m_outputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_open64 the destination: "
-		   << m_outputFile << " : " << rfio_serror() << std::endl;
+                   << m_outputFile << " : " << rfio_serror() << std::endl;
     throw e;
   }
 
@@ -172,7 +172,7 @@ void castor::job::RfioMover::destination
 //-----------------------------------------------------------------------------
 // CleanupFile
 //-----------------------------------------------------------------------------
-void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
+void castor::job::diskcopy::RfioMover::cleanupFile(bool silent, bool unlink)
   throw(castor::exception::Exception) {
 
   // Close the source file
@@ -180,7 +180,7 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
   if ((m_inputFD > 0) && (rfio_close(m_inputFD) < 0)) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_close the source: "
-		   << rfio_serror() << std::endl;
+                   << rfio_serror() << std::endl;
     m_inputFD = -1;
     if (!silent) throw e;
   }
@@ -190,19 +190,19 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
   // of file to include the checksum information recorded earlier
   if ((m_csumType != "") && (m_csumValue != "")) {
     if (fsetxattr(m_outputFD, "user.castor.checksum.value",
-		  m_csumValue.c_str(), strlen(m_csumValue.c_str()), 0) != 0) {
+                  m_csumValue.c_str(), strlen(m_csumValue.c_str()), 0) != 0) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Failed to set extended attribute : "
-		     << "'user.castor.checksum.value' to "
-		     << m_csumValue;
+                     << "'user.castor.checksum.value' to "
+                     << m_csumValue;
       throw e;
     }
     if (fsetxattr(m_outputFD, "user.castor.checksum.type",
-		  m_csumType.c_str(), strlen(m_csumType.c_str()), 0) != 0) {
+                  m_csumType.c_str(), strlen(m_csumType.c_str()), 0) != 0) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Failed to set extended attribute : "
-		     << "'user.castor.checksum.type' to "
-		     << m_csumType;
+                     << "'user.castor.checksum.type' to "
+                     << m_csumType;
       throw e;
     }
   }
@@ -214,12 +214,12 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
   if ((m_outputFD > 0) && (rfio_close(m_outputFD) < 0)) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_close the destination: "
-		   << rfio_serror() << " - unlinking file" << std::endl;
+                   << rfio_serror() << " - unlinking file" << std::endl;
     rfio_errno = serrno = 0;
     if (rfio_stat64((char *)m_outputFile.c_str(), &statbuf) == 0) {
       if ((statbuf.st_mode & S_IFMT) == S_IFREG) {
-	rfio_errno = serrno = 0;
-       	rfio_unlink((char *)m_outputFile.c_str());
+        rfio_errno = serrno = 0;
+               rfio_unlink((char *)m_outputFile.c_str());
       }
     }
     m_outputFD = -1;
@@ -232,8 +232,8 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
     rfio_errno = serrno = 0;
     if (rfio_stat64((char *)m_outputFile.c_str(), &statbuf) == 0) {
       if ((statbuf.st_mode & S_IFMT) == S_IFREG) {
-	rfio_errno = serrno = 0;
-       	rfio_unlink((char *)m_outputFile.c_str());
+        rfio_errno = serrno = 0;
+               rfio_unlink((char *)m_outputFile.c_str());
       }
     }
   }
@@ -243,7 +243,7 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
 //-----------------------------------------------------------------------------
 // CopyFile
 //-----------------------------------------------------------------------------
-void castor::job::RfioMover::copyFile()
+void castor::job::diskcopy::RfioMover::copyFile()
   throw(castor::exception::Exception) {
 
   // Get the RFCP buffer size
@@ -255,7 +255,7 @@ void castor::job::RfioMover::copyFile()
       cleanupFile(true, true);
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "Invalid RFCP/BUFFERSIZE option, transfer aborted"
-		     << std::endl;
+                     << std::endl;
       throw e;
     }
   }
@@ -297,20 +297,20 @@ void castor::job::RfioMover::copyFile()
       int count = 0, m = 0;
       rfio_errno = serrno = 0;
       while ((count != n &&
-	      (m = rfio_write(m_outputFD, copyBuffer + count, n - count)) > 0)) {
-	count += m;
+              (m = rfio_write(m_outputFD, copyBuffer + count, n - count)) > 0)) {
+        count += m;
       }
       m_totalBytes += n;
       m_bytesTransferred += n;
 
       // Writing failed ?
       if (m < 0) {
-	cleanupFile(true, true);
-	free(copyBuffer);
-	castor::exception::Exception e(SEINTERNAL);
-	e.getMessage() << "Failed to rfio_write on destination: "
-		       << m_outputFile << " : " << rfio_serror() << std::endl;
-	throw e;
+        cleanupFile(true, true);
+        free(copyBuffer);
+        castor::exception::Exception e(SEINTERNAL);
+        e.getMessage() << "Failed to rfio_write on destination: "
+                       << m_outputFile << " : " << rfio_serror() << std::endl;
+        throw e;
       }
     } else if (n < 0) {
       // Here we encountered a read error, so we remove the file and throw
@@ -319,7 +319,7 @@ void castor::job::RfioMover::copyFile()
       free(copyBuffer);
       castor::exception::Exception e(SEINTERNAL);
       e.getMessage() << "Failed to rfio_read from source: "
-		     << m_inputFile << " : " << rfio_serror() << std::endl;
+                     << m_inputFile << " : " << rfio_serror() << std::endl;
       throw e;
     }
   } while ((m_fileSize != m_totalBytes) && (n > 0));

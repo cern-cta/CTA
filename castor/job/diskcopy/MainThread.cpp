@@ -24,8 +24,8 @@
 
 // Include files
 #include "castor/job/diskcopy/MainThread.hpp"
+#include "castor/job/diskcopy/RfioMover.hpp"
 #include "castor/job/SharedResourceHelper.hpp"
-#include "castor/job/RfioMover.hpp"
 #include "castor/System.hpp"
 #include "Cgetopt.h"
 #include "u64subr.h"
@@ -154,7 +154,7 @@ void castor::job::diskcopy::MainThread::init() {
 
   // Initialize the mover. For now we only support RFIO!
   try {
-    m_mover = new castor::job::RfioMover();
+    m_mover = new castor::job::diskcopy::RfioMover();
   } catch (castor::exception::Exception e) {
 
     // "Failed to initialize mover"
@@ -426,10 +426,11 @@ void castor::job::diskcopy::MainThread::run(void*) {
      castor::dlf::Param("DiskCopyId", m_diskCopyId),
      castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
+     castor::dlf::Param("SvcClass", m_svcClass),
      castor::dlf::Param("TotalWaitTime",
                         totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestUuid)};
-  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 6, params, &m_fileId);
+  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 7, params, &m_fileId);
 
   // Call the disk2DiskCopyStart function to find out the information about the
   // destination and source diskcopy's. Note: disk2DiskCopyFailed will be

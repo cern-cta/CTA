@@ -57,7 +57,7 @@ END;
 /***** EXISTING/OLD MONITORING *****/
 
 /* SQL statement for table LatencyStats */
-CREATE TABLE LatencyStats (timestamp DATE CONSTRAINT NN_LatencyStats_ts NOT NULL, interval NUMBER, RequestType VARCHAR2(255), protocol VARCHAR2(255), started NUMBER(*,3), minLatencyTime NUMBER(*,3), maxLatencyTime NUMBER(*,3), avgLatencyTime NUMBER(*,3), stddevLatencyTime NUMBER(*,3), medianLatencyTime NUMBER(*,3))
+CREATE TABLE LatencyStats (timestamp DATE CONSTRAINT NN_LatencyStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), protocol VARCHAR2(255), started NUMBER(*,3), minLatencyTime NUMBER(*,3), maxLatencyTime NUMBER(*,3), avgLatencyTime NUMBER(*,3), stddevLatencyTime NUMBER(*,3), medianLatencyTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 CREATE INDEX I_LatencyStats_ts ON LatencyStats (timestamp) LOCAL;

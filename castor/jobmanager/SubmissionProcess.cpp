@@ -440,8 +440,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
         << " -T " << request->requestType()
         << " -m " << request->openFlags()
 
-      // The client's identification as a string. This consists of the
-      // client's object type, IP address and port
+        // The client's identification as a string. This consists of the
+        // client's object type, IP address and port
         << " -C \"" <<  request->clientType() << ":"
         << ((request->ipAddress() & 0xFF000000) >> 24) << "."
         << ((request->ipAddress() & 0x00FF0000) >> 16) << "."
@@ -452,6 +452,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
         << " -u " << request->euid()
         << " -g " << request->egid()
         << " -X " << request->clientSecure()
+        << " -S " << request->svcClass()
         << " -t " << request->requestCreationTime()
         << " -R " << m_sharedLSFResource << "/$LSB_JOBID";
   }

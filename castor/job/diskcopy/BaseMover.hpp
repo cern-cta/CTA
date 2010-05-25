@@ -29,58 +29,62 @@
 #define BASE_MOVER_HPP 1
 
 // Include files
-#include "castor/job/IMover.hpp"
+#include "castor/job/diskcopy/IMover.hpp"
 
 
 namespace castor {
 
   namespace job {
 
-    /**
-     * Base class for a mover
-     */
-    class BaseMover : public castor::job::IMover {
-	
-    public:
-      
-      /**
-       * Default constructor
-       */
-      BaseMover();
-      
-      /**
-       * Default destructor
-       */
-      virtual ~BaseMover() throw() {};
-      
-      /**
-       * Returns the size of the source file represented in bytes
-       */
-      virtual u_signed64 fileSize() {
-	return m_fileSize;
-      }
+    namespace diskcopy {
 
       /**
-       * Returns the number of bytes transferred from the client to the source/
-       * destination
+       * Base class for a mover
        */
-      virtual u_signed64 bytesTransferred() {
-	return m_bytesTransferred;
-      }
+      class BaseMover : public castor::job::diskcopy::IMover {
 
-    protected:
-
-      /// Flag to indicate whether the mover has been asked to shutdown
-      bool m_shutdown;
-
-      /// The size in bytes of the source file
-      u_signed64 m_fileSize;
-
-      /// The number of bytes transferred to the client/destination
-      u_signed64 m_bytesTransferred;
+      public:
       
-    };
+        /**
+         * Default constructor
+         */
+        BaseMover();
+      
+        /**
+         * Default destructor
+         */
+        virtual ~BaseMover() throw() {};
+      
+        /**
+         * Returns the size of the source file represented in bytes
+         */
+        virtual u_signed64 fileSize() {
+          return m_fileSize;
+        }
+
+        /**
+         * Returns the number of bytes transferred from the client to the
+         * source/destination
+         */
+        virtual u_signed64 bytesTransferred() {
+          return m_bytesTransferred;
+        }
+
+      protected:
+
+        /// Flag to indicate whether the mover has been asked to shutdown
+        bool m_shutdown;
+
+        /// The size in bytes of the source file
+        u_signed64 m_fileSize;
+
+        /// The number of bytes transferred to the client/destination
+        u_signed64 m_bytesTransferred;
+      
+      };
     
+    } // End of name space diskcopy
+
   } // End of namespace job
 
 } // End of namespace castor

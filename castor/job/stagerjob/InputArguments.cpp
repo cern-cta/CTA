@@ -63,7 +63,8 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   euid(0),
   egid(0),
   requestCreationTime(0),
-  resourceFile("") {
+  resourceFile(""),
+  svcClass("") {
 
   // Initialize the Cns_fileid structure
   memset(&fileId, 0, sizeof(fileId));
@@ -79,6 +80,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
     { "nshost",        REQUIRED_ARGUMENT, NULL, 'H' },
 
     // Resources
+    { "svcclass",      REQUIRED_ARGUMENT, NULL, 'S' },
     { "resfile",       REQUIRED_ARGUMENT, NULL, 'R' },
 
     // Mover specific
@@ -102,7 +104,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
   // Parse command line arguments
   char c;
-  while ((c = Cgetopt_long(argc, argv, "r:s:F:H:R:p:i:T:m:C:u:g:X:t:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "r:s:F:H:R:p:i:T:m:C:u:g:X:t:S:", longopts, NULL)) != -1) {
     switch (c) {
     case 'r':
       rawRequestUuid = Coptarg;
@@ -126,12 +128,12 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
       protocol = Coptarg;
       if (protocol == "rfio3") protocol = "rfio";
       if (protocol!= "rfio" &&
-	  protocol!= "root" &&
-	  protocol!= "xroot" &&
-	  protocol!= "gsiftp") {
-	castor::exception::InvalidArgument e;
-	e.getMessage() << "Unsupported protocol " << protocol;
-	throw e;
+          protocol!= "root" &&
+          protocol!= "xroot" &&
+          protocol!= "gsiftp") {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Unsupported protocol " << protocol;
+        throw e;
       }
       break;
     case 'i':
@@ -140,25 +142,25 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
     case 'T':
       type = atoi(Coptarg);
       if ((type < 0) || ((unsigned int)type > castor::ObjectsIdsNb)) {
-	castor::exception::InvalidArgument e;
-	e.getMessage() << "Invalid request type: " << type;
-	throw e;
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Invalid request type: " << type;
+        throw e;
       }
       break;
     case 'm': {
         char *mode = Coptarg;
-	if (mode[0] == 'r') {
-	  accessMode = castor::job::stagerjob::ReadOnly;
-	} else if (mode[0] == 'w') {
-	  accessMode = castor::job::stagerjob::WriteOnly;
-	} else if (mode[0] == 'o') {
-	  accessMode = castor::job::stagerjob::ReadWrite;
-	} else {
-	  castor::exception::InvalidArgument e;
-	  e.getMessage() << "Invalid mode option: " << mode << ". "
-			 << "Valid values are 'r', 'w' and 'o'";
-	  throw e;
-	}
+        if (mode[0] == 'r') {
+          accessMode = castor::job::stagerjob::ReadOnly;
+        } else if (mode[0] == 'w') {
+          accessMode = castor::job::stagerjob::WriteOnly;
+        } else if (mode[0] == 'o') {
+          accessMode = castor::job::stagerjob::ReadWrite;
+        } else {
+          castor::exception::InvalidArgument e;
+          e.getMessage() << "Invalid mode option: " << mode << ". "
+                         << "Valid values are 'r', 'w' and 'o'";
+          throw e;
+        }
       }
       break;
     case 'C':
@@ -172,18 +174,21 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
       break;
     case 'X': {
         std::string secureFlag = Coptarg;
-	if ((secureFlag == "1") || (secureFlag == "yes")) {
-	  isSecure = true;
-	} else if ((secureFlag != "0") && (secureFlag != "no")) {
-	  castor::exception::InvalidArgument e;
-	  e.getMessage() << "Invalid secure option: " << secureFlag << ". "
-			 << "Valid values are 'yes' (1) or 'no' (0)";
-	  throw e;
-	}
+        if ((secureFlag == "1") || (secureFlag == "yes")) {
+          isSecure = true;
+        } else if ((secureFlag != "0") && (secureFlag != "no")) {
+          castor::exception::InvalidArgument e;
+          e.getMessage() << "Invalid secure option: " << secureFlag << ". "
+                         << "Valid values are 'yes' (1) or 'no' (0)";
+          throw e;
+        }
       }
       break;
     case 't':
       requestCreationTime = strutou64(Coptarg);
+      break;
+    case 'S':
+      svcClass = Coptarg;
       break;
     default:
       castor::exception::InvalidArgument e;
@@ -269,29 +274,29 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
       // "Invalid Uniform Resource Indicator, cannot download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("URI", resourceFile.substr(0, 7))};
+        {castor::dlf::Param("URI", resourceFile.substr(0, 7))};
       castor::dlf::dlf_writep
-	(requestUuid, DLF_LVL_ERROR, INVALIDURI, 1, params, &fileId);
+        (requestUuid, DLF_LVL_ERROR, INVALIDURI, 1, params, &fileId);
     } else if (e.code() == SERTYEXHAUST) {
 
       // "Exceeded maximum number of attempts trying to download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", resHelper.errorBuffer() != "" ?
-			    resHelper.errorBuffer() : "no message"),
-	 castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
-	 castor::dlf::Param("URL", resourceFile),
-	 castor::dlf::Param(subRequestUuid)};
+        {castor::dlf::Param("Error", resHelper.errorBuffer() != "" ?
+                            resHelper.errorBuffer() : "no message"),
+         castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
+         castor::dlf::Param("URL", resourceFile),
+         castor::dlf::Param(subRequestUuid)};
       castor::dlf::dlf_writep
-	(requestUuid, DLF_LVL_ERROR, MAXATTEMPTS, 4, params, &fileId);
+        (requestUuid, DLF_LVL_ERROR, MAXATTEMPTS, 4, params, &fileId);
     } else {
 
       // "Exception caught trying to download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Message", e.getMessage().str()),
-	 castor::dlf::Param("Filename", resourceFile.substr(7)),
-	 castor::dlf::Param(subRequestUuid)};
+        {castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Filename", resourceFile.substr(7)),
+         castor::dlf::Param(subRequestUuid)};
       castor::dlf::dlf_writep
-	(requestUuid, DLF_LVL_ERROR, DOWNEXCEPT, 3, params, &fileId);
+        (requestUuid, DLF_LVL_ERROR, DOWNEXCEPT, 3, params, &fileId);
     }
     throw e;
   }

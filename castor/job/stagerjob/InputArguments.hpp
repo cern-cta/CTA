@@ -68,57 +68,60 @@ namespace castor {
 
       public:
 
-	/// The Cns invariant of the job
+        /// The Cns invariant of the job
         struct Cns_fileid fileId;
 
-	/// The request uuid of the job being processed
+        /// The request uuid of the job being processed
         Cuuid_t requestUuid;
 
-	/// The sub request uuid of the job being processed
+        /// The sub request uuid of the job being processed
         Cuuid_t subRequestUuid;
 
-	/// The request uuid of the job represented as a string
+        /// The request uuid of the job represented as a string
         std::string rawRequestUuid;
 
-	/// The sub request uuid of the job represented as a string
+        /// The sub request uuid of the job represented as a string
         std::string rawSubRequestUuid;
 
-	/// The protocol used by the mover
+        /// The protocol used by the mover
         std::string protocol;
 
-	/// The id of the subrequest
+        /// The id of the subrequest
         u_signed64 subRequestId;
 
-	/// The type of request e.g 40 (StagePutRequest)
+        /// The type of request e.g 40 (StagePutRequest)
         int type;
 
-	/// The selected diskserver as determined by scheduling
+        /// The selected diskserver as determined by scheduling
         std::string diskServer;
 
-	/// The select filesystem as determined by scheduling
+        /// The select filesystem as determined by scheduling
         std::string fileSystem;
 
-	/// The access mode to open the file e.g. read, write, read/write, etc.
+        /// The access mode to open the file e.g. read, write, read/write, etc.
         enum AccessMode accessMode;
 
-	/// The client where to send the response
+        /// The client where to send the response
         castor::IClient* client;
 
-	/// Flag to indicate whether the transfer should be secure
+        /// Flag to indicate whether the transfer should be secure
         bool isSecure;
 
-	/// The userid of the user initiating the transfer
-	uid_t euid;
+        /// The userid of the user initiating the transfer
+        uid_t euid;
 
-	/// The groupid of the user initiating the transfer
-	gid_t egid;
+        /// The groupid of the user initiating the transfer
+        gid_t egid;
 
-	/// The creation time of the original request in seconds since EPOCH
+        /// The creation time of the original request in seconds since EPOCH
         u_signed64 requestCreationTime;
 
-	/// The location of the file to retrieve containing the diskserver and
-	/// filesystem to write too
-	std::string resourceFile;
+        /// The location of the file to retrieve containing the diskserver and
+        /// filesystem to write too
+        std::string resourceFile;
+
+        /// The name of the service class for the castor file
+        std::string svcClass;
 
       }; // end of class InputArguments
 

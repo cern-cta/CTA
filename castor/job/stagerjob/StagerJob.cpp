@@ -678,11 +678,12 @@ int main(int argc, char** argv) {
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("Type", castor::ObjectsIdStrings[arguments->type]),
        castor::dlf::Param("Protocol", arguments->protocol),
+       castor::dlf::Param("SvcClass", arguments->svcClass),
        castor::dlf::Param("TotalWaitTime", totalWaitTime),
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBSTARTED, 6, params, &arguments->fileId);
+       castor::job::stagerjob::JOBSTARTED, 7, params, &arguments->fileId);
 
     // Call stagerJobProcess
     process(context, arguments);

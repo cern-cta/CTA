@@ -33,18 +33,20 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
  *
  * Provides statistics on the amount of time a user has had to wait since their
  * request was entered into the system and it actually being served. The
- * returned data is broken down by request type and protocol.
+ * returned data is broken down by request type, service class and protocol.
  */
 CREATE OR REPLACE PROCEDURE statsLatency (now IN DATE, interval IN NUMBER) AS
 BEGIN
   -- Stats table: LatencyStats
   -- Frequency: 5 minutes
   INSERT INTO LatencyStats
-    (timestamp, interval, requestType, protocol, started, minLatencyTime,
-     maxLatencyTime, avgLatencyTime, stddevLatencyTime, medianLatencyTime)
+    (timestamp, interval, requestType, svcClass, protocol, started,
+     minLatencyTime, maxLatencyTime, avgLatencyTime, stddevLatencyTime,
+     medianLatencyTime)
     -- Gather data
     SELECT now - 5/1440 timestamp, interval,
-           nvl(type, 'StageDiskCopyReplicaRequest') requestType, protocol,
+           nvl(type, 'StageDiskCopyReplicaRequest') requestType, svcClass,
+           protocol,
            (count(*) / interval) started,
            min(waitTime)         minLatencyTime,
            max(waitTime)         maxLatencyTime,
@@ -54,7 +56,8 @@ BEGIN
       FROM (
         SELECT waitTime,
                max(decode(params.name, 'Type',     params.value, NULL)) type,
-               max(decode(params.name, 'Protocol', params.value, NULL)) protocol
+               max(decode(params.name, 'Protocol', params.value, NULL)) protocol,
+               max(decode(params.name, 'SvcClass', params.value, NULL)) svcClass
           FROM (
             -- Extract the totalWaitTime for all stagerjob's or d2dtransfer's
             -- which have started.
@@ -80,11 +83,12 @@ BEGIN
       -- NULL's are 133!!
       LEFT JOIN &dlfschema..dlf_str_param_values params
         ON results.id = params.id
-       AND params.name IN ('Type', 'Protocol')
+       AND params.name IN ('Type', 'Protocol', 'SvcClass')
        AND params.timestamp >  now - 10/1440
        AND params.timestamp <= now - 5/1440
      GROUP BY waitTime)
-     GROUP BY type, protocol;
+     WHERE svcClass IS NOT NULL
+     GROUP BY type, svcClass, protocol;
 END;
 /
 
