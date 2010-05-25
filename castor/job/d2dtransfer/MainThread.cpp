@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/job/diskcopy/MainThread.hpp"
-#include "castor/job/diskcopy/RfioMover.hpp"
+#include "castor/job/d2dtransfer/MainThread.hpp"
+#include "castor/job/d2dtransfer/RfioMover.hpp"
 #include "castor/job/SharedResourceHelper.hpp"
 #include "castor/System.hpp"
 #include "Cgetopt.h"
@@ -44,7 +44,7 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
+castor::job::d2dtransfer::MainThread::MainThread(int argc, char *argv[])
   throw(castor::exception::Exception) :
   m_mover(0),
   m_protocol("rfio"),
@@ -79,7 +79,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
 //-----------------------------------------------------------------------------
 // init
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::init() {
+void castor::job::d2dtransfer::MainThread::init() {
   // Drop privileges to the stage superuser.
   try {
     changeUidGid(STAGERSUPERUSER, STAGERSUPERGROUP);
@@ -154,7 +154,7 @@ void castor::job::diskcopy::MainThread::init() {
 
   // Initialize the mover. For now we only support RFIO!
   try {
-    m_mover = new castor::job::diskcopy::RfioMover();
+    m_mover = new castor::job::d2dtransfer::RfioMover();
   } catch (castor::exception::Exception e) {
 
     // "Failed to initialize mover"
@@ -186,7 +186,7 @@ void castor::job::diskcopy::MainThread::init() {
 //-----------------------------------------------------------------------------
 // ParseCommandLine
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::parseCommandLine
+void castor::job::d2dtransfer::MainThread::parseCommandLine
 (int argc, char *argv[])
   throw(castor::exception::Exception) {
 
@@ -285,7 +285,7 @@ void castor::job::diskcopy::MainThread::parseCommandLine
 //-----------------------------------------------------------------------------
 // Help
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::help(std::string programName) {
+void castor::job::d2dtransfer::MainThread::help(std::string programName) {
   std::cout << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"
@@ -309,7 +309,7 @@ void castor::job::diskcopy::MainThread::help(std::string programName) {
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::run(void*) {
+void castor::job::d2dtransfer::MainThread::run(void*) {
 
   // Download the resource file
   std::string content("");
@@ -427,10 +427,11 @@ void castor::job::diskcopy::MainThread::run(void*) {
      castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
      castor::dlf::Param("SvcClass", m_svcClass),
+     castor::dlf::Param("Type", castor::ObjectsIdStrings[OBJ_StageDiskCopyReplicaRequest]),
      castor::dlf::Param("TotalWaitTime",
                         totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestUuid)};
-  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 7, params, &m_fileId);
+  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 8, params, &m_fileId);
 
   // Call the disk2DiskCopyStart function to find out the information about the
   // destination and source diskcopy's. Note: disk2DiskCopyFailed will be
@@ -543,7 +544,7 @@ void castor::job::diskcopy::MainThread::run(void*) {
 //-----------------------------------------------------------------------------
 // Stop
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::stop() {
+void castor::job::d2dtransfer::MainThread::stop() {
   if (m_mover != 0) {
     m_mover->stop(false);
   }
@@ -553,7 +554,7 @@ void castor::job::diskcopy::MainThread::stop() {
 //-----------------------------------------------------------------------------
 // changeUidGid
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::changeUidGid
+void castor::job::d2dtransfer::MainThread::changeUidGid
 (std::string user, std::string group)
   throw(castor::exception::Exception){
 
@@ -613,7 +614,7 @@ void castor::job::diskcopy::MainThread::changeUidGid
 //-----------------------------------------------------------------------------
 // terminate
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::terminate
+void castor::job::d2dtransfer::MainThread::terminate
 (u_signed64 diskCopyId, int status) {
 
   // Everything ok ?

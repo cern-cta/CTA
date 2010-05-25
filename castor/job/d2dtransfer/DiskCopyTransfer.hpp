@@ -32,7 +32,7 @@ namespace castor {
 
   namespace job {
 
-    namespace diskcopy {
+    namespace d2dtransfer {
 
       /**
        * DiskCopyTransfer class
@@ -53,7 +53,7 @@ namespace castor {
 	
       };
 
-    } // End of namespace diskcopy
+    } // End of namespace d2dtransfer
 
   } // End of namespace job
 

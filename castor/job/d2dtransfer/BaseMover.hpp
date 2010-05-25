@@ -29,19 +29,19 @@
 #define BASE_MOVER_HPP 1
 
 // Include files
-#include "castor/job/diskcopy/IMover.hpp"
+#include "castor/job/d2dtransfer/IMover.hpp"
 
 
 namespace castor {
 
   namespace job {
 
-    namespace diskcopy {
+    namespace d2dtransfer {
 
       /**
        * Base class for a mover
        */
-      class BaseMover : public castor::job::diskcopy::IMover {
+      class BaseMover : public castor::job::d2dtransfer::IMover {
 
       public:
       

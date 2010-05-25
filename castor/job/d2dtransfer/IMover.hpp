@@ -36,7 +36,7 @@ namespace castor {
 
   namespace job {
 
-    namespace diskcopy {
+    namespace d2dtransfer {
 
       /**
        * Abstract mover interface
@@ -104,7 +104,7 @@ namespace castor {
 
       };
     
-    } // End of namespace diskcopy
+    } // End of namespace d2dtransfer
 
   } // End of namespace job
 

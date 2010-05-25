@@ -23,13 +23,13 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/job/diskcopy/BaseMover.hpp"
+#include "castor/job/d2dtransfer/BaseMover.hpp"
 
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::diskcopy::BaseMover::BaseMover() :
+castor::job::d2dtransfer::BaseMover::BaseMover() :
   m_shutdown(0),
   m_fileSize(0),
   m_bytesTransferred(0) {

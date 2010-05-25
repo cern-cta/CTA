@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/job/diskcopy/RfioMover.hpp"
+#include "castor/job/d2dtransfer/RfioMover.hpp"
 #include "getconfent.h"
 #include "rfio_api.h"
 #include "Cns_api.h"
@@ -43,7 +43,7 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::diskcopy::RfioMover::RfioMover() :
+castor::job::d2dtransfer::RfioMover::RfioMover() :
   m_outputFile(""),
   m_inputFile(""),
   m_outputFD(0),
@@ -58,7 +58,7 @@ castor::job::diskcopy::RfioMover::RfioMover() :
 //-----------------------------------------------------------------------------
 // Destructor
 //-----------------------------------------------------------------------------
-castor::job::diskcopy::RfioMover::~RfioMover() throw() {
+castor::job::d2dtransfer::RfioMover::~RfioMover() throw() {
 
   // Close the source file descriptor
   if (m_inputFD > 0) {
@@ -77,7 +77,7 @@ castor::job::diskcopy::RfioMover::~RfioMover() throw() {
 //-----------------------------------------------------------------------------
 // Source
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::RfioMover::source()
+void castor::job::d2dtransfer::RfioMover::source()
   throw(castor::exception::Exception) {
 
 }
@@ -86,7 +86,7 @@ void castor::job::diskcopy::RfioMover::source()
 //-----------------------------------------------------------------------------
 // Destination
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::RfioMover::destination
+void castor::job::d2dtransfer::RfioMover::destination
 (castor::stager::DiskCopyInfo *diskCopy,
  castor::stager::DiskCopyInfo *sourceDiskCopy)
   throw(castor::exception::Exception) {
@@ -172,7 +172,7 @@ void castor::job::diskcopy::RfioMover::destination
 //-----------------------------------------------------------------------------
 // CleanupFile
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::RfioMover::cleanupFile(bool silent, bool unlink)
+void castor::job::d2dtransfer::RfioMover::cleanupFile(bool silent, bool unlink)
   throw(castor::exception::Exception) {
 
   // Close the source file
@@ -243,7 +243,7 @@ void castor::job::diskcopy::RfioMover::cleanupFile(bool silent, bool unlink)
 //-----------------------------------------------------------------------------
 // CopyFile
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::RfioMover::copyFile()
+void castor::job::d2dtransfer::RfioMover::copyFile()
   throw(castor::exception::Exception) {
 
   // Get the RFCP buffer size

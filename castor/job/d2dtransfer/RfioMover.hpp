@@ -26,20 +26,20 @@
 #define RFIOMOVER_HPP 1
 
 // Include files
-#include "castor/job/diskcopy/BaseMover.hpp"
-#include "castor/job/diskcopy/IMover.hpp"
+#include "castor/job/d2dtransfer/BaseMover.hpp"
+#include "castor/job/d2dtransfer/IMover.hpp"
 
 
 namespace castor {
 
   namespace job {
 
-    namespace diskcopy {
+    namespace d2dtransfer {
     
       /**
        * Rfio Mover
        */
-      class RfioMover : public castor::job::diskcopy::BaseMover {
+      class RfioMover : public castor::job::d2dtransfer::BaseMover {
       
       public:
       
@@ -138,7 +138,7 @@ namespace castor {
 
       };
 
-    } // End of namespace diskcopy
+    } // End of namespace d2dtransfer
 
   } // End of namespace job
 

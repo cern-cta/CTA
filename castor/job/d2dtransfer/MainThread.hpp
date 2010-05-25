@@ -26,8 +26,8 @@
 #define MAIN_THREAD_HPP 1
 
 // Include files
-#include "castor/job/diskcopy/MainThread.hpp"
-#include "castor/job/diskcopy/IMover.hpp"
+#include "castor/job/d2dtransfer/MainThread.hpp"
+#include "castor/job/d2dtransfer/IMover.hpp"
 #include "castor/job/SharedResourceHelper.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/stager/IJobSvc.hpp"
@@ -40,7 +40,7 @@ namespace castor {
 
   namespace job {
 
-    namespace diskcopy {
+    namespace d2dtransfer {
 
       /**
        * Main Thread
@@ -126,7 +126,7 @@ namespace castor {
         castor::stager::IJobSvc *m_jobSvc;
 
         /// The mover responsible for the actual data transfer
-        castor::job::diskcopy::IMover *m_mover;
+        castor::job::d2dtransfer::IMover *m_mover;
 
         /// The helper to download the resource file
         castor::job::SharedResourceHelper *m_resHelper;
@@ -164,7 +164,7 @@ namespace castor {
 
       };
 
-    } // End of namespace diskcopy
+    } // End of namespace d2dtransfer
 
   } // End of namespace job
 

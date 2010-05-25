@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/job/diskcopy/DiskCopyTransfer.hpp"
-#include "castor/job/diskcopy/MainThread.hpp"
+#include "castor/job/d2dtransfer/DiskCopyTransfer.hpp"
+#include "castor/job/d2dtransfer/MainThread.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
 
@@ -34,7 +34,7 @@
 int main(int argc, char *argv[]) {
 
   try {
-    castor::job::diskcopy::DiskCopyTransfer daemon;
+    castor::job::d2dtransfer::DiskCopyTransfer daemon;
 
     // We create a thread here to handle the main logic/operations of the disk
     // copy transfer mover. We use a thread as we'd like to benefit from the
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("MainThread",
-    	new castor::job::diskcopy::MainThread(argc, argv), 0));
+    	new castor::job::d2dtransfer::MainThread(argc, argv), 0));
     daemon.getThreadPool('M')->setNbThreads(1);
 
     // Redirect the standard file descriptors to /dev/null
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
+castor::job::d2dtransfer::DiskCopyTransfer::DiskCopyTransfer():
   castor::server::BaseDaemon("d2dtransfer") {
 
   // Now with predefined messages
