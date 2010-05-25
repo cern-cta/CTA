@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_7';
 
 /***** EXISTING/OLD MONITORING *****/
 
@@ -44,10 +44,8 @@ BEGIN
      minLatencyTime, maxLatencyTime, avgLatencyTime, stddevLatencyTime,
      medianLatencyTime)
     -- Gather data
-    SELECT now - 5/1440 timestamp, interval,
-           nvl(type, 'StageDiskCopyReplicaRequest') requestType, svcClass,
-           protocol,
-           (count(*) / interval) started,
+    SELECT now - 5/1440 timestamp, interval, nvl(type, '-') requestType,
+           svcClass, protocol, (count(*) / interval) started,
            min(waitTime)         minLatencyTime,
            max(waitTime)         maxLatencyTime,
            avg(waitTime)         avgLatencyTime,
@@ -75,20 +73,16 @@ BEGIN
                AND params.name = 'TotalWaitTime'
                AND params.timestamp >  now - 10/1440
                AND params.timestamp <= now - 5/1440
-          ) results
-      -- For facility 23 (d2dtransfer) we can assume that the request type
-      -- associated with the transfer is 133 (StageDiskCopyReplicaRequest).
-      -- However, for normal jobs we must parse the Arguments attribute of the
-      -- start message to determine the request type. Hence the left join,
-      -- NULL's are 133!!
-      LEFT JOIN &dlfschema..dlf_str_param_values params
-        ON results.id = params.id
-       AND params.name IN ('Type', 'Protocol', 'SvcClass')
-       AND params.timestamp >  now - 10/1440
-       AND params.timestamp <= now - 5/1440
-     GROUP BY waitTime)
+           ) results
+         -- Attach the type, protocol and service class values
+         INNER JOIN &dlfschema..dlf_str_param_values params
+            ON results.id = params.id
+           AND params.name IN ('Type', 'Protocol', 'SvcClass')
+           AND params.timestamp >  now - 10/1440
+           AND params.timestamp <= now - 5/1440
+         GROUP BY waitTime)
      WHERE svcClass IS NOT NULL
-     GROUP BY type, svcClass, protocol;
+   GROUP BY GROUPING SETS (svcclass, type), (svcclass, protocol);
 END;
 /
 
