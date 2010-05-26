@@ -181,6 +181,9 @@ The following error values might be returned by any package:
 .TP
 .B SENOVALUE
 (1042) No value
+.TP
+.B SEINVALIDCONFIG
+(1043) Invalid configuration
 
 .SH COPYTAPE ERRORS
 None yet
