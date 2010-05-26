@@ -76,8 +76,9 @@
 #define SELOOP          SEBASEOFF+40    /* Too many symbolic links      */
 #define SENOPORTINRANGE SEBASEOFF+41    /* No port in range             */
 #define SENOVALUE       SEBASEOFF+42    /* No value                     */
+#define SEINVALIDCONFIG SEBASEOFF+43    /* Invalid configuration        */
 
-#define SEMAXERR        SEBASEOFF+42    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+43    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*

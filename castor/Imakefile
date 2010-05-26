@@ -275,6 +275,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/InvalidConfigEntry.cpp \
+              exception/InvalidConfiguration.cpp \
               exception/Internal.cpp \
               exception/NotSupported.cpp \
               exception/OutOfMemory.cpp \
