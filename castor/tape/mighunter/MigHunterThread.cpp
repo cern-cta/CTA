@@ -65,14 +65,17 @@ castor::tape::mighunter::MigHunterThread::MigHunterThread(
   const std::list<std::string> &svcClassList,
   const uint64_t               migrationDataThreshold,
   const bool                   doClone,
-  PyObject *const              migrationPolicyDict,
-  const char *const            migrationPolicyModuleStatus) throw() :
+  PyObject *const              migrationPolicyDict) throw() :
 
   m_listSvcClass(svcClassList),
   m_migrationDataThreshold(migrationDataThreshold),
   m_doClone(doClone),
-  m_migrationPolicyDict(migrationPolicyDict),
-  m_migrationPolicyModuleStatus(migrationPolicyModuleStatus) {
+  m_migrationPolicyDict(migrationPolicyDict) {
+
+  if(migrationPolicyDict == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": migrationPolicyDict parameter is NULL");
+  }
 }
 
 
@@ -405,7 +408,6 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
       // log in the dlf with the summary
       castor::dlf::Param paramsPolicy[] = {
         castor::dlf::Param("SvcClass"            , (*svcClassName)     ),
-        castor::dlf::Param("policyModuleStatus", m_migrationPolicyModuleStatus),
         castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy),
         castor::dlf::Param("allowedByPolicy"     , allowedByPolicy     ),
         castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy  )};
@@ -497,7 +499,6 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
     // Log summary
     castor::dlf::Param paramsPolicy[] = {
       castor::dlf::Param("SvcClass"            , (*svcClassName)           ),
-      castor::dlf::Param("policyModuleStatus"  , m_migrationPolicyModuleStatus),
       castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy      ),
       castor::dlf::Param("allowedByPolicy"     , allowedByPolicy           ),
       castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy        ),

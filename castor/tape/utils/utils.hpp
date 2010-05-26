@@ -542,7 +542,8 @@ void pthreadJoin(pthread_t thread, void **const valuePtr)
 
 /**
  * C++ wrapper function of the C getconfent() function.  This wrapper
- * converts a return value of null into an InvalidConfiguration exception.
+ * converts a return value of null or empty string into an
+ * InvalidConfiguration exception.
  *
  * @param category The category of the configuration value to be retrieved.
  * @param name     The name of the configuration value to be retrieved.
@@ -550,6 +551,12 @@ void pthreadJoin(pthread_t thread, void **const valuePtr)
  */
 const char *getMandatoryValueFromConfiguration(const char *const category,
   const char *const name) throw(castor::exception::InvalidConfiguration);
+
+
+/**
+ * Returns true if the specified C string is empty else returns false.
+ */
+bool isAnEmptyString(const char *const str) throw();
 
 } // namespace utils
 } // namespace tape

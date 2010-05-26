@@ -28,6 +28,27 @@
 // some pre-processor definitions which affect the standard headers
 #include "castor/tape/python/python.hpp"
 
+#include "castor/Constants.hpp"
+#include "castor/Services.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/InvalidConfiguration.hpp"
+#include "castor/server/SignalThreadPool.hpp"
+#include "castor/tape/mighunter/Constants.hpp"
+#include "castor/tape/mighunter/IMigHunterSvc.hpp"
+#include "castor/tape/mighunter/MigHunterDaemon.hpp"
+#include "castor/tape/mighunter/MigHunterDlfMessageConstants.hpp"
+#include "castor/tape/mighunter/MigHunterThread.hpp"
+#include "castor/tape/mighunter/StreamThread.hpp"
+#include "castor/tape/python/SmartPyObjectPtr.hpp"
+#include "castor/tape/utils/SmartFILEPtr.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "h/Cgetopt.h"
+#include "h/getconfent.h"
+#include "h/u64subr.h"
+
 #include <iostream>
 #include <list>
 #include <memory>
@@ -36,35 +57,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/exception/InvalidArgument.hpp"
-
-#include "h/Cgetopt.h"
-#include "h/u64subr.h"
-
-#include "castor/server/SignalThreadPool.hpp"
-
-#include "castor/tape/mighunter/Constants.hpp"
-#include "castor/tape/mighunter/IMigHunterSvc.hpp"
-#include "castor/tape/mighunter/MigHunterDaemon.hpp"
-#include "castor/tape/mighunter/MigHunterDlfMessageConstants.hpp"
-#include "castor/tape/mighunter/MigHunterThread.hpp"
-#include "castor/tape/mighunter/StreamThread.hpp"
-
-#include "castor/tape/utils/SmartFILEPtr.hpp"
-
-#include "castor/tape/python/ScopedPythonLock.hpp"
-#include "castor/tape/python/SmartPyObjectPtr.hpp"
-
-
-extern "C" {
-  char* getconfent(const char *, const char *, int);
-}
 
 
 //------------------------------------------------------------------------------
@@ -143,101 +135,23 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // Throw an exception if the Oracle database service could not
   // be obtained
   if (mySvc == NULL) {
-    castor::exception::Internal ex;
-    ex.getMessage() <<
-      "Failed to get " << orasvcName << " Oracle database service";
-    throw(ex);
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to get " << orasvcName << " Oracle database service");
   }
 
-  // The status of the migration-policy Python-module as a text message which
-  // can be logged so that operators know what needs to be done in order to get
-  // a user-defined policy loaded.  The possible string values are
-  // "Not configured", "Not loaded" and "Loaded".
-  const char *migrationPolicyModuleStatus = "Not configured";
+  const std::string migrationPolicyModuleName =
+    utils::getMandatoryValueFromConfiguration("MIGHUNTER", "MIGRATION_POLICY");
 
-  // Get the policy migration policy name
-  std::string migrationPolicyModuleName;
-  {
-    const char *const category = "MIGHUNTER";
-    const char *const name     = "MIGRATION_POLICY";
-    const char *const tmpStr   = getconfent(category, name, 0);
-
-    if(tmpStr != NULL) {
-      migrationPolicyModuleName   = tmpStr;
-      migrationPolicyModuleStatus = "Not loaded";
-    } else {
-      std::ostringstream oss;
-
-      oss << category << "/" << name << " not specified in castor.conf";
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("message", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
-        MIGRATION_POLICY_NOT_CONFIGURED, params);
-    }
-  }
-
-  // The status of the stream-policy Python-module as a text message which
-  // can be logged so that operators know what needs to be done in order to get
-  // a user-defined policy loaded.  The possible string values are
-  // "Not configured", "Not loaded" and "Loaded".
-  const char *streamPolicyModuleStatus = "Not configured";
-
-  // Get the policy stream policy name
-  std::string streamPolicyModuleName;
-  {
-    const char *const category = "MIGHUNTER";
-    const char *const name     = "STREAM_POLICY";
-    const char *const tmpStr   = getconfent(category, name, 0);
- 
-    if(tmpStr != NULL) {
-      streamPolicyModuleName   = tmpStr;
-      streamPolicyModuleStatus = "Not loaded";
-    } else {
-      std::ostringstream oss;
-
-      oss << category << "/" << name << " not specified in castor.conf";
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("message", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
-        STREAM_POLICY_NOT_CONFIGURED, params);
-    }
-  }
-
-  // Initialize Python
+  const std::string streamPolicyModuleName =
+    utils::getMandatoryValueFromConfiguration("MIGHUNTER", "STREAM_POLICY");
 
   castor::tape::python::initializePython();
 
-  // Load the policies
+  PyObject *const migrationPolicyDict =
+    python::importPolicyPythonModuleWithLock(migrationPolicyModuleName.c_str());
 
-  castor::tape::python::ScopedPythonLock scopedLock;
-
-  PyObject* migrationPolicyDict = NULL;
-
-  // Get the dictionary just if there is a module name set in castor.conf
-  if (!migrationPolicyModuleName.empty()){
-    migrationPolicyDict = castor::tape::python::importPolicyPythonModule(
-      migrationPolicyModuleName.c_str());
-  }
-
-  // Update the status string of the migration-policy Python-module
-  if(migrationPolicyDict != NULL) {
-    migrationPolicyModuleStatus = "Loaded";
-  }
-
-  PyObject* streamPolicyDict = NULL;
-
-  // Get the dictionary just if there is a module name set in castor.conf
-  if (!streamPolicyModuleName.empty()){
-    streamPolicyDict = castor::tape::python::importPolicyPythonModule(
-      streamPolicyModuleName.c_str());
-  }
-
-  // Update the status string of the stream-policy Python-module
-  if(migrationPolicyDict != NULL) {
-    streamPolicyModuleStatus = "Loaded";
-  }
+  PyObject *const streamPolicyDict =
+    python::importPolicyPythonModuleWithLock(streamPolicyModuleName.c_str());
 
   // Parse the command-line
   parseCommandLine(argc, argv);
@@ -252,7 +166,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // Create the mighunter thread pool
   std::auto_ptr<castor::tape::mighunter::MigHunterThread> migHunterThread(
     new MigHunterThread(m_listSvcClass, m_migrationDataThreshold, m_doClone,
-    migrationPolicyDict, migrationPolicyModuleStatus));
+    migrationPolicyDict));
   std::auto_ptr<castor::server::SignalThreadPool> migHunterPool(
     new server::SignalThreadPool("MigHunterThread", migHunterThread.release(),
     m_migrationSleepTime));
@@ -261,7 +175,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   // Create the stream thread pool
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
-    streamPolicyDict, streamPolicyModuleStatus));
+    streamPolicyDict));
   std::auto_ptr<server::SignalThreadPool> streamPool(
     new server::SignalThreadPool("StreamThread", streamThread.release(),
     m_streamSleepTime));
@@ -420,4 +334,3 @@ void castor::tape::mighunter::MigHunterDaemon::usage(){
     "-v volume: Data volume threshold in bytes below which a migration will\n"
     "           not start\n" << std::endl;
 }
-

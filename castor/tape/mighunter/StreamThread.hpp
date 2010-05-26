@@ -64,13 +64,6 @@ private:
   PyObject *const m_streamPolicyDict;
 
   /**
-   * The status of the stream-policy Python-module as a text message which
-   * can be logged so that operators know what needs to be done in order to get
-   * a user-defined policy loaded.
-   */
-  const char *const m_streamPolicyModuleStatus;
-
-  /**
    * The indirect exception throw entry point for stream threads that is
    * called by run();
    *
@@ -106,15 +99,10 @@ public:
    *                         migration policy module.  This parameter must be
    *                         set to NULL if there is no stream-policy
    *                         Python-module.
-   * @param streamPolicyModuleStatus The status of the migration-policy
-   *                         Python-module as a text message which can be
-   *                         logged so that operators know what needs to be
-   *                         done in order to get a user-defined policy loaded.
    */
   StreamThread(
     const std::list<std::string> &svcClassArray,
-    PyObject *const              streamPolicyDict,
-    const char *const            streamPolicyModuleStatus) throw();
+    PyObject *const              streamPolicyDict) throw();
      
   /**
    * Destructor

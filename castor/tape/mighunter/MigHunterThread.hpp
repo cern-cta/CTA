@@ -80,13 +80,6 @@ private:
   PyObject *const m_migrationPolicyDict;
 
   /**
-   * The status of the migration-policy Python-module as a text message which
-   * can be logged so that operators know what needs to be done in order to get
-   * a user-defined policy loaded.
-   */
-  const char *const m_migrationPolicyModuleStatus;
-
-  /**
    * The indirect exception throw entry point for MigHunter threads that is
    * called by run();
    *
@@ -138,18 +131,12 @@ public:
    *                               the migration policy module.  This parameter
    *                               must be set to NULL if there is no
    *                               migration-policy Python-module.
-   * @param migrationPolicyModuleStatus The status of the migration-policy
-   *                               Python-module as a text message which
-   *                               can be logged so that operators know what
-   *                               needs to be done in order to get a
-   *                               user-defined policy loaded.
    */
   MigHunterThread(
     const std::list<std::string> &svcClassList,
     const uint64_t               migrationDataThreshold,
     const bool                   doClone,
-    PyObject *const              migrationPolicyDict,
-    const char *const            migrationPolicyModuleStatus) throw();
+    PyObject *const              migrationPolicyDict) throw();
 
   /**
    * Destructor

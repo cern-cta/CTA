@@ -63,11 +63,14 @@
 //------------------------------------------------------------------------------
 castor::tape::mighunter::StreamThread::StreamThread(
   const std::list<std::string> &svcClassArray,
-  PyObject *const              streamPolicyDict,
-  const char *const            streamPolicyModuleStatus) throw() :
+  PyObject *const              streamPolicyDict) throw() :
   m_listSvcClass(svcClassArray),
-  m_streamPolicyDict(streamPolicyDict),
-  m_streamPolicyModuleStatus(streamPolicyModuleStatus) {
+  m_streamPolicyDict(streamPolicyDict) {
+
+  if(streamPolicyDict == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": streamPolicyDict parameter is NULL");
+  }
 }
 
 
@@ -335,7 +338,6 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
         allCandidatesProcessed ? "TRUE" : "FALSE";
       castor::dlf::Param paramsPolicy[] = {
         castor::dlf::Param("SvcClass"            , (*svcClassName)            ),
-        castor::dlf::Param("policyModuleStatus"  , m_streamPolicyModuleStatus ),
         castor::dlf::Param("total"               , infoCandidateStreams.size()),
         castor::dlf::Param("nbNoTapeCopies"      , nbNoTapeCopies             ),
         castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy     ),
