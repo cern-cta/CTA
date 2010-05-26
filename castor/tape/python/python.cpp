@@ -27,6 +27,7 @@
 #include "castor/tape/python/python.hpp"
 
 #include "castor/tape/python/Constants.hpp"
+#include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
@@ -201,6 +202,17 @@ PyObject * castor::tape::python::importPolicyPythonModule(
   }
 
   return(dict);
+}
+
+
+//---------------------------------------------------------------------------
+// importPolicyPythonModuleWithLock
+//---------------------------------------------------------------------------
+PyObject * castor::tape::python::importPolicyPythonModuleWithLock(
+  const char *const moduleName) throw(castor::exception::Exception) {
+  ScopedPythonLock scopedLock;
+
+  return(importPolicyPythonModule(moduleName));
 }
 
 

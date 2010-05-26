@@ -89,6 +89,25 @@ PyObject* importPolicyPythonModule(const char *const moduleName)
   throw(castor::exception::Exception);
 
 /**
+ * Convenient wrapper method around importPolicyPythonModule() that takes a
+ * lock on the global Python interpreter and then calls
+ * importPolicyPythonModule().  The lock is released before this method
+ * returns.
+ *
+ * For further information please see the documentation for the
+ * importPolicyPythonModule() method.
+ *
+ * @param moduleName The name of the CASTOR-policy Python-module.
+ * @return           The Python dictionary object of the imported library.  The
+ *                   documentation of the embedded Python-interpreter describes
+ *                   the return value as being a "borrowed reference".  This
+ *                   means the caller does not need to call Py_XDECREF when the
+ *                   dictionary is no longer required.
+ */
+PyObject* importPolicyPythonModuleWithLock(const char *const moduleName)
+  throw(castor::exception::Exception);
+
+/**
  * Get the Python function object for the specified function within the
  * specified Python dictionary.
  *
