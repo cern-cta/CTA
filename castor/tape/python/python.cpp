@@ -132,6 +132,7 @@ PyObject * castor::tape::python::importPolicyPythonModule(
 
   if(moduleName == NULL) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Failed to import policy python-module"
       ": moduleName parameter is NULL");
   }
 
@@ -151,7 +152,9 @@ PyObject * castor::tape::python::importPolicyPythonModule(
       castor::exception::Exception ex2(ex.code());
 
       ex2.getMessage() <<
-        "Failed to get information about the CASTOR-policy Python-module"
+        "Failed to import policy python-module"
+        ": moduleName=" << moduleName <<
+        ": Failed to get information about the CASTOR-policy Python-module file"
         ": " << ex.getMessage().str();
 
       throw(ex2);
@@ -162,7 +165,9 @@ PyObject * castor::tape::python::importPolicyPythonModule(
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() <<
-        fullPathname << " is not a regular file";
+        "Failed to import policy python-module"
+        ": moduleName=" << moduleName <<
+        ": " << fullPathname << " is not a regular file";
 
       throw(ex);
     }
@@ -175,8 +180,9 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() <<
-      "PyImport_ImportModule() call failed"
-      ": moduleName=" << moduleName;
+      "Failed to import policy python-module"
+      ": moduleName=" << moduleName <<
+      ": PyImport_ImportModule() call failed";
 
     throw(ex);
   }
@@ -187,8 +193,9 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() <<
-      "PyModule_GetDict() call failed"
-      ": moduleName=" << moduleName;
+      "Failed to import policy python-module"
+      ": moduleName=" << moduleName <<
+      "PyModule_GetDict() call failed";
 
     throw(ex);
   }
