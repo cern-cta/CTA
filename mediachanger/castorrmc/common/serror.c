@@ -63,6 +63,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Too many symbolic links",
    "No port in range",
    "No value",
+   "Invalid configuration",
    "BAD ERROR NUMBER"
   };
 
