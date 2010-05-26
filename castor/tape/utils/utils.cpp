@@ -880,7 +880,8 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
     castor::exception::InvalidConfiguration ex;
 
     ex.getMessage() <<
-      category << "/" << name << " not specified in castor.conf";
+      category << "/" << name <<
+      " is mandatory and is not specified in castor.conf";
 
     throw(ex);
   }
