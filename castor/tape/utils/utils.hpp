@@ -29,6 +29,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
+#include "castor/exception/InvalidConfiguration.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
@@ -537,6 +538,18 @@ void pthreadCreate(
  */
 void pthreadJoin(pthread_t thread, void **const valuePtr)
   throw(castor::exception::Exception);
+
+
+/**
+ * C++ wrapper function of the C getconfent() function.  This wrapper
+ * converts a return value of null into an InvalidConfiguration exception.
+ *
+ * @param category The category of the configuration value to be retrieved.
+ * @param name     The name of the configuration value to be retrieved.
+ * @return         The value returned bu getconfent().
+ */
+const char *getMandatoryValueFromConfiguration(const char *const category,
+  const char *const name) throw(castor::exception::InvalidConfiguration);
 
 } // namespace utils
 } // namespace tape

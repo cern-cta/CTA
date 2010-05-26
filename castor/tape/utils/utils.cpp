@@ -863,3 +863,27 @@ void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
     throw(ex);
   }
 }
+
+
+//------------------------------------------------------------------------------
+// getMandatoryValueFromConfiguration
+//------------------------------------------------------------------------------
+const char *castor::tape::utils::getMandatoryValueFromConfiguration(
+  const char *const category, const char *const name)
+  throw(castor::exception::InvalidConfiguration) {
+
+  const char *const tmp = getconfent(category, name, 0);
+
+  // Throw an exception if the name of the policy Python-module has not been
+  // configured
+  if(tmp == NULL) {
+    castor::exception::InvalidConfiguration ex;
+
+    ex.getMessage() <<
+      category << "/" << name << " not specified in castor.conf";
+
+    throw(ex);
+  }
+
+  return tmp;
+}
