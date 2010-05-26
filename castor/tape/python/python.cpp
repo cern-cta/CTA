@@ -181,7 +181,19 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     throw(ex);
   }
 
-  return(PyModule_GetDict(module.get()));
+  PyObject *const dict = PyModule_GetDict(module.get());
+
+  if(dict == NULL) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "PyModule_GetDict() call failed"
+      ": moduleName=" << moduleName;
+
+    throw(ex);
+  }
+
+  return(dict);
 }
 
 
