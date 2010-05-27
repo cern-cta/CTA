@@ -916,8 +916,6 @@ LEFT OUTER JOIN VdqmTape ON
   TapeDrive.tape = VDQMTAPE.ID
 LEFT OUTER JOIN DEVICEGROUPNAME ON
   TapeDrive.deviceGroupName = DeviceGroupName.id
---LEFT OUTER JOIN TapeDriveDedication ON
---  TapeDrive.id = TapeDriveDedication.tapeDrive
 LEFT OUTER JOIN TapeRequest ON
   TapeDrive.RunningTapeReq = TapeRequest.id
 LEFT OUTER JOIN TapeAccessSpecification ON
