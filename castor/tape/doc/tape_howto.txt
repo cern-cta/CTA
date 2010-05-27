@@ -3525,3 +3525,52 @@ CREATE TABLE OPS_STEVE_STUCK_RECALL_CFS AS
       TapeCopy.status = 4 -- TAPECOPY_TOBERECALLED
       AND DiskCopy.status = 2 -- DISKCOPY_WAITTAPERECALL
       AND DiskCopy.creationtime < getTime() - (7 * 24 * 3600);
+
+
+Setup VDQM on a devbox using a scratchDB
+========================================
+
+1) Prepare the VDQM DB
+   Drop the DB schema (if persent)
+   Create the VDQM schema
+SQL> @trunk/castor/vdqm/vdqm_oracle_create.sql
+
+2) Create/Modify the ORAVDQMCONFIG file of the devBox to point to the scratch DB
+# vi /etc/castor/ORAVDQMCONFIG
+
+3) Modify the VDQM HOST in the castor.conf to point to the devBox
+# vi /etc/castor/castor.conf
+....
+VDQM HOST <VDQMhost>
+....
+
+4) install the VDQM server on your devbox (NOTE castor version match)
+# rpm -Uvh
+# http://swrepsrv.cern.ch/swrep/x86_64_slc4/castor-vdqm2-server-2.1.9-5.x86_64.rpm
+# vdqmDBInit
+# /etc/init.d/vdqmd start
+
+5) Chose te tapeserver(s) to be used by the new VDQM
+# ssh tpstvABC 
+
+6) Put DOWN the drive
+# tpmaint stop
+
+7) Modify the VDQM HOST and add VDQM host to ADMIN HOSTS in the castor.conf 
+# vi /etc/castor/castor.conf
+...
+ADMIN HOSTS <VDQMhost> ...
+....
+VDQM HOST <VDQMhost>
+....
+
+8) Restart the drive
+# tpmaint start
+(just in case)
+# /etc/init.d/taped   restart
+# /etc/init.d/rtcpd   restart
+# /etc/init.d/rsyslog restart
+
+9) Chek that it worked
+[root@tpsrvABC ~]# showqueues 
+35921005@tpsrvABC (0 MB) FREE vid:  last update May 26 17:24:14
