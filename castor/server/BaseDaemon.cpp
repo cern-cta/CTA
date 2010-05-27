@@ -400,7 +400,7 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
       case SIGTERM:
       case SIGINT:
       case SIGHUP:
-        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+        daemon->shutdownGracefully();
         break;
 
       case SIGCHLD:
@@ -421,4 +421,12 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
     }
   }
   return 0;
+}
+
+
+//------------------------------------------------------------------------------
+// shutdownGracefully
+//------------------------------------------------------------------------------
+void castor::server::BaseDaemon::shutdownGracefully() throw() {
+  m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
 }

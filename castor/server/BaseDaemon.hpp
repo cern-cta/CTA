@@ -96,6 +96,11 @@ namespace castor {
      */
     virtual void handleSignals();
 
+    /**
+     * Shuts down the daemon gracefully.
+     */
+    void shutdownGracefully() throw();
+
   protected:
 
     /**
