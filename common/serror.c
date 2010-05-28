@@ -206,6 +206,8 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
    "File has been overwritten, request ignored",
    "Segment had been deleted",
    "Is a link",
+   "File class does not allow a copy on tape",
+   "Too many copies on tape",
    "BAD ERROR NUMBER"
   };
 

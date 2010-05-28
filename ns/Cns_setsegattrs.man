@@ -87,6 +87,10 @@ or write permission on the file itself is denied.
 .B ENSFILECHG
 The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.
 .TP
+.B ENSCLASSNOSEGS
+File class does not allow a copy on tape. The maximum number of copies of the
+file on tape, defined by the file class, prevents the creation of segments.
+.TP
 .B EFAULT
 .I path
 and

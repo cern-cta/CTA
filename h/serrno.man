@@ -457,6 +457,12 @@ The following error values are returned only by the name server package:
 .TP
 .B ENSISLINK
 (1404) Is a link
+.TP
+.B ENSCLASSNOSEGS
+(1405) File class does not allow a copy on tape
+.TP
+.B ENSTOOMANYSEGS
+(1406) Too many copies on tape
 
 .SH RFIO ERRORS
 The following error values are returned only by the remote file I/O package:

@@ -287,6 +287,11 @@ int Cns_srv_chclass(req_data, clienthost, thip)
   Cns_dbrec_addr rec_addr;
   uid_t uid;
   char *user;
+  int bof;
+  int nbsegs;
+  int c;
+  struct Cns_seg_metadata smd_entry;
+  DBLISTPTR dblistptr;
 
   strcpy (func, "Cns_srv_chclass");
   rbp = req_data;
@@ -356,6 +361,26 @@ int Cns_srv_chclass(req_data, clienthost, thip)
   /* update entries */
 
   if (fmd_entry.fileclass != new_class_entry.classid) {
+
+    /* if the file has segments make sure the new fileclass allows them! */
+
+    nbsegs = 0;
+    bof = 1;
+    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                                     &smd_entry, 0, NULL, 0, &dblistptr)) == 0) {
+      nbsegs++;
+      bof = 0;
+    }
+    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                                &smd_entry, 0, NULL, 1, &dblistptr);
+    if (c < 0)
+      RETURN (serrno);
+
+    if (nbsegs && (new_class_entry.nbcopies == 0))
+      RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
+    if (nbsegs > new_class_entry.nbcopies)
+      RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
+
     fmd_entry.fileclass = new_class_entry.classid;
     fmd_entry.ctime = time (0);
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
@@ -3437,7 +3462,7 @@ int Cns_srv_updateseg_status(req_data, clienthost, thip)
                              &old_smd_entry, 1, &rec_addrs))
     RETURN (serrno);
 
-  /* verify that the segment metadata return is what we expected */
+  /* verify that the old segment metadata is what we expected */
 
   if (strcmp (old_smd_entry.vid, vid) ||
       (old_smd_entry.side != side) ||
@@ -4725,6 +4750,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   u_signed64 cwd;
   u_signed64 fileid;
   struct Cns_file_metadata filentry;
+  struct Cns_class_metadata class_entry;
   int fsec;
   char func[20];
   gid_t gid;
@@ -4801,6 +4827,15 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
+
+  /* check if the file class associated to the file allows for segments to be
+   * created on tape. I.e. nbCopies > 0 */
+  if (Cns_get_class_by_id(&thip->dbfd, filentry.fileclass, &class_entry,
+                          0, NULL))
+    RETURN (serrno);
+
+  if (class_entry.nbcopies == 0)
+    RETURN (ENSCLASSNOSEGS);
 
   for (i = 0; i < nbseg; i++) {
     memset ((char *) &smd_entry, 0, sizeof(smd_entry));

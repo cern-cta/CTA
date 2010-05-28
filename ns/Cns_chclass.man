@@ -68,6 +68,13 @@ exceeds
 .B CA_MAXCLASNAMELEN
 or the class does not exist.
 .TP
+.B ENSCLASSNOSEGS
+File class does not allow a copy on tape.
+.TP
+.B ENSTOOMANYSEGS
+Too many copies on tape. The number of copies of the file on tape exceeds the
+maximum number of allowed copies on the target file class.
+.TP
 .B ENAMETOOLONG
 The length of
 .I path
