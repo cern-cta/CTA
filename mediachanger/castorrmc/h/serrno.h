@@ -210,11 +210,13 @@
  * NS (Name Server) errors
  *------------------------------------------------------------------------
  */
-#define	ENSNACT    ENSBASEOFF+1	/* Name server not active */
-#define	ENSFILECHG ENSBASEOFF+2	/* File has been overwritten, request ignored */
-#define ENSNOSEG   ENSBASEOFF+3	/* Segment had been deleted */
-#define ENSISLINK  ENSBASEOFF+4	/* Is a link */
-#define ENSMAXERR  ENSBASEOFF+4
+#define	ENSNACT        ENSBASEOFF+1	/* Name server not active */
+#define	ENSFILECHG     ENSBASEOFF+2	/* File has been overwritten, request ignored */
+#define ENSNOSEG       ENSBASEOFF+3	/* Segment had been deleted */
+#define ENSISLINK      ENSBASEOFF+4	/* Is a link */
+#define ENSCLASSNOSEGS ENSBASEOFF+5	/* File class does not allow a copy on tape */
+#define ENSTOOMANYSEGS ENSBASEOFF+6	/* Too many copies on tape */
+#define ENSMAXERR      ENSBASEOFF+6
 
 /*
  *------------------------------------------------------------------------
