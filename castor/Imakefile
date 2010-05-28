@@ -273,6 +273,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               exception/BadVersion.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \
+              exception/FailedToExecutePython.cpp \
               exception/InvalidArgument.cpp \
               exception/InvalidConfigEntry.cpp \
               exception/InvalidConfiguration.cpp \

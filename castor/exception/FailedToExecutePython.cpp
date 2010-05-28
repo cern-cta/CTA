@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/exception/InvalidConfiguration.hpp
+ *                 castor/exception/FailedToExecutePython.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,34 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
+ * 
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP 
-#define CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP 1
+#include "serrno.h"
+#include "castor/exception/FailedToExecutePython.hpp"
 
-#include "castor/exception/Exception.hpp"
-
-namespace castor    {
-namespace exception {
-
-/**
- * Invalid configuration
- */
-class InvalidConfiguration : public castor::exception::Exception {
-      
-public:
-      
-  /**
-   * Constructor
-   */
-  InvalidConfiguration() throw();
-
-}; // class InvalidConfiguration
-      
-} // namespace exception
-} // namespace castor
-
-#endif // CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::exception::FailedToExecutePython::FailedToExecutePython() throw():
+  castor::exception::Exception(SEPYTHONEXEC) {
+  // Do nothing
+}

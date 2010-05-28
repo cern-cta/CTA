@@ -64,6 +64,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "No port in range",
    "No value",
    "Invalid configuration",
+   "Failed to execute Python",
    "BAD ERROR NUMBER"
   };
 

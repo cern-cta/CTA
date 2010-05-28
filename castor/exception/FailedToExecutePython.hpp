@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/exception/InvalidConfiguration.hpp
+ *                 castor/exception/FailedToExecutePython.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP 
-#define CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP 1
+#ifndef CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP 
+#define CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP 1
 
 #include "castor/exception/Exception.hpp"
 
@@ -31,20 +31,20 @@ namespace castor    {
 namespace exception {
 
 /**
- * Invalid configuration
+ * Failed to execute Python
  */
-class InvalidConfiguration : public castor::exception::Exception {
+class FailedToExecutePython : public castor::exception::Exception {
       
 public:
       
   /**
    * Constructor
    */
-  InvalidConfiguration() throw();
+  FailedToExecutePython() throw();
 
-}; // class InvalidConfiguration
+}; // class FailedToExecutePython
       
 } // namespace exception
 } // namespace castor
 
-#endif // CASTOR_EXCEPTION_INVALIDCONFIGURATION_HPP
+#endif // CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP
