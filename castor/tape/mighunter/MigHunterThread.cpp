@@ -437,6 +437,22 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
         MIGRATION_POLICY_RESULT, paramsPolicy);
 
+      try {
+        checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
+          infoCandidateTapeCopies, eligibleCandidates);
+      } catch(castor::exception::TapeCopyNotFound &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("SVCCLASS"    , *svcClassName        ),
+          castor::dlf::Param("tapecopy id" , ex.tapeCopyId()      ),
+          castor::dlf::Param("code"        , sstrerror(ex.code()) ),
+          castor::dlf::Param("message"     , ex.getMessage().str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+        oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
+        m_daemon.shutdownGracefully();
+      }
+
       // For each eligibleCandidate
       for (
         std::map<
@@ -639,4 +655,76 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
 
   // Return the result of the Python function
   return PyInt_AsLong(resultObj.get());
+}
+
+
+//------------------------------------------------------------------------------
+// checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool
+//------------------------------------------------------------------------------
+void castor::tape::mighunter::MigHunterThread::
+  checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
+  const MigrationPolicyElementList &tapeCopiesToBeFound,
+  const std::map<u_signed64, std::list<MigrationPolicyElement> >
+    &tapePool2TapeCopies) throw(castor::exception::TapeCopyNotFound) {
+
+  // For each tape-copy to be checked
+  for(
+    MigrationPolicyElementList::const_iterator tapeCopyToBeFound =
+      tapeCopiesToBeFound.begin();
+    tapeCopyToBeFound != tapeCopiesToBeFound.end();
+    tapeCopyToBeFound++ ) {
+
+    if(!tapeCopyIsInMapOfTapePool2TapeCopies(*tapeCopyToBeFound,
+      tapePool2TapeCopies)) {
+      castor::exception::TapeCopyNotFound ex(tapeCopyToBeFound->tapeCopyId);
+
+      ex.getMessage() <<
+        "Tape-copy was not attached to at least one tape-pool by the" <<
+        " migrationPolicy function"
+        " functionName=" << tapeCopyToBeFound->policyName;
+
+      throw ex;
+    }
+  }
+}
+
+
+bool castor::tape::mighunter::MigHunterThread::
+  tapeCopyIsInMapOfTapePool2TapeCopies(
+  const MigrationPolicyElement &tapeCopyToBeFound,
+  const std::map<u_signed64, MigrationPolicyElementList> &tapePool2TapeCopies)
+  throw() {
+
+  // For each list of tape-copies to be attached to a tape-pool
+  for (
+    std::map<u_signed64, MigrationPolicyElementList>::const_iterator
+      tapePoolTapeCopies = tapePool2TapeCopies.begin();
+    tapePoolTapeCopies != tapePool2TapeCopies.end();
+    tapePoolTapeCopies++) {
+
+    if(tapeCopyIsInList(tapeCopyToBeFound, tapePoolTapeCopies->second)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+bool castor::tape::mighunter::MigHunterThread::tapeCopyIsInList(
+  const MigrationPolicyElement &tapeCopyToBeFound,
+  const MigrationPolicyElementList &tapeCopies) throw() {
+
+  for (
+    MigrationPolicyElementList::const_iterator tapeCopyInList =
+      tapeCopies.begin();
+    tapeCopyInList != tapeCopies.end();
+    tapeCopyInList++ ) {
+
+    if(tapeCopyToBeFound.tapeCopyId == tapeCopyInList->tapeCopyId) {
+      return true;
+    }
+  }
+
+  return false;
 }

@@ -32,6 +32,8 @@
 // some pre-processor definitions which affect the standard headers
 #include <Python.h>
 
+#include "castor/exception/TapeCopyNotFound.hpp"
+
 #include "castor/server/BaseDbThread.hpp"
 
 #include "castor/tape/mighunter/IMigHunterSvc.hpp"
@@ -105,6 +107,41 @@ private:
   void getInfoFromNs(const std::string &svcClassName,
     castor::tape::mighunter::MigrationPolicyElement &elem) const
     throw (castor::exception::Exception);
+
+  /**
+   * Throws a TapeCopyNotFound exception if there is a tape-copy in the
+   * specifed list of tape-copies to be found which cannot be found in the
+   * specified map of tape-pools to tape-copy lists.
+   *
+   * @param tapeCopiesToBeFound The list of tape-copies to be found.
+   * @param tapePool2TapeCopies The map of tape-pools to tape-copy lists.
+   */
+  void checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
+    const MigrationPolicyElementList &tapeCopiesToBeFound,
+    const std::map<u_signed64, std::list<MigrationPolicyElement> >
+      &tapePool2TapeCopies) throw(castor::exception::TapeCopyNotFound);
+
+  /**
+   * Returns true if the specifed tape-copy is in the specified map of
+   * tape-pools to tape-copy lists.
+   *
+   * @param tapeCopyToBeFound   The tape-copy to be found.
+   * @param tapePool2TapeCopies The map of tape-pools to tape-copy lists.
+   */
+  bool tapeCopyIsInMapOfTapePool2TapeCopies(
+    const MigrationPolicyElement &tapeCopyToBeFound,
+    const std::map<u_signed64, MigrationPolicyElementList> &tapePool2TapeCopies)
+    throw();
+
+  /**
+   * Returns true if the specifed tape-copy is in the specified list of
+   * tape-copies.
+   *
+   * @param tapeCopyToBeFound The tape-copy to be found.
+   * @param tapeCopies        The list of tape-copies.
+   */
+  bool tapeCopyIsInList(const MigrationPolicyElement &tapeCopyToBeFound,
+    const MigrationPolicyElementList &tapeCopies) throw();
 
   /**
    * Run the migration policy using the specified policy element as input.
