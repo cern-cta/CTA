@@ -230,6 +230,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
             GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
+          oraSvc->stopChosenStreams(infoCandidateStreams);
           m_daemon.shutdownGracefully();
         }
 
@@ -258,6 +259,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
+            oraSvc->stopChosenStreams(infoCandidateStreams);
             m_daemon.shutdownGracefully();
           }
 
@@ -284,6 +286,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
+            oraSvc->stopChosenStreams(infoCandidateStreams);
             m_daemon.shutdownGracefully();
           }
 
