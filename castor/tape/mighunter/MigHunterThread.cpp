@@ -62,15 +62,17 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::mighunter::MigHunterThread::MigHunterThread(
-  const std::list<std::string> &svcClassList,
-  const uint64_t               migrationDataThreshold,
-  const bool                   doClone,
-  PyObject *const              migrationPolicyDict) throw() :
+  const std::list<std::string>             &svcClassList,
+  const uint64_t                           migrationDataThreshold,
+  const bool                               doClone,
+  PyObject *const                          migrationPolicyDict,
+  castor::tape::mighunter::MigHunterDaemon &daemon) throw() :
 
   m_listSvcClass(svcClassList),
   m_migrationDataThreshold(migrationDataThreshold),
   m_doClone(doClone),
-  m_migrationPolicyDict(migrationPolicyDict) {
+  m_migrationPolicyDict(migrationPolicyDict),
+  m_daemon(daemon) {
 
   if(migrationPolicyDict == NULL) {
     TAPE_THROW_CODE(EINVAL,

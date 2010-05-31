@@ -32,12 +32,14 @@
 // some pre-processor definitions which affect the standard headers
 #include <Python.h>
 
-#include <list>
 #include "castor/server/BaseDbThread.hpp"
+#include "castor/tape/mighunter/MigHunterDaemon.hpp"
 
-namespace castor   {
-namespace tape     {
-namespace mighunter{
+#include <list>
+
+namespace castor    {
+namespace tape      {
+namespace mighunter {
 
 /**
  * Stream  thread.
@@ -62,6 +64,11 @@ private:
    * The Python dictionary object associated with the stream policy module.
    */
   PyObject *const m_streamPolicyDict;
+
+  /**
+   * The migration hunter daemon.
+   */
+  castor::tape::mighunter::MigHunterDaemon &m_daemon;
 
   /**
    * The indirect exception throw entry point for stream threads that is
@@ -99,10 +106,12 @@ public:
    *                         migration policy module.  This parameter must be
    *                         set to NULL if there is no stream-policy
    *                         Python-module.
+   * @param daemon           The migration hunter daemon.
    */
   StreamThread(
-    const std::list<std::string> &svcClassArray,
-    PyObject *const              streamPolicyDict) throw();
+    const std::list<std::string>             &svcClassArray,
+    PyObject *const                          streamPolicyDict,
+    castor::tape::mighunter::MigHunterDaemon &daemon) throw();
      
   /**
    * Destructor

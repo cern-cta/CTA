@@ -32,15 +32,18 @@
 // some pre-processor definitions which affect the standard headers
 #include <Python.h>
 
-#include <list>
-#include <stdint.h>
-
 #include "castor/server/BaseDbThread.hpp"
 
+#include "castor/tape/mighunter/IMigHunterSvc.hpp"
+#include "castor/tape/mighunter/MigHunterDaemon.hpp"
 #include "castor/tape/mighunter/MigrationPolicyElement.hpp"
 
+#include <list>
+#include <map>
+#include <stdint.h>
+
 namespace castor    {
-namespace tape    {
+namespace tape      {
 namespace mighunter {
 
 /**
@@ -78,6 +81,11 @@ private:
    * The Python dictionary object associated with the migration policy module.
    */
   PyObject *const m_migrationPolicyDict;
+
+  /**
+   * The migration hunter daemon.
+   */
+  castor::tape::mighunter::MigHunterDaemon &m_daemon;
 
   /**
    * The indirect exception throw entry point for MigHunter threads that is
@@ -131,12 +139,14 @@ public:
    *                               the migration policy module.  This parameter
    *                               must be set to NULL if there is no
    *                               migration-policy Python-module.
+   * @param daemon                 The migration hunter daemon.
    */
   MigHunterThread(
-    const std::list<std::string> &svcClassList,
-    const uint64_t               migrationDataThreshold,
-    const bool                   doClone,
-    PyObject *const              migrationPolicyDict) throw();
+    const std::list<std::string>             &svcClassList,
+    const uint64_t                           migrationDataThreshold,
+    const bool                               doClone,
+    PyObject *const                          migrationPolicyDict,
+    castor::tape::mighunter::MigHunterDaemon &daemon) throw();
 
   /**
    * Destructor

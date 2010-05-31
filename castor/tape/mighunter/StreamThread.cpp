@@ -62,10 +62,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::mighunter::StreamThread::StreamThread(
-  const std::list<std::string> &svcClassArray,
-  PyObject *const              streamPolicyDict) throw() :
+  const std::list<std::string>             &svcClassArray,
+  PyObject *const                          streamPolicyDict,
+  castor::tape::mighunter::MigHunterDaemon &daemon) throw() :
   m_listSvcClass(svcClassArray),
-  m_streamPolicyDict(streamPolicyDict) {
+  m_streamPolicyDict(streamPolicyDict),
+  m_daemon(daemon) {
 
   if(streamPolicyDict == NULL) {
     TAPE_THROW_CODE(EINVAL,

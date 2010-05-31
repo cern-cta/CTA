@@ -166,7 +166,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // Create the mighunter thread pool
   std::auto_ptr<castor::tape::mighunter::MigHunterThread> migHunterThread(
     new MigHunterThread(m_listSvcClass, m_migrationDataThreshold, m_doClone,
-    migrationPolicyDict));
+    migrationPolicyDict, *this));
   std::auto_ptr<castor::server::SignalThreadPool> migHunterPool(
     new server::SignalThreadPool("MigHunterThread", migHunterThread.release(),
     m_migrationSleepTime));
@@ -175,7 +175,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   // Create the stream thread pool
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
-    streamPolicyDict));
+    streamPolicyDict, *this));
   std::auto_ptr<server::SignalThreadPool> streamPool(
     new server::SignalThreadPool("StreamThread", streamThread.release(),
     m_streamSleepTime));
