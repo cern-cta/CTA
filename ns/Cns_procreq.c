@@ -4791,6 +4791,11 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
            (long long int)last_mod_time, path, cwdpath);
   Cns_logreq (func, logbuf);
 
+  /* check if the user is authorized to set segment attributes */
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
   /* start transaction */
 
   (void) Cns_start_tr (thip->s, &thip->dbfd);
