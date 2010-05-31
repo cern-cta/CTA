@@ -40,3 +40,4 @@
 39,STREAM_POLICY_NOT_CONFIGURED,"Stream policy not configured"
 40,MIGHUNTERTHREAD_SKIPPING_SRVCCLASS,"MigHunter thread skipping service class because there are no candidate tape copies"
 41,DAEMON_START,"Service started"
+42,GRACEFUL_SHUTDOWN_DUE_TO_ERROR,"Graceful shutdown due to error"

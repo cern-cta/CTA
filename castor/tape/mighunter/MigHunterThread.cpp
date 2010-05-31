@@ -148,9 +148,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
     MigrationPolicyElementList candidatesToRestore;
     MigrationPolicyElementList invalidTapeCopies;
 
-    u_signed64 allowedByPolicy      = 0;
     u_signed64 notAllowedByPolicy   = 0;
-    u_signed64 allowedWithoutPolicy = 0;
 
     // The eligible canditates organized by tape pool so that the database
     // locking logic can take a lock on the tape pools one at a time
@@ -230,6 +228,32 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
           break;
         }
 
+        // Gracefully shutdown the daemon if the service class has no tape
+        // pools, as this is an invalid configuration
+        if(ret == -1) {
+          castor::dlf::Param params[] = {
+          castor::dlf::Param("SVCCLASS", *svcClassName),
+          castor::dlf::Param("error"   ,
+            "Invalid configuration: Service class has no tape pools")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+            GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+          m_daemon.shutdownGracefully();
+        }
+
+        // Gracefully shutdown the daemon if the nbDrives attribute of the
+        // service class is set to 0, as this is an invalid configuration
+        if(ret == -3) {
+          castor::dlf::Param params[] = {
+          castor::dlf::Param("SVCCLASS", *svcClassName),
+          castor::dlf::Param("error"   ,
+            "Invalid configuration: nbDrives set to 0")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+            GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+          m_daemon.shutdownGracefully();
+        }
+
         // Throw an exception
         castor::exception::Internal ex;
 
@@ -294,6 +318,20 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
           MIGRATION_POLICY_INPUT, paramsInput, &castorFileId);
 
+        // Gracefully shutdown the daemon if the migratorPolicy attribute of the
+        // service class is an empty string, as this is an invalid configuration
+        if(infoCandidate->policyName.empty()) {
+          castor::dlf::Param params[] = {
+          castor::dlf::Param("SVCCLASS"    , *svcClassName            ),
+          castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId),
+          castor::dlf::Param("error"       ,
+            "Invalid configuration: migratorPolicy is an empty string")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+            GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+          m_daemon.shutdownGracefully();
+        }
+
         castor::dlf::Param paramsOutput[] = {
           castor::dlf::Param("SvcClass", *svcClassName),
           castor::dlf::Param("tapecopy id", infoCandidate->tapeCopyId)};
@@ -305,86 +343,66 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
           castor::tape::python::ScopedPythonLock scopedPythonLock;
 
           // Try to get a handle on the migration-policy Python-function
-          PyObject *migrationPolicyFunc = NULL;
-          if(m_migrationPolicyDict != NULL &&
-            !infoCandidate->policyName.empty()) {
+          PyObject *const migrationPolicyFunc = python::getPythonFunction(
+            m_migrationPolicyDict, infoCandidate->policyName.c_str());
 
-            migrationPolicyFunc = python::getPythonFunction(
-              m_migrationPolicyDict, infoCandidate->policyName.c_str());
+          // Gracefully shutdown the daemon if the function does not exist in
+          // the Python-module, as this is an invalid configuration
+          if(migrationPolicyFunc == NULL) {
+            castor::dlf::Param params[] = {
+            castor::dlf::Param("SVCCLASS"    , *svcClassName              ),
+            castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId  ),
+            castor::dlf::Param("error"       ,
+              "Invalid configuration: migratorPolicy not in Python-module"),
+            castor::dlf::Param("functionName", infoCandidate->policyName  )};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-            // Log an alert if the function does not exist in the Python-module
+            m_daemon.shutdownGracefully();
+          }
+
+          // Apply the migration policy
+          int policyResult = 0;
+          try {
+
+            policyResult = applyMigrationPolicy(migrationPolicyFunc,
+              *infoCandidate);
+
+          } catch(castor::exception::Exception &ex) {
+
+            // Gracefully shutdown the daemon if the migration policy could not
+            // be applied
             if(migrationPolicyFunc == NULL) {
               castor::dlf::Param params[] = {
-                castor::dlf::Param("SvcClass"    ,*svcClassName            ),
-                castor::dlf::Param("tapecopy id" ,infoCandidate->tapeCopyId),
-                castor::dlf::Param("functionName",infoCandidate->policyName)};
+              castor::dlf::Param("SVCCLASS"    , *svcClassName              ),
+              castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId  ),
+              castor::dlf::Param("error"       ,
+                "Failed to apply migration policy"),
+              castor::dlf::Param("functionName", infoCandidate->policyName  )};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
-                MIGRATION_POLICY_FUNCTION_NOT_IN_MODULE, params, &castorFileId);
+              m_daemon.shutdownGracefully();
             }
           }
 
-          // Attach the tape-copy if there is no migration-policy
-          // Python-function
-          if(migrationPolicyFunc == NULL) {
+          // Attach the tape copy if this is the result of applying the policy
+          if(policyResult) {
 
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-              START_WITHOUT_POLICY, paramsOutput, &castorFileId);
+              ALLOWED_BY_MIGRATION_POLICY, paramsOutput, &castorFileId);
 
             eligibleCandidates[infoCandidate->tapePoolId].push_back(
               *infoCandidate);
 
-            allowedWithoutPolicy++;
-
-          // Else apply the policy
+          // Else do not attach the tape copy
           } else {
 
-            // Apply the migration policy
-            int policyResult = 0;
-            try {
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+              NOT_ALLOWED_BY_MIGRATION_POLICY, paramsOutput,&castorFileId);
+            notAllowedByPolicy++;
 
-              policyResult = applyMigrationPolicy(migrationPolicyFunc,
-                *infoCandidate);
-
-            } catch(castor::exception::Exception &ex) {
-
-              castor::dlf::Param params[] = {
-                castor::dlf::Param("code"   , sstrerror(ex.code()) ),
-                castor::dlf::Param("message", ex.getMessage().str())};
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                FAILED_TO_APPLY_MIGRATION_POLICY, params, &castorFileId);
-
-              // Treat an exception in the same way as there being no policy,
-              // i.e. attach the tape-copy
-              eligibleCandidates[infoCandidate->tapePoolId].push_back(
-                *infoCandidate);
-
-              allowedWithoutPolicy++;
-
-              // Skip to the next canditate
-              continue; // For each infoCandidate
-            }
-
-            // Attach the tape copy if this is the result of applying the policy
-            if (policyResult) {
-
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-                ALLOWED_BY_MIGRATION_POLICY, paramsOutput, &castorFileId);
-
-              eligibleCandidates[infoCandidate->tapePoolId].push_back(
-                *infoCandidate);
-
-              allowedByPolicy++;
-
-            // Else do not attach the tape copy
-            } else {
-
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-                NOT_ALLOWED_BY_MIGRATION_POLICY, paramsOutput,&castorFileId);
-              notAllowedByPolicy++;
-
-            }
-          } 
+          }
 
         } catch (castor::exception::Exception &e) {
           // An exception here is fatal.  Log a message and exit
@@ -409,10 +427,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
 
       // log in the dlf with the summary
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"            , (*svcClassName)     ),
-        castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy),
-        castor::dlf::Param("allowedByPolicy"     , allowedByPolicy     ),
-        castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy  )};
+        castor::dlf::Param("SvcClass"          , (*svcClassName)          ),
+        castor::dlf::Param("allowedByPolicy"   , eligibleCandidates.size()),
+        castor::dlf::Param("notAllowedByPolicy", notAllowedByPolicy       )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
         MIGRATION_POLICY_RESULT, paramsPolicy);
@@ -500,12 +517,11 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
 
     // Log summary
     castor::dlf::Param paramsPolicy[] = {
-      castor::dlf::Param("SvcClass"            , (*svcClassName)           ),
-      castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy      ),
-      castor::dlf::Param("allowedByPolicy"     , allowedByPolicy           ),
-      castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy        ),
-      castor::dlf::Param("resurrected"         , candidatesToRestore.size()),
-      castor::dlf::Param("invalidated"         , invalidTapeCopies.size()  )};
+      castor::dlf::Param("SvcClass"          , (*svcClassName)           ),
+      castor::dlf::Param("allowedByPolicy"   , eligibleCandidates.size() ),
+      castor::dlf::Param("notAllowedByPolicy", notAllowedByPolicy        ),
+      castor::dlf::Param("resurrected"       , candidatesToRestore.size()),
+      castor::dlf::Param("invalidated"       , invalidTapeCopies.size()  )};
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
       MIGRATION_POLICY_RESULT, paramsPolicy);
