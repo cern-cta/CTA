@@ -352,8 +352,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
             castor::dlf::Param params[] = {
             castor::dlf::Param("SVCCLASS"    , *svcClassName              ),
             castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId  ),
-            castor::dlf::Param("error"       ,
-              "Invalid configuration: migratorPolicy not in Python-module"),
+            castor::dlf::Param("error"       , "Invalid configuration:"
+              " migratorPolicy function not found in Python-module"),
             castor::dlf::Param("functionName", infoCandidate->policyName  )};
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
@@ -372,18 +372,18 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
 
             // Gracefully shutdown the daemon if the migration policy could not
             // be applied
-            if(migrationPolicyFunc == NULL) {
-              castor::dlf::Param params[] = {
-              castor::dlf::Param("SVCCLASS"    , *svcClassName              ),
-              castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId  ),
-              castor::dlf::Param("error"       ,
-                "Failed to apply migration policy"),
-              castor::dlf::Param("functionName", infoCandidate->policyName  )};
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+            castor::dlf::Param params[] = {
+            castor::dlf::Param("SVCCLASS"    , *svcClassName              ),
+            castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId  ),
+            castor::dlf::Param("error"       ,
+              "Failed to apply migration policy"                          ),
+            castor::dlf::Param("functionName", infoCandidate->policyName  ),
+            castor::dlf::Param("Message"     , ex.getMessage().str()      ),
+            castor::dlf::Param("Code"        , ex.code()                  )};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-              m_daemon.shutdownGracefully();
-            }
+            m_daemon.shutdownGracefully();
           }
 
           // Attach the tape copy if this is the result of applying the policy

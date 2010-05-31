@@ -178,10 +178,9 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
         atLeastOneStream ? infoCandidateStreams.begin()->runningStream : 0;
 
       // counters for logging
-      u_signed64 nbNoTapeCopies         = 0;
-      u_signed64 nbAllowedByPolicy      = 0;
-      u_signed64 nbNotAllowedByPolicy   = 0;
-      u_signed64 nbAllowedWithoutPolicy = 0;
+      u_signed64 nbNoTapeCopies       = 0;
+      u_signed64 nbAllowedByPolicy    = 0;
+      u_signed64 nbNotAllowedByPolicy = 0;
 
       gettimeofday(&tvStart, NULL);
 
@@ -220,6 +219,20 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAM_INPUT, 
           paramsInput);
 
+        // Gracefully shutdown the daemon if the streamPolicy attribute of the
+        // service class is an empty string, as this is an invalid configuration
+        if(infoCandidateStream->policyName.empty()) {
+          castor::dlf::Param params[] = {
+          castor::dlf::Param("SVCCLASS" , *svcClassName                ),
+          castor::dlf::Param("stream id", infoCandidateStream->streamId),
+          castor::dlf::Param("error"    ,
+            "Invalid configuration: streamPolicy is an empty string")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+            GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+          m_daemon.shutdownGracefully();
+        }
+
         castor::dlf::Param paramsOutput[] = {
           castor::dlf::Param("SvcClass", *svcClassName),
           castor::dlf::Param("stream id", infoCandidateStream->streamId)};
@@ -230,84 +243,69 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
           castor::tape::python::ScopedPythonLock scopedPythonLock;
 
           // Try to get a handle on the stream-policy Python-function
-          PyObject *streamPolicyFunc = NULL;
-          if(m_streamPolicyDict != NULL &&
-            !infoCandidateStream->policyName.empty()) {
+          PyObject *const streamPolicyFunc =python::getPythonFunction(
+            m_streamPolicyDict, infoCandidateStream->policyName.c_str());
 
-            streamPolicyFunc = python::getPythonFunction(
-              m_streamPolicyDict, infoCandidateStream->policyName.c_str());
+          // Gracefully shutdown the daemon if the function does not exist in
+          // the Python-module, as this is an invalid configuration
+          if(streamPolicyFunc == NULL) {
+            castor::dlf::Param params[] = {
+            castor::dlf::Param("SVCCLASS"    ,*svcClassName                  ),
+            castor::dlf::Param("stream id"   ,infoCandidateStream->streamId  ),
+            castor::dlf::Param("error"       ,"Invalid configuration: "
+              "streamPolicy function not found in Python-module"             ),
+            castor::dlf::Param("functionName",infoCandidateStream->policyName)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-            // Log an alert if the function does not exist in the Python-module
-            if(streamPolicyFunc == NULL) {
-              castor::dlf::Param params[] = {
-                castor::dlf::Param("SvcClass",*svcClassName),
-                castor::dlf::Param("stream id",infoCandidateStream->streamId),
-                castor::dlf::Param("functionName",
-                  infoCandidateStream->policyName)};
-
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
-                STREAM_POLICY_FUNCTION_NOT_IN_MODULE, params);
-            }
+            m_daemon.shutdownGracefully();
           }
 
-          // Attach the stream if there is no stream-policy Python-function
-          if(streamPolicyFunc == NULL) {
+          // Apply stream the policy
+          int policyResult = 0;
+          try {
 
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-              START_WITHOUT_POLICY, paramsOutput);
+            policyResult = applyStreamPolicy(streamPolicyFunc,
+              *infoCandidateStream);
+
+          } catch(castor::exception::Exception &ex) {
+
+
+            // Gracefully shutdown the daemon if the migration policy could not
+            // be applied
+            castor::dlf::Param params[] = {
+            castor::dlf::Param("SVCCLASS"    ,*svcClassName                  ),
+            castor::dlf::Param("stream id"   ,infoCandidateStream->streamId  ),
+            castor::dlf::Param("error"       ,
+              "Failed to apply stream policy"                                ),
+            castor::dlf::Param("functionName",infoCandidateStream->policyName),
+            castor::dlf::Param("Message"     ,ex.getMessage().str()          ),
+            castor::dlf::Param("Code"        ,ex.code()                      )};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+            m_daemon.shutdownGracefully();
+          }
+
+          // Start the stream if this is the result of applying the policy
+          if (policyResult) {
+
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 
+              ALLOWED_BY_STREAM_POLICY, paramsOutput);
 
             eligibleStreams.push_back(*infoCandidateStream);
-            runningStreams++;
-            nbAllowedWithoutPolicy++;
 
-          // Else apply the policy
+            runningStreams++;
+            nbAllowedByPolicy++;
+
+          // Else do not start the stream
           } else {
 
-            // Apply stream the policy
-            int policyResult = 0;
-            try {
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+              NOT_ALLOWED_BY_STREAM_POLICY, paramsOutput);
+            streamsToRestore.push_back(*infoCandidateStream);
+            nbNotAllowedByPolicy++;
 
-              policyResult = applyStreamPolicy(streamPolicyFunc,
-                *infoCandidateStream);
-
-            } catch(castor::exception::Exception &ex) {
-
-              castor::dlf::Param params[] = {
-                castor::dlf::Param("code"   , sstrerror(ex.code()) ),
-                castor::dlf::Param("message", ex.getMessage().str())};
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                FAILED_TO_APPLY_STREAM_POLICY, params);
-
-              // Treat an exception in the same way as there being no policy,
-              // i.e. attach the stream
-              eligibleStreams.push_back(*infoCandidateStream);
-              runningStreams++;
-              nbAllowedWithoutPolicy++;
-
-              // Skip to the next canditate
-              continue; // For each infoCandidateStream
-            }
-
-            // Start the stream if this is the result of applying the policy
-            if (policyResult) {
-
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 
-                ALLOWED_BY_STREAM_POLICY, paramsOutput);
-
-              eligibleStreams.push_back(*infoCandidateStream);
-
-              runningStreams++;
-              nbAllowedByPolicy++;
-
-            // Else do not start the stream
-            } else {
-
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-                NOT_ALLOWED_BY_STREAM_POLICY, paramsOutput);
-              streamsToRestore.push_back(*infoCandidateStream);
-              nbNotAllowedByPolicy++;
-
-            }
           }
 
         } catch (castor::exception::Exception &e) {
@@ -332,22 +330,20 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
       // Log in the dlf with the summary
       const bool allCandidatesProcessed =
         infoCandidateStreams.size() ==
-          nbAllowedWithoutPolicy +
-          nbAllowedByPolicy      +
-          nbNotAllowedByPolicy   +
+          nbAllowedByPolicy    +
+          nbNotAllowedByPolicy +
           nbNoTapeCopies;
       const char *const allCandidatesProcessedStr =
         allCandidatesProcessed ? "TRUE" : "FALSE";
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"            , (*svcClassName)            ),
-        castor::dlf::Param("total"               , infoCandidateStreams.size()),
-        castor::dlf::Param("nbNoTapeCopies"      , nbNoTapeCopies             ),
-        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy     ),
-        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy          ),
-        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy       ),
-        castor::dlf::Param("allProcessed"        , allCandidatesProcessedStr  ),
-        castor::dlf::Param("runningStreams"      , runningStreams             ),
-        castor::dlf::Param("ProcessingTime"      , procTime * 0.000001       )};
+        castor::dlf::Param("SvcClass"          , (*svcClassName)            ),
+        castor::dlf::Param("total"             , infoCandidateStreams.size()),
+        castor::dlf::Param("nbNoTapeCopies"    , nbNoTapeCopies             ),
+        castor::dlf::Param("allowedByPolicy"   , nbAllowedByPolicy          ),
+        castor::dlf::Param("notAllowedByPolicy", nbNotAllowedByPolicy       ),
+        castor::dlf::Param("allProcessed"      , allCandidatesProcessedStr  ),
+        castor::dlf::Param("runningStreams"    , runningStreams             ),
+        castor::dlf::Param("ProcessingTime"    , procTime * 0.000001       )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
         paramsPolicy);
