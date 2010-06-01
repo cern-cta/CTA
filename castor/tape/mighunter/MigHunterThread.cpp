@@ -41,6 +41,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
+#include "castor/server/BaseThreadPool.hpp"
+
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 
@@ -119,7 +121,9 @@ void castor::tape::mighunter::MigHunterThread::run(void* arg) {
 //------------------------------------------------------------------------------
 // exceptionThrowingRun
 //------------------------------------------------------------------------------
-void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
+void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
+
+  server::BaseThreadPool *const threadPool = (server::BaseThreadPool*)arg;
 
   // Get a handle on the service to access the database
   const char *const oraSvcName = "OraMigHunterSvc";
@@ -174,7 +178,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-        m_daemon.shutdownGracefully();
+        m_daemon.shutdownGracefully(); // Non-blocking
+        threadPool->shutdown(); // Non-blocking
+        return; // run() will not be called again
       }
 
       timeval tvEnd;
@@ -250,7 +256,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
             GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-          m_daemon.shutdownGracefully();
+          m_daemon.shutdownGracefully(); // Non-blocking
+          threadPool->shutdown(); // Non-blocking
+          return; // run() will not be called again
         }
 
         // Gracefully shutdown the daemon if the nbDrives attribute of the
@@ -263,7 +271,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
             GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-          m_daemon.shutdownGracefully();
+          m_daemon.shutdownGracefully(); // Non-blocking
+          threadPool->shutdown(); // Non-blocking
+          return; // run() will not be called again
         }
 
         // Throw an exception
@@ -342,7 +352,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
             GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
           oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
-          m_daemon.shutdownGracefully();
+          m_daemon.shutdownGracefully(); // Non-blocking
+          threadPool->shutdown(); // Non-blocking
+          return; // run() will not be called again
         }
 
         castor::dlf::Param paramsOutput[] = {
@@ -372,7 +384,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
             oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
-            m_daemon.shutdownGracefully();
+            m_daemon.shutdownGracefully(); // Non-blocking
+            threadPool->shutdown(); // Non-blocking
+            return; // run() will not be called again
           }
 
           // Apply the migration policy
@@ -398,7 +412,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
             oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
-            m_daemon.shutdownGracefully();
+            m_daemon.shutdownGracefully(); // Non-blocking
+            threadPool->shutdown(); // Non-blocking
+            return; // run() will not be called again
           }
 
           // Attach the tape copy if this is the result of applying the policy
@@ -462,7 +478,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
           GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
         oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
-        m_daemon.shutdownGracefully();
+        m_daemon.shutdownGracefully(); // Non-blocking
+        threadPool->shutdown(); // Non-blocking
+        return; // run() will not be called again
       }
 
       // For each eligibleCandidate

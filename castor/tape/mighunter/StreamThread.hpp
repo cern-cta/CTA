@@ -78,7 +78,7 @@ private:
    *
    * @param arg The argument to be passed to the thread.
    */
-  void exceptionThrowingRun(void *arg);
+  void exceptionThrowingRun(void *const arg);
 
   /**
    * Run the stream policy using the specified policy element as input.

@@ -98,7 +98,7 @@ private:
    *
    * @param arg The argument to be passed to the thread.
    */
-  void exceptionThrowingRun(void *arg);
+  void exceptionThrowingRun(void *const arg);
 
   /**
    * Get the values of the attributes stored in the name server for the

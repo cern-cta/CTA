@@ -41,6 +41,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
+#include "castor/server/BaseThreadPool.hpp"
+
 #include "castor/stager/SvcClass.hpp"
 
 #include "castor/tape/mighunter/IMigHunterSvc.hpp"
@@ -114,7 +116,10 @@ void castor::tape::mighunter::StreamThread::run(void *arg) {
 //------------------------------------------------------------------------------
 // exceptionThrowingRun
 //------------------------------------------------------------------------------
-void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
+void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
+  void *const arg) {
+
+  server::BaseThreadPool *const threadPool = (server::BaseThreadPool*)arg;
 
   // Get a handle on the service to access the database
   const char *const oraSvcName = "OraMigHunterSvc";
@@ -231,7 +236,9 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
             GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
           oraSvc->stopChosenStreams(infoCandidateStreams);
-          m_daemon.shutdownGracefully();
+          m_daemon.shutdownGracefully(); // Non-blocking
+          threadPool->shutdown(); // Non-blocking
+          return; // run() will not be called again
         }
 
         castor::dlf::Param paramsOutput[] = {
@@ -260,7 +267,9 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
             oraSvc->stopChosenStreams(infoCandidateStreams);
-            m_daemon.shutdownGracefully();
+            m_daemon.shutdownGracefully(); // Non-blocking
+            threadPool->shutdown(); // Non-blocking
+            return; // run() will not be called again
           }
 
           // Apply stream the policy
@@ -287,7 +296,9 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
             oraSvc->stopChosenStreams(infoCandidateStreams);
-            m_daemon.shutdownGracefully();
+            m_daemon.shutdownGracefully(); // Non-blocking
+            threadPool->shutdown(); // Non-blocking
+            return; // run() will not be called again
           }
 
           // Start the stream if this is the result of applying the policy
