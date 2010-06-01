@@ -619,11 +619,12 @@ CREATE OR REPLACE FUNCTION checkFailPutWhenTape0(svcClassId NUMBER, fileClassId 
 RETURN NUMBER AS
   nbTCs INTEGER;
   nbForcedTCs INTEGER;
+  nbTPs INTEGER;
 BEGIN
   -- get #tapeCopies requested by this file
   SELECT nbCopies INTO nbTCs
     FROM FileClass WHERE id = fileClassId;
-  -- get #tapeCpies from the forcedFileClass: if no forcing
+  -- get #tapeCopies from the forcedFileClass: if no forcing
   -- we assume we have tape backend and we let the job
   SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
     FROM FileClass, SvcClass
@@ -633,7 +634,18 @@ BEGIN
     -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
     RETURN 1;
   ELSE
-    RETURN 0;
+    -- get #tapePools configured in this svcClass
+    SELECT COUNT(*) INTO nbTPs FROM SvcClass2TapePool
+     WHERE parent = svcClassId;
+    IF nbTCs > 0 AND nbTPs = 0 THEN
+      -- This is a configuration mistake, and we stop the user in this case.
+      -- However, many other conditions should be met to make sure the file
+      -- being written goes to tape (see e.g. bug #68020).
+      -- To be reviewed once the migration policy logic is refactored.
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
   END IF;
 END;
 /
@@ -1928,7 +1940,7 @@ BEGIN
     -- try to find an existing file and lock it
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-    -- update lastAccess time
+    -- update lastAccessTime
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
