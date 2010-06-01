@@ -3574,3 +3574,46 @@ VDQM HOST <VDQMhost>
 9) Chek that it worked
 [root@tpsrvABC ~]# showqueues 
 35921005@tpsrvABC (0 MB) FREE vid:  last update May 26 17:24:14
+
+
+How to restore the rpms of your development box using afs
+=========================================================
+
+With an SLC4 development box running veersion 2.1.9-5 of CASTOR:
+
+[root@lxcastordev04 mighunter]# cd
+/afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/2.1.9-\*/2.1.9-5/SL4/x86_64/
+[root@lxcastordev04 x86_64]# rpm -qa | egrep ^castor- | awk '{print
+"/afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/SL4/x86_64/"
+$1 ".x86_64.rpm";}' | xargs rpm -Uvh --force
+Preparing...                ########################################### [100%]
+   1:castor-lib             ########################################### [  3%]
+   2:castor-lib-oracle      ########################################### [  7%]
+   3:castor-lib-monitor     ########################################### [ 10%]
+   4:castor-lib-tape        ########################################### [ 14%]
+   5:castor-rmmaster-client ########################################### [ 17%]
+   6:castor-rechandler-serve########################################### [ 21%]
+   7:castor-rh-server       ########################################### [ 24%]
+   8:castor-hsmtools        ########################################### [ 28%]
+   9:castor-csec            ########################################### [ 31%]
+  10:castor-rmmaster-server ########################################### [ 34%]
+  11:castor-stager-server   ########################################### [ 38%]
+  12:castor-expert-server   ########################################### [ 41%]
+  13:castor-rtcopy-clientser########################################### [ 45%]
+  14:castor-config          ########################################### [ 48%]
+  15:castor-logprocessor-ser########################################### [ 52%]
+  16:castor-vdqm2-lib-oracle########################################### [ 55%]
+  17:castor-tape-client     ########################################### [ 59%]
+  18:castor-vdqm2-client    ########################################### [ 62%]
+  19:castor-dbtools         ########################################### [ 66%]
+  20:castor-vmgr-client     ########################################### [ 69%]
+  21:castor-ns-client       ########################################### [ 72%]
+  22:castor-jobmanager-serve########################################### [ 76%]
+  23:castor-policies        ########################################### [ 79%]
+  24:castor-mighunter-server########################################### [ 83%]
+  25:castor-lsf-plugin      ########################################### [ 86%]
+  26:castor-stager-client   ########################################### [ 90%]
+  27:castor-upv-client      ########################################### [ 93%]
+  28:castor-rfio-client     ########################################### [ 97%]
+  29:castor-tapegateway-serv########################################### [100%]
+[root@lxcastordev04 x86_64]#
