@@ -532,6 +532,25 @@ BEGIN
      RETURNING fileSystem, castorFile, owneruid, ownergid
       INTO fsId, cfId, ouid, ogid;
   END IF;
+  -- Handle SubRequests
+  BEGIN
+    -- Get the corresponding subRequest, if it exists
+    SELECT id INTO srId
+      FROM SubRequest
+     WHERE diskCopy = dcId
+       AND status IN (6, 14); -- READY, BEINGSHCED
+    -- Wake up other subrequests waiting on it
+    UPDATE SubRequest SET status = 1, -- RESTART
+                          parent = 0
+     WHERE parent = srId;
+    -- Fail it
+    archiveSubReq(srId, 9); -- FAILED_FINISHED
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- SubRequest not found, don't trigger replicateOnClose here
+    -- as we may have been restarted
+    NULL;
+  END;
+  -- Handle draining logic
   BEGIN
     -- Determine the source diskcopy and filesystem involved in the replication
     SELECT sourceDiskCopy, fileSystem
@@ -547,23 +566,11 @@ BEGIN
      WHERE status = 3  -- RUNNING
        AND (diskCopy = srcDcId
         OR  parent = srcDcId);
-    -- Get the corresponding subRequest, if it exists
-    SELECT id INTO srId
-      FROM SubRequest
-     WHERE diskCopy = dcId
-       AND status IN (6, 14); -- READY, BEINGSHCED
-    -- Wake up other subrequests waiting on it
-    UPDATE SubRequest SET status = 1, -- RESTART
-                          parent = 0
-     WHERE parent = srId;
-    -- Fail it
-    archiveSubReq(srId, 9); -- FAILED_FINISHED
-    -- If no filesystem was set on the diskcopy then we can safely delete it
-    -- without waiting for garbage collection as the transfer was never started
-    IF fsId = 0 THEN
-      DELETE FROM DiskCopy WHERE id = dcId;
-      DELETE FROM Id2Type WHERE id = dcId;
-    END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;
+  END;
+  -- Handle replication on close
+  BEGIN
     -- Trigger the creation of additional copies of the file, if necessary.
     -- Note: We do this also on failure to be able to recover from transient
     -- errors, e.g. timeouts while waiting to be scheduled, but we don't on ENOENT.
@@ -571,10 +578,14 @@ BEGIN
       replicateOnClose(cfId, ouid, ogid);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- SubRequest not found, don't trigger replicateOnClose here
-    -- as we may have been restarted
     NULL;
   END;
+  -- If no filesystem was set on the diskcopy then we can safely delete it
+  -- without waiting for garbage collection as the transfer was never started
+  IF fsId = 0 THEN
+    DELETE FROM DiskCopy WHERE id = dcId;
+    DELETE FROM Id2Type WHERE id = dcId;
+  END IF;
   -- Continue draining process
   drainFileSystem(srcFsId);
   -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
@@ -1025,33 +1036,6 @@ BEGIN
 
   -- Extract additional information required for StageDiskCopyReplicaRequest's
   IF reqType = 133 THEN
-    -- Set the requested filesystem for the job to the mountpoint of the
-    -- source disk copy. The scheduler plugin needs this information to
-    -- correctly schedule access to the filesystem.
-    BEGIN
-      SELECT DiskServer.name || ':' || FileSystem.mountpoint INTO srRfs
-        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, SvcClass
-       WHERE DiskCopy.id = reqSourceDiskCopy
-         AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-         AND DiskCopy.filesystem = FileSystem.id
-         AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
-         AND FileSystem.diskserver = DiskServer.id
-         AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
-         AND FileSystem.diskPool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = SvcClass.id
-         AND SvcClass.name = reqSourceSvcClass;
-      UPDATE SubRequest SET requestedFileSystems = srRfs
-       WHERE id = srId;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- The source diskcopy has been removed before the job manager daemon 
-      -- could enter the job into LSF. Under this circumstance fail the 
-      -- diskcopy transfer. This will restart the subrequest and trigger a tape
-      -- recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopy, 0);
-      COMMIT;
-      RAISE;
-    END;
-
     -- Provide the job manager with a list of hosts to exclude as destination
     -- diskservers.
     OPEN excludedHosts FOR

@@ -875,6 +875,7 @@ CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest
   fileId NUMBER;
   nsHost VARCHAR2(2048);
   rpath VARCHAR2(2048);
+  rfs VARCHAR(2048);
 BEGIN
   -- Extract the castorfile associated with the request, this is needed to
   -- create the StageDiskCopyReplicaRequest's diskcopy and subrequest entries.
@@ -890,6 +891,7 @@ BEGIN
     SELECT ids_seq.nextval INTO srId FROM Dual;
   END IF;
 
+  -- Extract CastorFile information
   SELECT fileid, nshost, filesize, lastknownfilename
     INTO fileId, nsHost, fileSize, fileName
     FROM CastorFile WHERE id = cfId;
@@ -913,14 +915,21 @@ BEGIN
   RETURNING id INTO reqId;
   INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest;
 
+  -- Determine the requested filesystem value
+  SELECT DiskServer.name || ':' || FileSystem.mountpoint INTO rfs
+    FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskServer = DiskServer.id
+     AND DiskCopy.id = sourceDcId;
+
   -- Create the SubRequest setting the initial status to READYFORSCHED for
   -- immediate dispatching i.e no stager processing by the jobmanager daemon.
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
-     status, request, getnextstatus, errorcode, svcHandler)
+     status, request, getnextstatus, errorcode, requestedfilesystems, svcHandler)
   VALUES (0, fileName, 'rfio', fileSize, 0, uuidgen(), 0, 0, gettime(), gettime(),
-     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, 'NotNullNeeded');
+     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, rfs, 'NotNullNeeded');
   INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
 
   -- Create the DiskCopy without filesystem
