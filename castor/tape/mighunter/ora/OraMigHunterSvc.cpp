@@ -42,6 +42,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidConfiguration.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
 #include "castor/stager/Stream.hpp"
@@ -232,11 +233,23 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::inputForMigrationPolicy(std:
     
     std::list<std::string> listTapePoolName;
     std::list<u_signed64>  listTapePoolId;
+    unsigned int nbTapePools = 0;
     while(tapePoolResults->next() != oracle::occi::ResultSet::END_OF_FETCH ) {
+      nbTapePools++;
       std::string tapePoolName = tapePoolResults->getString(1);
       u_signed64  tapePoolId = (u_signed64) tapePoolResults->getDouble(2);
       listTapePoolName.push_back(tapePoolName);
       listTapePoolId.push_back(tapePoolId);
+    }
+
+    if(nbTapePools == 0) {
+      castor::exception::InvalidConfiguration ex;
+
+      ex.getMessage() <<
+        "Failed to get input for migration policy"
+        ": Service class " << svcClassName << " has no tape pools";
+
+      throw ex;
     }
     
     // Now let's analyse the first query result with the tapepool information

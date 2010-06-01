@@ -160,10 +160,22 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void*) {
       timeval    tvStart;
       gettimeofday(&tvStart, NULL);
 
-      // Retreive tapecopy id and extra information from the db for the python
-      // policy
-      oraSvc->inputForMigrationPolicy((*svcClassName),
-        &initialSizeToTransfer, infoCandidateTapeCopies);
+      try {
+        // Retreive tape-copy ids and other information from the db which are
+        // required by the migration-policy Python-function
+        oraSvc->inputForMigrationPolicy((*svcClassName),
+          &initialSizeToTransfer, infoCandidateTapeCopies);
+      } catch(castor::exception::InvalidConfiguration &ex) {
+        castor::dlf::Param params[] = {
+        castor::dlf::Param("SVCCLASS", *svcClassName          ),
+        castor::dlf::Param("error"   , "Invalid configuration"),
+        castor::dlf::Param("Message", ex.getMessage().str()   ),
+        castor::dlf::Param("Code"   , ex.code()               )};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+        m_daemon.shutdownGracefully();
+      }
 
       timeval tvEnd;
       gettimeofday(&tvEnd, NULL);
