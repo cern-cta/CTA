@@ -709,7 +709,8 @@ void castor::tape::mighunter::MigHunterThread::
       castor::exception::TapeCopyNotFound ex(tapeCopyToBeFound->tapeCopyId);
 
       ex.getMessage() <<
-        "Tape-copy was not attached to at least one tape-pool by the" <<
+        "Tape-copy not found in the tape-copies to be attached to streams"
+        ": Coverage of the migrationPolicy function is not complete" <<
         " migrationPolicy function"
         " functionName=" << tapeCopyToBeFound->policyName;
 

@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 castor::exception::TapeCopyNotFound::TapeCopyNotFound(
   const u_signed64 tapeCopyId) throw():
-  castor::exception::Exception(ENOENT), m_tapeCopyId(tapeCopyId) {
+  castor::exception::Exception(ESTTCNOTFOUND), m_tapeCopyId(tapeCopyId) {
   // Do nothing
 }
 
