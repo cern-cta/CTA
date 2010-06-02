@@ -1144,6 +1144,27 @@ int Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, d
   }
 }
 
+int Cns_get_smd_count_by_pfid(dbfd, fileid, count)
+     struct Cns_dbfd *dbfd;
+     u_signed64 fileid;
+     int *count;
+{
+  char func[26];
+  struct sqlca sqlca;
+
+  strcpy (func, "Cns_get_smd_count_by_pfid");
+  EXEC SQL SELECT COUNT(*) INTO :*count
+    FROM Cns_seg_metadata
+    WHERE s_fileid = :fileid;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return(0);
+  default:
+    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+    return(-1);
+  }
+}
+
 int Cns_get_last_smd_by_vid(dbfd, vid, side, smd_entry)
      struct Cns_dbfd *dbfd;
      char *vid;

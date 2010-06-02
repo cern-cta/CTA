@@ -287,11 +287,7 @@ int Cns_srv_chclass(req_data, clienthost, thip)
   Cns_dbrec_addr rec_addr;
   uid_t uid;
   char *user;
-  int bof;
-  int nbsegs;
-  int c;
-  struct Cns_seg_metadata smd_entry;
-  DBLISTPTR dblistptr;
+  int count;
 
   strcpy (func, "Cns_srv_chclass");
   rbp = req_data;
@@ -364,21 +360,11 @@ int Cns_srv_chclass(req_data, clienthost, thip)
 
     /* if the file has segments make sure the new fileclass allows them! */
 
-    nbsegs = 0;
-    bof = 1;
-    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
-                                     &smd_entry, 0, NULL, 0, &dblistptr)) == 0) {
-      nbsegs++;
-      bof = 0;
-    }
-    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
-                                &smd_entry, 0, NULL, 1, &dblistptr);
-    if (c < 0)
+    if (Cns_get_smd_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count))
       RETURN (serrno);
-
-    if (nbsegs && (new_class_entry.nbcopies == 0))
+    if (count && (new_class_entry.nbcopies == 0))
       RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
-    if (nbsegs > new_class_entry.nbcopies)
+    if (count > new_class_entry.nbcopies)
       RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
 
     fmd_entry.fileclass = new_class_entry.classid;
@@ -4757,6 +4743,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   int i;
   char logbuf[LOGBUFSZ];
   int nbseg;
+  int count;
   struct Cns_seg_metadata old_smd_entry;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -4801,6 +4788,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   (void) Cns_start_tr (thip->s, &thip->dbfd);
 
   if (fileid) {
+
     /* get/lock basename entry */
 
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid,
@@ -4813,6 +4801,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
                          uid, gid, clienthost))
       RETURN (serrno);
   } else {
+
     /* check parent directory components for search permission and
        get/lock basename entry */
 
@@ -4822,25 +4811,29 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   }
 
   /* check if the entry is a regular file */
+
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
 
-  /* check that the file in nameserver is not newer than what
-     is given. This can happen in case of multiple stagers
-     concurrently modifying a file.
-     In such a case, raise the appropriate error and ignore the request. */
-  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
+  /* check that the file in nameserver is not newer than what is given
+     This can happen in case of multiple stagers concurrently modifying
+     a file. In such a case, raise the appropriate error and ignore the
+     request. */
+
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0))
     RETURN (ENSFILECHG);
-  }
 
   /* check if the file class associated to the file allows for segments to be
-   * created on tape. I.e. nbCopies > 0 */
+     created on tape. I.e. nbCopies > 0 */
+
   if (Cns_get_class_by_id(&thip->dbfd, filentry.fileclass, &class_entry,
                           0, NULL))
     RETURN (serrno);
 
   if (class_entry.nbcopies == 0)
     RETURN (ENSCLASSNOSEGS);
+
+  /* add the segments */
 
   for (i = 0; i < nbseg; i++) {
     memset ((char *) &smd_entry, 0, sizeof(smd_entry));
@@ -4887,8 +4880,9 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
     Cns_logreq (func, logbuf);
 
     if (magic >= CNS_MAGIC4) {
-      /* Checking that we can't have a NULL checksum name when a
-         checksum is specified */
+
+      /* if we have a checksum make sure the checksum name is also defined */
+
       if ((smd_entry.checksum_name == NULL
            || strlen(smd_entry.checksum_name) == 0)
           && smd_entry.checksum != 0) {
@@ -4898,16 +4892,19 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
     }
 
     if ((magic >= CNS_MAGIC4) && (nbseg == 1)) {
+
       /* Checking for a checksum in the file metadata table if we have
          only one segment for a file. We have different names for
          checksum type in Cns_seg_metadata table and Cns_file_metadata.
          adler32==AD */
+
       if (((strcmp(smd_entry.checksum_name, "adler32") == 0) &&
            (strcmp(filentry.csumtype, "AD") == 0))) {
+
         /* we have adler32 checksum type */
-        sprintf(tmpbuf3, "%lx", smd_entry.checksum);  /* convert number to a string */
+
+        sprintf(tmpbuf3, "%lx", smd_entry.checksum);
         if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
-          /* checksum mismatch! error! */
           sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
           Cns_logreq (func, logbuf);
           RETURN (SECHECKSUM);
@@ -4938,11 +4935,21 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
     fsec++;
   }
 
+  /* verify that we don't have too many segments for this file */
+
+  if (Cns_get_smd_count_by_pfid (&thip->dbfd, smd_entry.s_fileid, &count))
+    RETURN (serrno);
+  if (count > class_entry.nbcopies)
+    RETURN (ENSTOOMANYSEGS)
+
+  /* set the migration bit if not already set */
+
   if (filentry.status != 'm') {
     filentry.status = 'm';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
       RETURN (serrno);
   }
+
   RETURN (0);
 }
 
