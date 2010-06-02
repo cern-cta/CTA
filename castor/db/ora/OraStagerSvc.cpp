@@ -1256,7 +1256,7 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
     // consistency checks for this segment
     int errmsg = 0;
     // Ammend the unique copies set
-    nbCopies.insert(nsSegmenets[i].copyno);
+    nbCopies.insert(nsSegments[i].copyno);
     // Checks that the segment is associated to a tape
     if (nsSegments[i].vid == '\0') {
       // "Segment has no tape associated"
