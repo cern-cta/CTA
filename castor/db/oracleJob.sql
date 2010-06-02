@@ -951,24 +951,26 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  srIntId NUMBER;
 BEGIN
   -- Loop on all candidates for submission into LSF
   OPEN c;
   LOOP
     -- Retrieve the next candidate
-    FETCH c INTO srId;
+    FETCH c INTO srIntId;
     IF c%NOTFOUND THEN
-      -- There are no candidates available, throw a NO_DATA_FOUND exception
-      -- which indicates to the job manager to retry in 10 seconds time
-      RAISE NO_DATA_FOUND;
+      -- There are no candidates available, return a srId of 0, this indicates
+      -- to the job manager that there is nothing to do. The jobt manager will
+      -- try again shortly.
+      RETURN;
     END IF; 
     BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
-      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
         FROM SubRequest PARTITION (P_STATUS_13_14) SR
-       WHERE id = srId
+       WHERE id = srIntId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
          AND lastModificationTime < getTime() - 1800))
@@ -978,7 +980,7 @@ BEGIN
       UPDATE SubRequest
          SET status = 14,  -- BEINGSHCED
              lastModificationTime = getTime()
-       WHERE id = srId
+       WHERE id = srIntId
       RETURNING id, subReqId, protocol, xsize, requestedFileSystems
         INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
       EXIT;

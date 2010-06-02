@@ -327,11 +327,6 @@ castor::jobmanager::JobSubmissionRequest
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    // Ignore ORA-01403: no data found, this is expected when there is nothing
-    // to be scheduled.
-    if (e.getErrorCode() == 1403) {
-      return NULL;
-    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in jobToSchedule."
