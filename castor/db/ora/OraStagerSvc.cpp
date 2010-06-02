@@ -1244,6 +1244,8 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
   // list of temporarily and permanently invalid copies
   std::set<int> tmpInvalidCopies;
   std::set<int> permInvalidCopies;
+  // number of unique copies
+  std::set<int> nbCopies;
   // list of valid and the tape there are on
   // Note that the case of multi segmented tapes is not well supported
   // and only the last tape found will be kept.
@@ -1253,6 +1255,8 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
   for(short i = 0; i < nbNsSegments; i++) {
     // consistency checks for this segment
     int errmsg = 0;
+    // Ammend the unique copies set
+    nbCopies.insert(nsSegmenets[i].copyno);
     // Checks that the segment is associated to a tape
     if (nsSegments[i].vid == '\0') {
       // "Segment has no tape associated"
@@ -1310,7 +1314,7 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
   }
 
   // Update the number of missing copies if we have less copies than expected
-  *nbTapeCopies -= validCopies.size();
+  *nbTapeCopies -= nbCopies.size();
   
   // If we have more copies than expected we do nothing
   if (*nbTapeCopies < 0) {
