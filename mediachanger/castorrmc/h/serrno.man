@@ -599,6 +599,9 @@ The following error values are returned only by the stager package:
 .TP
 .B ESTREQCANCELED
 (1725) Request canceled while queuing
+.TP
+.B ESTTCNOATTACH
+(1726) Tape-copy not found
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:
