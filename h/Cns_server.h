@@ -231,7 +231,7 @@ EXTERN_C int Cns_get_smd_by_copyno _PROTO((struct Cns_dbfd *, int, u_signed64, i
 EXTERN_C int Cns_get_smd_by_fullid _PROTO((struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_smd_by_pfid _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_smd_by_vid _PROTO((struct Cns_dbfd *, int, char *, int, struct Cns_seg_metadata *, int, DBLISTPTR *));
-EXTERN_C int Cns_get_smd_count_by_pfid _PROTO((struct Cns_dbfd *, u_signed64, int *));
+EXTERN_C int Cns_get_smd_copy_count_by_pfid _PROTO((struct Cns_dbfd *, u_signed64, int *));
 EXTERN_C int Cns_get_tapesum_by_vid _PROTO((struct Cns_dbfd *, char *, int, u_signed64 *, u_signed64 *, u_signed64 *));
 EXTERN_C int Cns_get_tppool_by_cid _PROTO((struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_umd_by_fileid _PROTO((struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *));

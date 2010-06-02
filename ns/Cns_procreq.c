@@ -360,7 +360,7 @@ int Cns_srv_chclass(req_data, clienthost, thip)
 
     /* if the file has segments make sure the new fileclass allows them! */
 
-    if (Cns_get_smd_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count))
+    if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count))
       RETURN (serrno);
     if (count && (new_class_entry.nbcopies == 0))
       RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
@@ -4937,7 +4937,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 
   /* verify that we don't have too many segments for this file */
 
-  if (Cns_get_smd_count_by_pfid (&thip->dbfd, smd_entry.s_fileid, &count))
+  if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, smd_entry.s_fileid, &count))
     RETURN (serrno);
   if (count > class_entry.nbcopies)
     RETURN (ENSTOOMANYSEGS)
