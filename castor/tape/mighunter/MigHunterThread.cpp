@@ -714,8 +714,7 @@ void castor::tape::mighunter::MigHunterThread::
         ex.getMessage() <<
           "Tape-copy not found in the tape-copies to be attached to streams"
           ": Coverage of the migrationPolicy function is not complete" <<
-          " migrationPolicy function"
-          " functionName=" << tapeCopyToBeFound->policyName;
+          ": functionName=" << tapeCopyToBeFound->policyName;
 
         throw ex;
       }
