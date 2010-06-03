@@ -152,7 +152,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
     MigrationPolicyElementList candidatesToRestore;
     MigrationPolicyElementList invalidTapeCopies;
 
-    u_signed64 notAllowedByPolicy   = 0;
+    u_signed64 allowedByPolicy    = 0;
+    u_signed64 notAllowedByPolicy = 0;
 
     // The eligible canditates organized by tape pool so that the database
     // locking logic can take a lock on the tape pools one at a time
@@ -425,6 +426,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
             eligibleCandidates[infoCandidate->tapePoolId].push_back(
               *infoCandidate);
+            allowedByPolicy++;
 
           // Else do not attach the tape copy
           } else {
@@ -455,15 +457,6 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
           exit(-1);
         }
       } // For each infoCandidate
-
-      // log in the dlf with the summary
-      castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"          , (*svcClassName)          ),
-        castor::dlf::Param("allowedByPolicy"   , eligibleCandidates.size()),
-        castor::dlf::Param("notAllowedByPolicy", notAllowedByPolicy       )};
-
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-        MIGRATION_POLICY_RESULT, paramsPolicy);
 
       try {
         checkEachTapeCopyWillBeAttachedOrInvalidated(
@@ -567,7 +560,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
     // Log summary
     castor::dlf::Param paramsPolicy[] = {
       castor::dlf::Param("SvcClass"          , (*svcClassName)           ),
-      castor::dlf::Param("allowedByPolicy"   , eligibleCandidates.size() ),
+      castor::dlf::Param("allowedByPolicy"   , allowedByPolicy           ),
       castor::dlf::Param("notAllowedByPolicy", notAllowedByPolicy        ),
       castor::dlf::Param("resurrected"       , candidatesToRestore.size()),
       castor::dlf::Param("invalidated"       , invalidTapeCopies.size()  )};
@@ -723,6 +716,9 @@ void castor::tape::mighunter::MigHunterThread::
 }
 
 
+//------------------------------------------------------------------------------
+// tapeCopyIsInMapOfTapePool2TapeCopies
+//------------------------------------------------------------------------------
 bool castor::tape::mighunter::MigHunterThread::
   tapeCopyIsInMapOfTapePool2TapeCopies(
   const MigrationPolicyElement &tapeCopyToBeFound,
@@ -745,6 +741,9 @@ bool castor::tape::mighunter::MigHunterThread::
 }
 
 
+//------------------------------------------------------------------------------
+// tapeCopyIsInList
+//------------------------------------------------------------------------------
 bool castor::tape::mighunter::MigHunterThread::tapeCopyIsInList(
   const MigrationPolicyElement &tapeCopyToBeFound,
   const MigrationPolicyElementList &tapeCopies) throw() {
