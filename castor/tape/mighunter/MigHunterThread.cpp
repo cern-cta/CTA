@@ -466,8 +466,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         MIGRATION_POLICY_RESULT, paramsPolicy);
 
       try {
-        checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
-          infoCandidateTapeCopies, eligibleCandidates);
+        checkEachTapeCopyWillBeAttachedOrInvalidated(
+          infoCandidateTapeCopies, eligibleCandidates, invalidTapeCopies);
       } catch(castor::exception::TapeCopyNotFound &ex) {
         castor::dlf::Param params[] = {
           castor::dlf::Param("SVCCLASS"    , *svcClassName        ),
@@ -689,13 +689,15 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
 
 
 //------------------------------------------------------------------------------
-// checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool
+// checkEachTapeCopyWillBeAttachedOrInvalidated
 //------------------------------------------------------------------------------
 void castor::tape::mighunter::MigHunterThread::
-  checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
+  checkEachTapeCopyWillBeAttachedOrInvalidated(
   const MigrationPolicyElementList &tapeCopiesToBeFound,
   const std::map<u_signed64, std::list<MigrationPolicyElement> >
-    &tapePool2TapeCopies) throw(castor::exception::TapeCopyNotFound) {
+    &tapePool2TapeCopies,
+  const MigrationPolicyElementList &invalidTapeCopies)
+  throw(castor::exception::TapeCopyNotFound) {
 
   // For each tape-copy to be checked
   for(
@@ -704,17 +706,19 @@ void castor::tape::mighunter::MigHunterThread::
     tapeCopyToBeFound != tapeCopiesToBeFound.end();
     tapeCopyToBeFound++ ) {
 
-    if(!tapeCopyIsInMapOfTapePool2TapeCopies(*tapeCopyToBeFound,
-      tapePool2TapeCopies)) {
-      castor::exception::TapeCopyNotFound ex(tapeCopyToBeFound->tapeCopyId);
+    if(!tapeCopyIsInList(*tapeCopyToBeFound, invalidTapeCopies)) {
+      if(!tapeCopyIsInMapOfTapePool2TapeCopies(*tapeCopyToBeFound,
+        tapePool2TapeCopies)) {
+        castor::exception::TapeCopyNotFound ex(tapeCopyToBeFound->tapeCopyId);
 
-      ex.getMessage() <<
-        "Tape-copy not found in the tape-copies to be attached to streams"
-        ": Coverage of the migrationPolicy function is not complete" <<
-        " migrationPolicy function"
-        " functionName=" << tapeCopyToBeFound->policyName;
+        ex.getMessage() <<
+          "Tape-copy not found in the tape-copies to be attached to streams"
+          ": Coverage of the migrationPolicy function is not complete" <<
+          " migrationPolicy function"
+          " functionName=" << tapeCopyToBeFound->policyName;
 
-      throw ex;
+        throw ex;
+      }
     }
   }
 }

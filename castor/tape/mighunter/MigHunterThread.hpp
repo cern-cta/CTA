@@ -111,15 +111,19 @@ private:
   /**
    * Throws a TapeCopyNotFound exception if there is a tape-copy in the
    * specifed list of tape-copies to be found which cannot be found in the
-   * specified map of tape-pools to tape-copy lists.
+   * either the specified map of tape-pools to tape-copy lists or the list of
+   * tape-copies to be invalidated.
    *
    * @param tapeCopiesToBeFound The list of tape-copies to be found.
    * @param tapePool2TapeCopies The map of tape-pools to tape-copy lists.
+   * @param invalidTapeCopies   The list of tape-copies to be invalidated.
    */
-  void checkEachTapeCopyWillBeAttachedToAtLeastOneTapePool(
+  void checkEachTapeCopyWillBeAttachedOrInvalidated(
     const MigrationPolicyElementList &tapeCopiesToBeFound,
     const std::map<u_signed64, std::list<MigrationPolicyElement> >
-      &tapePool2TapeCopies) throw(castor::exception::TapeCopyNotFound);
+      &tapePool2TapeCopies,
+    const MigrationPolicyElementList &invalidTapeCopies)
+    throw(castor::exception::TapeCopyNotFound);
 
   /**
    * Returns true if the specifed tape-copy is in the specified map of
