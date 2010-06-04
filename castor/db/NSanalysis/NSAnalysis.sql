@@ -26,6 +26,7 @@ CREATE TABLE dirs (fileid NUMBER NOT NULL,
                    nbTapes NUMBER,
                    nbFilesOnTape NUMBER,
                    nbFileCopiesOnTape NUMBER,
+                   nbSubDirs NUMBER,
                    oldestFileLastMod NUMBER,
                    avgFileLastMod NUMBER,
                    sigFileLastMod NUMBER,
@@ -51,6 +52,7 @@ CREATE TABLE ydirs(fileid NUMBER NOT NULL,
                    nbTapes NUMBER,
                    nbFilesOnTape NUMBER,
                    nbFileCopiesOnTape NUMBER,
+                   nbSubDirs NUMBER,
                    oldestFileLastMod NUMBER,
                    avgFileLastMod NUMBER,
                    sigFileLastMod NUMBER,
@@ -76,6 +78,7 @@ CREATE TABLE mdirs(fileid NUMBER NOT NULL,
                    nbTapes NUMBER,
                    nbFilesOnTape NUMBER,
                    nbFileCopiesOnTape NUMBER,
+                   nbSubDirs NUMBER,
                    oldestFileLastMod NUMBER,
                    avgFileLastMod NUMBER,
                    sigFileLastMod NUMBER,
@@ -101,6 +104,7 @@ CREATE TABLE wdirs(fileid NUMBER NOT NULL,
                    nbTapes NUMBER,
                    nbFilesOnTape NUMBER,
                    nbFileCopiesOnTape NUMBER,
+                   nbSubDirs NUMBER,
                    oldestFileLastMod NUMBER,
                    avgFileLastMod NUMBER,
                    sigFileLastMod NUMBER,
@@ -120,8 +124,8 @@ ALTER TABLE mdirs PARALLEL (degree 8);
 ALTER TABLE wdirs PARALLEL (degree 8);
 
 -- Enter all directories into new dirs table (~13mn)
-INSERT /*+ APPEND */ INTO dirs (SELECT fileid, parent_fileid, name, -1, '', 0, 0, 0, 0, 0, 0, 0,
-                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0
+INSERT /*+ APPEND */ INTO dirs (SELECT fileid, parent_fileid, name, -1, '', 0, 0, 0, 0, 0, 0, 0, 0,
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0
                                   FROM Cns_file_metadata WHERE BITAND(filemode,16384) = 16384);
 COMMIT;
 -- create some useful indexes
@@ -272,7 +276,7 @@ DECLARE
 BEGIN
   FOR v IN (SELECT /*+ FULL(Cns_file_metadata) */ parent_fileid, count(unique fileid) nbfiles, sum(filesize) localSize,
                    min(mtime) oldestfile, sum(mtime) avgfile, sum(mtime*mtime) sigfile, max(mtime) newestfile
-              FROM Cns_file_metadata GROUP BY parent_fileid) LOOP
+              FROM Cns_file_metadata WHERE BITAND(filemode,16384) = 0 GROUP BY parent_fileid) LOOP
     UPDATE dirs
        SET nbfiles = v.nbFiles, totalSize = v.localSize,
            newestfileLastMod = v.newestfile, avgfileLastMod = v.avgfile,
@@ -342,7 +346,7 @@ BEGIN
         INSERT VALUES (curDir, v.VID, v.depth-1);
       DELETE FROM dir2tape WHERE fileid IN (SELECT /*+ CARDINALITY(t 5) */ * FROM TABLE(children) t);
       SELECT count(*) INTO nbt FROM dir2Tape WHERE fileid = curDir;
-      UPDATE dirs SET nbTapes = nbTapes+nbt WHERE fileid = curDir;
+      UPDATE dirs SET nbTapes = nvl(nbTapes,0)+nvl(nbt,0) WHERE fileid = curDir;
       n := n + 1;
       IF n = 2000 THEN
         COMMIT;
@@ -376,6 +380,7 @@ DECLARE
   at2 NUMBER;
   st2 NUMBER;
   nt2 NUMBER;
+  nsd NUMBER;
 BEGIN
   -- start at max depth
   SELECT MAX(depth) INTO d FROM dirs;
@@ -383,24 +388,28 @@ BEGIN
     FOR l IN (SELECT fileid FROM dirs WHERE dirs.depth = d) LOOP
       SELECT SUM(totalSize), SUM(sizeOnTape), SUM(dataOnTape), SUM(nbFiles), SUM(nbFilesOnTape), SUM(nbFileCopiesOnTape),
              MIN(oldestFileLastMod), SUM(avgFileLastMod), SUM(sigFileLastMod), MAX(newestFileLastMod),
-             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod)
-        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2
+             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod),
+             SUM(nbSubDirs)+count(*)
+        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2, nsd
         FROM dirs WHERE parent = l.fileid;
-      IF ot IS NOT NULL THEN 
-        UPDATE dirs
-           SET totalSize = totalSize+ts, sizeOnTape = sizeOnTape+st, dataOnTape = dataOnTape+dt,
-               nbFiles = nbFiles+nb, nbFilesOnTape = nbFilesOnTape+nt, nbFileCopiesOnTape = nbFileCopiesOnTape+nc,
-               oldestFileLastMod = minimum(oldestFileLastMod,ol),
-               avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
-               sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
-               newestFileLastMod = maximum(newestFileLastMod,ne),
-               oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
-               avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
-               sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
-               newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
-         WHERE fileid = l.fileid;
-        n := n + 1;
-      END IF;
+      UPDATE dirs
+         SET totalSize = nvl(totalSize,0)+nvl(ts,0),
+             sizeOnTape = nvl(sizeOnTape,0)+nvl(st,0),
+             dataOnTape = nvl(dataOnTape,0)+nvl(dt,0),
+             nbFiles = nvl(nbFiles,0)+nvl(nb,0),
+             nbFilesOnTape = nvl(nbFilesOnTape,0)+nvl(nt,0),
+             nbFileCopiesOnTape = nvl(nbFileCopiesOnTape,0)+nvl(nc,0),
+             nbSubDirs = nvl(nsd,0),
+             oldestFileLastMod = minimum(oldestFileLastMod,ol),
+             avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
+             sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
+             newestFileLastMod = maximum(newestFileLastMod,ne),
+             oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
+             avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
+             sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
+             newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
+       WHERE fileid = l.fileid;
+      n := n + 1;
       IF n = 2000 THEN
         COMMIT;
         n := 0;
@@ -464,7 +473,7 @@ DECLARE
 BEGIN
   FOR v IN (SELECT /*+ FULL(Cns_file_metadata) */ parent_fileid, count(unique fileid) nbfiles, sum(filesize) localSize,
                    min(mtime) oldestfile, sum(mtime) avgfile, sum(mtime*mtime) sigfile, max(mtime) newestfile
-              FROM Cns_file_metadata WHERE mtime > &snapshotTime-7*86400 GROUP BY parent_fileid) LOOP
+              FROM Cns_file_metadata WHERE BITAND(filemode,16384) = 0 AND mtime > &snapshotTime-7*86400 GROUP BY parent_fileid) LOOP
     UPDATE wdirs
        SET nbfiles = v.nbFiles, totalSize = v.localSize,
            newestfileLastMod = v.newestfile, avgfileLastMod = v.avgfile,
@@ -570,6 +579,7 @@ DECLARE
   at2 NUMBER;
   st2 NUMBER;
   nt2 NUMBER;
+  nsd NUMBER;
 BEGIN
   -- start at max depth
   SELECT MAX(depth) INTO d FROM wdirs;
@@ -577,24 +587,28 @@ BEGIN
     FOR l IN (SELECT fileid FROM wdirs WHERE wdirs.depth = d) LOOP
       SELECT SUM(totalSize), SUM(sizeOnTape), SUM(dataOnTape), SUM(nbFiles), SUM(nbFilesOnTape), SUM(nbFileCopiesOnTape),
              MIN(oldestFileLastMod), SUM(avgFileLastMod), SUM(sigFileLastMod), MAX(newestFileLastMod),
-             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod)
-        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2
+             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod),
+             SUM(nbSubDirs)+count(*)
+        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2, nsd
         FROM wdirs WHERE parent = l.fileid;
-      IF ot IS NOT NULL THEN 
-        UPDATE wdirs
-           SET totalSize = totalSize+ts, sizeOnTape = sizeOnTape+st, dataOnTape = dataOnTape+dt,
-               nbFiles = nbFiles+nb, nbFilesOnTape = nbFilesOnTape+nt, nbFileCopiesOnTape = nbFileCopiesOnTape+nc,
-               oldestFileLastMod = minimum(oldestFileLastMod,ol),
-               avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
-               sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
-               newestFileLastMod = maximum(newestFileLastMod,ne),
-               oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
-               avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
-               sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
-               newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
-         WHERE fileid = l.fileid;
-        n := n + 1;
-      END IF;
+      UPDATE wdirs
+         SET totalSize = nvl(totalSize,0)+nvl(ts,0),
+             sizeOnTape = nvl(sizeOnTape,0)+nvl(st,0),
+             dataOnTape = nvl(dataOnTape,0)+nvl(dt,0),
+             nbFiles = nvl(nbFiles,0)+nvl(nb,0),
+             nbFilesOnTape = nvl(nbFilesOnTape,0)+nvl(nt,0),
+             nbFileCopiesOnTape = nvl(nbFileCopiesOnTape,0)+nvl(nc,0),
+             nbSubDirs = nvl(nsd,0),
+             oldestFileLastMod = minimum(oldestFileLastMod,ol),
+             avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
+             sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
+             newestFileLastMod = maximum(newestFileLastMod,ne),
+             oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
+             avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
+             sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
+             newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
+       WHERE fileid = l.fileid;
+      n := n + 1;
       IF n = 2000 THEN
         COMMIT;
         n := 0;
@@ -655,7 +669,7 @@ DECLARE
 BEGIN
   FOR v IN (SELECT /*+ FULL(Cns_file_metadata) */ parent_fileid, count(unique fileid) nbfiles, sum(filesize) localSize,
                    min(mtime) oldestfile, sum(mtime) avgfile, sum(mtime*mtime) sigfile, max(mtime) newestfile
-              FROM Cns_file_metadata WHERE mtime > &snapshotTime-30*86400 GROUP BY parent_fileid) LOOP
+              FROM Cns_file_metadata WHERE BITAND(filemode,16384) = 0 AND mtime > &snapshotTime-30*86400 GROUP BY parent_fileid) LOOP
     UPDATE mdirs
        SET nbfiles = v.nbFiles, totalSize = v.localSize,
            newestfileLastMod = v.newestfile, avgfileLastMod = v.avgfile,
@@ -761,6 +775,7 @@ DECLARE
   at2 NUMBER;
   st2 NUMBER;
   nt2 NUMBER;
+  nsd NUMBER;
 BEGIN
   -- start at max depth
   SELECT MAX(depth) INTO d FROM mdirs;
@@ -768,24 +783,28 @@ BEGIN
     FOR l IN (SELECT fileid FROM mdirs WHERE mdirs.depth = d) LOOP
       SELECT SUM(totalSize), SUM(sizeOnTape), SUM(dataOnTape), SUM(nbFiles), SUM(nbFilesOnTape), SUM(nbFileCopiesOnTape),
              MIN(oldestFileLastMod), SUM(avgFileLastMod), SUM(sigFileLastMod), MAX(newestFileLastMod),
-             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod)
-        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2
+             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod),
+             SUM(nbSubDirs)+count(*)
+        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2, nsd
         FROM mdirs WHERE parent = l.fileid;
-      IF ot IS NOT NULL THEN 
-        UPDATE mdirs
-           SET totalSize = totalSize+ts, sizeOnTape = sizeOnTape+st, dataOnTape = dataOnTape+dt,
-               nbFiles = nbFiles+nb, nbFilesOnTape = nbFilesOnTape+nt, nbFileCopiesOnTape = nbFileCopiesOnTape+nc,
-               oldestFileLastMod = minimum(oldestFileLastMod,ol),
-               avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
-               sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
-               newestFileLastMod = maximum(newestFileLastMod,ne),
-               oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
-               avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
-               sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
-               newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
-         WHERE fileid = l.fileid;
-        n := n + 1;
-      END IF;
+      UPDATE mdirs
+         SET totalSize = nvl(totalSize,0)+nvl(ts,0),
+             sizeOnTape = nvl(sizeOnTape,0)+nvl(st,0),
+             dataOnTape = nvl(dataOnTape,0)+nvl(dt,0),
+             nbFiles = nvl(nbFiles,0)+nvl(nb,0),
+             nbFilesOnTape = nvl(nbFilesOnTape,0)+nvl(nt,0),
+             nbFileCopiesOnTape = nvl(nbFileCopiesOnTape,0)+nvl(nc,0),
+             nbSubDirs = nvl(nsd,0),
+             oldestFileLastMod = minimum(oldestFileLastMod,ol),
+             avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
+             sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
+             newestFileLastMod = maximum(newestFileLastMod,ne),
+             oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
+             avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
+             sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
+             newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
+       WHERE fileid = l.fileid;
+      n := n + 1;
       IF n = 2000 THEN
         COMMIT;
         n := 0;
@@ -846,7 +865,7 @@ DECLARE
 BEGIN
   FOR v IN (SELECT /*+ FULL(Cns_file_metadata) */ parent_fileid, count(unique fileid) nbfiles, sum(filesize) localSize,
                    min(mtime) oldestfile, sum(mtime) avgfile, sum(mtime*mtime) sigfile, max(mtime) newestfile
-              FROM Cns_file_metadata WHERE mtime > &snapshotTime-365*86400 GROUP BY parent_fileid) LOOP
+              FROM Cns_file_metadata WHERE BITAND(filemode,16384) = 0 AND mtime > &snapshotTime-365*86400 GROUP BY parent_fileid) LOOP
     UPDATE ydirs
        SET nbfiles = v.nbFiles, totalSize = v.localSize,
            newestfileLastMod = v.newestfile, avgfileLastMod = v.avgfile,
@@ -952,6 +971,7 @@ DECLARE
   at2 NUMBER;
   st2 NUMBER;
   nt2 NUMBER;
+  nsd NUMBER;
 BEGIN
   -- start at max depth
   SELECT MAX(depth) INTO d FROM ydirs;
@@ -959,24 +979,28 @@ BEGIN
     FOR l IN (SELECT fileid FROM ydirs WHERE ydirs.depth = d) LOOP
       SELECT SUM(totalSize), SUM(sizeOnTape), SUM(dataOnTape), SUM(nbFiles), SUM(nbFilesOnTape), SUM(nbFileCopiesOnTape),
              MIN(oldestFileLastMod), SUM(avgFileLastMod), SUM(sigFileLastMod), MAX(newestFileLastMod),
-             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod)
-        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2
+             MIN(oldestFileOnTapeLastMod), SUM(avgFileOnTapeLastMod), SUM(sigFileOnTapeLastMod), MAX(newestFileOnTapeLastMod),
+             SUM(nbSubDirs)+count(*)
+        INTO ts, st, dt, nb, nt, nc, ol, av, si, ne, ot, at2, st2, nt2, nsd
         FROM ydirs WHERE parent = l.fileid;
-      IF ot IS NOT NULL THEN 
-        UPDATE ydirs
-           SET totalSize = totalSize+ts, sizeOnTape = sizeOnTape+st, dataOnTape = dataOnTape+dt,
-               nbFiles = nbFiles+nb, nbFilesOnTape = nbFilesOnTape+nt, nbFileCopiesOnTape = nbFileCopiesOnTape+nc,
-               oldestFileLastMod = minimum(oldestFileLastMod,ol),
-               avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
-               sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
-               newestFileLastMod = maximum(newestFileLastMod,ne),
-               oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
-               avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
-               sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
-               newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
-         WHERE fileid = l.fileid;
-        n := n + 1;
-      END IF;
+      UPDATE ydirs
+         SET totalSize = nvl(totalSize,0)+nvl(ts,0),
+             sizeOnTape = nvl(sizeOnTape,0)+nvl(st,0),
+             dataOnTape = nvl(dataOnTape,0)+nvl(dt,0),
+             nbFiles = nvl(nbFiles,0)+nvl(nb,0),
+             nbFilesOnTape = nvl(nbFilesOnTape,0)+nvl(nt,0),
+             nbFileCopiesOnTape = nvl(nbFileCopiesOnTape,0)+nvl(nc,0),
+             nbSubDirs = nvl(nsd,0),
+             oldestFileLastMod = minimum(oldestFileLastMod,ol),
+             avgFileLastMod = nvl(avgFileLastMod,0) + nvl(av,0),
+             sigFileLastMod = nvl(sigFileLastMod,0) + nvl(si,0),
+             newestFileLastMod = maximum(newestFileLastMod,ne),
+             oldestFileOnTapeLastMod = minimum(oldestFileOnTapeLastMod,ot),
+             avgFileOnTapeLastMod = nvl(avgFileOnTapeLastMod,0) + nvl(at2,0),
+             sigFileOnTapeLastMod = nvl(sigFileOnTapeLastMod,0) + nvl(st2,0),
+             newestFileOnTapeLastMod = maximum(newestFileOnTapeLastMod,nt2)
+       WHERE fileid = l.fileid;
+      n := n + 1;
       IF n = 2000 THEN
         COMMIT;
         n := 0;
