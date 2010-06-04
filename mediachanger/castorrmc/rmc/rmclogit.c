@@ -31,7 +31,7 @@ int rmclogit(char *func, char *msg, ...)
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
-	fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
+	fd_log = open (RMCLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;
