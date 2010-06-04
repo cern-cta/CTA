@@ -15,7 +15,7 @@
 #define _CTAPE_CONSTANTS_H
 #include "Castor_limits.h"
 
-#ifdef CSEC
+#ifdef TPCSEC
 #define STAPE_PORT 5511
 #endif
 #define TAPE_PORT 5011

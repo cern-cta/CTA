@@ -53,19 +53,13 @@ export MINOR_CASTOR_VERSION
 %endif
 %if %compiling_nostk
 echo "Compiling in NOSTK mode, that is only tape part with no STK dependency"
-make -j $((`grep processor /proc/cpuinfo | wc -l`*2)) tape
-# XXX to be removed when parallel compilation is fixed
-make tape
+make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2)) tape
 %else
 %if %compiling_client
 echo "Only compiling client part"
-make -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
-# XXX to be removed when parallel compilation is fixed
-make client
+make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
 %else
-make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
-# XXX to be removed when parallel compilation is fixed
-make
+make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2))
 %endif
 %endif
 

@@ -20,7 +20,7 @@
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-#ifdef CSEC
+#ifdef VMGRCSEC
 #include "Csec_api.h"
 #endif
 #if defined(_WIN32)
@@ -52,18 +52,18 @@ int user_repbuf_len;
 	int s;
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
-#ifdef CSEC
+#ifdef VMGRCSEC
 	Csec_context_t ctx;
 	int secure_connection = 0;
 #endif
 
 	strcpy (func, "send2vmgr");
-#ifdef CSEC
+#ifdef VMGRCSEC
 	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
 		sin.sin_family = AF_INET;
-#ifdef CSEC
+#ifdef VMGRCSEC
 		if (secure_connection) {
 		  if ((p = getenv ("SVMGR_PORT")) || (p = getconfent ("SVMGR", "PORT", 0))) {
 		    sin.sin_port = htons ((unsigned short)atoi (p));
@@ -85,7 +85,7 @@ int user_repbuf_len;
 		    sin.sin_port = htons ((unsigned short)VMGR_PORT);
 		    serrno = 0;
 		  }
-#ifdef CSEC
+#ifdef VMGRCSEC
 		}
 #endif
 		if ((p = getenv ("VMGR_HOST")) || (p = getconfent ("VMGR", "HOST", 0)))
@@ -125,7 +125,7 @@ int user_repbuf_len;
 				return (-1);
 			}
 		}
-#ifdef CSEC
+#ifdef VMGRCSEC
 			if (secure_connection) {
 
 			  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {

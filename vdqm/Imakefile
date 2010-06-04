@@ -1,46 +1,45 @@
-#
-#                      vdqm/Imakefile
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2009/06/19 09:22:40 $ $Author: waldron $
-#
-# Makefile for the VDQM API library and client
-#
-# @author Castor Dev team, castor-dev@cern.ch
+COMM
+COMM                      vdqm/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2009/06/19 09:22:40 $ $Author: waldron $
+COMM
+COMM Makefile for the VDQM API library and client
+COMM
+COMM @author Castor Dev team, castor-dev@cern.ch
 
 #if BuildSecureVdqm
-SECURITYFLAG = -DCSEC
+CPPFLAGS += -DVDQMCSEC
 LDLIBS += -ldl
 #endif  
-VDQM_HOST = VdqmHost
-CPPFLAGS += -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
+CPPFLAGS += -DVDQM_HOST=VdqmHost
 
 CommonDependsOnLibrary(common,castorcommon)
 
-vdqmc_SendRecv.c:	vdqm_SendRecv.c
-	RemoveFiles(vdqmc_SendRecv.c)
-	cp vdqm_SendRecv.c vdqmc_SendRecv.c
-FilesToClean += vdqmc_SendRecv.c
+LOCAL_PATH/vdqmc_SendRecv.c: LOCAL_PATH/vdqm_SendRecv.c
+	RemoveFiles($@)
+	cp $< $@
+FilesToClean += LOCAL_PATH/vdqmc_SendRecv.c
 
 VDQMLIB_OBJS = vdqmapi.o vdqmc_SendRecv.o
 SharedLibraryTarget(castorvdqm,$(VDQMLIB_OBJS),,DepSharedLibraryTargetName(common,castorcommon))
 
-VDQMLIB = SharedLibraryTargetName(castorvdqm)
+VDQMLIB = DepSharedLibraryTargetName(vdqm,castorvdqm)
 
 ClientProgramTarget(showqueues,showqueues.o,$(VDQMLIB),$(VDQMLIB),0755)
 ClientProgramTarget(vdqm_admin,vdqm_admin.o,$(VDQMLIB),$(VDQMLIB),0755)

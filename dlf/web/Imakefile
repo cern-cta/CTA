@@ -26,15 +26,10 @@ InstallNonExecFile(results.php,$(DLFWEB),644)
 InstallNonExecFile(site.css,$(DLFWEB),644)
 InstallNonExecFile(utils.php,$(DLFWEB),644)
 
-INSUBDIR=db/
-InstallNonExecFile(oracle.php,$(DLFWEB)/db,644)
-
-INSUBDIR=js/
-InstallNonExecFile(CalendarPopup.js,$(DLFWEB)/js,644)
-InstallNonExecFile(Date.js,$(DLFWEB)/js,644)
-
-INSUBDIR=images/
-InstallNonExecFile(backdrop.png,$(DLFWEB)/images,644)
-InstallNonExecFile(css.png,$(DLFWEB)/images,644)
-InstallNonExecFile(php.png,$(DLFWEB)/images,644)
-InstallNonExecFile(xhtml.png,$(DLFWEB)/images,644)
+InstallNonExecFileSubdir(oracle.php,$(DLFWEB)/db,644,db/)
+InstallNonExecFileSubdir(CalendarPopup.js,$(DLFWEB)/js,644,js/)
+InstallNonExecFileSubdir(Date.js,$(DLFWEB)/js,644,js/)
+InstallNonExecFileSubdir(backdrop.png,$(DLFWEB)/images,644,images/)
+InstallNonExecFileSubdir(css.png,$(DLFWEB)/images,644,images/)
+InstallNonExecFileSubdir(php.png,$(DLFWEB)/images,644,images/)
+InstallNonExecFileSubdir(xhtml.png,$(DLFWEB)/images,644,images/)

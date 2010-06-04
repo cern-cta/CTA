@@ -43,7 +43,7 @@ extern char *geterr();
 #include <rtcp_api.h>
 #endif /* RTCP_SERVER */
 #include <serrno.h>
-#ifdef CSEC
+#ifdef RTCOPYCSEC
 #include "Csec_api.h"
 #endif
 
@@ -604,7 +604,7 @@ int rtcp_Connect(
   struct sockaddr_in sin ; /* Internet address */
   int keepalive=1;
 
-#ifdef CSEC
+#ifdef RTCOPYCSEC
   uid_t Csec_uid;
   gid_t Csec_gid;
   int Csec_service_type;
@@ -670,7 +670,7 @@ int rtcp_Connect(
        (char *)&tcp_nodelay,sizeof(tcp_nodelay));
    }
 
-#ifdef CSEC
+#ifdef RTCOPYCSEC
   if (whereto == RTCP_CONNECT_TO_CLIENT) { /* We are the server */
     /*
      * Try to establish secure connection.

@@ -6,7 +6,7 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
+CPPFLAGS += -DORAVDQMCONFIGFILE=VdqmConfigFile
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -28,33 +28,32 @@ NormalProgramTarget(c2probe,c2probe.o,,,755)
 NormalProgramTarget(listPriority,listPriority.o,,,755)
 NormalProgramTarget(enterPriority,enterPriority.o,,,755)
 NormalProgramTarget(deletePriority,deletePriority.o,,,755)
-rfcpupd.c: ../rfio/rfcp.c
+LOCAL_PATH/rfcpupd.c: $(CASTOR_ROOT)/rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
-rfcpupd.o: rfcpupd.c
-	$(COMPILE.c) $(OUTPUT_OPTION) -DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP) $<
 FilesToClean += rfcpupd.c
+COMPILEC(rfcpupd.c,-DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP))
 NormalProgramTarget(rfcpupd,rfcpupd.o,,,755)
 NormalProgramTarget(stager_actualget,stager_actualget.o,,,755)
 NormalProgramTarget(stager_actualput,stager_actualput.o,,,755)
 
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.o,,,755)
 
-InstallTarget(cleanLostFiles,755,$(BIN))
-InstallTarget(diskServer_qry,755,$(BIN))
-InstallTarget(listFileClass,755,$(BIN))
-InstallTarget(listSvcClass,755,$(BIN))
-InstallTarget(printFileClass,755,$(BIN))
-InstallTarget(printSvcClass,755,$(BIN))
-InstallTarget(moveDiskServer,755,$(BIN))
-InstallTarget(dedicateTapeDrive,755,$(BIN))
-InstallTarget(listDedications,755,$(BIN))
-InstallTarget(checkreplicas,755,$(BIN))
-InstallTarget(draindiskserver,755,$(BIN))
-InstallTarget(migrateNewCopy,755,$(BIN))
-InstallTarget(vdqmlistpriority,755,$(BIN))
-InstallTarget(vdqmlistrequest,755,$(BIN))
-InstallTarget(vdqmsetpriority,755,$(BIN))
-InstallTarget(vdqmdeletepriority,755,$(BIN))
+InstallTarget(cleanLostFiles,755)
+InstallTarget(diskServer_qry,755)
+InstallTarget(listFileClass,755)
+InstallTarget(listSvcClass,755)
+InstallTarget(printFileClass,755)
+InstallTarget(printSvcClass,755)
+InstallTarget(moveDiskServer,755)
+InstallTarget(dedicateTapeDrive,755)
+InstallTarget(listDedications,755)
+InstallTarget(checkreplicas,755)
+InstallTarget(draindiskserver,755)
+InstallTarget(migrateNewCopy,755)
+InstallTarget(vdqmlistpriority,755)
+InstallTarget(vdqmlistrequest,755)
+InstallTarget(vdqmsetpriority,755)
+InstallTarget(vdqmdeletepriority,755)
 
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),755)
 InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),644)

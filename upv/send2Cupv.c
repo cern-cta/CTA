@@ -21,7 +21,7 @@
 #include "serrno.h"
 #include "Cupv.h"
 #include "Cupv_util.h"
-#ifdef CSEC
+#ifdef UPVCSEC
 #include "Csec_api.h"
 #endif
 #if defined(_WIN32)
@@ -52,22 +52,22 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
   int s;
   struct sockaddr_in sin; /* internet socket */
   struct servent *sp;
-#ifdef CSEC
+#ifdef UPVCSEC
   Csec_context_t ctx;
   int secure_connection = 0;
 #endif
 
   strcpy (func, "send2Cupv");
-#ifdef CSEC
+#ifdef UPVCSEC
   if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif
   if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
     sin.sin_family = AF_INET;
-#ifdef CSEC
+#ifdef UPVCSEC
     if (secure_connection) {
       if ((p = getenv ("SUPV_PORT")) || (p = getconfent ("SUPV", "PORT", 0))) {
 	sin.sin_port = htons ((unsigned short)atoi (p));
-      } else if (sp = Cgetservbyname ("sCupv", "tcp")) {
+      } else if ((sp = Cgetservbyname ("sCupv", "tcp"))) {
 	sin.sin_port = sp->s_port;
       } else {
 	sin.sin_port = htons ((unsigned short)SCUPV_PORT);
@@ -81,7 +81,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
       } else {
 	sin.sin_port = htons ((unsigned short)CUPV_PORT);
       }
-#ifdef CSEC
+#ifdef UPVCSEC
     }
 #endif
     if ((p = getenv ("UPV_HOST")) || (p = getconfent ("UPV", "HOST", 0)))
@@ -122,7 +122,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 	  return (-1);
 	}
       }
-#ifdef CSEC
+#ifdef UPVCSEC
       if (secure_connection) {
 	if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	  Cupv_errmsg (func, CUP02, "send", "Could not init context");

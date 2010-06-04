@@ -6,14 +6,11 @@
 DLFWEB=/var/www/html/dlf
 DLFCONF=/var/www/conf/dlf
 
-.PHONY : install clean clobber Makefiles checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION
+.PHONY : install clean clobber checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION client installclient tape installtape purge
 
 all: checkORACLE checkLSF checkGLOBUS checkXROOT tape client
-	GotoSubdirs($(SUBDIRS))
-
 tape: checkSTK
-
-client:
+install: checkDESTDIR checkVERSION all exportman installtape installclient
 
 EXPORTMAN?=$(DESTDIR)/usr/share
 checkDESTDIR:
@@ -29,6 +26,10 @@ checkORACLE:
 	fi; \
 	if [ ! -r ${ORACLE_HOME}/lib/libclntsh.so ]; then \
 	  echo "Could not find libclntsh.so in ${ORACLE_HOME}/lib. Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -r ${ORACLE_HOME}/bin/proc ]; then \
+	  echo "Could not find proc in ${ORACLE_HOME}/bin. Giving up."; \
 	  exit 1; \
 	fi
 
@@ -71,33 +72,6 @@ checkVERSION:
 	  echo "Please define MAJOR/MINOR_CASTOR_VERSION before installing."; \
 	  exit 1; \
 	fi
-
-install: checkDESTDIR checkVERSION all exportman
-	GotoSubdirs($(SUBDIRS))
-
-clean:
-	RemoveFiles($(FilesToClean))
-	GotoSubdirs($(SUBDIRS))
-
-clobber: clean
-	RemoveFiles($(FilesToClobber))
-	GotoSubdirs($(SUBDIRS))
-
-Makefiles:
-	@for i in $(SUBDIRS);\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(CASTOR_ROOT)/imake/imake -I$(CASTOR_ROOT)/config;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-exportman:
-	GotoSubdirs($(SUBDIRS))
 
 /******************************************************************************
  * The following code deals with automatic prerequisites, that is with        *
@@ -157,10 +131,10 @@ create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,
  * They make all targets of the objects list depend on their coresponding .d file
  */
 %.d: %.c
-	@$(create_d)
+	$(create_d)
 
 %.d: %.cpp
-	@$(create_d)
+	$(create_d)
 
 /*
  * The last part is to include the generated dependency files into this

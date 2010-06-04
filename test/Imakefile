@@ -6,5 +6,5 @@ COMM
 
 COMM		Make CASTOR tests
 
-#SUBDIRS = common rfio rtcopy stager tape dlf castor
+COMMSUBDIRS = common rfio rtcopy stager tape dlf castor
 SUBDIRS = castor

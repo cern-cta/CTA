@@ -26,7 +26,7 @@
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
-#ifdef CSEC
+#ifdef TPCSEC
 #include "Csec_api.h"
 #endif
 #include "Ctape_api.h"
@@ -56,17 +56,17 @@ int user_repbuf_len;
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 	char tapehost[CA_MAXHOSTNAMELEN+1];
-#ifdef CSEC
+#ifdef TPCSEC
 	Csec_context_t ctx;
 	int secure_connection = 0;
 #endif
 
 	strcpy (func, "send2tpd");
-#ifdef CSEC
+#ifdef TPCSEC
 	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif
 	sin.sin_family = AF_INET;
-#ifdef CSEC
+#ifdef TPCSEC
 	if (secure_connection) {
 	  if ((p = getenv ("STAPE_PORT")) || (p = getconfent ("STAPE", "PORT", 0))) {
 	    sin.sin_port = htons ((unsigned short)atoi (p));
@@ -88,7 +88,7 @@ int user_repbuf_len;
 	    sin.sin_port = htons ((unsigned short)TAPE_PORT);
 	    serrno = 0;
 	  }
-#ifdef CSEC
+#ifdef TPCSEC
 	}
 #endif
 	if (host == NULL) {
@@ -126,7 +126,7 @@ int user_repbuf_len;
 			return (-1);
 		}
 	}
-#ifdef CSEC
+#ifdef TPCSEC
 
 		if (secure_connection) {
 		  

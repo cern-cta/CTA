@@ -34,7 +34,7 @@
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
-#ifdef CSEC
+#ifdef RTCOPYCSEC
 #include "Csec_api.h"
 #endif
 
@@ -46,7 +46,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
   socklen_t fromlen;
   int save_errno, keepalive=1;
   struct timeval t_out, *t_out_p;
-#ifdef CSEC
+#ifdef RTCOPYCSEC
   uid_t Csec_uid;
   gid_t Csec_gid;
   Csec_context_t sec_ctx;
@@ -127,7 +127,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
             setsockopt(*ns, IPPROTO_TCP, TCP_NODELAY,
               (char *)&tcp_nodelay,sizeof(tcp_nodelay));
           }
-#ifdef CSEC
+#ifdef RTCOPYCSEC
           /*
            * Try to establish secure connection.
            */
@@ -180,7 +180,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
                       
             Csec_clearContext(&sec_ctx);
           }
-#endif   /* CSEC */
+#endif   /* RTCOPYCSEC */
           /*
            * Break out of infinite accept loop.
            */

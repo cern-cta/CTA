@@ -11,33 +11,19 @@ COMM Define the file indicating that no more RFIO requests
 COMM should be issued.
 COMM
 
-NOMORERFIO = OperatorDir/nomorerfio
-LOGDIR = /var/log/castor
-LOGFILE = $(LOGDIR)/rfiod.log
-CNS_ROOT_DIR = NsRoot
-RFIO_ALRM= RfioSpool/RfioAlarmFile
-NFSROOT0 = NfsRoot
+CPPFLAGS += -DSACCT -DNOMORERFIO=RfioNoMore -DRFIOLOGFILE=RfioLogFile \
+	    -DCNS_ROOT=NsRoot $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DFORTRAN
 
-CPPFLAGS += -DSACCT -DNOMORERFIO=\"$(NOMORERFIO)\" -DLOGFILE=\"$(LOGFILE)\" \
-	    -DRFIO_ALRM=\"$(RFIO_ALRM)\" -DCNS_ROOT=\"$(CNS_ROOT_DIR)\" \
-	    $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DNFSROOT=\"$(NFSROOT0)\" \
-            -DFORTRAN
-
-FIOO=fio.o
-RFIOLIB = SharedLibraryTargetName(castorrfio)
+RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
 
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
-#if defined(__STDC__)
-GLOBUS_FLAVOUR=GlobusFlavour##pthr
-#else
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
-#endif
 GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
 LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
-LDFLAGS += -ldl
+AddLdFlags(-ldl)
 
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
@@ -54,7 +40,7 @@ CommonDependsOnLibrary(castor,castorclient)
 RFIOLIB_OBJS = access.o alrm.o chdir.o checkkey.o chmod.o \
 		chown.o close.o closedir.o connect.o error.o \
 		fchmod.o fchown.o fclose.o feof.o ferror.o \
-		fflush.o fileno.o $(FIOO) fopen.o \
+		fflush.o fileno.o fio.o fopen.o \
 		fread.o fseek.o fstat.o ftell.o \
 		fwrite.o getc.o getcwd.o lockf.o \
 		lseek.o lstat.o lun2fn.o misc.o \
@@ -142,10 +128,10 @@ LIBMANPAGE(rfio_write)
 LIBMANPAGE(rfioreadopt)
 LIBMANPAGE(rfiosetopt)
 
-MakeDir($(LOGDIR),0755)
+MakeDir(LogPath,0755)
 SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \
-		checkkey.o $(FIOO) rfstatfs.o alrm.o \
+		checkkey.o fio.o rfstatfs.o alrm.o \
 		rfioacct.o RemoteJobSvc.o stager_catalogInterface.o \
 		stager_util.o stager_messages.o stager_extern_globals.o \
 		stager_uuid.o
@@ -154,7 +140,7 @@ SRVOBJS += rfio_alignedbuf.o rfio_xfsprealloc.o
 #endif
 
 NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(CKSUMLIB),755)
-LOGROTATE(castor-rfio-server,..,install)
+LOGROTATE(castor-rfio-server,install)
 SYSCONFIG(rfiod,install)
 INITSCRIPT(rfiod,install)
 

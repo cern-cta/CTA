@@ -43,7 +43,7 @@
 #include "sacct.h"
 #endif
 #include "serrno.h"
-#ifdef CSEC
+#ifdef TPCSEC
 #include "Csec_api.h"
 #endif 
 #include "tplogger_api.h"
@@ -65,7 +65,7 @@ int nbtpdrives;		/* number of tape drives */
 fd_set readfd, readmask;
 struct rlsq *rlsqp;	/* pointer to rls queue */
 int rpfd;
-#ifdef CSEC
+#ifdef TPCSEC
 uid_t Csec_uid;
 gid_t Csec_gid;
 int Csec_service_type;
@@ -76,7 +76,7 @@ struct sigaction sa;
 struct tprrt tpdrrt;	/* global resource reservation table */
 struct tptab *tptabp;	/* pointer to tape drive table */
 
-#ifdef CSEC
+#ifdef TPCSEC
 #define RESETID(UID,GID) resetid(&UID, &GID);
 void resetid(uid_t *u, gid_t *g) {
   if (Csec_service_type < 0) {
@@ -145,7 +145,7 @@ int tpd_main() {
         time_t lasttime_vdqm_update;
         int vdqmchkintvl = VDQMCHKINTVLDFT;
 #endif
-#ifdef CSEC
+#ifdef TPCSEC
 	Csec_context_t sec_ctx;
 #endif
         /* initialize tplogger */ 
@@ -210,10 +210,10 @@ int tpd_main() {
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
-#ifdef CSEC
+#ifdef TPCSEC
 	if ((p = getenv ("STAPE_PORT")) || (p = getconfent ("STAPE", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = getservbyname ("stape", "tcp")) {
+	} else if ((sp = getservbyname ("stape", "tcp"))) {
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)STAPE_PORT);
@@ -254,14 +254,14 @@ int tpd_main() {
 		check_child_exit();
 
 		if (FD_ISSET (s, &readfd)) {
-#ifdef CSEC
+#ifdef TPCSEC
 		        char *mech, *clientid;
 #endif
 			FD_CLR (s, &readfd);
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 			serrno = 0;
 
-#ifdef CSEC
+#ifdef TPCSEC
 			Csec_server_reinitContext(&sec_ctx, CSEC_SERVICE_TYPE_TAPE, NULL);
 			if (Csec_server_establishContext(&sec_ctx, rqfd) < 0) {
 			  tplogit(func, "CSEC: Could not establish context: %s !\n", Csec_getErrorMessage());

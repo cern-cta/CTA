@@ -623,7 +623,7 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
     int port;
     struct sockaddr_in sin;
     struct hostent *hp;
-#ifdef CSEC
+#ifdef VDQMCSEC
     Csec_context_t sec_ctx;
     char *p;
     int n;
@@ -666,7 +666,7 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
         closesocket(s);
         return(-1);
     }
-#ifdef CSEC
+#ifdef VDQMCSEC
 
     if (Csec_client_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
       log(LOG_ERR, "vdqm_ConnectToRTCP(%s): Could not init context\n", servername);

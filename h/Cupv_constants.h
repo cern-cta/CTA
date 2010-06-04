@@ -15,7 +15,7 @@
 #define _CUPV_CONSTANTS_H
 #include "Castor_limits.h"
 
-#ifdef CSEC
+#ifdef UPVCSEC
 #define SCUPV_PORT 5520
 #endif
 #define CUPV_PORT 56013

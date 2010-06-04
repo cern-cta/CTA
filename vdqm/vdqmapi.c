@@ -62,7 +62,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     extern char * getenv() ;
     char *p ;
     int vdqm_port = -1;
-#ifdef CSEC
+#ifdef VDQMCSEC
     int n;
     int secure_connection = 0;
 #endif
@@ -114,7 +114,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     vdqm_primary = p;
     p = strtok(NULL,", \t");
     vdqm_replica = p;
-#ifdef CSEC
+#ifdef VDQMCSEC
     if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
     if (secure_connection) {
       if ( (p = getenv("SVDQM_PORT")) != (char *)NULL ) {
@@ -141,7 +141,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
         vdqm_port = VDQM_PORT;
 #endif /* VDQM_PORT */
       }
-#ifdef CSEC
+#ifdef VDQMCSEC
     }
 #endif
     if ( vdqm_port < 0 ) {
@@ -211,7 +211,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
         break;
     } /* for (;;) */
     TRACE(1,"vdqm","vdqm_Connect() successful");
-#ifdef CSEC
+#ifdef VDQMCSEC
     if (secure_connection) {
       if (Csec_client_initContext(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	TRACE (1, "vdqm_CSEC", "Could not init context\n");

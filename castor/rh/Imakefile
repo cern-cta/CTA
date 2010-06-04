@@ -1,28 +1,28 @@
-#
-#                      castor/rh/Imakefile
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
-#
-# Make Castor RH library
-#
-# @author Castor Dev team, castor-dev@cern.ch
-#
+COMM
+COMM                      castor/rh/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
+COMM
+COMM Make Castor RH library
+COMM
+COMM @author Castor Dev team, castor-dev@cern.ch
+COMM
 
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
@@ -36,7 +36,7 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).s
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
-LDFLAGS += -lmemcached -lstdc++
+AddLdFlags(-lmemcached -lstdc++)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -47,9 +47,9 @@ DependsOnLibrary(security,castorsecurity)
 RHBIN_SRCS = Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp UserCounter.cpp SvcClassCounter.cpp
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.o)
 NormalProgramTarget(rhd,$(RHBIN_OBJS),,,750)
-MakeDir(/var/log/castor,0755)
+MakeDir(LogPath,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(rhd)
-LOGROTATE(castor-rh-server,../..,install)
+LOGROTATE(castor-rh-server,install)
 SYSCONFIG(rhd,install)
 INITSCRIPT(rhd,install)

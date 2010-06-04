@@ -2,22 +2,10 @@
  * @(#)$RCSfile$ $Revision$ $Date$ CERN IT-DM
  */
 
-#define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9 castorsrv101 castorsrv102 castorsrv103 castorsrv201 castorsrv202 castorsrv203"
-
-#if defined(_WIN32)
-
-#define CONFIGPATH(x)	        %%SystemRoot%%\\system32\\drivers\\etc\\castor\\ ## x
-#define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
-#define InstallBinDir	        \\cern.ch\dfs\Applications\CERN\CASTOR\bin
-#define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
-#define InstallLibDir   	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
-#define OperatorDir     	%%SystemRoot%%
-#define W2000MapDir     	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
-#define WntMapDir	        \\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
-
-#else
-
-#define CONFIGPATH(x)	        /etc/castor/x
+#define ConfigPath              /etc/castor
+#define LogPath                 /var/log/castor
+#define CONFIGPATH(x)	        \"ConfigPath/x\"
+#define LOGPATH(x)	        \"LogPath/x\"
 #define InstallConfigDir	/etc/sysconfig
 #define InstallBinDir	        /usr/bin
 #define InstallIncludeDir       /usr/include
@@ -27,39 +15,77 @@
 #define InstallLibDir	        /usr/lib
 #endif
 #define InstallLibNoArchDir     /usr/lib
-#define OperatorDir	        /var/run
 
-#endif
+#define AdminHosts \"castor\ tms-2\ lxcastor\ sure01\ sure02\ castoradm1\ castoradm2\ castoradm3\ castorsrv1\ castorsrv2\ castorsrv3\ castorsrv4\ castorsrv5\ castorsrv6\ castorsrv7\ castorsrv8\ castorsrv9\ castorsrv101\ castorsrv102\ castorsrv103\ castorsrv201\ castorsrv202\ castorsrv203\"
 
+COMM Define the file indicating the hosts
+COMM authorized to use remotely rtcopy server
 #define AuthorizedHosts	CONFIGPATH(rtcopy.hosts)
+
+#define CupvLogFile	LOGPATH(cupvd.log)
 #define CupvConfigFile	CONFIGPATH(CUPVCONFIG)
-#define CupvHost	"castorcupv"
+#define CupvHost	\"castorcupv\"
+
 #define DbConfigFile	CONFIGPATH(DBCONFIG)
 #define LocalHostsList  CONFIGPATH(castor.localhosts)
 #define MappingFile	CONFIGPATH(ext.users)
-#define NfsRoot 	/shift
+#define NfsRoot 	\"/shift\"
+
+#define NsLogFile       LOGPATH(nsd.log)
 #define NsConfigFile	CONFIGPATH(NSCONFIG)
-#define NsHost          "castorns"
-#define SNsHost         "scnsdev"
-#define NsHostPfx       cns
-#define SNsHostPfx      scns
-#define NsRoot          "/castor"
+#define NsHost          \"castorns\"
+#define SNsHost         \"scnsdev\"
+#define NsHostPfx       \"cns\"
+#define SNsHostPfx      \"scns\"
+
+COMM Define CASTOR Name server root path name to prevent
+COMM tpread/tpwrite request to/from HSM files
+#define NsRoot          \"/castor\"
+
 #define OperConfigFile	CONFIGPATH(OPERCONFIG)
 #define OperatorGid	root
 #define RemoteHostsList CONFIGPATH(castor.remhosts)
-#define RfioAlarmFile	rfio_alrm
-#define	RtcpclientdHost	"castorrtcpcld"
-#define SacctDir	/var/log/castor
-#define ShiftConfigFile	CONFIGPATH(castor.conf)
+#define SacctFile	LOGPATH(sacct)
+#define CastorConfigFile CONFIGPATH(castor.conf)
 #define StageMapFile    CONFIGPATH(stagemap.conf)
 #define OraStagerConfigFile CONFIGPATH(ORASTAGERCONFIG)
-#define StagerSuperGroup    st
-#define StagerSuperUser	stage
+#define StagerSuperGroup \"st\"
+#define StagerSuperUser	\"stage\"
 #define StagerGid	st
+
+#define TapeLogFile	LOGPATH(taped_legacy.log)
 #define TapeConfigFile	CONFIGPATH(TPCONFIG)
-#define VdqmHost        "castorvdqm1 castorvdqm2"
+#define TapeScsiInc	\"/usr/include/scsi/sg.h\"
+
+#define RmcLogFile      LOGPATH(rmcd_legacy.log)
+
+#define VdqmHost        \"castorvdqm1\ castorvdqm2\"
+#define VdqmConfigFile	CONFIGPATH(ORAVDQMCONFIG)
+
+#define VmgrLogFile	LOGPATH(vmgrd.log)
 #define VmgrConfigFile	CONFIGPATH(VMGRCONFIG)
+
+#define ExpertLogFile   LOGPATH(expertd.log)
 #define ExpertConfigFile CONFIGPATH(EXPCONFIG)
+
+#define RfioAlarmFile	rfio_alrm
+#define RfioLogFile     LOGPATH(rfiod.log)
+#define RfioNoMore      \"/var/run/nomorerfio\"
+
+#define RepackConfigFile CONFIGPATH(ORAREPACKCONFIG)
+
+#define	RtcpclientdHost	\"castorrtcpcld\"
+COMM Define the working directory of
+COMM the remote tape copy jobs.
+#define RtcpWorkDir     \"/var/lib/castor/rtcpd\"
+#define RtcpBareWorkDir /var/lib/castor/rtcpd
+COMM Define the file indicating that more
+COMM tape request should be submit on the
+COMM server.
+#define	RtcpNoMoreTapes	\"/var/run/nomoretapes\"
+COMM Define the remote tape copy daemon log file.
+#define RtcpdLogFile    LOGPATH(rtcpd_legacy.log)
+
 
 #define UseXFSPrealloc	        YES
 

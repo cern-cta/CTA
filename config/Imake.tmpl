@@ -6,6 +6,10 @@
 /*
  * @(#)Imake.tmpl,v 1.5 2004/06/09 08:45:47 CERN IT-PDP/DM   Jean-Philippe Baud
  */
+
+ifndef IMAKETMPL
+  IMAKETMPL = 1
+
 #define COMM	#
 #define NO	0
 #define YES	1
@@ -22,22 +26,24 @@
 #endif
 
 DEBUG = -O0 -g
-CASTOR_ROOT?=$(shell pwd | sed -e 's=CASTOR2/.*$$=CASTOR2=' -e 's=trunk/.*$$=trunk=' -e 's=\(v2_1_[^/]*\)/.*$$=\1=' -e 's=\(castor-[0-9\-\.]*\)/.*$$=\1=')
+#define LOCAL_PATH __local_path__
+#define PREFIX(VAR) __root_prefix__/**/_/**/VAR
+CASTOR_ROOT = $(patsubst %/,%,$(dir $(patsubst %/,%,$(dir $(patsubst "%",%,__FILE__)))))
 CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS += $(CXXFLAGS)
 CPPFLAGS += -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
+CPPFLAGS += -DBIN=\"InstallBinDir\" -DSACCT -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile -DNFSROOT=NfsRoot
 LDFLAGS += -pthread
 
 PERLLIBDIR = /usr/lib/perl/CASTOR
 
-PYTHONLIBS = `python ${CASTOR_ROOT}/config/pycompile.py --libs`
-PYTHONINC = `python ${CASTOR_ROOT}/config/pycompile.py --inc`
-PYTHONCFLAGS = `python ${CASTOR_ROOT}/config/pycompile.py --cflags`
+PYTHONLIBS = $(shell python ${CASTOR_ROOT}/config/pycompile.py --libs)
+PYTHONINC = $(shell python ${CASTOR_ROOT}/config/pycompile.py --inc)
+PYTHONCFLAGS = $(shell python ${CASTOR_ROOT}/config/pycompile.py --cflags)
 PYTHONLIBDIR = $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
 
-BIN = InstallBinDir
 ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib
 else
@@ -45,14 +51,32 @@ else
 endif
 
 #ifdef StagerSuperUser
-STAGERSUPERUSER0 = StagerSuperUser
-STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
+STAGERSUPERUSER  = -DSTAGERSUPERUSER=StagerSuperUser
 #endif
 #ifdef StagerSuperGroup
-STAGERSUPERGROUP0 = StagerSuperGroup
-STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+STAGERSUPERGROUP = -DSTAGERSUPERGROUP=StagerSuperGroup
 #endif
 
 #include <Imake.rules>
 #include <Project.tmpl>
+
+endif
+
+ifndef LOCAL_PATH
+LOCAL_PATH = 1
+
+.PHONY: PREFIX(clean) PREFIX(clobber) PREFIX(exportman)
+
+clean : PREFIX(clean)
+PREFIX(clean):
+	RemoveFiles($(PREFIX(FilesToClean)))
+
+clobber : PREFIX(clobber)
+PREFIX(clobber): clean
+	RemoveFiles($(PREFIX(FilesToClobber)))
+
+exportman : PREFIX(exportman)
+
 #include INCLUDE_IMAKEFILE
+
+endif

@@ -53,7 +53,7 @@ int explogit(const char *args, ...)
 		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, Tid, args);
 	vsprintf (prtbuf+strlen(prtbuf), msg, ap);
 	va_end (ap);
-	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) > -1) {
+	if ((fd_log = open (EXPERTLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) > -1) {
 	  write (fd_log, prtbuf, strlen(prtbuf));
 	  close (fd_log);
 	}

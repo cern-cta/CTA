@@ -6,87 +6,66 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 
 COMM 	Make tape daemon programs.
 
-TMS = NOTMS
-OPSGRP = OperatorGid
-LOGDIR = /var/log/castor
-SACCTDIR = SacctDir
-SACCTFILE = SacctDir/sacct
-SCONFIGFILE = ShiftConfigFile
 TAPEACCT = tapeacct.o
-TPCONFIG = TapeConfigFile
 #if !CASTOR_NOSTK
 CDKFLG = -DCDK -DLINUX
 CDKINC = -I/usr/include/CDK
 LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
 #endif
 #if BuildSecureTape
-SECURITYFLAG=-DCSEC
-LDFLAGS += -ldl
+CPPFLAGS += -DTPCSEC
+AddLdFlags(-ldl)
 #endif
 
-COMM######################### FLAGS ##############################
+COMM ######################### FLAGS ##############################
 
-CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
-	    $(STAGERSUPERUSER) -DTPCONFIG=\"$(TPCONFIG)\" \
-	    -D$(TMS) $(PCTAFLAG) -DSACCT -DACCTFILE=\"$(SACCTFILE)\" \
-	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR \
-	    $(CDKINC) $(SECURITYFLAG) -DSCSIINC="\"/usr/include/scsi/sg.h\""
+CPPFLAGS += -DTAPELOGFILE=TapeLogFile $(STAGERSUPERUSER) -DNOTMS \
+	    $(CDKFLG) -DVDQM -DVMGR $(CDKINC) -DSCSIINC=TapeScsiInc
 
-usrlocate.c:	locate.c
-	RemoveFiles(usrlocate.c)
-	cp locate.c usrlocate.c
-usrreadlbl.c:	readlbl.c
-	RemoveFiles(usrreadlbl.c)
-	cp readlbl.c usrreadlbl.c
-usrrwndtape.c:	rwndtape.c
-	RemoveFiles(usrrwndtape.c)
-	cp rwndtape.c usrrwndtape.c
-usrskiptape.c:	skiptape.c
-	RemoveFiles(usrskiptape.c)
-	cp skiptape.c usrskiptape.c
-usrsmcsubr.c:	smcsubr.c
-	RemoveFiles(usrsmcsubr.c)
-	cp smcsubr.c usrsmcsubr.c
-usrsmcsubr2.c:	smcsubr2.c
-	RemoveFiles(usrsmcsubr2.c)
-	cp smcsubr2.c usrsmcsubr2.c
-usrtperror.c:	tperror.c
-	RemoveFiles(usrtperror.c)
-	cp tperror.c usrtperror.c
-usrusrmsg.c:	usrmsg.c
-	RemoveFiles(usrusrmsg.c)
-	cp usrmsg.c usrusrmsg.c
-usrwritelbl.c:	writelbl.c
-	RemoveFiles(usrwritelbl.c)
-	cp writelbl.c usrwritelbl.c
-usrwrttpmrk.c:	wrttpmrk.c
-	RemoveFiles(usrwrttpmrk.c)
-	cp wrttpmrk.c usrwrttpmrk.c
+LOCAL_PATH/usrlocate.c: LOCAL_PATH/locate.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrreadlbl.c: LOCAL_PATH/readlbl.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrrwndtape.c: LOCAL_PATH/rwndtape.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrskiptape.c: LOCAL_PATH/skiptape.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrsmcsubr.c: LOCAL_PATH/smcsubr.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrsmcsubr2.c: LOCAL_PATH/smcsubr2.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrtperror.c: LOCAL_PATH/tperror.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrusrmsg.c: LOCAL_PATH/usrmsg.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrwritelbl.c: LOCAL_PATH/writelbl.c
+	RemoveFiles($@)
+	cp $< $@
+LOCAL_PATH/usrwrttpmrk.c: LOCAL_PATH/wrttpmrk.c
+	RemoveFiles($@)
+	cp $< $@
 
-FilesToClean += usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
+FilesToClean += LOCAL_PATH/usrlocate.c LOCAL_PATH/usrreadlbl.c LOCAL_PATH/usrrwndtape.c LOCAL_PATH/usrskiptape.c LOCAL_PATH/usrsmcsubr.c LOCAL_PATH/usrsmcsubr2.c LOCAL_PATH/usrtperror.c LOCAL_PATH/usrusrmsg.c LOCAL_PATH/usrwritelbl.c LOCAL_PATH/usrwrttpmrk.c
 
-sendscsicmd.o: sendscsicmd.c
-	$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE $<
-usrlocate.o: usrlocate.c ../h/Ctape.h ../h/serrno.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrreadlbl.o: usrreadlbl.c ../h/Ctape.h ../h/serrno.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrrwndtape.o: usrrwndtape.c ../h/Ctape.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrskiptape.o: usrskiptape.c ../h/Ctape.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrsmcsubr.o: usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrsmcsubr2.o: usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrtperror.o: usrtperror.c ../h/Ctape.h ../h/serrno.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrusrmsg.o:	usrusrmsg.c ../h/Ctape.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrwritelbl.o: usrwritelbl.c ../h/Ctape.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrwrttpmrk.o: usrwrttpmrk.c ../h/Ctape.h
-	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+COMPILEC(sendscsicmd.c,-DTAPE)
+COMPILEC(usrlocate.c,-DNOTRACE)
+COMPILEC(usrreadlbl.c,-DNOTRACE)
+COMPILEC(usrrwndtape.c,-DNOTRACE)
+COMPILEC(usrskiptape.c,-DNOTRACE)
+COMPILEC(usrsmcsubr.c,-DNOTRACE)
+COMPILEC(usrsmcsubr2.c,-DNOTRACE)
+COMPILEC(usrtperror.c,-DNOTRACE)
+COMPILEC(usrusrmsg.c,-DNOTRACE)
+COMPILEC(usrwritelbl.c,-DNOTRACE)
+COMPILEC(usrwrttpmrk.c,-DNOTRACE)
 
 TapeDependsOnLibrary(common,castorcommon)
 TapeDependsOnLibrary(vdqm,castorvdqm)
@@ -116,7 +95,7 @@ LIBMANPAGE(skiptape)
 LIBMANPAGE(usrlbl)
 LIBMANPAGE(wrttpmrk)
 
-TAPELIB = SharedLibraryTargetName(castortape)
+TAPELIB = DepSharedLibraryTargetName(tape,castortape)
 
 TapeProgramTarget(tpconfig,tpconfig.o,$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tprstat,tprstat.o,$(TAPELIB),$(TAPELIB),755)
@@ -125,7 +104,7 @@ EXEMANPAGE(tpconfig)
 EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
 
-TapeMakeDir($(LOGDIR),0755)
+TapeMakeDir(LogPath,0755)
 TAPED_OBJS = tpdaemon.o checkjobdied.o cvtden.o sendrep.o tplogit.o usrmsg.o
 CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
 MOUNTTAPE_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o sendtmsmount.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
@@ -144,8 +123,8 @@ EXEMANPAGE(smc)
 EXEMANPAGE(tplabel)
 EXEMANPAGE(tpdump)
 EXEMANPAGE(tape_oper)
-LOGROTATE(castor-tape-server,..,installtape)
-LOGROTATE(castor-sacct,..,installtape)
+LOGROTATE(castor-tape-server,installtape)
+LOGROTATE(castor-sacct,installtape)
 SYSCONFIG(taped,installtape)
 INITSCRIPT(taped,installtape)
-CONFIGFILE(TP,..,installtape)
+CONFIGFILE(TP,installtape)

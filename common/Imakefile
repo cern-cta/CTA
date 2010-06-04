@@ -6,22 +6,14 @@ COMM
 
 COMM		Make common routines library
 
-PATH_CONFIG = ShiftConfigFile
-MAPPING = MappingFile
-LOCHOSTSFILE = LocalHostsList
-RTHOSTSFILE = RemoteHostsList
-ADMINHOSTS = AdminHosts
-SACCTFILE = SacctDir/sacct
-WSACCTO = wsacct.o
-NFSROOT0 = NfsRoot
-CPPFLAGS += -DCTHREAD_DEBUG -DCPOOL_DEBUG -DPATH_CONFIG=\"$(PATH_CONFIG)\" -DLOCALHOSTSFILE=\"$(LOCHOSTSFILE)\" -DMAPPING_FILE=\"$(MAPPING)\" -DRTHOSTSFILE=\"$(RTHOSTSFILE)\" -DADMIN_HOSTS=\"$(ADMINHOSTS)\" -DACCTFILE=\"$(SACCTFILE)\" -DNFSROOT=\"$(NFSROOT0)\"
+CPPFLAGS += -DCTHREAD_DEBUG -DCPOOL_DEBUG -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \
 		 getfilep.o getifnam.o getuser.o log.o marshall.o \
 		 readc.o remote.o \
 		 serror.o setnetio.o socket.o solveln.o trace.o \
-		 $(WSACCTO) ypgetacct.o ypgetacctent.o \
+		 wsacct.o ypgetacct.o ypgetacctent.o \
 		 Cdlopen.o Cthread.o Csched.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \

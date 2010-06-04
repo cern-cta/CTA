@@ -21,7 +21,7 @@
 #include "vdqm_messages.h"
 #include "Castor_limits.h"
 #include "Cregexp.h"
-#ifdef CSEC
+#ifdef VDQMCSEC
 #include "Csec_api.h"
 #endif 
 
@@ -33,7 +33,7 @@ typedef struct vdqmnw {
     SOCKET listen_socket;
     SOCKET accept_socket;
     SOCKET connect_socket;
-#ifdef CSEC
+#ifdef VDQMCSEC
     Csec_context_t sec_ctx;
     uid_t Csec_uid;
     gid_t Csec_gid;

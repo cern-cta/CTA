@@ -1,38 +1,39 @@
-#
-#                      castor/repack/Imakefile
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.34 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
-#
-# Make Castor Repack System
-#
-# @author Castor Dev team, castor-dev@cern.ch
-#
+COMM
+COMM                      castor/repack/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.34 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
+COMM
+COMM Make Castor Repack System
+COMM
+COMM @author Castor Dev team, castor-dev@cern.ch
+COMM
 
-CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -I $(ORACLE_HOME)/rdbms/public
+CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=RepackConfigFile -I $(ORACLE_HOME)/rdbms/public
 SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
-SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
+SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,$(CASTOR_ROOT)/shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/db/newora,castorcommonora)
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
@@ -63,13 +64,12 @@ REPACKDBIN_SRCS =  RepackServer.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp \
 		$(REPACKCOMMON_SRC)
 REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.o)
-MakeDepSharedLibrary(db/newora,castorcommonora)
 NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(SERVDEPLIB),$(SERVLIBS),750)
-MakeDir(/var/log/castor,0755)
-LOGROTATE(castor-repack-server,../..,install)
+MakeDir(LogPath,0755)
+LOGROTATE(castor-repack-server,install)
 SYSCONFIG(repackd,install)
 INITSCRIPT(repackd,install)
-CONFIGFILE(ORAREPACK,../..,install)
+CONFIGFILE(ORAREPACK,install)
 
 REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
 REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.o)

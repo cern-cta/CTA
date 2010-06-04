@@ -17,9 +17,7 @@
 
 #define DIRXSIZE (HYPERSIZE+WORDSIZE+LONGSIZE+LONGSIZE+LONGSIZE+HYPERSIZE+TIME_TSIZE+TIME_TSIZE+TIME_TSIZE+WORDSIZE+BYTESIZE)
 
-#ifdef CSEC
 #define CNS_SEC_PORT 5510
-#endif
 #define CNS_PORT 5010
 
 		/* constants used for setting retention period on disk */

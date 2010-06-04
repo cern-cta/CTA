@@ -29,13 +29,8 @@ VOMS_LOCATION=VomsLocation
 #endif
 GLOBUS_FLAVOUR_NONPTHR=GlobusFlavour
 VOMS_FLAVOUR_NONPTHR=GlobusFlavour
-#if defined(__STDC__)
-GLOBUS_FLAVOUR=GlobusFlavour##pthr
-VOMS_FLAVOUR=GlobusFlavour##pthr
-#else
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 VOMS_FLAVOUR=GlobusFlavour/**/pthr
-#endif
 #if UseVOMS
 VOMS_INCLUDE=-I$(VOMS_LOCATION)/include/glite/security/voms -DUSE_VOMS
 VOMS_LIB_NONPTHR=-L$(VOMS_LOCATION)/lib -lvomsc
@@ -54,25 +49,29 @@ GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
 GSILIB = SecLibsGSI -lc -ldl
 SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GSILIB))
 
-Csec_plugin_GSI.o: Csec_plugin_GSS.c
+LOCAL_PATH/Csec_plugin_GSI.o: LOCAL_PATH/Csec_plugin_GSS.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
-Csec_plugin_GSI.d: Csec_plugin_GSS.c
-	@gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_GSI.d: LOCAL_PATH/Csec_plugin_GSS.c
+	gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_GSI_mapper.o: Csec_plugin_GSS_mapper.c
+LOCAL_PATH/Csec_plugin_GSI_mapper.o: LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
-Csec_plugin_GSI_mapper.d: Csec_plugin_GSS_mapper.c
-	@gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_GSI_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_GSI_pthr.o: Csec_plugin_GSS.c
+LOCAL_PATH/Csec_plugin_GSI_pthr.o: LOCAL_PATH/Csec_plugin_GSS.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
-Csec_plugin_GSI_pthr.d: Csec_plugin_GSS.c
-	@gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_GSI_pthr.d: LOCAL_PATH/Csec_plugin_GSS.c
+	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_GSI_pthr_mapper.o: Csec_plugin_GSS_mapper.c
+LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.o: LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
-Csec_plugin_GSI_pthr_mapper.d: Csec_plugin_GSS_mapper.c
-	@gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 #if UseKRB5
@@ -87,15 +86,17 @@ KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
 KRB5LIB = SecLibsKRB5 -lc -ldl
 SharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
-Csec_plugin_KRB5.o: Csec_plugin_GSS.c
+LOCAL_PATH/Csec_plugin_KRB5.o: LOCAL_PATH/Csec_plugin_GSS.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
-Csec_plugin_KRB5.d: Csec_plugin_GSS.c
-	@gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_KRB5.d: LOCAL_PATH/Csec_plugin_GSS.c
+	gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_KRB5_mapper.o:  Csec_plugin_GSS_mapper.c
+LOCAL_PATH/Csec_plugin_KRB5_mapper.o:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
-Csec_plugin_KRB5_mapper.d:  Csec_plugin_GSS_mapper.c
-	@gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
+	gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 IDLIB_OBJS = Csec_plugin_ID.o

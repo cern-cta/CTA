@@ -39,7 +39,7 @@
 #endif
 #endif
 #include "vmgr_struct.h"
-#ifdef CSEC
+#ifdef VMGRCSEC
 #include "Csec_api.h"
 #endif 
 #include "vmgr_constants.h" 
@@ -110,7 +110,7 @@ struct vmgr_srv_thread_info {
 	int		s;		/* socket for communication with client */
 	struct vmgr_dbfd dbfd;
 	char		errbuf[PRTBUFSZ];
-#ifdef CSEC
+#ifdef VMGRCSEC
         Csec_context_t sec_ctx;
         uid_t Csec_uid;
         gid_t Csec_gid;

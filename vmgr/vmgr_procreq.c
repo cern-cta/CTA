@@ -29,7 +29,7 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 #define RESETID(UID,GID) resetid(&UID, &GID, thip);
  
 void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
-#ifdef CSEC
+#ifdef VMGRCSEC
   if (thip->Csec_service_type < 0) {
     *u = thip->Csec_uid;
     *g = thip->Csec_gid;

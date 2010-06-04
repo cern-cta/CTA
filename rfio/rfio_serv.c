@@ -295,7 +295,7 @@ int main (argc, argv)
     loglevel = LOG_DEBUG;
   }
   if (logging && !lfname) {
-    strcpy(logfile, LOGFILE);
+    strcpy(logfile, RFIOLOGFILE);
   }
   if (!(strcmp(logfile, "stderr"))) {
     strcpy(logfile, "");

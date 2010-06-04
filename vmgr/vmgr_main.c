@@ -31,7 +31,7 @@
 #include "vmgr.h"
 #include "vmgr_server.h"
 #include "patchlevel.h"
-#ifdef CSEC
+#ifdef VMGRCSEC
 #include "Csec_api.h"
 #endif
 
@@ -168,7 +168,7 @@ int vmgr_main(main_args)
   }
   memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
   sin.sin_family = AF_INET ;
-#ifdef CSEC
+#ifdef VMGRCSEC
   if ((p = getenv ("SVMGR_PORT")) || (p = getconfent ("SVMGR", "PORT", 0))) {
     sin.sin_port = htons ((unsigned short)atoi (p));
   } else if (sp = getservbyname ("svmgr", "tcp")) {
@@ -529,7 +529,7 @@ doit(arg)
   char req_data[REQBUFSZ-3*LONGSIZE];
   int req_type = 0;
   struct vmgr_srv_thread_info *thip = (struct vmgr_srv_thread_info *) arg;
-#ifdef CSEC
+#ifdef VMGRCSEC
   char *username;
   Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
   if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {

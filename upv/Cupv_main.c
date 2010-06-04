@@ -31,7 +31,7 @@
 #include "Cregexp.h"
 #include "Cgetopt.h"
 #include "patchlevel.h"
-#ifdef CSEC
+#ifdef UPVCSEC
 #include "Csec_api.h"
 #endif
 
@@ -154,7 +154,7 @@ int Cupv_main(main_args)
   }
   memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
   sin.sin_family = AF_INET ;
-#ifdef CSEC
+#ifdef UPVCSEC
   if ((p = getenv ("SCUPV_PORT")) || (p = getconfent ("SCUPV", "PORT", 0))) {
     sin.sin_port = htons ((unsigned short)atoi (p));
   } else if (sp = getservbyname ("sCupv", "tcp")) {
@@ -409,7 +409,7 @@ doit(arg)
   char req_data[REQBUFSZ-3*LONGSIZE];
   int req_type = 0;
   struct Cupv_srv_thread_info *thip = (struct Cupv_srv_thread_info *) arg;
-#ifdef CSEC
+#ifdef UPVCSEC
   Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
   if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
     Cupvlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());

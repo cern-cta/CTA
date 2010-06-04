@@ -1,30 +1,30 @@
-#
-#                      castor/job/stagerjob/Imakefile
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2009/08/18 09:42:52 $ $Author: waldron $
-#
-# Makefile for the CASTOR2 stagerjob
-#
-# @author Castor Dev team, castor-dev@cern.ch
+COMM
+COMM                      castor/job/stagerjob/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2009/08/18 09:42:52 $ $Author: waldron $
+COMM
+COMM Makefile for the CASTOR2 stagerjob
+COMM
+COMM @author Castor Dev team, castor-dev@cern.ch
 
 CXXFLAGS += `curl-config --cflags`
-LDFLAGS += -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`
+AddLdFlags(-ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -43,5 +43,5 @@ JOB_SRCS = StagerJob.cpp \
            ../SharedResourceHelper.cpp
 JOBS_OBJS = $(JOB_SRCS:.cpp=.o)
 NormalProgramTarget(stagerjob,$(JOBS_OBJS),,,6755)
-MakeDir(/var/log/castor,0755)
-LOGROTATE(castor-job,../../..,install)
+MakeDir(LogPath,0755)
+LOGROTATE(castor-job,install)

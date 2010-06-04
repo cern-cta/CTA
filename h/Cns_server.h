@@ -17,9 +17,7 @@
 #include <mysql.h>
 #endif
 #include "Cns_struct.h"
-#ifdef CSEC
 #include "Csec_api.h"
-#endif
 
                         /* name server constants and macros */
 
@@ -139,14 +137,12 @@ struct Cns_srv_thread_info {
         int                s;                  /* socket for communication with client */
         struct Cns_dbfd dbfd;
         char               errbuf[PRTBUFSZ];
-#ifdef CSEC
         Csec_context_t     sec_ctx;
         uid_t              Csec_uid;
         gid_t              Csec_gid;
         char               *Csec_mech;
         char               *Csec_auth_id;
         int                secure;             /* flag to indicate whether security is enabled */
-#endif
         u_signed64         starttime;
 };
 

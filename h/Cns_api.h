@@ -44,12 +44,10 @@ struct Cns_api_thread_info {
 	mode_t		mask;		/* current HSM umask */
 	char		server[CA_MAXHOSTNAMELEN+1];	/* current HSM Name Server */
 	char            defserver[CA_MAXHOSTNAMELEN+1]; /* default HSM Name Server */
-#ifdef CSEC
 	uid_t		Csec_uid;
 	gid_t		Csec_gid;
 	char		Csec_mech[CA_MAXCSECPROTOLEN+1];
 	char		Csec_auth_id[CA_MAXCSECNAMELEN+1];
-#endif
         /* Authorization ID used by the API, otherwise it uses geteuid/getegid
 	   In any case these uid/gid are only trusted if the clients has service credentials */
         int             use_authorization_id;

@@ -5,10 +5,7 @@ COMM
 COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2009/08/18 09:42:59 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
-LOGDIR = /var/log/castor
-LOGFILE = $(LOGDIR)/expertd.log
-EXPERT_CONFIG = ExpertConfigFile
-CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DEXPERT_CONFIG=\"$(EXPERT_CONFIG)\"
+CPPFLAGS += -DEXPERTLOGFILE=ExpertLogFile -DEXPERT_CONFIG=ExpertConfigFile
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
@@ -16,14 +13,14 @@ DependsOnLibrary(upv,castorupv)
 EXPERTLIB_OBJS = send2expert.o exp_api.o
 SharedLibraryTarget(castorexpert,$(EXPERTLIB_OBJS),,)
 
-MakeDir($(LOGDIR),0755)
+MakeDir(LogPath,0755)
 EXPERTD_OBJS = expertd.o exp_procreq.o sendrep.o explogit.o
-EXPERTDEPLIB = SharedLibraryTargetName(castorexpert)
-NormalProgramTarget(expertd,$(EXPERTD_OBJS),$(EXPERTDEPLIB),SharedLibraryTargetName(castorexpert),750)
-LOGROTATE(castor-expert-server,..,install)
+EXPERTDEPLIB = DepSharedLibraryTargetName(expert,castorexpert)
+NormalProgramTarget(expertd,$(EXPERTD_OBJS),$(EXPERTDEPLIB),$(EXPERTDEPLIB),750)
+LOGROTATE(castor-expert-server,install)
 SYSCONFIG(expertd,install)
 INITSCRIPT(expertd,install)
-CONFIGFILE(EXP,..,install)
+CONFIGFILE(EXP,install)
 
 EXEMANPAGE(expert)
 EXEMANPAGE(expertd)

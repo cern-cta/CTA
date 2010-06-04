@@ -188,18 +188,18 @@
 #endif /* VDQM_HOST */
 
 #ifndef VDQM_PORT
-#ifdef CSEC
+#ifdef VDQMCSEC
 #define SVDQM_PORT       (5512)
 #endif
 #define VDQM_PORT        (5012)
 #endif /* VDQM_PORT */
 
 #ifndef VDQMBC_PORT
-#ifdef CSEC
+#ifdef VDQMCSEC
 #define VDQMBC_PORT      (9390)
 #else
 #define VDQMBC_PORT      (8890)
-#endif /* CSEC */
+#endif /* VDQMCSEC */
 #endif /* VDQMBC_PORT */
 
 #define VDQM_TIMEOUT     (300)

@@ -93,7 +93,7 @@ int Cns_main(main_args)
   jid = getpid();
   strcpy (func, "Cns_serv");
   nsconfigfile[0] = '\0';
-  strcpy (logfile, LOGFILE);
+  strcpy (logfile, NSLOGFILE);
 
   /* process command line options if any */
 

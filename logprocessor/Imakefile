@@ -1,37 +1,37 @@
-#
-#                      logprocessor
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
-#
-# Makefile for the Log Processor Daemon
-#
-# @author Castor Dev team, castor-dev@cern.ch
+COMM
+COMM                      logprocessor
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
+COMM
+COMM Makefile for the Log Processor Daemon
+COMM
+COMM @author Castor Dev team, castor-dev@cern.ch
 
 LIBNOARCHDIR = InstallLibNoArchDir
 
-InstallTarget(logprocessord,755,$(BIN))
+InstallTarget(logprocessord,755)
 InstallNonExecFile(DLF.py,$(LIBNOARCHDIR)/log-processor,644)
 InstallNonExecFile(LoggingCommon.py,$(LIBNOARCHDIR)/log-processor,644)
-MakeDir(/var/log/castor,0755)
+MakeDir(LogPath,0755)
 MakeDir(/var/log/dlf,0755)
-LOGROTATE(castor-logprocessor-server,..,install)
+LOGROTATE(castor-logprocessor-server,install)
 SYSCONFIG(logprocessord,install)
 INITSCRIPT(logprocessord,install)
-CONFIGFILE(DLF,..,install)
-EXAMPLEFILE(logprocessord.conf,../debian,/etc/castor,install)
+CONFIGFILE(DLF,install)
+EXAMPLEFILE(logprocessord.conf,/etc/castor,install)

@@ -39,7 +39,7 @@
 #endif
 #endif
 
-#ifdef CSEC
+#ifdef UPVCSEC
 #include "Csec_api.h"
 #endif
 
@@ -115,7 +115,7 @@ typedef Cdb_off_t DBLISTPTR;
 struct Cupv_srv_thread_info {
         int		s;		   /* socket for communication with client */
         struct          Cupv_dbfd dbfd;
-#ifdef CSEC
+#ifdef UPVCSEC
         Csec_context_t  sec_ctx;
         uid_t           Csec_uid;
         gid_t           Csec_gid;

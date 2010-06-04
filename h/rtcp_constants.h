@@ -196,11 +196,11 @@
  * Some general constants
  */
 #if !defined(RTCOPY_PORT)
-#ifdef CSEC
+#ifdef RTCOPYCSEC
 #define RTCOPY_PORT        (5503)
 #else
 #define RTCOPY_PORT        (5003)
-#endif /* CSEC */
+#endif /* RTCOPYCSEC */
 #endif /* RTCOPY_PORT */
 
 #define RTCP_MAX_REQUEST_LENGTH (8*1024*1024)

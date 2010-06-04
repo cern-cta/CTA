@@ -24,4 +24,6 @@ COMM
 COMM @author castor-dev team
 COMM
 
-SUBDIRS = internal external xroot
+include LOCAL_PATH/internal/Makefile
+include LOCAL_PATH/external/Makefile
+include LOCAL_PATH/xroot/Makefile

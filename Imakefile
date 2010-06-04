@@ -6,45 +6,44 @@ COMM
 
 COMM		Make CASTOR libraries and executables
 
-SUBDIRS = common dlf security upv ns rfio logprocessor \
-	  expert rmc rtcopy client tape vdqm vmgr \
-	  hsmtools h castor gridftp2 shlib clips test
-
-clean: imakeclean
-clobber: imakeclobber
-
 purge: clobber
 	find . -name Makefile -print | grep -v codeGeneration | xargs rm -f;	\
 	find . -name Makefile.bak -print | grep -v codeGeneration | xargs rm -f
 
+clean: imakeclean
+clobber: imakeclobber
+
 imakeclean:
-	@(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clean)
+	(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clean)
 imakeclobber:
-	@(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clobber)
+	(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clobber)
 
 tar:
-	@sh ./maketar.sh
+	sh ./maketar.sh
 
 sql:
-	@sh ./makesql.sh
+	sh ./makesql.sh
 
 doxygen: tools/doxyconfig
 	doxygen tools/doxyconfig
 
-.PHONY : client installclient tape installtape
-
-client: 
-	GotoSubdirs(upv ns client rfio vdqm vmgr security shlib)
-
-installclient: checkDESTDIR checkVERSION client exportman
-	GotoSubdirs(upv ns client rfio vdqm vmgr castor common h shlib)
-
-tape:
-	GotoSubdirs(rmc tape rtcopy)
-
-installtape: installclient tape
-	GotoSubdirs(rmc tape rtcopy)
-
-all: client tape
-
-install: installtape
+include LOCAL_PATH/upv/Makefile
+include LOCAL_PATH/hsmtools/Makefile
+include LOCAL_PATH/h/Makefile
+include LOCAL_PATH/client/src/stager/Makefile
+include LOCAL_PATH/rfio/Makefile
+include LOCAL_PATH/expert/Makefile
+include LOCAL_PATH/tape/Makefile
+include LOCAL_PATH/clips/Makefile
+include LOCAL_PATH/logprocessor/Makefile
+include LOCAL_PATH/vdqm/Makefile
+include LOCAL_PATH/castor/Makefile
+include LOCAL_PATH/security/Makefile
+include LOCAL_PATH/vmgr/Makefile
+include LOCAL_PATH/rmc/Makefile
+include LOCAL_PATH/dlf/Makefile
+include LOCAL_PATH/ns/Makefile
+include LOCAL_PATH/rtcopy/Makefile
+include LOCAL_PATH/common/Makefile
+include LOCAL_PATH/gridftp2/Makefile
+include LOCAL_PATH/shlib/Makefile
