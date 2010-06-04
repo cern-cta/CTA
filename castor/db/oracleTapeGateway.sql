@@ -723,18 +723,15 @@ create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
   tcId  INTEGER:=0;
   lastUpdateTime NUMBER;
   knownName VARCHAR2(2048);
-  newFseq NUMBER;
   trId NUMBER;
   srId NUMBER;
   unused INTEGER;
 BEGIN
   ret:=0;
   BEGIN
-    -- last fseq is the first fseq value available for this migration
-    SELECT streammigration, lastfseq, id INTO strId, newFseq, trId
+    SELECT streammigration, id INTO strId, trId
       FROM TapeGatewayRequest
-     WHERE vdqmvolreqid = transactionId
-     FOR UPDATE;
+     WHERE vdqmvolreqid = transactionId;
 
     SELECT vid INTO outVid
       FROM Tape
@@ -804,7 +801,15 @@ BEGIN
     FROM CastorFile
    WHERE id = cfId; -- we rely on the check done before
 
+  DECLARE
+    newFseq NUMBER;
   BEGIN
+   -- Atomically increment and read the next FSEQ to be written to
+   UPDATE TapeGatewayRequest
+     SET lastfseq=lastfseq+1
+     WHERE id=trId
+     RETURNING lastfseq-1 into newFseq; -- The previous calue is where we'll write
+
     INSERT INTO TapeGatewaySubRequest
       (fseq, id, tapecopy, request,diskcopy)
       VALUES (newFseq, ids_seq.nextval, tcId,trId, dcid)
@@ -814,10 +819,6 @@ BEGIN
       (id,type)
       VALUES (srId,180);
   
-
-   UPDATE TapeGatewayRequest
-     SET lastfseq=lastfseq+1
-     WHERE id=trId; --increased when we have the proper value
 
    OPEN outputFile FOR
      SELECT fileId,nshost,lastUpdateTime,ds,mp,path,knownName,fseq,filesize,id
