@@ -1,5 +1,5 @@
 COL fileName new_value spoolFile;
-select SUBSTR('&1',INSTR('&1','/',-1)+1)||'.'||SUBSTR('&_USER',11)||'.&2' fileName from dual;
+select SUBSTR('&1',INSTR('&1','/',-1)+1)||'.'||SUBSTR('&_USER',INSTR('&_USER','NS_')+3)||'.&2' fileName from dual;
 
 PROMPT 'writing to &spoolFile'
 SPOOL '&spoolFile'
