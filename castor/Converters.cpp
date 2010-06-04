@@ -76,7 +76,7 @@ void castor::Converters::addFactory (const ICnvFactory* factory) {
 }
 
 //-----------------------------------------------------------------------------
-// converter
+// cnvFactory
 //-----------------------------------------------------------------------------
 const castor::ICnvFactory*
 castor::Converters::cnvFactory(const unsigned int repType,
