@@ -122,6 +122,7 @@
 #include	<sys/stat.h>
 #include	<string.h>
 #include "imakemdep.h"
+#include <stdarg.h>
 
 /* Macros for prototyping */
 #ifdef _PROTO
@@ -188,8 +189,7 @@ void	CleanCppOutput _PROTO((FILE *, char *));
 void	cppit _PROTO((char *, char *, FILE *, char *));
 void	init _PROTO(());
 boolean	isempty _PROTO((char *));
-void	LogFatal _PROTO((char *, char *));
-void    LogFatalI _PROTO((char *, int));
+void	LogFatal _PROTO((char *, ...));
 void	makeit _PROTO(());
 void	SetOpts _PROTO((int, char **));
 void	showit _PROTO((FILE *));
@@ -210,7 +210,6 @@ imake_catch _PROTO((int));
 boolean	verbose = FALSE;
 boolean	show = TRUE;
 extern char	*getenv _PROTO((const char *));
-extern char	*mktemp _PROTO((char *));
 
 main(argc, argv)
 	int	argc;
@@ -224,10 +223,7 @@ main(argc, argv)
 	SetOpts(argc, argv);
 
 	Imakefile = FindImakefile(Imakefile);
-	if (Makefile)
-		tmpMakefile = Makefile;
-	else
-		tmpMakefile = mktemp(Strdup(tmpMakefile));
+  tmpMakefile = Makefile;
 	AddMakeArg("-f");
 	AddMakeArg( tmpMakefile );
 	sprintf(makeMacro, "MAKE=%s", program);
@@ -282,7 +278,7 @@ imake_catch(sig)
 	int	sig;
 {
 	errno = 0;
-	LogFatalI("Signal %d.", sig);
+	LogFatal("Signal %d.", sig);
 }
 
 /*
@@ -437,18 +433,8 @@ char *FindImakefile(Imakefile)
 }
 
 void
-LogFatalI(s, i)
-	char *s;
-	int i;
-{
-	/*NOSTRICT*/
-	LogFatal(s, (char *)i);
-}
-
-void
-LogFatal(x0,x1)
-	char *x0, *x1;
-{
+LogFatal(char* x0,...) {
+  va_list ap;
 	static boolean	entered = FALSE;
 
 	if (entered)
@@ -458,7 +444,9 @@ LogFatal(x0,x1)
 	fprintf(stderr, "%s: ", program);
 	if (errno)
 		fprintf(stderr, "%s: ", strerror(errno));
-	fprintf(stderr, x0,x1);
+	va_start(ap, x0);
+  vfprintf(stderr,x0,ap);
+  va_end(ap);
 	fprintf(stderr, "  Stop.\n");
 	wrapup();
 	exit(1);
@@ -494,7 +482,7 @@ cppit(Imakefile, template, outfd, outfname)
 	cleanedImakefile = CleanCppInput(Imakefile);
 #if defined(_WIN32)
 	if ((pipeFile = fopen(ImakefileC, "w")) == NULL)
-		LogFatalI("Cannot open %s for output.", (int) ImakefileC);
+		LogFatal("Cannot open %s for output.", (int) ImakefileC);
 	haveImakefileC = TRUE;
 	fprintf(pipeFile, "#define IMAKE_TEMPLATE\t\"%s\"\n",
 		template);
@@ -509,7 +497,7 @@ cppit(Imakefile, template, outfd, outfname)
 	if (status < 0)
 		LogFatal("Cannot spawn %s.", cpp);
 	if (status > 0)
-		LogFatalI("Exit code %d.", status);
+		LogFatal("Exit code %d.", status);
 	close(1);
 #else
 	/*
@@ -527,7 +515,7 @@ cppit(Imakefile, template, outfd, outfname)
 	if (pid) {	/* parent */
 		close(pipefd[0]);
 		if ((pipeFile = fdopen(pipefd[1], "w")) == NULL)
-			LogFatalI("Cannot fdopen fd %d for output.", pipefd[1]);
+			LogFatal("Cannot fdopen fd %d for output.", pipefd[1]);
 		fprintf(pipeFile, "#define IMAKE_TEMPLATE\t\"%s\"\n",
 			template);
 		fprintf(pipeFile, "#define INCLUDE_IMAKEFILE\t<%s>\n",
@@ -538,14 +526,14 @@ cppit(Imakefile, template, outfd, outfname)
 			errno = 0;
 #ifdef SYSV
 			if ((status >> 8) & 0xff)
-				LogFatalI("Signal %d.", (status >> 8) & 0xff);
+				LogFatal("Signal %d.", (status >> 8) & 0xff);
 			if (status & 0xff)
-				LogFatalI("Exit code %d.", status & 0xff);
+				LogFatal("Exit code %d.", status & 0xff);
 #else	/* !SYSV */
 			if (status.w_termsig)
-				LogFatalI("Signal %d.", status.w_termsig);
+				LogFatal("Signal %d.", status.w_termsig);
 			if (status.w_retcode)
-				LogFatalI("Exit code %d.", status.w_retcode);
+				LogFatal("Exit code %d.", status.w_retcode);
 #endif	/* !SYSV */
 		}
 	} else {	/* child... dup and exec cpp */
@@ -581,7 +569,7 @@ makeit()
 	if (status < 0)
 		LogFatal("Cannot spawn %s.", make_argv[0]);
 	if (status > 0)
-		LogFatalI("Exit code %d.", status);
+		LogFatal("Exit code %d.", status);
 #else
 	pid = fork();
 	if (pid < 0)
@@ -591,14 +579,14 @@ makeit()
 			errno = 0;
 #ifdef SYSV
 			if ((status >> 8) & 0xff)
-				LogFatalI("Signal %d.", (status >> 8) & 0xff);
+				LogFatal("Signal %d.", (status >> 8) & 0xff);
 			if (status & 0xff)
-				LogFatalI("Exit code %d.", status & 0xff);
+				LogFatal("Exit code %d.", status & 0xff);
 #else	/* !SYSV */
 			if (status.w_termsig)
-				LogFatalI("Signal %d.", status.w_termsig);
+				LogFatal("Signal %d.", status.w_termsig);
 			if (status.w_retcode)
-				LogFatalI("Exit code %d.", status.w_retcode);
+				LogFatal("Exit code %d.", status.w_retcode);
 #endif	/* !SYSV */
 		}
 	} else {	/* child... dup and exec cpp */
@@ -659,17 +647,22 @@ char *CleanCppInput(Imakefile)
 		 && strcmp(ptoken, "else")
 		 && strcmp(ptoken, "endif")
 		 && strcmp(ptoken, "if")) {
-		    if (outFile == NULL) {
-			tmpImakefile = mktemp(Strdup(tmpImakefile));
-			cleanedImakefile = tmpImakefile;
-			outFile = fopen(tmpImakefile, "w");
-			if (outFile == NULL)
+      if (outFile == NULL) {
+        int len = strlen(tmpImakefile);
+        char *new = Emalloc(len+7);
+        strncpy(new,tmpImakefile,len);
+        strncpy(new+len,"XXXXXX",7);
+        int fd = mkstemp(new);
+        tmpImakefile = new;
+        outFile = fdopen(fd, "w");
+        cleanedImakefile = tmpImakefile;
+        if (outFile == NULL)
 			    LogFatal("Cannot open %s for write.\n",
-				tmpImakefile);
-		    }
-		    fwrite(punwritten, sizeof(char), pbuf-punwritten, outFile);
-		    fputs("/**/", outFile);
-		    punwritten = pbuf;
+                   tmpImakefile);
+      }
+      fwrite(punwritten, sizeof(char), pbuf-punwritten, outFile);
+      fputs("/**/", outFile);
+      punwritten = pbuf;
 		}
 		*pend = savec;
 	    }
@@ -855,7 +848,7 @@ char *Emalloc(size)
 	char	*p;
 
 	if ((p = malloc(size)) == NULL)
-		LogFatalI("Cannot allocate %d bytes\n", size);
+		LogFatal("Cannot allocate %d bytes\n", size);
 	return(p);
 }
 
