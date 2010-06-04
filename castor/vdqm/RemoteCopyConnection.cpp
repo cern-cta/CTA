@@ -189,9 +189,6 @@ bool castor::vdqm::RemoteCopyConnection::sendJob(
   // After marshalling we can send the information to the RTCPD or tape
   // aggregator daemon
   rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, true, true, m_socket, buf);
-#endif
 
   if (rc == -1) {
     serrno = SECOMERR;
@@ -225,10 +222,6 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
 
 
   int rc = netread_timeout(m_socket, buffer, LONGSIZE*3, VDQM_TIMEOUT);
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, false, true, m_socket,
-    buffer);
-#endif
 
   switch (rc) {
   case -1:

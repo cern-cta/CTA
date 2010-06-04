@@ -137,42 +137,13 @@ rfio_xyread(lun, buf, nrec, nwant, ngot, chopt, irc)
  * Fortran wrapper
  */
 
-#if defined(CRAY)
-#include <fortran.h>            /* Fortran to C conversion macros       */
-#endif /* CRAY */
-
-#if defined(CRAY)
-void XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc)
-     int     *flun, *fnrec, *fnwant, *fngot, *firc;
-     char    *fbuf;
-     _fcd    fchopt;
-#else /* sun || apollo || sgi || ultrix */
-#if (defined(hpux) && !defined(PPU)) || (defined(_AIX) && defined(_IBMR2) && !defined(EXTNAME))
-#define xyread_  xyread
-#endif  /* hpux && !PPU || AIX && !EXTNAME */
-
-#if defined(_WIN32)
-     void DLL_DECL _stdcall XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, fchoptl, firc)
-#else
-          void xyread_(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, fchoptl)
-#endif
+void xyread_(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, fchoptl)
           int     *flun, *fnrec, *fnwant, *fngot, *firc;
           char    *fbuf, *fchopt;
           int     fchoptl;
-#endif  /* CRAY */
 {
   char    *chopt;         /* xyread options                       */
   int     status;         /* xyread return status                 */
-#if defined(CRAY)
-  int     fchoptl;        /* CRAY fortran CHOPT string len        */
-  char    *fchoptp;       /* CRAY fortran CHOPT C char pointer    */
-
-  /*
-   * convert fortran arguments
-   */
-  fchoptp = _fcdtocp(fchopt);
-  fchoptl = _fcdlen(fchopt);
-#endif  /* CRAY */
 
   INIT_TRACE("RFIO_TRACE");
   if ((chopt = malloc((unsigned) fchoptl+1)) == NULL)        {
@@ -181,11 +152,7 @@ void XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc)
     return;
   }
 
-#if defined(CRAY)
-  strncpy(chopt, fchoptp, fchoptl); chopt[fchoptl] = '\0';
-#else
   strncpy(chopt, fchopt, fchoptl); chopt[fchoptl] = '\0';
-#endif  /* CRAY */
 
   TRACE(1, "rfio", "XYREAD(%d, %x, %d, %d, %x, %s, %x)",
         *flun, fbuf, *fnrec, *fnwant, fngot, chopt, firc);
@@ -196,14 +163,3 @@ void XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc)
   (void) free(chopt);
   return;
 }
-
-#if defined(apollo)
-void xyread(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, fchoptl)
-     int     *flun, *fnrec, *fnwant, *fngot, *firc;
-     char    *fbuf, *fchopt;
-     short    * fchoptl;
-{
-  xyread_(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, *fchoptl) ;
-  return ;
-}
-#endif /* apollo */

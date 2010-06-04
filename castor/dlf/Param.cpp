@@ -75,13 +75,7 @@ castor::dlf::Param::Param(const char* name,
   // There is NO localtime_r() on Windows,
   // so we will use non-reentrant version localtime().
   struct tm tmstruc;
-#if !defined(_WIN32)
   localtime_r (&time, &tmstruc);
-#else
-  struct tm* p_tmstruc;
-  p_tmstruc = localtime(&time);
-  tmstruc = *p_tmstruc;
-#endif
   std::ostringstream s;
   s << std::setw(2) << tmstruc.tm_mon+1
     << "/" << tmstruc.tm_mday

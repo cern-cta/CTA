@@ -135,7 +135,6 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     char *ifce = NULL;
     char file_path[CA_MAXPATHLEN+1];
 
-#if defined(ACCTON)
     if ( client == NULL || tape == NULL ) return(-1);
     tapereq = &tape->tapereq;
     if ( file != NULL ) {
@@ -217,7 +216,6 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
                     fseq,errmsgtxt);
     if ( subtype == RTCPPRC || subtype == RTCPPRR ) 
         rc = rtcp_AccountTiming(tape,file);
-#endif /* ACCTON */
     return(0);
 }
 

@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 // Include Files
-#if !defined(_WIN32)
 #include <net.h>
 #include <netdb.h>
 #include <errno.h>
@@ -33,9 +32,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#else
-#include <winsock2.h>
-#endif
 #include <string>
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -104,14 +100,8 @@ void castor::io::ClientSocket::connect()
   // consequence of this EINPROGRESS (Operation now in progress) is an expected
   // return value of the connect() call. We reset errno to 0 as this is expected
   // behaviour.
-#if !defined(_WIN32)
   if ((m_connTimeout > 0) && (errno == EINPROGRESS)) {
     errno = 0;
   }
-#else
-  if ((m_connTimeout > 0) && (WSAGetLastError() != WSAEINPROGRESS)) {
-    errno = 0;
-  }
-#endif
 }
 

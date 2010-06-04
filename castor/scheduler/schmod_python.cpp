@@ -75,11 +75,6 @@ extern "C" {
   //---------------------------------------------------------------------------
   int sched_init(void*) {
 
-    // Ignore SIGXFSZ signal which is raised when the maximum file size is
-    // exceeded as configured by ulimit(1)
-#ifdef SIGXDSZ
-    signal(SIGXFSZ, SIG_IGN);
-#endif
     signal(SIGPIPE, SIG_IGN);
 
     // Initialize DLF logging

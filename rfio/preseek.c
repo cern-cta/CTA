@@ -192,20 +192,7 @@ int DLL_DECL rfio_preseek(s,iov,iovnb)
 /*
  * FORTRAN bindings.
  */
-#if defined(CRAY)
-#include <fortran.h>  /* FORTRAN to C conversion macros */
-#endif
-
-
-#if defined(CRAY)
-int PRESEE(sptr,iov,iovnbptr)
-#else
-#if defined(_AIX)
-     int DLL_DECL presee(sptr,iov,iovnbptr)
-#else
      int DLL_DECL presee_(sptr,iov,iovnbptr)
-#endif /* AIX */
-#endif /* CRAY */
      int      * sptr ;
      struct iovec * iov ;
      int     * iovnbptr ;

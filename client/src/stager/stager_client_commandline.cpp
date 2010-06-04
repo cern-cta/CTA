@@ -14,11 +14,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <grp.h>
-#if !defined(_WIN32)
 #include <unistd.h>
-#else
-#include "pwd.h"        // For getuid(), getgid()
-#endif
 
 /* ============= */
 /* Local headers */

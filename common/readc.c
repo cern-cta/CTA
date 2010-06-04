@@ -20,30 +20,15 @@
  *
  */
 
-#if !defined(CRAY)
 #include <stdio.h>
 #include <sys/types.h>
 #include <osdep.h>
 
-#if defined(hpux) || (defined(_AIX) && defined(_IBMR2))
-void DLL_DECL read_s(stream,buff,count,status)
-#else
-#if defined(_WIN32)
-void DLL_DECL _stdcall READ_S(stream,buff,count,status)
-#else
 void DLL_DECL read_s_(stream,buff,count,status)
-#endif
-#endif	/* hpux	|| AIX */
-
-#if defined(apollo)
-        int * stream ;
-#else
-	FILE **stream ;
-#endif  /* apollo */
-
-        char *  buff ;
-        int  * count ;
-        int * status ;
+     FILE **stream ;
+     char *  buff ;
+     int  * count ;
+     int * status ;
 {
 	int rcode ;
         int size ;
@@ -56,11 +41,7 @@ void DLL_DECL read_s_(stream,buff,count,status)
 	/*
  	 * Reading the record length.
 	 */	
-#if defined(apollo)
-        rcode= read(*stream,&size,sizeof(size)) ;
-#else
 	rcode= fread(&size,sizeof(size),1,*stream) ;
-#endif  /* apollo */
 	if ( rcode == 0 ) {
 		/*
 		 * End of file.
@@ -70,11 +51,7 @@ void DLL_DECL read_s_(stream,buff,count,status)
 		return ;
 	}
 
-#if defined(apollo)
-	else if ( rcode != sizeof(size) ) {
-#else
 	else if ( rcode != 1 ) {
-#endif
 		/*
 		 * Error.
 		 */
@@ -85,34 +62,19 @@ void DLL_DECL read_s_(stream,buff,count,status)
 	 * Reading the record.
 	 */
         if ( *count > size ) {
-#if defined(apollo)
-                rcode= read(*stream,buff,size) ; 
-		if ( rcode != size ) {
-#else
                 rcode= fread(buff,size,1,*stream) ; 
 		if ( rcode != 1 ) {
-#endif  /* apollo */
 			*status= 5 ; 
 			return ; 
 		}
 		/*
 		 * Number of bytes read.
 		 */
-#if defined(apollo)
-		*count= rcode ; 
-#else
 		*count= size ;
-#endif  /* apollo */
 	}
 	else {
-
-#if defined(apollo)
-                rcode= read(*stream,buff,*count) ; 
-		if ( rcode != *count ) {
-#else
-                rcode= fread(buff,*count,1,*stream) ; 
+    rcode= fread(buff,*count,1,*stream) ; 
 		if ( rcode != 1 ) {
-#endif  /* apollo */
 			*status= 5 ; 
 			return ; 
 		}
@@ -126,11 +88,7 @@ void DLL_DECL read_s_(stream,buff,count,status)
 	if ( *count < size ) {
 
 		*status= -1 ; 
-#if defined(apollo)
-		if ( lseek(*stream,size-(*count),L_INCR) == -1 ) {
-#else
 		if ( fseek(*stream,size-(*count),1) == -1 ) {
-#endif  /* apollo */
 			*status= 5 ; 
 			return ;
 		}	
@@ -139,33 +97,16 @@ void DLL_DECL read_s_(stream,buff,count,status)
 	/*
 	 * Reading the trailing record length. 
 	 */
-#if defined(apollo)
-        rcode= read(*stream,&size,sizeof(size)) ;
-	if ( rcode != sizeof(size) ) {
-#else
 	rcode= fread(&size,sizeof(size),1,*stream) ;
 	if ( rcode != 1 ) {
-#endif  /* apollo */
 		*status= 5 ; 
 		return ; 
 	}
+
 }
-
-#if defined(hpux) || (defined(_AIX) && defined(_IBMR2))
-void DLL_DECL read_d(stream,buff,count,status)
-#else
-#if defined(_WIN32)
-void DLL_DECL _stdcall READ_D(stream,buff,count,status)
-#else
 void DLL_DECL read_d_(stream,buff,count,status)
-#endif
-#endif	/* hpux	|| AIX */
 
-#if defined(apollo)
-        int * stream ;
-#else
 	FILE **stream ;
-#endif  /* apollo */
         char *  buff ;
         int  * count ;
         int * status ;
@@ -180,11 +121,7 @@ void DLL_DECL read_d_(stream,buff,count,status)
 	/*
 	 * Reading the record.
 	 */
-#if defined(apollo)
-        rcode= read(*stream,buff,*count) ; 
-#else
 	rcode= fread(buff,*count,1,*stream) ;
-#endif  /* apollo */
 	if ( rcode == 0 ) {
 		/*
 		 * End of file.
@@ -194,11 +131,7 @@ void DLL_DECL read_d_(stream,buff,count,status)
 		return ;
 	}
 
-#if defined(apollo)
-	else if ( rcode < 0 || rcode != *count ) {
-#else
 	else if ( rcode < 0 || rcode != 1 ) {
-#endif  /* apollo */
 		/*
 		 * Error
 		 */
@@ -207,4 +140,3 @@ void DLL_DECL read_d_(stream,buff,count,status)
 	} 
 
 }
-#endif /* ! CRAY */

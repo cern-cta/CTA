@@ -338,38 +338,13 @@ int DLL_DECL rfio_xyopen(name,node,lun,lrecl,chopt,irc)
  * Fortran wrapper
  */
 
-#if defined(CRAY)
-#include <fortran.h>            /* Fortran to C conversion macros       */
-#endif /* CRAY */
-
-#if defined(CRAY)
-void XYOPEN(flun, flrecl, fchopt, firc)
-     int     *flun, *flrecl, *firc;
-     _fcd    fchopt;
-#else /* sun || apollo || sgi || ultrix || AIX */
-#if (defined(hpux) && !defined(PPU)) || (defined(_AIX) && defined(_IBMR2) && !defined(EXTNAME))
-#define xyopen_  xyopen
-#endif  /* hpux && !PPU || AIX && !EXTNAME */
-
-#if defined(_WIN32)
-     void DLL_DECL _stdcall XYOPEN(flun, flrecl, fchopt, fchoptl, firc)
-#else
           void xyopen_(flun, flrecl, fchopt, firc, fchoptl)
-#endif
           int     *flun, *flrecl, *firc;
           char    *fchopt;
           int     fchoptl;
-#endif /* CRAY */
 {
   char    *chopt;                 /* "C" character strings        */
   int     status;                 /* xyopen return status         */
-#if defined(CRAY)
-  int     fchoptl;
-  char    *fchoptp;
-
-  fchoptp = _fcdtocp(fchopt);
-  fchoptl = _fcdlen(fchopt);
-#endif  /* CRAY */
 
   INIT_TRACE("RFIO_TRACE");       /* initialize trace if any      */
 
@@ -380,11 +355,7 @@ void XYOPEN(flun, flrecl, fchopt, firc)
     *firc = -errno;
     return;
   }
-#if defined(CRAY)
-  strncpy(chopt, fchoptp, fchoptl); chopt[fchoptl] = '\0';
-#else
   strncpy(chopt, fchopt, fchoptl); chopt[fchoptl] = '\0';
-#endif  /* CRAY */
 
   TRACE(1,"rfio","XYOPEN(%d,%d,%s,%d)",*flun,*flrecl,chopt,*firc);
 
@@ -400,53 +371,13 @@ void XYOPEN(flun, flrecl, fchopt, firc)
   return;
 }
 
-#if defined(apollo)
-/*
- * Dedicated to Fortran programs compiled with DOMAIN Fortran Compiler.
- */
-void xyopen(flun, flrecl, fchopt, firc, fchoptl)
-     int     *flun, *flrecl, *firc ;
-     char    * fchopt ;
-     short  * fchoptl ;
-{
-  (void) xyopen_(flun, flrecl, fchopt, firc,*fchoptl) ;
-  return ;
-}
-#endif /* apollo */
-
-#if defined(CRAY)
-void XYOPN(fname, fnode, flun, flrecl, fchopt, firc)
-     int     *flun, *flrecl, *firc;
-     _fcd    fname, fnode, fchopt;
-#else /* sun || apollo || sgi || ultrix || AIX */
-#if (defined(hpux) && !defined(PPU)) || (defined(_AIX) && defined(_IBMR2) && !defined(EXTNAME))
-#define xyopn_  xyopn
-#endif  /* hpux && !PPU || AIX && !EXTNAME */
-
-#if defined(_WIN32)
-     void DLL_DECL _stdcall XYOPN(fname, fnamel, fnode, fnodel, flun, flrecl, fchopt, fchoptl, firc)
-#else
-          void xyopn_(fname, fnode, flun, flrecl, fchopt, firc, fnamel, fnodel, fchoptl)
-#endif
+void xyopn_(fname, fnode, flun, flrecl, fchopt, firc, fnamel, fnodel, fchoptl)
           int     *flun, *flrecl, *firc;
           char    *fname, *fnode, *fchopt;
           int     fnamel, fnodel, fchoptl;
-#endif /* CRAY */
 {
   char    *name, *node, *chopt;   /* "C" character strings        */
   int     status;                 /* xyopn return status          */
-
-#if defined(CRAY)
-  int     fnamel, fnodel, fchoptl;
-  char    *fnamep, *fnodep, *fchoptp;
-
-  fnamep = _fcdtocp(fname);
-  fnamel = _fcdlen(fname);
-  fnodep = _fcdtocp(fnode);
-  fnodel = _fcdlen(fnode);
-  fchoptp = _fcdtocp(fchopt);
-  fchoptl = _fcdlen(fchopt);
-#endif  /* CRAY */
 
   INIT_TRACE("RFIO_TRACE");       /* initialize trace if any      */
 
@@ -466,15 +397,9 @@ void XYOPN(fname, fnode, flun, flrecl, fchopt, firc)
     return;
   }
 
-#if defined(CRAY)
-  strncpy(name, fnamep, fnamel); name[fnamel] = '\0';
-  strncpy(node, fnodep, fnodel); node[fnodel] = '\0';
-  strncpy(chopt, fchoptp, fchoptl); chopt[fchoptl] = '\0';
-#else
   strncpy(name, fname, fnamel); name[fnamel] = '\0';
   strncpy(node, fnode, fnodel); node[fnodel] = '\0';
   strncpy(chopt, fchopt, fchoptl); chopt[fchoptl] = '\0';
-#endif /* CRAY */
   striptb(name);
   striptb(node);
   striptb(chopt);
@@ -488,17 +413,3 @@ void XYOPN(fname, fnode, flun, flrecl, fchopt, firc)
   free(name); free(node); free(chopt);
   return;
 }
-
-#if defined(apollo)
-/*
- * Dedicated to Fortran programs compiled with DOMAIN Fortran Compiler.
- */
-void xyopn(fname, fnode, flun, flrecl, fchopt, firc, fnamel, fnodel, fchoptl)
-     int     *flun, *flrecl, *firc;
-     char    *fname, *fnode, *fchopt;
-     short   *fnamel, *fnodel, *fchoptl;
-{
-  (void) xyopn_(fname, fnode, flun, flrecl, fchopt, firc, *fnamel, *fnodel, *fchoptl) ;
-  return ;
-}
-#endif /* apollo */

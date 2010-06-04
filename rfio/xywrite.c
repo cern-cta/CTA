@@ -127,42 +127,13 @@ rfio_xywrite(lun, buf, nrec, nwrit, chopt, irc)
  * Fortran wrapper
  */
 
-#if defined(CRAY)
-#include <fortran.h>            /* Fortran to C conversion macros       */
-#endif /* CRAY */
-
-#if defined(CRAY)
-void XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, firc)
+void xywrit_(flun, fbuf, fnrec, fnwrit, fchopt, firc, fchoptl)
      int     *flun, *fnrec, *fnwrit, *firc;
-     char    *fbuf;
-     _fcd    fchopt;
-#else /* sun || apollo || sgi || ultrix || AIX */
-#if (defined(hpux) && !defined(PPU)) || (defined(_AIX) && defined(_IBMR2) && !defined(EXTNAME))
-#define xywrit_  xywrit
-#endif  /* hpux && !PPU || AIX && !EXTNAME */
-
-#if defined(_WIN32)
-     void DLL_DECL _stdcall XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, fchoptl, firc)
-#else
-          void xywrit_(flun, fbuf, fnrec, fnwrit, fchopt, firc, fchoptl)
-#endif
-          int     *flun, *fnrec, *fnwrit, *firc;
-          char    *fbuf, *fchopt;
-          int     fchoptl;
-#endif  /* CRAY */
+     char    *fbuf, *fchopt;
+     int     fchoptl;
 {
   char    *chopt;         /* xywrite options                      */
   int     status;         /* xywrite return status                */
-#if defined(CRAY)
-  int     fchoptl;        /* CRAY fortran CHOPT string len        */
-  char    *fchoptp;       /* CRAY fortran CHOPT C char pointer    */
-
-  /*
-   * convert fortran arguments
-   */
-  fchoptp = _fcdtocp(fchopt);
-  fchoptl = _fcdlen(fchopt);
-#endif  /* CRAY */
 
   INIT_TRACE("RFIO_TRACE");
   if ((chopt = malloc((unsigned) fchoptl+1)) == NULL)        {
@@ -171,11 +142,7 @@ void XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, firc)
     return;
   }
 
-#if defined(CRAY)
-  strncpy(chopt, fchoptp, fchoptl); chopt[fchoptl] = '\0';
-#else
   strncpy(chopt, fchopt, fchoptl); chopt[fchoptl] = '\0';
-#endif  /* CRAY */
 
   TRACE(1, "rfio", "XYWRIT(%d, %x, %d, %d, %s, %x)",
         *flun, fbuf, *fnrec, *fnwrit, chopt, firc);
@@ -186,14 +153,3 @@ void XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, firc)
   (void) free(chopt);
   return;
 }
-
-#if defined(apollo)
-void xywrit(flun, fbuf, fnrec, fnwrit, fchopt, firc, fchoptl)
-     int     *flun, *fnrec, *fnwrit, *firc;
-     char    *fbuf, *fchopt;
-     short   * fchoptl;
-{
-  xywrit_(flun, fbuf, fnrec, fnwrit, fchopt, firc, *fchoptl) ;
-  return ;
-}
-#endif /* apollo */

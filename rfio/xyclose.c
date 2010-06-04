@@ -110,19 +110,6 @@ int DLL_DECL rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical u
  * Fortran wrapper
  */
 
-#if defined(CRAY)
-#include <fortran.h>            /* Fortran to C conversion macros       */
-#endif /* CRAY */
-
-#if defined(CRAY)
-void XYCLOS(flun, fchopt, firc)
-     int     *flun, *firc;
-     _fcd    fchopt;
-#else /* sun || apollo || sgi || ultrix || AIX */
-#if (defined(hpux) && !defined(PPU)) || (defined(_AIX) && defined(_IBMR2) && !defined(EXTNAME))
-#define xyclos_  xyclos
-#endif  /* hpux && !PPU || AIX && !EXTNAME */
-
 #if defined(_WIN32)
      void _stdcall XYCLOS(flun, fchopt, fchoptl, firc)
 #else
@@ -131,20 +118,9 @@ void XYCLOS(flun, fchopt, firc)
           int     *flun, *firc;
           char    *fchopt;
           int     fchoptl;
-#endif  /* CRAY */
 {
   char    *chopt;         /* xyclos options                       */
   int     status;         /* xyclos return status                 */
-#if defined(CRAY)
-  int     fchoptl;        /* CRAY fortran CHOPT string len        */
-  char    *fchoptp;       /* CRAY fortran CHOPT C char pointer    */
-
-  /*
-   * convert fortran arguments
-   */
-  fchoptp = _fcdtocp(fchopt);
-  fchoptl = _fcdlen(fchopt);
-#endif  /* CRAY */
 
   INIT_TRACE("RFIO_TRACE");
   if ((chopt = malloc((unsigned) fchoptl+1)) == NULL)        {
@@ -153,11 +129,7 @@ void XYCLOS(flun, fchopt, firc)
     return;
   }
 
-#if defined(CRAY)
-  strncpy(chopt, fchoptp, fchoptl); chopt[fchoptl] = '\0';
-#else
   strncpy(chopt, fchopt, fchoptl); chopt[fchoptl] = '\0';
-#endif  /* CRAY */
 
   TRACE(1, "rfio", "XYCLOS(%d, %s, %x)", *flun,  chopt, firc);
   status = rfio_xyclose(*flun, chopt, firc);
@@ -167,14 +139,3 @@ void XYCLOS(flun, fchopt, firc)
   (void) free(chopt);
   return;
 }
-
-#if defined(apollo)
-void xyclos(flun, fchopt, firc, fchoptl)
-     int     *flun, *firc;
-     char    * fchopt ;
-     short   * fchoptl ;
-{
-  xyclos_(flun, fchopt, firc, *fchoptl) ;
-  return ;
-}
-#endif /* apollo */

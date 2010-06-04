@@ -29,7 +29,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
 
-#if !defined(_WIN32)
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -38,7 +37,6 @@
 #include <arpa/inet.h>
 #include <net.h>
 #include <netdb.h>
-#endif
 #include <sys/types.h>
 #include <errno.h>
 
@@ -46,9 +44,6 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-
-#define WD 30
-#define SETW std::setw(WD) << std::left <<
 
 #ifndef DEFAULT_SOCKET_NETTIMEOUT
 #define DEFAULT_SOCKET_NETTIMEOUT   20    // XXX this value is ALSO defined in AbstractSocket.cpp
@@ -139,11 +134,7 @@ std::string castor::replier::ClientConnection::getStatusStr()
 void castor::replier::ClientConnection::close() throw() {
 
   const char *func = "cc::close ";
-#if !defined(_WIN32)
   ::close(m_fd);
-#else
-  ::closesocket(m_fd);
-#endif
   // "CC: Closing client connection"
   castor::dlf::Param params[] =
     {castor::dlf::Param("Function", func),
@@ -221,30 +212,17 @@ void castor::replier::ClientConnection::createSocket()
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't set socket to TCP_NODELAY mode:"
                     << strerror(errno) << std::endl;
-#if !defined(_WIN32)
     ::close(s);
-#else
-    ::closesocket(s);
-#endif
     throw ex;
   }
 
   // Setting the socket to asynchonous mode
-#if !defined(_WIN32)
   int nonblocking= 1 ;
   if (ioctl(s, FIONBIO,&nonblocking) == -1 ) {
-#else
-  u_long nonblocking= 1 ;
-  if (ioctlsocket(s, FIONBIO,&nonblocking) == -1 ) {
-#endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't set socket to asynchonous mode:"
                     << strerror(errno) << std::endl;
-#if !defined(_WIN32)
     ::close(s);
-#else
-    ::closesocket(s);
-#endif
     throw ex;
   }
 
@@ -264,33 +242,19 @@ void castor::replier::ClientConnection::connect()
 
   // Connecting to the client
   int rc = ::connect(m_fd, (struct sockaddr *)&saddr, sizeof(saddr));
-#if !defined(_WIN32)
   if (rc == -1 && errno != EINPROGRESS) {
-#else
-  if (rc == -1 && WSAGetLastError() != WSAEINPROGRESS) {
-#endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't connect to client:"
                     << strerror(errno) << std::endl;
-#if !defined(_WIN32)
     ::close(m_fd);
-#else
-    ::closesocket(m_fd);
-#endif
     throw ex;
   }
   // The socket of the request replier is non-blocking. As a consequence of this
   // EINPROGRESS (Operation now in progress) is an expected return value of the
   // connect() call. We reset errno to 0 as this is expected behaviour.
-#if !defined(_WIN32)
   if (errno == EINPROGRESS) {
     errno = 0;
   }
-#else
-  if (WSAGetLastError() != WSAEINPROGRESS) {
-    errno = 0;
-  }
-#endif
   setStatus(CONNECTING);
 }
 
@@ -361,17 +325,9 @@ void castor::replier::ClientConnection::send()
   memcpy(p, response->str().data(), len);
 
   size_t written = 0;
-#if !defined(_WIN32)
   ssize_t rc = 0;
-#else
-  int rc = 0;
-#endif
   while (written < buflen) {
-#if !defined(_WIN32)
     rc = netwrite_timeout(m_fd, (char *)(buf + written), buflen - written, DEFAULT_SOCKET_NETTIMEOUT);
-#else
-    rc = ::send(m_fd, (char *)(buf + written), buflen - written, 0);
-#endif
     if (rc == -1) {
       if (errno == EAGAIN) {
         continue;

@@ -17,11 +17,9 @@
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfio_rfilefdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
-#if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
 #include <pwd.h>
 #include <stdlib.h>
 #include <Cpwd.h>
@@ -500,22 +498,11 @@ int rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   /*
    * The file is open, update rfp->fp
    */
-#if defined(hpux)
-  rfp->fp.__fileL = rfp->s;
-#else
 #if defined(linux)
   rfp->fp._fileno = rfp->s;
 #else
-#if defined(__Lynx__)
-  rfp->fp._fd = rfp->s;
-#else
   rfp->fp._file = rfp->s;
-#endif  /* __Lynx__ */
 #endif  /* linux */
-#endif  /* hpux */
-#if defined(CRAY)
-  rfp->fp._file50= rfp->s ;
-#endif /* CRAY */
   END_TRACE() ;
   return (rfp->s) ;
 }

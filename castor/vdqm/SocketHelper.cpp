@@ -133,10 +133,6 @@ void castor::vdqm::SocketHelper::netWriteVdqmHeader(
     }
   }
 
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, true, true, socket->socket(),
-    hdrbuf);
-#endif
 }
 
 
@@ -173,10 +169,6 @@ void castor::vdqm::SocketHelper::netReadVdqmHeader(
     }
   }
 
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, false, true, socket->socket(),
-    hdrbuf);
-#endif
 }
 
 

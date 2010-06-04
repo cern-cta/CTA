@@ -13,11 +13,7 @@
 #include "Castor_limits.h"
 
 #ifndef PATH_CONFIG
-#if defined(_WIN32)
-#define PATH_CONFIG "%SystemRoot%\\system32\\drivers\\etc\\castor\\castor.conf"
-#else
 #define PATH_CONFIG "/etc/castor/castor.conf"
-#endif
 #endif /* PATH_CONFIG */
 
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
@@ -54,16 +50,7 @@ static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
       }
     }
 
-#if defined(_WIN32)
-    if (strncmp (filename, "%SystemRoot%\\", 13) == 0 &&
-        (p = getenv ("SystemRoot"))) {
-        Csnprintf (path_config, CA_MAXPATHLEN, "%s\\%s", p, strchr (filename, '\\'));
-    } else {
-#endif
-        strncpy (path_config, filename, CA_MAXPATHLEN);
-#if defined(_WIN32)
-    }
-#endif
+    strncpy (path_config, filename, CA_MAXPATHLEN);
     /* Who knows */
     path_config[CA_MAXPATHLEN] = '\0';
 

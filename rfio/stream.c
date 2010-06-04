@@ -32,12 +32,7 @@
 #endif
 #endif
 
-#if !defined(_WIN32)
 #include <sys/time.h>
-#endif
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include <stdlib.h>
 
 #if defined(_WIN32)
@@ -45,20 +40,6 @@
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
-#if ((defined(IRIX5) || defined(IRIX6)) && ! (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN) && defined(PDP_ENDIAN)))
-#ifdef LITTLE_ENDIAN
-#undef LITTLE_ENDIAN
-#endif
-#define LITTLE_ENDIAN 1234
-#ifdef BIG_ENDIAN
-#undef BIG_ENDIAN
-#endif
-#define BIG_ENDIAN 4321
-#ifdef PDP_ENDIAN
-#undef PDP_ENDIAN
-#endif
-#define PDP_ENDIAN 3412
-#endif
 #include <netinet/tcp.h>
 #endif
 #include <common.h>
@@ -323,22 +304,11 @@ int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   }
   TRACE(2,"rfio","setsockopt keepalive on ctrl done");
 
-#if (defined(__osf__) && defined(__alpha) && defined(DUXV4))
-  /* Set the keepalive interval to 20 mns instead of the default 2 hours */
-  yes = 20 * 60;
-  if (setsockopt(rfp->s,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-    TRACE(2,"rfio","setsockopt keepidle on ctrl: %s",strerror(errno));
-  }
-  TRACE(2,"rfio","setsockopt keepidle on ctrl done (%d s)",yes);
-#endif
-
-#if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
   yes = 1;
   if (setsockopt(rfp->s,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
     TRACE(2,"rfio","setsockopt nodelay on ctrl: %s",strerror(errno));
   }
   TRACE(2,"rfio","setsockopt nodelay option set on ctrl socket");
-#endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
   /*
    * Allocate, if necessary, an I/O buffer.
@@ -481,21 +451,11 @@ int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   }
   TRACE(2,"rfio","setsockopt keepalive on data done");
 
-#if (defined(__osf__) && defined(__alpha) && defined(DUXV4))
-  /* Set the keepalive interval to 20 mns instead of the default 2 hours */
-  yes = 20 * 60;
-  if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-    TRACE(2,"rfio","setsockopt keepidle on data: %s",strerror(errno));
-  }
-  TRACE(2,"rfio","setsockopt keepidle on data done (%d s)",yes);
-#endif
-#if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
   yes = 1;
   if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
     TRACE(2,"rfio","setsockopt nodelay on data: %s",strerror(errno));
   }
   TRACE(2,"rfio","setsockopt nodelay option set on data socket");
-#endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
 #if defined (CLIENTLOG)
   /* Client logging */
@@ -504,22 +464,11 @@ int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   /*
    * The file is open, update rfp->fp
    */
-#if defined(hpux)
-  rfp->fp.__fileL = rfp->s;
-#else
 #if defined(linux)
   rfp->fp._fileno = rfp->s;
 #else
-#if defined(__Lynx__)
-  rfp->fp._fd = rfp->s;
-#else
   rfp->fp._file = rfp->s;
-#endif  /* __Lynx__ */
 #endif  /* linux */
-#endif  /* hpux */
-#if defined(CRAY)
-  rfp->fp._file50= rfp->s ;
-#endif /* CRAY */
   END_TRACE() ;
   return (rfp->s) ;
 }
@@ -1229,11 +1178,7 @@ int set_rcv_sockparam(s,value)
      int s,value;
 {
   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
-#if defined(_WIN32)
-    if (errno != WSAENOBUFS)
-#else
       if (errno != ENOBUFS)
-#endif
       {
         TRACE(2,"rfio", "setsockopt rcvbuf(): %s\n",strerror(errno));
         return(-1);
@@ -1249,11 +1194,7 @@ int set_snd_sockparam(s,value)
      int s,value;
 {
   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
-#if defined(_WIN32)
-    if (errno != WSAENOBUFS)
-#else
       if (errno != ENOBUFS)
-#endif
       {
         TRACE(2,"rfio", "setsockopt sndbuf(): %s\n",strerror(errno));
         return(-1);
@@ -1277,10 +1218,8 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
   struct sockaddr_in sin; /* socket address (internet) struct     */
   char    *host;          /* host name chararcter string          */
   char    *p, *cp;        /* character string pointers            */
-#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
-#endif
 #endif
   register int    retrycnt; /* number of NOMORERFIO retries       */
   register int    retryint; /* interval between NOMORERFIO retries*/
@@ -1407,13 +1346,7 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
   }
 
-#if defined(_WIN32)
-  if (strncmp (NOMORERFIO, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (nomorebuf1, "%s%s", p, strchr (NOMORERFIO, '\\'));
-#else
   strcpy(nomorebuf1, NOMORERFIO);
-#endif
   sprintf(nomorebuf2, "%s.%s", nomorebuf1, cp);
  retry:
   if (!stat(nomorebuf1,&statbuf)) {
@@ -1455,11 +1388,6 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
 
   /* A bit ugly but this is the only solution because the posix
      flag O_ACCMODE is not defined under NT with MS C++ compiler */
-#if defined(_WIN32)
-#ifndef O_ACCMODE
-#define O_ACCMODE 3
-#endif
-#endif
   /* Do the RCV_BUF setsockopt only if we are reading a file */
   /* This is a fix for observed performance problems */
   /* between DECs and SGIs using HIPPI */
@@ -1495,11 +1423,7 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
   TRACE(2, "rfio", "rfio_dataconnect: connect(%d, %x, %d)", s, &sin, sizeof(struct sockaddr_in));
   if (connect(s, (struct sockaddr *)&sin, sizeof(struct sockaddr_in)) < 0)   {
     TRACE(2, "rfio", "rfio_dataconnect: connect(): ERROR occured (errno=%d)", errno);
-#if defined(_WIN32)
-    if (errno == WSAECONNREFUSED)
-#else
       if (errno == ECONNREFUSED)
-#endif
       {     syslog(LOG_ALERT, "rfio: dataconnect: %d failed to connect %s", getpid(), cp);
         if (crtycnt-- > 0)       {
           if (crtyint) sleep(crtyint);
@@ -1521,19 +1445,11 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
           goto conretryall;
         }
       }
-#if defined(_WIN32)
-    if (errno==WSAEHOSTUNREACH || errno==WSAETIMEDOUT)
-#else
       if (errno==EHOSTUNREACH || errno==ETIMEDOUT)
-#endif
       {
         if ( ( cp = strtok(NULL," \t")) != NULL )  {
           crtycnt =  crtycnts ;
-#if defined(_WIN32)
-          if (errno == WSAEHOSTUNREACH)
-#else
             if (errno == EHOSTUNREACH)
-#endif
               syslog(LOG_ALERT, "rfio: dataconnect: after EHOSTUNREACH, changing host to %s", cp) ;
             else
               syslog(LOG_ALERT, "rfio: dataconnect: after ETIMEDOUT, changing host to %s", cp) ;

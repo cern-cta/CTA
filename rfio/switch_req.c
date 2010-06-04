@@ -19,17 +19,6 @@
 #include <log.h>                        /* Genralized error logger      */
 #include "fio.h"                       /* Remote file I/O              */
 
-#if defined(CRAY)
-#define fopn_us_ FOPN_US
-#define fopn_ud_ FOPN_UD
-#define fwr_us_  FWR_US
-#define fwr_ud_  FWR_UD
-#define frd_us_  FRD_US
-#define frd_ud_  FRD_UD
-#define fcls_f_  FCLS_F
-#define frdc_  FRDC
-#endif  /* CRAY */
-
 int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
      int     *access  ;
      LONG *lun  ;

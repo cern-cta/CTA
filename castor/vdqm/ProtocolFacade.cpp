@@ -202,11 +202,6 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     return;
   }
 
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, false, false,
-    m_socket.socket(), &header);
-#endif
-
   // Initialization of the OldRequestFacade, which provides the essential
   // functions
   OldRequestFacade oldRequestFacade(&volumeRequest, &driveRequest, &header,

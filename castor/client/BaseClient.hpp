@@ -29,15 +29,10 @@
 #define CLIENTS_BASECLIENT_HPP 1
 
 // Include Files
-#if !defined(_WIN32)
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/times.h>
-#else
-#include <io.h>
-#include "poll.h"
-#endif
 #include <string>
 #include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Exception.hpp"

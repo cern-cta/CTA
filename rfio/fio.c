@@ -43,21 +43,10 @@
 #include <errno.h>
 #include <serrno.h>
 
-#if !defined(apollo)
 #define SET SEEK_SET
 #define CUR SEEK_CUR
 #define END SEEK_END
-#if defined(_WIN32)
-#include <io.h>
-#else
 #include <unistd.h>
-#endif
-#else /* apollo */
-#define SET L_SET
-#define CUR L_INCR
-#define END L_XTND
-#include <sys/file.h>
-#endif /* apollo */
 
 static int lun2fd[MAXFTNLUN];  /* Fortran logical units to file descr. mapping */
 int is_usf (int);
@@ -346,7 +335,7 @@ int uf_close(unit)
 
 /*
  *  uf_cread replaces the frdc function
- *  for all kinds of machines except CRAY.
+ *  for all kinds of machines
  */
 
 void uf_cread(unit, buf, nrec, nwant, ngot, irc)

@@ -23,56 +23,20 @@
 #include "u64subr.h"
 #include <signal.h>   /* Signal handling  */
 #include <Cnetdb.h>
-#if defined(_WIN32)
-#include "syslog.h"
-#include "log.h"
-#else
 #include <syslog.h>   /* System logger  */
 #include <log.h>                        /* Genralized error logger      */
-#endif
-#if !defined(_WIN32)
 #include <sys/time.h>                   /* time definitions             */
 #include <sys/param.h>                  /* System parameters            */
-#endif
-#ifndef _WIN32
 #include <sys/wait.h>   /* wait, wait3, wait4 (BSD) */
-#endif
-#if defined(sun) || defined(ultrix) || defined(_AIX)
-#include <sgtty.h>   /* Terminal ioctl's  */
-#include <sys/resource.h>               /* resources usage definitions  */
-#ifndef sun
-#include <sys/termio.h>                 /* tty ioctl()'s                */
-#endif
-#endif /* sun || ultrix || _AIX */
-#if ( defined(__osf__) && defined(__alpha) )
-#include <sys/ioctl.h>
-#endif
-#if defined(sgi)
-#include <sys/types.h>                  /* System Types and Macros      */
-#include <sys/termio.h>                 /* tty ioctl()'s                */
-#include <sys/prctl.h>                  /* Process data area defs.      */
-#include <sys/schedctl.h>               /* Scheduling definitions       */
-#endif /* sgi */
-
-#ifndef _WIN32
 #include <unistd.h>
-#endif
-
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#endif
-
-#if ( defined(__osf__) && defined(__alpha) ) || defined(linux)
-#include <sys/types.h>
-#include <sys/wait.h>                   /* wait, wait3, wait4 (BSD)     */
-#endif /* __alpha ** __osf__ || linux */
 
 #if defined(linux)
+#include <sys/types.h>
+#include <sys/wait.h>                   /* wait, wait3, wait4 (BSD)     */
 #include <sys/resource.h>
 #endif /* linux */
 
@@ -130,7 +94,6 @@ extern int      srpreseek64();          /* server remote preseek()      */
 extern int      srstat64();             /* server remote stat()         */
 extern int      srlockf64();            /* server remote lockf()        */
 extern int      srfstat64();            /* server remote fstat()        */
-#if !defined(_WIN32)
 extern int      srchown();              /* server remote chown()        */
 extern int      srfchmod();             /* server remote fchmod()       */
 extern int      srfchown();             /* server remote fchown()       */
@@ -143,7 +106,6 @@ extern int      srreaddir();            /* server remote readdir()      */
 extern int      srrewinddir();          /* server remote rewinddir()    */
 extern int      srclosedir();           /* server remote closedir()     */
 extern int      sraccess();             /* server remote access()       */
-#endif
 #if defined(FORTRAN)
 extern int      srxyopen();             /* server remote xyopen()       */
 extern int      srxyclos();             /* server remote xyclos()       */
@@ -152,26 +114,17 @@ extern int      srxyread();             /* server remote xyread()       */
 #endif /* FORTRAN */
 extern int      setnetio();             /* set network characteristics  */
 
-#if defined(_WIN32)
-extern int      standalone;
-extern char     logfile[CA_MAXPATHLEN+1];
-extern char     *argv0;
-#else
 static int      standalone=0;   /* standalone flag                      */
 static char     logfile[CA_MAXPATHLEN+1];   /* log file name buffer                 */
-#endif
 
 FILE            *streamf ;      /* FILE pointer for popen() calls       */
 
 int     doit();                 /* doit() forward reference             */
-#ifndef _WIN32
 void    check_child_exit();
-#endif
 
-#if defined(sun) || defined(ultrix) || defined(_AIX) || ( defined(__alpha) && defined(__osf__)) || defined(linux)
+#if defined(linux)
 void    reaper (int);           /* reaper() forward reference           */
-#else
-#endif /* sun || ultrix || AIX || __alpha && __osf__ || linux */
+#endif /* linux */
 
 fd_set readfd, readmask;
 struct timeval timeval;
@@ -197,71 +150,6 @@ void *handler_context = NULL;
 int forced_mover_exit_error = 1;
 
 
-#if defined(_WIN32)         /* WIN32 version with multithread support */
-#define MAX_THREADS 64      /*  */
-
-struct thData {
-  SOCKET ns;                /* control socket */
-  struct sockaddr_in from;
-  int mode;
-  int _is_remote;
-
-  int fd;
-  /* all globals, which have to be local for thread */
-  char *rqstbuf;            /* Request buffer                   */
-  char *filename;           /* file name                        */
-  char *iobuffer;           /* Data communication buffer        */
-  int  iobufsiz;            /* Current io buffer size           */
-  SOCKET data_s;            /* Data listen socket (v3)          */
-  SOCKET data_sock;         /* Data accept socket (v3)          */
-  SOCKET ctrl_sock;         /* the control socket (v3)          */
-  int  first_write;
-  int  first_read;
-  int  byte_read_from_network;
-  struct rfiostat myinfo;
-  char from_host[MAXHOSTNAMELEN];
-  uid_t uid = 0;
-  gid_t gid = 0;
-} *td;
-
-DWORD  tls_i;               /* Thread local storage index       */
-int mt_doit(void **);
-int mt_cleanup(struct thData *, int *, int);
-#endif /* WIN32 */
-
-#if defined(_WIN32)
-int set_rcv_sockparam(s, value)
-     SOCKET  s;
-     int     value;
-{
-  if( setsockopt( s, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR) {
-    if( WSAGetLastError() != WSAENOBUFS ) {
-      log(LOG_ERR, "setsockopt rcvbuf(): %s\n", geterr());
-      WSACleanup();
-      exit(1);
-    } else
-      return(-1);
-  } else
-    return(value);
-}
-
-int set_snd_sockparam(s, value)
-     SOCKET  s;
-     int     value;
-{
-  if(setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR) {
-    if( WSAGetLastError() != WSAENOBUFS ) {
-      log(LOG_ERR, "setsockopt sndbuf(): %s\n", geterr());
-      WSACleanup();
-      exit(1);
-    }
-    else
-      return(-1);
-  }
-  else
-    return(value);
-}
-#else
 int set_rcv_sockparam(s,value)
      int s,value;
 {
@@ -293,21 +181,14 @@ int set_snd_sockparam(s,value)
   /* else */
   return(value);
 }
-#endif
 
-#if defined(_WIN32)
-rfiod()
-#else
-     int main (argc, argv)
+int main (argc, argv)
      int     argc;
      char    **argv;
-#endif
 {
   extern int      opterr, optind;         /* required by getopt(3)*/
   extern char     *optarg;                /* required by getopt(3)*/
-#if !defined(_WIN32)
   register int    option;
-#endif
   int      loglevel = LOG_INFO;      /* Default log level    */
   int      debug = 0;                /* Debug flag           */
   int      port = 0;                 /* Non-standard port    */
@@ -322,28 +203,15 @@ rfiod()
   char     *p;
   uid_t    uid = 0;      /* User id of the user issuing the request*/
   gid_t    gid = 0;        /* Group id of the user issuing the request*/
-#if defined(_WIN32)
-  register SOCKET      s, ns;
-#else
   register int  s, ns;
-#endif
   int      i, pid;
   struct   sockaddr_in sin, from;
   socklen_t fromlen;
   char     localhost[MAXHOSTNAMELEN];     /* Local host name      */
   int             mode;
   register int    maxfds=0;               /* max. # of file descr.*/
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
-  struct sigvec   sv;
-#endif
-#if (defined(__osf__) && defined(__alpha)) || defined (SOLARIS) || defined(linux)
+#if defined(linux)
   struct sigaction sa;
-#endif
-#if defined(_WIN32)
-  WSADATA  wsadata;
-  int    rcode;
-  struct thData  *td;
-  struct hostent *hp;
 #endif
 #ifdef STAGERSUPERUSER
   struct group *this_group;             /* Group structure */
@@ -355,20 +223,6 @@ rfiod()
   strcpy(logfile, "syslog"); /* default logfile */
   opterr++;
 
-#if defined(_WIN32)
-  rcode = WSAStartup(MAKEWORD(2, 0), &wsadata); /* initialization of WinSock DLL */
-  if( rcode ) {
-    fprintf( stderr, "WSAStartup: %s\n", ws_strerr(rcode) );
-    exit(1);
-  }
-  tls_i = TlsAlloc();              /* allocation of thread local storage */
-  if( tls_i == 0xFFFFFFFF ) {     /* TLS allocation error               */
-    perror("TlsAlloc");
-    WSACleanup();
-    exit(1);
-  }
-#endif /* if WIN32 */
-#if !defined(_WIN32)
   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:u:g:")) != EOF) {
     switch (option) {
     case 'd':
@@ -431,14 +285,11 @@ rfiod()
   if (optind < argc) {
     forced_filename = argv[optind];
   }
-#endif /* WIN32 */
 
-#if !defined(_WIN32)
   /*
    * Ignoring SIGXFSZ signals before logging anything
    */
   signal(SIGXFSZ,SIG_IGN);
-#endif
 
   if (debug) {
     loglevel = LOG_DEBUG;
@@ -466,19 +317,8 @@ rfiod()
     sv.sv_handler = reaper;
     sigvec(SIGCHLD, &sv, (struct sigvec *)0);
 #endif /* sun || ultrix || AIX */
-#if defined(CRAY) || defined(sgi) || defined(hpux)
-    /* FH */ /* Should trap SIGCLD for kid status */
-    if (signal(SIGCLD, SIG_IGN) == SIG_ERR) {
-      perror("signal (SIGCLD)");
-      exit(1);
-    }
-#endif /* CRAY || sgi || hpux */
 
-#if !( defined(CRAY) || defined(sgi) || defined(hpux) || defined(SOLARIS) || defined(_WIN32))
     maxfds=getdtablesize();
-#else
-    maxfds=_NFILE;
-#endif
 
 #if (defined(IRIX5) || defined(IRIX6))
     if (!debug) {
@@ -553,14 +393,10 @@ rfiod()
           exit(1);
         }
         if (pid > 0) exit(0);
-#if HPUX10
-        setpgrp3();
-#else
 #if __Lynx__
         setpgrp(0, getpid());
 #else
         setpgrp();
-#endif
 #endif
       } /* if( !nodetach ) */
     } /* if( !debug ) */
@@ -1129,19 +965,9 @@ int doit(s, fromp, mode, uid, gid)
     /*
      * Trap SIGPIPE
      */
-#if defined(CRAY) || defined(sgi) || defined(hpux) || defined(SOLARIS)
-    (void) signal(SIGPIPE,reaper) ;
-#endif /* CRAY || sgi || hpux || SOLARIS */
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
-    sv.sv_mask = sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM);
-    sv.sv_handler = reaper;
-    sigvec(SIGPIPE, &sv, (struct sigvec *)0);
-#endif /* sun || ultrix || AIX */
-#if ( defined(__osf__) && defined(__alpha) ) || defined(linux)
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
     sigaction (SIGPIPE, &sa, NULL);
-#endif /* __osf__ && __alpha || linux */
 
   }
 #if !defined(_WIN32)

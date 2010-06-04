@@ -99,14 +99,8 @@ const int castor::client::HIGH_CLIENT_PORT_RANGE = 30100;
 #endif
 #define SIXMONTHS (6*30*24*60*60)
 
-
-#if defined(_WIN32)
-static char strftime_format_sixmonthsold[] = "%b %d %Y";
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
 static char strftime_format_sixmonthsold[] = "%b %e %Y";
 static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
 
 void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
   time_t this_time = time(NULL);
@@ -115,7 +109,7 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 #endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
 
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
   localtime_r(&(then),&tmstruc);
   tp = &tmstruc;
 #else
@@ -232,12 +226,8 @@ std::string castor::client::BaseClient::internalSendRequest
 
   // Prepare the timing information
   clock_t startTime;
-#if !defined(_WIN32)
   struct tms buf;
   startTime = times(&buf);
-#else
-  startTime = clock();
-#endif
 
   // Create a socket
   if (m_hasSecAuthorization) {
@@ -276,18 +266,10 @@ std::string castor::client::BaseClient::internalSendRequest
       throw e;
     }
     delete ack;
-#if !defined(_WIN32)
     m_sendAckTime = times(&buf);
-#else
-    m_sendAckTime = clock();
-#endif
     stage_trace(3, "%s SND %.2f s to send the request",
                 requestId.c_str(),
-#if !defined(_WIN32)
                 ((float)(m_sendAckTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)));
-#else
-                ((float)(m_sendAckTime - startTime)) / CLOCKS_PER_SEC);
-#endif
     delete s;
     return requestId;
   }
@@ -620,13 +602,8 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 
   // Set the socket to non blocking
   int rc;
-#if !defined(_WIN32)
   int nonblocking = 1;
   rc = ioctl(m_callbackSocket->socket(), FIONBIO, &nonblocking);
-#else
-  u_long nonblocking = 1;
-  rc = ioctlsocket(m_callbackSocket->socket(), FIONBIO, &nonblocking);
-#endif
   if (rc == SOCKET_ERROR) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Could not set socket asynchronous";
@@ -736,19 +713,11 @@ void castor::client::BaseClient::pollAnswersFromStager
                 << ((ip & 0x00FF0000) >> 16) << "."
                 << ((ip & 0x0000FF00) >> 8)  << "."
                 << ((ip & 0x000000FF));
-#if !defined(_WIN32)
         struct tms buf;
         clock_t endTime = times(&buf);
-#else
-        clock_t endTime = clock();
-#endif
         stage_trace(3, "%s CBK %.2f s before callback from %s was received",
                     requestId().c_str(),
-#if !defined(_WIN32)
                     ((float)(endTime - m_sendAckTime)) / ((float)sysconf(_SC_CLK_TCK)),
-#else
-                    ((float)(endTime - m_sendAckTime)) / CLOCKS_PER_SEC,
-#endif
                     ipToStr.str().c_str());
 
         // Register the new file descriptor in the accepted connections list and

@@ -36,16 +36,10 @@
 #include "castor/Services.hpp"
 #include "castor/rh/EndResponse.hpp"
 
-#if !defined(_WIN32)
 #include <sys/poll.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#else
-#include "poll.h"
-#include <io.h>
-#include <fcntl.h>
-#endif
 #include <errno.h>
 #include <time.h>
 
@@ -54,9 +48,6 @@
 #include <stack>
 #include <iomanip>
 #include <sstream>
-
-#define WD 30
-#define SETW std::setw(WD) << std::left <<
 
 /**
  * The RequestReplier is a component of sending the replies in non-blocking mode
@@ -109,11 +100,7 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   m_connectionStatusCallback = 0;
 
   // Establishing the pipe used for notification with ReplierThread
-#if !defined(_WIN32)
   int rc = pipe(m_commPipe);
-#else
-  int rc = _pipe(m_commPipe, 512, O_BINARY);
-#endif
   if (-1 == rc) {
     // "RR: Could not establish communication pipe"
     castor::dlf::Param params[] =

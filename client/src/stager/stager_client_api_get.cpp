@@ -85,11 +85,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     }
 
     mode_t mask;
-#ifdef _WIN32
-    _umask (mask = _umask(0));
-#else
     umask (mask = umask(0));
-#endif
     req.setMask(mask);
 
     // Preparing the requests
