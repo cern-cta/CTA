@@ -58,17 +58,17 @@ extern "C" {
     try {
       bool create = false;
       clusterStatus =
-	castor::monitoring::ClusterStatus::getClusterStatus(create);
+        castor::monitoring::ClusterStatus::getClusterStatus(create);
     } catch (castor::exception::Exception e) {
       ls_syslog(LOG_ERR, "shmod_shmem: failed to access shared memory: %s",
-		e.getMessage().str().c_str());
+                e.getMessage().str().c_str());
       return -1;
     }
 
     // Shared memory defined ?
     if (clusterStatus == NULL) {
       ls_syslog(LOG_ERR, "shmod_shmem: shared memory doesn't exist, check "
-		"that the rmmaster daemon is running");
+                "that the rmmaster daemon is running");
       return -1;
     }
 
@@ -77,7 +77,7 @@ extern "C" {
       (RsrcReqHandlerType *) calloc(1, sizeof(RsrcReqHandlerType));
     if (handler == NULL) {
       ls_syslog(LOG_ERR, "shmod_shmem: failed to allocate memory: %s",
-		strerror(errno));
+                strerror(errno));
       return -1;
     }
 
@@ -121,12 +121,12 @@ extern "C" {
 
       // Set the key and handler specific data for this resource requirement
       lsb_resreq_setobject(resreq, HANDLER_SHMEM_ID,
-			   (char *)handler->jobName.c_str(),
-			   handler);
+                           (char *)handler->jobName.c_str(),
+                           handler);
     } catch (castor::exception::Exception e) {
       // Free resources
       if (handler)
-	delete handler;
+        delete handler;
       return -1;
     }
 
@@ -138,8 +138,8 @@ extern "C" {
   // shmem_match
   //---------------------------------------------------------------------------
   int shmem_match(castor::scheduler::HandlerData *handler,
-		  void *candGroupList,
-		  void *reasonTb) {
+                  void *candGroupList,
+                  void *reasonTb) {
 
     // Check parameters
     if (handler == NULL) {
@@ -155,131 +155,131 @@ extern "C" {
     while (candGroupEntry != NULL) {
       int index = 0, reason = 0;
       while (index < candGroupEntry->numOfMembers) {
-	candHost *candHost = &(candGroupEntry->candHost[index]);
-	hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
+        candHost *candHost = &(candGroupEntry->candHost[index]);
+        hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
 
-   	// Cast normal string into sharedMemory one in order to be able to
-	// search for it in the clusterStatus map.
-	std::string diskServer = hInfo->name;
-	castor::monitoring::SharedMemoryString *smDiskServer =
-	  (castor::monitoring::SharedMemoryString *)(&(diskServer));
-	castor::monitoring::ClusterStatus::const_iterator it =
-	  clusterStatus->find(*smDiskServer);
+        // Cast normal string into sharedMemory one in order to be able to
+        // search for it in the clusterStatus map.
+        std::string diskServer = hInfo->name;
+        castor::monitoring::SharedMemoryString *smDiskServer =
+          (castor::monitoring::SharedMemoryString *)(&(diskServer));
+        castor::monitoring::ClusterStatus::const_iterator it =
+          clusterStatus->find(*smDiskServer);
 
-	// If the job has explicitly defined a list of requested filesystems,
-	// exclude any diskserver not in the list.
-	std::vector<std::string>::const_iterator it2 =
-	  std::find(handler->rfs.begin(), handler->rfs.end(), diskServer);
+        // If the job has explicitly defined a list of requested filesystems,
+        // exclude any diskserver not in the list.
+        std::vector<std::string>::const_iterator it2 =
+          std::find(handler->rfs.begin(), handler->rfs.end(), diskServer);
 
-	// Check to see if the diskserver is in the exclusion host list
-	std::vector<std::string>::const_iterator it4 =
-	  std::find(handler->excludedHosts.begin(),
-		    handler->excludedHosts.end(), diskServer);
+        // Check to see if the diskserver is in the exclusion host list
+        std::vector<std::string>::const_iterator it4 =
+          std::find(handler->excludedHosts.begin(),
+                    handler->excludedHosts.end(), diskServer);
 
-	reason = 0;
-	if (handler->rfs.size() && (it2 == handler->rfs.end())) {
-	  reason = PEND_HOST_CNOTRFS;  // Diskserver is not in the list of RFS
-	}
-	else if (it == clusterStatus->end()) {
-	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
-	}
-	else if ((handler->requestType ==
-		  castor::OBJ_StageDiskCopyReplicaRequest) &&
-		 (handler->sourceDiskServer != diskServer) &&
-		 (it4 != handler->excludedHosts.end())) {
-	  reason = PEND_HOST_CEXCLUDE; // Diskserver in exclusion list
-	}
+        reason = 0;
+        if (handler->rfs.size() && (it2 == handler->rfs.end())) {
+          reason = PEND_HOST_CNOTRFS;  // Diskserver is not in the list of RFS
+        }
+        else if (it == clusterStatus->end()) {
+          reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
+        }
+        else if ((handler->requestType ==
+                  castor::OBJ_StageDiskCopyReplicaRequest) &&
+                 (handler->sourceDiskServer != diskServer) &&
+                 (it4 != handler->excludedHosts.end())) {
+          reason = PEND_HOST_CEXCLUDE; // Diskserver in exclusion list
+        }
 
-	// For non diskcopy replication requests the diskserver must be in
-	// PRODUCTION
-	else if ((handler->requestType !=
-		  castor::OBJ_StageDiskCopyReplicaRequest) &&
-		 (it->second.status() !=
-		  castor::stager::DISKSERVER_PRODUCTION)) {
-	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
-	}
+        // For non diskcopy replication requests the diskserver must be in
+        // PRODUCTION
+        else if ((handler->requestType !=
+                  castor::OBJ_StageDiskCopyReplicaRequest) &&
+                 (it->second.status() !=
+                  castor::stager::DISKSERVER_PRODUCTION)) {
+          reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
+        }
 
-	// For diskcopy replication requests where the diskserver being
-	// processed is the source diskserver the diskserver must be in
-	// PRODUCTION or DRAINING
-	else if ((handler->requestType ==
-		  castor::OBJ_StageDiskCopyReplicaRequest) &&
-		 (handler->sourceDiskServer == diskServer) &&
-		 (it->second.status() ==
-		  castor::stager::DISKSERVER_DISABLED)) {
-	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
-	}
+        // For diskcopy replication requests where the diskserver being
+        // processed is the source diskserver the diskserver must be in
+        // PRODUCTION or DRAINING
+        else if ((handler->requestType ==
+                  castor::OBJ_StageDiskCopyReplicaRequest) &&
+                 (handler->sourceDiskServer == diskServer) &&
+                 (it->second.status() ==
+                  castor::stager::DISKSERVER_DISABLED)) {
+          reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
+        }
 
-	// For diskcopy replication requests where the diskserver being
-	// processed is not the source diskserver. I.e it could be the
-	// destination end of the transfer the diskserver must be in
-	// PRODUCTION
-	else if ((handler->requestType ==
-		  castor::OBJ_StageDiskCopyReplicaRequest) &&
-		 (handler->sourceDiskServer != diskServer) &&
-		 (it->second.status() !=
-		  castor::stager::DISKSERVER_PRODUCTION)) {
-	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
-	}
+        // For diskcopy replication requests where the diskserver being
+        // processed is not the source diskserver. I.e it could be the
+        // destination end of the transfer the diskserver must be in
+        // PRODUCTION
+        else if ((handler->requestType ==
+                  castor::OBJ_StageDiskCopyReplicaRequest) &&
+                 (handler->sourceDiskServer != diskServer) &&
+                 (it->second.status() !=
+                  castor::stager::DISKSERVER_PRODUCTION)) {
+          reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
+        }
 
-	// Up to this point we have only processed information about the
-	// diskserver as a whole entity. Now we must look at its filesystems
-	// to determine if they are ok. We only look at status here not space!
-	else {
-	  unsigned long disabled = 0;
-	  for (castor::monitoring::DiskServerStatus::const_iterator it3 =
-		 it->second.begin();
-	       it3 != it->second.end(); it3++) {
+        // Up to this point we have only processed information about the
+        // diskserver as a whole entity. Now we must look at its filesystems
+        // to determine if they are ok. We only look at status here not space!
+        else {
+          unsigned long disabled = 0;
+          for (castor::monitoring::DiskServerStatus::const_iterator it3 =
+                 it->second.begin();
+               it3 != it->second.end(); it3++) {
 
-	    // For non diskcopy replication requests the filesystem must be in
-	    // PRODUCTION
-	    if ((handler->requestType !=
-		 castor::OBJ_StageDiskCopyReplicaRequest) &&
-		(it3->second.status() !=
-		 castor::stager::FILESYSTEM_PRODUCTION)) {
-	      disabled++;
-	    }
+            // For non diskcopy replication requests the filesystem must be in
+            // PRODUCTION
+            if ((handler->requestType !=
+                 castor::OBJ_StageDiskCopyReplicaRequest) &&
+                (it3->second.status() !=
+                 castor::stager::FILESYSTEM_PRODUCTION)) {
+              disabled++;
+            }
 
-	    // For diskcopy replication requests where the diskserver being
-	    // processed is the source diskserver the diskserver must be in
-	    // PRODUCTION or DRAINING
-	    else if ((handler->requestType ==
-		      castor::OBJ_StageDiskCopyReplicaRequest) &&
-		     (handler->sourceDiskServer == diskServer)) {
-	      if ((handler->sourceFileSystem == it3->first.c_str()) &&
-		  (it3->second.status() ==
-		   castor::stager::FILESYSTEM_DISABLED)) {
-		disabled++;
+            // For diskcopy replication requests where the diskserver being
+            // processed is the source diskserver the diskserver must be in
+            // PRODUCTION or DRAINING
+            else if ((handler->requestType ==
+                      castor::OBJ_StageDiskCopyReplicaRequest) &&
+                     (handler->sourceDiskServer == diskServer)) {
+              if ((handler->sourceFileSystem == it3->first.c_str()) &&
+                  (it3->second.status() ==
+                   castor::stager::FILESYSTEM_DISABLED)) {
+                disabled++;
 
-		// Fail this diskserver completely. Diskcopy replication
-		// requests force a first execution host within a parallel
-		// job submission. If the filesystem with the source file is
-		// unavailable then the job is not eligible to run.
-		reason = PEND_HOST_CSTATE;
-	      }
-	    }
+                // Fail this diskserver completely. Diskcopy replication
+                // requests force a first execution host within a parallel
+                // job submission. If the filesystem with the source file is
+                // unavailable then the job is not eligible to run.
+                reason = PEND_HOST_CSTATE;
+              }
+            }
 
-	    // For all other requests the filesystem must be in PRODUCTION
-	    else if (it3->second.status() !=
-		     castor::stager::FILESYSTEM_PRODUCTION) {
-	      disabled++;
-	    }
-	  }
+            // For all other requests the filesystem must be in PRODUCTION
+            else if (it3->second.status() !=
+                     castor::stager::FILESYSTEM_PRODUCTION) {
+              disabled++;
+            }
+          }
 
-	  // Only remove the diskserver if all its filesystems are disabled
-	  if (disabled == it->second.size()) {
-	    reason = PEND_HOST_CSTATE; // Diskserver status incorrect
-	  }
-	}
+          // Only remove the diskserver if all its filesystems are disabled
+          if (disabled == it->second.size()) {
+            reason = PEND_HOST_CSTATE; // Diskserver status incorrect
+          }
+        }
 
-	// Remove the host from the candidate list if a reason exists
-	if (reason) {
-	  lsb_reason_set(reasonTb, candHost, reason);
-	  lsb_cand_removehost(candGroupEntry, index);
-	} else {
-	  index++;
-	}
-	free(hInfo);
+        // Remove the host from the candidate list if a reason exists
+        if (reason) {
+          lsb_reason_set(reasonTb, candHost, reason);
+          lsb_cand_removehost(candGroupEntry, index);
+        } else {
+          index++;
+        }
+        free(hInfo);
       }
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }

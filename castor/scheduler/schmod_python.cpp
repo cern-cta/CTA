@@ -660,6 +660,15 @@ extern "C" {
                   it3->second.deltaNbReadWriteStreams();
               }
 
+              // For diskcopy replication requests do not allow the source
+              // diskserver to be selected as the destination, this will result
+              // in 'Not enough hosts to meet the job's spanning requirement'
+              if ((handler->requestType == 
+                   castor::OBJ_StageDiskCopyReplicaRequest) &&
+                  (handler->sourceDiskServer == diskServer)) {
+                newWeight = 1;
+              }
+
               if ((newWeight < 0) && (newWeight > bestWeight)) {
                 handler->selectedDiskServer = diskServer;
                 handler->selectedFileSystem = it3->first.c_str();
