@@ -247,6 +247,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
       fprintf (stderr, "%s\n", dlerror());
+      exit(EXIT_FAILURE);
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
