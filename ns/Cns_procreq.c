@@ -5018,7 +5018,7 @@ int Cns_srv_dropsegs(req_data, clienthost, thip)
     RETURN (SEINTERNAL);
 
   /* Delete file segments */
-  if (Cns_internal_deletesegs(func, thip, &fmd_entry) != 0)
+  if (Cns_internal_deletesegs(func, thip, &fmd_entry, 0) != 0)
     if (serrno != SEENTRYNFND)
       RETURN (serrno);
 
