@@ -105,6 +105,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     rtcpFileRequest_t *filereq = NULL;
     SOCKET *client_socket = NULL;
     char lbltyp[CA_MAXLBLTYPLEN+1];
+    char tape_path[CA_MAXPATHLEN+1];
 
     proc_stat.tapeIOstatus.nbbytes = 0;
     TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -197,8 +198,10 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
      * Loop on the files and dump as many as requested by the client.
      */
     rc = 0;
+    /* Extract the tape path to pass it downstream  */
+	strncpy (tape_path, tape->file->filereq.tape_path, CA_MAXPATHLEN);
     while ( rc == 0 ) {
-        rc = rtcpd_DmpFile(tape,tape->file->prev);
+        rc = rtcpd_DmpFile(tape,tape->file->prev,tape_path);
         CHECK_PROC_ERR(tape,NULL,"rtcpd_dmpfil() error");
         tellClient(client_socket,NULL,tape->file->prev,rc);
         if ( rc != 0 ) break;

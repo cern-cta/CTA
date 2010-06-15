@@ -242,7 +242,7 @@ int rtcpd_Release  _PROTO((tape_list_t *, file_list_t *));
 int rtcpd_Info  _PROTO((tape_list_t *, file_list_t *));
 int rtcpd_drvinfo  _PROTO((tape_list_t *));
 int rtcpd_DmpInit _PROTO((tape_list_t *));
-int rtcpd_DmpFile _PROTO((tape_list_t *, file_list_t *));
+int rtcpd_DmpFile _PROTO((tape_list_t *, file_list_t *, char *));
 int rtcpd_DmpEnd _PROTO((void));
 int rtcpd_stageupdc  _PROTO((tape_list_t *, file_list_t *));
 int rtcp_CheckReq  _PROTO((SOCKET *, rtcpClientInfo_t *, tape_list_t *));

@@ -1299,7 +1299,7 @@ int rtcpd_DmpInit(tape_list_t *tape) {
     return(rc);
 }
 
-int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
+int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
     int rc, save_serrno;
     rtcpFileRequest_t filereq;
 
@@ -1315,7 +1315,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
     memset(&filereq,'\0',sizeof(filereq));
 
     rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
-             tape->file->filereq.tape_path,
+             tape_path,
              tape->tapereq.label,
              filereq.blocksize,
              filereq.fid,
@@ -1327,7 +1327,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
     tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
                      "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
                      "Message"      , TL_MSG_PARAM_STR, "call Ctape_dmpfil",
-                     "Tape path"    , TL_MSG_PARAM_STR, tape->file->filereq.tape_path,
+                     "Tape path"    , TL_MSG_PARAM_STR, tape_path,
                      "Label"        , TL_MSG_PARAM_STR, tape->tapereq.label,
                      "Block size"   , TL_MSG_PARAM_INT, filereq.blocksize,
                      "FID"          , TL_MSG_PARAM_STR, filereq.fid,
@@ -1337,7 +1337,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
                      "recfm"        , TL_MSG_PARAM_STR, filereq.recfm,
                      "Max size"     , TL_MSG_PARAM_INT, (int)filereq.maxsize );
     
-    rc = Ctape_dmpfil(tape->file->filereq.tape_path,
+    rc = Ctape_dmpfil(tape_path,
                       tape->tapereq.label,
                       &filereq.blocksize,
                       filereq.fid,
@@ -1348,7 +1348,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
                       &filereq.maxsize);
 
    rtcp_log(LOG_DEBUG,"returned Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
-            tape->file->filereq.tape_path,
+            tape_path,
             tape->tapereq.label,
             filereq.blocksize,
             filereq.fid,
@@ -1360,7 +1360,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
    tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
                     "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
                     "Message"      , TL_MSG_PARAM_STR, "returned Ctape_dmpfil",
-                    "Tape path"    , TL_MSG_PARAM_STR, tape->file->filereq.tape_path,
+                    "Tape path"    , TL_MSG_PARAM_STR, tape_path,
                     "Label"        , TL_MSG_PARAM_STR, tape->tapereq.label,
                     "Block size"   , TL_MSG_PARAM_INT, filereq.blocksize,
                     "FID"          , TL_MSG_PARAM_STR, filereq.fid,
