@@ -3617,3 +3617,103 @@ Preparing...                ########################################### [100%]
   28:castor-rfio-client     ########################################### [ 97%]
   29:castor-tapegateway-serv########################################### [100%]
 [root@lxcastordev04 x86_64]#
+
+
+How to add a new rpm to a development box
+=========================================
+
+The following example shows the additrion of the screen rpm to development box
+lxcastordev04:
+
+-bash-3.2$ ssh lxadm
+Warning: Permanently added the RSA host key for IP address '137.138.4.44' to
+the list of known hosts.
+Scientific Linux CERN SLC release 4.8 (Beryllium)
+Last login: Wed Jun  9 09:27:32 2010 from lxcastordev04.cern.ch
+*******************************************************************************
+*                      This system is ACTIVELY MONITORED
+*                      *
+*                                                                             *
+*         WARNING: This system MUST NOT be used for PRIVATE PURPOSES
+*         *
+*                  Users activity, including commands, is logged
+*                  *
+*                                                                             *
+*******************************************************************************
+[lxadm04] /afs/cern.ch/user/m/murrayc3 > cdbop
+quattor CDB CLI: Version 2.2.0
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <UXb2a3jYaK>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~> get
+prod/cluster/castordev/customization/headnode/dev04
+[INFO] 'prod/cluster/castordev/customization/headnode/dev04.tpl': received
+<cdbop@cdbserv.cern.ch: ~> !vi
+prod/cluster/castordev/customization/headnode/dev04.tpl
+<cdbop@cdbserv.cern.ch: ~> up
+prod/cluster/castordev/customization/headnode/dev04.tpl
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': scheduled to be
+updated
+<cdbop@cdbserv.cern.ch: ~> com
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': will be updated
+please confirm [yes]: yes
+Comment: Addeed^?
+[INFO] please wait...
+[INFO] commit OK
+<cdbop@cdbserv.cern.ch: ~> exit
+[lxadm04] /afs/cern.ch/user/m/murrayc3 > ssh root@lxcastordev04
+Last login: Wed Jun 16 10:51:01 2010 from lxcastordev04.cern.ch
+*******************************************************************************
+*                                                                             *
+*  Reminder: You have committed to obey the Computing Rules
+*  *
+*                                              http://cern.ch/ComputingRules
+*                                              *
+*                                                                             *
+*******************************************************************************
+[root@lxcastordev04 ~]# spma_wrapper.sh
+
+[INFO] NCM-NCD version 1.2.22 started by root at: Wed Jun 16 10:56:18 2010
+[INFO] executing configure on components....
+
+
+[INFO] running component: spma
+---------------------------------------------------------
+[OK]   updated SPMA configuration file /etc/spma.conf
+[OK]   updated SPMA target configuration file in /var/lib/spma-target.cf
+[INFO] configure on component spma executed, 0 errors, 0 warnings
+
+=========================================================
+
+[OK]   0 errors, 0 warnings executing configure
+[INFO] SPMA version 1.11.5 started by root at: Wed Jun 16 10:56:29 2010
+[INFO] using local package cache in: /var/spma-cache/
+[INFO] proxy server not activated
+[WARN] /bin/rpm--version produced STDERR output:
+[INFO] examining local installations..
+[INFO] reading target configuration ..
+[INFO] executing operations..
+[INFO] The following package operations are required:
+       replace   ncm-chkconfig 1.1.7 1 noarch  with
+http://swrep/swrep/x86_64_slc5/ ncm-chkconfig 1.1.9 1 noarch
+       install http://swrep/swrep/x86_64_slc5/ screen 4.0.3 1.el5_4.1 x86_64
+[INFO] Please be patient... 2 operation(s) to verify/execute.
+[OK]   SPMA finished successfully.
+
+[INFO] NCM-NCD version 1.2.22 started by root at: Wed Jun 16 10:56:34 2010
+[INFO] executing configure on components....
+
+
+[INFO] running component: grub
+---------------------------------------------------------
+[INFO] correct kernel (2.6.18-194.el5xen) already configured
+[OK]   Updated boot kernel version to /boot/vmlinuz-2.6.18-194.el5xen
+[INFO] configure on component grub executed, 0 errors, 0 warnings
+
+=========================================================
+
+[OK]   0 errors, 0 warnings executing configure
+[root@lxcastordev04 ~]#
+
