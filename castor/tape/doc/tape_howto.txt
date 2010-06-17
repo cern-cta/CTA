@@ -48,79 +48,11 @@ Method 4
 cd /afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/2.1.9-3/SL4/x86_64
 
 
-How to build the castor rpms
-============================
-
-Enter the following:
-
-export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
-export ORACLE_LIB="$ORACLE_HOME/lib"
-export ORACLE_BIN="$ORACLE_HOME/bin"
-# /usr/bin/X11 is in the path for the makedepend command
-export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
-export MAJOR_CASTOR_VERSION=2.1
-export MINOR_CASTOR_VERSION=9.5
-
-mkdir tmp
-
-cd tmp
-
-svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
-
-cd trunk
-
-./makerpm.sh
-
-You should get the output in:
-
-/usr/src/redhat/RPMS/x86_64/
-
-
 How to update an installed rpm
 ==============================
 
 ssh root@c2itdcsrv102
 rpm -Uvh--force <location to rpm>/castor-rtcopyclient-server-2.1.8-7.x86_64.rpm
-
-
-How to build the VDQM v2_1_7_20
-===============================
-
-export CVSROOT=":gserver:isscvs.cern.ch:/local/reps/castor"
-export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
-export ORACLE_LIB="$ORACLE_HOME/lib"
-export ORACLE_BIN="$ORACLE_HOME/bin"
-# /usr/bin/X11 is in the path for the makedepend command
-export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
-unset LD_LIBRARY_PATH
-
-export MAJOR_CASTOR_VERSION=2.1
-export MINOR_CASTOR_VERSION=7.20
-
-cvs co -r v2_1_7_20 CASTOR2
-cd CASTOR2
-make -f Makefile.ini Makefiles
-make
-
-
-How to build the head of the VDQM
-=================================
-
-export CVSROOT=":gserver:isscvs.cern.ch:/local/reps/castor"
-export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
-export ORACLE_LIB="$ORACLE_HOME/lib"
-export ORACLE_BIN="$ORACLE_HOME/bin"
-# /usr/bin/X11 is in the path for the makedepend command
-export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
-unset LD_LIBRARY_PATH
-
-export MAJOR_CASTOR_VERSION=9.9
-export MINOR_CASTOR_VERSION=9.9
-
-cvs co CASTOR2
-cd CASTOR2
-make -f Makefile.ini Makefiles
-make
 
 
 How to increase the maximum number of simultenous XE sessions and processes
@@ -236,51 +168,6 @@ How to attach to posovl
 =======================
 
 `ps -ef | grep posovl | grep -v grep | awk '{print "gdb attach " $2;}'`
-
-
-How to use CVS and build CASTOR2
-================================
-
-CVSROOT:
-
-export CVSROOT=:gserver:isscvs.cern.ch:/local/reps/castor
-
-Check out CASTOR2 without using CVSROOT:
-
-cvs -d :gserver:isscvs.cern.ch:/local/reps/castor co CASTOR2
-
-Build CASTOR2 after modifying CASTOR2/config/site.def accordingly:
-
-cd CASTOR2
-make -f Makefile.ini Makefiles
-make depend
-make -j 4; make -j 4
-
-
-How to build CASTOR from svn
-============================
-
-# Set the version of CASTOR which will be used when naming the dynamic link
-# librarys
-export MAJOR_CASTOR_VERSION=2.1
-export MINOR_CASTOR_VERSION=9.5
-
-# Set environment variables for using Oracle
-export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
-export ORACLE_LIB="${ORACLE_HOME}/lib"
-export ORACLE_BIN="${ORACLE_HOME}/bin"
-export PATH="${ORACLE_BIN}:${PATH}"
-export LD_LIBRARY_PATH="${ORACLE_LIB}:${LD_LIBRARY_PATH}"
-
-# Checkout the source code from svn
-svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
-
-# Build the Makefiles from the Imakefiles
-cd trunk
-make -f Makefile.ini
-
-# Make the libraries and executables
-make
 
 
 How to list the contents of an rpm in the repository
