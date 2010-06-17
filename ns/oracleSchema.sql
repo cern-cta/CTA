@@ -99,8 +99,11 @@ ALTER TABLE Cns_file_metadata
      OR  (bitand(filemode, 40960) != 40960 AND fileclass IS NOT NULL));
 
 -- Create indexes on Cns_file_metadata
-CREATE INDEX PARENT_FILEID_IDX ON Cns_file_metadata (parent_fileid);
+CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
+
+-- Create indexes on Cns_seg_metadata
+CREATE INDEX I_seg_metadata_vid_fileid_segsize on Cns_seg_metadata (vid, s_fileid, segsize);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
