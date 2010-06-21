@@ -3604,3 +3604,103 @@ http://swrep/swrep/x86_64_slc5/ ncm-chkconfig 1.1.9 1 noarch
 [OK]   0 errors, 0 warnings executing configure
 [root@lxcastordev04 ~]#
 
+
+How to reset the stager database of development box
+===================================================
+
+1. Determine the CASTORversion of your development box.
+
+bash-3.2$ castor -v
+2.1.9-6
+bash-3.2$
+
+
+2. Checkout the database directory of the CASTOR source tree.
+
+bash-3.2$ cd /var/murrayc3/checkout
+bash-3.2$ svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/tags/v2_1_9_6/castor/db castor_db_v2_1_9_6
+
+
+3. As root on the head node, stop the CASTOR daemons
+
+[root@lxcastordev04 ~]# for D in expertd jobmanagerd mighunterd rechandlerd rhd rmmasterd rtcpclientd stagerd; do /etc/init.d/$D stop; done
+
+4. Drop the existing stager schema.
+
+bash-3.2$ sqlplus stager_dev04@c2castordevdb
+...
+SQL> @/var/murrayc3/checkout/castor_db_v2_1_9_6/drop_oracle_schema.sql
+
+
+5. Point the development box at the production name server
+
+
+6. As root on the head node, start the CASTOR daemons
+
+[root@lxcastordev04 ~]# for D in expertd jobmanagerd mighunterd rechandlerd
+rhd rmmasterd rtcpclientd stagerd; do /etc/init.d/$D start; done
+
+
+7. Determine the user id and group id of user stage:
+
+-bash-3.2$ id stage
+uid=14029(stage) gid=1474(st) groups=1474(st)
+context=user_u:system_r:unconfined_t
+-bash-3.2$
+
+
+8. Determine the group id of group c3:
+
+-bash-3.2$ grep c3 /etc/group
+c3:x:1028:
+-bash-3.2$
+
+9. Create a new empty stager schema
+
+SQL> @/var/murrayc3/checkout/castor_db_v2_1_9_6/stager_oracle_create.sql
+...
+Enter the stage user id: 14029
+Enter the st group id: 1474
+...
+List of admins: 1028
+...
+
+
+10. Check the diskservers are registered in the database
+
+bash-3.2$ rmGetNodes | egrep 'name:'
+                       name: lxc2disk07.cern.ch
+                       name: lxc2disk08.cern.ch
+bash-3.2$
+
+
+11. As root on the head node, enter the file classes of the name server into
+    the stager database
+
+[root@lxcastordev04 ~]# for cname  in `nslistclass | grep NAME | awk '{print
+$2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
+
+
+12. As root on the headnode, enter the default, dev and diskonly service
+    classes into the stager database
+
+[root@lxcastordev04 ~]# enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev04
+...
+[root@lxcastordev04 ~]# enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes
+...
+[root@lxcastordev04 ~]# enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes
+
+
+13. A root on the headnode, move the file systems of the disk servers into the
+    default and disk pools
+
+[root@lxcastordev04 ~]# moveDiskServer default lxc2disk07.cern.ch
+[root@lxcastordev04 ~]# moveDiskServer extra lxc2disk08.cern.ch
+[root@lxcastordev04 ~]#
+
+
+14. As root release the disk servers into production
+
+[root@lxcastordev04 ~]# rmAdminNode -r -R -n lxc2disk07.cern.ch
+[root@lxcastordev04 ~]# rmAdminNode -r -R -n lxc2disk08.cern.ch
+[root@lxcastordev04 ~]#
