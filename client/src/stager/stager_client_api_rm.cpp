@@ -27,9 +27,7 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
-#include "castor/stager/StageRmRequest.hpp"
 #include "castor/stager/StageReleaseFilesRequest.hpp"
-#include "castor/stager/StageAbortRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 
@@ -209,69 +207,3 @@ EXTERN_C int DLL_DECL stage_releaseFiles(struct stage_filereq *requests,
 			     opts);
 
 }
-
-
-
-////////////////////////////////////////////////////////////
-//    stage_abortRequest                                  //
-////////////////////////////////////////////////////////////
-
-
-EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
-					 struct stage_options* opts) {
-
-
-  const char *func = "stage_abortRequest";
-  int ret=0;
-
-  if (requestId == NULL) {
-    serrno = EINVAL;
-    stager_errmsg(func, "Invalid input parameter");
-    return -1;
-  }
-
-  try {
-    // Uses a BaseClient to handle the request
-    castor::client::BaseClient client(stage_getClientTimeout());
-    castor::stager::StageAbortRequest req;
-
-    ret=setDefaultOption(opts);
-    client.setOptions(opts);
-    client.setAuthorizationId();
-    if(ret==-1){free(opts);}
-
-    // Using the VectorResponseHandler which stores everything in
-    // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;
-    castor::client::VectorResponseHandler rh(&respvec);
-    std::string reqid = client.sendRequest(&req, &rh);
-
-    int nbResponses =  respvec.size();
-
-    if (nbResponses !=  1) {
-      // We got not replies, this is not normal !
-      serrno = SEINTERNAL;
-      stager_errmsg(func, "No responses received");
-      return -1;
-    }
-
-    // Casting the response into a FileResponse !
-    castor::rh::FileResponse* fr =
-      dynamic_cast<castor::rh::FileResponse*>(respvec[0]);
-    if (0 == fr) {
-      castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << "Error in dynamic cast, response was NOT a file response";
-      throw e;
-    }
-
-    return fr->status();
-
-  } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    stager_errmsg(func, (e.getMessage().str().c_str()));
-    return -1;
-  }
-}
-
-
-
