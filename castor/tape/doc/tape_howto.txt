@@ -3739,3 +3739,17 @@ Upgrade the stager database and then run spma_ncm_wrapper.sh as root.
 
 Don't forget to update your disk servers by running spma_ncm_wrapper.sh on
 them as well.
+
+
+How to modify the Quattor templates of a development box
+========================================================
+
+The Quattor templates for a development box are included in the following order:
+
+1. prod/cluster/castordev/config <- NEVER CHANGE THIS
+
+2. prod/cluster/castordev/instance/dev04 <- Override variables here
+
+3. prod/cluster/castordev/role/headnode <- This is where the CASTOR_[CNS|VMGR|VDQM|…] variables are used – NEVER CHANGE THIS
+
+4. prod/cluster/castordev/customization/dev04 <- Add rpms here
