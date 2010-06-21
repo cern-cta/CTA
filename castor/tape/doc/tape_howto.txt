@@ -3678,7 +3678,7 @@ $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
 [root@lxcastordev04 ~]# enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes
 
 
-10. A root on the headnode, move the file systems of the disk servers into the
+10. As root on the headnode, move the file systems of the disk servers into the
     default and disk pools
 
 [root@lxcastordev04 ~]# moveDiskServer default lxc2disk07.cern.ch
@@ -3736,3 +3736,6 @@ Comment: Upgrading to 2.1.9-7
 <cdbop@cdbserv.cern.ch: ~>
 
 Upgrade the stager database and then run spma_ncm_wrapper.sh as root.
+
+Don't forget to update your disk servers by running spma_ncm_wrapper.sh on
+them as well.
