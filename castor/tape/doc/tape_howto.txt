@@ -3704,3 +3704,48 @@ $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
 [root@lxcastordev04 ~]# rmAdminNode -r -R -n lxc2disk07.cern.ch
 [root@lxcastordev04 ~]# rmAdminNode -r -R -n lxc2disk08.cern.ch
 [root@lxcastordev04 ~]#
+
+
+How to upgrade a development box
+================================
+
+Login as yourself on lxadm, run cdop and download the following template file:
+
+    /prod/cluster/castordev/instance/dev04
+
+-bash-3.2$ ssh murrayc3@lxadm
+Scientific Linux CERN SLC release 4.8 (Beryllium)
+Last login: Fri Jun 18 18:00:27 2010 from pb-d-128-141-48-106.cern.ch
+*******************************************************************************
+*                      This system is ACTIVELY MONITORED                      *
+*                                                                             *
+*         WARNING: This system MUST NOT be used for PRIVATE PURPOSES          *
+*                  Users activity, including commands, is logged              *
+*                                                                             *
+*******************************************************************************
+[lxadm04] /afs/cern.ch/user/m/murrayc3 > cdbop
+quattor CDB CLI: Version 2.2.0
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <QLqaI1lSYp>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~> get -f prod/cluster/castordev/instance/dev04
+[INFO] 'prod/cluster/castordev/instance/dev04.tpl': received
+
+Modify the CASTOR_VERSION variable as needed, then upload the template and
+commit.
+
+<cdbop@cdbserv.cern.ch: ~> up prod/cluster/castordev/instance/dev04.tpl
+[INFO] '/prod/cluster/castordev/instance/dev04': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~> commit
+[INFO] '/prod/cluster/castordev/instance/dev04': will be updated
+please confirm [yes]: yes
+Comment: Upgrading to 2.1.9-7
+[INFO] please wait...
+[INFO] commit OK
+<cdbop@cdbserv.cern.ch: ~>
+<cdbop@cdbserv.cern.ch: ~> !vi prod/cluster/castordev/instance/dev04.tpl
+<cdbop@cdbserv.cern.ch: ~>
+
+Upgrade the stager database and then run spma_ncm_wrapper.sh as root.
