@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI verified="false" xmi.version="1.2" timestamp="2010-05-20T09:51:33" xmlns:UML="http://schema.omg.org/spec/UML/1.3">
+<XMI verified="false" xmi.version="1.2" timestamp="2010-06-08T09:59:51" xmlns:UML="http://schema.omg.org/spec/UML/1.3">
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -2205,7 +2205,7 @@
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello">
       <diagrams>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Tape gateway" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="iv2ni54uLPNe" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Tape gateway" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="iv2ni54uLPNe" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="none" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="0" x="110" showattsigs="601" y="260" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="249" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="Kt5nreil0XBW" showscope="1" height="150" showopsigs="601"/>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="100" showattsigs="601" y="30" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="272" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="3EKjfICVy3zB" showscope="1" height="115" showopsigs="601"/>
@@ -2224,92 +2224,92 @@
            <startpoint startx="240" starty="145"/>
            <endpoint endx="230" endy="260"/>
           </linepath>
-          <floatingtext width="17" x="240" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="cYOGtTTRK1Dp" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="180" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="muunbahcXgwB" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="17" x="240" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="1deDMQT8Enbl" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="180" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="e1IyEprkDOAb" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="Kt5nreil0XBW" linecolor="none" totalcounta="3" xmi.id="NQx6vEHCHjYT" widgetbid="1016" totalcountb="2" type="503" linewidth="none">
           <linepath>
            <startpoint startx="190" starty="410"/>
            <endpoint endx="190" endy="500"/>
           </linepath>
-          <floatingtext width="34" x="160" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="b3w7isIKOfYI" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..1" pretext=""/>
-          <floatingtext width="94" x="190" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="GBnkqs9bm1OL" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeRecall" pretext="+"/>
+          <floatingtext width="34" x="160" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="Q0jbOuDOVpbp" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..1" pretext=""/>
+          <floatingtext width="94" x="190" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Tx5LaoNEndA1" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeRecall" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="Kt5nreil0XBW" linecolor="none" totalcounta="2" xmi.id="1MnrQOlS91Q3" widgetbid="jeKTcSocmSxD" totalcountb="2" type="503" linewidth="none">
           <linepath>
            <startpoint startx="359" starty="340"/>
            <endpoint endx="550" endy="340"/>
           </linepath>
-          <floatingtext width="17" x="400" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="s7Vc7rwitsnb" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="72" x="360" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="60hQ1uFG42yu" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="request" pretext="+"/>
+          <floatingtext width="17" x="400" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="5zHqcPp0PZco" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="72" x="360" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="F4xSrZDKUJe4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="request" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="jeKTcSocmSxD" linecolor="none" totalcounta="2" xmi.id="Iy3yhWYx4PVp" widgetbid="1191" totalcountb="2" type="503" linewidth="none">
           <linepath>
            <startpoint startx="650" starty="360"/>
            <endpoint endx="640" endy="390"/>
           </linepath>
-          <floatingtext width="17" x="620" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="ySf2UduLjOxq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="84" x="640" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="k6t6jSOpS5FR" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapecopy" pretext="+"/>
+          <floatingtext width="17" x="620" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="GVximblrY2hA" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="84" x="640" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="TpCwenlsphKf" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapecopy" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="3" widgetaid="1191" linecolor="none" totalcounta="3" xmi.id="2207" widgetbid="1580" totalcountb="4" type="512" linewidth="none">
           <linepath>
            <startpoint startx="610" starty="505"/>
            <endpoint endx="450" endy="840"/>
           </linepath>
-          <floatingtext width="34" x="640" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="7qKqCIeS99Yr" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="34" x="390" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="REInnoqmjiDh" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="87" x="550" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="FtW6jIhRMbY5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopy" pretext="+"/>
-          <floatingtext width="68" x="420" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="1usRy7qwZWw1" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
+          <floatingtext width="34" x="640" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="XXU6XBEwgNli" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="34" x="390" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="8MDg7etfpvzg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="87" x="550" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="PXBp4lbVanRC" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopy" pretext="+"/>
+          <floatingtext width="68" x="420" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="YA4LrM05syoe" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="1580" linecolor="none" totalcounta="4" xmi.id="38336" widgetbid="1016" totalcountb="3" type="512" linewidth="none">
           <linepath>
            <startpoint startx="310" starty="840"/>
            <endpoint endx="265" endy="670"/>
           </linepath>
-          <floatingtext width="17" x="310" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="xHFgxQLkUu4z" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="17" x="250" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="PNej18DvE9xT" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="68" x="240" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="n3bKXVLfJeTW" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
-          <floatingtext width="51" x="270" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="u8w3FSsggBRT" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
+          <floatingtext width="17" x="310" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="djPSeO6uMq2F" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="17" x="250" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="MneP39zRrUWu" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="68" x="240" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Izk8vYmR3GVa" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
+          <floatingtext width="51" x="270" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="QjW45InBe0sm" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="2" widgetaid="1580" linecolor="none" totalcounta="4" xmi.id="70kTN2ng13Vl" widgetbid="Kt5nreil0XBW" totalcountb="3" type="503" linewidth="none">
           <linepath>
            <startpoint startx="380" starty="840"/>
            <endpoint endx="280" endy="410"/>
           </linepath>
-          <floatingtext width="34" x="340" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="NuSpoWpCrRtt" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..1" pretext=""/>
-          <floatingtext width="135" x="200" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="bp7IyYjwnxak" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="streamMigration" pretext="+"/>
+          <floatingtext width="34" x="340" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="sPBCDCSaz4x0" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..1" pretext=""/>
+          <floatingtext width="135" x="200" y="810" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="mH5OHv8ueWKH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="streamMigration" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1195" linecolor="none" totalcounta="2" xmi.id="jlxc6odYCrVh" widgetbid="jeKTcSocmSxD" totalcountb="2" type="503" linewidth="none">
           <linepath>
            <startpoint startx="610" starty="182"/>
            <endpoint endx="650" endy="310"/>
           </linepath>
-          <floatingtext width="17" x="600" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="pqPal0I8skwg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="81" x="620" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Z6mlFjCqXJ6V" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskcopy" pretext="+"/>
+          <floatingtext width="17" x="600" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="ueLYAfn02xDG" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="81" x="620" y="180" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="EvS3Pwv9D0VS" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskcopy" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="1191" linecolor="none" totalcounta="3" xmi.id="2130" widgetbid="1030" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="670" starty="505"/>
            <endpoint endx="670" endy="590"/>
           </linepath>
-          <floatingtext width="17" x="670" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="pefhMbLbKCfS" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="670" y="560" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="xcAnLcrmGkkB" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="54" x="610" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Ejs6AlxirjT4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copy" pretext="+"/>
-          <floatingtext width="84" x="600" y="560" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="TgvyxzRlprLY" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
+          <floatingtext width="17" x="670" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="44O7zbL8E9Cu" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="670" y="560" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="sInVpiUFXbtL" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="54" x="610" y="510" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="9do6hj6teWu1" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copy" pretext="+"/>
+          <floatingtext width="84" x="600" y="560" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Sp8dqe6kGRGO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1016" linecolor="none" totalcounta="3" xmi.id="2112" widgetbid="1030" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="265" starty="590"/>
            <endpoint endx="550" endy="770"/>
           </linepath>
-          <floatingtext width="17" x="250" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="nYE3HxE17BW8" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="540" y="740" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="RawLLPbdFRFG" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="51" x="270" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="kCwX1I6qulVG" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
-          <floatingtext width="84" x="480" y="740" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Kqrc2W4y8DjS" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
+          <floatingtext width="17" x="250" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="PnwuOpGbmH48" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="540" y="740" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="bvYv94Gwuhvs" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="51" x="270" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Fx3TOKrQMFVL" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
+          <floatingtext width="84" x="480" y="740" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="pqR1zdvqvhLi" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
          </assocwidget>
         </associations>
        </diagram>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Tape messages" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="RcNDgtXHVcS2" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Tape messages" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="958" canvaswidth="1518" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="RcNDgtXHVcS2" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="none" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="0" x="110" showattsigs="601" y="80" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="128" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="B8NzFjMF0W0p" showscope="1" height="52" showopsigs="601"/>
          <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="none" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="0" x="500" showattsigs="601" y="20" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="130" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="h9uvz0EKYQWQ" showscope="1" height="94" showopsigs="601"/>
@@ -2371,8 +2371,8 @@
            <startpoint startx="160" starty="700"/>
            <endpoint endx="360" endy="665"/>
           </linepath>
-          <floatingtext width="17" x="190" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="iQ872lLT1ZOH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="185" x="110" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="gJkdXjigEo7o" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="positionCommandCode" pretext="+"/>
+          <floatingtext width="17" x="190" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="2ot42nwijo0Y" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="185" x="110" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="onBd1mNJrVsk" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="positionCommandCode" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="3" widgetaid="qxGN7s2xrw8M" linecolor="none" totalcounta="2" xmi.id="LKpVz0BLTwxE" widgetbid="2MEJAPRljyXW" totalcountb="8" type="500" linewidth="none">
           <linepath>
@@ -2433,8 +2433,8 @@
            <startpoint startx="930" starty="130"/>
            <endpoint endx="630" endy="50"/>
           </linepath>
-          <floatingtext width="17" x="920" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="ZtXlhcaQ3iV5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="870" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="lQmgu27ZLqCq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="mode" pretext="+"/>
+          <floatingtext width="17" x="920" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="Dqz2KpnKbeOc" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="870" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="UC4T5vGrgRVi" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="mode" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="lOug3GirQgFy" linecolor="none" totalcounta="2" xmi.id="BrWXy6djhjvR" widgetbid="2MEJAPRljyXW" totalcountb="8" type="500" linewidth="none">
           <linepath>
@@ -2447,8 +2447,8 @@
            <startpoint startx="850" starty="260"/>
            <endpoint endx="630" endy="80"/>
           </linepath>
-          <floatingtext width="17" x="850" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="VwioktfHmC3R" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="94" x="770" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="TqWSPsjAHTo9" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="clientType" pretext="+"/>
+          <floatingtext width="17" x="850" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="eHNKiq0thxu1" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="94" x="770" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="QKK97IhZTj1W" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="clientType" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="7" widgetaid="SELd2IcDH2ei" linecolor="none" totalcounta="2" xmi.id="osODikrCev21" widgetbid="2MEJAPRljyXW" totalcountb="8" type="500" linewidth="none">
           <linepath>
@@ -2470,7 +2470,7 @@
          </assocwidget>
         </associations>
        </diagram>
-       <diagram showopsig="0" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="0" showpubliconly="0" showpackage="0" showstereotype="0" name="Catalog" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1721" localid="" snapcsgrid="0" showgrid="1" showops="0" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="fMQlcGvXPRc5" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="0" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="0" showpubliconly="0" showpackage="0" showstereotype="0" name="Catalog" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="0" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="fMQlcGvXPRc5" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="630" showattsigs="600" y="0" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="185" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="1237" showscope="1" height="262" showopsigs="600"/>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="130" showattsigs="600" y="130" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="146" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="1190" showscope="1" height="73" showopsigs="600"/>
@@ -2497,20 +2497,20 @@
            <startpoint startx="276" starty="180"/>
            <endpoint endx="630" endy="170"/>
           </linepath>
-          <floatingtext width="34" x="290" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="1RWQD7I1QdtB" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="34" x="580" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="oEMPRE7vYfYO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="89" x="280" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="pJNskBMDbFuj" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapePools" pretext="+"/>
-          <floatingtext width="91" x="540" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="WMYdpSMeCFHT" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClasses" pretext="+"/>
+          <floatingtext width="34" x="290" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="i7RP3LOo0h8I" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="34" x="580" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="M5zJJoOqJ0qW" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="89" x="280" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="lfJMJhyhzGq4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapePools" pretext="+"/>
+          <floatingtext width="91" x="540" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="XVc0CdWour7a" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClasses" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1239" linecolor="none" totalcounta="2" xmi.id="38335" widgetbid="1237" totalcountb="3" type="512" linewidth="none">
           <linepath>
            <startpoint startx="1270" starty="90"/>
            <endpoint endx="815" endy="90"/>
           </linepath>
-          <floatingtext width="34" x="1230" y="90" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="QjMzOuNTnLiu" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="34" x="840" y="70" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="cQ3IdaByN6hn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="86" x="1180" y="70" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="7u0H9Hi8iFZt" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskPools" pretext="+"/>
-          <floatingtext width="91" x="820" y="90" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="KpujSmuE0EcR" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClasses" pretext="+"/>
+          <floatingtext width="34" x="1230" y="90" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="uJfBHUfuoyPy" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="34" x="840" y="70" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="NSqsx7Qniidy" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="86" x="1180" y="70" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="dKIVCP5uXWHY" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskPools" pretext="+"/>
+          <floatingtext width="91" x="820" y="90" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="qdKqIS8cV6vp" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClasses" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1237" linecolor="none" totalcounta="3" xmi.id="AnL3DpbgPrrp" widgetbid="1581" totalcountb="2" type="512" linewidth="none">
           <linepath>
@@ -2518,59 +2518,59 @@
            <endpoint endx="50" endy="300"/>
            <point x="50" y="90"/>
           </linepath>
-          <floatingtext width="34" x="590" y="60" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="TV7GqpBSGCit" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="50" y="240" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="kup70Wuq3tgo" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="126" x="50" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="sZ1sldHBKbAg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="forcedFileClass" pretext="+"/>
+          <floatingtext width="34" x="590" y="60" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="bZxPXNOunClk" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="50" y="240" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="I9X0s9x1tXfh" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="126" x="50" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="BkaeqWTin7t5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="forcedFileClass" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1190" linecolor="none" totalcounta="2" xmi.id="35965" widgetbid="1580" totalcountb="3" type="501" linewidth="none">
           <linepath>
            <startpoint startx="200" starty="203"/>
            <endpoint endx="200" endy="780"/>
           </linepath>
-          <floatingtext width="17" x="200" y="210" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="sKJwBzieuiSQ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="160" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="rwQVXgzy5udg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="83" x="110" y="210" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Vx0pYAU1gbGU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapePool" pretext="+"/>
-          <floatingtext width="74" x="120" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="RRvhddYLXOSV" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="streams" pretext="+"/>
+          <floatingtext width="17" x="200" y="210" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="NyyEWevVlIIx" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="160" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="WAmKyyc8Vp4G" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="83" x="110" y="210" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="17NpEGspnpCK" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapePool" pretext="+"/>
+          <floatingtext width="74" x="120" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="AYDylyg37E3x" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="streams" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="1580" linecolor="none" totalcounta="3" xmi.id="38336" widgetbid="1016" totalcountb="2" type="512" linewidth="none">
           <linepath>
            <startpoint startx="260" starty="780"/>
            <endpoint endx="260" endy="532"/>
           </linepath>
-          <floatingtext width="17" x="240" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="93REv2uRCtTk" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="17" x="240" y="540" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="K093mTxaWWFG" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="68" x="260" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="WC13YRXQloKu" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
-          <floatingtext width="51" x="260" y="540" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="o3Zgl15axV5U" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
+          <floatingtext width="17" x="240" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="j8oExsUhbnWY" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="17" x="240" y="540" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="6IsP3OCQnUWU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="68" x="260" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="llJrxKoKJlYn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
+          <floatingtext width="51" x="260" y="540" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="NRI6hb3DjnVh" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="1016" linecolor="none" totalcounta="3" xmi.id="2112" widgetbid="1030" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="314" starty="440"/>
            <endpoint endx="440" endy="400"/>
           </linepath>
-          <floatingtext width="17" x="320" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="sD4MiJcFbRiO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="400" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="JbKExS2HSKoL" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="51" x="320" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="XKoSnuvwvM8q" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
-          <floatingtext width="85" x="350" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="M0IXtlHDjOGV" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
+          <floatingtext width="17" x="320" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="UD8HgdmhASST" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="400" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="dvXxBnCIY6z5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="51" x="320" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="3XinKDS4JGIF" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tape" pretext="+"/>
+          <floatingtext width="85" x="350" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="7lwiYQHci71k" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1191" linecolor="none" totalcounta="3" xmi.id="2130" widgetbid="1030" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="530" starty="760"/>
            <endpoint endx="530" endy="587"/>
           </linepath>
-          <floatingtext width="17" x="540" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="MEKmW75aBbOb" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="400" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="JewE0bsdqhrX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="54" x="390" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="54WoSkIKvMhd" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copy" pretext="+"/>
-          <floatingtext width="85" x="440" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="dHrEgXcx8uB3" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
+          <floatingtext width="17" x="540" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="Y334709dEroa" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="400" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="YgNQhUzLLD6c" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="54" x="390" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="WGhCLjupu17Y" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copy" pretext="+"/>
+          <floatingtext width="85" x="440" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="erGmJiFwbkrn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="segments" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1191" linecolor="none" totalcounta="2" xmi.id="2207" widgetbid="1580" totalcountb="2" type="512" linewidth="none">
           <linepath>
            <startpoint startx="490" starty="820"/>
            <endpoint endx="322" endy="820"/>
           </linepath>
-          <floatingtext width="34" x="450" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="0TXq8NLMooe8" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="34" x="320" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="S1nGeDaPjVIn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="87" x="400" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="ERUKLeNfqfRK" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopy" pretext="+"/>
-          <floatingtext width="68" x="320" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="mWuv5HXOvRdw" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
+          <floatingtext width="34" x="450" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="wYcGlisf2PA4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="34" x="320" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="mQeEhIlz6uUj" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="87" x="400" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="tJZV4OGaSJeX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopy" pretext="+"/>
+          <floatingtext width="68" x="320" y="820" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="IoBWdx6BbSbJ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="stream" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1240" linecolor="none" totalcounta="2" xmi.id="2183" widgetbid="1240" totalcountb="2" type="512" linewidth="none">
           <linepath>
@@ -2579,10 +2579,10 @@
            <point x="700" y="406"/>
            <point x="700" y="579"/>
           </linepath>
-          <floatingtext width="34" x="720" y="380" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="NRK4wcrgS1Le" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="730" y="550" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="nxtz2wKWIykV" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="55" x="700" y="410" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="mpBhEmbED73L" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="child" pretext="+"/>
-          <floatingtext width="66" x="680" y="580" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="UOfGCJMcIAsx" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="parent" pretext="+"/>
+          <floatingtext width="34" x="720" y="380" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="16c6z6nmegDd" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="730" y="550" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="8vY8EjuFiJG7" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="55" x="700" y="410" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="pYsR0Uix2KBm" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="child" pretext="+"/>
+          <floatingtext width="66" x="680" y="580" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="11R1PZ5BxjNe" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="parent" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="46353" linecolor="none" totalcounta="2" xmi.id="48745" widgetbid="1240" totalcountb="3" type="510" linewidth="none">
           <linepath>
@@ -2590,10 +2590,10 @@
            <endpoint endx="810" endy="320"/>
            <point x="840" y="240"/>
           </linepath>
-          <floatingtext width="17" x="910" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="FYlXWU0jb8Ho" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="840" y="290" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="6iOVV0otUnix" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="72" x="850" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="F77YF0TaRneL" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="request" pretext="+"/>
-          <floatingtext width="106" x="730" y="290" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="PU1pVKUGFLFH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="subRequests" pretext="+"/>
+          <floatingtext width="17" x="910" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="ai1J1HOsaffa" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="840" y="290" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="I5c05hh9YBs5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="72" x="850" y="230" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="sLGn2dQ1k25h" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="request" pretext="+"/>
+          <floatingtext width="106" x="730" y="290" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="6tTiZhLhatpo" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="subRequests" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="3" indexb="2" widgetaid="696" linecolor="none" totalcounta="4" xmi.id="2142" widgetbid="1237" totalcountb="3" type="512" linewidth="none">
           <linepath>
@@ -2601,9 +2601,9 @@
            <endpoint endx="815" endy="170"/>
            <point x="1110" y="170"/>
           </linepath>
-          <floatingtext width="34" x="1120" y="270" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="sCDRKUFOBbrg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="830" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="ZfX4SEzaMDvq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="77" x="820" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="7AENTRegzOCT" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClass" pretext="+"/>
+          <floatingtext width="34" x="1120" y="270" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="SH72unbAqBBw" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="830" y="140" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="qq5PzvUn5FC8" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="77" x="820" y="170" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="qBkO3YBbGCsF" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClass" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="46353" linecolor="none" totalcounta="2" xmi.id="47151" widgetbid="696" totalcountb="4" type="500" linewidth="none">
           <linepath>
@@ -2617,10 +2617,10 @@
            <startpoint startx="1310" starty="290"/>
            <endpoint endx="1310" endy="112"/>
           </linepath>
-          <floatingtext width="34" x="1360" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="Kd5hpyVSWz2R" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="1270" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="g8DZNRk7tI1v" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="99" x="1100" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="dXWcvi6ntHEB" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystems" pretext="+"/>
-          <floatingtext width="80" x="1190" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="jTau2RZc56eX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskPool" pretext="+"/>
+          <floatingtext width="34" x="1360" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="qUevhq1SDlRk" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="1270" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="JhmA1mt8Nm69" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="99" x="1100" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="nNj1ZaG1rM2l" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystems" pretext="+"/>
+          <floatingtext width="80" x="1190" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="7btxm2rctxzq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskPool" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="1580" linecolor="none" totalcounta="2" xmi.id="a97TTqorQ5jE" widgetbid="1196" totalcountb="3" type="512" linewidth="none">
           <linepath>
@@ -2630,36 +2630,36 @@
            <point x="1620" y="920"/>
            <point x="1620" y="490"/>
           </linepath>
-          <floatingtext width="17" x="1410" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="I70o72El9RIW" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="155" x="1410" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="iaVlf9IxlMea" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="lastFileSystemUsed" pretext="+"/>
+          <floatingtext width="17" x="1410" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="yeG9NhugMeqO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="155" x="1410" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="pxjgsjWjB8cq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="lastFileSystemUsed" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="16310" linecolor="none" totalcounta="2" xmi.id="17131" widgetbid="1196" totalcountb="3" type="501" linewidth="none">
           <linepath>
            <startpoint startx="1540" starty="390"/>
            <endpoint endx="1406" endy="390"/>
           </linepath>
-          <floatingtext width="17" x="1520" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="ZdMg4eBvemcv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="1410" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="PFubMcPabBZv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="90" x="1450" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="s0djJddzB8kq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskserver" pretext="+"/>
-          <floatingtext width="99" x="1400" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="G0o1KQZdYXPd" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystems" pretext="+"/>
+          <floatingtext width="17" x="1520" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="CXNZBBvZsPKH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="1410" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="0CWWmOs4lyWH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="90" x="1450" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="QhWlRasEWbsO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskserver" pretext="+"/>
+          <floatingtext width="99" x="1400" y="360" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="IP5TXiHUMXdj" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystems" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="1192" linecolor="none" totalcounta="3" xmi.id="2136" widgetbid="1191" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="750" starty="820"/>
            <endpoint endx="616" endy="820"/>
           </linepath>
-          <floatingtext width="17" x="720" y="780" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="mAFNKoGwun4X" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="620" y="770" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="hlhGqYqXYLsN" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="88" x="660" y="760" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="c8W8dwjCZ5rc" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
-          <floatingtext width="97" x="610" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="j2VLo7HCL9lf" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopies" pretext="+"/>
+          <floatingtext width="17" x="720" y="780" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="DfsydODF8yDR" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="620" y="770" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="LquDstG5op67" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="88" x="660" y="760" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="ellyJOfTu203" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
+          <floatingtext width="97" x="610" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Dvb3LvKJ6qpq" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="tapeCopies" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1240" linecolor="none" totalcounta="2" xmi.id="2171" widgetbid="1192" totalcountb="3" type="512" linewidth="none">
           <linepath>
            <startpoint startx="840" starty="666"/>
            <endpoint endx="810" endy="700"/>
           </linepath>
-          <floatingtext width="17" x="850" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="QceIPgp6RWLH" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="88" x="750" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="R9XkJIP3QeOk" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
+          <floatingtext width="17" x="850" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="sci0ZtPukH5c" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="88" x="750" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="lRQpFDdStVPU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1192" linecolor="none" totalcounta="3" xmi.id="2189" widgetbid="1237" totalcountb="2" type="512" linewidth="none">
           <linepath>
@@ -2668,8 +2668,8 @@
            <point x="670" y="760"/>
            <point x="670" y="330"/>
           </linepath>
-          <floatingtext width="17" x="630" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="j16AdUs37XJU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="77" x="530" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="39obTfwuoTe5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClass" pretext="+"/>
+          <floatingtext width="17" x="630" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="gItXnI0ftgdS" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="77" x="530" y="260" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="AJgz9m4sDThT" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="svcClass" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1192" linecolor="none" totalcounta="2" xmi.id="2201" widgetbid="1581" totalcountb="2" type="512" linewidth="none">
           <linepath>
@@ -2678,19 +2678,19 @@
            <point x="840" y="910"/>
            <point x="50" y="910"/>
           </linepath>
-          <floatingtext width="34" x="840" y="880" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="MBMAfyEMxKWa" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="60" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="nPbsuuM72tkd" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="78" x="50" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="D8Zfcsuf1hFU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileClass" pretext="+"/>
+          <floatingtext width="34" x="840" y="880" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="MUjYxOzbgq9S" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="60" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="7770njQKlke3" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="78" x="50" y="390" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Z2KJKPuUiaRr" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileClass" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="1196" linecolor="none" totalcounta="2" xmi.id="2124" widgetbid="1195" totalcountb="3" type="501" linewidth="none">
           <linepath>
            <startpoint startx="1310" starty="594"/>
            <endpoint endx="1330" endy="660"/>
           </linepath>
-          <floatingtext width="15" x="1320" y="600" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="701" linecolor="none" xmi.id="WKZXEKAxxQiJ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="28" x="1310" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="702" linecolor="none" xmi.id="wwzdUnxyqdSB" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="72" x="1210" y="600" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="709" linecolor="none" xmi.id="lfIlMXDihaqK" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystem" pretext="+"/>
-          <floatingtext width="50" x="1240" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="710" linecolor="none" xmi.id="W2gULD28ae0U" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copies" pretext="+"/>
+          <floatingtext width="15" x="1320" y="600" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="701" linecolor="none" xmi.id="gFHPxvT4RzrX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="28" x="1310" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="702" linecolor="none" xmi.id="uWyKrugaoezY" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="72" x="1210" y="600" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="709" linecolor="none" xmi.id="7YWp6xfQRMyO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystem" pretext="+"/>
+          <floatingtext width="50" x="1240" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="19" role="710" linecolor="none" xmi.id="lvyPk7rrCxpx" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="copies" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="1240" linecolor="none" totalcounta="2" xmi.id="2165" widgetbid="1195" totalcountb="3" type="512" linewidth="none">
           <linepath>
@@ -2698,20 +2698,20 @@
            <endpoint endx="1240" endy="730"/>
            <point x="1040" y="730"/>
           </linepath>
-          <floatingtext width="34" x="940" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="eBkSoAdbdsxi" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="17" x="1220" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="7mKh8QSmh9NO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="106" x="990" y="610" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="oTHM7HobZO8l" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="subRequests" pretext="+"/>
-          <floatingtext width="81" x="1150" y="700" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="gIjdhPudJrGl" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskcopy" pretext="+"/>
+          <floatingtext width="34" x="940" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="p8FdnCBW1aQn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="17" x="1220" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="mGDFO1bQJ3rX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="106" x="990" y="610" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="jrPvmEsQT8pO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="subRequests" pretext="+"/>
+          <floatingtext width="81" x="1150" y="700" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="1ISTFJyAowSf" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskcopy" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="1192" linecolor="none" totalcounta="2" xmi.id="2177" widgetbid="1195" totalcountb="3" type="501" linewidth="none">
           <linepath>
            <startpoint startx="920" starty="790"/>
            <endpoint endx="1240" endy="790"/>
           </linepath>
-          <floatingtext width="17" x="930" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="XuLE1iaYxbN3" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="1180" y="690" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="qvlEFwOhjClO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="88" x="920" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="XH1q6FakQKBC" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
-          <floatingtext width="94" x="1140" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Son6fjmmT6Tb" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskCopies" pretext="+"/>
+          <floatingtext width="17" x="930" y="730" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="CVyUWn1qcgzK" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="1180" y="690" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="liryh1zuMU6H" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="88" x="920" y="790" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="Kpf8k7lZF0C0" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="castorFile" pretext="+"/>
+          <floatingtext width="94" x="1140" y="750" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="DLVEvv0hBBua" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskCopies" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="4" widgetaid="696" linecolor="none" totalcounta="4" xmi.id="2370" widgetbid="1216" totalcountb="9" type="511" linewidth="none">
           <linepath>
@@ -2776,7 +2776,7 @@
          </assocwidget>
         </associations>
        </diagram>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="JobManager" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="YsoxtU7yzPA0" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="JobManager" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="YsoxtU7yzPA0" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="620" showattsigs="601" y="320" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="217" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="179343" showscope="1" height="115" showopsigs="601"/>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="160" showattsigs="601" y="40" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="223" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="19616" showscope="1" height="67" showopsigs="601"/>
@@ -2785,7 +2785,7 @@
         <messages/>
         <associations/>
        </diagram>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Message" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="DSjJCcWu4Nwy" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Message" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="DSjJCcWu4Nwy" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="260" showattsigs="601" y="110" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="174" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="1010" showscope="1" height="115" showopsigs="601"/>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="270" showattsigs="601" y="330" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="162" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="8MsXQ4qQHi0N" showscope="1" height="41" showopsigs="601"/>
@@ -2806,32 +2806,32 @@
            <startpoint startx="432" starty="350"/>
            <endpoint endx="710" endy="330"/>
           </linepath>
-          <floatingtext width="17" x="700" y="330" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="atAH3wdwSnG2" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="430" y="320" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="tYAMccv7WGJV" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
-          <floatingtext width="135" x="590" y="330" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="wt2tUNuIIdUV" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServerStatus" pretext="+"/>
+          <floatingtext width="17" x="700" y="330" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="dGs0ixF5zAdF" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="430" y="320" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="N4wYGo6SH4wn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="135" x="590" y="330" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="rveSZbkKJcH0" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServerStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="CkfEAlzdC0Ip" linecolor="none" totalcounta="2" xmi.id="qbTVIW9h3nzt" widgetbid="59466" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="427" starty="520"/>
            <endpoint endx="720" endy="500"/>
           </linepath>
-          <floatingtext width="17" x="710" y="500" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="b7M1ta4GjC86" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="135" x="430" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="N9ArNTNJLNAn" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStatus" pretext="+"/>
-          <floatingtext width="135" x="600" y="500" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="k442fYVFPfUS" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStatus" pretext="+"/>
+          <floatingtext width="17" x="710" y="500" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="I9eHJFVGxBWi" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="135" x="430" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="yigGma3cWf25" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStatus" pretext="+"/>
+          <floatingtext width="135" x="600" y="500" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="EkOYMfWytNwb" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="8MsXQ4qQHi0N" linecolor="none" totalcounta="2" xmi.id="o3nsokjplgKU" widgetbid="CkfEAlzdC0Ip" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="350" starty="371"/>
            <endpoint endx="350" endy="500"/>
           </linepath>
-          <floatingtext width="17" x="350" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="9LAtXGxBjL9X" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="350" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="qv5Qldd8g5uO" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="134" x="210" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="fTNyqXmYZqaF" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStates" pretext="+"/>
-          <floatingtext width="44" x="300" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="O5SoixEI2ZJv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="ack" pretext="+"/>
+          <floatingtext width="17" x="350" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="fnwdwSLgxbt8" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="350" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="tCYvtRIFrdSe" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="134" x="210" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="jXIFBILP2hvP" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemStates" pretext="+"/>
+          <floatingtext width="44" x="300" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="MSLFnHo3OSIi" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="ack" pretext="+"/>
          </assocwidget>
         </associations>
        </diagram>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Monitoring" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="XIkFhDYti2xM" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Monitoring" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="XIkFhDYti2xM" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="390" showattsigs="601" y="90" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="208" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="178146" showscope="1" height="115" showopsigs="601"/>
          <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="1" usesdiagramusefillcolor="1" showpubliconly="0" showpackage="0" x="830" showattsigs="601" y="10" showattributes="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" width="275" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="180472" showscope="1" height="283" showopsigs="601"/>
@@ -2853,50 +2853,50 @@
            <startpoint startx="598" starty="150"/>
            <endpoint endx="830" endy="100"/>
           </linepath>
-          <floatingtext width="17" x="600" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="GouwtoJutzvY" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="790" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="xrLHy16Id6KX" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="93" x="600" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="06g3f0wpJ6gr" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServer" pretext="+"/>
-          <floatingtext width="196" x="640" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Md23w9an5dBo" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemMetricsReports" pretext="+"/>
+          <floatingtext width="17" x="600" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="KwXCXxoOCUds" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="790" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="SYCBR9piN9wE" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="93" x="600" y="150" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="sGfHgyxMltxg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServer" pretext="+"/>
+          <floatingtext width="196" x="640" y="120" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="JGKErDNkQtdJ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="fileSystemMetricsReports" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="T666fybyCjIp" linecolor="none" totalcounta="3" xmi.id="m6ISNQaeptZO" widgetbid="AcHW1mHXJSdz" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="160" starty="100"/>
            <endpoint endx="200" endy="160"/>
           </linepath>
-          <floatingtext width="17" x="200" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="oy1hxwFtnb8j" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="82" x="110" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="FsKKWT7kH1h9" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="direction" pretext="+"/>
+          <floatingtext width="17" x="200" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="VRNhtyXJWiVv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="82" x="110" y="130" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="NHwl8a2TUXdz" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="direction" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="179202" linecolor="none" totalcounta="3" xmi.id="180341" widgetbid="179343" totalcountb="3" type="510" linewidth="none">
           <linepath>
            <startpoint startx="580" starty="560"/>
            <endpoint endx="550" endy="455"/>
           </linepath>
-          <floatingtext width="17" x="550" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="VxRky6tk4uRz" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="107" x="440" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="aE0BKKjZC1sg" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
+          <floatingtext width="17" x="550" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="uaPO80LdPjIJ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="107" x="440" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="pKdDUYPppMay" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="189809" linecolor="none" totalcounta="3" xmi.id="189866" widgetbid="179343" totalcountb="3" type="510" linewidth="none">
           <linepath>
            <startpoint startx="750" starty="540"/>
            <endpoint endx="620" endy="455"/>
           </linepath>
-          <floatingtext width="17" x="610" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="bh2ogsU9ptul" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="107" x="590" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="qfscEyJoCJyU" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
+          <floatingtext width="17" x="610" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="Htf4FD09nPVv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="107" x="590" y="460" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="fncCT57JQjWs" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="189922" linecolor="none" totalcounta="3" xmi.id="189966" widgetbid="179343" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="850" starty="410"/>
            <endpoint endx="697" endy="400"/>
           </linepath>
-          <floatingtext width="17" x="700" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="sQb2hXXJCX5s" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="107" x="700" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="znW3iv3Wat6m" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
+          <floatingtext width="17" x="700" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="mVKCCo2TihVv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="107" x="700" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="NpWnWm6BYgN1" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="2" indexb="1" widgetaid="180543" linecolor="none" totalcounta="3" xmi.id="180721" widgetbid="179343" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="302" starty="420"/>
            <endpoint endx="480" endy="400"/>
           </linepath>
-          <floatingtext width="17" x="450" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="LTstMygCOFD4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="107" x="370" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="PX2CRwvQhRSN" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
+          <floatingtext width="17" x="450" y="370" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="q83OoQPatik5" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="107" x="370" y="400" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="uW3ftYbHN54t" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="adminStatus" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="179202" linecolor="none" totalcounta="2" xmi.id="182597" widgetbid="180543" totalcountb="3" type="510" linewidth="none">
           <linepath>
@@ -2904,10 +2904,10 @@
            <endpoint endx="220" endy="466"/>
            <point x="220" y="620"/>
           </linepath>
-          <floatingtext width="17" x="430" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="c1FyGS22APyP" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="34" x="230" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="pn1pbnDKU0kd" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
-          <floatingtext width="93" x="360" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="mkNyFSoczooQ" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServer" pretext="+"/>
-          <floatingtext width="191" x="220" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="kjpQ9HnUkfL4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="FileSystemStatesReports" pretext="+"/>
+          <floatingtext width="17" x="430" y="590" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="701" linecolor="none" xmi.id="MFFDvyJPincA" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="34" x="230" y="470" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="piTLrQlWyRXa" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="0..n" pretext=""/>
+          <floatingtext width="93" x="360" y="630" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="UmWCR26JY9zP" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="diskServer" pretext="+"/>
+          <floatingtext width="191" x="220" y="490" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="hYg3dkuRsxpf" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="FileSystemStatesReports" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="179202" linecolor="none" totalcounta="2" xmi.id="180326" widgetbid="19616" totalcountb="2" type="510" linewidth="none">
           <linepath>
@@ -2915,25 +2915,25 @@
            <endpoint endx="800" endy="720"/>
            <point x="550" y="740"/>
           </linepath>
-          <floatingtext width="17" x="790" y="720" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="2xMWy4ADaDBh" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="480" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="HV5z9R2lSHhj" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
-          <floatingtext width="60" x="740" y="720" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="jkjt9iGzTHm4" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="17" x="790" y="720" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="bpyYFT6Pt7ND" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="480" y="680" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="709" linecolor="none" xmi.id="AQ10Lrfh4tvz" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="60" x="740" y="720" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="rCOZzyjneB6T" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="189922" linecolor="none" totalcounta="2" xmi.id="189981" widgetbid="19616" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="950" starty="433"/>
            <endpoint endx="910" endy="690"/>
           </linepath>
-          <floatingtext width="17" x="900" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="BIwcXghZd15Z" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="910" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="cDQ5S7mBrT2z" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="17" x="900" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="I4gvDmOmcMKr" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="910" y="660" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="w3uywnxnxKMv" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="180543" linecolor="none" totalcounta="3" xmi.id="180706" widgetbid="59466" totalcountb="2" type="510" linewidth="none">
           <linepath>
            <startpoint startx="150" starty="466"/>
            <endpoint endx="110" endy="680"/>
           </linepath>
-          <floatingtext width="17" x="70" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="qqigKkfT0Z6X" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="180" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="6DleRwJ37j6Z" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="17" x="70" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="YMJWeePvg5qt" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="180" y="650" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="qQEhWbuQcnPW" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="1" widgetaid="189809" linecolor="none" totalcounta="2" xmi.id="189881" widgetbid="59466" totalcountb="2" type="510" linewidth="none">
           <linepath>
@@ -2941,8 +2941,8 @@
            <endpoint endx="221" endy="710"/>
            <point x="630" y="730"/>
           </linepath>
-          <floatingtext width="17" x="210" y="710" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="5npAUuhJkPz2" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
-          <floatingtext width="60" x="220" y="710" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="Fl6qm9QqN9Um" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
+          <floatingtext width="17" x="210" y="710" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="702" linecolor="none" xmi.id="4xHgkgDI0Umf" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="1" pretext=""/>
+          <floatingtext width="60" x="220" y="710" usesdiagramusefillcolor="1" posttext="" usesdiagramfillcolor="1" isinstance="0" fillcolor="none" height="25" role="710" linecolor="none" xmi.id="rEfRZyGNMU4s" usefillcolor="1" linewidth="none" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" text="status" pretext="+"/>
          </assocwidget>
          <assocwidget indexa="1" indexb="2" widgetaid="178146" linecolor="none" totalcounta="2" xmi.id="178259" widgetbid="1216" totalcountb="3" type="511" linewidth="none">
           <linepath>
@@ -2988,10 +2988,237 @@
          </assocwidget>
         </associations>
        </diagram>
-       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Policies" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="1065" canvaswidth="1649" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="u8wyWPUN7yMk" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="0" snapy="10" linewidth="0" showattsig="1" showpubliconly="0" showpackage="0" showstereotype="0" name="Policies" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" canvasheight="999" canvaswidth="2137" localid="" snapcsgrid="0" showgrid="1" showops="1" usefillcolor="1" fillcolor="#ffffc0" zoom="100" xmi.id="u8wyWPUN7yMk" documentation="" showscope="1" snapgrid="1" showatts="1" type="1">
         <widgets/>
         <messages/>
         <associations/>
+       </diagram>
+       <diagram showopsig="1" linecolor="#ff0000" snapx="10" showattribassocs="1" snapy="10" linewidth="0" showattsig="0" showpubliconly="1" showpackage="1" showstereotype="1" name="Requests" font="Andale Mono,12,-1,5,50,0,0,0,0,0" canvasheight="1183" canvaswidth="2656" localid="" snapcsgrid="0" showgrid="0" showops="0" usefillcolor="1" fillcolor="#ffffc0" zoom="81" xmi.id="wgCKlwyKCdlP" documentation="" showscope="1" snapgrid="0" showatts="1" type="1">
+        <widgets>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="170" showattsigs="600" showstereotype="1" y="784" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="360" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44739" showscope="1" height="63" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1556" showattsigs="600" showstereotype="1" y="601" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="410" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="64515" showscope="1" height="117" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1465" showattsigs="600" showstereotype="1" y="787" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="420" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="pymVTLtOa7eh" showscope="1" height="153" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="540" showattsigs="600" showstereotype="1" y="563" showattributes="1" font="Andale Mono,12,-1,5,75,1,0,0,0,0" drawascircle="0" width="282" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="46353" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1594" showattsigs="600" showstereotype="1" y="470" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="330" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="LyheFPFGZ6Ru" showscope="1" height="99" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1520" showattsigs="600" showstereotype="1" y="219" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="290" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="88538" showscope="1" height="63" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1555" showattsigs="600" showstereotype="1" y="297" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="300" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="88535" showscope="1" height="99" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1092" showattsigs="600" showstereotype="1" y="847" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="320" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="88536" showscope="1" height="99" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1474" showattsigs="600" showstereotype="1" y="53" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="380" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="59031" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1288" showattsigs="600" showstereotype="1" y="967" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="340" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="69548" showscope="1" height="171" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1136" showattsigs="600" showstereotype="1" y="54" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="320" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="70051" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="795" showattsigs="600" showstereotype="1" y="211" showattributes="1" font="Andale Mono,12,-1,5,75,1,0,0,0,0" drawascircle="0" width="272" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="46354" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="471" showattsigs="600" showstereotype="1" y="208" showattributes="1" font="Andale Mono,12,-1,5,75,1,0,0,0,0" drawascircle="0" width="292" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="47170" showscope="1" height="63" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1248" showattsigs="600" showstereotype="1" y="434" showattributes="1" font="Andale Mono,12,-1,5,75,1,0,0,0,0" drawascircle="0" width="242" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="696" showscope="1" height="261" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="6" showattsigs="600" showstereotype="1" y="49" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="340" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="51926" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="218" showattsigs="600" showstereotype="1" y="408" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="440" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="DMKAs4xmumsq" showscope="1" height="36" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="741" showattsigs="600" showstereotype="1" y="51" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="380" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44741" showscope="1" height="63" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="369" showattsigs="600" showstereotype="1" y="47" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="360" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="42341" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="729" showattsigs="600" showstereotype="1" y="872" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="320" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44734" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="28" showattsigs="600" showstereotype="1" y="453" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="410" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44731" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="16" showattsigs="600" showstereotype="1" y="546" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="410" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44732" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="12" showattsigs="600" showstereotype="1" y="623" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="440" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44733" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="253" showattsigs="600" showstereotype="1" y="315" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="360" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="47960" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="383" showattsigs="600" showstereotype="1" y="865" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="320" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44735" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="621" showattsigs="600" showstereotype="1" y="799" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="410" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="51925" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="792" showattsigs="600" showstereotype="1" y="724" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="350" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="175262" showscope="1" height="63" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="844" showattsigs="600" showstereotype="1" y="644" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="310" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44737" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="36" showattsigs="600" showstereotype="1" y="216" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="390" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="47961" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="514" showattsigs="600" showstereotype="1" y="950" showattributes="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" width="350" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="44736" showscope="1" height="54" showopsigs="601"/>
+         <classwidget linecolor="none" usesdiagramfillcolor="1" linewidth="none" showoperations="0" usesdiagramusefillcolor="1" showpubliconly="1" showpackage="1" x="1207" showattsigs="600" showstereotype="1" y="194" showattributes="1" font="Andale Mono,12,-1,5,75,1,0,0,0,0" drawascircle="0" width="292" isinstance="0" usefillcolor="1" fillcolor="none" xmi.id="72046" showscope="1" height="135" showopsigs="601"/>
+        </widgets>
+        <messages/>
+        <associations>
+         <assocwidget indexa="1" indexb="1" widgetaid="44739" linecolor="none" totalcounta="3" xmi.id="47165" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="290" starty="784"/>
+           <endpoint endx="571" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="2" indexb="2" widgetaid="44739" linecolor="none" totalcounta="3" xmi.id="84130" widgetbid="46353" totalcountb="9" type="512" linewidth="none">
+          <linepath>
+           <startpoint startx="410" starty="784"/>
+           <endpoint endx="602" endy="617"/>
+          </linepath>
+          <floatingtext linecolor="none" usesdiagramfillcolor="1" linewidth="none" usesdiagramusefillcolor="1" x="618" showstereotype="1" y="601" text="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" pretext="" role="702" width="18" isinstance="0" posttext="" usefillcolor="1" fillcolor="none" xmi.id="kirFlFfTlOvF" height="22"/>
+          <floatingtext linecolor="none" usesdiagramfillcolor="1" linewidth="none" usesdiagramusefillcolor="1" x="543" showstereotype="1" y="599" text="parent" font="Andale Mono,12,-1,5,50,0,0,0,0,0" pretext="+" role="710" width="78" isinstance="0" posttext="" usefillcolor="1" fillcolor="none" xmi.id="iYjTUileLV4l" height="22"/>
+         </assocwidget>
+         <assocwidget indexa="2" indexb="3" widgetaid="47170" linecolor="none" totalcounta="4" xmi.id="48746" widgetbid="46353" totalcountb="4" type="512" linewidth="none">
+          <linepath>
+           <startpoint startx="617" starty="271"/>
+           <endpoint endx="751" endy="563"/>
+          </linepath>
+          <floatingtext linecolor="none" usesdiagramfillcolor="1" linewidth="none" usesdiagramusefillcolor="1" x="719" showstereotype="1" y="497" text="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" pretext="" role="702" width="18" isinstance="0" posttext="" usefillcolor="1" fillcolor="none" xmi.id="r6fuVVJtj8wO" height="22"/>
+          <floatingtext linecolor="none" usesdiagramfillcolor="1" linewidth="none" usesdiagramusefillcolor="1" x="2574" showstereotype="1" y="462" text="parent" font="Andale Mono,12,-1,5,50,0,0,0,0,0" pretext="+" role="710" width="78" isinstance="0" posttext="" usefillcolor="1" fillcolor="none" xmi.id="PEr5fn0rRjHp" height="22"/>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="3" widgetaid="46353" linecolor="none" totalcounta="2" xmi.id="47151" widgetbid="696" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="822" starty="590"/>
+           <endpoint endx="1248" endy="629"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="46354" linecolor="none" totalcounta="2" xmi.id="47152" widgetbid="696" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="931" starty="265"/>
+           <endpoint endx="1248" endy="499"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="3" indexb="2" widgetaid="47170" linecolor="none" totalcounta="4" xmi.id="47957" widgetbid="696" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="690" starty="271"/>
+           <endpoint endx="1248" endy="564"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="4" widgetaid="64515" linecolor="none" totalcounta="2" xmi.id="64912" widgetbid="696" totalcountb="6" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1556" starty="659"/>
+           <endpoint endx="1490" endy="608"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="69548" linecolor="none" totalcounta="2" xmi.id="70044" widgetbid="696" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1458" starty="967"/>
+           <endpoint endx="1409" endy="695"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="88538" linecolor="none" totalcounta="2" xmi.id="89083" widgetbid="696" totalcountb="6" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1665" starty="282"/>
+           <endpoint endx="1490" endy="477"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="88536" linecolor="none" totalcounta="2" xmi.id="89085" widgetbid="696" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1252" starty="847"/>
+           <endpoint endx="1328" endy="695"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="88535" linecolor="none" totalcounta="2" xmi.id="89086" widgetbid="696" totalcountb="6" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1705" starty="396"/>
+           <endpoint endx="1490" endy="521"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="5" widgetaid="pymVTLtOa7eh" linecolor="none" totalcounta="2" xmi.id="mgnQgist7i0B" widgetbid="696" totalcountb="6" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1675" starty="787"/>
+           <endpoint endx="1490" endy="651"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="3" widgetaid="LyheFPFGZ6Ru" linecolor="none" totalcounta="2" xmi.id="jY5i5J311fHO" widgetbid="696" totalcountb="6" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1594" starty="519"/>
+           <endpoint endx="1490" endy="564"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="51926" linecolor="none" totalcounta="2" xmi.id="84129" widgetbid="47170" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="176" starty="103"/>
+           <endpoint endx="568" endy="208"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="DMKAs4xmumsq" linecolor="none" totalcounta="2" xmi.id="yNUQdd97KTbi" widgetbid="46353" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="438" starty="444"/>
+           <endpoint endx="681" endy="563"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="44741" linecolor="none" totalcounta="2" xmi.id="47167" widgetbid="46354" totalcountb="2" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="931" starty="114"/>
+           <endpoint endx="931" endy="211"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="42341" linecolor="none" totalcounta="2" xmi.id="47958" widgetbid="47170" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="549" starty="101"/>
+           <endpoint endx="665" endy="208"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="6" widgetaid="44734" linecolor="none" totalcounta="2" xmi.id="47161" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="889" starty="872"/>
+           <endpoint endx="728" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="44731" linecolor="none" totalcounta="2" xmi.id="47160" widgetbid="46353" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="233" starty="507"/>
+           <endpoint endx="610" endy="563"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="44732" linecolor="none" totalcounta="2" xmi.id="47159" widgetbid="46353" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="426" starty="573"/>
+           <endpoint endx="540" endy="581"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="44733" linecolor="none" totalcounta="2" xmi.id="47158" widgetbid="46353" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="232" starty="623"/>
+           <endpoint endx="540" endy="599"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="47960" linecolor="none" totalcounta="2" xmi.id="48743" widgetbid="47170" totalcountb="4" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="433" starty="315"/>
+           <endpoint endx="544" endy="271"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="3" widgetaid="44735" linecolor="none" totalcounta="2" xmi.id="47162" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="543" starty="865"/>
+           <endpoint endx="634" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="5" widgetaid="51925" linecolor="none" totalcounta="2" xmi.id="52712" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="826" starty="799"/>
+           <endpoint endx="696" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="7" widgetaid="175262" linecolor="none" totalcounta="2" xmi.id="175300" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="967" starty="724"/>
+           <endpoint endx="759" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="8" widgetaid="44737" linecolor="none" totalcounta="2" xmi.id="47164" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="999" starty="644"/>
+           <endpoint endx="790" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="47961" linecolor="none" totalcounta="2" xmi.id="48744" widgetbid="47170" totalcountb="2" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="426" starty="243"/>
+           <endpoint endx="471" endy="239"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="4" widgetaid="44736" linecolor="none" totalcounta="2" xmi.id="47163" widgetbid="46353" totalcountb="9" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="689" starty="950"/>
+           <endpoint endx="665" endy="617"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="72046" linecolor="none" totalcounta="2" xmi.id="72544" widgetbid="696" totalcountb="2" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1353" starty="329"/>
+           <endpoint endx="1369" endy="434"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="1" widgetaid="70051" linecolor="none" totalcounta="2" xmi.id="72545" widgetbid="72046" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1296" starty="108"/>
+           <endpoint endx="1304" endy="194"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" indexb="2" widgetaid="59031" linecolor="none" totalcounta="2" xmi.id="72546" widgetbid="72046" totalcountb="3" type="500" linewidth="none">
+          <linepath>
+           <startpoint startx="1664" starty="107"/>
+           <endpoint endx="1401" endy="194"/>
+          </linepath>
+         </assocwidget>
+        </associations>
        </diagram>
       </diagrams>
      </XMI.extension>
@@ -3012,15 +3239,16 @@
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello">
-  <docsettings viewid="RcNDgtXHVcS2" uniqueid="0TjEFQ5iS3Gq" documentation=""/>
+  <docsettings viewid="wgCKlwyKCdlP" uniqueid="r6fuVVJtj8wO" documentation=""/>
   <listview>
-   <listitem open="1" type="800" label="Views">
+   <listitem open="1" type="800" id="Views">
     <listitem open="1" type="801" id="1">
      <listitem open="0" type="807" id="fMQlcGvXPRc5" label="Catalog"/>
      <listitem open="0" type="807" id="YsoxtU7yzPA0" label="JobManager"/>
      <listitem open="0" type="807" id="DSjJCcWu4Nwy" label="Message"/>
      <listitem open="0" type="807" id="XIkFhDYti2xM" label="Monitoring"/>
      <listitem open="0" type="807" id="u8wyWPUN7yMk" label="Policies"/>
+     <listitem open="0" type="807" id="wgCKlwyKCdlP" label="Requests"/>
      <listitem open="0" type="807" id="iv2ni54uLPNe" label="Tape gateway"/>
      <listitem open="0" type="807" id="RcNDgtXHVcS2" label="Tape messages"/>
      <listitem open="1" type="818" id="2103">
@@ -3416,7 +3644,7 @@
         <listitem open="0" type="814" id="a8i9Tz19AAxy"/>
         <listitem open="0" type="814" id="8WNcxF7kezMQ"/>
        </listitem>
-       <listitem open="1" type="813" id="R5j2pUzclG6J">
+       <listitem open="0" type="813" id="R5j2pUzclG6J">
         <listitem open="0" type="814" id="mY1OJFTaPC7B"/>
         <listitem open="0" type="814" id="R2S0RhABu9xH"/>
         <listitem open="1" type="814" id="3Z7EzNuKT1PH"/>
