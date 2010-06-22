@@ -245,6 +245,12 @@ CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBE
 /* SQL statements for type StgFilesDeleted */
 CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for type StageAbortRequest */
+CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageAbortRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type NsFileId */
+CREATE TABLE NsFileId (fileid INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFileId_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -291,7 +297,6 @@ INSERT INTO Type2Obj (type, object) VALUES (10, 'FileClass');
 INSERT INTO Type2Obj (type, object) VALUES (12, 'FileSystem');
 INSERT INTO Type2Obj (type, object) VALUES (13, 'IClient');
 INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
-INSERT INTO Type2Obj (type, object) VALUES (16, 'ReqIdRequest');
 INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
 INSERT INTO Type2Obj (type, object) VALUES (18, 'Segment');
 INSERT INTO Type2Obj (type, object) VALUES (26, 'Stream');
@@ -434,5 +439,6 @@ INSERT INTO Type2Obj (type, object) VALUES (188, 'StreamPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (189, 'RetryPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (190, 'VdqmTapeGatewayRequest');
 INSERT INTO Type2Obj (type, object) VALUES (191, 'StageQueryResult');
+INSERT INTO Type2Obj (type, object) VALUES (192, 'FileId');
 COMMIT;
 

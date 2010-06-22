@@ -47,7 +47,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "IClient",
   "MessageAck",
   "DELETED TYPE",
-  "ReqIdRequest",
+  "DELETED TYPE",
   "Request",
   "Segment",
   "DELETED TYPE",
@@ -234,7 +234,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "RetryPolicyElement",
   "VdqmTapeGatewayRequest",
 
-  "StageQueryResult"
+  "StageQueryResult",
+  "NsFileId"
 };
 
 

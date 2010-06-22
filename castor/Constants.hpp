@@ -51,7 +51,6 @@ namespace castor {
     OBJ_FileSystem = 12,
     OBJ_IClient = 13,
     OBJ_MessageAck = 14,
-    OBJ_ReqIdRequest = 16,
     OBJ_Request = 17,
     OBJ_Segment = 18,
     OBJ_Stream = 26,
@@ -230,7 +229,8 @@ namespace castor {
     OBJ_RetryPolicyElement = 189,
     OBJ_VdqmTapeGatewayRequest = 190,
 
-    OBJ_StageQueryResult = 191
+    OBJ_StageQueryResult = 191,
+    OBJ_NsFileId = 192
 
   };
 
@@ -307,7 +307,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 192
+#define OBJECT_IDS_NB 193
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

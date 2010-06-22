@@ -41,11 +41,13 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/NsFileId.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <rfcntl.h>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -92,7 +94,6 @@ void castor::io::StreamStageAbortRequestCnv::createRep(castor::IAddress* address
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->parentUuid();
   ad->stream() << htolopnflg(obj->flags());
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
@@ -105,6 +106,7 @@ void castor::io::StreamStageAbortRequestCnv::createRep(castor::IAddress* address
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->parentUuid();
   ad->stream() << obj->id();
 }
 
@@ -118,9 +120,6 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::createObj(castor::IAddr
   // create the new Object
   castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
   // Now retrieve and set members
-  std::string parentUuid;
-  ad->stream() >> parentUuid;
-  object->setParentUuid(parentUuid);
   u_signed64 flags;
   ad->stream() >> flags;
   flags = ltohopnflg(flags);
@@ -158,6 +157,9 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::createObj(castor::IAddr
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
+  std::string parentUuid;
+  ad->stream() >> parentUuid;
+  object->setParentUuid(parentUuid);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -181,9 +183,15 @@ void castor::io::StreamStageAbortRequestCnv::marshalObject(castor::IObject* obje
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
+    address->stream() << obj->files().size();
+    for (std::vector<castor::stager::NsFileId*>::iterator it = obj->files().begin();
+         it != obj->files().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -204,14 +212,21 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::unmarshalObject(castor:
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));
-  ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));
+  unsigned int filesNb;
+  ad.stream() >> filesNb;
+  for (unsigned int i = 0; i < filesNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    castor::IObject* objFiles = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addFiles(dynamic_cast<castor::stager::NsFileId*>(objFiles));
+  }
   return object;
 }
 

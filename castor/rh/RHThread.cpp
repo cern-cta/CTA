@@ -40,6 +40,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/GCFileList.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -607,6 +608,13 @@ unsigned int castor::rh::RHThread::handleRequest
     if (0 != cpReq) {
       svcs()->fillRep(&ad, cpReq, OBJ_BWUser, false);
       svcs()->fillRep(&ad, cpReq, OBJ_RequestType, false);
+    }
+
+    // Store fileids for abort requests
+    castor::stager::StageAbortRequest* abortReq =
+      dynamic_cast<castor::stager::StageAbortRequest*>(fr);
+    if (0 != abortReq) {
+      svcs()->fillRep(&ad, abortReq, OBJ_NsFileId, false);
     }
 
   } catch (castor::exception::Exception e) {

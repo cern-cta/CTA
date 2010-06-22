@@ -83,6 +83,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBWUserCnv.cpp \
      DbVdqmTapeCnv.cpp \
      DbVersionQueryCnv.cpp \
+     DbNsFileIdCnv.cpp \
      ../DbBaseObj.cpp \
      ../DbCnvSvc.cpp \
      ../DbParamsSvc.cpp \

@@ -43,8 +43,11 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/NsFileId.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <algorithm>
+#include <set>
 #include <stdlib.h>
 #include <vector>
 
@@ -59,7 +62,7 @@ static castor::CnvFactory<castor::db::cnv::DbStageAbortRequestCnv>* s_factoryDbS
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_insertStatementString =
-"INSERT INTO StageAbortRequest (parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15,:16) RETURNING id INTO :17";
+"INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client, parent) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15,:16) RETURNING id INTO :17";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_deleteStatementString =
@@ -67,7 +70,7 @@ const std::string castor::db::cnv::DbStageAbortRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_selectStatementString =
-"SELECT parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client, parent FROM StageAbortRequest WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_bulkSelectStatementString =
@@ -78,7 +81,7 @@ const std::string castor::db::cnv::DbStageAbortRequestCnv::s_bulkSelectStatement
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, parent, svcClass, client \
+     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client, parent \
                      FROM StageAbortRequest t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -89,7 +92,7 @@ const std::string castor::db::cnv::DbStageAbortRequestCnv::s_bulkSelectStatement
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_updateStatementString =
-"UPDATE StageAbortRequest SET parentUuid = :1, flags = :2, userName = :3, euid = :4, egid = :5, mask = :6, pid = :7, machine = :8, svcClassName = :9, userTag = :10, reqId = :11, lastModificationTime = :12 WHERE id = :13";
+"UPDATE StageAbortRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, parentUuid = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_storeTypeStatementString =
@@ -103,10 +106,6 @@ const std::string castor::db::cnv::DbStageAbortRequestCnv::s_deleteTypeStatement
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_insertNewReqStatementString =
 "INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
 
-/// SQL update statement for member parent
-const std::string castor::db::cnv::DbStageAbortRequestCnv::s_updateFileRequestStatementString =
-"UPDATE StageAbortRequest SET parent = :1 WHERE id = :2";
-
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_checkSvcClassExistStatementString =
 "SELECT id FROM SvcClass WHERE id = :1";
@@ -118,6 +117,22 @@ const std::string castor::db::cnv::DbStageAbortRequestCnv::s_updateSvcClassState
 /// SQL update statement for member client
 const std::string castor::db::cnv::DbStageAbortRequestCnv::s_updateIClientStatementString =
 "UPDATE StageAbortRequest SET client = :1 WHERE id = :2";
+
+/// SQL update statement for member parent
+const std::string castor::db::cnv::DbStageAbortRequestCnv::s_updateFileRequestStatementString =
+"UPDATE StageAbortRequest SET parent = :1 WHERE id = :2";
+
+/// SQL select statement for member files
+const std::string castor::db::cnv::DbStageAbortRequestCnv::s_selectNsFileIdStatementString =
+"SELECT id FROM NsFileId WHERE request = :1 FOR UPDATE";
+
+/// SQL delete statement for member files
+const std::string castor::db::cnv::DbStageAbortRequestCnv::s_deleteNsFileIdStatementString =
+"UPDATE NsFileId SET request = 0 WHERE id = :1";
+
+/// SQL remote update statement for member files
+const std::string castor::db::cnv::DbStageAbortRequestCnv::s_remoteUpdateNsFileIdStatementString =
+"UPDATE NsFileId SET request = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -132,10 +147,13 @@ castor::db::cnv::DbStageAbortRequestCnv::DbStageAbortRequestCnv(castor::ICnvSvc*
   m_insertNewReqStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_updateFileRequestStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
-  m_updateIClientStatement(0) {}
+  m_updateIClientStatement(0),
+  m_updateFileRequestStatement(0),
+  m_selectNsFileIdStatement(0),
+  m_deleteNsFileIdStatement(0),
+  m_remoteUpdateNsFileIdStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -159,10 +177,13 @@ void castor::db::cnv::DbStageAbortRequestCnv::reset() throw() {
     if(m_insertNewReqStatement) delete m_insertNewReqStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
-    if(m_updateFileRequestStatement) delete m_updateFileRequestStatement;
     if(m_checkSvcClassExistStatement) delete m_checkSvcClassExistStatement;
     if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
     if(m_updateIClientStatement) delete m_updateIClientStatement;
+    if(m_updateFileRequestStatement) delete m_updateFileRequestStatement;
+    if(m_deleteNsFileIdStatement) delete m_deleteNsFileIdStatement;
+    if(m_selectNsFileIdStatement) delete m_selectNsFileIdStatement;
+    if(m_remoteUpdateNsFileIdStatement) delete m_remoteUpdateNsFileIdStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -173,10 +194,13 @@ void castor::db::cnv::DbStageAbortRequestCnv::reset() throw() {
   m_insertNewReqStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_updateFileRequestStatement = 0;
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
+  m_updateFileRequestStatement = 0;
+  m_selectNsFileIdStatement = 0;
+  m_deleteNsFileIdStatement = 0;
+  m_remoteUpdateNsFileIdStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -205,14 +229,17 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRep(castor::IAddress*,
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   try {
     switch (type) {
-    case castor::OBJ_FileRequest :
-      fillRepFileRequest(obj);
-      break;
     case castor::OBJ_SvcClass :
       fillRepSvcClass(obj);
       break;
     case castor::OBJ_IClient :
       fillRepIClient(obj);
+      break;
+    case castor::OBJ_FileRequest :
+      fillRepFileRequest(obj);
+      break;
+    case castor::OBJ_NsFileId :
+      fillRepNsFileId(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -230,21 +257,6 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRep(castor::IAddress*,
                     << std::endl << e.getMessage().str() << std::endl;
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// fillRepFileRequest
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStageAbortRequestCnv::fillRepFileRequest(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check update statement
-  if (0 == m_updateFileRequestStatement) {
-    m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
-  }
-  // Update local object
-  m_updateFileRequestStatement->setUInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
-  m_updateFileRequestStatement->setUInt64(2, obj->id());
-  m_updateFileRequestStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -295,6 +307,74 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepIClient(castor::stager::Sta
 }
 
 //------------------------------------------------------------------------------
+// fillRepFileRequest
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbStageAbortRequestCnv::fillRepFileRequest(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check update statement
+  if (0 == m_updateFileRequestStatement) {
+    m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
+  }
+  // Update local object
+  m_updateFileRequestStatement->setUInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
+  m_updateFileRequestStatement->setUInt64(2, obj->id());
+  m_updateFileRequestStatement->execute();
+}
+
+//------------------------------------------------------------------------------
+// fillRepNsFileId
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbStageAbortRequestCnv::fillRepNsFileId(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception) {
+  // check select statement
+  if (0 == m_selectNsFileIdStatement) {
+    m_selectNsFileIdStatement = createStatement(s_selectNsFileIdStatementString);
+  }
+  // Get current database data
+  std::set<u_signed64> filesList;
+  m_selectNsFileIdStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectNsFileIdStatement->executeQuery();
+  while (rset->next()) {
+    filesList.insert(rset->getUInt64(1));
+  }
+  delete rset;
+  // update files and create new ones
+  std::vector<castor::IObject*> toBeCreated;
+  for (std::vector<castor::stager::NsFileId*>::iterator it = obj->files().begin();
+       it != obj->files().end();
+       it++) {
+    if (0 == (*it)->id()) {
+      toBeCreated.push_back(*it);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateNsFileIdStatement) {
+        m_remoteUpdateNsFileIdStatement = createStatement(s_remoteUpdateNsFileIdStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateNsFileIdStatement->setUInt64(1, obj->id());
+      m_remoteUpdateNsFileIdStatement->setUInt64(2, (*it)->id());
+      m_remoteUpdateNsFileIdStatement->execute();
+      std::set<u_signed64>::iterator item;
+      if ((item = filesList.find((*it)->id())) != filesList.end()) {
+        filesList.erase(item);
+      }
+    }
+  }
+  // create new objects
+  cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_StageAbortRequest);
+  // Delete old links
+  for (std::set<u_signed64>::iterator it = filesList.begin();
+       it != filesList.end();
+       it++) {
+    if (0 == m_deleteNsFileIdStatement) {
+      m_deleteNsFileIdStatement = createStatement(s_deleteNsFileIdStatementString);
+    }
+    m_deleteNsFileIdStatement->setUInt64(1, *it);
+    m_deleteNsFileIdStatement->execute();
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress*,
@@ -305,14 +385,17 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress*,
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   switch (type) {
-  case castor::OBJ_FileRequest :
-    fillObjFileRequest(obj);
-    break;
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
     break;
   case castor::OBJ_IClient :
     fillObjIClient(obj);
+    break;
+  case castor::OBJ_FileRequest :
+    fillObjFileRequest(obj);
+    break;
+  case castor::OBJ_NsFileId :
+    fillObjNsFileId(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -323,44 +406,6 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress*,
   }
   if (endTransaction) {
     cnvSvc()->commit();
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjFileRequest
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
-  if (!rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 parentId = rset->getInt64(15);
-  // Close ResultSet
-  delete rset;
-  // Check whether something should be deleted
-  if (0 != obj->parent() &&
-      (0 == parentId ||
-       obj->parent()->id() != parentId)) {
-    obj->setParent(0);
-  }
-  // Update object or create new one
-  if (0 != parentId) {
-    if (0 == obj->parent()) {
-      obj->setParent
-        (dynamic_cast<castor::stager::FileRequest*>
-         (cnvSvc()->getObjFromId(parentId)));
-    } else {
-      cnvSvc()->updateObj(obj->parent());
-    }
   }
 }
 
@@ -381,7 +426,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjSvcClass(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(16);
+  u_signed64 svcClassId = rset->getInt64(15);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -419,7 +464,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(17);
+  u_signed64 clientId = rset->getInt64(16);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -437,6 +482,96 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::Sta
     } else {
       cnvSvc()->updateObj(obj->client());
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjFileRequest
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
+  if (!rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 parentId = rset->getInt64(17);
+  // Close ResultSet
+  delete rset;
+  // Check whether something should be deleted
+  if (0 != obj->parent() &&
+      (0 == parentId ||
+       obj->parent()->id() != parentId)) {
+    obj->setParent(0);
+  }
+  // Update object or create new one
+  if (0 != parentId) {
+    if (0 == obj->parent()) {
+      obj->setParent
+        (dynamic_cast<castor::stager::FileRequest*>
+         (cnvSvc()->getObjFromId(parentId)));
+    } else {
+      cnvSvc()->updateObj(obj->parent());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjNsFileId
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbStageAbortRequestCnv::fillObjNsFileId(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectNsFileIdStatement) {
+    m_selectNsFileIdStatement = createStatement(s_selectNsFileIdStatementString);
+  }
+  // retrieve the object from the database
+  std::vector<u_signed64> filesList;
+  m_selectNsFileIdStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectNsFileIdStatement->executeQuery();
+  while (rset->next()) {
+    filesList.push_back(rset->getUInt64(1));
+  }
+  // Close ResultSet
+  delete rset;
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::NsFileId*> toBeDeleted;
+  for (std::vector<castor::stager::NsFileId*>::iterator it = obj->files().begin();
+       it != obj->files().end();
+       it++) {
+    std::vector<u_signed64>::iterator item =
+      std::find(filesList.begin(), filesList.end(), (*it)->id());
+    if (item == filesList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      filesList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::stager::NsFileId*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeFiles(*it);
+    (*it)->setRequest(0);
+  }
+  // Create new objects
+  std::vector<castor::IObject*> newFiles =
+    cnvSvc()->getObjsFromIds(filesList, OBJ_NsFileId);
+  for (std::vector<castor::IObject*>::iterator it = newFiles.begin();
+       it != newFiles.end();
+       it++) {
+    castor::stager::NsFileId* remoteObj = 
+      dynamic_cast<castor::stager::NsFileId*>(*it);
+    obj->addFiles(remoteObj);
+    remoteObj->setRequest(obj);
   }
 }
 
@@ -466,22 +601,22 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress*,
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setString(1, obj->parentUuid());
-    m_insertStatement->setUInt64(2, obj->flags());
-    m_insertStatement->setString(3, obj->userName());
-    m_insertStatement->setInt(4, obj->euid());
-    m_insertStatement->setInt(5, obj->egid());
-    m_insertStatement->setInt(6, obj->mask());
-    m_insertStatement->setInt(7, obj->pid());
-    m_insertStatement->setString(8, obj->machine());
-    m_insertStatement->setString(9, obj->svcClassName());
-    m_insertStatement->setString(10, obj->userTag());
-    m_insertStatement->setString(11, obj->reqId());
+    m_insertStatement->setUInt64(1, obj->flags());
+    m_insertStatement->setString(2, obj->userName());
+    m_insertStatement->setInt(3, obj->euid());
+    m_insertStatement->setInt(4, obj->egid());
+    m_insertStatement->setInt(5, obj->mask());
+    m_insertStatement->setInt(6, obj->pid());
+    m_insertStatement->setString(7, obj->machine());
+    m_insertStatement->setString(8, obj->svcClassName());
+    m_insertStatement->setString(9, obj->userTag());
+    m_insertStatement->setString(10, obj->reqId());
+    m_insertStatement->setInt(11, time(0));
     m_insertStatement->setInt(12, time(0));
-    m_insertStatement->setInt(13, time(0));
-    m_insertStatement->setUInt64(14, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setUInt64(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(13, obj->parentUuid());
+    m_insertStatement->setUInt64(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(16, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(17));
     m_storeTypeStatement->setUInt64(1, obj->id());
@@ -504,7 +639,6 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress*,
                     << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
                     << " and parameters' values were :" << std::endl
-                    << "  parentUuid : " << obj->parentUuid() << std::endl
                     << "  flags : " << obj->flags() << std::endl
                     << "  userName : " << obj->userName() << std::endl
                     << "  euid : " << obj->euid() << std::endl
@@ -517,10 +651,11 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress*,
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
+                    << "  parentUuid : " << obj->parentUuid() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  parent : " << (obj->parent() ? obj->parent()->id() : 0) << std::endl
                     << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
-                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl
+                    << "  parent : " << (obj->parent() ? obj->parent()->id() : 0) << std::endl;
     throw ex;
   }
 }
@@ -554,30 +689,6 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // build the buffers for parentUuid
-    unsigned int parentUuidMaxLen = 0;
-    for (int i = 0; i < nb; i++) {
-      if (objs[i]->parentUuid().length()+1 > parentUuidMaxLen)
-        parentUuidMaxLen = objs[i]->parentUuid().length()+1;
-    }
-    char* parentUuidBuffer = (char*) calloc(nb, parentUuidMaxLen);
-    if (parentUuidBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentUuidBuffer);
-    unsigned short* parentUuidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (parentUuidBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentUuidBufLens);
-    for (int i = 0; i < nb; i++) {
-      strncpy(parentUuidBuffer+(i*parentUuidMaxLen), objs[i]->parentUuid().c_str(), parentUuidMaxLen);
-      parentUuidBufLens[i] = objs[i]->parentUuid().length()+1; // + 1 for the trailing \0
-    }
-    m_insertStatement->setDataBuffer
-      (1, parentUuidBuffer, castor::db::DBTYPE_STRING, parentUuidMaxLen, parentUuidBufLens);
     // build the buffers for flags
     double* flagsBuffer = (double*) malloc(nb * sizeof(double));
     if (flagsBuffer == 0) {
@@ -596,7 +707,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       flagsBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, flagsBuffer, castor::db::DBTYPE_UINT64, sizeof(flagsBuffer[0]), flagsBufLens);
+      (1, flagsBuffer, castor::db::DBTYPE_UINT64, sizeof(flagsBuffer[0]), flagsBufLens);
     // build the buffers for userName
     unsigned int userNameMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -620,7 +731,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       userNameBufLens[i] = objs[i]->userName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (3, userNameBuffer, castor::db::DBTYPE_STRING, userNameMaxLen, userNameBufLens);
+      (2, userNameBuffer, castor::db::DBTYPE_STRING, userNameMaxLen, userNameBufLens);
     // build the buffers for euid
     long* euidBuffer = (long*) malloc(nb * sizeof(long));
     if (euidBuffer == 0) {
@@ -639,7 +750,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       euidBufLens[i] = sizeof(long);
     }
     m_insertStatement->setDataBuffer
-      (4, euidBuffer, castor::db::DBTYPE_INT, sizeof(euidBuffer[0]), euidBufLens);
+      (3, euidBuffer, castor::db::DBTYPE_INT, sizeof(euidBuffer[0]), euidBufLens);
     // build the buffers for egid
     long* egidBuffer = (long*) malloc(nb * sizeof(long));
     if (egidBuffer == 0) {
@@ -658,7 +769,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       egidBufLens[i] = sizeof(long);
     }
     m_insertStatement->setDataBuffer
-      (5, egidBuffer, castor::db::DBTYPE_INT, sizeof(egidBuffer[0]), egidBufLens);
+      (4, egidBuffer, castor::db::DBTYPE_INT, sizeof(egidBuffer[0]), egidBufLens);
     // build the buffers for mask
     long* maskBuffer = (long*) malloc(nb * sizeof(long));
     if (maskBuffer == 0) {
@@ -677,7 +788,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       maskBufLens[i] = sizeof(long);
     }
     m_insertStatement->setDataBuffer
-      (6, maskBuffer, castor::db::DBTYPE_INT, sizeof(maskBuffer[0]), maskBufLens);
+      (5, maskBuffer, castor::db::DBTYPE_INT, sizeof(maskBuffer[0]), maskBufLens);
     // build the buffers for pid
     long* pidBuffer = (long*) malloc(nb * sizeof(long));
     if (pidBuffer == 0) {
@@ -696,7 +807,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       pidBufLens[i] = sizeof(long);
     }
     m_insertStatement->setDataBuffer
-      (7, pidBuffer, castor::db::DBTYPE_INT, sizeof(pidBuffer[0]), pidBufLens);
+      (6, pidBuffer, castor::db::DBTYPE_INT, sizeof(pidBuffer[0]), pidBufLens);
     // build the buffers for machine
     unsigned int machineMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -720,7 +831,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       machineBufLens[i] = objs[i]->machine().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (8, machineBuffer, castor::db::DBTYPE_STRING, machineMaxLen, machineBufLens);
+      (7, machineBuffer, castor::db::DBTYPE_STRING, machineMaxLen, machineBufLens);
     // build the buffers for svcClassName
     unsigned int svcClassNameMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -744,7 +855,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       svcClassNameBufLens[i] = objs[i]->svcClassName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (9, svcClassNameBuffer, castor::db::DBTYPE_STRING, svcClassNameMaxLen, svcClassNameBufLens);
+      (8, svcClassNameBuffer, castor::db::DBTYPE_STRING, svcClassNameMaxLen, svcClassNameBufLens);
     // build the buffers for userTag
     unsigned int userTagMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -768,7 +879,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       userTagBufLens[i] = objs[i]->userTag().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (10, userTagBuffer, castor::db::DBTYPE_STRING, userTagMaxLen, userTagBufLens);
+      (9, userTagBuffer, castor::db::DBTYPE_STRING, userTagMaxLen, userTagBufLens);
     // build the buffers for reqId
     unsigned int reqIdMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -792,7 +903,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       reqIdBufLens[i] = objs[i]->reqId().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (11, reqIdBuffer, castor::db::DBTYPE_STRING, reqIdMaxLen, reqIdBufLens);
+      (10, reqIdBuffer, castor::db::DBTYPE_STRING, reqIdMaxLen, reqIdBufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
     if (creationTimeBuffer == 0) {
@@ -811,7 +922,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       creationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (12, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
+      (11, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
     // build the buffers for lastModificationTime
     double* lastModificationTimeBuffer = (double*) malloc(nb * sizeof(double));
     if (lastModificationTimeBuffer == 0) {
@@ -830,26 +941,31 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       lastModificationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (13, lastModificationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastModificationTimeBuffer[0]), lastModificationTimeBufLens);
-    // build the buffers for parent
-    double* parentBuffer = (double*) malloc(nb * sizeof(double));
-    if (parentBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentBuffer);
-    unsigned short* parentBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (parentBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentBufLens);
+      (12, lastModificationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastModificationTimeBuffer[0]), lastModificationTimeBufLens);
+    // build the buffers for parentUuid
+    unsigned int parentUuidMaxLen = 0;
     for (int i = 0; i < nb; i++) {
-      parentBuffer[i] = (type == OBJ_FileRequest && objs[i]->parent() != 0) ? objs[i]->parent()->id() : 0;
-      parentBufLens[i] = sizeof(double);
+      if (objs[i]->parentUuid().length()+1 > parentUuidMaxLen)
+        parentUuidMaxLen = objs[i]->parentUuid().length()+1;
+    }
+    char* parentUuidBuffer = (char*) calloc(nb, parentUuidMaxLen);
+    if (parentUuidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(parentUuidBuffer);
+    unsigned short* parentUuidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (parentUuidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(parentUuidBufLens);
+    for (int i = 0; i < nb; i++) {
+      strncpy(parentUuidBuffer+(i*parentUuidMaxLen), objs[i]->parentUuid().c_str(), parentUuidMaxLen);
+      parentUuidBufLens[i] = objs[i]->parentUuid().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (14, parentBuffer, castor::db::DBTYPE_UINT64, sizeof(parentBuffer[0]), parentBufLens);
+      (13, parentUuidBuffer, castor::db::DBTYPE_STRING, parentUuidMaxLen, parentUuidBufLens);
     // build the buffers for svcClass
     double* svcClassBuffer = (double*) malloc(nb * sizeof(double));
     if (svcClassBuffer == 0) {
@@ -868,7 +984,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       svcClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (15, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
+      (14, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
     if (clientBuffer == 0) {
@@ -887,7 +1003,26 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
       clientBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (16, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+      (15, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+    // build the buffers for parent
+    double* parentBuffer = (double*) malloc(nb * sizeof(double));
+    if (parentBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(parentBuffer);
+    unsigned short* parentBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (parentBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(parentBufLens);
+    for (int i = 0; i < nb; i++) {
+      parentBuffer[i] = (type == OBJ_FileRequest && objs[i]->parent() != 0) ? objs[i]->parent()->id() : 0;
+      parentBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (16, parentBuffer, castor::db::DBTYPE_UINT64, sizeof(parentBuffer[0]), parentBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -979,18 +1114,18 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateRep(castor::IAddress*,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setString(1, obj->parentUuid());
-    m_updateStatement->setUInt64(2, obj->flags());
-    m_updateStatement->setString(3, obj->userName());
-    m_updateStatement->setInt(4, obj->euid());
-    m_updateStatement->setInt(5, obj->egid());
-    m_updateStatement->setInt(6, obj->mask());
-    m_updateStatement->setInt(7, obj->pid());
-    m_updateStatement->setString(8, obj->machine());
-    m_updateStatement->setString(9, obj->svcClassName());
-    m_updateStatement->setString(10, obj->userTag());
-    m_updateStatement->setString(11, obj->reqId());
-    m_updateStatement->setInt(12, time(0));
+    m_updateStatement->setUInt64(1, obj->flags());
+    m_updateStatement->setString(2, obj->userName());
+    m_updateStatement->setInt(3, obj->euid());
+    m_updateStatement->setInt(4, obj->egid());
+    m_updateStatement->setInt(5, obj->mask());
+    m_updateStatement->setInt(6, obj->pid());
+    m_updateStatement->setString(7, obj->machine());
+    m_updateStatement->setString(8, obj->svcClassName());
+    m_updateStatement->setString(9, obj->userTag());
+    m_updateStatement->setString(10, obj->reqId());
+    m_updateStatement->setInt(11, time(0));
+    m_updateStatement->setString(12, obj->parentUuid());
     m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
@@ -1079,19 +1214,19 @@ castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAdd
     // create the new Object
     castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
     // Now retrieve and set members
-    object->setParentUuid(rset->getString(1));
-    object->setFlags(rset->getUInt64(2));
-    object->setUserName(rset->getString(3));
-    object->setEuid(rset->getInt(4));
-    object->setEgid(rset->getInt(5));
-    object->setMask(rset->getInt(6));
-    object->setPid(rset->getInt(7));
-    object->setMachine(rset->getString(8));
-    object->setSvcClassName(rset->getString(9));
-    object->setUserTag(rset->getString(10));
-    object->setReqId(rset->getString(11));
-    object->setCreationTime(rset->getUInt64(12));
-    object->setLastModificationTime(rset->getUInt64(13));
+    object->setFlags(rset->getUInt64(1));
+    object->setUserName(rset->getString(2));
+    object->setEuid(rset->getInt(3));
+    object->setEgid(rset->getInt(4));
+    object->setMask(rset->getInt(5));
+    object->setPid(rset->getInt(6));
+    object->setMachine(rset->getString(7));
+    object->setSvcClassName(rset->getString(8));
+    object->setUserTag(rset->getString(9));
+    object->setReqId(rset->getString(10));
+    object->setCreationTime(rset->getUInt64(11));
+    object->setLastModificationTime(rset->getUInt64(12));
+    object->setParentUuid(rset->getString(13));
     object->setId(rset->getUInt64(14));
     delete rset;
     return object;
@@ -1138,19 +1273,19 @@ castor::db::cnv::DbStageAbortRequestCnv::bulkCreateObj(castor::IAddress* address
       // create the new Object
       castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
       // Now retrieve and set members
-      object->setParentUuid(rset->getString(1));
-      object->setFlags(rset->getUInt64(2));
-      object->setUserName(rset->getString(3));
-      object->setEuid(rset->getInt(4));
-      object->setEgid(rset->getInt(5));
-      object->setMask(rset->getInt(6));
-      object->setPid(rset->getInt(7));
-      object->setMachine(rset->getString(8));
-      object->setSvcClassName(rset->getString(9));
-      object->setUserTag(rset->getString(10));
-      object->setReqId(rset->getString(11));
-      object->setCreationTime(rset->getUInt64(12));
-      object->setLastModificationTime(rset->getUInt64(13));
+      object->setFlags(rset->getUInt64(1));
+      object->setUserName(rset->getString(2));
+      object->setEuid(rset->getInt(3));
+      object->setEgid(rset->getInt(4));
+      object->setMask(rset->getInt(5));
+      object->setPid(rset->getInt(6));
+      object->setMachine(rset->getString(7));
+      object->setSvcClassName(rset->getString(8));
+      object->setUserTag(rset->getString(9));
+      object->setReqId(rset->getString(10));
+      object->setCreationTime(rset->getUInt64(11));
+      object->setLastModificationTime(rset->getUInt64(12));
+      object->setParentUuid(rset->getString(13));
       object->setId(rset->getUInt64(14));
       // store object in results and loop;
       res.push_back(object);
@@ -1189,19 +1324,19 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::StageAbortRequest* object = 
       dynamic_cast<castor::stager::StageAbortRequest*>(obj);
-    object->setParentUuid(rset->getString(1));
-    object->setFlags(rset->getUInt64(2));
-    object->setUserName(rset->getString(3));
-    object->setEuid(rset->getInt(4));
-    object->setEgid(rset->getInt(5));
-    object->setMask(rset->getInt(6));
-    object->setPid(rset->getInt(7));
-    object->setMachine(rset->getString(8));
-    object->setSvcClassName(rset->getString(9));
-    object->setUserTag(rset->getString(10));
-    object->setReqId(rset->getString(11));
-    object->setCreationTime(rset->getUInt64(12));
-    object->setLastModificationTime(rset->getUInt64(13));
+    object->setFlags(rset->getUInt64(1));
+    object->setUserName(rset->getString(2));
+    object->setEuid(rset->getInt(3));
+    object->setEgid(rset->getInt(4));
+    object->setMask(rset->getInt(5));
+    object->setPid(rset->getInt(6));
+    object->setMachine(rset->getString(7));
+    object->setSvcClassName(rset->getString(8));
+    object->setUserTag(rset->getString(9));
+    object->setReqId(rset->getString(10));
+    object->setCreationTime(rset->getUInt64(11));
+    object->setLastModificationTime(rset->getUInt64(12));
+    object->setParentUuid(rset->getString(13));
     object->setId(rset->getUInt64(14));
     delete rset;
   } catch (castor::exception::SQLError e) {

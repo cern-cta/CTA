@@ -30,24 +30,33 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/ReqIdRequest.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/stager/NsFileId.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::StageAbortRequest::StageAbortRequest() throw() :
-  ReqIdRequest(),
-  m_id(0) {
+  Request(),
+  m_parentUuid(""),
+  m_id(0),
+  m_parent(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StageAbortRequest::~StageAbortRequest() throw() {
+  for (unsigned int i = 0; i < m_filesVector.size(); i++) {
+    m_filesVector[i]->setRequest(0);
+  }
+  m_filesVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -63,10 +72,28 @@ void castor::stager::StageAbortRequest::print(std::ostream& stream,
     return;
   }
   // Call print on the parent class(es)
-  this->ReqIdRequest::print(stream, indent, alreadyPrinted);
+  this->Request::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "parentUuid : " << m_parentUuid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Parent : " << std::endl;
+  if (0 != m_parent) {
+    m_parent->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  {
+    stream << indent << "Files : " << std::endl;
+    int i;
+    std::vector<NsFileId*>::const_iterator it;
+    for (it = m_filesVector.begin(), i = 0;
+         it != m_filesVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

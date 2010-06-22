@@ -139,6 +139,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamChangePrivilegeCnv.cpp \
               io/StreamBWUserCnv.cpp \
               io/StreamRequestTypeCnv.cpp \
+              io/StreamNsFileIdCnv.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
               rh/Client.cpp \
@@ -214,7 +215,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/PutStartRequest.cpp \
               stager/QryRequest.cpp \
               stager/PutFailed.cpp \
-              stager/ReqIdRequest.cpp \
               stager/Request.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \
@@ -249,6 +249,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
+              stager/NsFileId.cpp \
               vdqm/ClientIdentification.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/DeviceGroupName.cpp \
