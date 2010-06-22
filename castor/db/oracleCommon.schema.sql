@@ -318,6 +318,16 @@ CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
   (subReqId VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
 
+/* Global temporary table to handle output of the processBulkAbortForGet procedure */
+CREATE GLOBAL TEMPORARY TABLE processBulkAbortFileReqsHelper
+  (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048))
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table to handle output of the processBulkRequest procedure */
+CREATE GLOBAL TEMPORARY TABLE ProcessBulkRequestHelper
+  (fileId NUMBER, nsHost VARCHAR2(2048), errorCode NUMBER, errorMessage VARCHAR2(2048))
+  ON COMMIT PRESERVE ROWS;
+
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
   (fileId NUMBER CONSTRAINT NN_CleanupJobLog_FileId NOT NULL, 

@@ -230,7 +230,9 @@ namespace castor {
     OBJ_VdqmTapeGatewayRequest = 190,
 
     OBJ_StageQueryResult = 191,
-    OBJ_NsFileId = 192
+    OBJ_NsFileId = 192,
+    OBJ_BulkRequestResult = 193,
+    OBJ_FileResult = 194
 
   };
 
@@ -307,7 +309,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 193
+#define OBJECT_IDS_NB 195
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

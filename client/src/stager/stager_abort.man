@@ -1,0 +1,70 @@
+.\" @(#)$RCSfile: stager_abort.man,v $ $Revision: 1.10 $ $Date: 2009/03/25 13:23:36 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_ABORT 1castor "$Date: 2009/03/25 13:23:36 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_abort \- request for aborting a request in the CASTOR stager
+.SH SYNOPSIS
+.B stager_abort
+.BI -r
+.BI requestUuid
+[
+.BI -M
+.BI fileid@nsHost
+[
+.BI -M
+.BI ...
+]]
+[
+.BI -f
+.BI hsmFileList
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+The
+.B stager_abort
+command aborts a request or part of a request in the CASTOR stager. 
+stager_abort operations can only be performed if the user has proper
+permissions. At the stager level, user needs StageAbortRequest permissions
+on the '*' disk pool.
+
+In case of partial abort, the
+.BI \-M
+/
+.BI \-\-filename
+flags should be used to list concerned files. Note that this is only valid for
+file related requests.
+
+.SH OPTIONS
+
+.TP
+.BI \-r,\ \-\-requestid " requestUuid"
+specifies the uuid of the request to be aborted.
+.TP
+.BI \-M,\ \-\-filename " fileid@nsHost"
+specifies the subpart of the request to be aborted in case of multifiles requests.
+In case -M is not used, the whole request will be aborted, that is all files of a multifiles
+request will be targetted.
+.TP
+.BI \-f,\ \-\-filelist " hsmFileList"
+specifies a file containing a list of CASTOR HSM file(s) to be concerned by the abort, one per line.
+This can be used to avoid the command line restrictions when many files should be aborted at once within a large request.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+.fi
+$ stager_abort -r 4c10f2cf-0000-1000-85d5-de0284ff7eeb -M /castor/cern.ch/user/t/test/file1
+.fi
+Received 1 responses
+.fi
+512345678 SUBRQUEST_READY
+.fi
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

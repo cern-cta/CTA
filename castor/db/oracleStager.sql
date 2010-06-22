@@ -82,8 +82,13 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR2(2048));
-  TYPE StreamReport_Cur IS REF CURSOR RETURN  StreamReport;  
-
+  TYPE StreamReport_Cur IS REF CURSOR RETURN StreamReport;  
+  TYPE FileResult IS RECORD (
+   fileid INTEGER,
+   nshost VARCHAR2(2048),
+   errorcode INTEGER,
+   errormessage VARCHAR2(2048));
+  TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;  
 END castor;
 /
 
@@ -407,6 +412,293 @@ BEGIN
     END;
   END LOOP;
   CLOSE SRcur;
+END;
+/
+
+/* PL/SQL method to process bulk abort on a given get/prepareToGet request */
+CREATE OR REPLACE PROCEDURE processAbortForGet(sr processBulkAbortFileReqsHelper%ROWTYPE) AS
+  abortedSRstatus NUMBER;
+BEGIN
+  -- note the revalidation of the status and even of the existence of the subrequest
+  -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
+  SELECT status INTO abortedSRstatus FROM SubRequest WHERE id = sr.srId;
+  CASE
+    WHEN abortedSRstatus = dconst.SUBREQUEST_START
+      OR abortedSRstatus = dconst.SUBREQUEST_RESTART
+      OR abortedSRstatus = dconst.SUBREQUEST_RETRY
+      OR abortedSRstatus = dconst.SUBREQUEST_WAITSCHED
+      OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ
+      OR abortedSRstatus = dconst.SUBREQUEST_READY
+      OR abortedSRstatus = dconst.SUBREQUEST_REPACK
+      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
+      OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
+      -- standard case, we only have to fail the subrequest
+      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+    WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
+      -- recall case, let's see whether we can cancel the recalle
+      DECLARE
+        segId INTEGER;
+        unusedIds "numList";
+      BEGIN
+        -- XXX First lock all segments for the file. Note that
+        -- XXX this step should be dropped once the tapeGateway
+        -- XXX is deployed. The current recaller does not take
+        -- XXX the proper lock on the castorFiles, hence we
+        -- XXX need this here
+        SELECT Segment.id BULK COLLECT INTO unusedIds
+          FROM Segment, TapeCopy
+         WHERE TapeCopy.castorfile = sr.cfId
+           AND TapeCopy.id = Segment.copy
+         ORDER BY Segment.id
+           FOR UPDATE OF Segment.id;
+        -- Check whether we have any segment in SELECTED
+        SELECT segment.id INTO segId
+          FROM Segment, TapeCopy
+         WHERE TapeCopy.castorfile = sr.cfId
+           AND TapeCopy.id = Segment.copy
+           AND Segment.status = 7 -- SELECTED
+           AND ROWNUM < 2;
+        -- Something is running, so give up
+        INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 16, 'Cannot abort ongoing recall'); -- EBUSY
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Nothing running, we can cancel the recall  
+        UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+        deleteTapeCopies(sr.cfId);
+        UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
+         WHERE castorfile = sr.cfid AND status = dconst.DISKCOPY_WAITTAPERECALL;
+        INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+      END;
+    WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_ANSWERING THEN
+      -- subrequest has failed, nothing to abort
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+    WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
+      OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
+      -- subrequest is over, nothing to abort
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+    ELSE
+      -- unknown status !
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+  END CASE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- subRequest was deleted in the mean time !
+  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+END;
+/
+
+/* PL/SQL method to process bulk abort on a given put/prepareToPut request */
+CREATE OR REPLACE PROCEDURE processAbortForPut(sr processBulkAbortFileReqsHelper%ROWTYPE) AS
+  abortedSRstatus NUMBER;
+BEGIN
+  -- note the revalidation of the status and even of the existence of the subrequest
+  -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
+  SELECT status INTO abortedSRstatus FROM SubRequest WHERE id = sr.srId;
+  CASE
+    WHEN abortedSRstatus = dconst.SUBREQUEST_START
+      OR abortedSRstatus = dconst.SUBREQUEST_RESTART
+      OR abortedSRstatus = dconst.SUBREQUEST_RETRY
+      OR abortedSRstatus = dconst.SUBREQUEST_WAITSCHED
+      OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ
+      OR abortedSRstatus = dconst.SUBREQUEST_READY
+      OR abortedSRstatus = dconst.SUBREQUEST_REPACK
+      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
+      OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
+      -- standard case, we only have to fail the subrequest
+      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
+       WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
+                                                 dconst.DISKCOPY_WAITFS,
+                                                 dconst.DISKCOPY_WAITFS_SCHEDULING);
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+    WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_ANSWERING THEN
+      -- subrequest has failed, nothing to abort
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+    WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
+      OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
+      -- subrequest is over, nothing to abort
+      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+    ELSE
+      -- unknown status !
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+  END CASE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- subRequest was deleted in the mean time !
+  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+END;
+/
+
+/* PL/SQL method to process bulk abort on files related requests */
+CREATE OR REPLACE PROCEDURE processBulkAbortFileReqs
+(abortReqId IN INTEGER, origReqId IN INTEGER,
+ fileIds IN "numList", nsHosts IN strListTable, reqType IN NUMBER) AS
+  nbItems NUMBER;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  unused NUMBER;
+  firstOne BOOLEAN;
+BEGIN
+  -- Gather the list of subrequests to abort
+  IF fileIds.count() = 0 THEN
+    -- handle the case of an empty request, meaning that all files should be aborted
+    INSERT INTO processBulkAbortFileReqsHelper (
+      SELECT SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost
+        FROM SubRequest, CastorFile
+       WHERE SubRequest.castorFile = CastorFile.id
+         AND request = origReqId);
+  ELSE
+    -- handle the case of selective abort
+    FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
+      DECLARE
+        srId NUMBER;
+        cfId NUMBER;
+      BEGIN
+        SELECT SubRequest.id, CastorFile.id INTO srId, cfId
+          FROM SubRequest, CastorFile
+         WHERE request = origReqId
+           AND SubRequest.castorFile = CastorFile.id
+           AND CastorFile.fileid = fileIds(i)
+           AND CastorFile.nsHost = nsHosts(i);
+        INSERT INTO processBulkAbortFileReqsHelper VALUES (srId, cfId, fileIds(i), nsHosts(i));
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- this fileid/nshost did not exist in the request, send an error back
+        INSERT INTO ProcessBulkRequestHelper
+        VALUES (fileIds(i), nsHosts(i), 2, 'No subRequest found for this fileId/nsHost'); -- ENOENT
+      END;
+    END LOOP;
+  END IF;
+  SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
+  -- handle aborts in bulk while avoiding deadlocks
+  WHILE nbItems > 0 LOOP
+    firstOne := TRUE;
+    FOR sr IN (SELECT srId, cfId, fileId, nsHost FROM processBulkAbortFileReqsHelper) LOOP
+      BEGIN
+        IF firstOne THEN
+          -- on the first item, we take a blocking lock as we are sure that we will not
+          -- deadlock and we would like to process at least one item to not loop endlessly
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE;
+          firstOne := FALSE;
+        ELSE
+          -- on the other items, we go for a non blocking lock. If we get it, that's
+          -- good and we process this extra subrequest within the same session. If
+          -- we do not get the lock, then we close the session here and go for a new
+          -- one. This will prevent dead locks while ensuring that a minimal number of
+          -- commits is performed.
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE NOWAIT;
+        END IF;
+        -- we got the lock on the Castorfile, we can handle the abort for this subrequest
+        CASE reqType
+          WHEN 1 THEN processAbortForGet(sr);
+          WHEN 2 THEN processAbortForPut(sr);
+        END CASE;
+        DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
+        nbItems := nbItems - 1;
+      EXCEPTION WHEN SrLocked THEN
+        -- we close the session here and exit the inner loop
+        COMMIT;
+        EXIT;
+      END;
+    END LOOP;
+  END LOOP;
+END;
+/
+
+/* PL/SQL method to process bulk abort requests */
+CREATE OR REPLACE PROCEDURE processBulkAbort(abortReqId IN INTEGER, rIpAddress OUT INTEGER,
+                                             rport OUT INTEGER, rReqUuid OUT VARCHAR2) AS
+  clientId NUMBER;
+  reqType NUMBER;
+  requestId NUMBER;
+  abortedReqUuid VARCHAR(2048);
+  fileIds "numList";
+  nsHosts strListTable;
+  ids "numList";
+BEGIN
+  -- get request and client informations and drop them from the DB
+  DELETE FROM StageAbortRequest WHERE id = abortReqId
+    RETURNING reqId, parentUuid, client INTO rReqUuid, abortedReqUuid, clientId;
+  DELETE FROM Id2Type WHERE id = abortReqId;
+  DELETE FROM Client WHERE id = clientId
+    RETURNING ipAddress, port INTO rIpAddress, rport;
+  DELETE FROM Id2Type WHERE id = clientId;
+  -- list fileids to process and drop them from the DB
+  SELECT fileid, nsHost, id BULK COLLECT INTO fileIds, nsHosts, ids
+    FROM NsFileId WHERE request = abortReqId;
+  FORALL i IN ids.FIRST .. ids.LAST DELETE FROM NsFileId WHERE id = ids(i);
+  FORALL i IN ids.FIRST .. ids.LAST DELETE FROM Id2Type WHERE id = ids(i);
+  -- dispatch actual processing depending on request type
+  BEGIN
+    SELECT rType, id INTO reqType, requestId FROM
+      (SELECT reqId, id, 1 as rtype from StageGetRequest UNION ALL
+       SELECT reqId, id, 1 as rtype from StagePrepareToGetRequest UNION ALL
+       SELECT reqId, id, 2 as rtype from StagePutRequest UNION ALL
+       SELECT reqId, id, 2 as rtype from StagePrepareToPutRequest)
+     WHERE reqId = abortedReqUuid;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- abort on non supported request type
+    INSERT INTO ProcessBulkRequestHelper VALUES (0, '', 2, 'Request not found, or abort not supported for this request type'); -- ENOENT
+    RETURN;
+  END;
+  processBulkAbortFileReqs(abortReqId, requestId, fileIds, nsHosts, reqType);
+END;
+/
+
+/* PL/SQL method to process bulk requests */
+CREATE OR REPLACE PROCEDURE processBulkRequest(service IN VARCHAR2,
+                                               rtype OUT INTEGER, rIpAddress OUT INTEGER,
+                                               rport OUT INTEGER, rReqUuid OUT VARCHAR2,
+                                               rSubResults OUT castor.FileResult_Cur) AS
+  CURSOR Rcur IS SELECT /*+ FIRST_ROWS(10) */ id
+                   FROM NewRequests
+                  WHERE type IN (
+                    SELECT type FROM Type2Obj
+                     WHERE svcHandler = service
+                       AND svcHandler IS NOT NULL);
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  reqId NUMBER;
+BEGIN
+  -- in case we do not find anything, rtype should be 0
+  rtype :=0;
+  OPEN Rcur;
+  -- Loop on candidates until we can lock one
+  LOOP
+    -- Fetch next candidate
+    FETCH Rcur INTO reqId;
+    EXIT WHEN Rcur%NOTFOUND;
+    BEGIN
+      -- Try to take a lock on the current candidate
+      SELECT id INTO reqId FROM NewRequests WHERE id = reqId FOR UPDATE NOWAIT;
+      -- Since we are here, we got the lock. We have our winner,
+      DELETE FROM NewRequests WHERE id = reqId;
+      -- Clear the temporary table for subresults
+      DELETE FROM ProcessBulkRequestHelper;
+      -- dispatch actual processing depending on request type
+      SELECT type INTO rType FROM id2Type WHERE id = reqId;
+      CASE rType
+        WHEN 50 THEN -- Abort Request
+          processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
+      END CASE;
+      -- open cursor on results
+      OPEN rSubResults FOR
+        SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+      -- and exit the loop
+      EXIT;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- Got to next candidate, this request was processed already and disappeared
+        NULL;
+      WHEN SrLocked THEN
+        -- Go to next candidate, this request is being processed by another thread
+        NULL;
+    END;
+  END LOOP;
+  CLOSE Rcur;
 END;
 /
 

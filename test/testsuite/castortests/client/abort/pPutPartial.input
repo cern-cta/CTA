@@ -1,0 +1,8 @@
+stager_put -M <noTapeFileName> -M <noTapeFileName1> >& <tmpLocalFileName>
+cat <tmpLocalFileName>
+stager_qry -M <noTapeFileName> -M <noTapeFileName1> >& <tmpLocalFileName1>
+cat <tmpLocalFileName1>
+stager_abort -r `grep 'to send the request' <tmpLocalFileName> | awk '{print $2;}'` -M `tail -1 <tmpLocalFileName1> | awk '{print $2;}'`
+stager_qry -M <noTapeFileName> -M <noTapeFileName1>
+stager_abort -r `grep 'to send the request' <tmpLocalFileName> | awk '{print $2;}'`
+stager_qry -M <noTapeFileName> -M <noTapeFileName1>

@@ -58,6 +58,11 @@ namespace castor{
 	STAGER_PUTDONE = 42, /* "PutDone Request" */
 	STAGER_CHGPRIV = 43, /* "ChangePrivilege Request" */
 
+	/***********************/
+	/* BulkStageSvcThread  */
+        STAGER_BLKSTGSVC_ABORT = 152, /* Abort processed */
+        STAGER_BLKSTGSVC_UNKREQ = 153, /* "Unknown request processed" */
+
 	/******************/
 	/*  SYSTEM LEVEL */
 	/****************/

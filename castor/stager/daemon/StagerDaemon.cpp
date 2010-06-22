@@ -44,6 +44,7 @@
 #include "castor/stager/daemon/JobRequestSvcThread.hpp"
 #include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
+#include "castor/stager/daemon/BulkStageReqSvcThread.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
@@ -83,6 +84,10 @@ int main(int argc, char* argv[]){
         new castor::stager::daemon::StageRequestSvcThread()));
 
     stagerDaemon.addThreadPool(
+      new castor::server::SignalThreadPool("BulkStageReqSvcThread",
+        new castor::stager::daemon::BulkStageReqSvcThread()));
+
+    stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("QueryRequestSvcThread",
         new castor::stager::daemon::QueryRequestSvcThread()));
 
@@ -105,6 +110,7 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
     stagerDaemon.getThreadPool('S')->setNbThreads(4);
+    stagerDaemon.getThreadPool('B')->setNbThreads(3);
     stagerDaemon.getThreadPool('Q')->setNbThreads(10);
     stagerDaemon.getThreadPool('E')->setNbThreads(3);
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
@@ -183,6 +189,11 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_RMPERFORMED, "Rm performed"},
     { STAGER_PUTDONE,"PutDone Request"},
     { STAGER_CHGPRIV,"ChangePrivilege Request"},
+
+    /***********************/
+    /* BulkStageReqSvcThread  */
+    { STAGER_BLKSTGSVC_ABORT, "Abort processed"},
+    { STAGER_BLKSTGSVC_UNKREQ, "Unknown request processed"},
 
     /*  SYSTEM LEVEL */
     /* after calling the corresponding stagerService function, to show the decision taken */

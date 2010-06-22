@@ -235,7 +235,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "VdqmTapeGatewayRequest",
 
   "StageQueryResult",
-  "NsFileId"
+  "NsFileId",
+  "BulkRequestResult",
+  "FileResult"
 };
 
 

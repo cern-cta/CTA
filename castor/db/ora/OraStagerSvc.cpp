@@ -72,6 +72,8 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/PriorityMap.hpp"
+#include "castor/stager/BulkRequestResult.hpp"
+#include "castor/stager/FileResult.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "OraStagerSvc.hpp"
@@ -104,6 +106,10 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
   "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
+
+/// SQL statement for processBulkRequest
+const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementString =
+  "BEGIN processBulkRequest(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
@@ -199,6 +205,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getConfigOptionStatementStrin
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
+  m_processBulkRequestStatement(0),
   m_subRequestFailedToDoStatement(0),
   m_getDiskCopiesForJobStatement(0),
   m_processPrepareRequestStatement(0),
@@ -253,6 +260,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
+    if (m_processBulkRequestStatement) deleteStatement(m_processBulkRequestStatement);
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
@@ -279,6 +287,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
 
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
+  m_processBulkRequestStatement = 0;
   m_subRequestFailedToDoStatement = 0;
   m_getDiskCopiesForJobStatement = 0;
   m_processPrepareRequestStatement = 0;
@@ -381,6 +390,78 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// processBulkRequest
+//------------------------------------------------------------------------------
+castor::stager::BulkRequestResult*
+castor::db::ora::OraStagerSvc::processBulkRequest
+(const std::string service)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_processBulkRequestStatement) {
+      m_processBulkRequestStatement =
+        createStatement(s_processBulkRequestStatementString);
+      m_processBulkRequestStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_processBulkRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_processBulkRequestStatement->registerOutParam
+        (4, oracle::occi::OCCIINT);
+      m_processBulkRequestStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 2048);
+      m_processBulkRequestStatement->registerOutParam
+        (6, oracle::occi::OCCICURSOR);
+      m_processBulkRequestStatement->setAutoCommit(true);
+    }
+    m_processBulkRequestStatement->setString(1, service);
+
+    // execute the statement and see whether we found something
+    unsigned int rc = m_processBulkRequestStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "processBulkRequest : unable to process bulk request.";
+      throw ex;
+    }
+    int reqType = m_processBulkRequestStatement->getInt(2);
+    if (0 == reqType) {
+      // Found no request to process
+      return 0;
+    }
+    // Create result
+    castor::stager::BulkRequestResult* result =
+      new castor::stager::BulkRequestResult();
+    result->setReqType((castor::ObjectsIds)reqType);
+    result->client().setIpAddress(m_processBulkRequestStatement->getInt(3));
+    result->client().setPort(m_processBulkRequestStatement->getInt(4));
+    result->setReqId(m_processBulkRequestStatement->getString(5));
+    oracle::occi::ResultSet *rset =
+      m_processBulkRequestStatement->getCursor(6);
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::stager::FileResult fr;
+      // Now retrieve and set members
+      fr.setFileId((u_signed64)rset->getDouble(1));
+      fr.setNsHost(rset->getString(2));
+      fr.setErrorCode(rset->getInt(3));
+      fr.setErrorMessage(rset->getString(4));
+      result->subResults().push_back(fr);
+      status = rset->next();
+    }
+    delete rset;
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in processBulkRequest."
       << std::endl << e.what();
     throw ex;
   }

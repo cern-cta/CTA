@@ -107,6 +107,7 @@ castor::rh::RHThread::RHThread()
   m_svcHandler[OBJ_FilesDeletionFailed] = "G";
   m_svcHandler[OBJ_NsFilesDeleted] = "G";
   m_svcHandler[OBJ_StgFilesDeleted] = "G";
+  m_svcHandler[OBJ_StageAbortRequest] = "B";
 
   // Read the list of SRM trusted hosts. Requests coming from
   // these hosts are entitled to override the request UUID.

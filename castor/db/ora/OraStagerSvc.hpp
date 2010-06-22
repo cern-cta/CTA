@@ -92,6 +92,16 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Selects and processes a bulk request.
+         * @param service identifies the group of bulk requests targetted
+         * @return the result of the processing
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::BulkRequestResult* processBulkRequest
+        (const std::string service)
+          throw (castor::exception::Exception);
+
+        /**
          * Selects the next SubRequest in FAILED status the stager
          * should deal with.
          * Selects a SubRequest in FAILED status and move its status
@@ -495,6 +505,12 @@ namespace castor {
 
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
+
+        /// SQL statement for function processBulkRequest
+        static const std::string s_processBulkRequestStatementString;
+
+        /// SQL statement object for function processBulkRequest
+        oracle::occi::Statement *m_processBulkRequestStatement;
 
         /// SQL statement for function oldSubRequestToDo
         static const std::string s_oldSubRequestToDoStatementString;

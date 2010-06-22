@@ -250,6 +250,8 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
               stager/NsFileId.cpp \
+              stager/BulkRequestResult.cpp \
+              stager/FileResult.cpp \
               vdqm/ClientIdentification.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/DeviceGroupName.cpp \

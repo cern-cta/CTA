@@ -50,6 +50,7 @@ DBSERVICEDAEMONBIN_SRCS = \
 	BaseRequestSvcThread.cpp \
 	PrepRequestSvcThread.cpp \
 	StageRequestSvcThread.cpp \
+	BulkStageReqSvcThread.cpp \
 	JobRequestSvcThread.cpp \
 	QueryRequestSvcThread.cpp \
 	GcSvcThread.cpp \
