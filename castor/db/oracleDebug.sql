@@ -145,8 +145,6 @@ BEGIN
                      SELECT id, username, machine, svcClassName, 'Upd' AS type FROM StageUpdateRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'PUpd' AS type FROM StagePrepareToUpdateRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'GetNext' AS type FROM StageGetNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'UpdNext' AS type FROM StageUpdateNextRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
