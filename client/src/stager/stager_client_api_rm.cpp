@@ -27,7 +27,6 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
-#include "castor/stager/StageReleaseFilesRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 
@@ -170,33 +169,6 @@ EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
   castor::stager::StageRmRequest req;
 
   stage_trace(3, "%s", func);
-  return _processFileRequest(func,
-			     req,
-			     requests,
-			     nbreqs,
-			     responses,
-			     nbresps,
-			     requestId,
-			     opts);
-
-}
-
-
-
-////////////////////////////////////////////////////////////
-//    stage_releaseFiles                                  //
-////////////////////////////////////////////////////////////
-
-
-EXTERN_C int DLL_DECL stage_releaseFiles(struct stage_filereq *requests,
-					 int nbreqs,
-					 struct stage_fileresp **responses,
-					 int *nbresps,
-					 char **requestId,
-					 struct stage_options* opts) {
-
-  const char *func = "stage_releaseFiles";
-  castor::stager::StageReleaseFilesRequest req;
   return _processFileRequest(func,
 			     req,
 			     requests,

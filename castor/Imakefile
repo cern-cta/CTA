@@ -111,17 +111,13 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamTapePoolCnv.cpp \
               io/StreamStageAbortRequestCnv.cpp \
               io/StreamStageFileQueryRequestCnv.cpp \
-              io/StreamStageGetNextRequestCnv.cpp \
               io/StreamStageGetRequestCnv.cpp \
               io/StreamStagePrepareToGetRequestCnv.cpp \
               io/StreamStagePrepareToPutRequestCnv.cpp \
               io/StreamStagePrepareToUpdateRequestCnv.cpp \
               io/StreamStagePutDoneRequestCnv.cpp \
-              io/StreamStagePutNextRequestCnv.cpp \
               io/StreamStagePutRequestCnv.cpp \
-              io/StreamStageReleaseFilesRequestCnv.cpp \
               io/StreamStageRmRequestCnv.cpp \
-              io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
               io/StreamStageRepackRequestCnv.cpp \
               io/StreamThreadNotificationCnv.cpp \
@@ -231,19 +227,15 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/SetFileGCWeight.cpp \
               stager/StageAbortRequest.cpp \
               stager/StageFileQueryRequest.cpp \
-              stager/StageGetNextRequest.cpp \
               stager/StageGetRequest.cpp \
               stager/StagePrepareToGetRequest.cpp \
               stager/StagePrepareToPutRequest.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
               stager/StageRepackRequest.cpp \
               stager/StagePutDoneRequest.cpp \
-              stager/StagePutNextRequest.cpp \
               stager/StagePutRequest.cpp \
 	      stager/StageQueryResult.cpp \
-              stager/StageReleaseFilesRequest.cpp \
               stager/StageRmRequest.cpp \
-              stager/StageUpdateNextRequest.cpp \
               stager/StageUpdateRequest.cpp \
               stager/Stream.cpp \
               stager/StreamStatusCodes.cpp \
@@ -340,7 +332,6 @@ STAGERLIB_OBJS = \
 		../client/src/stager/stager_client_api_query.o \
 		../client/src/stager/stager_client_api_rm.o \
 		../client/src/stager/stager_client_api_setFileGCWeight.o \
-		../client/src/stager/stager_client_api_next.o \
 		../client/src/stager/stager_client_api_version.o \
 		../client/src/stager/stager_client_api_changePrivilege.o \
 		../client/src/stager/stager_client_api_listPrivileges.o \

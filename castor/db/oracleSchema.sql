@@ -104,21 +104,6 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubReques
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
 
-/* SQL statements for type StageReleaseFilesRequest */
-CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageAbortRequest */
-CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageAbortRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageGetNextRequest */
-CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageGetNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StagePutNextRequest */
-CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePutNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageUpdateNextRequest */
-CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageUpdateNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type Tape */
 CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), dgn VARCHAR2(2048), label VARCHAR2(2048), density VARCHAR2(2048), devtype VARCHAR2(2048), id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -309,7 +294,6 @@ INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (16, 'ReqIdRequest');
 INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
 INSERT INTO Type2Obj (type, object) VALUES (18, 'Segment');
-INSERT INTO Type2Obj (type, object) VALUES (21, 'StageGetNextRequest');
 INSERT INTO Type2Obj (type, object) VALUES (26, 'Stream');
 INSERT INTO Type2Obj (type, object) VALUES (27, 'SubRequest');
 INSERT INTO Type2Obj (type, object) VALUES (28, 'SvcClass');
@@ -327,10 +311,7 @@ INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
 INSERT INTO Type2Obj (type, object) VALUES (44, 'StageUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (45, 'FileRequest');
 INSERT INTO Type2Obj (type, object) VALUES (46, 'QryRequest');
-INSERT INTO Type2Obj (type, object) VALUES (48, 'StagePutNextRequest');
-INSERT INTO Type2Obj (type, object) VALUES (49, 'StageUpdateNextRequest');
 INSERT INTO Type2Obj (type, object) VALUES (50, 'StageAbortRequest');
-INSERT INTO Type2Obj (type, object) VALUES (51, 'StageReleaseFilesRequest');
 INSERT INTO Type2Obj (type, object) VALUES (58, 'DiskCopyForRecall');
 INSERT INTO Type2Obj (type, object) VALUES (59, 'TapeCopyForMigration');
 INSERT INTO Type2Obj (type, object) VALUES (60, 'GetUpdateStartRequest');

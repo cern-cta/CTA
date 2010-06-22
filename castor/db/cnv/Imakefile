@@ -58,18 +58,14 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbSetFileGCWeightCnv.cpp \
      DbStageAbortRequestCnv.cpp \
      DbStageFileQueryRequestCnv.cpp \
-     DbStageGetNextRequestCnv.cpp \
      DbStageGetRequestCnv.cpp \
      DbStagePrepareToGetRequestCnv.cpp \
      DbStagePrepareToPutRequestCnv.cpp \
      DbStagePrepareToUpdateRequestCnv.cpp \
      DbStagePutDoneRequestCnv.cpp \
-     DbStagePutNextRequestCnv.cpp \
      DbStagePutRequestCnv.cpp \
-     DbStageReleaseFilesRequestCnv.cpp \
      DbStageRepackRequestCnv.cpp \
      DbStageRmRequestCnv.cpp \
-     DbStageUpdateNextRequestCnv.cpp \
      DbStageUpdateRequestCnv.cpp \
      DbStgFilesDeletedCnv.cpp \
      DbStreamCnv.cpp \
