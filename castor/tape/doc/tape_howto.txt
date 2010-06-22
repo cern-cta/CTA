@@ -3752,4 +3752,4 @@ The Quattor templates for a development box are included in the following order:
 
 3. prod/cluster/castordev/role/headnode <- This is where the CASTOR_[CNS|VMGR|VDQM|…] variables are used – NEVER CHANGE THIS
 
-4. prod/cluster/castordev/customization/dev04 <- Add rpms here
+4. prod/cluster/castordev/customization/headnode/dev04 <- Add rpms here
