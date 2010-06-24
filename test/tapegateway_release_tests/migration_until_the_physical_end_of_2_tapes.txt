@@ -24,3 +24,11 @@ nsmkdir /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
 6. Make sure the directory has a file class with one tape copy
 
 nschclass largeuser /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+
+7. Stop the mighunter daemon responsible for your service class:
+
+/etc/init.d/mighunterd stop
+
+8. Start the remote copy of 2 Terabytes
+
+for I in `seq 20`; do bsub -q 8nh /afs/cern.ch/user/m/murrayc3/tapegateway_tests/migrate100MBFiles.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/tapegateway_tests 1024; done
