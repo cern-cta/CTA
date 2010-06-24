@@ -89,7 +89,6 @@ void cmd_parse(int argc,
                char *argv[],
                castor::stager::StageAbortRequest &req)
   throw (castor::exception::Exception) {
-  int Coptind, Copterr;
   bool gotUuid = false;
   Coptind = 1;
   Copterr = 1;
