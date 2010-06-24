@@ -1,0 +1,34 @@
+1. Dedicate 1 tape drives to your stager:
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+
+2. Create yourself a tape pool with 2 tapes that can accessed by your 2 drives:
+
+vmgrenterpool --name gatewaytest --user murrayc3 --group c3
+vmgrmodifytape -V I12017 --pool gatewaytest
+
+3. Choose a service class for your test and make sure it has your newly created tape pool as its one and only tape pool:
+
+modifySvcClass --Name default --AddTapePools gatewaytest
+
+4. Make sure your service class will use exactly 1 drive
+
+modifySvcClass --Name default --NbDrives 1
+
+5. Create yourself a directory in CASTOR where you will copy your test files:
+
+nsmkdir /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+
+6. Make sure the directory has a file class with one tape copy
+
+nschclass largeuser /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+
+7. Stop the mighunter daemons:
+
+Modify the stream policy to always say NO.
+Re-start the mighunter daemons.
+Waiting for all 10 files to be in streams.
+use nssetfilesize on all 10 files in the name server.
+Stop the mighunter daemons.
+Modify the stream policy to always say YES.
+Re-start the mighunter daemons.

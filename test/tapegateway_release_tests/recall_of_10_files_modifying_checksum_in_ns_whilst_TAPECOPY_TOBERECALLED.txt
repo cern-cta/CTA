@@ -1,0 +1,5 @@
+Stop the tape gateway
+stager_get the 10 files
+Wait until all 10 tape copies in status TAPECOPY_TOBERECALLED have been created
+nssetchecksum the 10 files
+Re-start the tape gateway
