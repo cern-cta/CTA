@@ -11,7 +11,7 @@ vmgrmodifytape -V I12017 --pool gatewaytest
 
 modifySvcClass --Name default --AddTapePools gatewaytest
 
-4. Make sure your service class will use exactly 1 drive
+4. Make sure your service class will use exactly 1 drive for migrations:
 
 modifySvcClass --Name default --NbDrives 1
 
