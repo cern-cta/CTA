@@ -3805,6 +3805,8 @@ Last login: Thu Jun 24 18:47:55 2010 from lxcastordev04.cern.ch
 *                                              http://cern.ch/ComputingRules  *
 *                                                                             *
 *******************************************************************************
+[root@lxcastordev04 ~]# spma_wrapper.sh
+...
 [root@lxcastordev04 ~]# cd /var/murrayc3
 [root@lxcastordev04 murrayc3]# mkdir rlwrap
 [root@lxcastordev04 murrayc3]# cd rlwrap
