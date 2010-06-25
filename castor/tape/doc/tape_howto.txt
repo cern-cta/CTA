@@ -3753,3 +3753,79 @@ The Quattor templates for a development box are included in the following order:
 3. prod/cluster/castordev/role/headnode <- This is where the CASTOR_[CNS|VMGR|VDQM|…] variables are used – NEVER CHANGE THIS
 
 4. prod/cluster/castordev/customization/headnode/dev04 <- Add rpms here
+
+
+How to build and install rlwrap on a development box
+====================================================
+
+-bash-3.2$ ssh murrayc3@lxadm
+Scientific Linux CERN SLC release 4.8 (Beryllium)
+Last login: Thu Jun 24 14:04:54 2010 from lxcastordev04.cern.ch
+*******************************************************************************
+*                      This system is ACTIVELY MONITORED                      *
+*                                                                             *
+*         WARNING: This system MUST NOT be used for PRIVATE PURPOSES          *
+*                  Users activity, including commands, is logged              *
+*                                                                             *
+*******************************************************************************
+[lxadm04] /afs/cern.ch/user/m/murrayc3 > cdbop
+quattor CDB CLI: Version 2.2.0
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <2UdGA9ILSI>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~> get -f prod/cluster/castordev/customization/headnode/dev04
+<cdbop@cdbserv.cern.ch: ~> !vi prod/cluster/castordev/customization/headnode/dev04.tpl
+
+In vi add the following 3 rpms in order:
+
+    pkg_repl("libtermcap-devel");
+    pkg_repl("ncurses-devel");
+    pkg_repl("readline-devel");
+
+<cdbop@cdbserv.cern.ch: ~> up prod/cluster/castordev/customization/headnode/dev04.tpl
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~> commit
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': will be updated
+please confirm [yes]: yes
+Comment: Adding libtermcap-devel, ncurses-devel and readline-devel so I build rlwrap which the slc5 rpm version of does not work
+[INFO] please wait...
+[INFO] commit OK
+<cdbop@cdbserv.cern.ch: ~> exit
+[lxadm04] /afs/cern.ch/user/m/murrayc3 >
+[lxadm04] /afs/cern.ch/user/m/murrayc3 > exit
+logout
+Connection to lxadm closed.
+-bash-3.2$ ssh root@lxcastordev04
+Last login: Thu Jun 24 18:47:55 2010 from lxcastordev04.cern.ch
+*******************************************************************************
+*                                                                             *
+*  Reminder: You have committed to obey the Computing Rules                   *
+*                                              http://cern.ch/ComputingRules  *
+*                                                                             *
+*******************************************************************************
+[root@lxcastordev04 ~]# cd /var/murrayc3
+[root@lxcastordev04 murrayc3]# mkdir rlwrap
+[root@lxcastordev04 murrayc3]# cd rlwrap
+[root@lxcastordev04 rlwrap]# wget http://utopia.knoware.nl/~hlub/uck/rlwrap/rlwrap-0.37.tar.gz
+--2010-06-25 09:42:18--  http://utopia.knoware.nl/~hlub/uck/rlwrap/rlwrap-0.37.tar.gz
+Resolving utopia.knoware.nl... 213.197.30.29
+Connecting to utopia.knoware.nl|213.197.30.29|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 251438 (246K) [application/x-gzip]
+Saving to: `rlwrap-0.37.tar.gz'
+
+100%[==================================================================================================>] 251,438     1.53M/s   in 0.2s
+
+2010-06-25 09:42:18 (1.53 MB/s) - `rlwrap-0.37.tar.gz' saved [251438/251438]
+
+[root@lxcastordev04 rlwrap]# tar -xzf rlwrap-0.37.tar.gz
+[root@lxcastordev04 rlwrap]# cd rlwrap-0.37
+[root@lxcastordev04 rlwrap-0.37]# ./configure
+...
+[root@lxcastordev04 rlwrap-0.37]# make
+...
+[root@lxcastordev04 rlwrap-0.37]# make install
+...
+[root@lxcastordev04 rlwrap-0.37]#
