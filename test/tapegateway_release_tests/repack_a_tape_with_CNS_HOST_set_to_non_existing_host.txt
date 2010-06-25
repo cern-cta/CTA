@@ -1,0 +1,7 @@
+Create a source tape with 10 100MB files:
+
+Setup a destination service class with a dedicated repack-destination tape-pool:
+
+Edit your local /etc/castor/castor.conf and set the CNS HOST to a wrong hostname
+
+Start the repack of a tape:
