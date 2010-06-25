@@ -2,7 +2,7 @@
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
 
-2. Create yourself a tape pool with 1 tape that can accessed by your drive:
+2. Create yourself a tape pool with 2 tapes that can accessed by your 1 drives:
 
 vmgrenterpool --name gatewaytest --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
@@ -19,17 +19,10 @@ modifySvcClass --Name default --NbDrives 1
 
 nsmkdir /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
 
-6. Make sure the directory has a file class with one tape copy
+6. Make sure the directory has a file class with two tape copies
 
-nschclass largeuser /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+nschclass twotapecopies /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
 
 7. Stop the mighunter daemons:
 
-Modify the stream policy to always say NO.
-Re-start the mighunter daemons.
-Start the migrations using rfcp
-Waiting for all 10 files to be in streams.
-Use nssetchecksum to modify all 10 files in the name server.
-Stop the mighunter daemons.
-Modify the stream policy to always say YES.
-Re-start the mighunter daemons.
+8. Start the migrations using rfcp
