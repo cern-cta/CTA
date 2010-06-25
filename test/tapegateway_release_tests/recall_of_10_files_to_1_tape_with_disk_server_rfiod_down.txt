@@ -23,13 +23,20 @@ nsmkdir /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
 
 nschclass largeuser /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
 
-7. Stop the mighunter daemons:
+Identify your disk servers:
 
-Modify the stream policy to always say NO.
-Re-start the mighunter daemons.
-Start the migrations using rfcp
-Waiting for all 10 files to be in streams.
-Use nssetchecksum to modify all 10 files in the name server.
-Stop the mighunter daemons.
-Modify the stream policy to always say YES.
-Re-start the mighunter daemons.
+-bash-3.2$ stager_qry -s | grep DiskServer
+  DiskServer lxc2disk07.cern.ch DISKSERVER_PRODUCTION   CAPACITY 160945766400 FREE 80105460( 0%)
+  DiskServer lxc2disk08.cern.ch DISKSERVER_PRODUCTION   CAPACITY 160945766400 FREE 152853708680(94%)
+-bash-3.2$
+
+Logon to each disk server and stop the rfiod daemon:
+
+-bash-3.2$ ssh root@lxc2disk07.cern.ch
+[root@lxc2disk07 ~]# /etc/init.d/rfiod stop
+[root@lxc2disk07 ~]# exit
+-bash-3.2$ ssh root@lxc2disk08.cern.ch
+[root@lxc2disk08 ~]# /etc/init.d/rfiod stop
+[root@lxc2disk08 ~]# exit
+
+Start the recalls using rfcp
