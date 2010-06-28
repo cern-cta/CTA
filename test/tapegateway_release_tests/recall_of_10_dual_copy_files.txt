@@ -1,2 +1,0 @@
-stager_rm the 10 files
-stager_get the 10 files

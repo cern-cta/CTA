@@ -1,0 +1,100 @@
+THE NAME OF TEST
+================
+
+Migrate and recall 10 dual tape-copy files
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+The tape gateway is responible for ensuring an indiviual tape can only contain
+one tape-copy of a given castor-file.  The tape gateway must prevent two or more
+copies of a castor-file being on the same tape.
+
+This test verifies that the tape gateway correctly stores dual tape-copy files
+on tape.
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+* A test-stager where you can carry out the test.
+* A service class with a set of one or more disk-pools that has enough free
+  space to store ten 100MB on disk.
+* A user account that permits the modification of the service-class within the
+  stager.
+* Two test tapes, each of which must have enough free space to store ten 100MB
+  files.
+* A user account that permits the creation of a new tape-pool within the VMGR
+* Two free tape-drives, both of which can access both o fthe two test tapes.
+* A user account that permits the dedication of drives within the VDQM.
+* A file class with two tape-copies or a user account that permits the creation
+  of a new one with two tape-copies.  Do not modify the number of tape-copies
+  attribute of an existing file class.
+* A user account that allows the creation and population of a CASTOR directory
+  with a tape backend.
+* A copy of the utility test script from the CASTOR svn repository,
+  "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
+
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. Create yourself a tape-pool containing your 2 test-tapes.
+
+vmgrenterpool --name gatewaytest --user murrayc3 --group c3
+vmgrmodifytape -V I12017 --pool gatewaytest
+vmgrmodifytape -V I12018 --pool gatewaytest
+
+2. Choose a service class for your test and make sure it has your newly created
+   tape-pool as its one and only tape-pool.
+
+modifySvcClass --Name default --AddTapePools gatewaytest
+
+3. Make sure your service class will use exactly 2 drives for migrations.
+
+modifySvcClass --Name default --NbDrives 2
+
+4. Create yourself an empty test-directory in CASTOR where you will copy your
+   test-files.
+
+nsmkdir /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files
+
+5. Make sure the directory has a file-class with two tape-copies.
+
+nschclass twotapecopies /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files
+
+6. Dedicate the 2 free tape-drives to the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213 -match 'host=lxcastordev04'
+
+7. Stop the mighunter daemons of the test-stager.
+
+/etc/init.d/mighunterd stop
+
+8. Create and copy to CASTOR the ten 100MB test-files using the
+   createAndCopyFilesToCastor.sh script.
+
+migrate100MBFiles.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files 100 10
+
+9. Using nsls -l wait for all ten 100 MB files to be migrated to tape.
+
+watch 'nsls -l /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files'
+
+10. Remove the test-files from the disk cache.
+
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm $TESTDIR/$F; done
+
+11. Recall the files back from tape.
+
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+
+
+EXPECTED RESULTS
+================
+
+The 10 recalls should have completed successfully, in other words, stager_qry
+should show the files have been successfully recalled from tape back onto disk.
+Running "nsls -l" on the test-directory should show each file has two
+tape-segments and each of these two segements is on a different test-tape.
