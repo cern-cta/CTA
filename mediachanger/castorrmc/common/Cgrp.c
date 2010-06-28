@@ -27,8 +27,6 @@ CONST char *name;
      * If single-threaded compilation we don't do anything.
      */
     return(getgrnam(name));
-#elif (defined(_WIN32))
-    return(getgrnam((char *) name));
 #else
     /*
      * linux or APPLE
@@ -64,8 +62,6 @@ gid_t gid;
     /*
      * If single-threaded compilation we don't do anything.
      */
-    return(getgrgid(gid));
-#elif (defined(_WIN32))
     return(getgrgid(gid));
 #else
     /*

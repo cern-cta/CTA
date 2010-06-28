@@ -12,24 +12,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
-#ifndef _WIN32
 #include <sys/time.h>
-#endif
-#ifdef _AIX
-/* Otherwise cc will not know about fd_set on */
-/* old aix versions.                          */
-#include <sys/select.h>
-#endif
 #include <sys/types.h>
-#ifndef _WIN32
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#endif
-
-#if defined(SOLARIS)
-#include <sys/filio.h>
-#endif /* SOLARIS */
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 #include <poll.h>
@@ -39,13 +26,11 @@
 #include "serrno.h"
 #include "socket_timeout.h"
 
-#ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
 #if defined(__STDC__)
 typedef void    Sigfunc(int);
 #else
 typedef void    Sigfunc();
-#endif
 #endif
 
 #if defined(__STDC__)
@@ -53,17 +38,13 @@ int      _net_readable(int, int);
 int      _net_writable(int, int);
 int      _net_connectable(SOCKET, int);
 int      _net_isclosed(int);
-#ifndef _WIN32
 Sigfunc *_netsignal(int, Sigfunc *);
-#endif
 #else
 int      _net_readable();
 int      _net_writable();
 int      _net_connectable();
 int      _net_isclosed();
-#ifndef _WIN32
 Sigfunc *_netsignal();
-#endif
 #endif
 
 int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
@@ -73,25 +54,17 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
      int timeout;
 {
 	int rc, nonblocking;
-#ifndef _WIN32
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
-#endif
 
-#ifndef _WIN32
 	/* In any case we catch and trap SIGPIPE */
 	if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
 		return(-1);
 	}
-#endif
 
 	rc = 0;
 	if ( timeout >= 0 )  {
 		nonblocking = 1;
-#ifndef _WIN32
 		rc = ioctl(fd,FIONBIO,&nonblocking);
-#else /* _WIN32 */
-		rc = ioctlsocket(fd,FIONBIO,&nonblocking);
-#endif /* _WIN32 */
 		if ( rc == SOCKET_ERROR ) {
 			serrno = 0;
 		} 
@@ -102,15 +75,9 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 	if ( rc != -1 ) {
 		rc = connect(fd,addr,addr_size);
 		if ( timeout >= 0 ) {
-#ifndef _WIN32
 			if ( rc == -1 && errno != EINPROGRESS ) {
 				serrno = 0;
 			} else rc = 0;
-#else /* _WIN32 */
-			if ( rc == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK ) {
-				serrno = 0;
-			} else rc = 0;
-#endif /* _WIN32 */
 		} /* timeout >= 0 */
 	}
 
@@ -133,20 +100,14 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 		}
 	}
 
-#ifndef _WIN32
 	/* Restore previous handlers */
 	int save_errno = errno;
 	_netsignal(SIGPIPE, sigpipe);
 	errno = save_errno;
-#endif
 	/* Restore blocking socket if connect was successful */
 	if ( timeout >= 0 && rc == 0 ) {
 		nonblocking = 0;
-#ifndef _WIN32
 		rc = ioctl(fd,FIONBIO,&nonblocking);
-#else /* _WIN32 */
-		rc = ioctlsocket(fd,FIONBIO,&nonblocking);
-#endif /* _WIN32 */
 		if ( rc == SOCKET_ERROR ) serrno = 0;
 	}
 
@@ -164,9 +125,7 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 	ssize_t flag = 0;            /* != 0 means error */
 	char  *ptr = NULL;           /* Temp. pointer */
 	int select_status = 0;
-#ifndef _WIN32
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
-#endif
 	time_t time_start;
 	int time_elapsed;
 
@@ -181,12 +140,10 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 		return(netread(fd,vptr,(int) n));
 	}
 
-#ifndef _WIN32
 	/* In any case we catch and trap SIGPIPE */
 	if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
 		return(-1);
 	}
-#endif
 
 	ptr   = vptr;
 	nleft = n;
@@ -241,12 +198,10 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 		}
 	}
 
-#ifndef _WIN32
 	/* Restore previous handlers */
 	int save_errno = errno;
 	_netsignal(SIGPIPE, sigpipe);
 	errno = save_errno;
-#endif
 
 	if (flag != 0) {
 		/* Return -1 if error */
@@ -266,9 +221,7 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 	ssize_t nwritten = 0;        /* Bytes yet read */
 	ssize_t flag = 0;            /* != 0 means error */
 	char  *ptr   = NULL;         /* Temp. pointer */
-#ifndef _WIN32
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
-#endif
 	int select_status = 0;
 	time_t time_start;
 	int time_elapsed;
@@ -284,12 +237,10 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 		return(netwrite(fd,vptr,(int) n));
 	}
 
-#ifndef _WIN32
 	/* In any case we catch and trap SIGPIPE */
 	if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
 		return(-1);
 	}
-#endif
 
 	ptr      = vptr;
 	nleft    = n;
@@ -340,12 +291,10 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 		}
 	}
 
-#ifndef _WIN32
 	/* Restore previous handlers */
 	int save_errno = errno;
 	_netsignal(SIGPIPE, sigpipe);
 	errno = save_errno;
-#endif
 
 	if (flag != 0) {
 		/* Return -1 if error */
@@ -355,7 +304,6 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 	return(n - nleft);
 }
 
-#ifndef _WIN32
 Sigfunc *_netsignal(signo, func)
      int signo;
      Sigfunc *func;
@@ -381,7 +329,6 @@ Sigfunc *_netsignal(signo, func)
 	}
 	return(oact.sa_handler);
 }
-#endif
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_isclosed(fd)
@@ -535,12 +482,6 @@ int _net_connectable(fd, timeout)
 	 */
 	if ( rc == 0 ) {
 		serrno = SETIMEDOUT;
-#if defined(_WIN32)
-		/*
-		 * Make sure an error value is set
-		 */
-		WSASetLastError(WSAETIMEDOUT);
-#endif /* _WIN32 */
 		return(-1);
 	}
 
@@ -580,12 +521,6 @@ int _net_connectable(fd, timeout)
 	 */
 	if ( errval == 0 ) {
 		errval = SECOMERR;
-#if defined(_WIN32)
-		/*
-		 * Make sure an error value is set
-		 */
-		WSASetLastError(WSAECONNREFUSED);
-#endif /* _WIN32 */
 	}
 #endif
 	serrno = errval;

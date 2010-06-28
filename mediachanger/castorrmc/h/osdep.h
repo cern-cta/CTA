@@ -61,17 +61,8 @@ typedef struct  {
 #define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
 #define QUADADDR(x)     (((char *)&(x))+sizeof(QUAD)-QUADSIZE)
 
-#ifndef _WIN32
 typedef long long		signed64;
 typedef unsigned long long	u_signed64;
-#else
-typedef __int64			signed64;
-typedef unsigned __int64	u_signed64;
-typedef long gid_t;
-typedef long uid_t;
-typedef int mode_t;
-typedef int socklen_t;
-#endif
 
 typedef signed64 HYPER;
 typedef u_signed64 U_HYPER;
@@ -80,13 +71,8 @@ typedef U_HYPER TIME_T;
 #define ONE_KB 0x400
 #define ONE_MB 0x100000
 #define ONE_GB 0x40000000
-#ifndef _WIN32
 #define ONE_TB 0x10000000000LL
 #define ONE_PB 0x4000000000000LL
-#else
-#define ONE_TB 0x10000000000
-#define ONE_PB 0x4000000000000
-#endif
 
 /*
  * Error reporting
@@ -99,7 +85,7 @@ typedef U_HYPER TIME_T;
 #ifdef _PROTO
 #undef _PROTO
 #endif
-#if (defined(__STDC__) || defined(__cplusplus) || defined(_WIN32))
+#if (defined(__STDC__) || defined(__cplusplus))
 /* On Win32, compiler is STDC compliant but the */
 /* __STDC__ definition itself is not a default. */
 #define CONST const
@@ -110,11 +96,7 @@ typedef U_HYPER TIME_T;
 #endif
 
 /* Macros for 64-bits constants definition */
-#ifdef _WIN32
-#define CONSTLL(a) (a##i64)
-#else
 #define CONSTLL(a) (a##LL)
-#endif
 
 /* Macros for externalization (UNIX) (J.-D.Durand) */
 #ifdef EXTERN_C
@@ -139,27 +121,10 @@ typedef U_HYPER TIME_T;
 #if defined(DLL_DECL)
 #undef DLL_DECL
 #endif
-#if !defined(_WIN32)
 #define DLL_DECL
-#else
-#if defined(_EXPORTING) && defined(_DLL)
-#define DLL_DECL __declspec(dllexport) 
-#elif defined(_IMPORTING)
-#define DLL_DECL __declspec(dllimport)
-#else
-#define DLL_DECL
-#endif
-#endif
 
-#if (defined(__alpha) && defined(__osf__)) || defined(__APPLE__)
+#if defined(__APPLE__)
 #define off64_t off_t
-#endif
-#if defined(_WIN32)
-#define off64_t __int64
-#endif
-
-#if defined(_WIN32)
-typedef int socklen_t;
 #endif
 
 #endif /* _OSDEP_H_INCLUDED_ */

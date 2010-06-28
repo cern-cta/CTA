@@ -64,10 +64,6 @@ int rmclogit(char*, char*, ...);
 #define	RMC06	"RMC06 - invalid value for %s\n"
 #define	RMC09	"RMC09 - fatal configuration error: %s %s\n"
 #define	RMC46	"RMC46 - request too large (max. %d)\n"
-#if defined(_WIN32)
-#define	RMC52	"RMC52 - WSAStartup unsuccessful\n"
-#define	RMC53	"RMC53 - you are not registered in the unix group/passwd mapping file\n"
-#endif
 #define	RMC92	"RMC92 - %s request by %d,%d from %s\n"
 #define	RMC98	"RMC98 - %s\n"
 

@@ -139,7 +139,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
  *    H Y P E R   ( 6 4   B I T S )
  */
 
-#if !defined(__alpha) && !defined(i386) && !defined(_WIN32) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__) 
+#if !defined(i386) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__) 
 #define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
 					  LONG n_ = htonl(*((unsigned long *)&(u_))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \

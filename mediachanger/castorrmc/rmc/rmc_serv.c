@@ -10,9 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -20,7 +17,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include "Cinit.h"
 #include "marshall.h"
 #include "net.h"
@@ -138,21 +134,7 @@ struct main_args *main_args;
 	else
 		sprintf (extended_robot_info.smc_ldr, "/dev/%s", robot);
 
-#if defined(SOLARIS25) || defined(hpux)
-	/* open the SCSI picker device
-	   (open is done in send_scsi_cmd for the other platforms */
-
-	if ((extended_robot_info.smc_fd = open (extended_robot_info.smc_ldr, O_RDWR)) < 0) {
-		rmclogit (func, RMC02, "open", strerror(errno));
-                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
-                                     "func" , TL_MSG_PARAM_STR, "rmc_main",
-                                     "On"   , TL_MSG_PARAM_STR, "open",
-                                     "error", TL_MSG_PARAM_STR, strerror(errno));                
-		exit (SYERR);
-	}
-#else
 	extended_robot_info.smc_fd = -1;
-#endif
 
 	/* get robot geometry, try 2 times */
    
@@ -215,10 +197,8 @@ struct main_args *main_args;
 	}
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
-#if ! defined(_WIN32)
 	signal (SIGPIPE, SIG_IGN);
 	signal (SIGXFSZ, SIG_IGN);
-#endif
 
 	/* open request socket */
 
@@ -281,7 +261,6 @@ struct main_args *main_args;
         tl_rtcpd.tl_exit( &tl_rmcdaemon, 0 );
 }
 
-#if ! defined(_WIN32)
 int main(argc, argv)
 int argc;
 char **argv;
@@ -294,13 +273,6 @@ char **argv;
 		exit (SYERR);
 	exit (rmc_main (&main_args));
 }
-#else
-main()
-{
-	if (Cinitservice ("rmcd", &rmc_main))
-		exit (SYERR);
-}
-#endif
 
 void
 doit(rqfd)

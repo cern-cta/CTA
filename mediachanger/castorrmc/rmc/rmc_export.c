@@ -6,12 +6,8 @@
 /*      rmc_export - export/eject a cartridge from the robot */
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "rmc.h"
 #include "rmc_api.h"

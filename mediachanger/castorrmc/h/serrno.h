@@ -472,7 +472,7 @@
  *------------------------------------------------------------------------
  */
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE) || (defined(_WIN32) && (defined(_MT) || defined(_DLL)))
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 /*
  * Multi-thread (MT) environment
  */

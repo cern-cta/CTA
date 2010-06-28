@@ -6,14 +6,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include "marshall.h"
 #include "net.h"
@@ -80,11 +76,7 @@ int user_repbuf_len;
 	}
 
 	if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-		if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
 		if (errno == ECONNREFUSED) {
-#endif
 			rmc_errmsg (func, RMC00, rmchost);
 			(void) netclose (s);
 			serrno = ERMCNACT;

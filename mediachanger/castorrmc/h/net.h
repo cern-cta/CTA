@@ -14,7 +14,6 @@
  * CASTOR sources dealing with networking access should 
  * use these definitions to maximize portability.
  */
-#if !defined(_WIN32)
 #ifndef SOCKET
 #define SOCKET int
 #endif
@@ -58,31 +57,6 @@
 #ifndef ioctlsocket
 #define ioctlsocket ioctl
 #endif
-
-#else /* _WIN32 */
-#include <winsock2.h>
-/*
- * Some UNIX definitions for NT
- */
-#if defined(SD_RECEIVE)
-#define SHUT_RD SD_RECEIVE
-#else /* SD_RECEIVE */
-#define SHUT_RD 0x00
-#endif /* SD_RECEIVE */
-
-#if defined(SD_SEND)
-#define SHUT_WR SD_SEND
-#else /* SD_SEND */
-#define SHUT_WR 0x01
-#endif /* SD_SEND */
-
-#if defined(SD_BOTH)
-#define SHUT_RDWR SD_BOTH
-#else /* SD_BOTH */
-#define SHUT_RDWR 0x02
-#endif /* SD_BOTH */
-
-#endif /* _WIN32 */
 
 EXTERN_C int DLL_DECL (*recvfunc) _PROTO((SOCKET, char *, int));
                                         /* Network receive function     */

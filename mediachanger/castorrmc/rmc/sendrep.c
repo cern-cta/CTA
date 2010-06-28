@@ -5,11 +5,7 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
