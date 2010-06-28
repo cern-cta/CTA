@@ -23,10 +23,10 @@ THE PREREQUISITES OF THE TEST
   space to store ten 100MB on disk.
 * A user account that permits the modification of the service-class within the
   stager.
-* Two test tapes, each of which must have enough free space to store ten 100MB
+* Two test-tapes, each of which must have enough free space to store ten 100MB
   files.
 * A user account that permits the creation of a new tape-pool within the VMGR
-* Two free tape-drives, both of which can access both o fthe two test tapes.
+* Two free tape-drives, both of which can access both of the two test tapes.
 * A user account that permits the dedication of drives within the VDQM.
 * A file class with two tape-copies or a user account that permits the creation
   of a new one with two tape-copies.  Do not modify the number of tape-copies
@@ -40,7 +40,7 @@ THE PREREQUISITES OF THE TEST
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 =================================================
 
-1. Create yourself a tape-pool containing your 2 test-tapes.
+1. Create yourself a tape-pool containing the 2 test-tapes.
 
 vmgrenterpool --name gatewaytest --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
@@ -76,7 +76,7 @@ vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213 -match 'host=l
 8. Create and copy to CASTOR the ten 100MB test-files using the
    createAndCopyFilesToCastor.sh script.
 
-migrate100MBFiles.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files 100 10
+createAndCopyFilesToCastor.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files 100 10
 
 9. Using nsls -l wait for all ten 100 MB files to be migrated to tape.
 
