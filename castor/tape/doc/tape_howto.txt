@@ -3833,62 +3833,27 @@ Saving to: `rlwrap-0.37.tar.gz'
 [root@lxcastordev04 rlwrap-0.37]#
 
 
-How to install repack client and server rpms on a development box
-=================================================================
+How to install repack client and server on a development box
+============================================================
 
-[root@lxcastordev04 ~]# ssh murrayc3@lxadm
-Scientific Linux CERN SLC release 4.8 (Beryllium)
-Last login: Mon Jun 28 09:27:21 2010 from lxcastordev04.cern.ch
-*******************************************************************************
-*                      This system is ACTIVELY MONITORED
-*                      *
-*                                                                             *
-*         WARNING: This system MUST NOT be used for PRIVATE PURPOSES
-*         *
-*                  Users activity, including commands, is logged
-*                  *
-*                                                                             *
-*******************************************************************************
-[lxadm04] /afs/cern.ch/user/m/murrayc3 > cdbop
-quattor CDB CLI: Version 2.2.0
-Connecting to https://cdbserv.cern.ch...
-Welcome to CDB Command Line Interface
-Opening session...
-[INFO] session opened with ID <RicxepjSmt>
-Type 'help' for more info
-<cdbop@cdbserv.cern.ch: ~> get -f
-prod/cluster/castordev/customization/headnode/dev04
-[INFO] 'prod/cluster/castordev/customization/headnode/dev04.tpl': received
-<cdbop@cdbserv.cern.ch: ~> !vi
-prod/cluster/castordev/customization/headnode/dev04.tpl
+In CDB add:
 
-Add the following two lines within the "/software/packages" entry:
+ include { 'cluster/' + ELFMS_SVCCLASS + '/roles/repacknode' };
 
-    pkg_repl("castor-repack-server", CASTOR_VERSION, ELFMS_ARCH);
-    pkg_repl("castor-repack-client", CASTOR_VERSION, ELFMS_ARCH);
+to: profiles/profile_lxcastordev04:
 
-<cdbop@cdbserv.cern.ch: ~/private> up prod/cluster/castordev/customization/headnode/dev04.tpl
-[INFO] '/prod/cluster/castordev/customization/headnode/dev04': scheduled to be
-updated
-<cdbop@cdbserv.cern.ch: ~/private> commit
-[INFO] '/prod/cluster/castordev/customization/headnode/dev04': will be updated
-please confirm [yes]: yes
-Comment: Fourth attempt to install repack
-[INFO] please wait...
-[INFO] commit OK
-<cdbop@cdbserv.cern.ch: ~/private> exit
-[lxadm04] /afs/cern.ch/user/m/murrayc3/private > ssh root@lxcastordev04
-Last login: Mon Jun 28 10:02:31 2010 from lxcastordev04.cern.ch
-*******************************************************************************
-*                                                                             *
-*  Reminder: You have committed to obey the Computing Rules
-*  *
-*                                              http://cern.ch/ComputingRules
-*                                              *
-*                                                                             *
-*******************************************************************************
-[root@lxcastordev04 ~]# spma_ncm_wrapper.sh
-...
-[INFO] Warnings while configuring consoleclient (1) sindes (5)
-[WARN] 0 errors, 6 warnings executing configure
-[root@lxcastordev04 ~]#
+Reconfigure the headnode:
+
+[root@lxcastordev04 ~]# spma_wrapper.sh
+....
+[root@lxcastordev04 ~]# ncm-ncd –co castorconf
+....
+
+Setup the password file:
+
+[root@lxcastordev04 castor]# cp ORAREPACKCONFIG.example ORAREPACKCONFIG
+[root@lxcastordev04 castor]# nano ORAREPACKCONFIG
+[root@lxcastordev04 castor]# chown root:st ORAREPACKCONFIG
+
+Start the repackd
+
