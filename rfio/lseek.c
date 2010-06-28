@@ -87,11 +87,7 @@ off_t DLL_DECL rfio_lseek(s, offset, how)
     offsetin  = offset;
     offsetout = rfio_lseek64(s, offsetin, how);
     if (offsetout > OFF_MAX && sizeof(off_t) == 4) {
-#if (defined(__osf__) && defined(__alpha)) || defined(hpux) || defined(_WIN32)
-      errno = EINVAL;
-#else
       errno = EOVERFLOW;
-#endif
       END_TRACE();
       return(-1);
     }

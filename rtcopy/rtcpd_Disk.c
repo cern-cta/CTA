@@ -11,12 +11,6 @@
 #include <time.h>
 #include <fcntl.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <io.h>
-#include <string.h>
-extern char *geterr();
-#else /* _WIN32 */
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
@@ -24,7 +18,6 @@ extern char *geterr();
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #include <sys/time.h>
-#endif /* _WIN32 */
 
 #include <stdlib.h>
 #include <errno.h>
@@ -347,11 +340,7 @@ static int DiskFileOpen(int pool_index,
     char node[2];
     SOCKET s;
     char Uformat_flags[8];
-#if defined(_WIN32)
-    int binmode = O_BINARY;
-#else /* _WIN32 */
     int binmode = 0;
-#endif /* _WIN32 */
 
     rc = irc = 0;
     disk_fd = -1;

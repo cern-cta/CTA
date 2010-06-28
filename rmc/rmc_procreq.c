@@ -11,11 +11,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include "Cupv_api.h"
 #include "marshall.h"
 #include "rmc.h"

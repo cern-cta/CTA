@@ -13,17 +13,11 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <getopt.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
 
-#if sgi
-extern char *strdup _PROTO((CONST char *));
-#endif
 int errflg;
 int iflag;
 int rflag;
@@ -42,9 +36,6 @@ void usage(int status, char *name) {
     printf ("      --help         display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -62,9 +53,6 @@ int main(int argc,char **argv)
   char *p;
   char *path;
   struct Cns_filestat statbuf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "interactive", NO_ARGUMENT, NULL, 'i' },
@@ -105,12 +93,6 @@ int main(int argc,char **argv)
     }
   } else
     newclass_name = class_arg;
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   for (i = Coptind+1; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
@@ -140,9 +122,6 @@ int main(int argc,char **argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

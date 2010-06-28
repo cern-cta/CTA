@@ -3,21 +3,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.10 $ $Date: 2007/02/20 16:28:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	Ctape_info - get tape file information */
 
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
@@ -53,13 +45,6 @@ char *recfm;
 	strcpy (func, "Ctape_info");
 	uid = getuid();
 	gid = getgid();
-#if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		Ctape_errmsg (func, TP053);
-		serrno = SENOMAPFND;
-		return (-1);
-	}
-#endif
 
 	/* path */
 

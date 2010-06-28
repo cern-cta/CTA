@@ -58,12 +58,8 @@ int DLL_DECL rfio_msymlink(n1,file2)
       return(rc);
     }
     /* The file is local */
-#if ! defined(_WIN32)
     rc = symlink(n1,filename) ;
     if ( rc < 0 ) serrno = 0;
-#else
-    { serrno = SEOPNOTSUP; rc = -1;}
-#endif
     rfio_errno = 0;
     END_TRACE();
     return (rc) ;

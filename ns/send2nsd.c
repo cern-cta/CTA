@@ -8,13 +8,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include "Cns.h"
 #include "Cns_api.h"
@@ -181,11 +177,7 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
           }
         } else {
 
-#if defined(_WIN32)
-          if (WSAGetLastError() == WSAECONNREFUSED)
-#else
             if (serrno == ECONNREFUSED)
-#endif
 	      {
 		if (retrycnt == nbretry) {
 		  Cns_errmsg (func, NS000, Cnshost);

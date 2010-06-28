@@ -11,9 +11,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "serrno.h"
 #include "u64subr.h"
 #include "vmgr.h"
@@ -134,9 +131,6 @@ char **argv;
 	struct vmgr_tape_info *lp;
 	char pool_name[CA_MAXPOOLNAMELEN+1];
 	char vid[CA_MAXVIDLEN+1];
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 	int xflag = 0;
 	int sflag = 0;
 
@@ -182,12 +176,6 @@ char **argv;
                 exit (USERR);
         }
  
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
-		exit (SYERR);
-	}
-#endif
 	flags = VMGR_LIST_BEGIN;
 	serrno = 0;
 	while ((lp = vmgr_listtape (vid, pool_name, flags, &list)) != NULL) {
@@ -199,8 +187,5 @@ char **argv;
 			 (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
 	else
 		(void) vmgr_listtape (vid, pool_name, VMGR_LIST_END, &list);
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	exit (0);
 }

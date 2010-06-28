@@ -1,6 +1,3 @@
-#if defined(_WIN32)
-#include <winsock2.h>    /* Needed for SOCKET definition */
-#endif /* _WIN32 */
 #include <stdlib.h>
 #include <errno.h>
 #include <Castor_limits.h>

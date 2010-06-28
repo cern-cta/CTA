@@ -32,19 +32,12 @@
 #include <sys/types.h>                  /* Standard data types          */
 #include <sys/stat.h>
 #include <errno.h>
-#if defined(_WIN32)
-#include <io.h>
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <unistd.h>
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
 #include <signal.h>
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <sys/stat.h>
 #include <patchlevel.h>
 #include <Castor_limits.h>

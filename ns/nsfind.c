@@ -13,10 +13,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include "statbits.h"
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cregexp.h"
@@ -25,9 +21,6 @@
 #include "u64subr.h"
 #define ONEDAY (24*60*60)
 #define SIXMONTHS (6*30*24*60*60)
-#if sgi
-extern char *strdup _PROTO((CONST char *));
-#endif
 int procpath (char *dir);
 char atimeflg;
 int atimeval;
@@ -63,9 +56,6 @@ void usage(int status, char *name) {
     printf ("       --help    display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -79,9 +69,6 @@ int main(argc, argv)
   int hflg = 0;
   char *p;
   char *path;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   for (i = 1; i < argc; i++) {
     if (*argv[i] != '-') { /* path */
@@ -159,12 +146,6 @@ int main(argc, argv)
     usage (USERR, argv[0]);
   }
   (void) time (&current_time);
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   for (i = 1; i <= lastpath; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
@@ -189,9 +170,6 @@ int main(argc, argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>      /* Standard data types                */
 #include <netdb.h>          /* Network "data base"                */
@@ -22,7 +19,6 @@
 #include <sys/time.h>
 #include <netinet/in.h>     /* Internet data types                */
 #include <netinet/tcp.h>    /* S. Murray 31/03/09 TCP definitions */
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <osdep.h>

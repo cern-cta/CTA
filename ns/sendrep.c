@@ -7,11 +7,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include <stdarg.h>
 #include "marshall.h"
 #include "net.h"

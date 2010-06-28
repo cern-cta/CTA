@@ -15,9 +15,6 @@
 
 #include <osdep.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#include <stddef.h>
-#endif
 
 #define CUUID_STRING_LEN 36
 #define CUUID_STRING_FMT "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"

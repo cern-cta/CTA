@@ -28,45 +28,25 @@
 #define RFIO_RFIO_CALLS_H 1
 
 int  srchk(
-#if defined(_WIN32)
-           SOCKET  s
-#else
            int     s
-#endif
            );
 
 int   srerrmsg(
-#if defined(_WIN32)
-               SOCKET  s
-#else
                int     s
-#endif
                );
 
 int srstatfs(int s);
 
 int   srfread(
-#if defined(_WIN32)
-               SOCKET  s,
-#else
                int     s,
-#endif
                FILE    *fp);
 
 int   srfwrite(
-#if defined(_WIN32)
-               SOCKET  s,
-#else
                int     s,
-#endif
                FILE    *fp);
 
 int   srpclose(
-#if defined(_WIN32)
-               SOCKET  s,
-#else
                int     s,
-#endif
                FILE    *fs);
 
 #endif // RFIO_RFIO_CALLS_H

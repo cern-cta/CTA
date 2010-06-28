@@ -29,18 +29,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
 #include <signal.h>
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <sys/stat.h>
 #include <errno.h>
 #include <patchlevel.h>

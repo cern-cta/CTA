@@ -51,11 +51,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef _WIN32
 #include <unistd.h>
-#else
-#include "net.h"
-#endif
 #include <ctype.h>
 #include <errno.h>
 #include <Castor_limits.h>

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.39 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,16 +10,9 @@
 #include <pwd.h>
 #include <signal.h>
 #include <fcntl.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include <string.h>
 #include <sys/types.h>
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
@@ -152,11 +141,7 @@ char	**argv;
 	fsid = argv[31];
 	domainname = argv[32];
  
-#if _AIX
-	scsi = strncmp (dvrname, "mtdd", 4);
-#else
 	scsi = 1;
-#endif
 
 	c = 0;
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
@@ -166,29 +151,11 @@ char	**argv;
 
 	/* open device and check drive ready */
 
-#ifndef SOLARIS
 		if (!scsi)
-#endif
 			tapefd = open (path, O_RDONLY);
-#ifndef SOLARIS
 		else
 			tapefd = open (path, O_RDONLY|O_NDELAY);
-#endif
 		if (tapefd < 0) {
-#if defined(_AIX) || defined(SOLARIS)
-#if _AIX
-			if (!scsi && (errno == EIO || errno == ENOTREADY)) {
-#else
-			if (errno == EIO) {
-#endif
-				usrmsg (func, TP054);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 2,
-                                                    "func" , TL_MSG_PARAM_STR  , func,
-                                                    "TPVID", TL_MSG_PARAM_TPVID, vid );                        
-				c = ETNRDY;
-				goto reply;
-			}
-#endif
 			c = errno;
 			if (errno == ENXIO)	/* drive not operational */
 				configdown (drive);

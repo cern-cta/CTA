@@ -3,26 +3,15 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.55 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include <pwd.h>
 #include <string.h>
 #include <sys/time.h>
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
@@ -163,16 +152,7 @@ char	**argv;
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
 
-#if defined(ADSTAR)
-	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
-	    (errno == EBUSY || errno == EAGAIN))
-#else
-#ifndef SOLARIS
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 && errno == EBUSY)
-#else
-	while ((tapefd = open (dvn, O_RDONLY)) < 0 && errno == EBUSY)
-#endif
-#endif
 		sleep (UCHECKI);
 	if (tapefd >= 0) {
 	
@@ -246,12 +226,6 @@ char	**argv;
 
 	  close (tapefd);
  	} else {
-#if defined(sun)
-		if (errno != EIO)
-#endif
-#if defined(_IBMR2)
-		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
-#endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
                                 tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
@@ -308,7 +282,7 @@ char	**argv;
 
         /* initialize for select */
 
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+#if defined(linux)
         maxfds = getdtablesize();
 #else
         maxfds = _NFILE;
@@ -316,16 +290,7 @@ char	**argv;
         FD_ZERO (&readmask);
 
 unload_loop:
-#if defined(ADSTAR)
-	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
-	    (errno == EBUSY || errno == EAGAIN))
-#else
-#ifndef SOLARIS
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 && errno == EBUSY)
-#else
-	while ((tapefd = open (dvn, O_RDONLY)) < 0 && errno == EBUSY)
-#endif
-#endif
 		sleep (UCHECKI);
 	if (tapefd >= 0) {
 		if ((c = chkdriveready (tapefd)) < 0) {
@@ -357,12 +322,6 @@ unload_loop:
 		}
 		close (tapefd);
 	} else {
-#if defined(sun)
-		if (errno != EIO)
-#endif
-#if defined(_IBMR2)
-		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
-#endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
                                 tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
@@ -395,9 +354,6 @@ unload_loop:
 		} while (n == 1);
 		if (n == 2) goto unload_loop;
 	}
-#ifdef TMS
-	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
-#endif
 vol_unmount:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
@@ -423,9 +379,6 @@ vol_unmount:
 	goto freedrv;
 
 freevol:
-#ifdef TMS
-	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
-#endif
 
 freedrv:
 

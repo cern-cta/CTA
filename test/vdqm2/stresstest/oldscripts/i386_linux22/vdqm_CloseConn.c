@@ -1,12 +1,7 @@
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <sys/socket.h>
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <log.h>

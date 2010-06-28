@@ -4,12 +4,9 @@
 #include <errno.h>
 #include <serrno.h>
 #include <osdep.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 #include <signal.h>
 
-#ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
 #ifdef __STDC__
 typedef void    Sigfunc(int);
@@ -17,9 +14,6 @@ Sigfunc *_test_signal(int, Sigfunc *);
 #else
 typedef void    Sigfunc();
 Sigfunc *_test_signal();
-#endif
-#else
-#define _test_signal(a,b) signal(a,b)
 #endif
 
 void *doit _PROTO((void *));
@@ -104,7 +98,6 @@ void *doit(arg)
   return((void *) &okstatus);
 }
 
-#ifndef _WIN32
 Sigfunc *_test_signal(signo, func)
      int signo;
      Sigfunc *func;
@@ -130,7 +123,6 @@ Sigfunc *_test_signal(signo, func)
   }
   return(oact.sa_handler);
 }
-#endif /* #ifndef _WIN32 */
 
 void reaper(signo)
      int signo;

@@ -27,35 +27,12 @@
 #include <Cpwd.h>
 #include <Cnetdb.h>
 
-#if !defined(_WIN32)
 #include <sys/time.h>
-#endif
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include <stdlib.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
-#if ((defined(IRIX5) || defined(IRIX6)) && ! (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN) && defined(PDP_ENDIAN)))
-#ifdef LITTLE_ENDIAN
-#undef LITTLE_ENDIAN
-#endif
-#define LITTLE_ENDIAN 1234
-#ifdef BIG_ENDIAN
-#undef BIG_ENDIAN
-#endif
-#define BIG_ENDIAN 4321
-#ifdef PDP_ENDIAN
-#undef PDP_ENDIAN
-#endif
-#define PDP_ENDIAN 3412
-#endif
 #include <netinet/tcp.h>
-#endif
 #include <common.h>
 
 EXTERN_C int DLL_DECL data_rfio_connect _PROTO((char *, int *, int, int));
@@ -289,22 +266,11 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
   }
   TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepalive on ctrl done");
 
-#if (defined(__osf__) && defined(__alpha) && defined(DUXV4))
-  /* Set the keepalive interval to 20 mns instead of the default 2 hours */
-  yes = 20 * 60;
-  if (setsockopt(rfp->s,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-    TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepidle on ctrl: %s",strerror(errno));
-  }
-  TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepidle on ctrl done (%d s)",yes);
-#endif
-
-#if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
   yes = 1;
   if (setsockopt(rfp->s,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
     TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt nodelay on ctrl: %s",strerror(errno));
   }
   TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt nodelay option set on ctrl socket");
-#endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
   /*
    * Allocate, if necessary, an I/O buffer.
@@ -383,11 +349,7 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
    */
   rlen = RQSTSIZE+HYPERSIZE;
   if ((rb = netread_timeout(rfp->s,rfio_buf,rlen,10*RFIO_CTRL_TIMEOUT)) != rlen ) {
-#if !defined(_WIN32)
     if (rb == 0 || (rb < 0 && errno == ECONNRESET))
-#else
-      if (rb == 0 || (rb < 0 && serrno == SETIMEDOUT))
-#endif
       {
 
         /* Server doesn't support 64 mode, call 32 one*/
@@ -469,21 +431,11 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
   }
   TRACE(2,"rfio","open64_v3: setsockopt keepalive on data done");
 
-#if (defined(__osf__) && defined(__alpha) && defined(DUXV4))
-  /* Set the keepalive interval to 20 mns instead of the default 2 hours */
-  yes = 20 * 60;
-  if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-    TRACE(2,"rfio","open64_v3: setsockopt keepidle on data: %s",strerror(errno));
-  }
-  TRACE(2,"rfio","open64_v3: setsockopt keepidle on data done (%d s)",yes);
-#endif
-#if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
   yes = 1;
   if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
     TRACE(2,"rfio","open64_v3: setsockopt nodelay on data: %s",strerror(errno));
   }
   TRACE(2,"rfio","open64_v3: setsockopt nodelay option set on data socket");
-#endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
 #if defined (CLIENTLOG)
   /* Client logging */
@@ -492,19 +444,11 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
   /*
    * The file is open, update rfp->fp
    */
-#if defined(hpux)
-  rfp->fp.__fileL = rfp->s;
-#else
 #if defined(linux)
   rfp->fp._fileno = rfp->s;
 #else
-#if defined(__Lynx__)
-  rfp->fp._fd = rfp->s;
-#else
   rfp->fp._file = rfp->s;
-#endif  /* __Lynx__ */
 #endif  /* linux */
-#endif  /* hpux */
   END_TRACE() ;
   return (rfp->s) ;
 }

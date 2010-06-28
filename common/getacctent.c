@@ -9,7 +9,6 @@
 #include <pwd.h>
 #include <stdlib.h>
 
-#if !defined(_WIN32)
 /*
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POSIX release
@@ -17,9 +16,6 @@
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-#else
-#include <windows.h>
-#endif /* !_WIN32 */
 
 
 #include <osdep.h>
@@ -37,13 +33,9 @@ char DLL_DECL *getacctent(pwd, acct, buf, buflen)
 
         FILE      *fp = NULL; /* Pointer to /etc/account file  */
         char acct_file[256];
-#if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
         char *last = NULL;
-#endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
-#if defined(_WIN32)
-        OSVERSIONINFO osvi;
-	char *p;
-#endif
+#endif /* (_REENTRANT || _THREAD_SAFE) */ 
 
         if (pwd == (struct passwd *)NULL) return(NULL);
 
@@ -53,26 +45,7 @@ char DLL_DECL *getacctent(pwd, acct, buf, buflen)
          * name (indicating that we have to look in YP) or the end of file
          * is reached.
          */
-#if defined(_WIN32)
-        memset (&osvi, 0, sizeof(osvi));
-        osvi.dwOSVersionInfoSize = sizeof(osvi);
-        GetVersionEx (&osvi);
-        if (osvi.dwMajorVersion > 5) {
-                if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
-                  (p = getenv ("SystemRoot")))
-                    sprintf (acct_file, "%s%s\\account", p, strchr (W2000MAPDIR, '\\'));
-                else
-                    sprintf (acct_file, "%s\\account", W2000MAPDIR);
-        } else {
-                if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
-                  (p = getenv ("SystemRoot")))
-                    sprintf (acct_file, "%s%s\\account", p, strchr (WNTMAPDIR, '\\'));
-                else
-                    sprintf (acct_file, "%s\\account", WNTMAPDIR);
-        }
-#else
         strcpy (acct_file, ACCT_FILE);
-#endif
 
         if ((fp = fopen(acct_file, "r")) == NULL) {
 #if defined(NIS)

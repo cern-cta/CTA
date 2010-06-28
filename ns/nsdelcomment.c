@@ -10,9 +10,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "serrno.h"
@@ -25,9 +22,6 @@ void usage(int status, char *name) {
     printf ("Delete the comment associated with a file/directory.\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -39,9 +33,6 @@ int main(argc, argv)
   char fullpath[CA_MAXPATHLEN+1];
   char *p;
   char *path;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   if (argc == 2) {
     if (strcmp(argv[1], "--help") == 0)
@@ -50,12 +41,6 @@ int main(argc, argv)
   if (argc != 2) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   path = argv[1];
   if (*path != '/' && strstr (path, ":/") == NULL) {
     if ((p = getenv (CNS_HOME_ENV)) == NULL ||
@@ -76,9 +61,6 @@ int main(argc, argv)
     fprintf (stderr, "%s: %s\n", path, sstrerror(serrno));
     errflg++;
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

@@ -14,22 +14,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
-#if !defined(_WIN32)
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#else /* _WIN32 */
-#include <io.h>
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <sys/types.h>
-#if (defined(_AIX) && defined(_IBMR2)) || defined (SOLARIS) || \
-( defined(__osf__) && defined(__alpha) )
-#include <sys/stat.h>
-#endif /* _AIX && _IBMR2  ||  SOLARIS  || ( __alpha__ && __osf ) */
 
-#if ! defined(_AIX) && !defined(_WIN32)
 #include <sys/mtio.h>
-#endif  /* ! _AIX && !_WIN32*/
 
 #include <osdep.h>
 #include <net.h>
@@ -52,11 +41,6 @@ char *getconfent _PROTO((char *, char *, int));
 int gettperror _PROTO((int, char *, char **));
 static int read_sony _PROTO(());
 static int write_sony _PROTO(());
-
-#if defined(_AIX) && defined(_IBMR2)
-static char driver_name[7];
-char *dvrname;
-#endif /* _AIX && _IBMR2 */
 
 static char labelid[2][4] = {"EOF","EOV"} ;
 
@@ -143,42 +127,10 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
       break;
     }
     break;
-#if defined(_AIX) && defined(_IBMR2)
-  case EMEDIA:               
-    /* 
-     * media surface error on IBM 
-     */
-    severity = RTCP_RESELECT_SERV | RTCP_USERR;
-
-    /*
-     * Check if there is any configured error action
-     * for this medium errors (like sending a mail to
-     * operator or raising an alarm).
-     */
-    sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
-    if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
-      j = atoi(p);
-      severity = j;
-    }
-    rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", 
-                          sstrerror(errno), trec+1);
-    break;
-#endif
   case EINVAL:
     rtcpd_AppendClientMsg(NULL, file, RT119, "CPDSKTP", trec+1);
     severity = RTCP_FAILED | RTCP_USERR;
     break;
-#if defined(sun)
-    /* 
-     * Should not happen: EACCES only occurs when the driver 
-     * gave a wrong information to tpmnt. 
-     */
-  case EACCES :
-    rtcpd_AppendClientMsg(NULL, file, RT116, "CPDSKTP", 
-                          sstrerror(errno), trec+1);
-    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
-    break;
-#endif /* sun */
   default:
     rtcpd_AppendClientMsg(NULL, file, RT116, "CPDSKTP", 
                           sstrerror(errno>0 ? errno : serrno), trec+1);
@@ -285,33 +237,6 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
       severity = RTCP_NEXTRECORD;
     }
     break ;
-#if defined(_AIX) && defined(_IBMR2)
-  case EMEDIA:
-    rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", 
-                          sstrerror(errno), trec+1);
-    if ( skiponerr ) {  /* -E skip */
-      rtcpd_AppendClientMsg(NULL, file, RT211, "CPTPDSK");
-      severity = RTCP_NEXTRECORD;
-      break;
-    }
-
-    if ( keepfile != 0 )
-      severity = RTCP_RESELECT_SERV | RTCP_MNYPARY;
-    else
-      severity = RTCP_RESELECT_SERV | RTCP_USERR;
-
-    /*
-     * Check if there is any configured error action
-     * for this medium errors (like sending a mail to
-     * operator or raising an alarm).
-     */
-    sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
-    if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
-      j = atoi(p);
-      severity = j;
-    }
-    break;
-#endif
   case ENOSPC:
     rtcpd_AppendClientMsg(NULL, file, RT137, "CPTPDSK", trec+1);
     severity = RTCP_FAILED | RTCP_USERR ;
@@ -361,11 +286,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
   int fd , rc; 
   int tmode;
   char *p;
-#if defined(_WIN32)
-  int binmode = O_BINARY;
-#else /* _WIN32 */
   int binmode = 0;
-#endif /* _WIN32 */
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
 
@@ -387,9 +308,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
   if ( tapereq->mode == WRITE_ENABLE ) tmode = O_RDWR | binmode;
   else {
     tmode = O_RDONLY | binmode;
-#if !defined(SOLARIS)
     if ( file->sonyraw > 0 ) tmode = O_RDWR;
-#endif /* SOLARIS */
   }
 
   file->cksumRoutine = (unsigned long (*) _PROTO((unsigned long,
@@ -555,20 +474,6 @@ int topen(tape_list_t *tape, file_list_t *file) {
   }
 
 
-#if defined(_AIX) && defined(_IBMR2)
-  /*
-   * This call is currently necessary because drive error reporting
-   * on IBM is different depending on the drive type (see 
-   * gettperror() in Ctape software). It is thread unsafe since it
-   * depends on the dvrname global but this is OK here since we 
-   * only have one mover process with one tapeIO thread per tape unit.
-   */
-  if (getdvrnam (filereq->tape_path, driver_name) < 0)
-    strcpy (driver_name, "tape");
-  dvrname = driver_name;
-#endif
-
-#if !defined(_WIN32) && !(defined(_AIX) && !defined(ADSTAR))
   rtcp_log(LOG_DEBUG,"topen() call clear_compression_stats(%d,%s,%s)\n",
            fd,filereq->tape_path,tapereq->devtype);
   tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
@@ -588,7 +493,6 @@ int topen(tape_list_t *tape, file_list_t *file) {
                    "rc"     , TL_MSG_PARAM_INT, rc,
                    "errno"  , TL_MSG_PARAM_INT, errno,
                    "serrno" , TL_MSG_PARAM_INT, serrno );
-#endif /* !_WIN32 && !(_AIX && !ADSTAR) */
 
   if (fd > 0) {
 
@@ -615,9 +519,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
   char *errstr = NULL;
-#if !defined(_WIN32) && !(defined(_AIX) && !defined(ADSTAR))
   COMPRESSION_STATS compstats;
-#endif /* !_WIN32 && !(_AIX && !ADSTAR) */
 
 
   if ( tape == NULL || file == NULL ) {
@@ -700,7 +602,6 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
       }
     }
   }
-#if !defined(_WIN32) && !(defined(_AIX) && !defined(ADSTAR))
   if ( (rc != -1) && (file->trec > 0) ) {
     serrno = 0;
     errno = 0;
@@ -754,7 +655,6 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
       }
     }
   }
-#endif /* !_WIN32 && !(_AIX && !ADSTAR) */
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
   if ( file->cksumRoutine != (unsigned long (*) _PROTO((unsigned long, 
@@ -954,11 +854,7 @@ int twrite(int fd,char *ptr,int len,
      * There is an error.
      */
     if ( rc == -1 ) {
-#if defined(_IBMR2)
-      if ( errno == ENOSPC || errno == ENXIO)
-#else
         if ( errno == ENOSPC )
-#endif
           file->eovflag= 1; /* tape volume overflow */
         else
           twerror(fd,tape,file) ;
@@ -988,39 +884,6 @@ int twrite(int fd,char *ptr,int len,
       }
     }
 
-#if defined(sun) || defined(sgi)
-    if ( rc == 0 ) {
-      struct mtget mt_info ;
-
-      if ( ioctl(fd,MTIOCGET,&mt_info) == -1 ) {
-        rtcpd_SetReqStatus(NULL,file,errno,RTCP_FAILED | RTCP_SYERR);
-        rtcpd_AppendClientMsg(NULL,file, RT109, "CPDSKTP", 
-                              sstrerror(errno));
-        return(-1);
-      }
-#if defined(sun)
-      if ( mt_info.mt_erreg == 19 ) /* SC_EOT */
-#else
-      if ( mt_info.mt_erreg == 0 )
-#endif  /* sun */
-      {
-        file->eovflag= 1; /* tape volume overflow */
-      } else {
-        rtcpd_AppendClientMsg(NULL,file, RT117, "CPDSKTP", 
-                              mt_info.mt_erreg, file->trec+1);
-#if defined(sun)
-        rtcpd_SetReqStatus(NULL,file,EINVAL,
-                           RTCP_RESELECT_SERV | RTCP_UNERR);
-        filereq->err.max_cpretry--;
-#else
-        rtcpd_SetReqStatus(NULL,file,EINVAL,
-                           RTCP_FAILED | RTCP_UNERR);
-#endif  /* sun */
-        return(-1);
-      }
-    }
-    
-#endif  /* sun || sgi */
     if ( file->eovflag ) {
       file->trec-- ;
       return(0);
@@ -1086,33 +949,6 @@ int tread(int fd,char *ptr,int len,
      */
     file->trec ++ ;
 
-    /*
-     * Blank tape may have been encountered.
-     */
-#if defined(sun)
-    if ( rc == 0 ) {
-      char *msgaddr = NULL;
-
-      if (gettperror (fd, filereq->tape_path, &msgaddr) == ETBLANK) {
-        rtcpd_AppendClientMsg(NULL, file, RT118,"CPTPDSK",
-                              file->trec);
-        if (file->trec && filereq->rtcp_err_action == KEEPFILE ) {
-          rtcpd_SetReqStatus(NULL,file,ETBLANK,    
-                             RTCP_RESELECT_SERV | RTCP_OK);
-          filereq->err.max_cpretry--;
-        } else
-          rtcpd_SetReqStatus(NULL,file,ETBLANK,    
-                             RTCP_FAILED | RTCP_USERR);
-
-        rtcp_log(LOG_ERR,RT118,"CPTPDSK",file->trec);
-        tl_rtcpd.tl_log( &tl_rtcpd, 118, 3, 
-                         "func"   , TL_MSG_PARAM_STR, "tread",
-                         "Message", TL_MSG_PARAM_STR, "CPTPDSK",
-                         "Block #", TL_MSG_PARAM_INT, file->trec );        
-      }
-      return(-1);
-    }
-#endif  /* sun  */
     /*
      * Returning number of bytes read.
      */

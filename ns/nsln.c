@@ -10,9 +10,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -29,9 +26,6 @@ void usage(int status, char *name) {
     printf ("      --help      display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -49,9 +43,6 @@ int main(argc, argv)
   char *p;
   char path[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "symbolic", NO_ARGUMENT, NULL, 's' },
@@ -86,18 +77,9 @@ int main(argc, argv)
         (statbuf.filemode & S_IFDIR) == 0) {
       fprintf (stderr, "target %s must be a directory\n",
                argv[argc-1]);
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       exit (USERR);
     }
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   argc -= Coptind;
   argv += Coptind;
   if (argc == 1)
@@ -137,9 +119,6 @@ int main(argc, argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

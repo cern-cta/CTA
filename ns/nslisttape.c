@@ -9,9 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -40,9 +37,6 @@ void usage(int status, char *name) {
     printf ("      --help           display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -72,10 +66,6 @@ int main(int argc,char **argv)
   u_signed64 count = 0;
   u_signed64 size = 0;
   u_signed64 maxfileid = 0;
-
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "display_side", NO_ARGUMENT,       &dsflag,       1  },
@@ -111,9 +101,6 @@ int main(int argc,char **argv)
       fseq = (int) strtol(Coptarg, (char **)NULL, 10);
       if ((errno != 0) || (fseq == 0)) {
         fprintf (stderr, "invalid file sequence number: %s\n", Coptarg);
-#if defined(_WIN32)
-	WSACleanup();
-#endif
         exit (USERR);
       }
       break;
@@ -139,20 +126,11 @@ int main(int argc,char **argv)
   if (errflg) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
 
   if (sumflag) {
     c = Cns_tapesum(server, vid, &count, &size, &maxfileid, dflag == 0 ? 1 : 3);
     if (c < 0) {
       fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       exit (USERR);
     }
     u64tostr (maxfileid, tmpbuf3, 0);
@@ -161,9 +139,6 @@ int main(int argc,char **argv)
     } else {
       printf("%s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0), tmpbuf3);
     }
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (0);
   }
 
@@ -173,9 +148,6 @@ int main(int argc,char **argv)
     if ((signed64)dtp->parent_fileid != parent_fileid) {
       if (Cns_getpath (server, dtp->parent_fileid, path) < 0) {
         fprintf (stderr, "%s\n", sstrerror(serrno));
-#if defined(_WIN32)
-        WSACleanup();
-#endif
         exit (USERR);
       }
       parent_fileid = dtp->parent_fileid;
@@ -213,15 +185,9 @@ int main(int argc,char **argv)
   }
   if (serrno != 0) {
     fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit(USERR);
   }
   (void) Cns_listtape (server, vid, CNS_LIST_END, &list, fseq);
 
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }

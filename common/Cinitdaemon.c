@@ -7,7 +7,6 @@
  * Cinitdaemon.c - Common routine for CASTOR daemon initialisation
  */
 
-#if ! defined(_WIN32)
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,22 +23,14 @@ void (*wait4child) _PROTO((int));
         int maxfds;
         struct sigaction sa;
 
-#if defined(linux) || defined(__APPLE__)
         maxfds = getdtablesize();
-#else
-        maxfds = _NFILE;
-#endif
         /* Background */
         if ((c = fork()) < 0) {
                 fprintf (stderr, "%s: cannot fork: %s\n",name,sstrerror(errno));
                 exit(1);
         } else
                 if (c > 0) exit (0);
-#if defined(linux) || defined(__APPLE__)
         c = setsid();
-#else
-        c = setpgrp();
-#endif
         /* Redirect standard files to /dev/null */
         freopen( "/dev/null", "r", stdin);
         freopen( "/dev/null", "w", stdout);
@@ -54,4 +45,3 @@ void (*wait4child) _PROTO((int));
         }
         return (maxfds);
 }
-#endif

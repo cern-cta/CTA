@@ -30,11 +30,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <unistd.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
@@ -42,7 +37,6 @@ WSADATA wsadata;
 #include <netinet/in.h>                 /* Internet data types          */
 #include <signal.h>
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <sys/stat.h>
 #include <errno.h>
 #include <netdb.h>
@@ -205,9 +199,6 @@ int rtcpcld_initNotifyByPort(
      int *usePort;
 {
   struct sockaddr_in sin;
-#if defined(_WIN32)
-  SOCKET tmp;
-#endif /* _WIN32 */
   int rc, notificationPort = -1;
   socklen_t len;
 
@@ -217,26 +208,6 @@ int rtcpcld_initNotifyByPort(
   }
 
   if ( usePort != NULL ) notificationPort = *usePort;
-
-#if defined(_WIN32)
-  /*
-   * Do a dummy test to see if WinSock DLL has been initialized
-   */
-  tmp = socket(AF_INET,SOCK_STREAM,0);
-  if ( tmp == INVALID_SOCKET ) {
-    if ( GetLastError() == WSANOTINITIALISED ) {
-      /* Initialize the WinSock DLL */
-      rc = WSAStartup(MAKEWORD(2,0), &wsadata);
-      if ( rc ) {
-        serrno = SECOMERR;
-        return(-1);
-      }
-    } else {
-      serrno = SECOMERR;
-      return(-1);
-    }
-  } else closesocket(tmp);
-#endif /* _WIN32 */
 
   if ( notificationPort == -1 ) {
     getServerNotifyAddr(NULL,-1,&notificationPort);
@@ -303,9 +274,7 @@ int rtcpcld_getNotifyWithAddr(
   FD_ZERO(&rd_set);
   FD_SET(s,&rd_set);
   maxfd = 0;
-#ifndef _WIN32
   maxfd = s + 1;
-#endif /* _WIN32 */
   for (;;) {
     rd_setcp = rd_set;
     timeout.tv_sec = 0;

@@ -13,18 +13,12 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
 #include <signal.h>
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <sys/stat.h>
 #include <errno.h>
 #include <patchlevel.h>
@@ -53,7 +47,6 @@ extern int Cinitdaemon _PROTO((char *, void (*)(int)));
 char *getconfent();
 
 static int ChdirWorkdir() {
-#if !defined(_WIN32)
     char *workdir = WORKDIR, *p;
     struct stat st;
     mode_t save_mask;
@@ -104,7 +97,6 @@ S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH);
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         return(-1);
     }
-#endif /* _WIN32 */
     return(0);
 }
 
@@ -118,13 +110,11 @@ int rtcpd_main() {
     SOCKET *request_socket = NULL;
     SOCKET accept_socket = INVALID_SOCKET;
 
-#if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
     /*
      * Ignoring SIGXFSZ signals before logging anything
      */
     signal(SIGXFSZ,SIG_IGN);
-#endif /* _WIN32 */
 
     rtcp_InitLog(NULL,NULL,NULL,NULL);
 
@@ -219,11 +209,11 @@ int rtcpd_main() {
             continue;
         }
 
-#if !defined(_WIN32) && !defined(CTAPE_DUMMIES)
+#if !defined(CTAPE_DUMMIES)
         pid = (int)fork();
-#else  /* !_WIN32 && !CTAPE_DUMMIES */
+#else  /* !CTAPE_DUMMIES */
         pid = 0;
-#endif /* _WIN32 */
+#endif /* !CTAPE_DUMMIES */
         if ( pid == -1 ) {
             rtcp_log(LOG_ERR,"main() failed to fork(): %s\n",
                      sstrerror(errno));
@@ -241,7 +231,7 @@ int rtcpd_main() {
         /*
          * Child
          */
-#if !defined(_WIN32) && !defined(CTAPE_DUMMIES)
+#if !defined(CTAPE_DUMMIES)
         signal(SIGPIPE,SIG_IGN);
         /*
          * Ignoring SIGXFSZ signals before logging anything
@@ -250,12 +240,12 @@ int rtcpd_main() {
         closesocket(*listen_socket);
         free(listen_socket);
         listen_socket = NULL;
-#endif /* !_WIN32 && !CTAPE_DUMMIES */
+#endif /* !CTAPE_DUMMIES */
         *request_socket = accept_socket;
         rc = rtcpd_MainCntl(request_socket);
-#if !defined(_WIN32) && !defined(CTAPE_DUMMIES)
+#if !defined(CTAPE_DUMMIES)
         break;
-#endif /* !_WIN32 && !CTAPE_DUMMIES */
+#endif /* !CTAPE_DUMMIES */
     }
     (void)rtcp_CleanUp(&listen_socket,rc);
     if ( request_socket != NULL ) free(request_socket);
@@ -296,24 +286,8 @@ int main(int argc, char *argv[]) {
 
     if ( Debug == TRUE ) exit(rtcpd_main());
 
-#if defined(_WIN32)
-/*
- * Windows
- */
-#if !defined(CTAPE_DUMMIES)
-    if ( Cinitservice("rtcpd",rtcpd_main) == -1 ) exit(1);
-#else /* !CTAPE_DUMMIES */
-    exit(rtcpd_main());
-#endif /* !CTAPE_DUMMIES */
-
-
-#else /* _WIN32 */
-/*
- * UNIX
- */
 #if !defined(CTAPE_DUMMIES)
     if ( Cinitdaemon("rtcpd",SIG_IGN) == -1 ) exit(1);
 #endif /* CTAPE_DUMMIES */
     exit(rtcpd_main());
-#endif /* _WIN32 */
 }

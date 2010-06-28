@@ -9,11 +9,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -30,9 +26,6 @@ void usage(int status, char *name) {
     printf ("      --help     display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -61,9 +54,6 @@ int main(argc, argv)
   char *p;
   char *path;
   struct Cns_filestat statbuf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "force",   NO_ARGUMENT, NULL, 'f' },
@@ -130,21 +120,12 @@ int main(argc, argv)
   }
   if (errflg)
     exit (USERR);
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   if (vflg)
     printf ("%s: renaming %s to %s\n", argv[0], oldpath, newpath);
   if (! fflag && Cns_lstat(newpath, &statbuf) == 0) {
     if (isatty(fileno(stdin))) {
       printf("%s: overwrite %s? ", argv[0], newpath);
       if (! isyes()) {
-#if defined(_WIN32)
-	WSACleanup();
-#endif
         exit (0);
       }
     }
@@ -153,13 +134,7 @@ int main(argc, argv)
   if (Cns_rename (oldpath, newpath) < 0) {
     fprintf (stderr, "cannot rename to %s: %s\n", path,
              sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }

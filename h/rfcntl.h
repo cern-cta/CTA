@@ -29,18 +29,7 @@
  * O_EXCL      002000   000200   004000
  */
 
-#if defined(linux) || defined(_WIN32) || defined(__APPLE__)
-
-#if defined(_WIN32)
-#define htonopnflg(A)  (A)
-#define ntohopnflg(A)  (A)
-#define htolopnflg(A)  ((((A) & 000004) << 9) | (((A) & 000010) << 7) | \
-                        (((A) & 000400) >> 2) | (((A) & 002000) >> 3) | \
-                        ((A) & 001003))
-#define ltohopnflg(A)  ((((A) & 004000) >> 9) | (((A) & 002000) >> 7) | \
-                        (((A) & 000100) << 2) | (((A) & 000200) << 3) | \
-                        ((A) & 001003))
-#endif /* WIN32 */
+#if defined(linux) || defined(__APPLE__)
 
 #if defined(linux)
 #define htonopnflg(A)  (((A) & 004000) >> 9) | (((A) & 002000) >> 7) |  \
@@ -65,4 +54,4 @@
 #endif /* APPLE */
 
 
-#endif /* linux || _WIN32 || APPLE */
+#endif /* linux || APPLE */

@@ -3,12 +3,6 @@
  * All rights reserved
  */
 
-#ifdef _WIN32
-#define S_IROTH 00004
-#define S_IWOTH 00002
-#define S_IXOTH 00001
-#endif
-
 /* nsgetacl - get the Access Control List for a file/directory */
 #include <errno.h>
 #include <sys/types.h>
@@ -19,9 +13,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -42,9 +33,6 @@ void usage(int status, char *name) {
     printf ("      --help  display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -67,9 +55,6 @@ int main(argc, argv)
   int nentries;
   char *p;
   char *path;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "help", NO_ARGUMENT, &hflg, 1  },
@@ -99,12 +84,6 @@ int main(argc, argv)
   if (errflg || Coptind >= argc) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   for (i = Coptind; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
@@ -223,9 +202,6 @@ int main(argc, argv)
     if (i < argc - 1)
       printf ("\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

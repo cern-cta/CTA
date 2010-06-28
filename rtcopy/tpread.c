@@ -7,9 +7,6 @@
  * tpread.c - tpread/tpwrite command line commands
  */
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>

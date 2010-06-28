@@ -10,17 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <sys/types.h>      /* Standard data types                */
 #include <netdb.h>          /* Network "data base"                */
 #include <sys/socket.h>     /* Socket interface                   */
 #include <netinet/in.h>     /* Internet data types                */
 #include <netinet/tcp.h>    /* S. Murray 31/03/09 TCP definitions */
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <Cnetdb.h>
@@ -66,26 +60,6 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     if ( serviceName != NULL ) localServiceName = serviceName;
     if ( cfgName != NULL ) localCfgName = cfgName;
 
-#if defined(_WIN32)
-    /*
-     * Do a dummy test to see if WinSock DLL has been initialized
-     */
-    rc = socket(AF_INET,SOCK_STREAM,0);
-    if ( rc == INVALID_SOCKET ) {
-        if ( GetLastError() == WSANOTINITIALISED ) {
-            /* Initialize the WinSock DLL */
-            rc = WSAStartup(MAKEWORD(2,0), &wsadata);    
-            if ( rc ) {
-                rtcp_log(LOG_ERR,"rtcp_InitNW() WSAStartup(): %s\n",neterror());
-                return(-1);
-            }
-        } else {
-            rtcp_log(LOG_ERR,"rtcp_InitNW() WSAStartup(): %s\n",neterror());
-            return(-1);
-        }
-    } else closesocket(rc);
-#endif /* _WIN32 */
-    
     if ( (*ListenSocket = (SOCKET *)calloc(1,sizeof(SOCKET))) == NULL ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() calloc(): %s",sstrerror(errno));
         serrno = SESYSERR;
@@ -225,8 +199,5 @@ int rtcp_CleanUp(SOCKET **ListenSocket,int status) {
         free(*ListenSocket);
         *ListenSocket = NULL;
     }
-#if defined(_WIN32)
-    WSACleanup();
-#endif /* _WIN32 */
     return(status);
 }

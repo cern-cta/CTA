@@ -5,12 +5,7 @@
 
 /* log.c        - generalized logging routines                          */
 
-#if defined(_WIN32)
-#include <io.h>
-#include <pwd.h>
-#else
 #include <unistd.h>
-#endif /* _WIN32 */
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -30,20 +25,12 @@ static mode_t logbits=0666;
 static int loglevel=LOG_NOLOG;  /* logging level                        */
 static char logname[64];        /* logging facility name                */
 static char logfilename[64]=""; /* log file name                        */
-#if defined(_WIN32)
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
 static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
 
 static int pid;                 /* process identifier                   */
 static int logfd ;              /* logging file descriptor              */
 
-#if !defined(_WIN32)
 extern char *getenv();
-#else  /* _WIN32 */
-uid_t getpid();
-#endif /* _WIN32 */
 
 void DLL_DECL (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
 void DLL_DECL setlogbits _PROTO((int));
@@ -120,7 +107,7 @@ void DLL_DECL logit(int level, char *format, ...)
   va_start(args, format);
   if (loglevel >= level)  {
     (void) time(&clock);
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)))
     (void)localtime_r(&clock,&tmstruc);
     tp = &tmstruc;
 #else
@@ -135,11 +122,7 @@ void DLL_DECL logit(int level, char *format, ...)
       pid = getpid();
       (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
     } else {
-#if defined(linux) || defined(__APPLE__)
       pid = getpgrp();
-#else
-      pid = getpid();
-#endif
       (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
     }
     (void) vsprintf(line+strlen(line),format,args);

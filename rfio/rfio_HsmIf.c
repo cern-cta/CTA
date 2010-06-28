@@ -7,21 +7,11 @@
 
 #include "Cmutex.h"
 #include <stdlib.h>
-#if !defined(_WIN32)
 #include <unistd.h>
-#else
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#define R_OK 4
-#define W_OK 2
-#define X_OK 1
-#define F_OK 0
-#endif /* _WIN32 */
 #include <dirent.h>
 #include <sys/stat.h>
 #define RFIO_KERNEL 1
@@ -301,16 +291,8 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
       if (rc < 0) {
         if ( (save_serrno == SECOMERR) ||
              (save_serrno == SETIMEDOUT) ||
-#ifdef _WIN32
-             (save_serrno == WSAECONNREFUSED) ||
-#else
              (save_serrno == ECONNREFUSED) ||
-#endif
-#ifdef _WIN32
-             (save_errno == WSAECONNREFUSED)
-#else
              (save_errno == ECONNREFUSED)
-#endif
              ) {
           int retrySleepTime;
           retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));

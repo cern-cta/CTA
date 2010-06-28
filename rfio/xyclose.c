@@ -110,11 +110,7 @@ int DLL_DECL rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical u
  * Fortran wrapper
  */
 
-#if defined(_WIN32)
-     void _stdcall XYCLOS(flun, fchopt, fchoptl, firc)
-#else
           void xyclos_(flun, fchopt, firc, fchoptl)
-#endif
           int     *flun, *firc;
           char    *fchopt;
           int     fchoptl;

@@ -21,9 +21,7 @@
 #include "osdep.h"
 #include "stager_api.h"
 #include "u64subr.h"
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 #include "Cglobals.h"
 #include "Castor_limits.h"
 #include "stage_constants.h"
@@ -91,7 +89,6 @@ u_signed64 maxsize;
 int v2 = 0;
 u_signed64 inpfile_size = 0;
 
-#ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
 #ifdef __STDC__
 typedef void    Sigfunc(int);
@@ -99,9 +96,6 @@ Sigfunc *_rfio_signal(int, Sigfunc *);
 #else
 typedef void    Sigfunc();
 Sigfunc *_rfio_signal();
-#endif
-#else
-#define _rfio_signal(a,b) signal(a,b)
 #endif
 
 /**
@@ -178,11 +172,7 @@ int main(argc, argv)
      char *argv[];
 {
   int argvindx;  /* argument index in program argv */
-#if defined(_WIN32)
-  int binmode = O_BINARY;
-#else
   int binmode = 0;
-#endif
   int c;
   int cfargc;  /* number of arguments in command file */
   char **cfargv = 0; /* arguments in command file */
@@ -205,9 +195,6 @@ int main(argc, argv)
   int v;
 
   extern char * getifnam() ;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
   int input_is_local = 1;
 
   /* Init important variable for the cleaner */
@@ -225,25 +212,6 @@ int main(argc, argv)
       incmdfile = 0;
     }
     curargv = incmdfile ? cfargv[cfargvindx++] : argv[argvindx++];
-#if defined(_WIN32)
-    if (strcmp (curargv, "-a") == 0) {
-      binmode = O_TEXT;
-      continue;
-    } else if (strcmp (curargv, "-b") == 0) {
-      binmode = O_BINARY;
-      continue;
-    } else if (*curargv == '@') {
-      if ((cfargc = cmdf2argv (curargv+1, &cfargv)) < 0) {
-        exit (USERR);
-      }
-      if (cfargc == 0) {
-        continue;
-      }
-      incmdfile = 1;
-      cfargvindx = 0;
-      continue;
-    }
-#endif
     if (strcmp (curargv, "-s") == 0) {
       curargv = incmdfile ? cfargv[cfargvindx++] : argv[argvindx++];
       /* We verify that curargv do not contain other characters but digits */
@@ -294,13 +262,6 @@ int main(argc, argv)
     usage();
   }
 
-  /* Check that files are not identical ! */
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (SYERR);
-  }
-#endif
   /* We remove double slashes in both inpfile and outfile */
   if (rfio_stat64(outfile, &sbuf2) == 0) {
     if (S_ISDIR(sbuf2.st_mode)) {
@@ -359,23 +320,15 @@ int main(argc, argv)
   if (strcmp(inpfile,"-") != 0) {
     rc = rfio_stat64(inpfile, &sbuf);
     if ( rc == 0 && ( S_ISDIR(sbuf.st_mode) || S_ISCHR(sbuf.st_mode)
-#if !defined(_WIN32)
                       || S_ISBLK(sbuf.st_mode)
-#endif
                       ) ) {
       fprintf(stderr,"file %s: Not a regular file\n",inpfile);
-#if defined(_WIN32)
-      WSACleanup();
-#endif
 
       exit(USERR) ;
     } else if (rc == 0) {
       inpfile_size = (u_signed64) sbuf.st_size;
     } else {
       rfio_perror(inpfile);
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       exit(USERR) ;
     }
   } else {
@@ -386,9 +339,6 @@ int main(argc, argv)
   if ( ( l1 == 0 && l2 == 0 && (!memcmp(&sbuf,&sbuf2,sizeof(sbuf))) ) ||
        ( l1 && l2 && !strcmp( shost1, host2 ) && (!memcmp(&sbuf,&sbuf2,sizeof(sbuf))) ) ) {
     fprintf(stderr,"files are identical \n");
-#if defined(_WIN32)
-    WSACleanup();
-#endif
 
     exit (USERR) ;
   }
@@ -402,10 +352,8 @@ int main(argc, argv)
   serrno = rfio_errno = 0;
   if (rfio_HsmIf_IsHsmFile(inpfile)) {
     /* The input is a CASTOR file - we need a signal handler because rfio_open() calls the stager */
-#if ! defined(_WIN32)
     _rfio_signal (SIGHUP, copyfile_stgcleanup);
     _rfio_signal (SIGQUIT, copyfile_stgcleanup);
-#endif
     _rfio_signal (SIGINT, copyfile_stgcleanup);
     _rfio_signal (SIGTERM, copyfile_stgcleanup);
   }
@@ -472,9 +420,6 @@ int main(argc, argv)
         c = SYERR;
       }
     }
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (c);
   }
   if ( (ifce=getifnam(fd1))==NULL ) {
@@ -540,9 +485,6 @@ int main(argc, argv)
         c = SYERR;
       }
     }
-#if defined(_WIN32)
-    WSACleanup();
-#endif
 
     exit (c);
   }
@@ -581,47 +523,19 @@ int main(argc, argv)
     if (have_maxsize < 0) {
       rc2 = ((off64_t)inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
       if (rc2 == SYERR) {
-#ifdef _WIN32
-        if (binmode != O_BINARY) {
-          fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", "Warning", u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
-          fprintf(stderr,"The local file size may have changed during the transfer process\n");
-          rc = OK;
-        } else {
-#endif
           fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", sstrerror(SESYSERR), u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
           fprintf(stderr,"The local file size may have changed during the transfer process\n");
-#ifdef _WIN32
-        }
-#endif
       }
     } else {
       if (maxsize < inpfile_size) { /* If input is "-", inpfile_size is zero */
         rc2 = ((off64_t)maxsize == size ? OK : SYERR);
         if (rc2 == SYERR) {
-#ifdef _WIN32
-          if (binmode != O_BINARY) {
-            fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", "Warning", u64tostr(size, tmpbuf, 0), u64tostr(maxsize, tmpbuf2, 0));
-            rc = OK;
-          } else {
-#endif
             fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", sstrerror(SESYSERR), u64tostr(size, tmpbuf, 0), u64tostr(maxsize, tmpbuf2, 0));
-#ifdef _WIN32
-          }
-#endif
         }
       } else {
         rc2 = ((off64_t)inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
         if (rc2 == SYERR) {
-#ifdef _WIN32
-          if (binmode != O_BINARY) {
-            fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", "Warning", u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
-            rc = OK;
-          } else {
-#endif
             fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", sstrerror(SESYSERR), u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
-#ifdef _WIN32
-          }
-#endif
         }
       }
     }
@@ -632,9 +546,6 @@ int main(argc, argv)
     fprintf(stdout,"%s bytes transferred !!\n",u64tostr(size, tmpbuf, 0));
     rc2 = (inpfile_size == 0 ? OK : SYERR);
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
 
   exit(rc2);
 }
@@ -669,9 +580,6 @@ off64_t copyfile(fd1, fd2, name, maxsize)
 
   if ( ( cpbuf = malloc(bufsize) ) == NULL ) {
     perror("malloc");
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (SYERR);
   }
 
@@ -701,9 +609,6 @@ off64_t copyfile(fd1, fd2, name, maxsize)
         rfio_stat64(name, &sbuf); /* check for special files */
         mode = sbuf.st_mode & S_IFMT;
         if (mode == S_IFREG) rfio_unlink(name);
-#if defined(_WIN32)
-        WSACleanup();
-#endif
         free(cpbuf);
         exit((save_err == ENOSPC) ? ENOSPC : ((serrno == EBUSY) ? EBUSY : SYERR));
       }
@@ -719,16 +624,10 @@ off64_t copyfile(fd1, fd2, name, maxsize)
   if (rfio_close(fd1) < 0) {
     if (save_error_for_read == SECHECKSUM) {
       /* if there was a checksum error we will return Bad checksum rc==200 */
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       free(cpbuf);
       exit(200);
     }
     rfio_perror("close source");
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     free(cpbuf);
     exit(SYERR);
   }
@@ -742,9 +641,6 @@ off64_t copyfile(fd1, fd2, name, maxsize)
     if (mode == S_IFREG) {
       rfio_unlink(name);
     }
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     free(cpbuf);
     /* for checksum error we have to return Bad checksum rc==200 */
     save_errno= (save_errno == SECHECKSUM) ? 200:SYERR;
@@ -790,7 +686,6 @@ void copyfile_stgcleanup(sig)
   return;
 }
 
-#ifndef _WIN32
 Sigfunc *_rfio_signal(signo, func)
 int signo;
 Sigfunc *func;
@@ -815,14 +710,12 @@ Sigfunc *func;
     return(SIG_ERR);
   }
   switch (signo) {
-#if ! defined(_WIN32)
   case SIGHUP:
     TRACE(2,"rfio","_rfio_signal: Trapping SIGHUP");
     break;
   case SIGQUIT:
     TRACE(2,"rfio","_rfio_signal: Trapping SIGQUIT");
     break;
-#endif
   case SIGINT:
     TRACE(2,"rfio","_rfio_signal: Trapping SIGINT");
     break;
@@ -835,4 +728,3 @@ Sigfunc *func;
   }
   return(oact.sa_handler);
 }
-#endif /* #ifndef _WIN32 */

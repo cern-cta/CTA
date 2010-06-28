@@ -48,12 +48,7 @@ int DLL_DECL rfio_rewinddir(dirp)
       (void)rfio_HsmIf_rewinddir((DIR *)dirp);
     } else {
       TRACE(2, "rfio", "rfio_rewinddir: using local rewinddir(0x%x)",dirp) ;
-#if defined(_WIN32)
-      serrno = SEOPNOTSUP;
-      return(-1);
-#else /* _WIN32 */
       (void)rewinddir((DIR *)dirp) ;
-#endif /* _WIN32 */
     }
     END_TRACE();
     return(0) ;

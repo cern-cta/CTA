@@ -7,12 +7,8 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -35,14 +31,6 @@ Cns_updateseg_checksum(char *server, u_signed64 fileid, struct Cns_segattrs *old
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-    if (uid < 0 || gid < 0) {
-      Cns_errmsg (func, NS053);
-      serrno = SENOMAPFND;
-      return (-1);
-    }
-#endif
 
   if (! oldsegattrs || ! newsegattrs) {
     serrno = EFAULT;

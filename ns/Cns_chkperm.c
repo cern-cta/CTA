@@ -7,9 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#if ! defined(_WIN32)
 #include <unistd.h>
-#endif
 #include "Cns.h"
 #include "Cns_server.h"
 #include "Cupv_api.h"

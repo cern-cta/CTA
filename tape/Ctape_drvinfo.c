@@ -3,20 +3,12 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_drvinfo.c,v $ $Revision: 1.2 $ $Date: 2007/02/15 17:37:05 $ CERN IT-GD/CT Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	Ctape_drvinfo - get tape drive information */
 
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
@@ -41,13 +33,6 @@ struct devinfo *devinfo;
 	strcpy (func, "Ctape_drvinfo");
 	uid = getuid();
 	gid = getgid();
-#if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		Ctape_errmsg (func, TP053);
-		serrno = SENOMAPFND;
-		return (-1);
-	}
-#endif
 
 	if (drive == NULL || devinfo == NULL) {
 		serrno = EFAULT;

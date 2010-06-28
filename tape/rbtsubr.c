@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.39 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	rbtsubr - control routines for robot devices */
 #include <errno.h>
 #include <stdio.h>
@@ -14,21 +10,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-#if defined(RS6000PCTA)
-#include <sys/mtio.h>
-#endif
-#if defined(ADSTAR)
-#include <sys/Atape.h>
-#endif
-#include <sys/mtlibio.h>
-#endif
 #if defined(CDK)
 #include "acssys.h"
 #include "acsapi.h"
-#endif
-#if defined(DMSCAPI)
-#include "fbsuser.h"
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -50,9 +34,6 @@ extern char msg[];
 static char action[8];
 static char cur_unm[9];
 static char cur_vid[7];
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-static int mount_req_id_3495 = -1;
-#endif
 #if defined(CDK)
 static REQ_ID dismount_req_id = 0;
 static REQ_ID mount_req_id = 0;
@@ -111,26 +92,16 @@ char *loader;
 	strcpy (action, "mount");
 	strcpy (cur_unm, unm);
 	strcpy (cur_vid, vid);
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-	if (*loader == 'l')
-		return (mount3495 (vid, dvn, loader));
-#endif
 #if defined(CDK)
 	if (*loader == 'a')
 		return (acsmount (vid, loader, ring));
-#endif
-#if defined(DMSCAPI)
-	if (*loader == 'R')
-		return (mountfbs (vid, loader));
 #endif
 
 	if (*loader == 'd')
 		return(dmcmount(vid,unm,loader));
 
 	if (*loader == 'n'
-#if !defined(DMSCAPI)
 	    || *loader == 'R'
-#endif
 			     ) {
 		char buf[256];
 		FILE *f, *popen();
@@ -204,21 +175,6 @@ int vsnretry;
 	strcpy (action, "demount");
 	strcpy (cur_unm, unm);
 	strcpy (cur_vid, vid);
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-	if (*loader == 'l') {
-		int c;
-		int status;
-
-		if (mount_req_id_3495 < 0 || qmid3495 (&status) ||
-		    (status != MT_PENDING_STS) || cancel3495()) {
-			closelmcp();
-			c = demount3495 (vid, dvn, loader, force);
-		} else
-			c = 0;
-		closelmcp ();
-		return (c);
-	}
-#endif
 #if defined(CDK)
 	if (*loader == 'a') {
 		if (mount_req_id)
@@ -226,18 +182,12 @@ int vsnretry;
 		return (acsdismount (vid, loader, force));
 	}
 #endif
-#if defined(DMSCAPI)
-	if (*loader == 'R')
-		return (dismountfbs (vid, loader, force));
-#endif
 
 	if (*loader == 'd')
 		return(dmcdismount(vid, unm, loader, force));
 
 	if (*loader == 'n'
-#if !defined(DMSCAPI)
 	    || *loader == 'R'
-#endif
 			     ) {
 		char buf[256];
 		FILE *f, *popen();
@@ -295,361 +245,6 @@ int vsnretry;
 	RETURN (RBT_CONF_DRV_DN);
 }
 
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-
-/*	3495subr - I/O control routines for 3495 Library Devices */
-static int device;
-static char ldr[14];
-static int lmcpfd = -1;
-static struct mtlqmidarg mtlqmidarg;
-
-/*	openlmcp - opens lmcp and gets ESA device number for the specified drive */
-
-openlmcp (drive, loader)
-char *drive;
-char *loader;
-{
-	char func[16];
-	int tapefd;
-
-	ENTRY (openlmcp);
-	if ((tapefd = open (drive, O_RDONLY|O_NDELAY)) < 0) {
-		usrmsg (func, TP042, drive, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Drive",   TL_MSG_PARAM_STR, drive, 
-                                    "Message", TL_MSG_PARAM_STR, "open",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
-		RETURN (-errno);
-	}
-	ioctl (tapefd, MTDEVICE, &device);
-	close (tapefd);
-	sprintf (ldr, "/dev/%s", loader);
-	if ((lmcpfd = open (ldr, O_RDWR)) < 0) {
-		usrmsg (func, TP042, ldr, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "ldr",     TL_MSG_PARAM_STR, ldr, 
-                                    "Message", TL_MSG_PARAM_STR, "open",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno),
-                                    "Drive"  , TL_MSG_PARAM_STR, drive );
-		RETURN (-errno);
-	}
-	RETURN (lmcpfd);
-}
-
-/*	mount3495 - mounts a volume on a specified drive  */
-/*	does not wait until the mount is complete */
-
-mount3495 (vid, drive, loader)
-char *vid;
-char *drive;
-char *loader;
-{
-	int c;
-	char func[16];
-	struct mtlmarg mtlmarg;
-
-	ENTRY (mount3495);
-	if (lmcpfd < 0) {
-		if ((lmcpfd = openlmcp (drive, loader)) < 0)
-			RETURN (RBT_CONF_DRV_DN);
-		memset ((char *)&mtlmarg, 0, sizeof(mtlmarg));
-		mtlmarg.device = device;
-		memset (mtlmarg.volser, ' ', sizeof(mtlmarg.volser));
-		memcpy (mtlmarg.volser, vid, strlen(vid));
-	}
-	if (ioctl (lmcpfd, MTIOCLM, &mtlmarg) < 0) {
-		c = ibmrbterr (func, ldr, action, mtlmarg.mtlmret.cc,
-			mtlmarg.mtlmret.number_sense, mtlmarg.mtlmret.sense_bytes);
-		RETURN (c);
-	}
-	memset ((char *)&mtlqmidarg, 0, sizeof(mtlqmidarg));
-	mtlqmidarg.device = device;
-	mtlqmidarg.req_id = mtlmarg.mtlmret.req_id;
-	mount_req_id_3495 = mtlmarg.mtlmret.req_id;
-	RETURN (0);
-}
-
-/*	demount3495 - demounts a volume from a specified drive  */
-/*	does not wait until the demount is complete */
-
-demount3495 (vid, drive, loader, force)
-char *vid;
-char *drive;
-char *loader;
-unsigned int force;
-{
-	int c;
-	char func[16];
-	struct mtldarg mtldarg;
-	int status;
-
-	ENTRY (demount3495);
-	if (lmcpfd < 0) {
-		if ((lmcpfd = openlmcp (drive, loader)) < 0)
-			RETURN (RBT_CONF_DRV_DN);
-		memset ((char *)&mtldarg, 0, sizeof(mtldarg));
-		mtldarg.device = device;
-		memset (mtldarg.volser, ' ', sizeof(mtldarg.volser));
-		if (! force)
-			memcpy (mtldarg.volser, vid, strlen(vid));
-	}
-	if (ioctl (lmcpfd, MTIOCLDM, &mtldarg) < 0) {
-		c = ibmrbterr (func, ldr, action, mtldarg.mtldret.cc,
-			mtldarg.mtldret.number_sense, mtldarg.mtldret.sense_bytes);
-		RETURN (c);
-	}
-	memset ((char *)&mtlqmidarg, 0, sizeof(mtlqmidarg));
-	mtlqmidarg.device = device;
-	mtlqmidarg.req_id = mtldarg.mtldret.req_id;
-	while ((c = qmid3495 (&status)) == 0 && status == MT_PENDING_STS)
-		sleep (UCHECKI);
-	RETURN (c);
-}
-
-qmid3495 (status)
-int *status;
-{
-	int c;
-	char func[16];
-	int libcc;
-	char *msgaddr;
-
-	strcpy (func, "qmid3495");
-	if (ioctl (lmcpfd, MTIOCLQMID, &mtlqmidarg) < 0) {
-		c = ibmrbterr (func, ldr, "qmid", mtlqmidarg.mtlqmidret.cc,
-			mtlqmidarg.mtlqmidret.number_sense,
-			mtlqmidarg.mtlqmidret.sense_bytes);
-		RETURN (c);
-	}
-	if (mtlqmidarg.mtlqmidret.info.status_type == EXE_TYPE) {
-		*status = mtlqmidarg.mtlqmidret.info.status_response.status;
-		return (0);
-	} else {
-		*status = 0;
-		libcc = mtlqmidarg.mtlqmidret.info.status_response.drm_status.cc;
-		libcc2txt (libcc, &msgaddr);
-		if (libcc < 4) {
-			if (libcc) {
-				tplogit (func, "TP041 - %s of %s on %s %s\n",
-					action, cur_vid, cur_unm, msgaddr);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "action",  TL_MSG_PARAM_STR, action,
-                                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                                    "msgaddr", TL_MSG_PARAM_STR, msgaddr );
-                        }
-			return (0);
-		} else {
-			sprintf (msg, "TP041 - %s of %s on %s %s",
-				action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );
-			c =  liberr2act (0, libcc);
-			RETURN (c);
-		}
-	}
-}
-
-cancel3495 ()
-{
-	int c;
-	char func[16];
-	struct mtlcarg mtlcarg;
-
-	ENTRY (cancel3495);
-	memset ((char *)&mtlcarg, 0, sizeof(mtlcarg));
-	mtlcarg.device = device;
-	mtlcarg.req_id = mount_req_id_3495;
-	mtlcarg.cancel_type = MIDC;
-	if (ioctl (lmcpfd, MTIOCLC, &mtlcarg) < 0) {
-		c = ibmrbterr (func, ldr, action, mtlcarg.mtlcret.cc,
-			mtlcarg.mtlcret.number_sense, mtlcarg.mtlcret.sense_bytes);
-		RETURN (c);
-	}
-	RETURN (0);
-}
-
-closelmcp ()
-{
-	if (lmcpfd >= 0)
-		close (lmcpfd);
-	lmcpfd = -1;
-}
-
-eracod2act(req_type, cc)
-int req_type;	/* 0 --> mount, 1 --> dismount */
-int cc;		/* error returned by the mount/dismount routine */
-{
-	struct rbterr_codact era_acttbl[] = {
-	  0x60, RBT_NORETRY, RBT_FAST_RETRY,	/* Library Attachement Facility Equipment Check */
-	  0x62, RBT_NORETRY, RBT_FAST_RETRY,	/* Library Manager Offline to Subsystem */
-#if TMS
-	  0x64, RBT_SLOW_RETRY, RBT_NORETRY,	/* Library Volser in Use */
-#else
-	  0x64, RBT_SLOW_RETRY, RBT_NORETRY, 
-#endif
-	  0x66, RBT_NORETRY, RBT_OK,	/* Library Volser Not in Library */
-	  0x68, RBT_DMNT_FORCE, RBT_OK,		/* Library Order Sequence Check */
-	  0x6B, RBT_SLOW_RETRY, RBT_NORETRY,	/* Library Volume Misplaced */
-	  0x6D, RBT_NORETRY, RBT_UNLD_DMNT,	/* Library Drive Not Unloaded */
-	  0x75, RBT_SLOW_RETRY, RBT_SLOW_RETRY, /* Library Volume Inaccessible */
-	};
-	int i;
-
-	for (i = 0; i < sizeof(era_acttbl)/sizeof(struct rbterr_codact); i++) {
-		if (cc == era_acttbl[i].cc)
-			return ((req_type == 0) ?
-				era_acttbl[i].mnt_fail_action :
-				era_acttbl[i].dmnt_fail_action);
-	}
-	return (RBT_NORETRY);
-}
-
-libcc2txt(cc, msgaddr)
-int cc;
-char **msgaddr;
-{
-	static char *liberrtxt[] = {
-	  "Complete - No error.",
-	  "Complete - Vision system not operational.",
-	  "Complete - VOLSER not readable.",
-	  "Complete - Category assignment not changed.",
-	  "Cancelled - Program request.",
-	  "Cancelled - Order sequence.",
-	  "Cancelled - Manual mode.",
-	  "Failed - Unexpected hardware failure.",
-	  "Failed - Vision system not operational.",
-	  "Failed - VOLSER not readable.",
-	  "Failed - Volume inaccessible.",
-	  "Failed - Volume misplaced.",
-	  "Failed - Category empty.",
-	  "Failed - Volume manually ejected.",
-	  "Failed - Volume no longer in inventory.",
-	  "Failed - Device no longer available.",
-	  "Failed - Unrecoverable Load Failure.",
-	  "Failed - Damaged Cartridge Ejected.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Undefined completion code.",
-	  "Error - LMCP is not configured.",
-	  "Error - Device is not command-port LMCP.",
-	  "Error - Device is not configured.",
-	  "Error - Device is not in library.",
-	  "Error - Not enough memory.",
-	  "Error - Device is in use.",
-	  "Error - I/O failed.",
-	  "Error - Device is invalid.",
-	  "Error - Device is not notification-port LMCP. ",
-	  "Error - Invalid sub command parameter.",
-	  "Error - No library device is configured.",
-	  "Error - Internal error.",
-	  "Error - Invalid cancel type.",
-	  "Error - Not an LMCP device.",
-	  "Error - Library is Offline to Host.",
-	  "Undefined completion code."
-	};
-	if (cc >= 0 && cc < 47)
-		*msgaddr = liberrtxt[cc];
-	else
-		*msgaddr = liberrtxt[47];
-}
-
-liberr2act(req_type, cc)
-int req_type;	/* 0 --> mount, 1 --> dismount */
-int cc;		/* error returned by the mount/dismount routine */
-{
-	struct rbterr_codact liberr_acttbl[] = {
-	  MTCC_CANCEL_ORDERSEQ, RBT_DMNT_FORCE, RBT_OK,		/* Order sequence */
-	  MTCC_FAILED_HARDWARE, RBT_NORETRY, RBT_FAST_RETRY,		/* Unexpected hardware failure */
-	  MTCC_FAILED_INACC, RBT_SLOW_RETRY, RBT_SLOW_RETRY,	/* Volume inaccessible */
-	  MTCC_FAILED_MISPLACED, RBT_SLOW_RETRY, RBT_NORETRY,	/* Volume misplaced */
-	  MTCC_FAILED_INVENTORY, RBT_NORETRY, RBT_FAST_RETRY,		/* Volume not in inventory */
-	  MTCC_FAILED_NOTAVAIL, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN, /* Device no longer available */
-	  MTCC_FAILED_LOADFAIL, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN, /* Unrecoverable Load Failure */
-	  MTCC_FAILED_DAMAGED, RBT_NORETRY, RBT_FAST_RETRY,		/* Damaged Cartridge Ejected */
-	  MTCC_NO_DEVLIB, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN,	/* Device is not in library */
-	  MTCC_LIB_OFFLINE, RBT_NORETRY, RBT_FAST_RETRY,		/* Library is Offline to Host */
-	};
-	int i;
-
-	for (i = 0; i < sizeof(liberr_acttbl)/sizeof(struct rbterr_codact); i++) {
-		if (cc == liberr_acttbl[i].cc)
-			return ((req_type == 0) ?
-				liberr_acttbl[i].mnt_fail_action :
-				liberr_acttbl[i].dmnt_fail_action);
-	}
-	return (RBT_NORETRY);
-}
-
-ibmrbterr(func, ldr, action, cc, number_sense, sense_bytes)
-char *func;
-char *ldr;
-char *action;
-int cc;
-int number_sense;
-char sense_bytes[];
-{
-	char *msgaddr;
-
-	if (errno != EIO) {
-		usrmsg (func, TP042, ldr, "ioctl", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "ldr",     TL_MSG_PARAM_STR, ldr,
-                                    "Message", TL_MSG_PARAM_STR, "ioctl",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno),
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm);                
-		return (-errno);
-	} else {
-		if (cc == MTCC_IO_FAILED) {
-			get_era_msg (number_sense, sense_bytes, &msgaddr);
-			sprintf (msg, TP041, action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );                       
- 			if (number_sense)
-				return (eracod2act (*action == 'm' ? 0 : 1, sense_bytes[3]));
-			else
-				return (RBT_NORETRY);
-		} else {
-			libcc2txt (cc, &msgaddr);
-			sprintf (msg, "TP041 - %s of %s on %s %s",
-				action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );
-			return (liberr2act (*action == 'm' ? 0 : 1, cc));
-		}
-	}
-}
-#endif
 #if defined(CDK)
 
 /*	acssubr - I/O control routines for Storage Tek silos */
@@ -1112,146 +707,6 @@ int wait4acsfinalresp()
 }
 
 #endif
-#if DMSCAPI
-static int hostid = -1;
-
-fbserr2act(req_type, cc)
-int req_type;	/* 0 --> mount, 1 --> dismount */
-int cc;		/* error returned by the mount/dismount routine */
-{
-	struct rbterr_codact dmserr_acttbl[] = {
-	  EFBS_COM_NOTEXE, RBT_NORETRY, RBT_FAST_RETRY,	/* FBS not running */
-	  EFBS_DMS_INIT, RBT_FAST_RETRY, RBT_FAST_RETRY, /* DMS initializing */
-	  EFBS_DMS_DOPEN, RBT_NORETRY, RBT_FAST_RETRY,		/* DMS door open */
-	  EFBS_ME_DOROPN1, RBT_NORETRY, RBT_FAST_RETRY,	/* door open 1 */
-	  EFBS_DMP_DIRUSE, RBT_DMNT_FORCE, RBT_DMNT_FORCE, /* DIR is in use */
-	  EFBS_DMP_NOSHCAS, RBT_NORETRY, RBT_OK,	/* no such cassette */
-	  EFBS_DMP_NOTREDY, RBT_NORETRY, RBT_FAST_RETRY,	/* DMS not ready */
-	  EFBS_DMP_DIRINTO, RBT_NORETRY, RBT_FAST_RETRY,	/* DIR IN timeout */
-	  EFBS_DMP_UKNCASS, RBT_DMNT_FORCE, RBT_DMNT_FORCE, /* unknown cassette */
-	  EFBS_DMP_LOCAL, RBT_NORETRY, RBT_FAST_RETRY,	/* DIR remote selector is OFF */
-	  EFBS_PSY_STOP, RBT_NORETRY, RBT_FAST_RETRY,		/* FBS will stop soon */
-	};
-	int i;
-
-	for (i = 0; i < sizeof(dmserr_acttbl)/sizeof(struct rbterr_codact); i++) {
-		if (cc == dmserr_acttbl[i].cc)
-			return ((req_type == 0) ?
-				dmserr_acttbl[i].mnt_fail_action :
-				dmserr_acttbl[i].dmnt_fail_action);
-	}
-	return (RBT_NORETRY);
-}
-
-mountfbs(vid, loader)
-char *vid;
-char *loader;
-{
-	int c;
-	char cassette[8];
-	int dirno;
-	char func[16];
-	char msgbuf[128];
-
-	ENTRY (mountfbs);
-	if (hostid < 0) {
-		if ((hostid = fbsinit (NULL)) < 0) {
-			usrmsg (func, TP042, loader, "fbsinit",
-				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "loader",  TL_MSG_PARAM_STR, loader,
-                                            "Message", TL_MSG_PARAM_STR, "fbsinit", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror(fbs_errno, msgbuf),
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
-			RETURN (-errno);
-		}
-	}
-	sprintf (cassette, "C%s", vid);
-	dirno = atoi (loader+1) - 1;
-	if (dmsthread (hostid, cassette, dirno) < 0) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm,
-			fbsstrerror (fbs_errno, msgbuf));
-		usrmsg (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, action,
-                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
-		c = fbserr2act (0, fbs_errno);
-		RETURN (c);
-	}
-	RETURN (0);
-}
-
-dismountfbs(vid, loader, force)
-char *vid;
-char *loader;
-unsigned int force;
-{
-	int c;
-	char cassette[8];
-	char func[16];
-	char msgbuf[128];
-
-	ENTRY (dismountfbs);
-	if (hostid < 0) {
-		if ((hostid = fbsinit (NULL)) < 0) {
-			usrmsg (func, TP042, loader, "fbsinit",
-				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "loader",  TL_MSG_PARAM_STR, loader,
-                                            "Message", TL_MSG_PARAM_STR, "fbsinit", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ),
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
-			RETURN (-errno);
-		}
-	}
-	if (! force)
-		sprintf (cassette, "C%s", vid);
-	else
-		strcpy (cassette, loader);
-	if (dmsuthread (hostid, cassette) < 0) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm,
-			fbsstrerror (fbs_errno, msgbuf));
-		usrmsg (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, action,
-                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
-		c = fbserr2act (1, fbs_errno);
-		RETURN (c);
-	}
-	RETURN (0);
-}
-
-closefbs(loader)
-char *loader;
-{
-	char func[16];
-	char msgbuf[128];
-
-	ENTRY (closefbs);
-	if (hostid >= 0) {
-		if (fbsterm (hostid) < 0) {
-			usrmsg (func, TP042, loader, "fbsterm",
-				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "loader",  TL_MSG_PARAM_STR, loader,
-                                            "Message", TL_MSG_PARAM_STR, "fbsterm", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ),
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
-			RETURN (-EIO);
-		}
-	}
-	RETURN (0);
-}
-#endif
 /*
  * Code for DEC Media Changer (TL820) robots. Works together with
  * the dmcserv server. Depends on the "dmc.h" include file.
@@ -1352,9 +807,6 @@ int send2dmc(sock,req)
 int *sock;
 DMCrequest_t *req;
 {
-#if SERVICESDB
-	struct servent *sp;
-#endif
 	struct hostent *hp;
 	struct sockaddr_in sin;
 	int s,j;
@@ -1379,19 +831,6 @@ DMCrequest_t *req;
 		strcpy(dmc_host,p);
 	}
 	if ( (p = getenv("DMC_PORT")) != NULL ) dmc_port = atoi(p);
-#if SERVICESDB
-	else {
-		if ( (sp = getservbyname(DMC_NAME,DMC_PROTO)) == NULL ) {
-			tplogit(func,"getservbyname: %s\n",neterror());
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "getservbyname",
-                                            "Error",   TL_MSG_PARAM_STR, neterror() );
-			RETURN(RBT_FAST_RETRY);
-		}
-		dmc_port = ntohs(sp->s_port);
-	}
-#endif
 	sin.sin_family = AF_INET;
 	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
 		tplogit(func,"gethostbyname: %s\n",neterror());
@@ -1558,25 +997,6 @@ char *loader;
 		(void) rmc_seterrbuf (rmc_errbuf, sizeof(rmc_errbuf));
 		RETURN (0);
 	}
-#if defined(SOLARIS25) || defined(hpux)
-        /* open the SCSI picker device
-           (open is done in send_scsi_cmd for the other platforms */
- 
-        if ((smc_fd = open (smc_ldr, O_RDWR)) < 0) {
-		if (errno == EBUSY)
-			c = RBT_FAST_RETRY;
-		else
-			c = RBT_NORETRY;
-                usrmsg (func, TP042, smc_ldr, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
-                                    "Message", TL_MSG_PARAM_STR, "open", 
-                                    "Error",   TL_MSG_PARAM_STR, strerror( errno ),
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm );
-		RETURN (c);
-        }
-#endif
 
 	/* get robot geometry */
 

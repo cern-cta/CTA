@@ -10,11 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <process.h>
-#include <winsock2.h>
-extern char *geterr();
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <unistd.h>                      /* Network "data base"          */
@@ -22,7 +17,6 @@ extern char *geterr();
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #include <sys/time.h>
-#endif /* _WIN32 */
 
 #include <errno.h>
 #include <stdarg.h>

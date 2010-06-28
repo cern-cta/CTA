@@ -9,11 +9,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include "Cns_api.h"
 #include "Cns.h"
 #include "marshall.h"

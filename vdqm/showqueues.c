@@ -10,9 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <time.h>
 #include <Castor_limits.h>
 #include <Cgetopt.h>

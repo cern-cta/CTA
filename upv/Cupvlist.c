@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "u64subr.h"
@@ -58,11 +55,6 @@ int main(int argc,char **argv)
   char grp[MAXGRPNAMELEN + 1];
 
   /*    char tmpbuf[8]; */
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
-
-
   usr[0] = 0;
   grp[0] = 0;
   src[0]=0;
@@ -162,13 +154,6 @@ int main(int argc,char **argv)
   strcpy(filter.tgthost, tgt);
   filter.privcat = priv;
 
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, CUP52);
-    exit (SYERR);
-  }
-#endif
-
   flags = CUPV_LIST_BEGIN;
   while ((lp = Cupv_list (flags, &list, &filter)) != NULL) {
 
@@ -184,9 +169,6 @@ int main(int argc,char **argv)
   }
   (void) Cupv_list(CUPV_LIST_END, &list, &filter);
 
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }
 

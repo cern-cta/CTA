@@ -335,20 +335,9 @@
  
 			/* cpdsktp/cptpdsk info messages */
  
-#if defined(_WIN32)
-#define RT201   "\n %s - %I64 BYTES COPIED\n"
-#define RT202   " %s - %I64 RECORDS COPIED\n"
-#define RT207   " %s - MAX. NB OF RECORDS: %I64\n"
-#elif defined(__osf__) && defined(__alpha)
-#define RT201   "\n %s - %lu BYTES COPIED\n"
-#define RT202   " %s - %lu RECORDS COPIED\n"
-#define RT207   " %s - MAX. NB OF RECORDS: %lu\n"
-#else
 #define RT201   "\n %s - %llu BYTES COPIED\n"
 #define RT202   " %s - %llu RECORDS COPIED\n"
 #define RT207   " %s - MAX. NB OF RECORDS: %llu\n"
-#endif
-
 #define	RT203	" %s - APPEND MODE\n"
 #define	RT204	" %s - BLOCK SIZE: %d\n"
 #define	RT205	" %s - END OF FILE\n"

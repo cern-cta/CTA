@@ -5,12 +5,8 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cupv_api.h"
 #include "Cupv.h"
@@ -35,13 +31,6 @@ int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
     return (-1);
   uid = geteuid();
   gid = getegid();
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cupv_errmsg (func, CUP53);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (src == NULL || tgt == NULL) {
     serrno = EINVAL;

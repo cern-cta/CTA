@@ -13,14 +13,10 @@
 
 #include <errno.h>
 #include <string.h>
-#ifdef _WIN32
-#include <time.h>
-#else
 #include <unistd.h>
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
-#endif
 #include "serrno.h"
 #include "osdep.h"
 #include "Cuuid.h"
@@ -32,14 +28,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if !defined(__APPLE__)
 #include <sys/sysinfo.h>
 #endif
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 
 #define UUIDS_PER_TICK 1024
 /* Set the following to a call to acquire a system wide global lock */
@@ -675,63 +667,7 @@ static void _Cuuid_get_ieee_node_identifier(node)
   *node = saved_node;
 }
 
-#ifdef _WIN32
-static void _Cuuid_get_random_info(seed)
-     char seed[16];
-{
-  MD5_CTX c;
-  typedef struct {
-    MEMORYSTATUS m;
-    SYSTEM_INFO s;
-    FILETIME t;
-    LARGE_INTEGER pc;
-    DWORD tc;
-    DWORD l;
-    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
-  } randomness;
-  randomness r;
-  
-  memset(&r,'\0',sizeof(r));
-  _Cuuid_MD5Init(&c);
-  /* memory usage stats */
-  GlobalMemoryStatus(&r.m);
-  /* random system stats */
-  GetSystemInfo(&r.s);
-  /* 100ns resolution (nominally) time of day */
-  GetSystemTimeAsFileTime(&r.t);
-  /* high resolution performance counter */
-  QueryPerformanceCounter(&r.pc);
-  /* milliseconds since last boot */
-  r.tc = GetTickCount();
-  r.l = MAX_COMPUTERNAME_LENGTH + 1;
-  GetComputerName(r.hostname, &r.l );
-  _Cuuid_MD5Update(&c, (unsigned char *) &r, sizeof(randomness));
-  _Cuuid_MD5Final(&c);
-  memcpy(seed,c.digest,sizeof(seed));
-}
-
-static void _Cuuid_get_system_time(uuid_time)
-     Cuuid_time_t *uuid_time;
-{
-  ULARGE_INTEGER time;
-  
-  GetSystemTimeAsFileTime((FILETIME *)&time);
-  
-  /* NT keeps time in FILETIME format which is 100ns ticks since
-     Jan 1, 1601.  UUIDs use time in 100ns ticks since Oct 15, 1582.
-     The difference is 17 Days in Oct + 30 (Nov) + 31 (Dec)
-     + 18 years and 5 leap days.
-  */
-  
-  time.QuadPart +=
-    (unsigned __int64) (1000*1000*10)         /* seconds   */
-    * (unsigned __int64) (60 * 60 * 24)       /* days      */
-    * (unsigned __int64) (17+30+31+365*18+5); /* # of days */
-  
-  *uuid_time = time.QuadPart;
-}
-
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 
 static void _Cuuid_get_random_info(seed)
       char seed[16];
@@ -767,7 +703,7 @@ static void _Cuuid_get_system_time(uuid_time)
         CONSTLL(0x01B21DD213814000);
 }
 
-#else /* _WIN32, __APPLE__ */
+#else /*__APPLE__ */
 
 static void _Cuuid_get_random_info(seed)
      char seed[16];
@@ -804,7 +740,7 @@ static void _Cuuid_get_system_time(uuid_time)
   *uuid_time = (tp.tv_sec * 10000000) + (tp.tv_usec * 10) +
     CONSTLL(0x01B21DD213814000);
 }
-#endif /* _WIN32, __APPLE__ */
+#endif /*__APPLE__ */
 
 /* Conversion from/to Cuuid/string */
 int DLL_DECL Cuuid2string(output,maxlen,uuid)

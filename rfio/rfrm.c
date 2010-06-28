@@ -17,9 +17,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #define RFIO_KERNEL 1
 #include <rfio.h>
 #include "getconfent.h"
@@ -44,9 +41,6 @@ int main(argc, argv)
   int recursive = 0;
   int ask_yesno = 1;
   struct stat64 st;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif /* _WIN32 */
 
   cmd = argv[0];
   if ( argc < 2 ) {
@@ -63,12 +57,6 @@ int main(argc, argv)
       exit(2);
     }
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);

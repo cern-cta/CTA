@@ -98,18 +98,6 @@ int DLL_DECL *C__Coptopt _PROTO((void));
 int DLL_DECL *C__Coptreset _PROTO((void));
 char DLL_DECL **C__Coptarg _PROTO((void));
 
-#if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
-/* 
- * We need to define a thread safe h_errno for these systems...
- */
-EXTERN_C int DLL_DECL h_errno;
-/*
- * Function prototypes for muti-thread env. version of h_errno external
- */
-int DLL_DECL *C__h_errno _PROTO((void));
-
-#endif /* hpux ||HPUX10 || sgi || SOLARIS */
-
 /*
  * Cglobals_init() - assing routines to provide thread local storage. 
  * Globals that existed prior to this call are all re-assigned as
@@ -155,9 +143,6 @@ void DLL_DECL Cglobals_init(getspec,setspec,getTid)
         *C__Coptopt() = Coptopt;
         *C__Coptreset() = Coptreset;
         *C__Coptarg() = Coptarg;
-#if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
-        *C__h_errno() = h_errno;
-#endif /* hpux || HPUX10 || sgi || SOLARIS */
 
         single_thread_globals = NULL;
     }
@@ -454,34 +439,3 @@ char DLL_DECL **C__Coptarg() {
         else return(addr);
     }
 }
-
-#if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
-int DLL_DECL *C__h_errno() {
-    int rc;
-    int *addr;
-
-    if ( local_setspec == NULL ) {
-        return(&h_errno);
-    } else {
-        addr = NULL;
-        /*
-         * We re-use the old single thread h_errno as key
-         */
-        rc = local_getspec(&h_errno,(void **)&addr);
-        if ( rc == -1 || addr == NULL ) {
-            addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&h_errno,(void *)addr);
-        }
-        /*
-         * If memory allocation failed, we can still
-         * return the external. This is obviously not
-         * thread-safe but at least the application
-         * will not die with a strange coredump in a
-         * hidden de-reference of __h_errno().
-         */
-        if ( addr == NULL ) return(&h_errno);
-        else return(addr);
-    }
-}
-#endif /* hpux || HPUX10 ||  sgi || SOLARIS */
-

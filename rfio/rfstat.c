@@ -16,10 +16,6 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <statbits.h>
-#endif
 #include <u64subr.h>
 
 
@@ -41,15 +37,7 @@ void report_mode(mode)
   case    S_IFREG: c = '-'; break;
   case    S_IFLNK: c = 'l'; break;
   case    S_IFSOCK: c = 's'; break;
-#if defined(_WIN32)
-  case _S_IFIFO: c = 'p'; break;
-#else
-#if defined(__Lynx__)
-  case    S_IFFIFO: c = 'p'; break;
-#else
   case    S_IFIFO: c = 'p'; break;
-#endif
-#endif
   default :       c = '?';
   }
   letters[0]=c;
@@ -115,9 +103,7 @@ void report(buf)
 
   fprintf(stdout,"Device          : %x\n",(int) buf->st_dev);
   fprintf(stdout,"Inode number    : %d\n",(int) buf->st_ino);
-#if !defined(_WIN32)
   fprintf(stdout,"Nb blocks       : %d\n",(int) buf->st_blocks);
-#endif /* _WIN32 */
   report_mode(buf->st_mode);
   fprintf(stdout,"Hard Links      : %d\n",(int) buf->st_nlink);
   if ((pwd = getpwuid(buf->st_uid)) == NULL)      {
@@ -143,29 +129,14 @@ int main(argc,argv)
      char    **argv;
 {
   struct stat64     buf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
   if (argc != 2)  {
     fprintf(stderr,"usage: %s <file_path>\n",argv[0]);
     exit(1);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit(2);
-  }
-#endif
   if (rfio_stat64(argv[1],&buf) < 0) {
     rfio_perror(argv[1]);
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit(1);
   }
   report(&buf);
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit(0);
 }

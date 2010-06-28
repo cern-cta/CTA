@@ -69,10 +69,6 @@ struct exp_api_thread_info
 #define	EXP09	"EXP09 - fatal configuration error: %s %s\n"
 #define	EXP23	"EXP23 - %s is not accessible\n"
 #define EXP46	"EXP46 - request too large (max. %d)\n"
-#if defined(_WIN32)
-#define	EXP52	"EXP52 - WSAStartup unsuccessful\n"
-#define	EXP53	"EXP53 - you are not registered in the unix group/passwd mapping file\n"
-#endif
 #define	EXP92	"EXP92 - %s request by %d,%d from %s\n"
 #define	EXP98	"EXP98 - %s\n"
 #define EXP99   "EXP99 - %d\n"

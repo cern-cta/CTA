@@ -8,12 +8,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -39,14 +35,6 @@ Cns_utime(const char *path, struct utimbuf *times)
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path) {
     serrno = EFAULT;

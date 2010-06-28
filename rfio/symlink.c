@@ -58,12 +58,8 @@ int DLL_DECL rfio_symlink(n1,n2 )
       return(status);
     }
     TRACE(2,"rfio","rfio_symlink local %s -> %s",filename,n1);
-#if ! defined(_WIN32)
     status = symlink(n1,filename) ;
     if ( status < 0 ) serrno = 0;
-#else
-    { serrno = SEOPNOTSUP; status = -1;}
-#endif
     END_TRACE() ;
     rfio_errno = 0;
     return status ;

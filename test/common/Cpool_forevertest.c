@@ -4,9 +4,7 @@
 #include <serrno.h>
 #include <log.h>
 #include <osdep.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 #include <time.h>
 
 void *master_thread (void *);

@@ -5,10 +5,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.23 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <pwd.h>
@@ -18,19 +14,12 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include <sys/wait.h>
-#endif
 #include "Cinit.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
@@ -70,9 +59,7 @@ uid_t Csec_uid;
 gid_t Csec_gid;
 int Csec_service_type;
 #endif
-#if ! defined(_WIN32)
 struct sigaction sa;
-#endif
 struct tprrt tpdrrt;	/* global resource reservation table */
 struct tptab *tptabp;	/* pointer to tape drive table */
 
@@ -193,10 +180,8 @@ int tpd_main() {
 #endif
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
-#if ! defined(_WIN32)
 	signal (SIGPIPE,SIG_IGN);
 	signal (SIGXFSZ,SIG_IGN);
-#endif
 
 	/* open request socket */
 
@@ -469,7 +454,6 @@ int tpd_main() {
 	}
 }
 
-#if ! defined(_WIN32)
 int main(argc, argv)
 int argc;
 char **argv;
@@ -483,13 +467,6 @@ char **argv;
 		exit (1);
 	exit (tpd_main());
 }
-#else
-main()
-{
-	if (Cinitservice ("taped", &tpd_main))
-		exit (1);
-}
-#endif
 
 int chk_den(tunp, den, cdevp)
 struct tptab *tunp;
@@ -2725,7 +2702,6 @@ int rlsflags;
 	return (c);
 }
 
-#if ! defined(_WIN32)
 void wait4child()
 {
 }
@@ -2958,7 +2934,6 @@ void check_child_exit()
 		if (i < nbtpdrives) continue;                
 	}
 }
-#endif
 
 /* 
 ** Check if the drive is available for use. Since the tape daemon

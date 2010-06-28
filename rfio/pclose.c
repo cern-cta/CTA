@@ -9,11 +9,7 @@
 
 /* pclose.c      Remote command I/O - close a popened command   */
 
-#if defined(_WIN32)
-#define WEXITSTATUS(status) ((status>>8)&0xFF)
-#else
 #include <sys/wait.h>
-#endif
 #include <errno.h>
 #include <string.h>
 #define RFIO_KERNEL     1
@@ -39,11 +35,7 @@ int DLL_DECL rfio_pclose(fs)
    */
   if (rfio_rfilefdt_findptr(fs,FINDRFILE_WITH_SCAN) == -1 ) {
     TRACE(2, "rfio", "rfio_pclose: using local pclose") ;
-#if defined(_WIN32)
-    status = _pclose(fs->fp_save);
-#else
     status= pclose(fs->fp_save);
-#endif
     if ( status < 0 ) serrno = 0;
     free((char *)fs);
     END_TRACE() ;

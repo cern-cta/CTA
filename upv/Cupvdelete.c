@@ -7,9 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "Cupv_api.h"
@@ -36,9 +33,6 @@ int main(int argc,char **argv)
   char tgt[CA_MAXREGEXPLEN + 1];
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   usr[0] = 0;
   grp[0] = 0;
@@ -125,22 +119,10 @@ int main(int argc,char **argv)
       exit(USERR);
     }
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, CUP52);
-    exit (SYERR);
-  }
-#endif
   if (Cupv_delete (uid, gid, src, tgt) < 0) {
     fprintf (stderr, "Cupvdelete: %s\n", sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }
 

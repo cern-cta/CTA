@@ -57,14 +57,6 @@
  */
 #if defined(RFIO_KERNEL)
 
-#if defined(_WIN32)
-#include <Castor_limits.h>
-#ifdef MAXHOSTNAMELEN
-#undef MAXHOSTNAMELEN
-#endif
-#define         MAXHOSTNAMELEN  CA_MAXHOSTNAMELEN+1
-#endif
-
 #define RESHOSTNAMELEN 20
 #define MAXMCON 20
 

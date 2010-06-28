@@ -7,12 +7,8 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "vmgr_api.h"
 #include "vmgr.h"
@@ -36,13 +32,6 @@ int vmgr_deletedenmap(const char *model, char *media_letter, char *density)
                 return (-1);
         uid = geteuid();
         gid = getegid();
-#if defined(_WIN32)
-        if (uid < 0 || gid < 0) {
-                vmgr_errmsg (func, VMG53);
-                serrno = SENOMAPFND;
-                return (-1);
-        }
-#endif
 
 	if (! model || ! density) {
 		serrno = EFAULT;

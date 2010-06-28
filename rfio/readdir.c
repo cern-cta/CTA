@@ -56,13 +56,8 @@ struct dirent DLL_DECL *rfio_readdir(dirp)
       de = rfio_HsmIf_readdir((DIR *)dirp);
     } else {
       TRACE(2,"rfio","rfio_readdir: using local readdir(%x)", dirp);
-#if defined(_WIN32)
-      de = NULL;
-      serrno = SEOPNOTSUP;
-#else /* _WIN32 */
       de = readdir((DIR *)dirp);
       if ( ! de ) serrno = 0;
-#endif /* _WIN32 */
     }
     END_TRACE();
     return(de);
@@ -130,14 +125,8 @@ struct dirent DLL_DECL *rfio_readdir(dirp)
     dirp->offset++;
     dirp->dp.dd_loc = dirp->offset;
     de->d_reclen = sizeof(struct dirent) + namlen;
-#if !defined(SOLARIS) && !defined(sgi) && !defined(linux)
+#if !defined(linux)
     de->d_namlen = namlen;
-#endif
-#ifdef SOLARIS
-    de->d_off = dirp->offset;
-#endif
-#ifdef _AIX
-    de->d_offset = dirp->offset;
 #endif
   } else {
     TRACE(2,"rfio","rfio_readdir: no more directory entries");
@@ -148,7 +137,7 @@ struct dirent DLL_DECL *rfio_readdir(dirp)
   return(de);
 }
 
-#if !defined(SOLARIS) && !defined(linux)
+#if !defined(linux)
 struct dirent DLL_DECL *rfio_readdir64(dirp)
      RDIR *dirp;
 {

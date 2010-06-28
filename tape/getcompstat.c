@@ -7,12 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(ADSTAR)
-#include <sys/Atape.h>
-#include <sys/scsi.h>
-#else
 #include "scsictl.h"
-#endif
 #include "Ctape_api.h" 
 #include "serrno.h" 
 #include "sendscsicmd.h" 
@@ -24,7 +19,7 @@ char *path;
 char *devtype;
 COMPRESSION_STATS *comp_stats;
 {
-#if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(linux)
 	unsigned long kbytes_from_host;
 	unsigned long kbytes_to_tape;
 	unsigned long kbytes_from_tape;
@@ -33,26 +28,11 @@ COMPRESSION_STATS *comp_stats;
 	unsigned char *p;
 	unsigned short pagelen;
 	unsigned short parmcode;
-#if defined(ADSTAR)
-	struct log_sense_page log_sense_page;
-#else
 	unsigned char buffer[256];	/* LOG pages are returned in this buffer */
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
 	char sense[256];	/* Sense bytes are returned in this buffer */
-#endif
-#if defined(ADSTAR)
-	if (strcmp (devtype, "3590") == 0) {
-		memset (&log_sense_page, 0, sizeof(log_sense_page));
-		log_sense_page.page_code = 0x38;
-		if (ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page) < 0) {
-			serrno = errno;
-			return (-1);
-		}
-		p = log_sense_page.data;
-	}
-#else
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x4D;	/* LOG SENSE */
 	cdb[7] = (sizeof(buffer) & 0xFF00) >> 8;
@@ -83,7 +63,6 @@ COMPRESSION_STATS *comp_stats;
 		return (-1);
 
 	p = buffer;
-#endif
 	pagelen = *(p+2) << 8 | *(p+3);
 	endpage = p + 4 + pagelen;
 	p += 4;
@@ -246,21 +225,7 @@ char *path;
 char *devtype;
 {
   (void)devtype;
-#if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-#if defined(ADSTAR)
-	struct sc_iocmd sc_iocmd;
-
-	memset (&sc_iocmd, 0, sizeof(sc_iocmd));
-	sc_iocmd.scsi_cdb[0] = 0x4C;
-	sc_iocmd.scsi_cdb[1] = 0x02;	/* PCR set */
-	sc_iocmd.timeout_value = 10;	/* seconds */
-	sc_iocmd.command_length = 10;
-
-	if (ioctl (tapefd, STIOCMD, &sc_iocmd) < 0) {
-		serrno = errno;
-		return (-1);
-	}
-#else
+#if defined(linux)
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
@@ -275,7 +240,6 @@ char *devtype;
 	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
-#endif
 #endif
 	return (0);
 }

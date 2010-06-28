@@ -12,9 +12,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr.h"
@@ -39,9 +36,6 @@ char **argv;
 	int media_cost;
 	char media_letter[CA_MAXMLLEN+1] = " ";
 	char *model = NULL;
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 
 	Copterr = 1;
 	Coptind = 1;
@@ -69,19 +63,10 @@ char **argv;
 		exit (USERR);
 	}
  
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
-		exit (SYERR);
-	}
-#endif
 	if (model) {
 		if (vmgr_querymodel (model, media_letter, &media_cost) < 0) {
 			fprintf (stderr, "vmgrlistmodel %s: %s\n", model,
 			    (serrno == ENOENT) ? "No such model" : sstrerror(serrno));
-#if defined(_WIN32)
-			WSACleanup();
-#endif
 			exit (USERR);
 		}
 		printf ("%-6s %-2s %d\n", model, media_letter, media_cost);
@@ -94,8 +79,5 @@ char **argv;
 		}
 		(void) vmgr_listmodel (VMGR_LIST_END, &list);
 	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	exit (0);
 }

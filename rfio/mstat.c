@@ -42,11 +42,8 @@ int DLL_DECL rfio_mstat(file,statb)
      struct stat *statb;
 
 {
-#if (defined(__alpha) && defined(__osf__))
-  return (rfio_mstat64(file,statb));
-#else
   int       rc;
-#if defined(IRIX64) || defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
+#if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
   struct stat64 statb64;
 
   if ((rc = rfio_mstat64(file,&statb64)) == 0)
@@ -136,7 +133,6 @@ int DLL_DECL rfio_mstat(file,statb)
     END_TRACE();
     return (rc)  ;
   }
-#endif
 #endif
 }
 
@@ -263,10 +259,8 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
    * backward compatibility with
    * former stat () protocol
    */
-#if !defined(_WIN32)
   unmarshall_LONG(p, statbuf->st_blksize);
   unmarshall_LONG(p, statbuf->st_blocks);
-#endif
 
   TRACE(1, "rfio", "rfio_stat: return %d",status);
   rfio_errno = status;
@@ -765,11 +759,7 @@ int DLL_DECL rfio_smstat64(s,filename,statbuf,reqst)
 
   TRACE(2, "rfio", "rfio_smstat64: reading %d bytes", replen);
   rc = netread_timeout(s, buf, replen, RFIO_CTRL_TIMEOUT);
-#if !defined(_WIN32)
   if ( (rc == 0 || (rc < 0 && errno == ECONNRESET)) && sec )
-#else
-    if ( (rc == 0 || (rc < 0 && serrno == SETIMEDOUT)) && sec )
-#endif
     {
 
       TRACE(2, "rfio", "rfio_smstat64: Server doesn't support %s()",
@@ -798,10 +788,8 @@ int DLL_DECL rfio_smstat64(s,filename,statbuf,reqst)
     unmarshall_LONG(p, statbuf->st_mtime);
     unmarshall_LONG(p, statbuf->st_ctime);
     unmarshall_LONG(p, status);
-#if !defined(_WIN32)
     unmarshall_LONG(p, statbuf->st_blksize);
     unmarshall_HYPER(p, statbuf->st_blocks);
-#endif
   }
   else {
     unmarshall_WORD(p, statbuf->st_dev);
@@ -815,12 +803,10 @@ int DLL_DECL rfio_smstat64(s,filename,statbuf,reqst)
     unmarshall_LONG(p, statbuf->st_mtime);
     unmarshall_LONG(p, statbuf->st_ctime);
     unmarshall_LONG(p, status);
-#if !defined(_WIN32)
     if ( reqst != RQST_LSTAT_SEC && reqst != RQST_LSTAT ) {
       unmarshall_LONG(p, statbuf->st_blksize);
       unmarshall_LONG(p, statbuf->st_blocks);
     }
-#endif
   }
 
   TRACE(1, "rfio", "rfio_smstat64: return %d", status);
@@ -848,9 +834,7 @@ int DLL_DECL stat64tostat(statb64, statb)
   statb->st_atime  = statb64->st_atime;
   statb->st_mtime  = statb64->st_mtime;
   statb->st_ctime  = statb64->st_ctime;
-#if !defined(_WIN32)
   statb->st_blksize= statb64->st_blksize;
   statb->st_blocks = (int) statb64->st_blocks;
-#endif
   return (0);
 }

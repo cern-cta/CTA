@@ -5,21 +5,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.4 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include <stddef.h>
 #include "Ctape.h"
@@ -110,11 +102,7 @@ int user_repbuf_len;
 	}
 
 	if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-		if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
 		if (errno == ECONNREFUSED) {
-#endif
 			Ctape_errmsg (func, TP000, tapehost);
 			(void) netclose (s);
 			serrno = ETDNP;

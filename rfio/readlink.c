@@ -37,12 +37,8 @@ int DLL_DECL rfio_readlink(path,buf, length)
   INIT_TRACE("RFIO_TRACE");
   TRACE( 1, "rfio", " rfio_readlink (%s,%x,%d)",path,buf,length);
   if ( ! (parserc = rfio_parseln(path,&host,&filename,NORDLINKS)) ) {
-#if !defined(_WIN32)
     status = readlink(filename,buf,length) ;
     if ( status < 0 ) serrno = 0;
-#else
-    { serrno = SEOPNOTSUP; status = -1; }
-#endif
     END_TRACE() ;
     rfio_errno = 0;
     return status ;

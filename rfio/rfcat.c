@@ -11,9 +11,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "rfio_api.h"
 
 int catfile(inpfile)
@@ -55,22 +52,11 @@ int main(argc, argv)
 {
   int errflg = 0;
   int i;
-#if defined(_WIN32)
-  WSADATA wsadata;
-
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
 
   if (argc == 1)
     errflg = catfile ("-");
   else
     for (i = 1; i < argc; i++)
       errflg += catfile (argv[i]);
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (errflg ? 1 : 0);
 }

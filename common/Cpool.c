@@ -16,7 +16,6 @@
 #undef Cpool_next_index
 #undef Cpool_next_index_timeout
 #include <serrno.h>
-#ifndef _WIN32
 /* All that stuff is for CTHREAD_MULTI_PROCESS support on */
 /* Unix-like systems.                                     */
 #include <sys/time.h>
@@ -24,12 +23,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#endif /* _WIN32 */
-#ifdef _AIX
-/* Otherwise cc will not know about fd_set on */
-/* old aix versions.                          */
-#include <sys/select.h>
-#endif
 #ifdef DEBUG
 #ifndef CPOOL_DEBUG
 #define CPOOL_DEBUG
@@ -44,7 +37,6 @@
 
 int Cpool_debug = 0;
 
-#ifndef _WIN32
 #ifndef _CTHREAD
 /* ------------------------------------ */
 /* Undefinition of memory wrappers      */
@@ -56,7 +48,6 @@ int Cpool_debug = 0;
 #undef realloc
 #undef free
 #endif 
-#endif /* _WIN32 */
 
 /* ------------------------------------ */
 /* Linked list of pools                 */
@@ -67,11 +58,9 @@ struct Cpool_t {
 	int                     nbelem;   /* Nb of elems                        */
 	int                    *cid;      /* Elements Cthread ID                */
 	int                     forceid;  /* Index forcing the assignment to    */
-#ifndef _WIN32
 	/* If CTHREAD_MULTI_PROCESS */
 	int                    *writefd;  /* Parent->Child (only on unix)       */
 	int                    *readfd;   /* Child->Parent (only on unix)       */
-#endif
 	/* If CTHREAD_TRUE_THREAD */
 	int                    *state;    /* Elements current status (0=READY)  */
 	/*                        (1=RUNNING) */
@@ -87,13 +76,8 @@ struct Cpool_t {
 	struct Cpool_t         *next;     /* Next pool                          */
 };
 
-#ifndef _WIN32
 static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL};
-#else
-static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, 0, NULL, NULL, NULL};
-#endif
 
-#ifndef _WIN32
 /* ------------------------------------ */
 /* Linked list of memory allocation     */
 /* ------------------------------------ */
@@ -103,35 +87,22 @@ struct Cmalloc_t {
 	struct Cmalloc_t *next;
 };
 static struct Cmalloc_t Cmalloc = { NULL, NULL, NULL};
-#endif /* _WIN32 */
 
-#ifndef _WIN32
 /* ------------------------------------ */
 /* Non-thread environment pipe protocol */
 /* ------------------------------------ */
 static int  tubes[5];
-#endif /* _WIN32 */
 
-#ifndef _WIN32
 /* ------------------------------------ */
 /* Typedefs                             */
 /* ------------------------------------ */
 typedef void    Sigfunc _PROTO((int));
-#endif /* _WIN32 */
-
-#ifdef hpux
-/* hpux wants int instead of fd_set */
-typedef int _cpool_fd_set;
-/* typedef fd_set _cpool_fd_set; */
-#else
 typedef fd_set _cpool_fd_set;
-#endif /* hpux */
 
 /* ------------------------------------ */
 /* Prototypes                           */
 /* ------------------------------------ */
 void   DLL_DECL  *_Cpool_starter _PROTO((void *));
-#ifndef _WIN32
 size_t   _Cpool_writen _PROTO((int, void *, size_t));
 size_t   _Cpool_readn _PROTO((int, void *, size_t));
 #ifdef CPOOL_DEBUG
@@ -143,10 +114,8 @@ size_t   _Cpool_readn_timeout _PROTO((int, void *, size_t, int));
 #endif
 void     _Cpool_alarm _PROTO((int));
 Sigfunc *_Cpool_signal _PROTO((int, Sigfunc *));
-#endif /* _WIN32 */
 int    DLL_DECL  _Cpool_self();
 
-#ifndef _WIN32
 /* ------------------------------------ */
 /* Constants used in the fork() model   */
 /* ------------------------------------ */
@@ -157,7 +126,6 @@ int    DLL_DECL  _Cpool_self();
 #define _CPOOL_SLEEP_FLAG       -1
 #endif
 static void *_cpool_sleep_flag = (void *) _CPOOL_SLEEP_FLAG;
-#endif /* _WIN32 */
 
 /* ============================================ */
 /* Routine  : Cpool_create                      */
@@ -202,13 +170,11 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 	int                     j;
 	int                     k;
 	int                     poolnb, nbcreated;
-#ifndef _WIN32
 	/* If CTHREAD_MULTI_PROCESS */
 	int                     p_to_c[2];
 	int                     c_to_p[2];
 	int                    *to_close = NULL;
 	int                     pid = 0;
-#endif
 	/* If CTHREAD_TRUE_THREAD */
 	void                   *cpool_arg = NULL;
 
@@ -249,7 +215,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		poolnb = -1;
 	}
 
-#ifndef _WIN32
 	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 		/* To let know the child which parent is the creator */
 		/* and to die in case of non-parent existence        */
@@ -276,7 +241,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			return(-1);
 		}
 	}
-#endif
   
 	/* We create a new pool element */
 	if ((current = malloc(sizeof(struct Cpool_t))) == NULL) {
@@ -292,11 +256,9 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 
 	/* Allocation for Cthread ID's */
 	if ((current->cid = malloc(nbreq * sizeof(int))) == NULL) {
-#ifndef _WIN32
 		if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 			free(to_close);
 		}
-#endif
 		free(current);
 #ifdef CPOOL_DEBUG
 		if (Cpool_debug != 0)
@@ -307,7 +269,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		serrno = SEINTERNAL;
 		return(-1);
 	}
-#ifndef _WIN32
 	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 		/* Allocation for writing pipes (unix only) */
 		if ((current->writefd = malloc(nbreq * sizeof(int))) == NULL) {
@@ -339,7 +300,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			return(-1);
 		}
 	} else {
-#endif /* _WIN32 */
 #ifdef CPOOL_DEBUG
 		if (Cpool_debug != 0)
 			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : lock on &(current->lock_parent)\n",
@@ -471,9 +431,7 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			serrno = SEINTERNAL;
 			return(-1);
 		}
-#ifndef _WIN32
 	}
-#endif
 	current->next = NULL;
 	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
 		/* We tell that there is no dispatch at this time */
@@ -483,7 +441,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 	nbcreated = j = k = 0;
 	/* We create the pools */
 	for (i = 0; i < nbreq; i++) {
-#ifndef _WIN32
 		if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 			/* The pipes */
 			if (pipe(p_to_c))
@@ -507,7 +464,6 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			/* Non thread environment : everything will be done with pipes */
 			current->cid[i] = Cthread_create(_Cpool_starter,NULL);
 		} else {
-#endif /* _WIN32 */
 			/* Thread environment : everything will be done with shared mem. and cond. vars. */
 			/* We send as argument the address of the current pool structure as well as the  */
 			/* index of this thread in this structure                                        */
@@ -568,41 +524,33 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 				serrno = SEINTERNAL;
 				current->cid[i] = -1;
 			}
-#ifndef _WIN32
 		}
-#endif /* _WIN32 */
 		if (current->cid[i] < 0) {
 			/* Error at cthread_create : we clean fd created an try the */
 			/* next iteration                                           */
-#ifndef _WIN32
 			if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 				for (j=0; j <= 3; j++) {
 					close(tubes[j]);
 				}
 			}
-#endif /* _WIN32 */
 		} else {
-#ifndef _WIN32
 			if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 				current->writefd[i] = p_to_c[1];
 				current->readfd[i] = c_to_p[0];
 				to_close[k++] = p_to_c[0];
 				to_close[k++] = c_to_p[1];
 			}
-#endif /* _WIN32 */
 			/* We count number of created processes */
 			++nbcreated;
 		}
 	}
 
-#ifndef _WIN32
 	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 		for (j=0; j < k; j++) {
 			close(to_close[j]);
 		}
 		free(to_close);
 	}
-#endif /* _WIN32 */
 
 	/* We update the return value */
 	if (nbget != NULL)
@@ -650,7 +598,6 @@ void *_Cpool_starter(arg)
 			_Cpool_self(),_Cthread_self(),(unsigned long) arg);
 #endif
 
-#ifndef _WIN32
 	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
 		/*----------------------- */
 		/* Non-Thread only        */
@@ -818,7 +765,6 @@ void *_Cpool_starter(arg)
 				free(thisarg);
 		}
 	} else {
-#endif /* _WIN32 */
 		{
 			/*----------------------- */
 			/* Thread only			  */
@@ -1040,12 +986,9 @@ void *_Cpool_starter(arg)
 			Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
 			  
 		}
-#ifndef _WIN32
 	}
-#endif
 }
 
-#ifndef _WIN32
 /* ============================================ */
 /* Routine  : _Cpool_writen_timeout             */
 /* Arguments: file des., pointer, size, timeout */
@@ -1641,7 +1584,6 @@ void DLL_DECL *Cpool_realloc(file,line,ptr,size)
 	/* We return the result */
 	return(result);
 }
-#endif /* _WIN32 */
 
 /* ============================================ */
 /* Routine  : Cpool_assign                      */
@@ -1698,7 +1640,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			_Cpool_self(),_Cthread_self(),poolnb, (unsigned long) startroutine, (unsigned long) arg, timeout);
 #endif
     
-#ifndef _WIN32
 	/* THIS ROUTINE IS EXPLICITELY SPLITTED IN TWO PARTS    */
 	/* - The _NOCTHREAD one (using pipes)                   */
 	/* - The _CTHREAD one (using shared mem. and cond. var. */
@@ -1898,7 +1839,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		return(0);
 
 	} else {
-#endif /* _WIN32 */
 		{
 			/*----------------------- */
 			/* Thread only            */
@@ -2441,9 +2381,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 			return(0);
 		}
-#ifndef _WIN32
 	}
-#endif
 }
 
 /* ============================================ */
@@ -2492,7 +2430,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 			_Cpool_self(),_Cthread_self(),poolnb,(unsigned long) pooladdr, timeout);
 #endif
     
-#ifndef _WIN32
 	/* THIS ROUTINE IS EXPLICITELY SPLITTED IN TWO PARTS    */
 	/* - The _NOCTHREAD one (using pipes)                   */
 	/* - The _CTHREAD one (using shared mem. and cond. var. */
@@ -2621,7 +2558,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 		return(-1);
     
 	} else {
-#endif /* _WIN32 */
 		{
 			/*----------------------- */
 			/* Thread only            */
@@ -2852,9 +2788,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 		  
 			return(i);
 		}
-#ifndef _WIN32
 	}
-#endif
 }
 
 /* ============================================ */

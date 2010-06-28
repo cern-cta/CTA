@@ -10,11 +10,7 @@
 /* rename.c       Remote File I/O - change the name of a file           */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN (CA_MAXHOSTNAMELEN+1)
-#else
 #include <sys/param.h>
-#endif
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 

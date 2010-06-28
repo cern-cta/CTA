@@ -9,12 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -40,14 +36,6 @@ Cns_readdirx(Cns_DIR *dirp)
 
   strcpy (func, "Cns_readdirx");
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (NULL);
-  }
-#endif
 
   if (! dirp) {
     serrno = EFAULT;

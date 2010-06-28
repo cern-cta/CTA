@@ -12,9 +12,7 @@
 
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
 
-#if !defined(_WIN32)
 #include <sys/param.h>  /* system dependent parameters  */
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <Castor_limits.h>
@@ -162,11 +160,7 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
 #if defined(FollowRtLinks)
     while ( (n= rfio_readlink(buffer1,buffer,CA_MAXPATHLEN+1)) > 0  && countln < 4 )
 #else
-#if !defined(_WIN32)
       while ( (n= readlink(buffer1,buffer,CA_MAXPATHLEN+1)) > 0  && countln < 4 )
-#else
-        if (countln)  /* i.e. never, because links are not impl. */
-#endif
 #endif /* FollowRtLinks */
         {
           /* save original filename */

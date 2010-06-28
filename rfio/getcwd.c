@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#if defined(_WIN32)
-#include <direct.h>
-#endif
 /* getcwd.c      Remote File I/O - get current working directory        */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */

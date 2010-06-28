@@ -8,14 +8,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Castor_limits.h"
 #include "Cnetdb.h"
 #include "serrno.h"
@@ -28,7 +24,6 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 	struct hostent *hp;
 	char *p;
 
-#ifndef _WIN32
 	FILE *fd;
 	/*
 	 * try looking in /etc/resolv.conf
@@ -57,7 +52,6 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 		}
 		fclose (fd);
 	}
-#endif
 
 	/* Try gethostname */
 

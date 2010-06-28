@@ -14,9 +14,7 @@
 #include <stdarg.h>
 #include "Cglobals.h"
 #include "expert.h"
-#if !defined(_WIN32)
 #include <unistd.h>
-#endif
 
 extern int jid;
 
@@ -38,7 +36,7 @@ int explogit(const char *args, ...)
 	va_start (ap, args);
 	msg = va_arg (ap, char *);
 	(void) time (&current_time);		/* Get current time */
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 	(void) localtime_r (&current_time, &tmstruc);
 	tm = &tmstruc;
 #else

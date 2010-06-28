@@ -11,13 +11,9 @@
 
 #include <sys/types.h>
 #include <stddef.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else /* _WIN32 */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#endif /* _WIN32 */
 
 #include <Cglobals.h>
 #include <Cnetdb.h>
@@ -25,7 +21,7 @@
 struct hostent DLL_DECL *Cgethostbyname(name)
 CONST char *name;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(_WIN32) || defined(__APPLE__)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already
@@ -66,7 +62,7 @@ CONST void *addr;
 size_t len;
 int type;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(_WIN32) || defined(__APPLE__)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already
@@ -106,7 +102,7 @@ struct servent DLL_DECL *Cgetservbyname(name,proto)
 CONST char *name;
 CONST char *proto;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(_WIN32) || defined(__APPLE__)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already

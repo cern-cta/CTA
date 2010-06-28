@@ -5,16 +5,9 @@
 /*
  * System remote file I/O
  */
-#ifdef _WIN32
-#include "Cmutex.h"
-#endif
 #define RFIO_KERNEL     1
 #include <fcntl.h>
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
-#else
 #include <sys/param.h>          /* For MAXHOSTNAMELEN definition  */
-#endif
 #include <stdlib.h>
 #include "rfio.h"
 #include "rfio_rfilefdt.h"
@@ -29,34 +22,7 @@ RFILE dummyrfile;               /* Used to fill with a dummy value */
 int DLL_DECL rfio_rfilefdt_allocentry(s)
      int s;
 {
-#ifdef _WIN32
-  int i;
-  int rc;
-
-  if (Cmutex_lock((void *) rfilefdt,-1) != 0) {
-    return(-1);
-  }
-  /* Scan it */
-
-  for (i = 0; i < MAXRFD; i++) {
-    if (rfilefdt[i] == NULL) {
-      rc = i;
-      rfilefdt[i] = &dummyrfile;
-      goto _rfio_rfilefdt_allocentry_return;
-    }
-  }
-
-  serrno = ENOENT;
-  rc = -1;
-
- _rfio_rfilefdt_allocentry_return:
-  if (Cmutex_unlock((void *) rfilefdt) != 0) {
-    return(-1);
-  }
-  return(rc);
-#else /* _WIN32 */
   return(((s >= 0) && (s < MAXRFD)) ? s : -1);
-#endif /* _WIN32 */
 }
 
 /*
@@ -71,32 +37,6 @@ int DLL_DECL rfio_rfilefdt_findentry(s,scanflag)
      int scanflag;
 {
   int i;
-#ifdef _WIN32
-  int rc;
-
-  if (Cmutex_lock((void *) rfilefdt,-1) != 0) {
-    return(-1);
-  }
-  /* Scan it */
-
-  for (i = 0; i < MAXRFD; i++) {
-    if (rfilefdt[i] != NULL) {
-      if (rfilefdt[i]->s == s) {
-        rc = i;
-        goto _rfio_rfilefdt_findentry_return;
-      }
-    }
-  }
-
-  serrno = ENOENT;
-  rc = -1;
-
- _rfio_rfilefdt_findentry_return:
-  if (Cmutex_unlock((void *) rfilefdt) != 0) {
-    return(-1);
-  }
-  return(rc);
-#else /* _WIN32 */
   if (scanflag == FINDRFILE_WITH_SCAN) {
     for (i = 0; i < MAXRFD; i++) {
       if (rfilefdt[i] != NULL) {
@@ -109,7 +49,6 @@ int DLL_DECL rfio_rfilefdt_findentry(s,scanflag)
   } else {
     return(((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL)) ? s : -1);
   }
-#endif /* _WIN32 */
 }
 
 
@@ -125,30 +64,6 @@ int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
      int scanflag;
 {
   int i;
-#ifdef _WIN32
-  int rc;
-
-  if (Cmutex_lock((void *) rfilefdt,-1) != 0) {
-    return(-1);
-  }
-  /* Scan it */
-
-  for (i = 0; i < MAXRFD; i++) {
-    if (rfilefdt[i] == ptr) {
-      rc = i;
-      goto _rfio_rfilefdt_findentry_return;
-    }
-  }
-
-  serrno = ENOENT;
-  rc = -1;
-
- _rfio_rfilefdt_findentry_return:
-  if (Cmutex_unlock((void *) rfilefdt) != 0) {
-    return(-1);
-  }
-  return(rc);
-#else /* _WIN32 */
   if (scanflag == FINDRFILE_WITH_SCAN) {
     for (i = 0; i < MAXRFD; i++) {
       if (rfilefdt[i] == ptr) {
@@ -161,7 +76,6 @@ int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
     serrno = EINVAL;
     return(-1);
   }
-#endif /* _WIN32 */
 }
 
 
@@ -172,22 +86,9 @@ int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
 int DLL_DECL rfio_rfilefdt_freeentry(s)
      int s;
 {
-#ifdef _WIN32
-  if (Cmutex_lock((void *) rfilefdt,-1) != 0) {
-    return(-1);
-  }
-  if (rfilefdt[s] != NULL) {
-    if (rfilefdt[s] != &dummyrfile) free(rfilefdt[s]);
-    rfilefdt[s] = NULL;
-  }
-  if (Cmutex_unlock((void *) rfilefdt) != 0) {
-    return(-1);
-  }
-#else /* _WIN32 */
   if ((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL)) {
     if (rfilefdt[s] != &dummyrfile) free((char *)rfilefdt[s]);
     rfilefdt[s] = NULL;
   }
-#endif /* _WIN32 */
   return(0);
 }

@@ -106,12 +106,10 @@ extern int      srreaddir();            /* server remote readdir()      */
 extern int      srrewinddir();          /* server remote rewinddir()    */
 extern int      srclosedir();           /* server remote closedir()     */
 extern int      sraccess();             /* server remote access()       */
-#if defined(FORTRAN)
 extern int      srxyopen();             /* server remote xyopen()       */
 extern int      srxyclos();             /* server remote xyclos()       */
 extern int      srxywrit();             /* server remote xywrit()       */
 extern int      srxyread();             /* server remote xyread()       */
-#endif /* FORTRAN */
 extern int      setnetio();             /* set network characteristics  */
 
 static int      standalone=0;   /* standalone flag                      */
@@ -304,57 +302,17 @@ int main (argc, argv)
     /*
      * Trap SIGCLD, SIGCHLD
      */
-#if ( defined(__osf__) && defined(__alpha) ) || defined (SOLARIS) || defined(linux)
+#if defined(linux)
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
     sigaction (SIGCHLD, &sa, NULL);
-#if ( defined(__osf__) && defined(__alpha) ) || defined (SOLARIS)
-    sigignore(SIGHUP);
-#endif
-#endif /* __osf__ && __alpha  || SOLARIS || linux */
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
-    sv.sv_mask = sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM);
-    sv.sv_handler = reaper;
-    sigvec(SIGCHLD, &sv, (struct sigvec *)0);
-#endif /* sun || ultrix || AIX */
+#endif /* linux */
 
     maxfds=getdtablesize();
 
-#if (defined(IRIX5) || defined(IRIX6))
-    if (!debug) {
-      /* The setsid IRIX man page claims that setsid will */
-      /* disassociate from controlling terminal provided  */
-      /* that we always first fork.                       */
-      if ( !nodetach ) {
-        pid = fork();
-        if (pid == -1) {
-          perror("main fork");
-          exit(1);
-        }
-        if (pid > 0) exit(0); /* Parent terminates */
-        /* Become session leader - this also disconnect from terminal */
-        if (setsid() < 0) {
-          perror("main fork");
-          exit(1);
-        }
-        pid = fork();
-        if (pid == -1) {
-          perror("second fork");
-          exit(1);
-        }
-        if (pid > 0) exit(0); /* 1st child terminates */
-        for (i=0; i< maxfds; i++) {
-          if (i != Socket_parent) {
-            (void) close(i);
-          }
-        }
-      }
-    }
-#else /* IRIX5 || IRIX6 */
     /*
      * disassociate controlling terminal
      */
-#if !defined(_WIN32)
     if (!debug) {
       for (i=0; i< maxfds; i++) {
         if (i != Socket_parent) {
@@ -362,16 +320,6 @@ int main (argc, argv)
         }
       }
 
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX) || defined(sgi) ||  ( defined(__osf__) && defined(__alpha) )
-      (void) open("/dev/null", O_RDONLY);
-      dup2(0,1);
-      dup2(0,2);
-      i = open("/dev/tty", O_RDWR);
-      if ( i > 0 ) {
-        ioctl(i, TIOCNOTTY, 0);
-        close(i);
-      }
-#else
       /* Redirect standard files to /dev/null */
       freopen( "/dev/null", "r", stdin);
       freopen( "/dev/null", "w", stdout);
@@ -381,7 +329,6 @@ int main (argc, argv)
           (void) close(i);
         }
       }
-#endif /* sun || ultrix || _AIX || sgi */
 
       /*
        * Finally fork ourselves if option -n not specified
@@ -393,26 +340,13 @@ int main (argc, argv)
           exit(1);
         }
         if (pid > 0) exit(0);
-#if __Lynx__
-        setpgrp(0, getpid());
-#else
         setpgrp();
-#endif
       } /* if( !nodetach ) */
     } /* if( !debug ) */
-#endif  /* not WIN32 */
-#endif /* IRIX5 || IRIX6 */
 
-#if defined(_WIN32)
-    openlog("rfiod", loglevel, LOG_DAEMON);
-#endif
     (void) initlog("rfiod", loglevel, logfile);
 #if defined(__DATE__) && defined (__TIME__)
-#if defined(_WIN32)
-    log(LOG_ERR, "%s generated on %s %s\n", argv0, __DATE__, __TIME__);
-#else
     log(LOG_ERR, "%s generated on %s %s %d %d\n",argv[0],__DATE__,__TIME__, uid, gid);
-#endif /* WIN32 */
 #else
     log(LOG_ERR, "%s\n", argv[0]);
 #endif /* __DATE__ && __TIME__ */
@@ -433,28 +367,14 @@ int main (argc, argv)
         log(LOG_ERR, "Current directory set to '%s'\n", curdir);
     }
 
-#ifndef _WIN32
-    FD_ZERO (&readmask);
-    FD_ZERO (&readfd);
-#endif
-
     if (Socket_parent >= 0) {
       log(LOG_INFO, "Socket inherited from parent, file descriptor %d\n", Socket_parent);
       s = Socket_parent;
     } else {
-#if defined(_WIN32)
-      if( (s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET ) {
-        log(LOG_ERR, "socket(): %s\n", geterr());
-        WSACleanup();
-        TlsFree(tls_i);
-        exit(1);
-      }
-#else
       if( (s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         log(LOG_ERR, "socket(): %s\n",strerror(errno));
         exit(1);
       }
-#endif
     }
     if (Socket_parent_port >= 0) {
       log(LOG_INFO, "Socket already bound to port %d\n", Socket_parent_port);
@@ -488,25 +408,14 @@ int main (argc, argv)
         int bool = 1;
         setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&bool, sizeof(bool));
       }
-#if defined(_WIN32)
-      if( bind(s, (struct sockaddr*)&sin, sizeof(sin)) == SOCKET_ERROR ) {
-        log(LOG_ERR, "bind(): %s\n", geterr());
-        WSACleanup();
-        TlsFree(tls_i);
-        exit(1);
-      }
-#else
       if( bind(s, (struct sockaddr*)&sin, sizeof(sin)) < 0 ) {
         log(LOG_ERR, "bind(): %s\n",strerror(errno));
         exit(1);
       }
-#endif
       listen(s, 5);
     }
 
-#ifndef _WIN32
     if ( s != INVALID_SOCKET ) FD_SET (s, &readmask);
-#endif
 
     max_rcvbuf = setsock_ceiling;
     max_sndbuf = setsock_ceiling;
@@ -573,37 +482,20 @@ int main (argc, argv)
 #endif
 
     for (;;) {
-#ifndef _WIN32
       check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */
       if ( (s != INVALID_SOCKET) && FD_ISSET (s, &readfd)) {
-#endif
         fromlen = sizeof(from);
         ns = accept(s, (struct sockaddr *)&from, &fromlen);
-#if defined(_WIN32)
-        if( ns == INVALID_SOCKET ) {
-          log(LOG_DEBUG, "accept(): %s\n", geterr());
-          goto select_continue;
-        }
-#else
         if( ns < 0 ) {
           log(LOG_DEBUG, "accept(): %s\n",strerror(errno));
           goto select_continue;
         }
-#endif
         log(LOG_DEBUG, "accepting requests\n");
-#if defined(_WIN32)
-        if( getpeername(ns, (struct sockaddr*)&from, &fromlen) == SOCKET_ERROR ) {
-          log(LOG_ERR, "getpeername: %s\n", geterr());
-          (void) closesocket(ns);
-          goto select_continue;
-        }
-#else
         if( getpeername(ns, (struct sockaddr*)&from, &fromlen) < 0 ) {
           log(LOG_ERR, "getpeername: %s\n",strerror(errno));
           (void) close(ns);
           goto select_continue;
         }
-#endif
         {
           char *p;
 
@@ -619,46 +511,6 @@ int main (argc, argv)
           }
         }
         if (!singlethread) {
-#if defined(_WIN32)
-          td = (struct thData*)malloc(sizeof(struct thData));
-          if( td == NULL ) {
-            perror("malloc");
-            closesocket(ns);
-            closesocket(s);
-            TlsFree(tls_i);
-            WSACleanup();
-            exit(1);
-          }
-          td->uid = uid;
-          td->gid = gid;
-          td->ns = ns;
-          memcpy(&(td->from), (void*)&from, sizeof(from));
-          td->mode = 1;
-          td->_is_remote = 0;
-          hp = Cgethostbyaddr((char*)(&(from.sin_addr)), sizeof(struct in_addr), from.sin_family);
-          if( hp == NULL ) {
-            strcpy(td->from_host, (char*)inet_ntoa(from.sin_addr));
-            log(LOG_INFO, "connection from %s\n", inet_ntoa(from.sin_addr));
-          }
-          else {
-            strcpy(td->from_host, hp->h_name);
-            log(LOG_INFO, "connection from %s\n", hp->h_name);
-          }
-          /*
-           * Detect whether client is in or out of site
-           */
-          {
-            int sav_serrno = serrno;
-            if( isremote(from.sin_addr, td->from_host) )
-              td->_is_remote++;
-            serrno = sav_serrno; /* Failure or not of isremote(), we continue */
-          }
-          pid = _beginthread(mt_doit, 0, (void*)td );
-          if( pid == -1 ) {
-            log(LOG_ERR, "_beginthread: %s\n", strerror(errno));
-            closesocket(ns);
-          }
-#else
           pid = fork();
           switch (pid) {
           case -1:
@@ -682,15 +534,12 @@ int main (argc, argv)
             s = Socket_parent = INVALID_SOCKET;
             continue;
           }
-#endif /* WIN32 */
         } else { /* singlethread */
           mode = 1;
           doit(ns, &from, mode, uid, gid);
         }
-#ifndef _WIN32
         FD_CLR (ns, &readfd);
       }
-#endif
     select_continue:
       if ( s != INVALID_SOCKET ) {
         memcpy (&readfd, &readmask, sizeof(readmask));
@@ -725,102 +574,28 @@ int main (argc, argv)
     }
   } else {       /* !standalone */
 
-#if defined(_WIN32)
-    openlog("rfiod", loglevel, LOG_DAEMON);
-#endif
     (void) initlog("rfiod", loglevel, logfile);
     fromlen = sizeof(from);
     log(LOG_DEBUG, "accepting requests\n");
-#if defined(_WIN32)
-    if( getpeername(0, (struct sockaddr*)&from, &fromlen) == INVALID_SOCKET) {
-      log(LOG_ERR, "getpeername: %s\n", geterr());
-      WSACleanup();
-      TlsFree(tls_i);
-      exit(1);
-    }
-#else
     if (getpeername(0,(struct sockaddr *)&from, &fromlen)<0) {
       log(LOG_ERR, "getpeername: %s\n",strerror(errno));
       exit(1);
     }
-#endif
-#if defined(_AIX) && defined(_IBMESA)
-    if ( setluid (0) == -1 ) {
-      log(LOG_ERR, "setluid: %s\n",strerror(errno));
-      exit(1);
-    }
-#endif
     mode = 0;
     doit(0, &from, mode, uid, gid);
   }
-#if defined(_WIN32)
-  WSACleanup();
-  TlsFree(tls_i);
-#endif
   exit(0);
 }
 
 
-#ifndef _WIN32
 void reaper(dummy)
      int dummy;
 {
   (void)dummy;
 }
-#endif
-
-#if defined(_WIN32)
-mt_doit( void **ptr )          /* Wrapper for doit() */
-{
-  int res;
-  struct thData *td = (struct thData*)ptr;
-
-  td->rqstbuf = (char*)malloc(BUFSIZ);
-  if( td->rqstbuf == NULL ) {
-    perror("malloc");
-    exit(1);
-  }
-  td->filename = (char*)malloc(MAXFILENAMSIZE);
-  if( td->filename == NULL ) {
-    perror("malloc");
-    exit(1);
-  }
-  res = TlsSetValue(tls_i, (LPVOID)td);
-  if( res == 0 ) {
-    perror("TlsSetValue");
-    exit(1);
-  }
-
-  res = doit( td->ns, td->from, td->mode, td->uid, td->gid );
-  return (res);
-}
-
-int mt_cleanup(struct thData *td, int *fd, int rcode)
-{
-  if( *fd >= 0 )
-    close(*fd);
-  *fd = -1;
-
-  if( rcode > 0 ) {
-    log(LOG_INFO, "mt_cleanup: closing control socket %d\n", td->ns);
-    shutdown(td->ns, SD_BOTH);
-    closesocket(td->ns);
-  }
-  free(td->rqstbuf);
-  free(td->filename);
-  log(LOG_INFO, "mt_cleanup: freeing thread data pointer at 0X%X\n", td);
-  free(td);
-
-  return rcode;
-}
-#endif
 
 int doit(s, fromp, mode, uid, gid)
-#if defined(_WIN32)
-     SOCKET   s;
-#else
      int      s;
-#endif
      struct sockaddr_in *fromp;
      int mode;
      uid_t uid;
@@ -828,10 +603,8 @@ int doit(s, fromp, mode, uid, gid)
 {
   int      request, status;        /* Request Id  number               */
   int      fd = -1;                /* Local fd      -> -1              */
-#if !defined(_WIN32)
   DIR      *dirp = NULL;           /* Local dir ptr -> NULL            */
   struct   hostent *hp;
-#endif
   int      lun;
   int      access, yes;
   struct   rfiostat info;
@@ -839,22 +612,11 @@ int doit(s, fromp, mode, uid, gid)
   char     from_host[MAXHOSTNAMELEN];  /* Where the request comes from   */
   int      from_port;                  /* Port of the client socket      */
   char     * p1 ;
-#if defined(sgi)
-  register int    ndpri;
-#endif /* sgi */
 
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
-  struct sigvec   sv;
-#endif
-#if (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(linux)
   struct sigaction sa;
 #endif
   char tmpbuf[21], tmpbuf2[21];
-
-#if defined(_WIN32)
-  struct thData  *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif /* WIN32 */
 
 #define CLIENT_NAME_SIZE 1000
   char *Csec_mech;
@@ -949,13 +711,11 @@ int doit(s, fromp, mode, uid, gid)
   /*
    * Use to solve an UltraNet bug
    */
-#if !defined(_WIN32)
   if (setnetio() <0) {
     shutdown(s, 2);
     close(s);
     exit(1);
   }
-#endif /* _WIN32 */
 
   if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) != NULL && !strcmp(p1,"YES") ) {
     yes = 1;
@@ -970,7 +730,6 @@ int doit(s, fromp, mode, uid, gid)
     sigaction (SIGPIPE, &sa, NULL);
 
   }
-#if !defined(_WIN32)
   else {
     /*
      * Ignoring SIGPIPE and SIGXFSZ signals.
@@ -978,11 +737,9 @@ int doit(s, fromp, mode, uid, gid)
     (void) signal(SIGPIPE,SIG_IGN) ;
     (void) signal(SIGXFSZ,SIG_IGN) ;
   }
-#endif
   /*
    * Getting the client host name.
    */
-#if !defined(_WIN32)
   hp =  Cgethostbyaddr((char *)(&fromp->sin_addr), sizeof(struct in_addr), fromp->sin_family);
   if ( hp == NULL) {
     strcpy(from_host,(char *)inet_ntoa(fromp->sin_addr));
@@ -1001,36 +758,6 @@ int doit(s, fromp, mode, uid, gid)
       is_remote++;
     serrno = sav_serrno; /* Failure or not of isremote(), we continue */
   }
-#else
-  strcpy(from_host, td->from_host);
-  is_remote = td->_is_remote;
-#endif /* WIN32 */
-  /*
-   * Locking program in memory and setting a non degrading
-   * priority if specified in the configuration file.
-   */
-#if defined(sgi)
-  if ((p1 = getconfent("RFIO","RESIDENT",0)) != NULL) {
-    if ( !strcmp(p1,"1") ) {
-      /*
-       * Lock program in memory
-       */
-      if ( prctl(PR_RESIDENT) < 0)
-        log(LOG_INFO,"prctl(PR_RESIDENT): %s\n",strerror(errno)) ;
-      else
-        log(LOG_INFO,"Daemon locked\n");
-    }
-  }
-  if ((p1 = getconfent("RFIO","NDPRIORITY",0)) != NULL) {
-    ndpri= atoi(p1) ;
-    if ((ndpri < NDPHIMAX) || (ndpri > NDPLOMIN))
-      log(LOG_INFO,"Invalid non-degrading priority: %d\n",ndpri) ;
-    else if (schedctl(NDPRI, 0, ndpri) < 0)
-      log(LOG_INFO,"schedctl(%d,%d,%d): %s\n",NDPRI,0,ndpri,strerror(errno)) ;
-    else
-      log(LOG_INFO,"schedctl(%d,%d,%d) done\n",NDPRI,0,ndpri) ;
-  }
-#endif /* sgi */
 
 #if defined(linux)
   if ( (p1 = getconfent(from_host,"RFIOD_SCHED",0)) != NULL ) {
@@ -1052,13 +779,9 @@ int doit(s, fromp, mode, uid, gid)
     if ( (request==RQST_OPEN || request==RQST_OPENDIR ||
           request==RQST_XYOPEN) && !bet && is_remote ) {
       log(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 1));
-#else /* WIN32 */
       shutdown(s, 2);
       close(s);
       if (mode) return(1); else  exit(1);
-#endif
     }
     if (request < 0) {
       log(LOG_INFO,"drop_socket(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
@@ -1068,13 +791,9 @@ int doit(s, fromp, mode, uid, gid)
           s, u64tostr(info.rnbr,tmpbuf,0),u64tostr(info.wnbr,tmpbuf2,0)) ;
       log(LOG_ERR, "fatal error on socket %d: %s\n", s, strerror(errno));
 
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 1));
-#else
       shutdown(s, 2);
       close(s);
       if (mode) return(1); else  exit(1);
-#endif
     }
     switch (request) {
     case 0:
@@ -1089,9 +808,6 @@ int doit(s, fromp, mode, uid, gid)
       rfioacct(0,0,0,s,0,0,status,errno,&info,NULL,NULL);
 #endif /* SACCT */
 
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 1));
-#endif
       shutdown(s, 2);
       if( close(s) < 0 )
         log(LOG_ERR, "Error closing socket fildesc=%d, errno=%d\n", s, errno);
@@ -1101,9 +817,6 @@ int doit(s, fromp, mode, uid, gid)
     case RQST_CHKCON :
       log(LOG_DEBUG, "request type : check connect\n");
       srchk(s) ;
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif
       shutdown(s, 2); close(s);
       if (mode) return(0); else  exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
@@ -1117,24 +830,18 @@ int doit(s, fromp, mode, uid, gid)
       fd = sropen64(s, is_remote, from_host);
       log(LOG_DEBUG, "ropen64() returned: %d\n",fd);
       break;
-#if !defined(_WIN32)
     case RQST_OPENDIR :
       log(LOG_DEBUG, "request type <opendir()>\n");
       dirp = sropendir(s,is_remote,from_host,bet);
       log(LOG_DEBUG, "ropendir() returned %x\n",dirp);
       break;
-#endif /* WIN32 */
     case RQST_CLOSE  :
       log(LOG_DEBUG, "request type <close()>\n");
       status = srclose(s, &info, fd);
       log(LOG_DEBUG,"close() returned %d\n",status);
       fd = -1;
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif
       shutdown(s, 2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#if !defined(_WIN32)
     case RQST_CLOSEDIR  :
       log(LOG_DEBUG, "request type <closedir()>\n");
       status = srclosedir(s,&info,dirp);
@@ -1143,7 +850,6 @@ int doit(s, fromp, mode, uid, gid)
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
-#endif /* WIN32 */
     case RQST_READ  :
       info.readop ++ ;
       log(LOG_DEBUG, "request type <read()>\n");
@@ -1168,14 +874,12 @@ int doit(s, fromp, mode, uid, gid)
       status = srreadahd64(s, &info, fd);
       log(LOG_DEBUG, "rreadahd64() returned: %d\n",status);
       break;
-#if !defined(_WIN32)
     case RQST_READDIR :
       info.readop++;
       log(LOG_DEBUG, "request type <readdir()>\n");
       status = srreaddir(s,&info,dirp);
       log(LOG_DEBUG, "rreaddir() returned: %d\n",status);
       break;
-#endif /* WIN32 */
     case RQST_WRITE  :
       info.writop ++ ;
       log(LOG_DEBUG, "request type <write()>\n");
@@ -1188,7 +892,6 @@ int doit(s, fromp, mode, uid, gid)
       status = srwrite64(s, &info, fd);
       log(LOG_DEBUG, "rwrite64() returned: %d\n",status);
       break;
-#if !defined(_WIN32)
     case RQST_FCHMOD :
       log(LOG_DEBUG, "request type <fchmod()>\n");
       status = srfchmod(s, from_host, is_remote, fd) ;
@@ -1199,7 +902,6 @@ int doit(s, fromp, mode, uid, gid)
       status = srfchown(s, from_host, is_remote, fd) ;
       log(LOG_DEBUG, "fchown() returned %d\n",status);
       break;
-#endif /* WIN32 */
     case RQST_FSTAT :
       info.statop ++ ;
       log(LOG_DEBUG, "request type <fstat()>\n");
@@ -1219,14 +921,10 @@ int doit(s, fromp, mode, uid, gid)
       status = srstat(s,(bet?is_remote:0),(bet?from_host:(char *)NULL),bet);
       log(LOG_DEBUG, "stat() returned %d\n",status);
       if (request==RQST_STAT || request==RQST_STAT_SEC) {
-#if defined(_WIN32)
-        return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
         shutdown(s, 2); close(s);
         if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT  */
       break ;
-#if !defined(_WIN32)
     case RQST_LSTAT_SEC:
     case RQST_LSTAT :
       log(LOG_DEBUG, "request type <lstat()>\n");
@@ -1234,7 +932,6 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG, "lstat() returned %d\n",status);
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#endif /* WIN32 */
     case RQST_LSEEK :
       info.seekop ++ ;
       log(LOG_DEBUG, "request type <lseek()>\n");
@@ -1263,12 +960,8 @@ int doit(s, fromp, mode, uid, gid)
     case RQST_ERRMSG :
       log(LOG_DEBUG, "request type <errmsg()>\n");
       srerrmsg(s);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#if !defined(_WIN32)
     case RQST_MSYMLINK :
     case RQST_SYMLINK :
       log(LOG_DEBUG, "request type <symlink()>\n");
@@ -1291,14 +984,10 @@ int doit(s, fromp, mode, uid, gid)
       status = srrewinddir(s,&info,dirp);
       log(LOG_DEBUG, "srrewinddir() returned %d\n",status);
       break;
-#endif /* WIN32 */
     case RQST_STATFS :
       log(LOG_DEBUG, "request type <statfs()>\n");
       status = srstatfs(s) ;
       log(LOG_DEBUG, "statfs() returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_POPEN :
@@ -1320,64 +1009,44 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG,"request type <pclose()>\n");
       status = srpclose(s,streamf) ;
       log(LOG_DEBUG,"pclose() returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#if !defined(_WIN32)
     case RQST_ACCESS :
       log(LOG_DEBUG,"request type <access()>\n");
       status = sraccess(s, from_host, (bet?is_remote:0)) ;
       log(LOG_DEBUG,"raccess returned %d\n",status);
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#endif /* WIN32 */
     case RQST_MKDIR :
       log(LOG_DEBUG,"request type <mkdir()>\n");
       status = srmkdir(s,from_host,is_remote) ;
       log(LOG_DEBUG,"rmkdir returned %d\n", status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_RMDIR :
       log(LOG_DEBUG,"request type <rmdir()>\n");
       status = srrmdir(s,from_host,is_remote) ;
       log(LOG_DEBUG,"rrmdir returned %d\n", status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_CHMOD:
       log(LOG_DEBUG,"request type <chmod()>\n");
       status = srchmod(s,from_host,is_remote) ;
       log(LOG_DEBUG,"rchmod returned %d\n", status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#if !defined(_WIN32)
     case RQST_CHOWN:
       log(LOG_DEBUG,"request type <chown()>\n");
       status = srchown(s,from_host,is_remote) ;
       log(LOG_DEBUG,"rchown returned %d\n", status);
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#endif /* WIN32 */
     case RQST_RENAME:
       log(LOG_DEBUG,"request type <rename()>\n");
       status = srrename(s,from_host,is_remote) ;
       log(LOG_DEBUG,"rrename returned %d\n", status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-#if !defined(_WIN32)
     case RQST_LOCKF:
       log(LOG_DEBUG,"request type <lockf()>\n");
       status = srlockf(s,fd) ;
@@ -1388,15 +1057,11 @@ int doit(s, fromp, mode, uid, gid)
       status = srlockf64(s, &info, fd) ;
       log(LOG_DEBUG,"rlockf64 returned %d\n", status);
       break;
-#endif /* WIN32 */
     case RQST_END :
       log(LOG_DEBUG,"request type : end rfiod\n") ;
 #if defined(SACCT)
       rfioacct(RQST_END,0,0,s,0,0,status,errno,&info,NULL,NULL);
 #endif /* SACCT */
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break ;
@@ -1410,9 +1075,6 @@ int doit(s, fromp, mode, uid, gid)
       status = srclose_v3(s,&info,fd);
       log(LOG_DEBUG,"rclose_v3 returned %d\n", status);
       fd = -1;
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
@@ -1420,9 +1082,6 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG,"request type : read_v3\n");
       status = srread_v3(s,&info,fd);
       log(LOG_DEBUG,"rread_v3 returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       fd = -1;
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
@@ -1431,9 +1090,6 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG,"request type : write_v3\n");
       status = srwrite_v3(s,&info,fd);
       log(LOG_DEBUG,"rwrite_v3 returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       fd = -1;
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
@@ -1454,9 +1110,6 @@ int doit(s, fromp, mode, uid, gid)
       status = srclose64_v3(s,&info,fd);
       log(LOG_DEBUG,"rclose64_v3 returned %d\n", status);
       fd = -1;
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
@@ -1464,9 +1117,6 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG,"request type : read64_v3\n");
       status = srread64_v3(s,&info,fd);
       log(LOG_DEBUG,"rread64_v3 returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       fd = -1;
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
@@ -1475,14 +1125,10 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG,"request type : write64_v3\n");
       status = srwrite64_v3(s,&info,fd);
       log(LOG_DEBUG,"rwrite64_v3 returned %d\n",status);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       fd = -1;
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
-#if defined(FORTRAN)
     case RQST_XYOPEN  :
       log(LOG_DEBUG, "request type <xyopen()>\n");
       status = srxyopen(s, &lun, &access,(bet?is_remote:0),(bet?from_host:NULL),bet);
@@ -1506,21 +1152,16 @@ int doit(s, fromp, mode, uid, gid)
       status = srxywrit(s, &info, lun, access);
       log(LOG_DEBUG, "xywrit() returned: %d\n",status);
       break;
-#endif /* FORTRAN */
     case RQST_MSTAT64:
     case RQST_STAT64 :
       log(LOG_DEBUG, "request type <stat64()>\n");
       status = srstat64(s, is_remote, from_host);
       log(LOG_DEBUG, "stat64() returned %d\n",status);
       if (request == RQST_STAT64) {
-#if defined(_WIN32)
-        return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
         shutdown(s, 2); close(s);
         if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT64  */
       break ;
-#if !defined(_WIN32)
     case RQST_LSTAT64 :
       log(LOG_DEBUG, "request type <lstat64()>\n");
       status = srlstat64(s, is_remote, from_host);
@@ -1528,19 +1169,14 @@ int doit(s, fromp, mode, uid, gid)
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
-#endif /* ! _WIN32  */
     default :
       log(LOG_ERR, "unknown request type %x(hex)\n", request);
-#if defined(_WIN32)
-      return(mt_cleanup(td, &fd, 0));
-#endif /* WIN32 */
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     }  /* End of switch (request) */
   }  /* End of for (;;) */
 }
 
-#ifndef _WIN32
 void check_child_exit(int block)
 {
   int child_pid;
@@ -1570,4 +1206,3 @@ void check_child_exit(int block)
   }
   return;
 }
-#endif

@@ -6,12 +6,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"

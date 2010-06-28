@@ -9,19 +9,11 @@
 
 #include <stdlib.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <direct.h>
-#include <io.h>
-#include <fcntl.h>
-#define pipe(x) _pipe(x, 512, O_BINARY)
-#else  /* _WIN32 */
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -69,11 +61,6 @@ typedef struct rtcpcThrData
   struct rtcpcThrData *prev;
 } rtcpcThrData_t;
 static rtcpcThrData_t *activeThreads = NULL;
-
-#if defined(_WIN32)
-extern uid_t getuid();
-extern gid_t getgid();
-#endif /* _WIN32 */
 
 #include <serrno.h>
 
@@ -152,11 +139,7 @@ static int rtcpc_FixPath(file_list_t *file, int fn_size) {
   char tmp_path[CA_MAXPATHLEN+1];
   char local_host[CA_MAXHOSTNAMELEN+1];
   char *filename, *dskhost, *path;
-#if defined(_WIN32)
-  char dir_delim[] = "\\";
-#else /* _WIN32 */
   char dir_delim[] = "/";
-#endif /* _WIN32 */
 #if defined(USE_RFIO)
   int c;
 #endif /* USE_RFIO */
@@ -2017,20 +2000,16 @@ int rtcpc_runReq_ext(
       FD_SET((*socks)->abort_socket,&rd_set);
     if ( internalPipe[0] != INVALID_SOCKET )
       FD_SET(internalPipe[0],&rd_set);
-#if !defined(_WIN32)
     maxfd = (*socks)->abort_socket;
     if ( (*socks)->abort_socket < *((*socks)->listen_socket) ) 
       maxfd = *((*socks)->listen_socket);
     if ( maxfd < internalPipe[0] ) maxfd = internalPipe[0];
-#endif /* !_WIN32 */
     for (i=0; i<100; i++) {
       if ( (*socks)->proc_socket[i] != NULL &&
            *(*socks)->proc_socket[i] != INVALID_SOCKET ) {
         FD_SET(*((*socks)->proc_socket[i]),&rd_set);
-#if !defined(_WIN32)
         if (*((*socks)->proc_socket[i]) > maxfd) 
           maxfd = *((*socks)->proc_socket[i]);
-#endif /* !_WIN32 */
       }
     }
     exc_set = rd_set;

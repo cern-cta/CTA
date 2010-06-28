@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.73 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,18 +13,11 @@
 #if linux
 #include <sys/mtio.h>
 #endif
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
@@ -98,9 +87,6 @@ char	**argv;
 	char hdr2[81];
 	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
 	int lblcode;
-#if DUXV4
-	char *msgaddr;
-#endif
 #if linux
 	struct mtop mtop;
 #endif
@@ -114,9 +100,6 @@ char	**argv;
 	char *sbp;
 	int scsi;
 	int side;
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-	int status;
-#endif
 	int Tflag = 0;
         int Fflag = 0; /* force flag */
 	struct timeval timeval;
@@ -125,9 +108,6 @@ char	**argv;
 	int tpmounted;
 	char tpvsn[CA_MAXVSNLEN+1];
 	int ux;
-#ifdef TMS
-	int vbsyretry;
-#endif        
 	int vdqm_rc;
 	int vdqm_reqid;
 	int vdqm_status;
@@ -195,11 +175,7 @@ char	**argv;
 		prelabel -= FORCEPRELBL;
                 Fflag = 1;
 	}
-#if _AIX
-	scsi = strncmp (dvrname, "mtdd", 4);
-#else
 	scsi = 1;
-#endif
 
 	c = 0;
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
@@ -208,7 +184,7 @@ char	**argv;
 
 	/* initialize for select */
 
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+#if defined(linux)
 	maxfds = getdtablesize();
 #else
 	maxfds = _NFILE;
@@ -266,16 +242,6 @@ char	**argv;
 #endif
 
 	updvsn_done = 0;
-#ifdef TMS
-	vbsyretry = 0;
-	while ((c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive)) == ETVBSY) {
-		n = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
-		if (vbsyretry++) break;
-		sleep (10);
-	}
-	if (c)
-		goto reply;
-#endif
 #if VMGR
 	density[0] = '\0';
 	if ((c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost)))
@@ -283,14 +249,10 @@ char	**argv;
 #endif
 
 	if (tpmounted) {	/* tape already mounted */
-#ifndef SOLARIS25
 		if (!scsi)
-#endif
 			tapefd = open (path, O_RDONLY);
-#ifndef SOLARIS25
 		else
 			tapefd = open (path, O_RDONLY|O_NDELAY);
-#endif
 		if (tapefd >= 0) {
 			if (chkdriveready (tapefd) > 0) goto mounted;
 			else close (tapefd);
@@ -340,7 +302,7 @@ char	**argv;
                                     "Reason"  , TL_MSG_PARAM_STR  , why,
                                     "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
-#if defined(RS6000PCTA) || defined(ADSTAR) || defined(CDK)
+#if defined(CDK)
 remount_loop:
 #endif
 		if (*loader != 'm' && needrbtmnt) {
@@ -358,48 +320,12 @@ remount_loop:
 		}
 
 		while (1) {	/* wait for drive ready or operator cancel */
-#if defined(SOLARIS) || defined(_AIX)
-#if _AIX
-			if (scsi) {
-				if ((tapefd = open (path, O_RDWR)) >= 0) {
-					tpmode = WRITE_ENABLE;
-					break;
-				}
-				if (errno == EWRPROTECT) {
-					if ((tapefd = open (path, O_RDONLY)) >= 0) {
-						tpmode = WRITE_DISABLE;
-						break;
-					}
-				}
-				if (errno != EIO && errno != ENOTREADY) c = errno;
-			} else {
-#else
-				if ((tapefd = open (path, O_RDWR)) >= 0) {
-					tpmode = WRITE_ENABLE;
-					break;
-				}
-				if (errno == EACCES) {
-					if ((tapefd = open (path, O_RDONLY)) >= 0) {
-						tpmode = WRITE_DISABLE;
-						break;
-					}
-				}
-				if (errno != EIO) c = errno;
-#endif
-#endif
-#ifndef SOLARIS
-#if !defined(_IBMR2) || defined(RS6000PCTA)
 				if ((tapefd = open (path, O_RDONLY|O_NDELAY)) >= 0) {
 					if (chkdriveready (tapefd) > 0) {
 						tpmode = chkwriteprot (tapefd);
 						break;
 					} else close (tapefd);
 				} else c = errno;
-#endif
-#if defined(_AIX) && defined(_IBMR2)
-			}
-#endif
-#endif
 			if (c) {
 				if (errno == ENXIO)	/* drive not operational */
 					configdown (drive);
@@ -441,15 +367,11 @@ remount_loop:
 
 				goto reply;
 			}
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-			if (*loader == 'l')
-				c = qmid3495 (&status);
-#endif
 #if defined(CDK)
 			if (*loader == 'a')
 				c = acsmountresp();
 #endif
-#if defined(RS6000PCTA) || defined(ADSTAR) || defined(CDK)
+#if defined(CDK)
 			if (*loader == 'l' || *loader == 'a') {
 				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
 					goto reply;
@@ -495,31 +417,10 @@ remount_loop:
 #endif
 			continue;
 		}
-#if defined(_AIX) && defined(RS6000PCTA)
-		if (!scsi) {
-			close (tapefd);         /* to avoid errno 22 on read */
-			if ((tapefd = open (path, O_RDONLY)) < 0) {
-				usrmsg (func, TP042, path, "reopen", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
-                                                    "func"   , TL_MSG_PARAM_STR  , func,
-                                                    "path"   , TL_MSG_PARAM_STR  , path,
-                                                    "Message", TL_MSG_PARAM_STR  , "reopen",
-                                                    "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
-                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
-                                                    "Drive"  , TL_MSG_PARAM_STR  , drive, 
-                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid);
-				c = errno;
-				goto reply;
-			}
-		}
-#endif
 #if linux
 		mtop.mt_op = MTSETBLK;
 		mtop.mt_count = 0;
 		ioctl (tapefd, MTIOCTOP, &mtop);	/* set variable block size */
-#endif
-#if DUXV4
-		(void) gettperror (tapefd, path, &msgaddr);	/* clear eei status */
 #endif
 
 		/* position tape at BOT */
@@ -528,8 +429,6 @@ remount_loop:
 
 		/* set density and compression mode */
 
-#if defined(ADSTAR)
-#endif
 #if linux
 		(void) setdens (tapefd, path, devtype, den);
 #endif
@@ -864,10 +763,6 @@ remount_loop:
 	}
 #endif
 mounted:
-#ifdef TMS
-	if (c = sendtmsmount (mode, "CO", vid, jid, name, acctname, drive))
-		goto reply;
-#endif
 #if VDQM
 	vdqm_status = VDQM_VOL_MOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
@@ -952,17 +847,9 @@ reply:
 		cleanup();
 	} else {
 		close (tapefd);
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-                if (*loader == 'l')
-                        closelmcp ();
-#endif
 #if defined(CDK)
 		if (*loader == 'a')
 			wait4acsfinalresp();
-#endif
-#if defined(DMSCAPI)
-		if (*loader == 'R')
-			closefbs (loader);
 #endif
 		if (*loader == 's')
 			closesmc ();
@@ -1115,23 +1002,11 @@ void cleanup()
         tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "cleanup started" );
-#ifdef TMS
-	if (updvsn_done == 0)
-		(void) sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
-#endif
 	if (tapefd >= 0)
 		close (tapefd);
-#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-	if (*loader == 'l')
-		closelmcp ();
-#endif
 #if defined(CDK)
 	if (*loader == 'a')
 		wait4acsfinalresp();
-#endif
-#if defined(DMSCAPI)
-	if (*loader == 'R')
-		closefbs();
 #endif
 	if ((*loader == 's') && (do_cleanup_after_mount == 0)) {
                 do_cleanup_after_mount = 1;
@@ -1286,7 +1161,7 @@ char *loader;
 		*c = EIO;
 		return (-1);
 	case RBT_SLOW_RETRY:
-		*c = ETVBSY;	/* volume in use (ifndef TMS) */
+		*c = ETVBSY;	/* volume in use */
 		return (-1);
 	case RBT_FAST_RETRY:
                 tplogit (func, "RBT_FAST_RETRY %s\n", msg);

@@ -3,22 +3,14 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.25 $ $Date: 2007/02/20 16:56:34 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
  *	and the VOL1 label verified
  */
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
@@ -66,13 +58,6 @@ int vdqm_reqid;
 	strcpy (func, "Ctape_mount");
 	uid = getuid();
 	gid = getgid();
-#if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		Ctape_errmsg (func, TP053);
-		serrno = SENOMAPFND;
-		return (-1);
-	}
-#endif
 	jid = findpgrp();
 #ifdef TMS
 	p = getacct();

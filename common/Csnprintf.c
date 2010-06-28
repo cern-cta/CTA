@@ -22,14 +22,6 @@ int DLL_DECL Csnprintf(char *str, size_t size, const char *format, ...) {
 
 int DLL_DECL Cvsnprintf(char *str, size_t size, const char *format, va_list args)
 {
-#if (defined(__osf__) && defined(__alpha))
-	return(vsprintf(str, format, args));
-#else
-#if defined(_WIN32)
-	return(_vsnprintf(str, size, format, args));
-#else
 	return(vsnprintf(str, size, format, args));
-#endif
-#endif
 }
 

@@ -20,7 +20,6 @@
 #include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
-#if !defined(_WIN32)
 #include <unistd.h>
 /*
  * _WIN32 strtok() is already MT safe where as others wait
@@ -29,9 +28,6 @@
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-#else
-extern uid_t getuid();
-#endif
 #include <stdlib.h>
 
 #include <Cglobals.h>
@@ -48,7 +44,7 @@ char *resbuf;
     struct passwd *pwd = NULL;        /* Pointer to the password entry    */
     char      buf[BUFSIZ];
     char      *cprv, *rv;
-#if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
     char      *last = NULL;
 #endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
 

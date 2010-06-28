@@ -18,9 +18,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
-#if !defined(_WIN32)
 #include <dirent.h>
-#endif
 
 #include <pwd.h>
 #include <grp.h>
@@ -69,9 +67,6 @@ int main(argc, argv)
   int recursively = 0;
   int multiple = 0;
   char tmpbuf[21];
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   strcpy(ftype,"pcdb-ls");
   ftype_v[0] = S_IFIFO; ftype_v[1] = S_IFCHR; ftype_v[2] = S_IFDIR;
@@ -97,13 +92,6 @@ int main(argc, argv)
     }
   }
   (void) time (&current_time);
-
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
 
   multiple = argc - optind - 1;
   for (;optind<argc;optind++) {

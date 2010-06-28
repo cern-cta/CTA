@@ -33,27 +33,13 @@ struct rfstatfs {
         long freenods ;      /* Number of free inodes        */
 } ;
 #include <stdio.h>
-#ifndef _DIRENT_WIN32_H
 #include <dirent.h>
-#endif
 #include <sys/stat.h>
-#if !defined(RFIO_KERNEL)
-#if defined(_WIN32)
-typedef void * DIR;
-#endif
-#endif
 
 /*
  * Define structure for preseek requests.
  */
-#if !defined(_WIN32)
 #include <sys/uio.h>
-#else
-struct iovec {
-        int iov_base ;
-        int iov_len ;
-} ;
-#endif
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
 struct iovec64 {
         off64_t iov_base ;
@@ -125,7 +111,7 @@ EXTERN_C int DLL_DECL rfstatfs _PROTO((char *, struct rfstatfs *)) ;
 EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
 
-#if (defined(__alpha) && defined(__osf__)) || defined(__APPLE__)
+#if defined(__APPLE__)
 #define fseeko64 fseek
 #define fstat64 fstat
 #define ftello64 ftell
@@ -134,12 +120,6 @@ EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
 #define lstat64 lstat
 #define open64 open
 #define stat64 stat
-#endif
-#if defined(_WIN32)
-#define fstat64 _fstati64
-#define lseek64 _lseeki64
-#define open64 open
-#define stat64 _stati64
 #endif
 
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
@@ -196,7 +176,7 @@ EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
 EXTERN_C RFILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((RFILE *, off64_t, int));
 EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((RFILE *));
-#if defined(linux) || defined(SOLARIS)
+#if defined(linux)
 EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
 #else
 EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
@@ -232,16 +212,14 @@ EXTERN_C int DLL_DECL rfio_pclose _PROTO((FILE *));
 EXTERN_C FILE DLL_DECL *rfio_popen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, FILE *));
 EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, FILE *));
-#if !(defined(__hpux) && !defined(_INCLUDE_POSIX_SOURCE))
 EXTERN_C DIR DLL_DECL *rfio_opendir _PROTO((char *));
 EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((DIR *));
-#endif /* !__hpux && !_INCLUDE_POSIX_SOURCE */
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
 EXTERN_C FILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((FILE *, off64_t, int));
 EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((FILE *));
-#if defined(linux) || defined(SOLARIS)
+#if defined(linux)
 EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((DIR *));
 #else
 EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((DIR *));

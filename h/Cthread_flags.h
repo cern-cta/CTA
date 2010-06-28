@@ -46,33 +46,9 @@
 #endif
 #define _CTHREAD_PROTO_LINUX 3
 
-#ifdef _CTHREAD_PROTO_WIN32
-#undef _CTHREAD_PROTO_WIN32
-#endif
-#define _CTHREAD_PROTO_WIN32 4
-
 /* ----------------------------------------------- */
 /* Analyse of compilation flags                    */
 /* ----------------------------------------------- */
-
-/* ----------------------------------------------- */
-/* Windows : Force to always use threads on _WIN32 */
-/* ----------------------------------------------- */
-#ifdef _WIN32
-#ifdef NOCTHREAD
-#undef NOCTHREAD
-#endif
-#ifndef CTHREAD
-#define CTHREAD
-#endif
-/* Makes sure that Windows/NT version is correct */
-#ifndef _CTHREAD_WIN32MTX
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x0400
-#endif /* _CTHREAD_WIN32MTX */
-#endif /* ifdef _WIN32 */
 
 /* -------------------------------------------- */
 /* Unix-like:                                   */
@@ -107,9 +83,6 @@
 /* For Windows we current don't have any choice */
 /* -------------------------------------------- */
 #ifdef _CTHREAD
-#if _WIN32
-#define _CTHREAD_PROTO _CTHREAD_PROTO_WIN32
-#else
 #ifdef CTHREAD_POSIX
 #define _CTHREAD_PROTO _CTHREAD_PROTO_POSIX
 #else
@@ -123,7 +96,6 @@
 #endif /* ifdef CTHREAD_LINUX */
 #endif /* ifdef CTHREAD_DCE */
 #endif /* ifdef CTHREAD_POSIX */
-#endif /* ifdef _WIN32 */
 #endif /* ifdef CTHREAD */
 
 /* -------------------------------------------- */
@@ -145,13 +117,7 @@
 /* Includes                                     */
 /* ============================================ */
 #ifdef _CTHREAD
-#ifdef _WIN32
-#include <windows.h>
-#include <winbase.h>
-#include <process.h>
-#else
 #include <pthread.h>
-#endif /* ifdfef _WIN32 */
 #else  /* ifdef _CTHREAD */
 #include <unistd.h>           /* getpid fork..  */
 #include <sys/types.h>        /* waitpid        */
@@ -159,10 +125,8 @@
 #include <signal.h>           /* signal         */
 #endif /* ifdef _CTHREAD */
 #include <stdlib.h>           /* malloc, etc... */
-#ifndef _WIN32
 #include <unistd.h>           /* fork usleep... */
 #include <sys/time.h>         /* gettimeofday   */
-#endif /* ifndef _WIN32 */
 #include <errno.h>            /* errno ...      */
 #include <string.h>           /* strerror ...   */
 

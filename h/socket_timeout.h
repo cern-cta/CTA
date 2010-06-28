@@ -33,12 +33,7 @@
 #include <net.h>
 #include <sys/socket.h>
 
-#if _WIN32
-#include <windows.h>
-typedef size_t ssize_t;
-#else
 #include <sys/types.h>
-#endif
 
 EXTERN_C ssize_t DLL_DECL  netread_timeout _PROTO((SOCKET, void *, ssize_t, int));
 EXTERN_C ssize_t DLL_DECL  netwrite_timeout _PROTO((SOCKET, void *, ssize_t, int));

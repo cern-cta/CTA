@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.14 $ $Date: 2008/10/28 08:04:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
 #include <errno.h>
 #include <stdio.h>
@@ -206,13 +202,9 @@ char	**argv;
 		strcpy (vid, vsn);
 	if (nbhdr < 0) nbhdr = 1;
 
-#if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
-#endif
 	signal (SIGINT, cleanup);
-#if ! defined(_WIN32)
 	signal (SIGQUIT, cleanup);
-#endif
 	signal (SIGTERM, cleanup);
 
         if (*dgn == '\0') {
@@ -223,12 +215,6 @@ char	**argv;
 #if VMGR
 		uid = getuid();
 		gid = getgid();
-#if defined(_WIN32)
-		if (uid < 0 || gid < 0) {
-			fprintf (stderr, TP053);
-			exit_prog (USERR);
-		}
-#endif
 		if ((c = vmgrcheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, uid, gid))) {
 #if TMS
 			if (c != ETVUNKN)

@@ -8,9 +8,6 @@
  */
 
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -30,11 +27,6 @@
 #endif /* RTCP_SERVER */
 #include "vmgr_api.h"
 #include "serrno.h"
-
-#if defined(_WIN32)
-extern uid_t geteuid();
-extern gid_t getegid();
-#endif /* _WIN32 */
 
 #define LOWERCASE(X) {char *__c; \
     for (__c=X; *__c != '\0'; __c++) *__c=tolower(*__c); } 
@@ -64,12 +56,6 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     /* We need to know exact current euid/egid */
     euid = geteuid();
     egid = getegid();
-#if defined(_WIN32)
-    if (euid < 0 || egid < 0) {
-		serrno = SEUSERUNKN;
-		return(-1);
-    }
-#endif
 
     firstVID = tape->tapereq.vid;
     if ( *firstVID == '\0' ) firstVID = tape->tapereq.vsn;

@@ -10,11 +10,6 @@
 #if defined(CTAPE_DUMMIES)
 
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <io.h>
-#include <process.h>
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -223,15 +218,6 @@ int Ctape_status(char *a, struct drv_status *b, int c) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"Ctape_rstatus(%s,0x%x,%d)\n",a,b,c));
 }
-
-#if defined(_AIX) && defined(_IBMR2)
-int getdvrnam(char *path, char *drvname) {
-    fprintf(stdout,"getdvrnam(%s,%s) called\n",
-            (path != NULL ? path : "(nil)"),
-            (drvname != NULL ? drvname : "(nil)"));
-    return(0);
-}
-#endif /* _AIX && _IBMR2 */
 
 int gettperror(int fd, char *path, char **msgaddr) {
     int rc = 0;

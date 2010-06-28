@@ -231,10 +231,6 @@
 #define	TP049	"TP049 - option IGNOREEOI is not valid for label type al or sl\n"
 #define	TP050	"TP050 - vid mismatch: %s on request, %s on drive\n"
 #define	TP051	"TP051 - fatal configuration error: %s %s\n"
-#if defined(_WIN32)
-#define	TP052	"TP052 - WSAStartup unsuccessful\n"
-#define	TP053	"TP053 - you are not registered in the unix group/passwd mapping file\n"
-#endif
 #define	TP054	"TP054 - tape not mounted or not ready\n"
 #define	TP055	"TP055 - parameter inconsistency with TMS for vid %s: %s on request <-> %s in TMS\n"
 #define	TP056	"TP056 - %s request by %d,%d from %s\n"

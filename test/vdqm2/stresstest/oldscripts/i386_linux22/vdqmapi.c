@@ -5,14 +5,6 @@
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
-#if defined(_WIN32)
-#include <process.h>
-#include <winsock2.h>
-extern char *geterr();
-extern uid_t getuid();
-extern gid_t getgid();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
@@ -20,7 +12,6 @@ WSADATA wsadata;
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <net.h>
@@ -51,15 +42,6 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
 	int rc;
 
 	if ( nw != NULL && *nw != NULL && (*nw)->connect_socket != INVALID_SOCKET ) return(0);
-#if defined(_WIN32)
-	rc = WSAStartup(MAKEWORD(2,0), &wsadata);    /* Initialize the WinSock DLL */
-	if ( rc ) {
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_InitNW() WSAStartup(): %s\n",NWERRTXT);
-#endif /* DEBUG */
-		return(-1);
-	}
-#endif /* _WIN32 */
 	/*
 	 * Connect to appropriate VDQM server and port. The server
 	 * name is take from:
@@ -182,15 +164,6 @@ int DLL_DECL vdqm_Disconnect(vdqmnw_t **nw) {
 		}
 		free(*nw);
 		*nw = NULL;
-#if defined(_WIN32)
-		if ( (rc = WSACleanup()) == SOCKET_ERROR ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_Disconnect() WSACleanup(): %s\n",
-				NWERRTXT);
-#endif /* DEBUG */
-			return(-1);
-		}
-#endif /* _WIN32 */
 	}
 	return(0);
 }

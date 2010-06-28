@@ -26,22 +26,16 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
-#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif
 #endif
 
 #include <sys/time.h>
 #include <stdlib.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
 #include <netinet/tcp.h>
-#endif
 #include <common.h>
 
 int data_rfio_connect();

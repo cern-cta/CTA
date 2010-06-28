@@ -18,9 +18,7 @@
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfio_rdirfdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
-#if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
-#endif /* _WIN32 */
 #include <Cpwd.h>
 extern char *getacct();
 
@@ -135,13 +133,8 @@ RDIR DLL_DECL *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
       rfio_errno = 0;
       dp = (RDIR *)rfio_HsmIf_opendir(dirname);
     } else {
-#if defined(_WIN32)
-      dp = NULL;
-      serrno = SEOPNOTSUP;
-#else /* _WIN32 */
       dp = (RDIR *)opendir(dirname);
       if ( ! dp ) serrno = 0;
-#endif /* _WIN32 */
     }
     END_TRACE() ;
     return(dp);

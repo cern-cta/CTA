@@ -17,11 +17,9 @@
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfio_rfilefdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
-#if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
 #include <pwd.h>
 #include <stdlib.h>
 #include <Cpwd.h>
@@ -125,7 +123,7 @@ int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
   int     rt ;  /* daemon in site(0) or not (1) */
   int     bufsize ;  /* socket buffer size   */
   struct  sockaddr_in to;
-#if (defined(_AIX) || defined(linux))
+#if defined(linux)
   socklen_t tolen;
 #else
   int     tolen;
@@ -344,11 +342,7 @@ int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
   if (netread_timeout(rfp->s, rfio_buf, replen, RFIO_CTRL_TIMEOUT) != replen ) {
     TRACE(2, "rfio", "rfio_open64_ext: read(): ERROR %d occured (errno=%d, serrno=%d)",
           replen, errno, serrno);
-#if !defined(_WIN32)
     if ( serrno == SECONNDROP || errno == ECONNRESET )
-#else
-      if ( serrno == SECONNDROP || serrno == SETIMEDOUT )
-#endif
       {
         rfio_cleanup(rfp->s);
         /* Server doesn't support 64 mode, call 32 one*/
@@ -397,19 +391,11 @@ int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
   /*
    * The file is open, update rfp->fp
    */
-#if defined(hpux)
-  rfp->fp.__fileL = rfp->s;
-#else
 #if defined(linux)
   rfp->fp._fileno = rfp->s;
 #else
-#if defined(__Lynx__)
-  rfp->fp._fd = rfp->s;
-#else
   rfp->fp._file = rfp->s;
-#endif  /* __Lynx__ */
 #endif  /* linux */
-#endif  /* hpux */
   END_TRACE() ;
   return (rfp->s) ;
 }

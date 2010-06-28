@@ -9,11 +9,7 @@
 
 #include <stdlib.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else  /* _WIN32 */
 #include <sys/time.h>
-#endif /* _WIN32 */
 
 #include <errno.h>
 #include <stdarg.h>

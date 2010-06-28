@@ -3,21 +3,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.12 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	usrlbl - user callable routines to read/write header and trailer labels */
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(hpux) || defined(sgi) || defined(linux)
-#include <sys/mtio.h>
-#endif
-#if defined(__alpha) && defined(__osf__)
-#include <sys/ioctl.h>
+#if defined(linux)
 #include <sys/mtio.h>
 #endif
 #include "Ctape.h"
@@ -145,11 +137,8 @@ int	nblocks;
 	int c;
 	struct devlblinfo  *dlip;
 	char hdr1[80], hdr2[80];
-#if defined(hpux) || defined(linux)
+#if defined(linux)
 	struct mtget mt_info;
-#endif
-#if defined(__alpha) && defined(__osf__)
-	struct mtop mtop;
 #endif
 	char uhl1[80];
 
@@ -166,69 +155,28 @@ int	nblocks;
 	memcpy (hdr2, labelid, 3);
 
 	if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
-#if defined(hpux) || defined(linux)
+#if defined(linux)
 	/* Please note that under Linux, this call is not necessary here
 	because the previous writing of filemark has already cleared the
 	EOT condition */
 	if (labelid[2] == 'V')	/* must clear EOT condition */
 		c = ioctl (tapefd, MTIOCGET, &mt_info);
 #endif
-#if defined(__alpha) && defined(__osf__)
-	if (labelid[2] == 'V') {
-		mtop.mt_op = MTCSE;     /* Clears serious exception */
-		mtop.mt_count = 1;
-		c = ioctl (tapefd, MTIOCTOP, &mtop);
-	}
-#endif
-#if sgi
-	if (labelid[2] == 'V')
-		c = ioctl (tapefd, MTANSI, 1);
-#endif
 	if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
 	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
-#if defined(hpux)
-	if (labelid[2] == 'V')	/* must clear EOT condition */
-		c = ioctl (tapefd, MTIOCGET, &mt_info);
-#endif
 #if defined(linux)
 	/* must clear EOT condition */
 	c = ioctl (tapefd, MTIOCGET, &mt_info);
 #endif
-#if defined(__alpha) && defined(__osf__)
-	if (labelid[2] == 'V') {
-		mtop.mt_op = MTCSE;     /* Clears serious exception */
-		mtop.mt_count = 1;
-		c = ioctl (tapefd, MTIOCTOP, &mtop);
-	}
-#endif
 	if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
-#if sun
-	if (c == 0)	/* 1st try for EOV2 on Desktop SPARC & SPARC System 600 */
-		if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
-#endif
 	if (dlip->lblcode == AUL) {
 		memcpy (uhl1, dlip->uhl1, 80);
 		uhl1[1] = 'T';
-#if defined(hpux)
-		if (labelid[2] == 'V')	/* must clear EOT condition */
-			c = ioctl (tapefd, MTIOCGET, &mt_info);
-#endif
 #if defined(linux)
 		/* must clear EOT condition */
 		c = ioctl (tapefd, MTIOCGET, &mt_info);
 #endif
-#if defined(__alpha) && defined(__osf__)
-		if (labelid[2] == 'V') {
-			mtop.mt_op = MTCSE;     /* Clears serious exception */
-			mtop.mt_count = 1;
-			c = ioctl (tapefd, MTIOCTOP, &mtop);
-		}
-#endif
 		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
-#if sun
-		if (c == 0)	/* 1st try for UHL1 on Desktop SPARC & SPARC System 600 */
-			if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
-#endif
 	}
 	return (wrteotmrk (tapefd, path));
 }

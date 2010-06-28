@@ -25,16 +25,10 @@
 #include "common.h"
 #include <zlib.h>
 #include <attr/xattr.h>
-#if defined(_WIN32)
-#include "syslog.h"
-#include "ws_errmsg.h"
-#include <io.h>
-#else
 #include <sys/param.h>
 #include <syslog.h>                     /* System logger                */
 #include <sys/time.h>
-#endif
-#if defined(_AIX) || defined(hpux) || defined(SOLARIS) || defined(linux)
+#if defined(linux)
 #include <signal.h>
 #endif
 
@@ -48,37 +42,14 @@
 #include "log.h"
 #include "u64subr.h"
 
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif
 #include <sys/types.h>
-#if !defined(_WIN32)
 #include <netinet/in.h>
-#if ((defined(IRIX5) || defined(IRIX6)) && ! (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN) && defined(PDP_ENDIAN)))
-#ifdef   LITTLE_ENDIAN
-#undef   LITTLE_ENDIAN
-#endif
-#define  LITTLE_ENDIAN 1234
-#ifdef   BIG_ENDIAN
-#undef   BIG_ENDIAN
-#endif
-#define  BIG_ENDIAN 4321
-#ifdef   PDP_ENDIAN
-#undef   PDP_ENDIAN
-#endif
-#define  PDP_ENDIAN 3412
-#endif
 #include <netinet/tcp.h>
-#endif
 #include <sys/stat.h>
 
 #ifdef linux
 #include <sys/uio.h>
 #include "rfio_alignedbuf.h"
-#endif
-
-#ifdef CS2
-#include <nfs/nfsio.h>
 #endif
 
 #include "rfio_callhandlers.h"
@@ -101,11 +72,6 @@ extern int ignore_uid_gid;
 #define DAEMONV3_RDMT (1)
 #define DAEMONV3_RDMT_NBUF (4)
 #define DAEMONV3_RDMT_BUFSIZE (256*1024)
-
-#ifdef _WIN32
-#define malloc_page_aligned(x) malloc(x)
-#define free_page_aligned(x) free(x)
-#endif
 
 static int daemonv3_rdmt, daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
 
@@ -141,50 +107,6 @@ extern char *getconfent();
 extern int  checkkey(int sock, u_short key);
 extern int  check_user_perm(int *uid, int *gid, char *hostname, int *ptrcode, char *permstr);
 
-#if defined(_WIN32)
-#if !defined (MAX_THREADS)
-#define MAX_THREADS 64
-#endif /* MAX_THREADS */
-
-extern  DWORD tls_i;                    /* thread local storage index */
-extern struct thData {
-  SOCKET ns;            /* control socket */
-  struct sockaddr_in from;
-  int mode;
-  int _is_remote;
-  int fd;
-  /* all globals, which have to be local for thread */
-  char *rqstbuf;        /* Request buffer               */
-  char *filename;       /* file name                    */
-  char *iobuffer;       /* Data communication buffer    */
-  int  iobufsiz;        /* Current io buffer size       */
-  SOCKET data_s;        /* Data listen socket (v3) */
-  SOCKET data_sock;     /* Data accept socket (v3) */
-  SOCKET ctrl_sock;     /* the control socket (v3) */
-  int first_write;
-  int first_read;
-  int byte_read_from_network;
-  struct rfiostat myinfo;
-  char  from_host[MAXHOSTNAMELEN];
-  /* Context for the open/firstwrite/close handlers */
-  void *handler_context;
-} *td;
-
-#define rqstbuf td->rqstbuf
-#define filename td->filename
-#define iobuffer td->iobuffer
-#define iobufsiz td->iobufsiz
-#define data_s td->data_s
-#define data_sock td->data_sock
-#define ctrl_sock td->ctrl_sock
-#define first_write td->first_write
-#define first_read td->first_read
-#define byte_read_from_network td->byte_read_from_network
-#define is_remote td->_is_remote
-#define myinfo td->myinfo
-#define handler_context td->handler_context
-
-#else    /* WIN32 */
 /*
  * Buffer declarations
  */
@@ -193,11 +115,6 @@ extern char     filename[MAXFILENAMSIZE];
 
 static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz;              /* Current io buffer size       */
-#endif   /* else WIN32 */
-
-#if defined(_WIN32)
-#define ECONNRESET WSAECONNRESET
-#endif   /* WIN32 */
 
 extern int srchkreqsize _PROTO((SOCKET, char *, int));
 extern char *forced_filename;
@@ -207,7 +124,6 @@ extern int check_path_whitelist _PROTO((const char *, const char *, const char *
 
 /* Warning : the new sequential transfer mode cannot be used with
    several files open at a time (because of those global variables)*/
-#if !defined(_WIN32)    /* moved to global structure            */
 static int data_sock;   /* Data socket                          */
 static int ctrl_sock;   /* the control socket                   */
 static int first_write;
@@ -216,7 +132,6 @@ static off64_t          byte_read_from_network;
 static struct rfiostat  myinfo;
 /* Context for the open/firstwrite/close handlers */
 extern void *handler_context;
-#endif   /* WIN32 */
 
 
 /************************************************************************/
@@ -225,7 +140,6 @@ extern void *handler_context;
 /*                                                                      */
 /************************************************************************/
 
-#if !defined(_WIN32)
 int srlockf64(s, infop, fd)
      int      s;
      struct   rfiostat *infop;
@@ -303,9 +217,7 @@ int srlockf64(s, infop, fd)
   }
   return status;
 }
-#endif  /* !WIN32 */
 
-#if !defined(_WIN32)
 int     srlstat64(s, rt, host)
      int     s;
      int     rt; /* Is it a remote site call ?   */
@@ -433,14 +345,9 @@ int     srlstat64(s, rt, host)
   }
   return 0;
 }
-#endif        /* !WIN32 */
 
 int     srstat64(s, rt, host)
-#if defined(_WIN32)
-     SOCKET        s;
-#else
      int     s;
-#endif
      int       rt; /* Is it a remote site call ?   */
      char *host; /* Where the request comes from */
 {
@@ -452,10 +359,6 @@ int     srstat64(s, rt, host)
   char   user[CA_MAXUSRNAMELEN+1];
   int    uid,gid;
 
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -466,11 +369,7 @@ int     srstat64(s, rt, host)
      */
     log(LOG_DEBUG, "srstat64(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-#if defined(_WIN32)
-      log(LOG_ERR, "srstat64: read(): %s\n", geterr());
-#else
       log(LOG_ERR, "srstat64: read(): %s\n", strerror(errno));
-#endif
       return -1;
     }
     p = rqstbuf;
@@ -569,28 +468,18 @@ int     srstat64(s, rt, host)
    */
   if ( status == -1 && rcode > 0 ) status = rcode;
   marshall_LONG(p, status);
-#if !defined(_WIN32)
   marshall_LONG(p, statbuf.st_blksize);
   marshall_HYPER(p, statbuf.st_blocks);
-#endif
   replen = 3*HYPERSIZE+5*LONGSIZE+5*WORDSIZE;
   if (netwrite_timeout(s, rqstbuf, replen, RFIO_CTRL_TIMEOUT) != replen)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "srstat64: write(): %s\n", geterr());
-#else
     log(LOG_ERR, "srstat64: write(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   return 0;
 }
 
 int  sropen64(s, rt, host)
-#if defined(_WIN32)
-     SOCKET        s;
-#else
      int     s;
-#endif
      int       rt; /* Is it a remote site call ?   */
      char *host; /* Where the request comes from */
 {
@@ -607,17 +496,8 @@ int  sropen64(s, rt, host)
   char    user[CA_MAXUSRNAMELEN+1];                       /* User name                 */
   char    reqhost[MAXHOSTNAMELEN];
   off64_t offsetin, offsetout;
-#if defined(_WIN32)
-  SOCKET  sock;
-#else
   int        sock;
-#endif
   char tmpbuf[21], tmpbuf2[21];
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   /* Initialization of global variables */
   /* cf. initialization in sropen64_v3(); here we only
@@ -635,11 +515,7 @@ int  sropen64(s, rt, host)
      */
     log(LOG_DEBUG, "sropen64(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-#if defined(_WIN32)
-      log(LOG_ERR, "sropen64: read(): %s\n", geterr());
-#else
       log(LOG_ERR, "sropen64: read(): %s\n", strerror(errno));
-#endif
       return -1;
     }
     p = rqstbuf;
@@ -730,23 +606,14 @@ int  sropen64(s, rt, host)
       if ( (rtuser=getconfent ("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
         {
           /* Port is also passwd */
-#if defined(_WIN32)
-          if( (sock = connecttpread(reqhost, passwd)) != INVALID_SOCKET
-              && !checkkey(sock, passwd) )
-#else
             if( (sock = connecttpread(reqhost, passwd)) >= 0 && !checkkey(sock, passwd) )
-#endif
               {
                 status= -1;
                 errno = EACCES;
                 rcode= errno;
                 log(LOG_ERR, "sropen64: DIRECT mapping : permission denied\n");
               }
-#if defined(_WIN32)
-          if( sock == INVALID_SOCKET )
-#else
             if( sock < 0 )
-#endif
               {
                 status= -1;
                 log(LOG_ERR, "sropen64: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
@@ -851,11 +718,7 @@ int  sropen64(s, rt, host)
   log(LOG_DEBUG, "sropen64: sending back status(%d) and errno(%d)\n", status, rcode);
   replen = WORDSIZE+3*LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "sropen64: write(): %s\n", geterr());
-#else
     log(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   return fd;
@@ -872,22 +735,14 @@ int rfio_call64_answer_client_internal
   marshall_LONG(p,0);
   log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code);
   if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
-#if defined(_WIN32)
-    log(LOG_ERR, "srwrite64: netwrite(): %s\n", geterr());
-#else
     log(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   return 0;
 }
 
 int srwrite64(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET s;
-#else
      int     s;
-#endif
      int     fd;
      struct rfiostat * infop;
 {
@@ -900,11 +755,6 @@ int srwrite64(s, infop, fd)
   char      *p;                          /* Pointer to buffer         */
   int       reqlen;                      /* residual request len      */
   char      tmpbuf[21];
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   if (first_write) {
     first_write = 0;
@@ -927,11 +777,7 @@ int srwrite64(s, infop, fd)
   reqlen = HYPERSIZE;
   log(LOG_DEBUG, "srwrite64(%d, %d)): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p, reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-#if defined(_WIN32)
-    log(LOG_ERR, "srwrite64: read(): %s\n", geterr());
-#else
     log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   unmarshall_HYPER(p,offset);
@@ -955,13 +801,8 @@ int srwrite64(s, infop, fd)
     iobufsiz = size;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
     log(LOG_DEBUG, "srwrite64: allocated %d bytes at %x\n", size, iobuffer);
-#if defined(_WIN32)
-    if( setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR )
-      log(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", geterr());
-#else
     if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&optval, sizeof(optval)) == -1)
       log(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", strerror(errno));
-#endif
     else
       log(LOG_DEBUG, "srwrite64: setsockopt(SO_RCVBUF): %d\n", optval);
   }
@@ -970,11 +811,7 @@ int srwrite64(s, infop, fd)
    */
   p= iobuffer;
   if (netread_timeout(s,p,size,RFIO_DATA_TIMEOUT) != size) {
-#if defined(_WIN32)
-    log(LOG_ERR, "srwrite64: read(): %s\n", geterr());
-#else
     log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   /*
@@ -1009,11 +846,7 @@ int srwrite64(s, infop, fd)
 }
 
 int srread64(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET        s;
-#else
      int     s;
-#endif
      int     fd;
      struct rfiostat * infop;
 {
@@ -1029,11 +862,6 @@ int srread64(s, infop, fd)
   int      replen=WORDSIZE+3*LONGSIZE;   /* Reply header length       */
   char     tmpbuf[21];
 
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
-
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p, size);
   unmarshall_LONG(p,how);
@@ -1045,11 +873,7 @@ int srread64(s, infop, fd)
   reqlen = HYPERSIZE;
   log(LOG_DEBUG, "srread64(%d, %d): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-#if defined(_WIN32)
-    log(LOG_ERR, "srread64: read(): %s\n", geterr());
-#else
     log(LOG_ERR, "srread64: read(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   unmarshall_HYPER(p,offset);
@@ -1070,11 +894,7 @@ int srread64(s, infop, fd)
       marshall_LONG(p,rcode);
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-#if defined(_WIN32)
-        log(LOG_ERR, "srread64: write(): %s\n", geterr());
-#else
         log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
-#endif
         return -1;
       }
       return -1;
@@ -1101,11 +921,7 @@ int srread64(s, infop, fd)
       marshall_LONG(p,rcode);
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-#if defined(_WIN32)
-        log(LOG_ERR, "srread64: netwrite(): %s\n", geterr());
-#else
         log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
-#endif
         return -1;
       }
       return -1;
@@ -1113,14 +929,8 @@ int srread64(s, infop, fd)
     iobufsiz = size + replen;
     log(LOG_DEBUG, "srread64: allocated %d bytes at %x\n", size, iobuffer);
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-#if defined(_WIN32)
-    if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval))
-        == SOCKET_ERROR )
-      log(LOG_ERR, "srread64: setsockopt(SO_SNDBUF): %s\n", geterr());
-#else
     if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == -1 )
       log(LOG_ERR, "srread64: setsockopt(SO_SNDBUF): %s\n", strerror(errno));
-#endif
     log(LOG_DEBUG, "srread64: setsockopt(SO_SNDBUF): %d\n", optval);
   }
   p = iobuffer + replen;
@@ -1143,22 +953,14 @@ int srread64(s, infop, fd)
   marshall_LONG(p,status);
   log(LOG_DEBUG, "srread64: returning status %d, rcode %d\n", status, rcode);
   if (netwrite_timeout(s,iobuffer,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "srread64: write(): %s\n", geterr());
-#else
     log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   return status;
 }
 
 int srreadahd64(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET s;
-#else
      int     s;
-#endif
      int     fd;
      struct rfiostat *infop;
 {
@@ -1172,11 +974,6 @@ int srreadahd64(s, infop, fd)
   char     *p;  /* Pointer to buffer */
   int      reqlen; /* residual request length */
   char     tmpbuf[21];
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   /*
    * Receiving request.
@@ -1193,11 +990,7 @@ int srreadahd64(s, infop, fd)
   reqlen = HYPERSIZE;
   log(LOG_DEBUG, "rreadahd64(%d, %d): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-#if defined(_WIN32)
-    log(LOG_ERR, "rreadahd64: read(): %s\n", geterr());
-#else
     log(LOG_ERR, "rreadahd64: read(): %s\n", strerror(errno));
-#endif
     return -1;
   }
   unmarshall_HYPER(p,offset);
@@ -1217,11 +1010,7 @@ int srreadahd64(s, infop, fd)
       marshall_LONG(p,status);
       marshall_LONG(p,rcode);
       if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-#if defined(_WIN32)
-        log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n",geterr());
-#else
         log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
-#endif
         return -1;
       }
       return status;
@@ -1240,23 +1029,14 @@ int srreadahd64(s, infop, fd)
     }
     if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
       log(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno));
-#if !defined(_WIN32)
       (void) close(s);
-#else
-      closesocket(s);
-#endif /* _WIN32 */
       return -1;
     }
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
     log(LOG_DEBUG, "rreadahd64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
-#if defined(_WIN32)
-    if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR )
-      log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n", geterr());
-#else
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
       log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
-#endif
     else
       log(LOG_DEBUG, "rreadahd64(): setsockopt(SO_SNDBUF): %d\n",optval);
   }
@@ -1274,17 +1054,10 @@ int srreadahd64(s, infop, fd)
     FD_SET(s,&fds);
     timeout.tv_sec = 0;
     timeout.tv_usec= 0;
-#if defined(_WIN32)
-    if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR )  {
-      log(LOG_ERR,"rreadahd64(): select(): %s\n", geterr());
-      return -1;
-    }
-#else
     if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
       log(LOG_ERR,"rreadahd64(): select(): %s\n",strerror(errno));
       return -1;
     }
-#endif
     if ( FD_ISSET(s,&fds) ) {
       log(LOG_DEBUG,"rreadahd64(): returns because of new request\n");
       return 0;
@@ -1313,11 +1086,7 @@ int srreadahd64(s, infop, fd)
     marshall_LONG(p, rcode);
     marshall_LONG(p, status);
     if ( netwrite_timeout(s, iobuffer, iobufsiz, RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-#if defined(_WIN32)
-      log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", geterr());
-#else
       log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
-#endif
       return -1;
     }
     /*
@@ -1331,11 +1100,7 @@ int srreadahd64(s, infop, fd)
 }
 
 int     srfstat64(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET   s;
-#else
      int      s;
-#endif
      int      fd;
      struct rfiostat *infop;
 {
@@ -1345,11 +1110,6 @@ int     srfstat64(s, infop, fd)
   int            headlen = 3*LONGSIZE+WORDSIZE;
   char           *p;
   struct stat64  statbuf;
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   log(LOG_DEBUG, "rfstat64(%d, %d)\n", s, fd);
   infop->statop++;
@@ -1364,11 +1124,7 @@ int     srfstat64(s, infop, fd)
   }
   else errno = 0;
 
-#if !defined(_WIN32)
   msgsiz= 5*WORDSIZE + 4*LONGSIZE + 3*HYPERSIZE;
-#else
-  msgsiz= 5*WORDSIZE + 3*LONGSIZE + 2*HYPERSIZE;
-#endif
   p = rqstbuf;
   marshall_WORD(p, RQST_FSTAT64);
   marshall_LONG(p, status);
@@ -1384,29 +1140,19 @@ int     srfstat64(s, infop, fd)
   marshall_LONG(p, statbuf.st_atime);
   marshall_LONG(p, statbuf.st_mtime);
   marshall_LONG(p, statbuf.st_ctime);
-#if !defined(_WIN32)
   marshall_LONG(p, statbuf.st_blksize);
   marshall_HYPER(p, statbuf.st_blocks);
-#endif
 
   log(LOG_DEBUG, "rfstat64(%d,%d): sending back %d bytes, status=%d\n", s, fd, msgsiz, status);
   if (netwrite_timeout(s,rqstbuf,headlen+msgsiz,RFIO_CTRL_TIMEOUT) != (headlen+msgsiz) )  {
-#if defined(WIN32)
-    log(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, geterr());
-#else
     log(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, strerror(errno));
-#endif
     return -1;
   }
   return 0;
 }
 
 int srlseek64(s, request, infop, fd)
-#if defined(_WIN32)
-     SOCKET       s;
-#else
      int         s;
-#endif
      int    request;
      int         fd;
      struct rfiostat *infop;
@@ -1419,11 +1165,6 @@ int srlseek64(s, request, infop, fd)
   int      how;
   char     *p;
   char     tmpbuf[21];
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   (void)infop;
   p= rqstbuf + 2*WORDSIZE;
@@ -1442,22 +1183,14 @@ int srlseek64(s, request, infop, fd)
   marshall_LONG(p,rcode);
   rlen =  WORDSIZE+LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,rlen,RFIO_CTRL_TIMEOUT) != rlen)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "srlseek64: netwrite(): %s\n", geterr());
-#else
     log(LOG_ERR, "srlseek64: write(): %s\n",strerror(errno));
-#endif
     return -1;
   }
   return status;
 }
 
 int srpreseek64(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET s;
-#else
      int     s;
-#endif
      int fd;
      struct rfiostat *infop;
 {
@@ -1469,11 +1202,6 @@ int srpreseek64(s, infop, fd)
   int reqno;  /* Request number */
   struct iovec64 *v; /* List of requests */
   char *trp = NULL; /* Temporary buffer */
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,size);
@@ -1495,11 +1223,7 @@ int srpreseek64(s, infop, fd)
    */
   log(LOG_DEBUG,"rpreseek64: reading %d bytes\n",nblock*(HYPERSIZE+LONGSIZE));
   if ( netread_timeout(s,p,nblock*(HYPERSIZE+LONGSIZE),RFIO_CTRL_TIMEOUT) != (nblock*(HYPERSIZE+LONGSIZE)) ) {
-#if defined(_WIN32)
-    log(LOG_ERR,"rpreseek64: netread(): %s\n", geterr());
-#else
     log(LOG_ERR,"rpreseek64: read(): %s\n",strerror(errno));
-#endif
     if ( trp ) (void) free(trp);
     return -1;
   }
@@ -1543,13 +1267,8 @@ int srpreseek64(s, infop, fd)
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
     log(LOG_DEBUG, "rpreseek64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
-#if defined(_WIN32)
-    if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR )
-      log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n", geterr());
-#else
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
       log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
-#endif
     else
       log(LOG_DEBUG, "rpreseek64(): setsockopt(SO_SNDBUF): %d\n",optval);
   }
@@ -1572,17 +1291,10 @@ int srpreseek64(s, infop, fd)
     FD_SET(s,&fds);
     timeout.tv_sec = 0;
     timeout.tv_usec= 0;
-#if defined(_WIN32)
-    if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR ) {
-      log(LOG_ERR,"rpreseek64(): select(): %s\n", geterr());
-      return -1;
-    }
-#else
     if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
       log(LOG_ERR,"rpreseek64(): select(): %s\n",strerror(errno));
       return -1;
     }
-#endif  /* WIN32 */
     if ( FD_ISSET(s,&fds) ) {
       log(LOG_DEBUG,"rpreseek64(): returns because of new request\n");
       return 0;
@@ -1646,11 +1358,7 @@ int srpreseek64(s, infop, fd)
     marshall_LONG(p,size);
     log(LOG_DEBUG,"rpreseek64(): sending %d bytes\n",iobufsiz);
     if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-#if defined(_WIN32)
-      log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", geterr());
-#else
       log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", strerror(errno));
-#endif
       return -1;
     }
     /*
@@ -1664,11 +1372,7 @@ int srpreseek64(s, infop, fd)
 
 
 int  sropen64_v3(s, rt, host)
-#if defined(_WIN32)
-     SOCKET        s;
-#else
      int         s;
-#endif
      int         rt;            /* Is it a remote site call ?          */
      char        *host;         /* Where the request comes from        */
 {
@@ -1690,12 +1394,8 @@ int  sropen64_v3(s, rt, host)
   char     *dp2 = NULL;
   long     low_port  = RFIO_LOW_PORT_RANGE;
   long     high_port = RFIO_HIGH_PORT_RANGE;
-#if defined(_WIN32)
-  SOCKET  sock;
-#else    /* WIN32 */
   int      sock;                         /* Control socket       */
   int      data_s;                       /* Data    socket       */
-#endif   /* else WIN32 */
   socklen_t fromlen;
   socklen_t size_sin;
   int      port;
@@ -1706,14 +1406,8 @@ int  sropen64_v3(s, rt, host)
   int      yes;                          /* Socket option value  */
   off64_t  offsetout;                    /* Offset               */
   char     tmpbuf[21];
-#if defined(_WIN32)
-  struct thData *td;
-#endif
   struct timeval tv;
   fd_set read_fds;
-#if defined(_WIN32)
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   /* Initialization of global variables */
   ctrl_sock   = s;
@@ -1740,11 +1434,7 @@ int  sropen64_v3(s, rt, host)
      */
     log(LOG_DEBUG,"ropen64_v3(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-#if defined(_WIN32)
-      log(LOG_ERR,"ropen64_v3: read(): %s\n", geterr());
-#else
       log(LOG_ERR,"ropen64_v3: read(): %s\n",strerror(errno));
-#endif
       return -1;
     }
     p= rqstbuf;
@@ -1836,22 +1526,14 @@ int  sropen64_v3(s, rt, host)
         {
           /* Port is also passwd */
           sock = connecttpread(reqhost, passwd);
-#if defined(_WIN32)
-          if( (sock != INVALID_SOCKET) && !checkkey(sock, passwd) )
-#else
             if( (sock >= 0) && !checkkey(sock, passwd) )
-#endif
               {
                 status= -1;
                 errno = EACCES;
                 rcode= errno;
                 log(LOG_ERR,"ropen64_v3: DIRECT mapping : permission denied\n");
               }
-#if defined(_WIN32)
-          if( sock == INVALID_SOCKET )
-#else
             if (sock < 0)
-#endif
               {
                 status= -1;
                 log(LOG_ERR,"ropen64_v3: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
@@ -1868,7 +1550,6 @@ int  sropen64_v3(s, rt, host)
       log(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
       log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
       (void) umask((mode_t) CORRECT_UMASK(mask));
-#if !defined(_WIN32)
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
@@ -1877,7 +1558,6 @@ int  sropen64_v3(s, rt, host)
           log(LOG_ERR,"ropen64_v3: failed at check_user_perm(), rcode %d\n", rcode);
         status = -1;
       }  else
-#endif
         {
           char *pfn = NULL;
           int rc;
@@ -1912,8 +1592,6 @@ int  sropen64_v3(s, rt, host)
 #if defined(linux)
             log(LOG_INFO, "%s: O_DIRECT requested\n", __func__);
             flags |= O_DIRECT;
-#elif defined(_WIN32)
-            log(LOG_INFO, "%s: O_DIRECT requested but ignored.", __FUNCTION__);
 #else
             log(LOG_INFO, "%s: O_DIRECT requested but ignored.", __func__);
 #endif
@@ -1930,21 +1608,13 @@ int  sropen64_v3(s, rt, host)
             if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
               fd = open64(CORRECT_FILENAME(ofilename), flags,
                           ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
-#if defined(_WIN32)
-              _setmode( fd, _O_BINARY );       /* default is text mode  */
-#endif
             }
           }
           if (fd < 0)  {
             status= -1;
             rcode= errno;
-#if defined(_WIN32)
-            log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
-                CORRECT_FILENAME(filename), flags, mode, geterr());
-#else
             log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
                 CORRECT_FILENAME(filename), flags, mode, strerror(errno));
-#endif
           }
           else  {
             /* File is opened         */
@@ -1955,11 +1625,7 @@ int  sropen64_v3(s, rt, host)
              */
             offsetout = lseek64(fd, (off64_t)0, SEEK_CUR);
             if (offsetout == ((off64_t)-1) ) {
-#if defined(_WIN32)
-              log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, geterr());
-#else
               log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno));
-#endif
               status = -1;
               rcode  = errno;
             }
@@ -1975,17 +1641,10 @@ int  sropen64_v3(s, rt, host)
 
     if (! status && fd >= 0)  {
       data_s = socket(AF_INET, SOCK_STREAM, 0);
-#if defined(_WIN32)
-      if( data_s == INVALID_SOCKET )  {
-        log( LOG_ERR, "ropen64_v3: datasocket(): %s\n", geterr());
-        return(-1);
-      }
-#else    /* WIN32 */
       if( data_s < 0 )  {
         log(LOG_ERR, "ropen64_v3: datasocket(): %s\n", strerror(errno));
         exit(1);
       }
-#endif   /* else WIN32 */
       log(LOG_DEBUG, "ropen64_v3: data socket created fd=%d\n", data_s);
 
       memset(&sin, 0, sizeof(sin));
@@ -1995,13 +1654,8 @@ int  sropen64_v3(s, rt, host)
       /* Check to see if there is a user defined RFIOD/PORT_RANGE configured */
       if ((value = getconfent("RFIOD", "PORT_RANGE", 0)) != NULL) {
         if ((buf = strdup(value)) == NULL) {
-#if defined(_WIN32)
-          log(LOG_ERR, "ropen64_v3: strdup: %s\n", geterr());
-          return(-1);
-#else    /* WIN32 */
           log(LOG_ERR, "ropen64_v3: strdup: %s\n", strerror(errno));
           exit(1);
-#endif   /* else WIN32 */
         }
         if ((p = strchr(buf, ',')) != NULL) {
           *p = '\0';
@@ -2048,25 +1702,6 @@ int  sropen64_v3(s, rt, host)
           /* Just because the bind was successfull, doesn't mean the listen
            * will succeed!
            */
-#if defined(_WIN32)
-          if (listen(data_s, 5) == INVALID_SOCKET) {
-            if (WSAGetLastError() == WSAEADDRINUSE) {
-              log(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, geterr());
-              /* close and recreate the socket */
-              close(data_s);
-              data_s = socket(AF_INET, SOCK_STREAM, 0);
-              if( data_s == INVALID_SOCKET )  {
-                log( LOG_ERR, "datasocket(): %s\n", geterr());
-                return(-1);
-              }
-              sleep(1);
-              continue;
-            } else {
-              log(LOG_ERR, "ropen64_v3: listen(%d): %s\n", data_s, geterr());
-              return(-1);
-            }
-          }
-#else    /* WIN32 */
           if (listen(data_s, 5) < 0) {
             if (errno == EADDRINUSE) {
               log(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, strerror(errno));
@@ -2085,28 +1720,16 @@ int  sropen64_v3(s, rt, host)
             }
           }
           break;
-#endif   /* else WIN32 */
         } else {
-#if defined(_WIN32)
-          log(LOG_DEBUG, "ropen64_v3: bind(%d:%d): %s, trying again\n", data_s, port, geterr());
-#else    /* WIN32 */
           log(LOG_DEBUG, "ropen64_v3: bind(%d:%d): %s, trying again\n", data_s, port, strerror(errno));
-#endif   /* else WIN32 */
         }
       }
 
       size_sin = sizeof(sin);
-#if defined(_WIN32)
-      if (getsockname(data_s, (struct sockaddr*)&sin, &size_sin) == SOCKET_ERROR )  {
-        log(LOG_ERR, "ropen64_v3: getsockname: %s\n", geterr());
-        return(-1);
-      }
-#else    /* WIN32 */
       if (getsockname(data_s, (struct sockaddr*)&sin, &size_sin) < 0 )  {
         log(LOG_ERR, "ropen64_v3: getsockname: %s\n", strerror(errno));
         exit(1);
       }
-#endif   /* else WIN32 */
 
       log(LOG_DEBUG, "ropen64_v3: assigning data port %d\n", htons(sin.sin_port));
     }
@@ -2125,11 +1748,7 @@ int  sropen64_v3(s, rt, host)
   log(LOG_DEBUG, "ropen64_v3: sending back status(%d) and errno(%d)\n", status, rcode);
   errno = ECONNRESET;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
-#if defined(_WIN32)
-    log(LOG_ERR,"ropen64_v3: write(): %s\n", geterr());
-#else
     log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
-#endif
     return -1;
   }
 
@@ -2147,19 +1766,11 @@ int  sropen64_v3(s, rt, host)
        * 98/08/05 - Jes
        */
       log(LOG_DEBUG, "ropen64_v3: doing setsockopt %d RCVBUF\n", data_s);
-#if defined(_WIN32)
-      if( setsockopt(data_s, SOL_SOCKET, SO_RCVBUF, (char*)&max_rcvbuf,
-                     sizeof(max_rcvbuf)) == SOCKET_ERROR )  {
-        log(LOG_ERR, "ropen64_v3: setsockopt %d rcvbuf(%d bytes): %s\n",
-            data_s, max_rcvbuf, geterr());
-      }
-#else
       if (setsockopt(data_s, SOL_SOCKET, SO_RCVBUF, (char *)&max_rcvbuf,
                      sizeof(max_rcvbuf)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt %d rcvbuf(%d bytes): %s\n",
             data_s, max_rcvbuf, strerror(errno));
       }
-#endif       /* WIN32 */
       log(LOG_DEBUG, "ropen64_v3: setsockopt rcvbuf on data socket %d (%d bytes)\n",
           data_s, max_rcvbuf);
       for (;;)
@@ -2169,17 +1780,10 @@ int  sropen64_v3(s, rt, host)
           FD_SET(data_s, &read_fds);
           tv.tv_sec  = 10;
           tv.tv_usec = 0;
-#if defined (_WIN32)
-          if ( select(FD_SETSIZE, &read_fds, NULL, NULL, &tv) == SOCKET_ERROR ) {
-            log(LOG_ERR, "ropen64_v3: select failed: %s\n", geterr());
-            return -1;
-          }
-#else
           if ( select(FD_SETSIZE, &read_fds, NULL, NULL, &tv) < 0 ) {
             log(LOG_ERR, "ropen64_v3: select failed: %s\n", strerror(errno));
             return -1;
           }
-#endif
           /* Anything received on the data socket ? */
           if ( !FD_ISSET(data_s, &read_fds) ) {
             log(LOG_ERR, "ropen64_v3: timeout in accept(%d)\n", data_s);
@@ -2188,17 +1792,10 @@ int  sropen64_v3(s, rt, host)
           fromlen = sizeof(from);
           log(LOG_DEBUG, "ropen64_v3: wait for accept to complete\n");
           data_sock = accept(data_s, (struct sockaddr*)&from, &fromlen);
-#if defined(_WIN32)
-          if( data_sock == INVALID_SOCKET )  {
-            log(LOG_ERR, "ropen64_v3: data accept(%d): %s\n", data_s, geterr());
-            return(-1);
-          }
-#else
           if( data_sock < 0 )  {
             log(LOG_ERR, "ropen64_v3: data accept(%d): %s\n", data_s, strerror(errno));
             exit(1);
           }
-#endif   /* else WIN32 */
           else break;
         }
       log(LOG_DEBUG, "ropen64_v3: data accept is ok, fildesc=%d\n", data_sock);
@@ -2208,103 +1805,44 @@ int  sropen64_v3(s, rt, host)
        * above before accept())
        */
       log(LOG_DEBUG, "ropen64_v3: doing setsockopt %d SNDBUF\n", data_sock);
-#if defined(_WIN32)
-      if( setsockopt(data_sock, SOL_SOCKET, SO_SNDBUF, (char*)&max_sndbuf,
-                     sizeof(max_sndbuf)) == SOCKET_ERROR)  {
-        log(LOG_ERR, "ropen64_v3: setsockopt %d SNDBUF(%d bytes): %s\n",
-            data_sock, max_sndbuf, geterr());
-      }
-#else    /* WIN32*/
       if (setsockopt(data_sock,SOL_SOCKET,SO_SNDBUF,(char *)&max_sndbuf,
                      sizeof(max_sndbuf)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt %d SNDBUFF(%d bytes): %s\n",
             data_sock, max_sndbuf, strerror(errno));
       }
-#endif   /* else WIN32 */
       log(LOG_DEBUG, "ropen64_v3: setsockopt SNDBUF on data socket %d(%d bytes)\n",
           data_sock, max_sndbuf);
 
       /* Set the keepalive option on both sockets */
       yes = 1;
-#if defined(_WIN32)
-      if( setsockopt(data_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&yes,
-                     sizeof(yes)) == SOCKET_ERROR) {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepalive on data socket%d: %s\n", data_sock, geterr());
-      }
-#else
       if (setsockopt(data_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt keepalive on data socket %d: %s\n",
             data_sock, strerror(errno));
       }
-#endif       /* WIN32 */
       log(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on data socket %d done\n", data_sock);
 
       yes = 1;
-#if defined(_WIN32)
-      if( setsockopt(ctrl_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&yes,
-                     sizeof(yes)) == SOCKET_ERROR )  {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepalive on ctrl socket %d: %s\n",
-            ctrl_sock, geterr());
-      }
-#else
       if (setsockopt(ctrl_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt keepalive on ctrl socket %d: %s\n",
             ctrl_sock, strerror(errno));
       }
-#endif       /* WIN32 */
       log(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on ctrl socket %d done\n", ctrl_sock);
 
-#if (defined(__osf__) && defined(__alpha) && defined(DUXV4))
-      /* Set the keepalive interval to 20 mns instead of the default 2 hours */
-      yes = 20 * 60;
-      if (setsockopt(data_sock, IPPROTO_TCP, TCP_KEEPIDLE,(char *)&yes, sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepidle on data socket %d: %s\n",
-            data_sock, strerror(errno));
-      }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt keepidle on data socket %d done (%d sec)\n",
-          data_sock, yes);
-
-      yes = 20 * 60;
-      if (setsockopt(ctrl_sock, IPPROTO_TCP, TCP_KEEPIDLE, (char *)&yes, sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepidle on ctrl socket %d: %s\n",
-            ctrl_sock, strerror(errno));
-      }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt keepidle on ctrl socket %d done (%d sec)\n",
-          ctrl_sock, yes);
-#endif
-#if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
       /*
        * TCP_NODELAY seems to cause small Hippi packets on Digital UNIX 4.x
        */
       yes = 1;
-#if defined(_WIN32)
-      if( setsockopt(data_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes,
-                     sizeof(yes))  == SOCKET_ERROR )  {
-        log(LOG_ERR, "ropen64_v3: setsockopt nodelay on data socket %d: %s\n",
-            data_sock, geterr());
-      }
-#else
       if (setsockopt(data_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt nodelay on data socket %d: %s\n",
             data_sock, strerror(errno));
       }
-#endif       /* WIN32 */
       log(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on data socket %d\n", data_sock);
-#endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
       yes = 1;
-#if defined(_WIN32)
-      if( setsockopt(ctrl_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes,
-                     sizeof(yes)) == SOCKET_ERROR )  {
-        log(LOG_ERR, "ropen64_v3: setsockopt nodelay on ctrl socket %d: %s\n",
-            ctrl_sock, geterr());
-      }
-#else
       if (setsockopt(ctrl_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
         log(LOG_ERR, "ropen64_v3: setsockopt nodelay on ctrl socket %d: %s\n",
             ctrl_sock, strerror(errno));
       }
-#endif  /* WIN32 */
       log(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on ctrl socket %d\n", ctrl_sock);
     }
 #if defined(SACCT)
@@ -2315,11 +1853,7 @@ int  sropen64_v3(s, rt, host)
 
 
 int   srclose64_v3(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET        s;
-#else
      int       s;
-#endif
      int     fd;
      struct rfiostat *infop;
 {
@@ -2330,11 +1864,6 @@ int   srclose64_v3(s, infop, fd)
   struct stat filestat;
   int rc;
   int ret;
-
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   (void)infop;
   /* Issue statistics                                        */
@@ -2371,15 +1900,9 @@ int   srclose64_v3(s, infop, fd)
 
   /* Close the data socket */
   if (data_sock >= 0) {
-#if defined(_WIN32)
-    if( closesocket(data_sock) == SOCKET_ERROR )
-      log(LOG_DEBUG, "rclose64_v3: Error closing data socket fildesc=%d, errno=%d\n",
-          data_sock, WSAGetLastError());
-#else    /* WIN32 */
     if( close(data_sock) < 0 )
       log(LOG_DEBUG, "rclose64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
-#endif  /* else WIN32 */
     else
       log(LOG_DEBUG, "rclose64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
@@ -2398,23 +1921,13 @@ int   srclose64_v3(s, infop, fd)
 
   errno = ECONNRESET;
   if (netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "rclose64_v3: netwrite(): %s\n", geterr());
-#else    /* WIN32 */
     log(LOG_ERR, "rclose64_v3: netwrite(): %s\n", strerror(errno));
-#endif   /* else WIN32 */
     return -1;
   }
 
-#if defined(_WIN32)
-  if( closesocket(s) == SOCKET_ERROR )
-    log(LOG_DEBUG, "rclose64_v3: Error closing control socket fildesc=%d, errno=%d\n",
-        s, WSAGetLastError());
-#else    /* WIN32 */
   if( close(s) < 0 )
     log(LOG_DEBUG, "rclose64_v3 : Error closing control socket fildesc=%d,errno=%d\n",
         s, errno);
-#endif  /* else WIN32 */
   else
     log(LOG_DEBUG, "rclose64_v3 : closing ctrl socket fildesc=%d\n", s);
 
@@ -2691,32 +2204,17 @@ static void wait_producer64_thread(int *cidp)
    - Trace statistics
 */
 static int   readerror64_v3(s, infop, cidp)
-#if defined(_WIN32)
-     SOCKET         s;
-#else    /* WIN32 */
      int            s;
-#endif   /* else WIN32 */
      struct rfiostat* infop;
      int           *cidp;
 {
 
   char tmpbuf[21], tmpbuf2[21];
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
-
   /* We close the data socket                                        */
   if (data_sock >= 0) {
-#if defined(_WIN32)
-    if( closesocket(data_sock) == SOCKET_ERROR )
-      log(LOG_DEBUG, "readerror64_v3: Error closing data socket fildesc=%d, errno=%d\n",
-          data_sock, WSAGetLastError());
-#else    /* WIN32 */
     if( close(data_sock) < 0 )
       log(LOG_DEBUG, "readerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
-#endif  /* else WIN32 */
     else
       log(LOG_DEBUG, "readerror64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
@@ -2765,13 +2263,8 @@ static int   readerror64_v3(s, infop, cidp)
   return 0;
 }
 
-#if defined(_WIN32)
-int srread64_v3(s, infop, fd)
-     SOCKET         s;
-#else    /* WIN32 */
      int srread64_v3(ctrl_sock, infop, fd)
           int            ctrl_sock;
-#endif   /* else WIN32 */
           int            fd;
           struct rfiostat* infop;
 {
@@ -2779,9 +2272,7 @@ int srread64_v3(s, infop, fd)
   int         rcode;               /* To send back errno         */
   off64_t     offsetout;           /* lseek offset               */
   char        *p;                  /* Pointer to buffer          */
-#if !defined(_WIN32)
   char        *iobuffer;
-#endif
   off64_t     bytes2send;
   fd_set      fdvar, fdvar2;
   extern int  max_sndbuf;
@@ -2794,12 +2285,6 @@ int srread64_v3(s, infop, fd)
   int         el;
   char        tmpbuf[21];
 
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-
-  ctrl_sock = s;
-#endif   /* WIN32 */
   (void)infop;
   /*
    * Receiving request,
@@ -2896,11 +2381,7 @@ int srread64_v3(s, infop, fd)
     log(LOG_DEBUG, "rread64_v3: filesize : %s bytes\n", u64tostr(st.st_size,tmpbuf,0));
     offsetout = lseek64(fd,0L,SEEK_CUR);
     if (offsetout == (off64_t)-1) {
-#if defined(_WIN32)
-      log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, geterr());
-#else
       log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno));
-#endif   /* WIN32 */
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
@@ -2916,23 +2397,10 @@ int srread64_v3(s, infop, fd)
     errno = ECONNRESET;
     n = netwrite_timeout(ctrl_sock, rfio_buf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
     if (n != RQSTSIZE) {
-#if defined(_WIN32)
-      log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", geterr());
-#else    /* WIN32 */
       log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno));
-#endif   /* else WIN32 */
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
-
-#ifdef CS2
-    if (ioctl(fd,NFSIOCACHE,CLIENTNOCACHE) < 0)
-      log(LOG_ERR, "rread64_v3: ioctl client nocache error occured (errno=%d)\n", errno);
-
-    if (ioctl(fd,NFSIOCACHE,SERVERNOCACHE) < 0)
-      log(LOG_ERR, "rread64_v3: ioctl server nocache error occured (errno=%d)\n", errno);
-    log(LOG_DEBUG,"rread64_v3: CS2: clientnocache, servernocache\n");
-#endif
 
     if (daemonv3_rdmt) {
       Csemaphore_init(&empty64,daemonv3_rdmt_nbuf);
@@ -2971,19 +2439,11 @@ int srread64_v3(s, infop, fd)
         write_fdset = &fdvar2;
 
       log(LOG_DEBUG,"srread64_v3: doing select\n");
-#if defined(_WIN32)
-      if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) == SOCKET_ERROR ) {
-        log(LOG_ERR, "srread64_v3: select failed: %s\n", geterr());
-        readerror64_v3(ctrl_sock, &myinfo, &cid1);
-        return -1;
-      }
-#else
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) < 0 ) {
         log(LOG_ERR, "srread64_v3: select failed: %s\n", strerror(errno));
         readerror64_v3(ctrl_sock, &myinfo, &cid1);
         return -1;
       }
-#endif
 
       if( FD_ISSET(ctrl_sock, &fdvar) )  {
         int n, magic, code;
@@ -2993,13 +2453,8 @@ int srread64_v3(s, infop, fd)
         errno = ECONNRESET;
         n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
         if (n != RQSTSIZE) {
-#if defined(_WIN32)
-          log(LOG_ERR, "srread64_v3: read ctrl socket %d: netread(): %s\n",
-              ctrl_sock, geterr());
-#else
           log(LOG_ERR, "srread64_v3: read ctrl socket %d: read(): %s\n",
               ctrl_sock, strerror(errno));
-#endif
           readerror64_v3(ctrl_sock, &myinfo, &cid1);
           return -1;
         }
@@ -3101,11 +2556,7 @@ int srread64_v3(s, infop, fd)
           errno = ECONNRESET;
           n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
           if (n != RQSTSIZE)  {
-#if defined(_WIN32)
-            log(LOG_ERR,"rread64_v3: netwrite(): %s\n", geterr());
-#else    /* WIN32 */
             log(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno));
-#endif   /* else WIN32 */
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1;
           }
@@ -3122,11 +2573,7 @@ int srread64_v3(s, infop, fd)
             errno = ECONNRESET;
             n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
             if (n != RQSTSIZE)  {
-#if defined(_WIN32)
-              log(LOG_ERR, "rread64_v3: netwrite(): %s\n", geterr());
-#else
               log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
-#endif  /* WIN32 */
               readerror64_v3(ctrl_sock, &myinfo, &cid1);
               return -1;
             }
@@ -3134,19 +2581,10 @@ int srread64_v3(s, infop, fd)
             n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
             if (n != RQSTSIZE) {
               if (n == 0)  {
-#if defined(_WIN32)
-                WSASetLastError(WSAECONNRESET);
-#else    /* WIN32 */
                 errno = ECONNRESET;
-#endif   /* else WIN32 */
               }
-#if defined(_WIN32)
-              log(LOG_ERR, "read64_v3: read ctrl socket %d: read(): %s\n",
-                  ctrl_sock, geterr());
-#else    /* WIN32 */
               log(LOG_ERR, "read64_v3: read ctrl socket %d: read(): %s\n",
                   ctrl_sock, strerror(errno));
-#endif   /* else WIN32 */
             }  /* n != RQSTSIZE */
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return(-1);
@@ -3154,21 +2592,12 @@ int srread64_v3(s, infop, fd)
           else  {
             /* status > 0, reading was succesfully */
             log(LOG_DEBUG, "rread64_v3: writing %d bytes to data socket %d\n", status, data_sock);
-#if defined(_WIN32)
-            WSASetLastError(WSAECONNRESET);
-            if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
-              log(LOG_ERR, "rread64_v3: send() (to data sock): %s\n", geterr() );
-              readerror64_v3(ctrl_sock, &myinfo, &cid1);
-              return -1;
-            }
-#else    /* WIN32 */
             errno = ECONNRESET;
             if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
               log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
               readerror64_v3(ctrl_sock, &myinfo, &cid1);
               return -1;
             }
-#endif   /* else WIN32 */
             if (daemonv3_rdmt)
               Csemaphore_up(&empty64);
             myinfo.rnbr += status;
@@ -3185,11 +2614,7 @@ int srread64_v3(s, infop, fd)
    - wait for acknowledge on control stream
 */
 static int   writerror64_v3(s, rcode, infop, cidp)
-#if defined(_WIN32)
-     SOCKET         s;
-#else    /* WIN32 */
      int            s;
-#endif   /* else WIN32 */
      int            rcode;
      struct rfiostat   *infop;
      int           *cidp;
@@ -3207,11 +2632,6 @@ static int   writerror64_v3(s, rcode, infop, cidp)
    */
   unsigned    char *dummy = NULL;
 
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
-
   /* Send back error message  */
   status = -1;
   p = rqstbuf;
@@ -3222,11 +2642,7 @@ static int   writerror64_v3(s, rcode, infop, cidp)
   errno = ECONNRESET;
   n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
   if (n != RQSTSIZE)  {
-#if defined(_WIN32)
-    log(LOG_ERR, "writerror64_v3: write(): %s\n", ws_strerr(errno));
-#else
     log(LOG_ERR, "writerror64_v3: write(): %s\n", strerror(errno));
-#endif
     /* Consumer thread already exited after error */
   }
 
@@ -3257,15 +2673,8 @@ static int   writerror64_v3(s, rcode, infop, cidp)
     t.tv_usec = 0;
 
     log(LOG_DEBUG,"writerror64_v3: doing select after error writing on disk\n");
-#if defined(_WIN32)
-    if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) == SOCKET_ERROR )
-#else
       if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) < 0 )
-#endif
         {
-#if defined(_WIN32)
-          errno = WSAGetLastError();
-#endif
           log(LOG_ERR, "writerror64_v3: select fdvar2 failed (errno=%d)\n", errno);
           /* Consumer thread already exited after error */
           break;
@@ -3279,11 +2688,7 @@ static int   writerror64_v3(s, rcode, infop, cidp)
       if (n != RQSTSIZE)  {
         /* Connexion dropped (n==0) or some another error */
         if (n == 0)  errno = ECONNRESET;
-#if defined(_WIN32)
-        log(LOG_ERR, "writerror64_v3: read ctrl socket: read(): %s\n", ws_strerr(errno));
-#else
         log(LOG_ERR, "writerror64_v3: read ctrl socket: read(): %s\n", strerror(errno));
-#endif
         /* Consumer thread already exited after error */
         break;
       }
@@ -3296,23 +2701,13 @@ static int   writerror64_v3(s, rcode, infop, cidp)
       /* Read as much data as possible from the data socket */
 
       log(LOG_DEBUG, "writerror64_v3: emptying data socket (last disk write)\n");
-#if defined(_WIN32)
-      n = recv(data_sock, dummy, sizeofdummy, 0);
-      if( (n == 0) || (n == SOCKET_ERROR) )
-#else
         n = read(data_sock, dummy, sizeofdummy);
       if ( n <= 0 )
-#endif  /* WIN32 */
         {
           /* Connexion dropped (n==0) or some another error */
           if (n == 0) errno = ECONNRESET;
-#if defined(_WIN32)
-          log(LOG_ERR, "writerror64_v3: read emptying data socket: recv(): %s\n",
-              ws_strerr(errno));
-#else
           log(LOG_ERR, "writerror64_v3: read emptying data socket: read(): %s\n",
               strerror(errno));
-#endif       /* WIN32 */
           /* Consumer thread already exited after error     */
           break;
         }
@@ -3322,15 +2717,9 @@ static int   writerror64_v3(s, rcode, infop, cidp)
 
   /* Close the data socket                                   */
   if (data_sock >= 0) {
-#if defined(_WIN32)
-    if( closesocket(data_sock) == SOCKET_ERROR )
-      log(LOG_DEBUG, "writerror64_v3: Error closing data socket fildesc=%d, errno=%d\n",
-          data_sock, WSAGetLastError());
-#else    /* WIN32 */
     if( close(data_sock) < 0 )
       log(LOG_DEBUG, "writerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
-#endif  /* else WIN32 */
     else
       log(LOG_DEBUG, "writerror64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
@@ -3380,20 +2769,14 @@ static int   writerror64_v3(s, rcode, infop, cidp)
 }
 
 int srwrite64_v3(s, infop, fd)
-#if defined(_WIN32)
-     SOCKET         s;
-#else
      int            s;
-#endif
      int            fd;
      struct rfiostat   *infop;
 {
   int         status;        /* Return code                */
   int         rcode;         /* To send back errno         */
   char        *p;            /* Pointer to buffer          */
-#if !defined(_WIN32)
   char        *iobuffer;
-#endif
   fd_set      fdvar;
   off64_t     byte_written_by_client = 0;
   int         eof_received       = 0;
@@ -3408,10 +2791,6 @@ int srwrite64_v3(s, infop, fd)
   int         cid2 = -1;
   int         saved_errno;
   char        tmpbuf[21], tmpbuf2[21];
-#if defined(_WIN32)
-  struct thData *td;
-  td = (struct thData*)TlsGetValue(tls_i);
-#endif
 
   (void)infop;
   /*
@@ -3509,22 +2888,12 @@ int srwrite64_v3(s, infop, fd)
     else
       iobuffer_p = iobuffer;
 
-#if !defined(_WIN32)
     optlen = sizeof(maxseg);
     if (getsockopt(data_sock,IPPROTO_TCP,TCP_MAXSEG,(char *)&maxseg,&optlen) < 0) {
       log(LOG_ERR, "rwrite64_v3: getsockopt: ERROR occured (errno=%d)\n", errno);
       return -1;
     }
     log(LOG_DEBUG,"rwrite64_v3: max TCP segment: %d\n", maxseg);
-#endif       /* WIN32 */
-#ifdef CS2
-    log(LOG_DEBUG,"rwrite64_v3: CS2: clientnocache, servercache\n");
-    if (ioctl(fd,NFSIOCACHE,CLIENTNOCACHE) < 0)
-      log(LOG_ERR, "rwrite64_v3: ioctl client nocache error occured (errno=%d)\n", errno);
-
-    if (ioctl(fd,NFSIOCACHE,SERVERCACHE) < 0)
-      log(LOG_ERR, "rwrite64_v3: ioctl server cache error occured (errno=%d)\n", errno);
-#endif
 
     if (daemonv3_wrmt) {
       Csemaphore_init(&empty64,daemonv3_wrmt_nbuf);
@@ -3552,21 +2921,12 @@ int srwrite64_v3(s, infop, fd)
     t.tv_usec = 0;
 
     log(LOG_DEBUG,"rwrite64_v3: doing select\n");
-#if defined(_WIN32)
-    if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
-      log(LOG_ERR, "rwrite64_v3: select: %s\n", geterr());
-      if (daemonv3_wrmt)
-        wait_consumer64_thread(&cid2);
-      return -1;
-    }
-#else    /* WIN32 */
     if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) < 0 )  {
       log(LOG_ERR, "rwrite64_v3: select: %s\n", strerror(errno));
       if (daemonv3_wrmt)
         wait_consumer64_thread(&cid2);
       return -1;
     }
-#endif   /* else WIN32 */
 
     /* Anything received on control socket ?  */
     if( FD_ISSET(ctrl_sock, &fdvar) )  {
@@ -3577,11 +2937,7 @@ int srwrite64_v3(s, infop, fd)
       n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
       if ( n != RQSTSIZE )  {
         if (n == 0)  errno = ECONNRESET;
-#if defined(_WIN32)
-        log(LOG_ERR, "rwrite64_v3: read ctrl socket: netread(): %s\n", ws_strerr(errno));
-#else
         log(LOG_ERR, "rwrite64_v3: read ctrl socket: netread(): %s\n", strerror(errno));
-#endif      /* WIN32 */
         if (daemonv3_wrmt)
           wait_consumer64_thread(&cid2);
         return -1;
@@ -3620,20 +2976,11 @@ int srwrite64_v3(s, infop, fd)
 
       log(LOG_DEBUG,"rwrite64_v3: iobuffer_p = %X, DISKBUFSIZE_WRITE = %d, data socket = %d\n",
           iobuffer_p, DISKBUFSIZE_WRITE, data_sock);
-#if defined(_WIN32)
-      n = recv(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer, 0);
-      if( (n == 0) || n == SOCKET_ERROR )
-#else
         n = read(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer);
       if( n <= 0 )
-#endif
         {
           if (n == 0) errno = ECONNRESET;
-#if defined(_WIN32)
-          log(LOG_ERR, "rwrite64_v3: read data socket: recv(): %s\n", ws_strerr(errno));
-#else
           log(LOG_ERR, "rwrite64_v3: read data socket: read(): %s\n", strerror(errno));
-#endif      /* WIN32 */
           if (daemonv3_wrmt)
             wait_consumer64_thread(&cid2);
           return -1;

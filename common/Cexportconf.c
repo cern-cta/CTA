@@ -10,7 +10,6 @@
 #include "Castor_limits.h"
 #include "osdep.h"
 
-#if !defined(_WIN32)
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -21,7 +20,6 @@
 #include <sys/resource.h>  /* For getrlimit() */
 #include <unistd.h>
 #include "u64subr.h"
-#endif
 
 #define EXPORTCONF_FILENAME "rlimit"
 
@@ -30,7 +28,6 @@ int DLL_DECL Cexportconf(dirname)
      char *dirname;
 { 
 
-#if !defined(_WIN32)
 
   int fd;
   char filename[CA_MAXPATHLEN +1];
@@ -136,8 +133,6 @@ int DLL_DECL Cexportconf(dirname)
   }
 
   close(fd);
-
-#endif
 
   return(0);
 

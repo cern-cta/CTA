@@ -15,22 +15,13 @@
  * vdqm_SendRecv.c - Send and receive VDQM request and acknowledge messages.
  */
 
-#ifndef lint
-static char cvsId[] = "$Id";
-#endif /* not lint */
-
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
-#endif /* _WIN32 */
 #include <errno.h>
 
 #include <Castor_limits.h>

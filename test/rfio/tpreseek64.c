@@ -7,29 +7,16 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpreseek64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 09:20:52 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand Benjamin Couturier";
-#endif /* not lint */
-
 /*	tpreseek64 - write NBRECORDS_TOWRITE records and
 		   read back NBRECORDS_TOREAD using the rfio_preseek64 function */
 
 #include <fcntl.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "rfio_api.h"
 #include "serrno.h"
 #include "errno.h"
 
-#ifdef _WIN32
-#define CONSTLL(a) (a##i64)
-#else
 #define CONSTLL(a) (a##LL)
-#endif
-
-
 #define NBRECORDS_TOREAD 5
 #define NBRECORDS_TOWRITE 10
 
@@ -73,20 +60,10 @@ main(argc, argv)
 	
   static int records_toread[NBRECORDS_TOREAD] = {2, 4, 5, 8, 9};
 
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
-
   if (argc != 2) {
     fprintf (stderr, "usage: tpreseek64 pathname\n");
     exit (1);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
   while (!errflg) {
 
     off64_t rv = 0;
@@ -201,9 +178,6 @@ main(argc, argv)
       rfio_perror ("rfio_unlink"); 
       errflg++; 
     } 
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (errflg ? 1 : 0);
 }
 

@@ -15,13 +15,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 
 #include "marshall.h"
 #include "Cmonit_api.h"

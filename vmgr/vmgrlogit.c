@@ -31,7 +31,7 @@ int vmgrlogit(char *func, char *msg, ...)
 	save_errno = errno;
 	va_start (args, msg);
 	(void) time (&current_time);		/* Get current time */
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 	(void) localtime_r (&current_time, &tmstruc);
 	tm = &tmstruc;
 #else

@@ -15,11 +15,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <unistd.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
@@ -28,7 +23,6 @@ WSADATA wsadata;
 #include <signal.h>
 #include <wait.h>
 #include <sys/time.h>
-#endif /* _WIN32 */
 #include <sys/stat.h>
 #include <errno.h>
 #include <patchlevel.h>
@@ -756,8 +750,7 @@ static void startTapeErrorHandler()
      * Child
      */
     sprintf(cmd,"%s/%s",BIN,TAPEERRORHANDLER_CMD);
-#ifndef _WIN32
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+#if defined(linux)
     maxfds = getdtablesize();
 #else
     maxfds = _NFILE;
@@ -863,7 +856,6 @@ static void startTapeErrorHandler()
                     );
     dlf_shutdown();
     exit(SYERR);
-#endif /* _WIN32 */
   } else {
     /*
      * fork() failed
@@ -919,8 +911,7 @@ static int startWorker(
 
   key = tape->dbRef->key;
 
-#ifndef _WIN32
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+#if defined(linux)
   maxfds = getdtablesize();
 #else
   maxfds = _NFILE;
@@ -1110,7 +1101,6 @@ static int startWorker(
                   );
   dlf_shutdown();
   exit(SYERR);
-#endif /* _WIN32 */
 
   return(0);
 }
@@ -1131,10 +1121,8 @@ int rtcpcld_main() {
   rtcpTapeRequest_t tapereq;
   char *p = NULL;
 
-#if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
-#endif /* _WIN32 */
   signal(SIGCHLD, sigchld_handler);
 
   sigemptyset(&signalset);
@@ -1240,11 +1228,9 @@ int rtcpcld_main() {
   timeout.tv_usec = 0;
   timeout_cp.tv_sec = timeout_cp.tv_usec = 0;
   maxfd = 0;
-#ifndef _WIN32
   maxfd = *rtcpdSocket;
   if ( maxfd < *notificationSocket ) maxfd = *notificationSocket;
   maxfd++;
-#endif /* _WIN32 */
   rc = 0;
 
   /*
@@ -1367,11 +1353,7 @@ int rtcpcld_main() {
              tapereq.unit
              );
 
-#if !defined(_WIN32)
       pid = (int)fork();
-#else  /* !_WIN32 */
-      pid = 0;
-#endif /* _WIN32 */
       if ( pid == -1 ) {
         (void)dlf_write(
                         mainUuid,
@@ -1424,12 +1406,10 @@ int rtcpcld_main() {
        * Child, kick off the migrator/recaller program and exit.
        */
       inChild = 1;
-#if !defined(_WIN32)
       signal(SIGPIPE,SIG_IGN);
       closesocket(*rtcpdSocket);
       free(rtcpdSocket);
       rtcpdSocket = NULL;
-#endif /* !_WIN32 */
       rc = startWorker(&acceptSocket,tape);
       if ( rc == -1 ) {
         (void)dlf_write(
@@ -1686,13 +1666,6 @@ int main(
   if (Debug == TRUE) {
     rc = rtcpcld_main();
   } else {
-#if defined(_WIN32)
-    /*
-     * Windows
-     */
-    if (Cinitservice("rtcpclientd",rtcpcld_main) == -1)
-      exit(1);
-#else /* _WIN32 */
     /*
      * UNIX
      */
@@ -1700,7 +1673,6 @@ int main(
       dlf_shutdown();
       exit(1);
     }
-#endif /* _WIN32 */
     rc = rtcpcld_main();
   }
   dlf_shutdown();

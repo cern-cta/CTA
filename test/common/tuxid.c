@@ -7,18 +7,12 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tuxid.c,v $ $Revision: 1.4 $ $Date: 2001/05/23 11:16:21 $ CERN IT-PDP/DM Jean-Philippe Baud, Jean-Damien Durand";
-#endif /* not lint */
-
 #define _POSIX_
 #include <stdio.h>
-#ifndef _WIN32
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#endif
 #include <errno.h>
 #include "grp.h"
 #include "pwd.h"

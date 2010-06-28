@@ -1,12 +1,8 @@
 #include <stdlib.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#endif /* _WIN32 */
 #include <Castor_limits.h>
 #include <net.h>
 #include <log.h>

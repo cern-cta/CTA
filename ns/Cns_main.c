@@ -9,16 +9,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include "Cinit.h"
 #include "Cnetdb.h"
 #include "Cns.h"
@@ -198,10 +194,8 @@ int Cns_main(main_args)
 
   FD_ZERO (&readmask);
   FD_ZERO (&readfd);
-#if ! defined(_WIN32)
   signal (SIGPIPE,SIG_IGN);
   signal (SIGXFSZ,SIG_IGN);
-#endif
   signal (SIGTERM,Cns_signal_handler);
   signal (SIGINT,Cns_signal_handler);
 
@@ -308,7 +302,6 @@ int main(argc, argv)
      int argc;
      char **argv;
 {
-#if ! defined(_WIN32)
   struct main_args main_args;
 
   if ((maxfds = Cinitdaemon ("nsd", NULL)) < 0)
@@ -316,10 +309,6 @@ int main(argc, argv)
   main_args.argc = argc;
   main_args.argv = argv;
   exit (Cns_main (&main_args));
-#else
-  if (Cinitservice ("nsd", &Cns_main))
-    exit (SYERR);
-#endif
 }
 
 int getreq(thip, magic, req_type, req_data, clienthost)

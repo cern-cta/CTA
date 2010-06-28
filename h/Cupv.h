@@ -55,10 +55,6 @@
 #define	CUP09	"CUP09 - fatal configuration error: %s %s\n" 
 #define	CUP23	"CUP23 - %s is not accessible\n" 
 #define CUP46	"CUP46 - request too large (max. %d)\n" 
-#if defined(_WIN32) 
-#define	CUP52	"CUP52 - WSAStartup unsuccessful\n" 
-#define	CUP53	"CUP53 - you are not registered in the unix group/passwd mapping file\n" 
-#endif 
 
 /*  #define CUP64	"CUP64 - parameter inconsistency with CUPV for vid %s: %s on request <-> %s in CUPV\n" */
 #define	CUP92	"CUP92 - %s request by %d,%d from %s\n" 

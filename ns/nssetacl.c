@@ -13,9 +13,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -42,9 +39,6 @@ void usage(int status, char *name) {
     printf ("      --help    display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -71,9 +65,6 @@ int main(argc, argv)
   char *path;
   struct Cns_acl *taclp;
   struct Cns_acl tmpacl[CA_MAXACLENTRIES];
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "delete", NO_ARGUMENT, NULL, 'd' },
@@ -111,16 +102,7 @@ int main(argc, argv)
   if (errflg || Coptind >= argc - 1) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   if ((nb_inp_entries = parse_entries (argv[Coptind], inpacl)) <= 0) {
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
   for (i = Coptind+1; i < argc; i++) {
@@ -199,9 +181,6 @@ int main(argc, argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

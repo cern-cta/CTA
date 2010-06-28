@@ -3,29 +3,17 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.7 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <string.h>
 
 /*      inquiry - get information about the type of a drive */
-#if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(linux)
 #include <sys/types.h>
 #include <fcntl.h>
-#if defined(ADSTAR)
-#include <sys/Atape.h>
-#include <sys/scsi.h>
-#else
 #include "scsictl.h"
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-#if defined(_IBMR2)
-extern char *dvrname;
-#endif
 #endif
 #include "sendscsicmd.h"
 

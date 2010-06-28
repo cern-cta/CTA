@@ -11,9 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Castor_limits.h"
-#ifdef _WIN32
-#include <winsock2.h>
-#endif
 #include "stager_api.h"
 #include "stager_errmsg.h"
 #include "serrno.h"
@@ -184,9 +181,6 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   char errbuf[BUFSIZE];
 
   args.nbreqs = nbArgs;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
   args.opts.stage_port = 0;
@@ -199,12 +193,6 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
-#ifdef _WIN32
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "Can not initialize Windows Socket layer.\n");
-    exit (1);
-  }
-#endif
   /* Setting the error buffer */
   stager_seterrbuf(errbuf, sizeof(errbuf));
 

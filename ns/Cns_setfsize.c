@@ -8,12 +8,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -41,14 +37,6 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path && ! file_uniqueid) {
     serrno = EFAULT;
@@ -118,14 +106,6 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! guid) {
     serrno = EFAULT;
@@ -197,14 +177,6 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid,
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path && ! file_uniqueid) {
     serrno = EFAULT;

@@ -22,34 +22,19 @@
 #include <stdio.h>              /* standard Input/Output                */
 #include <sys/types.h>          /* standard data types                  */
 
-#if !defined(_WIN32)
 #include <unistd.h>		/* Standardized definitions		*/
-#else /* _WIN32 */
-#ifndef STATBITS_H
-#include <statbits.h>           /* File access macros for WIN32         */
-#endif
-#endif /* _WIN32 */
-
-#ifndef _DIRENT_WIN32_H
 #include <dirent.h>             /* standard directory definitions       */
-#endif
 
 /*
  * Common includes needed by internal (kernel) routines.
  */
 #if defined(RFIO_KERNEL)
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/socket.h>         /* socket interface                     */
 #include <netinet/in.h>         /* internet types                       */
 #include <netdb.h>              /* network database                     */
-#endif
 #include <errno.h>              /* standard error numbers               */
 #include <string.h>             /* string handling routines             */
-#if ! defined(_WIN32)
 #include <sys/file.h>           /* define L_XTND, L_INCR and L_SET      */
-#endif
 #include <time.h>
 #include <marshall.h>           /* marshalling macros and definitions   */
 #include <serrno.h>             /* special error numbers                */
@@ -65,11 +50,9 @@
 #include <rfio_constants.h>
 #endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
 
-#if !defined(_WIN32)
 #ifndef min
 #define min(a,b)      (((a)<(b)) ? (a):(b))
 #endif
-#endif /* _WIN32 */
 
 /*
  * Internal (kernel) structures
@@ -185,10 +168,6 @@ typedef struct {
 	int passwd; 		/* passwd required if from rem. site    */
 } RDIR;
 
-#if defined(_WIN32)
-typedef RDIR DIR;
-#endif /* _WIN32 */
-
 /*
  * Define RFIO statistic structure
  */
@@ -266,7 +245,7 @@ struct rfiostat	{
 #endif /* rewinddir */
 #define rewinddir       rfio_rewinddir
 
-#if !(defined(__alpha) && defined(__osf__)) && !defined(_WIN32) && !defined(__APPLE__)
+#if !defined(__APPLE__)
 #define fopen64         rfio_fopen64
 #define fseeko64        rfio_fseeko64
 #define fstat64         rfio_fstat64

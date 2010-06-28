@@ -12,15 +12,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include "Cinit.h"
 #include "Cnetdb.h"
 #include "Cpool_api.h"
@@ -74,10 +70,8 @@ int expertd_main() {
 
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
-#if ! defined(_WIN32)
 	signal (SIGPIPE,SIG_IGN);
 	signal (SIGXFSZ,SIG_IGN);
-#endif
 
 	/* open request socket */
 
@@ -150,14 +144,9 @@ int expertd_main() {
 
 int main()
 {
-#if ! defined(_WIN32)
 	if ((maxfds = Cinitdaemon ("expertd", NULL)) < 0)
 		exit (EXP_SYERR);
 	exit (expertd_main());
-#else
-	if (Cinitservice ("expertd", &expertd_main))
-		exit (EXP_SYERR);
-#endif
 }
 
 int getreq(s, magic, req_type, req_data, data_len, clienthost)

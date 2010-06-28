@@ -3,19 +3,12 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)repair_vdqm.c,v 1.5 2000-05-04 14:24:07+02 CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * showqueues.c - command to list queues and running jobs.
  */
 
 #include <stdio.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <regex.h>
 #include <time.h>
 #include <errno.h>

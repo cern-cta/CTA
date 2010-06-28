@@ -27,11 +27,7 @@
  */
 #define RFIO_KERNEL     1
 #include "rfio.h"
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
-#else
 #include <sys/param.h>
-#endif
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>

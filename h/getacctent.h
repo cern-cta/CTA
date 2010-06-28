@@ -13,9 +13,7 @@
 #include <osdep.h>
 
 #ifndef ACCT_FILE
-#if ! defined(_WIN32)
 #define ACCT_FILE	"/etc/account"
-#endif
 #endif
 #define ACCT_FILE_VAR	"ACCT_FILE"
 

@@ -3,9 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <Castor_limits.h>
 #include <serrno.h>
 #include <net.h>

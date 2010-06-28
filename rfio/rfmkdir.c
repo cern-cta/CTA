@@ -17,10 +17,6 @@
 #include <sys/stat.h>
 #include <rfio_api.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
-
 static char *ckpath();
 char *getconfent();
 
@@ -37,9 +33,6 @@ int main(argc, argv)
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char *endprt;             /* For conversion                        IN2P3*/
   struct stat64 st;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif /* _WIN32 */
 
   if ( argc < 2 ) {
     fprintf(stderr,"Usage: %s [-m mode] [-p] dirname ...\n",argv[0]);
@@ -66,13 +59,6 @@ int main(argc, argv)
       exit(2);
     }
   }
-
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);

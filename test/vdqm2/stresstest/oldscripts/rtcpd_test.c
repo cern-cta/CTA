@@ -1,10 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
@@ -12,7 +7,6 @@ WSADATA wsadata;
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <rtcp_constants.h>             /* Definition of RTCOPY_MAGIC   */
@@ -35,12 +29,8 @@ WSADATA wsadata;
 #define RTCPD_BACKLOG 5
 #endif /* SOMAXCONN */
 
-#if defined(_WIN32)
-#define NWERRTXT geterr()
-#else /* _WIN32 */
 #define NWERRTXT strerror(errno)
 #define Sleep(X) sleep(X/1000)
-#endif /* _WIN32 */
 
 #define ERRTXT strerror(errno)
 
@@ -51,13 +41,6 @@ int rtcpd_InitNW(SOCKET *s) {
     int port, rc;
 
     if ( s == NULL ) return(-1);
-#if defined(_WIN32)
-    rc = WSAStartup(MAKEWORD(2,0),&wsadata);
-    if ( rc ) {
-        log(LOG_ERR,"rtcp_InitNW() WSAStartup(): %s\n",NWERRTXT);
-        return(-1);
-    }
-#endif /* _WIN32 */
 
     if ( (p = getenv("RTCOPY_PORT")) != (char *)NULL ) {
         port = atoi(p);
@@ -113,9 +96,7 @@ int rtcpd_Listen(SOCKET s, SOCKET *ns) {
 
     for (;;) {
         *ns = INVALID_SOCKET;
-#if !defined(_WIN32)
         maxfd = s + 1;
-#endif /* _WIN32 */
         rfds_copy = rfds;
         if ( (rc = select(maxfd,&rfds_copy,NULL,NULL,NULL)) > 0 ) {
             if ( FD_ISSET(s,&rfds_copy) ) {
@@ -329,12 +310,6 @@ int rtcpd_exit(SOCKET s1, SOCKET s2, char *msg) {
         shutdown(s2,SD_BOTH);
         closesocket(s2);
     }
-#if defined(_WIN32)
-    if ( (rc = WSACleanup()) == SOCKET_ERROR ) {
-        log(LOG_ERR,"rtcpd_exit() WSACleanup(): %s\n",
-				NWERRTXT);
-    }
-#endif /* _WIN32 */
     log(LOG_ERR,"rtcpd_exit() %s\n",msg);
     exit(0);
     return(0);

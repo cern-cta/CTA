@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.11 $ $Date: 2007/03/26 12:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -447,19 +443,6 @@ char **argv;
 	/* get robot geometry */
 
 	if (*rmchost == '\0') {
-#if defined(SOLARIS25) || defined(hpux)
-		/* open the SCSI picker device
-		   (open is done in send_scsi_cmd for the other platforms */
-
-		if ((fd = open (loader, O_RDWR)) < 0) {
-			if (errno == EBUSY)
-				c = EBUSY;
-			else
-				c = RBT_NORETRY;
-			fprintf (stderr, SR019, loader, "open", strerror(errno));
-			exit (c);
-		}
-#endif
 		if ((c = smc_get_geometry (fd, loader, &robot_info))) {
 			c = smc_lasterror (&smc_status, &msgaddr);
 			fprintf (stderr, SR020, "get_geometry", msgaddr);

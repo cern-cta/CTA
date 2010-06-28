@@ -7,11 +7,6 @@
  * Csec_plugin_KRB4.c - Plugin function used for authentication in CASTOR
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_plugin_KRB4.c,v $ $Revision: 1.13 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
-
 #include <osdep.h>
 #include <stddef.h>
 #include <errno.h>
@@ -22,15 +17,11 @@ static char sccsid[] = "@(#)$RCSfile: Csec_plugin_KRB4.c,v $ $Revision: 1.13 $ $
 #include <fcntl.h>
 #include <stdarg.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#endif
 
 #include "marshall.h"
 #include "serrno.h"

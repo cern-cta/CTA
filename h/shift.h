@@ -19,11 +19,6 @@
 #include <shift/patchlevel.h>   /* Current version number               */
 #include <shift/osdep.h>        /* Operating System dependencies        */
 #include <shift/serrno.h>       /* SHIFT error numbers and codes        */
-#ifdef _WIN32
-#include <shift/dirent.h>
-#include <shift/statbits.h>
-#include <shift/syslog.h>
-#endif
 #include <shift/log.h>          /* Logging facilities                   */
 #include <shift/trace.h>        /* Tracing facilities                   */
 #include <shift/rfio_constants.h>

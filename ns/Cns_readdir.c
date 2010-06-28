@@ -10,12 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -42,14 +38,6 @@ Cns_readdir(Cns_DIR *dirp)
 
   strcpy (func, "Cns_readdir");
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (NULL);
-  }
-#endif
 
   if (! dirp) {
     serrno = EFAULT;
@@ -99,20 +87,12 @@ Cns_readdir(Cns_DIR *dirp)
     dp = (struct dirent *) dirp->dd_buf;
     while (nbentries--) {
       dp->d_ino = 0;
-#if defined(linux) || defined(sgi) || defined(SOLARIS)
-      dp->d_off = 0;
-#endif
-#if defined(_AIX)
-      dp->d_offset = 0;
-#endif
 #if defined(linux)
+      dp->d_off = 0;
       dp->d_type = 0;
 #endif
       unmarshall_STRING (rbp, dp->d_name);
       n = strlen (dp->d_name);
-#if defined(_AIX) || (defined(__alpha) && defined(__osf__)) || defined(hpux)
-      dp->d_namlen = n;
-#endif
       dp->d_reclen = ((direntsz + n + 8) / 8) * 8;
       dp = (struct dirent *) ((char *) dp + dp->d_reclen);
     }

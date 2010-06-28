@@ -14,11 +14,7 @@
  */
 #define RFIO_KERNEL     1
 #include <fcntl.h>
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
-#else
 #include <sys/param.h>          /* For MAXHOSTNAMELEN definition  */
-#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -97,17 +93,9 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
   if ( (cp == NULL) || !strcmp( host, localhost) || !strcmp(host,"localhost") ) {
     TRACE(3,"rfio","popen(%s,%s): local mode",command,type) ;
     if (cp == NULL)
-#if defined(_WIN32)
-      file = _popen(command, type);
-#else
     file = popen(command,type);
-#endif
     else
-#if defined(_WIN32)
-      file = _popen(pcom, type);
-#else
     file = popen(pcom, type) ;
-#endif
     rfio_errno = 0;
     if ( file == NULL ) {
       TRACE(1,"rfio","popen() failed ,error %d", errno) ;

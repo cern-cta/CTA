@@ -12,9 +12,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr.h"
@@ -63,9 +60,6 @@ char **argv;
 	};
 	int nb_free_slots;
 	int status;
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 
 	Copterr = 1;
 	Coptind = 1;
@@ -89,20 +83,11 @@ char **argv;
                 exit (USERR);
         }
  
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
-		exit (SYERR);
-	}
-#endif
 	if (library_name) {
 		if (vmgr_querylibrary (library_name, &capacity, &nb_free_slots,
 		    &status) < 0) {
 			fprintf (stderr, "vmgrlistlibrary %s: %s\n", library_name,
 			    (serrno == ENOENT) ? "No such library" : sstrerror(serrno));
-#if defined(_WIN32)
-			WSACleanup();
-#endif
 			exit (USERR);
 		}
 		listentry (library_name, capacity, nb_free_slots, status);
@@ -115,8 +100,5 @@ char **argv;
 		}
 		(void) vmgr_listlibrary (VMGR_LIST_END, &list);
 	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	exit (0);
 }

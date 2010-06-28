@@ -4,9 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <serrno.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 
 void *doit _PROTO((void *));
 

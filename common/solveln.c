@@ -5,24 +5,9 @@
 
 #include <errno.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
-#else
-#if defined(__Lynx__)
-#include <socket.h>
-#else
 #include <sys/param.h>
-#endif
-#endif
 #include <string.h>
-#if defined(_WIN32)
-#include <direct.h>
-#else
 #include <unistd.h>
-#endif
-#if defined(SOLARIS)
-#include <netdb.h>
-#endif /* SOLARIS */
 #include <osdep.h>
 #define MAXFILENAMSIZE 1024     /* Maximum length of a file path name   */
 
@@ -37,10 +22,6 @@ char * path ;
 char * buff ;
 int size    ;
 {
-#if defined(_WIN32)
-	strcpy(buff, path);
-	return (strlen(path));
-#else
 	char *cp ;
 	char filename[MAXFILENAMSIZE] ;
 	char storpath[MAXFILENAMSIZE] ;
@@ -81,7 +62,6 @@ int size    ;
 			}
 		}
 	}
-#endif
 }
 
 
@@ -96,10 +76,6 @@ int size    ;
  * returned.
  * It is assumed that path begins by '/' or that it contains ":/" .
  */
-#if defined(SOLARIS)
-extern char * getcwd() ;
-#endif
-
 extern char *getconfent() ;
 int DLL_DECL solveln(path, buffer, size)
 char *path ;
@@ -186,11 +162,7 @@ int size ;
          */
         gethostname( hostname, MAXHOSTNAMELEN ) ;
          if ( (n=seelink(path, buffer, size)) < 0 ) {
-#if defined(sgi) && !defined(IRIX5)
-                if ( errno == ENXIO || errno == ENOENT )  {
-#else
                 if ( errno == EINVAL || errno == ENOENT ) {
-#endif
                         sprintf( buffer, "%s:%s",hostname,path ) ;
                         return 0 ;
                 }

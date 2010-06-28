@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.6 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	tpstat - tape status display */
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,9 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Ctape_api.h"
 
 void usage(cmd)

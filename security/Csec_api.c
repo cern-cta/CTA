@@ -19,14 +19,10 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 
 #include "marshall.h"
 #include "serrno.h"

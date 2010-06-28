@@ -12,18 +12,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#define R_OK 4
-#define W_OK 2
-#define X_OK 1
-#define F_OK 0
-#define S_ISGID 0002000
-#define S_ISVTX 0001000
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include <uuid/uuid.h>
 #include "marshall.h"
 #include "Cgrp.h"

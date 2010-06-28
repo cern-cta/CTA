@@ -11,15 +11,11 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include "Cinit.h"
 #include "Cdomainname.h"
 #include "Cnetdb.h"
@@ -153,10 +149,8 @@ int vmgr_main(main_args)
 
   FD_ZERO (&readmask);
   FD_ZERO (&readfd);
-#if ! defined(_WIN32)
   signal (SIGPIPE,SIG_IGN);
   signal (SIGXFSZ,SIG_IGN);
-#endif
   signal (SIGTERM,vmgr_signal_handler);
   signal (SIGINT,vmgr_signal_handler);
 
@@ -245,7 +239,6 @@ int main(argc, argv)
      int argc;
      char **argv;
 {
-#if ! defined(_WIN32)
   struct main_args main_args;
 
   if ((maxfds = Cinitdaemon ("vmgrd", NULL)) < 0)
@@ -253,10 +246,6 @@ int main(argc, argv)
   main_args.argc = argc;
   main_args.argv = argv;
   exit (vmgr_main (&main_args));
-#else
-  if (Cinitservice ("vmgrd", &vmgr_main))
-    exit (SYERR);
-#endif
 }
 
 int getreq(s, magic, req_type, req_data, clienthost)

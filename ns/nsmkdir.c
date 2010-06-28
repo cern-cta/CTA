@@ -10,13 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include "statbits.h"
-#define F_OK 0
-#else
 #include <unistd.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -33,9 +27,6 @@ void usage(int status, char *name) {
     printf ("      --help       display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -57,9 +48,6 @@ int main(argc, argv)
   char *p;
   int pflag = 0;
   struct Cns_filestat statbuf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "mode",    REQUIRED_ARGUMENT, NULL, 'm' },
@@ -103,12 +91,6 @@ int main(argc, argv)
   if (errflg) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   for (i = Coptind; i < argc; i++) {
     dir = argv[i];
     if (*dir != '/' && strstr (dir, ":/") == NULL) {
@@ -187,9 +169,6 @@ int main(argc, argv)
       }
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

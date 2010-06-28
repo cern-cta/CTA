@@ -12,9 +12,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr.h"
@@ -32,9 +29,6 @@ char **argv;
 	};
 	char *tag = NULL;
 	char *vid = NULL;
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 
 	Copterr = 1;
 	Coptind = 1;
@@ -58,19 +52,10 @@ char **argv;
 		    "usage: %s --tag text -V vid\n", argv[0]);
 		exit (USERR);
 	}
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
-		exit (SYERR);
-	}
-#endif
 	if (vmgr_settag (vid, tag)) {
 		fprintf (stderr, "%s: %s\n", vid, sstrerror(serrno));
 		errflg++;
 	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	if (errflg)
 		exit (USERR);
 	exit (0);

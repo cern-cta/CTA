@@ -21,11 +21,7 @@
 #include "checkkey.h"
 #include <grp.h>
 #include <log.h>                        /* Genralized error logger      */
-#if defined(_WIN32)
-#include "syslog.h"
-#else
 #include <sys/param.h>                  /* System parameters            */
-#endif
 #include <pwd.h>
 
 extern int forced_umask;
@@ -52,51 +48,6 @@ extern int  udf_read();
 extern int uf_close();
 extern void uf_cread();
 
-#if defined(_WIN32)
-
-#if !defined (MAX_THREADS)
-#define MAX_THREADS 64
-#endif /* MAX_THREADS */
-#if !defined (RFIO_MAX_PORTS)
-#define RFIO_MAX_PORTS 10
-#endif /* RFIO_MAX_PORTS */
-
-extern /*__declspec( thread ) */ DWORD tls_i;
-extern struct thData  {
-  SOCKET ns;    /* control socket */
-  struct sockaddr_in from;
-  int mode;
-  int _is_remote;
-  int fd;
-  /* globals, which have to be local for thread... */
-  char *rqstbuf;        /* Request buffer  */
-  char *filename;        /* file name             */
-  char *iobuffer;   /* Data communication buffer    */
-  int  iobufsiz;  /* Current io buffer size       */
-  SOCKET data_s;      /* Data listen socket (v3) */
-  SOCKET data_sock;   /* Data accept socket (v3) */
-  SOCKET ctrl_sock;   /* the control socket (v3) */
-  int first_write;
-  int first_read;
-  int byte_read_from_network;
-  struct rfiostat myinfo;
-  char from_host[MAXHOSTNAMELEN];
-} *td;
-
-#define rqstbuf td->rqstbuf
-#define filename td->filename
-#define iobuffer td->iobuffer
-#define iobufsiz td->iobufsiz
-#define data_s td->data_s
-#define data_sock td->data_sock
-#define ctrl_sock td->ctrl_sock
-#define first_write td->first_write
-#define first_read td->first_read
-#define byte_read_from_network td->byte_read_from_network
-#define is_remote td->_is_remote
-#define myinfo td->myinfo
-
-#else /* ! _WIN32 */
 /*
  * Data buffer.
  */
@@ -107,7 +58,6 @@ static int      iobufsiz= 0;
  * ( Defined in rfio_calls.c )
  */
 extern char rqstbuf[] ;
-#endif /* _WIN32 */
 
 extern int switch_open();
 extern int switch_close();
@@ -138,9 +88,7 @@ int   srxyopen(s, rlun,access, rt,host, bet)
   int     append ;   /* Open flag  */
   int  trunc;    /* Open flag  */
   char account[MAXACCTSIZE] ;  /* client account  */
-#if !defined(_WIN32)
   char filename[MAXFILENAMSIZE] ;  /* file name            */
-#endif
   int filen ;    /* file name length */
   int     status ;   /* Status  */
   char    user[CA_MAXUSRNAMELEN+1];
@@ -275,7 +223,6 @@ int   srxyopen(s, rlun,access, rt,host, bet)
       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
       append = openopt & FFOOPT_A;
       trunc = openopt & FFOOPT_T;
-#if !defined(_WIN32)
       /* While performing tape operations multiple calls to change uid are issued. As
        * a result we ignore errors from setgroups if we are not running as the super-
        * user because it is a super-user only command. If we do not do this all tape
@@ -286,7 +233,6 @@ int   srxyopen(s, rlun,access, rt,host, bet)
         log(LOG_ERR, "rxyopen: unable to setuid,gid(%d,%d): %s\n", uid, gid, strerror(errno));
       }
       else
-#endif
         {
           const char *perm_array[] = { "WTRUST", "OPENTRUST", NULL };
           char ofilename[MAXFILENAMSIZE];

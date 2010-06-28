@@ -721,26 +721,6 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
     serrno = SECTHREADERR;
     return(-1);
   }
-#if ((defined(__osf__) && defined(__alpha)) || (defined(IRIX5) || defined(IRIX6) || defined(IRIX64)))
-  /*
-   * Need to increase the thread stack on DUNIX and IRIX
-   */
-#if (defined(__osf__) && defined(__alpha))
-  n = 256*1024;
-#elif (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
-  n = 512*1024;
-#else
-  /* Any default that can the #define's did not catched ? */
-  n = 256*1024;
-#endif
-  if ((n = pthread_attr_setstacksize(&attr,n)) != 0) {
-      pthread_attr_destroy(&attr);
-      free(starter);
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-  }
-#endif /* __osf__ && __alpha */
   if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter)) != 0) {
     pthread_attr_destroy(&attr);
     free(starter);
@@ -763,18 +743,6 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
     free(starter);
     return(-1);
   }
-#if defined(__osf__) && defined(__alpha)
-  /*
-   * Need to increase the thread stack on DUNIX
-   */
-  n = 256*1024;
-  if ( (n = pthread_attr_setstacksize(&attr,n)) ) {
-      pthread_attr_destroy(&attr);
-      free(starter);
-      serrno = SECTHREADERR;
-      return(-1);
-  }
-#endif /* __osf__ && __alpha */
   if (pthread_create(&pid,attr,_Cthread_start_pthread, (void *) starter) != 0) {
     serrno = SECTHREADERR;
     pthread_attr_delete(&attr);
@@ -3034,9 +3002,7 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
-#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
     struct timeval ts;
-#endif
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -3074,7 +3040,7 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
-#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64) || defined(linux))
+#if defined(linux)
         /* usleep is in micro-seconds, not milli seconds... */
         usleep((Timeout * 1000)/20);
 #else
@@ -3283,10 +3249,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
-#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64) || defined(linux))
+#if !(defined(linux))
     struct timeval ts;
 #endif
-
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
 
@@ -3323,7 +3288,7 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
-#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64) || defined(linux))
+#if defined(linux)
         /* usleep is in micro-seconds, not milli seconds... */
         usleep((Timeout * 1000)/20);
 #else

@@ -131,13 +131,8 @@ struct acctrfio64 {       /* accounting record for rfio64 software */
 
 struct accttape {	/* accounting record for tape software */
 	int	subtype;
-#if defined(_WIN32)
-	int     uid;
-	int     gid;
-#else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* _WIN32 */
 	int	jid;
 	char	filler[16];
 	char	dgn[CA_MAXDGNLEN+1];	/* CART, 8500, SMCF... */
@@ -202,13 +197,8 @@ struct accttape {	/* accounting record for tape software */
 
 struct acctrtcp {	/* accounting record for rtcopy software */
 	int	subtype;
-#if defined(_WIN32)
-	int     uid;
-	int     gid;
-#else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* _WIN32 */
 	int	jid;
 	int	stgreqid;	/* stager request id */
 	char	reqtype;	/* R -> tpread, W -> tpwrite, D -> dumptape */
@@ -259,13 +249,8 @@ struct acctrtcp_timing {
 
 struct acctstage {	/* accounting record for stage software */
 	int	subtype;
-#if defined(_WIN32)
-	int     uid;
-	int     gid;
-#else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* _WIN32 */
 	int	reqid;
 	int	req_type;
 	int	retryn;		/* retry number */
@@ -301,13 +286,8 @@ struct acctstage {	/* accounting record for stage software */
 
 struct acctstage2 {	/* accounting record for stage software */
 	int	subtype;
-#if defined(_WIN32)
-	int     uid;
-	int     gid;
-#else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* _WIN32 */
 	int	reqid;
 	int	req_type;
 	int	retryn;		/* retry number */
@@ -345,13 +325,8 @@ struct acctstage2 {	/* accounting record for stage software */
 
 struct acctstage64 {	/* accounting record for stage 64BITS software */
 	int	subtype;
-#if defined(_WIN32)
-	int     uid;
-	int     gid;
-#else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* _WIN32 */
 	int	reqid;
 	int	req_type;
 	int	retryn;		/* retry number */

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.3 $ $Date: 2009/07/23 12:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	tprstat - resource reservation status display */
 #include <stdio.h>
 #include <pwd.h>
@@ -14,9 +10,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Ctape_api.h"
 #define MAXDGP 4
 #define MAXJOBS 64

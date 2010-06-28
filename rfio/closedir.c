@@ -47,13 +47,8 @@ int DLL_DECL rfio_closedir(dirp)
       status = rfio_HsmIf_closedir((DIR *)dirp);
     } else {
       TRACE(2, "rfio", "rfio_closedir: using local closedir(0x%x)",dirp) ;
-#if defined(_WIN32)
-      status = -1;
-      serrno = SEOPNOTSUP;
-#else /* _WIN32 */
       status= closedir((DIR *)dirp) ;
       if ( status < 0 ) serrno = 0;
-#endif /* _WIN32 */
     }
     END_TRACE() ;
     return status ;

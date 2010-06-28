@@ -10,13 +10,9 @@
 #include <stdio.h>
 #include <osdep.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#endif
 #include <log.h>
 #include <string.h>
 #include <errno.h>

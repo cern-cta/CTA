@@ -3,11 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: regression_tests.c,v $ $Revision: 1.2 $ $Date: 2004/03/17 14:45:52 $ CERN IT/ADC Olof Barring";
-#endif /* lint */
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,9 +10,7 @@ static char sccsid[] = "@(#)$RCSfile: regression_tests.c,v $ $Revision: 1.2 $ $D
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#if !defined(_WIN32)
 #include <dirent.h>
-#endif
 #include <pwd.h>
 #include <grp.h>
 #define RFIO_KERNEL 1

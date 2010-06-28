@@ -3,21 +3,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.13 $ $Date: 2007/02/15 17:00:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	Ctape_config - configure a drive up/down */
 
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
@@ -43,13 +35,6 @@ int reason;
 	strcpy (func, "Ctape_config");
 	uid = getuid();
 	gid = getgid();
-#if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		Ctape_errmsg (func, TP053);
-		serrno = SENOMAPFND;
-		return (-1);
-	}
-#endif
 
 	/* unm may be in the form drivename@hostname */
 

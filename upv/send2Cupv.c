@@ -8,13 +8,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include "marshall.h"
 #include "net.h"
@@ -23,9 +19,6 @@
 #include "Cupv_util.h"
 #ifdef UPVCSEC
 #include "Csec_api.h"
-#endif
-#if defined(_WIN32)
-extern char *ws_strerr;
 #endif
 
 /* send2Cupv - send a request to the CUPV daemon and wait for the reply */
@@ -106,11 +99,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
     }
 
     if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-      if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
 	if (errno == ECONNREFUSED) {
-#endif
 	  Cupv_errmsg (func, CUP00, Cupvhost);
 	  (void) netclose (s);
 	  serrno = ECUPVNACT;

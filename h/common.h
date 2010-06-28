@@ -14,12 +14,8 @@
 #ifndef _COMMON_H_INCLUDED_
 #define _COMMON_H_INCLUDED_
 
-#if !defined(_WIN32)
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
-#else
-#include <winsock2.h>
-#endif
 
 #include <Castor_limits.h>
 #include <osdep.h>

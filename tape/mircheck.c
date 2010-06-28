@@ -27,7 +27,7 @@ char *path;
 char *devtype;
 int checktype;
 {
-#if defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(linux)
 	unsigned char *endpage;
 	unsigned char *p;
 	unsigned short pagelen;

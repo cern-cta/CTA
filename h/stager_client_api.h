@@ -142,10 +142,6 @@
 
 #include <stdio.h>
 #include <osdep.h>
-#ifdef _WIN32
-#include <io.h>
-#include <sys/stat.h>
-#endif
 #include <sys/types.h>
 
 

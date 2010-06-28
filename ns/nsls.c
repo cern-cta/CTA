@@ -14,13 +14,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include "statbits.h"
-#define F_OK 0
-#else
 #include <unistd.h>
-#endif
 #include "Cgetopt.h"
 #include "Cns.h"
 #include "Cns_api.h"
@@ -41,9 +35,6 @@ int listtpentry(char*,int,int,u_signed64,int,char*,int,int,
 void direntstatg2filestatcs(struct Cns_filestatcs*, struct Cns_direnstatg*);
 void direntstatc2filestatcs(struct Cns_filestatcs*, struct Cns_direnstatc*);
 
-#if sgi
-extern char *strdup _PROTO((CONST char *));
-#endif
 int cflag;
 int clflag;
 int cmflag;
@@ -87,9 +78,6 @@ void usage(int status, char *name) {
     printf ("      --help      display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -104,9 +92,6 @@ int main(argc, argv)
   int i;
   char *p;
   char *path;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "checksum",     NO_ARGUMENT, &checksumflag, 1 },
@@ -158,21 +143,12 @@ int main(argc, argv)
     usage (0, argv[0]);
   }
   (void) time (&current_time);
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
 
   if (Coptind >= argc && ! errflg) { /* no file specified */
     if ((p = getenv (CNS_HOME_ENV)) && strlen (p) <= CA_MAXPATHLEN) {
       strcpy (fullpath, p);
       if (procpath (fullpath)) {
         fprintf (stderr, "%s: %s\n", fullpath, sstrerror(serrno));
-#if defined(_WIN32)
-        WSACleanup();
-#endif
         exit (USERR);
       }
     } else
@@ -205,9 +181,6 @@ int main(argc, argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

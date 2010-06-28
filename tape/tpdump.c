@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.33 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	tpdump - analyse the content of a tape */
 #include <errno.h>
 #include <stdio.h>
@@ -273,13 +269,9 @@ char	**argv;
 	if (*vid == '\0')
 		strcpy (vid, vsn);
 
-#if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
-#endif
 	signal (SIGINT, cleanup);
-#if ! defined(_WIN32)
 	signal (SIGQUIT, cleanup);
-#endif
 	signal (SIGTERM, cleanup);
 
 	if (*dgn == '\0') {
@@ -309,12 +301,6 @@ char	**argv;
 #endif
 	}
 	strcpy (infil, tempnam (NULL, "tp"));
-
-#if defined(_AIX) && defined(_IBMR2)
-	if (getdvrnam (infil, driver_name) < 0)
-		strcpy (driver_name, "tape");
-	dvrname = driver_name;
-#endif
 
 	/* reserve resources */
 

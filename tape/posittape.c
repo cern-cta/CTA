@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.22 $ $Date: 2008/08/22 10:20:00 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -136,9 +132,6 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 	int c;
 	time_t current_time;
 	struct devinfo *devinfo;
-#if defined(ADSTAR)
-	extern char *dvrname;
-#endif
 	char func[16];
 	struct tm *localtime(), *tm;
 	int n;
@@ -189,14 +182,8 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 		*cfseq = 1;
 		if (fseq == 1 && (filstat == NEW_FILE || filstat == NOFILECHECK))
 			goto reply;
-#if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
-#if defined(ADSTAR)
-		if (strcmp (dvrname, "Atape") == 0 &&
-		    strcmp (devtype, "3590") == 0 &&
-#endif
-#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
+#if defined(linux)
 		if (devinfo->fastpos &&
-#endif
 		    (fseq > 2 || fseq == -1)) {	/* fast positionning */
 			if (fseq > 0)
 				n = fseq - 1;
@@ -261,9 +248,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				goto reply;
 			}
 			c = 3 - c;
-#if defined(SOLARIS) || defined(linux)
 			if (c > 0)
-#endif
 				c = skiptpfb (tapefd, path, c);
 			goto reply;
 		}
@@ -293,7 +278,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 					c = rwndtape (tapefd, path);
 				} else {
 					c = 3 + rewritetm - c;
-#if defined(SOLARIS) || defined(linux)
+#if defined(linux)
 					if (c > 0)
 #endif
 						c = skiptpfb (tapefd, path, c);
@@ -462,14 +447,8 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				if (tmr == 0 && (c = skiptpff (tapefd, path, 1)))
 					goto reply;
 		}
-#if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux) || defined(hpux)
-#if defined(ADSTAR)
-		if (strcmp (dvrname, "Atape") == 0 &&
-		    strcmp (devtype, "3590") == 0 &&
-#endif
-#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux) || defined(hpux)
+#if defined(linux)
 		if (devinfo->fastpos &&
-#endif
 		    (fseq > *cfseq + 1 || fseq == -1 ||
 		    (fseq == -2 && Qfirst > *cfseq + 1))) { /* fast positionning */
 			if (fseq > 0)
@@ -583,7 +562,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 					goto reply;
 				}
 				c = 3 + rewritetm - c;
-#if defined(SOLARIS) || defined(linux)
+#if defined(linux)
 				if (c > 0)
 #endif
 					c = skiptpfb (tapefd, path, c);

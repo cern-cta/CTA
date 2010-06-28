@@ -9,11 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#ifndef _WIN32
 #include <unistd.h>
-#else
-#include <winsock2.h>
-#endif
 #include <stdarg.h>
 #include "osdep.h"
 #include "stager_util.h"

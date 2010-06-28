@@ -9,17 +9,12 @@
 
 #include <stdlib.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-#else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #include <sys/time.h>
-#endif /* _WIN32 */
 
 #include <errno.h>
 #include <stdarg.h>
@@ -47,12 +42,6 @@ extern char *geterr();
 #include <Ctape_api.h>
 #include <serrno.h>
 #include "tplogger_api.h"
-#if defined(sgi)
-/*
- * Workaround for SGI flags in grp.h
- */
-extern struct group *getgrent();
-#endif /* IRIX */
 
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
@@ -157,10 +146,8 @@ static int rtcpd_ChkNewAcct(char *acctstr,struct passwd *pwd,gid_t gid) {
 int rtcpd_CheckClient(int _uid, int _gid, char *name,
                       char *acctstr, int *rc) {
   struct passwd *pw;
-#if !defined(_WIN32)
   struct group *gr;
   char **gr_mem;
-#endif /* _WIN32 */
   uid_t uid;
   gid_t gid;
 
@@ -196,7 +183,6 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
     if ( rc != NULL ) *rc = UIDMISMATCH;
     return(-1);
   }
-#if !defined(_WIN32)
   if ( pw->pw_gid != gid ) {
     setgrent();
     while ( (gr = getgrent()) ) {
@@ -219,17 +205,12 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
       return(-1);
     }
   }
-#endif /* _WIN32 */
 
   return(0);
 }
 
 int rtcpd_jobID() {
-#if defined(_WIN32)
-  return((int)getpid());
-#else /* _WIN32 */
   return((int)getpgrp());
-#endif /* _WIN32 */
 }
 
 /*
@@ -2328,14 +2309,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   static int thPoolSz = -1;
   char *cmd = NULL;
   char acctstr[7] = "";
-#if !defined(_WIN32)
   char envacct[20];
   int save_errno;
-#endif /* _WIN32 */
 
-#if !defined(_WIN32)
   (void)setpgrp();
-#endif /* _WIN32 */
   AbortFlag = 0;
   rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
   tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
@@ -2556,9 +2533,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   cmd = rtcp_cmds[tapereq.mode];
 
   /*
-   * On UNIX: set client UID/GID
+   * set client UID/GID
    */
-#if !defined(_WIN32)
   rc = setgid((gid_t)client->gid);
   save_errno = errno;
   if ( rc == -1 ) {
@@ -2597,7 +2573,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       }
     }
   }
-#endif /* !_WIN32 */
 
   (void)rtcpd_PrintCmd(tape,NULL);
   if ( rc == -1 ) {

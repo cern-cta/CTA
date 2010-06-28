@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -37,9 +34,6 @@ void usage(int status, char *name) {
     printf ("      --help            display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -56,9 +50,6 @@ int main(int argc,char **argv)
   Cns_list list;
   struct Cns_fileclass *lp;
   char *server = NULL;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "id",    REQUIRED_ARGUMENT, NULL,   OPT_CLASS_ID   },
@@ -110,12 +101,6 @@ int main(int argc,char **argv)
     usage (USERR, argv[0]);
   }
 
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   if (classid > 0 || class_name) {
     if (Cns_queryclass (server, classid, class_name, &Cns_fileclass) < 0) {
       char buf[256];
@@ -127,9 +112,6 @@ int main(int argc,char **argv)
       }
       fprintf (stderr, "nslistclass %s: %s\n", buf,
                (serrno == ENOENT) ? "No such class" : sstrerror(serrno));
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       exit (USERR);
     }
     listentry (&Cns_fileclass);
@@ -145,9 +127,6 @@ int main(int argc,char **argv)
     }
     (void) Cns_listclass (server, CNS_LIST_END, &list);
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }
 

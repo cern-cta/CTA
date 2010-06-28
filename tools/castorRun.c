@@ -13,9 +13,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif
 #include <sys/wait.h>
 #include "serrno.h"
 #include "osdep.h"

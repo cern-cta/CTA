@@ -16,7 +16,7 @@
 #include <Cpwd.h>
 #include <string.h>
 
-#if !defined(IRIX64) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__)
+#if !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__)
 static int pw_key = -1;
 static int old_uid_key = -1;
 #endif
@@ -26,11 +26,8 @@ int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat */
      char    *filepath;               /* remote file path    */
      struct stat *statbuf;            /* status buffer   */
 {
-#if (defined(__alpha) && defined(__osf__))
-  return (rfio_lstat64(filepath,statbuf));
-#else
   int      lstatus;  /* remote lstat() status     */
-#if defined(IRIX64) || defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
+#if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
   struct stat64 statb64;
 
   if ((lstatus = rfio_lstat64(filepath,&statb64)) == 0)
@@ -74,11 +71,7 @@ int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat */
 
     END_TRACE();
     rfio_errno = 0;
-#if !defined(_WIN32)
     lstatus = lstat(filename,statbuf);
-#else
-    lstatus = stat(filename,statbuf);
-#endif /* _WIN32 */
     if ( lstatus < 0 ) serrno = 0;
     return(lstatus);
   }
@@ -179,7 +172,6 @@ int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat */
   END_TRACE();
   return (0);
 #endif
-#endif
 }
 
 int DLL_DECL rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
@@ -210,11 +202,7 @@ int DLL_DECL rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
 
     END_TRACE();
     rfio_errno = 0;
-#if !defined(_WIN32)
     status = lstat64(filename,statbuf);
-#else
-    status = stat64(filename,statbuf);
-#endif /* _WIN32 */
     if ( status < 0 ) serrno = 0;
     return(status);
   }

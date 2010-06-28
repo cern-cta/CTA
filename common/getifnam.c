@@ -7,19 +7,13 @@
 
 #include <stdio.h>                      /* Standard input/output        */
 #include <sys/types.h>                  /* Standard data types          */
-#if !defined(_WIN32)
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
-#else
-#include <winsock2.h>
-#endif
 #include <errno.h>                      /* Error numbers                */
 #include <serrno.h>                     /* Special error numbers        */
 #include <log.h>                        /* Generalized error logger     */
-#if !defined(_WIN32)
 #include <net/if.h>                     /* Network interfaces           */
 #include <sys/ioctl.h>                  /* ioctl() definitions          */
-#endif
 #include <trace.h>                      /* tracing definitions          */
 #include <string.h>                     /* For strlen                   */
 #include <Cglobals.h>                   /* Cglobals prototypes          */
@@ -40,10 +34,6 @@ SOCKET     s;
 char    *ifname;
 size_t  ifnamelen;
 {
-#if defined(_WIN32)
-    static char dummy_ifce[4]="???";    /* We don't know yet how to get it */
-    return (dummy_ifce);
-#else /* _WIN32 */
     struct  ifconf  ifc;            /* Interface configuration      */
     struct  ifreq   *ifr;           /* Interface request            */
     char    buf[BUFSIZ];            /* A buffer                     */
@@ -129,7 +119,6 @@ size_t  ifnamelen;
         END_TRACE();
         return((char *) NULL);
     }
-#endif /* _WIN32 */
 }
 
 char DLL_DECL *getifnam(s)

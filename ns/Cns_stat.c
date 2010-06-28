@@ -9,12 +9,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "Cns_api.h"
 #include "Cns.h"
@@ -44,14 +40,6 @@ Cns_lstat(const char *path, struct Cns_filestat *statbuf)
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path || ! statbuf) {
     serrno = EFAULT;
@@ -127,14 +115,6 @@ Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filesta
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path || ! statbuf || ! file_uniqueid) {
     serrno = EFAULT;
@@ -248,14 +228,6 @@ Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_files
     return (-1);
   Cns_getid(&uid, &gid);
 
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
-
   if (! path || ! statbuf || ! file_uniqueid) {
     serrno = EFAULT;
     return (-1);
@@ -342,14 +314,6 @@ Cns_statg(const char *path, const char *guid, struct Cns_filestatg *statbuf)
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
-
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if ((! path && ! guid) || ! statbuf) {
     serrno = EFAULT;

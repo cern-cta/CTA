@@ -38,7 +38,7 @@
  * Linux
  * Tru64
  */
-#if ! (defined(_AIX) || defined(hpux) || defined(linux) || (defined(__osf__) && defined(__alpha)))
+#if ! (defined(linux))
 
 /* ================================================================= */
 
@@ -60,17 +60,9 @@ Csetprocname(char *fmt, ...)
 
 /* ================================================================= */
 
-#else /* ! (defined(_AIX) || defined(hpux) || defined(linux) || (defined(__osf__) && defined(__alpha))) */
+#else /* ! (defined(linux)) */
 
 /* ================================================================= */
-
-/* Section OS-specific */
-#if _AIX
-#define SPT_PADCHAR	'\0'	/* pad process name with nulls */
-#endif
-#if hpux
-#define SPT_TYPE	SPT_PSTAT
-#endif
 
 /*
  * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
@@ -439,4 +431,4 @@ Csetprocname(char *fmt, ...)
   return(__Csetprocname("%s", buf));
 }
 
-#endif /* ! (defined(_AIX) || defined(hpux) || defined(linux) || (defined(__osf__) && defined(__alpha))) */
+#endif /* ! (defined(linux)) */

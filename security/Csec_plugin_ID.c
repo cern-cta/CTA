@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_plugin_ID.c,v $ $Revision: 1.12 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /*
  * Csec_plugin_ID.c - Plugin function used for authentication in CASTOR
  */
@@ -22,14 +18,10 @@ static char sccsid[] = "@(#)$RCSfile: Csec_plugin_ID.c,v $ $Revision: 1.12 $ $Da
 #include <stdarg.h>
 #include <string.h>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 
 #include "marshall.h"
 #include "serrno.h"

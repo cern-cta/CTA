@@ -7,13 +7,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include "marshall.h"
 #include "net.h"
@@ -22,9 +18,6 @@
 #include "vmgr_api.h"
 #ifdef VMGRCSEC
 #include "Csec_api.h"
-#endif
-#if defined(_WIN32)
-extern char *ws_strerr;
 #endif
 
 /* send2vmgr - send a request to the volume manager and wait for the reply */
@@ -109,11 +102,7 @@ int user_repbuf_len;
 		}
 
 		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-			if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
 			if (errno == ECONNREFUSED) {
-#endif
 				vmgr_errmsg (func, VMG00, vmgrhost);
 				(void) netclose (s);
 				serrno = EVMGRNACT;

@@ -155,10 +155,6 @@
 #define	NS009	"NS009 - fatal configuration error: %s %s\n"
 #define	NS023	"NS023 - %s is not accessible\n"
 #define NS046	"NS046 - request too large (max. %d)\n"
-#if defined(_WIN32)
-#define	NS052	"NS052 - WSAStartup unsuccessful\n"
-#define	NS053	"NS053 - you are not registered in the unix group/passwd mapping file\n"
-#endif
 #define	NS092	"NS092 - %s request by %s (%d,%d) from %s\n"
 #define	NS098	"NS098 - %s\n"
 #endif

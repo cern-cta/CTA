@@ -8,9 +8,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -27,9 +24,6 @@ void usage(int status, char *name) {
     printf ("      --help           display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -43,10 +37,6 @@ int main(argc, argv)
   char info[256];
   static char retryenv[16];
   char *server = NULL;
-
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "host", REQUIRED_ARGUMENT, NULL, 'h' },
@@ -80,24 +70,12 @@ int main(argc, argv)
     usage (USERR, argv[0]);
   }
 
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   sprintf (retryenv, "%s=0", CNS_CONRETRY_ENV);
   putenv (retryenv);
   if (Cns_ping (server, info) < 0) {
     fprintf (stderr, "nsping: %s\n", sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
   printf ("%s\n", info);
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (0);
 }

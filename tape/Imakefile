@@ -76,7 +76,7 @@ TapeDependsOnLibrary(upv,castorupv)
 
 TPLIB_OBJS = Ctape_config.o Ctape_devinfo.o Ctape_dmpfil.o Ctape_drvinfo.o Ctape_errmsg.o Ctape_info.o Ctape_kill.o Ctape_label.o Ctape_mount.o Ctape_position.o Ctape_reserve.o Ctape_rls.o Ctape_rstatus.o Ctape_status.o asc2ebc.o chkdirw.o cvtden.o ebc2asc.o findpgrp.o getcompstat.o initlabel.o send2tpd.o tmscheck.o usrlbl.o usrlocate.o usrreadlbl.o usrrwndtape.o usrskiptape.o usrsmcsubr.o usrsmcsubr2.o usrtperror.o usrusrmsg.o usrwritelbl.o usrwrttpmrk.o tplogger.o tplogger_messages.o sendscsicmd.o
 RMCLIB_OBJS = ../rmc/rmc_dismount.o ../rmc/rmc_errmsg.o ../rmc/rmc_export.o ../rmc/rmc_find_cartridge.o ../rmc/rmc_get_geometry.o ../rmc/rmc_import.o ../rmc/rmc_mount.o ../rmc/rmc_read_elem_status.o ../rmc/send2rmc.o
-TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS) $(IBMR2_OBJS),,)
+TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS),,)
 
 LIBMANPAGE(Ctape_dmpfil)
 LIBMANPAGE(Ctape_info)
@@ -110,7 +110,7 @@ CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
 MOUNTTAPE_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o sendtmsmount.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
 RLSTAPE_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o sendtmsmount.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
-TapeProgramTarget(taped,$(TAPED_OBJS) $(IBMR2_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
+TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
 TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
 TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),750)
 TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)

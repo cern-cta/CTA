@@ -8,12 +8,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <unistd.h>
 #include <netinet/in.h>
-#endif
 #include "marshall.h"
 #include "serrno.h"
 #include "Cupv_api.h"
@@ -44,13 +40,6 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
     return (NULL);
   uid = geteuid();
   gid = getegid();
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cupv_errmsg (func, CUP53);
-    serrno = SENOMAPFND;
-    return (NULL);
-  }
-#endif
 
   if (strlen(filter->srchost) > CA_MAXREGEXPLEN
       || strlen(filter->tgthost) > CA_MAXREGEXPLEN) {

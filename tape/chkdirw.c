@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 /*	chkdirw - extract directory name from full pathname
  *		and check if writable.
  *
@@ -15,11 +11,7 @@
  */
 #include <errno.h>
 #include <string.h>
-#if defined(_WIN32)
-#define W_OK 2
-#else
 #include <unistd.h>
-#endif
 #include "serrno.h"
 #include "Ctape_api.h"
 

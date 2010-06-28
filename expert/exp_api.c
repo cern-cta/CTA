@@ -55,11 +55,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
-#endif
 #include "net.h"
 #include "marshall.h"
 #include "serrno.h"

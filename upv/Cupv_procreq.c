@@ -10,12 +10,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netinet/in.h>
 #include <unistd.h>
-#endif
 #include "Cthread_api.h"
 #include "marshall.h"
 #include "serrno.h"

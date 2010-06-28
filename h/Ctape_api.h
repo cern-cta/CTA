@@ -154,11 +154,7 @@ EXTERN_C int DLL_DECL readlbl       _PROTO((int, char*, char *));
 EXTERN_C void DLL_DECL closesmc();
 
 /* tape/rwndtape.c     */
-#if defined(_WIN32)
-EXTERN_C int DLL_DECL rwndtape      _PROTO((HANDLE, char *));
-#else
 EXTERN_C int DLL_DECL rwndtape      _PROTO((int, char *));
-#endif
 
 /* tape/sendrep.c      */
 EXTERN_C int DLL_DECL sendrep       _PROTO((int, int, ...));
@@ -167,17 +163,9 @@ EXTERN_C int DLL_DECL sendrep       _PROTO((int, int, ...));
 EXTERN_C int DLL_DECL setdens       _PROTO((int, char*, char*, int));
 
 /* tape/skiptape.c     */
-#if defined(_WIN32)
-EXTERN_C int DLL_DECL skiptpfb      _PROTO((HANDLE, char *, int));
-#else
 EXTERN_C int DLL_DECL skiptpfb      _PROTO((int, char *, int));
-#endif
-#if defined(_WIN32)
-EXTERN_C int DLL_DECL skiptpff      _PROTO((HANDLE, char *, int));
-#else
 EXTERN_C int DLL_DECL skiptpff      _PROTO((int, char *, int));
-#endif
-#if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
+#if defined(linux)
 EXTERN_C int DLL_DECL skiptpfff     _PROTO((int, char*, int));
 #endif
 
@@ -186,11 +174,7 @@ EXTERN_C int DLL_DECL gettperror    _PROTO((int, char *, char **));
 EXTERN_C int DLL_DECL rpttperror    _PROTO((char *, int, char *, char *));
 
 /* tape/unldtape.c     */
-#if defined(_WIN32)
-EXTERN_C int DLL_DECL unldtape      _PROTO((HANDLE, char*));
-#else
 EXTERN_C int DLL_DECL unldtape      _PROTO((int, char*));
-#endif
 
 /* tape/usrmsg.c       */
 EXTERN_C int DLL_DECL usrmsg        _PROTO((char *, char *, ...));
@@ -199,10 +183,6 @@ EXTERN_C int DLL_DECL usrmsg        _PROTO((char *, char *, ...));
 EXTERN_C int DLL_DECL writelbl      _PROTO((int, char *, char*));
 
 /* tape/wrttpmrk.c     */
-#if defined(_WIN32)
-EXTERN_C int DLL_DECL wrttpmrk      _PROTO((HANDLE, char *, int));
-#else
 EXTERN_C int DLL_DECL wrttpmrk      _PROTO((int, char *, int));
-#endif
 
 #endif

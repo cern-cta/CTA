@@ -12,10 +12,6 @@
 #ifndef _GSSAPI_OPENSSL_H
 #define _GSSAPI_OPENSSL_H
 
-#if defined(WIN32)
-#   include "windows.h"
-#endif
-
 #include "gssapi.h"
 #include "globus_gsi_gss_constants.h"
 

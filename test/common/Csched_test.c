@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.3 $ $Date: 2000/06/19 09:52:17 $ CERN IT-PDP/DM Jean-Damien Durand";
-#endif
-
 /*******************************************************************************
  * Base on:
  *******************************************************************************
@@ -56,9 +52,7 @@ static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.3 $ $Date: 2
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 #include <errno.h>              /* errno and error codes */
 #include "serrno.h"             /* Castor's errno and error codes */
 

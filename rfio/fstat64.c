@@ -109,7 +109,6 @@ int DLL_DECL rfio_fstat64(s, statbuf)
       unmarshall_LONG(p,statbuf->st_atime);
       unmarshall_LONG(p,statbuf->st_mtime);
       unmarshall_LONG(p,statbuf->st_ctime);
-#if !defined(_WIN32)
       if ( msgsiz > (5*WORDSIZE+3*LONGSIZE+2*HYPERSIZE) ) {
         unmarshall_LONG(p, statbuf->st_blksize);
         unmarshall_HYPER(p, statbuf->st_blocks);
@@ -117,7 +116,6 @@ int DLL_DECL rfio_fstat64(s, statbuf)
         statbuf->st_blksize = 0;
         statbuf->st_blocks  = 0;
       }
-#endif
       rfio_errno= rcode ;
       if ( temp ) (void) free(trp) ;
       TRACE(1,"rfio","rfio_fstat64: return status %d, rcode %d", status, rcode) ;

@@ -11,14 +11,9 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <pwd.h>
-#include <winsock2.h>
-#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include <string.h>
 
 #include "rfio.h"

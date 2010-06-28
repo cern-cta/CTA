@@ -13,11 +13,7 @@
 
 #ifndef _CNS_API_H
 #define _CNS_API_H
-#if defined(_WIN32)
-#include <sys/utime.h>
-#else
 #include <utime.h>
-#endif
 #include "Cns_constants.h"
 #if defined(NSTYPE_LFC)
 #include "lfc_api.h"

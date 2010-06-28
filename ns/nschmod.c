@@ -12,9 +12,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <ctype.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -30,9 +27,6 @@ void usage(int status, char *name) {
     printf ("      --help       display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -121,9 +115,6 @@ int main(int argc,char **argv)
   char *p;
   char *path;
   struct Cns_filestat statbuf;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "recursive",   NO_ARGUMENT, NULL, 'r' },
@@ -156,9 +147,6 @@ int main(int argc,char **argv)
     newmode = strtol (mode_arg, &dp, 8);
     if (*dp != '\0' || newmode > 07777) {
       fprintf (stderr, "invalid mode: %s\n", mode_arg);
-#if defined(_WIN32)
-      WSACleanup();
-#endif
       exit (USERR);
     }
     absmode = 1;
@@ -166,12 +154,6 @@ int main(int argc,char **argv)
     fprintf (stderr, "symbolic modes not supported yet\n");
     exit (USERR);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   for (i = Coptind + 1; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
@@ -209,9 +191,6 @@ int main(int argc,char **argv)
       errflg++;
     }
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

@@ -3,18 +3,11 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpreseek.c,v $ $Revision: 1.4 $ $Date: 2001/05/31 15:17:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	tpreseek - write NBRECORDS_TOWRITE records and
 		   read back NBRECORDS_TOREAD using the rfio_preseek function */
 
 #include <fcntl.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "rfio_api.h"
 #define NBRECORDS_TOREAD 5
 #define NBRECORDS_TOWRITE 10
@@ -33,20 +26,11 @@ char **argv;
 	static int lengths[NBRECORDS_TOWRITE] = {4096, 32768, 16384, 8192, 65536,
 					  32768, 16384, 4096, 65536, 8192};
 	static int records_toread[NBRECORDS_TOREAD] = {2, 4, 5, 8, 9};
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 
 	if (argc != 2) {
 		fprintf (stderr, "usage: tpreseek pathname\n");
 		exit (1);
 	}
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, "WSAStartup unsuccessful\n");
-		exit (2);
-	}
-#endif
 	while (! errflg) {
 
 		/* Write variable length records.
@@ -123,8 +107,5 @@ char **argv;
 		rfio_perror ("rfio_unlink");
 		errflg++;
 	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	exit (errflg ? 1 : 0);
 }

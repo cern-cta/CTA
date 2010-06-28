@@ -1,16 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-extern char *geterr();
-WSADATA wsadata;
-#else /* _WIN32 */
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
-#endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
 #include <log.h>
@@ -30,14 +24,6 @@ int vdqm_InitNW(vdqmnw_t **nw) {
   char *p ;
   int vdqm_port = -1;
   int rcode,rc;
-
-#if defined(_WIN32)
-  rc = WSAStartup(MAKEWORD(2,0), &wsadata);    /* Initialize the WinSock DLL */
-  if ( rc ) {
-	log(LOG_ERR,"vdqm_InitNW() WSAStartup(): %s\n",NWERRTXT);
-	return(-1);
-  }
-#endif /* _WIN32 */
 
   if ( (*nw = (vdqmnw_t *)calloc(1,sizeof(vdqmnw_t))) == NULL ) {
 	log(LOG_ERR,"vdqm_InitNW() calloc(): %s",ERRTXT);
@@ -108,8 +94,5 @@ int vdqm_CleanUp(vdqmnw_t *nw,int status) {
 	shutdown(nw->listen_socket,SD_BOTH);
 	closesocket(nw->listen_socket);
 	free(nw);
-#if defined(_WIN32)
-	WSACleanup();
-#endif /* _WIN32 */
 	return(status);
 }

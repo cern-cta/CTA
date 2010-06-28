@@ -10,11 +10,7 @@
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
-#ifndef _WIN32
 #include <unistd.h>
-#else
-#include <winsock2.h>
-#endif
 #include "osdep.h"
 #include "u64subr.h"
 #include "serrno.h"
@@ -34,13 +30,8 @@
 #endif
 #define SIXMONTHS (6*30*24*60*60)
 
-#if defined(_WIN32)
-static char strftime_format_sixmonthsold[] = "%b %d %Y";
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
 static char strftime_format_sixmonthsold[] = "%b %e %Y";
 static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
 
 #define DUMP_VAL(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define PRINT_VAL(st,member) fprintf(stdout, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
@@ -170,7 +161,7 @@ void DLL_DECL Cupv_util_time(this,timestr)
 #endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
 
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
   localtime_r(&(this),&tmstruc);
   tp = &tmstruc;
 #else

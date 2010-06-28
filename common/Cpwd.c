@@ -26,8 +26,6 @@ CONST char *name;
      * If single-threaded compilation we don't do anything.
      */
     return(getpwnam(name));
-#elif (defined(_WIN32))
-    return(getpwnam((char *) name));
 #else
     /*
      * linux or __APPLE__
@@ -63,8 +61,6 @@ uid_t uid;
     /*
      * If single-threaded compilation we don't do anything.
      */
-    return(getpwuid(uid));
-#elif (defined(_WIN32))
     return(getpwuid(uid));
 #else
     /*

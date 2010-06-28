@@ -69,11 +69,7 @@ off64_t DLL_DECL rfio_lseek64(s, offset, how)
    * Checking 'offset' parameter.
    */
   if ( offset < 0 && how == SEEK_SET ) {
-#if (defined(__osf__) && defined(__alpha)) || defined(hpux) || defined(_WIN32)
-    errno= EINVAL ;
-#else
     errno= EOVERFLOW ;
-#endif
     END_TRACE();
     return -1 ;
   }

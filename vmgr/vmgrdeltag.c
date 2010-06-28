@@ -12,9 +12,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
@@ -28,9 +25,6 @@ char **argv;
 	int c;
 	int errflg = 0;
 	char *vid = NULL;
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
 
 	while ((c = getopt (argc, argv, "V:")) != EOF) {
 		switch (c) {
@@ -49,19 +43,10 @@ char **argv;
 		    "usage: %s -V vid\n", argv[0]);
 		exit (USERR);
 	}
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
-		exit (SYERR);
-	}
-#endif
 	if (vmgr_deltag (vid)) {
 		fprintf (stderr, "%s: %s\n", vid, sstrerror(serrno));
 		errflg++;
 	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
 	if (errflg)
 		exit (USERR);
 	exit (0);

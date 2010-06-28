@@ -7,9 +7,6 @@
  * vdqm_admin.c - VDQM administration utility
  */
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <Castor_limits.h>
 #include <net.h>
 #include <osdep.h>

@@ -15,9 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <rfio_api.h>
 static char *ckpath();
 char *getconfent();
@@ -27,10 +24,6 @@ int main(argc, argv)
      char *argv[];
 {
   char *old_path,*new_path;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
-
 
   if ( argc < 3 ) {
     fprintf(stderr,"Usage: %s old-path new-path\n",argv[0]);
@@ -39,13 +32,6 @@ int main(argc, argv)
   old_path = ckpath(argv[1]);
   new_path = ckpath(argv[2]);
 
-
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
   if ( rfio_rename(old_path,new_path) ) {
     rfio_perror("rename()");
     exit(1);

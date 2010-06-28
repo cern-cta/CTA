@@ -11,13 +11,8 @@
 
 #define READ(x,y,z)     recv(x,y,z,0)   /* Actual read system call      */
 #define WRITE(x,y,z)    send(x,y,z,0)   /* Actual write system  call    */
-#if defined(_WIN32)
-#define CLOSE(x)        closesocket(x)  /* Actual close system call     */
-#define IOCTL(x,y,z)    ioctlsocket(x,y,&(z)) /* Actual ioctl system call*/
-#else /* _WIN32 */
 #define CLOSE(x)        close(x)        /* Actual close system call     */
 #define IOCTL(x,y,z)    ioctl(x,y,z)    /* Actual ioctl system call     */
-#endif /* _WIN32 */
 
 #ifndef READTIMEOUTVALUE
 #define READTIMEOUTVALUE     60         /* Default read time out        */
@@ -37,21 +32,13 @@ static int timeout_set=0;
  
 #include <stdio.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <ws_errmsg.h>
-#else
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#endif
 #include <errno.h>
 #include <setjmp.h>
 #include <signal.h>
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>
-#endif /* _AIX */
 #include <net.h>                        /* networking specifics         */
 #if defined(DEBUG) || defined(DUMP)
 #include <log.h>                        /* logging functions            */
@@ -292,13 +279,8 @@ SOCKET     s;
 char DLL_DECL *
 s_errmsg()                              /* return last error message    */
 {
-#if !defined(_WIN32)
     if ( serrno != 0 ) return((char *)sstrerror(serrno));
     else return((char *)sstrerror(errno));
-#else /* _WIN32 */
-    if ( serrno != 0 ) return((char *)sstrerror(serrno));
-    else return(geterr());
-#endif /* _WIN32 */
 }
 
 /*
@@ -306,10 +288,6 @@ s_errmsg()                              /* return last error message    */
  * in libsocket.a, therefore conflicting with ours. Hence this
  * workaround.
  */
-
-#if defined(SOLARIS) && (SOLARIS == 1)
-#define s_ioctl sol_s_ioctl
-#endif /* SOLARIS */
 
 int DLL_DECL 
 s_ioctl(s, request, arg)                /* issue an ioctl(2) call       */

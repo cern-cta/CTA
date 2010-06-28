@@ -17,9 +17,6 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif /* _WIN32 */
 #include <rfio_api.h>
 #include "getconfent.h"
 
@@ -44,10 +41,6 @@ int main(argc, argv)
   mode_t mode = 0777;
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char     *endprt;             /* For conversion                        IN2P3*/
-
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   cmdid = argv[0];
 
@@ -78,13 +71,6 @@ int main(argc, argv)
     fprintf(stderr,"Missing file name\n");
     help(2);
   }
-
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, "WSAStartup unsuccessful\n");
-    exit (2);
-  }
-#endif
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);

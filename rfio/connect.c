@@ -11,11 +11,7 @@
 
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
 
-#if defined(_WIN32)
-#include "log.h"             /* system logger                        */
-#else
 #include <syslog.h>             /* system logger                        */
-#endif
 #include "rfio.h"               /* remote file I/O definitions               */
 #include <Cglobals.h>  /* thread local storage for global variables */
 #include <Cnetdb.h>  /* thread-safe network database routines */
@@ -29,11 +25,9 @@
 #include <common.h>
 #include <string.h>
 
-#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-#endif /* _WIN32 */
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
@@ -101,10 +95,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   char    nomorebuf1[BUFSIZ], nomorebuf2[BUFSIZ]; /* NOMORERFIO buffers */
   char *last_host = NULL;
   int   last_host_len = 256;
-#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
-#endif
 #endif
   int timeout;
   int secure_connection = 0;
@@ -287,13 +279,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
   }
 
-#if defined(_WIN32)
-  if (strncmp (NOMORERFIO, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (nomorebuf1, "%s%s", p, strchr (NOMORERFIO, '\\'));
-#else
   strcpy(nomorebuf1, NOMORERFIO);
-#endif
   sprintf(nomorebuf2, "%s.%s", nomorebuf1, cp);
  retry:
   if (!stat(nomorebuf1,&statbuf)) {
@@ -330,11 +316,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   TRACE(2, "rfio", "rfio_connect: netconnect_timeout(%d, %x, %d, %d)", s, &sin, sizeof(struct sockaddr_in),timeout);
   if (netconnect_timeout(s, (struct sockaddr *)&sin, sizeof(struct sockaddr_in), timeout) < 0)  {
     TRACE(2, "rfio", "rfio_connect: connect(): ERROR occured (%s)", neterror());
-#if defined(_WIN32)
-    if (WSAGetLastError() == WSAECONNREFUSED)
-#else
       if (errno == ECONNREFUSED || serrno == ECONNREFUSED)
-#endif
 	{
 	  syslog(LOG_ALERT, "rfio: connect: %d failed to connect %s", getpid(), cp);
 	  if (crtycnt-- > 0) {
@@ -357,20 +339,11 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 	    goto conretryall;
 	  }
 	}
-#if defined(_WIN32)
-    if (WSAGetLastError()==WSAENETUNREACH ||
-        WSAGetLastError()==WSAETIMEDOUT || serrno == SETIMEDOUT )
-#else
       if (errno==EHOSTUNREACH || errno==ETIMEDOUT || serrno == SETIMEDOUT )
-#endif
 	{
 	  if ( ( cp = strtok(NULL," \t")) != NULL ) {
 	    crtycnt =  crtycnts ;
-#if defined(_WIN32)
-	    if (WSAGetLastError() == WSAENETUNREACH)
-#else
 	      if (errno == EHOSTUNREACH)
-#endif
 		syslog(LOG_ALERT, "rfio: connect: after EHOSTUNREACH, changing host to %s", cp);
 	      else
 		syslog(LOG_ALERT, "rfio: connect: after ETIMEDOUT, changing host to %s", cp);

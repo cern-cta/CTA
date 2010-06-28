@@ -10,21 +10,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#endif
 #include "Cnetdb.h"
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
 #include "expert.h"
-#if defined(_WIN32)
-extern char *ws_strerr;
-#endif
 
 /* send2expert - send a request to the expert daemon */
 
@@ -81,11 +74,7 @@ int reql;
 		}
 
 		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-			if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
 			if (errno == ECONNREFUSED) {
-#endif
 				(void) netclose (s);
 				serrno = EEXPNACT;
 				return (-1);

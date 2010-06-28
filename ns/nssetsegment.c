@@ -9,9 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
@@ -36,9 +33,6 @@ void usage(int status, char *name) {
     printf ("      --help               display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   exit (status);
 }
 
@@ -72,10 +66,6 @@ int main(argc, argv)
   u_signed64 segsize = 0;
   char chksumvalue[CA_MAXCKSUMLEN+1];
   char chksumname[CA_MAXCKSUMNAMELEN+1];
-
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Coptions_t longopts[] = {
     { "checksum",  REQUIRED_ARGUMENT, NULL,   'k' },
@@ -211,12 +201,6 @@ int main(argc, argv)
   if (errflg) {
     usage (USERR, argv[0]);
   }
-#if defined(_WIN32)
-  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-    fprintf (stderr, NS052);
-    exit (SYERR);
-  }
-#endif
   path = argv[Coptind];
   if (*path != '/' && strstr (path, ":/") == NULL) {
     if ((p = getenv (CNS_HOME_ENV)) == NULL ||
@@ -237,18 +221,12 @@ int main(argc, argv)
   /* Stat the file to get the fileid */
   if (Cns_stat(filepath, &stat)) {
     fprintf (stderr, "%s: %s: %s\n", argv[0], filepath, sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
 
   /* Lookup the segments for the file */
   if (Cns_getsegattrs(filepath, NULL, &nbseg, &segattrs)) {
     fprintf (stderr, "%s: %s: %s\n", argv[0], filepath, sstrerror(serrno));
-#if defined(_WIN32)
-    WSACleanup();
-#endif
     exit (USERR);
   }
   for (i = 0; i < nbseg; i++) {
@@ -323,9 +301,6 @@ int main(argc, argv)
     errflg++;
   }
 
-#if defined(_WIN32)
-  WSACleanup();
-#endif
   if (errflg)
     exit (USERR);
   exit (0);

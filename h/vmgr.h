@@ -88,10 +88,6 @@
 #define	VMG09	"VMG09 - fatal configuration error: %s %s\n"
 #define	VMG23	"VMG23 - %s is not accessible\n"
 #define VMG46	"VMG46 - request too large (max. %d)\n"
-#if defined(_WIN32)
-#define	VMG52	"VMG52 - WSAStartup unsuccessful\n"
-#define	VMG53	"VMG53 - you are not registered in the unix group/passwd mapping file\n"
-#endif
 #define VMG64	"VMG64 - parameter inconsistency with VMGR for vid %s: %s on request <-> %s in VMGR\n"
 #define	VMG92	"VMG92 - %s request by %d,%d from %s\n"
 #define	VMG98	"VMG98 - %s\n"

@@ -15,34 +15,16 @@
 #include <serrno.h>
 #include <log.h>
 
-#if defined(_WIN32)
-char *getenv();
-#endif
-
 #ifndef MAPPING_FILE
-#if defined(_WIN32)
-#define MAPPING_FILE "%SystemRoot%\\system32\\drivers\\etc\\users.ext"
-#else
 #define MAPPING_FILE "/etc/ext.users"
-#endif /* _WIN32 */
 #endif  
 
-#if defined(_WIN32)
-/*
- * infile will be modified at runtime when %SystemRoot% is
- * resolved. Must reserv enough space to hold new pathname.
- */
-static char infile[CA_MAXPATHLEN+1] = MAPPING_FILE;
-#else
 static char *infile = MAPPING_FILE;
-#endif  /* WIN32 */
 
 
-#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-#endif
 
 /*
  * function finds the corresponding entry in the
@@ -71,20 +53,10 @@ int *to_gid ;
     char mapuid[6] ;
     char mapgid[6] ;
     int counter ;
-#if defined(_WIN32)
-    char path[CA_MAXPATHLEN+1];
-#endif
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-#if defined(_WIN32)
-    strcpy(path, infile);
-    if( (strncmp(path, "%SystemRoot%\\", 13) == 0) && ((p = getenv ("SystemRoot")) != NULL) ) {
-        sprintf(infile, "%s\\%s", p, strchr (path, '\\'));
-    }
-#endif
-   
     if  ( (fsin=fopen(infile,"r"))==NULL ) {
        log(LOG_ERR, "Could not open file %s, errno %d\n", infile, errno);
        serrno = ENOENT;
