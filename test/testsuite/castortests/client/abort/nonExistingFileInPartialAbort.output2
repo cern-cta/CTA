@@ -10,4 +10,4 @@
     stager: Waiting for callback from castor
     stager: <uuid1> CBK <answer duration> s before callback from <server ip> was received
 Received 1 responses
-123 : SUBREQUEST_START, error 2 : No subRequest found for this fileId/nsHost
+123 :  error 2 : No subRequest found for this fileId/nsHost

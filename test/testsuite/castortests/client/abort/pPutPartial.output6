@@ -10,5 +10,5 @@
     stager: Waiting for callback from castor
     stager: <uuid4> CBK <answer duration4> s before callback from <server ip> was received
 Received 2 responses
-<fileid> : SUBREQUEST_START
-<fileid1> : SUBREQUEST_START, error 22 : Cannot abort failed subRequest
+<fileid> : aborted
+<fileid1> :  error 22 : Cannot abort failed subRequest

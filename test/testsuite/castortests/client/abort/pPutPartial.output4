@@ -10,4 +10,4 @@
     stager: Waiting for callback from castor
     stager: <uuid2> CBK <answer duration2> s before callback from <server ip> was received
 Received 1 responses
-<fileid1> : SUBREQUEST_START
+<fileid1> : aborted
