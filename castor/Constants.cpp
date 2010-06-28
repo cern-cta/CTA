@@ -121,7 +121,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeServer",
   "TapeDrive",
   "DeviceGroupName",
-  "ErrorHistory",
+  "DELETED TYPE",
   "TapeDriveDedication",
   "TapeAccessSpecification",
   "TapeDriveCompatibility",

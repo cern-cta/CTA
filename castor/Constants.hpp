@@ -99,7 +99,6 @@ namespace castor {
     OBJ_TapeServer = 86,
     OBJ_TapeDrive = 87,
     OBJ_DeviceGroupName = 88,
-    OBJ_ErrorHistory = 89,
     OBJ_TapeDriveDedication = 90,
     OBJ_TapeAccessSpecification = 91,
     OBJ_TapeDriveCompatibility = 92,

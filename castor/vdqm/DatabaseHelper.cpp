@@ -248,7 +248,7 @@ void castor::vdqm::DatabaseHelper::updateRepresentation
       throw ex;      
     }
     else {
-      // If we are here, we have an exception during a handling of ErrorHistory
+      // If we are here, we have an exception during a handling of Error
       tapeDrive = 0;
       tapeRequest = 0;
       

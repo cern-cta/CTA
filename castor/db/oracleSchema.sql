@@ -343,7 +343,6 @@ INSERT INTO Type2Obj (type, object) VALUES (85, 'ClientIdentification');
 INSERT INTO Type2Obj (type, object) VALUES (86, 'TapeServer');
 INSERT INTO Type2Obj (type, object) VALUES (87, 'TapeDrive');
 INSERT INTO Type2Obj (type, object) VALUES (88, 'DeviceGroupName');
-INSERT INTO Type2Obj (type, object) VALUES (89, 'ErrorHistory');
 INSERT INTO Type2Obj (type, object) VALUES (90, 'TapeDriveDedication');
 INSERT INTO Type2Obj (type, object) VALUES (91, 'TapeAccessSpecification');
 INSERT INTO Type2Obj (type, object) VALUES (92, 'TapeDriveCompatibility');
