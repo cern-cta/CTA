@@ -34,7 +34,7 @@ CommonDependsOnLibrary(common,castorcommon)
 LOCAL_PATH/vdqmc_SendRecv.c: LOCAL_PATH/vdqm_SendRecv.c
 	RemoveFiles($@)
 	cp $< $@
-FilesToClean += LOCAL_PATH/vdqmc_SendRecv.c
+PREFIX(FilesToClean) += LOCAL_PATH/vdqmc_SendRecv.c
 
 VDQMLIB_OBJS = vdqmapi.o vdqmc_SendRecv.o
 SharedLibraryTarget(castorvdqm,$(VDQMLIB_OBJS),,DepSharedLibraryTargetName(common,castorcommon))

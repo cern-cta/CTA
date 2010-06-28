@@ -41,7 +41,7 @@ LOCAL_PATH/rtcpc_CallVMGR.c: LOCAL_PATH/rtcp_CallVMGR.c
 LOCAL_PATH/rtcpc_CheckReq.c: LOCAL_PATH/rtcp_CheckReq.c
 	RemoveFiles($@)
 	cp $< $@
-FilesToClean += LOCAL_PATH/rtcpc_log.c LOCAL_PATH/rtcpc_SendRecv.c LOCAL_PATH/rtcpc_CallVMGR.c LOCAL_PATH/rtcpc_CheckReq.c
+PREFIX(FilesToClean) += LOCAL_PATH/rtcpc_log.c LOCAL_PATH/rtcpc_SendRecv.c LOCAL_PATH/rtcpc_CallVMGR.c LOCAL_PATH/rtcpc_CheckReq.c
 COMPILEC(rtcpc_SendRecv.c,-URTCP_SERVER)
 COMPILEC(rtcpc_log.c,-URTCP_SERVER)
 COMPILEC(rtcpc_CallVMGR.c,-URTCP_SERVER)

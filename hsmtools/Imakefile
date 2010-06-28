@@ -30,7 +30,7 @@ NormalProgramTarget(enterPriority,enterPriority.o,,,755)
 NormalProgramTarget(deletePriority,deletePriority.o,,,755)
 LOCAL_PATH/rfcpupd.c: $(CASTOR_ROOT)/rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
-FilesToClean += rfcpupd.c
+PREFIX(FilesToClean) += LOCAL_PATH/rfcpupd.c
 COMPILEC(rfcpupd.c,-DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP))
 NormalProgramTarget(rfcpupd,rfcpupd.o,,,755)
 NormalProgramTarget(stager_actualget,stager_actualget.o,,,755)
