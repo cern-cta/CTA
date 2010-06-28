@@ -16,7 +16,7 @@
 #define PATH_CONFIG "/etc/castor/castor.conf"
 #endif /* PATH_CONFIG */
 
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
