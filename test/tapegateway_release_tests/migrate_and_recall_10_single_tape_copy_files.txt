@@ -18,7 +18,7 @@ THE PREREQUISITES OF THE TEST
 =============================
 
 * A test-stager where you can carry out the test.
-* A service class with a set of one or more disk-pools that has enough free
+* A test-service-class with a set of one or more disk-pools that has enough free
   space to store ten 100MB on disk.
 * A user account that permits the modification of the service-class within the
   stager.
@@ -35,56 +35,87 @@ THE PREREQUISITES OF THE TEST
   "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
 
 
-INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
-=================================================
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE TEST'S ENVIRONMENT
+============================================================
 
-1. Create yourself a tape-pool containing the test-tape.
+1. Check that the tapeGateway is up and running.
+
+ps -ef | egrep 'tapegatewayd|rtcpclientd' | grep -v grep
+
+2. Create yourself a tape-pool containing the test-tape.
 
 vmgrenterpool --name gatewaytest --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
 
-2. Choose a service class for your test and make sure it has your newly created
+3. Choose a service class for your test and make sure it has your newly created
    tape-pool as its one and only tape-pool.
 
 modifySvcClass --Name default --AddTapePools gatewaytest
 
-3. Make sure your service class will use exactly 1 drive for migrations.
+4. Make sure your service class will use exactly 1 drive for migrations.
 
 modifySvcClass --Name default --NbDrives 1
 
-4. Create yourself an empty test-directory in CASTOR where you will copy your
+5. Check that there is a migHunter daemon running for the selected 
+   test-service-class.
+
+ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep
+
+   If one is not already runnig, start it.
+
+[root]  /usr/bin/mighunterd -t 60  <test-service-class>
+
+6. Create yourself an empty test-directory in CASTOR where you will copy your
    test-files.
 
 nsmkdir /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files
 
-5. Make sure the directory has a file-class with one tape-copy.
+7. Make sure the directory has a file-class with one tape-copy.
 
-nschclass twotapecopies /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files
+nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 "NBCOPIES 1"
 
-6. Dedicate the 1 free tape-drive to the test-stager.
+nschclass <fileclass> /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files
+
+8. Dedicate the 1 free tape-drive to the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
 
-7. Stop the mighunter daemons of the test-stager.
 
-/etc/init.d/mighunterd stop
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
 
-8. Create and copy to CASTOR the ten 100MB test-files using the
+1. Stop the mighunter daemons of the test-stager.
+
+ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep | awk '{print $2}'| xargs kill -9
+
+2. Create and copy to CASTOR the ten 100MB test-files using the
    createAndCopyFilesToCastor.sh script.
 
-createAndCopyFilesToCastor.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files 100 10
+sh createAndCopyFilesToCastor.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files 100 10
 
-9. Using nsls -l wait for all ten 100 MB files to be migrated to tape.
+3. Start the mighunter daemons of the test-stager.
+
+/usr/bin/mighunterd -t 60 <test-service-class>
+
+4. Using nsls -l wait for all ten 100 MB files to be migrated to tape.
 
 watch 'nsls -l /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files'
 
-10. Remove the test-files from the disk cache.
+5. Remove the test-files from the disk cache.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm $TESTDIR/$F; done
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm $TESTDIR/$F; done
 
-11. Recall the files back from tape.
+6. Using stager_qry wait for all ten 100 MB files to be INVALID.
+
+watch 'stager_qry -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files'
+
+7. Recall the files back from tape.
 
 TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+
+8. Using stager_qry wait for all ten 100 MB files to be STAGED.
+
+watch 'stager_qry -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files'
 
 
 EXPECTED RESULTS
