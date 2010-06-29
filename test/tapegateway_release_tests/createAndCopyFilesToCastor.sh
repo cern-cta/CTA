@@ -61,7 +61,7 @@ export CNS_HOST
 export RFIO_USE_CASTOR_V2=YES
 
 # Create the seed file in the /tmp directory
-SEEDFILE=/tmp/tapegateway100MBSeedFile_`uuidgen`_`hostname`
+SEEDFILE=/tmp/tapegateway${FILESIZE}MBSeedFile_`uuidgen`_`hostname`
 echo Creating seed file: ${SEEDFILE}
 dd if=/dev/urandom of=${SEEDFILE} bs=1M count=${FILESIZE}
 if test ! -f ${SEEDFILE}; then
@@ -72,7 +72,7 @@ fi
 # For each 100MB source file to be migrated to tape
 for I in `seq $NBFILES`; do
   # Create the file from the seed file
-  SRCFILE=/tmp/tapegateway100MBSrcFile_${I}_`uuidgen`_`hostname`
+  SRCFILE=/tmp/tapegateway${FILESIZE}MBSrcFile_${I}_`uuidgen`_`hostname`
   echo ${SRCFILE} > ${SRCFILE}
   cat ${SEEDFILE} >> ${SRCFILE}
 
