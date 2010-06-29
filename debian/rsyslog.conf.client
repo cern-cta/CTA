@@ -17,7 +17,7 @@ $template DynaFile,"/var/log/castor/%programname%.log"
 
 # Remote logging configuration
 $WorkDirectory /var/spool/rsyslog   # where to place spool files
-$ActionQueueType LinkedList         # run asynchronously
+$ActionQueueType LinkedList         # dynamic allocation of memory for messages
 $ActionQueueFileName forward1       # unique name prefix for spool files
 $ActionQueueSaveOnShutdown on       # save messages to disk on shutdown
 $ActionQueueMaxDiskSpace 1g         # 1gb space limit (use as much as possible)

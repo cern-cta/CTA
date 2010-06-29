@@ -17,6 +17,18 @@ $DynaFileCacheSize 100              # the maximum number of dynamically generate
 $umask 0000
 $FileCreateMode 0644                # world readable log files
 
+# Main message queue configuration (http://www.rsyslog.com/doc-queues.html)
+$MainMsgQueueType LinkedList        # dynamic allocation of memory for messages
+$MainMsgQueueWorkerThreads 10       # increase the maximum number of allowed threads
+                                    # that can be used to process messages
+$MainMsgQueueSize 70000             # increase the maximum size of the main message
+                                    # queue to handle traffic bursts
+
+# Begin discarding informational and debug messages if the main message queue has
+# more than 48000 messages
+$MainMsgQueueDiscardMark 48000
+$MainMsgQueueDiscardSeverity 6
+
 # Templates
 $template DynaFile, "/var/log/castor/%programname%.log"
 
