@@ -1,5 +1,5 @@
 /******************************************************************************
- *              stager_2.1.9-7_to_2.1.9-7gateway.sql
+ *              stager_2.1.9-7_to_2.1.9-7-1.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -30,7 +30,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_9_4'
-     AND release = '2_1_9_7gateway'
+     AND release = '2_1_9_7_1'
      AND state != 'COMPLETE';
   COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -51,7 +51,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_9_4', '2_1_9_7gateway', 'TRANSPARENT');
+VALUES ('2_1_9_4', '2_1_9_7_1', 'TRANSPARENT');
 COMMIT;
 
 
@@ -266,5 +266,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
- WHERE release = '2_1_9_7gateway';
+ WHERE release = '2_1_9_7_1';
 COMMIT;

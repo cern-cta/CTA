@@ -5,7 +5,7 @@ vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213 -match 'host=l
 
 2. Create yourself a tape pool with 2 tapes that can accessed by your 2 drives:
 
-vmgrenterpool --name gatewaytest --user murrayc3 --group c3
+vmgrenterpool --name gatewayendtape --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
 vmgrmodifytape -V I12018 --pool gatewaytest
 
