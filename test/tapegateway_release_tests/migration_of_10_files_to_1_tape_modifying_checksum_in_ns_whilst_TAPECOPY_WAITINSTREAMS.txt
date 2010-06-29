@@ -41,8 +41,8 @@ THE PREREQUISITES OF THE TEST
   returns 0 in the case of SECHECKSUM.
 
 
-INSTRUCTIONS DESCRIBING HOW TO SET UP THE TEST'S ENVIRONMENT
-============================================================
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
 
 1. Check that the tapeGateway is up and running.
 
@@ -163,3 +163,9 @@ EXPECTED RESULTS
 The 10 recalls should have NOT be migrated to tape, and the previous specifyed 
 SELEC statement should report that all 10 tapecopies ends in statud 6: 
 TAPECOPY_FAILED.
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
+TBD

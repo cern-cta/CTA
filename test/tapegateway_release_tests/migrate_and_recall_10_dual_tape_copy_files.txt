@@ -37,8 +37,8 @@ THE PREREQUISITES OF THE TEST
   "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
 
 
-INSTRUCTIONS DESCRIBING HOW TO SET UP THE TEST'S ENVIRONMENT
-============================================================
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
 
 1. Check that the tapeGateway is up and running.
 
@@ -130,3 +130,9 @@ The 10 recalls should have completed successfully, in other words, stager_qry
 should show the files have been successfully recalled from tape back onto disk.
 Running "nsls -l" on the test-directory should show each file has two
 tape-segments and each of these two segements is on a different test-tape.
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
+TBD
