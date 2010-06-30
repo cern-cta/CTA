@@ -95,18 +95,18 @@ ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep | awk
 
    Add in the /etc/castor/policies/stream.py the following stream policy.
 
+....
 def NoStreamPolicy(runningStreams,numFiles,dataVolume,maxNumStreams,age):
   """the NoStreamPolicy will do NOT start any streams"""
   returncode = 0
 
-  ....
   # log input and decision
   f = open('/tmp/fileStream.dump','a')
   f.writelines("NoStreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+'\n'+"runningStreams "+str(runningStreams)+" numFiles "+str(numFiles)+" dataVolume "+str(dataVolume)+" maxNumStreams "+str(maxNumStreams)+ " age "+str(age)+" wantedRunningStreams "+str(0)+" returncode "+str(returncode)+'\n')
   f.close()
   # return
   return returncode
-  ...
+...
 
   modifySvcClass --Name default --StreamPolicy NoStreamPolicy
   printSvcClass default | grep streampolicy
