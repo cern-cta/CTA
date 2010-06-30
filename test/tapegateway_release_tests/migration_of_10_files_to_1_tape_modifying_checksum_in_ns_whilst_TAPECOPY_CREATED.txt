@@ -1,21 +1,23 @@
 THE NAME OF TEST
 ================
 
-Migration of 10 files to 1 tape modifying checksum in ns whilst 
-TAPECOPY WAITINSTREAMS
+Migration of 10 files to 1 tape modifying checksum in ns whilst
+TAPECOPY_CREATED.
 
 THE PURPOSE OF THE TEST
 =======================
 
-The principle responsibility of the tape gateway is coordinate the transfer of
-files to and from tape.
+The principle responsibility of the tape gateway is to coordinate the transfer
+of files to and from tape.
 
-This test verifies that the tape gateway can correctly do NOT migrate files
-whitch checksum result different from the checksum value stored in the 
-name server.
+This test verifies that the tape-gateway will fail the migration of a file with
+a bad checksum.
 
-Tape gateway is responsible for dicide whether or not retry migrations by 
-executing the migration retry policy Python-script.
+The tape-gateway is responsible for retying failed migrations based on a
+user-define policy. The tape-gateway does this by executing a Python-script
+which provides the policy user-coded logic for deciding whether or not a failed
+migration should be repeated based on the error code that is being generating
+and the number of prevous retries.
 
 
 THE PREREQUISITES OF THE TEST
@@ -37,9 +39,9 @@ THE PREREQUISITES OF THE TEST
   with a tape backend.
 * A copy of the utility test script from the CASTOR svn repository,
   "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
-
-* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to a python functon that 
-  returns 0 in the case of SECHECKSUM.
+* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
+  which contains a function of the same name which returns 0 in the case of a
+  SECHECKSUM error code.
 
 
 INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
@@ -85,83 +87,48 @@ nschclass largeuser /castor/cern.ch/user/m/murrayc3/migrate_10_files_with_wrong_
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
 
-9. Determine whether or not there is a migHunter daemon running for the
-    test-service-class. 
+9. Determine whether or not there is a migHunter daemon running for the test
+   service-class. 
     
-ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep
+ps -ef | egrep "/usr/bin/mighunterd.* largeuser" | grep -v grep
 
-10. If no mighunter daemon is running for the test-service-class, then start
-    one as user root.
+10. If the previous step shows the mighunter daemon is running, then shut it
+    down as user root.
 
-/usr/bin/mighunterd -t 60 default
+ps -ef | egrep "/usr/bin/mighunterd.* largeuser" | grep -v grep | awk '{print $2}'| xargs kill
+
 
 
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 =================================================
 
-1. Stop the mighunter daemons of the test-stager as user root.
-
-ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep | awk '{print $2}'| xargs kill -9
-
-2. Add a new stream policy that always return FALSE. Add in 
-   the /etc/castor/policies/stream.py file the following stream policy.
-
-....
-def NoStreamPolicy(runningStreams,numFiles,dataVolume,maxNumStreams,age):
-  """the NoStreamPolicy will do NOT start any streams"""
-  returncode = 0
-
-  # log input and decision
-  f = open('/tmp/fileStream.dump','a')
-  f.writelines("NoStreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+'\n'+"runningStreams "+str(runningStreams)+" numFiles "+str(numFiles)+" dataVolume "+str(dataVolume)+" maxNumStreams "+str(maxNumStreams)+ " age "+str(age)+" wantedRunningStreams "+str(0)+" returncode "+str(returncode)+'\n')
-  f.close()
-  # return
-  return returncode
-...
-
-3. Modify the test service-class to use the previously created stream policy.
-
-modifySvcClass --Name default --StreamPolicy NoStreamPolicy
-printSvcClass default | grep streampolicy
-
-4. Re-Start the mighunter daemons of the test-stager.
-
-/usr/bin/mighunterd -t 60 default
-
-5. Create and copy to CASTOR the ten 100MB test-files using the
+1. Create and copy to CASTOR the ten 100MB test-files using the
    createAndCopyFilesToCastor.sh script.
 
 sh createAndCopyFilesToCastor.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_10_files_with_wrong_checksum 100 10
 
-6. Waiting for all 10 files to be in streams.
+2. Waiting for all 10 files to be in TAPECOPY_CREATED (tragic number 0).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
        FROM castorfile
             INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
       WHERE lastknownfilename like '%/migrate_10_files_with_wrong_checksum/%';
 
-7. Use nssetchecksum to modify all 10 files in the name server.
-   Write on the terminal the filenames and they're relative checksum.
+3. Display the current checksum value for each of the 10 test-files.
 
 TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_with_wrong_checksum; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsls -l --checksum $TESTDIR/$F | awk '{print $10" " $NF}'; done
 
-   Modify the checksum of all files to a clearly wrong value.
+4. Use nssetchecksum to invalidate the checksum value of each o the 10
+   test-files.
 
 TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_with_wrong_checksum; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nssetchecksum -n AD --checksum=99999999 $TESTDIR/$F; done
 
-8. Stop the mighunter daemons of the test-stager.
+5. Start the mighunter daemon for the test service-class.
 
-ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep | awk '{print $2}'| xargs kill -9
+/usr/bin/mighunterd -t 60 largeuser
 
-9. Modify the stream policy to always return TRUE.
-
-modifySvcClass --Name default --StreamPolicy ""
-
-10. Re-Start the mighunter daemons of the test-stager.
-
-/usr/bin/mighunterd -t 60 default
-
-11. Check that the status of all the 10 tapecopies is in 6 -- TAPECOPY_FAILED
+6. Wait for the status of the tapecopy of each test-file to become
+   TAPECOPY_FAILED (tragic number 6).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
        FROM castorfile
@@ -172,18 +139,22 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
 EXPECTED RESULTS
 ================
 
-The 10 recalls should have NOT be migrated to tape, and the previous specifyed 
-SELEC statement should report that all 10 tapecopies ends in statud 6: 
-TAPECOPY_FAILED.
+The tape-gateway should have failed all 10 of the test-files being migrated to
+tape.  In addition to the status output of step 6 of the above test
+instructions, nsls -l should show that none of the 10 test files have been
+migrated.  The following command-line should therefore display 0 as its result.
+
+nsls -l /castor/cern.ch/dev/n/nbessone/migrate_10_files_with_wrong_checksum | egrep -v '^m' | wc -l
+[output] 0
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 ====================================================================
 
-1. Revoke the dedication the two test-drives from the test-stager.
+1. Revoke the dedication the test-drive from the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
 
 2. Remove the test-directory and its contents from the CASTOR name-space.
 
-nsrm -r /castor/cern.ch/user/m/murrayc3/migrate_and_recall_10_files_with_wrong_checksum
+nsrm -r /castor/cern.ch/user/m/murrayc3/migrate_10_files_with_wrong_checksum
