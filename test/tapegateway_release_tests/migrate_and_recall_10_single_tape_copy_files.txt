@@ -47,6 +47,7 @@ ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
 vmgrenterpool --name gatewaytest --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
 
+
 3. Make sure the test service-class has the test tape-pool as its one and only
    tape-pool.
 
@@ -76,15 +77,14 @@ nschclass largeuser /castor/cern.ch/user/m/murrayc3/gatewayendtape
 
 8. Dedicate the test-drive to the test-stager.
 
-vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match
-'host=lxcastordev04'
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
 
-10. Determine whether or not there is a migHunter daemon running for the 
+9. Determine whether or not there is a migHunter daemon running for the 
     test-service-class.
 
 ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep
 
-11. If no mighunter daemon is running for the test-service-class, then start
+10. If no mighunter daemon is running for the test-service-class, then start
     one as user root.
 
 /usr/bin/mighunterd -t 60 default
