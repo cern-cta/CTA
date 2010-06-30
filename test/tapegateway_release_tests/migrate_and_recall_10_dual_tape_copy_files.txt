@@ -144,10 +144,11 @@ tape-segments and each of these two segements is on a different test-tape.
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 ====================================================================
 
-1. Remove the contents of the test-directory from the CASTOR name-space.
+1. Revoke the dedication the two test-drives from the test-stager.
 
-TEST_DIR=/castor/cern.ch/user/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls $TEST_DIR | awk '{print $NF;}'`; do nsrm $TEST_DIR/$F; done
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213
 
-2. Remove the now empty test-directory.
+2. Remove the test-directory and its contents from the CASTOR name-space.
 
-nsrmdir /castor/cern.ch/user/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files
+nsrm -r /castor/cern.ch/user/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files
