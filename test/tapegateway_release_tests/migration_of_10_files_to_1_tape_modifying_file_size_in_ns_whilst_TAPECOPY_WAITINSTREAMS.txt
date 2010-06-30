@@ -127,9 +127,9 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
      INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
       WHERE lastknownfilename like '%/migrate_10_files_with_wrong_filesize/%';
 
-6. Use nssetchecksum to modify all 10 files in the name server.
+6. Use nssetfsize to modify all 10 files in the name server.
 
-   Write on the terminal the filenames and they're relative checksum.
+   Write on the terminal the filenames and they're relative filesize.
 
 TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_with_wrong_filesize; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsls -l $TESTDIR/$F | awk '{print $5" " $NF}'; done
 
