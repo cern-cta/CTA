@@ -169,9 +169,19 @@ TEST_DIR=/castor/cern.ch/user/m/murrayc3/gatewayendtape; nsls $TEST_DIR | awk "{
 
 stager_rm -S'*' -f gatewayendtape_file_list.txt
 
+3. Create a file containing the stager status of each of the test-files.
+
+stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_after_stager_rm_list.txt
+
+4. Check that all 20480 files have been removed from the disk cache.
+
+grep "not on disk cache" gatewayendtape_file_status_after_stager_rm_list.txt |
+wc -l
+[output] 20480
+
 3. Recall all of the test-files from the 3 test-tapes.
 
-stager_get -S'*' -f gatewayendtape_file_list.txt
+stager_get -f gatewayendtape_file_list.txt
 
 4. Wait for all of the files to be recalled.
 
@@ -179,19 +189,11 @@ watch "showqueues -x | egrep 'I12018|I12019|I12020'"
 
 5. Create a file containing the stager status of each of the test-files.
 
-stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_list.txt
+stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_after_stager_get_list.txt
 
-6. Check that all of the test-files have been successfully recalled.  If this
-   is indeed the case, then all of the following 3 wc based command-lines will
-   print 20480 as the number of lines.
+6. Check that all 20480 test-files have been successfully recalled.
 
-wc -l gatewayendtape_file_list.txt
-[output] 20480 gatewayendtape_file_list.txt
-
-wc -l gatewayendtape_file_status_list.txt
-[output] 20480 gatewayendtape_file_status_list.txt
-
-grep STAGED gatewayendtape_file_status_list.txt | wc -l
+grep STAGED gatewayendtape_file_status_after_stager_get_list.txt | wc -l
 [output] 20480
 
 
