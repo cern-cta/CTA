@@ -18,73 +18,191 @@ It is the responsibility of the tape gateway to respond to the end of a tape
 by retrying the migration of all the files that were being worked on by the
 corresponding rtcpd daemon at the moment in time the end of tape was reached.
 
+Is is also the responsibility of the tape gateway to continuously ask for a
+new tape when the tape pool in question is empty.  This test should limit the
+number of tapes in the destination tape pool so that this behaviour of the
+tape-gateway can be exercised.
+
 
 THE PREREQUISITES OF THE TEST
 =============================
 
-TBD
+* A test-stager running the tape-gateway where you can carry out the test.
+* A test-service-class with a set of one or more disk-pools that has enough
+  free space to store 2TB of data.
+* A user account that permits the modification of the service-class within the
+  stager.
+* Three empty 1TB test-tapes.
+* A user account that permits the creation of a new tape-pool within the VMGR.
+* At least 2 free tape-drives, both of which can access the 3 test-tapes.
+* A user account that permits the dedication of drives within the VDQM.
+* A file class with one tape-copy or a user account that permits the creation
+  of a new one with one tape-copy.  Do not modify the number of tape-copies
+  attribute of an existing file class.
+* A user account that allows the creation and population of a CASTOR directory
+  with a tape backend.
+* A copy of the utility test script from the CASTOR svn repository,
+  "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
 
 
 INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 =================================================================
 
-TBD
+1. Check that the tapeGateway is up and running.
 
+ps -ef | egrep 'tapegatewayd|rtcpclientd' | grep -v grep
 
-INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
-=================================================
-
-1. Create yourself a tape-pool with 2 tapes that can be accessed by your 2
-   drives:
+2. Create yourself a test tape-pool containing only  2 of the 3 test-tapes.
+   Make sure that the thrid test-tape is not in the test-tape pool.
 
 vmgrenterpool --name gatewayendtape --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewayendtape
 vmgrmodifytape -V I12018 --pool gatewayendtape
 
-2. Choose a service class for your test and make sure it has your newly created tape pool as its one and only tape pool:
+3. Make sure the test service-class has the test tape-pool as its one and only
+   tape-pool.
 
-modifySvcClass --Name default --RemoveTapePools
-modifySvcClass --Name default --AddTapePools
+modifySvcClass --Name default --RemoveTapePools itdc_mixed_new
+modifySvcClass --Name default --AddTapePools gatewayendtape
 
-3. Make sure your service class will use exactly 2 drives for migrations:
+4. Make sure the test service-class will use exactly 2 drives for migrations:
 
-modifySvcClass --Name default --NbDrives 1
+modifySvcClass --Name default --NbDrives 2
 
-4. Create an empty directory in CASTOR to store the test files used to fill
-   the two tapes.
+5. Create the empty test-directory in CASTOR where test-files will be copied
+   to.
 
 nsmkdir /castor/cern.ch/user/m/murrayc3/gatewayendtape
 
-5. Make sure the directory has a file class with one tape copy
+6. Determine the name of a file-class with one tape-copy.
 
 nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 'NBCOPIES 1'
-...
-CLASS_ID 95
-CLASS_NAME largeuser
-NBCOPIES 1
-...
+[output] ...
+[output] CLASS_ID 95
+[output] CLASS_NAME largeuser
+[output] NBCOPIES 1
+[output] ...
+
+7. Set the file-class of the test-directory to be that of the previous step.
+
 nschclass largeuser /castor/cern.ch/user/m/murrayc3/gatewayendtape
 
-6. Dedicate the 2 test-drives to the test-stager.
+8. Dedicate the 2 test-drives to the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=^lxbrl270[89].cern.ch$'
 vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213 -match 'host=^lxbrl270[89].cern.ch$'
 
-7. Start the remote copy of 2 Terabytes
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. Start the remote copy of 2 Terabytes
 
 for I in `seq 20`; do bsub -q 8nh
 /afs/cern.ch/user/m/murrayc3/castor/checkout/trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh
 castorcert5-A default castorcert5-lb
 /castor/cern.ch/user/m/murrayc3/gatewayendtape 100 1024; done
 
+2. Wait for the VMGR state of the 2 test-tapes to become FULL.  This state
+   change can be detected using the vmgrlisttape command.
+
+watch "vmgrlisttape | egrep 'I12017|I12018'"
+
+3. Determine that the tape-gateway is continuously asking for another tape, but
+   cannot get one due to lack of space in the test tape-pool.
+
+grep "No tape available in such tapepool.*poolname='gatewayendtape'"
+/var/log/castor/tapegatewayd.log | tail
+
+4. Determine the mount transaction ids of the mounts which resulted in the
+   ends of the 2 test-tapes being reached
+
+grep 'submitting to vdqm.* TPVID=I12017 ' /var/log/castor/tapegatewayd.log |
+tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
+[output] mountTransactionId=414885
+
+grep 'submitting to vdqm.* TPVID=I12018 ' /var/log/castor/tapegatewayd.log |
+tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
+[output] mountTransactionId=414863
+
+11. Using the mount transaction ids from the previous step, check that the
+    tap-gateway logged a warning when the end of each test-tape was reached.
+
+egrep "mountTransactionId=(414885|414863) .* TAPE VOLUMES OVERFLOW"
+/var/log/castor/tapegatewayd.log
+[output] 2010-06-30T00:27:44.311889+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18403 MSG="Worker: received end notification error report" mountTransactionId=414863 tapebridgeTransId=16389 errorcode=28 errorMessage="File=BridgeProtocolEngine.cpp Line=964 Function=rtcpFileErrReqRtcpdCallback: Received an error from rtcpd:  CPDSKTP !  ERROR, TAPE VOLUMES OVERFLOW  CPDSKTP ! TAPE IS NOW INCORRECTLY TERMINATED"
+[output] 2010-06-30T03:46:43.788630+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18385 MSG="Worker: received end notification error report" mountTransactionId=414885 tapebridgeTransId=10777 errorcode=28 errorMessage="File=BridgeProtocolEngine.cpp Line=964 Function=rtcpFileErrReqRtcpdCallback: Received an error from rtcpd:  CPDSKTP !  ERROR, TAPE VOLUMES OVERFLOW  CPDSKTP ! TAPE IS NOW INCORRECTLY TERMINATED"
+
+12. Add a third tape to the test-tapepool so that the rest of the files making
+up the 2 Terabytes can be migrated.
+
+vmgrmodifytape -V I12020 --pool gatewayendtape
+
+13. Wait for all of the remaining migrations to complete with the new third
+    test-tape.
+
+watch 'showqueues -x | grep I12020'
+
+14. Check that all of the 100MB files making up the 2TB of test-data have been
+    succesfully migrated.
+
+nsls -l /castor/cern.ch/user/m/murrayc3/gatewayendtape | egrep -v ^m | wc -l
+
 
 EXPECTED RESULTS
 ================
 
-TBD
+The tape-gateway should have succesfully filled the first 2 test-tapes entered
+into the test tape-pool and the tape-gateway should have successfully finished
+migrating the entire set of test-files using the thrird test-tape which was
+added later to the test tape-pool.  In addition to step 14 of the above test
+instructions, it should be possible to remove all of the test-files from the
+test-stager disk cache and then successfully recall all of them from the 3
+test-tapes.  This acceptance-test can be done as follows.
+
+1. Create a file containing the full paths of all of the test-files in the
+   test-directory.
+
+TEST_DIR=/castor/cern.ch/user/m/murrayc3/gatewayendtape; nsls $TEST_DIR | awk "{print \"$TEST_DIR/\"\$NF;}" | sort > gatewayendtape_file_list.txt
+
+2. Remove all of the test-files from the test-stager disk cache.
+
+stager_rm -S'*' -f gatewayendtape_file_list.txt
+
+3. Recall all of the test-files from the 3 test-tapes.
+
+stager_get -S'*' -f gatewayendtape_file_list.txt
+
+4. Wait for all of the files to be recalled.
+
+watch "showqueues -x | egrep 'I12018|I12019|I12020'"
+
+5. Create a file containing the stager status of each of the test-files.
+
+stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_list.txt
+
+6. Check that all of the test-files have been successfully recalled.  If this
+   is indeed the case, then all of the following 3 wc based command-lines will
+   print 20480 as the number of lines.
+
+wc -l gatewayendtape_file_list.txt
+[output] 20480 gatewayendtape_file_list.txt
+
+wc -l gatewayendtape_file_status_list.txt
+[output] 20480 gatewayendtape_file_status_list.txt
+
+grep STAGED gatewayendtape_file_status_list.txt | wc -l
+[output] 20480
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 ====================================================================
 
-TBD
+1. Revoke the dedication the two test-drives from the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213
+
+2. Remove the test-directory and its contents from the CASTOR name-space.
+
+nsrm -r /castor/cern.ch/user/m/murrayc3/gatewayendtape
