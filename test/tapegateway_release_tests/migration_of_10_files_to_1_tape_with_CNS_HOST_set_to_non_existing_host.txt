@@ -1,30 +1,188 @@
-1. Dedicate 1 tape drives to your stager:
+THE NAME OF TEST
+================
 
-vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+Migration of 10 files to 1 tape with CNS HOST set to non existing host
 
-2. Create yourself a tape pool with 2 tapes that can accessed by your 2 drives:
+
+THE PURPOSE OF THE TEST
+=======================
+
+The principle responsibility of the tape gateway is coordinate the transfer of
+files to and from tape.
+
+This test verifies that the tape-gateway will fail the migration of a file
+if variable CNS HOST point to a non exixting name server.
+
+The tape-gateway is responsible for retying failed migrations based on a
+user-define policy. The tape-gateway does this by executing a Python-script
+which provides the policy user-coded logic for deciding whether or not a failed
+migration should be repeated based on the error code that is being generating
+and the number of prevous retries.
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+* A test-stager running the tape-gateway where you can carry out the test.
+* A test service-class with the following properties:
+  - A set of one or more disk-pools that has enough free space to store ten
+    100MB test-files.
+  - Stream policy set to one which always returns 1.
+  - Migrator policy set to one which always returns 1.
+  - Recaller policy set to 'None'.
+* A user account that permits the modification of the service-class within the
+  stager.
+* One test-tape which must have enough free space to store ten 100MB files.
+* A user account that permits the creation of a new tape-pool within the VMGR
+* One free tape-drive which can access the test-tape.
+* A user account that permits the dedication of drives within the VDQM.
+* A file class with one tape-copy or a user account that permits the creation
+  of a new one with one tape-copy.  Do not modify the number of tape-copies
+  attribute of an existing file class.
+* A user account that allows the creation and population of a CASTOR directory
+  with a tape backend.
+* A copy of the utility test script from the CASTOR svn repository,
+  "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
+* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
+  which contains a function of the same name which returns 0 in the case of a
+  ENOENT error code.
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
+1. Check that the tapeGateway is up and running.
+
+ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
+
+2. Create yourself a tape-pool containing the test-tape.
 
 vmgrenterpool --name gatewaytest --user murrayc3 --group c3
 vmgrmodifytape -V I12017 --pool gatewaytest
 
-3. Choose a service class for your test and make sure it has your newly created tape pool as its one and only tape pool:
+3. Make sure the test service-class has the test tape-pool as its one and only
+   tape-pool.
 
 modifySvcClass --Name default --AddTapePools gatewaytest
 
-4. Make sure your service class will use exactly 1 drive
+4. Make sure the test service-class will use exactly 1 drive for migrations.
 
 modifySvcClass --Name default --NbDrives 1
 
-5. Create yourself a directory in CASTOR where you will copy your test files:
+5. Create the empty test-directory in CASTOR where test-files will be copied
+   to.
 
-nsmkdir /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+nsmkdir /castor/cern.ch/dev/m/murrayc3/migrate_10_files_with_ns_non_existing
 
-6. Make sure the directory has a file class with one tape copy
+6. Determine the name of a file-class with one tape-copy.
 
-nschclass largeuser /castor/cern.ch/dev/m/murrayc3/tapegateway_tests
+nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 'NBCOPIES 1'
+[output] ...
+[output] CLASS_ID 95
+[output] CLASS_NAME largeuser
+[output] NBCOPIES 1
+[output] ...
+
+7. Set the file-class of the test-directory to be that of the previous step.
+
+nschclass largeuser /castor/cern.ch/user/m/murrayc3/migrate_10_files_with_ns_non_existing
+
+8. Dedicate the test-drive to the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+
+9. Determine whether or not there is a migHunter daemon running for the test
+   service-class.
+
+ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep
+
+10. If the previous step shows the mighunter daemon is running, then shut it
+    down as user root.
+
+ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep | awk '{print $2}'| xargs kill
 
 
-7. Edit your local /etc/castor/castor.conf and set the CNS HOST to a wrong hostname
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. Add to the /etc/castor/policies/stream.py file a new stream-policy
+   Python-function that always returns FALSE.
+
+....
+def StreamPolicyAlwaysNo(runningStreams,numFiles,dataVolume,maxNumStreams,age):
+  """the StreamPolicyAlwaysNo will do NOT start any streams"""
+  return 0
+...
+
+2. Modify the test service-class to use the previously created stream policy.
+
+modifySvcClass --Name default --StreamPolicy StreamPolicyAlwaysNo
+printSvcClass default | grep streampolicy
+
+3. Start the mighunter daemons of the test-stager.
+
+/usr/bin/mighunterd -t 60 default
+
+4. Create and copy to CASTOR the ten 100MB test-files using the
+   createAndCopyFilesToCastor.sh script.
+
+sh createAndCopyFilesToCastor.sh lxcastordev04 default lxcastorsrv101 /castor/cern.ch/dev/m/murrayc3/migrate_10_files_with_ns_non_existing 100 10
+
+5. Waiting for all 10 files to be in streams.
+
+SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
+       FROM castorfile
+            INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
+      WHERE lastknownfilename like '%/migrate_10_files_removed_from_ns/%';
+
+6. Stop the mighunter daemons of the test-stager.
+
+ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep | awk '{print $2}'| xargs kill -9
+
+7. Modify the stream policy to always return TRUE.
+
+modifySvcClass --Name default --StreamPolicy ""
+
+8. Edit file /etc/castor/castor.conf and change the CNS HOST to point to a non 
+   existin name server.
+
+grep "CNS HOST" /etc/castor/castor.conf
+[output]#CNS HOST lxcastorsrv101
+[output]CNS HOST pippo
+
+9. Re-Start the mighunter daemons of the test-stager.
+
+/usr/bin/mighunterd -t 60 default
+
+10. Wait for the status of the tapecopy of each test-file to become
+    TAPECOPY_FAILED (tragic number 6).
+
+SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
+     FROM castorfile 
+     INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
+      WHERE lastknownfilename like '%/migrate_10_files_with_ns_non_existing/%';
 
 
-8. Start the migrations using rfcp
+EXPECTED RESULTS
+================
+
+The 10 recalls should have NOT be migrated to tape, and the previous specifyed
+SELEC statement should report that all 10 tapecopies ends in statud 6:
+TAPECOPY_FAILED.
+
+In /var/log/castor/tapegatewayd.log there must be ten entries reporting 
+errorCode="Host not known" 
+
+grep "Host not known" /var/log/castor/tapegatewayd.log | wc -l
+[output]10
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
+1. Revoke the dedication the two test-drives from the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+
+2. Remove the test-directory and its contents from the CASTOR name-space.
+
+nsrm -r /castor/cern.ch/user/m/murrayc3/migrate_10_files_with_ns_non_existing
