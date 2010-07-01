@@ -1,8 +1,8 @@
 THE NAME OF TEST
 ================
 
-Migration of 10 files to 1 tape modifying checksum in ns whilst
-TAPECOPY_CREATED.
+Migrate 10 files modifying ns checksum whilst TAPECOPY_CREATED.
+
 
 THE PURPOSE OF THE TEST
 =======================
