@@ -24,8 +24,12 @@ THE PREREQUISITES OF THE TEST
 =============================
 
 * A test-stager running the tape-gateway where you can carry out the test.
-* A test-service-class with a set of one or more disk-pools that has enough
-  free space to store ten 100MB on disk.
+* A test service-class with the following properties:
+  - A set of one or more disk-pools that has enough free space to store ten
+    100MB test-files.
+  - Stream policy set to one which always returns 1.
+  - Migrator policy set to one which always returns 1.
+  - Recaller policy set to 'None'.
 * A user account that permits the modification of the service-class within the
   stager.
 * One test-tape which must have enough free space to store ten 100MB files.
