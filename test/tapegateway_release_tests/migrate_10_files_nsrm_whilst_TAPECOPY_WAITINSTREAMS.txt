@@ -135,7 +135,15 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
             INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
       WHERE lastknownfilename like '%/migrate_10_files_removed_from_ns/%';
 
-6. Use nsrm to remove all 10 files from the name server.
+6. Stop the mighunter daemons of the test-stager.
+
+ps -ef | egrep "/usr/bin/mighunterd.* default | grep -v grep | awk '{print $2}'| xargs kill -9
+
+7. Modify the stream policy to always return TRUE.
+
+modifySvcClass --Name default --StreamPolicy ""
+
+8. Use nsrm to remove all 10 files from the name server.
    Write on the terminal the informations about the 10 files.
 
 TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_removed_from_ns; for F in `nsls -l  $TESTDIR | awk '{print $NF;}'`; do nsls -l --checksum $TESTDIR/$F; done
@@ -143,14 +151,6 @@ TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_removed_from_ns; for F i
    Removed the 10 files from the name server.
 
 TESTDIR=/castor/cern.ch/dev/n/nbessone/migrate_10_files_removed_from_ns; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm  $TESTDIR/$F; done
-
-7. Stop the mighunter daemons of the test-stager.
-
-ps -ef | egrep "/usr/bin/mighunterd.* default | grep -v grep | awk '{print $2}'| xargs kill -9
-
-8. Modify the stream policy to always return TRUE.
-
-modifySvcClass --Name default --StreamPolicy ""
 
 9. Re-Start the mighunter daemons of the test-stager.
 
@@ -173,9 +173,8 @@ TAPECOPY_FAILED, and then disappers.
 
 In /var/log/castor/tapegatewayd.log there must be ten entries reporting 
 errorCode   ="No such file or directory" 
-errorMessage=".... failed check against the nameserver"
 
-grep "failed check against the nameserver" /var/log/castor/tapegatewayd.log | wc -l
+grep "No such file or directory" /var/log/castor/tapegatewayd.log | wc -l
 [output]10 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
