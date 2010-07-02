@@ -2794,7 +2794,7 @@ int srwrite64_v3(int            s,
     status = rfio_handle_firstwrite(handler_context);
     if (status != 0)  {
       log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
-      writerror64_v3(ctrl_sock, EBUSY, &myinfo);
+      writerror64_v3(ctrl_sock, EBUSY, &myinfo, &cid2);
       return -1;
     }
 
