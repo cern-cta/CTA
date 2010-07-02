@@ -120,7 +120,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
 
     msgtxtbuf = (char *)calloc(1,CA_MAXLINELEN+1);
     rtcp_InitLog(msgtxtbuf,NULL,NULL,client_socket);
-    Ctape_dmpmsg = (void (*) _PROTO((int, const char *, ...)))dmp_usrmsg;
+    Ctape_dmpmsg = (void (*) (int, const char *, ...))dmp_usrmsg;
 
     /*
      * Initialize Ctape error message buffer

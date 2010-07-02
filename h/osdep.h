@@ -81,18 +81,12 @@ typedef U_HYPER TIME_T;
 #define NETERROR  perror
 #define OSERROR   perror
  
-/* Macros for prototyping */
-#ifdef _PROTO
-#undef _PROTO
-#endif
 #if (defined(__STDC__) || defined(__cplusplus))
 /* On Win32, compiler is STDC compliant but the */
 /* __STDC__ definition itself is not a default. */
 #define CONST const
-#define _PROTO(a) a
 #else
 #define CONST
-#define _PROTO(a) ()
 #endif
 
 /* Macros for 64-bits constants definition */

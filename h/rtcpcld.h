@@ -141,307 +141,307 @@ enum NotificationState {
 };
 
 #if defined(CASTOR_SERVICES_H)
-int rtcpcld_getDbSvc _PROTO((
-                             struct C_Services_t ***
-                             ));
+int rtcpcld_getDbSvc (
+		      struct C_Services_t ***
+		      );
 #endif /* CASTOR_SERVICES_H */
 
 #if defined(CASTOR_ITAPESVC_H)
-int rtcpcld_getStgSvc _PROTO((
-                              struct Cstager_ITapeSvc_t ***
-                              ));
+int rtcpcld_getStgSvc (
+		       struct Cstager_ITapeSvc_t ***
+		       );
 #endif /* CASTOR_ITAPESVC_H */
 
-int rtcpcld_doCommit _PROTO((
-                             void
-                             ));
+int rtcpcld_doCommit (
+		      void
+		      );
 
-int rtcpcld_InitNW  _PROTO((
-                            SOCKET **
-                            ));
-int rtcp_Listen  _PROTO((
-                         SOCKET, SOCKET *,
-                         int, int
-                         ));
-int rtcp_CleanUp  _PROTO((
-                          SOCKET **, 
-                          int
-                          ));
-int rtcpcld_Listen _PROTO((
-                           SOCKET *, 
-                           SOCKET *, 
-                           int
-                           ));
-int rtcpcld_initLogging _PROTO((
-                                char *
-                                ));
-void rtcpcld_extlog _PROTO((
-                            int,
-                            CONST char *,
-                            ...
-                            ));
-int rtcpcld_initNotify _PROTO((
-                               SOCKET **
-                               ));
-int rtcpcld_initNotifyByPort _PROTO((
-                                     SOCKET **,
-                                     int *
-                                     ));
-int rtcpcld_getNotifyWithAddr _PROTO((
-                                      SOCKET,
-                                      char *
-                                      ));
-int rtcpcld_getNotify _PROTO((
-                              SOCKET
-                              ));
-int rtcpcld_sendNotify _PROTO((
-                               char *
-                               ));
-int rtcpcld_sendNotifyByAddr _PROTO((
-                                     char *,
-                                     int
-                                     ));
-int rtcpcld_notifyRtcpclientd _PROTO((
-                                      void
-                                      ));
-int rtcpcld_validPosition _PROTO((
-                                  int,
-                                  unsigned char *
-                                  ));
-int rtcpcld_validPath _PROTO((
-                              char *
-                              ));
-int rtcpcld_validFilereq _PROTO((
-                                 rtcpFileRequest_t *
-                                 ));
-int rtcpcld_findFile _PROTO((
-                             tape_list_t *,
-                             rtcpFileRequest_t *,
-                             file_list_t **
-                             ));
-int rtcpcld_nextFileToProcess _PROTO((
-                                      tape_list_t *,
-                                      file_list_t **
-                                      ));
-int rtcpcld_runWorker _PROTO((
-                              tape_list_t *,
-                              SOCKET *,
-                              int (*) _PROTO((void *(*)(void *), void *)),
-                              int (*) _PROTO((rtcpTapeRequest_t *, 
-                                              rtcpFileRequest_t *))
-                              ));
+int rtcpcld_InitNW  (
+		     SOCKET **
+		     );
+int rtcp_Listen  (
+		  SOCKET, SOCKET *,
+		  int, int
+		  );
+int rtcp_CleanUp  (
+		   SOCKET **, 
+		   int
+		   );
+int rtcpcld_Listen (
+		    SOCKET *, 
+		    SOCKET *, 
+		    int
+		    );
+int rtcpcld_initLogging (
+			 char *
+			 );
+void rtcpcld_extlog (
+		     int,
+		     CONST char *,
+		     ...
+		     );
+int rtcpcld_initNotify (
+			SOCKET **
+			);
+int rtcpcld_initNotifyByPort (
+			      SOCKET **,
+			      int *
+			      );
+int rtcpcld_getNotifyWithAddr (
+			       SOCKET,
+			       char *
+			       );
+int rtcpcld_getNotify (
+		       SOCKET
+		       );
+int rtcpcld_sendNotify (
+			char *
+			);
+int rtcpcld_sendNotifyByAddr (
+			      char *,
+			      int
+			      );
+int rtcpcld_notifyRtcpclientd (
+			       void
+			       );
+int rtcpcld_validPosition (
+			   int,
+			   unsigned char *
+			   );
+int rtcpcld_validPath (
+		       char *
+		       );
+int rtcpcld_validFilereq (
+			  rtcpFileRequest_t *
+			  );
+int rtcpcld_findFile (
+		      tape_list_t *,
+		      rtcpFileRequest_t *,
+		      file_list_t **
+		      );
+int rtcpcld_nextFileToProcess (
+			       tape_list_t *,
+			       file_list_t **
+			       );
+int rtcpcld_runWorker (
+		       tape_list_t *,
+		       SOCKET *,
+		       int (*) (void *(*)(void *), void *),
+		       int (*) (rtcpTapeRequest_t *, 
+				rtcpFileRequest_t *)
+		       );
                               
-int rtcpcld_parseWorkerCmd _PROTO((
-                                   int,
-                                   char **,
-                                   tape_list_t *,
-                                   SOCKET *
-                                   ));
-int rtcpcld_workerFinished _PROTO((
-                                   tape_list_t *,
-                                   int,
-                                   u_signed64,
-                                   int,
-                                   int,
-                                   int
-                                   ));
-int rtcpcld_initLocks _PROTO((
-                              tape_list_t *
-                              ));
-int rtcpcld_setTapeFseq _PROTO((
-                                int
-                                ));
-int rtcpcld_getTapeFseq _PROTO((
-                                void
-                                ));
-int rtcpcld_getAndIncrementTapeFseq _PROTO((
-                                            void
-                                            ));
-int rtcpcld_lockTape _PROTO((
-                             void
-                             ));
-int rtcpcld_unlockTape _PROTO((
-                               void
-                               ));
-int rtcpcld_myDispatch _PROTO((
-                               void *(*) _PROTO((void *)),
-                               void *
-                               ));
-int rtcpcld_initThreadPool _PROTO((
-                                   int
-                                   ));
-void rtcpcld_cleanupTape _PROTO((
-                                tape_list_t *
-                                ));
-void rtcpcld_cleanupFile _PROTO((
-                                 file_list_t *
-                                 ));
-int rtcpcld_getTapesToDo _PROTO((
-                                 tape_list_t ***,
-                                 int *
-                                 ));
-int rtcpcld_getSegmentToDo _PROTO((
-                                   tape_list_t *,
-                                   file_list_t **
-                                   ));
-int rtcpcld_getTapeCopyNumber _PROTO((
-                                      file_list_t *,
-                                      int *
-                                      ));
-int rtcpcld_anyReqsForTape _PROTO((
-                                  tape_list_t *
-                                  ));
-int rtcpcld_returnStream _PROTO((
-                                 tape_list_t *
-                                 ));
-int rtcpcld_restoreSelectedTapeCopies _PROTO((
-                                              tape_list_t *
-                                              ));
-int rtcpcld_restoreSelectedSegments _PROTO((
-                                            tape_list_t *
-                                            ));
-int rtcpcld_setVidWorkerAddress _PROTO((
-                                        tape_list_t *,
-                                        int
-                                        ));
-int rtcpcld_checkFileForRepack _PROTO((
-                                       struct Cns_fileid *,
-                                       char **
-                                       ));
+int rtcpcld_parseWorkerCmd (
+			    int,
+			    char **,
+			    tape_list_t *,
+			    SOCKET *
+			    );
+int rtcpcld_workerFinished (
+			    tape_list_t *,
+			    int,
+			    u_signed64,
+			    int,
+			    int,
+			    int
+			    );
+int rtcpcld_initLocks (
+		       tape_list_t *
+		       );
+int rtcpcld_setTapeFseq (
+			 int
+			 );
+int rtcpcld_getTapeFseq (
+			 void
+			 );
+int rtcpcld_getAndIncrementTapeFseq (
+				     void
+				     );
+int rtcpcld_lockTape (
+		      void
+		      );
+int rtcpcld_unlockTape (
+			void
+			);
+int rtcpcld_myDispatch (
+			void *(*) (void *),
+			void *
+			);
+int rtcpcld_initThreadPool (
+			    int
+			    );
+void rtcpcld_cleanupTape (
+			  tape_list_t *
+			  );
+void rtcpcld_cleanupFile (
+			  file_list_t *
+			  );
+int rtcpcld_getTapesToDo (
+			  tape_list_t ***,
+			  int *
+			  );
+int rtcpcld_getSegmentToDo (
+			    tape_list_t *,
+			    file_list_t **
+			    );
+int rtcpcld_getTapeCopyNumber (
+			       file_list_t *,
+			       int *
+			       );
+int rtcpcld_anyReqsForTape (
+			    tape_list_t *
+			    );
+int rtcpcld_returnStream (
+			  tape_list_t *
+			  );
+int rtcpcld_restoreSelectedTapeCopies (
+				       tape_list_t *
+				       );
+int rtcpcld_restoreSelectedSegments (
+				     tape_list_t *
+				     );
+int rtcpcld_setVidWorkerAddress (
+				 tape_list_t *,
+				 int
+				 );
+int rtcpcld_checkFileForRepack (
+				struct Cns_fileid *,
+				char **
+				);
 
 #if defined(CASTOR_STAGER_TAPESTATUSCODES_H) && defined(CASTOR_STAGER_SEGMENTSTATUSCODES_H)
-int rtcpcld_updateTapeStatus _PROTO((
-                                     tape_list_t *, 
-                                     enum Cstager_TapeStatusCodes_t,
-                                     enum Cstager_TapeStatusCodes_t
-                                     ));
-int rtcpcld_updateVIDFileStatus _PROTO((
-                                        tape_list_t *,
-                                        enum Cstager_SegmentStatusCodes_t,
-                                        enum Cstager_SegmentStatusCodes_t
-                                        ));
+int rtcpcld_updateTapeStatus (
+			      tape_list_t *, 
+			      enum Cstager_TapeStatusCodes_t,
+			      enum Cstager_TapeStatusCodes_t
+			      );
+int rtcpcld_updateVIDFileStatus (
+				 tape_list_t *,
+				 enum Cstager_SegmentStatusCodes_t,
+				 enum Cstager_SegmentStatusCodes_t
+				 );
 
-int rtcpcld_setFileStatus _PROTO((
-                                  tape_list_t *,
-                                  file_list_t *,
-                                  enum Cstager_SegmentStatusCodes_t,
-                                  int
-                                  ));
+int rtcpcld_setFileStatus (
+			   tape_list_t *,
+			   file_list_t *,
+			   enum Cstager_SegmentStatusCodes_t,
+			   int
+			   );
 #endif /* CASTOR_STAGER_TAPESTATUSCODES_H && CASTOR_STAGER_SEGMENTSTATUSCODES_H */
 
-int rtcpcld_setVIDFailedStatus _PROTO((
-                                      tape_list_t *
-                                      ));
+int rtcpcld_setVIDFailedStatus (
+				tape_list_t *
+				);
 
-char *rtcpcld_fixStr _PROTO((
-                             CONST char *
-                             ));
-int rtcpcld_updcMigrFailed _PROTO((
-                                   tape_list_t *,
-                                   file_list_t *
-                                   ));
-int rtcpcld_updcRecallFailed _PROTO((
-                                     tape_list_t *,
-                                     file_list_t *,
-                                     int del_file
-                                     ));
-int rtcpcld_updcFileMigrated _PROTO((
-                                     tape_list_t *,
-                                     file_list_t *
-                                   ));
-int rtcpcld_updcFileRecalled _PROTO((
-                                     tape_list_t *,
-                                     file_list_t *
-                                     ));
-int rtcpcld_getMigrSvcClassName _PROTO((
-                                        file_list_t *,
-                                        char **
-                                        ));
-int rtcpcld_getLastModificationTime _PROTO((
-                                        file_list_t *,
-                                        time_t *
-                                        ));
-int rtcpcld_getTapePoolName _PROTO((
-                                    tape_list_t *,
-                                    char **
-                                    ));
+char *rtcpcld_fixStr (
+		      CONST char *
+		      );
+int rtcpcld_updcMigrFailed (
+			    tape_list_t *,
+			    file_list_t *
+			    );
+int rtcpcld_updcRecallFailed (
+			      tape_list_t *,
+			      file_list_t *,
+			      int del_file
+			      );
+int rtcpcld_updcFileMigrated (
+			      tape_list_t *,
+			      file_list_t *
+			      );
+int rtcpcld_updcFileRecalled (
+			      tape_list_t *,
+			      file_list_t *
+			      );
+int rtcpcld_getMigrSvcClassName (
+				 file_list_t *,
+				 char **
+				 );
+int rtcpcld_getLastModificationTime (
+				     file_list_t *,
+				     time_t *
+				     );
+int rtcpcld_getTapePoolName (
+			     tape_list_t *,
+			     char **
+			     );
 
 #ifdef CASTOR_STAGER_TAPECOPY_H
-int rtcpcld_putFailed _PROTO((
-                              struct Cstager_TapeCopy_t *,
-                              int
-                              ));
+int rtcpcld_putFailed (
+		       struct Cstager_TapeCopy_t *,
+		       int
+		       );
 #endif /* CASTOR_STAGER_TAPECOPY_H */
 
-int rtcpcld_initNsInterface _PROTO((
-                                    void
-                                    ));
-int rtcpcld_initCatalogueInterface _PROTO((
-                                           void
-                                           ));
-int rtcpcld_updateNsSegmentAttributes _PROTO((
-                                              tape_list_t *,
-                                              file_list_t *,
-                                              int,
-                                              struct Cns_fileid*,
-                                              time_t
-                                              ));
-int rtcpcld_checkNsSegment _PROTO((
-                                   tape_list_t *,
-                                   file_list_t *
-                                   ));
-int rtcpcld_checkSegment _PROTO((
-                                 tape_list_t *,
-                                 file_list_t *
-                                 ));
+int rtcpcld_initNsInterface (
+			     void
+			     );
+int rtcpcld_initCatalogueInterface (
+				    void
+				    );
+int rtcpcld_updateNsSegmentAttributes (
+				       tape_list_t *,
+				       file_list_t *,
+				       int,
+				       struct Cns_fileid*,
+				       time_t
+				       );
+int rtcpcld_checkNsSegment (
+			    tape_list_t *,
+			    file_list_t *
+			    );
+int rtcpcld_checkSegment (
+			  tape_list_t *,
+			  file_list_t *
+			  );
 
-int rtcpcld_checkDualCopies _PROTO((
-                                    file_list_t *
-                                    ));
-char *rtcpcld_tapeStatusStr _PROTO((
-                                    int
-                                    ));
-int rtcpcld_getFileId _PROTO((
-                              file_list_t *,
-                              struct Cns_fileid **
-                              ));
-int rtcpcld_getOwner _PROTO((
-                             struct Cns_fileid *,
-                             int *,
-                             int *
-                             ));
-int rtcpcld_gettape _PROTO((
-                            char *,
-                            u_signed64,
-                            tape_list_t **
-                            ));
-int rtcpcld_tapeOK _PROTO((
-                           tape_list_t *
-                           ));
-int rtcpcld_handleTapeError _PROTO((
-                                    tape_list_t *,
-                                    file_list_t *
-                                    ));
-int rtcpcld_updateTape _PROTO((
-                               tape_list_t *,
-                               file_list_t *,
-                               int,
-                               int,
-                               int *
-                               ));
-int rtcpcld_segmentOK _PROTO((
-                              struct Cns_segattrs *
-                              ));
-int rtcpcld_cleanup _PROTO((
-			    void
-			    ));
-void rtcpcld_sendStreamReport _PROTO((
-				      struct Cstager_ITapeSvc_t* tpSvc,
-				      char *file_path,
-				      int direction,
-				      int created,
-				      char* tape_vid,
-				      Cuuid_t uuid
-                              ));
+int rtcpcld_checkDualCopies (
+			     file_list_t *
+			     );
+char *rtcpcld_tapeStatusStr (
+			     int
+			     );
+int rtcpcld_getFileId (
+		       file_list_t *,
+		       struct Cns_fileid **
+		       );
+int rtcpcld_getOwner (
+		      struct Cns_fileid *,
+		      int *,
+		      int *
+		      );
+int rtcpcld_gettape (
+		     char *,
+		     u_signed64,
+		     tape_list_t **
+		     );
+int rtcpcld_tapeOK (
+		    tape_list_t *
+		    );
+int rtcpcld_handleTapeError (
+			     tape_list_t *,
+			     file_list_t *
+			     );
+int rtcpcld_updateTape (
+			tape_list_t *,
+			file_list_t *,
+			int,
+			int,
+			int *
+			);
+int rtcpcld_segmentOK (
+		       struct Cns_segattrs *
+		       );
+int rtcpcld_cleanup (
+		     void
+		     );
+void rtcpcld_sendStreamReport (
+			       struct Cstager_ITapeSvc_t* tpSvc,
+			       char *file_path,
+			       int direction,
+			       int created,
+			       char* tape_vid,
+			       Cuuid_t uuid
+			       );
 
 #endif /* RTCPCLD_H */

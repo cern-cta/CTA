@@ -21,9 +21,9 @@
 
 /* expert server function prototypes */
 
-EXTERN_C void exp_logreq _PROTO((char*, char*));
-EXTERN_C int explogit _PROTO((char *, char *, ...));
-EXTERN_C int sendrep _PROTO((int, int, ...));
-EXTERN_C int exp_srv_execute _PROTO((int, char*, char*, int));
+EXTERN_C void exp_logreq (char*, char*);
+EXTERN_C int explogit (char *, char *, ...);
+EXTERN_C int sendrep (int, int, ...);
+EXTERN_C int exp_srv_execute (int, char*, char*, int);
 
 #endif

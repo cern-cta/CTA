@@ -14,10 +14,10 @@
 
 /* Function prototypes */
 
-EXTERN_C int expert_send_request _PROTO((int*, int));
-EXTERN_C int expert_send_data _PROTO((int, const char*, int));
-EXTERN_C int expert_receive_data _PROTO((int, char*, int, int));
-EXTERN_C int send2expert _PROTO((int*, char*, int));
-EXTERN_C int getexpertrep _PROTO((int, int*, int*, int*));
+EXTERN_C int expert_send_request (int*, int);
+EXTERN_C int expert_send_data (int, const char*, int);
+EXTERN_C int expert_receive_data (int, char*, int, int);
+EXTERN_C int send2expert (int*, char*, int);
+EXTERN_C int getexpertrep (int, int*, int*, int*);
 
 #endif

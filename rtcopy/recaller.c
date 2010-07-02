@@ -64,16 +64,16 @@
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
 #include "castor/Constants.h"
-extern int rtcpc_runReq_ext _PROTO((
-                                    rtcpHdr_t *,
-                                    rtcpc_sockets_t **,
-                                    tape_list_t *,
-                                    int (*)(void *(*)(void *), void *)
-                                    ));
-extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *,
-                                           rtcpFileRequest_t *
-                                           ));
+extern int rtcpc_runReq_ext (
+			     rtcpHdr_t *,
+			     rtcpc_sockets_t **,
+			     tape_list_t *,
+			     int (*)(void *(*)(void *), void *)
+			     );
+extern int (*rtcpc_ClientCallback) (
+				    rtcpTapeRequest_t *,
+				    rtcpFileRequest_t *
+				    );
 
 Cuuid_t childUuid, mainUuid;
 static tape_list_t *tape = NULL;

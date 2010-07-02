@@ -44,31 +44,31 @@ typedef struct vdqmnw {
 /*
  * Prototypes for network interface routines
  */
-int vdqm_InitNW _PROTO((vdqmnw_t **));
-int vdqm_InitNWOnPort _PROTO((vdqmnw_t **, int));
-int vdqm_Listen _PROTO((vdqmnw_t *));
-int vdqm_AcknPing _PROTO((vdqmnw_t *, int));
-int vdqm_AcknRollback _PROTO((vdqmnw_t *));
-int vdqm_AcknCommit _PROTO((vdqmnw_t *));
-int vdqm_RecvAckn _PROTO((vdqmnw_t *));
-int vdqm_RecvPingAckn _PROTO((vdqmnw_t *));
-int vdqm_RecvReq _PROTO((vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_SendReq _PROTO((vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_SendPing _PROTO((vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *));
-int vdqm_CleanUp _PROTO((vdqmnw_t *,int));
-int vdqm_ConnectToVDQM _PROTO((vdqmnw_t **, char *));
-int vdqm_CloseConn _PROTO((vdqmnw_t *));
-int vdqm_ConnectToRTCP _PROTO((SOCKET *, char *));
-int vdqm_SendToRTCP _PROTO((SOCKET, vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_GetRTCPReq _PROTO((char *, vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_SendRTCPAckn _PROTO((SOCKET, int *, int *, char *));
-int vdqm_GetRTCPPort _PROTO((void));
-int vdqm_SendVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
-int vdqm_RecvVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
-int vdqm_SendDelDrv_Transfer _PROTO((vdqmnw_t *, vdqmDelDrv_t *));
-int vdqm_SendDedicate_Transfer _PROTO((vdqmnw_t *, vdqmDedicate_t *));
-int vdqm_AggregatorVolReq_Send _PROTO((vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *));
-int vdqm_AggregatorVolReq_Recv _PROTO((vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *));
+int vdqm_InitNW (vdqmnw_t **);
+int vdqm_InitNWOnPort (vdqmnw_t **, int);
+int vdqm_Listen (vdqmnw_t *);
+int vdqm_AcknPing (vdqmnw_t *, int);
+int vdqm_AcknRollback (vdqmnw_t *);
+int vdqm_AcknCommit (vdqmnw_t *);
+int vdqm_RecvAckn (vdqmnw_t *);
+int vdqm_RecvPingAckn (vdqmnw_t *);
+int vdqm_RecvReq (vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_SendReq (vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_SendPing (vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *);
+int vdqm_CleanUp (vdqmnw_t *,int);
+int vdqm_ConnectToVDQM (vdqmnw_t **, char *);
+int vdqm_CloseConn (vdqmnw_t *);
+int vdqm_ConnectToRTCP (SOCKET *, char *);
+int vdqm_SendToRTCP (SOCKET, vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_GetRTCPReq (char *, vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_SendRTCPAckn (SOCKET, int *, int *, char *);
+int vdqm_GetRTCPPort (void);
+int vdqm_SendVolPriority_Transfer (vdqmnw_t *, vdqmVolPriority_t *);
+int vdqm_RecvVolPriority_Transfer (vdqmnw_t *, vdqmVolPriority_t *);
+int vdqm_SendDelDrv_Transfer (vdqmnw_t *, vdqmDelDrv_t *);
+int vdqm_SendDedicate_Transfer (vdqmnw_t *, vdqmDedicate_t *);
+int vdqm_AggregatorVolReq_Send (vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *);
+int vdqm_AggregatorVolReq_Recv (vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *);
 
 #if defined(VDQMSERV)
 /*
@@ -145,62 +145,62 @@ typedef struct vdqmReplicaList {
 /*
  * Thread pool interface
  */
-int vdqm_InitPool _PROTO((vdqmnw_t **));
-int vdqm_GetPool _PROTO((int, vdqmnw_t *, vdqmnw_t *));
-int vdqm_ReturnPool _PROTO((vdqmnw_t *));
+int vdqm_InitPool (vdqmnw_t **);
+int vdqm_GetPool (int, vdqmnw_t *, vdqmnw_t *);
+int vdqm_ReturnPool (vdqmnw_t *);
 /*
  * Queue operations interface
  */
-void *vdqm_ProcReq _PROTO((void *));
-int vdqm_WaitForReqs _PROTO((int));
-int vdqm_SetError _PROTO((int));
-int vdqm_GetError _PROTO((void));
-int vdqm_InitQueueOp _PROTO((void));
-int vdqm_InitDgnQueue _PROTO((dgn_element_t *));
-int vdqm_LockAllQueues _PROTO((void));
-int vdqm_UnlockAllQueues _PROTO((void));
-int vdqm_NewVolReqID _PROTO((int *));
-int vdqm_NewDrvReqID _PROTO((int *));
-int vdqm_NewVolReq _PROTO((vdqmHdr_t *, vdqmVolReq_t *));
-int vdqm_NewDrvReq _PROTO((vdqmHdr_t *, vdqmDrvReq_t *));
-int vdqm_DelVolReq _PROTO((vdqmVolReq_t *));
-int vdqm_DelDrvReq _PROTO((vdqmDrvReq_t *));
-int vdqm_GetVolQueue _PROTO((char *, vdqmVolReq_t *, void **, void **));
-int vdqm_GetDrvQueue _PROTO((char *, vdqmDrvReq_t *, void **, void **));
-int vdqm_GetQueuePos _PROTO((vdqmVolReq_t *));
-int vdqm_QueueOpRollback _PROTO((vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_DedicateDrv _PROTO((vdqmDrvReq_t *));
+void *vdqm_ProcReq (void *);
+int vdqm_WaitForReqs (int);
+int vdqm_SetError (int);
+int vdqm_GetError (void);
+int vdqm_InitQueueOp (void);
+int vdqm_InitDgnQueue (dgn_element_t *);
+int vdqm_LockAllQueues (void);
+int vdqm_UnlockAllQueues (void);
+int vdqm_NewVolReqID (int *);
+int vdqm_NewDrvReqID (int *);
+int vdqm_NewVolReq (vdqmHdr_t *, vdqmVolReq_t *);
+int vdqm_NewDrvReq (vdqmHdr_t *, vdqmDrvReq_t *);
+int vdqm_DelVolReq (vdqmVolReq_t *);
+int vdqm_DelDrvReq (vdqmDrvReq_t *);
+int vdqm_GetVolQueue (char *, vdqmVolReq_t *, void **, void **);
+int vdqm_GetDrvQueue (char *, vdqmDrvReq_t *, void **, void **);
+int vdqm_GetQueuePos (vdqmVolReq_t *);
+int vdqm_QueueOpRollback (vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_DedicateDrv (vdqmDrvReq_t *);
 /*
  * Administrative operations
  */
-int vdqm_DrvMatch _PROTO((vdqm_volrec_t *, vdqm_drvrec_t *));
-int vdqm_ResetDedicate _PROTO((vdqm_drvrec_t *));
-int vdqm_SetDedicate _PROTO((vdqm_drvrec_t *));
+int vdqm_DrvMatch (vdqm_volrec_t *, vdqm_drvrec_t *);
+int vdqm_ResetDedicate (vdqm_drvrec_t *);
+int vdqm_SetDedicate (vdqm_drvrec_t *);
 /*
  * Drives list handling operations
  */
-void vdqm_init_drive_file _PROTO ((char *));
-int vdqm_load_queue _PROTO (());
-int vdqm_save_queue _PROTO (());
+void vdqm_init_drive_file (char *);
+int vdqm_load_queue ();
+int vdqm_save_queue ();
 /*
  * Replica (Cdb client) interface
  */
-int vdqm_UpdateReplica _PROTO((dgn_element_t *));
-int vdqm_DeleteFromReplica _PROTO((vdqmVolReq_t *, vdqmDrvReq_t *));
-int vdqm_ReplVolReq _PROTO((vdqmHdr_t *, vdqmVolReq_t *));
-int vdqm_ReplDrvReq _PROTO((vdqmHdr_t *, vdqmDrvReq_t *));
-int vdqm_CheckReplicaHost _PROTO((vdqmnw_t *));
-int vdqm_AddReplica _PROTO((vdqmnw_t *, vdqmHdr_t *));
-int vdqm_StartReplicaThread _PROTO((void));
-int vdqm_DumpQueues _PROTO((vdqmnw_t *));
-int vdqm_GetReplica _PROTO((vdqmnw_t *, vdqmReplica_t *));
+int vdqm_UpdateReplica (dgn_element_t *);
+int vdqm_DeleteFromReplica (vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_ReplVolReq (vdqmHdr_t *, vdqmVolReq_t *);
+int vdqm_ReplDrvReq (vdqmHdr_t *, vdqmDrvReq_t *);
+int vdqm_CheckReplicaHost (vdqmnw_t *);
+int vdqm_AddReplica (vdqmnw_t *, vdqmHdr_t *);
+int vdqm_StartReplicaThread (void);
+int vdqm_DumpQueues (vdqmnw_t *);
+int vdqm_GetReplica (vdqmnw_t *, vdqmReplica_t *);
 /* 
  * RTCOPY interface
  */
-int vdqm_GetRTCPPort _PROTO((void));
-int vdqm_StartJob _PROTO((vdqm_volrec_t *));
-int vdqm_OnRollback _PROTO((void));
-void *vdqm_OnRollbackThread _PROTO((void *));
+int vdqm_GetRTCPPort (void);
+int vdqm_StartJob (vdqm_volrec_t *);
+int vdqm_OnRollback (void);
+void *vdqm_OnRollbackThread (void *);
 
 #endif /* VDQMSERV */
 

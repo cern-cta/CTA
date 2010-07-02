@@ -35,7 +35,7 @@
 #include <netinet/tcp.h>
 #include <common.h>
 
-EXTERN_C int data_rfio_connect _PROTO((char *, int *, int, int));
+EXTERN_C int data_rfio_connect (char *, int *, int, int);
 
 static void rfio_setup64_ext_v3(iop,uid,gid,passwd)
      RFILE   *iop;

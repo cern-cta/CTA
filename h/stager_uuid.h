@@ -8,10 +8,10 @@
 #include "osdep.h"
 #include "Cuuid.h"
 
-EXTERN_C Cuuid_t *C__stager_request_uuid _PROTO(());
+EXTERN_C Cuuid_t *C__stager_request_uuid ();
 #define stager_request_uuid (*C__stager_request_uuid())
 
-EXTERN_C Cuuid_t *C__stager_subrequest_uuid _PROTO(());
+EXTERN_C Cuuid_t *C__stager_subrequest_uuid ();
 #define stager_subrequest_uuid (*C__stager_subrequest_uuid())
 
 #endif /* __stager_uuid_h */

@@ -75,11 +75,11 @@
 /* =============== */
 /* Local functions */
 /* =============== */
-void _Csched_test_usage _PROTO(());
-void *_Csched_test_doit _PROTO((void *));
-void *High _PROTO((void *));
-void *Medium _PROTO((void *));
-void *Low _PROTO((void *));
+void _Csched_test_usage ();
+void *_Csched_test_doit (void *);
+void *High (void *);
+void *Medium (void *);
+void *Low (void *);
 
 int thread_status_ok = 0;
 int thread_status_notok = -1;

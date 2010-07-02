@@ -65,7 +65,7 @@
 #include <rtcpcld_constants.h>
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
-extern char *getconfent _PROTO((char *, char *, int));
+extern char *getconfent (char *, char *, int);
 
 /** Global needed for determine which uuid to log
  */

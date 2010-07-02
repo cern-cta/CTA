@@ -95,10 +95,10 @@ EXTERN_C int dontLog;
  *
  * \see rtcpc(3)
  */
-EXTERN_C int (*rtcpcld_ClientCallback) _PROTO((
-                                               rtcpTapeRequest_t *tapereq,
-                                               rtcpFileRequest_t *filereq
-                                               ));
+EXTERN_C int (*rtcpcld_ClientCallback) (
+					rtcpTapeRequest_t *tapereq,
+					rtcpFileRequest_t *filereq
+					);
 /** Client callback to fill incomplete file requests
  *
  * \param tape Tape request list
@@ -109,9 +109,9 @@ EXTERN_C int (*rtcpcld_ClientCallback) _PROTO((
  *the request in this callback. Other file requests may also be updated
  *or added to the list of file requests.
  */
-EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
-                                                 tape_list_t *tape
-                                                 ));
+EXTERN_C int (*rtcpcld_MoreInfoCallback) (
+					  tape_list_t *tape
+					  );
 /** RTCOPY client daemon client
  *
  * \param tape - double linked list specifying the entire remote tape copy request.
@@ -141,9 +141,9 @@ EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
  *
  * \see rtcpc(3)
  */
-int rtcpcldc _PROTO((
-                     tape_list_t *tape
-                     ));
+int rtcpcldc (
+	      tape_list_t *tape
+	      );
 /** Cleanup after a series of rtcpcldc_appendFileReqs() calls
  *
  * \param tape - tape list passed in the original rtcpcldc() call.
@@ -158,9 +158,9 @@ int rtcpcldc _PROTO((
  *call rtcpclc_cleanup after a call to rtcpcldc() but it will not cause any
  *harm.
  */
-void rtcpcldc_cleanup _PROTO((
-                              tape_list_t *tape
-                              ));
+void rtcpcldc_cleanup (
+		       tape_list_t *tape
+		       );
 /** Append files to a running request
  *
  * \param tape tape request to which the files should be appended.
@@ -186,13 +186,13 @@ void rtcpcldc_cleanup _PROTO((
  *
  * \see Cmutex, Cglobals man-pages
  */
-int rtcpcldc_appendFileReqs _PROTO((
-                                    tape_list_t *tape,
-                                    file_list_t *file
-                                    ));
+int rtcpcldc_appendFileReqs (
+			     tape_list_t *tape,
+			     file_list_t *file
+			     );
 
-int rtcpcldc_kill _PROTO((
-                          tape_list_t *tape
-                          ));
+int rtcpcldc_kill (
+		   tape_list_t *tape
+		   );
 
 #endif /* H_RTCPCLDAPI_H */

@@ -375,6 +375,6 @@ struct acctstage64 {	/* accounting record for stage 64BITS software */
 /*
  * Function prototypes
  */
-EXTERN_C int tapeacct _PROTO((int, uid_t, gid_t, int, char*, char*, char*, int, int));
+EXTERN_C int tapeacct (int, uid_t, gid_t, int, char*, char*, char*, int, int);
 
 #endif // H_SACCT_H

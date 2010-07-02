@@ -71,20 +71,20 @@ static char *cmdName = NULL;
 static sigset_t signalset;
 static int shutdownServiceFlag = 0;
 static char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
-static void startTapeErrorHandler _PROTO((void));
-extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
-extern int Cinitdaemon _PROTO((char *, void (*)(int)));
-extern int Cinitservice _PROTO((char *, void (*)(int)));
+static void startTapeErrorHandler (void);
+extern int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+extern int Cinitdaemon (char *, void (*)(int));
+extern int Cinitservice (char *, void (*)(int));
 int Debug = FALSE;
 int inChild = 0;
 Cuuid_t mainUuid;
 Cuuid_t childUuid;
 extern int use_port;
-extern char *getconfent _PROTO((char *, char *, int));
-extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *,
-                                           rtcpFileRequest_t *
-                                           ));
+extern char *getconfent (char *, char *, int);
+extern int (*rtcpc_ClientCallback) (
+				    rtcpTapeRequest_t *,
+				    rtcpFileRequest_t *
+				    );
 
 static int getVIDFromRtcpd(
                            origSocket,
@@ -644,9 +644,9 @@ static void checkWorkerExit(shutDownFlag)
   return;
 }
 
-static void shutdownService _PROTO((
-                                    int
-                                    ));
+static void shutdownService (
+			     int
+			     );
 
 static void sigchld_handler(int signo) {
   (void)signo;

@@ -27,11 +27,11 @@ typedef struct socks {
 } msymlink_connects ;
 static msymlink_connects msymlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
-static int rfio_smsymlink _PROTO((int,  char *, char *));
-static int rfio_msymlink_allocentry _PROTO((char *, int, int));
-static int rfio_msymlink_findentry _PROTO((char *,int));
-static int rfio_symend_this _PROTO((int,int));
-extern int rfio_newhost _PROTO((char *));
+static int rfio_smsymlink (int,  char *, char *);
+static int rfio_msymlink_allocentry (char *, int, int);
+static int rfio_msymlink_findentry (char *,int);
+static int rfio_symend_this (int,int);
+extern int rfio_newhost (char *);
 
 int rfio_msymlink(n1,file2)
      char *n1 ;

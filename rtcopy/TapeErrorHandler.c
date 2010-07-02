@@ -91,7 +91,7 @@
 #include <rtcpcld.h>
 #include <rfio_api.h>
 #include <Cns_api.h>
-extern char *getconfent _PROTO((CONST char *, CONST char *, int));
+extern char *getconfent (CONST char *, CONST char *, int);
 /** Default retry policy names
  */
 static char *migratorRetryPolicy = MIGRATOR_RETRY_POLICY_NAME;

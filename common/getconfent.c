@@ -21,7 +21,7 @@
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 
-static char *getconfent_r _PROTO((const char *, const char *, const char *, int, char *, int));
+static char *getconfent_r (const char *, const char *, const char *, int, char *, int);
 
 static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
      const char *filename;

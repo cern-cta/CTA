@@ -31,11 +31,11 @@ typedef struct socks {
 } mstat_connects ;
 static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
-EXTERN_C int rfio_smstat _PROTO((int, char *, struct stat *, int));
-static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
-static int rfio_mstat_findentry _PROTO((char *,int));
-static int rfio_end_this _PROTO((int,int));
-extern int rfio_newhost _PROTO((char *));
+EXTERN_C int rfio_smstat (int, char *, struct stat *, int);
+static int rfio_mstat_allocentry (char *, int, int, int);
+static int rfio_mstat_findentry (char *,int);
+static int rfio_end_this (int,int);
+extern int rfio_newhost (char *);
 
 int rfio_mstat(file,statb)
      char *file ;

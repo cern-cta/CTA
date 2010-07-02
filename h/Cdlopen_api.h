@@ -26,9 +26,9 @@
 #include <dlfcn.h>
 #endif
 
-EXTERN_C void *Cdlopen _PROTO((CONST char *, int));
-EXTERN_C void *Cdlsym _PROTO((void *, CONST char *));
-EXTERN_C int   Cdlclose _PROTO((void *));
-EXTERN_C char *Cdlerror _PROTO((void));
+EXTERN_C void *Cdlopen (CONST char *, int);
+EXTERN_C void *Cdlsym (void *, CONST char *);
+EXTERN_C int   Cdlclose (void *);
+EXTERN_C char *Cdlerror (void);
 
 #endif /* __Cdlopen_api_h */

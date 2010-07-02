@@ -63,7 +63,7 @@ char	**argv;
 {
 	static char aden[CA_MAXDENLEN+1] = "";
 	int c;
-	void cleanup _PROTO((int));
+	void cleanup (int);
 	int code = 0;
 	int count;
 	char devtype[CA_MAXDVTLEN+1];
@@ -327,7 +327,7 @@ char	**argv;
 	    NULL, NULL, NULL))
 		exit_prog (SYERR);
 
-	Ctape_dmpmsg = (void (*) _PROTO((int, CONST char *, ...))) (&tpdump_usrmsg);
+	Ctape_dmpmsg = (void (*) (int, CONST char *, ...)) (&tpdump_usrmsg);
 	if (Ctape_dmpinit (infil, vid, aden, drive, devtype, maxblksize,
 	    fromblock, toblock, maxbyte, fromfile, maxfile, code, flags))
 		exit_prog (SYERR);

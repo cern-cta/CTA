@@ -99,30 +99,30 @@ int stager_getoutbuf(buffer, buflen)
 /*	stager_setlog - set receiving callback routine for error and output messages */
 
 int stager_setlog(logfunction)
-		 void (*logfunction) _PROTO((int, char *));
+     void (*logfunction) (int, char *);
 {
 	void *logfunctionp;
 
-	Cglobals_get (&logfunction_key, &logfunctionp, sizeof(void (*) _PROTO((int, char *))));
+	Cglobals_get (&logfunction_key, &logfunctionp, sizeof(void (*) (int, char *)));
 	if (logfunctionp == NULL) {
 		return(-1);
 	}
-	* (void (**) _PROTO((int, char *))) logfunctionp = logfunction;
+	* (void (**) (int, char *)) logfunctionp = logfunction;
 	return(0);
 }
 
 /*	stager_getlog - get receiving callback routine for error and output messages */
 
 int stager_getlog(logfunction)
-		 void (**logfunction) _PROTO((int, char *));
+     void (**logfunction) (int, char *);
 {
 	void *logfunctionp;
 
-	Cglobals_get (&logfunction_key, &logfunctionp, sizeof(void (*) _PROTO((int, char *))));
+	Cglobals_get (&logfunction_key, &logfunctionp, sizeof(void (*) (int, char *)));
 	if (logfunctionp == NULL) {
 		return(-1);
 	}
-	*logfunction = * (void (**) _PROTO((int, char *))) logfunctionp;
+	*logfunction = * (void (**) (int, char *)) logfunctionp;
 	return(0);
 }
 
@@ -135,7 +135,7 @@ int stager_errmsg(const char *func, const char *msg, ...) {
 	char *errbufp;
 	int errbuflen;
 	int len;
-	void (*logfunction) _PROTO((int, char *));
+	void (*logfunction) (int, char *);
 
 	if (stager_geterrbuf(&errbufp,&errbuflen) != 0 || stager_getlog(&logfunction) != 0) {
 		return(-1);
@@ -185,7 +185,7 @@ int stager_outmsg(const char *func, const char *msg, ...) {
 	char *outbufp;
 	int outbuflen;
 	int len;
-	void (*logfunction) _PROTO((int, char *));
+	void (*logfunction) (int, char *);
 
 	if (stager_getoutbuf(&outbufp,&outbuflen) != 0 || stager_getlog(&logfunction) != 0) {
 		return(-1);

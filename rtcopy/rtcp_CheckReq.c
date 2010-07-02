@@ -44,9 +44,9 @@
 #endif /* RTCP_SERVER */
 #include <Ctape_api.h>
 #include <serrno.h>
-int rtcp_CheckReqStructures _PROTO((SOCKET *,
-                                          rtcpClientInfo_t *,
-                                          tape_list_t *));
+int rtcp_CheckReqStructures (SOCKET *,
+			     rtcpClientInfo_t *,
+			     tape_list_t *);
 
 #if defined(RTCP_SERVER)
 #define SET_REQUEST_ERR(X,Z) {\
@@ -68,10 +68,10 @@ static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
 #if TMS
-extern int rtcp_CallTMS _PROTO((tape_list_t *, char *));
+extern int rtcp_CallTMS (tape_list_t *, char *);
 #endif
 #if VMGR
-extern int rtcp_CallVMGR _PROTO((tape_list_t *, char *));
+extern int rtcp_CallVMGR (tape_list_t *, char *);
 #endif
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {

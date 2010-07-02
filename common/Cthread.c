@@ -31,55 +31,55 @@
 /* Internal Prototypes                          */
 /* ============================================ */
 /* Add a Cthread ID */
-int   _Cthread_addcid _PROTO((const char *, int, const char *, int, Cth_pid_t *, unsigned, void *(*)(void *), int));
+int   _Cthread_addcid (const char *, int, const char *, int, Cth_pid_t *, unsigned, void *(*)(void *), int);
 /* Add a mutex */
-int   _Cthread_addmtx _PROTO((const char *, int, struct Cmtx_element_t *));
+int   _Cthread_addmtx (const char *, int, struct Cmtx_element_t *);
 /* Add a TSD */
-int   _Cthread_addspec _PROTO((const char *, int, struct Cspec_element_t *));
+int   _Cthread_addspec (const char *, int, struct Cspec_element_t *);
 /* Obain a mutex lock */
 #ifndef CTHREAD_DEBUG
-int   _Cthread_obtain_mtx _PROTO((const char *, int, Cth_mtx_t *, int));
+int   _Cthread_obtain_mtx (const char *, int, Cth_mtx_t *, int);
 #else
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-int   _Cthread_obtain_mtx_debug _PROTO((const char *, int, const char *, int, Cth_mtx_t *, int));
+int   _Cthread_obtain_mtx_debug (const char *, int, const char *, int, Cth_mtx_t *, int);
 #endif
 /* Release a mutex lock */
-int   _Cthread_release_mtx _PROTO((const char *, int, Cth_mtx_t *));
+int   _Cthread_release_mtx (const char *, int, Cth_mtx_t *);
 /* Methods to create a mutex to protect Cthread */
 /* internal tables and linked lists             */
 /* This is useful only in thread environment    */
-void  _Cthread_once _PROTO((void));
-int   _Cthread_init _PROTO((void));
+void  _Cthread_once (void);
+int   _Cthread_init (void);
 /* Release of a thread-specific variable        */
-void  _Cthread_keydestructor _PROTO((void *));
+void  _Cthread_keydestructor (void *);
 /* Release of a thread                          */
-int   _Cthread_destroy _PROTO((const char *, int, int));
+int   _Cthread_destroy (const char *, int, int);
 #ifdef _CTHREAD
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-unsigned __stdcall _Cthread_start_threadex _PROTO((void *));
-void     __cdecl   _Cthread_start_thread _PROTO((void *));
-int _Cthread_win32_cond_init _PROTO((Cth_cond_t *));
-int _Cthread_win32_cond_wait _PROTO((Cth_cond_t *, Cth_mtx_t *, int));
-int _Cthread_win32_cond_broadcast _PROTO((Cth_cond_t *));
-int _Cthread_win32_cond_signal _PROTO((Cth_cond_t *));
-int _Cthread_win32_cond_destroy _PROTO((Cth_cond_t *));
+unsigned __stdcall _Cthread_start_threadex (void *);
+void     __cdecl   _Cthread_start_thread (void *);
+int _Cthread_win32_cond_init (Cth_cond_t *);
+int _Cthread_win32_cond_wait (Cth_cond_t *, Cth_mtx_t *, int);
+int _Cthread_win32_cond_broadcast (Cth_cond_t *);
+int _Cthread_win32_cond_signal (Cth_cond_t *);
+int _Cthread_win32_cond_destroy (Cth_cond_t *);
 #else
-void *_Cthread_start_pthread _PROTO((void *));
+void *_Cthread_start_pthread (void *);
 #endif
 #else
 /* Signal handler - Simplify the POSIX sigaction calls */
-typedef void    Sigfunc _PROTO((int));
-Sigfunc *_Cthread_signal _PROTO((const char *, int, int, Sigfunc *));
-void     _Cthread_sigchld _PROTO((int));
-void    *_Cthread_start_nothread _PROTO((void *(*)(void *), void *, Sigfunc *));
+typedef void    Sigfunc (int);
+Sigfunc *_Cthread_signal (const char *, int, int, Sigfunc *);
+void     _Cthread_sigchld (int);
+void    *_Cthread_start_nothread (void *(*)(void *), void *, Sigfunc *);
 #endif /* _CTHREAD */
 
 /* Find a global key in Cspec structure         */
-struct Cspec_element_t *_Cthread_findglobalkey _PROTO((const char *, int, int *));
+struct Cspec_element_t *_Cthread_findglobalkey (const char *, int, int *);
 /* Cthread-ID (as a Thread-Specific variable) destructor */
-void _Cthread_cid_destructor _PROTO((void *));
+void _Cthread_cid_destructor (void *);
 /* Cthread-ID once for all... */
-void _Cthread_cid_once _PROTO((void));
+void _Cthread_cid_once (void);
 
 /* ------------------------------------ */
 /* For the Cthread_self() command       */
@@ -536,7 +536,7 @@ void _Cthread_sigchld(errcode)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
-     void *(*startroutine) _PROTO((void *));
+     void *(*startroutine) (void *);
      void *arg;
      Sigfunc *old_sigchld;
 {
@@ -615,7 +615,7 @@ void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
 int Cthread_Create(file, line, startroutine, arg)
      const char *file;
      int line;
-     void *(*startroutine) _PROTO((void *));
+     void *(*startroutine) (void *);
      void *arg;
 {
   Cth_pid_t pid;                        /* Thread/Process ID */
@@ -817,7 +817,7 @@ int Cthread_Create(file, line, startroutine, arg)
 int Cthread_Create_Detached(file, line, startroutine, arg)
      const char *file;
      int line;
-     void *(*startroutine) _PROTO((void *));
+     void *(*startroutine) (void *);
      void *arg;
 {
 #ifdef _CTHREAD
@@ -3401,7 +3401,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
      int line;
      Cth_pid_t *pid;
      unsigned thID;
-     void *(*startroutine) _PROTO((void *));
+     void *(*startroutine) (void *);
      int detached;
 {
   struct Cid_element_t *current = &Cid;    /* Curr Cid_element */
@@ -3895,7 +3895,7 @@ void _Cthread_once() {
   }
   /* Initialize thread specific globals environment*/
 
-  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) _PROTO((void))) Cthread_Self0); 
+  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) (void)) Cthread_Self0); 
   Cmutex_init(Cthread_Lock_Mtx_init,Cthread_Mutex_Unlock_init);
   return;
 #endif /* ifndef _CTHREAD */

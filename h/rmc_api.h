@@ -17,14 +17,14 @@
 
                         /*  function prototypes */
 
-EXTERN_C int rmc_dismount _PROTO((char *, char *, char *, int, int));
-EXTERN_C int rmc_errmsg _PROTO((char *, char *, ...));
-EXTERN_C int rmc_export _PROTO((char *, char *, char *));
-EXTERN_C int rmc_find_cartridge _PROTO((char *, char *, char *, int, int, int, struct smc_element_info *));
-EXTERN_C int rmc_get_geometry _PROTO((char *, char *, struct robot_info *));
-EXTERN_C int rmc_import _PROTO((char *, char *, char *));
-EXTERN_C int rmc_mount _PROTO((char *, char *, char *, int, int));
-EXTERN_C int rmc_read_elem_status _PROTO((char *, char *, int, int, int, struct smc_element_info *));
-EXTERN_C int rmc_seterrbuf _PROTO((char *, int));
-EXTERN_C int send2rmc _PROTO((char *, char *, int, char *, int));
+EXTERN_C int rmc_dismount (char *, char *, char *, int, int);
+EXTERN_C int rmc_errmsg (char *, char *, ...);
+EXTERN_C int rmc_export (char *, char *, char *);
+EXTERN_C int rmc_find_cartridge (char *, char *, char *, int, int, int, struct smc_element_info *);
+EXTERN_C int rmc_get_geometry (char *, char *, struct robot_info *);
+EXTERN_C int rmc_import (char *, char *, char *);
+EXTERN_C int rmc_mount (char *, char *, char *, int, int);
+EXTERN_C int rmc_read_elem_status (char *, char *, int, int, int, struct smc_element_info *);
+EXTERN_C int rmc_seterrbuf (char *, int);
+EXTERN_C int send2rmc (char *, char *, int, char *, int);
 #endif

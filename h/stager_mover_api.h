@@ -90,11 +90,11 @@
  * @note the pfn is allocated by the call, and therefore
  *       should be freed by the mover.
  */
-EXTERN_C int stage_mover_open _PROTO ((const char *sfn,
-						int mode,
-						const char *userId,
-						char **pfn,
-						void **stagerContext));
+EXTERN_C int stage_mover_open (const char *sfn,
+			       int mode,
+			       const char *userId,
+			       char **pfn,
+			       void **stagerContext);
 
 
 
@@ -116,7 +116,7 @@ EXTERN_C int stage_mover_open _PROTO ((const char *sfn,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int stage_mover_write _PROTO ((void *stagerContext));
+EXTERN_C int stage_mover_write (void *stagerContext);
 
 
 
@@ -137,7 +137,7 @@ EXTERN_C int stage_mover_write _PROTO ((void *stagerContext));
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int stage_mover_close _PROTO ((void *stagerContext));
+EXTERN_C int stage_mover_close (void *stagerContext);
 
 
 ////////////////////////////////////////////////////////////
@@ -159,9 +159,9 @@ EXTERN_C int stage_mover_close _PROTO ((void *stagerContext));
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int stage_mover_error _PROTO ((void *stagerContext,
-						 const int  errorCode,
-						 const char *errorString));
+EXTERN_C int stage_mover_error (void *stagerContext,
+				const int  errorCode,
+				const char *errorString);
 
 
 

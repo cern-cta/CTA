@@ -66,17 +66,17 @@
 #include <rtcpcld.h>
 #define RTCPCLD_COMMON
 #include <rtcpcld_messages.h>
-extern char *getconfent _PROTO((char *, char *, int));
-extern int rtcpc_runReq_ext _PROTO((
-                                    rtcpHdr_t *,
-                                    rtcpc_sockets_t **,
-                                    tape_list_t *,
-                                    int (*)(void *(*)(void *), void *)
-                                    ));
-extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *,
-                                           rtcpFileRequest_t *
-                                           ));
+extern char *getconfent (char *, char *, int);
+extern int rtcpc_runReq_ext (
+			     rtcpHdr_t *,
+			     rtcpc_sockets_t **,
+			     tape_list_t *,
+			     int (*)(void *(*)(void *), void *)
+			     );
+extern int (*rtcpc_ClientCallback) (
+				    rtcpTapeRequest_t *,
+				    rtcpFileRequest_t *
+				    );
 extern int inChild;
 extern Cuuid_t mainUuid;
 extern Cuuid_t childUuid;
@@ -743,8 +743,8 @@ int rtcpcld_runWorker(
                       )
      tape_list_t *tape;
      SOCKET *origSocket;
-     int (*myDispatch) _PROTO((void *(*)(void *), void *));
-     int (*myCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
+     int (*myDispatch) (void *(*)(void *), void *);
+int (*myCallback) (rtcpTapeRequest_t *, rtcpFileRequest_t *);
 {
   rtcpc_sockets_t *socks;
   rtcpHdr_t hdr;

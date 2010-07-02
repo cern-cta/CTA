@@ -370,7 +370,7 @@ int startThreads(
                  threadRoutine
                  )
      int nbThreads;
-     void *(*threadRoutine) _PROTO((void *));
+     void *(*threadRoutine) (void *);
 {
   int rc, i, *arg;
 

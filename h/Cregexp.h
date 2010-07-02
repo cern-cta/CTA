@@ -32,8 +32,8 @@ struct Cregexp {
 };
 typedef struct Cregexp Cregexp_t;
 
-EXTERN_C Cregexp_t *Cregexp_comp _PROTO((char *));
-EXTERN_C int           Cregexp_exec _PROTO((Cregexp_t *, char *));
-EXTERN_C int           Cregexp_sub _PROTO((Cregexp_t *, char *, char *, size_t));
+EXTERN_C Cregexp_t *Cregexp_comp (char *);
+EXTERN_C int           Cregexp_exec (Cregexp_t *, char *);
+EXTERN_C int           Cregexp_sub (Cregexp_t *, char *, char *, size_t);
 
 #endif /* __Cregexp_h */

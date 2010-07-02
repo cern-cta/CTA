@@ -41,7 +41,7 @@
  * @param isAdd whether it is an addPrivilege command. Otherwise
  * it is a removePrivilege command
  */
-EXTERN_C int changePrivilege _PROTO
-((int argc, char *argv[], int isAdd));
+EXTERN_C int changePrivilege
+(int argc, char *argv[], int isAdd);
 
 #endif  /* STAGER_CLIENT_CHANGEPRIVILEGE */

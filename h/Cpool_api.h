@@ -32,10 +32,10 @@
 #endif
 #endif /* _CTHREAD */
 
-EXTERN_C void *Cpool_calloc _PROTO((char *, int, size_t, size_t));
-EXTERN_C void *Cpool_malloc _PROTO((char *, int, size_t));
-EXTERN_C void  Cpool_free _PROTO((char *, int, void *));
-EXTERN_C void *Cpool_realloc _PROTO((char *, int, void *, size_t));
+EXTERN_C void *Cpool_calloc (char *, int, size_t, size_t);
+EXTERN_C void *Cpool_malloc (char *, int, size_t);
+EXTERN_C void  Cpool_free (char *, int, void *);
+EXTERN_C void *Cpool_realloc (char *, int, void *, size_t);
 #define Cpool_create(nbreq,nbget) Cpool_create_ext(nbreq,nbget,NULL)
 #define Cpool_assign(poolid,addr,args,timeout) Cpool_assign_ext(poolid,NULL,addr,args,timeout)
 #define Cpool_next_index(poolnb) Cpool_next_index_timeout(poolnb,-1)
@@ -46,9 +46,9 @@ EXTERN_C void *Cpool_realloc _PROTO((char *, int, void *, size_t));
 /* goal: get rid of internal mutexes     */
 /* ===================================== */
 
-EXTERN_C int   Cpool_create_ext _PROTO((int, int *, void **));
-EXTERN_C int   Cpool_assign_ext _PROTO((int, void *, void *(*)(void *), void *, int));
-EXTERN_C int   Cpool_next_index_timeout_ext _PROTO((int, void *, int));
+EXTERN_C int   Cpool_create_ext (int, int *, void **);
+EXTERN_C int   Cpool_assign_ext (int, void *, void *(*)(void *), void *, int);
+EXTERN_C int   Cpool_next_index_timeout_ext (int, void *, int);
 
 #endif /* __cpool_api_h */
 

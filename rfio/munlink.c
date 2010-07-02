@@ -26,11 +26,11 @@ typedef struct socks {
 } munlink_connects ;
 static munlink_connects munlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
-static int rfio_smunlink _PROTO((int, char *));
-static int rfio_munlink_allocentry _PROTO((char *, int, int));
-static int rfio_munlink_findentry _PROTO((char *,int));
-static int rfio_unend_this _PROTO((int,int));
-extern int rfio_newhost _PROTO((char *));
+static int rfio_smunlink (int, char *);
+static int rfio_munlink_allocentry (char *, int, int);
+static int rfio_munlink_findentry (char *,int);
+static int rfio_unend_this (int,int);
+extern int rfio_newhost (char *);
 
 int rfio_munlink(file)
      char *file ;

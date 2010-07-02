@@ -65,7 +65,7 @@
 #include <list>
 #include <vector>
 
-EXTERN_C char *getconfent _PROTO((char *, char *, int));
+EXTERN_C char *getconfent (char *, char *, int);
 
 //------------------------------------------------------------------------------
 // Constants

@@ -31,9 +31,9 @@
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
-char *rfio_lasthost _PROTO(()); /* returns last succesfully connected host     */
-int rfio_newhost _PROTO((char *)); /* returns last succesfully connected host     */
-int rfio_connect_with_port _PROTO((char*,int,int*)); /* Connect <node>'s rfio server on port <port> */
+char *rfio_lasthost (); /* returns last succesfully connected host     */
+int rfio_newhost (char *); /* returns last succesfully connected host     */
+int rfio_connect_with_port (char*,int,int*); /* Connect <node>'s rfio server on port <port> */
 
 /** Parses the node name to check whether it contains the port number as well */
 int rfio_nodeHasPort(char *node, char *host, int *port) {

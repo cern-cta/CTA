@@ -18,7 +18,7 @@ Cuuid_t NameSpace_DNS = { /* 6ba7b810-9dad-11d1-80b4-00c04fd430c8 */
 };
 
 /* puid -- print a UUID */
-void puid _PROTO((Cuuid_t));
+void puid (Cuuid_t);
 
 
 int main(argc,argv)

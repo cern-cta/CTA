@@ -37,10 +37,10 @@
 
 extern int AbortFlag;
 
-char *getconfent _PROTO((char *, char *, int));
-int gettperror _PROTO((int, char *, char **));
-static int read_sony _PROTO(());
-static int write_sony _PROTO(());
+char *getconfent (char *, char *, int);
+int gettperror (int, char *, char **);
+static int read_sony ();
+static int write_sony ();
 
 static char labelid[2][4] = {"EOF","EOV"} ;
 
@@ -311,22 +311,22 @@ int topen(tape_list_t *tape, file_list_t *file) {
     if ( file->sonyraw > 0 ) tmode = O_RDWR;
   }
 
-  file->cksumRoutine = (unsigned long (*) _PROTO((unsigned long,
-                                                  const char *,
-                                                  unsigned int)))NULL;
+  file->cksumRoutine = (unsigned long (*) (unsigned long,
+					   const char *,
+					   unsigned int))NULL;
   if ( *filereq->castorSegAttr.segmCksumAlgorithm != '\0' ) {
     if ( strncmp(filereq->castorSegAttr.segmCksumAlgorithm,
                  RTCP_CKSUM_ADLER32,
                  CA_MAXCKSUMNAMELEN) == 0 ) {
-      file->cksumRoutine = (unsigned long (*) _PROTO((unsigned long,
-                                                      const char *,
-                                                      unsigned int)))adler32;
+      file->cksumRoutine = (unsigned long (*) (unsigned long,
+					       const char *,
+					       unsigned int))adler32;
     } else if ( strncmp(filereq->castorSegAttr.segmCksumAlgorithm,
                         RTCP_CKSUM_CRC32,
                         CA_MAXCKSUMNAMELEN) == 0 ) {
-      file->cksumRoutine = (unsigned long (*) _PROTO((unsigned long,
-                                                      const char *,
-                                                      unsigned int)))crc32;
+      file->cksumRoutine = (unsigned long (*) (unsigned long,
+					       const char *,
+					       unsigned int))crc32;
     } else {
       log(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
           filereq->castorSegAttr.segmCksumAlgorithm);
@@ -338,9 +338,9 @@ int topen(tape_list_t *tape, file_list_t *file) {
     }
   }
   
-  while ( file->cksumRoutine == (unsigned long (*) _PROTO((unsigned long, 
-                                                           const char *,
-                                                           unsigned int)))NULL ) {
+  while ( file->cksumRoutine == (unsigned long (*) (unsigned long, 
+						    const char *,
+						    unsigned int))NULL ) {
 
     /*
      * Set configured checksum algorithm once for the whole request to
@@ -364,19 +364,19 @@ int topen(tape_list_t *tape, file_list_t *file) {
     if ( strncmp(cfgCksumAlgorithm,
                  RTCP_CKSUM_ADLER32,
                  CA_MAXCKSUMNAMELEN) == 0 ) {
-      file->cksumRoutine = (unsigned long (*) _PROTO((
-                                                      unsigned long, 
-                                                      const char *,
-                                                      unsigned int
-                                                      )))adler32;
+      file->cksumRoutine = (unsigned long (*) (
+					       unsigned long, 
+					       const char *,
+					       unsigned int
+					       ))adler32;
     } else if ( strncmp(cfgCksumAlgorithm,
                         RTCP_CKSUM_CRC32,
                         CA_MAXCKSUMNAMELEN) == 0 ) {
-      file->cksumRoutine = (unsigned long (*) _PROTO((
-                                                      unsigned long, 
-                                                      const char *,
-                                                      unsigned int
-                                                      )))crc32;
+      file->cksumRoutine = (unsigned long (*) (
+					       unsigned long, 
+					       const char *,
+					       unsigned int
+					       ))crc32;
     } else if ( strncmp(cfgCksumAlgorithm,"none",CA_MAXCKSUMNAMELEN) == 0 || 
                 strncmp(cfgCksumAlgorithm,"NONE",CA_MAXCKSUMNAMELEN) == 0 ) {
       rtcp_log(
@@ -407,9 +407,9 @@ int topen(tape_list_t *tape, file_list_t *file) {
     } 
   }
  
-  if ( file->cksumRoutine != (unsigned long (*) _PROTO((unsigned long, 
-                                                        const char *,
-                                                        unsigned int)))NULL ) {
+  if ( file->cksumRoutine != (unsigned long (*) (unsigned long, 
+						 const char *,
+						 unsigned int))NULL ) {
     if ( *filereq->castorSegAttr.segmCksumAlgorithm == '\0' ) {
       strncpy(
               filereq->castorSegAttr.segmCksumAlgorithm,
@@ -657,9 +657,9 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
   }
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
-  if ( file->cksumRoutine != (unsigned long (*) _PROTO((unsigned long, 
-                                                        const char *,
-                                                        unsigned int)))NULL ) {
+  if ( file->cksumRoutine != (unsigned long (*) (unsigned long, 
+						 const char *,
+						 unsigned int))NULL ) {
     rtcp_log(LOG_INFO,"segment checksum (%s): %lu, 0x%x\n",
              filereq->castorSegAttr.segmCksumAlgorithm,
              filereq->castorSegAttr.segmCksum,
@@ -895,9 +895,9 @@ int twrite(int fd,char *ptr,int len,
   }
 
   if ( (rc > 0) && (file->cksumRoutine != 
-                    (unsigned long (*) _PROTO((unsigned long, 
-                                               const char *,
-                                               unsigned int)))NULL) ) {
+                    (unsigned long (*) (unsigned long, 
+					const char *,
+					unsigned int))NULL) ) {
     filereq->castorSegAttr.segmCksum = 
       file->cksumRoutine(
                          filereq->castorSegAttr.segmCksum,
@@ -1038,10 +1038,10 @@ int tread(int fd,char *ptr,int len,
     rc = read_sony();
   }
   if ( (rc > 0) && (file->cksumRoutine != 
-                    (unsigned long (*) _PROTO((
-                                               unsigned long,
-                                               const char *,
-                                               unsigned int)))NULL) ) {
+                    (unsigned long (*) (
+					unsigned long,
+					const char *,
+					unsigned int))NULL) ) {
     filereq->castorSegAttr.segmCksum =
       file->cksumRoutine(
                          filereq->castorSegAttr.segmCksum,

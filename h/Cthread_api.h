@@ -58,37 +58,37 @@
 #define  Cthread_kill(a,b)            Cthread_Kill(__FILE__,__LINE__,a,b)
 #define  Cthread_exit(a)              Cthread_Exit(__FILE__,__LINE__,a)
 
-EXTERN_C int    Cthread_init _PROTO((void));
-EXTERN_C int    Cthread_Create _PROTO((const char *, int, void *(*)(void *), void *));
-EXTERN_C int    Cthread_Create_Detached _PROTO((const char *, int, void *(*)(void *), void *)); 
-EXTERN_C int    Cthread_Join _PROTO((const char *, int, int , int  **));
-EXTERN_C int    Cthread_Lock_Mtx _PROTO((const char *, int, void *, int));
-EXTERN_C int    Cthread_Lock_Mtx_init _PROTO((void *, int));
-EXTERN_C int    Cthread_Mutex_Unlock _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Mutex_Unlock_init _PROTO((void *));
-EXTERN_C int    Cthread_Mutex_Unlock_ext _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Wait_Condition _PROTO((const char *, int, void *, int));
-EXTERN_C int    Cthread_Wait_Condition_ext _PROTO((const char *, int, void *, int));
-EXTERN_C int    Cthread_Cond_Broadcast _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Cond_Broadcast_ext _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Detach _PROTO((const char *, int, int));
-EXTERN_C int    Cthread_Mutex_Destroy _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Self _PROTO((const char *, int));
-EXTERN_C int    Cthread_Self0 _PROTO((void));
-EXTERN_C int   _Cthread_self _PROTO((void));
-EXTERN_C int    Cthread_Getspecific _PROTO((const char *, int, int *, void **));
-EXTERN_C int    Cthread_Getspecific0 _PROTO((int *, void **));
-EXTERN_C int    Cthread_Getspecific_init _PROTO((int *, void **));
-EXTERN_C int    Cthread_Setspecific _PROTO((const char *, int, int *, void *));
-EXTERN_C int    Cthread_Setspecific0 _PROTO((int *, void *));
-EXTERN_C int    Cthread_proto _PROTO((void));
-EXTERN_C int    Cthread_isproto _PROTO((char *));
-EXTERN_C int    Cthread_environment _PROTO((void));
-EXTERN_C void   Cthread_unprotect _PROTO((void));
-EXTERN_C void  *Cthread_Lock_Mtx_addr _PROTO((const char *, int, void *));
-EXTERN_C int    Cthread_Lock_Mtx_ext _PROTO((const char *, int, void *, int));
-EXTERN_C int    Cthread_Kill _PROTO((const char *, int, int, int));
-EXTERN_C void   Cthread_Exit _PROTO((const char *, int, void *));
+EXTERN_C int    Cthread_init (void);
+EXTERN_C int    Cthread_Create (const char *, int, void *(*)(void *), void *);
+EXTERN_C int    Cthread_Create_Detached (const char *, int, void *(*)(void *), void *); 
+EXTERN_C int    Cthread_Join (const char *, int, int , int  **);
+EXTERN_C int    Cthread_Lock_Mtx (const char *, int, void *, int);
+EXTERN_C int    Cthread_Lock_Mtx_init (void *, int);
+EXTERN_C int    Cthread_Mutex_Unlock (const char *, int, void *);
+EXTERN_C int    Cthread_Mutex_Unlock_init (void *);
+EXTERN_C int    Cthread_Mutex_Unlock_ext (const char *, int, void *);
+EXTERN_C int    Cthread_Wait_Condition (const char *, int, void *, int);
+EXTERN_C int    Cthread_Wait_Condition_ext (const char *, int, void *, int);
+EXTERN_C int    Cthread_Cond_Broadcast (const char *, int, void *);
+EXTERN_C int    Cthread_Cond_Broadcast_ext (const char *, int, void *);
+EXTERN_C int    Cthread_Detach (const char *, int, int);
+EXTERN_C int    Cthread_Mutex_Destroy (const char *, int, void *);
+EXTERN_C int    Cthread_Self (const char *, int);
+EXTERN_C int    Cthread_Self0 (void);
+EXTERN_C int   _Cthread_self (void);
+EXTERN_C int    Cthread_Getspecific (const char *, int, int *, void **);
+EXTERN_C int    Cthread_Getspecific0 (int *, void **);
+EXTERN_C int    Cthread_Getspecific_init (int *, void **);
+EXTERN_C int    Cthread_Setspecific (const char *, int, int *, void *);
+EXTERN_C int    Cthread_Setspecific0 (int *, void *);
+EXTERN_C int    Cthread_proto (void);
+EXTERN_C int    Cthread_isproto (char *);
+EXTERN_C int    Cthread_environment (void);
+EXTERN_C void   Cthread_unprotect (void);
+EXTERN_C void  *Cthread_Lock_Mtx_addr (const char *, int, void *);
+EXTERN_C int    Cthread_Lock_Mtx_ext (const char *, int, void *, int);
+EXTERN_C int    Cthread_Kill (const char *, int, int, int);
+EXTERN_C void   Cthread_Exit (const char *, int, void *);
 
 #endif /* __Cthread_api_h */
 

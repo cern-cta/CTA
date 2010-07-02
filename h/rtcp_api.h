@@ -30,99 +30,99 @@ typedef struct rtcpc_sockets {
 } rtcpc_sockets_t;
 
 
-EXTERN_C int rtcpc_InitReq _PROTO((
-                                            rtcpc_sockets_t **,
-                                            int *,
-                                            tape_list_t *
-                                            ));
-EXTERN_C int rtcpc_SelectServer _PROTO((
-                                                 rtcpc_sockets_t **,
-                                                 tape_list_t *,
-                                                 char *,
-                                                 int,
-                                                 int *
-                                                 ));
-EXTERN_C int rtcpc_sendReqList _PROTO((
-                                                rtcpHdr_t *,
-                                                rtcpc_sockets_t **,
-                                                tape_list_t *
-                                                ));
-EXTERN_C int rtcpc_sendEndOfReq _PROTO((
-                                                 rtcpHdr_t *,
-                                                 rtcpc_sockets_t **,
-                                                 tape_list_t *
-                                                 ));
-EXTERN_C int rtcpc_runReq _PROTO((
-                                           rtcpHdr_t *,
-                                           rtcpc_sockets_t **,
-                                           tape_list_t *
-                                           ));
-EXTERN_C int rtcpc _PROTO((
-                                    tape_list_t *
-                                    ));
-EXTERN_C int rtcp_CallTMS _PROTO((
-                                           tape_list_t *,
-                                           char *
-                                           ));
-EXTERN_C void rtcp_SetErrTxt _PROTO((
-                                              int,
-                                              char *,
-                                              ...
-                                              ));
-EXTERN_C int rtcpc_BuildReq _PROTO((
-                                             tape_list_t **,
-                                             int,
-                                             char **
-                                             ));
-EXTERN_C int rtcpc_GetDeviceQueues _PROTO((
-                                                    char *,
-                                                    char *,
-                                                    int *,
-                                                    int *,
-                                                    int *
-                                                    ));
-EXTERN_C int rtcp_RetvalSHIFT _PROTO((
-                                               tape_list_t *,
-                                               file_list_t *,
-                                               int *
-                                               ));
-EXTERN_C void rtcpc_FreeReqLists _PROTO((
-                                                  tape_list_t **
-                                                  ));
-EXTERN_C int rtcp_NewTapeList _PROTO((
-                                               tape_list_t **,
-                                               tape_list_t **,
-                                               int
-                                               ));
-EXTERN_C int rtcp_NewFileList _PROTO((
-                                               tape_list_t **,
-                                               file_list_t **,
-                                               int
-                                               ));
-EXTERN_C int rtcpc_InitDumpTapeReq _PROTO((
-                                                    rtcpDumpTapeRequest_t *
-                                                    ));
-EXTERN_C int rtcpc_BuildDumpTapeReq _PROTO((
-                                                     tape_list_t **,
-                                                     int,
-                                                     char *[]
+EXTERN_C int rtcpc_InitReq (
+			    rtcpc_sockets_t **,
+			    int *,
+			    tape_list_t *
+			    );
+EXTERN_C int rtcpc_SelectServer (
+				 rtcpc_sockets_t **,
+				 tape_list_t *,
+				 char *,
+				 int,
+				 int *
+				 );
+EXTERN_C int rtcpc_sendReqList (
+				rtcpHdr_t *,
+				rtcpc_sockets_t **,
+				tape_list_t *
+				);
+EXTERN_C int rtcpc_sendEndOfReq (
+				 rtcpHdr_t *,
+				 rtcpc_sockets_t **,
+				 tape_list_t *
+				 );
+EXTERN_C int rtcpc_runReq (
+			   rtcpHdr_t *,
+			   rtcpc_sockets_t **,
+			   tape_list_t *
+			   );
+EXTERN_C int rtcpc (
+		    tape_list_t *
+		    );
+EXTERN_C int rtcp_CallTMS (
+			   tape_list_t *,
+			   char *
+			   );
+EXTERN_C void rtcp_SetErrTxt (
+			      int,
+			      char *,
+			      ...
+			      );
+EXTERN_C int rtcpc_BuildReq (
+			     tape_list_t **,
+			     int,
+			     char **
+			     );
+EXTERN_C int rtcpc_GetDeviceQueues (
+				    char *,
+				    char *,
+				    int *,
+				    int *,
+				    int *
+				    );
+EXTERN_C int rtcp_RetvalSHIFT (
+			       tape_list_t *,
+			       file_list_t *,
+			       int *
+			       );
+EXTERN_C void rtcpc_FreeReqLists (
+				  tape_list_t **
+				  );
+EXTERN_C int rtcp_NewTapeList (
+			       tape_list_t **,
+			       tape_list_t **,
+			       int
+			       );
+EXTERN_C int rtcp_NewFileList (
+			       tape_list_t **,
+			       file_list_t **,
+			       int
+			       );
+EXTERN_C int rtcpc_InitDumpTapeReq (
+				    rtcpDumpTapeRequest_t *
+				    );
+EXTERN_C int rtcpc_BuildDumpTapeReq (
+				     tape_list_t **,
+				     int,
+				     char *[]
 
-                                                     ));
-EXTERN_C int dumpTapeReq _PROTO((
-                                          tape_list_t *
-                                          ));
-EXTERN_C int dumpFileReq _PROTO((
-                                          file_list_t *
-                                          ));
-EXTERN_C int rtcpc_CheckRetry _PROTO((
-                                               tape_list_t *
-                                               ));
-EXTERN_C int rtcpc_kill _PROTO((
-                                         void
-                                         ));
-EXTERN_C int rtcpc_validCksumAlg _PROTO((
-                                                 char *
-                                                 ));
+				     );
+EXTERN_C int dumpTapeReq (
+			  tape_list_t *
+			  );
+EXTERN_C int dumpFileReq (
+			  file_list_t *
+			  );
+EXTERN_C int rtcpc_CheckRetry (
+			       tape_list_t *
+			       );
+EXTERN_C int rtcpc_kill (
+			 void
+			 );
+EXTERN_C int rtcpc_validCksumAlg (
+				  char *
+				  );
 
 #endif /* RTCP_API_H */
 

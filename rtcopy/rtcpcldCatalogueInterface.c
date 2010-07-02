@@ -103,10 +103,10 @@ Cuuid_t childUuid, mainUuid;
 
 static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
 
-int detachTapeCopyFromStream _PROTO((
-                                     struct Cstager_TapeCopy_t *,
-                                     struct Cstager_Stream_t *
-                                     ));
+int detachTapeCopyFromStream (
+			      struct Cstager_TapeCopy_t *,
+			      struct Cstager_Stream_t *
+			      );
 
 /**
  * Create/get the DB services. The call is wrapped in this routine to

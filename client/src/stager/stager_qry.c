@@ -88,7 +88,7 @@ enum queryType {
  * Displays usage
  * @param cmd the command to use when displaying usage
  */
-void usage _PROTO((char *cmd));
+void usage (char *cmd);
 
 /**
  * Checks the type of query and counts the numberof arguments

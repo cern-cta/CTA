@@ -16,8 +16,8 @@ typedef void    Sigfunc();
 Sigfunc *_test_signal();
 #endif
 
-void *doit _PROTO((void *));
-void reaper _PROTO((int));
+void *doit (void *);
+void reaper (int);
 
 static int okstatus = 0;
 int n;

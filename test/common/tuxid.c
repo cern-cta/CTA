@@ -29,7 +29,7 @@ static int verbose_flag = 0;
 static int gid_flag = 0;
 static int self_flag = 0;
 
-void usage _PROTO((char *));
+void usage (char *);
 
 char *cuserid();
 

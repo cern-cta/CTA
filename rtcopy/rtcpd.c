@@ -41,8 +41,8 @@ extern char *rtcpd_logfile;
 extern int use_port;
 extern int Debug;
 extern int loglevel;
-extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
-extern int Cinitdaemon _PROTO((char *, void (*)(int)));
+extern int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+extern int Cinitdaemon (char *, void (*)(int));
 
 char *getconfent();
 

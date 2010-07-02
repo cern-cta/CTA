@@ -33,7 +33,7 @@
 #include "stager_client_commandline.h"
 
 
-void usage _PROTO((char *));
+void usage (char *);
 
 /* Global vars used by common functions */
 static int filenb;

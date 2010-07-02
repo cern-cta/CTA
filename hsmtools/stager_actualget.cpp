@@ -35,7 +35,7 @@ extern "C" {
 #include "stager_client_commandline.h"
 #include "Cgetopt.h"
 
-  void usage _PROTO((char *));
+  void usage (char *);
 
   int main(int argc, char *argv[]) {
     // parse command line

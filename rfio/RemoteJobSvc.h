@@ -12,6 +12,6 @@
 #include "castor/IObject.h"
 #include "castor/IAddress.h"
 
-EXTERN_C int stager_getRemJobAndDbSvc _PROTO((struct Cstager_IJobSvc_t ***, struct C_Services_t ***));
+EXTERN_C int stager_getRemJobAndDbSvc (struct Cstager_IJobSvc_t ***, struct C_Services_t ***);
 
 #endif /* _RemoteJobSvc_h */

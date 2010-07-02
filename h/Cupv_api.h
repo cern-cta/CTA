@@ -43,12 +43,12 @@ typedef struct {
 
 int Cupv_apiinit(struct Cupv_api_thread_info **thip);
 /* function prototypes */
-EXTERN_C struct Cupv_userpriv *Cupv_list  _PROTO((int, Cupv_entry_list *, struct Cupv_userpriv *));
-EXTERN_C int Cupv_add _PROTO ((uid_t, gid_t, const char *, const char *, int));
-EXTERN_C int Cupv_check _PROTO ((uid_t, gid_t, const char *, const char *, int));
-EXTERN_C int Cupv_modify _PROTO ((uid_t, gid_t, const char *, const char *, const char *, const char *, int));
-EXTERN_C int Cupv_delete _PROTO ((uid_t, gid_t, const char *, const char *));
-EXTERN_C int Cupv_seterrbuf _PROTO ((char *, int));
+EXTERN_C struct Cupv_userpriv *Cupv_list  (int, Cupv_entry_list *, struct Cupv_userpriv *);
+EXTERN_C int Cupv_add (uid_t, gid_t, const char *, const char *, int);
+EXTERN_C int Cupv_check (uid_t, gid_t, const char *, const char *, int);
+EXTERN_C int Cupv_modify (uid_t, gid_t, const char *, const char *, const char *, const char *, int);
+EXTERN_C int Cupv_delete (uid_t, gid_t, const char *, const char *);
+EXTERN_C int Cupv_seterrbuf (char *, int);
 #endif
 
 

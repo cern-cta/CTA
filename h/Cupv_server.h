@@ -126,32 +126,32 @@ struct Cupv_srv_thread_info {
 
 			/* upv function prototypes */
 
-EXTERN_C int sendrep _PROTO((int, int, ...));
-EXTERN_C int Cupvlogit _PROTO((char *, char *, ...));
+EXTERN_C int sendrep (int, int, ...);
+EXTERN_C int Cupvlogit (char *, char *, ...);
 
-EXTERN_C int Cupv_util_check _PROTO ((struct Cupv_userpriv *, struct Cupv_srv_thread_info *thip));
-EXTERN_C int Cupv_check_regexp _PROTO((char *));
-EXTERN_C int Cupv_check_regexp_syntax _PROTO((char *));
-EXTERN_C int Cupv_compare_priv _PROTO((struct Cupv_userpriv *, struct Cupv_userpriv *));
-EXTERN_C int Cupv_opendb _PROTO((struct Cupv_dbfd *));
-EXTERN_C int Cupv_start_tr _PROTO((int, struct Cupv_dbfd *));
-EXTERN_C int Cupv_end_tr _PROTO((struct Cupv_dbfd *));
-EXTERN_C int Cupv_init_dbpkg _PROTO (());
-EXTERN_C int Cupv_abort_tr _PROTO ((struct Cupv_dbfd *));
-EXTERN_C int Cupv_closedb  _PROTO ((struct Cupv_dbfd *));
+EXTERN_C int Cupv_util_check (struct Cupv_userpriv *, struct Cupv_srv_thread_info *thip);
+EXTERN_C int Cupv_check_regexp (char *);
+EXTERN_C int Cupv_check_regexp_syntax (char *);
+EXTERN_C int Cupv_compare_priv (struct Cupv_userpriv *, struct Cupv_userpriv *);
+EXTERN_C int Cupv_opendb (struct Cupv_dbfd *);
+EXTERN_C int Cupv_start_tr (int, struct Cupv_dbfd *);
+EXTERN_C int Cupv_end_tr (struct Cupv_dbfd *);
+EXTERN_C int Cupv_init_dbpkg ();
+EXTERN_C int Cupv_abort_tr (struct Cupv_dbfd *);
+EXTERN_C int Cupv_closedb  (struct Cupv_dbfd *);
 
-EXTERN_C int Cupv_get_privilege_entry _PROTO ((struct Cupv_dbfd *, struct Cupv_userpriv *, int, Cupv_dbrec_addr *));
-EXTERN_C int Cupv_delete_privilege_entry _PROTO ((struct Cupv_dbfd *, Cupv_dbrec_addr *));
-EXTERN_C int Cupv_insert_privilege_entry _PROTO ((struct Cupv_dbfd *, struct Cupv_userpriv *));
-EXTERN_C int Cupv_update_privilege_entry _PROTO ((struct Cupv_dbfd *, Cupv_dbrec_addr *, struct Cupv_userpriv *));
-EXTERN_C int Cupv_list_privilege_entry  _PROTO ((struct Cupv_dbfd *, int, struct Cupv_userpriv *, struct Cupv_userpriv *, int, DBLISTPTR *));
+EXTERN_C int Cupv_get_privilege_entry (struct Cupv_dbfd *, struct Cupv_userpriv *, int, Cupv_dbrec_addr *);
+EXTERN_C int Cupv_delete_privilege_entry (struct Cupv_dbfd *, Cupv_dbrec_addr *);
+EXTERN_C int Cupv_insert_privilege_entry (struct Cupv_dbfd *, struct Cupv_userpriv *);
+EXTERN_C int Cupv_update_privilege_entry (struct Cupv_dbfd *, Cupv_dbrec_addr *, struct Cupv_userpriv *);
+EXTERN_C int Cupv_list_privilege_entry  (struct Cupv_dbfd *, int, struct Cupv_userpriv *, struct Cupv_userpriv *, int, DBLISTPTR *);
 
-EXTERN_C int Cupv_srv_list _PROTO((char *, char *, struct Cupv_srv_thread_info *, int, DBLISTPTR *));
-EXTERN_C int Cupv_srv_add _PROTO((char *, char *, struct Cupv_srv_thread_info *));
-EXTERN_C int Cupv_srv_delete _PROTO((char *, char *, struct Cupv_srv_thread_info *));
-EXTERN_C int Cupv_srv_modify _PROTO((char *, char *, struct Cupv_srv_thread_info *));
-EXTERN_C int Cupv_srv_check _PROTO((char *, char *, struct Cupv_srv_thread_info *));
-EXTERN_C int Cupv_srv_shutdown _PROTO((int, char *, char *, struct Cupv_srv_thread_info *));
+EXTERN_C int Cupv_srv_list (char *, char *, struct Cupv_srv_thread_info *, int, DBLISTPTR *);
+EXTERN_C int Cupv_srv_add (char *, char *, struct Cupv_srv_thread_info *);
+EXTERN_C int Cupv_srv_delete (char *, char *, struct Cupv_srv_thread_info *);
+EXTERN_C int Cupv_srv_modify (char *, char *, struct Cupv_srv_thread_info *);
+EXTERN_C int Cupv_srv_check (char *, char *, struct Cupv_srv_thread_info *);
+EXTERN_C int Cupv_srv_shutdown (int, char *, char *, struct Cupv_srv_thread_info *);
 
 #endif
 

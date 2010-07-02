@@ -37,7 +37,7 @@
 #include <rtcp_server.h>
 #include <serrno.h>
 #include "tplogger_api.h"
-char *getconfent _PROTO((char *, char *, int));
+char *getconfent (char *, char *, int);
 
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
@@ -763,7 +763,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     register int debug = Debug;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
-    extern char *u64tostr _PROTO((u_signed64, char *, int));
+    extern char *u64tostr (u_signed64, char *, int);
 
     if ( tape_fd < 0 || indxp == NULL || firstblk == NULL ||
          tape == NULL || file == NULL ) {
@@ -1319,7 +1319,7 @@ void *tapeIOthread(void *arg) {
     int tape_fd = -1;
     int rc,BroadcastInfo,mode,diskIOfinished,severity,save_errno,save_serrno;
     int save_rc;
-    extern char *u64tostr _PROTO((u_signed64, char *, int));
+    extern char *u64tostr (u_signed64, char *, int);
 
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");

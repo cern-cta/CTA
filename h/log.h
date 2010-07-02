@@ -17,12 +17,12 @@
 #include <osdep.h>
 #endif
 
-EXTERN_C void (*logfunc) _PROTO((int, char *, ...));  
+EXTERN_C void (*logfunc) (int, char *, ...);  
                                 /* logging function to use */
-EXTERN_C void initlog _PROTO((char *, int, char *));
-EXTERN_C void logit _PROTO((int, char *, ...));
-EXTERN_C void setlogbits _PROTO((int));
-EXTERN_C int getloglv _PROTO((void));
+EXTERN_C void initlog (char *, int, char *);
+EXTERN_C void logit (int, char *, ...);
+EXTERN_C void setlogbits (int);
+EXTERN_C int getloglv (void);
 
 #ifdef log
 #undef log

@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <serrno.h>
 
-void *doit _PROTO((void *));
+void *doit (void *);
 
 #define NTHREADS 2
 

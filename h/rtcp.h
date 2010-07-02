@@ -302,11 +302,11 @@ typedef struct file_list {
     /*
      * Checksum routine to be used for this tape segment
      */
-    unsigned long (*cksumRoutine) _PROTO((
-                                          unsigned long,
-                                          const char *,
-                                          unsigned int
-                                          ));
+  unsigned long (*cksumRoutine) (
+				 unsigned long,
+				 const char *,
+				 unsigned int
+				 );
     RtcpDBRef_t *dbRef;              /* DB reference used in new stager */
     rtcpFileRequest_t filereq;
     struct tape_list *tape;          /* Parent tape request */
@@ -345,9 +345,9 @@ else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(
 /*
  * This extern declaration is needed by both client and server
  */
-EXTERN_C void (*rtcp_log) _PROTO((int, const char *, ...));
-EXTERN_C char *rtcp_voidToString _PROTO((void *, int));
-EXTERN_C int rtcp_stringToVoid _PROTO((char *, void *, int));
-EXTERN_C int rtcp_ClientMsg _PROTO((SOCKET *, char *));
+EXTERN_C void (*rtcp_log) (int, const char *, ...);
+EXTERN_C char *rtcp_voidToString (void *, int);
+EXTERN_C int rtcp_stringToVoid (char *, void *, int);
+EXTERN_C int rtcp_ClientMsg (SOCKET *, char *);
 
 #endif /* RTCP_H */

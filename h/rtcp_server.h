@@ -186,102 +186,102 @@ typedef struct processing_status {
  */
 extern char rtcp_cmds[][10]; /* Hold constants "CPDSKTP" and "CPTPDSK".*/
 
-int rtcpd_InitNW  _PROTO((SOCKET **));
-int rtcp_CleanUp  _PROTO((SOCKET **, int));
+int rtcpd_InitNW  (SOCKET **);
+int rtcp_CleanUp  (SOCKET **, int);
 #if !defined(_AIX) || defined(__STDC__)
-void rtcpd_AppendClientMsg  _PROTO((tape_list_t *, file_list_t *, char *, ...));
+void rtcpd_AppendClientMsg  (tape_list_t *, file_list_t *, char *, ...);
 #endif /* aix */
-int rtcp_SendReq _PROTO((SOCKET *, rtcpHdr_t *,rtcpClientInfo_t *, rtcpTapeRequest_t *, rtcpFileRequest_t *));
-int rtcp_RecvReq  _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
-                 rtcpTapeRequest_t *, rtcpFileRequest_t *));
-int rtcp_SendReq  _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
-                 rtcpTapeRequest_t *, rtcpFileRequest_t *));
-int rtcp_RecvAckn  _PROTO((SOCKET *, int));
-int rtcp_SendAckn  _PROTO((SOCKET *, int));
-int rtcp_RecvAckn  _PROTO((SOCKET *, int));
-int rtcp_CloseConnection _PROTO((SOCKET *s));
+int rtcp_SendReq (SOCKET *, rtcpHdr_t *,rtcpClientInfo_t *, rtcpTapeRequest_t *, rtcpFileRequest_t *);
+int rtcp_RecvReq  (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+		   rtcpTapeRequest_t *, rtcpFileRequest_t *);
+int rtcp_SendReq  (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+		   rtcpTapeRequest_t *, rtcpFileRequest_t *);
+int rtcp_RecvAckn  (SOCKET *, int);
+int rtcp_SendAckn  (SOCKET *, int);
+int rtcp_RecvAckn  (SOCKET *, int);
+int rtcp_CloseConnection (SOCKET *s);
 
-int rtcp_Listen  _PROTO((SOCKET, SOCKET *, int, int));
-int rtcpd_ClientListen  _PROTO((SOCKET));
-int rtcp_RunOld  _PROTO((SOCKET *, rtcpHdr_t *));
-int rtcp_SendOldCAckn _PROTO((SOCKET *, rtcpHdr_t *));
-int rtcp_SendOldCinfo _PROTO((SOCKET *, rtcpHdr_t *, shift_client_t *));
-int rtcp_CloseConnection  _PROTO((SOCKET *));
-int rtcp_Connect _PROTO((SOCKET *, char *, int *, int));
+int rtcp_Listen  (SOCKET, SOCKET *, int, int);
+int rtcpd_ClientListen  (SOCKET);
+int rtcp_RunOld  (SOCKET *, rtcpHdr_t *);
+int rtcp_SendOldCAckn (SOCKET *, rtcpHdr_t *);
+int rtcp_SendOldCinfo (SOCKET *, rtcpHdr_t *, shift_client_t *);
+int rtcp_CloseConnection  (SOCKET *);
+int rtcp_Connect (SOCKET *, char *, int *, int);
 
-int rtcpd_ConnectToClient  _PROTO((SOCKET *, char *, int *));
-int rtcpd_MainCntl  _PROTO((SOCKET *));
-int rtcpd_CheckClient _PROTO((int, int, char *, char *, int *));
-int rtcpd_StartMonitor _PROTO((int));
-int rtcpd_InitDiskIO  _PROTO((int *));
-int rtcpd_CleanUpDiskIO  _PROTO((int));
-int rtcpd_StartTapeIO  _PROTO((rtcpClientInfo_t *, tape_list_t *));
-int rtcpd_StartDiskIO  _PROTO((rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int));
-int rtcpd_CheckProcError  _PROTO((void));
-void rtcpd_SetProcError  _PROTO((int));
-void rtcpd_SetReqStatus  _PROTO((tape_list_t *, file_list_t *, int, int));
-void rtcpd_CheckReqStatus  _PROTO((tape_list_t *, file_list_t *, int *, int *));
-int rtcpd_CalcBufSz  _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_VarToFix _PROTO((char *, char *, int, int, int, int *, int *, void **));
-int rtcpd_FixToVar _PROTO((char *, char *, int, int));
-int rtcpd_f77RecToFix _PROTO((char *, int, int, char *, void **));
-int rtcpd_AdmUformatInfo _PROTO((file_list_t *, int));
-int rtcpd_WaitTapeIO  _PROTO((int *));
-int rtcpd_WaitCLThread  _PROTO((int, int *));
-int rtcpd_CtapeInit _PROTO((void));
-int rtcpd_CtapeFree _PROTO((void));
-int rtcpd_Assign  _PROTO((tape_list_t *));
-int rtcpd_Deassign  _PROTO((int, rtcpTapeRequest_t *, rtcpClientInfo_t *));
-char *rtcpd_CtapeErrMsg  _PROTO((void));
-char *rtcpd_GetCtapeErrBuf _PROTO((void));
-void rtcpd_CtapeKill _PROTO((void));
-int rtcpd_Reserve  _PROTO((tape_list_t *));
-int rtcpd_Mount  _PROTO((tape_list_t *));
-int rtcpd_Position  _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_Release  _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_Info  _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_drvinfo  _PROTO((tape_list_t *));
-int rtcpd_DmpInit _PROTO((tape_list_t *));
-int rtcpd_DmpFile _PROTO((tape_list_t *, file_list_t *, char *));
-int rtcpd_DmpEnd _PROTO((void));
-int rtcpd_stageupdc  _PROTO((tape_list_t *, file_list_t *));
-int rtcp_CheckReq  _PROTO((SOCKET *, rtcpClientInfo_t *, tape_list_t *));
-int rtcpd_CheckFileReq _PROTO((file_list_t *));
-int rtcp_CheckReqStructures _PROTO((SOCKET *, rtcpClientInfo_t *, tape_list_t *));
-int rtcp_CallTMS  _PROTO((tape_list_t *, char *));
-int tellClient  _PROTO((SOCKET *, tape_list_t *, file_list_t *, int));
-int topen  _PROTO((tape_list_t *, file_list_t *));
-int tclose  _PROTO((int, tape_list_t *, file_list_t *));
-int tcloserr  _PROTO((int, tape_list_t *, file_list_t *));
-int twrite  _PROTO((int, char *, int, tape_list_t *, file_list_t *));
-int tread  _PROTO((int, char *, int, tape_list_t *, file_list_t *));
-int rtcpd_WaitForPosition _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_SignalFilePositioned _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_tpdump _PROTO((rtcpClientInfo_t *, tape_list_t *));
-int rtcp_SendTpDump _PROTO((SOCKET *, rtcpDumpTapeRequest_t *));
-int rtcp_RecvTpDump _PROTO((SOCKET *, rtcpDumpTapeRequest_t *));
-int rtcp_GetMsg _PROTO((SOCKET *, char *, int));
-int rtcp_WriteAccountRecord _PROTO((rtcpClientInfo_t *, tape_list_t *, file_list_t *, int));
-int rtcpd_tpdump _PROTO((rtcpClientInfo_t *, tape_list_t *));
-int rtcp_CheckConnect _PROTO((SOCKET *, tape_list_t *));
-int rtcpd_init_stgupdc _PROTO((tape_list_t *));
-int rtcpd_GetRequestList _PROTO((SOCKET *, rtcpClientInfo_t *,
-                                rtcpTapeRequest_t *, tape_list_t **,
-                                file_list_t *));
-void rtcpd_BroadcastException _PROTO((void));
-int rtcpd_FreeBuffers _PROTO(());
-int rtcpd_WaitCompletion _PROTO((tape_list_t *, file_list_t *));
-int rtcpd_checkMoreWork _PROTO((SOCKET *, tape_list_t *, file_list_t *));
-int rtcpd_waitMoreWork _PROTO((file_list_t *fl));
-int rtcpd_nbFullBufs _PROTO((int));
-int rtcpd_jobID _PROTO((void));
-int rtcpd_SerializeLock _PROTO((int, int*, void*, int*, int*, int**));
+int rtcpd_ConnectToClient  (SOCKET *, char *, int *);
+int rtcpd_MainCntl  (SOCKET *);
+int rtcpd_CheckClient (int, int, char *, char *, int *);
+int rtcpd_StartMonitor (int);
+int rtcpd_InitDiskIO  (int *);
+int rtcpd_CleanUpDiskIO  (int);
+int rtcpd_StartTapeIO  (rtcpClientInfo_t *, tape_list_t *);
+int rtcpd_StartDiskIO  (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int);
+int rtcpd_CheckProcError  (void);
+void rtcpd_SetProcError  (int);
+void rtcpd_SetReqStatus  (tape_list_t *, file_list_t *, int, int);
+void rtcpd_CheckReqStatus  (tape_list_t *, file_list_t *, int *, int *);
+int rtcpd_CalcBufSz  (tape_list_t *, file_list_t *);
+int rtcpd_VarToFix (char *, char *, int, int, int, int *, int *, void **);
+int rtcpd_FixToVar (char *, char *, int, int);
+int rtcpd_f77RecToFix (char *, int, int, char *, void **);
+int rtcpd_AdmUformatInfo (file_list_t *, int);
+int rtcpd_WaitTapeIO  (int *);
+int rtcpd_WaitCLThread  (int, int *);
+int rtcpd_CtapeInit (void);
+int rtcpd_CtapeFree (void);
+int rtcpd_Assign  (tape_list_t *);
+int rtcpd_Deassign  (int, rtcpTapeRequest_t *, rtcpClientInfo_t *);
+char *rtcpd_CtapeErrMsg  (void);
+char *rtcpd_GetCtapeErrBuf (void);
+void rtcpd_CtapeKill (void);
+int rtcpd_Reserve  (tape_list_t *);
+int rtcpd_Mount  (tape_list_t *);
+int rtcpd_Position  (tape_list_t *, file_list_t *);
+int rtcpd_Release  (tape_list_t *, file_list_t *);
+int rtcpd_Info  (tape_list_t *, file_list_t *);
+int rtcpd_drvinfo  (tape_list_t *);
+int rtcpd_DmpInit (tape_list_t *);
+int rtcpd_DmpFile (tape_list_t *, file_list_t *, char *);
+int rtcpd_DmpEnd (void);
+int rtcpd_stageupdc  (tape_list_t *, file_list_t *);
+int rtcp_CheckReq  (SOCKET *, rtcpClientInfo_t *, tape_list_t *);
+int rtcpd_CheckFileReq (file_list_t *);
+int rtcp_CheckReqStructures (SOCKET *, rtcpClientInfo_t *, tape_list_t *);
+int rtcp_CallTMS  (tape_list_t *, char *);
+int tellClient  (SOCKET *, tape_list_t *, file_list_t *, int);
+int topen  (tape_list_t *, file_list_t *);
+int tclose  (int, tape_list_t *, file_list_t *);
+int tcloserr  (int, tape_list_t *, file_list_t *);
+int twrite  (int, char *, int, tape_list_t *, file_list_t *);
+int tread  (int, char *, int, tape_list_t *, file_list_t *);
+int rtcpd_WaitForPosition (tape_list_t *, file_list_t *);
+int rtcpd_SignalFilePositioned (tape_list_t *, file_list_t *);
+int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
+int rtcp_SendTpDump (SOCKET *, rtcpDumpTapeRequest_t *);
+int rtcp_RecvTpDump (SOCKET *, rtcpDumpTapeRequest_t *);
+int rtcp_GetMsg (SOCKET *, char *, int);
+int rtcp_WriteAccountRecord (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int);
+int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
+int rtcp_CheckConnect (SOCKET *, tape_list_t *);
+int rtcpd_init_stgupdc (tape_list_t *);
+int rtcpd_GetRequestList (SOCKET *, rtcpClientInfo_t *,
+			  rtcpTapeRequest_t *, tape_list_t **,
+			  file_list_t *);
+void rtcpd_BroadcastException (void);
+int rtcpd_FreeBuffers ();
+int rtcpd_WaitCompletion (tape_list_t *, file_list_t *);
+int rtcpd_checkMoreWork (SOCKET *, tape_list_t *, file_list_t *);
+int rtcpd_waitMoreWork (file_list_t *fl);
+int rtcpd_nbFullBufs (int);
+int rtcpd_jobID (void);
+int rtcpd_SerializeLock (int, int*, void*, int*, int*, int**);
 
 #if defined(CTAPE_DUMMIES)
-int   stage_setlog _PROTO((void (*) _PROTO((int, char *))));
+int   stage_setlog (void (*) (int, char *));
 /*
-int   stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
-int   stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
+  int   stage_updc_filcp (char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *);
+  int   stage_updc_tppos (char *, int, int, int, char *, char *, int, int, char *, char *);
 */
 #endif /* CTAPE_DUMMIES */
 

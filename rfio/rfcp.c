@@ -50,7 +50,7 @@ extern int serrno ;
 extern int rfio_errno ;
 extern char *getconfent() ;
 #if sgi
-extern char *strdup _PROTO((CONST char *));
+extern char *strdup (CONST char *);
 #endif
 
 #if defined(vms) && (vms == 1)
@@ -68,15 +68,15 @@ extern char *strdup _PROTO((CONST char *));
 #endif /* vms */
 
 void usage();
-off64_t copyfile _PROTO((int, int, char *, u_signed64));
-void copyfile_stglog _PROTO((int, char *));
+off64_t copyfile (int, int, char *, u_signed64);
+void copyfile_stglog (int, char *);
 /* instructions for the signal handler v.s. stcp_output (bit-wise flag)*/
 /*  0: do nothing */
 /*  1: free stcp_output */
 /*  2: call stage_clr_Path on stcp_output->ipath */
 /*  4: call stage_clr_Path on stpp_input.upath */
 /*  8: exit */
-void copyfile_stgcleanup _PROTO((int));
+void copyfile_stgcleanup (int);
 #define CLEANER_NOOP 0
 #define CLEANER_FREE 1
 #define CLEANER_CLR  2

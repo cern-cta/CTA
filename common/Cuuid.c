@@ -161,28 +161,28 @@ static int _Cuuid_st_key = -1;
 static Cuuid_state_t _Cuuid_st_static;
 
 /* Static MD5 prototypes */
-static int     _Cuuid_MD5Init                  _PROTO((MD5_CTX *));
-static int     _Cuuid_MD5Update                _PROTO((MD5_CTX *,
-						       unsigned char *,
-						       unsigned int));
-static int     _Cuuid_MD5Final                 _PROTO((MD5_CTX *));
-static void    _Cuuid_Transform                _PROTO((UINT4 *,
-						       UINT4 *));
+static int     _Cuuid_MD5Init                  (MD5_CTX *);
+static int     _Cuuid_MD5Update                (MD5_CTX *,
+						unsigned char *,
+						unsigned int);
+static int     _Cuuid_MD5Final                 (MD5_CTX *);
+static void    _Cuuid_Transform                (UINT4 *,
+						UINT4 *);
 
 /* Static _Cuuid prototypes */
-static void    _Cuuid_read_state               _PROTO((U_SHORT *,
-						       Cuuid_time_t *,
-						       Cuuid_node_t *));
-static void    _Cuuid_write_state              _PROTO(());
-static void    _Cuuid_format_uuid_v1           _PROTO(());
-static void    _Cuuid_format_uuid_v3           _PROTO((Cuuid_t *,
-						       unsigned char[16]));
-static void    _Cuuid_get_current_time         _PROTO((Cuuid_time_t *));
-static U_SHORT _Cuuid_true_random              _PROTO(());
-static void    _Cuuid_get_ieee_node_identifier _PROTO((Cuuid_node_t *));
-static void    _Cuuid_get_system_time          _PROTO((Cuuid_time_t *));
-static void    _Cuuid_get_random_info          _PROTO((char[16]));
-static Cuuid_state_t *C_Cuuid_st _PROTO(());
+static void    _Cuuid_read_state               (U_SHORT *,
+						Cuuid_time_t *,
+						Cuuid_node_t *);
+static void    _Cuuid_write_state              ();
+static void    _Cuuid_format_uuid_v1           ();
+static void    _Cuuid_format_uuid_v3           (Cuuid_t *,
+						unsigned char[16]);
+static void    _Cuuid_get_current_time         (Cuuid_time_t *);
+static U_SHORT _Cuuid_true_random              ();
+static void    _Cuuid_get_ieee_node_identifier (Cuuid_node_t *);
+static void    _Cuuid_get_system_time          (Cuuid_time_t *);
+static void    _Cuuid_get_random_info          (char[16]);
+static Cuuid_state_t *C_Cuuid_st ();
 
 /* --------------------------- */
 /* Thread-safe _Cuuid_state st */

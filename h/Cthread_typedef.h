@@ -190,7 +190,7 @@ typedef int Cth_spec_t;
 /* -------------------------------------------- */
 #ifdef _CTHREAD
 typedef struct Cthread_start_params {
-  void *(*_thread_routine) _PROTO((void *));
+  void *(*_thread_routine) (void *);
   void *_thread_arg;
   int   detached;
 } Cthread_start_params_t;
@@ -249,7 +249,7 @@ struct Cid_element_t {
   int       cid;            /* Cthread ID       */
   Cth_pid_t pid;            /* Thread/Proc. ID  */
   unsigned thID;            /* WIN32 thread ID  */
-  void   *(*addr) _PROTO((void *));  /* Start-up         */
+  void   *(*addr) (void *);  /* Start-up         */
   int       detached;       /* Is it detached ? */
   int       joined;         /* Has it been joined? */
   struct Cid_element_t *next; /* Next element   */

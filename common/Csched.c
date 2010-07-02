@@ -64,10 +64,10 @@ EXTERN_C int _Cthread_once_status;
 
 #ifdef CTHREAD_DEBUG
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-EXTERN_C int _Cthread_obtain_mtx_debug _PROTO((char *, int, char *, int, Cth_mtx_t *, int));
+EXTERN_C int _Cthread_obtain_mtx_debug (char *, int, char *, int, Cth_mtx_t *, int);
 #endif
-EXTERN_C int _Cthread_init _PROTO((void));
-EXTERN_C int _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
+EXTERN_C int _Cthread_init (void);
+EXTERN_C int _Cthread_release_mtx (char *, int, Cth_mtx_t *);
 
 /* =============================================== */
 /* Routine  : Csched_Getschedparam                 */

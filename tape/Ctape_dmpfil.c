@@ -23,7 +23,7 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 #include "u64subr.h"
-void (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
+void (*Ctape_dmpmsg) (int, const char *, ...) = NULL;
 static char *buffer;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 static int den;		/* density code */

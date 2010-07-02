@@ -20,8 +20,8 @@ char *static_message = "Cstrerror internal error";
 
 static int Cstrerror_bufp_key = 0;
 static int Cstrerror_buflen_key = 0;
-static int Cstrerror_getbuf _PROTO((char **, int *));
-static int Cstrerror_setbuf _PROTO((char *, int));
+static int Cstrerror_getbuf (char **, int *);
+static int Cstrerror_setbuf (char *, int);
 
 static int Cstrerror_getbuf(buffer, buflen)
      char **buffer;

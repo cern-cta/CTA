@@ -67,7 +67,7 @@ struct Cpool_t {
 	/*                       (-1=STARTED) */
 	
 	int                     flag;     /* Parent flag (-1=WAITING)           */
-	void                  *(**start) _PROTO((void *)); /* Start routines             */
+  void                  *(**start) (void *); /* Start routines             */
 	void                  **arg;
 	
 	void                   *lock_parent_cthread_structure;
@@ -96,24 +96,24 @@ static int  tubes[5];
 /* ------------------------------------ */
 /* Typedefs                             */
 /* ------------------------------------ */
-typedef void    Sigfunc _PROTO((int));
+typedef void    Sigfunc (int);
 typedef fd_set _cpool_fd_set;
 
 /* ------------------------------------ */
 /* Prototypes                           */
 /* ------------------------------------ */
-void    *_Cpool_starter _PROTO((void *));
-size_t   _Cpool_writen _PROTO((int, void *, size_t));
-size_t   _Cpool_readn _PROTO((int, void *, size_t));
+void    *_Cpool_starter (void *);
+size_t   _Cpool_writen (int, void *, size_t);
+size_t   _Cpool_readn (int, void *, size_t);
 #ifdef CPOOL_DEBUG
-size_t   _Cpool_writen_timeout _PROTO((char *, int, int, void *, size_t, int));
-size_t   _Cpool_readn_timeout _PROTO((char *, int, int, void *, size_t, int));
+size_t   _Cpool_writen_timeout (char *, int, int, void *, size_t, int);
+size_t   _Cpool_readn_timeout (char *, int, int, void *, size_t, int);
 #else
-size_t   _Cpool_writen_timeout _PROTO((int, void *, size_t, int));
-size_t   _Cpool_readn_timeout _PROTO((int, void *, size_t, int));
+size_t   _Cpool_writen_timeout (int, void *, size_t, int);
+size_t   _Cpool_readn_timeout (int, void *, size_t, int);
 #endif
-void     _Cpool_alarm _PROTO((int));
-Sigfunc *_Cpool_signal _PROTO((int, Sigfunc *));
+void     _Cpool_alarm (int);
+Sigfunc *_Cpool_signal (int, Sigfunc *);
 int     _Cpool_self();
 
 /* ------------------------------------ */
@@ -608,7 +608,7 @@ void *_Cpool_starter(arg)
 		void       *thisarg;
 		int         ready = 1;
 		size_t      thislength;
-		void     *(*routine) _PROTO((void *));
+		void     *(*routine) (void *);
 		int         sleep_flag;
     
 		/* We get the argument */
@@ -717,7 +717,7 @@ void *_Cpool_starter(arg)
 						return(NULL);
 					}
 				} else {
-					if (routine == (void *(*) _PROTO((void *))) _CPOOL_SLEEP_FLAG) {
+				  if (routine == (void *(*) (void *)) _CPOOL_SLEEP_FLAG) {
 						/* We just had a hit from Cpool_next_index, that sent us the sleep flag */
 						sleep_flag = 1;
 					}
@@ -772,7 +772,7 @@ void *_Cpool_starter(arg)
 			struct Cpool_t *current;
 			int 			index;
 			char		   *dummy;
-			void		  *(*start) _PROTO((void *));
+			void		  *(*start) (void *);
 			void		   *startarg;
 			void *lock_parent_cthread_structure;
 			/* We receive in the argument the address of the pool structure */
@@ -945,7 +945,7 @@ void *_Cpool_starter(arg)
 				/* We are waked up: the routine and its arguments */
 				/* address are put in current->start[index] and   */
 				/* current->arg[index]                            */
-				start    = (void *(*) _PROTO((void *))) current->start[index];
+				start    = (void *(*) (void *)) current->start[index];
 				startarg = (void *)            current->arg[index];
 			  
 #ifdef CPOOL_DEBUG
@@ -1600,7 +1600,7 @@ void *Cpool_realloc(file,line,ptr,size)
 /* ============================================ */
 int Cpool_assign(poolnb,startroutine,arg,timeout)
 	int poolnb;
-	void *(*startroutine) _PROTO((void *));
+	void *(*startroutine) (void *);
 	void *arg;
 	int timeout;
 {
@@ -1626,7 +1626,7 @@ int Cpool_assign(poolnb,startroutine,arg,timeout)
 int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 	int poolnb;
 	void *pooladdr;
-	void *(*startroutine) _PROTO((void *));
+	void *(*startroutine) (void *);
 	void *arg;
 	int timeout;
 {
@@ -1980,7 +1980,7 @@ int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 								(unsigned long) (current->start + (i * sizeof(void *))));
 						}
 #endif
-						current->start[i] = (void *(*) _PROTO((void *))) startroutine;
+						current->start[i] = (void *(*) (void *)) startroutine;
 						current->arg[i] = (void *) arg;
 						/* We signal the thread          */
 						
@@ -2295,7 +2295,7 @@ int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		  
 			/* We put the routine and its    */
 			/* arguments                     */
-			current->start[current->flag] = (void *(*) _PROTO((void *))) startroutine;
+			current->start[current->flag] = (void *(*) (void *)) startroutine;
 			current->arg[current->flag] = (void *) arg;
 		  
 			/* We signal the child       */

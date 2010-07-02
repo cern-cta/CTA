@@ -14,9 +14,9 @@
 #include <osdep.h>
 #include <netdb.h>
 
-EXTERN_C struct hostent *Cgethostbyname _PROTO((CONST char *));
-EXTERN_C struct hostent *Cgethostbyaddr _PROTO((CONST void *, size_t, int));
-EXTERN_C struct servent *Cgetservbyname _PROTO((CONST char *, CONST char *));
+EXTERN_C struct hostent *Cgethostbyname (CONST char *);
+EXTERN_C struct hostent *Cgethostbyaddr (CONST void *, size_t, int);
+EXTERN_C struct servent *Cgetservbyname (CONST char *, CONST char *);
 
 #define CLOSE(x)        ::close(x)        /* Actual close system call     */
 #define IOCTL(x,y,z)    ::ioctl(x,y,z)    /* Actual ioctl system call     */

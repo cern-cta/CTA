@@ -15,12 +15,12 @@
 #include <osdep.h>
 #endif
 
-EXTERN_C void print_trace _PROTO((int, const char *, const char *, ...));
-EXTERN_C void init_trace _PROTO((const char *));
-EXTERN_C void end_trace _PROTO((void));
-EXTERN_C void print_trace_r _PROTO((void *, int, const char *, const char *, ...));
-EXTERN_C void init_trace_r _PROTO((void **, const char *));
-EXTERN_C void end_trace_r _PROTO((void *));
+EXTERN_C void print_trace (int, const char *, const char *, ...);
+EXTERN_C void init_trace (const char *);
+EXTERN_C void end_trace (void);
+EXTERN_C void print_trace_r (void *, int, const char *, const char *, ...);
+EXTERN_C void init_trace_r (void **, const char *);
+EXTERN_C void end_trace_r (void *);
 
 EXTERN_C int  notrace;
 

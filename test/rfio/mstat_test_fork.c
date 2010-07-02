@@ -6,7 +6,7 @@
 #include <serrno.h>
 #include <unistd.h>
 
-void *doit _PROTO((void *));
+void *doit (void *);
 
 #define NFORK 2
 

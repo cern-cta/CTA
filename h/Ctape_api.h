@@ -70,119 +70,119 @@ struct rsv_status {		/* resource reservation status reply entry */
 
 			/* function prototypes */
 
-EXTERN_C int Ctape_config _PROTO((char *, int, int));
-EXTERN_C struct devinfo *Ctape_devinfo _PROTO((char *));
+EXTERN_C int Ctape_config (char *, int, int);
+EXTERN_C struct devinfo *Ctape_devinfo (char *);
 EXTERN_C int Ctape_dmpend();
-EXTERN_C int Ctape_dmpfil _PROTO((char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *));
-EXTERN_C int Ctape_dmpinit _PROTO((char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int));
-EXTERN_C void (*Ctape_dmpmsg) _PROTO((int, const char *, ...));
-EXTERN_C int Ctape_drvinfo _PROTO((char *, struct devinfo *));
-EXTERN_C int Ctape_errmsg _PROTO((char *, char *, ...));
-EXTERN_C int Ctape_info _PROTO((char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *));
-EXTERN_C int Ctape_kill _PROTO((char *));
-EXTERN_C int Ctape_label _PROTO((char *, char *, int, char *, char *, char *, char *, char *, int, int, int));
-EXTERN_C int Ctape_mount _PROTO((char *, char *, int, char *, char *, char *, int, char *, char *, int));
-EXTERN_C int Ctape_position _PROTO((char *, int, int, int, unsigned char *, int, int, int, char *, char *, char *, int, int, int, int));
-EXTERN_C int Ctape_reserve _PROTO((int, struct dgn_rsv *));
-EXTERN_C int Ctape_rls _PROTO((char *, int));
-EXTERN_C int Ctape_rstatus _PROTO((char *, struct rsv_status *, int, int));
-EXTERN_C void Ctape_seterrbuf _PROTO((char *, int));
-EXTERN_C int Ctape_status _PROTO((char *, struct drv_status *, int));
-EXTERN_C int send2tpd _PROTO((char *, char *, int, char *, int));
+EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *);
+EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int);
+EXTERN_C void (*Ctape_dmpmsg) (int, const char *, ...);
+EXTERN_C int Ctape_drvinfo (char *, struct devinfo *);
+EXTERN_C int Ctape_errmsg (char *, char *, ...);
+EXTERN_C int Ctape_info (char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *);
+EXTERN_C int Ctape_kill (char *);
+EXTERN_C int Ctape_label (char *, char *, int, char *, char *, char *, char *, char *, int, int, int);
+EXTERN_C int Ctape_mount (char *, char *, int, char *, char *, char *, int, char *, char *, int);
+EXTERN_C int Ctape_position (char *, int, int, int, unsigned char *, int, int, int, char *, char *, char *, int, int, int, int);
+EXTERN_C int Ctape_reserve (int, struct dgn_rsv *);
+EXTERN_C int Ctape_rls (char *, int);
+EXTERN_C int Ctape_rstatus (char *, struct rsv_status *, int, int);
+EXTERN_C void Ctape_seterrbuf (char *, int);
+EXTERN_C int Ctape_status (char *, struct drv_status *, int);
+EXTERN_C int send2tpd (char *, char *, int, char *, int);
 
 /* tape/asc2ebc.c      */
-EXTERN_C void asc2ebc      _PROTO((char *, int));
+EXTERN_C void asc2ebc      (char *, int);
 
 /* tape/buildhdrlbl.c  */
-EXTERN_C int buildhdrlbl   _PROTO((char[], char[], char*, char*, int, int, int, char*, int, int, int, int));
+EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, char*, int, int, int, int);
 
 /* tape/builduhl.c     */
-EXTERN_C int builduhl      _PROTO((char[], int, int, int, char*, char*, char*, char*));
+EXTERN_C int builduhl      (char[], int, int, int, char*, char*, char*, char*);
 
 /* tape/buildvollbl.c  */
-EXTERN_C int buildvollbl   _PROTO((char[], char*, int, char*));
+EXTERN_C int buildvollbl   (char[], char*, int, char*);
 
 /* tape/chkdirw.c      */
-EXTERN_C int chkdirw       _PROTO((char *));
+EXTERN_C int chkdirw       (char *);
 
 /* tape/checkjobdied.c */
-EXTERN_C int checkjobdied  _PROTO((int[]));
+EXTERN_C int checkjobdied  (int[]);
 
 /* tape/cvtden.c       */
-EXTERN_C int cvtden        _PROTO((char *));
+EXTERN_C int cvtden        (char *);
 
 /* tape/ebc2asc.c      */
-EXTERN_C void ebc2asc      _PROTO((char *, int));
+EXTERN_C void ebc2asc      (char *, int);
 
 /* tape/getcompstat.c  */
-EXTERN_C int clear_compression_stats _PROTO((int, char *, char *));
-EXTERN_C int get_compression_stats   _PROTO((int, char *, char*, COMPRESSION_STATS *comp_stats));
+EXTERN_C int clear_compression_stats (int, char *, char *);
+EXTERN_C int get_compression_stats   (int, char *, char*, COMPRESSION_STATS *comp_stats);
 
 /* tape/getdrvstatus.c */
-EXTERN_C int chkdriveready _PROTO((int));
-EXTERN_C int chkwriteprot  _PROTO((int));
+EXTERN_C int chkdriveready (int);
+EXTERN_C int chkwriteprot  (int);
 
 /* tape/tapealertcheck.c */
-EXTERN_C int get_tape_alerts _PROTO((int, char*, char*));
+EXTERN_C int get_tape_alerts (int, char*, char*);
 
 /* tape/findpgrp.c     */
 EXTERN_C int findpgrp();
 
 /* tape/inquiry.c      */
-EXTERN_C int inquiry       _PROTO((int, char*, unsigned char*));
-EXTERN_C int inquiry80     _PROTO((int, char*, unsigned char*));
+EXTERN_C int inquiry       (int, char*, unsigned char*);
+EXTERN_C int inquiry80     (int, char*, unsigned char*);
 
 /* tape/mircheck.c     */
-EXTERN_C int is_mir_invalid_load _PROTO((int, char *, char *));
+EXTERN_C int is_mir_invalid_load (int, char *, char *);
 
 /* tape/locate.c       */
-EXTERN_C int locate        _PROTO((int, char*, unsigned char*));
-EXTERN_C int read_pos      _PROTO((int, char *, unsigned char *));
+EXTERN_C int locate        (int, char*, unsigned char*);
+EXTERN_C int read_pos      (int, char *, unsigned char *);
 
 /* tape/posittape.c    */
-EXTERN_C int posittape     _PROTO((int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*));
+EXTERN_C int posittape     (int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*);
 
 /* tape/rbtsubr.c      */
-/* EXTERN_C int rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int )); */
+/* EXTERN_C int rbtdemount    (char*, char*, char*, char*, unsigned int, int ); */
 EXTERN_C int acsmountresp();
-EXTERN_C int rbtmount      _PROTO((char*, int, char*, char*, int, char*));
-EXTERN_C int rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int));
+EXTERN_C int rbtmount      (char*, int, char*, char*, int, char*);
+EXTERN_C int rbtdemount    (char*, char*, char*, char*, unsigned int, int);
 EXTERN_C int wait4acsfinalresp();
 
 /* tape/readlbl.c      */
-EXTERN_C int readlbl       _PROTO((int, char*, char *));
+EXTERN_C int readlbl       (int, char*, char *);
 EXTERN_C void closesmc();
 
 /* tape/rwndtape.c     */
-EXTERN_C int rwndtape      _PROTO((int, char *));
+EXTERN_C int rwndtape      (int, char *);
 
 /* tape/sendrep.c      */
-EXTERN_C int sendrep       _PROTO((int, int, ...));
+EXTERN_C int sendrep       (int, int, ...);
 
 /* tape/setdens.c      */
-EXTERN_C int setdens       _PROTO((int, char*, char*, int));
+EXTERN_C int setdens       (int, char*, char*, int);
 
 /* tape/skiptape.c     */
-EXTERN_C int skiptpfb      _PROTO((int, char *, int));
-EXTERN_C int skiptpff      _PROTO((int, char *, int));
+EXTERN_C int skiptpfb      (int, char *, int);
+EXTERN_C int skiptpff      (int, char *, int);
 #if defined(linux)
-EXTERN_C int skiptpfff     _PROTO((int, char*, int));
+EXTERN_C int skiptpfff     (int, char*, int);
 #endif
 
 /* tape/tperror.c      */
-EXTERN_C int gettperror    _PROTO((int, char *, char **));
-EXTERN_C int rpttperror    _PROTO((char *, int, char *, char *));
+EXTERN_C int gettperror    (int, char *, char **);
+EXTERN_C int rpttperror    (char *, int, char *, char *);
 
 /* tape/unldtape.c     */
-EXTERN_C int unldtape      _PROTO((int, char*));
+EXTERN_C int unldtape      (int, char*);
 
 /* tape/usrmsg.c       */
-EXTERN_C int usrmsg        _PROTO((char *, char *, ...));
+EXTERN_C int usrmsg        (char *, char *, ...);
 
 /* tape/writelbl.c     */
-EXTERN_C int writelbl      _PROTO((int, char *, char*));
+EXTERN_C int writelbl      (int, char *, char*);
 
 /* tape/wrttpmrk.c     */
-EXTERN_C int wrttpmrk      _PROTO((int, char *, int));
+EXTERN_C int wrttpmrk      (int, char *, int);
 
 #endif

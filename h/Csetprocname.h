@@ -7,7 +7,7 @@
 
 #include <osdep.h>
 
-EXTERN_C int Cinitsetprocname _PROTO((int, char **, char **));
-EXTERN_C int Csetprocname _PROTO((char *, ...));
+EXTERN_C int Cinitsetprocname (int, char **, char **);
+EXTERN_C int Csetprocname (char *, ...);
 
 #endif /* __CSETPROCNAME_H */

@@ -90,13 +90,13 @@ int Coptarg_key;
 /*
  * Function prototypes for multi-thread env. version of errno externals
  */
-int *C__serrno _PROTO((void));
-int *C__rfio_errno _PROTO((void));
-int *C__Copterr _PROTO((void));
-int *C__Coptind _PROTO((void));
-int *C__Coptopt _PROTO((void));
-int *C__Coptreset _PROTO((void));
-char **C__Coptarg _PROTO((void));
+int *C__serrno (void);
+int *C__rfio_errno (void);
+int *C__Copterr (void);
+int *C__Coptind (void);
+int *C__Coptopt (void);
+int *C__Coptreset (void);
+char **C__Coptarg (void);
 
 /*
  * Cglobals_init() - assing routines to provide thread local storage. 
@@ -104,9 +104,9 @@ char **C__Coptarg _PROTO((void));
  * thread-specific to calling thread (normally the main thread).
  */
 void Cglobals_init(getspec,setspec,getTid)
-    int (*getspec) _PROTO((int *, void **));
-    int (*setspec) _PROTO((int *, void *));
-    int (*getTid) _PROTO((void));
+     int (*getspec) (int *, void **);
+int (*setspec) (int *, void *);
+int (*getTid) (void);
 {
     int i,rc;
     int *key;

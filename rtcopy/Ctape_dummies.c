@@ -92,7 +92,7 @@ static char unit[CA_MAXUNMLEN+1];
     if ( _rc == -1 ) rtcp_log(LOG_ERR,"%s: vdqm_UnitStatus(): %s\n",#Z,sstrerror(serrno)); \
     return(rc);
 
-void (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
+void (*Ctape_dmpmsg) (int, const char *, ...) = NULL;
 
 int Ctape_InitDummy() {
     int status;
@@ -282,7 +282,7 @@ int Ctape_dmpend() {
  * Some stage API routines needed by RTCOPY
  */
 /*
-int stage_setlog(void (*a) _PROTO((int, char *))) {
+  int stage_setlog(void (*a) (int, char *)) {
     return(0);
 }
 */

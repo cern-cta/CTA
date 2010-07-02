@@ -48,7 +48,7 @@ static rfio_HsmIf_DIRcontext_t *HsmDirs[MAXRFD];
 #define FINDCNSFILES_WITH_SCAN     1
 #define FINDCNSFILES_WITHOUT_SCAN  0
 
-EXTERN_C char *getconfent _PROTO(());   /* CASTOR /etc/castor.conf util */
+EXTERN_C char *getconfent ();   /* CASTOR /etc/castor.conf util */
 
 
 void rfio_stglog(int type, char *msg) {

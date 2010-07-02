@@ -124,19 +124,6 @@
 #include "imakemdep.h"
 #include <stdarg.h>
 
-/* Macros for prototyping */
-#ifdef _PROTO
-#undef _PROTO
-#endif
-#if (defined(__STDC__) || defined(_WIN32))
-/* On Win32, compiler is STDC compliant but the */
-/* __STDC__ definition itself is not a default. */
-#define _PROTO(a) a
-#else
-#define _PROTO(a) ()
-#endif
-
-
 #define	TRUE		1
 #define	FALSE		0
 
@@ -150,7 +137,7 @@ int	InRule = FALSE;
  * space instead of being deleted.  Blech.
  */
 #ifdef FIXUP_CPP_WHITESPACE
-void KludgeOutputLine _PROTO((char **));
+void KludgeOutputLine (char **);
 void KludgeResetRule();
 #else
 #define KludgeOutputLine(arg)
@@ -177,27 +164,27 @@ char	*Makefile = "Makefile";
 char	*Template = "Imake.tmpl";
 boolean	haveImakefileC = FALSE;
 char	*program;
-char	*FindImakefile _PROTO((char *));
-char	*ReadLine _PROTO((FILE *, char *));
-char	*CleanCppInput _PROTO((char *));
-char	*Strdup _PROTO((register char *));
-char	*Emalloc _PROTO((int));
+char	*FindImakefile (char *);
+char	*ReadLine (FILE *, char *);
+char	*CleanCppInput (char *);
+char	*Strdup (register char *);
+char	*Emalloc (int);
 
-void	AddCppArg _PROTO((char *));
-void	AddMakeArg _PROTO((char *));
-void	CleanCppOutput _PROTO((FILE *, char *));
-void	cppit _PROTO((char *, char *, FILE *, char *));
-void	init _PROTO(());
-boolean	isempty _PROTO((char *));
-void	LogFatal _PROTO((char *, ...));
-void	makeit _PROTO(());
-void	SetOpts _PROTO((int, char **));
-void	showit _PROTO((FILE *));
-void	wrapup _PROTO(());
+void	AddCppArg (char *);
+void	AddMakeArg (char *);
+void	CleanCppOutput (FILE *, char *);
+void	cppit (char *, char *, FILE *, char *);
+void	init ();
+boolean	isempty (char *);
+void	LogFatal (char *, ...);
+void	makeit ();
+void	SetOpts (int, char **);
+void	showit (FILE *);
+void	wrapup ();
 /*
  * This function is not used. Is it ?
  *
-  void	writetmpfile _PROTO((FILE *, int, char *));
+ void	writetmpfile (FILE *, int, char *);
 */
 
 #if SIGNALRETURNSINT
@@ -205,11 +192,11 @@ int
 #else
 void
 #endif
-imake_catch _PROTO((int));
+imake_catch (int);
 
 boolean	verbose = FALSE;
 boolean	show = TRUE;
-extern char	*getenv _PROTO((const char *));
+extern char	*getenv (const char *);
 
 main(argc, argv)
 	int	argc;

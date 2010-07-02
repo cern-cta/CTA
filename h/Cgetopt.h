@@ -32,11 +32,11 @@ typedef struct Coptions Coptions_t;
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int   *C__Copterr _PROTO((void));
-EXTERN_C int   *C__Coptind _PROTO((void));
-EXTERN_C int   *C__Coptopt _PROTO((void));
-EXTERN_C int   *C__Coptreset _PROTO((void));
-EXTERN_C char **C__Coptarg _PROTO((void));
+EXTERN_C int   *C__Copterr (void);
+EXTERN_C int   *C__Coptind (void);
+EXTERN_C int   *C__Coptopt (void);
+EXTERN_C int   *C__Coptreset (void);
+EXTERN_C char **C__Coptarg (void);
 
 /*
  * Thread safe serrno. Note, C__serrno is defined in Cglobals.c rather
@@ -59,7 +59,7 @@ EXTERN_C  int Coptreset;
 EXTERN_C  char *Coptarg;
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C int Cgetopt _PROTO((int, char * CONST *, CONST char *));
-EXTERN_C int Cgetopt_long _PROTO((int, char **, const char *, Coptions_t *, int *));
+EXTERN_C int Cgetopt (int, char * CONST *, CONST char *);
+EXTERN_C int Cgetopt_long (int, char **, const char *, Coptions_t *, int *);
 
 #endif /* __Cgetopt_h */

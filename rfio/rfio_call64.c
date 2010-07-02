@@ -116,11 +116,11 @@ extern char     filename[MAXFILENAMSIZE];
 static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz;              /* Current io buffer size       */
 
-extern int srchkreqsize _PROTO((SOCKET, char *, int));
+extern int srchkreqsize (SOCKET, char *, int);
 extern char *forced_filename;
 #define CORRECT_FILENAME(filename) (forced_filename != NULL ? forced_filename : filename)
 extern const char *rfio_all_perms[];
-extern int check_path_whitelist _PROTO((const char *, const char *, const char **, char *, size_t, int));
+extern int check_path_whitelist (const char *, const char *, const char **, char *, size_t, int);
 
 /* Warning : the new sequential transfer mode cannot be used with
    several files open at a time (because of those global variables)*/

@@ -67,41 +67,41 @@ static rtcpcThrData_t *activeThreads = NULL;
 #define RFIO_NETOPT 	2
 #define RFIO_NONET	1
 
-extern int rtcpc_InitNW _PROTO((SOCKET **, int *));
-extern int rtcp_CleanUp _PROTO((SOCKET **, int));
-extern int rtcp_RecvReq _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
-                                rtcpTapeRequest_t *, rtcpFileRequest_t *));
-extern int rtcp_SendReq _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
-                                rtcpTapeRequest_t *, rtcpFileRequest_t *));
-extern int rtcp_RecvAckn _PROTO((SOCKET *, int));
-extern int rtcp_SendAckn _PROTO((SOCKET *, int));
-extern int rtcp_CloseConnection _PROTO((SOCKET *));
+extern int rtcpc_InitNW (SOCKET **, int *);
+extern int rtcp_CleanUp (SOCKET **, int);
+extern int rtcp_RecvReq (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+			 rtcpTapeRequest_t *, rtcpFileRequest_t *);
+extern int rtcp_SendReq (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+			 rtcpTapeRequest_t *, rtcpFileRequest_t *);
+extern int rtcp_RecvAckn (SOCKET *, int);
+extern int rtcp_SendAckn (SOCKET *, int);
+extern int rtcp_CloseConnection (SOCKET *);
 
-extern int rtcp_Listen _PROTO((SOCKET, SOCKET *, int, int));
-extern int rtcp_CheckConnect _PROTO((SOCKET *, tape_list_t *));
+extern int rtcp_Listen (SOCKET, SOCKET *, int, int);
+extern int rtcp_CheckConnect (SOCKET *, tape_list_t *);
 #if TMS
-extern int rtcp_CallTMS _PROTO((tape_list_t *, char *));
+extern int rtcp_CallTMS (tape_list_t *, char *);
 #endif
 #if VMGR
-extern int rtcp_CallVMGR _PROTO((tape_list_t *, char *));
+extern int rtcp_CallVMGR (tape_list_t *, char *);
 #endif
-extern int rtcpc_InitReqStruct _PROTO((
-                                       rtcpTapeRequest_t *, 
-                                       rtcpFileRequest_t *
-                                       ));
-extern int rtcp_CheckReqStructures _PROTO((
-                                           SOCKET *, 
-                                           rtcpClientInfo_t *, 
-                                           tape_list_t *
-                                           ));
-int (*rtcpc_ClientCallback) _PROTO((
-                                    rtcpTapeRequest_t *, 
-                                    rtcpFileRequest_t *
-                                    )) = NULL;
-int rtcpc_finished _PROTO((
-                           rtcpc_sockets_t **,
-                           rtcpHdr_t *,
-                           tape_list_t *));
+extern int rtcpc_InitReqStruct (
+				rtcpTapeRequest_t *, 
+				rtcpFileRequest_t *
+				);
+extern int rtcp_CheckReqStructures (
+				    SOCKET *, 
+				    rtcpClientInfo_t *, 
+				    tape_list_t *
+				    );
+int (*rtcpc_ClientCallback) (
+			     rtcpTapeRequest_t *, 
+			     rtcpFileRequest_t *
+			     ) = NULL;
+int rtcpc_finished (
+		    rtcpc_sockets_t **,
+		    rtcpHdr_t *,
+		    tape_list_t *);
 
 /*
  * Kill mechanism is not thread-safe if several threads run rtcpc() in
@@ -728,8 +728,8 @@ int rtcpc_UpdateProcStatus(tape_list_t *tape,
           } else fl->filereq = *filereq; 
 
           if ( rtcpc_ClientCallback != 
-               (int (*) _PROTO((rtcpTapeRequest_t *,
-                                rtcpFileRequest_t *)))NULL ) {
+               (int (*) (rtcpTapeRequest_t *,
+			 rtcpFileRequest_t *))NULL ) {
             rc = rtcpc_ClientCallback(&tl->tapereq,&fl->filereq);
             if ( rc == -1 ) {
               save_serrno = serrno;
@@ -1141,8 +1141,8 @@ int rtcpc_kill() {
 int rtcpc_InitReq(rtcpc_sockets_t **socks, int *port, tape_list_t *tape) {
   int save_serrno, local_severity, rc;
 
-  if ( rtcp_log == (void (*) _PROTO((int, const char *, ...)))NULL )
-    rtcp_log = (void (*) _PROTO((int, const char *, ...)))local_log;
+  if ( rtcp_log == (void (*) (int, const char *, ...))NULL )
+    rtcp_log = (void (*) (int, const char *, ...))local_log;
 
   if ( socks == NULL || tape == NULL ) {
     rtcp_log(LOG_ERR,
@@ -1217,8 +1217,8 @@ int rtcpc(tape_list_t *tape) {
   char realVID[CA_MAXVIDLEN+1];
   int save_serrno = 0, tStartRequest;
 
-  if ( rtcp_log == (void (*) _PROTO((int, const char *, ...)))NULL )
-    rtcp_log = (void (*) _PROTO((int, const char *, ...)))local_log;
+  if ( rtcp_log == (void (*) (int, const char *, ...))NULL )
+    rtcp_log = (void (*) (int, const char *, ...))local_log;
 
   tStartRequest = (int)time(NULL);
   tapereq = &tape->tapereq;

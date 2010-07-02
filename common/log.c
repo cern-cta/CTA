@@ -32,8 +32,8 @@ static int logfd ;              /* logging file descriptor              */
 
 extern char *getenv();
 
-void (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
-void setlogbits _PROTO((int));
+void (*logfunc) (int, char *, ...)=(void (*) (int, char *, ...))logit;
+void setlogbits (int);
 
 /*
  * Opening log file.
@@ -62,12 +62,12 @@ void initlog(name, level, output)
    * to either syslog or logit.
    */
   if (!strcmp(output,"syslog"))   {
-    logfunc=(void (*) _PROTO((int, char *, ...)))syslog;
+    logfunc=(void (*) (int, char *, ...))syslog;
   } else if (!strcmp(output,"stdout"))   {
-    logfunc=(void (*) _PROTO((int, char *, ...)))logit;
+    logfunc=(void (*) (int, char *, ...))logit;
     logfd= fileno(stdout) ; /* standard output       */
   } else {
-    logfunc=(void (*) _PROTO((int, char *, ...)))logit;
+    logfunc=(void (*) (int, char *, ...))logit;
     if (strlen(output) == 0) {
       logfd= fileno(stderr) ; /* standard error       */
     } else {

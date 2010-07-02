@@ -28,9 +28,9 @@
 #include "stager_client_commandline.h"
 
 extern char *getconfent();
-extern int rfio_HsmIf_IsCnsFile _PROTO((char *));
-EXTERN_C int Cdomainname _PROTO((char *, int));
-static int rfio_parseln_old _PROTO((char *, char **, char **,int));
+extern int rfio_HsmIf_IsCnsFile (char *);
+EXTERN_C int Cdomainname (char *, int);
+static int rfio_parseln_old (char *, char **, char **,int);
 
 static int name1_key = -1;
 static int buffer_key = -1;

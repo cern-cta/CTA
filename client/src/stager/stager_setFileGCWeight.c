@@ -41,7 +41,7 @@ static struct Coptions longopts[] =
     {NULL,            0,                  NULL,        0}
   };
 
-void usage _PROTO((char *));
+void usage (char *);
 int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, char **service_class, float *weight);
 int cmd_countHsmFiles(int argc, char *argv[]);
 

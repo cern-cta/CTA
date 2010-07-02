@@ -17,7 +17,7 @@
 
 int Cinitdaemon(name,wait4child)
 char *name;
-void (*wait4child) _PROTO((int));
+void (*wait4child) (int);
 {
         int c;
         int maxfds;

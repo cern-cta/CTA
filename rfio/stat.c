@@ -13,7 +13,7 @@
 #include <rfio.h>
 
 
-EXTERN_C int rfio_smstat _PROTO((int, char *, struct stat *, int));
+EXTERN_C int rfio_smstat (int, char *, struct stat *, int);
 
 int  rfio_stat(filepath, statbuf)       /* Remote file stat    */
      char    *filepath;              /* remote file path                     */

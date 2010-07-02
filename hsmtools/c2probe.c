@@ -70,8 +70,8 @@
 #define _DELTA_TIME(WHAT,A,B) (WHAT ## A - WHAT ## B >= 0 ? WHAT ## A - WHAT ## B : time(NULL)-WHAT ## B)
 #define DELTA_TIME(WHAT) _DELTA_TIME(WHAT,_end,_start)
 
-extern int Cinitdaemon _PROTO((char *, void (*)(int)));
-extern int Cinitservice _PROTO((char *, void (*)(int)));
+extern int Cinitdaemon (char *, void (*)(int));
+extern int Cinitservice (char *, void (*)(int));
 
 uid_t runUid;
 gid_t runGid;

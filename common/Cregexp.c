@@ -278,21 +278,21 @@ static int _Cregexp_endp_key   = -1;
 /*
  * Forward declarations for regcomp()'s friends.
  */
-char *_Cregexp_reg _PROTO((int, int *, char **, int *, char *, char **, long *));
-char *_Cregexp_branch _PROTO((int *, char **, int *, char *, char **, long *));
-char *_Cregexp_piece _PROTO((int *, char **, int *, char *, char **, long *));
-char *_Cregexp_atom _PROTO((int *, char **, int *, char *, char **, long *));
-char *_Cregexp_node _PROTO(());
-char *_Cregexp_next _PROTO((char *, char *));
-void _Cregexp_c _PROTO(());
-void _Cregexp_insert _PROTO(());
-void _Cregexp_tail _PROTO((char *, char *, char *));
-void _Cregexp_optail _PROTO((char *, char *, char *));
-int _Cregexp_try _PROTO((Cregexp_t *, char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
-int _Cregexp_match _PROTO((char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
-int _Cregexp_repeat _PROTO((char *, char **));
-int _Cregexp_gettsd _PROTO((char ***, int **, char **, char ***, long **, char ***, char ***, char ****, char ****));
-char *_Cregexp_prop _PROTO((char *));
+char *_Cregexp_reg (int, int *, char **, int *, char *, char **, long *);
+char *_Cregexp_branch (int *, char **, int *, char *, char **, long *);
+char *_Cregexp_piece (int *, char **, int *, char *, char **, long *);
+char *_Cregexp_atom (int *, char **, int *, char *, char **, long *);
+char *_Cregexp_node ();
+char *_Cregexp_next (char *, char *);
+void _Cregexp_c ();
+void _Cregexp_insert ();
+void _Cregexp_tail (char *, char *, char *);
+void _Cregexp_optail (char *, char *, char *);
+int _Cregexp_try (Cregexp_t *, char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***);
+int _Cregexp_match (char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***);
+int _Cregexp_repeat (char *, char **);
+int _Cregexp_gettsd (char ***, int **, char **, char ***, long **, char ***, char ***, char ****, char ****);
+char *_Cregexp_prop (char *);
 
 
 int _Cregexp_gettsd(_Cregexp_parse,

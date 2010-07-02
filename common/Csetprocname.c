@@ -180,9 +180,9 @@ static char buf[SPT_BUFSIZE];   /* Automatically initialized to zeroes */
 static char	**Argv = NULL;		/* pointer to argument vector */
 static char	*LastArgv = NULL;	/* end of argv */
 #if SPT_TYPE != SPT_BUILTIN
-static int	__Csetprocname _PROTO((char *, ...));
+static int	__Csetprocname (char *, ...);
 #endif /* SPT_TYPE != SPT_BUILTIN */
-static size_t __sm_strlcpy _PROTO((register char *, register char *, ssize_t));
+static size_t __sm_strlcpy (register char *, register char *, ssize_t);
 
 int Cinitsetprocname(argc, argv, envp)
      int argc;

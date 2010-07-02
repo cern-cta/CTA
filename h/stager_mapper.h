@@ -79,10 +79,10 @@
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int stage_mapper_setenv _PROTO((const char *username,
-						   const char *groupname,
-						   char **mstager,
-						   char **msvcclass));
+EXTERN_C int stage_mapper_setenv (const char *username,
+				  const char *groupname,
+				  char **mstager,
+				  char **msvcclass);
 
 /*\@}*/
 
@@ -95,10 +95,10 @@ EXTERN_C int stage_mapper_setenv _PROTO((const char *username,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int just_stage_mapper _PROTO((const char *username,
-						   const char *groupname,
-						   char **mstager,
-						   char **msvcclass));
+EXTERN_C int just_stage_mapper (const char *username,
+				const char *groupname,
+				char **mstager,
+				char **msvcclass);
 
 /*\@}*/
 #endif /* stager_mapper_h */

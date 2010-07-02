@@ -5,11 +5,11 @@
 #ifndef __rfio_rdirfdt_h
 #define __rfio_rdirfdt_h
 
-EXTERN_C int rfio_rdirfdt_allocentry _PROTO((int));
+EXTERN_C int rfio_rdirfdt_allocentry (int);
 #define FINDRDIR_WITH_SCAN     1
 #define FINDRDIR_WITHOUT_SCAN  0
-EXTERN_C int rfio_rdirfdt_findentry _PROTO((int, int));
-EXTERN_C int rfio_rdirfdt_findptr _PROTO((RDIR *, int));
-EXTERN_C int rfio_rdirfdt_freeentry _PROTO((int));
+EXTERN_C int rfio_rdirfdt_findentry (int, int);
+EXTERN_C int rfio_rdirfdt_findptr (RDIR *, int);
+EXTERN_C int rfio_rdirfdt_freeentry (int);
 
 #endif /* __rfio_rdirfdt_h */

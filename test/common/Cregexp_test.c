@@ -43,8 +43,8 @@
 #include "serrno.h"
 #include "Cregexp.h"
 
-int _Cregexp_test_multiple _PROTO(());
-void _Cregexp_test_try _PROTO((char **));
+int _Cregexp_test_multiple ();
+void _Cregexp_test_try (char **);
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024

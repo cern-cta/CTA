@@ -52,7 +52,7 @@
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
 #define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
 
-extern char *getifnam _PROTO((SOCKET));
+extern char *getifnam (SOCKET);
 
 typedef struct thread_arg {
     SOCKET client_socket;
@@ -1698,7 +1698,7 @@ void *diskIOthread(void *arg) {
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
     int rc, save_rc, mode, severity, save_errno,save_serrno;
-    extern char *u64tostr _PROTO((u_signed64, char *, int));
+    extern char *u64tostr (u_signed64, char *, int);
     extern int ENOSPC_occurred;
 
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");

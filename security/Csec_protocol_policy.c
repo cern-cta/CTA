@@ -23,10 +23,10 @@
 #include "Csec_protocol_policy.h"
 
 
-EXTERN_C char *getconfent _PROTO((char *, char *, int));
-static int _is_proto_deleg_able _PROTO((char *));
-static int _add_to_bigbuf _PROTO((char *,csec_buffer_desc *, size_t *, char *, char **));
-static int _check_short_resp _PROTO((char *,csec_buffer_desc *, char *));
+EXTERN_C char *getconfent (char *, char *, int);
+static int _is_proto_deleg_able (char *);
+static int _add_to_bigbuf (char *,csec_buffer_desc *, size_t *, char *, char **);
+static int _check_short_resp (char *,csec_buffer_desc *, char *);
 
 #define TMPBUFSIZE 1500
 #define MAXNETLISTLEN 1024

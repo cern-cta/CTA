@@ -8,7 +8,7 @@ static int my_key = -1; /* Our static key, integer, init value -1 */
 #define my_var (*C__my_var())
 
 static int my_var_static; /* If Cglobals_get error in order not to crash */
-void *doit _PROTO((void *));
+void *doit (void *);
 
 int doit_v = 0;
 #define NTHREADS 100
