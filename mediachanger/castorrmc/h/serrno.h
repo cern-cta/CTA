@@ -13,7 +13,7 @@
 #define _SERRNO_H_INCLUDED_
 
 #ifndef _SHIFT_H_INCLUDED_
-#include <osdep.h>                      /* EXTERN_C,, _PROTO   */
+#include <osdep.h>                      /* EXTERN_C   */
 #endif
 #include <sys/types.h>                  /* For size_t                   */
 #include <stddef.h>                     /* For size_t on _WIN32         */
@@ -476,7 +476,7 @@
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int *C__serrno _PROTO((void));
+EXTERN_C int *C__serrno (void);
 
 /*
  * Thread safe serrno. Note, C__serrno is defined in Cglobals.c rather
@@ -491,9 +491,9 @@ EXTERN_C int *C__serrno _PROTO((void));
 extern  int     serrno;                 /* Global error number          */
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C char *sstrerror_r _PROTO((int,char *, size_t));
-EXTERN_C char *sstrerror _PROTO((int));
-EXTERN_C void sperror _PROTO((char *));
+EXTERN_C char *sstrerror_r (int,char *, size_t);
+EXTERN_C char *sstrerror (int);
+EXTERN_C void sperror (char *);
 
 extern  char    *sys_serrlist[];        /* Error text array             */
 

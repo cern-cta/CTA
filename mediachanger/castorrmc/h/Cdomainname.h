@@ -27,6 +27,6 @@
 #ifndef H_CDOMAINNAME_H 
 #define H_CDOMAINNAME_H 1
 
-EXTERN_C int Cdomainname _PROTO((char*, int));
+EXTERN_C int Cdomainname (char*, int);
 
 #endif // H_CDOMAINNAME_H

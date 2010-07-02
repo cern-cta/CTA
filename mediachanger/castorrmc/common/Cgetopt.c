@@ -48,9 +48,9 @@
 /* =================== */
 /* Internal prototypes */
 /* =================== */
-static char * _Cgetopt_progname _PROTO ((char *));
-int _Cgetopt_internal _PROTO ((int, char * CONST *, CONST char *));
-static char **C__place _PROTO(());
+static char * _Cgetopt_progname (char *);
+int _Cgetopt_internal (int, char * CONST *, CONST char *);
+static char **C__place ();
 static int my_place = -1; /* If Cglobals_get error in order not to crash */
 #define place (*C__place())
 static char *my_place_static = "";

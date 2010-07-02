@@ -23,6 +23,6 @@ struct main_args {
 	char	**argv;
 };
 
-EXTERN_C int Cinitdaemon _PROTO((char *, void (*) _PROTO((int))));
+EXTERN_C int Cinitdaemon (char *, void (*) (int));
 
 #endif
