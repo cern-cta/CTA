@@ -10,9 +10,8 @@
 #include <sys/types.h>
 #include "Ctape_api.h"
 
-void ebc2asc(p, len)
-char *p;
-int len;
+void ebc2asc(char *p,
+             int len)
 {
 	int i;
 	char *q;

@@ -30,9 +30,8 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int chmoddir (dir, newmode)
-     char *dir;
-     mode_t newmode;
+int chmoddir (char *dir,
+              mode_t newmode)
 {
   char curdir[CA_MAXPATHLEN+1];
   struct dirlist {

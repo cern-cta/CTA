@@ -28,10 +28,10 @@
 
 extern int switch_close();
 
-int rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
-     int     lun;
-     char    *chopt;
-     int     *irc;
+/* close a remote fortran logical unit  */
+int rfio_xyclose(int     lun,
+                 char    *chopt,
+                 int     *irc)
 {
   char    buf[LONGSIZE];  /* network command/response buffer      */
   register char *p=buf;   /* buffer pointer                       */
@@ -110,10 +110,10 @@ int rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
  * Fortran wrapper
  */
 
-          void xyclos_(flun, fchopt, firc, fchoptl)
-          int     *flun, *firc;
-          char    *fchopt;
-          int     fchoptl;
+void xyclos_(int     *flun,
+             char    *fchopt,
+             int  *firc,
+             int     fchoptl)
 {
   char    *chopt;         /* xyclos options                       */
   int     status;         /* xyclos return status                 */

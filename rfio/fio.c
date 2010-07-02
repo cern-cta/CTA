@@ -59,13 +59,10 @@ int is_usf (int);
 static int lun2reclen[MAXFTNLUN];
 static int tested = 0 ; /* Test is_usf() done ? */
 
-int usf_open(unit, file,append,trunc)
-
-     int  *unit;
-     char  *file;
-     int  *append;
-     int     *trunc;
-
+int usf_open(int  *unit,
+             char  *file,
+             int  *append,
+             int     *trunc)
 { int fd;
   int flags;
   int errno1;
@@ -111,13 +108,10 @@ int usf_open(unit, file,append,trunc)
   return (0);
 }
 
-int udf_open(unit, file, lrecl,trunc)
-
-     int  *unit;
-     char  *file;
-     int  *lrecl;
-     int *trunc;
-
+int udf_open(int  *unit,
+             char  *file,
+             int  *lrecl,
+             int *trunc)
 {
   int flags;
   int fd;
@@ -145,12 +139,9 @@ int udf_open(unit, file, lrecl,trunc)
   return (0);
 }
 
-int usf_write(unit, buf, nwrit)
-
-     int *unit;
-     char *buf;
-     int *nwrit;
-
+int usf_write(int *unit,
+              char *buf,
+              int *nwrit)
 { int fd,reclen;
   fd=lun2fd[*unit-1];
   reclen=lun2reclen[*unit-1];
@@ -170,13 +161,10 @@ int usf_write(unit, buf, nwrit)
   }
 }
 
-int udf_write(unit, buf, nrec, nwrit)
-
-     int  *unit;
-     char  *buf;
-     int  *nrec;
-     int  *nwrit;
-
+int udf_write(int  *unit,
+              char  *buf,
+              int  *nrec,
+              int  *nwrit)
 { int fd;
   int reclen,i;
   int zero=0;
@@ -214,12 +202,9 @@ int udf_write(unit, buf, nrec, nwrit)
  */
 
 
-int usf_read(unit, buf, nwant)
-
-     int *unit;
-     char *buf;
-     int *nwant;
-
+int usf_read(int *unit,
+             char *buf,
+             int *nwant)
 { int fd,reclen;
   int c,d;
   int got;
@@ -280,13 +265,10 @@ int usf_read(unit, buf, nwant)
 }
 
 
-int udf_read(unit, buf, nrec, nwant)
-
-     int  *unit;
-     char  *buf;
-     int  *nrec;
-     int  *nwant;
-
+int udf_read(int  *unit,
+             char  *buf,
+             int  *nrec,
+             int  *nwant)
 { int fd=lun2fd[*unit-1];
   int reclen=lun2reclen[*unit-1];
   int got;
@@ -318,10 +300,7 @@ int udf_read(unit, buf, nrec, nwant)
 }
 
 
-int uf_close(unit)
-
-     int  *unit;
-
+int uf_close(int  *unit)
 {
   if ( close( lun2fd[*unit-1] ) < 0 ) {
     return(errno);
@@ -338,15 +317,12 @@ int uf_close(unit)
  *  for all kinds of machines
  */
 
-void uf_cread(unit, buf, nrec, nwant, ngot, irc)
-
-     int  *unit;
-     char  *buf;
-     int  *nrec;
-     int  *nwant;
-     int *ngot;
-     int  *irc;
-
+void uf_cread(int  *unit,
+              char  *buf,
+              int  *nrec,
+              int  *nwant,
+              int *ngot,
+              int  *irc)
 {
   int fd=lun2fd[*unit-1];
   int sequential=0;
@@ -449,8 +425,7 @@ void uf_cread(unit, buf, nrec, nwant, ngot, irc)
  * It leaves the file pointer at the place it was.
  *
  */
-int is_usf( fd )
-     int fd ;
+int is_usf(int fd)
 {
   int len,llen ;
   int rcode,rc ;

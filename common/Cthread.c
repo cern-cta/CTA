@@ -129,8 +129,7 @@ int _Cthread_once_status = -1;
 /* ============================================ */
 /* Notes: See Cthread_Self().                   */
 /* ============================================ */
-void _Cthread_cid_destructor(ptr)
-     void *ptr;
+void _Cthread_cid_destructor(void *ptr)
 {
   if (ptr != NULL)
     free(ptr);
@@ -399,11 +398,10 @@ void *_Cthread_start_pthread(void *arg) {
 /*                   [with R.W.Stevens example] */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-Sigfunc *_Cthread_signal(file, line, signo, func)
-     char *file;
-     int line;
-     int signo;
-     Sigfunc *func;
+Sigfunc *_Cthread_signal(char *file,
+                         int line,
+                         int signo,
+                         Sigfunc *func)
 {
   struct sigaction	act, oact;
   
@@ -444,8 +442,7 @@ Sigfunc *_Cthread_signal(file, line, signo, func)
 /* 11-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void _Cthread_sigchld(errcode)
-     int errcode;
+void _Cthread_sigchld(int errcode)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
@@ -535,10 +532,9 @@ void _Cthread_sigchld(errcode)
 /* 10-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
-     void *(*startroutine) (void *);
-     void *arg;
-     Sigfunc *old_sigchld;
+void *_Cthread_start_nothread(void *(*startroutine) (void *),
+			      void *arg,
+			      Sigfunc *old_sigchld)
 {
   void                 *status;    /* Thread status     */
   Cth_pid_t             pid;       /* pthread_t         */
@@ -612,11 +608,10 @@ void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-int Cthread_Create(file, line, startroutine, arg)
-     const char *file;
-     int line;
-     void *(*startroutine) (void *);
-     void *arg;
+int Cthread_Create(const char *file,
+                   int line,
+                   void *(*startroutine) (void *),
+                   void *arg)
 {
   Cth_pid_t pid;                        /* Thread/Process ID */
   unsigned thID = 0;                    /* Thread ID (WIN32) */
@@ -814,11 +809,10 @@ int Cthread_Create(file, line, startroutine, arg)
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-int Cthread_Create_Detached(file, line, startroutine, arg)
-     const char *file;
-     int line;
-     void *(*startroutine) (void *);
-     void *arg;
+int Cthread_Create_Detached(const char *file,
+                            int line,
+                            void *(*startroutine) (void *),
+                            void *arg)
 {
 #ifdef _CTHREAD
   Cth_pid_t pid;                        /* Thread/Process ID */
@@ -959,11 +953,10 @@ int Cthread_Create_Detached(file, line, startroutine, arg)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Join(file, line, cid, status)
-     const char *file;
-     int line;
-     int cid;
-     int **status;
+int Cthread_Join(const char *file,
+                 int line,
+                 int cid,
+                 int **status)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
@@ -1108,10 +1101,9 @@ int Cthread_Join(file, line, cid, status)
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Detach(file, line, cid)
-     const char *file;
-     int line;
-     int cid;
+int Cthread_Detach(const char *file,
+                   int line,
+                   int cid)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                 n;                  /* Status           */
@@ -1211,9 +1203,8 @@ int Cthread_Detach(file, line, cid)
 int Cthread_Self0() {
   return(_Cthread_self());
 }
-int Cthread_Self(file, line)
-     const char *file;
-     int line;
+int Cthread_Self(const char *file,
+                 int line)
 {
 #ifdef _CTHREAD
   void               *tsd = NULL;       /* Thread-Specific Variable */
@@ -1377,10 +1368,9 @@ int Cthread_Self(file, line)
 /*                   before removing the element*/
 /*                   (Olof.Barring@cern.ch)     */
 /* ============================================ */
-int _Cthread_destroy(file, line, cid)
-     const char *file;
-     int line;
-     int cid;
+int _Cthread_destroy(const char *file,
+                     int line,
+                     int cid)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   struct Cid_element_t *previous = NULL;  /* Curr Cid_element */
@@ -1461,10 +1451,9 @@ int _Cthread_destroy(file, line, cid)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Cond_Broadcast_ext(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+int Cthread_Cond_Broadcast_ext(const char *file,
+                               int line,
+                               void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = addr;  /* Curr Cmtx_element */
@@ -1557,10 +1546,9 @@ int Cthread_Cond_Broadcast_ext(file, line, addr)
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Cond_Broadcast(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+int Cthread_Cond_Broadcast(const char *file,
+                           int line,
+                           void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -1688,11 +1676,10 @@ int Cthread_Cond_Broadcast(file, line, addr)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Wait_Condition_ext(file, line, addr, timeout)
-     const char *file;
-     int line;
-     void *addr;
-     int timeout;
+int Cthread_Wait_Condition_ext(const char *file,
+                               int line,
+                               void *addr,
+                               int timeout)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = addr;    /* Curr Cmtx_element */
@@ -1850,11 +1837,10 @@ int Cthread_Wait_Condition_ext(file, line, addr, timeout)
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Wait_Condition(file, line, addr, timeout)
-     const char *file;
-     int line;
-     void *addr;
-     int timeout;
+int Cthread_Wait_Condition(const char *file,
+                           int line,
+                           void *addr,
+                           int timeout)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -2058,11 +2044,10 @@ int Cthread_Wait_Condition(file, line, addr, timeout)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Lock_Mtx(file, line, addr, timeout)
-     const char *file;
-     int line;
-     void *addr;
-     int timeout;
+int Cthread_Lock_Mtx(const char *file,
+                     int line,
+                     void *addr,
+                     int timeout)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -2351,11 +2336,10 @@ int Cthread_Lock_Mtx(file, line, addr, timeout)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Lock_Mtx_ext(file, line, addr, timeout)
-     const char *file;
-     int line;
-     void *addr;
-     int timeout;
+int Cthread_Lock_Mtx_ext(const char *file,
+                         int line,
+                         void *addr,
+                         int timeout)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = addr;  /* Curr Cmtx_element */
@@ -2408,10 +2392,9 @@ int Cthread_Lock_Mtx_ext(file, line, addr, timeout)
 /*       Cthread corresponding to address       */
 /*       given in parameter.                    */
 /* ============================================ */
-void *Cthread_Lock_Mtx_addr(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+void *Cthread_Lock_Mtx_addr(const char *file,
+                            int line,
+                            void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -2485,10 +2468,9 @@ void *Cthread_Lock_Mtx_addr(file, line, addr)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Mutex_Unlock_ext(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+int Cthread_Mutex_Unlock_ext(const char *file,
+                             int line,
+                             void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = addr;   /* Curr Cmtx_element */
@@ -2534,10 +2516,9 @@ int Cthread_Mutex_Unlock_ext(file, line, addr)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Mutex_Unlock(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+int Cthread_Mutex_Unlock(const char *file,
+                         int line,
+                         void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -2607,10 +2588,9 @@ int Cthread_Mutex_Unlock(file, line, addr)
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Mutex_Destroy(file, line, addr)
-     const char *file;
-     int line;
-     void *addr;
+int Cthread_Mutex_Destroy(const char *file,
+                          int line,
+                          void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -2717,10 +2697,9 @@ int Cthread_Mutex_Destroy(file, line, addr)
 /* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
 /* ==================================================================================== */
 
-int _Cthread_release_mtx(file, line, mtx)
-     const char *file;
-     int line;
-     Cth_mtx_t *mtx;
+int _Cthread_release_mtx(const char *file,
+                         int line,
+                         Cth_mtx_t *mtx)
 {
 #ifdef _CTHREAD
    int               n;
@@ -2847,11 +2826,10 @@ int _Cthread_release_mtx(file, line, mtx)
 /* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
 /* ==================================================================================== */
 
-int _Cthread_obtain_mtx(file, line, mtx, timeout)
-     const char *file;
-     int line;
-     Cth_mtx_t *mtx;
-     int timeout;
+int _Cthread_obtain_mtx(const char *file,
+                        int line,
+                        Cth_mtx_t *mtx,
+                        int timeout)
 {
 #ifdef _CTHREAD
   int               n;
@@ -3089,13 +3067,12 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 /* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
 /* ==================================================================================== */
 
-int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeout)
-     const char *Cthread_file;
-     int Cthread_line;
-     const char *file;
-     int line;
-     Cth_mtx_t *mtx;
-     int timeout;
+int _Cthread_obtain_mtx_debug(const char *Cthread_file,
+                              int Cthread_line,
+                              const char *file,
+                              int line,
+                              Cth_mtx_t *mtx,
+                              int timeout)
 {
 #ifdef _CTHREAD
   int               n;
@@ -3323,10 +3300,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
 /* Notes:                                       */
 /* This routine is adding a new mtx element     */
 /* ============================================ */
-int _Cthread_addmtx(file, line, Cmtx_new)
-     const char *file;
-     int line;
-     struct Cmtx_element_t *Cmtx_new;
+int _Cthread_addmtx(const char *file,
+                    int line,
+                    struct Cmtx_element_t *Cmtx_new)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;    /* Curr Cmtx_element */
@@ -3394,15 +3370,14 @@ int _Cthread_addmtx(file, line, Cmtx_new)
 /* its parameters are changed and the element   */
 /* cid is returned                              */
 /* ============================================ */
-int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startroutine, detached)
-     const char *Cthread_file;
-     int Cthread_line;
-     const char *file;
-     int line;
-     Cth_pid_t *pid;
-     unsigned thID;
-     void *(*startroutine) (void *);
-     int detached;
+int _Cthread_addcid(const char *Cthread_file,
+                    int Cthread_line,
+                    const char *file,
+                    int line,
+                    Cth_pid_t *pid,
+                    unsigned thID,
+                    void *(*startroutine) (void *),
+                    int detached)
 {
   struct Cid_element_t *current = &Cid;    /* Curr Cid_element */
   int                 current_cid = -1;    /* Curr Cthread ID    */
@@ -3909,8 +3884,7 @@ void _Cthread_once() {
 /* 28-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void _Cthread_keydestructor(addr)
-     void *addr;
+void _Cthread_keydestructor(void *addr)
 {
   /* Release the Thread-Specific key */
 #ifdef CTHREAD_DEBUG
@@ -3993,18 +3967,16 @@ struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-int Cthread_Setspecific0(global_key, addr)
-     int *global_key;
-     void *addr;
+int Cthread_Setspecific0(int *global_key,
+                         void *addr)
 {
   return(Cthread_Setspecific(NULL,0,global_key,addr));
 }
 
-int Cthread_Setspecific(file, line, global_key, addr)
-     const char *file;
-     int line;
-     int *global_key;
-     void *addr;
+int Cthread_Setspecific(const char *file,
+                        int line,
+                        int *global_key,
+                        void *addr)
 {
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
 #ifdef _CTHREAD
@@ -4112,30 +4084,26 @@ int Cthread_Setspecific(file, line, global_key, addr)
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-int Cthread_Getspecific0(global_key, addr)
-     int *global_key;
-     void **addr;
+int Cthread_Getspecific0(int *global_key,
+                         void **addr)
 {
   return(Cthread_Getspecific("Cthread.c(Cthread_Getspecific0)",__LINE__,global_key,addr));
 }
 
-int Cthread_Getspecific_init(global_key, addr)
-     int *global_key;
-     void **addr;
+int Cthread_Getspecific_init(int *global_key,
+                             void **addr)
 {
   /* Just to avoid debug printing recursion from Cglobals_init() */
   return(Cthread_Getspecific(NULL,__LINE__,global_key,addr));
 }
 
-int Cthread_Lock_Mtx_init(addr,timeout)
-     void *addr;
-     int timeout;
+int Cthread_Lock_Mtx_init(void *addr,
+                          int timeout)
 {
   return(Cthread_Lock_Mtx(__FILE__,__LINE__,addr,timeout));
 }
 
-int Cthread_Mutex_Unlock_init(addr)
-     void *addr;
+int Cthread_Mutex_Unlock_init(void *addr)
 {
   /* Just to avoid debug printing recursion from Cmutex_init() */
   return(Cthread_Mutex_Unlock(__FILE__,__LINE__,addr));
@@ -4145,11 +4113,10 @@ int Cthread_Mutex_Unlock_init(addr)
 /* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
 /* ==================================================================================== */
 
-int Cthread_Getspecific(file, line, global_key, addr)
-     const char *file;
-     int line;
-     int *global_key;
-     void **addr;
+int Cthread_Getspecific(const char *file,
+                        int line,
+                        int *global_key,
+                        void **addr)
 {
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
 #ifdef _CTHREAD
@@ -4337,10 +4304,9 @@ int Cthread_Getspecific(file, line, global_key, addr)
 /* Notes:                                       */
 /* This routine is adding a new mtx element     */
 /* ============================================ */
-int _Cthread_addspec(file, line, Cspec_new)
-     const char *file;
-     int line;
-     struct Cspec_element_t *Cspec_new;
+int _Cthread_addspec(const char *file,
+                     int line,
+                     struct Cspec_element_t *Cspec_new)
 {
   struct Cspec_element_t *current = &Cspec;    /* Curr Cmtx_element */
   
@@ -4668,8 +4634,7 @@ int Cthread_proto() {
 /* 3         LinuxThreads                       */
 /* 4         WIN32                              */
 /* ============================================ */
-int Cthread_isproto(proto)
-     char *proto;
+int Cthread_isproto(char *proto)
 {
   if (proto == NULL) {
     serrno = EINVAL;
@@ -4918,11 +4883,10 @@ void Cthread_unprotect() {
 /* 27-NOV-2001       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Kill(file, line, cid, signo)
-     const char *file;
-     int line;
-     int cid;
-     int signo;
+int Cthread_Kill(const char *file,
+                 int line,
+                 int cid,
+                 int signo)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
@@ -5016,10 +4980,9 @@ int Cthread_Kill(file, line, cid, signo)
 /* 27-NOV-2001       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void Cthread_Exit(file, line, status)
-     const char *file;
-     int line;
-     void *status;
+void Cthread_Exit(const char *file,
+                  int line,
+                  void *status)
 {
 
 #ifdef CTHREAD_DEBUG

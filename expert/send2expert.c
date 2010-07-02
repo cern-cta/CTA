@@ -21,10 +21,9 @@
 
 /* send2expert - send a request to the expert daemon */
 
-int send2expert(socketp, reqp, reql)
-int *socketp;
-char *reqp;
-int reql;
+int send2expert(int *socketp,
+                char *reqp,
+                int reql)
 {
 	/*int c;*/
 	int port;
@@ -100,11 +99,10 @@ int reql;
 
 /* get reply from the expert daemon */
 
-int getexpertrep (socket, rep_status, errcode, reply_type)
-int socket;
-int* rep_status;
-int* errcode;
-int* reply_type;
+int getexpertrep (int socket,
+                  int* rep_status,
+                  int* errcode,
+                  int* reply_type)
 {
         int s;
         char repheader[4 * LONGSIZE];

@@ -167,9 +167,8 @@ int rc_castor2shift(int rc) {
 	}
 }
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   int argvindx;  /* argument index in program argv */
   int binmode = 0;
@@ -550,10 +549,10 @@ int main(argc, argv)
   exit(rc2);
 }
 
-off64_t copyfile(fd1, fd2, name, maxsize)
-     int fd1, fd2;
-     u_signed64 maxsize;
-     char *name;
+off64_t copyfile(int fd1,
+                 int fd2,
+                 char *name,
+                 u_signed64 maxsize)
 {
   int n;
   mode_t mode;
@@ -658,9 +657,8 @@ void usage()
 }
 
 
-void copyfile_stglog(type, msg)
-     int type;
-     char *msg;
+void copyfile_stglog(int type,
+                     char *msg)
 {
   if (type == 1) {   // MSG_ERR
     fprintf(stderr, "%s", msg);
@@ -675,8 +673,7 @@ void copyfile_stglog(type, msg)
   }
 }
 
-void copyfile_stgcleanup(sig)
-     int sig;
+void copyfile_stgcleanup(int sig)
 {
   TRACE(2,"rfio","copyfile_stgcleanup: Received signal No %d", sig);
   TRACE(2,"rfio","copyfile_stgcleanup: Sending stage_kill(%d)", sig);
@@ -686,9 +683,8 @@ void copyfile_stgcleanup(sig)
   return;
 }
 
-Sigfunc *_rfio_signal(signo, func)
-int signo;
-Sigfunc *func;
+Sigfunc *_rfio_signal(int signo,
+                      Sigfunc *func)
 {
   struct sigaction act, oact;
   int n = 0;

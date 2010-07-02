@@ -15,8 +15,7 @@
 #include <sys/ioctl.h>
 #include "Ctape.h"
 #include "serrno.h"
-chkdriveready(tapefd)
-int tapefd;
+chkdriveready(int tapefd)
 {
 	char func[16];
 	struct devget mt_info;
@@ -33,8 +32,7 @@ int tapefd;
 		return (1);	/* drive ready */
 }
 
-chkwriteprot(tapefd)
-int tapefd;
+chkwriteprot(int tapefd)
 {
 	char func[16];
 	struct devget mt_info;
@@ -56,8 +54,7 @@ int tapefd;
 #include <sys/mtio.h>
 #include "Ctape.h"
 #include "serrno.h"
-chkdriveready(tapefd)
-int tapefd;
+chkdriveready(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -74,8 +71,7 @@ int tapefd;
 		return (0);	/* drive not ready */
 }
 
-chkwriteprot(tapefd)
-int tapefd;
+chkwriteprot(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -98,8 +94,7 @@ int tapefd;
 #include <sys/mtio.h>
 #include "Ctape.h"
 #include "serrno.h"
-chkdriveready(tapefd)
-int tapefd;
+chkdriveready(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -113,8 +108,7 @@ int tapefd;
 	return (1);	/* if open is successful, drive is ready */
 }
 
-chkwriteprot(tapefd)
-int tapefd;
+chkwriteprot(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -137,8 +131,7 @@ int tapefd;
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-int chkdriveready(tapefd)
-int tapefd;
+int chkdriveready(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -155,8 +148,7 @@ int tapefd;
 		return (0);	/* drive not ready */
 }
 
-int chkwriteprot(tapefd)
-int tapefd;
+int chkwriteprot(int tapefd)
 {
 	char func[16];
 	struct mtget mt_info;
@@ -185,8 +177,7 @@ int tapefd;
 #endif
 #include "Ctape.h"
 #include "serrno.h"
-chkdriveready(tapefd)
-int tapefd;
+chkdriveready(int tapefd)
 {
 	char func[16];
 #if defined(RS6000PCTA)
@@ -235,8 +226,7 @@ int tapefd;
 }
 
 #if defined(RS6000PCTA)
-chkwriteprot(tapefd)
-int tapefd;
+chkwriteprot(int tapefd)
 {
 	char func[16];
 	struct mtsrbl mtsrbl;

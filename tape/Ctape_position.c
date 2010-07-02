@@ -16,22 +16,21 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, fsid, recfm, blksize, lrecl, retentd, flags)
-char *path;
-int method;
-int fseq;
-int fsec;
-unsigned char *blockid;
-int Qfirst;
-int Qlast;
-int filstat;
-char *fid;
-char *fsid;
-char *recfm;
-int blksize;
-int lrecl;
-int retentd;
-int flags;
+int Ctape_position(char *path,
+                   int method,
+                   int fseq,
+                   int fsec,
+                   unsigned char *blockid,
+                   int Qfirst,
+                   int Qlast,
+                   int filstat,
+                   char *fid,
+                   char *fsid,
+                   char *recfm,
+                   int blksize,
+                   int lrecl,
+                   int retentd,
+                   int flags)
 {
 	char actual_fid[CA_MAXFIDLEN+1];
 	int actual_fseq;

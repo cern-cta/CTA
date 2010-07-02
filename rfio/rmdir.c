@@ -15,8 +15,8 @@
 #include <string.h>
 
 
-int  rfio_rmdir(dirpath)           /* Remote rmdir             */
-     char  *dirpath;          /* remote directory path             */
+/* Remote rmdir             */
+int  rfio_rmdir(char  *dirpath)          /* remote directory path             */
 {
   static char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;              /* socket descriptor            */

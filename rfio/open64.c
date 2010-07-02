@@ -26,11 +26,10 @@
 
 extern RFILE *rfilefdt[MAXRFD];        /* File descriptors tables       */
 
-static void rfio_setup64_ext(iop,uid,gid,passwd)
-     RFILE   *iop;
-     int  uid;
-     int  gid;
-     int passwd;
+static void rfio_setup64_ext(RFILE   *iop,
+                             int  uid,
+                             int  gid,
+                             int passwd)
 {
   extern char * getenv() ;  /* External declaration  */
   char     *cp ;               /* Character pointer  */
@@ -97,16 +96,15 @@ static void rfio_setup64_ext(iop,uid,gid,passwd)
 /*
  * Remote file open.
  */
-int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
-     char    * filepath ;
-     int  flags,mode ;
-     uid_t uid;
-     gid_t gid;
-     int  passwd ;
-     char  * reqhost; /* In case of a Non-mapped I/O with uid & gid
-                         sepcified, which host will be contacted
-                         for key check ? */
-
+int rfio_open64_ext(char    * filepath,
+                    int  flags,
+                    int mode,
+                    uid_t uid,
+                    gid_t gid,
+                    int  passwd,
+                    char  * reqhost) /* In case of a Non-mapped I/O with uid & gid
+					sepcified, which host will be contacted
+					for key check ? */
 {
   int     status ; /* Return code    */
   int     rcode ; /* Remote errno   */
@@ -400,9 +398,9 @@ int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
   return (rfp->s) ;
 }
 
-int  rfio_open64_v2(filepath, flags, mode)
-     char    * filepath ;
-     int     flags,mode ;
+int  rfio_open64_v2(char    * filepath,
+                    int     flags,
+                    int mode)
 {
   char rh[1] ;
   rh[0]='\0' ;
@@ -410,9 +408,9 @@ int  rfio_open64_v2(filepath, flags, mode)
   return(rfio_open64_ext(filepath, flags, mode,(uid_t)0,(gid_t)0,0,rh));
 }
 
-int rfio_open64(filepath, flags, mode)
-     char    *filepath ;
-     int     flags,mode ;
+int rfio_open64(char    *filepath,
+                int     flags,
+                int mode)
 {
   int n;
   int old;
@@ -427,8 +425,7 @@ int rfio_open64(filepath, flags, mode)
   return(n);
 }
 
-void rfio_setup64(iop)
-     RFILE   *iop;
+void rfio_setup64(RFILE   *iop)
 {
   (void)rfio_setup64_ext(iop,0,0,0);
 }

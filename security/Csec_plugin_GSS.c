@@ -103,9 +103,9 @@ static int activate_lock;
 /* EXPORTED FUNCTIONS */
 /******************************************************************************/
 
-int (CSEC_METHOD_NAME(Csec_activate, MECH))(FP,ctx)
-     FPARG;
-     Csec_context_t *ctx;
+int (CSEC_METHOD_NAME(Csec_activate, MECH))(
+					    FPARG,
+					    Csec_context_t *ctx)
 {
 
   (void)FP;
@@ -249,11 +249,11 @@ int (CSEC_METHOD_NAME(Csec_delete_creds, MECH))(FP,ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int (CSEC_METHOD_NAME(Csec_acquire_creds, MECH))(FP, ctx, service_name, is_client)
-     FPARG;
-     Csec_context_t *ctx;
-     char *service_name;
-     int is_client;
+int (CSEC_METHOD_NAME(Csec_acquire_creds, MECH))(
+						 FPARG,
+						 Csec_context_t *ctx,
+						 char *service_name,
+						 int is_client)
 {
   gss_name_t server_name = GSS_C_NO_NAME;
   OM_uint32 maj_stat, min_stat;
@@ -868,12 +868,11 @@ error:
  * Used by _Csec_process_gssapi_err
  * Displays the GSS-API error messages in the error buffer
  */
-static void _Csec_display_status_1(m, code, type, buf, bufsize)
-     char *m;
-     OM_uint32 code;
-     int type;
-     char *buf;
-     int bufsize;
+static void _Csec_display_status_1(char *m,
+                                   OM_uint32 code,
+                                   int type,
+                                   char *buf,
+                                   int bufsize)
 {
   OM_uint32 maj_stat, min_stat;
   gss_buffer_desc msg;
@@ -897,9 +896,8 @@ static void _Csec_display_status_1(m, code, type, buf, bufsize)
 /**
  * Function that maps the GSS-API errors to a CASTOR serrno.
  */
-static int _Csec_map_gssapi_err(maj_stat, min_stat)
-     OM_uint32 maj_stat;
-     OM_uint32 min_stat;
+static int _Csec_map_gssapi_err(OM_uint32 maj_stat,
+                                OM_uint32 min_stat)
 {
 
   int ret_serrno = ESEC_SYSTEM;
@@ -937,11 +935,11 @@ static int _Csec_map_gssapi_err(maj_stat, min_stat)
 /**
  * Function to display the GSS-API errors
  */
-static void _Csec_process_gssapi_err(FP, msg, maj_stat_code, min_stat_code)
-     FPARG;
-     char *msg;
-     OM_uint32 maj_stat_code;
-     OM_uint32 min_stat_code;
+static void _Csec_process_gssapi_err(
+				     FPARG,
+				     char *msg,
+				     OM_uint32 maj_stat_code,
+				     OM_uint32 min_stat_code)
 {
 
   char errbuf[ERRBUFSIZE];

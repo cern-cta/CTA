@@ -15,8 +15,7 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int Ctape_kill(path)
-char *path;
+int Ctape_kill(char *path)
 {
 	int c;
 	int errflg = 0;

@@ -39,10 +39,10 @@ void setlogbits (int);
  * Opening log file.
  * Storing the process pid.
  */
-void initlog(name, level, output)
-     char    *name;                  /* facility name                        */
-     int     level;                  /* logging level                        */
-     char    *output;                /* output specifier                     */
+void initlog(
+	     char    *name,                  /* facility name                        */
+	     int     level,                  /* logging level                        */
+	     char    *output)                /* output specifier                     */
 {
   register char  *p;
 
@@ -79,8 +79,7 @@ void initlog(name, level, output)
 /*
  * Mode bits for log file.
  */
-void setlogbits(bits)
-     int bits;                  /* logfile mode bits */
+void setlogbits(int bits)                  /* logfile mode bits */
 {
   logbits=(mode_t) bits;
 }

@@ -20,9 +20,8 @@
 static char *ckpath();
 char *getconfent();
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   extern char * optarg ;
   extern int    optind ;
@@ -97,8 +96,7 @@ int main(argc, argv)
 }
 
 
-static char *ckpath(path)
-     char *path;
+static char *ckpath(char *path)
 {
   char *cp;
   static char newpath[BUFSIZ];

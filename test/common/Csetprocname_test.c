@@ -6,10 +6,9 @@
 #define MYMSG "\n\n--> Look to process table, you should see '%s: %s'\n (with blanks after)\n\n"
 
 
-int main(argc,argv,envp)
-     int argc;
-     char **argv;
-     char **envp;
+int main(int argc,
+         char **argv,
+         char **envp)
 {
   char savargv0[1024];
   char savargv1[1024];

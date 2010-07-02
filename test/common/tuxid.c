@@ -350,8 +350,7 @@ main(argc,argv)
 	exit (0);
 }
 
-void usage(progname)
-     char *progname;
+void usage(char *progname)
 {
   printf("Usage: %s [options]\n"
           "where options are:\n"

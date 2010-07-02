@@ -17,9 +17,8 @@ int nassign[NMASTER_THREADS] = {1000,100000,100000,100000,100000,100000,100000,1
 extern int Cpool_debug;
 extern int Cthread_debug;
 
-int main(argc,argv)
-	int argc;
-	char **argv;
+int main(int argc,
+         char **argv)
 {
 	int i;
 	int n;
@@ -66,8 +65,7 @@ int main(argc,argv)
 	exit(0);
 }
 
-void *master_thread(arg)
-	void *arg;
+void *master_thread(void *arg)
 {
 	int i, j, n;
 

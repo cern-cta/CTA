@@ -30,11 +30,10 @@ RDIR  *rdirfdt[MAXRFD];         /* File descriptors tables             */
 RDIR *rfio_opendir_ext();
 
 
-static void rfio_dirsetup_ext(iop,uid,gid,passwd)
-     RDIR   *iop;
-     int    uid;
-     int    gid;
-     int    passwd;
+static void rfio_dirsetup_ext(RDIR   *iop,
+                              int    uid,
+                              int    gid,
+                              int    passwd)
 {
   iop->magic = RFIO_MAGIC;
   iop->s = -1;
@@ -54,8 +53,7 @@ static void rfio_dirsetup_ext(iop,uid,gid,passwd)
   strcpy(iop->host,"????????");
 }
 
-int rfio_dircleanup(s)      /* cleanup rfio dir. descriptor            */
-     int s;
+int rfio_dircleanup(int s)      /* cleanup rfio dir. descriptor            */
 {
   int s_index;
 
@@ -80,23 +78,21 @@ int rfio_dircleanup(s)      /* cleanup rfio dir. descriptor            */
   return(0);
 }
 
-RDIR *rfio_opendir(dirpath)
-     char *dirpath;
+RDIR *rfio_opendir(char *dirpath)
 {
   char rh[1];
   rh[0] = '\0';
   return(rfio_opendir_ext(dirpath,(uid_t)0,(gid_t)0,0,rh,rh));
 }
 
-RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
-     char *dirpath;
-     uid_t uid;
-     gid_t gid;
-     int passwd;
-     char  * reqhost; /* In case of a Non-mapped I/O with uid & gid
-                         sepcified, which host will be contacted
-                         for key check ? */
-     char   *vmstr ;
+RDIR *rfio_opendir_ext(char *dirpath,
+                       uid_t uid,
+                       gid_t gid,
+                       int passwd,
+                       char  * reqhost, /* In case of a Non-mapped I/O with uid & gid
+					   sepcified, which host will be contacted
+					   for key check ? */
+                       char   *vmstr)
 {
   int     status ; /* Return code    */
   int  rcode ; /* Remote errno   */

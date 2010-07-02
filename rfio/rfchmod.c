@@ -30,9 +30,8 @@ void help(int rcode) {
   exit(rcode);
 }
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   extern int optind;
   char     *path;
@@ -84,8 +83,7 @@ int main(argc, argv)
   return(exit_rc);
 }
 
-static char *ckpath(path)
-     char *path;
+static char *ckpath(char *path)
 {
   char *cp;
   static char newpath[BUFSIZ];

@@ -15,9 +15,8 @@
 #include "vmgr.h"
 #include "vmgr_api.h"
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int errflg = 0;
 	int flags;

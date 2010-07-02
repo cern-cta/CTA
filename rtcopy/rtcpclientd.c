@@ -86,12 +86,8 @@ extern int (*rtcpc_ClientCallback) (
 				    rtcpFileRequest_t *
 				    );
 
-static int getVIDFromRtcpd(
-                           origSocket,
-                           tapereq
-                           )
-     SOCKET *origSocket;
-     rtcpTapeRequest_t *tapereq;
+static int getVIDFromRtcpd(SOCKET *origSocket,
+			   rtcpTapeRequest_t *tapereq)
 {
   rtcpHdr_t hdr;
   int rc, acknMsg;
@@ -539,8 +535,7 @@ static int checkVdqmReqs()
   return(0);
 }
 
-static void checkWorkerExit(shutDownFlag)
-  int shutDownFlag;
+static void checkWorkerExit(int shutDownFlag)
 {
   int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;

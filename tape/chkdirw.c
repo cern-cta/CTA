@@ -15,8 +15,7 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int chkdirw(path)
-char *path;
+int chkdirw(char *path)
 {
 	char *p;
 	int rc;

@@ -21,9 +21,8 @@
 /*
  * Remote file stat
  */
-int rfio_fstat(s, statbuf)
-     int     s;
-     struct stat *statbuf;
+int rfio_fstat(int     s,
+               struct stat *statbuf)
 {
 #if (defined(__alpha) && defined(__osf__))
   return (rfio_fstat64(s,statbuf));

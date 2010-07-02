@@ -28,10 +28,9 @@
 /*
  * Remote file seek
  */
-int rfio_preseek(s,iov,iovnb)
-     int      s ;
-     int  iovnb ;
-     struct iovec *iov ;
+int rfio_preseek(int      s,
+                 struct iovec *iov,
+                 int  iovnb)
 {
   int s_index;
   char   * p ;  /* Pointer to buffer  */
@@ -192,10 +191,9 @@ int rfio_preseek(s,iov,iovnb)
 /*
  * FORTRAN bindings.
  */
-     int presee_(sptr,iov,iovnbptr)
-     int      * sptr ;
-     struct iovec * iov ;
-     int     * iovnbptr ;
+int presee_(int      * sptr,
+            struct iovec * iov,
+            int     * iovnbptr)
 {
   int status ;
 

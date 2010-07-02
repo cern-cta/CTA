@@ -22,8 +22,7 @@
  * Opens a listening TCP socket.
  *
  */
-int nw_create_socket(port)
-    u_short port;
+int nw_create_socket(u_short port)
 {
     struct sockaddr_in saddr;
     int s;
@@ -148,9 +147,8 @@ nw_readline(int fd, void *vptr, size_t maxlen) {
 }
 
 
-int nw_connect_to_server(host, port)
-     char *host;
-     u_short port;
+int nw_connect_to_server(char *host,
+                         u_short port)
 {
      struct sockaddr_in saddr;
      struct hostent *hp;

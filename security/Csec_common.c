@@ -132,11 +132,10 @@ int Csec_name2id(char *name, uid_t *uid, uid_t *gid) {
 /**
  * Sends a csec_buffer_t over a socket
  */
-int _Csec_send_token(s, tok, timeout, token_type)
-     int s;
-     csec_buffer_t tok;
-     int timeout;
-     int token_type;
+int _Csec_send_token(int s,
+                     csec_buffer_t tok,
+                     int timeout,
+                     int token_type)
 {
   int datalen, ret;
   char *func = "_Csec_send_token";
@@ -187,11 +186,10 @@ int _Csec_send_token(s, tok, timeout, token_type)
 /**
  * Reads a csec_buffer_t from a socket
  */
-int _Csec_recv_token(s, tok, timeout, rtype)
-     int s;
-     csec_buffer_t tok;
-     int timeout;
-     int *rtype;
+int _Csec_recv_token(int s,
+                     csec_buffer_t tok,
+                     int timeout,
+                     int *rtype)
 {
   int ret;
   char *func = "_Csec_recv_token";
@@ -351,8 +349,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
 /**
  * Dumps the token in hexa
  */
-void _Csec_print_token(tok)
-     csec_buffer_t tok;
+void _Csec_print_token(csec_buffer_t tok)
 {
   unsigned int i;
   int l=0;

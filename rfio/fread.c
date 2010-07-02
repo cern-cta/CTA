@@ -20,10 +20,10 @@
 /*
  * Remote file read
  */
-int rfio_fread(ptr, size, items, fp)
-     void    *ptr;                           /* buffer pointer               */
-     int     size, items;                    /* .. size items                */
-     RFILE   *fp;                            /* remote file pointer          */
+int rfio_fread(void    *ptr,                           /* buffer pointer               */
+               int     size,
+               int     items,                          /* .. size items                */
+               RFILE   *fp)                            /* remote file pointer          */
 {
   int rc ;
 

@@ -13,11 +13,10 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 
-int buildvollbl(vol1, vsn, lblcode, name)
-char vol1[];
-char *vsn;
-int lblcode;
-char *name;
+int buildvollbl(char vol1[],
+		char *vsn,
+		int lblcode,
+		char *name)
 {
 	int i;
 

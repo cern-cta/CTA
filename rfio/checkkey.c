@@ -38,9 +38,8 @@ extern int (*sendfunc)(); /* Network send function */
 #define RFIO_CTRL_TIMEOUT 10
 #endif
 
-int connecttpread(host,aport)
-     char * host ;
-     u_short aport ;
+int connecttpread(char * host,
+                  u_short aport)
 {
   struct hostent          *hp ;           /* Host entry pointer.          */
   struct sockaddr_in      sin ;           /* An Internet socket address.  */
@@ -99,9 +98,8 @@ int connecttpread(host,aport)
  * Returns 1 if key is valid, 0 otherwise.
  * returns -1 if failure
  */
-int checkkey( sock, key )
-     int sock;
-     u_short  key;
+int checkkey(int sock,
+             u_short  key)
 {
   int rcode ;
   int magic ;

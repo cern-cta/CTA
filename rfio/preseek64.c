@@ -28,10 +28,9 @@
 /*
  * Remote file seek
  */
-int rfio_preseek64(s,iov,iovnb)
-     int      s ;
-     int  iovnb ;
-     struct iovec64 *iov ;
+int rfio_preseek64(int      s,
+                   struct iovec64 *iov,
+                   int  iovnb)
 {
   int s_index;
   char   * p ;  /* Pointer to buffer  */

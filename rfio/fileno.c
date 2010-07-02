@@ -17,8 +17,7 @@
 #include "rfio_rfilefdt.h"
 
 
-int rfio_fileno(fp)
-     RFILE *fp;                      /* Remote file pointer                  */
+int rfio_fileno(RFILE *fp)                      /* Remote file pointer                  */
 {
   int     fd;
 

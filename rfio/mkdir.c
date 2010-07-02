@@ -14,9 +14,9 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 
-int rfio_mkdir(dirpath, mode)     /* Remote mkdir              */
-     char  *dirpath;          /* remote directory path             */
-     int  mode;              /* remote directory mode             */
+/* Remote mkdir              */
+int rfio_mkdir(char  *dirpath,          /* remote directory path             */
+	       int  mode)              /* remote directory mode             */
 {
   char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;              /* socket descriptor            */

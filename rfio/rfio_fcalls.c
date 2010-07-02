@@ -72,14 +72,12 @@ extern int check_path_whitelist (const char *, const char *, const char **, char
 /*                                                                      */
 /************************************************************************/
 
-int   srxyopen(s, rlun,access, rt,host, bet)
-     int     s;
-     int     *rlun;
-     int     *access;
-     int     rt;
-     char    *host;
-     int  bet ;
-
+int   srxyopen(int     s,
+               int     *rlun,
+               int     *access,
+               int     rt,
+               char    *host,
+               int  bet)
 {
   char    *p ;    /* Msg buffer pointer */
   int len ;     /* Msg length  */
@@ -257,10 +255,9 @@ int   srxyopen(s, rlun,access, rt,host, bet)
   return(status);
 }
 
-int   srxyclos(s, infop, lun)
-     int     s;
-     int     lun;
-     struct rfiostat * infop ;
+int   srxyclos(int     s,
+               struct rfiostat * infop,
+               int     lun)
 {
   int     status=0;
   char    *p ;
@@ -289,9 +286,10 @@ int   srxyclos(s, infop, lun)
   return(status);
 }
 
-int srxywrit(s, infop, lun, access)
-     int     s, lun, access ;
-     struct rfiostat * infop ;
+int srxywrit(int     s,
+             struct rfiostat * infop,
+             int lun,
+             int access)
 {
   int     status=0, rcode=0;
   char    *ptr;
@@ -345,10 +343,10 @@ int srxywrit(s, infop, lun, access)
 }
 
 
-int srxyread(s, infop, lun, access)
-     int     s, lun;
-     struct rfiostat * infop ;
-     int access;
+int srxyread(int     s,
+             struct rfiostat * infop,
+             int lun,
+             int access)
 {
   int     status=0, rcode=0;
   char    *ptr;

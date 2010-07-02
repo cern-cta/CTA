@@ -20,10 +20,8 @@
  * returns -1 if an error occured or no information is available at the
  * daemon's host. 0 otherwise.
  */
-int rfio_symlink(n1,n2 )
-     char *n1 ;
-     char *n2 ;
-
+int rfio_symlink(char *n1,
+                 char *n2)
 {
   int c;
   int status ;

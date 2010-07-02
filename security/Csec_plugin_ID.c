@@ -48,16 +48,14 @@ typedef struct {
 /* EXPORTED FUNCTIONS */
 /******************************************************************************/
 
-int Csec_activate_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_activate_ID(FPARG,
+		     Csec_context_t *ctx)
 {
   return 0;
 }
 
-int Csec_deactivate_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_deactivate_ID(FPARG,
+		       Csec_context_t *ctx)
 {
   return 0;
 }
@@ -65,9 +63,8 @@ int Csec_deactivate_ID(FP, ctx)
 /**
  * Not used.
  */
-int Csec_init_context_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_init_context_ID(FPARG,
+			 Csec_context_t *ctx)
 {
     return 0;
 }
@@ -76,9 +73,8 @@ int Csec_init_context_ID(FP, ctx)
 /**
  * Not used.
  */
-int Csec_reinit_context_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_reinit_context_ID(FPARG,
+			   Csec_context_t *ctx)
 {
     return 0;
 }
@@ -86,9 +82,8 @@ int Csec_reinit_context_ID(FP, ctx)
 /**
  * Deletes the security context inside the Csec_context_t
  */
-int Csec_delete_connection_context_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_delete_connection_context_ID(FPARG,
+				      Csec_context_t *ctx)
 {
     return 0;
 }
@@ -97,9 +92,8 @@ int Csec_delete_connection_context_ID(FP, ctx)
 /**
  * Deletes the credentials inside the Csec_context_t
  */
-int Csec_delete_creds_ID(FP, ctx)
-    FPARG;
-    Csec_context_t *ctx;
+int Csec_delete_creds_ID(FPARG,
+			 Csec_context_t *ctx)
 {
 
   if (ctx->credentials != NULL) {
@@ -117,11 +111,10 @@ int Csec_delete_creds_ID(FP, ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_acquire_creds_ID(FP, ctx, service_name, is_client)
-    FPARG;
-    Csec_context_t *ctx;
-    char *service_name;
-    int is_client;
+int Csec_acquire_creds_ID(FPARG,
+			  Csec_context_t *ctx,
+			  char *service_name,
+			  int is_client)
 {
   serrno = ENOTSUP;
   return -1;
@@ -131,12 +124,11 @@ int Csec_acquire_creds_ID(FP, ctx, service_name, is_client)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_ID(FP, ctx, s, buf, len)
-    FPARG;
-    Csec_context_t *ctx;
-    int s;
-    char *buf;
-    int len;
+int Csec_server_establish_context_ext_ID(FPARG,
+					 Csec_context_t *ctx,
+					 int s,
+					 char *buf,
+					 int len)
 {
     csec_buffer_desc recv_tok;
     char *func = "server_establish_context";
@@ -187,10 +179,9 @@ int Csec_server_establish_context_ext_ID(FP, ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_ID(FP, ctx, s)
-    FPARG;
-    Csec_context_t *ctx;
-    int s;
+int Csec_client_establish_context_ID(FPARG,
+				     Csec_context_t *ctx,
+				     int s)
 {
 
   uid_t uid;

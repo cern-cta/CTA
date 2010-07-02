@@ -318,9 +318,8 @@ int stage_updc_filcp(char *a, int b, int c, char *d, u_signed64 e, int f, int g,
     return(rc);
 }
 */
-void ebc2asc(p, len)
-char *p;
-int len;
+void ebc2asc(char *p,
+             int len)
 {
 	int i;
 	char *q;
@@ -363,9 +362,8 @@ int len;
 		*q = e2atab[*q & 0xff];
 }
 
-void asc2ebc(p, len)
-char *p;
-int len;
+void asc2ebc(char *p,
+             int len)
 {
 	int i;
 	char *q;

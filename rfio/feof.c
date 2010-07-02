@@ -18,8 +18,7 @@
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
-int rfio_feof(fp)
-     RFILE * fp ;
+int rfio_feof(RFILE * fp)
 {
   int     rc  ;
 

@@ -346,8 +346,7 @@ int _Cregexp_gettsd(_Cregexp_parse,
  * Beware that the optimization-preparation code in here knows about some
  * of the structure of the compiled regexp.
  */
-Cregexp_t *Cregexp_comp(exp)
-	char *exp;
+Cregexp_t *Cregexp_comp(char *exp)
 {
 	Cregexp_t *r;
 	char *scan;
@@ -1163,9 +1162,8 @@ void _Cregexp_optail(p,
 /*
  - regexec - match a regexp against a string
  */
-int Cregexp_exec(prog, string)
-	Cregexp_t *prog;
-	char *string;
+int Cregexp_exec(Cregexp_t *prog,
+                 char *string)
 {
 	char *s;
 	char **_Cregexp_parse;     /* Input-scan pointer. */
@@ -1661,11 +1659,10 @@ char *_Cregexp_next(p,
 /*
  - regsub - perform substitutions after a regexp match
  */
-int Cregexp_sub(prog, source, dest, maxsize)
-	Cregexp_t *prog;
-	char *source;
-	char *dest;
-	size_t maxsize;
+int Cregexp_sub(Cregexp_t *prog,
+                char *source,
+                char *dest,
+                size_t maxsize)
 {
 	char *src;
 	char *dst;
@@ -1722,8 +1719,7 @@ int Cregexp_sub(prog, source, dest, maxsize)
 /*
  - regprop - printable representation of opcode
  */
-char *_Cregexp_prop(op)
-	char *op;
+char *_Cregexp_prop(char *op)
 {
 	char *p;
 	static char buf[50];

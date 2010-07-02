@@ -17,9 +17,8 @@
 #endif
 #include <rfio.h>
 
-int rfstatfs(path, statfsbuf )
-     char *path ;
-     struct rfstatfs *statfsbuf ;
+int rfstatfs(char *path,
+             struct rfstatfs *statfsbuf)
 {
   int status = 0   ;
 

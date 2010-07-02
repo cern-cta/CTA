@@ -20,10 +20,10 @@
 /*
  * Remote file buffered write
  */
-int rfio_fwrite(ptr, size, items, fp)
-     void    *ptr;          /* buffer pointer */
-     int     size, items;
-     RFILE   *fp;
+int rfio_fwrite(void    *ptr,          /* buffer pointer */
+                int     size,
+                int items,
+                RFILE   *fp)
 {
   int rc ;
 

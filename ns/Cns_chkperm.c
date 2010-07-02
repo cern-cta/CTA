@@ -16,12 +16,11 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 
 /* Cns_chkbackperm - check permissions backward */
 
-int Cns_chkbackperm(dbfd, fileid, uid, gid, clienthost)
-     struct Cns_dbfd *dbfd;
-     u_signed64 fileid;
-     uid_t uid;
-     gid_t gid;
-     const char *clienthost;
+int Cns_chkbackperm(struct Cns_dbfd *dbfd,
+                    u_signed64 fileid,
+                    uid_t uid,
+                    gid_t gid,
+                    const char *clienthost)
 {
   u_signed64 cur_fileid = fileid;
   struct Cns_file_metadata fmd_entry;
@@ -43,18 +42,17 @@ int Cns_chkbackperm(dbfd, fileid, uid, gid, clienthost)
 
 /* Cns_parsepath - parse a path, resolving symbolic links if any */
 
-int Cns_parsepath(dbfd, cwd, path, uid, gid, clienthost, parent_dir, rec_addrp, base_entry, rec_addr, flags)
-     struct Cns_dbfd *dbfd;
-     u_signed64 cwd;
-     char *path;
-     uid_t uid;
-     gid_t gid;
-     const char *clienthost;
-     struct Cns_file_metadata *parent_dir;
-     Cns_dbrec_addr *rec_addrp;
-     struct Cns_file_metadata *base_entry;
-     Cns_dbrec_addr *rec_addr;
-     int flags;
+int Cns_parsepath(struct Cns_dbfd *dbfd,
+                  u_signed64 cwd,
+                  char *path,
+                  uid_t uid,
+                  gid_t gid,
+                  const char *clienthost,
+                  struct Cns_file_metadata *parent_dir,
+                  Cns_dbrec_addr *rec_addrp,
+                  struct Cns_file_metadata *base_entry,
+                  Cns_dbrec_addr *rec_addr,
+                  int flags)
 {
   int c;
   char *component;
@@ -219,12 +217,11 @@ int Cns_parsepath(dbfd, cwd, path, uid, gid, clienthost, parent_dir, rec_addrp, 
 
 /* Cns_chkentryperm - check permissions in a given directory component */
 
-int Cns_chkentryperm(fmd_entry, mode, uid, gid, clienthost)
-     struct Cns_file_metadata *fmd_entry;
-     mode_t mode;
-     uid_t uid;
-     gid_t gid;
-     const char *clienthost;
+int Cns_chkentryperm(struct Cns_file_metadata *fmd_entry,
+                     mode_t mode,
+                     uid_t uid,
+                     gid_t gid,
+                     const char *clienthost)
 {
   if (*fmd_entry->acl == 0) { /* No extended ACL */
     if (fmd_entry->uid != uid) {

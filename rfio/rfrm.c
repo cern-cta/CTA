@@ -30,9 +30,8 @@ static char *ckpath();
 static int rm_recursive();
 
 char *cmd;
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   int c, status;
   extern char * optarg ;
@@ -110,8 +109,7 @@ int main(argc, argv)
   exit(0);
 }
 
-static char *ckpath(path)
-     char *path;
+static char *ckpath(char *path)
 {
   char *cp;
   static char newpath[BUFSIZ];
@@ -125,9 +123,8 @@ static char *ckpath(path)
   return(newpath);
 }
 
-static int rfio_pushdir(ds,dir)
-     struct dirstack **ds;
-     char *dir;
+static int rfio_pushdir(struct dirstack **ds,
+                        char *dir)
 {
   struct dirstack *tmp;
   if ( ds == NULL || dir == NULL ) return(0);
@@ -165,9 +162,8 @@ static int read_yesno() {
   return(retval);
 }
 
-static int rm_recursive(path, yesno)
-     char *path;
-     int *yesno;
+static int rm_recursive(char *path,
+                        int *yesno)
 {
   DIR *dirp;
   struct dirent *de;

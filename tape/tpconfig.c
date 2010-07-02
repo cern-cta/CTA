@@ -42,16 +42,14 @@ struct confrsn confuprsn[] = {
 };
 #endif
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "unit_name status [reason]\n");
 }
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	unsigned int n;
 	int reason;

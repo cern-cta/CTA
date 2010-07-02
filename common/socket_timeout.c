@@ -47,11 +47,10 @@ int      _net_isclosed();
 Sigfunc *_netsignal();
 #endif
 
-int netconnect_timeout(fd, addr, addr_size, timeout)
-     SOCKET fd;
-     struct sockaddr *addr;
-     size_t addr_size;
-     int timeout;
+int netconnect_timeout(SOCKET fd,
+                       struct sockaddr *addr,
+                       size_t addr_size,
+                       int timeout)
 {
 	int rc, nonblocking;
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
@@ -114,11 +113,10 @@ int netconnect_timeout(fd, addr, addr_size, timeout)
 	return(rc);
 }
 
-ssize_t netread_timeout(fd, vptr, n, timeout)
-     SOCKET fd;
-     void *vptr;
-     ssize_t n;
-     int timeout;
+ssize_t netread_timeout(SOCKET fd,
+                        void *vptr,
+                        ssize_t n,
+                        int timeout)
 {
 	size_t nleft;                /* Bytes to read */
 	ssize_t nread = 0;           /* Bytes yet read */
@@ -211,11 +209,10 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
 	return(n - nleft);
 }
 
-ssize_t netwrite_timeout(fd, vptr, n, timeout)
-     SOCKET fd;
-     void *vptr;
-     ssize_t n;
-     int timeout;
+ssize_t netwrite_timeout(SOCKET fd,
+                         void *vptr,
+                         ssize_t n,
+                         int timeout)
 {
 	size_t nleft;                /* Bytes to read */
 	ssize_t nwritten = 0;        /* Bytes yet read */
@@ -304,9 +301,8 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
 	return(n - nleft);
 }
 
-Sigfunc *_netsignal(signo, func)
-     int signo;
-     Sigfunc *func;
+Sigfunc *_netsignal(int signo,
+                    Sigfunc *func)
 {
 	struct sigaction	act, oact;
 	int n = 0;
@@ -331,8 +327,7 @@ Sigfunc *_netsignal(signo, func)
 }
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
-int _net_isclosed(fd)
-     int fd;
+int _net_isclosed(int fd)
 {
 	struct pollfd pollit;
 	
@@ -352,8 +347,7 @@ int _net_isclosed(fd)
 	return 0;
 }
 #else
-int _net_isclosed(fd)
-     int fd;
+int _net_isclosed(int fd)
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -379,9 +373,8 @@ int _net_isclosed(fd)
 #endif
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
-int _net_writable(fd, timeout)
-     int fd;
-     int timeout;
+int _net_writable(int fd,
+                  int timeout)
 {
 	struct pollfd pollit;
 	
@@ -393,9 +386,8 @@ int _net_writable(fd, timeout)
 	return(poll(&pollit, 1, timeout * 1000));
 }
 #else
-int _net_writable(fd, timeout)
-     int fd;
-     int timeout;
+int _net_writable(int fd,
+                  int timeout)
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -412,9 +404,8 @@ int _net_writable(fd, timeout)
 #endif
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
-int _net_readable(fd, timeout)
-     int fd;
-     int timeout;
+int _net_readable(int fd,
+                  int timeout)
 {
 	struct pollfd pollit;
 	
@@ -426,9 +417,8 @@ int _net_readable(fd, timeout)
 	return(poll(&pollit, 1, timeout * 1000));
 }
 #else
-int _net_readable(fd, timeout)
-     int fd;
-     int timeout;
+int _net_readable(int fd,
+                  int timeout)
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -444,9 +434,8 @@ int _net_readable(fd, timeout)
 }
 #endif
 
-int _net_connectable(fd, timeout)
-     SOCKET fd;
-     int timeout;
+int _net_connectable(SOCKET fd,
+                     int timeout)
 {
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 	struct pollfd pollit;

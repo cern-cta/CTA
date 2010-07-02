@@ -21,10 +21,9 @@
 /*
  * Remote file chown
  */
-int rfio_fchown(s, owner, group)
-     int      s;
-     int owner ;            /* Owner's uid */
-     int group ;            /* Owner's gid */
+int rfio_fchown(int      s,
+                int owner,            /* Owner's uid */
+                int group)            /* Owner's gid */
 {
   int status ;
   char   * p ;

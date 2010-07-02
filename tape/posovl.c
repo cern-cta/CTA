@@ -33,9 +33,8 @@ fd_set readmask;
 int rpfd;
 int tapefd;
 uid_t uid;
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	char actual_hdr1[81];
 	int blksize;
@@ -407,8 +406,7 @@ void cleanup()
 	(void) send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 }
 
-void configdown(drive)
-char *drive;
+void configdown(char *drive)
 {
 	char msg[OPRMSGSZ];
 

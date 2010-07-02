@@ -18,9 +18,9 @@
 ** NB This does not implement a rename across hosts
 */
 
-int  rfio_rename(fileo, filen)  /* Remote rename               */
-     char  *fileo,  /* remote old path     */
-  *filen;  /* remote new path              */
+/* Remote rename               */
+int  rfio_rename(char  *fileo,  /* remote old path     */
+                 char *filen)  /* remote new path              */
 {
   char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;              /* socket descriptor            */

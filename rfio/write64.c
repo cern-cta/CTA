@@ -21,9 +21,9 @@
 /*
  * Remote file write
  */
-int rfio_write64(s, ptr, size)
-     void    *ptr;
-     int     s, size;
+int rfio_write64(int     s,
+                 void    *ptr,
+                 int size)
 {
   int s_index;
 
@@ -42,9 +42,9 @@ int rfio_write64(s, ptr, size)
     return(rfio_write64_v2(s,(char *)ptr,size));
 }
 
-int rfio_write64_v2(s, ptr, size)
-     char    *ptr;
-     int     s, size;
+int rfio_write64_v2(int     s,
+                    char    *ptr,
+                    int size)
 {
   int status ; /* Return code of called func */
   char   * p ;  /* Pointer to buffer  */

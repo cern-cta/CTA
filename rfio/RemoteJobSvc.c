@@ -24,9 +24,8 @@
 /*                                                                   */
 /* Output: Fills stgSvc                                              */
 /* ----------------------------------------------------------------- */
-int stager_getRemJobAndDbSvc(jobSvc,dbSvc)
-     struct Cstager_IJobSvc_t ***jobSvc;
-     struct C_Services_t ***dbSvc;
+int stager_getRemJobAndDbSvc(struct Cstager_IJobSvc_t ***jobSvc,
+                             struct C_Services_t ***dbSvc)
 {
   char *func = "stager_getRemJobAndDbSvc";
   struct C_Services_t **svcs = NULL;

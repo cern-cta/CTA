@@ -22,9 +22,9 @@ static int old_uid_key = -1;
 #endif
 
 
-int rfio_lstat(filepath, statbuf)      /* Remote file lstat */
-     char    *filepath;               /* remote file path    */
-     struct stat *statbuf;            /* status buffer   */
+/* Remote file lstat */
+int rfio_lstat(char    *filepath,               /* remote file path    */
+               struct stat *statbuf)            /* status buffer   */
 {
   int      lstatus;  /* remote lstat() status     */
 #if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
@@ -174,9 +174,9 @@ int rfio_lstat(filepath, statbuf)      /* Remote file lstat */
 #endif
 }
 
-int rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
-     char    *filepath;                              /* remote file path     */
-     struct stat64 *statbuf;                         /* status buffer        */
+/* Remote file lstat    */
+int rfio_lstat64(char    *filepath,                              /* remote file path     */
+                 struct stat64 *statbuf)                         /* status buffer        */
 {
   register int    s;                           /* socket descriptor    */
   int       status ;

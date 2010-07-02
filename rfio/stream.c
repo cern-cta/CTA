@@ -40,11 +40,10 @@
 
 int data_rfio_connect();
 
-static void rfio_setup_ext_v3(iop,uid,gid,passwd)
-     RFILE   *iop;
-     int  uid;
-     int  gid;
-     int passwd;
+static void rfio_setup_ext_v3(RFILE   *iop,
+                              int  uid,
+                              int  gid,
+                              int passwd)
 {
   extern char * getenv() ;  /* External declaration  */
   char * cp ;    /* Character pointer  */
@@ -104,8 +103,7 @@ static void rfio_setup_ext_v3(iop,uid,gid,passwd)
   strcpy(iop->host,"????????");
 }
 
-int     rfio_cleanup_v3(s)         /* cleanup rfio descriptor              */
-     int     s;
+int     rfio_cleanup_v3(int s)         /* cleanup rfio descriptor              */
 {
   int s_index;
 
@@ -131,9 +129,9 @@ int     rfio_cleanup_v3(s)         /* cleanup rfio descriptor              */
   return(0);
 }
 
-int rfio_open_v3(filepath, flags, mode)
-     char    * filepath ;
-     int     flags,mode ;
+int rfio_open_v3(char    * filepath,
+                 int     flags,
+                 int mode)
 {
   char rh[1] ;
   rh[0]='\0' ;
@@ -145,16 +143,16 @@ int rfio_open_v3(filepath, flags, mode)
 /*
  * Remote file open.
  */
-int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
-     char    * filepath ;
-     int  flags,mode ;
-     uid_t uid;
-     gid_t gid;
-     int  passwd ;
-     char  * reqhost; /* In case of a Non-mapped I/O with uid & gid
-                         sepcified, which host will be contacted
-                         for key check ? */
-     char   *vmstr ;
+int rfio_open_ext_v3(char    * filepath,
+                     int  flags,
+                     int mode,
+                     uid_t uid,
+                     gid_t gid,
+                     int  passwd,
+                     char  * reqhost, /* In case of a Non-mapped I/O with uid & gid
+					 sepcified, which host will be contacted
+					 for key check ? */
+                     char   *vmstr)
 {
   /*
    * TODO: support special filemode for binary/nobinary. This only
@@ -467,8 +465,7 @@ int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   return (rfp->s) ;
 }
 
-void rfio_setup_v3(iop)
-     RFILE   *iop;
+void rfio_setup_v3(RFILE   *iop)
 {
   (void)rfio_setup_ext_v3(iop,0,0,0);
 }
@@ -476,9 +473,9 @@ void rfio_setup_v3(iop)
 /*
  * Remote file read
  */
-int rfio_read_v3(ctrl_sock, ptr, size)
-     char    *ptr;
-     int     ctrl_sock, size;
+int rfio_read_v3(int     ctrl_sock,
+                 char    *ptr,
+                 int  size)
 {
   int status ; /* Return code of called func */
   char   * p ;  /* Pointer to buffer  */
@@ -724,9 +721,9 @@ int rfio_read_v3(ctrl_sock, ptr, size)
 /*
  * Remote file write
  */
-int rfio_write_v3(ctrl_sock, ptr, size)
-     char    *ptr;
-     int     ctrl_sock, size;
+int rfio_write_v3(int     ctrl_sock,
+                  char    *ptr,
+                  int  size)
 {
   int status ; /* Return code of called func */
   char   * p ;  /* Pointer to buffer  */
@@ -866,8 +863,7 @@ int rfio_write_v3(ctrl_sock, ptr, size)
 /*
  * remote file close
  */
-int rfio_close_v3(s)
-     int     s;
+int rfio_close_v3(int     s)
 {
   int req;
   char   * p  ;
@@ -1054,10 +1050,9 @@ int rfio_close_v3(s)
  * Must be called only between an open (version 3)
  * and the first read or write system call
  */
-int rfio_lseek_v3(s, offset, how)
-     int s;
-     int offset;
-     int how;
+int rfio_lseek_v3(int s,
+                  int offset,
+                  int how)
 {
   char *p;
   char rfio_buf[BUFSIZ];
@@ -1168,8 +1163,8 @@ static int  lasthost_key = -1; /* key to hold the last connect host name in TLS 
 extern int rfio_nodeHasPort(char *node, char *host, int *port);
 
 
-int set_rcv_sockparam(s,value)
-     int s,value;
+int set_rcv_sockparam(int s,
+                      int value)
 {
   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
       if (errno != ENOBUFS)
@@ -1184,8 +1179,8 @@ int set_rcv_sockparam(s,value)
   return(value);
 }
 
-int set_snd_sockparam(s,value)
-     int s,value;
+int set_snd_sockparam(int s,
+                      int value)
 {
   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
       if (errno != ENOBUFS)
@@ -1200,11 +1195,11 @@ int set_snd_sockparam(s,value)
   return(value);
 }
 
-int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio server */
-     char    *node;                  /* remote host to connect               */
-     int     *remote  ;              /* connected host is remote or not      */
-     int     port;
-     int     flags;
+/* Connect <node>'s rfio server */
+int     data_rfio_connect(char    *node,                  /* remote host to connect               */
+			  int     *remote,              /* connected host is remote or not      */
+			  int     port,
+			  int     flags)
 {
 
   register int    s;      /* socket descriptor                    */

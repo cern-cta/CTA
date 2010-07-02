@@ -45,9 +45,8 @@ int rpfd;
 void configdown( char* );
 int rbtdmntchk( int*, char*, unsigned int* );
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	char *acctname;
 	int c;
@@ -435,8 +434,7 @@ freedrv:
 	exit (c);
 }
 
-void configdown(drive)
-char *drive;
+void configdown(char *drive)
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("rlstape", "%s\n", msg);
@@ -449,10 +447,9 @@ char *drive;
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
-int rbtdmntchk(c, drive, demountforce)
-int *c;
-char *drive;
-unsigned int *demountforce;
+int rbtdmntchk(int *c,
+               char *drive,
+               unsigned int *demountforce)
 {
 	fd_set readfds;
 	struct timeval rbttimeval;

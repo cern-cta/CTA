@@ -45,20 +45,19 @@ static float gap;	/* inter record gap for 3420/3480/3490 */
 static int infd = -1;
 static int irec;
 
-int Ctape_dmpinit(path, vid, aden, drive, devtype, maxblksize, fromblock, toblock, maxbyte, fromfile, maxfile, code, flags)
-char *path;
-char *vid;
-char *aden;
-char *drive;
-char *devtype;
-int maxblksize;
-int fromblock;
-int toblock;
-int maxbyte;
-int fromfile;
-int maxfile;
-int code;
-int flags;
+int Ctape_dmpinit(char *path,
+                  char *vid,
+                  char *aden,
+                  char *drive,
+                  char *devtype,
+                  int maxblksize,
+                  int fromblock,
+                  int toblock,
+                  int maxbyte,
+                  int fromfile,
+                  int maxfile,
+                  int code,
+                  int flags)
 {
 	struct devinfo *devinfo;
 	int errflg = 0;
@@ -229,10 +228,9 @@ int flags;
 	return (0);
 }
 
-int ebc_asc(p, q, n)
-char *p;
-char *q;
-int n;
+int ebc_asc(char *p,
+            char *q,
+            int n)
 {
 	int i;
 	static char e2atab[256] = {
@@ -275,10 +273,9 @@ int n;
         return (0);
 }
 
-int asc_asc(p, q, n)
-char *p;
-char *q;
-int n;
+int asc_asc(char *p,
+            char *q,
+            int n)
 {
 	int i;
 	static char a2atab[256] = {
@@ -322,9 +319,8 @@ int n;
 }
 
 
-int dumpblock (buffer, nbytes)
-char *buffer;
-int nbytes;
+int dumpblock (char *buffer,
+               int nbytes)
 {
 	char bufftr[33];
 	int i, k, l;
@@ -354,8 +350,7 @@ int nbytes;
         return (0);
 }
 
-int printlabel1 (label)
-char *label;
+int printlabel1 (char *label)
 {
 	Ctape_dmpmsg (MSG_OUT, " FILE ID:                    %.17s\n", label + 4);
 	Ctape_dmpmsg (MSG_OUT, " VOLUME SEQNO:               %.4s\n", label + 27);
@@ -367,8 +362,7 @@ char *label;
         return (0);
 }
 
-int printlabel2 (label)
-char *label;
+int printlabel2 (char *label)
 {
 	Ctape_dmpmsg (MSG_OUT, " RECORD FORMAT:              %.1s\n", label + 4);
 	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.5s\n", label + 5);
@@ -380,8 +374,7 @@ char *label;
         return (0);
 }
 
-int printulabel1 (label)
-char *label;
+int printulabel1 (char *label)
 {
 	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.10s\n", label + 4);
 	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.10s\n", label + 14);
@@ -395,8 +388,7 @@ char *label;
         return (0);
 }
 
-int islabel(label)
-char *label;
+int islabel(char *label)
 {
 	if (strncmp (label, "HDR1", 4) == 0) {
 		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 1:\n");
@@ -446,10 +438,9 @@ char *label;
 	return (0);
 }
 
-int report_comp_stats (infd, path, devtype)
-int infd;
-char *path;
-char *devtype;
+int report_comp_stats (int infd,
+                       char *path,
+                       char *devtype)
 {
 	COMPRESSION_STATS compstats;
 
@@ -471,16 +462,15 @@ int Ctape_dmpend()
 }
 
 
-int Ctape_dmpfil(path, lbltype, blksize, fid, fsec, fseq, lrecl, recfm, Size)
-char *path;
-char *lbltype;
-int *blksize;
-char *fid;
-int *fsec;
-int *fseq;
-int *lrecl;
-char *recfm;
-u_signed64 *Size;
+int Ctape_dmpfil(char *path,
+                 char *lbltype,
+                 int *blksize,
+                 char *fid,
+                 int *fsec,
+                 int *fseq,
+                 int *lrecl,
+                 char *recfm,
+                 u_signed64 *Size)
 {
 	int avg_block_length;
 	unsigned char blockid[4];

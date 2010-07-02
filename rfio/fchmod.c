@@ -21,9 +21,8 @@
 /*
  * Remote file fchmod
  */
-int rfio_fchmod(s, mode)
-     int    s;
-     int mode;                      /* remote directory mode */
+int rfio_fchmod(int    s,
+                int mode)                      /* remote directory mode */
 {
   int status ;
   char   * p ;

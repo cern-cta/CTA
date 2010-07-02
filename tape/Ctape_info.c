@@ -15,17 +15,16 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int Ctape_info(path, blksize, blockid, density, devtype, drive, fid, fseq, lrecl, recfm)
-char *path;
-int *blksize;
-unsigned char *blockid;
-char *density;
-char *devtype;
-char *drive;
-char *fid;
-int *fseq;
-int *lrecl;
-char *recfm;
+int Ctape_info(char *path,
+               int *blksize,
+               unsigned char *blockid,
+               char *density,
+               char *devtype,
+               char *drive,
+               char *fid,
+               int *fseq,
+               int *lrecl,
+               char *recfm)
 {
 	int c, n;
 	int errflg = 0;

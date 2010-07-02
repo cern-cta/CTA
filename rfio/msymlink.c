@@ -33,9 +33,8 @@ static int rfio_msymlink_findentry (char *,int);
 static int rfio_symend_this (int,int);
 extern int rfio_newhost (char *);
 
-int rfio_msymlink(n1,file2)
-     char *n1 ;
-     char *file2 ;
+int rfio_msymlink(char *n1,
+                  char *file2)
 {
   int rt ,rc ,fd, rfindex, Tid, parserc;
   char *host , *filename ;
@@ -101,10 +100,9 @@ int rfio_msymlink(n1,file2)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-static int rfio_smsymlink(s,n1,filename)
-     int s ;
-     char * n1 ;
-     char * filename ;
+static int rfio_smsymlink(int s,
+                          char * n1,
+                          char * filename)
 {
   char     buf[BUFSIZ];
   int             status;         /* remote fopen() status        */
@@ -256,9 +254,8 @@ int rfio_symend()
 
 /* This is a simplified version of rfio_symend() that just free entry in the table */
 /* If flag is set a clean close (write on the socket) is tried */
-static int rfio_symend_this(s,flag)
-     int s;
-     int flag;
+static int rfio_symend_this(int s,
+                            int flag)
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -306,10 +303,9 @@ static int rfio_symend_this(s,flag)
 /*
  * Seach for a free index in the msymlink_tab table
  */
-static int rfio_msymlink_allocentry(hostname,Tid,s)
-     char *hostname;
-     int Tid;
-     int s;
+static int rfio_msymlink_allocentry(char *hostname,
+                                    int Tid,
+                                    int s)
 {
   int i;
   int rc;
@@ -347,9 +343,8 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
 /*
  * Seach for a given index in the msymlink_tab table
  */
-static int rfio_msymlink_findentry(hostname,Tid)
-     char *hostname;
-     int Tid;
+static int rfio_msymlink_findentry(char *hostname,
+                                   int Tid)
 {
   int i;
   int rc;

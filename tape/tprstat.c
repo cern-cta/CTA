@@ -14,15 +14,13 @@
 #define MAXDGP 4
 #define MAXJOBS 64
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s [hostname]\n", cmd);
 }
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	int c, i, j;
 	struct rsv_status rsv_status[MAXJOBS];

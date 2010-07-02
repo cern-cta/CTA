@@ -18,11 +18,10 @@
 #include "serrno.h"
 #include "sendscsicmd.h"
 
-int setdens(tapefd, path, devtype, den)
-int tapefd;
-char *path;
-char *devtype;
-int den;
+int setdens(int tapefd,
+            char *path,
+            char *devtype,
+            int den)
 {
 	unsigned char cdb[6];
 	unsigned char comppage;

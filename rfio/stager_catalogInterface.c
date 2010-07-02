@@ -32,8 +32,7 @@
 /*                                                      */
 /* Output: Fills dbSvc                                  */
 /* ---------------------------------------------------- */
-int stager_getDbSvc(dbSvc)
-     struct C_Services_t ***dbSvc;
+int stager_getDbSvc(struct C_Services_t ***dbSvc)
 {
   char *func = "stager_getDbSvc";
   struct C_Services_t **svc;
@@ -80,9 +79,8 @@ int stager_getDbSvc(dbSvc)
 /*                                                                   */
 /* Output: Fills stgSvc                                              */
 /* ----------------------------------------------------------------- */
-int stager_getStgAndDbSvc(stgSvc,dbSvc)
-     struct Cstager_IStagerSvc_t ***stgSvc;
-     struct C_Services_t ***dbSvc;
+int stager_getStgAndDbSvc(struct Cstager_IStagerSvc_t ***stgSvc,
+                          struct C_Services_t ***dbSvc)
 {
   char *func = "stager_getStgAndDbSvc";
   struct C_Services_t **svcs = NULL;
@@ -148,9 +146,7 @@ int stager_getStgAndDbSvc(stgSvc,dbSvc)
 /* ----------------------------------------------------------------- */
 
 
-int stager_getJobSvc(jobSvc)
-     struct Cstager_IJobSvc_t ***jobSvc;
-
+int stager_getJobSvc(struct Cstager_IJobSvc_t ***jobSvc)
 {
   char *func = "stager_getJobSvc";
   struct C_Services_t **svcs = NULL;

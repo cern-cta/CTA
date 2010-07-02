@@ -19,8 +19,7 @@
 #include <u64subr.h>
 
 
-void report_mode(mode)
-     unsigned int mode;
+void report_mode(unsigned int mode)
 {
   static char letters[11]="----------";
   register unsigned int  m;
@@ -94,8 +93,7 @@ void report_mode(mode)
 }
 
 
-void report(buf)
-     struct stat64    *buf;
+void report(struct stat64    *buf)
 {
   struct passwd   *pwd;
   struct group    *grp;
@@ -124,9 +122,8 @@ void report(buf)
   fprintf(stdout,"Last stat. mod. : %s",ctime(&buf->st_ctime));
 }
 
-int main(argc,argv)
-     int     argc;
-     char    **argv;
+int main(int     argc,
+         char    **argv)
 {
   struct stat64     buf;
   if (argc != 2)  {

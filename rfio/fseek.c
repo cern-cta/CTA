@@ -20,10 +20,9 @@
 /*
  * Remote file fseek
  */
-int rfio_fseek(fp, offset, whence)
-     RFILE *fp;
-     long int offset;
-     int whence;
+int rfio_fseek(RFILE *fp,
+               long int offset,
+               int whence)
 {
   int rc;
 

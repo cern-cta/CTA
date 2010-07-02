@@ -7,16 +7,16 @@
 #include <osdep.h>
 #include <net.h>
 
-int dorecv(x, y, z)
-int     x, z;
-char    *y;
+int dorecv(int x,
+           char *y,
+	   int z)
 {
 	return(netread(x,y,z));
 }
 
-int dosend(x, y, z)
-int     x, z;
-char    *y;
+int dosend(int x,
+           char *y,
+           int z)
 {
 	return(netwrite(x,y,z));
 }

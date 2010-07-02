@@ -13,9 +13,8 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 
-int rfio_statfs(path, statfsbuf)
-     char    *path;               /* remote file path                     */
-     struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
+int rfio_statfs(char    *path,               /* remote file path                     */
+                struct rfstatfs *statfsbuf)     /* status buffer (subset of local used) */
 {
   char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;      /* socket descriptor            */

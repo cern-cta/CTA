@@ -43,8 +43,7 @@ int maxfds;
 struct extended_robot_info extended_robot_info;
 int rpfd;
 
-int rmc_main(main_args)
-struct main_args *main_args;
+int rmc_main(struct main_args *main_args)
 {
 	int c;
 	unsigned char cdb[12];
@@ -261,9 +260,8 @@ struct main_args *main_args;
         tl_rtcpd.tl_exit( &tl_rmcdaemon, 0 );
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	struct main_args main_args;
 
@@ -274,9 +272,7 @@ char **argv;
 	exit (rmc_main (&main_args));
 }
 
-void
-doit(rqfd)
-int rqfd;
+void doit(int rqfd)
 {
 	int c;
 	char *clienthost;
@@ -291,11 +287,10 @@ int rqfd;
 		netclose (rqfd);
 }
 
-int getreq(s, req_type, req_data, clienthost)
-int s;
-int *req_type;
-char *req_data;
-char **clienthost;
+int getreq(int s,
+           int *req_type,
+           char *req_data,
+           char **clienthost)
 {
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
@@ -361,10 +356,9 @@ char **clienthost;
 	}
 }
 
-void procreq(req_type, req_data, clienthost)
-int req_type;
-char *req_data;
-char *clienthost;
+void procreq(int req_type,
+             char *req_data,
+             char *clienthost)
 {
 	int c;
 

@@ -13,11 +13,10 @@
 #include "sendscsicmd.h" 
 
 
-int get_compression_stats(tapefd, path, devtype, comp_stats)
-int tapefd;
-char *path;
-char *devtype;
-COMPRESSION_STATS *comp_stats;
+int get_compression_stats(int tapefd,
+                          char *path,
+                          char *devtype,
+                          COMPRESSION_STATS *comp_stats)
 {
 #if defined(linux)
 	unsigned long kbytes_from_host;
@@ -219,10 +218,9 @@ COMPRESSION_STATS *comp_stats;
 	return (0);
 }
 
-int clear_compression_stats(tapefd, path, devtype)
-int tapefd;
-char *path;
-char *devtype;
+int clear_compression_stats(int tapefd,
+                            char *path,
+                            char *devtype)
 {
   (void)devtype;
 #if defined(linux)

@@ -14,10 +14,10 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 
-int rfio_chown(file, owner, group)     /* Remote chown                 */
-     char  *file;          /* remote file path             */
-     int  owner ;     /* Owner's uid */
-     int   group ;     /* Owner's gid */
+/* Remote chown                 */
+int rfio_chown(char  *file,          /* remote file path             */
+               int  owner,     /* Owner's uid */
+               int   group)     /* Owner's gid */
 {
   char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;              /* socket descriptor            */

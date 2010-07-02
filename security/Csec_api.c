@@ -212,9 +212,8 @@ int Csec_clearContext(Csec_context_t *ctx) {
  * API function for the server to establish the context
  *
  */
-int Csec_server_establishContext(ctx, s)
-     Csec_context_t *ctx;
-     int s;
+int Csec_server_establishContext(Csec_context_t *ctx,
+                                 int s)
 {  
   return Csec_server_establish_context_ext(ctx, s, NULL, 0);
 }
@@ -223,11 +222,10 @@ int Csec_server_establishContext(ctx, s)
  * API function for the server to establish the context
  * Allows to specify a buffer for a token already received.
  */
-int Csec_server_establish_context_ext(ctx, s, buf, len)
-     Csec_context_t *ctx;
-     int s;
-     char *buf;
-     int len;
+int Csec_server_establish_context_ext(Csec_context_t *ctx,
+                                      int s,
+                                      char *buf,
+                                      int len)
 {
   char *func = "Csec_server_establish_context_ext";
 
@@ -283,9 +281,8 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establishContext(ctx, s)
-     Csec_context_t *ctx;
-     int s;
+int Csec_client_establishContext(Csec_context_t *ctx,
+                                 int s)
 {
   char *func="Csec_client_establishContext";
 

@@ -15,10 +15,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-int Ctape_status(host, drv_status, nbentries)
-char *host;
-struct drv_status drv_status[];
-int nbentries;
+int Ctape_status(char *host,
+                 struct drv_status drv_status[],
+                 int nbentries)
 {
 	int c, i, n;
 	char func[16];

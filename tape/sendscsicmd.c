@@ -151,20 +151,19 @@ void find_sgpath(char *sgpath, int maj, int min) {
 }
 
 
-int send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, timeout, flags, nb_sense_ret, msgaddr)
-int tapefd;
-char *path;
-int do_not_open;
-unsigned char *cdb;
-int cdblen;
-unsigned char *buffer;
-int buflen;
-char *sense;
-int senselen;
-int timeout;	/* in milliseconds */
-int flags;
-int *nb_sense_ret;
-char **msgaddr;
+int send_scsi_cmd (int tapefd,
+                   char *path,
+                   int do_not_open,
+                   unsigned char *cdb,
+                   int cdblen,
+                   unsigned char *buffer,
+                   int buflen,
+                   char *sense,
+                   int senselen,
+                   int timeout,   /* in milliseconds */
+                   int flags,
+                   int *nb_sense_ret,
+                   char **msgaddr)
 {
 	/* int i;*/
 	int fd;
@@ -333,9 +332,8 @@ char **msgaddr;
 }
 
 
-void get_ss_msg(scsi_status, msgaddr)
-int scsi_status;
-char **msgaddr;
+void get_ss_msg(int scsi_status,
+                char **msgaddr)
 {
 	int i;
 

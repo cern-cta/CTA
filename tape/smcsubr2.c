@@ -25,12 +25,11 @@ extern int smc_lasterror(struct smc_status *, char **);
 extern int smc_move_medium(int, char *, int, int, int);
 extern int smc_find_cartridge(int, char *, char *, int, int, int, struct smc_element_info[] );
 
-int smc_dismount (fd, loader, robot_info, drvord, vid)
-int fd;
-char *loader;
-struct robot_info *robot_info;
-int drvord;
-char *vid;
+int smc_dismount (int fd,
+                  char *loader,
+                  struct robot_info *robot_info,
+                  int drvord,
+                  char *vid)
 {
     int c;
     struct smc_element_info element_info;
@@ -80,11 +79,10 @@ char *vid;
 	RETURN (0);
 }
 
-int smc_export (fd, loader, robot_info, vid)
-int fd;
-char *loader;
-struct robot_info *robot_info;
-char *vid;
+int smc_export (int fd,
+                char *loader,
+                struct robot_info *robot_info,
+                char *vid)
 {
         int c;
         struct smc_element_info element_info;
@@ -145,11 +143,10 @@ char *vid;
 	RETURN (0);
 }
 
-int smc_import (fd, loader, robot_info, vid)
-int fd;
-char *loader;
-struct robot_info *robot_info;
-char *vid;
+int smc_import (int fd,
+                char *loader,
+                struct robot_info *robot_info,
+                char *vid)
 {
         int c;
 	int device_start;
@@ -230,13 +227,12 @@ char *vid;
 	RETURN (c);
 }
 
-int smc_mount (fd, loader, robot_info, drvord, vid, invert)
-int fd;
-char *loader;
-struct robot_info *robot_info;
-int drvord;
-char *vid;
-int invert;
+int smc_mount (int fd,
+               char *loader,
+               struct robot_info *robot_info,
+               int drvord,
+               char *vid,
+               int invert)
 {
     int c;
     struct smc_element_info element_info;

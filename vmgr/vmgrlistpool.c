@@ -20,13 +20,12 @@
 extern	char	*optarg;
 extern	int	optind;
 
-void listentry(pool_name, pool_uid, pool_gid, capacity, tot_free_space, sflag)
-char *pool_name;
-uid_t pool_uid;
-gid_t pool_gid;
-u_signed64 capacity;
-u_signed64 tot_free_space;
-int sflag;
+void listentry(char *pool_name,
+               uid_t pool_uid,
+               gid_t pool_gid,
+               u_signed64 capacity,
+               u_signed64 tot_free_space,
+               int sflag)
 {
 	signed64 c64;
 	signed64 f64;
@@ -73,9 +72,8 @@ int sflag;
 			(double)f64 * 100. / (double)c64 : 0);
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int c;
 	u_signed64 capacity;

@@ -149,13 +149,12 @@ int main()
 	exit (expertd_main());
 }
 
-int getreq(s, magic, req_type, req_data, data_len, clienthost)
-     int s;
-     int *magic;
-     int *req_type;
-     char **req_data;
-     int *data_len;
-     char **clienthost;
+int getreq(int s,
+           int *magic,
+           int *req_type,
+           char **req_data,
+           int *data_len,
+           char **clienthost)
 {
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
@@ -206,12 +205,11 @@ int getreq(s, magic, req_type, req_data, data_len, clienthost)
 	}
 }
 
-int procreq(req_type, req_data, data_len, clienthost, s)
-     int req_type;
-     char *req_data;
-     int data_len;
-     char *clienthost;
-     int s;
+int procreq(int req_type,
+            char *req_data,
+            int data_len,
+            char *clienthost,
+            int s)
 {
 	int c;
   (void)data_len;
@@ -239,9 +237,7 @@ int procreq(req_type, req_data, data_len, clienthost, s)
 	return (0);
 }
 
-void *
-doit(s)
-     int s;
+void* doit(int s)
 {
 	int c;
 	char *clienthost;

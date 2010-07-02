@@ -17,17 +17,16 @@
 #include "Ctape_api.h"
 #include "vmgr_api.h"
 
-int Ctape_mount(path, vid, side, dgn, density, drive, mode, vsn, lbltype, vdqm_reqid)
-char *path;
-char *vid;
-int side;
-char *dgn;
-char *density;
-char *drive;
-int mode;
-char *vsn;
-char *lbltype;
-int vdqm_reqid;
+int Ctape_mount(char *path,
+                char *vid,
+                int side,
+                char *dgn,
+                char *density,
+                char *drive,
+                int mode,
+                char *vsn,
+                char *lbltype,
+                int vdqm_reqid)
 {
 	char acctname[7];
 	char actual_den[6];

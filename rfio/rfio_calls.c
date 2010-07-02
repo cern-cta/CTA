@@ -151,8 +151,7 @@ const char *rfio_all_perms[] = { "FTRUST", "WTRUST", "RTRUST", "XTRUST", "OPENTR
 /* free elements in a NULL terminated array of character pointers
  * and the array itself
  */
-static int l_free_strlist(pathelements)
-     char **pathelements;
+static int l_free_strlist(char **pathelements)
 {
   int n = 0;
 
@@ -176,10 +175,9 @@ static int l_free_strlist(pathelements)
  * type: 0 for unix style, 1 for windows style
  * prefix: prefix for the path, used for windows style drive or hostname
  */
-static char *l_path_elements_to_path(pathelements, type, prefix)
-     const char **pathelements;
-     int type;
-     const char *prefix;
+static char *l_path_elements_to_path(const char **pathelements,
+                                     int type,
+                                     const char *prefix)
 {
   size_t len;
   int n;
@@ -401,13 +399,12 @@ static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,pref
  * outprefix: if set is filled with the path prefix
  * outelements: if set is set to an array of pointers to the path elements
  */
-static int rfio_canonicalize_path(inpath,outpath,outtype,outprefix,outelements,travel_sym)
-     const char *inpath;
-     char **outpath;
-     int *outtype;
-     char **outprefix;
-     char ***outelements;
-     int travel_sym;
+static int rfio_canonicalize_path(const char *inpath,
+                                  char **outpath,
+                                  int *outtype,
+                                  char **outprefix,
+                                  char ***outelements,
+                                  int travel_sym)
 {
   char *result_path;
   char **elements;
@@ -467,13 +464,12 @@ static int rfio_canonicalize_path(inpath,outpath,outtype,outprefix,outelements,t
  * opath: if not null is filled with a canonicalized version
  * opathsize: space available in opath
  */
-int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym)
-     const char *hostname;
-     const char *path;
-     const char **rfiod_permstrs;
-     char *opath;
-     size_t opathsize;
-     int travel_sym;
+int check_path_whitelist(const char *hostname,
+                         const char *path,
+                         const char **rfiod_permstrs,
+                         char *opath,
+                         size_t opathsize,
+                         int travel_sym)
 {
   int found = 0;
   int n;
@@ -624,9 +620,8 @@ int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym
 /*                                                                      */
 /************************************************************************/
 
-int     srrequest(s,bet)
-     int     s;
-     int     *bet;
+int     srrequest(int     s,
+                  int     *bet)
 {
   char    * p;
   WORD  magic;
@@ -662,10 +657,9 @@ int     srrequest(s,bet)
   return code;
 }
 
-int srchkreqsize(s, p, len)
-     int     s;
-     char *p;
-     int len;
+int srchkreqsize(int     s,
+                 char *p,
+                 int len)
 {
   char tmpbuf[1024];
   int templen = 1024;
@@ -685,8 +679,7 @@ int srchkreqsize(s, p, len)
   return(0);
 }
 
-int  srchk(s)
-     int     s;
+int  srchk(int     s)
 {
   char * p       ;
   int status = 0 ;
@@ -700,11 +693,10 @@ int  srchk(s)
   return 0;
 }
 
-int srsymlink(s,request,rt, host)
-     int s;
-     int request;
-     int     rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
+int srsymlink(int s,
+	      int request,
+	      int     rt, /* Is it a remote site call ?   */
+	      char *host) /* Where the request comes from */
 
 {
   char * p       ;
@@ -829,10 +821,9 @@ int srsymlink(s,request,rt, host)
 }
 
 
-int srreadlink(s,host,rt)
-     int s;
-     char *host;
-     int rt;
+int srreadlink(int s,
+               char *host,
+               int rt)
 {
   char * p       ;
   int status=0   ;
@@ -913,10 +904,9 @@ int srreadlink(s,host,rt)
 
 }
 
-int     srchown(s,host,rt)
-     int     s;
-     char *host;
-     int rt;
+int     srchown(int     s,
+                char *host,
+                int rt)
 {
   char  *p;
   LONG  status = 0;
@@ -999,10 +989,9 @@ int     srchown(s,host,rt)
   return status;
 }
 
-int     srchmod(s,host,rt)
-     int     s;
-     char *host;
-     int rt;
+int     srchmod(int     s,
+                char *host,
+                int rt)
 {
   char *p;
   LONG status = 0;
@@ -1084,10 +1073,9 @@ int     srchmod(s,host,rt)
   return status;
 }
 
-int     srmkdir(s,host,rt)
-     int     s;
-     char *host;
-     int rt;
+int     srmkdir(int     s,
+                char *host,
+                int rt)
 {
   char *p;
   LONG status = 0;
@@ -1169,10 +1157,9 @@ int     srmkdir(s,host,rt)
   return status;
 }
 
-int     srrmdir(s,host,rt)
-     int     s;
-     char *host;
-     int rt;
+int     srrmdir(int     s,
+                char *host,
+                int rt)
 {
   char *p;
   LONG status = 0;
@@ -1252,10 +1239,9 @@ int     srrmdir(s,host,rt)
   return status;
 }
 
-int srrename(s,host,rt)
-     int     s;
-     char    *host;
-     int     rt;
+int srrename(int     s,
+             char    *host,
+             int     rt)
 {
   char    *p;
   LONG    status = 0;
@@ -1340,9 +1326,8 @@ int srrename(s,host,rt)
   return status;
 }
 
-int srlockf(s,fd)
-     int     s;
-     int     fd;
+int srlockf(int     s,
+            int     fd)
 {
   char    *p;
   LONG    status = 0;
@@ -1406,8 +1391,7 @@ int srlockf(s,fd)
   return status;
 }
 
-int   srerrmsg(s)
-     int     s;
+int   srerrmsg(int     s)
 {
   int   code;
   int    len;
@@ -1433,11 +1417,10 @@ int   srerrmsg(s)
   return(0);
 }
 
-int     srlstat(s,rt,host,bet)
-     int     s;
-     int     rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
-     int   bet; /* Version indicator: 0(old) or 1(new) */
+int     srlstat(int     s,
+                int     rt, /* Is it a remote site call ?   */
+                char *host, /* Where the request comes from */
+                int   bet) /* Version indicator: 0(old) or 1(new) */
 {
   char *   p;
   int status = 0, rcode = 0;
@@ -1558,11 +1541,10 @@ int     srlstat(s,rt,host,bet)
   return 0;
 }
 
-int     srstat(s,rt,host,bet)
-     int     s;
-     int   rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
-     int   bet; /* Version indicator: 0(old) or 1(new) */
+int     srstat(int     s,
+               int   rt, /* Is it a remote site call ?   */
+               char *host, /* Where the request comes from */
+               int   bet) /* Version indicator: 0(old) or 1(new) */
 {
   char *   p;
   int status = 0, rcode = 0;
@@ -1688,10 +1670,9 @@ int     srstat(s,rt,host,bet)
   return 0;
 }
 
-int     sraccess(s, host, rt)
-     int     s;
-     char    *host;
-     int     rt;
+int     sraccess(int     s,
+                 char    *host,
+                 int     rt)
 {
   char *p;
   int  status = 0;
@@ -1867,8 +1848,7 @@ int     sraccess(s, host, rt)
   return 0;
 }
 
-int  srstatfs(s)
-     int     s;
+int  srstatfs(int     s)
 {
   int status = 0;
   int rcode = 0;
@@ -1925,11 +1905,10 @@ int  srstatfs(s)
 
 }
 
-int  sropen(s,rt,host,bet)
-     int     s;
-     int   rt;   /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
-     int   bet; /* Version indicator: 0(old) or 1(new) */
+int  sropen(int     s,
+            int   rt,   /* Is it a remote site call ?   */
+            char *host, /* Where the request comes from */
+            int   bet) /* Version indicator: 0(old) or 1(new) */
 {
   int   status;
   int   rcode = 0;
@@ -2179,10 +2158,9 @@ int rfio_calls_answer_client_internal
   return 0;
 }
 
-int srwrite(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat * infop;
+int srwrite(int     s,
+            struct rfiostat * infop,
+            int     fd)
 {
   int  status;         /* Return code               */
   int  rcode;          /* To send back errno        */
@@ -2269,10 +2247,9 @@ int srwrite(s, infop, fd)
   return status;
 }
 
-int srread(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat * infop;
+int srread(int     s,
+           struct rfiostat * infop,
+           int     fd)
 {
   int  status;        /* Return code                */
   int  rcode;         /* To send back errno         */
@@ -2369,10 +2346,9 @@ int srread(s, infop, fd)
   return status;
 }
 
-int srreadahead(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int srreadahead(int     s,
+                struct rfiostat *infop,
+                int     fd)
 {
   int  status;         /* Return code                 */
   int  rcode;          /* To send back errno          */
@@ -2492,10 +2468,9 @@ int srreadahead(s, infop, fd)
   }
 }
 
-int   srclose(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat * infop;
+int   srclose(int     s,
+              struct rfiostat * infop,
+              int     fd)
 {
   int status;
   int  rcode;
@@ -2553,9 +2528,8 @@ int   srclose(s, infop, fd)
   return status;
 }
 
-int  srpclose(s, fs)
-     int     s;
-     FILE    *fs;
+int  srpclose(int     s,
+              FILE    *fs)
 {
   int  status;
   char *p;
@@ -2579,10 +2553,9 @@ int  srpclose(s, fs)
   return status;
 }
 
-FILE  *srpopen(s, host, rt)
-     int     s;
-     char    *host;
-     int     rt;
+FILE  *srpopen(int     s,
+               char    *host,
+               int     rt)
 {
   int  status = 0;
   int  rcode = 0;
@@ -2640,9 +2613,8 @@ FILE  *srpopen(s, host, rt)
 }
 
 
-int srfread(s, fp)
-     int     s;
-     FILE    *fp;
+int srfread(int     s,
+            FILE    *fp)
 {
   int  status = 0;
   int  rcode = 0;
@@ -2688,9 +2660,8 @@ int srfread(s, fp)
   return(status);
 }
 
-int srfwrite(s, fp)
-     int     s;
-     FILE    *fp;
+int srfwrite(int     s,
+             FILE    *fp)
 {
   int     status = 0;
   int     rcode = 0;
@@ -2734,10 +2705,9 @@ int srfwrite(s, fp)
   return(status);
 }
 
-int     srfstat(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int     srfstat(int     s,
+                struct rfiostat *infop,
+                int     fd)
 {
   int  status;
   int  rcode;
@@ -2800,10 +2770,9 @@ int     srfstat(s, infop, fd)
   return 0;
 }
 
-int srlseek(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int srlseek(int     s,
+            struct rfiostat *infop,
+            int     fd)
 {
   int  status;
   int  rcode;
@@ -2831,10 +2800,9 @@ int srlseek(s, infop, fd)
   return status;
 }
 
-int srpreseek(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int srpreseek(int     s,
+              struct rfiostat *infop,
+              int     fd)
 {
   int  status;        /* Return code                */
   int  size;          /* Buffer size                */
@@ -3012,11 +2980,10 @@ int srpreseek(s, infop, fd)
   }
 }
 
-int     srfchmod(s, host, rt, fd)
-     int     s;
-     char    *host;
-     int     rt;
-     int        fd;
+int     srfchmod(int     s,
+                 char    *host,
+                 int     rt,
+                 int        fd)
 {
   int        status;
   int        rcode;
@@ -3060,11 +3027,10 @@ int     srfchmod(s, host, rt, fd)
   return 0;
 }
 
-int     srfchown(s, host, rt, fd)
-     int     s;
-     char    *host;
-     int     rt;
-     int        fd;
+int     srfchown(int     s,
+                 char    *host,
+                 int     rt,
+                 int        fd)
 {
   int        status;
   int        rcode;
@@ -3110,11 +3076,10 @@ int     srfchown(s, host, rt, fd)
   return 0;
 }
 
-DIR *sropendir(s,rt,host,bet)
-int s;
-int rt;
-char *host;
-int bet;
+DIR *sropendir(int s,
+               int rt,
+               char *host,
+               int bet)
 {
   int status;
   int rcode = 0;
@@ -3304,10 +3269,9 @@ int bet;
   return(dirp);
 }
 
-int srreaddir(s, infop, dirp)
-     int s;
-     struct rfiostat * infop;
-     DIR *dirp;
+int srreaddir(int s,
+              struct rfiostat * infop,
+              DIR *dirp)
 {
   int   status;       /* Return code          */
   int   rcode=0;      /* To send back errno   */
@@ -3358,10 +3322,9 @@ int srreaddir(s, infop, dirp)
   return status;
 }
 
-int srrewinddir(s, infop, dirp)
-     int s;
-     struct rfiostat * infop;
-     DIR *dirp;
+int srrewinddir(int s,
+                struct rfiostat * infop,
+                DIR *dirp)
 {
   int status = 0;
   int rcode = 0;
@@ -3391,10 +3354,9 @@ int srrewinddir(s, infop, dirp)
   return status;
 }
 
-int srclosedir(s,infop,dirp)
-     int s;
-     struct rfiostat * infop;
-     DIR *dirp;
+int srclosedir(int s,
+               struct rfiostat * infop,
+               DIR *dirp)
 {
   int status = 0;
   int rcode = 0;
@@ -3423,12 +3385,11 @@ int srclosedir(s,infop,dirp)
 /*
  * check if trusted host.
  */
-static int chksuser(uid,gid,hostname,ptrcode,permstr)
-     int uid;                 /* uid of caller */
-     int gid;                /* gid of caller */
-     char *hostname;        /* caller's host name */
-     int *ptrcode;                /* Return code */
-     char *permstr;                /* permission string for the request */
+static int chksuser(int uid,                 /* uid of caller */
+                    int gid,                /* gid of caller */
+                    char *hostname,        /* caller's host name */
+                    int *ptrcode,                /* Return code */
+                    char *permstr)                /* permission string for the request */
 {
 
   char ptr[BUFSIZ];
@@ -3458,9 +3419,8 @@ static int chksuser(uid,gid,hostname,ptrcode,permstr)
 }
 
 
-static int chk_newacct(pwd,gid)
-     struct passwd *pwd;
-     gid_t gid;
+static int chk_newacct(struct passwd *pwd,
+                       gid_t gid)
 {
   char buf[BUFSIZ];
   char acct[MAXACCTSIZE];
@@ -3485,9 +3445,8 @@ static int chk_newacct(pwd,gid)
   return -1;
 }
 
-int chsgroup(pw,gid)
-     struct passwd *pw;
-     int gid;
+int chsgroup(struct passwd *pw,
+             int gid)
 {
   struct group *gr;
   char **membername;
@@ -3516,12 +3475,11 @@ int chsgroup(pw,gid)
 /*
  * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
  */
-int chsuser(uid,gid,hostname,ptrcode,permstr)
-     int uid;                /* uid of caller                     */
-     int gid;                /* gid of caller                     */
-     char *hostname;         /* caller's host name                */
-     int *ptrcode;           /* Return code                       */
-     char *permstr;          /* permission string for the request */
+int chsuser(int uid,                /* uid of caller                     */
+            int gid,                /* gid of caller                     */
+            char *hostname,         /* caller's host name                */
+            int *ptrcode,           /* Return code                       */
+            char *permstr)          /* permission string for the request */
 {
 
   struct passwd *pw;
@@ -3557,12 +3515,11 @@ int chsuser(uid,gid,hostname,ptrcode,permstr)
 /*
  * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
  */
-int check_user_perm(uid,gid,hostname,ptrcode,permstr)
-     int *uid;               /* uid of caller                     */
-     int *gid;               /* gid of caller                     */
-     char *hostname;         /* caller's host name                */
-     int *ptrcode;           /* Return code                       */
-     char *permstr;          /* permission string for the request */
+int check_user_perm(int *uid,               /* uid of caller                     */
+                    int *gid,               /* gid of caller                     */
+                    char *hostname,         /* caller's host name                */
+                    int *ptrcode,           /* Return code                       */
+                    char *permstr)          /* permission string for the request */
 {
   if (Csec_service_type < 0) {
     *uid = peer_uid;
@@ -3573,11 +3530,10 @@ int check_user_perm(uid,gid,hostname,ptrcode,permstr)
 }
 
 
-int  sropen_v3(s, rt, host, bet)
-     int     s;
-     int     rt;             /* Is it a remote site call ?          */
-     char    *host;          /* Where the request comes from        */
-     int     bet;            /* Version indicator: 0(old) or 1(new) */
+int  sropen_v3(int     s,
+               int     rt,             /* Is it a remote site call ?          */
+               char    *host,          /* Where the request comes from        */
+               int     bet)            /* Version indicator: 0(old) or 1(new) */
 {
   int  status;
   int  rcode = 0;
@@ -4014,10 +3970,9 @@ int  sropen_v3(s, rt, host, bet)
 }
 
 
-int   srclose_v3(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int   srclose_v3(int     s,
+                 struct rfiostat *infop,
+                 int     fd)
 {
   int  status;
   int  rcode;
@@ -4305,8 +4260,7 @@ void *consume_thread(int *ptr)
   return(NULL);
 }
 
-void wait_consumer_thread(cid)
-     int cid;
+void wait_consumer_thread(int cid)
 {
   log(LOG_DEBUG,"Entering wait_consumer_thread\n");
   /* Indicate to the consumer thread that an error has occured */
@@ -4325,10 +4279,9 @@ void wait_consumer_thread(cid)
     }
 }
 
-     int srread_v3(ctrl_sock, infop, fd)
-          int     ctrl_sock;
-          int     fd;
-          struct  rfiostat* infop;
+     int srread_v3(int     ctrl_sock,
+                   struct  rfiostat* infop,
+                   int     fd)
 {
   int  status;         /* Return code          */
   int  rcode;          /* To send back errno   */
@@ -4643,10 +4596,9 @@ void wait_consumer_thread(cid)
     }
 }
 
-int srwrite_v3(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int srwrite_v3(int     s,
+               struct rfiostat *infop,
+               int     fd)
 {
   int  status;         /* Return code         */
   int  rcode;          /* To send back errno  */
@@ -5366,10 +5318,9 @@ int srwrite_v3(s, infop, fd)
   }
 }
 
-int srlseek_v3(s,infop,fd)
-     int s;
-     int fd;
-     struct rfiostat *infop;
+int srlseek_v3(int s,
+               struct rfiostat *infop,
+               int fd)
 {
   int  status;
   int  rcode;

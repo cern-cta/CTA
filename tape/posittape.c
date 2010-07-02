@@ -42,14 +42,13 @@ int getMaxPosTime() {
 }
 
 
-int gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
-int tapefd;
-char *path;
-int lblcode;
-char *hdr1;
-char *hdr2;
-char *uhl1;
-int *tmr;
+int gethdr2uhl1(int tapefd,
+                char *path,
+                int lblcode,
+                char *hdr1,
+                char *hdr2,
+                char *uhl1,
+                int *tmr)
 {
 	int c;
 	int cfseq;

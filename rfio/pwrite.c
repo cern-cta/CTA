@@ -14,10 +14,11 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <stdlib.h>
 
-int rfio_pwrite(ptr, size, items, fp)   /* Remote file write   */
-     char    *ptr;                           /* buffer pointer               */
-     int     size, items;                    /* .. size items                */
-     RFILE   *fp;                            /* remote file pointer          */
+/* Remote file write   */
+int rfio_pwrite(char    *ptr,                           /* buffer pointer               */
+                int     size,
+                int items,                              /* .. size items                */
+                RFILE   *fp)                            /* remote file pointer          */
 {
   char    buf[BUFSIZ];       /* General input/output buffer          */
   int status ;

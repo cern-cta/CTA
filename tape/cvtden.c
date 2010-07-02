@@ -20,8 +20,7 @@ static char adens[CA_MAXDENNUM][6] = {"0", "800", "1600", "6250", "38000",
 static char adensc[CA_MAXDENNUM][6] = {"", "", "", "", "38KC",
 	"8200C", "8500C", "38KDC", "", "", "10GC", "", "", "DDSC",
 				       "20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC", "200GC", "110GC","160GC","300GC", "400GC", "500GC", "700GC", "800GC", "1000GC"};
-int cvtden(aden)
-char	*aden;
+int cvtden(char	*aden)
 {
 	int i;
 
@@ -37,9 +36,7 @@ char	*aden;
 }
 
 /*	den2aden - convert integer densities to alphanumeric */
-char *
-den2aden(den)
-int	den;
+char* den2aden(int	den)
 {
 	if (den & IDRC)
 		return (adensc[den & ~IDRC]);

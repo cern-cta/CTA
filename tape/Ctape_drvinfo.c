@@ -14,9 +14,8 @@
 #include "marshall.h"
 #include "serrno.h"
 
-int Ctape_drvinfo(drive, devinfo)
-char *drive;
-struct devinfo *devinfo;
+int Ctape_drvinfo(char *drive,
+                  struct devinfo *devinfo)
 {
 	int c;
 	char func[16];

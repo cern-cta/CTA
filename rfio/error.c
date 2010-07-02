@@ -28,11 +28,10 @@ char *rfio_serror() ;
 /*
  * Get remote error string corresponding to code.
  */
-char *rfio_errmsg_r (s, code, buf, buflen)
-     int     s;
-     int     code;
-     char  *buf;
-     size_t  buflen;
+char *rfio_errmsg_r (int     s,
+                     int     code,
+                     char  *buf,
+                     size_t  buflen)
 {
   char   *p;
   LONG   len;
@@ -78,9 +77,8 @@ char *rfio_errmsg_r (s, code, buf, buflen)
 
 static int rfio_error_key = -1;
 
-char *rfio_errmsg(s, code)
-     int     s;
-     int     code;
+char *rfio_errmsg(int     s,
+                  int     code)
 {
   char *buf = NULL;
   int buflen = CA_MAXLINELEN+1;
@@ -90,9 +88,9 @@ char *rfio_errmsg(s, code)
 }
 
 
-char *rfio_serror_r(buf, buflen)   /* print an error message  */
-     char *buf;
-     size_t buflen;
+/* print an error message  */
+char *rfio_serror_r(char *buf,
+                    size_t buflen)
 {
   int          s;
   int  last_rferr ;  /* to preserve rfio_errno   */
@@ -188,8 +186,7 @@ char *rfio_serror()
 }
 
 
-void rfio_perror(umsg)
-     char *umsg ;
+void rfio_perror(char *umsg)
 {
   char *errmsg ;
   errmsg =  rfio_serror();

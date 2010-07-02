@@ -16,19 +16,18 @@
 #define __BASEVERSION__ "?"
 #include "Ctape.h"
 #include "Ctape_api.h"
-int buildhdrlbl(hdr1, hdr2, fid, fsid, fsec, fseq, retentd, recfm, blksize, lrecl, den, lblcode)
-char hdr1[];
-char hdr2[];
-char *fid;
-char *fsid;
-int fsec;
-int fseq;
-int retentd;
-char *recfm;
-int blksize;
-int lrecl;
-int den;
-int lblcode;
+int buildhdrlbl(char hdr1[],
+                char hdr2[],
+                char *fid,
+                char *fsid,
+                int fsec,
+                int fseq,
+                int retentd,
+                char *recfm,
+                int blksize,
+                int lrecl,
+                int den,
+                int lblcode)
 {
 	int blkcnt;
 	char buf[7];

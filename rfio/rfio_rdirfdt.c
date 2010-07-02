@@ -19,8 +19,7 @@ RDIR dummyrdir;                 /* Used to fill index */
 /*
  * Seach for a free index in the rdirfdt table
  */
-int rfio_rdirfdt_allocentry(s)
-     int s;
+int rfio_rdirfdt_allocentry(int s)
 {
   return(((s >= 0) && (s < MAXRFD)) ? s : -1);
 }
@@ -32,9 +31,8 @@ int rfio_rdirfdt_allocentry(s)
  * only boundary and content within the boundary
  * is performed.
  */
-int rfio_rdirfdt_findentry(s,scanflag)
-     int s;
-     int scanflag;
+int rfio_rdirfdt_findentry(int s,
+                           int scanflag)
 {
   int i;
   if (scanflag == FINDRDIR_WITH_SCAN) {
@@ -59,9 +57,8 @@ int rfio_rdirfdt_findentry(s,scanflag)
  * only boundary and content within the boundary
  * is performed.
  */
-int rfio_rdirfdt_findptr(ptr,scanflag)
-     RDIR *ptr;
-     int scanflag;
+int rfio_rdirfdt_findptr(RDIR *ptr,
+                         int scanflag)
 {
   int i;
   if (scanflag == FINDRDIR_WITH_SCAN) {
@@ -83,8 +80,7 @@ int rfio_rdirfdt_findptr(ptr,scanflag)
  * Free a given index in the rdirfdt table
  * Warning : the argument is REALLY an index
  */
-int rfio_rdirfdt_freeentry(s)
-     int s;
+int rfio_rdirfdt_freeentry(int s)
 {
   if ((s >= 0) && (s < MAXRFD) && (rdirfdt[s] != NULL)) {
     if (rdirfdt[s] != &dummyrdir) free((char *)rdirfdt[s]);

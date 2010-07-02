@@ -35,10 +35,8 @@ extern char* getconfent () ;
  *     -1 otherwise.
  * If RFIOD ALARM  is 0, alarm for any code.
  */
-int rfio_alrm(rcode,buf)
-     int rcode ;
-     char *buf ;
-
+int rfio_alrm(int rcode,
+              char *buf)
 {
   time_t clock ;
   int fd  ;

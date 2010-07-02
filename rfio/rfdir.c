@@ -47,9 +47,8 @@ int list_dir(char*,int,int);
 static int exit_rc = 0;
 static char *ckpath();
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   extern char * optarg;
   extern int optind;
@@ -132,8 +131,7 @@ int main(argc, argv)
   exit(exit_rc);
 }
 
-static char *ckpath(path)
-     char *path;
+static char *ckpath(char *path)
 {
   char *cp;
   static char newpath[BUFSIZ];
@@ -147,9 +145,8 @@ static char *ckpath(path)
   return(newpath);
 }
 
-static int rfio_pushdir(ds,dir)
-     struct dirstack **ds;
-     char *dir;
+static int rfio_pushdir(struct dirstack **ds,
+                        char *dir)
 {
   struct dirstack *tmp;
   if ( ds == NULL || dir == NULL ) return(0);
@@ -172,9 +169,9 @@ static struct dirstack *rfio_popdir(ds)
   return(*ds);
 }
 
-int list_dir(dir,recursively,multiple)
-     char *dir;
-     int recursively,multiple;
+int list_dir(char *dir,
+             int recursively,
+             int multiple)
 {
   RDIR *dirp;
   struct stat64 st;

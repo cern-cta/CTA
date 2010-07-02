@@ -17,8 +17,7 @@
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
-long rfio_ftell(fp)
-     RFILE    *fp;
+long rfio_ftell(RFILE    *fp)
 {
   long      rc;
 

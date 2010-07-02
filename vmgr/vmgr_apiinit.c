@@ -13,8 +13,7 @@
 #include "serrno.h"
 static int vmgr_api_key = -1;
 
-int vmgr_apiinit(thip)
-struct vmgr_api_thread_info **thip;
+int vmgr_apiinit(struct vmgr_api_thread_info **thip)
 {
 	Cglobals_get (&vmgr_api_key,
 	    (void **) thip, sizeof(struct vmgr_api_thread_info));
@@ -28,8 +27,7 @@ struct vmgr_api_thread_info **thip;
 	return (0);
 }
 
-int *
-C__vmgr_errno()
+int * C__vmgr_errno()
 {
 struct vmgr_api_thread_info *thip;
 	Cglobals_get (&vmgr_api_key,

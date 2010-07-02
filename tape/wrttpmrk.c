@@ -11,10 +11,9 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-int wrttpmrk(tapefd, path, n)
-int tapefd;
-char *path;
-int n;
+int wrttpmrk(int tapefd,
+             char *path,
+             int n)
 {
 	char func[16];
 	struct mtop mtop;

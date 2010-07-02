@@ -18,10 +18,9 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-int writelbl(tapefd, path, lblbuf)
-int tapefd;
-char *path;
-char *lblbuf;
+int writelbl(int tapefd,
+             char *path,
+             char *lblbuf)
 {
 	char func[16];
 	int n;

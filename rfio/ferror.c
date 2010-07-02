@@ -15,8 +15,7 @@
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
-int rfio_ferror(fp)
-     RFILE * fp ;
+int rfio_ferror(RFILE * fp)
 {
   int     rc  ;
 

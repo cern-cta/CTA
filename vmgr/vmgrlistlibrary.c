@@ -18,11 +18,10 @@
 #include "vmgr_api.h"
 #include "vmgr_constants.h"
 
-void listentry(library_name, capacity, nb_free_slots, status)
-char *library_name;
-int capacity;
-int nb_free_slots;
-int status;
+void listentry(char *library_name,
+               int capacity,
+               int nb_free_slots,
+               int status)
 {
 	const char *statusStr = NULL;
 
@@ -43,9 +42,8 @@ int status;
 		statusStr);
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int c;
 	int capacity;

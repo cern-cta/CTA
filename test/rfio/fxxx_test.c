@@ -19,9 +19,8 @@
 #include "u64subr.h"
 #include "Cgetopt.h"
 
-int main(argc,argv)
-	int argc;
-	char **argv;
+int main(int argc,
+         char **argv)
 {
 	FILE *fd;
 	char dummy[11] = "1234567890";

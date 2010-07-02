@@ -50,8 +50,8 @@ void print_trace(int level, const char *label, const char *format, ...)
 	serrno = sav_serrno;
 }
 
-void init_trace(name)  /* initialize trace level               */
-const char    *name;                  /* environment variable name            */
+void init_trace(const char    *name)                  /* environment variable name            */
+  /* initialize trace level               */
 {
 	register char    *p;    /* general purpose char. string pointer */
 	trc_spec_t *trc;
@@ -115,9 +115,9 @@ void print_trace_r(void *trace, int level, const char *label, const char *format
 	serrno = sav_serrno;
 }
 
-void init_trace_r(trace, name)  /* initialize trace level               */
-void    **trace;
-const char    *name;                  /* environment variable name            */
+void init_trace_r(  /* initialize trace level               */
+		  void    **trace,
+		  const char    *name)                  /* environment variable name            */
 {
 	register char    *p;    /* general purpose char. string pointer */
 	trc_spec_t *trc;

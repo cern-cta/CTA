@@ -23,9 +23,8 @@
  *		0	for EOF
  *		ETEOV	for EOV
  */
-int checkeofeov (tapefd, path)
-int	tapefd;
-char	*path;
+int checkeofeov (int	tapefd,
+                 char	*path)
 {
 	int c;
 	struct devlblinfo  *dlip;
@@ -64,9 +63,8 @@ char	*path;
 }
 
 /*	wrthdrlbl - write header labels */
-int wrthdrlbl (tapefd, path)
-int	tapefd;
-char	*path;
+int wrthdrlbl (int	tapefd,
+               char	*path)
 {
 	int c;
 	struct devlblinfo  *dlip;
@@ -101,9 +99,8 @@ char	*path;
 	return (wrttpmrk (tapefd, path, 1));
 }
 
-int wrteotmrk(tapefd, path)
-int tapefd;
-char *path;
+int wrteotmrk(int tapefd,
+              char *path)
 {
 	int c;
 	struct devlblinfo  *dlip;
@@ -127,11 +124,10 @@ char *path;
 }
 
 /*	wrttrllbl - write trailer labels */
-int wrttrllbl (tapefd, path, labelid, nblocks)
-int	tapefd;
-char	*path;
-char	*labelid;
-int	nblocks;
+int wrttrllbl (int	tapefd,
+               char	*path,
+               char	*labelid,
+               int	nblocks)
 {
 	char buf[7];
 	int c;
@@ -182,9 +178,8 @@ int	nblocks;
 }
 
 /*	deltpfil - delete current tape file */
-int deltpfil (tapefd, path)
-int	tapefd;
-char	*path;
+int deltpfil (int	tapefd,
+              char	*path)
 {
 	int c;
 	struct devlblinfo  *dlip;

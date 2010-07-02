@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include "rfio_api.h"
 
-int main(argc,argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int i;
 

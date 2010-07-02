@@ -239,10 +239,9 @@ struct smc_element_info element_info[];
 	return (avail_elem);
 }
 
-int smc_get_geometry(fd, rbtdev, robot_info)
-int fd;
-char *rbtdev;
-struct robot_info *robot_info;
+int smc_get_geometry(int fd,
+                     char *rbtdev,
+                     struct robot_info *robot_info)
 {
 	unsigned char buf[36];
 	unsigned char cdb[6];
@@ -321,13 +320,12 @@ struct robot_info *robot_info;
 	RETURN (0);
 }
 
-int smc_read_elem_status(fd, rbtdev, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
+int smc_read_elem_status(int fd,
+			 char *rbtdev,
+			 int type,
+			 int start,
+			 int nbelem,
+			 struct smc_element_info element_info[])
 {
 	char func[16];
 	int rc;
@@ -337,14 +335,13 @@ struct smc_element_info element_info[];
 	RETURN (rc);
 }
 
-int smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-char *template;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
+int smc_find_cartridge2 (int fd,
+                         char *rbtdev,
+                         char *template,
+                         int type,
+                         int start,
+                         int nbelem,
+                         struct smc_element_info element_info[])
 {
 	int c;
 	static char err_msgbuf[132];
@@ -406,14 +403,13 @@ struct smc_element_info element_info[];
 }
 
 
-int smc_find_cartridge(fd, rbtdev, template, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-char *template;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
+int smc_find_cartridge(int fd,
+                       char *rbtdev,
+                       char *template,
+                       int type,
+                       int start,
+                       int nbelem,
+                       struct smc_element_info element_info[])
 {
 	unsigned char cdb[12];
 	char func[16];
@@ -516,9 +512,8 @@ struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x5A, 0x01, RBT_NORETRY, "Operator Medium Removal Request"}
 };
 
-int smc_lasterror(smc_stat, msgaddr)
-struct smc_status *smc_stat;
-char **msgaddr;
+int smc_lasterror(struct smc_status *smc_stat,
+                  char **msgaddr)
 {
 	unsigned int i;
 
@@ -544,12 +539,11 @@ char **msgaddr;
 	return (RBT_NORETRY);
 }
 
-int smc_move_medium(fd, rbtdev, from, to, invert)
-int fd;
-char *rbtdev;
-int from;
-int to;
-int invert;
+int smc_move_medium(int fd,
+                    char *rbtdev,
+                    int from,
+                    int to,
+                    int invert)
 {
 	unsigned char cdb[12];
 	char func[16];
@@ -593,10 +587,9 @@ int invert;
 }
 
 
-int smc_ready_inport(fd, rbtdev, port)
-int fd;
-char *rbtdev;
-int port;
+int smc_ready_inport(int fd,
+                     char *rbtdev,
+                     int port)
 {
 	unsigned char cdb[6];
 	char func[16];

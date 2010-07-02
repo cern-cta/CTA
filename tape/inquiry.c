@@ -17,10 +17,9 @@
 #endif
 #include "sendscsicmd.h"
 
-int inquiry(fd, path, inq_data)
-int fd;
-char *path;
-unsigned char *inq_data;
+int inquiry(int fd,
+            char *path,
+            unsigned char *inq_data)
 {
 	char func[16];
 	unsigned char buf[36];
@@ -46,10 +45,9 @@ unsigned char *inq_data;
 }
 
 /*      inquiry80 - get drive serial number */
-int inquiry80(fd, path, inq_data)
-int fd;
-char *path;
-unsigned char *inq_data;
+int inquiry80(int fd,
+              char *path,
+              unsigned char *inq_data)
 {
 	unsigned char buf[16];
 	char func[16];

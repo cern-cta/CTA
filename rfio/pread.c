@@ -14,10 +14,11 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include "rfio_rfilefdt.h"
 
-int rfio_pread(ptr, size, items, fp)    /* Remote file read    */
-     char    *ptr;                           /* buffer pointer               */
-     int     size, items;                    /* .. size items                */
-     RFILE   *fp;                            /* remote file pointer          */
+/* Remote file read    */
+int rfio_pread(char    *ptr,                           /* buffer pointer               */
+               int     size,
+               int items,                              /* .. size items                */
+               RFILE   *fp)                            /* remote file pointer          */
 {
   int   status ;
   int rcode;

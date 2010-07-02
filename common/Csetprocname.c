@@ -44,10 +44,9 @@
 
 /* We prefer to explicitely do NOTHING rather than execute dummy code */
 /* This is safer -; */
-int Cinitsetprocname(argc, argv, envp)
-     int argc;
-     char **argv;
-     char **envp;
+int Cinitsetprocname(int argc,
+                     char **argv,
+                     char **envp)
 {
   return(0);
 }
@@ -184,10 +183,9 @@ static int	__Csetprocname (char *, ...);
 #endif /* SPT_TYPE != SPT_BUILTIN */
 static size_t __sm_strlcpy (register char *, register char *, ssize_t);
 
-int Cinitsetprocname(argc, argv, envp)
-     int argc;
-     char **argv;
-     char **envp;
+int Cinitsetprocname(int argc,
+                     char **argv,
+                     char **envp)
 {
   register int i;
   extern char **environ;
@@ -380,10 +378,9 @@ __Csetprocname(char *fmt, ...)
 **              strlen(src)
 */
 
-static size_t __sm_strlcpy(dst, src, size)
-     register char *dst;
-     register char *src;
-     ssize_t size;
+static size_t __sm_strlcpy(register char *dst,
+                           register char *src,
+                           ssize_t size)
 {
   register ssize_t i;
   

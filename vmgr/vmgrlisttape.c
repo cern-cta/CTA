@@ -19,10 +19,9 @@
 extern	char	*optarg;
 extern	int	optind;
 
-void listentry(lp, xflag, sflag)
-struct vmgr_tape_info *lp;
-int xflag;
-int sflag;
+void listentry(struct vmgr_tape_info *lp,
+               int xflag,
+               int sflag)
 {
 	time_t ltime;
 	char p_stat = '\0';
@@ -120,9 +119,8 @@ int sflag;
 	printf ("\n");
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int c;
 	int errflg = 0;

@@ -30,11 +30,10 @@ RFILE  *rfilefdt[MAXRFD];        /* File descriptors tables             */
 int rfio_open_v2(char*, int, int);
 
 
-static void rfio_setup_ext(iop,uid,gid,passwd)
-     RFILE   *iop;
-     int  uid;
-     int  gid;
-     int passwd;
+static void rfio_setup_ext(RFILE   *iop,
+                           int  uid,
+                           int  gid,
+                           int passwd)
 {
   extern char * getenv() ;  /* External declaration  */
   char * cp ;    /* Character pointer  */
@@ -96,8 +95,8 @@ static void rfio_setup_ext(iop,uid,gid,passwd)
   strcpy(iop->host,"????????");
 }
 
-int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
-     int     s;
+/* cleanup rfio descriptor              */
+int     rfio_cleanup(int     s)
 {
   int s_index;
 
@@ -124,9 +123,9 @@ int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
 }
 
 
-int rfio_open(filepath, flags, mode)
-     char    *filepath ;
-     int     flags,mode ;
+int rfio_open(char    *filepath,
+              int     flags,
+              int mode)
 {
 
 #ifdef O_LARGEFILE
@@ -189,9 +188,9 @@ int rfio_open(filepath, flags, mode)
 #endif
 }
 
-int  rfio_open_v2(filepath, flags, mode)
-     char    * filepath ;
-     int     flags,mode ;
+int  rfio_open_v2(char    * filepath,
+                  int     flags,
+                  int mode)
 {
   char rh[1] ;
   rh[0]='\0' ;
@@ -204,16 +203,16 @@ int  rfio_open_v2(filepath, flags, mode)
  * This entry is called from rfio_open64_v2 and rfio_open64_v3
  * when server does not support 64 bits mode.
  */
-int rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
-     char    * filepath ;
-     int  flags,mode ;
-     uid_t uid;
-     gid_t gid;
-     int  passwd ;
-     char  * reqhost; /* In case of a Non-mapped I/O with uid & gid
-                         sepcified, which host will be contacted
-                         for key check ? */
-     char   *vmstr ;
+int rfio_open_ext(char    * filepath,
+                  int  flags,
+                  int mode,
+                  uid_t uid,
+                  gid_t gid,
+                  int  passwd,
+                  char  * reqhost, /* In case of a Non-mapped I/O with uid & gid
+				      sepcified, which host will be contacted
+				      for key check ? */
+                  char   *vmstr)
 {
   /*
    * TODO: support special filemode for binary/nobinary. This only
@@ -507,8 +506,7 @@ int rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
   return (rfp->s) ;
 }
 
-void rfio_setup(iop)
-     RFILE   *iop;
+void rfio_setup(RFILE   *iop)
 {
   (void)rfio_setup_ext(iop,0,0,0);
 }

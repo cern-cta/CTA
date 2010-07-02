@@ -15,9 +15,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-int Ctape_reserve(count, dgn_rsv)
-int count;
-struct dgn_rsv dgn_rsv[];
+int Ctape_reserve(int count,
+                  struct dgn_rsv dgn_rsv[])
 {
 	int c;
 	char func[16];

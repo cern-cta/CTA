@@ -32,8 +32,7 @@ static int rfio_munlink_findentry (char *,int);
 static int rfio_unend_this (int,int);
 extern int rfio_newhost (char *);
 
-int rfio_munlink(file)
-     char *file ;
+int rfio_munlink(char *file)
 {
   int rt ,rc ,fd, rfindex, Tid, parserc;
   char *host , *filename ;
@@ -98,9 +97,8 @@ int rfio_munlink(file)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-static int rfio_smunlink(s,filename)
-     int s ;
-     char * filename ;
+static int rfio_smunlink(int s,
+                         char * filename)
 {
   char     buf[BUFSIZ];
   int             status;         /* remote fopen() status        */
@@ -252,9 +250,8 @@ int rfio_unend()
 
 /* This is a simplified version of rfio_unend() that just free entry in the table */
 /* If flag is set a clean close (write on the socket) is tried */
-static int rfio_unend_this(s,flag)
-     int s;
-     int flag;
+static int rfio_unend_this(int s,
+                           int flag)
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -302,10 +299,9 @@ static int rfio_unend_this(s,flag)
 /*
  * Seach for a free index in the munlink_tab table
  */
-static int rfio_munlink_allocentry(hostname,Tid,s)
-     char *hostname;
-     int Tid;
-     int s;
+static int rfio_munlink_allocentry(char *hostname,
+                                   int Tid,
+                                   int s)
 {
   int i;
   int rc;
@@ -343,9 +339,8 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
 /*
  * Seach for a given index in the munlink_tab table
  */
-static int rfio_munlink_findentry(hostname,Tid)
-     char *hostname;
-     int Tid;
+static int rfio_munlink_findentry(char *hostname,
+                                  int Tid)
 {
   int i;
   int rc;

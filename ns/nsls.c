@@ -81,9 +81,8 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int c;
   int errflg = 0;
@@ -186,8 +185,7 @@ int main(argc, argv)
   exit (0);
 }
 
-int procpath(fullpath)
-     char *fullpath;
+int procpath(char *fullpath)
 {
   int c;
   char comment[CA_MAXCOMMENTLEN+1];
@@ -223,8 +221,7 @@ int procpath(fullpath)
   }
 }
 
-int listdir(dir)
-     char *dir;
+int listdir(char *dir)
 {
   int c;
   char curdir[CA_MAXPATHLEN+1];
@@ -354,11 +351,10 @@ int listdir(dir)
   return (0);
 }
 
-int listentry(path, statbuf, slink, comment)
-     char *path;
-     struct Cns_filestatcs *statbuf;
-     char *slink;
-     char *comment;
+int listentry(char *path,
+              struct Cns_filestatcs *statbuf,
+              char *slink,
+              char *comment)
 {
   char modestr[11];
   time_t ltime;
@@ -483,8 +479,7 @@ decode_user(uid_t uid)
   return (sav_uidstr);
 }
 
-int listsegs(path)
-     char *path;
+int listsegs(char *path)
 {
   int c;
   struct Cns_fileid file_uniqueid;

@@ -31,10 +31,12 @@
 extern int switch_write();
 
 int
-rfio_xywrite(lun, buf, nrec, nwrit, chopt, irc)
-     int     lun, nrec, nwrit;
-     char    *buf, *chopt;
-     int     *irc;
+rfio_xywrite(int lun,
+	     char* buf,
+	     int nrec,
+	     int nwrit,
+	     char* chopt,
+	     int* irc)
 {
   char    buffer[128];            /* general purpose buffer       */
   register char *p=buf;           /* buffer pointer               */
@@ -127,10 +129,13 @@ rfio_xywrite(lun, buf, nrec, nwrit, chopt, irc)
  * Fortran wrapper
  */
 
-void xywrit_(flun, fbuf, fnrec, fnwrit, fchopt, firc, fchoptl)
-     int     *flun, *fnrec, *fnwrit, *firc;
-     char    *fbuf, *fchopt;
-     int     fchoptl;
+void xywrit_(int* flun,
+	     char* fbuf,
+	     int* fnrec,
+	     int* fnwrit,
+	     char* fchopt,
+	     int* firc,
+	     int fchoptl)
 {
   char    *chopt;         /* xywrite options                      */
   int     status;         /* xywrite return status                */

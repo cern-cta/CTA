@@ -76,9 +76,8 @@ char *logbuf;
 	}
 }
 
-int marshall_ELEMENT (sbpp, element_info)
-char **sbpp;
-struct smc_element_info *element_info;
+int marshall_ELEMENT (char **sbpp,
+                      struct smc_element_info *element_info)
 {
 	char *sbp = *sbpp;
 
@@ -96,9 +95,8 @@ struct smc_element_info *element_info;
 
 /*	rmc_srv_export - export/eject a cartridge from the robot */
 
-int rmc_srv_export(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_export(char *req_data,
+                   char *clienthost)
 {
 	int c;
 	char func[16];
@@ -144,9 +142,8 @@ char *clienthost;
 
 /*	rmc_srv_findcart - find cartridge(s) */
 
-int rmc_srv_findcart(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_findcart(char *req_data,
+                     char *clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -232,9 +229,8 @@ char *clienthost;
 
 /*	rmc_srv_getgeom - get the robot geometry */
 
-int rmc_srv_getgeom(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_getgeom(char *req_data,
+                    char *clienthost)
 {
 	char func[16];
 	gid_t gid;
@@ -280,9 +276,8 @@ char *clienthost;
 
 /*	rmc_srv_import - import/inject a cartridge into the robot */
 
-int rmc_srv_import(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_import(char *req_data,
+                   char *clienthost)
 {
 	int c;
 	char func[16];
@@ -328,9 +323,8 @@ char *clienthost;
 
 /*	rmc_srv_mount - mount a cartridge on a drive */
 
-int rmc_srv_mount(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_mount(char *req_data,
+                  char *clienthost)
 {
 	int c;
 	int drvord;
@@ -380,9 +374,8 @@ char *clienthost;
 
 /*	rmc_srv_readelem - read element status */
 
-int rmc_srv_readelem(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_readelem(char *req_data,
+                     char *clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -461,9 +454,8 @@ char *clienthost;
 
 /*	rmc_srv_unmount - dismount a cartridge from a drive */
 
-int rmc_srv_unmount(req_data, clienthost)
-char *req_data;
-char *clienthost;
+int rmc_srv_unmount(char *req_data,
+                    char *clienthost)
 {
 	int c;
 	int drvord;

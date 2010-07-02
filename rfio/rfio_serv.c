@@ -148,8 +148,8 @@ void *handler_context = NULL;
 int forced_mover_exit_error = 1;
 
 
-int set_rcv_sockparam(s,value)
-     int s,value;
+int set_rcv_sockparam(int s,
+                      int value)
 {
   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
     if (errno != ENOBUFS)
@@ -164,8 +164,8 @@ int set_rcv_sockparam(s,value)
   return(value);
 }
 
-int set_snd_sockparam(s,value)
-     int s,value;
+int set_snd_sockparam(int s,
+                      int value)
 {
   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
     if (errno != ENOBUFS)
@@ -180,9 +180,8 @@ int set_snd_sockparam(s,value)
   return(value);
 }
 
-int main (argc, argv)
-     int     argc;
-     char    **argv;
+int main (int     argc,
+          char    **argv)
 {
   extern int      opterr, optind;         /* required by getopt(3)*/
   extern char     *optarg;                /* required by getopt(3)*/
@@ -588,18 +587,16 @@ int main (argc, argv)
 }
 
 
-void reaper(dummy)
-     int dummy;
+void reaper(int dummy)
 {
   (void)dummy;
 }
 
-int doit(s, fromp, mode, uid, gid)
-     int      s;
-     struct sockaddr_in *fromp;
-     int mode;
-     uid_t uid;
-     gid_t gid;
+int doit(int      s,
+         struct sockaddr_in *fromp,
+         int mode,
+         uid_t uid,
+         gid_t gid)
 {
   int      request, status;        /* Request Id  number               */
   int      fd = -1;                /* Local fd      -> -1              */

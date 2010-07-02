@@ -13,12 +13,11 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_dismount(server, smc_ldr, vid, drvord, force)
-char *server;
-char *smc_ldr;
-char *vid;
-int drvord;
-int force;
+int rmc_dismount(char *server,
+                 char *smc_ldr,
+                 char *vid,
+                 int drvord,
+                 int force)
 {
 	int c;
 	gid_t gid;

@@ -23,8 +23,7 @@ int rfio_close_v2(int s);
 /*
  * remote file close
  */
-int rfio_close(s)
-     int     s;
+int rfio_close(int     s)
 {
   int      s_index;
   int rc;
@@ -44,8 +43,7 @@ int rfio_close(s)
   return(rc);
 }
 
-int rfio_close_v2(s)
-     int     s;
+int rfio_close_v2(int     s)
 {
   char     rfio_buf[BUFSIZ] ;
   char   * p  ;

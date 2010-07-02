@@ -13,13 +13,12 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_read_elem_status(server, smc_ldr, type, startaddr, nbelem, element_info)
-char *server;
-char *smc_ldr;
-int type;
-int startaddr;
-int nbelem;
-struct smc_element_info *element_info;
+int rmc_read_elem_status(char *server,
+                         char *smc_ldr,
+                         int type,
+                         int startaddr,
+                         int nbelem,
+                         struct smc_element_info *element_info)
 {
 	int c;
 	struct smc_element_info *elemp;

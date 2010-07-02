@@ -22,9 +22,8 @@ static int logfunction_key = 0;
 
 /*	stager_seterrbuf - set receiving buffer for error messages */
 
-int stager_seterrbuf(buffer, buflen)
-		 char *buffer;
-		 int buflen;
+int stager_seterrbuf(char *buffer,
+                     int buflen)
 {
 	char **errbufp;
 	int *errbuflenp;
@@ -41,9 +40,8 @@ int stager_seterrbuf(buffer, buflen)
 
 /*	stager_setoutbuf - set receiving buffer for output messages */
 
-int stager_setoutbuf(buffer, buflen)
-		 char *buffer;
-		 int buflen;
+int stager_setoutbuf(char *buffer,
+                     int buflen)
 {
 	char **outbufp;
 	int *outbuflenp;
@@ -60,9 +58,8 @@ int stager_setoutbuf(buffer, buflen)
 
 /*	stager_geterrbuf - get receiving buffer for error messages */
 
-int stager_geterrbuf(buffer, buflen)
-		 char **buffer;
-		 int *buflen;
+int stager_geterrbuf(char **buffer,
+                     int *buflen)
 {
 	char **errbufp;
 	int *errbuflenp;
@@ -79,9 +76,8 @@ int stager_geterrbuf(buffer, buflen)
 
 /*	stager_getoutbuf - get receiving buffer for output messages */
 
-int stager_getoutbuf(buffer, buflen)
-		 char **buffer;
-		 int *buflen;
+int stager_getoutbuf(char **buffer,
+                     int *buflen)
 {
 	char **outbufp;
 	int *outbuflenp;
@@ -98,8 +94,7 @@ int stager_getoutbuf(buffer, buflen)
 
 /*	stager_setlog - set receiving callback routine for error and output messages */
 
-int stager_setlog(logfunction)
-     void (*logfunction) (int, char *);
+int stager_setlog(void (*logfunction) (int, char *))
 {
 	void *logfunctionp;
 
@@ -113,8 +108,7 @@ int stager_setlog(logfunction)
 
 /*	stager_getlog - get receiving callback routine for error and output messages */
 
-int stager_getlog(logfunction)
-     void (**logfunction) (int, char *);
+int stager_getlog(void (**logfunction) (int, char *))
 {
 	void *logfunctionp;
 

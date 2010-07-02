@@ -38,8 +38,7 @@ void tpdump_usrmsg(int msg_type, char *msg, ...)
 	va_end (args);
 }
 
-int exit_prog(exit_code)
-int exit_code;
+int exit_prog(int exit_code)
 {
 	Ctape_dmpend();
 	if (reserve_done)
@@ -47,8 +46,7 @@ int exit_code;
 	exit (exit_code);
 }
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
@@ -57,9 +55,8 @@ char *cmd;
 	    "[-N [fromblock,]toblock] [-q fromfile] [-v vsn] -V vid\n");
 }
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	static char aden[CA_MAXDENLEN+1] = "";
 	int c;

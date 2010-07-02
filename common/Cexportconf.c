@@ -24,8 +24,7 @@
 #define EXPORTCONF_FILENAME "rlimit"
 
 
-int Cexportconf(dirname) 
-     char *dirname;
+int Cexportconf(char *dirname)
 { 
 
 

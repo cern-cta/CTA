@@ -20,8 +20,7 @@
 /*
  * remote pclose
  */
-int rfio_pclose(fs)
-     RFILE  *fs ;
+int rfio_pclose(RFILE  *fs)
 {
   char   * p  ;
   int  status, fss ;

@@ -67,10 +67,9 @@ static char tp_err_msgbuf[TPERRMSGBUSZ];
 
 int get_sk_msg(char *, int, int, int, char **);
 
-int gettperror(tapefd, path, msgaddr)
-int tapefd;
-char *path;
-char **msgaddr;
+int gettperror(int tapefd,
+               char *path,
+               char **msgaddr)
 {
 #ifndef NOTRACE
 	extern char *devtype;
@@ -158,12 +157,11 @@ char **msgaddr;
 }
 
 
-int get_sk_msg(devtype, key, asc, ascq, msgaddr)
-char *devtype;
-int key;
-int asc;
-int ascq;
-char **msgaddr;
+int get_sk_msg(char *devtype,
+               int key,
+               int asc,
+               int ascq,
+               char **msgaddr)
 {
 	int rc;
 	if (key >= 0 && key < 15) {
@@ -189,11 +187,10 @@ char **msgaddr;
 	return (rc);
 }
 
-int rpttperror(func, tapefd, path, cmd)
-char *func;
-int tapefd;
-char *path;
-char *cmd;
+int rpttperror(char *func,
+               int tapefd,
+               char *path,
+               char *cmd)
 {
 	char *msgaddr;
 	int rc;

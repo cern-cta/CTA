@@ -28,9 +28,8 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int errflg = 0;
   int hflg   = 0;

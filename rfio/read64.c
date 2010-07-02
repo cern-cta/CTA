@@ -31,9 +31,9 @@ static int rfio_preread64();
 /*
  * Remote file read
  */
-int rfio_read64(s, ptr, size)
-     void    *ptr;
-     int     s, size;
+int rfio_read64(int s,
+                void *ptr,
+                int size)
 {
   int s_index;
 
@@ -52,9 +52,9 @@ int rfio_read64(s, ptr, size)
     return(rfio_read64_v2(s,(char *)ptr,size));
 }
 
-int rfio_read64_v2(s, ptr, size)
-     char    *ptr;
-     int     s, size;
+int rfio_read64_v2(int s,
+                   char *ptr,
+                   int size)
 {
   int status ;  /* Status and return code from remote   */
   int nbytes ;   /* Bytes still to read   */
@@ -301,10 +301,9 @@ int rfio_read64_v2(s, ptr, size)
  * Return code of -2 tells that rfio_preread()
  * has not been able to satisfy the request.
  */
-static int rfio_preread64(s,buffer,size)
-     int     s ;
-     char * buffer ;  /* Pointer to user buffer.  */
-     int   size ;  /* How many bytes do we want to read ? */
+static int rfio_preread64(int     s ,
+			  char * buffer, /* Pointer to user buffer.  */
+			  int   size)    /* How many bytes do we want to read ? */
 {
   int ncount ;
   int   ngot ;
@@ -429,10 +428,9 @@ static int rfio_preread64(s,buffer,size)
 /*
  * Filling RFIO buffer.
  */
-int rfio_filbuf64(s,buffer,size)
-     int     s ;
-     char * buffer ;  /* Pointer to the buffer.  */
-     int   size ;  /* How many bytes do we want to read ? */
+int rfio_filbuf64(int     s ,
+		  char * buffer, /* Pointer to the buffer.  */
+		  int   size)    /* How many bytes do we want to read ? */
 {
   int status ;
   int  rcode ;

@@ -20,17 +20,17 @@
 #include "wsacct.h"
 #include "rfioacct.h"
 
-void rfioacct(reqtype,uid,gid,ns,flag1,flag2,status,rc,infop,filename1,filename2)
-     int reqtype;
-     uid_t uid;
-     gid_t gid;
-     int ns;
-     int flag1;
-     int flag2;
-     int status;
-     int rc;
-     struct rfiostat *infop;
-     char *filename1,*filename2;
+void rfioacct(int reqtype,
+              uid_t uid,
+              gid_t gid,
+              int ns,
+              int flag1,
+              int flag2,
+              int status,
+              int rc,
+              struct rfiostat *infop,
+              char *filename1,
+              char *filename2)
 {
 #if defined(SACCT)
   int acctreclen;

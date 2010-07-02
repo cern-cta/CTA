@@ -35,11 +35,11 @@ static int rfio_parseln_old (char *, char **, char **,int);
 static int name1_key = -1;
 static int buffer_key = -1;
 
-int rfio_parseln(name, host, path, ln) /* parse name to host and path  */
-     char    *name;
-     char    **host;
-     char    **path;
-     int    ln ;  /* solve links or not ? */
+/* parse name to host and path  */
+int rfio_parseln(char    *name,
+                 char    **host,
+                 char    **path,
+                 int    ln)  /* solve links or not ? */
 {
   RfioTURL_t turl;
   char buf[CA_MAXHOSTNAMELEN+1];
@@ -101,11 +101,11 @@ int rfio_parseln(name, host, path, ln) /* parse name to host and path  */
 
 
 
-static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path  */
-     char    *name;
-     char    **host;
-     char    **path;
-     int    ln ;  /* solve links or not ? */
+/* parse name to host and path  */
+static int rfio_parseln_old(char    *name,
+                            char    **host,
+                            char    **path,
+                            int    ln)  /* solve links or not ? */
 {
   char    *cp1, *cp2, *cp3;
   register int i;
@@ -342,10 +342,10 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
   }
 }
 
-int rfio_parse(name, host, path)  /* parse name to host and path  */
-     char    *name;
-     char    **host;
-     char    **path;
+/* parse name to host and path  */
+int rfio_parse(char    *name,
+               char    **host,
+               char    **path)
 {
   return ( rfio_parseln(name, host, path, RDLINKS) );
 }

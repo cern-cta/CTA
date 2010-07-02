@@ -22,12 +22,11 @@
 
 /* send2vmgr - send a request to the volume manager and wait for the reply */
 
-int send2vmgr(socketp, reqp, reql, user_repbuf, user_repbuf_len)
-int *socketp;
-char *reqp;
-int reql;
-char *user_repbuf;
-int user_repbuf_len;
+int send2vmgr(int *socketp,
+              char *reqp,
+              int reql,
+              char *user_repbuf,
+              int user_repbuf_len)
 {
 	int actual_replen = 0;
 	int c;

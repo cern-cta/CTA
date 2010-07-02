@@ -17,10 +17,9 @@
  * return -1 if path has not been modified, 
  * a positive number otherwise.
  */
-int seelink ( path, buff, size) 
-char * path ;
-char * buff ;
-int size    ;
+int seelink (char * path,
+             char * buff,
+             int size)
 {
 	char *cp ;
 	char filename[MAXFILENAMSIZE] ;
@@ -77,10 +76,9 @@ int size    ;
  * It is assumed that path begins by '/' or that it contains ":/" .
  */
 extern char *getconfent() ;
-int solveln(path, buffer, size)
-char *path ;
-char * buffer ;
-int size ;
+int solveln(char *path,
+            char * buffer,
+            int size)
 {
         char *nfsroot ;
         int n ;

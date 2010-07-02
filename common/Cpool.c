@@ -138,9 +138,8 @@ static void *_cpool_sleep_flag = (void *) _CPOOL_SLEEP_FLAG;
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_create(nbreq,nbget)
-	int nbreq;
-	int *nbget;
+int Cpool_create(int nbreq,
+                 int *nbget)
 {
 	return(Cpool_create_ext(nbreq,nbget,NULL));
 }
@@ -159,10 +158,9 @@ int Cpool_create(nbreq,nbget)
 /* 04-SEP-2003       Added &Cpool_structure     */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_create_ext(nbreq,nbget,pooladdr)
-	int nbreq;
-	int *nbget;
-	void **pooladdr;
+int Cpool_create_ext(int nbreq,
+                     int *nbget,
+                     void **pooladdr)
 {
 	struct Cpool_t         *current          = &Cpool;
 	struct Cpool_t         *previous         = &Cpool;
@@ -589,8 +587,7 @@ int Cpool_create_ext(nbreq,nbget,pooladdr)
 /* this just to agree with the prototype of     */
 /* Cthread_create and al.                       */
 /* ============================================ */
-void *_Cpool_starter(arg)
-	void *arg;
+void *_Cpool_starter(void *arg)
 {
 #ifdef CPOOL_DEBUG
 	if (Cpool_debug != 0)
@@ -1071,10 +1068,9 @@ size_t _Cpool_writen_timeout(
 /* 14-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-size_t _Cpool_writen(fd,vptr,n)
-	int fd;
-	void *vptr;
-	size_t n;
+size_t _Cpool_writen(int fd,
+                     void *vptr,
+                     size_t n)
 {
 	size_t		nleft;
 	ssize_t       nwriten;
@@ -1118,10 +1114,9 @@ size_t _Cpool_writen(fd,vptr,n)
 /* 14-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-size_t _Cpool_readn(fd,vptr,n)
-	int fd;
-	void *vptr;
-	size_t n;
+size_t _Cpool_readn(int fd,
+                    void *vptr,
+                    size_t n)
 {
 	size_t	nleft;
 	ssize_t   nread;
@@ -1266,8 +1261,7 @@ size_t _Cpool_readn_timeout(
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void _Cpool_alarm(signo)
-	int signo;
+void _Cpool_alarm(int signo)
 {
   (void)signo;
 #ifdef CPOOL_DEBUG
@@ -1290,9 +1284,8 @@ void _Cpool_alarm(signo)
 /*                   [with R.W.Stevens example] */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-Sigfunc *_Cpool_signal(signo,func)
-	int signo;
-	Sigfunc *func;
+Sigfunc *_Cpool_signal(int signo,
+                       Sigfunc *func)
 {
 	struct sigaction	act, oact;
 	int n = 0;
@@ -1340,11 +1333,10 @@ Sigfunc *_Cpool_signal(signo,func)
 /* Notes:                                       */
 /* This routine is a wrapper around calloc      */
 /* ============================================ */
-void *Cpool_calloc(file,line,nmemb,size)
-	char *file;
-	int line;
-	size_t nmemb;
-	size_t size;
+void *Cpool_calloc(char *file,
+                   int line,
+                   size_t nmemb,
+                   size_t size)
 {
 	struct Cmalloc_t *current  = &Cmalloc;
 	struct Cmalloc_t *previous = &Cmalloc;
@@ -1405,10 +1397,9 @@ void *Cpool_calloc(file,line,nmemb,size)
 /* Notes:                                       */
 /* This routine is a wrapper around malloc      */
 /* ============================================ */
-void *Cpool_malloc(file,line,size)
-	char *file;
-	int line;
-	size_t size;
+void *Cpool_malloc(char *file,
+                   int line,
+                   size_t size)
 {
 	struct Cmalloc_t *current  = &Cmalloc;
 	struct Cmalloc_t *previous = &Cmalloc;
@@ -1469,10 +1460,9 @@ void *Cpool_malloc(file,line,size)
 /* Notes:                                       */
 /* This routine is a wrapper around free        */
 /* ============================================ */
-void Cpool_free(file,line,ptr)
-	char *file;
-	int line;
-	void *ptr;
+void Cpool_free(char *file,
+                int line,
+                void *ptr)
 {
 	struct Cmalloc_t *current  = &Cmalloc;
 	struct Cmalloc_t *previous = NULL;
@@ -1533,11 +1523,10 @@ void Cpool_free(file,line,ptr)
 /* Notes:                                       */
 /* This routine is a wrapper around realloc     */
 /* ============================================ */
-void *Cpool_realloc(file,line,ptr,size)
-	char *file;
-	int line;
-	void *ptr;
-	size_t size;
+void *Cpool_realloc(char *file,
+                    int line,
+                    void *ptr,
+                    size_t size)
 {
 	struct Cmalloc_t *current  = &Cmalloc;
 	void             *result;
@@ -1598,11 +1587,10 @@ void *Cpool_realloc(file,line,ptr,size)
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_assign(poolnb,startroutine,arg,timeout)
-	int poolnb;
-	void *(*startroutine) (void *);
-	void *arg;
-	int timeout;
+int Cpool_assign(int poolnb,
+                 void *(*startroutine) (void *),
+                 void *arg,
+                 int timeout)
 {
 	return(Cpool_assign_ext(poolnb,NULL,startroutine,arg,timeout));
 }
@@ -1623,12 +1611,11 @@ int Cpool_assign(poolnb,startroutine,arg,timeout)
 /* 04-SEP-2003       Added pooladdr             */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
-	int poolnb;
-	void *pooladdr;
-	void *(*startroutine) (void *);
-	void *arg;
-	int timeout;
+int Cpool_assign_ext(int poolnb,
+                     void *pooladdr,
+                     void *(*startroutine) (void *),
+                     void *arg,
+                     int timeout)
 {
 
 	/* We makes sure that Cthread pakage is initalized */
@@ -2395,9 +2382,8 @@ int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 /* 08-JUN-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_next_index_timeout(poolnb,timeout)
-	int poolnb;
-	int timeout;
+int Cpool_next_index_timeout(int poolnb,
+                             int timeout)
 {
 	return(Cpool_next_index_timeout_ext(poolnb,NULL,timeout));
 }
@@ -2415,10 +2401,9 @@ int Cpool_next_index_timeout(poolnb,timeout)
 /* 04-SEP-2003       Added pooladdr             */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
-	int poolnb;
-	void *pooladdr;
-	int timeout;
+int Cpool_next_index_timeout_ext(int poolnb,
+                                 void *pooladdr,
+                                 int timeout)
 {
 
 	/* We makes sure that Cthread pakage is initalized */

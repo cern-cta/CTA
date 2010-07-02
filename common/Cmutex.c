@@ -17,9 +17,8 @@
 int (*local_mutex_lock) (void *, int);
 int (*local_mutex_unlock) (void *);
 
-void Cmutex_init(mutex_lock,mutex_unlock)
-     int (*mutex_lock) (void *, int);
-int (*mutex_unlock) (void *);
+void Cmutex_init(int (*mutex_lock) (void *, int),
+		 int (*mutex_unlock) (void *))
 {
     if ( mutex_lock != NULL && local_mutex_lock == NULL ) local_mutex_lock = mutex_lock;
     if ( mutex_unlock != NULL && local_mutex_unlock == NULL ) local_mutex_unlock = mutex_unlock;

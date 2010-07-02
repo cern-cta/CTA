@@ -25,12 +25,11 @@
 
 /* send2tpd - send a request to the tape daemon and wait for the reply */
 
-int send2tpd(host, reqp, reql, user_repbuf, user_repbuf_len)
-char *host;
-char *reqp;
-int reql;
-char *user_repbuf;
-int user_repbuf_len;
+int send2tpd(char *host,
+             char *reqp,
+             int reql,
+             char *user_repbuf,
+             int user_repbuf_len)
 {
 	int actual_replen = 0;
 	int c;

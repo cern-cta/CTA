@@ -13,8 +13,7 @@
 
 /* Cns_client_getAuthorizationId - get the authorization id from the thread-specific structure */
 
-int
-Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
+int Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 {
   struct Cns_api_thread_info *thip;
   if (Cns_apiinit (&thip))
@@ -34,8 +33,7 @@ Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 
 /* Cns_client_setAuthorizationId - set the authorization id in the thread-specific structure */
 
-int
-Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
+int Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
 {
 
   char func[30];
@@ -74,10 +72,8 @@ Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
  * @param gid The desired gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int
-Cns_setid(uid, gid)
-     uid_t uid;
-     gid_t gid;
+int Cns_setid(uid_t uid,
+              gid_t gid)
 {
   char func[16];
   struct Cns_api_thread_info *thip;
@@ -96,8 +92,7 @@ Cns_setid(uid, gid)
  * Resets the authorization id in the per thread structure.
  * @returns 0 in case of successs, -1 otherwise.
  */
-int
-Cns_unsetid()
+int Cns_unsetid()
 {
   char func[16];
   struct Cns_api_thread_info *thip;
@@ -124,11 +119,9 @@ Cns_unsetid()
  *             should be looked up by default
  * @returns 0 in case of successs, -1 otherwise.
  */
-static int
-Cns_getid_ext(uid, gid, mode)
-     uid_t *uid;
-     gid_t *gid;
-     int mode;
+static int Cns_getid_ext(uid_t *uid,
+                         gid_t *gid,
+                         int mode)
 {
   char func[16];
   struct Cns_api_thread_info *thip;
@@ -174,10 +167,8 @@ Cns_getid_ext(uid, gid, mode)
  * @param gid Pointer to where to store the gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int
-Cns_getid(uid, gid)
-     uid_t *uid;
-     gid_t *gid;
+int Cns_getid(uid_t *uid,
+              gid_t *gid)
 {
   return Cns_getid_ext(uid, gid, MODE_EFFECTIVE_ID);
 }
@@ -192,8 +183,7 @@ Cns_getid(uid, gid)
  * @param gid Pointer to where to store the gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int
-Cns_getrealid(uid, gid)
+int Cns_getrealid(uid, gid)
      uid_t *uid;
      gid_t *gid;
 {

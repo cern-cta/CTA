@@ -22,11 +22,10 @@
 #include <getacctent.h>
 #include <ypgetacctent.h>
 
-char *getacctent(pwd, acct, buf, buflen)
-    struct passwd   *pwd;       /* Pointer to the password entry */
-    char        *acct;      /* optional non-default acct     */
-    char        *buf;
-    int     buflen;
+char *getacctent(struct passwd   *pwd,       /* Pointer to the password entry */
+		 char        *acct,      /* optional non-default acct     */
+		 char        *buf,
+		 int     buflen)
     { 
         char   tmpbuf[BUFSIZ], 
             savbuf[BUFSIZ]; /* Line buffer           */

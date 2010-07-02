@@ -18,9 +18,8 @@
 extern	char	*optarg;
 extern	int	optind;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int c;
 	int errflg = 0;

@@ -36,10 +36,9 @@ extern int being_shutdown;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
 
-void get_cwd_path (thip, cwd, cwdpath)
-     struct Cns_srv_thread_info *thip;
-     u_signed64 cwd;
-     char *cwdpath;
+void get_cwd_path (struct Cns_srv_thread_info *thip,
+                   u_signed64 cwd,
+                   char *cwdpath)
 {
   char path[CA_MAXPATHLEN+1];
   char *p = path;
@@ -53,11 +52,10 @@ void get_cwd_path (thip, cwd, cwdpath)
     sprintf (cwdpath, "(cwd: %s)", p);
 }
 
-int get_client_actual_id (thip, uid, gid, user)
-     struct Cns_srv_thread_info *thip;
-     uid_t *uid;
-     gid_t *gid;
-     char **user;
+int get_client_actual_id (struct Cns_srv_thread_info *thip,
+                          uid_t *uid,
+                          gid_t *gid,
+                          char **user)
 {
   struct passwd *pw;
 
@@ -80,9 +78,8 @@ int get_client_actual_id (thip, uid, gid, user)
  * A backslash is appended to a line to be continued
  * A continuation line is prefixed by '+ '
  */
-void Cns_logreq(func, logbuf)
-     char *func;
-     char *logbuf;
+void Cns_logreq(char *func,
+                char *logbuf)
 {
   int n1, n2;
   char *p;
@@ -118,10 +115,9 @@ void Cns_logreq(func, logbuf)
   }
 }
 
-int marshall_DIRX (sbpp, magic, fmd_entry)
-     char **sbpp;
-     int magic;
-     struct Cns_file_metadata *fmd_entry;
+int marshall_DIRX (char **sbpp,
+                   int magic,
+                   struct Cns_file_metadata *fmd_entry)
 {
   char *sbp = *sbpp;
 
@@ -147,11 +143,10 @@ int marshall_DIRX (sbpp, magic, fmd_entry)
   return (0);
 }
 
-int marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
-     char **sbpp;
-     int magic;
-     struct Cns_file_metadata *fmd_entry;
-     struct Cns_seg_metadata *smd_entry;
+int marshall_DIRXT (char **sbpp,
+                    int magic,
+                    struct Cns_file_metadata *fmd_entry,
+                    struct Cns_seg_metadata *smd_entry)
 {
   char *sbp = *sbpp;
 
@@ -179,10 +174,9 @@ int marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
 
 /* Cns_srv_aborttrans - abort transaction */
 
-int Cns_srv_aborttrans(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_aborttrans(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   char func[19];
   gid_t gid;
@@ -203,10 +197,9 @@ int Cns_srv_aborttrans(req_data, clienthost, thip)
 
 /* Cns_srv_access - check accessibility of a file/directory */
 
-int Cns_srv_access(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_access(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   int amode;
   u_signed64 cwd;
@@ -257,10 +250,9 @@ int Cns_srv_access(req_data, clienthost, thip)
 
 /* Cns_srv_chclass - change class on directory */
 
-int Cns_srv_chclass(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_chclass(char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   char class_name[CA_MAXCLASNAMELEN+1];
   int classid;
@@ -367,10 +359,9 @@ int Cns_srv_chclass(req_data, clienthost, thip)
 
 /* Cns_srv_chdir - change current working directory */
 
-int Cns_srv_chdir(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_chdir(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
@@ -420,10 +411,9 @@ int Cns_srv_chdir(req_data, clienthost, thip)
 
 /* Cns_srv_chmod - change file/directory permissions */
 
-int Cns_srv_chmod(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_chmod(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata fmd_entry;
@@ -488,10 +478,9 @@ int Cns_srv_chmod(req_data, clienthost, thip)
 
 /* Cns_srv_chown - change owner and group of a file or a directory */
 
-int Cns_srv_chown(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_chown(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata fmd_entry;
@@ -602,11 +591,10 @@ int Cns_srv_chown(req_data, clienthost, thip)
 
 /* Cns_internal_deletesegs - internal method deleting file segments */
 
-int Cns_internal_deletesegs(func, thip, filentry, copyno)
-     char* func;
-     struct Cns_srv_thread_info *thip;
-     struct Cns_file_metadata *filentry;
-     int copyno;
+int Cns_internal_deletesegs(char* func,
+                            struct Cns_srv_thread_info *thip,
+                            struct Cns_file_metadata *filentry,
+                            int copyno)
 {
   int       found = 0;
   int       bof = 1;
@@ -650,11 +638,10 @@ int Cns_internal_deletesegs(func, thip, filentry, copyno)
 
 /* Cns_srv_creat - create a file entry */
 
-int Cns_srv_creat(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_creat(int magic,
+                  char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -789,10 +776,9 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
 
 /* Cns_srv_delcomment - delete a comment associated with a file/directory */
 
-int Cns_srv_delcomment(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_delcomment(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -851,10 +837,9 @@ int Cns_srv_delcomment(req_data, clienthost, thip)
 
 /* Cns_srv_delete - logically remove a file entry */
 
-int Cns_srv_delete(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_delete(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   int bof = 1;
   int c;
@@ -948,10 +933,9 @@ int Cns_srv_delete(req_data, clienthost, thip)
 
 /* Cns_srv_deleteclass - delete a file class definition */
 
-int Cns_srv_deleteclass(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_deleteclass(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   int bol = 1;
   struct Cns_class_metadata class_entry;
@@ -1013,10 +997,9 @@ int Cns_srv_deleteclass(req_data, clienthost, thip)
 
 /* Cns_srv_delsegbycopyno - delete file segments by copno */
 
-int Cns_srv_delsegbycopyno(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_delsegbycopyno(char *req_data,
+                           const char *clienthost,
+                           struct Cns_srv_thread_info *thip)
 {
   char       logbuf[LOGBUFSZ];
   char       func[23];
@@ -1113,15 +1096,14 @@ int Cns_srv_delsegbycopyno(req_data, clienthost, thip)
 
 /* Cns_srv_du - summarize file space usage */
 
-int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentries)
-     struct Cns_srv_thread_info *thip;
-     struct Cns_file_metadata *direntry;
-     int Lflag;
-     uid_t uid;
-     gid_t gid;
-     const char *clienthost;
-     u_signed64 *nbbytes;
-     u_signed64 *nbentries;
+int compute_du4dir (struct Cns_srv_thread_info *thip,
+                    struct Cns_file_metadata *direntry,
+                    int Lflag,
+                    uid_t uid,
+                    gid_t gid,
+                    const char *clienthost,
+                    u_signed64 *nbbytes,
+                    u_signed64 *nbentries)
 {
   int bod = 1;
   int c;
@@ -1173,10 +1155,9 @@ int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentr
   return (c < 0 ? serrno : 0);
 }
 
-int Cns_srv_du(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_du(char *req_data,
+               const char *clienthost,
+               struct Cns_srv_thread_info *thip)
 {
   int c;
   u_signed64 cwd;
@@ -1238,10 +1219,9 @@ int Cns_srv_du(req_data, clienthost, thip)
 
 /* Cns_srv_endsess - end session */
 
-int Cns_srv_endsess(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_endsess(char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   char func[16];
   gid_t gid;
@@ -1260,10 +1240,9 @@ int Cns_srv_endsess(req_data, clienthost, thip)
 
 /* Cns_srv_endtrans - end transaction mode */
 
-int Cns_srv_endtrans(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_endtrans(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   char func[17];
   gid_t gid;
@@ -1284,10 +1263,9 @@ int Cns_srv_endtrans(req_data, clienthost, thip)
 
 /* Cns_srv_enterclass - define a new file class */
 
-int Cns_srv_enterclass(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_enterclass(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   struct Cns_class_metadata class_entry;
   char func[19];
@@ -1354,10 +1332,9 @@ int Cns_srv_enterclass(req_data, clienthost, thip)
 
 /* Cns_srv_getacl - get the Access Control List for a file/directory */
 
-int Cns_srv_getacl(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getacl(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata fmd_entry;
@@ -1428,10 +1405,9 @@ int Cns_srv_getacl(req_data, clienthost, thip)
 
 /* Cns_srv_getcomment - get the comment associated with a file/directory */
 
-int Cns_srv_getcomment(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getcomment(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -1487,10 +1463,9 @@ int Cns_srv_getcomment(req_data, clienthost, thip)
 
 /* Cns_srv_getlinks - get the link entries associated with a given file */
 
-int Cns_srv_getlinks(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getlinks(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   int bol = 1;
   int c;
@@ -1588,10 +1563,9 @@ int Cns_srv_getlinks(req_data, clienthost, thip)
 
 /* Cns_srv_getpath - resolve a file id to a path */
 
-int Cns_srv_getpath(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getpath(char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   u_signed64 cur_fileid;
   char func[16];
@@ -1627,11 +1601,10 @@ int Cns_srv_getpath(req_data, clienthost, thip)
 
 /* Cns_srv_getsegattrs - get file segments attributes */
 
-int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getsegattrs(int magic,
+                        char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   int bof = 1;
   int c;
@@ -1731,10 +1704,9 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_lchown - change owner and group of a file or a directory */
 
-int Cns_srv_lchown(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_lchown(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata fmd_entry;
@@ -1846,13 +1818,12 @@ int Cns_srv_lchown(req_data, clienthost, thip)
 
 /* Cns_srv_listclass - list file classes */
 
-int Cns_srv_listclass(req_data, clienthost, thip, class_entry, endlist, dblistptr)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
-     struct Cns_class_metadata *class_entry;
-     int endlist;
-     DBLISTPTR *dblistptr;
+int Cns_srv_listclass(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip,
+                      struct Cns_class_metadata *class_entry,
+                      int endlist,
+                      DBLISTPTR *dblistptr)
 {
   int bol; /* beginning of class list flag */
   int bot; /* beginning of tape pools list flag */
@@ -1957,13 +1928,12 @@ int Cns_srv_listclass(req_data, clienthost, thip, class_entry, endlist, dblistpt
   RETURN (0);
 }
 
-int Cns_srv_listlinks(req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
-     struct Cns_symlinks *lnk_entry;
-     int endlist;
-     DBLISTPTR *dblistptr;
+int Cns_srv_listlinks(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip,
+                      struct Cns_symlinks *lnk_entry,
+                      int endlist,
+                      DBLISTPTR *dblistptr)
 {
   int bol; /* beginning of list flag */
   int c;
@@ -2087,11 +2057,10 @@ int Cns_srv_listlinks(req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
   RETURN (0);
 }
 
-int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_lastfseq(int magic,
+                     char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   struct Cns_seg_metadata smd_entry;
   char  func[19];
@@ -2152,10 +2121,9 @@ int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-int Cns_srv_bulkexist(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_bulkexist(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip)
 {
   char  logbuf[LOGBUFSZ];
   char  func[19];
@@ -2228,11 +2196,10 @@ int Cns_srv_bulkexist(req_data, clienthost, thip)
   RETURN (0);
 }
 
-int Cns_srv_tapesum(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_tapesum(int magic,
+                    char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   char  func[19];
   char  vid[CA_MAXVIDLEN+1];
@@ -2285,15 +2252,14 @@ int Cns_srv_tapesum(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, endlist, dblistptr)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
-     struct Cns_file_metadata *fmd_entry;
-     struct Cns_seg_metadata *smd_entry;
-     int endlist;
-     DBLISTPTR *dblistptr;
+int Cns_srv_listtape(int magic,
+                     char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip,
+                     struct Cns_file_metadata *fmd_entry,
+                     struct Cns_seg_metadata *smd_entry,
+                     int endlist,
+                     DBLISTPTR *dblistptr)
 {
   int bov; /* beginning of volume flag */
   int c;
@@ -2369,10 +2335,9 @@ int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, en
 
 /* Cns_srv_lstat - get information about a symbolic link */
 
-int Cns_srv_lstat(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_lstat(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -2441,11 +2406,10 @@ int Cns_srv_lstat(req_data, clienthost, thip)
 
 /* Cns_srv_mkdir - create a directory entry */
 
-int Cns_srv_mkdir(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_mkdir(int magic,
+                  char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
@@ -2547,10 +2511,9 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_modifyclass - modify an existing fileclass definition */
 
-int Cns_srv_modifyclass(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_modifyclass(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   int bol = 1;
   struct Cns_class_metadata class_entry;
@@ -2715,11 +2678,10 @@ int Cns_srv_modifyclass(req_data, clienthost, thip)
 
 /* Cns_srv_opendir - open a directory entry */
 
-int Cns_srv_opendir(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_opendir(int magic,
+                    char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
@@ -2790,10 +2752,9 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_ping - check server alive and return version number */
 
-int Cns_srv_ping(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_ping(char *req_data,
+                 const char *clienthost,
+                 struct Cns_srv_thread_info *thip)
 {
   char func[16];
   gid_t gid;
@@ -2820,10 +2781,9 @@ int Cns_srv_ping(req_data, clienthost, thip)
 
 /* Cns_srv_queryclass - query about a file class */
 
-int Cns_srv_queryclass(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_queryclass(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   int bol = 1;
   int c;
@@ -2905,18 +2865,17 @@ int Cns_srv_queryclass(req_data, clienthost, thip)
 
 /* Cns_srv_readdir - read directory entries */
 
-int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr, beginp)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
-     struct Cns_file_metadata *fmd_entry;
-     struct Cns_seg_metadata *smd_entry;
-     struct Cns_user_metadata *umd_entry;
-     int endlist;
-     DBLISTPTR *dblistptr;
-     DBLISTPTR *smdlistptr;
-     int *beginp;
+int Cns_srv_readdir(int magic,
+                    char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip,
+                    struct Cns_file_metadata *fmd_entry,
+                    struct Cns_seg_metadata *smd_entry,
+                    struct Cns_user_metadata *umd_entry,
+                    int endlist,
+                    DBLISTPTR *dblistptr,
+                    DBLISTPTR *smdlistptr,
+                    int *beginp)
 {
   int bod; /* beginning of directory flag */
   int bof; /* beginning of file flag */
@@ -3093,10 +3052,9 @@ int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd
 
 /* Cns_srv_readlink - read value of symbolic link */
 
-int Cns_srv_readlink(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_readlink(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -3155,10 +3113,9 @@ int Cns_srv_readlink(req_data, clienthost, thip)
 
 /* Cns_srv_rename - rename a file or a directory */
 
-int Cns_srv_rename(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_rename(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -3359,10 +3316,9 @@ int Cns_srv_rename(req_data, clienthost, thip)
 
 /* Cns_srv_updateseg_status - updates the segment status */
 
-int Cns_srv_updateseg_status(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_updateseg_status(char *req_data,
+                             const char *clienthost,
+                             struct Cns_srv_thread_info *thip)
 {
   char *rbp;
   char *user;
@@ -3458,11 +3414,10 @@ int Cns_srv_updateseg_status(req_data, clienthost, thip)
 /* Cns_srv_updateseg_checksum - updates file segment checksum
    when previous value is NULL */
 
-int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_updateseg_checksum(int magic,
+                               char *req_data,
+                               const char *clienthost,
+                               struct Cns_srv_thread_info *thip)
 {
   int copyno;
   u_signed64 fileid;
@@ -3599,11 +3554,10 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
 
 /* Cns_srv_replaceseg - replace file segment */
 
-int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_replaceseg(int magic,
+                       char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   int copyno;
   u_signed64 fileid;
@@ -3764,11 +3718,10 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
  * is not to segment file anymore.
  * ! It deletes the old entries in the DB (no!! update to status 'D') !
  */
-int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_replacetapecopy(int magic,
+                            char *req_data,
+                            const char *clienthost,
+                            struct Cns_srv_thread_info *thip)
 {
   u_signed64 fileid = 0;
   int rc,checksum_ok, nboldsegs, nbseg ,copyno, bof, i;
@@ -3989,10 +3942,9 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 
 /* Cns_srv_rmdir - remove a directory entry */
 
-int Cns_srv_rmdir(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_rmdir(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
@@ -4081,10 +4033,9 @@ int Cns_srv_rmdir(req_data, clienthost, thip)
 
 /* Cns_srv_setacl - set the Access Control List for a file/directory */
 
-int Cns_srv_setacl(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setacl(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   struct Cns_acl acl[CA_MAXACLENTRIES];
   struct Cns_acl *aclp;
@@ -4213,10 +4164,9 @@ int Cns_srv_setacl(req_data, clienthost, thip)
 
 /* Cns_srv_setatime - set last access time */
 
-int Cns_srv_setatime(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setatime(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -4293,10 +4243,9 @@ int Cns_srv_setatime(req_data, clienthost, thip)
 
 /* Cns_srv_setcomment - add/replace a comment associated with a file/directory */
 
-int Cns_srv_setcomment(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setcomment(char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   char comment[CA_MAXCOMMENTLEN+1];
   u_signed64 cwd;
@@ -4371,11 +4320,10 @@ int Cns_srv_setcomment(req_data, clienthost, thip)
 
 /* Cns_srv_setfsize - set file size and last modification time */
 
-int Cns_srv_setfsize(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setfsize(int magic,
+                     char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -4483,11 +4431,10 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setfsizecs - set file size, last modification time and file checksum*/
 
-int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setfsizecs(int magic,
+                       char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -4613,11 +4560,10 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setfsizeg - set file size and last modification time */
 
-int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setfsizeg(int magic,
+                      char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip)
 {
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
@@ -4716,11 +4662,10 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setsegattrs - set file segment attributes */
 
-int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_setsegattrs(int magic,
+                        char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   int copyno = 0;
   u_signed64 cwd;
@@ -4945,10 +4890,9 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_dropsegs - drops all segments of a file */
 
-int Cns_srv_dropsegs(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_dropsegs(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   char       logbuf[LOGBUFSZ];
   char       func[17];
@@ -5017,10 +4961,9 @@ int Cns_srv_dropsegs(req_data, clienthost, thip)
 
 /* Cns_srv_startsess - start session */
 
-int Cns_srv_startsess(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_startsess(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip)
 {
   char comment[CA_MAXCOMMENTLEN+1];
   char func[18];
@@ -5045,11 +4988,10 @@ int Cns_srv_startsess(req_data, clienthost, thip)
 
 /* Cns_srv_starttrans - start transaction mode */
 
-int Cns_srv_starttrans(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_starttrans(int magic,
+                       char *req_data,
+                       const char *clienthost,
+                       struct Cns_srv_thread_info *thip)
 {
   char comment[CA_MAXCOMMENTLEN+1];
   char func[19];
@@ -5079,10 +5021,9 @@ int Cns_srv_starttrans(magic, req_data, clienthost, thip)
 
 /* Cns_srv_stat - get information about a file or a directory */
 
-int Cns_srv_stat(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_stat(char *req_data,
+                 const char *clienthost,
+                 struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -5151,10 +5092,9 @@ int Cns_srv_stat(req_data, clienthost, thip)
 
 /* Cns_srv_statcs - get information about a file or a directory */
 
-int Cns_srv_statcs(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_statcs(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   u_signed64 fileid;
@@ -5225,10 +5165,9 @@ int Cns_srv_statcs(req_data, clienthost, thip)
 
 /* Cns_srv_statg - get information about a file or a directory */
 
-int Cns_srv_statg(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_statg(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata fmd_entry;
@@ -5301,10 +5240,9 @@ int Cns_srv_statg(req_data, clienthost, thip)
 
 /* Cns_srv_symlink - make a symbolic link to a file or a directory */
 
-int Cns_srv_symlink(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_symlink(char *req_data,
+                    const char *clienthost,
+                    struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   char func[16];
@@ -5395,10 +5333,9 @@ int Cns_srv_symlink(req_data, clienthost, thip)
 
 /* Cns_srv_undelete - logically restore a file entry */
 
-int Cns_srv_undelete(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_undelete(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   int bof = 1;
   int c;
@@ -5494,10 +5431,9 @@ int Cns_srv_undelete(req_data, clienthost, thip)
 
 /* Cns_srv_unlink - remove a file entry */
 
-int Cns_srv_unlink(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_unlink(char *req_data,
+                   const char *clienthost,
+                   struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -5599,10 +5535,9 @@ int Cns_srv_unlink(req_data, clienthost, thip)
 
 /* Cns_srv_unlinkbyvid - remove all file entries on a given volume */
 
-int Cns_srv_unlinkbyvid(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_unlinkbyvid(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char  vid[CA_MAXVIDLEN+22];
   char  func[20];
@@ -5734,10 +5669,9 @@ int Cns_srv_unlinkbyvid(req_data, clienthost, thip)
 
 /* Cns_srv_utime - set last access and modification times */
 
-int Cns_srv_utime(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_utime(char *req_data,
+                  const char *clienthost,
+                  struct Cns_srv_thread_info *thip)
 {
   time_t actime;
   u_signed64 cwd;
@@ -5816,10 +5750,9 @@ int Cns_srv_utime(req_data, clienthost, thip)
 
 /* Cns_srv_updatefile_checksum - set checksums for the file */
 
-int Cns_srv_updatefile_checksum(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_updatefile_checksum(char *req_data,
+                                const char *clienthost,
+                                struct Cns_srv_thread_info *thip)
 {
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
@@ -5965,10 +5898,9 @@ int Cns_vo_from_dn(const char *dn, char *vo)
 
 /* Cns_srv_entergrpmap - define a new group entry in Virtual Id table */
 
-int Cns_srv_entergrpmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_entergrpmap(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6014,10 +5946,9 @@ int Cns_srv_entergrpmap(req_data, clienthost, thip)
 
 /* Cns_srv_enterusrmap - define a new user entry in Virtual Id table */
 
-int Cns_srv_enterusrmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_enterusrmap(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6063,10 +5994,9 @@ int Cns_srv_enterusrmap(req_data, clienthost, thip)
 
 /* Cns_srv_getidmap - get uid/gids associated with a given dn/roles */
 
-int getonegid(dbfd, groupname, gid)
-     struct Cns_dbfd *dbfd;
-     char *groupname;
-     gid_t *gid;
+int getonegid(struct Cns_dbfd *dbfd,
+              char *groupname,
+              gid_t *gid)
 {
   int c;
   struct Cns_groupinfo group_entry;
@@ -6089,13 +6019,12 @@ int getonegid(dbfd, groupname, gid)
   return (0);
 }
 
-int getidmap(dbfd, username, nbgroups, groupnames, userid, gids)
-     struct Cns_dbfd *dbfd;
-     char *username;
-     int nbgroups;
-     char **groupnames;
-     uid_t *userid;
-     gid_t *gids;
+int getidmap(struct Cns_dbfd *dbfd,
+             char *username,
+             int nbgroups,
+             char **groupnames,
+             uid_t *userid,
+             gid_t *gids)
 {
   int c;
   char *groupname;
@@ -6142,10 +6071,9 @@ int getidmap(dbfd, username, nbgroups, groupnames, userid, gids)
   return (0);
 }
 
-int Cns_srv_getidmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getidmap(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   int c;
   char func[17];
@@ -6219,10 +6147,9 @@ int Cns_srv_getidmap(req_data, clienthost, thip)
 
 /* Cns_srv_getgrpbygid - get group name associated with a given gid */
 
-int Cns_srv_getgrpbygid(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getgrpbygid(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6259,10 +6186,9 @@ int Cns_srv_getgrpbygid(req_data, clienthost, thip)
 
 /* Cns_srv_getgrpbynam - get gid associated with a given group name */
 
-int Cns_srv_getgrpbynam(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getgrpbynam(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6300,10 +6226,9 @@ int Cns_srv_getgrpbynam(req_data, clienthost, thip)
 
 /* Cns_srv_getusrbynam - get uid associated with a given user name */
 
-int Cns_srv_getusrbynam(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getusrbynam(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6341,10 +6266,9 @@ int Cns_srv_getusrbynam(req_data, clienthost, thip)
 
 /* Cns_srv_getusrbyuid - get user name associated with a given uid */
 
-int Cns_srv_getusrbyuid(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_getusrbyuid(char *req_data,
+                        const char *clienthost,
+                        struct Cns_srv_thread_info *thip)
 {
   char func[20];
   gid_t gid;
@@ -6381,10 +6305,9 @@ int Cns_srv_getusrbyuid(req_data, clienthost, thip)
 
 /* Cns_srv_modgrpmap - modify group name associated with a given gid */
 
-int Cns_srv_modgrpmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_modgrpmap(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip)
 {
   char func[18];
   gid_t gid;
@@ -6431,10 +6354,9 @@ int Cns_srv_modgrpmap(req_data, clienthost, thip)
 
 /* Cns_srv_modusrmap - modify user name associated with a given uid */
 
-int Cns_srv_modusrmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_modusrmap(char *req_data,
+                      const char *clienthost,
+                      struct Cns_srv_thread_info *thip)
 {
   char func[18];
   gid_t gid;
@@ -6481,10 +6403,9 @@ int Cns_srv_modusrmap(req_data, clienthost, thip)
 
 /* Cns_srv_rmgrpmap - suppress group entry corresponding to a given gid/name */
 
-int Cns_srv_rmgrpmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_rmgrpmap(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   char func[18];
   gid_t gid;
@@ -6544,10 +6465,9 @@ int Cns_srv_rmgrpmap(req_data, clienthost, thip)
 
 /* Cns_srv_rmusrmap - suppress user entry corresponding to a given uid/name */
 
-int Cns_srv_rmusrmap(req_data, clienthost, thip)
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int Cns_srv_rmusrmap(char *req_data,
+                     const char *clienthost,
+                     struct Cns_srv_thread_info *thip)
 {
   char func[18];
   gid_t gid;

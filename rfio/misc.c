@@ -13,8 +13,8 @@
 #include <string.h>
 #include <osdep.h>
 
-void striptb(s)                 /* Strip trailing blanks       */
-     char    *s;
+/* Strip trailing blanks       */
+void striptb(char    *s)
 {
   register int    i;
 

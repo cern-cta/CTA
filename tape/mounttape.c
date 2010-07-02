@@ -71,9 +71,8 @@ int  rbtmountchk( int*, char*, char*, char*, char* );
 int  rbtdmntchk( int*, char*, unsigned int* );
 int repairbadmir( int tapefd, char* path );
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	int c;
 	char *clienthost;
@@ -879,15 +878,14 @@ reply:
 	exit (0);
 }
 
-int Ctape_rslt(uid, gid, jid, olddrive, newdrive, ux, loader, dvn)
-uid_t uid;
-gid_t gid;
-int jid;
-char *olddrive;
-char *newdrive;
-int *ux;
-char *loader;
-char *dvn;
+int Ctape_rslt(uid_t uid,
+               gid_t gid,
+               int jid,
+               char *olddrive,
+               char *newdrive,
+               int *ux,
+               char *loader,
+               char *dvn)
 {
 	int c;
 	int msglen;
@@ -935,16 +933,15 @@ char *dvn;
 	return (c);
 }
 
-int Ctape_updvsn(uid, gid, jid, ux, vid, vsn, tobemounted, lblcode, mode)
-uid_t uid;
-gid_t gid;
-int jid;
-int ux;
-char *vid;
-char *vsn;
-int tobemounted;
-int lblcode;
-int mode;
+int Ctape_updvsn(uid_t uid,
+                 gid_t gid,
+                 int jid,
+                 int ux,
+                 char *vid,
+                 char *vsn,
+                 int tobemounted,
+                 int lblcode,
+                 int mode)
 {
 	int c;
 	int msglen;
@@ -1061,8 +1058,7 @@ void cleanup()
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
 }
 
-void configdown(drive)
-char *drive;
+void configdown(char *drive)
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("mounttape", "%s\n", msg);
@@ -1082,10 +1078,9 @@ void mountkilled()
 	exit (2);
 }
 
-int rbtdmntchk(c, drive, demountforce)
-int *c;
-char *drive;
-unsigned int *demountforce;
+int rbtdmntchk(int *c,
+               char *drive,
+               unsigned int *demountforce)
 {
 	fd_set readfds;
 	struct timeval rbttimeval;
@@ -1140,12 +1135,11 @@ unsigned int *demountforce;
 	}
 }
 
-int rbtmountchk(c, drive, vid, dvn, loader)
-int *c;
-char *drive;
-char *vid;
-char *dvn;
-char *loader;
+int rbtmountchk(int *c,
+                char *drive,
+                char *vid,
+                char *dvn,
+                char *loader)
 {
 	unsigned int demountforce;
 	int n;

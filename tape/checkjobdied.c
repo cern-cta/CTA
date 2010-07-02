@@ -19,8 +19,7 @@
 #include "serrno.h"
 static char func[16];
 
-int checkjobdied(jobs)
-int jobs[];
+int checkjobdied(int jobs[])
 {
 	int i, j, k;
 #if defined(linux)

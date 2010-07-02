@@ -32,10 +32,9 @@ static int rfio_forcelocal = RFIO_NOLOCAL ;
 /*
  * User can set option through this function.
  */
-int rfiosetopt(opt,pval,len)
-     int opt ;
-     int  * pval ;
-     int len ;
+int rfiosetopt(int opt,
+               int  * pval,
+               int len)
 {
   (void)len;
   switch(opt) {
@@ -66,8 +65,7 @@ int rfiosetopt(opt,pval,len)
  * User can read an option through this function
  */
 
-int rfioreadopt(opt)
-     int  opt ;
+int rfioreadopt(int  opt)
 {
   switch(opt) {
   case RFIO_READOPT:

@@ -15,9 +15,9 @@
 
 EXTERN_C int rfio_smstat (int, char *, struct stat *, int);
 
-int  rfio_stat(filepath, statbuf)       /* Remote file stat    */
-     char    *filepath;              /* remote file path                     */
-     struct stat *statbuf;           /* status buffer (subset of local used) */
+/* Remote file stat    */
+int  rfio_stat(char    *filepath,              /* remote file path                     */
+               struct stat *statbuf)           /* status buffer (subset of local used) */
 {
 #if (defined(__alpha) && defined(__osf__))
   return (rfio_stat64(filepath,statbuf));
@@ -83,9 +83,9 @@ int  rfio_stat(filepath, statbuf)       /* Remote file stat    */
 #endif
 }
 
-int  rfio_stat64(filepath, statbuf)     /* Remote file stat    */
-     char    *filepath;              /* remote file path                     */
-     struct stat64 *statbuf;         /* status buffer (subset of local used) */
+/* Remote file stat    */
+int  rfio_stat64(char    *filepath,              /* remote file path                     */
+                 struct stat64 *statbuf)         /* status buffer (subset of local used) */
 {
   register int    s;              /* socket descriptor            */
   int       status ;

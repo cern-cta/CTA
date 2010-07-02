@@ -13,15 +13,13 @@
 #include <time.h>
 #include "Ctape_api.h"
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s [hostname]\n", cmd);
 }
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	int c, i;
 	struct drv_status drv_status[CA_MAXNBDRIVES];

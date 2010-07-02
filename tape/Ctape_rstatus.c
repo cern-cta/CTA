@@ -15,11 +15,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-int Ctape_rstatus(host, rsv_status, nbentries, nbdgp)
-char *host;
-struct rsv_status rsv_status[];
-int nbentries;
-int nbdgp;
+int Ctape_rstatus(char *host,
+                  struct rsv_status rsv_status[],
+                  int nbentries,
+                  int nbdgp)
 {
 	int c, i, j, n;
 	char func[16];

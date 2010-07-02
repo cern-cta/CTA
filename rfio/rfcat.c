@@ -13,8 +13,7 @@
 #include <string.h>
 #include "rfio_api.h"
 
-int catfile(inpfile)
-     char *inpfile;
+int catfile(char *inpfile)
 {
   char buf [32768];
   int c;
@@ -46,9 +45,8 @@ int catfile(inpfile)
   return (0);
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int errflg = 0;
   int i;

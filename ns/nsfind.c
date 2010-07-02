@@ -59,9 +59,8 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   char fullpath[CA_MAXPATHLEN+1];
   int i;
@@ -175,10 +174,9 @@ int main(argc, argv)
   exit (0);
 }
 
-int listentry(dir, path, statbuf)
-     char *dir;
-     char *path;
-     struct Cns_filestat *statbuf;
+int listentry(char *dir,
+              char *path,
+              struct Cns_filestat *statbuf)
 {
   struct group *gr;
   char modestr[11];

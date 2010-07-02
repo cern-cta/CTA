@@ -77,13 +77,12 @@ static int show_element_info( struct smc_element_info* );
 
 /*	rbtmount - mounts a volume on a specified drive  */
 
-int rbtmount (vid, side, unm, dvn, ring, loader)
-char *vid;
-int side;
-char *unm;
-char *dvn;
-int ring;
-char *loader;
+int rbtmount (char *vid,
+              int side,
+              char *unm,
+              char *dvn,
+              int ring,
+              char *loader)
 {
 	char func[16];
 
@@ -160,13 +159,12 @@ char *loader;
 
 /*	rbtdemount - demounts a volume from a specified drive  */
 
-int rbtdemount (vid, unm, dvn, loader, force, vsnretry)
-char *vid;
-char *unm;
-char *dvn;
-char *loader;
-unsigned int force;
-int vsnretry;
+int rbtdemount (char *vid,
+                char *unm,
+                char *dvn,
+                char *loader,
+                unsigned int force,
+                int vsnretry)
 {
 	char func[16];
 
@@ -294,9 +292,8 @@ static int actionChanged(int cc, int rt, short *act, int *slp, int *rtr) {
 }
 
 
-int acserr2act(req_type, cc)
-int req_type;	/* 0 --> mount, 1 --> dismount */
-int cc;		/* error returned by the mount/dismount routine */
+int acserr2act(int req_type,	/* 0 --> mount, 1 --> dismount */
+	       int cc)		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact acserr_acttbl[] = {
 	  {STATUS_DRIVE_AVAILABLE, RBT_NORETRY, RBT_OK},		/* unload on empty drive */
@@ -383,10 +380,9 @@ STATUS status;
 	return (p);
 }
 
-int acsmount(vid, loader, ring)
-char *vid;
-char *loader;
-int ring;
+int acsmount(char *vid,
+             char *loader,
+             int ring)
 {
 	int c;
 	DRIVEID drive_id;
@@ -439,10 +435,9 @@ int ring;
 	RETURN (0);
 }
 
-int acsdismount(vid, loader, force)
-char *vid;
-char *loader;
-unsigned int force;
+int acsdismount(char *vid,
+                char *loader,
+                unsigned int force)
 {
 	int c;
 	DRIVEID drive_id;
@@ -712,10 +707,9 @@ int wait4acsfinalresp()
  * the dmcserv server. Depends on the "dmc.h" include file.
  */
 extern char *getconfent();
-int dmcmount(vid,unm,loader)
-char *vid;
-char *unm;
-char *loader;
+int dmcmount(char *vid,
+             char *unm,
+             char *loader)
 {
 	DMCrequest_t req;
 	DMCreply_t rep;
@@ -754,11 +748,10 @@ char *loader;
 	RETURN(rep.status);
 }
 
-int dmcdismount(vid, unm, loader, force)
-char *vid;
-char *unm;
-char *loader;
-unsigned int force;
+int dmcdismount(char *vid,
+                char *unm,
+                char *loader,
+                unsigned int force)
 {
 	DMCrequest_t req;
 	DMCreply_t rep;
@@ -803,9 +796,8 @@ unsigned int force;
 	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
 	RETURN(rep.status);
 }
-int send2dmc(sock,req)
-int *sock;
-DMCrequest_t *req;
+int send2dmc(int *sock,
+             DMCrequest_t *req)
 {
 	struct hostent *hp;
 	struct sockaddr_in sin;
@@ -884,9 +876,8 @@ DMCrequest_t *req;
 	RETURN(0);
 }
 
-int fromdmc(sock,rep)
-int *sock;
-DMCreply_t *rep;
+int fromdmc(int *sock,
+            DMCreply_t *rep)
 {
 	int s = *sock;
 	int j,ntot;
@@ -953,8 +944,7 @@ static char rmc_errbuf[256];
 static char smc_ldr[CA_MAXRBTNAMELEN+6];
 static struct robot_info robot_info;
 
-int opensmc(loader)
-char *loader;
+int opensmc(char *loader)
 {
 	int c;
 	char *dp;
@@ -1037,10 +1027,9 @@ char *loader;
 	RETURN (0);
 }
 
-int smcmount(vid, side, loader)
-char *vid;
-int side;
-char *loader;
+int smcmount(char *vid,
+             int side,
+             char *loader)
 {
 	int c;
 	struct smc_element_info element_info;
@@ -1289,11 +1278,10 @@ char *loader;
 	RETURN (0);
 }
 
-int smcdismount(vid, loader, force, vsnretry)
-     char *vid;
-     char *loader;
-     int force;
-     int vsnretry;
+int smcdismount(char *vid,
+                char *loader,
+                int force,
+                int vsnretry)
 {
 	int c;
 	struct smc_element_info element_info;

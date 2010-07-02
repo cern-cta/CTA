@@ -42,9 +42,8 @@ void resetid(uid_t *u, gid_t *g, struct Cupv_srv_thread_info *thip) {
  *	A continuation line is prefixed by '+ '
  */
 void
-Cupv_logreq(func, logbuf)
-     char *func;
-     char *logbuf;
+Cupv_logreq(char *func,
+	    char *logbuf)
 {
   int n1, n2;
   char *p;
@@ -107,10 +106,9 @@ int check_server_perm(int uid, int gid, char *clienthost, struct Cupv_srv_thread
 
 /*	Cupv_srv_delete - Deletes a privilege entry */
 
-int Cupv_srv_delete(req_data, clienthost, thip)
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+int Cupv_srv_delete(char *req_data,
+                    char *clienthost,
+                    struct Cupv_srv_thread_info *thip)
 {
 
   char func[20];
@@ -170,10 +168,9 @@ int Cupv_srv_delete(req_data, clienthost, thip)
 
 /*	Cupv_srv_add - enter a new privilege entry */
 
-int Cupv_srv_add(req_data, clienthost, thip)
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+int Cupv_srv_add(char *req_data,
+                 char *clienthost,
+                 struct Cupv_srv_thread_info *thip)
 {
 
   char func[20];
@@ -230,10 +227,9 @@ int Cupv_srv_add(req_data, clienthost, thip)
 
 /*	Cupv_srv_add - enter a new privilege entry */
 
-int Cupv_srv_modify(req_data, clienthost, thip)
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+int Cupv_srv_modify(char *req_data,
+                    char *clienthost,
+                    struct Cupv_srv_thread_info *thip)
 {
 
   char func[20];
@@ -339,12 +335,11 @@ int Cupv_srv_modify(req_data, clienthost, thip)
 
 /*      Cupv_srv_list - list privileges */
 
-int Cupv_srv_list(req_data, clienthost, thip, endlist, dblistptr)
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
-     int endlist;
-     DBLISTPTR *dblistptr;
+int Cupv_srv_list(char *req_data,
+                  char *clienthost,
+                  struct Cupv_srv_thread_info *thip,
+                  int endlist,
+                  DBLISTPTR *dblistptr)
 {
   int bol;	/* beginning of list flag */
   int c;
@@ -420,10 +415,9 @@ int Cupv_srv_list(req_data, clienthost, thip, endlist, dblistptr)
 
 /*      Cupv_srv_check - Check privileges */
 
-int Cupv_srv_check(req_data, clienthost, thip)
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+int Cupv_srv_check(char *req_data,
+                   char *clienthost,
+                   struct Cupv_srv_thread_info *thip)
 {
   int c;
   struct Cupv_userpriv requested;

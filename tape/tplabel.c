@@ -22,16 +22,14 @@ int Ctape_kill_needed;
 int reserve_done;
 char path[CA_MAXPATHLEN+1];
 
-int exit_prog(exit_code)
-int exit_code;
+int exit_prog(int exit_code)
 {
 	if (reserve_done)
 		(void) Ctape_rls (NULL, TPRLS_ALL);
 	exit (exit_code);
 }
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
@@ -40,9 +38,8 @@ char *cmd;
 	    "[-v volume_serial_number] [--nbsides n] [-f]\n");
 }
 
-int main(argc, argv)
-int	argc;
-char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 #ifdef TMS
 	char acctname[7];
@@ -270,8 +267,7 @@ char	**argv;
         exit (0);        
 }
 
-void cleanup(sig)
-int sig;
+void cleanup(int sig)
 {
 	signal (sig, SIG_IGN);
 

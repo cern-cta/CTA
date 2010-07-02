@@ -11,10 +11,9 @@
 #include <fcntl.h>
 #include <time.h>
 #include "../h/sacct.h"
-void wsacct(package, acctstruct, len)
-int package;
-char *acctstruct;
-int len;
+void wsacct(int package,
+            char *acctstruct,
+            int len)
 {
 	struct accthdr accthdr;
 	char *buf;

@@ -102,11 +102,10 @@ struct flag2name {
 
 
 /* Idem than strtol() but returns 0 if OK, -1 if error, result in &ouput */
-int Cupv_strtoi(output,nptr,endptr,base)
-     int *output;
-     char *nptr;
-     char **endptr;
-     int base;
+int Cupv_strtoi(int *output,
+                char *nptr,
+                char **endptr,
+                int base)
 {
   long thislong;
   int rc = 0;
@@ -151,9 +150,8 @@ int Cupv_strtoi(output,nptr,endptr,base)
   return(rc);
 }
 
-void Cupv_util_time(this,timestr)
-     time_t this;
-     char *timestr;
+void Cupv_util_time(time_t this,
+                    char *timestr)
 {
   time_t this_time = time(NULL);
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)

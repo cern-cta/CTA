@@ -19,8 +19,7 @@
 
 extern char *optarg;
 
-void usage(cmd)
-char *cmd;
+void usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s%s%s%s%s%s%s",
@@ -35,13 +34,12 @@ char *cmd;
 	    "\t-q V [-h rmcserver] -l loader [-N nbelem] [-V vid] [-v]\n");
 }
 
-int smc_qdrive (rmchost, fd, loader, robot_info, drvord, verbose)
-char *rmchost;
-int fd;
-char *loader;
-struct robot_info *robot_info;
-int drvord;
-int verbose;
+int smc_qdrive (char *rmchost,
+                int fd,
+                char *loader,
+                struct robot_info *robot_info,
+                int drvord,
+                int verbose)
 {
         int c;
         struct smc_element_info *element_info;
@@ -96,8 +94,7 @@ int verbose;
 	return (0);
 }
 
-int smc_qlib (robot_info)
-struct robot_info *robot_info;
+int smc_qlib (struct robot_info *robot_info)
 {
 	printf ("Vendor/Product/Revision = <%s>\n", robot_info->inquiry);
 	printf ("Transport Count = %d, Start = %d\n",
@@ -111,12 +108,11 @@ struct robot_info *robot_info;
 	return (0);
 }
 
-int smc_qport (rmchost, fd, loader, robot_info, verbose)
-char *rmchost;
-int fd;
-char *loader;
-struct robot_info *robot_info;
-int verbose;
+int smc_qport (char *rmchost,
+               int fd,
+               char *loader,
+               struct robot_info *robot_info,
+               int verbose)
 {
     int c;
     struct smc_element_info *element_info;
@@ -164,14 +160,13 @@ int verbose;
 	return (0);
 }
  
-int smc_qslot (rmchost, fd, loader, robot_info, slotaddr, nbelem, verbose)
-char *rmchost;
-int fd;
-char *loader;
-struct robot_info *robot_info;
-int slotaddr;
-int nbelem;
-int verbose;
+int smc_qslot (char *rmchost,
+               int fd,
+               char *loader,
+               struct robot_info *robot_info,
+               int slotaddr,
+               int nbelem,
+               int verbose)
 {
         int c;
         struct smc_element_info *element_info;
@@ -217,14 +212,13 @@ int verbose;
 	return (0);
 }
 
-int smc_qvid (rmchost, fd, loader, robot_info, reqvid, nbelem, verbose)
-char *rmchost;
-int fd;
-char *loader;
-struct robot_info *robot_info;
-char *reqvid;
-int nbelem;
-int verbose;
+int smc_qvid (char *rmchost,
+              int fd,
+              char *loader,
+              struct robot_info *robot_info,
+              char *reqvid,
+              int nbelem,
+              int verbose)
 {
         int c;
         struct smc_element_info *element_info;
@@ -285,9 +279,8 @@ int verbose;
 	return (0);
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	int c;
 	char *dp;

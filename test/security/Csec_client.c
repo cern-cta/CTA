@@ -11,11 +11,8 @@
 FILE* log;
 
 
-int main(argc, argv)
-    int argc;
-    char *argv[];
-
-
+int main(int argc,
+	 char *argv[])
 {
   int s, rc, i,  nbauths = 1;
   Csec_context_t sec_ctx;

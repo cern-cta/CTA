@@ -21,9 +21,8 @@
 /*
  * Remote file stat
  */
-int rfio_fstat64(s, statbuf)
-     int            s;
-     struct stat64  *statbuf;
+int rfio_fstat64(int            s,
+                 struct stat64  *statbuf)
 {
   int status ;
   char   * p ;

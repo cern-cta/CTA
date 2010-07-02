@@ -16,10 +16,10 @@
 #include "u64subr.h"
 
 
-int rfio_lockf64(sd, op, siz)    /* Remote lockf             */
-     int      sd;                              /* file descriptor          */
-     int      op;                              /* lock operation           */
-     off64_t  siz;                             /* locked region            */
+/* Remote lockf             */
+int rfio_lockf64(int      sd,                              /* file descriptor          */
+                 int      op,                              /* lock operation           */
+                 off64_t  siz)                             /* locked region            */
 {
   static char    buf[256];       /* General input/output buffer      */
   int            status;         /* remote lockf() status            */

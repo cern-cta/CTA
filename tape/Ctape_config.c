@@ -15,10 +15,9 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int Ctape_config(unm, status, reason)
-char *unm;
-int status;
-int reason;
+int Ctape_config(char *unm,
+                 int status,
+                 int reason)
 {
 	int c;
 	char drive[CA_MAXUNMLEN+1];

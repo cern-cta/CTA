@@ -21,8 +21,7 @@
  * Remote file flush
  * If the file is remote, this is a dummy operation.
  */
-int rfio_fflush(fp)
-     RFILE *fp;
+int rfio_fflush(RFILE *fp)
 {
   int     status;
 

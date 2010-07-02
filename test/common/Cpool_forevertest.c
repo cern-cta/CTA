@@ -16,9 +16,8 @@ int nthreads_per_pool;
 extern int Cpool_debug;
 extern int Cthread_debug;
 
-int main(argc,argv)
-	int argc;
-	char **argv;
+int main(int argc,
+         char **argv)
 {
 	int i;
 	int n;

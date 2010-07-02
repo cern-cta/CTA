@@ -89,9 +89,8 @@ int medium_priority = -1;
 int low_priority = -1;
 int lockit;
 
-int main(argc,argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int rtn;
   int count;
@@ -197,8 +196,7 @@ int main(argc,argv)
   fprintf(stderr,"Test thread exiting with status %d%s\n",status != NULL ? *status : -1, status != NULL ? "" : " <unknown>");
 }
 
-void *_Csched_test_doit(arg)
-     void *arg;
+void *_Csched_test_doit(void *arg)
 {
   Csched_param_t param;
   int   i;

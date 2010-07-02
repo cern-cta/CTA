@@ -17,9 +17,8 @@ extern  char  *getconfent();
 extern  char  *optarg;
 extern  int  optind;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
   int c;
   char *Cns_hosts = NULL;

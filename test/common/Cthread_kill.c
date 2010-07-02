@@ -22,9 +22,8 @@ void reaper (int);
 static int okstatus = 0;
 int n;
 
-int main(argc,argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int nj, nd, signo, i;
   int *cid;
@@ -85,8 +84,7 @@ int main(argc,argv)
   exit(0);
 }
 
-void *doit(arg)
-     void *arg;
+void *doit(void *arg)
 {
   int cid = Cthread_self();
 
@@ -98,9 +96,8 @@ void *doit(arg)
   return((void *) &okstatus);
 }
 
-Sigfunc *_test_signal(signo, func)
-     int signo;
-     Sigfunc *func;
+Sigfunc *_test_signal(int signo,
+                      Sigfunc *func)
 {
   struct sigaction	act, oact;
   int n = 0;
@@ -124,8 +121,7 @@ Sigfunc *_test_signal(signo, func)
   return(oact.sa_handler);
 }
 
-void reaper(signo)
-     int signo;
+void reaper(int signo)
 {
 	/* Cthread_exit((void *) &signo); */
 }

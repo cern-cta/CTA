@@ -21,9 +21,8 @@ Cuuid_t NameSpace_DNS = { /* 6ba7b810-9dad-11d1-80b4-00c04fd430c8 */
 void puid (Cuuid_t);
 
 
-int main(argc,argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
     Cuuid_t u;
     int f;
@@ -43,8 +42,7 @@ int main(argc,argv)
 	exit(0);
 }
 
-void puid(u)
-	Cuuid_t u;
+void puid(Cuuid_t u)
 {
     int i;
 	

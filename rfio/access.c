@@ -13,9 +13,9 @@
 #include <string.h>
 
 
-int rfio_access(filepath, mode)       /* Remote file access            */
-     const char    *filepath;              /* remote file path                     */
-     int           mode;                   /* Access mode     */
+/* Remote file access            */
+int rfio_access(const char    *filepath,              /* remote file path                     */
+                int           mode)                   /* Access mode     */
 {
   char     buf[BUFSIZ];       /* General input/output buffer          */
   register int    s;              /* socket descriptor            */

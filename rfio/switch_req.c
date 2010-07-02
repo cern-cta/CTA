@@ -19,15 +19,14 @@
 #include <log.h>                        /* Genralized error logger      */
 #include "fio.h"                       /* Remote file I/O              */
 
-int switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
-     int     *access  ;
-     LONG *lun  ;
-     char  *filename ;
-     int *filen  ;
-     LONG  *lrecl  ;
-     LONG   *append  ;
-     LONG *trunc  ;
-     int  mod  ;
+int switch_open(int     *access,
+                LONG *lun,
+                char  *filename,
+                int *filen,
+                LONG  *lrecl,
+                LONG   *append,
+                LONG *trunc,
+                int  mod)
 {
   (void)filen;
   int status;
@@ -61,13 +60,12 @@ int switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
 
 }
 
-int switch_write(access,lun,ptr,nwrit,nrec,mod)
-     int     access          ;
-     LONG    *lun            ;
-     char  *ptr  ;
-     int  *nwrit  ;
-     int *nrec  ;
-     int  mod   ;
+int switch_write(int     access,
+                 LONG    *lun,
+                 char  *ptr,
+                 int  *nwrit,
+                 int *nrec,
+                 int  mod)
 {
   int status;
   switch (access) {
@@ -100,16 +98,14 @@ int switch_write(access,lun,ptr,nwrit,nrec,mod)
 }
 
 
-int switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
-     int   access ;
-     int  *ptlun   ;
-     char  *buffer1;
-     int *nwant ;
-     int  *nrec ;
-     int readopt ;
-     int *ngot ;
-     int  mod ;
-
+int switch_read(int   access,
+                int  *ptlun,
+                char  *buffer1,
+                int *nwant,
+                int  *nrec,
+                int readopt,
+                int *ngot,
+                int  mod)
 {
   int status;
   if (readopt == FFREAD_C)        {
@@ -155,8 +151,7 @@ int switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
 
 }
 
-int switch_close(lun)
-     int *lun;
+int switch_close(int *lun)
 {
   int irc;
   irc=uf_close(lun);

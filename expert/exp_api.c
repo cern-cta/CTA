@@ -64,9 +64,8 @@
 #include "expert_daemon.h"
 #include <string.h>
 
-int expert_send_request(exp_socket, request)
-     int *exp_socket;
-     int request;
+int expert_send_request(int *exp_socket,
+                        int request)
 {
 
 	gid_t gid;
@@ -126,10 +125,9 @@ int expert_send_request(exp_socket, request)
 	}
 }
 
-int expert_send_data(exp_socket, buffer, buf_length)
-     int exp_socket;
-     const char *buffer;
-     int buf_length;
+int expert_send_data(int exp_socket,
+                     const char *buffer,
+                     int buf_length)
 {
         int n;
         if ((n = netwrite (exp_socket, (char *)buffer, buf_length)) <= 0) {
@@ -141,11 +139,10 @@ int expert_send_data(exp_socket, buffer, buf_length)
 }
 
 
-int expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
-     int exp_socket;
-     char *buffer;
-     int buf_length;
-     int timeout;
+int expert_netread_timeout(int exp_socket,
+                           char *buffer,
+                           int buf_length,
+                           int timeout)
 {
 	fd_set  fds;
 	struct  timeval tout;
@@ -169,11 +166,10 @@ int expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
 
 
 
-int expert_receive_data(exp_socket, buffer, buf_length, timeout)
-     int exp_socket;
-     char *buffer;
-     int buf_length;
-     int timeout;
+int expert_receive_data(int exp_socket,
+                        char *buffer,
+                        int buf_length,
+                        int timeout)
 {
         char *p;
 	int l;

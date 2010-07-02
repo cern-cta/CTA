@@ -12,11 +12,9 @@
 #include "rfio.h"
 #include <string.h>
 
-int rfio_readlink(path,buf, length)
-     char *path ;
-     char *buf ;
-     int length ;
-
+int rfio_readlink(char *path,
+                  char *buf,
+                  int length)
 {
   int c;
   int status ;

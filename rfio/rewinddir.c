@@ -17,8 +17,7 @@
  * remote directory close
  */
 
-int rfio_rewinddir(dirp)
-     RDIR *dirp;
+int rfio_rewinddir(RDIR *dirp)
 {
   WORD    req ;
   LONG  rcode ;

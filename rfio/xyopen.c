@@ -40,8 +40,7 @@ RFILE *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 extern char *getacct();
 extern int switch_open();
 
-int rfio_xysock(lun)
-     int lun ;
+int rfio_xysock(int lun)
 {
   if ( ftnlun[lun] == NULL )
     return -1 ;
@@ -320,10 +319,12 @@ rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,uid,gid,key,reqhost)
   return(status);
 }
 
-int rfio_xyopen(name,node,lun,lrecl,chopt,irc)
-     char    *name, *node, *chopt;
-     int     lun, lrecl;
-     int     *irc;
+int rfio_xyopen(char    *name,
+                char *node,
+                int     lun,
+                int lrecl,
+                char *chopt,
+                int     *irc)
 {
   char rh[1];
   rh[0]='\0';
@@ -334,10 +335,11 @@ int rfio_xyopen(name,node,lun,lrecl,chopt,irc)
  * Fortran wrapper
  */
 
-          void xyopen_(flun, flrecl, fchopt, firc, fchoptl)
-          int     *flun, *flrecl, *firc;
-          char    *fchopt;
-          int     fchoptl;
+void xyopen_(int     *flun,
+             int *flrecl,
+             char    *fchopt,
+             int *firc,
+             int     fchoptl)
 {
   char    *chopt;                 /* "C" character strings        */
   int     status;                 /* xyopen return status         */
@@ -367,10 +369,15 @@ int rfio_xyopen(name,node,lun,lrecl,chopt,irc)
   return;
 }
 
-void xyopn_(fname, fnode, flun, flrecl, fchopt, firc, fnamel, fnodel, fchoptl)
-          int     *flun, *flrecl, *firc;
-          char    *fname, *fnode, *fchopt;
-          int     fnamel, fnodel, fchoptl;
+void xyopn_(char    *fname,
+            char  *fnode,
+            int     *flun,
+            int *flrecl,
+            char *fchopt,
+            int *firc,
+            int     fnamel,
+            int fnodel,
+            int fchoptl)
 {
   char    *name, *node, *chopt;   /* "C" character strings        */
   int     status;                 /* xyopn return status          */

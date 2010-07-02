@@ -59,8 +59,7 @@ void Cns_signal_handler(int sig)
   }
 }
 
-int Cns_main(main_args)
-     struct main_args *main_args;
+int Cns_main(struct main_args *main_args)
 {
   int c;
   struct Cns_dbfd dbfd;
@@ -298,9 +297,8 @@ int Cns_main(main_args)
   }
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   struct main_args main_args;
 
@@ -311,12 +309,11 @@ int main(argc, argv)
   exit (Cns_main (&main_args));
 }
 
-int getreq(thip, magic, req_type, req_data, clienthost)
-     struct Cns_srv_thread_info *thip;
-     int *magic;
-     int *req_type;
-     char **req_data;
-     char **clienthost;
+int getreq(struct Cns_srv_thread_info *thip,
+           int *magic,
+           int *req_type,
+           char **req_data,
+           const char **clienthost)
 {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
@@ -377,12 +374,11 @@ int getreq(thip, magic, req_type, req_data, clienthost)
   }
 }
 
-int procdirreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int procdirreq(int magic,
+               int req_type,
+               char *req_data,
+               const char *clienthost,
+               struct Cns_srv_thread_info *thip)
 {
   int bod = 1;
   int c;
@@ -469,12 +465,11 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
   return (rc);
 }
 
-int procreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int procreq(int magic,
+            int req_type,
+            char *req_data,
+            const char *clienthost,
+            struct Cns_srv_thread_info *thip)
 {
   int c;
 #ifdef USE_VOMS
@@ -858,11 +853,10 @@ doit(arg)
 
 }
 
-int procsessreq(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int procsessreq(int magic,
+                char *req_data,
+                const char *clienthost,
+                struct Cns_srv_thread_info *thip)
 {
   int req_type = -1;
   int rc = 0;
@@ -899,11 +893,10 @@ int procsessreq(magic, req_data, clienthost, thip)
   return (rc);
 }
 
-int proctransreq(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     const char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int proctransreq(int magic,
+                 char *req_data,
+                 const char *clienthost,
+                 struct Cns_srv_thread_info *thip)
 {
   int req_type = -1;
   int rc = 0;

@@ -103,10 +103,9 @@ char **C__Coptarg (void);
  * Globals that existed prior to this call are all re-assigned as
  * thread-specific to calling thread (normally the main thread).
  */
-void Cglobals_init(getspec,setspec,getTid)
-     int (*getspec) (int *, void **);
-int (*setspec) (int *, void *);
-int (*getTid) (void);
+void Cglobals_init(int (*getspec) (int *, void **),
+		   int (*setspec) (int *, void *),
+		   int (*getTid) (void))
 {
     int i,rc;
     int *key;
@@ -160,10 +159,9 @@ int (*getTid) (void);
  *                 0            on success and not first call
  *                 1            on success and first call (e.g. alloc)
  */
-int Cglobals_get(key, addr, size)
-     int *key;
-     void **addr;
-     size_t size;
+int Cglobals_get(int *key,
+                 void **addr,
+                 size_t size)
 {
     if ( key == NULL || addr == NULL || size<= (size_t)0 ) {
         return(-1);
@@ -235,8 +233,7 @@ int Cglobals_get(key, addr, size)
  * thread has *NOT* been created with a Cthread_create()).
  * 
  */ 
-void Cglobals_getTid(Tid)
-     int *Tid;
+void Cglobals_getTid(int *Tid)
 {
     if ( Tid == NULL ) return;
     if ( local_getTid == NULL ) *Tid = -1;

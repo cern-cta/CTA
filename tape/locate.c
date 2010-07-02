@@ -18,10 +18,9 @@
 #include <stdlib.h>
 #include "sendscsicmd.h"
 
-int locate(tapefd, path, blockid)
-int tapefd;
-char *path;
-unsigned char *blockid;
+int locate(int tapefd,
+           char *path,
+           unsigned char *blockid)
 {
 	unsigned char cdb[10];
 	char func[16];
@@ -61,10 +60,9 @@ unsigned char *blockid;
 	RETURN (0);
 }
 
-int read_pos(tapefd, path, blockid)
-int tapefd;
-char *path;
-unsigned char *blockid;
+int read_pos(int tapefd,
+             char *path,
+             unsigned char *blockid)
 {
 	unsigned char cdb[10];
 	unsigned char data[20];

@@ -454,9 +454,8 @@ int tpd_main() {
 	}
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,
+         char **argv)
 {
 	struct main_args main_args;
 
@@ -468,10 +467,9 @@ char **argv;
 	exit (tpd_main());
 }
 
-int chk_den(tunp, den, cdevp)
-struct tptab *tunp;
-int den;
-struct tpdev **cdevp;
+int chk_den(struct tptab *tunp,
+            int den,
+            struct tpdev **cdevp)
 {
 	/* check if the device supports the requested density */
 
@@ -556,11 +554,10 @@ void clean4jobdied()
 	free (jids);
 }
 
-int confdrive(tunp, rpfd, status, reason)
-struct tptab *tunp;
-int rpfd;
-int status;
-int reason;
+int confdrive(struct tptab *tunp,
+              int rpfd,
+              int status,
+              int reason)
 {
 	int c;
 	int i;
@@ -891,10 +888,9 @@ int initrrt()
 	return (0);
 }
 
-void procreq(req_type, req_data, clienthost)
-int req_type;
-char *req_data;
-char *clienthost;
+void procreq(int req_type,
+             char *req_data,
+             char *clienthost)
 {
 	switch (req_type) {
 	case TPRSV:
@@ -948,9 +944,8 @@ char *clienthost;
 	}
 }
 
-void procconfreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procconfreq(char *req_data,
+                 char *clienthost)
 {
 	int c;
 	char *drive;
@@ -1027,9 +1022,8 @@ reply:
 		netclose (rpfd);
 }
 
-void procdinforeq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procdinforeq(char *req_data,
+                  char *clienthost)
 {
 	int c;
 	struct devinfo *devinfo;
@@ -1097,9 +1091,8 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procfrdrvreq(req_data, clienthost)
-     char *req_data;
-     char *clienthost;
+void procfrdrvreq(char *req_data,
+                  char *clienthost)
 {
 	int found;
 	gid_t gid;
@@ -1201,9 +1194,8 @@ void procfrdrvreq(req_data, clienthost)
 	netclose (rpfd);
 }
 
-void procinforeq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procinforeq(char *req_data,
+                 char *clienthost)
 {
 	int c;
 	int cfseq;
@@ -1270,9 +1262,8 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void prockilltreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void prockilltreq(char *req_data,
+                  char *clienthost)
 {
 	int c, i;
 	gid_t gid;
@@ -1334,9 +1325,8 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-void procmountreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procmountreq(char *req_data,
+                  char *clienthost)
 {
 	char *acctname;
 	int c;
@@ -1710,9 +1700,8 @@ reply:
 		netclose (rpfd);
 }
 
-void procposreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procposreq(char *req_data,
+                char *clienthost)
 {
 	int blksize;
 	unsigned char blockid[4];
@@ -1997,9 +1986,8 @@ reply:
 		netclose (rpfd);
 }
 
-void procrlsreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procrlsreq(char *req_data,
+                char *clienthost)
 {
 	int c, i, n;
 	int errflg = 0;
@@ -2122,9 +2110,8 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 }
 
-void procrsltreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procrsltreq(char *req_data,
+                 char *clienthost)
 {
 	int c, i;
 	struct tpdev *cdevp;
@@ -2290,9 +2277,8 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procrsvreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procrsvreq(char *req_data,
+                char *clienthost)
 {
 	int c;
 	int count;
@@ -2410,9 +2396,8 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procrstatreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procrstatreq(char *req_data,
+                  char *clienthost)
 {
 	gid_t gid;
 	int j;
@@ -2454,9 +2439,8 @@ char *clienthost;
 	sendrep (rpfd, TAPERC, 0);
 }
 
-void procstatreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procstatreq(char *req_data,
+                 char *clienthost)
 {
 	gid_t gid;
 	int j;
@@ -2509,9 +2493,8 @@ char *clienthost;
 	sendrep (rpfd, TAPERC, 0);
 }
 
-void procufilreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procufilreq(char *req_data,
+                 char *clienthost)
 {
 	int blksize;
 	unsigned char blockid[4];
@@ -2558,9 +2541,8 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-void procuvsnreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void procuvsnreq(char *req_data,
+                 char *clienthost)
 {
 	gid_t gid;
 	int jid;
@@ -2603,11 +2585,10 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-int reldrive(tunp, user, rpfd, rlsflags)
-struct tptab *tunp;
-char *user;
-int rpfd;
-int rlsflags;
+int reldrive(struct tptab *tunp,
+             char *user,
+             int rpfd,
+             int rlsflags)
 {
 	int c;
 	int found;

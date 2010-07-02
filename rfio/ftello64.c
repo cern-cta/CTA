@@ -21,8 +21,7 @@
 /*
  * Remote file ftello
  */
-off64_t rfio_ftello64(fp)
-     RFILE    *fp;
+off64_t rfio_ftello64(RFILE    *fp)
 {
   off64_t  offsetout;
 

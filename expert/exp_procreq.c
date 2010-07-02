@@ -79,10 +79,9 @@ char *getenv();
 char *getconfent();
 char *exp_get_token();
 
-int exp_get_from_conf (req_type, wdir, args)
-     int req_type;
-     char *wdir;
-     char *args;
+int exp_get_from_conf (int req_type,
+                       char *wdir,
+                       char *args)
 {
 	struct _exp_req {
 		int req_type;
@@ -179,11 +178,10 @@ int exp_get_from_conf (req_type, wdir, args)
 
 /*	exp_srv_execute - process request */
 
-int exp_srv_execute(req_type, req_data, clienthost, s)
-     int req_type;
-     char *req_data;
-     char *clienthost;
-     int s;
+int exp_srv_execute(int req_type,
+                    char *req_data,
+                    char *clienthost,
+                    int s)
 {
 	char func[18];
 	gid_t gid;
@@ -201,7 +199,7 @@ int exp_srv_execute(req_type, req_data, clienthost, s)
 	unmarshall_LONG (rbp, gid);
 
 	/* Read the configuration file */
-	c = exp_get_from_conf (req_type, wdir, args);
+	c = exp_get_from_conf (req_type, wdir, (char*)args);
 	if (c < 0) {
 		explogit (func, EXP98, "error reading the configration file\n");
 		sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, serrno); /* Send error status */

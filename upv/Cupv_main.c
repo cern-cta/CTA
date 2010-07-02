@@ -51,8 +51,7 @@ void Cupv_signal_handler(int sig)
   }
 }
 
-int Cupv_main(main_args)
-     struct main_args *main_args;
+int Cupv_main(struct main_args *main_args)
 {
   int c;
   struct Cupv_dbfd dbfd;
@@ -221,9 +220,8 @@ int Cupv_main(main_args)
   }
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
 
   struct main_args main_args;
@@ -235,12 +233,11 @@ int main(argc, argv)
   exit (Cupv_main (&main_args));
 }
 
-int getreq(thip, magic, req_type, req_data, clienthost)
-     struct Cupv_srv_thread_info *thip;
-     int *magic;
-     int *req_type;
-     char *req_data;
-     char **clienthost;
+int getreq(struct Cupv_srv_thread_info *thip,
+           int *magic,
+           int *req_type,
+           char *req_data,
+           char **clienthost)
 {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
@@ -294,12 +291,11 @@ int getreq(thip, magic, req_type, req_data, clienthost)
   }
 }
 
-int proclistreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+int proclistreq(int magic,
+                int req_type,
+                char *req_data,
+                char *clienthost,
+                struct Cupv_srv_thread_info *thip)
 {
   int c;
   int new_req_type = -1;
@@ -343,12 +339,11 @@ int proclistreq(magic, req_type, req_data, clienthost, thip)
   return (c);
 }
 
-void procreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     char *clienthost;
-     struct Cupv_srv_thread_info *thip;
+void procreq(int magic,
+             int req_type,
+             char *req_data,
+             char *clienthost,
+             struct Cupv_srv_thread_info *thip)
 {
   int c;
 
@@ -388,9 +383,7 @@ void procreq(magic, req_type, req_data, clienthost, thip)
   sendrep (thip->s, CUPV_RC, c);
 }
 
-void *
-doit(arg)
-     void *arg;
+void *doit(void *arg)
 {
   int c;
   char *clienthost;

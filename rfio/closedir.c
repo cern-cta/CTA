@@ -17,8 +17,7 @@
  * remote directory close
  */
 
-int rfio_closedir(dirp)
-     RDIR *dirp;
+int rfio_closedir(RDIR *dirp)
 {
   char     rfio_buf[BUFSIZ];
   WORD    req ;

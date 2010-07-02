@@ -39,9 +39,8 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int c;
   char fullpath[CA_MAXPATHLEN+1];
@@ -150,8 +149,7 @@ int isyes()
   return (fchar == 'y');
 }
 
-int removedir (dir)
-     char *dir;
+int removedir (char *dir)
 {
   char curdir[CA_MAXPATHLEN+1];
   struct dirlist {

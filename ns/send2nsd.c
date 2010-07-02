@@ -22,15 +22,14 @@
 
 /* send2nsd - send a request to the name server and wait for the reply */
 
-int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, nbstruct)
-     int *socketp;
-     char *host;
-     char *reqp;
-     int reql;
-     char *user_repbuf;
-     int user_repbuf_len;
-     void **repbuf2;
-     int *nbstruct;
+int send2nsdx(int *socketp,
+              char *host,
+              char *reqp,
+              int reql,
+              char *user_repbuf,
+              int user_repbuf_len,
+              void **repbuf2,
+              int *nbstruct)
 {
   int actual_replen = 0;
   int alloced = 0;
@@ -338,13 +337,12 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
   return (c);
 }
 
-int send2nsd(socketp, host, reqp, reql, user_repbuf, user_repbuf_len)
-     int *socketp;
-     char *host;
-     char *reqp;
-     int reql;
-     char *user_repbuf;
-     int user_repbuf_len;
+int send2nsd(int *socketp,
+             char *host,
+             char *reqp,
+             int reql,
+             char *user_repbuf,
+             int user_repbuf_len)
 {
   return (send2nsdx (socketp, host, reqp, reql, user_repbuf, user_repbuf_len,
                      NULL, NULL));

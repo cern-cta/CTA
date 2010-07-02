@@ -53,9 +53,8 @@ char buf[BUFSIZ];
 
 Cregexp_t badregexp;		/* Will be initialized to 0. */
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         argv)
 {
   Cregexp_t *r;
   int i;
@@ -149,8 +148,7 @@ int _Cregexp_test_multiple() {
   return(EXIT_SUCCESS);
 }
 
-void _Cregexp_test_try(fields)
-     char **fields;
+void _Cregexp_test_try(char **fields)
 {
   Cregexp_t *r;
   char dbuf[BUFSIZ];

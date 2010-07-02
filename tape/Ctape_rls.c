@@ -15,9 +15,8 @@
 #include "serrno.h"
 #include "Ctape_api.h"
 
-int Ctape_rls(path, flags)
-char *path;
-int flags;
+int Ctape_rls(char *path,
+              int flags)
 {
 	int c;
 	int errflg = 0;

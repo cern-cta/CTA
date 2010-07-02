@@ -137,10 +137,14 @@ rfio_xyread(lun, buf, nrec, nwant, ngot, chopt, irc)
  * Fortran wrapper
  */
 
-void xyread_(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, fchoptl)
-          int     *flun, *fnrec, *fnwant, *fngot, *firc;
-          char    *fbuf, *fchopt;
-          int     fchoptl;
+void xyread_(int     *flun,
+             char    *fbuf,
+             int *fnrec,
+             int *fnwant,
+             int *fngot,
+             char *fchopt,
+             int *firc,
+             int     fchoptl)
 {
   char    *chopt;         /* xyread options                       */
   int     status;         /* xyread return status                 */

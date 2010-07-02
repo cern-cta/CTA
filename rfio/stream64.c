@@ -37,11 +37,10 @@
 
 EXTERN_C int data_rfio_connect (char *, int *, int, int);
 
-static void rfio_setup64_ext_v3(iop,uid,gid,passwd)
-     RFILE   *iop;
-     int  uid;
-     int  gid;
-     int passwd;
+static void rfio_setup64_ext_v3(RFILE   *iop,
+                                int  uid,
+                                int  gid,
+                                int passwd)
 {
   extern char * getenv() ;  /* External declaration  */
   char * cp ;    /* Character pointer  */
@@ -95,9 +94,9 @@ static void rfio_setup64_ext_v3(iop,uid,gid,passwd)
   strcpy(iop->host,"????????");
 }
 
-int rfio_open64_v3(filepath, flags, mode)
-     char    * filepath ;
-     int     flags,mode ;
+int rfio_open64_v3(char    * filepath,
+                   int     flags,
+                   int mode)
 {
   char rh[1] ;
   rh[0]='\0' ;
@@ -109,15 +108,15 @@ int rfio_open64_v3(filepath, flags, mode)
 /*
  * Remote file open.
  */
-int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
-     char    * filepath ;
-     int  flags,mode ;
-     uid_t uid;
-     gid_t gid;
-     int  passwd ;
-     char  * reqhost; /* In case of a Non-mapped I/O with uid & gid
-                         sepcified, which host will be contacted
-                         for key check ? */
+int rfio_open64_ext_v3(char    * filepath,
+                       int  flags,
+                       int mode,
+                       uid_t uid,
+                       gid_t gid,
+                       int  passwd,
+                       char  * reqhost) /* In case of a Non-mapped I/O with uid & gid
+					   sepcified, which host will be contacted
+					   for key check ? */
 {
   int     status ; /* Return code    */
   int     rcode ;     /* Remote errno   */
@@ -453,8 +452,7 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
   return (rfp->s) ;
 }
 
-void rfio_setup64_v3(iop)
-     RFILE   *iop;
+void rfio_setup64_v3(RFILE   *iop)
 {
   (void)rfio_setup64_ext_v3(iop,0,0,0);
 }
@@ -462,9 +460,9 @@ void rfio_setup64_v3(iop)
 /*
  * Remote file read
  */
-int rfio_read64_v3(ctrl_sock, ptr, size)
-     char    *ptr;
-     int     ctrl_sock, size;
+int rfio_read64_v3(int     ctrl_sock,
+                   char    *ptr,
+                   int size)
 {
   int status ; /* Return code of called func */
   char   * p ;  /* Pointer to buffer  */
@@ -693,9 +691,9 @@ int rfio_read64_v3(ctrl_sock, ptr, size)
 /*
  * Remote file write
  */
-int rfio_write64_v3(ctrl_sock, ptr, size)
-     char    *ptr;
-     int     ctrl_sock, size;
+int rfio_write64_v3(int     ctrl_sock,
+                    char    *ptr,
+                    int  size)
 {
   int status ; /* Return code of called func */
   char   * p ; /* Pointer to buffer  */
@@ -846,8 +844,7 @@ int rfio_write64_v3(ctrl_sock, ptr, size)
 /*
  * remote file close
  */
-int rfio_close64_v3(s)
-     int     s;
+int rfio_close64_v3(int     s)
 {
   int      req;
   char     *p  ;
@@ -1045,10 +1042,9 @@ int rfio_close64_v3(s)
  * Must be called only between an open (version 3)
  * and the first read or write system call
  */
-off64_t rfio_lseek64_v3(s, offset, how)
-     int       s;
-     off64_t   offset;
-     int       how;
+off64_t rfio_lseek64_v3(int       s,
+                        off64_t   offset,
+                        int       how)
 {
   char *p;
   off64_t   offset64_out;

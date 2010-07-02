@@ -31,10 +31,9 @@ static int rfio_forcelseek() ;
 /*
  * Remote file seek
  */
-off_t rfio_lseek(s, offset, how)
-     int      s ;
-     off_t  offset ;
-     int    how ;
+off_t rfio_lseek(int      s,
+                 off_t  offset,
+                 int    how)
 {
   int     status ;
   int s_index = -1;
@@ -211,9 +210,8 @@ off_t rfio_lseek(s, offset, how)
  * Action taken when a preseek() is active and rfio_lseek() is called.
  * Positionned pointers to the right record.
  */
-static int rfio_lseekinbuf(s,offset)
-     int      s ;
-     int offset ;
+static int rfio_lseekinbuf(int      s,
+                           int offset)
 {
   char   * p ; /* Pointer to buffer  */
   int s_index;
@@ -312,10 +310,9 @@ static int rfio_lseekinbuf(s,offset)
  * Forcing remote lseek().
  * Necessarry for SEEK_END lseek().
  */
-static int rfio_forcelseek(s, offset, how)
-     int      s ;
-     int offset ;
-     int    how ;
+static int rfio_forcelseek(int      s,
+                           int offset,
+                           int    how)
 {
   char   * p ; /* Pointer to buffer  */
   char * trp ; /* Pointer to temporary buffer */

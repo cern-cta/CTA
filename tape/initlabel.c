@@ -21,8 +21,7 @@
 
 static int nb_rsvd_resources;
 static struct devlblinfo *devlblinfop;
-int initlabelroutines (nrr)
-int nrr;
+int initlabelroutines (int nrr)
 {
 	nb_rsvd_resources = nrr;
 	devlblinfop = calloc (nrr, sizeof(struct devlblinfo));
@@ -34,9 +33,8 @@ int nrr;
 	return (0);
 }
 
-int getlabelinfo (path, dlipp)
-char *path;
-struct devlblinfo  **dlipp;
+int getlabelinfo (char *path,
+                  struct devlblinfo  **dlipp)
 {
 	struct devlblinfo  *dlip;
 	int i;
@@ -53,9 +51,8 @@ struct devlblinfo  **dlipp;
 
 /*	rmlabelinfo - remove label information from the internal table */
 
-int rmlabelinfo (path, flags)
-char *path;
-int flags;
+int rmlabelinfo (char *path,
+                 int flags)
 {
 	struct devlblinfo  *dlip;
 	int i;
@@ -82,11 +79,10 @@ int flags;
 /*	setdevinfo - set flags for optimization of label processing routines
  *	according to device type and density
  */
-int setdevinfo (path, devtype, den, lblcode)
-char *path;
-char *devtype;
-int den;
-int lblcode;
+int setdevinfo (char *path,
+                char *devtype,
+                int den,
+                int lblcode)
 {
 	struct devinfo *devinfo;
 	struct devlblinfo  *dlip;
@@ -114,14 +110,13 @@ int lblcode;
 
 /*	setlabelinfo - set label information for label processing routines */
 
-int setlabelinfo (path, flags, fseq, vol1, hdr1, hdr2, uhl1)
-char *path;
-int flags;
-int fseq;
-char *vol1;
-char *hdr1;
-char *hdr2;
-char *uhl1;
+int setlabelinfo (char *path,
+                  int flags,
+                  int fseq,
+                  char *vol1,
+                  char *hdr1,
+                  char *hdr2,
+                  char *uhl1)
 {
 	struct devlblinfo  *dlip;
 	int i;

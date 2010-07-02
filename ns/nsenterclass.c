@@ -58,9 +58,8 @@ void usage(int status, char *name) {
 }
 
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int c;
   struct Cns_fileclass Cns_fileclass;

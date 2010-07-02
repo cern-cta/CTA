@@ -140,10 +140,9 @@ extern void *handler_context;
 /*                                                                      */
 /************************************************************************/
 
-int srlockf64(s, infop, fd)
-     int      s;
-     struct   rfiostat *infop;
-     int      fd;
+int srlockf64(int      s,
+              struct   rfiostat *infop,
+              int      fd)
 {
   char    *p;
   LONG    status = 0;
@@ -218,10 +217,9 @@ int srlockf64(s, infop, fd)
   return status;
 }
 
-int     srlstat64(s, rt, host)
-     int     s;
-     int     rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
+int     srlstat64(int     s,
+                  int     rt, /* Is it a remote site call ?   */
+                  char *host) /* Where the request comes from */
 {
   char *   p;
   int    status = 0, rcode = 0;
@@ -346,10 +344,9 @@ int     srlstat64(s, rt, host)
   return 0;
 }
 
-int     srstat64(s, rt, host)
-     int     s;
-     int       rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
+int     srstat64(int     s,
+                 int       rt, /* Is it a remote site call ?   */
+                 char *host) /* Where the request comes from */
 {
   char   *p;
   int    status = 0, rcode = 0;
@@ -478,10 +475,9 @@ int     srstat64(s, rt, host)
   return 0;
 }
 
-int  sropen64(s, rt, host)
-     int     s;
-     int       rt; /* Is it a remote site call ?   */
-     char *host; /* Where the request comes from */
+int  sropen64(int     s,
+              int       rt, /* Is it a remote site call ?   */
+              char *host) /* Where the request comes from */
 {
   int     status;
   int     rcode = 0;
@@ -741,10 +737,9 @@ int rfio_call64_answer_client_internal
   return 0;
 }
 
-int srwrite64(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat * infop;
+int srwrite64(int     s,
+              struct rfiostat * infop,
+              int     fd)
 {
   int       status;                      /* Return code               */
   int       rcode;                       /* To send back errno        */
@@ -845,10 +840,9 @@ int srwrite64(s, infop, fd)
   return status;
 }
 
-int srread64(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat * infop;
+int srread64(int     s,
+             struct rfiostat * infop,
+             int     fd)
 {
   int      status;          /* Return code               */
   int      rcode;           /* To send back errno        */
@@ -959,10 +953,9 @@ int srread64(s, infop, fd)
   return status;
 }
 
-int srreadahd64(s, infop, fd)
-     int     s;
-     int     fd;
-     struct rfiostat *infop;
+int srreadahd64(int     s,
+                struct rfiostat *infop,
+                int     fd)
 {
   int      status; /* Return code  */
   int     rcode; /* To send back errno */
@@ -1099,10 +1092,9 @@ int srreadahd64(s, infop, fd)
   }
 }
 
-int     srfstat64(s, infop, fd)
-     int      s;
-     int      fd;
-     struct rfiostat *infop;
+int     srfstat64(int      s,
+                  struct rfiostat *infop,
+                  int      fd)
 {
   int            status;
   int            rcode = 0;
@@ -1151,11 +1143,10 @@ int     srfstat64(s, infop, fd)
   return 0;
 }
 
-int srlseek64(s, request, infop, fd)
-     int         s;
-     int    request;
-     int         fd;
-     struct rfiostat *infop;
+int srlseek64(int         s,
+              int    request,
+              struct rfiostat *infop,
+              int         fd)
 {
   int      status;
   int      rcode;
@@ -1189,10 +1180,9 @@ int srlseek64(s, request, infop, fd)
   return status;
 }
 
-int srpreseek64(s, infop, fd)
-     int     s;
-     int fd;
-     struct rfiostat *infop;
+int srpreseek64(int     s,
+                struct rfiostat *infop,
+                int fd)
 {
   int status;  /* Return code  */
   int  size;  /* Buffer size  */
@@ -1371,10 +1361,9 @@ int srpreseek64(s, infop, fd)
 }
 
 
-int  sropen64_v3(s, rt, host)
-     int         s;
-     int         rt;            /* Is it a remote site call ?          */
-     char        *host;         /* Where the request comes from        */
+int  sropen64_v3(int         s,
+                 int         rt,            /* Is it a remote site call ?          */
+                 char        *host)         /* Where the request comes from        */
 {
   int      status;
   int      rcode = 0;
@@ -1852,10 +1841,9 @@ int  sropen64_v3(s, rt, host)
 }
 
 
-int   srclose64_v3(s, infop, fd)
-     int       s;
-     int     fd;
-     struct rfiostat *infop;
+int   srclose64_v3(int       s,
+                   struct rfiostat *infop,
+                   int     fd)
 {
   int         status;
   int         rcode;
@@ -2203,10 +2191,9 @@ static void wait_producer64_thread(int *cidp)
    - Close the data stream
    - Trace statistics
 */
-static int   readerror64_v3(s, infop, cidp)
-     int            s;
-     struct rfiostat* infop;
-     int           *cidp;
+static int   readerror64_v3(int            s,
+                            struct rfiostat* infop,
+                            int           *cidp)
 {
 
   char tmpbuf[21], tmpbuf2[21];
@@ -2263,10 +2250,9 @@ static int   readerror64_v3(s, infop, cidp)
   return 0;
 }
 
-     int srread64_v3(ctrl_sock, infop, fd)
-          int            ctrl_sock;
-          int            fd;
-          struct rfiostat* infop;
+     int srread64_v3(int            ctrl_sock,
+                     struct rfiostat* infop,
+                     int            fd)
 {
   int         status;              /* Return code                */
   int         rcode;               /* To send back errno         */
@@ -2613,11 +2599,10 @@ static int   readerror64_v3(s, infop, cidp)
    - empty the DATA stream
    - wait for acknowledge on control stream
 */
-static int   writerror64_v3(s, rcode, infop, cidp)
-     int            s;
-     int            rcode;
-     struct rfiostat   *infop;
-     int           *cidp;
+static int   writerror64_v3(int            s,
+                            int            rcode,
+                            struct rfiostat   *infop,
+                            int           *cidp)
 {
   char        *p;            /* Pointer to buffer          */
   int         status;
@@ -2768,10 +2753,9 @@ static int   writerror64_v3(s, rcode, infop, cidp)
   return 0;
 }
 
-int srwrite64_v3(s, infop, fd)
-     int            s;
-     int            fd;
-     struct rfiostat   *infop;
+int srwrite64_v3(int            s,
+                 struct rfiostat   *infop,
+                 int            fd)
 {
   int         status;        /* Return code                */
   int         rcode;         /* To send back errno         */

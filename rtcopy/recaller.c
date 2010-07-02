@@ -400,8 +400,7 @@ int recallerCallbackFileCopied(
  * while the latter would rundown processing as soon as all unprocessed
  * file requests have finished.
  */
-int recallerCallbackMoreWork(filereq)
-     rtcpFileRequest_t *filereq;
+int recallerCallbackMoreWork(rtcpFileRequest_t *filereq)
 {
   static int requestToProcess = 0;
   struct Cns_fileid *castorFileId = NULL;

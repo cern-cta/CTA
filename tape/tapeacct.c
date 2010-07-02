@@ -13,16 +13,15 @@
 #include "osdep.h"
 #include "wsacct.h"
 
-int tapeacct(subtype, uid, gid, jid, dgn, drive, vid, fseq, reason)
-int subtype;
-uid_t uid;
-gid_t gid;
-int jid;
-char *dgn;
-char *drive;
-char *vid;
-int fseq;
-int reason;
+int tapeacct(int subtype,
+             uid_t uid,
+             gid_t gid,
+             int jid,
+             char *dgn,
+             char *drive,
+             char *vid,
+             int fseq,
+             int reason)
 {
 	struct accttape accttape;
 	char *getconfent();

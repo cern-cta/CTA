@@ -19,9 +19,8 @@
 static char *ckpath();
 char *getconfent();
 
-int main(argc, argv)
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   char *old_path,*new_path;
 
@@ -39,8 +38,7 @@ int main(argc, argv)
   return(0);
 }
 
-static char *ckpath(path)
-     char *path;
+static char *ckpath(char *path)
 {
   char *cp;
   char *newpath;

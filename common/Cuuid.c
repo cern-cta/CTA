@@ -173,8 +173,13 @@ static void    _Cuuid_Transform                (UINT4 *,
 static void    _Cuuid_read_state               (U_SHORT *,
 						Cuuid_time_t *,
 						Cuuid_node_t *);
-static void    _Cuuid_write_state              ();
-static void    _Cuuid_format_uuid_v1           ();
+static void    _Cuuid_write_state              (U_SHORT,
+						Cuuid_time_t,
+						Cuuid_node_t);
+static void    _Cuuid_format_uuid_v1           (Cuuid_t *,
+						U_SHORT,
+						Cuuid_time_t,
+						Cuuid_node_t);
 static void    _Cuuid_format_uuid_v3           (Cuuid_t *,
 						unsigned char[16]);
 static void    _Cuuid_get_current_time         (Cuuid_time_t *);
@@ -206,8 +211,7 @@ static Cuuid_state_t *C_Cuuid_st()
 /* ------------------------------- */
 /* Cuuid_create -- generate a UUID */
 /* ------------------------------- */
-void Cuuid_create(uuid)
-     Cuuid_t *uuid;
+void Cuuid_create(Cuuid_t *uuid)
 {
   Cuuid_time_t timestamp, last_time;
   U_SHORT clockseq;
@@ -245,11 +249,10 @@ void Cuuid_create(uuid)
 /* ----------------------------------------------------- */
 /* make a UUID from the timestamp, clockseq, and node ID */
 /* ----------------------------------------------------- */
-static void _Cuuid_format_uuid_v1(uuid,clock_seq,timestamp,node)
-     Cuuid_t *uuid;
-     U_SHORT clock_seq;
-     Cuuid_time_t timestamp;
-     Cuuid_node_t node;
+static void _Cuuid_format_uuid_v1(Cuuid_t *uuid,
+                                  U_SHORT clock_seq,
+                                  Cuuid_time_t timestamp,
+                                  Cuuid_node_t node)
 {
   /* Construct a version 1 uuid with the information we've gathered
    * plus a few constants. */
@@ -267,10 +270,9 @@ static void _Cuuid_format_uuid_v1(uuid,clock_seq,timestamp,node)
 /* ------------------------- */
 /* read UUID generator state */
 /* ------------------------- */
-static void _Cuuid_read_state(clockseq,timestamp,node)
-     U_SHORT *clockseq;
-     Cuuid_time_t *timestamp;
-     Cuuid_node_t *node;
+static void _Cuuid_read_state(U_SHORT *clockseq,
+                              Cuuid_time_t *timestamp,
+                              Cuuid_node_t *node)
 {
   Cuuid_state_t st = _Cuuid_st;
   
@@ -282,10 +284,9 @@ static void _Cuuid_read_state(clockseq,timestamp,node)
 /* ------------------------- */
 /* save UUID generator state */
 /* ------------------------- */
-static void _Cuuid_write_state(clockseq,timestamp,node)
-     U_SHORT clockseq;
-     Cuuid_time_t timestamp;
-     Cuuid_node_t node;
+static void _Cuuid_write_state(U_SHORT clockseq,
+                               Cuuid_time_t timestamp,
+                               Cuuid_node_t node)
 {
   Cuuid_state_t st = _Cuuid_st;
   
@@ -299,8 +300,7 @@ static void _Cuuid_write_state(clockseq,timestamp,node)
 /* Compensate for the fact that real clock resolution is */
 /* less than 100ns.                                      */
 /* ----------------------------------------------------- */
-static void _Cuuid_get_current_time(timestamp)
-     Cuuid_time_t *timestamp;
+static void _Cuuid_get_current_time(Cuuid_time_t *timestamp)
 {
   *timestamp = (Cuuid_time_t) time(NULL);
 }
@@ -322,10 +322,9 @@ static U_SHORT _Cuuid_true_random()
 /* Cuuid_create_from_name -- create a UUID using a name from a name   */
 /* space                                                              */
 /* ------------------------------------------------------------------ */
-void Cuuid_create_from_name(uuid,nsid,name)
-     Cuuid_t *uuid;
-     Cuuid_t  nsid;
-     char *name;
+void Cuuid_create_from_name(Cuuid_t *uuid,
+                            Cuuid_t  nsid,
+                            char *name)
 {
   MD5_CTX c;
   Cuuid_t net_nsid;      /* context UUID in network byte order */
@@ -351,9 +350,8 @@ void Cuuid_create_from_name(uuid,nsid,name)
 /* ------------------------------------------------------------------ */
 /* format_uuid_v3 -- make a UUID from a (pseudo)random 128 bit number */
 /* ------------------------------------------------------------------ */
-static void _Cuuid_format_uuid_v3(uuid, hash)
-     Cuuid_t *uuid;
-     unsigned char hash[16];
+static void _Cuuid_format_uuid_v3(Cuuid_t *uuid,
+                                  unsigned char hash[16])
 {
   /* Construct a version 3 uuid with the (pseudo-)random number
    * plus a few constants. */
@@ -381,9 +379,8 @@ static void _Cuuid_format_uuid_v3(uuid, hash)
 /*   
      Note:   lexical ordering is not temporal ordering!
 */
-int Cuuid_compare(u1,u2)
-     Cuuid_t *u1;
-     Cuuid_t *u2;
+int Cuuid_compare(Cuuid_t *u1,
+                  Cuuid_t *u2)
 {
   int i;
   
@@ -405,9 +402,8 @@ int Cuuid_compare(u1,u2)
 /* --------------- */
 /* _marshall_UUID  */
 /* --------------- */
-void _marshall_UUID (ptr, uuid)
-     char **ptr;
-     Cuuid_t *uuid;
+void _marshall_UUID (char **ptr,
+                     Cuuid_t *uuid)
 {
   int i;
   marshall_LONG(*ptr, uuid->time_low);
@@ -421,9 +417,8 @@ void _marshall_UUID (ptr, uuid)
 /* ---------------- */
 /* _unmarshall_UUID */
 /* ---------------- */
-void _unmarshall_UUID (ptr, uuid)
-     char **ptr;
-     Cuuid_t *uuid;
+void _unmarshall_UUID (char **ptr,
+                       Cuuid_t *uuid)
 {
   int i;
   unmarshall_LONG(*ptr, uuid->time_low);
@@ -438,8 +433,7 @@ void _unmarshall_UUID (ptr, uuid)
 /* The routine MD5Init initializes the message-digest context
    mdContext. All fields are set to zero.
 */
-static int _Cuuid_MD5Init(mdContext)
-     MD5_CTX *mdContext;
+static int _Cuuid_MD5Init(MD5_CTX *mdContext)
 {
   mdContext->i[0] = mdContext->i[1] = (UINT4)0;
   
@@ -457,10 +451,9 @@ static int _Cuuid_MD5Init(mdContext)
    account for the presence of each of the characters inBuf[0..inLen-1]
    in the message whose digest is being computed.
 */
-static int _Cuuid_MD5Update(mdContext,inBuf,inLen)
-     MD5_CTX *mdContext;
-     unsigned char *inBuf;
-     unsigned int inLen;
+static int _Cuuid_MD5Update(MD5_CTX *mdContext,
+                            unsigned char *inBuf,
+                            unsigned int inLen)
 {
   UINT4 in[16];
   int mdi;
@@ -496,8 +489,7 @@ static int _Cuuid_MD5Update(mdContext,inBuf,inLen)
 /* The routine MD5Final terminates the message-digest computation and
    ends with the desired message digest in mdContext->digest[0...15].
 */
-static int _Cuuid_MD5Final(mdContext)
-     MD5_CTX *mdContext;
+static int _Cuuid_MD5Final(MD5_CTX *mdContext)
 {
   UINT4 in[16];
   int mdi;
@@ -551,9 +543,8 @@ static int _Cuuid_MD5Final(mdContext)
 
 /* Basic MD5 step. Transforms buf based on in.
  */
-static void _Cuuid_Transform(buf,in)
-     UINT4 *buf;
-     UINT4 *in;
+static void _Cuuid_Transform(UINT4 *buf,
+                             UINT4 *in)
 {
   UINT4 a = buf[0], b = buf[1], c = buf[2], d = buf[3];
   
@@ -654,8 +645,7 @@ static void _Cuuid_Transform(buf,in)
 /* system dependent call to get IEEE node ID.
    This sample implementation generates a random node ID
 */
-static void _Cuuid_get_ieee_node_identifier(node)
-     Cuuid_node_t *node;
+static void _Cuuid_get_ieee_node_identifier(Cuuid_node_t *node)
 {
   char seed[16];
   Cuuid_node_t saved_node;
@@ -669,8 +659,7 @@ static void _Cuuid_get_ieee_node_identifier(node)
 
 #if defined(__APPLE__)
 
-static void _Cuuid_get_random_info(seed)
-      char seed[16];
+static void _Cuuid_get_random_info(char seed[16])
 {
     MD5_CTX c;
     typedef struct {
@@ -688,8 +677,7 @@ static void _Cuuid_get_random_info(seed)
       memcpy(seed,c.digest,sizeof(seed));
 }
 
-static void _Cuuid_get_system_time(uuid_time)
-      Cuuid_time_t *uuid_time;
+static void _Cuuid_get_system_time(Cuuid_time_t *uuid_time)
 {
       struct timeval tp;
       
@@ -705,8 +693,7 @@ static void _Cuuid_get_system_time(uuid_time)
 
 #else /*__APPLE__ */
 
-static void _Cuuid_get_random_info(seed)
-     char seed[16];
+static void _Cuuid_get_random_info(char seed[16])
 {
   MD5_CTX c;
   typedef struct {
@@ -726,8 +713,7 @@ static void _Cuuid_get_random_info(seed)
   memcpy(seed,c.digest,sizeof(seed));
 }
 
-static void _Cuuid_get_system_time(uuid_time)
-     Cuuid_time_t *uuid_time;
+static void _Cuuid_get_system_time(Cuuid_time_t *uuid_time)
 {
   struct timeval tp;
   
@@ -743,10 +729,9 @@ static void _Cuuid_get_system_time(uuid_time)
 #endif /*__APPLE__ */
 
 /* Conversion from/to Cuuid/string */
-int Cuuid2string(output,maxlen,uuid)
-     char *output;
-     size_t maxlen;
-     Cuuid_t *uuid;
+int Cuuid2string(char *output,
+                 size_t maxlen,
+                 Cuuid_t *uuid)
 {
   if ((output == NULL) || (uuid == NULL)) {
     serrno = EFAULT;
@@ -772,9 +757,8 @@ int Cuuid2string(output,maxlen,uuid)
   return(0);
 }
 
-int string2Cuuid(uuid,input)
-     Cuuid_t *uuid;
-     const char *input;
+int string2Cuuid(Cuuid_t *uuid,
+                 const char *input)
 {
   int items;
   U_LONG dummy[11];

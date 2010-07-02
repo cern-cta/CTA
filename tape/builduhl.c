@@ -14,15 +14,14 @@
 #include <time.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
-int builduhl(uhl1, fseq, blksize, lrecl, domainname, hostname, inq_data, drive_serial_no)
-char uhl1[];
-int fseq;
-int blksize;
-int lrecl;
-char *domainname;
-char *hostname;
-char *inq_data;
-char *drive_serial_no;
+int builduhl(char uhl1[],
+             int fseq,
+             int blksize,
+             int lrecl,
+             char *domainname,
+             char *hostname,
+             char *inq_data,
+             char *drive_serial_no)
 {
 	int blkcnt;
 	char buf[CA_MAXHOSTNAMELEN+1];

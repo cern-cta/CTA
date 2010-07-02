@@ -28,10 +28,9 @@ static off64_t rfio_forcelseek64(int s, off64_t offset, int how) ;
 /*
  * Remote file seek
  */
-off64_t rfio_lseek64(s, offset, how)
-     int      s ;
-     off64_t  offset ;
-     int      how ;
+off64_t rfio_lseek64(int      s,
+                     off64_t  offset,
+                     int      how)
 {
   int      status ;
   off64_t  offsetout;
@@ -218,9 +217,8 @@ off64_t rfio_lseek64(s, offset, how)
  * Action taken when a preseek() is active and rfio_lseek() is called.
  * Positionned pointers to the right record.
  */
-static off64_t rfio_lseekinbuf64(s,offset)
-     int      s ;
-     off64_t  offset ;
+static off64_t rfio_lseekinbuf64(int      s,
+                                 off64_t  offset)
 {
   char   * p ; /* Pointer to buffer  */
   int s_index;
@@ -321,10 +319,9 @@ static off64_t rfio_lseekinbuf64(s,offset)
  * Forcing remote lseek().
  * Necessarry for SEEK_END lseek().
  */
-static off64_t rfio_forcelseek64(s, offset, how)
-     int      s ;
-     off64_t  offset ;
-     int      how ;
+static off64_t rfio_forcelseek64(int      s,
+                                 off64_t  offset,
+                                 int      how)
 {
   char     * p ;             /* Pointer to buffer            */
   char     * trp ;           /* Pointer to temporary buffer  */

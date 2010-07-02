@@ -37,10 +37,8 @@ static int rfio_mstat_findentry (char *,int);
 static int rfio_end_this (int,int);
 extern int rfio_newhost (char *);
 
-int rfio_mstat(file,statb)
-     char *file ;
-     struct stat *statb;
-
+int rfio_mstat(char *file,
+               struct stat *statb)
 {
   int       rc;
 #if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
@@ -144,12 +142,10 @@ int rfio_mstat(file,statb)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-int rfio_smstat(s,filename,statbuf,reqst)
-     int s ;
-     char * filename ;
-     struct stat *statbuf ;
-     int reqst ;
-
+int rfio_smstat(int s,
+                char * filename,
+                struct stat *statbuf,
+                int reqst)
 {
   char     buf[BUFSIZ];
   int             status;         /* remote fopen() status        */
@@ -329,9 +325,8 @@ int rfio_end()
 
 /* This is a simplified version of rfio_end() that just free entry in the table */
 /* If flag is set a clean close is tried (write on the socket) */
-static int rfio_end_this(s,flag)
-     int s;
-     int flag;
+static int rfio_end_this(int s,
+                         int flag)
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -387,11 +382,10 @@ static int rfio_end_this(s,flag)
 /*
  * Seach for a free index in the mstat_tab table
  */
-static int rfio_mstat_allocentry(hostname,Tid,s,sec)
-     char *hostname;
-     int Tid;
-     int s;
-     int sec;
+static int rfio_mstat_allocentry(char *hostname,
+                                 int Tid,
+                                 int s,
+                                 int sec)
 {
   int i;
   int rc;
@@ -433,9 +427,8 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
 /*
  * Seach for a given index in the mstat_tab table
  */
-static int rfio_mstat_findentry(hostname,Tid)
-     char *hostname;
-     int Tid;
+static int rfio_mstat_findentry(char *hostname,
+                                int Tid)
 {
   int i;
   int rc;
@@ -509,10 +502,8 @@ int rfio_mstat_reset()
   return(rc);
 }
 
-int rfio_mstat64(file,statb)
-     char *file ;
-     struct stat64 *statb;
-
+int rfio_mstat64(char *file,
+                 struct stat64 *statb)
 {
   int rt ,rc ,i ,fd, rfindex, Tid;
   char *host , *filename ;
@@ -635,12 +626,10 @@ int rfio_mstat64(file,statb)
 }
 
 /* Do the remote stat64() and lstat64()                            */
-int rfio_smstat64(s,filename,statbuf,reqst)
-     int s ;
-     char * filename ;
-     struct stat64 *statbuf ;
-     int    reqst ;
-
+int rfio_smstat64(int s,
+                  char * filename,
+                  struct stat64 *statbuf,
+                  int    reqst)
 {
   char        buf[BUFSIZ];
   int         status;            /* remote fopen() status         */
@@ -820,9 +809,8 @@ int rfio_smstat64(s,filename,statbuf,reqst)
 
 }
 
-int stat64tostat(statb64, statb)
-     const struct   stat64   *statb64;
-     struct         stat     *statb;
+int stat64tostat(const struct   stat64   *statb64,
+                 struct         stat     *statb)
 {
   statb->st_dev    = statb64->st_dev;
   statb->st_ino    = (ino_t) statb64->st_ino;

@@ -54,8 +54,7 @@ void vmgr_signal_handler(int sig)
   }
 }
 
-int vmgr_main(main_args)
-     struct main_args *main_args;
+int vmgr_main(struct main_args *main_args)
 {
   int c;
   struct vmgr_dbfd dbfd;
@@ -235,9 +234,8 @@ int vmgr_main(main_args)
   }
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   struct main_args main_args;
 
@@ -248,12 +246,11 @@ int main(argc, argv)
   exit (vmgr_main (&main_args));
 }
 
-int getreq(s, magic, req_type, req_data, clienthost)
-     int s;
-     int *magic;
-     int *req_type;
-     char *req_data;
-     char **clienthost;
+int getreq(int s,
+           int *magic,
+           int *req_type,
+           char *req_data,
+           char **clienthost)
 {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
@@ -302,12 +299,11 @@ int getreq(s, magic, req_type, req_data, clienthost)
   }
 }
 
-int proclistreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     char *clienthost;
-     struct vmgr_srv_thread_info *thip;
+int proclistreq(int magic,
+                int req_type,
+                char *req_data,
+                char *clienthost,
+                struct vmgr_srv_thread_info *thip)
 {
   int c;
   DBLISTPTR dblistptr;
@@ -376,12 +372,11 @@ int proclistreq(magic, req_type, req_data, clienthost, thip)
   return (rc);
 }
 
-void procreq(magic, req_type, req_data, clienthost, thip)
-     int magic;
-     int req_type;
-     char *req_data;
-     char *clienthost;
-     struct vmgr_srv_thread_info *thip;
+void procreq(int magic,
+             int req_type,
+             char *req_data,
+             char *clienthost,
+             struct vmgr_srv_thread_info *thip)
 {
   int c;
 

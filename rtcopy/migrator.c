@@ -433,8 +433,7 @@ int migratorCallbackFileCopied(
   return(0);
 }
 
-int migratorCallbackMoreWork(filereq)
-     rtcpFileRequest_t *filereq;
+int migratorCallbackMoreWork(rtcpFileRequest_t *filereq)
 {
   file_list_t *fl;
   static int moreWorkDone = 0; /* We're always called from a serialized context */

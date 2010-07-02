@@ -17,18 +17,17 @@
 #include "Ctape_api.h"
 #include "vmgr_api.h"
 
-int Ctape_label(path, vid, side, dgn, density, drive, vsn, lbltype, nbhdr, flags, vdqm_reqid)
-char *path;
-char *vid;
-int side;
-char *dgn;
-char *density;
-char *drive;
-char *vsn;
-char *lbltype;
-int nbhdr;
-int flags;
-int vdqm_reqid;
+int Ctape_label(char *path,
+                char *vid,
+                int side,
+                char *dgn,
+                char *density,
+                char *drive,
+                char *vsn,
+                char *lbltype,
+                int nbhdr,
+                int flags,
+                int vdqm_reqid)
 {
 	char acctname[7];
 	char actual_den[6];

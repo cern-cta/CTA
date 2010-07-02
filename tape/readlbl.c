@@ -25,10 +25,9 @@
 int skiptprf(int, char *, int, int);
 char *getconfent();
 
-int readlbl(tapefd, path, lblbuf)
-int tapefd;
-char *path;
-char *lblbuf;
+int readlbl(int tapefd,
+            char *path,
+            char *lblbuf)
 {
 	/* int errcat; */
 	char func[16];

@@ -21,10 +21,9 @@
 /*
  * Remote file fseek
  */
-int rfio_fseeko64(fp, offset, whence)
-     RFILE *fp;
-     off64_t offset;
-     int whence;
+int rfio_fseeko64(RFILE *fp,
+                  off64_t offset,
+                  int whence)
 {
   int     rc;
   off64_t offsetout;
