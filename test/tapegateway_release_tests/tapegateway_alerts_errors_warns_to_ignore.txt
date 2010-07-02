@@ -1,0 +1,26 @@
+Alerts to ignore
+================
+
+The following alert is caused by a VMGR tape pool becoming full:
+
+2010-06-30T04:04:39.521838+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Alert TID=18358 MSG="TapeStreamLinker:No tape available in such tapepool" StreamId=4877022586 errorCode="No space left on device" errorMessage="castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream vmgr_gettape failed: poolname='gatewayendtape' size=1"
+
+
+Errors to ignore
+================
+
+The following kind of error is created ny a security scan:
+
+2010-06-30T10:40:13.017304+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Error TID=18392 MSG="Worker: cannot receive message" IP="137.138.145.31" Port=37391 HostName="pcitdi23.cern.ch" errorCode="Internal error" errorMessage="Bad magic number : 0x20544547 instead of 0x1e10131"
+
+
+Warns to ignore
+===============
+
+The following kinds of wraning are created by rtcpd encountering an error.  It
+is normal for rtcpd to encounter errors and therefore these warning can be
+ignored as long as they are not permanent:
+
+2010-07-01T03:20:46.843322+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18380 MSG="Worker: received end notification error report" mountTransactionId=414947 tapebridgeTransId=2146 errorcode=1016 errorMessage="File=BridgeProtocolEngine.cpp Line=964 Function=rtcpFileErrReqRtcpdCallback: Received an error from rtcpd:  CPDSKTP ! ERROR READING DISK FILE: Connection closed by remote end  CPTPDSK ! ERROR CLOSING DISK FILE: Connection closed by remote end"
+
+2010-07-01T13:30:18.364996+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18371 MSG="Worker: received end notification error report" mountTransactionId=415077 tapebridgeTransId=5 errorcode=10 errorMessage="File=BridgeProtocolEngine.cpp Line=1234 Function=rtcpTapeErrReqRtcpdCallback: Received an error from rtcpd: errorCode=10: errorMsg=No child processes : sstrerror=No child processes"
