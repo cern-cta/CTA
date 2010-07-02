@@ -102,7 +102,7 @@ typedef fd_set _cpool_fd_set;
 /* ------------------------------------ */
 /* Prototypes                           */
 /* ------------------------------------ */
-void   DLL_DECL  *_Cpool_starter _PROTO((void *));
+void    *_Cpool_starter _PROTO((void *));
 size_t   _Cpool_writen _PROTO((int, void *, size_t));
 size_t   _Cpool_readn _PROTO((int, void *, size_t));
 #ifdef CPOOL_DEBUG
@@ -114,7 +114,7 @@ size_t   _Cpool_readn_timeout _PROTO((int, void *, size_t, int));
 #endif
 void     _Cpool_alarm _PROTO((int));
 Sigfunc *_Cpool_signal _PROTO((int, Sigfunc *));
-int    DLL_DECL  _Cpool_self();
+int     _Cpool_self();
 
 /* ------------------------------------ */
 /* Constants used in the fork() model   */
@@ -138,7 +138,7 @@ static void *_cpool_sleep_flag = (void *) _CPOOL_SLEEP_FLAG;
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_create(nbreq,nbget)
+int Cpool_create(nbreq,nbget)
 	int nbreq;
 	int *nbget;
 {
@@ -159,7 +159,7 @@ int DLL_DECL Cpool_create(nbreq,nbget)
 /* 04-SEP-2003       Added &Cpool_structure     */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
+int Cpool_create_ext(nbreq,nbget,pooladdr)
 	int nbreq;
 	int *nbget;
 	void **pooladdr;
@@ -1340,7 +1340,7 @@ Sigfunc *_Cpool_signal(signo,func)
 /* Notes:                                       */
 /* This routine is a wrapper around calloc      */
 /* ============================================ */
-void DLL_DECL *Cpool_calloc(file,line,nmemb,size)
+void *Cpool_calloc(file,line,nmemb,size)
 	char *file;
 	int line;
 	size_t nmemb;
@@ -1405,7 +1405,7 @@ void DLL_DECL *Cpool_calloc(file,line,nmemb,size)
 /* Notes:                                       */
 /* This routine is a wrapper around malloc      */
 /* ============================================ */
-void DLL_DECL *Cpool_malloc(file,line,size)
+void *Cpool_malloc(file,line,size)
 	char *file;
 	int line;
 	size_t size;
@@ -1469,7 +1469,7 @@ void DLL_DECL *Cpool_malloc(file,line,size)
 /* Notes:                                       */
 /* This routine is a wrapper around free        */
 /* ============================================ */
-void DLL_DECL Cpool_free(file,line,ptr)
+void Cpool_free(file,line,ptr)
 	char *file;
 	int line;
 	void *ptr;
@@ -1533,7 +1533,7 @@ void DLL_DECL Cpool_free(file,line,ptr)
 /* Notes:                                       */
 /* This routine is a wrapper around realloc     */
 /* ============================================ */
-void DLL_DECL *Cpool_realloc(file,line,ptr,size)
+void *Cpool_realloc(file,line,ptr,size)
 	char *file;
 	int line;
 	void *ptr;
@@ -1598,7 +1598,7 @@ void DLL_DECL *Cpool_realloc(file,line,ptr,size)
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
+int Cpool_assign(poolnb,startroutine,arg,timeout)
 	int poolnb;
 	void *(*startroutine) _PROTO((void *));
 	void *arg;
@@ -1623,7 +1623,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 /* 04-SEP-2003       Added pooladdr             */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
+int Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 	int poolnb;
 	void *pooladdr;
 	void *(*startroutine) _PROTO((void *));
@@ -2395,7 +2395,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 /* 08-JUN-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_next_index_timeout(poolnb,timeout)
+int Cpool_next_index_timeout(poolnb,timeout)
 	int poolnb;
 	int timeout;
 {
@@ -2415,7 +2415,7 @@ int DLL_DECL Cpool_next_index_timeout(poolnb,timeout)
 /* 04-SEP-2003       Added pooladdr             */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
+int Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 	int poolnb;
 	void *pooladdr;
 	int timeout;
@@ -2801,7 +2801,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 /* 12-JUL-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL _Cpool_self() {
+int _Cpool_self() {
 	struct Cpool_t *current = NULL;
 	int             i;
 	int             cid;

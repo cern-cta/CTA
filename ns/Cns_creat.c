@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_creatc(const char *path, const char *guid, mode_t mode, struct Cns_fileid *file_uniqueid)
 {
   char *actual_path;
@@ -89,7 +89,7 @@ Cns_creatc(const char *path, const char *guid, mode_t mode, struct Cns_fileid *f
 
 /* Cns_creat - create a new file entry */
 
-int DLL_DECL
+int
 Cns_creat(const char *path, mode_t mode)
 {
   struct Cns_fileid file_uniqueid;
@@ -97,7 +97,7 @@ Cns_creat(const char *path, mode_t mode)
   return (Cns_creatc (path, NULL, mode, &file_uniqueid));
 }
 
-int DLL_DECL
+int
 Cns_creatg(const char *path, const char *guid, mode_t mode)
 {
   struct Cns_fileid file_uniqueid;
@@ -105,7 +105,7 @@ Cns_creatg(const char *path, const char *guid, mode_t mode)
   return (Cns_creatc (path, guid, mode, &file_uniqueid));
 }
 
-int DLL_DECL
+int
 Cns_creatx(const char *path, mode_t mode, struct Cns_fileid *file_uniqueid)
 {
   return (Cns_creatc (path, NULL, mode, file_uniqueid));

@@ -17,7 +17,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-struct Cns_direncomm DLL_DECL *
+struct Cns_direncomm *
 Cns_readdirc(Cns_DIR *dirp)
 {
   int c;

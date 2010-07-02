@@ -32,11 +32,11 @@ typedef struct Coptions Coptions_t;
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int  DLL_DECL  *C__Copterr _PROTO((void));
-EXTERN_C int  DLL_DECL  *C__Coptind _PROTO((void));
-EXTERN_C int  DLL_DECL  *C__Coptopt _PROTO((void));
-EXTERN_C int  DLL_DECL  *C__Coptreset _PROTO((void));
-EXTERN_C char DLL_DECL **C__Coptarg _PROTO((void));
+EXTERN_C int   *C__Copterr _PROTO((void));
+EXTERN_C int   *C__Coptind _PROTO((void));
+EXTERN_C int   *C__Coptopt _PROTO((void));
+EXTERN_C int   *C__Coptreset _PROTO((void));
+EXTERN_C char **C__Coptarg _PROTO((void));
 
 /*
  * Thread safe serrno. Note, C__serrno is defined in Cglobals.c rather
@@ -52,14 +52,14 @@ EXTERN_C char DLL_DECL **C__Coptarg _PROTO((void));
 /*
  * non-MT environment
  */
-EXTERN_C  int DLL_DECL Copterr;
-EXTERN_C  int DLL_DECL Coptind;
-EXTERN_C  int DLL_DECL Coptopt;
-EXTERN_C  int DLL_DECL Coptreset;
-EXTERN_C  char DLL_DECL *Coptarg;
+EXTERN_C  int Copterr;
+EXTERN_C  int Coptind;
+EXTERN_C  int Coptopt;
+EXTERN_C  int Coptreset;
+EXTERN_C  char *Coptarg;
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C int DLL_DECL Cgetopt _PROTO((int, char * CONST *, CONST char *));
-EXTERN_C int DLL_DECL Cgetopt_long _PROTO((int, char **, const char *, Coptions_t *, int *));
+EXTERN_C int Cgetopt _PROTO((int, char * CONST *, CONST char *));
+EXTERN_C int Cgetopt_long _PROTO((int, char **, const char *, Coptions_t *, int *));
 
 #endif /* __Cgetopt_h */

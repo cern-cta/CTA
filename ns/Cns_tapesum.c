@@ -16,7 +16,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
 {
   /* Variables */

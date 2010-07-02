@@ -14,7 +14,7 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <stdlib.h>
 
-int DLL_DECL rfio_pwrite(ptr, size, items, fp)   /* Remote file write   */
+int rfio_pwrite(ptr, size, items, fp)   /* Remote file write   */
      char    *ptr;                           /* buffer pointer               */
      int     size, items;                    /* .. size items                */
      RFILE   *fp;                            /* remote file pointer          */

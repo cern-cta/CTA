@@ -102,7 +102,7 @@ struct flag2name {
 
 
 /* Idem than strtol() but returns 0 if OK, -1 if error, result in &ouput */
-int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
+int Cupv_strtoi(output,nptr,endptr,base)
      int *output;
      char *nptr;
      char **endptr;
@@ -151,7 +151,7 @@ int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
   return(rc);
 }
 
-void DLL_DECL Cupv_util_time(this,timestr)
+void Cupv_util_time(this,timestr)
      time_t this;
      char *timestr;
 {
@@ -175,7 +175,7 @@ void DLL_DECL Cupv_util_time(this,timestr)
 }
 
 /* Parses the privilege string to return the int value */
-int DLL_DECL Cupv_parse_privstring(char *privstr) {
+int Cupv_parse_privstring(char *privstr) {
 
   char *p;
   char buf[MAXPRIVSTRLEN + 1];
@@ -215,7 +215,7 @@ int DLL_DECL Cupv_parse_privstring(char *privstr) {
 }
 
 /* Builds the privilege string  */
-void DLL_DECL Cupv_build_privstring(int priv, char *privstring) {
+void Cupv_build_privstring(int priv, char *privstring) {
 
   char buf[MAXPRIVSTRLEN +1];
   char *p;

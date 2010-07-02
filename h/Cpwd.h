@@ -18,8 +18,8 @@
 #include <osdep.h>
 #include <pwd.h>
 
-EXTERN_C struct passwd DLL_DECL *Cgetpwnam _PROTO((CONST char *));
-EXTERN_C struct passwd DLL_DECL *Cgetpwuid _PROTO((uid_t));
+EXTERN_C struct passwd *Cgetpwnam _PROTO((CONST char *));
+EXTERN_C struct passwd *Cgetpwuid _PROTO((uid_t));
 
 #endif /* _CPWD_H */
 

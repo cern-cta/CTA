@@ -108,7 +108,7 @@ typedef struct {
  *
  * @see openlog(), setlogmask()
  */
-EXTERN_C int DLL_DECL dlf_init _PROTO((const char *ident, int maskpri));
+EXTERN_C int dlf_init _PROTO((const char *ident, int maskpri));
 
 
 /* Shutdown the DLF logging interface deallocating all resources.
@@ -120,7 +120,7 @@ EXTERN_C int DLL_DECL dlf_init _PROTO((const char *ident, int maskpri));
  *
  * @see closelog()
  */
-EXTERN_C int DLL_DECL dlf_shutdown _PROTO((void));
+EXTERN_C int dlf_shutdown _PROTO((void));
 
 
 /* Register a message text with the logging interface. All messages logged by
@@ -147,7 +147,7 @@ EXTERN_C int DLL_DECL dlf_shutdown _PROTO((void));
  *                   - The msgno is greater than DLF_MAX_MSGTEXTS
  *          - ENOMEM Out of memory
  */
-EXTERN_C int DLL_DECL dlf_regtext _PROTO((unsigned int msgno,
+EXTERN_C int dlf_regtext _PROTO((unsigned int msgno,
                                           const char *message));
 
 
@@ -158,7 +158,7 @@ EXTERN_C int DLL_DECL dlf_regtext _PROTO((unsigned int msgno,
  *
  * @see syslog(), dlf_writep()
  */
-EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t reqid,
+EXTERN_C int dlf_write _PROTO((Cuuid_t reqid,
                                         unsigned int priority,
                                         unsigned int msgno,
                                         struct Cns_fileid *ns,
@@ -199,7 +199,7 @@ EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t reqid,
  *       silently truncated.
  * @see syslog(), dlf_write()
  */
-EXTERN_C int DLL_DECL dlf_writep _PROTO((Cuuid_t reqid,
+EXTERN_C int dlf_writep _PROTO((Cuuid_t reqid,
                                          unsigned int priority,
                                          unsigned int msgno,
                                          struct Cns_fileid *ns,
@@ -210,7 +210,7 @@ EXTERN_C int DLL_DECL dlf_writep _PROTO((Cuuid_t reqid,
  * @returns 1 if the interface is initialized, 0 if not
  * @see dlf_init()
  */
-EXTERN_C int DLL_DECL dlf_isinitialized _PROTO((void));
+EXTERN_C int dlf_isinitialized _PROTO((void));
 
 
 #endif /* _DLF_API_H */

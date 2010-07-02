@@ -13,7 +13,7 @@
 #include <string.h>
 #include <osdep.h>
 
-void DLL_DECL striptb(s)                 /* Strip trailing blanks       */
+void striptb(s)                 /* Strip trailing blanks       */
      char    *s;
 {
   register int    i;

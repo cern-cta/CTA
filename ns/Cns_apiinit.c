@@ -18,7 +18,7 @@
 
 static int Cns_api_key = -1;
 
-int DLL_DECL
+int
 Cns_apiinit(thip)
      struct Cns_api_thread_info **thip;
 {
@@ -41,7 +41,7 @@ Cns_apiinit(thip)
   return (0);
 }
 
-int DLL_DECL *
+int *
 C__Cns_errno()
 {
   struct Cns_api_thread_info *thip;

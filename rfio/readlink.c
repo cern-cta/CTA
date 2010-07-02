@@ -12,7 +12,7 @@
 #include "rfio.h"
 #include <string.h>
 
-int DLL_DECL rfio_readlink(path,buf, length)
+int rfio_readlink(path,buf, length)
      char *path ;
      char *buf ;
      int length ;

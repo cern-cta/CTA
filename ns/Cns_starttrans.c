@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_starttrans(char *server, char *comment)
 {
   int c;

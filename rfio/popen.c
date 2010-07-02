@@ -25,7 +25,7 @@
 #include <pwd.h>
 extern RFILE *rfilefdt[MAXRFD] ;
 
-RFILE DLL_DECL *rfio_popen( rcom , type )
+RFILE *rfio_popen( rcom , type )
      char * rcom  ;
      char *type  ;
 {

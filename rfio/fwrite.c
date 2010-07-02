@@ -20,7 +20,7 @@
 /*
  * Remote file buffered write
  */
-int DLL_DECL rfio_fwrite(ptr, size, items, fp)
+int rfio_fwrite(ptr, size, items, fp)
      void    *ptr;          /* buffer pointer */
      int     size, items;
      RFILE   *fp;

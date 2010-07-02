@@ -13,7 +13,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-char DLL_DECL *
+char *
 Cns_getcwd(char *buf, int size)
 {
   int alloc = 0;

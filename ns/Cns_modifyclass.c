@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_modifyclass(char *server, int classid, char *class_name, struct Cns_fileclass *Cns_fileclass)
 {
   int c;

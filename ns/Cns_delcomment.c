@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_delcomment(const char *path)
 {
   char *actual_path;

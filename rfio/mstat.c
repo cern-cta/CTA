@@ -31,13 +31,13 @@ typedef struct socks {
 } mstat_connects ;
 static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
-EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
+EXTERN_C int rfio_smstat _PROTO((int, char *, struct stat *, int));
 static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
 static int rfio_mstat_findentry _PROTO((char *,int));
 static int rfio_end_this _PROTO((int,int));
 extern int rfio_newhost _PROTO((char *));
 
-int DLL_DECL rfio_mstat(file,statb)
+int rfio_mstat(file,statb)
      char *file ;
      struct stat *statb;
 
@@ -144,7 +144,7 @@ int DLL_DECL rfio_mstat(file,statb)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
+int rfio_smstat(s,filename,statbuf,reqst)
      int s ;
      char * filename ;
      struct stat *statbuf ;
@@ -273,7 +273,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
 
 }
 
-int DLL_DECL rfio_end()
+int rfio_end()
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -470,7 +470,7 @@ static int rfio_mstat_findentry(hostname,Tid)
   return(rc);
 }
 
-int DLL_DECL rfio_mstat_reset()
+int rfio_mstat_reset()
 {
   int i,Tid;
   int rc = 0;
@@ -509,7 +509,7 @@ int DLL_DECL rfio_mstat_reset()
   return(rc);
 }
 
-int DLL_DECL rfio_mstat64(file,statb)
+int rfio_mstat64(file,statb)
      char *file ;
      struct stat64 *statb;
 
@@ -635,7 +635,7 @@ int DLL_DECL rfio_mstat64(file,statb)
 }
 
 /* Do the remote stat64() and lstat64()                            */
-int DLL_DECL rfio_smstat64(s,filename,statbuf,reqst)
+int rfio_smstat64(s,filename,statbuf,reqst)
      int s ;
      char * filename ;
      struct stat64 *statbuf ;
@@ -820,7 +820,7 @@ int DLL_DECL rfio_smstat64(s,filename,statbuf,reqst)
 
 }
 
-int DLL_DECL stat64tostat(statb64, statb)
+int stat64tostat(statb64, statb)
      const struct   stat64   *statb64;
      struct         stat     *statb;
 {

@@ -21,11 +21,11 @@
 #define  Csched_get_priority_mid(a)   Csched_Get_priority_mid(__FILE__,__LINE__,a)
 #define  Csched_get_priority_max(a)   Csched_Get_priority_max(__FILE__,__LINE__,a)
 
-EXTERN_C int   DLL_DECL  Csched_Getschedparam _PROTO((char *, int, int, int *, Csched_param_t *));
-EXTERN_C int   DLL_DECL  Csched_Setschedparam _PROTO((char *, int, int, int, Csched_param_t *));
-EXTERN_C int   DLL_DECL  Csched_Get_priority_min _PROTO((char *, int, int));
-EXTERN_C int   DLL_DECL  Csched_Get_priority_mid _PROTO((char *, int, int));
-EXTERN_C int   DLL_DECL  Csched_Get_priority_max _PROTO((char *, int, int));
+EXTERN_C int    Csched_Getschedparam _PROTO((char *, int, int, int *, Csched_param_t *));
+EXTERN_C int    Csched_Setschedparam _PROTO((char *, int, int, int, Csched_param_t *));
+EXTERN_C int    Csched_Get_priority_min _PROTO((char *, int, int));
+EXTERN_C int    Csched_Get_priority_mid _PROTO((char *, int, int));
+EXTERN_C int    Csched_Get_priority_max _PROTO((char *, int, int));
 
 #endif /* __Csched_api_h */
 

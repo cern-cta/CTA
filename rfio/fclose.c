@@ -18,7 +18,7 @@
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
-int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
+int rfio_fclose(fp)             /* Remote file close           */
      RFILE *fp;                      /* Remote file pointer                  */
 {
   int     save_errno;

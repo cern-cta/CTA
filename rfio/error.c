@@ -28,7 +28,7 @@ char *rfio_serror() ;
 /*
  * Get remote error string corresponding to code.
  */
-char DLL_DECL *rfio_errmsg_r (s, code, buf, buflen)
+char *rfio_errmsg_r (s, code, buf, buflen)
      int     s;
      int     code;
      char  *buf;
@@ -78,7 +78,7 @@ char DLL_DECL *rfio_errmsg_r (s, code, buf, buflen)
 
 static int rfio_error_key = -1;
 
-char DLL_DECL *rfio_errmsg(s, code)
+char *rfio_errmsg(s, code)
      int     s;
      int     code;
 {
@@ -90,7 +90,7 @@ char DLL_DECL *rfio_errmsg(s, code)
 }
 
 
-char DLL_DECL *rfio_serror_r(buf, buflen)   /* print an error message  */
+char *rfio_serror_r(buf, buflen)   /* print an error message  */
      char *buf;
      size_t buflen;
 {
@@ -147,7 +147,7 @@ char DLL_DECL *rfio_serror_r(buf, buflen)   /* print an error message  */
   }
 }
 
-int DLL_DECL rfio_serrno()   /* get error number - return -1 if cannot get it */
+int rfio_serrno()   /* get error number - return -1 if cannot get it */
 {
   int  last_rferr ;  /* to preserve rfio_errno   */
   int  last_err ;  /* to preserve errno    */
@@ -178,7 +178,7 @@ int DLL_DECL rfio_serrno()   /* get error number - return -1 if cannot get it */
 
 static int rfio_serror_key = -1;
 
-char DLL_DECL *rfio_serror()
+char *rfio_serror()
 {
   char *buf = NULL;
   int buflen = CA_MAXLINELEN+1;
@@ -188,7 +188,7 @@ char DLL_DECL *rfio_serror()
 }
 
 
-void DLL_DECL rfio_perror(umsg)
+void rfio_perror(umsg)
      char *umsg ;
 {
   char *errmsg ;

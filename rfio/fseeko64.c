@@ -21,7 +21,7 @@
 /*
  * Remote file fseek
  */
-int DLL_DECL rfio_fseeko64(fp, offset, whence)
+int rfio_fseeko64(fp, offset, whence)
      RFILE *fp;
      off64_t offset;
      int whence;

@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_getusrbyuid(uid_t uid, char *username)
 {
   int c;

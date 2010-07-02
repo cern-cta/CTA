@@ -22,7 +22,7 @@
 #include <getacctent.h>
 #include <ypgetacctent.h>
 
-char DLL_DECL *getacctent(pwd, acct, buf, buflen)
+char *getacctent(pwd, acct, buf, buflen)
     struct passwd   *pwd;       /* Pointer to the password entry */
     char        *acct;      /* optional non-default acct     */
     char        *buf;

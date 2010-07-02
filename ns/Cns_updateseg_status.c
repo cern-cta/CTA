@@ -15,7 +15,7 @@
 #include "serrno.h"
 #include <string.h>
 
-int DLL_DECL
+int
 Cns_updateseg_status(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs, const char status)
 {
   int c;

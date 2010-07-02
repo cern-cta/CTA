@@ -16,7 +16,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_unlinkbyvid(char *server, const char *vid)
 {
   /* Variables */

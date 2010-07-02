@@ -35,20 +35,20 @@
 #include <u64subr.h>
 #include <ypgetacctent.h>
 
-EXTERN_C char DLL_DECL *getconfent_r _PROTO((const char *, const char *, int, char *, int));
-EXTERN_C char DLL_DECL *getconfent _PROTO((const char *, const char *, int));
-EXTERN_C int DLL_DECL setnetio _PROTO(());
-EXTERN_C int DLL_DECL solveln _PROTO((char *, char *, int));
-EXTERN_C int DLL_DECL seelink _PROTO((char *, char *, int));
-EXTERN_C int DLL_DECL isremote _PROTO((struct in_addr, char *));
-EXTERN_C int DLL_DECL CDoubleDnsLookup _PROTO((SOCKET s, char *));
-EXTERN_C int DLL_DECL isadminhost _PROTO((SOCKET s, char *));
-EXTERN_C char DLL_DECL *getifnam_r _PROTO((SOCKET, char *, size_t));
-EXTERN_C char DLL_DECL *getifnam _PROTO((SOCKET));
-EXTERN_C int DLL_DECL get_user _PROTO((char *, char *, int, int, char *, int *, int *));
+EXTERN_C char *getconfent_r _PROTO((const char *, const char *, int, char *, int));
+EXTERN_C char *getconfent _PROTO((const char *, const char *, int));
+EXTERN_C int setnetio _PROTO(());
+EXTERN_C int solveln _PROTO((char *, char *, int));
+EXTERN_C int seelink _PROTO((char *, char *, int));
+EXTERN_C int isremote _PROTO((struct in_addr, char *));
+EXTERN_C int CDoubleDnsLookup _PROTO((SOCKET s, char *));
+EXTERN_C int isadminhost _PROTO((SOCKET s, char *));
+EXTERN_C char *getifnam_r _PROTO((SOCKET, char *, size_t));
+EXTERN_C char *getifnam _PROTO((SOCKET));
+EXTERN_C int get_user _PROTO((char *, char *, int, int, char *, int *, int *));
 
-EXTERN_C int DLL_DECL s_nrecv _PROTO((SOCKET, char *, int));
-EXTERN_C int DLL_DECL s_close _PROTO((SOCKET));
+EXTERN_C int s_nrecv _PROTO((SOCKET, char *, int));
+EXTERN_C int s_close _PROTO((SOCKET));
 
 
 /**
@@ -59,6 +59,6 @@ EXTERN_C int DLL_DECL s_close _PROTO((SOCKET));
  * 0 if it is a size with no unit,
  * 1 if it is a size with a unit
  */
-EXTERN_C int  DLL_DECL check_for_strutou64 _PROTO((char*));
+EXTERN_C int  check_for_strutou64 _PROTO((char*));
 
 #endif /* _COMMON_H_INCLUDED_ */

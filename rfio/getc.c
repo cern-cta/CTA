@@ -20,7 +20,7 @@
 /*
  * Remote file read
  */
-int DLL_DECL rfio_getc(fp)
+int rfio_getc(fp)
      RFILE   *fp;                    /* remote file pointer          */
 {
   unsigned char c ;

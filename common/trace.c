@@ -27,7 +27,7 @@ typedef struct trc_spec {
 
 extern  char* getenv();         /* get environment variable             */
 
-void DLL_DECL print_trace(int level, const char *label, const char *format, ...)
+void print_trace(int level, const char *label, const char *format, ...)
 {
 	va_list args;           /* arguments                            */
 	register int i;         /* general purpose index                */
@@ -50,7 +50,7 @@ void DLL_DECL print_trace(int level, const char *label, const char *format, ...)
 	serrno = sav_serrno;
 }
 
-void DLL_DECL init_trace(name)  /* initialize trace level               */
+void init_trace(name)  /* initialize trace level               */
 const char    *name;                  /* environment variable name            */
 {
 	register char    *p;    /* general purpose char. string pointer */
@@ -76,7 +76,7 @@ const char    *name;                  /* environment variable name            */
 	serrno = sav_serrno;
 }
 
-void DLL_DECL end_trace()         /* end trace level                      */
+void end_trace()         /* end trace level                      */
 {
 	trc_spec_t *trc;
 	int sav_errno = errno;
@@ -91,7 +91,7 @@ void DLL_DECL end_trace()         /* end trace level                      */
 
 
 
-void DLL_DECL print_trace_r(void *trace, int level, const char *label, const char *format, ...)
+void print_trace_r(void *trace, int level, const char *label, const char *format, ...)
 {
 	va_list args;           /* arguments                            */
 	register int i;         /* general purpose index                */
@@ -115,7 +115,7 @@ void DLL_DECL print_trace_r(void *trace, int level, const char *label, const cha
 	serrno = sav_serrno;
 }
 
-void DLL_DECL init_trace_r(trace, name)  /* initialize trace level               */
+void init_trace_r(trace, name)  /* initialize trace level               */
 void    **trace;
 const char    *name;                  /* environment variable name            */
 {
@@ -144,7 +144,7 @@ const char    *name;                  /* environment variable name            */
 	serrno = sav_serrno;
 }
 
-void DLL_DECL end_trace_r(void *trace)         /* end trace level                      */
+void end_trace_r(void *trace)         /* end trace level                      */
 {
 	trc_spec_t *trc;
 	int sav_errno = errno;

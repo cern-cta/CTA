@@ -29,7 +29,7 @@ static int ifname_key = -1;             /* Key to interface name global */
  *       it failed. With a new socket creation it works however.
  */
 
-char DLL_DECL  *getifnam_r(s,ifname,ifnamelen)
+char  *getifnam_r(s,ifname,ifnamelen)
 SOCKET     s;
 char    *ifname;
 size_t  ifnamelen;
@@ -121,7 +121,7 @@ size_t  ifnamelen;
     }
 }
 
-char DLL_DECL *getifnam(s)
+char *getifnam(s)
 SOCKET s;
 {
     char *ifname = NULL;

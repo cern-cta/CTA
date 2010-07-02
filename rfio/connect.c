@@ -68,14 +68,14 @@ int rfio_nodeHasPort(char *node, char *host, int *port) {
 
 static int  last_host_key = -1; /* key to hold the last connect host name in TLS */
 
-int DLL_DECL rfio_connect(node,remote)       /* Connect <node>'s rfio server */
+int rfio_connect(node,remote)       /* Connect <node>'s rfio server */
      char    *node;                  /* remote host to connect               */
      int     *remote  ;              /* connected host is remote or not      */
 {
   return(rfio_connect_with_port(node,-1,remote));
 }
 
-int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s rfio server on port <port> */
+int rfio_connect_with_port(node,port,remote)       /* Connect <node>'s rfio server on port <port> */
      char    *node;                  /* remote host to connect               */
      int port;                       /* port to use */
      int     *remote  ;              /* connected host is remote or not      */

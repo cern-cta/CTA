@@ -29,13 +29,13 @@
 
 extern char *getconfent();
 extern int rfio_HsmIf_IsCnsFile _PROTO((char *));
-EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
+EXTERN_C int Cdomainname _PROTO((char *, int));
 static int rfio_parseln_old _PROTO((char *, char **, char **,int));
 
 static int name1_key = -1;
 static int buffer_key = -1;
 
-int DLL_DECL rfio_parseln(name, host, path, ln) /* parse name to host and path  */
+int rfio_parseln(name, host, path, ln) /* parse name to host and path  */
      char    *name;
      char    **host;
      char    **path;
@@ -342,7 +342,7 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
   }
 }
 
-int DLL_DECL rfio_parse(name, host, path)  /* parse name to host and path  */
+int rfio_parse(name, host, path)  /* parse name to host and path  */
      char    *name;
      char    **host;
      char    **path;

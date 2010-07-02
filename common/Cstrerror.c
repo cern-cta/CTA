@@ -57,7 +57,7 @@ static int Cstrerror_setbuf(buffer, buflen)
   return(0);
 }
 
-char DLL_DECL *Cstrerror(code)
+char *Cstrerror(code)
      int code;
 {
   char *bufp;

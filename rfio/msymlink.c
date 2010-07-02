@@ -33,7 +33,7 @@ static int rfio_msymlink_findentry _PROTO((char *,int));
 static int rfio_symend_this _PROTO((int,int));
 extern int rfio_newhost _PROTO((char *));
 
-int DLL_DECL rfio_msymlink(n1,file2)
+int rfio_msymlink(n1,file2)
      char *n1 ;
      char *file2 ;
 {
@@ -205,7 +205,7 @@ static int rfio_smsymlink(s,n1,filename)
   return(0) ;
 }
 
-int DLL_DECL rfio_symend()
+int rfio_symend()
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -382,7 +382,7 @@ static int rfio_msymlink_findentry(hostname,Tid)
   return(rc);
 }
 
-int DLL_DECL rfio_msymlink_reset()
+int rfio_msymlink_reset()
 {
   int i,Tid;
   int rc = 0;

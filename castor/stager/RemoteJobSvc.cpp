@@ -64,7 +64,7 @@
 #include <errno.h>
 #include <list>
 
-EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
+EXTERN_C char *getconfent _PROTO((char *, char *, int));
 
 //------------------------------------------------------------------------------
 // Constants

@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_mkdirg(const char *path, const char *guid, mode_t mode)
 {
   char *actual_path;
@@ -82,7 +82,7 @@ Cns_mkdirg(const char *path, const char *guid, mode_t mode)
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_mkdir(const char *path, mode_t mode)
 {
   return (Cns_mkdirg (path, NULL, mode));

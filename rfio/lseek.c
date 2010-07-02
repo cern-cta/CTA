@@ -31,7 +31,7 @@ static int rfio_forcelseek() ;
 /*
  * Remote file seek
  */
-off_t DLL_DECL rfio_lseek(s, offset, how)
+off_t rfio_lseek(s, offset, how)
      int      s ;
      off_t  offset ;
      int    how ;

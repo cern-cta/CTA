@@ -71,39 +71,39 @@ int alloc_size = 1000;
  * Note that we cannot include serrno.h to get the definitions
  * since it re-defines serrno if _REENTRANT.
  */
-EXTERN_C int DLL_DECL serrno;
-int DLL_DECL serrno;
-EXTERN_C int DLL_DECL rfio_errno;
-int DLL_DECL rfio_errno;
-EXTERN_C int DLL_DECL Copterr;
-int DLL_DECL Copterr;
-EXTERN_C int DLL_DECL Coptind;
-int DLL_DECL Coptind;
-EXTERN_C int DLL_DECL Coptopt;
-int DLL_DECL Coptopt;
-EXTERN_C int DLL_DECL Coptreset;
-int DLL_DECL Coptreset;
-EXTERN_C char DLL_DECL *Coptarg;
-char DLL_DECL *Coptarg;
-EXTERN_C int DLL_DECL Coptarg_key;
-int DLL_DECL Coptarg_key;
+EXTERN_C int serrno;
+int serrno;
+EXTERN_C int rfio_errno;
+int rfio_errno;
+EXTERN_C int Copterr;
+int Copterr;
+EXTERN_C int Coptind;
+int Coptind;
+EXTERN_C int Coptopt;
+int Coptopt;
+EXTERN_C int Coptreset;
+int Coptreset;
+EXTERN_C char *Coptarg;
+char *Coptarg;
+EXTERN_C int Coptarg_key;
+int Coptarg_key;
 /*
  * Function prototypes for multi-thread env. version of errno externals
  */
-int DLL_DECL *C__serrno _PROTO((void));
-int DLL_DECL *C__rfio_errno _PROTO((void));
-int DLL_DECL *C__Copterr _PROTO((void));
-int DLL_DECL *C__Coptind _PROTO((void));
-int DLL_DECL *C__Coptopt _PROTO((void));
-int DLL_DECL *C__Coptreset _PROTO((void));
-char DLL_DECL **C__Coptarg _PROTO((void));
+int *C__serrno _PROTO((void));
+int *C__rfio_errno _PROTO((void));
+int *C__Copterr _PROTO((void));
+int *C__Coptind _PROTO((void));
+int *C__Coptopt _PROTO((void));
+int *C__Coptreset _PROTO((void));
+char **C__Coptarg _PROTO((void));
 
 /*
  * Cglobals_init() - assing routines to provide thread local storage. 
  * Globals that existed prior to this call are all re-assigned as
  * thread-specific to calling thread (normally the main thread).
  */
-void DLL_DECL Cglobals_init(getspec,setspec,getTid)
+void Cglobals_init(getspec,setspec,getTid)
     int (*getspec) _PROTO((int *, void **));
     int (*setspec) _PROTO((int *, void *));
     int (*getTid) _PROTO((void));
@@ -160,7 +160,7 @@ void DLL_DECL Cglobals_init(getspec,setspec,getTid)
  *                 0            on success and not first call
  *                 1            on success and first call (e.g. alloc)
  */
-int DLL_DECL Cglobals_get(key, addr, size)
+int Cglobals_get(key, addr, size)
      int *key;
      void **addr;
      size_t size;
@@ -235,7 +235,7 @@ int DLL_DECL Cglobals_get(key, addr, size)
  * thread has *NOT* been created with a Cthread_create()).
  * 
  */ 
-void DLL_DECL Cglobals_getTid(Tid)
+void Cglobals_getTid(Tid)
      int *Tid;
 {
     if ( Tid == NULL ) return;
@@ -244,7 +244,7 @@ void DLL_DECL Cglobals_getTid(Tid)
     return;
 } 
 
-int DLL_DECL *C__serrno() {
+int *C__serrno() {
     int rc;
     int *addr;
 
@@ -272,7 +272,7 @@ int DLL_DECL *C__serrno() {
     }
 }
 
-int DLL_DECL *C__rfio_errno() {
+int *C__rfio_errno() {
     int rc;
     int *addr;
 
@@ -300,7 +300,7 @@ int DLL_DECL *C__rfio_errno() {
     }
 }
 
-int DLL_DECL *C__Copterr() {
+int *C__Copterr() {
     int rc;
     int *addr;
 
@@ -328,7 +328,7 @@ int DLL_DECL *C__Copterr() {
     }
 }
 
-int DLL_DECL *C__Coptind() {
+int *C__Coptind() {
     int rc;
     int *addr;
 
@@ -356,7 +356,7 @@ int DLL_DECL *C__Coptind() {
     }
 }
 
-int DLL_DECL *C__Coptopt() {
+int *C__Coptopt() {
     int rc;
     int *addr;
 
@@ -384,7 +384,7 @@ int DLL_DECL *C__Coptopt() {
     }
 }
 
-int DLL_DECL *C__Coptreset() {
+int *C__Coptreset() {
     int rc;
     int *addr;
 
@@ -412,7 +412,7 @@ int DLL_DECL *C__Coptreset() {
     }
 }
 
-char DLL_DECL **C__Coptarg() {
+char **C__Coptarg() {
     int rc;
     char **addr;
 

@@ -28,7 +28,7 @@
 /*
  * Remote file seek
  */
-int DLL_DECL rfio_preseek(s,iov,iovnb)
+int rfio_preseek(s,iov,iovnb)
      int      s ;
      int  iovnb ;
      struct iovec *iov ;
@@ -192,7 +192,7 @@ int DLL_DECL rfio_preseek(s,iov,iovnb)
 /*
  * FORTRAN bindings.
  */
-     int DLL_DECL presee_(sptr,iov,iovnbptr)
+     int presee_(sptr,iov,iovnbptr)
      int      * sptr ;
      struct iovec * iov ;
      int     * iovnbptr ;

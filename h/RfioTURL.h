@@ -89,7 +89,7 @@ typedef struct RfioTURL
  * - E2BIG The protocol name, host name or remote path was too long
  */
 
-EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
+EXTERN_C int rfioTURLFromString _PROTO((
                                                  char *tURLString,
                                                  RfioTURL_t *rfioTURL
                                                  ));
@@ -114,7 +114,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
  * @return 0 == OK, -1 initialisation of (thread specific) memory failed
  */
 
-/* EXTERN_C int DLL_DECL initRfioTURLPrefix _PROTO((
+/* EXTERN_C int initRfioTURLPrefix _PROTO((
                                                  char *prefix
                                                  ));
 */
@@ -124,7 +124,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
  *
  * @see initRfioTURLPrefix()
  */
-/* EXTERN_C char DLL_DECL *getRfioTURLPrefix _PROTO((
+/* EXTERN_C char *getRfioTURLPrefix _PROTO((
                                          void
                                          ));
 */
@@ -143,7 +143,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
  * - EINVAL if rfioTURL or tURLString are NULL or len is negative
  * - E2BIG the string representation exceeds the passed len parameter
  */
-/*EXTERN_C int DLL_DECL rfioTURLToString _PROTO((
+/*EXTERN_C int rfioTURLToString _PROTO((
                                                RfioTURL_t *rfioTURL,
                                                char *tURLString,
                                                int len
@@ -164,7 +164,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
  *
  */
 /*
-EXTERN_C int DLL_DECL rfioPathToTURL _PROTO((
+EXTERN_C int rfioPathToTURL _PROTO((
                                              char *rfioPath,
                                              RfioTURL_t *rfioTURL
                                              ));

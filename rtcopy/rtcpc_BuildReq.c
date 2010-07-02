@@ -63,7 +63,7 @@ static int rtcpc_diskfiles(int , const char *, tape_list_t **);
 #define BIND_OPT(X,Y,Z) {strcat(opts,#Z); optlist[X-'A'] = (int (*)(int , const char *, tape_list_t **))rtcpc_##Y##_opt;};
 #define OPT_MAX  'z'-'A'+1
 
-int DLL_DECL rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
+int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     static int (*optlist[OPT_MAX])(int, const char *, tape_list_t **);
     static int recursion_level = 0;
     char opts[OPT_MAX] = "";
@@ -218,7 +218,7 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     return(0);
 }
 
-int DLL_DECL rtcp_NewTapeList(tape_list_t **tape, tape_list_t **newtape,
+int rtcp_NewTapeList(tape_list_t **tape, tape_list_t **newtape,
                               int mode) {
     return(newTapeList(tape,newtape,mode));
 }
@@ -252,7 +252,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     return(0);
 }
 
-int DLL_DECL rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
+int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
                               int mode) {
     return(newFileList(tape,newfile,mode));
 }
@@ -2152,7 +2152,7 @@ static char *CuuidToString(Cuuid_t *uuid) {
     return(rtcp_voidToString((void *)uuid,sizeof(Cuuid_t)));
 }
 
-int DLL_DECL dumpTapeReq(tape_list_t *tl) {
+int dumpTapeReq(tape_list_t *tl) {
     rtcpTapeRequest_t *tapereq;
     char indent[] = " ";
 
@@ -2192,7 +2192,7 @@ int DLL_DECL dumpTapeReq(tape_list_t *tl) {
 
     return(0);
 }
-int DLL_DECL dumpFileReq(file_list_t *fl) {
+int dumpFileReq(file_list_t *fl) {
     rtcpFileRequest_t *filereq;
     char indent[] = "    ";
 

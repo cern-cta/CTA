@@ -15,7 +15,7 @@
 #include "vmgr.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 vmgr_settag(const char *vid, char *tag)
 {
 	int c;

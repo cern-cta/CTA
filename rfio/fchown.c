@@ -21,7 +21,7 @@
 /*
  * Remote file chown
  */
-int DLL_DECL rfio_fchown(s, owner, group)
+int rfio_fchown(s, owner, group)
      int      s;
      int owner ;            /* Owner's uid */
      int group ;            /* Owner's gid */

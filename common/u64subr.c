@@ -15,7 +15,7 @@
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *i64tostr(i64, buf, fldsize)
+char *i64tostr(i64, buf, fldsize)
 	signed64 i64;
 	char *buf;
 	int fldsize;
@@ -45,7 +45,7 @@ char DLL_DECL *i64tostr(i64, buf, fldsize)
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *i64tohexstr(i64, buf, fldsize)
+char *i64tohexstr(i64, buf, fldsize)
 	signed64 i64;
 	char *buf;
 	int fldsize;
@@ -70,7 +70,7 @@ char DLL_DECL *i64tohexstr(i64, buf, fldsize)
 }
 
 /* strtou64 - convert a string to an unsigned 64 bits integer */
-u_signed64 DLL_DECL strtou64(str)
+u_signed64 strtou64(str)
 	CONST char *str;
 {
 	char *p = (char *) str;
@@ -85,7 +85,7 @@ u_signed64 DLL_DECL strtou64(str)
 }
 
 /* hexstrtou64 - convert an hex string to an unsigned 64 bits integer */
-u_signed64 DLL_DECL hexstrtou64(str)
+u_signed64 hexstrtou64(str)
 	CONST char *str;
 {
 	char *p = (char *) str;
@@ -116,7 +116,7 @@ u_signed64 DLL_DECL hexstrtou64(str)
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *u64tostr(u64, buf, fldsize)
+char *u64tostr(u64, buf, fldsize)
 	u_signed64 u64;
 	char *buf;
 	int fldsize;
@@ -153,7 +153,7 @@ char DLL_DECL *u64tostr(u64, buf, fldsize)
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *u64tohexstr(u64, buf, fldsize)
+char *u64tohexstr(u64, buf, fldsize)
 	u_signed64 u64;
 	char *buf;
 	int fldsize;
@@ -206,7 +206,7 @@ char DLL_DECL *u64tohexstr(u64, buf, fldsize)
 }
 
 /* strutou64 - convert a string with unit to an unsigned 64 bits integer */
-u_signed64 DLL_DECL strutou64(str)
+u_signed64 strutou64(str)
 	CONST char *str;
 {
 	char *p = (char *) str;
@@ -228,7 +228,7 @@ u_signed64 DLL_DECL strutou64(str)
 }
 
 /* hexstrutou64 - convert an hex string with unit to an unsigned 64 bits integer */
-u_signed64 DLL_DECL hexstrutou64(str)
+u_signed64 hexstrutou64(str)
 	CONST char *str;
 {
 	char *p = (char *) str;
@@ -267,7 +267,7 @@ u_signed64 DLL_DECL hexstrutou64(str)
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *u64tostru(u64, buf, fldsize)
+char *u64tostru(u64, buf, fldsize)
 	u_signed64 u64;
 	char *buf;
 	int fldsize;
@@ -324,7 +324,7 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
  */
-char DLL_DECL *u64tostrsi(u64, buf, fldsize)
+char *u64tostrsi(u64, buf, fldsize)
 	u_signed64 u64;
 	char *buf;
 	int fldsize;

@@ -101,31 +101,31 @@ static int rfio_HsmIf_FindDirEntry(rfio_HsmIf_DIRcontext_t *HsmDir) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_IsHsmDirEntry(DIR *HsmDir) {
+int rfio_HsmIf_IsHsmDirEntry(DIR *HsmDir) {
   return(rfio_HsmIf_FindDirEntry((rfio_HsmIf_DIRcontext_t *)HsmDir));
 }
 
-int DLL_DECL rfio_HsmIf_IsHsmFile(const char *path) {
+int rfio_HsmIf_IsHsmFile(const char *path) {
   int rc = 0;
   if ( (rc = rfio_HsmIf_IsCnsFile(path)) == 1 ) return(rc);
   return(rc);
 }
 
-char DLL_DECL *rfio_HsmIf_GetCwdServer() {
+char *rfio_HsmIf_GetCwdServer() {
   char *cwd_server = NULL;
 
   Cglobals_get(&cwdserver_key, (void **)&cwd_server, CA_MAXHOSTNAMELEN+1);
   return(cwd_server);
 }
 
-int DLL_DECL rfio_HsmIf_GetCwdType() {
+int rfio_HsmIf_GetCwdType() {
   int *cwd_type = NULL;
 
   Cglobals_get(&cwdtype_key, (void **)&cwd_type, CA_MAXHOSTNAMELEN+1);
   return(*cwd_type);
 }
 
-int DLL_DECL rfio_HsmIf_SetCwdServer(const char *path) {
+int rfio_HsmIf_SetCwdServer(const char *path) {
   char *cwd_server = NULL;
 
   Cglobals_get(&cwdserver_key, (void **)&cwd_server, CA_MAXHOSTNAMELEN+1);
@@ -134,7 +134,7 @@ int DLL_DECL rfio_HsmIf_SetCwdServer(const char *path) {
   return(0);
 }
 
-int DLL_DECL rfio_HsmIf_SetCwdType(int n) {
+int rfio_HsmIf_SetCwdType(int n) {
   int *cwd_type = NULL;
 
   Cglobals_get(&cwdtype_key, (void **)&cwd_type, sizeof(int));
@@ -142,7 +142,7 @@ int DLL_DECL rfio_HsmIf_SetCwdType(int n) {
   return(0);
 }
 
-int DLL_DECL rfio_HsmIf_access(const char *path, int amode) {
+int rfio_HsmIf_access(const char *path, int amode) {
   int rc = -1;
 
   if ( rfio_HsmIf_IsCnsFile(path) ) {
@@ -151,7 +151,7 @@ int DLL_DECL rfio_HsmIf_access(const char *path, int amode) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_chdir(const char *path) {
+int rfio_HsmIf_chdir(const char *path) {
   int rc = -1;
 
   if ( rfio_HsmIf_IsCnsFile(path) ) {
@@ -161,7 +161,7 @@ int DLL_DECL rfio_HsmIf_chdir(const char *path) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_chmod(const char *path, mode_t mode) {
+int rfio_HsmIf_chmod(const char *path, mode_t mode) {
   int rc = -1;
 
   if ( rfio_HsmIf_IsCnsFile(path) ) {
@@ -170,7 +170,7 @@ int DLL_DECL rfio_HsmIf_chmod(const char *path, mode_t mode) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_chown(const char *path, uid_t new_uid, gid_t new_gid) {
+int rfio_HsmIf_chown(const char *path, uid_t new_uid, gid_t new_gid) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_chown(path,new_uid,new_gid);
@@ -178,12 +178,12 @@ int DLL_DECL rfio_HsmIf_chown(const char *path, uid_t new_uid, gid_t new_gid) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_close(int fd) {
+int rfio_HsmIf_close(int fd) {
   (void)fd;
   return 0;
 }
 
-int DLL_DECL rfio_HsmIf_closedir(DIR *dirp) {
+int rfio_HsmIf_closedir(DIR *dirp) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
   int rc = -1;
@@ -203,7 +203,7 @@ int DLL_DECL rfio_HsmIf_closedir(DIR *dirp) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_creat(const char *path, mode_t mode) {
+int rfio_HsmIf_creat(const char *path, mode_t mode) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_creat(path,mode);
@@ -211,14 +211,14 @@ int DLL_DECL rfio_HsmIf_creat(const char *path, mode_t mode) {
   return(rc);
 }
 
-char DLL_DECL *rfio_HsmIf_getcwd(char *buf, int size) {
+char *rfio_HsmIf_getcwd(char *buf, int size) {
   char *cwd = NULL;
   if ( rfio_HsmIf_GetCwdType() == RFIO_HSM_CNS )
     cwd = Cns_getcwd(buf, size);
   return(cwd);
 }
 
-int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
+int rfio_HsmIf_mkdir(const char *path, mode_t mode) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_mkdir(path,mode);
@@ -226,7 +226,7 @@ int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int streaming) {
+int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int streaming) {
   int rc = -1;
   int ret;
   int save_serrno, save_errno;
@@ -346,7 +346,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
   return(rc);
 }
 
-DIR DLL_DECL *rfio_HsmIf_opendir(const char *path) {
+DIR *rfio_HsmIf_opendir(const char *path) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   char *p;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
@@ -382,7 +382,7 @@ DIR DLL_DECL *rfio_HsmIf_opendir(const char *path) {
   return((DIR *)tmp);
 }
 
-int DLL_DECL rfio_HsmIf_stat(const char *path, struct stat *st) {
+int rfio_HsmIf_stat(const char *path, struct stat *st) {
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
   struct Cns_filestat statbuf;
   char *current_entry = NULL;
@@ -424,7 +424,7 @@ int DLL_DECL rfio_HsmIf_stat(const char *path, struct stat *st) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
+int rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
   struct Cns_filestat statbuf;
   char *current_entry = NULL;
@@ -466,7 +466,7 @@ int DLL_DECL rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_read(int fd, void *buffer, int size) {
+int rfio_HsmIf_read(int fd, void *buffer, int size) {
   (void)fd;
   (void)buffer;
   int rc = -1;
@@ -475,7 +475,7 @@ int DLL_DECL rfio_HsmIf_read(int fd, void *buffer, int size) {
   return(rc);
 }
 
-struct dirent DLL_DECL *rfio_HsmIf_readdir(DIR *dirp) {
+struct dirent *rfio_HsmIf_readdir(DIR *dirp) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
   struct dirent *tmpdirent = NULL;
@@ -515,7 +515,7 @@ struct dirent DLL_DECL *rfio_HsmIf_readdir(DIR *dirp) {
   return(tmpdirent);
 }
 
-int DLL_DECL rfio_HsmIf_rename(const char *opath, const char *npath) {
+int rfio_HsmIf_rename(const char *opath, const char *npath) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(opath) &&
        rfio_HsmIf_IsCnsFile(npath) ) {
@@ -524,7 +524,7 @@ int DLL_DECL rfio_HsmIf_rename(const char *opath, const char *npath) {
   return(rc);
 }
 
-void DLL_DECL rfio_HsmIf_rewinddir(DIR *dirp) {
+void rfio_HsmIf_rewinddir(DIR *dirp) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   tmp = (rfio_HsmIf_DIRcontext_t *)dirp;
   if ( tmp->HsmType == RFIO_HSM_CNS )
@@ -532,7 +532,7 @@ void DLL_DECL rfio_HsmIf_rewinddir(DIR *dirp) {
   return;
 }
 
-int DLL_DECL rfio_HsmIf_rmdir(const char *path) {
+int rfio_HsmIf_rmdir(const char *path) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_rmdir(path);
@@ -540,7 +540,7 @@ int DLL_DECL rfio_HsmIf_rmdir(const char *path) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_unlink(const char *path) {
+int rfio_HsmIf_unlink(const char *path) {
   int rc = -1;
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_unlink(path);
@@ -548,7 +548,7 @@ int DLL_DECL rfio_HsmIf_unlink(const char *path) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_write(int fd, void *buffer, int size) {
+int rfio_HsmIf_write(int fd, void *buffer, int size) {
   (void)fd;
   (void)buffer;
   int rc = -1;
@@ -557,7 +557,7 @@ int DLL_DECL rfio_HsmIf_write(int fd, void *buffer, int size) {
   return(rc);
 }
 
-int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
+int rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
   (void)fd;
   (void)buffer;
   if ( size < 0 ) {
@@ -567,7 +567,7 @@ int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
   return(0);
 }
 
-int DLL_DECL rfio_HsmIf_IOError(int fd, int errorcode) {
+int rfio_HsmIf_IOError(int fd, int errorcode) {
   (void)fd;
   (void)errorcode;
   int rc = -1;

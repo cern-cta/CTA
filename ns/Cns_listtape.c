@@ -16,7 +16,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-struct Cns_direntape DLL_DECL *
+struct Cns_direntape *
 Cns_listtape(char *server, char *vid, int flags, Cns_list *listp, int fseq)
 {
   int bov = 0;

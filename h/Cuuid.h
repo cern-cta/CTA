@@ -31,15 +31,15 @@ typedef struct _Cuuid_t {
 /* A usefull cuuid : the null one */
 extern Cuuid_t nullCuuid;
 
-EXTERN_C void DLL_DECL Cuuid_create _PROTO((Cuuid_t *));
-EXTERN_C void DLL_DECL Cuuid_create_from_name _PROTO ((Cuuid_t *,
+EXTERN_C void Cuuid_create _PROTO((Cuuid_t *));
+EXTERN_C void Cuuid_create_from_name _PROTO ((Cuuid_t *,
                                                        Cuuid_t, char *));
-EXTERN_C int  DLL_DECL Cuuid_compare _PROTO((Cuuid_t *, Cuuid_t *));
-EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, Cuuid_t *));
-EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char**, Cuuid_t *));
+EXTERN_C int  Cuuid_compare _PROTO((Cuuid_t *, Cuuid_t *));
+EXTERN_C void _marshall_UUID _PROTO((char**, Cuuid_t *));
+EXTERN_C void _unmarshall_UUID _PROTO((char**, Cuuid_t *));
 
-EXTERN_C int DLL_DECL Cuuid2string _PROTO((char *, size_t, Cuuid_t *));
-EXTERN_C int DLL_DECL string2Cuuid _PROTO((Cuuid_t *, const char *));
+EXTERN_C int Cuuid2string _PROTO((char *, size_t, Cuuid_t *));
+EXTERN_C int string2Cuuid _PROTO((Cuuid_t *, const char *));
 
 #define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&(ptr), &(uuid))
 #define  marshall_UUID(ptr,uuid)  _marshall_UUID(&(ptr), &(uuid))

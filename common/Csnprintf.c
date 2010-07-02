@@ -7,7 +7,7 @@
 /* Hide the snprintf and al. call v.s. different OS. */
 /* Sometimes a different name, sometimes do not exist */
 
-int DLL_DECL Csnprintf(char *str, size_t size, const char *format, ...) {
+int Csnprintf(char *str, size_t size, const char *format, ...) {
 	int rc;
 	va_list args;
 
@@ -20,7 +20,7 @@ int DLL_DECL Csnprintf(char *str, size_t size, const char *format, ...) {
 	return(rc);
 }
 
-int DLL_DECL Cvsnprintf(char *str, size_t size, const char *format, va_list args)
+int Cvsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 	return(vsnprintf(str, size, format, args));
 }

@@ -64,7 +64,7 @@
 #include "expert_daemon.h"
 #include <string.h>
 
-int DLL_DECL expert_send_request(exp_socket, request)
+int expert_send_request(exp_socket, request)
      int *exp_socket;
      int request;
 {
@@ -126,7 +126,7 @@ int DLL_DECL expert_send_request(exp_socket, request)
 	}
 }
 
-int DLL_DECL expert_send_data(exp_socket, buffer, buf_length)
+int expert_send_data(exp_socket, buffer, buf_length)
      int exp_socket;
      const char *buffer;
      int buf_length;
@@ -141,7 +141,7 @@ int DLL_DECL expert_send_data(exp_socket, buffer, buf_length)
 }
 
 
-int DLL_DECL expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
+int expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
      int exp_socket;
      char *buffer;
      int buf_length;
@@ -169,7 +169,7 @@ int DLL_DECL expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
 
 
 
-int DLL_DECL expert_receive_data(exp_socket, buffer, buf_length, timeout)
+int expert_receive_data(exp_socket, buffer, buf_length, timeout)
      int exp_socket;
      char *buffer;
      int buf_length;

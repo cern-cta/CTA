@@ -22,7 +22,7 @@ static int logfunction_key = 0;
 
 /*	stager_seterrbuf - set receiving buffer for error messages */
 
-int DLL_DECL stager_seterrbuf(buffer, buflen)
+int stager_seterrbuf(buffer, buflen)
 		 char *buffer;
 		 int buflen;
 {
@@ -41,7 +41,7 @@ int DLL_DECL stager_seterrbuf(buffer, buflen)
 
 /*	stager_setoutbuf - set receiving buffer for output messages */
 
-int DLL_DECL stager_setoutbuf(buffer, buflen)
+int stager_setoutbuf(buffer, buflen)
 		 char *buffer;
 		 int buflen;
 {
@@ -60,7 +60,7 @@ int DLL_DECL stager_setoutbuf(buffer, buflen)
 
 /*	stager_geterrbuf - get receiving buffer for error messages */
 
-int DLL_DECL stager_geterrbuf(buffer, buflen)
+int stager_geterrbuf(buffer, buflen)
 		 char **buffer;
 		 int *buflen;
 {
@@ -79,7 +79,7 @@ int DLL_DECL stager_geterrbuf(buffer, buflen)
 
 /*	stager_getoutbuf - get receiving buffer for output messages */
 
-int DLL_DECL stager_getoutbuf(buffer, buflen)
+int stager_getoutbuf(buffer, buflen)
 		 char **buffer;
 		 int *buflen;
 {
@@ -98,7 +98,7 @@ int DLL_DECL stager_getoutbuf(buffer, buflen)
 
 /*	stager_setlog - set receiving callback routine for error and output messages */
 
-int DLL_DECL stager_setlog(logfunction)
+int stager_setlog(logfunction)
 		 void (*logfunction) _PROTO((int, char *));
 {
 	void *logfunctionp;
@@ -113,7 +113,7 @@ int DLL_DECL stager_setlog(logfunction)
 
 /*	stager_getlog - get receiving callback routine for error and output messages */
 
-int DLL_DECL stager_getlog(logfunction)
+int stager_getlog(logfunction)
 		 void (**logfunction) _PROTO((int, char *));
 {
 	void *logfunctionp;
@@ -128,7 +128,7 @@ int DLL_DECL stager_getlog(logfunction)
 
 /* stager_errmsg - send error message to user defined client buffer or to stderr */
 
-int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
+int stager_errmsg(const char *func, const char *msg, ...) {
 	va_list args;
 	char prtbuf[STAGER_PRTBUFSZ];
 	int save_errno;
@@ -178,7 +178,7 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 
 /* stager_outmsg - send output message to user defined client buffer or to stdout */
 
-int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
+int stager_outmsg(const char *func, const char *msg, ...) {
 	va_list args;
 	char prtbuf[STAGER_PRTBUFSZ];
 	int save_errno;

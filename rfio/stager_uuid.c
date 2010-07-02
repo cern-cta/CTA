@@ -16,7 +16,7 @@ static int stager_subrequest_uuid_key = -1; /* Our static key, integer, init val
 static Cuuid_t stager_request_uuid_static;      /* If Cglobals_get error in order not to crash */
 static Cuuid_t stager_subrequest_uuid_static;   /* If Cglobals_get error in order not to crash */
 
-Cuuid_t DLL_DECL *C__stager_request_uuid() {
+Cuuid_t *C__stager_request_uuid() {
   Cuuid_t *var;
   /* Call Cglobals_get */
   Cglobals_get(&stager_request_uuid_key, (void **) &var, sizeof(Cuuid_t));
@@ -27,7 +27,7 @@ Cuuid_t DLL_DECL *C__stager_request_uuid() {
   return(var);
 }
 
-Cuuid_t DLL_DECL *C__stager_subrequest_uuid() {
+Cuuid_t *C__stager_subrequest_uuid() {
   Cuuid_t *var;
   /* Call Cglobals_get */
   Cglobals_get(&stager_subrequest_uuid_key, (void **) &var, sizeof(Cuuid_t));

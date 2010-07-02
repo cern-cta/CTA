@@ -31,15 +31,15 @@
  * @param port       stager port
  * @param svcClass   service class
  */
-EXTERN_C int DLL_DECL getDefaultForGlobal _PROTO((
+EXTERN_C int getDefaultForGlobal _PROTO((
   char** host, int* port, char** svcClass));
 
 
 /* Common functions for command line executables */
-EXTERN_C int DLL_DECL parseCmdLine _PROTO((int argc, char *argv[], int (*cb)(const char *),
+EXTERN_C int parseCmdLine _PROTO((int argc, char *argv[], int (*cb)(const char *),
                                            char** service_class, char** usertag, int* display_reqid));
-EXTERN_C int DLL_DECL printFileResponses _PROTO((int nbresps, struct stage_fileresp* responses)); 
-EXTERN_C int DLL_DECL printPrepareResponses _PROTO((int nbresps, struct stage_prepareToGet_fileresp *responses));
-EXTERN_C void DLL_DECL printReceivedResponses _PROTO((int nbresps));
+EXTERN_C int printFileResponses _PROTO((int nbresps, struct stage_fileresp* responses)); 
+EXTERN_C int printPrepareResponses _PROTO((int nbresps, struct stage_prepareToGet_fileresp *responses));
+EXTERN_C void printReceivedResponses _PROTO((int nbresps));
 
 #endif  /* STAGER_CLIENT_COMMANDLINE */

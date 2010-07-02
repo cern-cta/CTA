@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include "Cns_api.h"
 
-mode_t DLL_DECL
+mode_t
 Cns_umask(mode_t cmask)
 {
   mode_t oldmask;

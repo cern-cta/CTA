@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_du(const char *path, int Lflag, u_signed64 *nbbytes, u_signed64 *nbentries)
 {
   char *actual_path;

@@ -17,7 +17,7 @@
 #define _RFIO_ERRNO_H_INCLUDED_
 
 #ifndef _OSDEP_H_INCLUDED_
-#include <osdep.h>                  /* EXTERN_C, DLL_DECL and _PROTO */
+#include <osdep.h>                  /* EXTERN_C, and _PROTO */
 #endif
 #include <stddef.h>                 /* For size_t                    */
 
@@ -25,7 +25,7 @@
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int DLL_DECL *C__rfio_errno _PROTO((void));
+EXTERN_C int *C__rfio_errno _PROTO((void));
 
 /*
  * Thread safe rfio_errno. Note, C__rfio_errno is defined in Cglobals.c rather
@@ -40,10 +40,10 @@ EXTERN_C int DLL_DECL *C__rfio_errno _PROTO((void));
 extern  int     rfio_errno;                 /* Global error number          */
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C char DLL_DECL *rfio_errmsg_r _PROTO((int, int, char*, size_t));
-EXTERN_C char DLL_DECL *rfio_errmsg _PROTO((int, int));
-EXTERN_C char DLL_DECL *rfio_serror_r _PROTO((char*, size_t));
-EXTERN_C char DLL_DECL *rfio_serror _PROTO((void));
-EXTERN_C void DLL_DECL rfio_perror _PROTO((char *));
+EXTERN_C char *rfio_errmsg_r _PROTO((int, int, char*, size_t));
+EXTERN_C char *rfio_errmsg _PROTO((int, int));
+EXTERN_C char *rfio_serror_r _PROTO((char*, size_t));
+EXTERN_C char *rfio_serror _PROTO((void));
+EXTERN_C void rfio_perror _PROTO((char *));
 
 #endif /* _RFIO_ERRNO_H_INCLUDED_ */

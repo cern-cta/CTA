@@ -243,7 +243,7 @@ void stage_changePrivilege(char* users,
 //-----------------------------------------------------------------------------
 // stage_addPrivilege
 //-----------------------------------------------------------------------------
-EXTERN_C int DLL_DECL stage_addPrivilege(char* users,
+EXTERN_C int stage_addPrivilege(char* users,
                                          char* requestTypes,
                                          struct stage_options* opts) {
   try {
@@ -259,7 +259,7 @@ EXTERN_C int DLL_DECL stage_addPrivilege(char* users,
 //-----------------------------------------------------------------------------
 // stage_removePrivilege
 //-----------------------------------------------------------------------------
-EXTERN_C int DLL_DECL stage_removePrivilege(char* users,
+EXTERN_C int stage_removePrivilege(char* users,
                                             char* requestTypes,
                                             struct stage_options* opts) {
   try {

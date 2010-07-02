@@ -114,7 +114,7 @@ static int  tl_set_msg_tbl_dlf( struct tplogger_s *self, tplogger_message_t tl_m
  * @returns    : 0 on success
  *               a value < 0 on failure
  */
-int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
+int tl_init_dlf( tplogger_t *self, int init ) {
 
         int   err = 0, rv, i;
 
@@ -187,7 +187,7 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
  * @returns    : 0 on success
  *               a value < 0 on failure
  */
-int DLL_DECL tl_exit_dlf( tplogger_t *self, int exit ) {
+int tl_exit_dlf( tplogger_t *self, int exit ) {
 
         int err = 0, rv;
 
@@ -301,7 +301,7 @@ static int loglevel_2_dlfpriority(int lvl) {
  * @returns    : 0 on success
  *               a value < 0 on failure
  */
-int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
+int tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 
 	dlf_write_param_t plist[num_params];
 	char              *name;
@@ -417,7 +417,7 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
 **   syslog implementation of the tplogger interface
 */
 
-int DLL_DECL tl_init_syslog( tplogger_t *self, int init ) {
+int tl_init_syslog( tplogger_t *self, int init ) {
 
         int err = 0;
 
@@ -456,7 +456,7 @@ int DLL_DECL tl_init_syslog( tplogger_t *self, int init ) {
 }
 
 
-int DLL_DECL tl_exit_syslog( tplogger_t *self, int exit ) {
+int tl_exit_syslog( tplogger_t *self, int exit ) {
 
         int err = 0;
 
@@ -572,7 +572,7 @@ static char *trimString(char *str) {
  * @returns    : 0 on success
  *               a value < 0 on failure
  */
-int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
+int tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 
         int err = 0, i, ndx = -1, prio, strndx, type;
 	va_list ap;
@@ -727,7 +727,7 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
 ** !! only for testing, writes to /tmp/tplogger.log !!
 */
 
-int DLL_DECL tl_init_stdio( tplogger_t *self, int init ) {
+int tl_init_stdio( tplogger_t *self, int init ) {
 
         int err = 0;
 
@@ -772,7 +772,7 @@ int DLL_DECL tl_init_stdio( tplogger_t *self, int init ) {
 }
 
 
-int DLL_DECL tl_exit_stdio( tplogger_t *self, int exit ) {
+int tl_exit_stdio( tplogger_t *self, int exit ) {
 
         int err = 0;
 
@@ -796,7 +796,7 @@ int DLL_DECL tl_exit_stdio( tplogger_t *self, int exit ) {
 /*
 ** Dummy function; only extracts the message text, no parameter parsing.
 */
-int DLL_DECL tl_log_stdio( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
+int tl_log_stdio( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 
         int err = 0;
 

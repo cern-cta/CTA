@@ -18,7 +18,7 @@
 
 /* Cns_lstat - get information about a symbolic link */
 
-int DLL_DECL
+int
 Cns_lstat(const char *path, struct Cns_filestat *statbuf)
 {
   char *actual_path;
@@ -93,7 +93,7 @@ Cns_lstat(const char *path, struct Cns_filestat *statbuf)
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestat *statbuf)
 {
   char *actual_path;
@@ -181,7 +181,7 @@ Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filesta
 
 /* Cns_stat - get information about a file or a directory */
 
-int DLL_DECL
+int
 Cns_stat(const char *path, struct Cns_filestat *statbuf)
 {
   struct Cns_fileid file_uniqueid;
@@ -192,7 +192,7 @@ Cns_stat(const char *path, struct Cns_filestat *statbuf)
 
 /* Cns_statcs - get information about a file or a directory as Cns_stat*/
 
-int DLL_DECL
+int
 Cns_statcs(const char *path, struct Cns_filestatcs *statbuf)
 {
   struct Cns_fileid file_uniqueid;
@@ -205,7 +205,7 @@ Cns_statcs(const char *path, struct Cns_filestatcs *statbuf)
  * This is the same function as Cns_statx, but has Cns_filestatcs structure as parameter.
  * Cns_filestatcs has additional fields:  csumtype, csumvalue
  */
-int DLL_DECL
+int
 Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestatcs *statbuf)
 {
   char *actual_path;
@@ -293,7 +293,7 @@ Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_files
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_statg(const char *path, const char *guid, struct Cns_filestatg *statbuf)
 {
   char *actual_path;

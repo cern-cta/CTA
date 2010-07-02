@@ -13,9 +13,9 @@
 #include <rfio.h>
 
 
-EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
+EXTERN_C int rfio_smstat _PROTO((int, char *, struct stat *, int));
 
-int  DLL_DECL rfio_stat(filepath, statbuf)       /* Remote file stat    */
+int  rfio_stat(filepath, statbuf)       /* Remote file stat    */
      char    *filepath;              /* remote file path                     */
      struct stat *statbuf;           /* status buffer (subset of local used) */
 {
@@ -83,7 +83,7 @@ int  DLL_DECL rfio_stat(filepath, statbuf)       /* Remote file stat    */
 #endif
 }
 
-int  DLL_DECL rfio_stat64(filepath, statbuf)     /* Remote file stat    */
+int  rfio_stat64(filepath, statbuf)     /* Remote file stat    */
      char    *filepath;              /* remote file path                     */
      struct stat64 *statbuf;         /* status buffer (subset of local used) */
 {

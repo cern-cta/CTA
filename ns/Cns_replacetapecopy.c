@@ -14,7 +14,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const char* newvid, int nbseg, struct Cns_segattrs *newsegattrs, time_t last_mod_time)
 {
   int c,i;

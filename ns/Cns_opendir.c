@@ -16,7 +16,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-Cns_DIR DLL_DECL *
+Cns_DIR *
 Cns_opendirxg(char *host, const char *path, const char *guid)
 {
   char *actual_path;
@@ -114,13 +114,13 @@ Cns_opendirxg(char *host, const char *path, const char *guid)
   return (dirp);
 }
 
-Cns_DIR DLL_DECL *
+Cns_DIR *
 Cns_opendirg(const char *path, const char *guid)
 {
   return (Cns_opendirxg (NULL, path, guid));
 }
 
-Cns_DIR DLL_DECL *
+Cns_DIR *
 Cns_opendir(const char *path)
 {
   return (Cns_opendirg (path, NULL));

@@ -17,7 +17,7 @@
 #endif
 #include <rfio.h>
 
-int DLL_DECL rfstatfs(path, statfsbuf )
+int rfstatfs(path, statfsbuf )
      char *path ;
      struct rfstatfs *statfsbuf ;
 {

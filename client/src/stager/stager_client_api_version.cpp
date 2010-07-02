@@ -23,7 +23,7 @@
 /* StageVersion      */
 /* ================= */
 
-EXTERN_C int DLL_DECL stage_version(int *majorVersion,
+EXTERN_C int stage_version(int *majorVersion,
                                     int *minorVersion,
                                     int *majorRelease,
                                     int *minorRelease,

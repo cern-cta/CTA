@@ -15,7 +15,7 @@
 #include "rfio_rfilefdt.h"
 
 
-int DLL_DECL rfio_lockf(sd, op, siz)    /* Remote lockf               */
+int rfio_lockf(sd, op, siz)    /* Remote lockf               */
      int  sd,  /* file descriptor    */
   op;  /* lock operation              */
      long  siz;  /* locked region   */

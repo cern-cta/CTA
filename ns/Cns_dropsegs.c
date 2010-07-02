@@ -15,7 +15,7 @@
 #include "serrno.h"
 #include <string.h>
 
-int DLL_DECL
+int
 Cns_dropsegs(const char *path, struct Cns_fileid *file_uniqueid) {
   char *actual_path;
   char func[16];

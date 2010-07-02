@@ -158,7 +158,7 @@ static int _processFileRequest(const char *func,
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
+EXTERN_C int stage_rm(struct stage_filereq *requests,
                                     int nbreqs,
                                     struct stage_fileresp **responses,
                                     int *nbresps,

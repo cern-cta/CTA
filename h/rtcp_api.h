@@ -30,97 +30,97 @@ typedef struct rtcpc_sockets {
 } rtcpc_sockets_t;
 
 
-EXTERN_C int DLL_DECL rtcpc_InitReq _PROTO((
+EXTERN_C int rtcpc_InitReq _PROTO((
                                             rtcpc_sockets_t **,
                                             int *,
                                             tape_list_t *
                                             ));
-EXTERN_C int DLL_DECL rtcpc_SelectServer _PROTO((
+EXTERN_C int rtcpc_SelectServer _PROTO((
                                                  rtcpc_sockets_t **,
                                                  tape_list_t *,
                                                  char *,
                                                  int,
                                                  int *
                                                  ));
-EXTERN_C int DLL_DECL rtcpc_sendReqList _PROTO((
+EXTERN_C int rtcpc_sendReqList _PROTO((
                                                 rtcpHdr_t *,
                                                 rtcpc_sockets_t **,
                                                 tape_list_t *
                                                 ));
-EXTERN_C int DLL_DECL rtcpc_sendEndOfReq _PROTO((
+EXTERN_C int rtcpc_sendEndOfReq _PROTO((
                                                  rtcpHdr_t *,
                                                  rtcpc_sockets_t **,
                                                  tape_list_t *
                                                  ));
-EXTERN_C int DLL_DECL rtcpc_runReq _PROTO((
+EXTERN_C int rtcpc_runReq _PROTO((
                                            rtcpHdr_t *,
                                            rtcpc_sockets_t **,
                                            tape_list_t *
                                            ));
-EXTERN_C int DLL_DECL rtcpc _PROTO((
+EXTERN_C int rtcpc _PROTO((
                                     tape_list_t *
                                     ));
-EXTERN_C int DLL_DECL rtcp_CallTMS _PROTO((
+EXTERN_C int rtcp_CallTMS _PROTO((
                                            tape_list_t *,
                                            char *
                                            ));
-EXTERN_C void DLL_DECL rtcp_SetErrTxt _PROTO((
+EXTERN_C void rtcp_SetErrTxt _PROTO((
                                               int,
                                               char *,
                                               ...
                                               ));
-EXTERN_C int DLL_DECL rtcpc_BuildReq _PROTO((
+EXTERN_C int rtcpc_BuildReq _PROTO((
                                              tape_list_t **,
                                              int,
                                              char **
                                              ));
-EXTERN_C int DLL_DECL rtcpc_GetDeviceQueues _PROTO((
+EXTERN_C int rtcpc_GetDeviceQueues _PROTO((
                                                     char *,
                                                     char *,
                                                     int *,
                                                     int *,
                                                     int *
                                                     ));
-EXTERN_C int DLL_DECL rtcp_RetvalSHIFT _PROTO((
+EXTERN_C int rtcp_RetvalSHIFT _PROTO((
                                                tape_list_t *,
                                                file_list_t *,
                                                int *
                                                ));
-EXTERN_C void DLL_DECL rtcpc_FreeReqLists _PROTO((
+EXTERN_C void rtcpc_FreeReqLists _PROTO((
                                                   tape_list_t **
                                                   ));
-EXTERN_C int DLL_DECL rtcp_NewTapeList _PROTO((
+EXTERN_C int rtcp_NewTapeList _PROTO((
                                                tape_list_t **,
                                                tape_list_t **,
                                                int
                                                ));
-EXTERN_C int DLL_DECL rtcp_NewFileList _PROTO((
+EXTERN_C int rtcp_NewFileList _PROTO((
                                                tape_list_t **,
                                                file_list_t **,
                                                int
                                                ));
-EXTERN_C int DLL_DECL rtcpc_InitDumpTapeReq _PROTO((
+EXTERN_C int rtcpc_InitDumpTapeReq _PROTO((
                                                     rtcpDumpTapeRequest_t *
                                                     ));
-EXTERN_C int DLL_DECL rtcpc_BuildDumpTapeReq _PROTO((
+EXTERN_C int rtcpc_BuildDumpTapeReq _PROTO((
                                                      tape_list_t **,
                                                      int,
                                                      char *[]
 
                                                      ));
-EXTERN_C int DLL_DECL dumpTapeReq _PROTO((
+EXTERN_C int dumpTapeReq _PROTO((
                                           tape_list_t *
                                           ));
-EXTERN_C int DLL_DECL dumpFileReq _PROTO((
+EXTERN_C int dumpFileReq _PROTO((
                                           file_list_t *
                                           ));
-EXTERN_C int DLL_DECL rtcpc_CheckRetry _PROTO((
+EXTERN_C int rtcpc_CheckRetry _PROTO((
                                                tape_list_t *
                                                ));
-EXTERN_C int DLL_DECL rtcpc_kill _PROTO((
+EXTERN_C int rtcpc_kill _PROTO((
                                          void
                                          ));
-EXTERN_C int DLL_DECL rtcpc_validCksumAlg _PROTO((
+EXTERN_C int rtcpc_validCksumAlg _PROTO((
                                                  char *
                                                  ));
 

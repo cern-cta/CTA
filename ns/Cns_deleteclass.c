@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_deleteclass(char *server, int classid, char *class_name)
 {
   int c;

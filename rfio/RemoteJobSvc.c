@@ -24,7 +24,7 @@
 /*                                                                   */
 /* Output: Fills stgSvc                                              */
 /* ----------------------------------------------------------------- */
-int DLL_DECL stager_getRemJobAndDbSvc(jobSvc,dbSvc)
+int stager_getRemJobAndDbSvc(jobSvc,dbSvc)
      struct Cstager_IJobSvc_t ***jobSvc;
      struct C_Services_t ***dbSvc;
 {

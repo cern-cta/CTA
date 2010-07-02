@@ -142,7 +142,7 @@ extern tplogger_t tl_gen;
 */
 #define ARRAY_ENTRIES(arr) (sizeof(arr))/(sizeof((arr)[0]))
 
-EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
+EXTERN_C int tplogger_nb_messages _PROTO(( tplogger_t *self ));
 
 
 /*
@@ -155,31 +155,31 @@ EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
 /* chunk size -1 passed to syslog  */
 #define MAX_SYSLOG_CHUNK 767
 
-EXTERN_C int DLL_DECL tl_init_dlf         _PROTO(( tplogger_t *self, int init ));
+EXTERN_C int tl_init_dlf         _PROTO(( tplogger_t *self, int init ));
 
-EXTERN_C int DLL_DECL tl_exit_dlf         _PROTO(( tplogger_t *self, int exit ));
+EXTERN_C int tl_exit_dlf         _PROTO(( tplogger_t *self, int exit ));
 
-EXTERN_C int DLL_DECL tl_log_dlf          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
+EXTERN_C int tl_log_dlf          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
 
 
 /*
 ** syslog prototypes of the tplogger interface
 */
-EXTERN_C int DLL_DECL tl_init_syslog         _PROTO(( tplogger_t *self, int init ));
+EXTERN_C int tl_init_syslog         _PROTO(( tplogger_t *self, int init ));
 
-EXTERN_C int DLL_DECL tl_exit_syslog         _PROTO(( tplogger_t *self, int exit ));
+EXTERN_C int tl_exit_syslog         _PROTO(( tplogger_t *self, int exit ));
 
-EXTERN_C int DLL_DECL tl_log_syslog          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
+EXTERN_C int tl_log_syslog          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
 
 
 /*
 ** stdio prototypes of the tplogger interface
 */
-EXTERN_C int DLL_DECL tl_init_stdio         _PROTO(( tplogger_t *self, int init ));
+EXTERN_C int tl_init_stdio         _PROTO(( tplogger_t *self, int init ));
 
-EXTERN_C int DLL_DECL tl_exit_stdio         _PROTO(( tplogger_t *self, int exit ));
+EXTERN_C int tl_exit_stdio         _PROTO(( tplogger_t *self, int exit ));
 
-EXTERN_C int DLL_DECL tl_log_stdio          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
+EXTERN_C int tl_log_stdio          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
 
 
 /*
@@ -187,6 +187,6 @@ EXTERN_C int DLL_DECL tl_log_stdio          _PROTO(( tplogger_t *self, unsigned 
 **
 ** Currently supported types: "dlf", "stdio"
 */
-EXTERN_C int DLL_DECL tl_init_handle _PROTO(( tplogger_t *self, const char *type ));
+EXTERN_C int tl_init_handle _PROTO(( tplogger_t *self, const char *type ));
 
 #endif  /* TPLOGGER_H */

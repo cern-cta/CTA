@@ -20,7 +20,7 @@
 /*
  * Remote file fseek
  */
-int DLL_DECL rfio_fseek(fp, offset, whence)
+int rfio_fseek(fp, offset, whence)
      RFILE *fp;
      long int offset;
      int whence;

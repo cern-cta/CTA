@@ -12,7 +12,7 @@
  * nbytes argument changed from int for ssize_t
  *
  * Revision 1.5  2000/05/31 10:35:17  obarring
- * Add DLL_DECL to prototypes
+ * Add to prototypes
  *
  * Revision 1.4  1999/10/20 19:11:53  jdurand
  * Introduced a typdef size_t ssize_t so that Windows is happy
@@ -35,8 +35,8 @@
 
 #include <sys/types.h>
 
-EXTERN_C ssize_t DLL_DECL  netread_timeout _PROTO((SOCKET, void *, ssize_t, int));
-EXTERN_C ssize_t DLL_DECL  netwrite_timeout _PROTO((SOCKET, void *, ssize_t, int));
-EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
+EXTERN_C ssize_t  netread_timeout _PROTO((SOCKET, void *, ssize_t, int));
+EXTERN_C ssize_t  netwrite_timeout _PROTO((SOCKET, void *, ssize_t, int));
+EXTERN_C int netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
 
 #endif /* __stgtimeout_h */

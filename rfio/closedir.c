@@ -17,7 +17,7 @@
  * remote directory close
  */
 
-int DLL_DECL rfio_closedir(dirp)
+int rfio_closedir(dirp)
      RDIR *dirp;
 {
   char     rfio_buf[BUFSIZ];

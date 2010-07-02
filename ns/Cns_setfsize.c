@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
              u_signed64 filesize, time_t new_mod_time,
              time_t last_mod_time)
@@ -87,7 +87,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
               const char *csumvalue, time_t new_mod_time,
               time_t last_mod_time)
@@ -154,7 +154,7 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid,
                u_signed64 filesize, const char *csumtype,
                const char *csumvalue, time_t new_mod_time,

@@ -17,7 +17,7 @@
  * return -1 if path has not been modified, 
  * a positive number otherwise.
  */
-int DLL_DECL seelink ( path, buff, size) 
+int seelink ( path, buff, size) 
 char * path ;
 char * buff ;
 int size    ;
@@ -77,7 +77,7 @@ int size    ;
  * It is assumed that path begins by '/' or that it contains ":/" .
  */
 extern char *getconfent() ;
-int DLL_DECL solveln(path, buffer, size)
+int solveln(path, buffer, size)
 char *path ;
 char * buffer ;
 int size ;

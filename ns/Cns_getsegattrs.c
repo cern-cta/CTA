@@ -16,7 +16,7 @@
 #include "serrno.h"
 #include <string.h>
 
-int DLL_DECL
+int
 Cns_getsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int *nbseg, struct Cns_segattrs **segattrs)
 {
   char *actual_path;

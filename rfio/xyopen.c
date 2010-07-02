@@ -35,12 +35,12 @@
 #include <Cpwd.h>
 #include <rfio_xy.h>
 
-RFILE DLL_DECL *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
+RFILE *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 
 extern char *getacct();
-extern int DLL_DECL switch_open();
+extern int switch_open();
 
-int DLL_DECL rfio_xysock(lun)
+int rfio_xysock(lun)
      int lun ;
 {
   if ( ftnlun[lun] == NULL )
@@ -320,7 +320,7 @@ rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,uid,gid,key,reqhost)
   return(status);
 }
 
-int DLL_DECL rfio_xyopen(name,node,lun,lrecl,chopt,irc)
+int rfio_xyopen(name,node,lun,lrecl,chopt,irc)
      char    *name, *node, *chopt;
      int     lun, lrecl;
      int     *irc;

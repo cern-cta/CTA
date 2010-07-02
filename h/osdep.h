@@ -108,21 +108,6 @@ typedef U_HYPER TIME_T;
 #define EXTERN_C extern
 #endif
 
-/* Macros for externalization (WIN32) (O.Barring)     */
-/* A correct exernalization of routines that          */
-/* _always_ returns an interger, in your              */
-/* <package>_api.h header file, is then:              */
-/* EXTERN_C <type> DLL_DECL routine _PROTO((...));    */
-/* [Please note the space before prototype itself]    */
-/* [Please note the two level parenthesis]            */
-/* If your externalized function do not return int    */
-/* but another type, you must get inspired by the     */
-/* following declaration of int and change       */
-#if defined(DLL_DECL)
-#undef DLL_DECL
-#endif
-#define DLL_DECL
-
 #if defined(__APPLE__)
 #define off64_t off_t
 #endif

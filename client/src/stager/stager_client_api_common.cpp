@@ -193,7 +193,7 @@ EXTERN_C char *stage_fileSystemStatusName(int statusCode) {
   return (char*)castor::stager::FileSystemStatusCodesStrings[statusCode];
 }
 
-EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
+EXTERN_C char* stage_geturl(struct stage_io_fileresp *io) {
   
   const char *func = "stage_geturl";
   
@@ -225,7 +225,7 @@ EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
 }
 
 
-EXTERN_C int DLL_DECL stage_getClientTimeout() {
+EXTERN_C int stage_getClientTimeout() {
   char *p;
   int stager_timeout = STAGER_TIMEOUT_DEFAULT;
   if ((p = getenv ("STAGER_TIMEOUT")) != NULL ||
@@ -243,7 +243,7 @@ EXTERN_C int DLL_DECL stage_getClientTimeout() {
 
 static int stager_client_api_key = -1;
 
-EXTERN_C int DLL_DECL
+EXTERN_C int
 stage_apiInit(struct stager_client_api_thread_info **thip) {
   Cglobals_get (&stager_client_api_key,
 		(void **) thip, 
@@ -263,7 +263,7 @@ stage_apiInit(struct stager_client_api_thread_info **thip) {
 
 
 #define STBUFSIZE 200
-EXTERN_C void DLL_DECL stage_trace(int level, const char *format, ...) {
+EXTERN_C void stage_trace(int level, const char *format, ...) {
   va_list args;           /* arguments */
   struct stager_client_api_thread_info *thip;
   const char *label = "stager";
@@ -282,7 +282,7 @@ EXTERN_C void DLL_DECL stage_trace(int level, const char *format, ...) {
 }
 
 
-EXTERN_C int DLL_DECL stage_setid(uid_t uid, gid_t gid) {
+EXTERN_C int stage_setid(uid_t uid, gid_t gid) {
 
   struct stager_client_api_thread_info *thip;
   if(stage_apiInit(&thip)) {
@@ -296,7 +296,7 @@ EXTERN_C int DLL_DECL stage_setid(uid_t uid, gid_t gid) {
 }
 
 
-EXTERN_C int DLL_DECL stage_getid(uid_t *uid, gid_t *gid) {
+EXTERN_C int stage_getid(uid_t *uid, gid_t *gid) {
 
   struct stager_client_api_thread_info *thip;
   if(stage_apiInit(&thip)) {
@@ -314,7 +314,7 @@ EXTERN_C int DLL_DECL stage_getid(uid_t *uid, gid_t *gid) {
 }
 
 
-EXTERN_C int DLL_DECL stage_resetid() {
+EXTERN_C int stage_resetid() {
 
   struct stager_client_api_thread_info *thip;
   if(stage_apiInit(&thip)) {
@@ -325,7 +325,7 @@ EXTERN_C int DLL_DECL stage_resetid() {
 }
 
 
-void DLL_DECL castor::client::setClientAuthorizationId
+void castor::client::setClientAuthorizationId
 (castor::client::BaseClient &client)
   throw(castor::exception::Exception) {
 

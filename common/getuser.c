@@ -34,7 +34,7 @@ static char *infile = MAPPING_FILE;
  *         -1 if entry was not found
  */
 
-int DLL_DECL get_user(from_node,from_user,from_uid,from_gid,to_user,to_uid,to_gid)
+int get_user(from_node,from_user,from_uid,from_gid,to_user,to_uid,to_gid)
 char *from_node;
 char *from_user;
 int from_uid;

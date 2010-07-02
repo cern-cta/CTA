@@ -61,9 +61,9 @@ typedef struct {
 } id_list_t;
 
 /* Local protos */
-static id_list_t * DLL_DECL _check_for_id _PROTO((char *));
-static int DLL_DECL _add_id _PROTO((id_list_t *));
-static int DLL_DECL _try_activate_func _PROTO((Csec_context_t *,void *, char *));
+static id_list_t * _check_for_id _PROTO((char *));
+static int _add_id _PROTO((id_list_t *));
+static int _try_activate_func _PROTO((Csec_context_t *,void *, char *));
 
 /* List handling */
 static int list_lock;

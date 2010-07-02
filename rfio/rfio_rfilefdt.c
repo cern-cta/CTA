@@ -19,7 +19,7 @@ RFILE dummyrfile;               /* Used to fill with a dummy value */
 /*
  * Seach for a free index in the rfilefdt table
  */
-int DLL_DECL rfio_rfilefdt_allocentry(s)
+int rfio_rfilefdt_allocentry(s)
      int s;
 {
   return(((s >= 0) && (s < MAXRFD)) ? s : -1);
@@ -32,7 +32,7 @@ int DLL_DECL rfio_rfilefdt_allocentry(s)
  * only boundary and content within the boundary
  * is performed.
  */
-int DLL_DECL rfio_rfilefdt_findentry(s,scanflag)
+int rfio_rfilefdt_findentry(s,scanflag)
      int s;
      int scanflag;
 {
@@ -59,7 +59,7 @@ int DLL_DECL rfio_rfilefdt_findentry(s,scanflag)
  * only boundary and content within the boundary
  * is performed.
  */
-int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
+int rfio_rfilefdt_findptr(ptr,scanflag)
      RFILE *ptr;
      int scanflag;
 {
@@ -83,7 +83,7 @@ int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
  * Free a given index in the rfilefdt table
  * Warning : the argument is REALLY an index
  */
-int DLL_DECL rfio_rfilefdt_freeentry(s)
+int rfio_rfilefdt_freeentry(s)
      int s;
 {
   if ((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL)) {

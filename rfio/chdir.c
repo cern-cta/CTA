@@ -13,7 +13,7 @@
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int DLL_DECL rfio_chdir(dirpath)
+int rfio_chdir(dirpath)
      char  *dirpath;       /* directory path               */
 {
   char     *filename;

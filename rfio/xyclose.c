@@ -26,9 +26,9 @@
 #include <string.h>
 #include <rfio_xy.h>
 
-extern int DLL_DECL switch_close();
+extern int switch_close();
 
-int DLL_DECL rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
+int rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
      int     lun;
      char    *chopt;
      int     *irc;

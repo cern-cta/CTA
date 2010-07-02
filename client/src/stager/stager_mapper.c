@@ -31,7 +31,7 @@ char stghostenv[CA_MAXLINELEN+1];
 char stgpoolenv[CA_MAXLINELEN+1];
 char svcclassenv[CA_MAXLINELEN+1];
 
-EXTERN_C void DLL_DECL stage_trace   _PROTO((int, char *, ...));
+EXTERN_C void stage_trace   _PROTO((int, char *, ...));
 
 
 /* ================= */

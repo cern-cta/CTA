@@ -410,7 +410,7 @@ int  rfio_open64_v2(filepath, flags, mode)
   return(rfio_open64_ext(filepath, flags, mode,(uid_t)0,(gid_t)0,0,rh));
 }
 
-int DLL_DECL rfio_open64(filepath, flags, mode)
+int rfio_open64(filepath, flags, mode)
      char    *filepath ;
      int     flags,mode ;
 {

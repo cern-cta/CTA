@@ -15,7 +15,7 @@
 
 static int Csec_api_key = -1;
 
-int DLL_DECL
+int
 Csec_apiinit(thip)
      struct Csec_api_thread_info **thip;
 {

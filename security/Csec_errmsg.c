@@ -14,7 +14,7 @@
 
 /* Csec_errmsg - send error message to error buffer in per-thread structure */
 /* should preserve errno, serrno */
-int DLL_DECL
+int
 Csec_errmsg(char *func, char *msg, ...) {
   
   va_list args;

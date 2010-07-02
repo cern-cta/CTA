@@ -89,7 +89,7 @@ private:
 //-----------------------------------------------------------------------------
 // stage_listPrivileges
 //-----------------------------------------------------------------------------
-EXTERN_C int DLL_DECL stage_listPrivileges
+EXTERN_C int stage_listPrivileges
 (int user,
  int group,
  unsigned int requestType,

@@ -47,7 +47,7 @@
 
 
 
-EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
+EXTERN_C int stage_prepareToGet(const char *userTag,
                                   struct stage_prepareToGet_filereq *requests,
                                   int nbreqs,
                                   struct stage_prepareToGet_fileresp **responses,
@@ -188,7 +188,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
 /* ================= */
 
 
-EXTERN_C int DLL_DECL stage_get(const char *userTag,
+EXTERN_C int stage_get(const char *userTag,
 				const char *protocol,
 				const char *filename,
 				struct stage_io_fileresp ** response,

@@ -131,7 +131,7 @@ int     rfio_cleanup_v3(s)         /* cleanup rfio descriptor              */
   return(0);
 }
 
-int DLL_DECL rfio_open_v3(filepath, flags, mode)
+int rfio_open_v3(filepath, flags, mode)
      char    * filepath ;
      int     flags,mode ;
 {
@@ -476,7 +476,7 @@ void rfio_setup_v3(iop)
 /*
  * Remote file read
  */
-int DLL_DECL rfio_read_v3(ctrl_sock, ptr, size)
+int rfio_read_v3(ctrl_sock, ptr, size)
      char    *ptr;
      int     ctrl_sock, size;
 {
@@ -724,7 +724,7 @@ int DLL_DECL rfio_read_v3(ctrl_sock, ptr, size)
 /*
  * Remote file write
  */
-int DLL_DECL rfio_write_v3(ctrl_sock, ptr, size)
+int rfio_write_v3(ctrl_sock, ptr, size)
      char    *ptr;
      int     ctrl_sock, size;
 {
@@ -866,7 +866,7 @@ int DLL_DECL rfio_write_v3(ctrl_sock, ptr, size)
 /*
  * remote file close
  */
-int DLL_DECL rfio_close_v3(s)
+int rfio_close_v3(s)
      int     s;
 {
   int req;

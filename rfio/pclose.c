@@ -20,7 +20,7 @@
 /*
  * remote pclose
  */
-int DLL_DECL rfio_pclose(fs)
+int rfio_pclose(fs)
      RFILE  *fs ;
 {
   char   * p  ;

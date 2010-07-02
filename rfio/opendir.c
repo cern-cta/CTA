@@ -80,7 +80,7 @@ int rfio_dircleanup(s)      /* cleanup rfio dir. descriptor            */
   return(0);
 }
 
-RDIR DLL_DECL *rfio_opendir(dirpath)
+RDIR *rfio_opendir(dirpath)
      char *dirpath;
 {
   char rh[1];
@@ -88,7 +88,7 @@ RDIR DLL_DECL *rfio_opendir(dirpath)
   return(rfio_opendir_ext(dirpath,(uid_t)0,(gid_t)0,0,rh,rh));
 }
 
-RDIR DLL_DECL *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
+RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
      char *dirpath;
      uid_t uid;
      gid_t gid;

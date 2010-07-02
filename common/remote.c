@@ -41,7 +41,7 @@ extern char *getconfent();
  *                   1 if requestor is out of site
  *          -1 in case of an error
  */
-int DLL_DECL isremote(from_host, host_name)
+int isremote(from_host, host_name)
 struct in_addr from_host;
 char *host_name ;
 {
@@ -201,7 +201,7 @@ char *host_name ;
     return 1;
 }
 
-int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
+int CDoubleDnsLookup(SOCKET s, char *host) {
     char tmphost[CA_MAXHOSTNAMELEN+1], *p;
     struct sockaddr_in from;
     struct hostent *hp;
@@ -259,7 +259,7 @@ int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
     return(-1);
 }
 
-int DLL_DECL isadminhost(SOCKET s, char *peerhost) {
+int isadminhost(SOCKET s, char *peerhost) {
     int i, rc;
 #if defined(ADMIN_HOSTS)
     char *defined_admin_hosts = ADMIN_HOSTS;

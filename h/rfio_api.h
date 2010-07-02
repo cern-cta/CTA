@@ -61,55 +61,55 @@ struct iovec64 {
  * RFIO library routines. Common internal and external prototypes
  */
 
-EXTERN_C int DLL_DECL rfio_access _PROTO((const char *, int));
-EXTERN_C int DLL_DECL rfio_chdir _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
-EXTERN_C int DLL_DECL rfio_chown _PROTO((char *, int, int));
-EXTERN_C int DLL_DECL rfio_close _PROTO((int));
-EXTERN_C int DLL_DECL rfio_close_v3 _PROTO((int));
-EXTERN_C int DLL_DECL rfio_end _PROTO((void));  /* Close connections opened by rfio_mstat() */
-EXTERN_C int DLL_DECL rfio_symend _PROTO((void)); /* Close connections opened by rfio_msymlink() */
-EXTERN_C int DLL_DECL rfio_unend _PROTO((void)); /* Close connections opened by rfio_munlink() */
-EXTERN_C int DLL_DECL rfio_fchmod _PROTO((int, int));
-EXTERN_C int DLL_DECL rfio_fchown _PROTO((int, int, int));
-EXTERN_C int DLL_DECL rfio_fstat _PROTO((int, struct stat *));
-EXTERN_C char DLL_DECL *rfio_getcwd _PROTO((char *, int));
-EXTERN_C int DLL_DECL rfio_lockf _PROTO((int, int, long));
-EXTERN_C off_t DLL_DECL rfio_lseek _PROTO((int, off_t, int));
-EXTERN_C int DLL_DECL rfio_lstat _PROTO((char *, struct stat *));
-EXTERN_C int DLL_DECL rfio_mkdir _PROTO((char *, int));
-EXTERN_C int DLL_DECL rfio_mstat _PROTO((char *, struct stat *));
-EXTERN_C int DLL_DECL rfio_munlink _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_msymlink _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_mstat_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int DLL_DECL rfio_munlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int DLL_DECL rfio_msymlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
+EXTERN_C int rfio_access _PROTO((const char *, int));
+EXTERN_C int rfio_chdir _PROTO((char *));
+EXTERN_C int rfio_chmod _PROTO((char *, int));
+EXTERN_C int rfio_chown _PROTO((char *, int, int));
+EXTERN_C int rfio_close _PROTO((int));
+EXTERN_C int rfio_close_v3 _PROTO((int));
+EXTERN_C int rfio_end _PROTO((void));  /* Close connections opened by rfio_mstat() */
+EXTERN_C int rfio_symend _PROTO((void)); /* Close connections opened by rfio_msymlink() */
+EXTERN_C int rfio_unend _PROTO((void)); /* Close connections opened by rfio_munlink() */
+EXTERN_C int rfio_fchmod _PROTO((int, int));
+EXTERN_C int rfio_fchown _PROTO((int, int, int));
+EXTERN_C int rfio_fstat _PROTO((int, struct stat *));
+EXTERN_C char *rfio_getcwd _PROTO((char *, int));
+EXTERN_C int rfio_lockf _PROTO((int, int, long));
+EXTERN_C off_t rfio_lseek _PROTO((int, off_t, int));
+EXTERN_C int rfio_lstat _PROTO((char *, struct stat *));
+EXTERN_C int rfio_mkdir _PROTO((char *, int));
+EXTERN_C int rfio_mstat _PROTO((char *, struct stat *));
+EXTERN_C int rfio_munlink _PROTO((char *));
+EXTERN_C int rfio_msymlink _PROTO((char *, char *));
+EXTERN_C int rfio_mstat_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
+EXTERN_C int rfio_munlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
+EXTERN_C int rfio_msymlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
 #if defined(RFIO_KERNEL)
-EXTERN_C int DLL_DECL rfio_open _PROTO((char *, int, int));
+EXTERN_C int rfio_open _PROTO((char *, int, int));
 #else /* RFIO_KERNEL */
-EXTERN_C int DLL_DECL rfio_open _PROTO((char *, int, ...));
+EXTERN_C int rfio_open _PROTO((char *, int, ...));
 #endif /* RFIO_KERNEL */
-EXTERN_C int DLL_DECL rfio_open_v3 _PROTO((char *, int, int));
-EXTERN_C void DLL_DECL rfio_perror _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_preseek _PROTO((int, struct iovec *, int));
-EXTERN_C int DLL_DECL rfio_read _PROTO((int, void *, int));
-EXTERN_C int DLL_DECL rfio_read_v3 _PROTO((int, char *, int));
-EXTERN_C int DLL_DECL rfio_readlink _PROTO((char *, char *, int));
-EXTERN_C int DLL_DECL rfio_rename _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_rmdir _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_serrno _PROTO((void));
-EXTERN_C char DLL_DECL *rfio_serror _PROTO((void));
-EXTERN_C int DLL_DECL rfio_stat _PROTO((char *, struct stat *));
-EXTERN_C int DLL_DECL rfio_statfs _PROTO((char *, struct rfstatfs *)) ;
-EXTERN_C int DLL_DECL rfio_symlink _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_unlink _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_write _PROTO((int, void *, int));
-EXTERN_C int DLL_DECL rfio_write_v3 _PROTO((int, char *, int));
-EXTERN_C int DLL_DECL rfioreadopt _PROTO((int));
-EXTERN_C int DLL_DECL rfiosetopt _PROTO((int, int *, int));
-EXTERN_C int DLL_DECL rfstatfs _PROTO((char *, struct rfstatfs *)) ;
-EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
-EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
+EXTERN_C int rfio_open_v3 _PROTO((char *, int, int));
+EXTERN_C void rfio_perror _PROTO((char *));
+EXTERN_C int rfio_preseek _PROTO((int, struct iovec *, int));
+EXTERN_C int rfio_read _PROTO((int, void *, int));
+EXTERN_C int rfio_read_v3 _PROTO((int, char *, int));
+EXTERN_C int rfio_readlink _PROTO((char *, char *, int));
+EXTERN_C int rfio_rename _PROTO((char *, char *));
+EXTERN_C int rfio_rmdir _PROTO((char *));
+EXTERN_C int rfio_serrno _PROTO((void));
+EXTERN_C char *rfio_serror _PROTO((void));
+EXTERN_C int rfio_stat _PROTO((char *, struct stat *));
+EXTERN_C int rfio_statfs _PROTO((char *, struct rfstatfs *)) ;
+EXTERN_C int rfio_symlink _PROTO((char *, char *));
+EXTERN_C int rfio_unlink _PROTO((char *));
+EXTERN_C int rfio_write _PROTO((int, void *, int));
+EXTERN_C int rfio_write_v3 _PROTO((int, char *, int));
+EXTERN_C int rfioreadopt _PROTO((int));
+EXTERN_C int rfiosetopt _PROTO((int, int *, int));
+EXTERN_C int rfstatfs _PROTO((char *, struct rfstatfs *)) ;
+EXTERN_C int rfio_smstat _PROTO((int, char *, struct stat *, int));
+EXTERN_C int rfio_lseek_v3 _PROTO((int, int, int));
 
 #if defined(__APPLE__)
 #define fseeko64 fseek
@@ -123,24 +123,24 @@ EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
 #endif
 
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
-EXTERN_C int DLL_DECL rfio_close64_v3 _PROTO((int));
-EXTERN_C int DLL_DECL rfio_fstat64 _PROTO((int, struct stat64 *));
-EXTERN_C int DLL_DECL rfio_lockf64 _PROTO((int, int, off64_t));
-EXTERN_C off64_t DLL_DECL rfio_lseek64 _PROTO((int, off64_t, int));
-EXTERN_C off64_t DLL_DECL rfio_lseek64_v3 _PROTO((int, off64_t, int));
-EXTERN_C int DLL_DECL rfio_lstat64 _PROTO((char *, struct stat64 *));
-EXTERN_C int DLL_DECL rfio_mstat64 _PROTO((char *, struct stat64 *));
+EXTERN_C int rfio_close64_v3 _PROTO((int));
+EXTERN_C int rfio_fstat64 _PROTO((int, struct stat64 *));
+EXTERN_C int rfio_lockf64 _PROTO((int, int, off64_t));
+EXTERN_C off64_t rfio_lseek64 _PROTO((int, off64_t, int));
+EXTERN_C off64_t rfio_lseek64_v3 _PROTO((int, off64_t, int));
+EXTERN_C int rfio_lstat64 _PROTO((char *, struct stat64 *));
+EXTERN_C int rfio_mstat64 _PROTO((char *, struct stat64 *));
 #if defined(RFIO_KERNEL)
-EXTERN_C int DLL_DECL rfio_open64 _PROTO((char *, int, int));
+EXTERN_C int rfio_open64 _PROTO((char *, int, int));
 #else /* RFIO_KERNEL */
-EXTERN_C int DLL_DECL rfio_open64 _PROTO((char *, int, ...));
+EXTERN_C int rfio_open64 _PROTO((char *, int, ...));
 #endif /* RFIO_KERNEL */
-EXTERN_C int DLL_DECL rfio_open64_v3 _PROTO((char *, int, int));
-EXTERN_C int DLL_DECL rfio_preseek64 _PROTO((int, struct iovec64 *, int));
-EXTERN_C int DLL_DECL rfio_read64_v3 _PROTO((int, char *, int));
-EXTERN_C int DLL_DECL rfio_stat64  _PROTO((char *, struct stat64 *));
-EXTERN_C int DLL_DECL rfio_write64_v3 _PROTO((int, char *, int));
-EXTERN_C int DLL_DECL rfio_smstat64 _PROTO((int, char *, struct stat64 *, int));
+EXTERN_C int rfio_open64_v3 _PROTO((char *, int, int));
+EXTERN_C int rfio_preseek64 _PROTO((int, struct iovec64 *, int));
+EXTERN_C int rfio_read64_v3 _PROTO((int, char *, int));
+EXTERN_C int rfio_stat64  _PROTO((char *, struct stat64 *));
+EXTERN_C int rfio_write64_v3 _PROTO((int, char *, int));
+EXTERN_C int rfio_smstat64 _PROTO((int, char *, struct stat64 *, int));
 #endif
 
 /*
@@ -150,140 +150,140 @@ EXTERN_C int DLL_DECL rfio_smstat64 _PROTO((int, char *, struct stat64 *, int));
 /*
  * Internal (KERNEL) prototypes
  */
-EXTERN_C int DLL_DECL rfio_closedir _PROTO((RDIR *));
-EXTERN_C int DLL_DECL rfio_fclose _PROTO((RFILE *));
-EXTERN_C int DLL_DECL rfio_feof _PROTO((RFILE *));
-EXTERN_C int DLL_DECL rfio_ferror _PROTO((RFILE *));
-EXTERN_C int DLL_DECL rfio_cleanup _PROTO((int));
-EXTERN_C int DLL_DECL rfio_cleanup_v3 _PROTO((int));
-EXTERN_C int DLL_DECL rfio_dircleanup _PROTO((int));
-EXTERN_C int DLL_DECL rfio_fflush _PROTO((RFILE *));
-EXTERN_C int DLL_DECL rfio_fileno _PROTO((RFILE *));
-EXTERN_C RFILE DLL_DECL *rfio_fopen _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_fread _PROTO((void *, int, int, RFILE *));
-EXTERN_C int DLL_DECL rfio_fseek _PROTO((RFILE *, long int, int));
-EXTERN_C long DLL_DECL rfio_ftell _PROTO((RFILE *));
-EXTERN_C int DLL_DECL rfio_fwrite _PROTO((void *, int, int, RFILE *));
-EXTERN_C int DLL_DECL rfio_getc _PROTO((RFILE *));
-EXTERN_C RDIR DLL_DECL *rfio_opendir _PROTO((char *));
-EXTERN_C int DLL_DECL rfio_pclose _PROTO((RFILE *));
-EXTERN_C RFILE DLL_DECL *rfio_popen _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, RFILE *));
-EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, RFILE *));
-EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((RDIR *));
-EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
+EXTERN_C int rfio_closedir _PROTO((RDIR *));
+EXTERN_C int rfio_fclose _PROTO((RFILE *));
+EXTERN_C int rfio_feof _PROTO((RFILE *));
+EXTERN_C int rfio_ferror _PROTO((RFILE *));
+EXTERN_C int rfio_cleanup _PROTO((int));
+EXTERN_C int rfio_cleanup_v3 _PROTO((int));
+EXTERN_C int rfio_dircleanup _PROTO((int));
+EXTERN_C int rfio_fflush _PROTO((RFILE *));
+EXTERN_C int rfio_fileno _PROTO((RFILE *));
+EXTERN_C RFILE *rfio_fopen _PROTO((char *, char *));
+EXTERN_C int rfio_fread _PROTO((void *, int, int, RFILE *));
+EXTERN_C int rfio_fseek _PROTO((RFILE *, long int, int));
+EXTERN_C long rfio_ftell _PROTO((RFILE *));
+EXTERN_C int rfio_fwrite _PROTO((void *, int, int, RFILE *));
+EXTERN_C int rfio_getc _PROTO((RFILE *));
+EXTERN_C RDIR *rfio_opendir _PROTO((char *));
+EXTERN_C int rfio_pclose _PROTO((RFILE *));
+EXTERN_C RFILE *rfio_popen _PROTO((char *, char *));
+EXTERN_C int rfio_pread _PROTO((char *, int, int, RFILE *));
+EXTERN_C int rfio_pwrite _PROTO((char *, int, int, RFILE *));
+EXTERN_C struct dirent *rfio_readdir _PROTO((RDIR *));
+EXTERN_C int rfio_rewinddir _PROTO((RDIR *));
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
-EXTERN_C RFILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((RFILE *, off64_t, int));
-EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((RFILE *));
+EXTERN_C RFILE *rfio_fopen64 _PROTO((char *, char *));
+EXTERN_C int rfio_fseeko64 _PROTO((RFILE *, off64_t, int));
+EXTERN_C off64_t rfio_ftello64 _PROTO((RFILE *));
 #if defined(linux)
-EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
+EXTERN_C struct dirent64 *rfio_readdir64 _PROTO((RDIR *));
 #else
-EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
+EXTERN_C struct dirent *rfio_readdir64 _PROTO((RDIR *));
 #endif
 #endif
-EXTERN_C int DLL_DECL rfio_filbuf _PROTO((int, char*, int));
-EXTERN_C int DLL_DECL rfio_filbuf64 _PROTO((int, char*, int));
-EXTERN_C int DLL_DECL rfio_open_ext _PROTO((char*, int, int, uid_t, gid_t, int, char*, char*));
-EXTERN_C int DLL_DECL rfio_open_ext_v3 _PROTO((char*, int, int, uid_t, gid_t, int, char*, char*));
-EXTERN_C int DLL_DECL rfio_open64_ext_v3 _PROTO((char*, int, int, uid_t, gid_t, int, char*));
-EXTERN_C void DLL_DECL rfio_setup _PROTO((RFILE*));
-EXTERN_C int DLL_DECL rfio_read_v2 _PROTO((int, char*, int));
-EXTERN_C int DLL_DECL rfio_read64_v2 _PROTO((int, char*, int));
-EXTERN_C int DLL_DECL rfio_write_v2 _PROTO((int, char*, int));
-EXTERN_C int DLL_DECL rfio_write64_v2 _PROTO((int, char*, int));
+EXTERN_C int rfio_filbuf _PROTO((int, char*, int));
+EXTERN_C int rfio_filbuf64 _PROTO((int, char*, int));
+EXTERN_C int rfio_open_ext _PROTO((char*, int, int, uid_t, gid_t, int, char*, char*));
+EXTERN_C int rfio_open_ext_v3 _PROTO((char*, int, int, uid_t, gid_t, int, char*, char*));
+EXTERN_C int rfio_open64_ext_v3 _PROTO((char*, int, int, uid_t, gid_t, int, char*));
+EXTERN_C void rfio_setup _PROTO((RFILE*));
+EXTERN_C int rfio_read_v2 _PROTO((int, char*, int));
+EXTERN_C int rfio_read64_v2 _PROTO((int, char*, int));
+EXTERN_C int rfio_write_v2 _PROTO((int, char*, int));
+EXTERN_C int rfio_write64_v2 _PROTO((int, char*, int));
 #else /* RFIO_KERNEL */
 /*
  * External prototypes
  */
-EXTERN_C int DLL_DECL rfio_closedir _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_fclose _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_feof _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_ferror _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_fflush _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_fileno _PROTO((FILE *));
-EXTERN_C FILE DLL_DECL *rfio_fopen _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_fread _PROTO((void *, int, int, FILE *));
-EXTERN_C int DLL_DECL rfio_fseek _PROTO((FILE *, long int, int));
-EXTERN_C long DLL_DECL rfio_ftell _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_fwrite _PROTO((void *, int, int, FILE *));
-EXTERN_C int DLL_DECL rfio_getc _PROTO((FILE *));
-EXTERN_C int DLL_DECL rfio_pclose _PROTO((FILE *));
-EXTERN_C FILE DLL_DECL *rfio_popen _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, FILE *));
-EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, FILE *));
-EXTERN_C DIR DLL_DECL *rfio_opendir _PROTO((char *));
-EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((DIR *));
+EXTERN_C int rfio_closedir _PROTO((DIR *));
+EXTERN_C int rfio_fclose _PROTO((FILE *));
+EXTERN_C int rfio_feof _PROTO((FILE *));
+EXTERN_C int rfio_ferror _PROTO((FILE *));
+EXTERN_C int rfio_fflush _PROTO((FILE *));
+EXTERN_C int rfio_fileno _PROTO((FILE *));
+EXTERN_C FILE *rfio_fopen _PROTO((char *, char *));
+EXTERN_C int rfio_fread _PROTO((void *, int, int, FILE *));
+EXTERN_C int rfio_fseek _PROTO((FILE *, long int, int));
+EXTERN_C long rfio_ftell _PROTO((FILE *));
+EXTERN_C int rfio_fwrite _PROTO((void *, int, int, FILE *));
+EXTERN_C int rfio_getc _PROTO((FILE *));
+EXTERN_C int rfio_pclose _PROTO((FILE *));
+EXTERN_C FILE *rfio_popen _PROTO((char *, char *));
+EXTERN_C int rfio_pread _PROTO((char *, int, int, FILE *));
+EXTERN_C int rfio_pwrite _PROTO((char *, int, int, FILE *));
+EXTERN_C DIR *rfio_opendir _PROTO((char *));
+EXTERN_C struct dirent *rfio_readdir _PROTO((DIR *));
+EXTERN_C int rfio_rewinddir _PROTO((DIR *));
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
-EXTERN_C FILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
-EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((FILE *, off64_t, int));
-EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((FILE *));
+EXTERN_C FILE *rfio_fopen64 _PROTO((char *, char *));
+EXTERN_C int rfio_fseeko64 _PROTO((FILE *, off64_t, int));
+EXTERN_C off64_t rfio_ftello64 _PROTO((FILE *));
 #if defined(linux)
-EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((DIR *));
+EXTERN_C struct dirent64 *rfio_readdir64 _PROTO((DIR *));
 #else
-EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((DIR *));
+EXTERN_C struct dirent *rfio_readdir64 _PROTO((DIR *));
 #endif
 #endif
 #endif /* RFIO_KERNEL */
 
 
-EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
+EXTERN_C int rfio_parse _PROTO((char *, char **, char **));
                                       /* parse file path                  */
 
 /*
  * Purely internal globals
  */
 #if defined(RFIO_KERNEL)
-EXTERN_C RFILE DLL_DECL *ftnlun[];        /* Fortran lun descriptor table */
-EXTERN_C char DLL_DECL *lun2fn _PROTO((int));
+EXTERN_C RFILE *ftnlun[];        /* Fortran lun descriptor table */
+EXTERN_C char *lun2fn _PROTO((int));
                                   /* resolve lun to filename translation  */
-EXTERN_C RFILE DLL_DECL *rfilefdt[];      /* Remote file desciptors table */
+EXTERN_C RFILE *rfilefdt[];      /* Remote file desciptors table */
 
-EXTERN_C int DLL_DECL rfio_connect _PROTO((char *, int *));
+EXTERN_C int rfio_connect _PROTO((char *, int *));
                                      /* connect remote rfio server        */
-EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
+EXTERN_C int rfio_parseln _PROTO((char *, char **, char **, int));
                                       /* parse file path                  */
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
-EXTERN_C int  DLL_DECL stat64tostat _PROTO((const struct stat64 *, struct stat *));
+EXTERN_C int  stat64tostat _PROTO((const struct stat64 *, struct stat *));
                                   /* copy from a stat64 struct to a stat  */
 #endif
-EXTERN_C void DLL_DECL striptb _PROTO((char *));  
+EXTERN_C void striptb _PROTO((char *));  
                                   /* strip trailing blanks                */
 
-EXTERN_C int DLL_DECL rfio_HsmIf_access _PROTO((const char *, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_chdir _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_chmod _PROTO((const char *, mode_t));
-EXTERN_C int DLL_DECL rfio_HsmIf_chown _PROTO((const char *, uid_t, gid_t));
-EXTERN_C int DLL_DECL rfio_HsmIf_close _PROTO((int));
-EXTERN_C int DLL_DECL rfio_HsmIf_closedir _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_HsmIf_creat _PROTO((const char *, mode_t));
-EXTERN_C char DLL_DECL *rfio_HsmIf_getcwd _PROTO((char *, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_getipath _PROTO((int, char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
-EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t, int, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_open_limbysz _PROTO((const char *, int, mode_t, U_HYPER, int));
-EXTERN_C DIR DLL_DECL *rfio_HsmIf_opendir _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_read _PROTO((int, void *, int));
-EXTERN_C struct dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_HsmIf_rename _PROTO((const char *, const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_reqtoput _PROTO((char *));
-EXTERN_C void DLL_DECL rfio_HsmIf_rewinddir _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_HsmIf_rmdir _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_stat _PROTO((const char *, struct stat *));
-EXTERN_C int DLL_DECL rfio_HsmIf_unlink _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_write _PROTO((int, void *, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_FindPhysicalPath _PROTO((char *, char **));
-EXTERN_C int DLL_DECL rfio_HsmIf_FirstWrite _PROTO((int, void *, int));
-EXTERN_C char DLL_DECL *rfio_HsmIf_GetCwdServer _PROTO(());
-EXTERN_C int DLL_DECL rfio_HsmIf_GetCwdType _PROTO(());
-EXTERN_C int DLL_DECL rfio_HsmIf_GetHsmType _PROTO((int, int *));
-EXTERN_C int DLL_DECL rfio_HsmIf_IOError _PROTO((int, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_IsHsmFile _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_SetCwdServer _PROTO((const char *));
-EXTERN_C int DLL_DECL rfio_HsmIf_SetCwdType _PROTO((int));
-EXTERN_C int DLL_DECL rfio_HsmIf_IsHsmDirEntry _PROTO((DIR *));
-EXTERN_C int DLL_DECL rfio_HsmIf_stat64 _PROTO((const char *, struct stat64 *));
+EXTERN_C int rfio_HsmIf_access _PROTO((const char *, int));
+EXTERN_C int rfio_HsmIf_chdir _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_chmod _PROTO((const char *, mode_t));
+EXTERN_C int rfio_HsmIf_chown _PROTO((const char *, uid_t, gid_t));
+EXTERN_C int rfio_HsmIf_close _PROTO((int));
+EXTERN_C int rfio_HsmIf_closedir _PROTO((DIR *));
+EXTERN_C int rfio_HsmIf_creat _PROTO((const char *, mode_t));
+EXTERN_C char *rfio_HsmIf_getcwd _PROTO((char *, int));
+EXTERN_C int rfio_HsmIf_getipath _PROTO((int, char *));
+EXTERN_C int rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
+EXTERN_C int rfio_HsmIf_open _PROTO((const char *, int, mode_t, int, int));
+EXTERN_C int rfio_HsmIf_open_limbysz _PROTO((const char *, int, mode_t, U_HYPER, int));
+EXTERN_C DIR *rfio_HsmIf_opendir _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_read _PROTO((int, void *, int));
+EXTERN_C struct dirent *rfio_HsmIf_readdir _PROTO((DIR *));
+EXTERN_C int rfio_HsmIf_rename _PROTO((const char *, const char *));
+EXTERN_C int rfio_HsmIf_reqtoput _PROTO((char *));
+EXTERN_C void rfio_HsmIf_rewinddir _PROTO((DIR *));
+EXTERN_C int rfio_HsmIf_rmdir _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_stat _PROTO((const char *, struct stat *));
+EXTERN_C int rfio_HsmIf_unlink _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_write _PROTO((int, void *, int));
+EXTERN_C int rfio_HsmIf_FindPhysicalPath _PROTO((char *, char **));
+EXTERN_C int rfio_HsmIf_FirstWrite _PROTO((int, void *, int));
+EXTERN_C char *rfio_HsmIf_GetCwdServer _PROTO(());
+EXTERN_C int rfio_HsmIf_GetCwdType _PROTO(());
+EXTERN_C int rfio_HsmIf_GetHsmType _PROTO((int, int *));
+EXTERN_C int rfio_HsmIf_IOError _PROTO((int, int));
+EXTERN_C int rfio_HsmIf_IsHsmFile _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_SetCwdServer _PROTO((const char *));
+EXTERN_C int rfio_HsmIf_SetCwdType _PROTO((int));
+EXTERN_C int rfio_HsmIf_IsHsmDirEntry _PROTO((DIR *));
+EXTERN_C int rfio_HsmIf_stat64 _PROTO((const char *, struct stat64 *));
 
 #endif /* RFIO_KERNEL */
 

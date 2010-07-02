@@ -14,7 +14,7 @@
 
 /* Cns_seterrbuf - set receiving buffer for error messages */
 
-int DLL_DECL
+int
 Cns_seterrbuf(char *buffer, int buflen)
 {
   struct Cns_api_thread_info *thip;
@@ -28,7 +28,7 @@ Cns_seterrbuf(char *buffer, int buflen)
 
 /* Cns_errmsg - send error message to user defined client buffer or to stderr */
 
-int DLL_DECL
+int
 Cns_errmsg(char *func, char *msg, ...)
 {
   va_list args;

@@ -15,7 +15,7 @@
 #include <string.h>
 
 
-int  DLL_DECL rfio_rmdir(dirpath)           /* Remote rmdir             */
+int  rfio_rmdir(dirpath)           /* Remote rmdir             */
      char  *dirpath;          /* remote directory path             */
 {
   static char     buf[BUFSIZ];       /* General input/output buffer          */

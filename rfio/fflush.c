@@ -21,7 +21,7 @@
  * Remote file flush
  * If the file is remote, this is a dummy operation.
  */
-int DLL_DECL rfio_fflush(fp)
+int rfio_fflush(fp)
      RFILE *fp;
 {
   int     status;

@@ -34,7 +34,7 @@
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_open(const char *userTag,
+EXTERN_C int stage_open(const char *userTag,
                                  const char *protocol,
                                  const char *filename,
                                  int flags,

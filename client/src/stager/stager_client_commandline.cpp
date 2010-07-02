@@ -40,7 +40,7 @@
  *                                                                                                                  *
  *******************************************************************************************************************/
 
-int DLL_DECL getDefaultForGlobal(
+int getDefaultForGlobal(
                                  char** host,
                                  int* port,
                                  char** svc)
@@ -178,7 +178,7 @@ int DLL_DECL getDefaultForGlobal(
 extern "C" {
 
 /* command line parser for a generic stager command line client */
-int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
+int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
                           char** service_class, char** usertag, int* display_reqid)
 {
   int nargs, Coptind, Copterr, errflg;
@@ -244,7 +244,7 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
 }
 }
 
-void DLL_DECL printReceivedResponses(int nbresps) {
+void printReceivedResponses(int nbresps) {
   // this piece of code is essentially copied from the stage_trace function
   // the call to replace this function should be :
   //   stage_trace(1, "Received %d responses", nbresps);
@@ -259,7 +259,7 @@ void DLL_DECL printReceivedResponses(int nbresps) {
   }
 }
 
-int DLL_DECL printFileResponses(int nbresps, struct stage_fileresp *responses) {
+int printFileResponses(int nbresps, struct stage_fileresp *responses) {
   int i;
   if (responses == NULL) {
     fprintf(stderr, "Error: Response object is NULL\n");
@@ -285,7 +285,7 @@ int DLL_DECL printFileResponses(int nbresps, struct stage_fileresp *responses) {
   return rc;
 }
 
-int DLL_DECL printPrepareResponses(int nbresps, struct stage_prepareToGet_fileresp *responses) {
+int printPrepareResponses(int nbresps, struct stage_prepareToGet_fileresp *responses) {
   int i;
   if (responses == NULL) {
     fprintf(stderr, "Error: Response object is NULL\n");

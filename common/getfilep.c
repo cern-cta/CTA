@@ -27,7 +27,7 @@
 extern unit *f77units;
 unit *uinc;
 
-FILE DLL_DECL *getfilep_(lun)   /* Get file pointer associated to lun.  */
+FILE *getfilep_(lun)   /* Get file pointer associated to lun.  */
 int     *lun;
 {
 	register int    i;      /* F77 unit array index                 */
@@ -60,7 +60,7 @@ int     *lun;
 #include <osdep.h>
 #include <sys/stat.h>
 
-FILE DLL_DECL  *
+FILE  *
 getfilep(filename)
         char           *filename;
 {

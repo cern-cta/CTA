@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_setacl(const char *path, int nentries, struct Cns_acl *acl)
 {
   char *actual_path;

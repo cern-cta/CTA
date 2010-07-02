@@ -32,7 +32,7 @@
 /*                                                      */
 /* Output: Fills dbSvc                                  */
 /* ---------------------------------------------------- */
-int DLL_DECL stager_getDbSvc(dbSvc)
+int stager_getDbSvc(dbSvc)
      struct C_Services_t ***dbSvc;
 {
   char *func = "stager_getDbSvc";
@@ -80,7 +80,7 @@ int DLL_DECL stager_getDbSvc(dbSvc)
 /*                                                                   */
 /* Output: Fills stgSvc                                              */
 /* ----------------------------------------------------------------- */
-int DLL_DECL stager_getStgAndDbSvc(stgSvc,dbSvc)
+int stager_getStgAndDbSvc(stgSvc,dbSvc)
      struct Cstager_IStagerSvc_t ***stgSvc;
      struct C_Services_t ***dbSvc;
 {
@@ -148,7 +148,7 @@ int DLL_DECL stager_getStgAndDbSvc(stgSvc,dbSvc)
 /* ----------------------------------------------------------------- */
 
 
-int DLL_DECL stager_getJobSvc(jobSvc)
+int stager_getJobSvc(jobSvc)
      struct Cstager_IJobSvc_t ***jobSvc;
 
 {

@@ -50,7 +50,7 @@
 //    stage_prepareToPut                                  //
 ////////////////////////////////////////////////////////////
 
-EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
+EXTERN_C int stage_prepareToPut(const char *userTag,
 					struct stage_prepareToPut_filereq *requests,
 					int nbreqs,
 					struct stage_prepareToPut_fileresp **responses,
@@ -184,7 +184,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_put(const char *userTag,
+EXTERN_C int stage_put(const char *userTag,
 				const char *protocol,
 				const char *filename,
 				mode_t mode,
@@ -308,7 +308,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
+EXTERN_C int stage_putDone(char *putRequestId,
 				    struct stage_filereq *requests,
                                     int nbreqs,
                                     struct stage_fileresp **responses,

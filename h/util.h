@@ -37,6 +37,6 @@
  * 0 if it is a size with no unit,
  * 1 if it is a size with a unit
  */
-EXTERN_C int  DLL_DECL check_for_strutou64 _PROTO((char*));
+EXTERN_C int  check_for_strutou64 _PROTO((char*));
 
 #endif // H_UTIL_H

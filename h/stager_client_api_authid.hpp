@@ -39,7 +39,7 @@ namespace castor {
      * @param client The client concerned
      * @exception Exception throws an Exception in case of error
      */
-    void DLL_DECL setClientAuthorizationId
+    void setClientAuthorizationId
     (castor::client::BaseClient &client)
       throw(castor::exception::Exception);
 

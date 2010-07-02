@@ -31,19 +31,19 @@ struct stager_client_api_thread_info {
 // Forward declaration of a C++ object
 struct Cclient_BaseClient_t;
 
-EXTERN_C int DLL_DECL
+EXTERN_C int
 stage_apiInit(struct stager_client_api_thread_info **thip);
 
-EXTERN_C void DLL_DECL
+EXTERN_C void
 stage_trace(int level, const char *format, ...);
 
-EXTERN_C int DLL_DECL
+EXTERN_C int
 stage_setid(uid_t uid, gid_t gid);
 
-EXTERN_C int DLL_DECL
+EXTERN_C int
 stage_getid(uid_t *uid, gid_t *gid);
 
-EXTERN_C int DLL_DECL
+EXTERN_C int
 stage_resetid();
 
 int setDefaultOption(struct stage_options* opts)

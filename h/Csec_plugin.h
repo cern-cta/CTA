@@ -30,34 +30,34 @@ MAKE_CALLER_FUNC_N5(RT,Csec_get_service_name,int,char *,char *,char *,int)
 #define CSEC_FPNAME(x) (*x)
 
 #define CSEC_DECLARE_FUNCTIONS(RT,FP,MECH) \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_activate,MECH))                     _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_deactivate,MECH))                   _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_init_context,MECH))                 _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_reinit_context,MECH))               _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_delete_connection_context,MECH))    _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_delete_creds,MECH))                 _PROTO((CSEC_EXTRARG)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_acquire_creds,MECH))                _PROTO((CSEC_EXTRARG, char *, int)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_server_establish_context_ext,MECH)) _PROTO((CSEC_EXTRARG, int, char *, int)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_client_establish_context,MECH))     _PROTO((CSEC_EXTRARG, int)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_map2name,MECH))                     _PROTO((CSEC_EXTRARG, const char *, char *, int)); \
-RT DLL_DECL __CONCAT(FP,NAME)(__CONCAT(Csec_get_service_name,MECH))             _PROTO((CSEC_EXTRARG, int, char *, char *, char *, int));
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_activate,MECH))                     _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_deactivate,MECH))                   _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_init_context,MECH))                 _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_reinit_context,MECH))               _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_delete_connection_context,MECH))    _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_delete_creds,MECH))                 _PROTO((CSEC_EXTRARG)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_acquire_creds,MECH))                _PROTO((CSEC_EXTRARG, char *, int)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_server_establish_context_ext,MECH)) _PROTO((CSEC_EXTRARG, int, char *, int)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_client_establish_context,MECH))     _PROTO((CSEC_EXTRARG, int)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_map2name,MECH))                     _PROTO((CSEC_EXTRARG, const char *, char *, int)); \
+RT __CONCAT(FP,NAME)(__CONCAT(Csec_get_service_name,MECH))             _PROTO((CSEC_EXTRARG, int, char *, char *, char *, int));
 
 /* for filling/passing and using function pointers to the plugin */
 typedef struct Csec_plugin_funcptrs_s {
   /* special thread specific variable from Cglobals.c */
-  int DLL_DECL *(*C__serrno) _PROTO((void));
-  int DLL_DECL *_serrno;
+  int *(*C__serrno) _PROTO((void));
+  int *_serrno;
 
-  struct passwd DLL_DECL *(*Cgetpwuid) _PROTO((uid_t));
-  int DLL_DECL (*Cmutex_lock) _PROTO((void *, int));
-  int DLL_DECL (*Cmutex_unlock) _PROTO((void *));
-  int DLL_DECL (*Csec_context_is_client) _PROTO((Csec_context_t *));
-  int DLL_DECL (*Csec_errmsg) _PROTO((char *, char *, ...));
-  int DLL_DECL (*_Csec_recv_token) _PROTO((int, csec_buffer_t, int, int *));
-  int DLL_DECL (*_Csec_send_token) _PROTO ((int, csec_buffer_t, int, int));
-  int DLL_DECL (*Csec_trace) _PROTO((char *, char *, ...));
-  int DLL_DECL (*Csec_isIdAService) _PROTO((const char *, const char *));
-  struct hostent DLL_DECL *(*Cgethostbyaddr) _PROTO((const void *, size_t, int));
+  struct passwd *(*Cgetpwuid) _PROTO((uid_t));
+  int (*Cmutex_lock) _PROTO((void *, int));
+  int (*Cmutex_unlock) _PROTO((void *));
+  int (*Csec_context_is_client) _PROTO((Csec_context_t *));
+  int (*Csec_errmsg) _PROTO((char *, char *, ...));
+  int (*_Csec_recv_token) _PROTO((int, csec_buffer_t, int, int *));
+  int (*_Csec_send_token) _PROTO ((int, csec_buffer_t, int, int));
+  int (*Csec_trace) _PROTO((char *, char *, ...));
+  int (*Csec_isIdAService) _PROTO((const char *, const char *));
+  struct hostent *(*Cgethostbyaddr) _PROTO((const void *, size_t, int));
 } Csec_plugin_funcptrs_t;
 
 typedef struct Csec_plugin_pluginptrs_s {
@@ -103,27 +103,27 @@ Csec_plugin_funcptrs_t x = { \
 #define PLUGINFP(CTX,x) (((Csec_plugin_pluginptrs_t *)((CTX)->shhandle))->x)
 
 #define MAKE_CALLER_FUNC_N0(RT,NAME) \
-RT DLL_DECL __CONCAT(NAME,_caller) (Csec_context_t *ctx) { \
+RT __CONCAT(NAME,_caller) (Csec_context_t *ctx) { \
   FILL_FUNCPTR_STRUCT(funcs) \
   return (*PLUGINFP(ctx,NAME))(&funcs, ctx); }
 
 #define MAKE_CALLER_FUNC_N1(RT,NAME,T2) \
-RT DLL_DECL __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2) { \
+RT __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2) { \
   FILL_FUNCPTR_STRUCT(funcs) \
   return (*PLUGINFP(ctx,NAME))(&funcs, ctx, t2); }
 
 #define MAKE_CALLER_FUNC_N2(RT,NAME,T2,T3) \
-RT DLL_DECL __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3) { \
+RT __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3) { \
   FILL_FUNCPTR_STRUCT(funcs) \
   return (*PLUGINFP(ctx,NAME))(&funcs, ctx, t2, t3); }
 
 #define MAKE_CALLER_FUNC_N3(RT,NAME,T2,T3,T4) \
-RT DLL_DECL __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3, T4 t4) { \
+RT __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3, T4 t4) { \
   FILL_FUNCPTR_STRUCT(funcs) \
   return (*PLUGINFP(ctx,NAME))(&funcs, ctx, t2, t3, t4); }
 
 #define MAKE_CALLER_FUNC_N5(RT,NAME,T2,T3,T4,T5,T6) \
-RT DLL_DECL __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) { \
+RT __CONCAT(NAME,_caller) (Csec_context_t *ctx, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) { \
   FILL_FUNCPTR_STRUCT(funcs) \
   return (*PLUGINFP(ctx,NAME))(&funcs, ctx, t2, t3, t4, t5, t6); }
 

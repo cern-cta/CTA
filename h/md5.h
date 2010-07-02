@@ -58,9 +58,9 @@ typedef struct {
   char hex[33];       /* hexadecimal form + 1 for the null character */
 } MD5_CTX;
 
-EXTERN_C int DLL_DECL MD5Init _PROTO((MD5_CTX *));
-EXTERN_C int DLL_DECL MD5Update _PROTO((MD5_CTX *, unsigned char *, unsigned int));
-EXTERN_C int DLL_DECL MD5Final _PROTO((MD5_CTX *));
+EXTERN_C int MD5Init _PROTO((MD5_CTX *));
+EXTERN_C int MD5Update _PROTO((MD5_CTX *, unsigned char *, unsigned int));
+EXTERN_C int MD5Final _PROTO((MD5_CTX *));
 
 /*
  * Last Update: "Friday 26 November, 1999 at 11:44:56 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"

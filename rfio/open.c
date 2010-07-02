@@ -124,7 +124,7 @@ int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
 }
 
 
-int DLL_DECL rfio_open(filepath, flags, mode)
+int rfio_open(filepath, flags, mode)
      char    *filepath ;
      int     flags,mode ;
 {

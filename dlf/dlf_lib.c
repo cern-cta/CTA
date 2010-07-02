@@ -81,7 +81,7 @@ char *_clean_string(char *str, int underscore) {
 /*---------------------------------------------------------------------------
  * dlf_init
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_init(const char *ident, int maskpri) {
+int dlf_init(const char *ident, int maskpri) {
 
   /* Variables */
   FILE *fp = NULL;
@@ -194,7 +194,7 @@ int DLL_DECL dlf_init(const char *ident, int maskpri) {
 /*---------------------------------------------------------------------------
  * dlf_shutdwn
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_shutdown(void) {
+int dlf_shutdown(void) {
 
   /* Variables */
   int i;
@@ -225,7 +225,7 @@ int DLL_DECL dlf_shutdown(void) {
 /*---------------------------------------------------------------------------
  * dlf_regtext
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_regtext(unsigned int msgno, const char *message) {
+int dlf_regtext(unsigned int msgno, const char *message) {
 
   /* Logging interface is initialized? */
   if (!initialized) {
@@ -267,7 +267,7 @@ int DLL_DECL dlf_regtext(unsigned int msgno, const char *message) {
 /*---------------------------------------------------------------------------
  * dlf_write
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_write(Cuuid_t reqid,
+int dlf_write(Cuuid_t reqid,
                        unsigned int priority,
                        unsigned int msgno,
                        struct Cns_fileid *ns,
@@ -375,7 +375,7 @@ int DLL_DECL dlf_write(Cuuid_t reqid,
 /*---------------------------------------------------------------------------
  * dlf_writep
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_writep(Cuuid_t reqid,
+int dlf_writep(Cuuid_t reqid,
                         unsigned int priority,
                         unsigned int msgno,
                         struct Cns_fileid *ns,
@@ -551,6 +551,6 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
 /*---------------------------------------------------------------------------
  * dlf_isinitialized
  *---------------------------------------------------------------------------*/
-int DLL_DECL dlf_isinitialized(void) {
+int dlf_isinitialized(void) {
   return (initialized);
 }

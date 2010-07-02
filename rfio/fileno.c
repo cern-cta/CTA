@@ -17,7 +17,7 @@
 #include "rfio_rfilefdt.h"
 
 
-int DLL_DECL rfio_fileno(fp)
+int rfio_fileno(fp)
      RFILE *fp;                      /* Remote file pointer                  */
 {
   int     fd;

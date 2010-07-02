@@ -489,7 +489,7 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
  *------------------------------------------------------------------------
  */
 
-char DLL_DECL *  sstrerror_r(n,buf,buflen)
+char *  sstrerror_r(n,buf,buflen)
      int     n;
      char    *buf;
      size_t  buflen;
@@ -617,7 +617,7 @@ char DLL_DECL *  sstrerror_r(n,buf,buflen)
   return(buf);
 }
 
-void DLL_DECL sperror(msg)
+void sperror(msg)
      char    *msg;
 {
   char buf[80];
@@ -630,7 +630,7 @@ void DLL_DECL sperror(msg)
 
 static int sstrerror_key = -1;
 
-char DLL_DECL *sstrerror(n)
+char *sstrerror(n)
      int n;
 {
   char *buf = NULL;

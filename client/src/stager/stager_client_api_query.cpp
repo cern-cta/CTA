@@ -43,7 +43,7 @@
 //    stage_filequery                                     //
 ////////////////////////////////////////////////////////////
 
-EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
+EXTERN_C int stage_filequery(struct stage_query_req *requests,
 				      int nbreqs,
 				      struct stage_filequery_resp **responses,
 				      int *nbresps,
@@ -214,7 +214,7 @@ void stage_translateDiskPoolResponse
 //    stage_diskpoolquery                                 //
 ////////////////////////////////////////////////////////////
 
-EXTERN_C int DLL_DECL stage_diskpoolquery
+EXTERN_C int stage_diskpoolquery
 (char *diskPoolName,
  struct stage_diskpoolquery_resp *response,
  struct stage_options* opts) {
@@ -288,7 +288,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 //    stage_diskpoolsquery                                //
 ////////////////////////////////////////////////////////////
 
-EXTERN_C int DLL_DECL stage_diskpoolsquery
+EXTERN_C int stage_diskpoolsquery
 (struct stage_diskpoolquery_resp **responses,
  int *nbresps,
  struct stage_options* opts) {
@@ -388,7 +388,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
 //    stage_delete_diskpoolquery_resp                     //
 ////////////////////////////////////////////////////////////
 
-EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp
+EXTERN_C void stage_delete_diskpoolquery_resp
 (struct stage_diskpoolquery_resp *response) {
   if (0 == response) return;
   free(response->diskPoolName);
@@ -419,7 +419,7 @@ void printSizeToBuf(char* buf, unsigned long long int size, int siflag) {
   }
 }
 
-EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
+EXTERN_C void stage_print_diskpoolquery_resp
 (FILE* stream, struct stage_diskpoolquery_resp *response, int siflag) {
   char freeBuf[21];
   char totalBuf[21];

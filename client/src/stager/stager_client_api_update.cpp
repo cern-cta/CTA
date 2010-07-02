@@ -44,7 +44,7 @@
 /* External routines */
 /* ================= */
 
-EXTERN_C int DLL_DECL stage_prepareToUpdate
+EXTERN_C int stage_prepareToUpdate
 (const char *userTag,
  struct stage_prepareToUpdate_filereq *requests,
  int nbreqs,
@@ -170,7 +170,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate
 
 
 
-EXTERN_C int DLL_DECL stage_update(const char *userTag,
+EXTERN_C int stage_update(const char *userTag,
                                    const char *protocol,
                                    const char *filename,
                                    int flags,

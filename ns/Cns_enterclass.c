@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_enterclass(char *server, struct Cns_fileclass *Cns_fileclass)
 {
   int c;

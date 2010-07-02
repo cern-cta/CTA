@@ -370,7 +370,7 @@ tplogger_message_t tplogger_messages_rmcdaemon[] = {
  *
  * @returns    : the number of available messages
  */
-int DLL_DECL tplogger_nb_messages( tplogger_t *self ) {
+int tplogger_nb_messages( tplogger_t *self ) {
 
         if( 0 == strcmp( self->tl_name, "taped" ) ) {
 

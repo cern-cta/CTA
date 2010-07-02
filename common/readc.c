@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <osdep.h>
 
-void DLL_DECL read_s_(stream,buff,count,status)
+void read_s_(stream,buff,count,status)
      FILE **stream ;
      char *  buff ;
      int  * count ;
@@ -104,7 +104,7 @@ void DLL_DECL read_s_(stream,buff,count,status)
 	}
 
 }
-void DLL_DECL read_d_(stream,buff,count,status)
+void read_d_(stream,buff,count,status)
 
 	FILE **stream ;
         char *  buff ;

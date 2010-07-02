@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include "Cns_api.h"
 
-void DLL_DECL
+void
 Cns_rewinddir(Cns_DIR *dirp)
 {
   if (! dirp)

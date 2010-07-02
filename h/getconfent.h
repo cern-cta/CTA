@@ -7,10 +7,10 @@
 
 #include "osdep.h"
 
-EXTERN_C char DLL_DECL *getconfent _PROTO((const char *, const char *, int));
-EXTERN_C char DLL_DECL *getconfent_fromfile _PROTO((const char *, const char *, const char *, int));
-EXTERN_C int DLL_DECL getconfent_multi _PROTO((const char *, const char *, int, char ***, int *));
-EXTERN_C int DLL_DECL getconfent_multi_fromfile _PROTO((const char *, const char *, const char *, int, char ***, int *));
-EXTERN_C int DLL_DECL getconfent_parser _PROTO((char **, char ***, int *));
+EXTERN_C char *getconfent _PROTO((const char *, const char *, int));
+EXTERN_C char *getconfent_fromfile _PROTO((const char *, const char *, const char *, int));
+EXTERN_C int getconfent_multi _PROTO((const char *, const char *, int, char ***, int *));
+EXTERN_C int getconfent_multi_fromfile _PROTO((const char *, const char *, const char *, int, char ***, int *));
+EXTERN_C int getconfent_parser _PROTO((char **, char ***, int *));
 
 #endif /* __getconfent_h */

@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern int DLL_DECL switch_write();
+extern int switch_write();
 
-int DLL_DECL
+int
 rfio_xywrite(lun, buf, nrec, nwrit, chopt, irc)
      int     lun, nrec, nwrit;
      char    *buf, *chopt;

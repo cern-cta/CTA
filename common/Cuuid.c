@@ -206,7 +206,7 @@ static Cuuid_state_t *C_Cuuid_st()
 /* ------------------------------- */
 /* Cuuid_create -- generate a UUID */
 /* ------------------------------- */
-void DLL_DECL Cuuid_create(uuid)
+void Cuuid_create(uuid)
      Cuuid_t *uuid;
 {
   Cuuid_time_t timestamp, last_time;
@@ -322,7 +322,7 @@ static U_SHORT _Cuuid_true_random()
 /* Cuuid_create_from_name -- create a UUID using a name from a name   */
 /* space                                                              */
 /* ------------------------------------------------------------------ */
-void DLL_DECL Cuuid_create_from_name(uuid,nsid,name)
+void Cuuid_create_from_name(uuid,nsid,name)
      Cuuid_t *uuid;
      Cuuid_t  nsid;
      char *name;
@@ -381,7 +381,7 @@ static void _Cuuid_format_uuid_v3(uuid, hash)
 /*   
      Note:   lexical ordering is not temporal ordering!
 */
-int DLL_DECL Cuuid_compare(u1,u2)
+int Cuuid_compare(u1,u2)
      Cuuid_t *u1;
      Cuuid_t *u2;
 {
@@ -405,7 +405,7 @@ int DLL_DECL Cuuid_compare(u1,u2)
 /* --------------- */
 /* _marshall_UUID  */
 /* --------------- */
-void DLL_DECL _marshall_UUID (ptr, uuid)
+void _marshall_UUID (ptr, uuid)
      char **ptr;
      Cuuid_t *uuid;
 {
@@ -421,7 +421,7 @@ void DLL_DECL _marshall_UUID (ptr, uuid)
 /* ---------------- */
 /* _unmarshall_UUID */
 /* ---------------- */
-void DLL_DECL _unmarshall_UUID (ptr, uuid)
+void _unmarshall_UUID (ptr, uuid)
      char **ptr;
      Cuuid_t *uuid;
 {
@@ -743,7 +743,7 @@ static void _Cuuid_get_system_time(uuid_time)
 #endif /*__APPLE__ */
 
 /* Conversion from/to Cuuid/string */
-int DLL_DECL Cuuid2string(output,maxlen,uuid)
+int Cuuid2string(output,maxlen,uuid)
      char *output;
      size_t maxlen;
      Cuuid_t *uuid;

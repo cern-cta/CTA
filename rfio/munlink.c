@@ -32,7 +32,7 @@ static int rfio_munlink_findentry _PROTO((char *,int));
 static int rfio_unend_this _PROTO((int,int));
 extern int rfio_newhost _PROTO((char *));
 
-int DLL_DECL rfio_munlink(file)
+int rfio_munlink(file)
      char *file ;
 {
   int rt ,rc ,fd, rfindex, Tid, parserc;
@@ -202,7 +202,7 @@ static int rfio_smunlink(s,filename)
   return(0) ;
 }
 
-int DLL_DECL rfio_unend()
+int rfio_unend()
 {
   int i,Tid, j=0 ;
   char buf[RQSTSIZE];
@@ -378,7 +378,7 @@ static int rfio_munlink_findentry(hostname,Tid)
   return(rc);
 }
 
-int DLL_DECL rfio_munlink_reset()
+int rfio_munlink_reset()
 {
   int i,Tid;
   int rc = 0;

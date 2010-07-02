@@ -12,10 +12,10 @@
 
 #include <osdep.h>
 
-EXTERN_C void DLL_DECL Cmutex_init _PROTO((int (*) _PROTO((void *, int)),
+EXTERN_C void Cmutex_init _PROTO((int (*) _PROTO((void *, int)),
                                            int (*) _PROTO((void *))));
-EXTERN_C int DLL_DECL Cmutex_lock _PROTO((void *, int));
-EXTERN_C int DLL_DECL Cmutex_unlock _PROTO((void *));
+EXTERN_C int Cmutex_lock _PROTO((void *, int));
+EXTERN_C int Cmutex_unlock _PROTO((void *));
 
 #define Cmutex_trylock(addr) Cmutex_lock(addr,0)
 

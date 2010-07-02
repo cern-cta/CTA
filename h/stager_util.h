@@ -11,6 +11,6 @@
 #include "osdep.h"
 #include "Cns_api.h"
 
-EXTERN_C void DLL_DECL stager_log _PROTO((const char *, const char *, int, int, struct Cns_fileid *, ...));
+EXTERN_C void stager_log _PROTO((const char *, const char *, int, int, struct Cns_fileid *, ...));
 
 #endif /* stager_api_h */

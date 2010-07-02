@@ -25,6 +25,6 @@
 #define PLUS_STR	"+"
 #define COLON_STR	":"
 
-EXTERN_C char DLL_DECL *getacctent _PROTO((struct passwd *, char *, char *, int));
+EXTERN_C char *getacctent _PROTO((struct passwd *, char *, char *, int));
 
 #endif /* GETACCTENT_H */

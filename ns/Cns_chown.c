@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_chown(const char *path, uid_t new_uid, gid_t new_gid)
 {
   char *actual_path;
@@ -74,7 +74,7 @@ Cns_chown(const char *path, uid_t new_uid, gid_t new_gid)
   return (c);
 }
 
-int DLL_DECL
+int
 Cns_lchown(const char *path, uid_t new_uid, gid_t new_gid)
 {
   char *actual_path;

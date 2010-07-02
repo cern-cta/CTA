@@ -28,7 +28,7 @@
 /*
  * Remote file seek
  */
-int DLL_DECL rfio_preseek64(s,iov,iovnb)
+int rfio_preseek64(s,iov,iovnb)
      int      s ;
      int  iovnb ;
      struct iovec64 *iov ;

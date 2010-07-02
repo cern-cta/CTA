@@ -345,9 +345,9 @@ else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(
 /*
  * This extern declaration is needed by both client and server
  */
-EXTERN_C void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...));
-EXTERN_C char DLL_DECL *rtcp_voidToString _PROTO((void *, int));
-EXTERN_C int DLL_DECL rtcp_stringToVoid _PROTO((char *, void *, int));
-EXTERN_C int DLL_DECL rtcp_ClientMsg _PROTO((SOCKET *, char *));
+EXTERN_C void (*rtcp_log) _PROTO((int, const char *, ...));
+EXTERN_C char *rtcp_voidToString _PROTO((void *, int));
+EXTERN_C int rtcp_stringToVoid _PROTO((char *, void *, int));
+EXTERN_C int rtcp_ClientMsg _PROTO((SOCKET *, char *));
 
 #endif /* RTCP_H */

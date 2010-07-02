@@ -14,7 +14,7 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 
-int DLL_DECL rfio_chown(file, owner, group)     /* Remote chown                 */
+int rfio_chown(file, owner, group)     /* Remote chown                 */
      char  *file;          /* remote file path             */
      int  owner ;     /* Owner's uid */
      int   group ;     /* Owner's gid */

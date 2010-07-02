@@ -29,9 +29,9 @@
 #include <string.h>
 #include <rfio_xy.h>
 
-extern int DLL_DECL switch_read();
+extern int switch_read();
 
-int DLL_DECL
+int
 rfio_xyread(lun, buf, nrec, nwant, ngot, chopt, irc)
      int     lun, nrec, nwant;
      char    *buf, *chopt;

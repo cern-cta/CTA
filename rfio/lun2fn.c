@@ -29,7 +29,7 @@
 
 extern char     *getenv();
 
-char * DLL_DECL
+char *
 lun2fn(lun)                     /* find file name corresponding to lun  */
      int     lun;
 {

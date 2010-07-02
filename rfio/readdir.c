@@ -24,7 +24,7 @@
  * Remote directory read
  */
 
-struct dirent DLL_DECL *rfio_readdir(dirp)
+struct dirent *rfio_readdir(dirp)
      RDIR *dirp;
 {
   int status ;  /* Status and return code from remote   */
@@ -138,13 +138,13 @@ struct dirent DLL_DECL *rfio_readdir(dirp)
 }
 
 #if !defined(linux)
-struct dirent DLL_DECL *rfio_readdir64(dirp)
+struct dirent *rfio_readdir64(dirp)
      RDIR *dirp;
 {
   return (rfio_readdir(dirp));
 }
 #else
-struct dirent64 DLL_DECL *rfio_readdir64(dirp)
+struct dirent64 *rfio_readdir64(dirp)
      RDIR *dirp;
 {
   struct dirent64 *de;

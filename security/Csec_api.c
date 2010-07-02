@@ -63,8 +63,8 @@ static struct _serv_table service_table[] = {
     {"", 0}
 };
 
-static int DLL_DECL _setSecurityOpts _PROTO((Csec_context_t *, int));
-static int DLL_DECL hostname_exists _PROTO((const char *, size_t));
+static int _setSecurityOpts _PROTO((Csec_context_t *, int));
+static int hostname_exists _PROTO((const char *, size_t));
 
 /*****************************************************************
  *                                                               *

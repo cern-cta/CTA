@@ -18,7 +18,7 @@
 #include <Cpwd.h>
 #include <osdep.h>
 
-struct passwd DLL_DECL *Cgetpwnam(name)
+struct passwd *Cgetpwnam(name)
 CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
@@ -54,7 +54,7 @@ CONST char *name;
 #endif
 }
 
-struct passwd DLL_DECL *Cgetpwuid(uid)
+struct passwd *Cgetpwuid(uid)
 uid_t uid;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))

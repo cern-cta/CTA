@@ -32,7 +32,7 @@ static int rfio_forcelocal = RFIO_NOLOCAL ;
 /*
  * User can set option through this function.
  */
-int DLL_DECL rfiosetopt(opt,pval,len)
+int rfiosetopt(opt,pval,len)
      int opt ;
      int  * pval ;
      int len ;

@@ -18,7 +18,7 @@
 ** NB This does not implement a rename across hosts
 */
 
-int  DLL_DECL rfio_rename(fileo, filen)  /* Remote rename               */
+int  rfio_rename(fileo, filen)  /* Remote rename               */
      char  *fileo,  /* remote old path     */
   *filen;  /* remote new path              */
 {

@@ -28,7 +28,7 @@ extern char *sys_errlist[];
 #endif /* sys_errlist && linux */
 
 
-int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
+int vdqm_Connect(vdqmnw_t **nw) {
     /* reserve space for both VDQM host and replica host */
 	char vdqm_host[2*CA_MAXHOSTNAMELEN+1];
     char *vdqm_primary,*vdqm_replica,*try_host;
@@ -144,7 +144,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
 	return(0);
 }
 
-int DLL_DECL vdqm_Disconnect(vdqmnw_t **nw) {
+int vdqm_Disconnect(vdqmnw_t **nw) {
 	int rc;
 
     if ( nw == NULL || *nw == NULL ) return(-1);
@@ -168,7 +168,7 @@ int DLL_DECL vdqm_Disconnect(vdqmnw_t **nw) {
 	return(0);
 }
 
-int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
+int vdqm_SendVolReq(vdqmnw_t *nw,
 					int  *reqID,
                     char *VID, 
                     char *dgn,
@@ -213,7 +213,7 @@ int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
 	return(rc);
 }
 
-int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *nw,
+int vdqm_DelVolumeReq(vdqmnw_t *nw,
 					int  reqID,
                     char *VID, 
                     char *dgn,
@@ -261,7 +261,7 @@ int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *nw,
 	return(rc);
 }
 
-int DLL_DECL vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
+int vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
     vdqmHdr_t hdr;
     int rc = 0;
 
@@ -302,7 +302,7 @@ int DLL_DECL vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
     return(rc);
 }
 
-int DLL_DECL vdqm_UnitStatus(vdqmnw_t *nw, 
+int vdqm_UnitStatus(vdqmnw_t *nw, 
                     char *VID, 
                     char *dgn, 
                     char *server, 
@@ -372,7 +372,7 @@ int DLL_DECL vdqm_UnitStatus(vdqmnw_t *nw,
 	return(rc);
 }
 
-int DLL_DECL vdqm_DelDrive(vdqmnw_t *nw,
+int vdqm_DelDrive(vdqmnw_t *nw,
                            char *dgn,
                            char *server,
                            char *unit) {
@@ -426,7 +426,7 @@ int DLL_DECL vdqm_DelDrive(vdqmnw_t *nw,
     return(rc);
 }
 
-int DLL_DECL vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
+int vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
     vdqmHdr_t hdr;
     int rc = 0;
 
@@ -461,7 +461,7 @@ int DLL_DECL vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
     return(rc);
 }
 
-int DLL_DECL vdqm_admin(vdqmnw_t *nw, int admin_req) {
+int vdqm_admin(vdqmnw_t *nw, int admin_req) {
     vdqmHdr_t hdr;
     vdqmnw_t *tmpnw = NULL;
     int rc;
@@ -502,7 +502,7 @@ int DLL_DECL vdqm_admin(vdqmnw_t *nw, int admin_req) {
     return(0);
 }
 
-int DLL_DECL vdqm_GetClientAddr(char *buf,
+int vdqm_GetClientAddr(char *buf,
                        char *clienthost, 
                        int *clientport, 
                        char *dgn,
@@ -523,7 +523,7 @@ int DLL_DECL vdqm_GetClientAddr(char *buf,
 	return(rc);
 }
 
-int DLL_DECL vdqm_AcknClientAddr(SOCKET s,
+int vdqm_AcknClientAddr(SOCKET s,
                                  int status,
                                  int errmsglen,
                                  char *errmsg) {
@@ -538,7 +538,7 @@ int DLL_DECL vdqm_AcknClientAddr(SOCKET s,
     return(rc);
 }
 
-int DLL_DECL vdqm_PingServer(vdqmnw_t *nw,int reqID) {
+int vdqm_PingServer(vdqmnw_t *nw,int reqID) {
 	vdqmVolReq_t volreq;
 	vdqmnw_t *tmpnw = NULL;
 	int rc;

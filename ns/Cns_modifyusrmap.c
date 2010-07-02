@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_modifyusrmap(uid_t uid, char *newname)
 {
   int c;

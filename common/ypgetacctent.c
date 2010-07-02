@@ -98,7 +98,7 @@ static int ypcall(instatus, inkey, inkeylen, inval, invallen, indata)
 #undef account
 #undef first
 
-char DLL_DECL *ypgetacctent(pwd, account, buffer, bufferlen)
+char *ypgetacctent(pwd, account, buffer, bufferlen)
     struct passwd   *pwd; 
     char        *account;
     char        *buffer;

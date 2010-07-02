@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_getgrpbygid(gid_t gid, char *groupname)
 {
   int c;

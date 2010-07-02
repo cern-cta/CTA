@@ -7,14 +7,14 @@
 #include <osdep.h>
 #include <net.h>
 
-int DLL_DECL dorecv(x, y, z)
+int dorecv(x, y, z)
 int     x, z;
 char    *y;
 {
 	return(netread(x,y,z));
 }
 
-int DLL_DECL dosend(x, y, z)
+int dosend(x, y, z)
 int     x, z;
 char    *y;
 {

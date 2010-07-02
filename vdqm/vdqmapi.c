@@ -42,7 +42,7 @@
      END_TRACE(); return((X));}
 
 
-int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
+int vdqm_Connect(vdqmnw_t **nw) {
     /* reserve space for both VDQM host and replica host */
     char vdqm_host[2*CA_MAXHOSTNAMELEN+1];
     char *vdqm_primary,*vdqm_replica,*try_host;
@@ -219,7 +219,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     VDQM_API_RETURN(0);
 }
 
-int DLL_DECL vdqm_Disconnect(vdqmnw_t **nw) {
+int vdqm_Disconnect(vdqmnw_t **nw) {
     int rc, retval;
     VDQM_API_ENTER(vdqm_Disconnect);
 
@@ -243,7 +243,7 @@ int DLL_DECL vdqm_Disconnect(vdqmnw_t **nw) {
     VDQM_API_RETURN(retval);
 }
 
-int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
+int vdqm_SendVolReq(vdqmnw_t *nw,
                     int  *reqID,
                     char *VID, 
                     char *dgn,
@@ -312,7 +312,7 @@ int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *nw,
+int vdqm_DelVolumeReq(vdqmnw_t *nw,
                     int  reqID,
                     char *VID, 
                     char *dgn,
@@ -368,7 +368,7 @@ int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *nw,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
+int vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
     vdqmHdr_t hdr;
     int save_serrno = 0;
     int rc = 0;
@@ -417,7 +417,7 @@ int DLL_DECL vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_UnitStatus(vdqmnw_t *nw, 
+int vdqm_UnitStatus(vdqmnw_t *nw, 
                     char *VID, 
                     char *dgn, 
                     char *server, 
@@ -523,7 +523,7 @@ int DLL_DECL vdqm_UnitStatus(vdqmnw_t *nw,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_DelDrive(vdqmnw_t *nw,
+int vdqm_DelDrive(vdqmnw_t *nw,
                            char *dgn,
                            char *server,
                            char *unit) {
@@ -582,7 +582,7 @@ int DLL_DECL vdqm_DelDrive(vdqmnw_t *nw,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
+int vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
     vdqmHdr_t hdr;
     int rc = 0;
     int save_serrno = 0;
@@ -629,7 +629,7 @@ int DLL_DECL vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_DedicateDrive(vdqmnw_t *nw, 
+int vdqm_DedicateDrive(vdqmnw_t *nw, 
                                 char *dgn,
                                 char *server,
                                 char *unit,
@@ -733,7 +733,7 @@ int DLL_DECL vdqm_DedicateDrive(vdqmnw_t *nw,
     VDQM_API_RETURN(rc);
 } 
 
-int DLL_DECL vdqm_admin(vdqmnw_t *nw, int admin_req) {
+int vdqm_admin(vdqmnw_t *nw, int admin_req) {
     vdqmHdr_t hdr;
     vdqmnw_t *tmpnw = NULL;
     int rc = 0;
@@ -787,7 +787,7 @@ int DLL_DECL vdqm_admin(vdqmnw_t *nw, int admin_req) {
     VDQM_API_RETURN(0);
 }
 
-int DLL_DECL vdqm_GetClientAddr(char *buf,
+int vdqm_GetClientAddr(char *buf,
                        char *clienthost, 
                        int *clientport, 
                        int *VolReqID, 
@@ -819,7 +819,7 @@ int DLL_DECL vdqm_GetClientAddr(char *buf,
     return(rc);
 }
 
-int DLL_DECL vdqm_AcknClientAddr(SOCKET s,
+int vdqm_AcknClientAddr(SOCKET s,
                                  int status,
                                  int errmsglen,
                                  char *errmsg) {
@@ -837,7 +837,7 @@ int DLL_DECL vdqm_AcknClientAddr(SOCKET s,
     return(rc);
 }
 
-int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
+int vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
     vdqmVolReq_t volreq;
     vdqmnw_t *tmpnw = NULL;
     int rc, save_serrno;
@@ -862,7 +862,7 @@ int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_SendVolPriority(char *vid, int tpMode, int priority,
+int vdqm_SendVolPriority(char *vid, int tpMode, int priority,
   int lifespanType) {
     vdqmnw_t *nw = NULL;
     vdqmVolPriority_t msg;
@@ -906,7 +906,7 @@ int DLL_DECL vdqm_SendVolPriority(char *vid, int tpMode, int priority,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_SendDelDrv(char *server, char *drive, char *dgn) {
+int vdqm_SendDelDrv(char *server, char *drive, char *dgn) {
     vdqmnw_t *nw = NULL;
     vdqmDelDrv_t msg;
     vdqmnw_t *tmpnw = NULL;
@@ -951,7 +951,7 @@ int DLL_DECL vdqm_SendDelDrv(char *server, char *drive, char *dgn) {
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_SendDedicate(char *server, char *drive, char *dgn,
+int vdqm_SendDedicate(char *server, char *drive, char *dgn,
     char *dedicate) {
     vdqmnw_t *nw = NULL;
     vdqmDedicate_t msg;
@@ -1049,7 +1049,7 @@ int DLL_DECL vdqm_SendDedicate(char *server, char *drive, char *dgn,
 }
 
 
-int DLL_DECL vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
+int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
                     int  *reqID,
                     char *VID, 
                     char *dgn,
@@ -1170,7 +1170,7 @@ int DLL_DECL vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
 }
 
 
-int DLL_DECL vdqm_QueueRequestForAggregator(vdqmnw_t *nw) {
+int vdqm_QueueRequestForAggregator(vdqmnw_t *nw) {
     int rc = 0;
 
     VDQM_API_ENTER(vdqm_ConfirmRequestForAggregator);

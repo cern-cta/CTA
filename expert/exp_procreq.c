@@ -248,7 +248,7 @@ int exp_srv_execute(req_type, req_data, clienthost, s)
 	RETURN (0);
 }
 
-char DLL_DECL * exp_get_token (ptr, delim, del, buf, buf_size)
+char * exp_get_token (ptr, delim, del, buf, buf_size)
      const char *ptr;
      const char *delim;
      char *del;

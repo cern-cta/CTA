@@ -35,7 +35,7 @@
  * 0 if it is a size with no unit,
  * 1 if it is a size with a unit
  */
-int DLL_DECL check_for_strutou64(char *str) {
+int check_for_strutou64(char *str) {
   /* We accept only the following format */
   /* [blanks]<digits>[b|k|M|G|T|P] */
   char *p = (char *) str;

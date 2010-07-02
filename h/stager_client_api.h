@@ -183,7 +183,7 @@ struct stage_options {
  * @returns 0 in case of success, -1 otherwise
  * @note the full version is majorVersion.minorVersion.majorRelease-minorRelease
  */
-EXTERN_C int DLL_DECL stage_version _PROTO((int *majorVersion,
+EXTERN_C int stage_version _PROTO((int *majorVersion,
                                             int *minorVersion,
                                             int *majorRelease,
                                             int *minorRelease,
@@ -267,7 +267,7 @@ struct stage_prepareToGet_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
+EXTERN_C int stage_prepareToGet _PROTO((const char *userTag,
                                                  struct stage_prepareToGet_filereq *requests,
                                                  int nbreqs,
                                                  struct stage_prepareToGet_fileresp **responses,
@@ -348,7 +348,7 @@ struct stage_io_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
+EXTERN_C int stage_get _PROTO ((const char *userTag,
                                          const char *protocol,
                                          const char *filename,
                                          struct stage_io_fileresp **response,
@@ -459,7 +459,7 @@ struct stage_prepareToUpdate_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
+EXTERN_C int stage_prepareToUpdate _PROTO((const char *userTag,
                                                     struct stage_prepareToUpdate_filereq *requests,
                                                     int nbreqs,
                                                     struct stage_prepareToUpdate_fileresp **responses,
@@ -494,7 +494,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
+EXTERN_C int stage_update _PROTO ((const char *userTag,
                                             const char *protocol,
                                             const char *filename,
                                             int   flags,
@@ -614,7 +614,7 @@ struct stage_prepareToPut_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_prepareToPut _PROTO ((const char *userTag,
+EXTERN_C int stage_prepareToPut _PROTO ((const char *userTag,
                                                   struct stage_prepareToPut_filereq *requests,
                                                   int nbreqs,
                                                   struct stage_prepareToPut_fileresp **responses,
@@ -647,7 +647,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut _PROTO ((const char *userTag,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
+EXTERN_C int stage_put _PROTO((const char *userTag,
                                         const char *protocol,
                                         const char *filename,
                                         mode_t mode,
@@ -750,7 +750,7 @@ struct stage_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_putDone _PROTO((char *putRequestId,
+EXTERN_C int stage_putDone _PROTO((char *putRequestId,
 					    struct stage_filereq *requests,
                                             int nbreqs,
                                             struct stage_fileresp **responses,
@@ -781,7 +781,7 @@ EXTERN_C int DLL_DECL stage_putDone _PROTO((char *putRequestId,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_rm _PROTO ((struct stage_filereq *requests,
+EXTERN_C int stage_rm _PROTO ((struct stage_filereq *requests,
                                         int nbreqs,
                                         struct stage_fileresp **responses,
                                         int *nbresps,
@@ -812,7 +812,7 @@ EXTERN_C int DLL_DECL stage_rm _PROTO ((struct stage_filereq *requests,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
+EXTERN_C int stage_releaseFiles _PROTO((struct stage_filereq *requests,
                                                  int nbreqs,
                                                  struct stage_fileresp **responses,
                                                  int *nbresps,
@@ -836,7 +836,7 @@ EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
+EXTERN_C int stage_abortRequest _PROTO((char *requestId,
                                                  struct stage_options* opts));
 
 
@@ -863,7 +863,7 @@ EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_setFileGCWeight _PROTO ((struct stage_filereq *requests,
+EXTERN_C int stage_setFileGCWeight _PROTO ((struct stage_filereq *requests,
                                                      int nbreqs,
                                                      float weight,
                                                      struct stage_fileresp **responses,
@@ -892,7 +892,7 @@ EXTERN_C int DLL_DECL stage_setFileGCWeight _PROTO ((struct stage_filereq *reque
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_addPrivilege _PROTO ((char* users,
+EXTERN_C int stage_addPrivilege _PROTO ((char* users,
                                                   char* requestTypes,
                                                   struct stage_options* opts));
 
@@ -917,7 +917,7 @@ EXTERN_C int DLL_DECL stage_addPrivilege _PROTO ((char* users,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_removePrivilege _PROTO ((char* users,
+EXTERN_C int stage_removePrivilege _PROTO ((char* users,
                                                      char* requestTypes,
                                                      struct stage_options* opts));
 
@@ -960,7 +960,7 @@ struct stage_listpriv_resp {
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_listPrivileges _PROTO ((int user,
+EXTERN_C int stage_listPrivileges _PROTO ((int user,
                                                     int group,
                                                     unsigned int requestType,
                                                     struct stage_listpriv_resp** privileges,
@@ -1079,7 +1079,7 @@ struct stage_filequery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req *requests,
+EXTERN_C int stage_filequery _PROTO((struct stage_query_req *requests,
                                               int nbreqs,
                                               struct stage_filequery_resp **responses,
                                               int *nbresps,
@@ -1235,7 +1235,7 @@ struct stage_diskpoolquery_resp {
  * @note the subparts of response are allocated by the call
  *       and therefore should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_diskpoolquery _PROTO
+EXTERN_C int stage_diskpoolquery _PROTO
 ((char *diskPoolName,
   struct stage_diskpoolquery_resp *response,
   struct stage_options* opts));
@@ -1254,7 +1254,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery _PROTO
  * @note responses is allocated by the call, as well as all its subparts
  *       and therefore should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_diskpoolsquery _PROTO
+EXTERN_C int stage_diskpoolsquery _PROTO
 ((struct stage_diskpoolquery_resp **responses,
   int *nbresps,
   struct stage_options* opts));
@@ -1265,7 +1265,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery _PROTO
  *
  * @param response the structure to free
  */
-EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp _PROTO
+EXTERN_C void stage_delete_diskpoolquery_resp _PROTO
 ((struct stage_diskpoolquery_resp *response));
 
 /**
@@ -1277,7 +1277,7 @@ EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp _PROTO
  * @param siflag flag to indicate whether to display size
  * related information in powers of 1000 not 1024
  */
-EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp _PROTO
+EXTERN_C void stage_print_diskpoolquery_resp _PROTO
 ((FILE *stream, struct stage_diskpoolquery_resp *response, int siflag));
 
 /**********************************************************
@@ -1367,7 +1367,7 @@ struct stage_subrequestquery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *requests,
+EXTERN_C int stage_requestquery _PROTO((struct stage_query_req *requests,
                                                  int nbreqs,
                                                  struct stage_requestquery_resp **responses,
                                                  int *nbresps,
@@ -1396,7 +1396,7 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_open _PROTO ((const char *userTag,
+EXTERN_C int stage_open _PROTO ((const char *userTag,
                                           const char *protocol,
                                           const char *filename,
                                           int flags,
@@ -1419,7 +1419,7 @@ EXTERN_C int DLL_DECL stage_open _PROTO ((const char *userTag,
  *
  * @returns The alloced URL, NULL otherwise
  */
-EXTERN_C char* DLL_DECL stage_geturl _PROTO ((struct stage_io_fileresp *io));
+EXTERN_C char* stage_geturl _PROTO ((struct stage_io_fileresp *io));
 
 
 
@@ -1442,7 +1442,7 @@ EXTERN_C char* DLL_DECL stage_geturl _PROTO ((struct stage_io_fileresp *io));
  *
  * @deprecated Use stage_requestStatusName instead
  */
-EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
+EXTERN_C char* stage_statusName _PROTO((int statusCode));
 
 
 /**
@@ -1454,7 +1454,7 @@ EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
  *
  * @returns The status name as char*
  */
-EXTERN_C char* DLL_DECL stage_requestStatusName _PROTO((int statusCode));
+EXTERN_C char* stage_requestStatusName _PROTO((int statusCode));
 
 /**
  * Possible file status codes
@@ -1481,7 +1481,7 @@ enum stage_fileStatus {
  *
  * @returns The status name as char*
  */
-EXTERN_C char* DLL_DECL stage_fileStatusName _PROTO((int statusCode));
+EXTERN_C char* stage_fileStatusName _PROTO((int statusCode));
 
 /**
  * stage_diskServerStatusName
@@ -1492,7 +1492,7 @@ EXTERN_C char* DLL_DECL stage_fileStatusName _PROTO((int statusCode));
  *
  * @returns The status name as char*
  */
-EXTERN_C char* DLL_DECL stage_diskServerStatusName _PROTO((int statusCode));
+EXTERN_C char* stage_diskServerStatusName _PROTO((int statusCode));
 
 /**
  * stage_fileSystemStatusName
@@ -1503,14 +1503,14 @@ EXTERN_C char* DLL_DECL stage_diskServerStatusName _PROTO((int statusCode));
  *
  * @returns The status name as char*
  */
-EXTERN_C char* DLL_DECL stage_fileSystemStatusName _PROTO((int statusCode));
+EXTERN_C char* stage_fileSystemStatusName _PROTO((int statusCode));
 
 /**********************************************************
  *    Utility to get the current client timeout           *
  **********************************************************/
 #define STAGER_TIMEOUT_DEFAULT 172800
 
-EXTERN_C int DLL_DECL stage_getClientTimeout _PROTO(());
+EXTERN_C int stage_getClientTimeout _PROTO(());
 
 
 

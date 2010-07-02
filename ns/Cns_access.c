@@ -69,7 +69,7 @@ Cns_access_internal(const char *path, int amode, uid_t uid, gid_t gid)
 }
 
 
-int DLL_DECL
+int
 Cns_access(const char *path, int amode)
 {
   gid_t gid;
@@ -80,7 +80,7 @@ Cns_access(const char *path, int amode)
 }
 
 
-int DLL_DECL
+int
 Cns_accessUser(const char *path, int amode, uid_t uid, gid_t gid)
 {
   return Cns_access_internal(path, amode, uid, gid);

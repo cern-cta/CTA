@@ -18,7 +18,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 {
   /* Variables */

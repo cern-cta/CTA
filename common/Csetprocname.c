@@ -44,7 +44,7 @@
 
 /* We prefer to explicitely do NOTHING rather than execute dummy code */
 /* This is safer -; */
-int DLL_DECL Cinitsetprocname(argc, argv, envp)
+int Cinitsetprocname(argc, argv, envp)
      int argc;
      char **argv;
      char **envp;
@@ -52,7 +52,7 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
   return(0);
 }
 
-int DLL_DECL 
+int 
 Csetprocname(char *fmt, ...)
 {
   return(0);
@@ -184,7 +184,7 @@ static int	__Csetprocname _PROTO((char *, ...));
 #endif /* SPT_TYPE != SPT_BUILTIN */
 static size_t __sm_strlcpy _PROTO((register char *, register char *, ssize_t));
 
-int DLL_DECL Cinitsetprocname(argc, argv, envp)
+int Cinitsetprocname(argc, argv, envp)
      int argc;
      char **argv;
      char **envp;
@@ -414,7 +414,7 @@ static size_t __sm_strlcpy(dst, src, size)
 **		none.
 */
 
-int DLL_DECL 
+int 
 Csetprocname(char *fmt, ...)
 {
   char buf[SPT_BUFSIZE];

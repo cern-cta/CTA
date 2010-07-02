@@ -20,7 +20,7 @@
  * returns -1 if an error occured or no information is available at the
  * daemon's host. 0 otherwise.
  */
-int DLL_DECL rfio_unlink(n2 )
+int rfio_unlink(n2 )
      char *n2 ;
 
 {

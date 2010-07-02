@@ -15,7 +15,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 
-int DLL_DECL
+int
 vmgr_deltag(const char *vid)
 {
 	int c;

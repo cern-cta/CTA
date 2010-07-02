@@ -47,7 +47,7 @@ static int client_socket_key = -1;
 int tpread_command = FALSE;
 int loglevel = LOG_INFO;
 
-void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
+void (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
 
 void rtcpc_SetErrTxt(int level, char *format, ...) {
     va_list args;

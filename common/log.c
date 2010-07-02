@@ -32,14 +32,14 @@ static int logfd ;              /* logging file descriptor              */
 
 extern char *getenv();
 
-void DLL_DECL (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
-void DLL_DECL setlogbits _PROTO((int));
+void (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
+void setlogbits _PROTO((int));
 
 /*
  * Opening log file.
  * Storing the process pid.
  */
-void DLL_DECL initlog(name, level, output)
+void initlog(name, level, output)
      char    *name;                  /* facility name                        */
      int     level;                  /* logging level                        */
      char    *output;                /* output specifier                     */
@@ -79,7 +79,7 @@ void DLL_DECL initlog(name, level, output)
 /*
  * Mode bits for log file.
  */
-void DLL_DECL setlogbits(bits)
+void setlogbits(bits)
      int bits;                  /* logfile mode bits */
 {
   logbits=(mode_t) bits;
@@ -89,7 +89,7 @@ void DLL_DECL setlogbits(bits)
  * logit should be called with the following syntax
  * logit(LOG_LEVEL,format[,value,...]) ;
  */
-void DLL_DECL logit(int level, char *format, ...)
+void logit(int level, char *format, ...)
 {
   va_list args ;          /* Variable argument list               */
   time_t  clock;
@@ -151,7 +151,7 @@ void DLL_DECL logit(int level, char *format, ...)
   errno = save_errno;
 }
 
-int DLL_DECL getloglv()
+int getloglv()
 {
   return(loglevel);
 }

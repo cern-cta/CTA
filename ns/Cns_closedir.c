@@ -15,7 +15,7 @@
 #include "marshall.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_closedir(Cns_DIR *dirp)
 {
   int msglen;

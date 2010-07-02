@@ -278,10 +278,10 @@ int rtcpd_jobID _PROTO((void));
 int rtcpd_SerializeLock _PROTO((int, int*, void*, int*, int*, int**));
 
 #if defined(CTAPE_DUMMIES)
-int  DLL_DECL  stage_setlog _PROTO((void (*) _PROTO((int, char *))));
+int   stage_setlog _PROTO((void (*) _PROTO((int, char *))));
 /*
-int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
-int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
+int   stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
+int   stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
 */
 #endif /* CTAPE_DUMMIES */
 

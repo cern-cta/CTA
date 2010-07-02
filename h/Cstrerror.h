@@ -12,6 +12,6 @@
 
 #include "osdep.h"
 
-EXTERN_C char DLL_DECL *Cstrerror _PROTO((int));
+EXTERN_C char *Cstrerror _PROTO((int));
 
 #endif /* __Cstrerror_h */

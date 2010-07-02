@@ -151,7 +151,7 @@ _Cgetopt_internal(nargc, nargv, ostr)
  * Cgetopt --
  *	Parse argc/argv argument vector.
  */
-int DLL_DECL 
+int 
 Cgetopt(nargc, nargv, ostr)
      int nargc;
      char * CONST *nargv;
@@ -170,7 +170,7 @@ Cgetopt(nargc, nargv, ostr)
  * Cgetopt_long --
  *	Parse argc/argv argument vector.
  */
-int DLL_DECL
+int
 Cgetopt_long(nargc, nargv, options, long_options, index)
      int nargc;
      char **nargv;

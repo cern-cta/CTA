@@ -36,6 +36,6 @@
 #define STAR_STR	"*"
 #define COLON_STR	":"
 
-EXTERN_C char DLL_DECL *ypgetacctent _PROTO((struct passwd *, char *, char *, int));
+EXTERN_C char *ypgetacctent _PROTO((struct passwd *, char *, char *, int));
 
 #endif /* YPGETACCTENT_H */

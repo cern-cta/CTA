@@ -13,7 +13,7 @@
 
 /* Cns_client_getAuthorizationId - get the authorization id from the thread-specific structure */
 
-int DLL_DECL
+int
 Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 {
   struct Cns_api_thread_info *thip;
@@ -34,7 +34,7 @@ Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 
 /* Cns_client_setAuthorizationId - set the authorization id in the thread-specific structure */
 
-int DLL_DECL
+int
 Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
 {
 
@@ -74,7 +74,7 @@ Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
  * @param gid The desired gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int DLL_DECL
+int
 Cns_setid(uid, gid)
      uid_t uid;
      gid_t gid;
@@ -96,7 +96,7 @@ Cns_setid(uid, gid)
  * Resets the authorization id in the per thread structure.
  * @returns 0 in case of successs, -1 otherwise.
  */
-int DLL_DECL
+int
 Cns_unsetid()
 {
   char func[16];
@@ -124,7 +124,7 @@ Cns_unsetid()
  *             should be looked up by default
  * @returns 0 in case of successs, -1 otherwise.
  */
-static int DLL_DECL
+static int
 Cns_getid_ext(uid, gid, mode)
      uid_t *uid;
      gid_t *gid;
@@ -174,7 +174,7 @@ Cns_getid_ext(uid, gid, mode)
  * @param gid Pointer to where to store the gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int DLL_DECL
+int
 Cns_getid(uid, gid)
      uid_t *uid;
      gid_t *gid;
@@ -192,7 +192,7 @@ Cns_getid(uid, gid)
  * @param gid Pointer to where to store the gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int DLL_DECL
+int
 Cns_getrealid(uid, gid)
      uid_t *uid;
      gid_t *gid;

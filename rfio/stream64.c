@@ -35,7 +35,7 @@
 #include <netinet/tcp.h>
 #include <common.h>
 
-EXTERN_C int DLL_DECL data_rfio_connect _PROTO((char *, int *, int, int));
+EXTERN_C int data_rfio_connect _PROTO((char *, int *, int, int));
 
 static void rfio_setup64_ext_v3(iop,uid,gid,passwd)
      RFILE   *iop;
@@ -95,7 +95,7 @@ static void rfio_setup64_ext_v3(iop,uid,gid,passwd)
   strcpy(iop->host,"????????");
 }
 
-int DLL_DECL rfio_open64_v3(filepath, flags, mode)
+int rfio_open64_v3(filepath, flags, mode)
      char    * filepath ;
      int     flags,mode ;
 {
@@ -462,7 +462,7 @@ void rfio_setup64_v3(iop)
 /*
  * Remote file read
  */
-int DLL_DECL rfio_read64_v3(ctrl_sock, ptr, size)
+int rfio_read64_v3(ctrl_sock, ptr, size)
      char    *ptr;
      int     ctrl_sock, size;
 {
@@ -693,7 +693,7 @@ int DLL_DECL rfio_read64_v3(ctrl_sock, ptr, size)
 /*
  * Remote file write
  */
-int DLL_DECL rfio_write64_v3(ctrl_sock, ptr, size)
+int rfio_write64_v3(ctrl_sock, ptr, size)
      char    *ptr;
      int     ctrl_sock, size;
 {
@@ -846,7 +846,7 @@ int DLL_DECL rfio_write64_v3(ctrl_sock, ptr, size)
 /*
  * remote file close
  */
-int DLL_DECL rfio_close64_v3(s)
+int rfio_close64_v3(s)
      int     s;
 {
   int      req;

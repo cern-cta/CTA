@@ -21,7 +21,7 @@
 /*
  * Remote file open
  */
-RFILE DLL_DECL *rfio_fopen64(file, mode)
+RFILE *rfio_fopen64(file, mode)
      char * file ;
      char * mode ;
 {

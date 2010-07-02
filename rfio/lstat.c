@@ -22,7 +22,7 @@ static int old_uid_key = -1;
 #endif
 
 
-int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat */
+int rfio_lstat(filepath, statbuf)      /* Remote file lstat */
      char    *filepath;               /* remote file path    */
      struct stat *statbuf;            /* status buffer   */
 {
@@ -174,7 +174,7 @@ int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat */
 #endif
 }
 
-int DLL_DECL rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
+int rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
      char    *filepath;                              /* remote file path     */
      struct stat64 *statbuf;                         /* status buffer        */
 {

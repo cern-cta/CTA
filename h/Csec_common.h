@@ -95,47 +95,47 @@ struct Csec_api_thread_info {
 };
 
 
-int DLL_DECL check_ctx _PROTO ((Csec_context_t *, char *));
-void DLL_DECL Csec_unload_shlib _PROTO ((Csec_context_t *)); 
-void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context_t *)); 
-/* int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context_t *, int, int)) ; */
-int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
-int DLL_DECL Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
-int DLL_DECL Csec_seterrbuf _PROTO((char *buffer, int buflen));
-int DLL_DECL Csec_trace _PROTO((char *func, char *msg, ...));
-int DLL_DECL Csec_setup_trace _PROTO(());
-int DLL_DECL _Csec_recv_token _PROTO ((int s, csec_buffer_t tok, int timeout, int *token_type));
-int DLL_DECL _Csec_send_token _PROTO ((int s, csec_buffer_t tok, int timeout, int token_type));
-void DLL_DECL  _Csec_print_token _PROTO((csec_buffer_t tok));
+int check_ctx _PROTO ((Csec_context_t *, char *));
+void Csec_unload_shlib _PROTO ((Csec_context_t *)); 
+void *Csec_get_shlib _PROTO ((Csec_context_t *)); 
+/* int Csec_init_context_ext _PROTO ((Csec_context_t *, int, int)) ; */
+int Csec_errmsg _PROTO((char *func, char *msg, ...));
+int Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
+int Csec_seterrbuf _PROTO((char *buffer, int buflen));
+int Csec_trace _PROTO((char *func, char *msg, ...));
+int Csec_setup_trace _PROTO(());
+int _Csec_recv_token _PROTO ((int s, csec_buffer_t tok, int timeout, int *token_type));
+int _Csec_send_token _PROTO ((int s, csec_buffer_t tok, int timeout, int token_type));
+void  _Csec_print_token _PROTO((csec_buffer_t tok));
 
 /* Protocol functions */
-int DLL_DECL Csec_client_negociate_protocol _PROTO((int, int, Csec_context_t *));
-int DLL_DECL Csec_setup_protocols_to_offer _PROTO((Csec_context_t *));
-int DLL_DECL Csec_server_negociate_protocol _PROTO((int, int, Csec_context_t *, char *, int));
+int Csec_client_negociate_protocol _PROTO((int, int, Csec_context_t *));
+int Csec_setup_protocols_to_offer _PROTO((Csec_context_t *));
+int Csec_server_negociate_protocol _PROTO((int, int, Csec_context_t *, char *, int));
 
 /* Misc utils */
-int DLL_DECL  Csec_server_establish_context_ext _PROTO ((Csec_context_t *ctx,
+int  Csec_server_establish_context_ext _PROTO ((Csec_context_t *ctx,
                                                          int s,
                                                          char *buf,
                                                          int len));
-int DLL_DECL Csec_map2name _PROTO((Csec_context_t *ctx,
+int Csec_map2name _PROTO((Csec_context_t *ctx,
                                    const char *principal,
                                    char *name,
                                    int maxnamelen));
-int DLL_DECL Csec_get_service_name _PROTO ((Csec_context_t *ctx,
+int Csec_get_service_name _PROTO ((Csec_context_t *ctx,
                                             int service_type,
                                             char *host,
                                             char *domain,
                                             char *service_name,
                                             int service_namelen));
-int DLL_DECL Csec_map2id _PROTO((Csec_context_t *ctx, char *principal, uid_t *uid, gid_t *gid));
-int DLL_DECL Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
-int DLL_DECL Csec_get_peer_service_name _PROTO ((Csec_context_t *ctx, int s, int service_type,
+int Csec_map2id _PROTO((Csec_context_t *ctx, char *principal, uid_t *uid, gid_t *gid));
+int Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
+int Csec_get_peer_service_name _PROTO ((Csec_context_t *ctx, int s, int service_type,
                                                  char *service_name, int service_namelen));
-int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context_t *ctx, int service_type,
+int Csec_get_local_service_name _PROTO ((Csec_context_t *ctx, int service_type,
                                                   char *service_name, int service_namelen));
-int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context_t *, int));
-int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context_t *, int));
-int DLL_DECL Csec_context_is_client _PROTO ((Csec_context_t *ctx));
+int Csec_server_set_service_name _PROTO ((Csec_context_t *, int));
+int Csec_client_set_service_name _PROTO ((Csec_context_t *, int));
+int Csec_context_is_client _PROTO ((Csec_context_t *ctx));
 
 #endif /* _CSEC_COMMON_H */

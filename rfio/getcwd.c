@@ -13,7 +13,7 @@
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-char DLL_DECL *rfio_getcwd(char *buf, int size)
+char *rfio_getcwd(char *buf, int size)
 {
   char *p;
   INIT_TRACE("RFIO_TRACE");

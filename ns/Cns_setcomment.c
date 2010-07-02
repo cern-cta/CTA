@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_setcomment(const char *path, char *comment)
 {
   char *actual_path;

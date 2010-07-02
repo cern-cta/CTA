@@ -23,7 +23,7 @@ int rfio_close_v2(int s);
 /*
  * remote file close
  */
-int DLL_DECL rfio_close(s)
+int rfio_close(s)
      int     s;
 {
   int      s_index;

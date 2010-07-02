@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_chclass(const char *path, int classid, char *class_name)
 {
   char *actual_path;

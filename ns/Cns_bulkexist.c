@@ -18,7 +18,7 @@
 
 /* Cns_bulkexist - check existence of files in bulk mode */
 
-int DLL_DECL
+int
 Cns_bulkexist(const char* server, u_signed64 *fileIds, int *nbFileIds)
 {
   char func[16];

@@ -102,7 +102,7 @@ const int castor::client::HIGH_CLIENT_PORT_RANGE = 30100;
 static char strftime_format_sixmonthsold[] = "%b %e %Y";
 static char strftime_format[] = "%b %e %H:%M:%S";
 
-void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
+void BaseClient_util_time(time_t then, char *timestr) {
   time_t this_time = time(NULL);
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   struct tm tmstruc;

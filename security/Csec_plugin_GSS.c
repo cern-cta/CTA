@@ -80,14 +80,14 @@ static int _Csec_map_gssapi_err _PROTO ((OM_uint32 maj_stat,
                                          OM_uint32 min_stat));
 static int _Csec_delete_deleg_creds _PROTO ((Csec_context_t *));
 
-static void DLL_DECL _Csec_csec_to_gss _PROTO ((csec_buffer_t, gss_buffer_t));
+static void _Csec_csec_to_gss _PROTO ((csec_buffer_t, gss_buffer_t));
 
-static void DLL_DECL _Csec_gss_to_csec _PROTO ((csec_buffer_t, gss_buffer_t));
+static void _Csec_gss_to_csec _PROTO ((csec_buffer_t, gss_buffer_t));
 
-static int DLL_DECL _Csec_make_target_name _PROTO ((FPARG, const char *server_dn, gss_name_t *target_name_P));
+static int _Csec_make_target_name _PROTO ((FPARG, const char *server_dn, gss_name_t *target_name_P));
 
 #if defined(GSI) && defined(USE_VOMS)
-static int DLL_DECL _Csec_get_voms_creds _PROTO ((FPARG, Csec_context_t *ctx, 
+static int _Csec_get_voms_creds _PROTO ((FPARG, Csec_context_t *ctx, 
 						  gss_ctx_id_t context_handle));
 #endif
 

@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_readlink(const char *path, char *buf, size_t bufsiz)
 {
   char *actual_path;

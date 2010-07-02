@@ -16,7 +16,7 @@
 #include "u64subr.h"
 
 
-int DLL_DECL rfio_lockf64(sd, op, siz)    /* Remote lockf             */
+int rfio_lockf64(sd, op, siz)    /* Remote lockf             */
      int      sd;                              /* file descriptor          */
      int      op;                              /* lock operation           */
      off64_t  siz;                             /* locked region            */

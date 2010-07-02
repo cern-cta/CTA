@@ -160,7 +160,7 @@ static int _processFileRequest(const char *func,
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_setFileGCWeight(struct stage_filereq *requests,
+EXTERN_C int stage_setFileGCWeight(struct stage_filereq *requests,
                                             int nbreqs,
                                             float weight,
                                             struct stage_fileresp **responses,

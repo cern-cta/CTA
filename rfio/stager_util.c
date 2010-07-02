@@ -21,7 +21,7 @@
 #include "stager_uuid.h"
 #include "log.h"
 
-void DLL_DECL stager_log(const char *func, const char *file, int line, int what, struct Cns_fileid *fileid, ...)
+void stager_log(const char *func, const char *file, int line, int what, struct Cns_fileid *fileid, ...)
 {
   va_list args;
   char *message;

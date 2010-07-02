@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_getidmap (const char *username, int nbgroups, const char **groupnames, uid_t *userid, gid_t *gids)
 {
   int c;

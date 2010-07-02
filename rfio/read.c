@@ -30,7 +30,7 @@ static int rfio_preread();
 /*
  * Remote file read
  */
-int DLL_DECL rfio_read(s, ptr, size)
+int rfio_read(s, ptr, size)
      void    *ptr;
      int     s, size;
 {

@@ -15,7 +15,7 @@
 
 /* Cns_rmusrmap - suppress user entry corresponding to a given uid/name */
 
-int DLL_DECL
+int
 Cns_rmusrmap(uid_t uid, char *username)
 {
   int c;

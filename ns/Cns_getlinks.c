@@ -16,7 +16,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_getlinks(const char *path, const char *guid, int *nbentries, struct Cns_linkinfo **linkinfos)
 {
   char *actual_path;

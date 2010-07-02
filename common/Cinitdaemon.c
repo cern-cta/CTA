@@ -15,7 +15,7 @@
 #include <osdep.h>
 #include <serrno.h>
 
-int DLL_DECL Cinitdaemon(name,wait4child)
+int Cinitdaemon(name,wait4child)
 char *name;
 void (*wait4child) _PROTO((int));
 {

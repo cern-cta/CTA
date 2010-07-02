@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_utime(const char *path, struct utimbuf *times)
 {
   char *actual_path;

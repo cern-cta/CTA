@@ -21,7 +21,7 @@
 /*
  * Remote file fchmod
  */
-int DLL_DECL rfio_fchmod(s, mode)
+int rfio_fchmod(s, mode)
      int    s;
      int mode;                      /* remote directory mode */
 {

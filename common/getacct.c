@@ -34,10 +34,10 @@
 #include <Cpwd.h>
 #include "getacct.h"
 
-EXTERN_C char DLL_DECL *getacctent();
+EXTERN_C char *getacctent();
 
 
-char DLL_DECL *getacct_r(resbuf) 
+char *getacct_r(resbuf) 
 char *resbuf;
 { 
     char      *account = NULL;    /* Pointer to the account env variable  */
@@ -89,7 +89,7 @@ char *resbuf;
 
 static int getacct_key = -1;
 
-char DLL_DECL *getacct()
+char *getacct()
 {
     char *resbuf = NULL;
 

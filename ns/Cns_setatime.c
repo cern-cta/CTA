@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_setatime(const char *path, struct Cns_fileid *file_uniqueid)
 {
   char *actual_path;

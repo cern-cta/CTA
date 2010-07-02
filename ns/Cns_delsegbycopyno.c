@@ -14,7 +14,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_delsegbycopyno(const char *path, struct Cns_fileid *file_uniqueid, int copyno)
 {
   /* Variables */

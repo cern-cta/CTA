@@ -21,7 +21,7 @@
 /*
  * Remote file stat
  */
-int DLL_DECL rfio_fstat(s, statbuf)
+int rfio_fstat(s, statbuf)
      int     s;
      struct stat *statbuf;
 {

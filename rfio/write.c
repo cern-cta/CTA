@@ -21,7 +21,7 @@
 /*
  * Remote file write
  */
-int DLL_DECL rfio_write(s, ptr, size)
+int rfio_write(s, ptr, size)
      void    *ptr;
      int     s, size;
 {

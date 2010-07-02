@@ -14,7 +14,7 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
 
-int DLL_DECL rfio_chmod(dirpath, mode)     /* Remote chmod         */
+int rfio_chmod(dirpath, mode)     /* Remote chmod         */
      char  *dirpath;          /* remote directory path             */
      int  mode;              /* remote directory mode             */
 {

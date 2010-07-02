@@ -15,7 +15,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
+int
 Cns_rename(const char *oldpath, const char *newpath)
 {
   char *actual_path;

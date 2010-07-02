@@ -201,7 +201,7 @@ void _Cthread_cid_once()
 /* a thread environment at least, some internal */
 /* Cthread structure are correctly initialized  */
 /* ============================================ */
-int DLL_DECL Cthread_init() {
+int Cthread_init() {
   return(_Cthread_init());
 }
 
@@ -612,7 +612,7 @@ void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-int DLL_DECL Cthread_Create(file, line, startroutine, arg)
+int Cthread_Create(file, line, startroutine, arg)
      const char *file;
      int line;
      void *(*startroutine) _PROTO((void *));
@@ -814,7 +814,7 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
+int Cthread_Create_Detached(file, line, startroutine, arg)
      const char *file;
      int line;
      void *(*startroutine) _PROTO((void *));
@@ -959,7 +959,7 @@ int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Join(file, line, cid, status)
+int Cthread_Join(file, line, cid, status)
      const char *file;
      int line;
      int cid;
@@ -1108,7 +1108,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Detach(file, line, cid)
+int Cthread_Detach(file, line, cid)
      const char *file;
      int line;
      int cid;
@@ -1208,10 +1208,10 @@ int DLL_DECL Cthread_Detach(file, line, cid)
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Self0() {
+int Cthread_Self0() {
   return(_Cthread_self());
 }
-int DLL_DECL Cthread_Self(file, line)
+int Cthread_Self(file, line)
      const char *file;
      int line;
 {
@@ -1461,7 +1461,7 @@ int _Cthread_destroy(file, line, cid)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
+int Cthread_Cond_Broadcast_ext(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -1557,7 +1557,7 @@ int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
+int Cthread_Cond_Broadcast(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -1688,7 +1688,7 @@ int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
+int Cthread_Wait_Condition_ext(file, line, addr, timeout)
      const char *file;
      int line;
      void *addr;
@@ -1850,7 +1850,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
+int Cthread_Wait_Condition(file, line, addr, timeout)
      const char *file;
      int line;
      void *addr;
@@ -2058,7 +2058,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
+int Cthread_Lock_Mtx(file, line, addr, timeout)
      const char *file;
      int line;
      void *addr;
@@ -2351,7 +2351,7 @@ int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 /* 13-OCT-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Lock_Mtx_ext(file, line, addr, timeout)
+int Cthread_Lock_Mtx_ext(file, line, addr, timeout)
      const char *file;
      int line;
      void *addr;
@@ -2408,7 +2408,7 @@ int DLL_DECL Cthread_Lock_Mtx_ext(file, line, addr, timeout)
 /*       Cthread corresponding to address       */
 /*       given in parameter.                    */
 /* ============================================ */
-void DLL_DECL *Cthread_Lock_Mtx_addr(file, line, addr)
+void *Cthread_Lock_Mtx_addr(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -2485,7 +2485,7 @@ void DLL_DECL *Cthread_Lock_Mtx_addr(file, line, addr)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Mutex_Unlock_ext(file, line, addr)
+int Cthread_Mutex_Unlock_ext(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -2534,7 +2534,7 @@ int DLL_DECL Cthread_Mutex_Unlock_ext(file, line, addr)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Mutex_Unlock(file, line, addr)
+int Cthread_Mutex_Unlock(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -2607,7 +2607,7 @@ int DLL_DECL Cthread_Mutex_Unlock(file, line, addr)
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Mutex_Destroy(file, line, addr)
+int Cthread_Mutex_Destroy(file, line, addr)
      const char *file;
      int line;
      void *addr;
@@ -3993,14 +3993,14 @@ struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-int DLL_DECL Cthread_Setspecific0(global_key, addr)
+int Cthread_Setspecific0(global_key, addr)
      int *global_key;
      void *addr;
 {
   return(Cthread_Setspecific(NULL,0,global_key,addr));
 }
 
-int DLL_DECL Cthread_Setspecific(file, line, global_key, addr)
+int Cthread_Setspecific(file, line, global_key, addr)
      const char *file;
      int line;
      int *global_key;
@@ -4112,14 +4112,14 @@ int DLL_DECL Cthread_Setspecific(file, line, global_key, addr)
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-int DLL_DECL Cthread_Getspecific0(global_key, addr)
+int Cthread_Getspecific0(global_key, addr)
      int *global_key;
      void **addr;
 {
   return(Cthread_Getspecific("Cthread.c(Cthread_Getspecific0)",__LINE__,global_key,addr));
 }
 
-int DLL_DECL Cthread_Getspecific_init(global_key, addr)
+int Cthread_Getspecific_init(global_key, addr)
      int *global_key;
      void **addr;
 {
@@ -4127,14 +4127,14 @@ int DLL_DECL Cthread_Getspecific_init(global_key, addr)
   return(Cthread_Getspecific(NULL,__LINE__,global_key,addr));
 }
 
-int DLL_DECL Cthread_Lock_Mtx_init(addr,timeout)
+int Cthread_Lock_Mtx_init(addr,timeout)
      void *addr;
      int timeout;
 {
   return(Cthread_Lock_Mtx(__FILE__,__LINE__,addr,timeout));
 }
 
-int DLL_DECL Cthread_Mutex_Unlock_init(addr)
+int Cthread_Mutex_Unlock_init(addr)
      void *addr;
 {
   /* Just to avoid debug printing recursion from Cmutex_init() */
@@ -4145,7 +4145,7 @@ int DLL_DECL Cthread_Mutex_Unlock_init(addr)
 /* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
 /* ==================================================================================== */
 
-int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
+int Cthread_Getspecific(file, line, global_key, addr)
      const char *file;
      int line;
      int *global_key;
@@ -4643,7 +4643,7 @@ int _Cthread_win32_cond_destroy(Cth_cond_t *cv) {
 /* 3         LinuxThreads                       */
 /* 4         WIN32                              */
 /* ============================================ */
-int DLL_DECL Cthread_proto() {
+int Cthread_proto() {
 #ifdef _CTHREAD
   return(_CTHREAD_PROTO);
 #else
@@ -4668,7 +4668,7 @@ int DLL_DECL Cthread_proto() {
 /* 3         LinuxThreads                       */
 /* 4         WIN32                              */
 /* ============================================ */
-int DLL_DECL Cthread_isproto(proto)
+int Cthread_isproto(proto)
      char *proto;
 {
   if (proto == NULL) {
@@ -4725,7 +4725,7 @@ int DLL_DECL Cthread_isproto(proto)
 /* Says if the implementation is singlethreaded */
 /* or not.                                      */
 /* ============================================ */
-int DLL_DECL Cthread_environment() {
+int Cthread_environment() {
 #ifdef _CTHREAD
   return(CTHREAD_TRUE_THREAD);
 #else
@@ -4744,7 +4744,7 @@ int DLL_DECL Cthread_environment() {
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL _Cthread_self() {
+int _Cthread_self() {
 #ifdef _CTHREAD
   void               *tsd = NULL;       /* Thread-Specific Variable */
 #else
@@ -4900,7 +4900,7 @@ int DLL_DECL _Cthread_self() {
 /* to 1, disabling the internal mutex lock/unlock  */
 /* to access Cthread internal linked lists.        */
 /* =============================================== */
-void DLL_DECL Cthread_unprotect() {
+void Cthread_unprotect() {
   _Cthread_unprotect = 1;
 }
 
@@ -4918,7 +4918,7 @@ void DLL_DECL Cthread_unprotect() {
 /* 27-NOV-2001       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cthread_Kill(file, line, cid, signo)
+int Cthread_Kill(file, line, cid, signo)
      const char *file;
      int line;
      int cid;
@@ -5016,7 +5016,7 @@ int DLL_DECL Cthread_Kill(file, line, cid, signo)
 /* 27-NOV-2001       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void DLL_DECL Cthread_Exit(file, line, status)
+void Cthread_Exit(file, line, status)
      const char *file;
      int line;
      void *status;

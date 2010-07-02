@@ -28,7 +28,7 @@ static off64_t rfio_forcelseek64(int s, off64_t offset, int how) ;
 /*
  * Remote file seek
  */
-off64_t DLL_DECL rfio_lseek64(s, offset, how)
+off64_t rfio_lseek64(s, offset, how)
      int      s ;
      off64_t  offset ;
      int      how ;

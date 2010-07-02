@@ -26,7 +26,7 @@
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-int DLL_DECL
+int
 Cns_selectsrvr(path, current_directory_server, server, actual_path)
      const char *path;
      char *current_directory_server;

@@ -79,7 +79,7 @@
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
+EXTERN_C int stage_mapper_setenv _PROTO((const char *username,
 						   const char *groupname,
 						   char **mstager,
 						   char **msvcclass));
@@ -95,7 +95,7 @@ EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL just_stage_mapper _PROTO((const char *username,
+EXTERN_C int just_stage_mapper _PROTO((const char *username,
 						   const char *groupname,
 						   char **mstager,
 						   char **msvcclass));

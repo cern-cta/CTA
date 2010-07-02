@@ -43,7 +43,7 @@ static char *protocol = DEFAULT_PROTOCOL;
 
 /* Uses the filenb global variable
    that should be set to 0 before 1st call */
-static int DLL_DECL _countFiles(const char *filename) {
+static int _countFiles(const char *filename) {
   (void)filename;
   filenb++;
   return 0;
@@ -51,7 +51,7 @@ static int DLL_DECL _countFiles(const char *filename) {
 
 /* uses the requests global variable,
    which should already be initialized */
-static int DLL_DECL _fillStruct(const char *filename) {
+static int _fillStruct(const char *filename) {
   requests[filenb].filename = (char *)strdup(filename);
   requests[filenb].protocol = (char *)strdup(protocol);
   requests[filenb].priority = 0;

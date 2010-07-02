@@ -17,7 +17,7 @@
  * remote directory close
  */
 
-int DLL_DECL rfio_rewinddir(dirp)
+int rfio_rewinddir(dirp)
      RDIR *dirp;
 {
   WORD    req ;

@@ -346,7 +346,7 @@ int _Cregexp_gettsd(_Cregexp_parse,
  * Beware that the optimization-preparation code in here knows about some
  * of the structure of the compiled regexp.
  */
-Cregexp_t DLL_DECL *Cregexp_comp(exp)
+Cregexp_t *Cregexp_comp(exp)
 	char *exp;
 {
 	Cregexp_t *r;
@@ -1163,7 +1163,7 @@ void _Cregexp_optail(p,
 /*
  - regexec - match a regexp against a string
  */
-int DLL_DECL Cregexp_exec(prog, string)
+int Cregexp_exec(prog, string)
 	Cregexp_t *prog;
 	char *string;
 {
@@ -1661,7 +1661,7 @@ char *_Cregexp_next(p,
 /*
  - regsub - perform substitutions after a regexp match
  */
-int DLL_DECL Cregexp_sub(prog, source, dest, maxsize)
+int Cregexp_sub(prog, source, dest, maxsize)
 	Cregexp_t *prog;
 	char *source;
 	char *dest;

@@ -13,7 +13,7 @@
 #include <string.h>
 
 
-int DLL_DECL rfio_access(filepath, mode)       /* Remote file access            */
+int rfio_access(filepath, mode)       /* Remote file access            */
      const char    *filepath;              /* remote file path                     */
      int           mode;                   /* Access mode     */
 {

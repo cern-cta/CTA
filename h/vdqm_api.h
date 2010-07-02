@@ -22,35 +22,35 @@
 #include <vdqm_constants.h>
 #include <vdqm.h>
 
-EXTERN_C int DLL_DECL vdqm_admin _PROTO((vdqmnw_t *, int));
-EXTERN_C int DLL_DECL vdqm_PingServer _PROTO((vdqmnw_t *, char *, int));
-EXTERN_C int DLL_DECL vdqm_Connect _PROTO((vdqmnw_t **));
-EXTERN_C int DLL_DECL vdqm_Disconnect _PROTO((vdqmnw_t **));
-EXTERN_C int DLL_DECL vdqm_SendVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int, int));
-EXTERN_C int DLL_DECL vdqm_UnitStatus _PROTO((vdqmnw_t *, char *, char *, char *, char *, int *, int *, int));
-EXTERN_C int DLL_DECL vdqm_DelVolumeReq _PROTO((vdqmnw_t *, int, char *, char *, char *, char *, int));
-EXTERN_C int DLL_DECL vdqm_DelDrive _PROTO((vdqmnw_t *, char *, char *, char *));
-EXTERN_C int DLL_DECL vdqm_GetClientAddr _PROTO((char *, char *, int *, int *, int *, int *, char *, char *, char *));
-EXTERN_C int DLL_DECL vdqm_AcknClientAddr _PROTO((SOCKET, int, int, char *));
-EXTERN_C int DLL_DECL vdqm_NextDrive _PROTO((vdqmnw_t **, vdqmDrvReq_t *));
-EXTERN_C int DLL_DECL vdqm_NextVol _PROTO((vdqmnw_t **, vdqmVolReq_t *));
-EXTERN_C int DLL_DECL vdqm_DedicateDrive _PROTO((vdqmnw_t *, char *, char *, char *, char *));
+EXTERN_C int vdqm_admin _PROTO((vdqmnw_t *, int));
+EXTERN_C int vdqm_PingServer _PROTO((vdqmnw_t *, char *, int));
+EXTERN_C int vdqm_Connect _PROTO((vdqmnw_t **));
+EXTERN_C int vdqm_Disconnect _PROTO((vdqmnw_t **));
+EXTERN_C int vdqm_SendVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int, int));
+EXTERN_C int vdqm_UnitStatus _PROTO((vdqmnw_t *, char *, char *, char *, char *, int *, int *, int));
+EXTERN_C int vdqm_DelVolumeReq _PROTO((vdqmnw_t *, int, char *, char *, char *, char *, int));
+EXTERN_C int vdqm_DelDrive _PROTO((vdqmnw_t *, char *, char *, char *));
+EXTERN_C int vdqm_GetClientAddr _PROTO((char *, char *, int *, int *, int *, int *, char *, char *, char *));
+EXTERN_C int vdqm_AcknClientAddr _PROTO((SOCKET, int, int, char *));
+EXTERN_C int vdqm_NextDrive _PROTO((vdqmnw_t **, vdqmDrvReq_t *));
+EXTERN_C int vdqm_NextVol _PROTO((vdqmnw_t **, vdqmVolReq_t *));
+EXTERN_C int vdqm_DedicateDrive _PROTO((vdqmnw_t *, char *, char *, char *, char *));
 
 /*
  * Functions that use VDQM magic number: VDQM2
  */
-EXTERN_C int DLL_DECL vdqm_SendVolPriority _PROTO((char*, int, int, int));
+EXTERN_C int vdqm_SendVolPriority _PROTO((char*, int, int, int));
 
 /*
  * Functions that use VDQM magic number: VDQM3
  */
-EXTERN_C int DLL_DECL vdqm_SendDelDrv _PROTO((char*, char*, char*));
-EXTERN_C int DLL_DECL vdqm_SendDedicate _PROTO((char*, char*, char*, char*));
+EXTERN_C int vdqm_SendDelDrv _PROTO((char*, char*, char*));
+EXTERN_C int vdqm_SendDedicate _PROTO((char*, char*, char*, char*));
 
 /*
  * Functions that use VDQM magic number: VDQM4
  */
-EXTERN_C int DLL_DECL vdqm_CreateRequestForAggregator _PROTO((vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port));
-EXTERN_C int DLL_DECL vdqm_QueueRequestForAggregator _PROTO((vdqmnw_t *nw));
+EXTERN_C int vdqm_CreateRequestForAggregator _PROTO((vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port));
+EXTERN_C int vdqm_QueueRequestForAggregator _PROTO((vdqmnw_t *nw));
 
 #endif /* _VDQM_API_H */

@@ -18,7 +18,7 @@
 
 #include <osdep.h>
 
-EXTERN_C char DLL_DECL *getacct_r _PROTO((char *));
-EXTERN_C char DLL_DECL *getacct _PROTO((void));
+EXTERN_C char *getacct_r _PROTO((char *));
+EXTERN_C char *getacct _PROTO((void));
 
 #endif /* GETACCT_H */

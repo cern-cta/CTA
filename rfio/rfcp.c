@@ -102,7 +102,7 @@ Sigfunc *_rfio_signal();
  * used to be defined in stage_api.c when CASTOR1 code was still
  * around. Since it is only used by rfcp now, I've moved it here
  */
-int DLL_DECL rc_castor2shift(int rc) {
+int rc_castor2shift(int rc) {
 	int arc; /* Absolute rc */
 	/* Input  is a CASTOR return code (routine error code) */
 	/* Output is a SHIFT  return code (process exit code) */

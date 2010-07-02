@@ -19,7 +19,7 @@
 #include <log.h>                        /* Genralized error logger      */
 #include "fio.h"                       /* Remote file I/O              */
 
-int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
+int switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
      int     *access  ;
      LONG *lun  ;
      char  *filename ;
@@ -61,7 +61,7 @@ int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
 
 }
 
-int DLL_DECL switch_write(access,lun,ptr,nwrit,nrec,mod)
+int switch_write(access,lun,ptr,nwrit,nrec,mod)
      int     access          ;
      LONG    *lun            ;
      char  *ptr  ;
@@ -100,7 +100,7 @@ int DLL_DECL switch_write(access,lun,ptr,nwrit,nrec,mod)
 }
 
 
-int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
+int switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
      int   access ;
      int  *ptlun   ;
      char  *buffer1;
@@ -155,7 +155,7 @@ int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
 
 }
 
-int DLL_DECL switch_close(lun)
+int switch_close(lun)
      int *lun;
 {
   int irc;

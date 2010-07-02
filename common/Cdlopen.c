@@ -46,7 +46,7 @@ static char *C__Cdlopen_buffer()
 #include <windows.h>
 
 /* Note: flag is not used on Windows */
-void DLL_DECL *Cdlopen(filename,flag)
+void *Cdlopen(filename,flag)
      CONST char *filename;
      int flag;
 {
@@ -54,22 +54,22 @@ void DLL_DECL *Cdlopen(filename,flag)
 }
 
 /* Note: GetLastError() is thread-safe */
-char DLL_DECL *Cdlerror(void) {
+char *Cdlerror(void) {
   DWORD getlasterror = GetLastError();
   Csnprintf(Cdlopen_buffer, CDLOPEN_BUFLEN, "GetLastError return code: %u", getlasterror);
   Cdlopen_buffer[CDLOPEN_BUFLEN] = '\0'; /* Who knows */
   return(Cdlopen_buffer);
 }
 
-void DLL_DECL *Cdlsym(void *handler, CONST char *symbol) {
+void *Cdlsym(void *handler, CONST char *symbol) {
   return((void *)GetProcAddress((HINSTANCE)handler, symbol));
 }
-int DLL_DECL Cdlclose(void *handler) {
+int Cdlclose(void *handler) {
   return(!FreeLibrary((HINSTANCE)handler));
 }
 #else
 /* Assuming standard dlopen() interface */
-void DLL_DECL *Cdlopen(filename,flag)
+void *Cdlopen(filename,flag)
      CONST char *filename;
      int flag;
 {
@@ -78,7 +78,7 @@ void DLL_DECL *Cdlopen(filename,flag)
 
 /* Note: dlerror() is NOT required to be reentrant, i.e. thread-safe */
 /* so we have to protect with a mutex */
-char DLL_DECL *Cdlerror(void) {
+char *Cdlerror(void) {
   int rc;
 
   rc = Cmutex_lock(&Cdlopen_mutex,10); /* Oupss */
@@ -94,10 +94,10 @@ char DLL_DECL *Cdlerror(void) {
   return buf;
 }
 
-void DLL_DECL *Cdlsym(void *handler, CONST char *symbol) {
+void *Cdlsym(void *handler, CONST char *symbol) {
   return(dlsym(handler, symbol));
 }
-int DLL_DECL Cdlclose(void *handler) {
+int Cdlclose(void *handler) {
   return(dlclose(handler));
 }
 #endif

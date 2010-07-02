@@ -86,7 +86,7 @@ EXTERN_C int _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
 /* =============================================== */
 /* Notes:                                          */
 /* =============================================== */
-int DLL_DECL Csched_Getschedparam(file,line,cid,policy,Cparam)
+int Csched_Getschedparam(file,line,cid,policy,Cparam)
      char *file;
      int line;
      int cid;
@@ -198,7 +198,7 @@ int DLL_DECL Csched_Getschedparam(file,line,cid,policy,Cparam)
 /* =============================================== */
 /* Notes:                                          */
 /* =============================================== */
-int DLL_DECL Csched_Setschedparam(file,line,cid,policy,Cparam)
+int Csched_Setschedparam(file,line,cid,policy,Cparam)
      char *file;
      int line;
      int cid;
@@ -307,7 +307,7 @@ int DLL_DECL Csched_Setschedparam(file,line,cid,policy,Cparam)
 /* =============================================== */
 /* Notes:                                          */
 /* =============================================== */
-int DLL_DECL Csched_Get_priority_min(file,line,policy)
+int Csched_Get_priority_min(file,line,policy)
      char *file;
      int line;
      int policy;
@@ -367,7 +367,7 @@ int DLL_DECL Csched_Get_priority_min(file,line,policy)
 /* =============================================== */
 /* Notes:                                          */
 /* =============================================== */
-int DLL_DECL Csched_Get_priority_max(file,line,policy)
+int Csched_Get_priority_max(file,line,policy)
      char *file;
      int line;
      int policy;
@@ -427,7 +427,7 @@ int DLL_DECL Csched_Get_priority_max(file,line,policy)
 /* =============================================== */
 /* Notes:                                          */
 /* =============================================== */
-int DLL_DECL Csched_Get_priority_mid(file,line,policy)
+int Csched_Get_priority_mid(file,line,policy)
      char *file;
      int line;
      int policy;

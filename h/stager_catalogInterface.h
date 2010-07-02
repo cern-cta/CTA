@@ -34,9 +34,9 @@
 #include "castor/rh/IOResponse.h"
 #include "castor/rh/Client.h"
 
-EXTERN_C int DLL_DECL stager_getDbSvc _PROTO((struct C_Services_t ***));
-EXTERN_C int DLL_DECL stager_getStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
-EXTERN_C int DLL_DECL stager_getJobSvc _PROTO((struct Cstager_IJobSvc_t ***));
+EXTERN_C int stager_getDbSvc _PROTO((struct C_Services_t ***));
+EXTERN_C int stager_getStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
+EXTERN_C int stager_getJobSvc _PROTO((struct Cstager_IJobSvc_t ***));
 
 
 #endif /* __stager_catalogInterface_h */
