@@ -23,13 +23,12 @@
 
 static char *getconfent_r (const char *, const char *, const char *, int, char *, int);
 
-static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
-     const char *filename;
-     const char *category;
-     const char *name;
-     int flags;
-     char *buffer;
-     int bufsiz;
+static char *getconfent_r(const char *filename,
+                          const char *category,
+                          const char *name,
+                          int flags,
+                          char *buffer,
+                          int bufsiz)
 {
     FILE    *fp;
     char    *p, *cp;
@@ -97,10 +96,9 @@ static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
 
 static int value_key = -1;
 
-char *getconfent(category, name, flags)
-     const char *category;
-     const char *name;
-     int flags;
+char *getconfent(const char *category,
+                 const char *name,
+                 int flags)
 {
     char *value = NULL;
 
@@ -112,11 +110,10 @@ char *getconfent(category, name, flags)
     return(getconfent_r(NULL,category,name,flags,value,BUFSIZ+1));
 }
 
-char *getconfent_fromfile(filename,category, name, flags)
-     const char *filename;
-     const char *category;
-     const char *name;
-     int flags;
+char *getconfent_fromfile(const char *filename,
+                          const char *category,
+                          const char *name,
+                          int flags)
 {
     char *value = NULL;
 
@@ -128,10 +125,9 @@ char *getconfent_fromfile(filename,category, name, flags)
     return(getconfent_r(filename,category,name,flags,value,BUFSIZ+1));
 }
 
-int getconfent_parser(conf_val, result, count)
-     char **conf_val;
-     char ***result;
-     int *count;
+int getconfent_parser(char **conf_val,
+                      char ***result,
+                      int *count)
 {
   char *p,*q,*last;
   int i=0;
@@ -156,13 +152,12 @@ int getconfent_parser(conf_val, result, count)
   return 0;
 }
 
-int getconfent_multi_fromfile(filename, category, name, flags, result, count)
-     const char *filename;
-     const char *category;
-     const char *name;
-     int flags;
-     char ***result;
-     int *count;
+int getconfent_multi_fromfile(const char *filename,
+                              const char *category,
+                              const char *name,
+                              int flags,
+                              char ***result,
+                              int *count)
 {
   char *conf_val;
 
@@ -179,12 +174,11 @@ int getconfent_multi_fromfile(filename, category, name, flags, result, count)
 
 
 
-int getconfent_multi(category, name, flags, result, count)
-     const char *category;
-     const char *name;
-     int flags;
-     char ***result;
-     int *count;
+int getconfent_multi(const char *category,
+                     const char *name,
+                     int flags,
+                     char ***result,
+                     int *count)
 {
   char *conf_val;
   
