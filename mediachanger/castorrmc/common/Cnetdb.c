@@ -19,7 +19,7 @@
 #include <Cnetdb.h>
 
 struct hostent *Cgethostbyname(name)
-CONST char *name;
+const char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
     /*
@@ -58,7 +58,7 @@ CONST char *name;
 }
 
 struct hostent *Cgethostbyaddr(addr,len,type)
-CONST void *addr;
+const void *addr;
 size_t len;
 int type;
 {
@@ -99,8 +99,8 @@ int type;
 }
 
 struct servent *Cgetservbyname(name,proto)
-CONST char *name;
-CONST char *proto;
+const char *name;
+const char *proto;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
     /*

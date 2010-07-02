@@ -49,7 +49,7 @@
 /* Internal prototypes */
 /* =================== */
 static char * _Cgetopt_progname (char *);
-int _Cgetopt_internal (int, char * CONST *, CONST char *);
+int _Cgetopt_internal (int, char * const *, const char *);
 static char **C__place ();
 static int my_place = -1; /* If Cglobals_get error in order not to crash */
 #define place (*C__place())
@@ -74,8 +74,8 @@ static char * _Cgetopt_progname(nargv0)
 int
 _Cgetopt_internal(nargc, nargv, ostr)
      int nargc;
-     char * CONST *nargv;
-     CONST char *ostr;
+     char * const *nargv;
+     const char *ostr;
 {
   char *oli;				/* option letter list index */
   
@@ -154,8 +154,8 @@ _Cgetopt_internal(nargc, nargv, ostr)
 int 
 Cgetopt(nargc, nargv, ostr)
      int nargc;
-     char * CONST *nargv;
-     CONST char *ostr;
+     char * const *nargv;
+     const char *ostr;
 {
   int retval;
 

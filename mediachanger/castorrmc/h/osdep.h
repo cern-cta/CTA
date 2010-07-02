@@ -81,17 +81,6 @@ typedef U_HYPER TIME_T;
 #define NETERROR  perror
 #define OSERROR   perror
  
-#if (defined(__STDC__) || defined(__cplusplus))
-/* On Win32, compiler is STDC compliant but the */
-/* __STDC__ definition itself is not a default. */
-#define CONST const
-#else
-#define CONST
-#endif
-
-/* Macros for 64-bits constants definition */
-#define CONSTLL(a) (a##LL)
-
 /* Macros for externalization (UNIX) (J.-D.Durand) */
 #ifdef EXTERN_C
 #undef EXTERN_C
