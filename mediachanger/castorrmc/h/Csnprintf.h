@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include "osdep.h"
 
-EXTERN_C int DLL_DECL Csnprintf _PROTO((char *, size_t, const char *, ...));
-EXTERN_C int DLL_DECL Cvsnprintf _PROTO((char *, size_t, const char *, va_list));
+EXTERN_C int Csnprintf _PROTO((char *, size_t, const char *, ...));
+EXTERN_C int Cvsnprintf _PROTO((char *, size_t, const char *, va_list));
 
 #endif /* __Csnprintf_h */
