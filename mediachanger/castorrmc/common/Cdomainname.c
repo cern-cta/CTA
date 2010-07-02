@@ -18,7 +18,7 @@
 
 /* Cdomainname - get domain name */
 
-int DLL_DECL Cdomainname(char *name, int namelen)
+int Cdomainname(char *name, int namelen)
 {
 	char hostname[CA_MAXHOSTNAMELEN+1];
 	struct hostent *hp;

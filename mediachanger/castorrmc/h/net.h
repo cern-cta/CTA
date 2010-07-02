@@ -58,19 +58,19 @@
 #define ioctlsocket ioctl
 #endif
 
-EXTERN_C int DLL_DECL (*recvfunc) _PROTO((SOCKET, char *, int));
+EXTERN_C int (*recvfunc) _PROTO((SOCKET, char *, int));
                                         /* Network receive function     */
 #define netread    (*recvfunc)
-EXTERN_C int DLL_DECL (*sendfunc) _PROTO((SOCKET, char *, int));
+EXTERN_C int (*sendfunc) _PROTO((SOCKET, char *, int));
                                         /* Network send function        */
 #define netwrite   (*sendfunc)
-EXTERN_C int DLL_DECL (*closefunc) _PROTO((SOCKET));
+EXTERN_C int (*closefunc) _PROTO((SOCKET));
                                         /* Network close function       */
 #define netclose   (*closefunc)
-EXTERN_C int DLL_DECL (*ioctlfunc) _PROTO((SOCKET, int, int));
+EXTERN_C int (*ioctlfunc) _PROTO((SOCKET, int, int));
                                         /* Network ioctl function       */
 #define netioctl  (*ioctlfunc)
-EXTERN_C char DLL_DECL *(*errfunc) _PROTO((void));
+EXTERN_C char *(*errfunc) _PROTO((void));
                                         /* Network error function       */
 #define neterror (*errfunc)
 

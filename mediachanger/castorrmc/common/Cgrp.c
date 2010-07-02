@@ -19,7 +19,7 @@
 #include <Cgrp.h>
 #include <osdep.h>
 
-struct group DLL_DECL *Cgetgrnam(name)
+struct group *Cgetgrnam(name)
 CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
@@ -55,7 +55,7 @@ CONST char *name;
 #endif
 }
 
-struct group DLL_DECL *Cgetgrgid(gid)
+struct group *Cgetgrgid(gid)
 gid_t gid;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))

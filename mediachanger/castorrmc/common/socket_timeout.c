@@ -47,7 +47,7 @@ int      _net_isclosed();
 Sigfunc *_netsignal();
 #endif
 
-int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
+int netconnect_timeout(fd, addr, addr_size, timeout)
      SOCKET fd;
      struct sockaddr *addr;
      size_t addr_size;
@@ -114,7 +114,7 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 	return(rc);
 }
 
-ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
+ssize_t netread_timeout(fd, vptr, n, timeout)
      SOCKET fd;
      void *vptr;
      ssize_t n;
@@ -211,7 +211,7 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 	return(n - nleft);
 }
 
-ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
+ssize_t netwrite_timeout(fd, vptr, n, timeout)
      SOCKET fd;
      void *vptr;
      ssize_t n;

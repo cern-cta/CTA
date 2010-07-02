@@ -146,7 +146,7 @@ int    nbytes;
 #endif
 }
 
-int DLL_DECL
+int
 s_recv (s, buf, nbytes)
 SOCKET s;
 char    *buf;
@@ -218,7 +218,7 @@ int     nbytes;
     return (nbytes);
 }
  
-int DLL_DECL
+int
 s_send (s, buf, nbytes)
 SOCKET  s;
 char    *buf;
@@ -269,14 +269,14 @@ int     nbytes;
     return (nbytes);
 }
 
-int DLL_DECL
+int
 s_close(s)
 SOCKET     s;
 {
     return(CLOSE(s));
 }
 
-char DLL_DECL *
+char *
 s_errmsg()                              /* return last error message    */
 {
     if ( serrno != 0 ) return((char *)sstrerror(serrno));
@@ -289,7 +289,7 @@ s_errmsg()                              /* return last error message    */
  * workaround.
  */
 
-int DLL_DECL 
+int 
 s_ioctl(s, request, arg)                /* issue an ioctl(2) call       */
 SOCKET s;
 int     request;
@@ -298,7 +298,7 @@ int     arg;
     return(IOCTL(s, request, arg));
 }
 
-int DLL_DECL s_nrecv(s, buf, nbytes)     /* Non blocking read           */
+int s_nrecv(s, buf, nbytes)     /* Non blocking read           */
 SOCKET s;
 char    *buf;
 int    nbytes;
@@ -310,7 +310,7 @@ int    nbytes;
 #endif /* BLOCKSIZE */
 }
 
-int DLL_DECL setrtimo(val)
+int setrtimo(val)
 int     val;
 {
 

@@ -33,19 +33,19 @@ int use_castor2_api() {
   return 1;
 }
 
-int DLL_DECL stage_setoutbuf(char* buffer, int buflen) { 
+int stage_setoutbuf(char* buffer, int buflen) { 
   (void)buffer;
   (void)buflen;
   return -1;
  }
 
-int DLL_DECL stage_seterrbuf(char* buffer, int buflen) {
+int stage_seterrbuf(char* buffer, int buflen) {
   (void) buffer;
   (void) buflen;
   return -1;
 }
 
-int DLL_DECL stage_iowc(int req_type,
+int stage_iowc(int req_type,
                         char t_or_d,
                         u_signed64 flags,
                         int openflags,
@@ -74,7 +74,7 @@ int DLL_DECL stage_iowc(int req_type,
   return -1;
 }
 
-int DLL_DECL stage_updc_filchg(char *stghost,
+int stage_updc_filchg(char *stghost,
                                stage_hsm_t *hsmstruct) {
   (void)stghost;
   (void)hsmstruct;

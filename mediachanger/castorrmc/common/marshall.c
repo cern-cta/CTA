@@ -11,7 +11,7 @@
 #include "marshall.h"
 #include "osdep.h"
 
-int DLL_DECL
+int
 _unmarshall_STRINGN(ptr, str, n)
 char **ptr;
 char *str;

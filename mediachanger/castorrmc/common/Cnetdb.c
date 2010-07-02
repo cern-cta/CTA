@@ -18,7 +18,7 @@
 #include <Cglobals.h>
 #include <Cnetdb.h>
 
-struct hostent DLL_DECL *Cgethostbyname(name)
+struct hostent *Cgethostbyname(name)
 CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
@@ -57,7 +57,7 @@ CONST char *name;
 #endif
 }
 
-struct hostent DLL_DECL *Cgethostbyaddr(addr,len,type)
+struct hostent *Cgethostbyaddr(addr,len,type)
 CONST void *addr;
 size_t len;
 int type;
@@ -98,7 +98,7 @@ int type;
 #endif
 }
 
-struct servent DLL_DECL *Cgetservbyname(name,proto)
+struct servent *Cgetservbyname(name,proto)
 CONST char *name;
 CONST char *proto;
 {

@@ -132,7 +132,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					  INC_PTR(ptr,strlen(str)+1); \
 					}
 
-EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
+EXTERN_C int _unmarshall_STRINGN _PROTO((char **, char*, int));
 #define  unmarshall_STRINGN(ptr,str,n)  _unmarshall_STRINGN(&ptr, str, n)
 
 /*
