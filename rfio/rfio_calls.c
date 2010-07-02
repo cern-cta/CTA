@@ -332,7 +332,7 @@ static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,pref
     cp = elements[n];
     elements[n] = NULL;
 
-    ptr2 = l_path_elements_to_path(elements, *path_typep, *prefixp);
+    ptr2 = l_path_elements_to_path((const char**)elements, *path_typep, *prefixp);
     elements[n] = cp;
 
     if (ptr2 == NULL) goto error;
@@ -417,7 +417,7 @@ static int rfio_canonicalize_path(const char *inpath,
 
   elements = l_canonicalize_path(inpath, 0, NULL, &p_type, &prefix, travel_sym);
   if (elements==NULL) return -1;
-  result_path = l_path_elements_to_path(elements, p_type, prefix);
+  result_path = l_path_elements_to_path((const char**)elements, p_type, prefix);
 
   /* makes it easier to compare the prefixes */
   if (prefix == NULL) prefix=strdup("");
