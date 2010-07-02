@@ -15,9 +15,8 @@
 #include <osdep.h>
 #include <serrno.h>
 
-int Cinitdaemon(name,wait4child)
-char *name;
-void (*wait4child) (int);
+int Cinitdaemon(char *name,
+		void (*wait4child) (int))
 {
         int c;
         int maxfds;

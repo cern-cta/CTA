@@ -12,10 +12,9 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_export(server, smc_ldr, vid)
-char *server;
-char *smc_ldr;
-char *vid;
+int rmc_export(char *server,
+               char *smc_ldr,
+               char *vid)
 {
 	int c;
 	gid_t gid;

@@ -617,8 +617,7 @@ char *  sstrerror_r(n,buf,buflen)
   return(buf);
 }
 
-void sperror(msg)
-     char    *msg;
+void sperror(char    *msg)
 {
   char buf[80];
   if (serrno)     {
@@ -630,8 +629,7 @@ void sperror(msg)
 
 static int sstrerror_key = -1;
 
-char *sstrerror(n)
-     int n;
+char *sstrerror(int n)
 {
   char *buf = NULL;
   int buflen = 80;

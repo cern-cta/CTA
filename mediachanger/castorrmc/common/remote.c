@@ -41,9 +41,8 @@ extern char *getconfent();
  *                   1 if requestor is out of site
  *          -1 in case of an error
  */
-int isremote(from_host, host_name)
-struct in_addr from_host;
-char *host_name ;
+int isremote(struct in_addr from_host,
+             char *host_name)
 {
     char *p ;
     char local[CA_MAXHOSTNAMELEN+1];

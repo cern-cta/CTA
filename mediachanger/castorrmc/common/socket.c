@@ -289,19 +289,16 @@ s_errmsg()                              /* return last error message    */
  * workaround.
  */
 
-int 
-s_ioctl(s, request, arg)                /* issue an ioctl(2) call       */
-SOCKET s;
-int     request;
-int     arg;
+int s_ioctl(SOCKET s,
+            int     request,
+            int     arg)                 /* issue an ioctl(2) call       */
 {
     return(IOCTL(s, request, arg));
 }
 
-int s_nrecv(s, buf, nbytes)     /* Non blocking read           */
-SOCKET s;
-char    *buf;
-int    nbytes;
+int s_nrecv(SOCKET s,
+            char    *buf,
+            int    nbytes)     /* Non blocking read           */
 {
 #if defined(BLOCKSIZE)
     return(READ(s, buf, min(BLOCKSIZE,nbytes)));
@@ -310,8 +307,7 @@ int    nbytes;
 #endif /* BLOCKSIZE */
 }
 
-int setrtimo(val)
-int     val;
+int setrtimo(int     val)
 {
 
     register int    otimeout;

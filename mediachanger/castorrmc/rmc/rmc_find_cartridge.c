@@ -13,14 +13,13 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_find_cartridge(server, smc_ldr, template, type, startaddr, nbelem, element_info)
-char *server;
-char *smc_ldr;
-char *template;
-int type;
-int startaddr;
-int nbelem;
-struct smc_element_info *element_info;
+int rmc_find_cartridge(char *server,
+                       char *smc_ldr,
+                       char *template,
+                       int type,
+                       int startaddr,
+                       int nbelem,
+                       struct smc_element_info *element_info)
 {
 	int c;
 	struct smc_element_info *elemp;

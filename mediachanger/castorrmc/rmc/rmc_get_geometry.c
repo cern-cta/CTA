@@ -13,10 +13,9 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_get_geometry(server, smc_ldr, robot_info)
-char *server;
-char *smc_ldr;
-struct robot_info *robot_info;
+int rmc_get_geometry(char *server,
+                     char *smc_ldr,
+                     struct robot_info *robot_info)
 {
 	int c;
 	gid_t gid;

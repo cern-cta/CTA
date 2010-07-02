@@ -24,11 +24,10 @@
 #include <sys/types.h>
 #include <osdep.h>
 
-void read_s_(stream,buff,count,status)
-     FILE **stream ;
-     char *  buff ;
-     int  * count ;
-     int * status ;
+void read_s_(FILE **stream,
+             char *  buff,
+             int  * count,
+             int * status)
 {
 	int rcode ;
         int size ;
@@ -104,12 +103,10 @@ void read_s_(stream,buff,count,status)
 	}
 
 }
-void read_d_(stream,buff,count,status)
-
-	FILE **stream ;
-        char *  buff ;
-        int  * count ;
-        int * status ;
+void read_d_(FILE **stream,
+             char *  buff,
+             int  * count,
+             int * status)
 {
 	int rcode ;
 

@@ -13,12 +13,11 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_mount(server, smc_ldr, vid, side, drvord)
-char *server;
-char *smc_ldr;
-char *vid;
-int side;
-int drvord;
+int rmc_mount(char *server,
+              char *smc_ldr,
+              char *vid,
+              int side,
+              int drvord)
 {
 	int c;
 	gid_t gid;
