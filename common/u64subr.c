@@ -71,7 +71,7 @@ char *i64tohexstr(i64, buf, fldsize)
 
 /* strtou64 - convert a string to an unsigned 64 bits integer */
 u_signed64 strtou64(str)
-	CONST char *str;
+	const char *str;
 {
 	char *p = (char *) str;
 	u_signed64 u64 = 0;
@@ -86,7 +86,7 @@ u_signed64 strtou64(str)
 
 /* hexstrtou64 - convert an hex string to an unsigned 64 bits integer */
 u_signed64 hexstrtou64(str)
-	CONST char *str;
+	const char *str;
 {
 	char *p = (char *) str;
 	u_signed64 u64 = 0;
@@ -207,7 +207,7 @@ char *u64tohexstr(u64, buf, fldsize)
 
 /* strutou64 - convert a string with unit to an unsigned 64 bits integer */
 u_signed64 strutou64(str)
-	CONST char *str;
+	const char *str;
 {
 	char *p = (char *) str;
 	u_signed64 u64 = 0;
@@ -229,7 +229,7 @@ u_signed64 strutou64(str)
 
 /* hexstrutou64 - convert an hex string with unit to an unsigned 64 bits integer */
 u_signed64 hexstrutou64(str)
-	CONST char *str;
+	const char *str;
 {
 	char *p = (char *) str;
 	u_signed64 u64 = 0;
@@ -337,11 +337,11 @@ char *u64tostrsi(u64, buf, fldsize)
 	char unit;
 
 	t64 = u64;
-	if (u64 > CONSTLL(1000000000000000)) {
-		fnum = (double) t64 / (double) CONSTLL(1000000000000000);
+	if (u64 > 1000000000000000)LL {
+		fnum = (double) t64 / (double) 1000000000000000LL;
 		unit = 'P';
-	} else if (u64 > CONSTLL(1000000000000)) {
-		fnum = (double) t64 / (double) CONSTLL(1000000000000);
+	} else if (u64 > 1000000000000)LL {
+		fnum = (double) t64 / (double) 1000000000000LL;
 		unit = 'T';
 	} else if (u64 > 1000000000) {
 		fnum = (double) t64 / (double) 1000000000;

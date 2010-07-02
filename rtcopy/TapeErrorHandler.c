@@ -91,7 +91,7 @@
 #include <rtcpcld.h>
 #include <rfio_api.h>
 #include <Cns_api.h>
-extern char *getconfent (CONST char *, CONST char *, int);
+extern char *getconfent (const char *, const char *, int);
 /** Default retry policy names
  */
 static char *migratorRetryPolicy = MIGRATOR_RETRY_POLICY_NAME;
@@ -490,7 +490,7 @@ static int checkRecallRetry(
     serrno = EINVAL;
     return(-1);
   }
-  Cstager_Tape_vid(tape,(CONST char **)&vid);
+  Cstager_Tape_vid(tape,(const char **)&vid);
   if ( vid == NULL ) {
     serrno = EINVAL;
     return(-1);
@@ -544,7 +544,7 @@ static int checkRecallRetry(
                             );
   Cstager_CastorFile_nsHost(
                             castorFile,
-                            (CONST char **)&nsHost
+                            (const char **)&nsHost
                             );
   if ( nsHost != NULL ) {
     strncpy(
@@ -709,7 +709,7 @@ static int checkRecallRetry(
     errMsgTxt = NULL;
     Cstager_Segment_errMsgTxt(
                               segments[i],
-                              (CONST char **)&errMsgTxt
+                              (const char **)&errMsgTxt
                               );
     /*
      * Error message text is passed within qoutes ('')
@@ -738,7 +738,7 @@ static int checkRecallRetry(
     severity = 0;
     Cstager_Segment_errMsgTxt(
                               segments[i],
-                              (CONST char **)&errMsgTxt
+                              (const char **)&errMsgTxt
                               );
     errMsgTxt = tmpBuf = rtcpcld_fixStr(errMsgTxt);
     if ( (errMsgTxt == NULL) || (*errMsgTxt == '\0') ) {
@@ -1014,7 +1014,7 @@ static int checkMigrationRetry(
                             );
   Cstager_CastorFile_nsHost(
                             castorFile,
-                            (CONST char **)&nsHost
+                            (const char **)&nsHost
                             );
   if ( nsHost != NULL ) {
     strncpy(
@@ -1254,7 +1254,7 @@ static int checkMigrationRetry(
     errMsgTxt = NULL;
     Cstager_Segment_errMsgTxt(
                               segments[i],
-                              (CONST char **)&errMsgTxt
+                              (const char **)&errMsgTxt
                               );
     /*
      * Error message text is passed within qoutes ('')
@@ -1283,7 +1283,7 @@ static int checkMigrationRetry(
     severity = 0;
     Cstager_Segment_errMsgTxt(
                               segments[i],
-                              (CONST char **)&errMsgTxt
+                              (const char **)&errMsgTxt
                               );
     errMsgTxt = tmpBuf = rtcpcld_fixStr(errMsgTxt);
     if ( (errMsgTxt == NULL) || (*errMsgTxt == '\0') ) {
@@ -1462,15 +1462,15 @@ int main() {
     }
     fseq = tpErrorCode = tpSeverity = segErrorCode = segSeverity = 0;
     vid = tpErrMsgTxt = segErrMsgTxt = NULL;
-    Cstager_Tape_vid(tp,(CONST char **)&vid);
+    Cstager_Tape_vid(tp,(const char **)&vid);
     Cstager_Tape_tpmode(tp,&mode);
     Cstager_Tape_errorCode(tp,&tpErrorCode);
     Cstager_Tape_severity(tp,&tpSeverity);
-    Cstager_Tape_errMsgTxt(tp,(CONST char **)&tpErrMsgTxt);
+    Cstager_Tape_errMsgTxt(tp,(const char **)&tpErrMsgTxt);
     Cstager_Segment_fseq(segm,&fseq);
     Cstager_Segment_errorCode(segm,&segErrorCode);
     Cstager_Segment_severity(segm,&segSeverity);
-    Cstager_Segment_errMsgTxt(segm,(CONST char **)&segErrMsgTxt);
+    Cstager_Segment_errMsgTxt(segm,(const char **)&segErrMsgTxt);
     iObj = Cstager_Segment_getIObject(segm);
     rc = C_Services_fillObj(
                             dbSvc,

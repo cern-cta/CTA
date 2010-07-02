@@ -700,7 +700,7 @@ static void _Cuuid_get_system_time(uuid_time)
          Unix base time is January 1, 1970.
       */
       *uuid_time = (tp.tv_sec * 10000000) + (tp.tv_usec * 10) +
-        CONSTLL(0x01B21DD213814000);
+        0x01B21DD213814000LL;
 }
 
 #else /*__APPLE__ */
@@ -738,7 +738,7 @@ static void _Cuuid_get_system_time(uuid_time)
      Unix base time is January 1, 1970.
   */
   *uuid_time = (tp.tv_sec * 10000000) + (tp.tv_usec * 10) +
-    CONSTLL(0x01B21DD213814000);
+    0x01B21DD213814000LL;
 }
 #endif /*__APPLE__ */
 

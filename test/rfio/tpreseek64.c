@@ -16,7 +16,6 @@
 #include "serrno.h"
 #include "errno.h"
 
-#define CONSTLL(a) (a##LL)
 #define NBRECORDS_TOREAD 5
 #define NBRECORDS_TOWRITE 10
 

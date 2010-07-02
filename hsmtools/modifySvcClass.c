@@ -217,7 +217,7 @@ int findTapePool(
   if ( (tapePoolArray == NULL) || (name == NULL) ) return(0);
   for ( i=0; i<nbTapePools; i++ ) {
     tmpName = NULL;
-    Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tmpName);
+    Cstager_TapePool_name(tapePoolArray[i],(const char **)&tmpName);
     if ( strcmp(tmpName,name) == 0 ) {
       if ( foundPool != NULL ) *foundPool = tapePoolArray[i];
       return(1);
@@ -242,7 +242,7 @@ int findDiskPool(
   if ( (diskPoolArray == NULL) || (name == NULL) ) return(0);
   for ( i=0; i<nbDiskPools; i++ ) {
     tmpName = NULL;
-    Cstager_DiskPool_name(diskPoolArray[i],(CONST char **)&tmpName);
+    Cstager_DiskPool_name(diskPoolArray[i],(const char **)&tmpName);
     if ( strcmp(tmpName,name) == 0 ) {
       if ( foundPool != NULL ) *foundPool = diskPoolArray[i];
       return(1);

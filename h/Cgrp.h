@@ -19,7 +19,7 @@
 #include <grp.h>
 #include <sys/types.h>
 
-EXTERN_C struct group *Cgetgrnam (CONST char *);
+EXTERN_C struct group *Cgetgrnam (const char *);
 EXTERN_C struct group *Cgetgrgid (gid_t);
 
 #endif /* _CGRP_H */

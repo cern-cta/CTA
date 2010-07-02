@@ -20,7 +20,7 @@
 #include <osdep.h>
 
 struct group *Cgetgrnam(name)
-CONST char *name;
+const char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
     /*

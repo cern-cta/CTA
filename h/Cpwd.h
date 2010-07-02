@@ -18,7 +18,7 @@
 #include <osdep.h>
 #include <pwd.h>
 
-EXTERN_C struct passwd *Cgetpwnam (CONST char *);
+EXTERN_C struct passwd *Cgetpwnam (const char *);
 EXTERN_C struct passwd *Cgetpwuid (uid_t);
 
 #endif /* _CPWD_H */

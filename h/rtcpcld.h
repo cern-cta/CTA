@@ -177,7 +177,7 @@ int rtcpcld_initLogging (
 			 );
 void rtcpcld_extlog (
 		     int,
-		     CONST char *,
+		     const char *,
 		     ...
 		     );
 int rtcpcld_initNotify (
@@ -334,7 +334,7 @@ int rtcpcld_setVIDFailedStatus (
 				);
 
 char *rtcpcld_fixStr (
-		      CONST char *
+		      const char *
 		      );
 int rtcpcld_updcMigrFailed (
 			    tape_list_t *,

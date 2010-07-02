@@ -50,7 +50,7 @@ extern int serrno ;
 extern int rfio_errno ;
 extern char *getconfent() ;
 #if sgi
-extern char *strdup (CONST char *);
+extern char *strdup (const char *);
 #endif
 
 #if defined(vms) && (vms == 1)

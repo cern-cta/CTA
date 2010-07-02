@@ -485,7 +485,7 @@ static int verifyTape(
   /*
    * Cross check that we really got hold of the correct request
    */
-  Cstager_Tape_vid(tp,(CONST char **)&vid);
+  Cstager_Tape_vid(tp,(const char **)&vid);
   Cstager_Tape_tpmode(tp,&mode);
   Cstager_Tape_side(tp,&side);
   if ( (tape->tapereq.mode != mode) ||
@@ -587,7 +587,7 @@ int rtcpcld_getTapesToDo(
   } else if ( nbTpItems > 0 ) {
     for (i=0; i<nbTpItems; i++) {
       tl = NULL;
-      Cstager_Tape_vid(tpArray[i],(CONST char **)&vid);
+      Cstager_Tape_vid(tpArray[i],(const char **)&vid);
       if ( vid == NULL ) continue;
       Cstager_Tape_tpmode(tpArray[i],&mode);
       /* We only allow for read requests here. The streams are handled later */
@@ -690,7 +690,7 @@ int rtcpcld_getTapesToDo(
         continue;
       }
       Cstager_Stream_initialSizeToTransfer(streamArray[i],&sizeToTransfer);
-      Cstager_TapePool_name(tapePool,(CONST char **)&tapePoolName);
+      Cstager_TapePool_name(tapePool,(const char **)&tapePoolName);
       tl = NULL;
       rc = rtcpcld_gettape(
                            tapePoolName,
@@ -928,7 +928,7 @@ static int compareSegments(
                            arg1,
                            arg2
                            )
-     CONST void *arg1, *arg2;
+     const void *arg1, *arg2;
 {
   struct Cstager_Segment_t **segm1, **segm2;
   int fseq1, fseq2, rc;
@@ -1344,7 +1344,7 @@ static int nextSegmentToRecall(
                                                    );
   Cstager_DiskCopy_path(
                         diskCopy,
-                        (CONST char **)&pathName
+                        (const char **)&pathName
                         );
   Cstager_DiskCopy_castorFile(
                               diskCopy,
@@ -1352,16 +1352,16 @@ static int nextSegmentToRecall(
                               );
   Cstager_DiskCopyForRecall_mountPoint(
                                        recallCandidate,
-                                       (CONST char **)&mountPointName
+                                       (const char **)&mountPointName
                                        );
   Cstager_DiskCopyForRecall_diskServer(
                                        recallCandidate,
-                                       (CONST char **)&diskServerName
+                                       (const char **)&diskServerName
                                        );
   if ( castorFile != NULL ) {
     Cstager_CastorFile_nsHost(
                               castorFile,
-                              (CONST char **)&nsHost
+                              (const char **)&nsHost
                               );
     if ( nsHost != NULL ) {
       strncpy(
@@ -1573,12 +1573,12 @@ int nextSegmentToMigrate(
 
   Cstager_TapeCopyForMigration_diskServer(
                                           nextMigrCandidate,
-                                          (CONST char **)&diskServer
+                                          (const char **)&diskServer
                                           );
 
   Cstager_TapeCopyForMigration_mountPoint(
                                     nextMigrCandidate,
-                                    (CONST char **)&mountPoint
+                                    (const char **)&mountPoint
                                     );
   if ( mountPoint == NULL ) {
     (void)dlf_write(
@@ -1656,7 +1656,7 @@ int nextSegmentToMigrate(
 
   Cstager_DiskCopy_path(
                         diskCopy,
-                        (CONST char **)&relPath
+                        (const char **)&relPath
                         );
 
   if ( relPath == NULL ) {
@@ -1728,7 +1728,7 @@ int nextSegmentToMigrate(
 
   Cstager_CastorFile_nsHost(
                             castorFile,
-                            (CONST char **)&nsHost
+                            (const char **)&nsHost
                             );
 
   if ( nsHost != NULL ) {
@@ -1985,7 +1985,7 @@ int rtcpcld_getMigrSvcClassName(
     return(-1);
   }
 
-  Cstager_SvcClass_name(svcClass,(CONST char **)svcClassName);
+  Cstager_SvcClass_name(svcClass,(const char **)svcClassName);
   return(0);
 }
 

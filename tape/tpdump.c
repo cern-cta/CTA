@@ -327,7 +327,7 @@ char	**argv;
 	    NULL, NULL, NULL))
 		exit_prog (SYERR);
 
-	Ctape_dmpmsg = (void (*) (int, CONST char *, ...)) (&tpdump_usrmsg);
+	Ctape_dmpmsg = (void (*) (int, const char *, ...)) (&tpdump_usrmsg);
 	if (Ctape_dmpinit (infil, vid, aden, drive, devtype, maxblksize,
 	    fromblock, toblock, maxbyte, fromfile, maxfile, code, flags))
 		exit_prog (SYERR);

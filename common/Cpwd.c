@@ -19,7 +19,7 @@
 #include <osdep.h>
 
 struct passwd *Cgetpwnam(name)
-CONST char *name;
+const char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
     /*

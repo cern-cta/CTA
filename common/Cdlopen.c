@@ -47,7 +47,7 @@ static char *C__Cdlopen_buffer()
 
 /* Note: flag is not used on Windows */
 void *Cdlopen(filename,flag)
-     CONST char *filename;
+     const char *filename;
      int flag;
 {
   return((void *)LoadLibrary(filename));
@@ -61,7 +61,7 @@ char *Cdlerror(void) {
   return(Cdlopen_buffer);
 }
 
-void *Cdlsym(void *handler, CONST char *symbol) {
+void *Cdlsym(void *handler, const char *symbol) {
   return((void *)GetProcAddress((HINSTANCE)handler, symbol));
 }
 int Cdlclose(void *handler) {
@@ -70,7 +70,7 @@ int Cdlclose(void *handler) {
 #else
 /* Assuming standard dlopen() interface */
 void *Cdlopen(filename,flag)
-     CONST char *filename;
+     const char *filename;
      int flag;
 {
   return(dlopen(filename, flag));
@@ -94,7 +94,7 @@ char *Cdlerror(void) {
   return buf;
 }
 
-void *Cdlsym(void *handler, CONST char *symbol) {
+void *Cdlsym(void *handler, const char *symbol) {
   return(dlsym(handler, symbol));
 }
 int Cdlclose(void *handler) {

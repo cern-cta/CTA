@@ -26,8 +26,8 @@
 #include <dlfcn.h>
 #endif
 
-EXTERN_C void *Cdlopen (CONST char *, int);
-EXTERN_C void *Cdlsym (void *, CONST char *);
+EXTERN_C void *Cdlopen (const char *, int);
+EXTERN_C void *Cdlsym (void *, const char *);
 EXTERN_C int   Cdlclose (void *);
 EXTERN_C char *Cdlerror (void);
 

@@ -59,7 +59,7 @@ EXTERN_C  int Coptreset;
 EXTERN_C  char *Coptarg;
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C int Cgetopt (int, char * CONST *, CONST char *);
+EXTERN_C int Cgetopt (int, char * const *, const char *);
 EXTERN_C int Cgetopt_long (int, char **, const char *, Coptions_t *, int *);
 
 #endif /* __Cgetopt_h */

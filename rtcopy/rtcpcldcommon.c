@@ -87,7 +87,7 @@ extern Cuuid_t childUuid;
  */
 void rtcpcld_extlog(
                     int level,
-                    CONST char *format,
+                    const char *format,
                     ...
                     )
 {
@@ -404,7 +404,7 @@ int rtcpcld_setVIDFailedStatus(
 char *rtcpcld_fixStr(
                      str
                      )
-     CONST char *str;
+     const char *str;
 {
   char *retStr = NULL, *p;
 

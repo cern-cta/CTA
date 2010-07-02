@@ -96,11 +96,11 @@
 #define STAGER_SERVICE_PROTO       "tcp"                 /* Proto in /etc/services if any */
 #define STAGER_SERVICE_NOTIFY_PROTO "udp"                /* Notify Proto in /etc/services if any */
 
-#define STAGER_OPTION_ECHO     CONSTLL(0x00000000000001) /* --echo */
-#define STAGER_OPTION_START    CONSTLL(0x00000000000002) /* --start */
-#define STAGER_OPTION_CREATE   CONSTLL(0x00000000000004) /* --create */
-#define STAGER_OPTION_DELETE   CONSTLL(0x00000000000010) /* --delete */
-#define STAGER_OPTION_UPDATE   CONSTLL(0x00000000000020) /* --update */
+#define STAGER_OPTION_ECHO     0x00000000000001LL /* --echo */
+#define STAGER_OPTION_START    0x00000000000002LL /* --start */
+#define STAGER_OPTION_CREATE   0x00000000000004LL /* --create */
+#define STAGER_OPTION_DELETE   0x00000000000010LL /* --delete */
+#define STAGER_OPTION_UPDATE   0x00000000000020LL /* --update */
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
