@@ -34,9 +34,8 @@ THE PREREQUISITES OF THE TEST
 * A user account that permits the creation of a new tape-pool within the VMGR.
 * Two free tape-drives, both of which can access both of the two test tapes.
 * A user account that permits the dedication of drives within the VDQM.
-* A file class with two tape-copy or a user account that permits the creation
-  of a new one with two tape-copy.  Do not modify the number of tape-copies
-  attribute of an existing file class.
+* A file class with a value of 2 for nbCopies (the number of desired
+  tape-copies).
 * A user account that allows the creation and population of a CASTOR directory
   with a tape backend.
 * A copy of the utility test script from the CASTOR svn repository,
