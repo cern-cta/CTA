@@ -7,14 +7,14 @@ Migrate and recall 10 dual tape-copy files
 THE PURPOSE OF THE TEST
 =======================
 
-The principle responsibility of the tape gateway is coordinate the transfer of
-files to and from tape.
+The principle responsibility of the tape-gateway is to coordinate the transfer
+of files to and from tape.
 
-This test verifies that the tape gateway can correctly store and retrive 10 dual
+This test verifies that the tape-gateway can correctly store and retrive 10 dual
 tape-copy files to and from tapes.
 
 Tape gateway is responible for ensuring that an indiviual tape can only contain
-one tape-copy of a given castor-file.  The tape gateway must prevent two or more
+one tape-copy of a given castor-file.  The tape-gateway must prevent two or more
 copies of a castor-file being on the same tape.
 
 

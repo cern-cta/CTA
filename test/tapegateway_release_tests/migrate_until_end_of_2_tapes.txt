@@ -14,11 +14,11 @@ threads within the rtcpd daemon concurrently reading mutliple files from one
 or more CASTOR disk servers into the internal memory-resident cache of the
 rtcpd daemon.  This caching mechanism is used to increase performance.
 
-It is the responsibility of the tape gateway to respond to the end of a tape
+It is the responsibility of the tape-gateway to respond to the end of a tape
 by retrying the migration of all the files that were being worked on by the
 corresponding rtcpd daemon at the moment in time the end of tape was reached.
 
-Is is also the responsibility of the tape gateway to continuously ask for a
+Is is also the responsibility of the tape-gateway to continuously ask for a
 new tape when the tape pool in question is empty.  This test should limit the
 number of tapes in the destination tape pool so that this behaviour of the
 tape-gateway can be exercised.

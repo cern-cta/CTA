@@ -7,10 +7,10 @@ Migrate and recall 10 single tape-copy files
 THE PURPOSE OF THE TEST
 =======================
 
-The principle responsibility of the tape gateway is coordinate the transfer of
-files to and from tape.
+The principle responsibility of the tape-gateway is to coordinate the transfer
+of files to and from tape.
 
-This test verifies that the tape gateway can correctly store and retrive 10 single
+This test verifies that the tape-gateway can correctly store and retrive 10 single
 tape-copy files to and from tape.
 
 
