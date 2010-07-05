@@ -82,11 +82,11 @@ nschclass largeuser /castor/cern.ch/user/m/murrayc3/gatewayendtape
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
 
 9. Determine whether or not there is a migHunter daemon running for the 
-    test-service-class.
+   test-service-class.
 
-ps -ef | egrep "/usr/bin/mighunterd.* <test-service-class>" | grep -v grep
+ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep
 
-10. If no mighunter daemon is running for the test-service-class, then start
+10. If no mighunter daemon is running for the test service-class, then start
     one as user root.
 
 /usr/bin/mighunterd -t 60 default
@@ -114,7 +114,7 @@ watch 'nsls -l /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_
 
 5. Remove the test-files from the disk cache.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm $TESTDIR/$F; done
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -S'*' $TESTDIR/$F; done
 
 6. Using stager_qry wait for all ten 100 MB files to be INVALID.
 

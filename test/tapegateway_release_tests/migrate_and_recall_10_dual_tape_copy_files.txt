@@ -122,17 +122,19 @@ watch 'nsls -l /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_co
 
 TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm $TESTDIR/$F; done
 
-6. Using stager_qry wait for all ten 100 MB files to be INVALID.
+6. Using stager_qry wait for all 10 test-files to be removed from the disk
+   cache.  Each file should be reported as either having a disk-copy status of
+   INVALID or not being on the disk-cache at all.
 
-watch 'stager_qry -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files'
+watch 'stager_qry -S '*' -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files'
 
-7. Recall the files back from tape.
+7. Recall all of the test-files back from tape.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -S deafult -M $TESTDIR/$F; done
 
 8. Using stager_qry wait for all ten 100 MB files to be STAGED.
 
-watch 'stager_qry -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files'
+watch "stager_qry -S '*' -M /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_dual_tape_copy_files"
 
 
 EXPECTED RESULTS

@@ -1,0 +1,188 @@
+THE NAME OF TEST
+================
+
+Migrate and recall stress test.
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+The principle responsibility of the tape-gateway is to coordinate the transfer
+of files to and from tape.
+
+The purpose of this test is to verify the tape-gateway can do its job correctly
+when faced with the migration of 102400 100MB files followed by recall of the
+same files.  Please note that this test does overlap migrations with recalls.
+The migrations are all completed before the first recall is started.
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+* A test-stager running the tape-gateway where you can carry out the test.
+* A test service-class with the following properties:
+  - A set of one or more disk-pools that has enough free space to store ten
+    10TB of test-files.
+  - Stream policy set to one which always returns 1.
+  - Migrator policy set to one which always returns 1.
+  - Recaller policy set to 'None'.
+* A user account that permits the modification of the service-class within the
+  stager.
+* A set of test-tapes with enough free space to store 10 TB of test-data in the
+  form of 100MB test-files.
+* A user account that permits the creation of a new tape-pool within the VMGR.
+* At least two free tape-drives for the test which can access all of the
+  test-tapes.  The more tape drives, the better for this test.
+* A user account that permits the dedication of drives within the VDQM.
+* A file class with a value of 1 for nbCopies (the number of desired
+  tape-copies).
+* A user account that allows the creation and population of a CASTOR directory
+  with a tape backend.
+* A copy of the utility test script from the CASTOR svn repository,
+  "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
+1. Check that the tapeGateway is up and running.
+
+ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
+
+2. Create yourself a tape-pool containing the test-tapes
+
+vmgrenterpool --name gatewaystress --user murrayc3 --group c3
+
+vmgrmodifytape -V I12019 -P gatewaystress
+vmgrmodifytape -V I12022 -P gatewaystress
+vmgrmodifytape -V I12023 -P gatewaystress
+vmgrmodifytape -V I12024 -P gatewaystress
+vmgrmodifytape -V I12026 -P gatewaystress
+vmgrmodifytape -V I12028 -P gatewaystress
+vmgrmodifytape -V I12032 -P gatewaystress
+vmgrmodifytape -V I12033 -P gatewaystress
+vmgrmodifytape -V I12036 -P gatewaystress
+vmgrmodifytape -V I12037 -P gatewaystress
+vmgrmodifytape -V I12040 -P gatewaystress
+vmgrmodifytape -V I12043 -P gatewaystress
+vmgrmodifytape -V I12044 -P gatewaystress
+vmgrmodifytape -V I12045 -P gatewaystress
+
+3. Make sure the test service-class has the test tape-pool as its one and only
+   tape-pool.
+
+modifySvcClass --Name largedisk1 --RemoveTapePools itdc_mixed_new
+printSvcClass largedisk1
+modifySvcClass --Name largedisk1 --RemoveTapePools itdc_T10KR3_new
+printSvcClass largedisk1
+modifySvcClass --Name largedisk1 --AddTapePools gatewaystress
+
+4. Make sure the test service-class will use all the available test tape-drives
+  for the test.
+
+modifySvcClass --Name default --NbDrives 10
+
+5. Create the empty test-directory in CASTOR where test-files will be copied
+   to.
+
+nsmkdir /castor/cern.ch/user/m/murrayc3/gatewaystress
+
+6. Determine the name of a file-class with one tape-copy.
+
+nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 'NBCOPIES 1'
+[output] ...
+[output] CLASS_ID 95
+[output] CLASS_NAME largeuser
+[output] NBCOPIES 1
+[output] ...
+
+7. Set the file-class of the test-directory to be that of the previous step.
+
+nschclass largeuser /castor/cern.ch/user/m/murrayc3/gatewaystress
+
+8. Dedicate as many of the test-drives as possible to the test-stager
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+
+9. Determine whether or not there is a migHunter daemon running for the
+   test-service-class.
+
+ps -ef | egrep "/usr/bin/mighunterd.* largedisk1" | grep -v grep
+
+10. If no mighunter daemon is running for the test-service-class, then start
+    one as user root.
+
+/usr/bin/mighunterd -t 60 largedisk1
+
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. Create and copy to CASTOR 102400 100MB test-files using the
+   createAndCopyFilesToCastor.sh script.
+
+for I in `seq 50`; do bsub -q 8nh /afs/cern.ch/user/m/murrayc3/castor/checkout/trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh castorcert5-A largedisk1 castorcert5-lb /castor/cern.ch/user/m/murrayc3/gatewaystress 100 2048; done
+
+2. Using nsls -l wait for all ten 100 MB files to be migrated to tape.  By
+   grepping for migrated files in the output of nsls -l and counting the
+   number lines, all the files will have been migrated when the count reaches
+   102400.
+
+nsls -l /castor/cern.ch/user/m/murrayc3/gatewaystress > gatewaystress_nsls_l.txt
+egrep ^m gatewaystress_nsls_l.txt | wc -l
+
+3. Remove the test-files from the disk cache.  The -f hsm-FileList option of
+   stager_rm probably will not work with 102400 files, therefore stager_rm can
+   be called for each individual test-file or the list can be split into
+   smaller files.  The example here takes the former approach.
+
+TESTDIR=/castor/cern.ch/user/m/murrayc3/gatewaystress; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm $TESTDIR/$F; done
+
+4. Using stager_qry wait for all 102400 test-files to be removed from the disk
+   cache.  Each file should be reported as either having a disk-copy status of
+   INVALID or not being on the disk-cache at all.  The stager_qry command-line
+   may need to be ran more than once because the number of files is large and
+   will cause a timeout until the database has cached enough values.  If
+   timeouts continually occur then the input-file gatewaystress_file_list.txt
+   should be split into smaller files.
+
+awk '{print "/castor/cern.ch/user/m/murrayc3/gatewaystress/" $NF;}' gatewaystress_nsls_l.txt > gatewaystress_file_list.txt
+stager_qry -S '*' -f ~/gatewaystress_file_list.txt > gatewaystress_file_status_after_stager_rm.txt
+egrep 'INVALID|not on disk cache' gatewaystress_file_status_after_stager_rm.txt | wc -l
+
+5. Recall all of the test-files back from tape.   The -f hsm-FileList option of
+   stager_get probably will not work with 102400 files, therefore stager_get
+   could be called for each individual test-file or the list can can be split
+   into smaller files.  The example here takes the former approach.
+
+for F in `cat gatewaystress_file_list.txt`; do stager_get -S largedisk1 -M $F; done
+
+6. Using stager_qry wait for all 102400 test-files to be STAGED.  The
+   stager_qry command-line may need to be ran more than once because the
+   number of files is large and will cause a timeout until the database has
+   cached enough values.  If timeouts continually occur then the input-file
+   gatewaystress_file_list.txt should be split into smaller files.
+
+stager_qry -S '*' -M /castor/cern.ch/user/m/murrayc3/gatewaystress > gatewaystress_file_status_after_stager_get.txt
+grep STAGED gatewaystress_file_status_after_stager_get.txt | wc -l
+
+
+EXPECTED RESULTS
+================
+
+All 102400 files must have migrated successfully.  Step 6 of the above
+instructions should show 102400 as the count for the numnre of STAGED files in
+/castor/cern.ch/user/m/murrayc3/gatewaystress.
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
+1. Revoke the dedication the test-drives from the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+
+2. Remove the test-directory and its contents from the CASTOR name-space.
+
+nsrm -r
+/castor/cern.ch/user/m/murrayc3/gatewaystress
