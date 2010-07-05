@@ -1,0 +1,35 @@
+THE NAME OF TEST
+================
+
+Recall of 10 files tape ARCHIVED whilst TAPECOPY_WAITINSTREAMS.
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+The principle responsibility of the tape-gateway is to coordinate the transfer
+of files to and from tape.
+
+This test verifies that the tape-gateway can correctly deal with the failure of
+a recall because the status of the tape in question was set to ARCHIVED whilst
+
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+
+EXPECTED RESULTS
+================
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
