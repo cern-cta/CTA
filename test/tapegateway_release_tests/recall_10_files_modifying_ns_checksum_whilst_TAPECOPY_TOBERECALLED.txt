@@ -54,7 +54,7 @@ nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep -v '^m' | wc -l
 
 4. Chech that the file are not on disk.
 
-stager_qry -M /castor/cern.ch/dev/m/murrayc3<folder_name>/
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name>
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
