@@ -27,25 +27,13 @@
 #include "socket_timeout.h"
 
 /* Signal handler - Simplify the POSIX sigaction calls */
-#if defined(__STDC__)
 typedef void    Sigfunc(int);
-#else
-typedef void    Sigfunc();
-#endif
 
-#if defined(__STDC__)
 int      _net_readable(int, int);
 int      _net_writable(int, int);
 int      _net_connectable(SOCKET, int);
 int      _net_isclosed(int);
 Sigfunc *_netsignal(int, Sigfunc *);
-#else
-int      _net_readable();
-int      _net_writable();
-int      _net_connectable();
-int      _net_isclosed();
-Sigfunc *_netsignal();
-#endif
 
 int netconnect_timeout(SOCKET fd,
                        struct sockaddr *addr,

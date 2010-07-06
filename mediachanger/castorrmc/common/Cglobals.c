@@ -41,30 +41,18 @@ typedef struct Cglobals {
  * Cglobals_init() is called from Cthread_init() or at process
  * startup before any threads (except main) have been created.
  */
-#ifdef __STDC__
 extern int (*local_getspec)(int *, void **);
 extern int (*local_setspec)(int *, void *);
 int (*local_getspec)(int *, void **) = NULL;
 int (*local_setspec)(int *, void *) = NULL;
 static int (*local_getTid)(void) = NULL;
-#else
-extern int (*local_getspec)();
-extern int (*local_setspec)();
-int (*local_getspec)() = NULL;
-int (*local_setspec)() = NULL;
-static int (*local_getTid)() = NULL;
-#endif
 
 static Cglobals_t **single_thread_globals = NULL;
 static int nb_globals = 0;
 /*
  * Single thread globals table allocation size.
  */
-#ifdef __STDC__
 const int alloc_size = 1000;
-#else
-int alloc_size = 1000;
-#endif
 
 /*
  * Castor errno externals (used as keys in multi-thread env.)
