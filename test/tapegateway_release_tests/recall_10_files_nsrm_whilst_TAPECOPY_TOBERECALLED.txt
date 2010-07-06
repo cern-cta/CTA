@@ -52,7 +52,7 @@ ps -ef | grep 'tapegatewayd' | grep -v grep
 nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
 [output] 0
 
-4. Chech that the file are not on disk.
+4. Check that the file are not on disk.
 
 stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
 [output] 10
