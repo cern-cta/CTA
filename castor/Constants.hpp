@@ -290,9 +290,7 @@ namespace castor {
     REP_INVALID = 0,
     REP_STREAM = 1,
     REP_DATABASE = 2,
-    REP_ORACLE = 3,
-    REP_MYSQL = 4,
-    REP_PGSQL = 5
+    REP_ORACLE = 3
   };
 
   /**

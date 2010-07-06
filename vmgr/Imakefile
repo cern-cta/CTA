@@ -10,7 +10,7 @@ COMM    Make volume manager programs.
 CPPFLAGS += -DVMGRCSEC
 AddLdFlags(-ldl)
 #endif
-CPPFLAGS += -DVMGRLOGFILE=VmgrLogFile -DVMGRCONFIG=VmgrConfigFile -DUSE_ORACLE -I$(ORACLE_HOME)/precomp/public
+CPPFLAGS += -DVMGRLOGFILE=VmgrLogFile -DVMGRCONFIG=VmgrConfigFile -I$(ORACLE_HOME)/precomp/public
 
 CommonDependsOnLibrary(ns,castorns)
 CommonDependsOnLibrary(common,castorcommon)

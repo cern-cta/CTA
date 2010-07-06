@@ -13,31 +13,6 @@
  
 #ifndef _VMGR_SERVER_H
 #define _VMGR_SERVER_H
-#ifdef USE_ORACLE
-#ifdef USE_OCI
-#include <ocidfn.h>
-#ifdef __STDC__
-#include <ociapr.h>
-#else
-#include <ocikpr.h>
-#endif
-#if defined(__alpha) && defined(__osf__)
-#define HDA_SIZE 512
-#else
-#define HDA_SIZE 256
-#endif
-#endif
-#else
-#ifdef USE_MYSQL
-#include <mysql.h>
-#else
-#ifdef USE_RAIMA
-#include <rds.h>
-#else
-#include "Cdb_api.h"
-#endif
-#endif
-#endif
 #include "vmgr_struct.h"
 #ifdef VMGRCSEC
 #include "Csec_api.h"
@@ -67,44 +42,12 @@
 
 struct vmgr_dbfd {
 	int		idx;		/* index in array of vmgr_dbfd */
-#ifdef USE_ORACLE
-#ifdef USE_OCI
-	Lda_Def		lda;		/* logon data area */
-	ub1		hda[HDA_SIZE];	/* host data area */
-#endif
-#else
-#ifdef USE_MYSQL
-        MYSQL           mysql;
-#else
-#ifdef USE_RAIMA
-	RDM_SESS	hSess;		/* session handle */
-	RDM_DB		hDb;		/* database handle */
-#else
-	Cdb_sess_t	Cdb_sess;
-	Cdb_db_t	Cdb_db;
-#endif
-#endif
-#endif
 	int		tr_started;
 	int             connected;
 };
 
-#ifdef USE_ORACLE
 typedef char vmgr_dbrec_addr[19];
 typedef int DBLISTPTR;
-#else
-#ifdef USE_MYSQL
-typedef char vmgr_dbrec_addr[21];
-typedef MYSQL_RES *DBLISTPTR;
-#else
-#ifdef USE_RAIMA
-typedef DB_ADDR vmgr_dbrec_addr;
-#else
-typedef Cdb_off_t vmgr_dbrec_addr;
-typedef Cdb_off_t DBLISTPTR;
-#endif
-#endif
-#endif
 
 struct vmgr_srv_thread_info {
 	int		s;		/* socket for communication with client */

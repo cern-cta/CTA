@@ -52,10 +52,6 @@ int Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, i
     return (-1);
   }
 
-#ifndef USE_CUPV
-  serrno = EPERM;
-  return(-1);
-#else
   /* Build request header */
   sbp = sendbuf;
   marshall_LONG (sbp, CUPV_MAGIC);
@@ -79,7 +75,6 @@ int Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, i
 	 serrno == ECUPVNACT)
     sleep (RETRYI);
   return (c);
-#endif
 }
 
 

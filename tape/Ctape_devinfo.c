@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)Ctape_devinfo.c,v 1.10 2003/11/19 14:31:30 CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	Ctape_devinfo - table of device characteristics */
 

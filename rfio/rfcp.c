@@ -90,13 +90,8 @@ int v2 = 0;
 u_signed64 inpfile_size = 0;
 
 /* Signal handler - Simplify the POSIX sigaction calls */
-#ifdef __STDC__
 typedef void    Sigfunc(int);
 Sigfunc *_rfio_signal(int, Sigfunc *);
-#else
-typedef void    Sigfunc();
-Sigfunc *_rfio_signal();
-#endif
 
 /**
  * used to be defined in stage_api.c when CASTOR1 code was still

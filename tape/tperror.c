@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.12 $ $Date: 2009/08/06 15:27:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
 			build error msg from sense key or sense bytes */

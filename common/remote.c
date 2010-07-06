@@ -60,14 +60,8 @@ int isremote(struct in_addr from_host,
     struct  sockaddr_in addr;
     char *last = NULL;
 
-#if defined(__STDC__)
     char lhfile[CA_MAXPATHLEN+1] =  LOCALHOSTSFILE;
     char rthfile[CA_MAXPATHLEN+1] = RTHOSTSFILE;
-#else
-    char *lhfile = LOCALHOSTSFILE;
-    char *rthfile = RTHOSTSFILE;
-#endif
-   
 
     if ( (p=getconfent("SIMULATION","REMOTE",1))!=NULL &&
         (p=(char *)strtok(p," \t"))!=NULL && !strcmp(p,"YES")) {

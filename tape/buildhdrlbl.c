@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	buildhdrlbl - build HDR1 and HDR2 from tpmnt parameters */
 #include <string.h>

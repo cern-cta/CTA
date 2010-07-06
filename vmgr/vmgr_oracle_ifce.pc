@@ -10,9 +10,6 @@
 #include <stdio.h>
 #include <sqlca.h>
 #include <sqlcpr.h>
-#ifndef USE_ORACLE
-#define USE_ORACLE
-#endif
 #include "serrno.h"
 #include "u64subr.h"
 #include "vmgr.h"

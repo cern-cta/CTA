@@ -16,9 +16,7 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
-#if SACCT
 #include "sacct.h"
-#endif
 #include "serrno.h"
 #include "tplogger_api.h"
 char *devtype;
@@ -207,10 +205,7 @@ int main(int	argc,
 				goto reply;
 
 	/* tape is positionned */
-
-#if SACCT
 	tapeacct (TPPOSIT, uid, gid, jid, dgn, drive, vid, cfseq, 0);
-#endif
 	if (lblcode == AL || lblcode == AUL || lblcode == SL) {
 		if (filstat != NEW_FILE) {	/* set defaults from label */
 			if (fid[0] == '\0') {

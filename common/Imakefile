@@ -10,7 +10,7 @@ CPPFLAGS += -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAP
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \
-		 getfilep.o getifnam.o getuser.o log.o marshall.o \
+		 getifnam.o getuser.o log.o marshall.o \
 		 readc.o remote.o \
 		 serror.o setnetio.o socket.o solveln.o trace.o \
 		 wsacct.o ypgetacct.o ypgetacctent.o \

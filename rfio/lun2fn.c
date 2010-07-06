@@ -59,11 +59,7 @@ lun2fn(lun)                     /* find file name corresponding to lun  */
   TRACE(1, "rfio", "lun2fn: opening %s", afile);
   if ((fp = fopen(afile, "r")) == NULL)   {
     if (errno == ENOENT)    {
-#if hpux
-      sprintf (buf, "ftn%02d", lun);
-#else
       sprintf (buf, "fort.%d", lun);
-#endif
       TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, buf);
       END_TRACE();
       return(buf);
@@ -95,11 +91,7 @@ lun2fn(lun)                     /* find file name corresponding to lun  */
   (void) fclose(fp);
 
   if (p == NULL)  {               /* no matching entry    */
-#if hpux
-    sprintf (buf, "ftn%d", lun);
-#else
     sprintf (buf, "fort.%d", lun);
-#endif
 
     TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, buf);
     END_TRACE();

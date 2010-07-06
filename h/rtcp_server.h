@@ -188,9 +188,7 @@ extern char rtcp_cmds[][10]; /* Hold constants "CPDSKTP" and "CPTPDSK".*/
 
 int rtcpd_InitNW  (SOCKET **);
 int rtcp_CleanUp  (SOCKET **, int);
-#if !defined(_AIX) || defined(__STDC__)
 void rtcpd_AppendClientMsg  (tape_list_t *, file_list_t *, char *, ...);
-#endif /* aix */
 int rtcp_SendReq (SOCKET *, rtcpHdr_t *,rtcpClientInfo_t *, rtcpTapeRequest_t *, rtcpFileRequest_t *);
 int rtcp_RecvReq  (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
 		   rtcpTapeRequest_t *, rtcpFileRequest_t *);
@@ -276,13 +274,5 @@ int rtcpd_waitMoreWork (file_list_t *fl);
 int rtcpd_nbFullBufs (int);
 int rtcpd_jobID (void);
 int rtcpd_SerializeLock (int, int*, void*, int*, int*, int**);
-
-#if defined(CTAPE_DUMMIES)
-int   stage_setlog (void (*) (int, char *));
-/*
-  int   stage_updc_filcp (char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *);
-  int   stage_updc_tppos (char *, int, int, int, char *, char *, int, int, char *, char *);
-*/
-#endif /* CTAPE_DUMMIES */
 
 #endif /* RTCP_SERVER_H */

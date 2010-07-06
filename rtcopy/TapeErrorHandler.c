@@ -57,9 +57,7 @@
 #include <u64subr.h>
 #include <Cglobals.h>
 #include <serrno.h>
-#if defined(VMGR)
 #include <vmgr_api.h>
-#endif /* VMGR */
 #include <Ctape_constants.h>
 #include <castor/Constants.h>
 #include <castor/stager/Tape.h>

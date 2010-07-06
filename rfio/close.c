@@ -68,18 +68,10 @@ int rfio_close_v2(int     s)
     status= close(s) ;
     if ( status < 0 ) serrno = 0;
     save_errno = errno;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logcl(s);
-#endif
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;
   }
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logcl(s);
-#endif
   /*
    * Checking magic number
    */

@@ -15,14 +15,10 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
-#if SACCT
 #include "sacct.h"
-#endif
 #include "serrno.h"
-#if VDQM
 #include "net.h"
 #include "vdqm_api.h"
-#endif
 #include "tplogger_api.h"
 #include <time.h>
 
@@ -244,7 +240,6 @@ int main(int	argc,
 	if ((p = getconfent ("TAPE", "RLSDELAY", 0)))
 		sleep (atoi (p));
 
-#if VDQM
 	vdqm_status = VDQM_UNIT_RELEASE;
 	if (rlsflags & TPRLS_UNLOAD)
 		vdqm_status |= VDQM_FORCE_UNMOUNT;
@@ -271,7 +266,6 @@ int main(int	argc,
 		rlsflags |= TPRLS_NOUNLOAD;
 		goto freevol;
 	}
-#endif
 	if (*vid == '\0')	/* mount req failed or killed */
 		goto vol_unmount;	/* before volume was requested on drive */
 	if (rlsflags & TPRLS_NOUNLOAD)
@@ -315,9 +309,7 @@ unload_loop:
                                         }
                                 }
                         }
-#if SACCT
 			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, 0);
-#endif
 		}
 		close (tapefd);
 	} else {
@@ -354,7 +346,6 @@ unload_loop:
 		if (n == 2) goto unload_loop;
 	}
 vol_unmount:
-#if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -374,7 +365,6 @@ vol_unmount:
                             "JobID"  , TL_MSG_PARAM_INT  , jid,
                             "vid"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );        
-#endif
 	goto freedrv;
 
 freevol:

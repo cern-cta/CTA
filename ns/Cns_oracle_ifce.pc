@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include <sqlca.h>
 #include <sqlcpr.h>
-#ifndef USE_ORACLE
-#define USE_ORACLE
-#endif
 #include "Cns.h"
 #include "Cns_server.h"
 #include "Cthread_api.h"

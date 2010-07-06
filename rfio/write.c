@@ -56,11 +56,6 @@ int rfio_write_v2(int     s,
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_write(%d, %x, %d)", s, ptr, size) ;
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logwr(s,size);
-#endif
-
   /*
    * The file is local.
    */

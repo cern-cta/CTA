@@ -185,11 +185,6 @@ int rfio_open_ext_v3(char    * filepath,
   INIT_TRACE("RFIO_TRACE");
   TRACE(1,"rfio","rfio_open_ext(%s, %d, %d, %d, %d, %d, %s, %s)",filepath,flags,mode,uid,gid,passwd,reqhost,vmstr ) ;
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logst();
-#endif /* CLIENTLOG */
-
   /*
    * The file is local.
    */
@@ -208,10 +203,6 @@ int rfio_open_ext_v3(char    * filepath,
     status= open(filename, flags, mode) ;
     END_TRACE() ;
     rfio_errno = 0;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logop(status,filename,host,flags);
-#endif /* CLIENTLOG */
     return status ;
   }
   if (parserc < 0) {
@@ -447,10 +438,6 @@ int rfio_open_ext_v3(char    * filepath,
   }
   TRACE(2,"rfio","setsockopt nodelay option set on data socket");
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logop(rfp->s,filename,host,flags);
-#endif
   /*
    * The file is open, update rfp->fp
    */
@@ -489,11 +476,6 @@ int rfio_read_v3(int     ctrl_sock,
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_read_v3(%d, %x, %d)", ctrl_sock, ptr, size) ;
-
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logrd(ctrl_sock,size);
-#endif
 
   /*
    * The file is local.
@@ -733,11 +715,6 @@ int rfio_write_v3(int     ctrl_sock,
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_write_v3(%d, %x, %d)", ctrl_sock, ptr, size) ;
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logwr(ctrl_sock,size);
-#endif
-
   /*
    * The file is local.
    */
@@ -886,10 +863,6 @@ int rfio_close_v3(int     s)
     TRACE(2, "rfio", "rfio_close_v3: using local close(%d)",s) ;
     status= close(s) ;
     save_errno = errno;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logcl(s);
-#endif
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;
@@ -904,10 +877,6 @@ int rfio_close_v3(int     s)
     return(status);
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logcl(s);
-#endif
   /*
    * Checking magic number
    */
@@ -1060,11 +1029,6 @@ int rfio_lseek_v3(int s,
 
   INIT_TRACE("RFIO_TRACE") ;
   TRACE(1, "rfio", "rfio_lseek_v3(%d,%d,%x)",s,offset,how);
-
-#if defined(CLIENTLOG)
-  /* Client logging */
-  rfio_logls(s,offset,how);
-#endif /* CLIENTLOG */
 
   /*
    * The file is local

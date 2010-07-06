@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.9 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>

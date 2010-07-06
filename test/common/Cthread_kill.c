@@ -8,13 +8,8 @@
 #include <signal.h>
 
 /* Signal handler - Simplify the POSIX sigaction calls */
-#ifdef __STDC__
 typedef void    Sigfunc(int);
 Sigfunc *_test_signal(int, Sigfunc *);
-#else
-typedef void    Sigfunc();
-Sigfunc *_test_signal();
-#endif
 
 void *doit (void *);
 void reaper (int);

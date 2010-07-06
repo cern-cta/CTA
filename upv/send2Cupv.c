@@ -25,10 +25,6 @@
 
 int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf_len)
 {
-#ifndef USE_CUPV
-  serrno = EPERM;
-  return(-1);
-#else
   int actual_replen = 0;
   int c;
   char Cupvhost[CA_MAXHOSTNAMELEN+1];
@@ -200,7 +196,6 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
       }
     }
     return (c);
-#endif
   }
 
 

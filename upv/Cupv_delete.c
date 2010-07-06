@@ -47,10 +47,6 @@ int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
     return (-1);
   }
 
-#ifndef USE_CUPV
-  serrno = EPERM;
-  return(-1);
-#else
   /* Build request header */
   sbp = sendbuf;
   marshall_LONG (sbp, CUPV_MAGIC);
@@ -73,7 +69,6 @@ int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
 	 serrno == ECUPVNACT)
     sleep (RETRYI);
   return (c);
-#endif
 }
 
 

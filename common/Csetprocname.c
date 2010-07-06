@@ -32,12 +32,6 @@
 #define SPT_SCO		6	/* write kernel u. area [SCO UNIX 3.2v4.0 Open Desktop 2.0 and earlier] */
 #define SPT_CHANGEARGV	7	/* write our own strings into argv[] [Next] */
 
-/* Set explicitely the platforms on which we do something:
- * AIX
- * HP-UX
- * Linux
- * Tru64
- */
 #if ! (defined(linux))
 
 /* ================================================================= */

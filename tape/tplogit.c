@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>

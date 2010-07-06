@@ -3,9 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: locate.c,v $ $Revision: 1.7 $ $Date: 2007/11/20 15:41:28 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <errno.h>
 #include <string.h>

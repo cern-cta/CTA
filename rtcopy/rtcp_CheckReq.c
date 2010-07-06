@@ -67,12 +67,7 @@ int rtcp_CheckReqStructures (SOCKET *,
 static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
-#if TMS
-extern int rtcp_CallTMS (tape_list_t *, char *);
-#endif
-#if VMGR
 extern int rtcp_CallVMGR (tape_list_t *, char *);
-#endif
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
 #if defined(RTCP_SERVER)
@@ -702,13 +697,11 @@ int rtcp_CheckReq(SOCKET *client_socket,
 
     if ( rtcp_CheckReqStructures(client_socket,client,tape) == -1 ) return(-1);
 
-#if VMGR
     /* Call VMGR */
     if ((rc = rtcp_CallVMGR(tape,NULL)) != 0) {
             rtcp_log(LOG_ERR,"rtcp_CheckReq(): rtcp_CallVMGR reported an error!\n");
             return (-1);
     }
-#endif
 
     if ( (p = getenv("RTCOPYD_MAX_TPRETRY")) != NULL )
         max_tpretry = atoi(p);

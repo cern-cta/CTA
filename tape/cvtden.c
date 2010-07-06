@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)cvtden.c,v 1.7 2002/11/06 10:11:26 CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
 #include <errno.h>

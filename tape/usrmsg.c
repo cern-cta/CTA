@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.9 $ $Date: 2007/03/08 09:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>

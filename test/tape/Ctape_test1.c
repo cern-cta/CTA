@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:32:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Ctape_test1 - test program 1: copy one tape to another */
 
 #include <errno.h>

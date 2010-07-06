@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: builduhl.c,v $ $Revision: 1.3 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	builduhl - build UHL1 from tpmnt parameters */
 #include <string.h>

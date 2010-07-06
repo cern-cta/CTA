@@ -10,9 +10,6 @@
  * @author Olof Barring
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/03/02 17:42:26 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <stdio.h>

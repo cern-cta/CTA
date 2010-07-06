@@ -77,7 +77,6 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
          *        (4) compiler constant
          *        (5) -1 : return error
          */
-#if !defined(DEBUG) && !defined(_DEBUG)
         sprintf(portEnv,"%s_PORT",localCfgName);
         if ( (p = getenv(portEnv)) != (char *)NULL ) {
             rtcp_port = atoi(p);
@@ -90,9 +89,6 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
             rtcp_port = RTCOPY_PORT;
 #endif /* RTCOPY_PORT */
         }
-#else /* !DEBUG && !_DEBUG */
-        rtcp_port = RTCOPY_PORT_DEBUG;
-#endif /* !DEBUG && !_DEBUG */
         if ( use_port > 0 ) rtcp_port = use_port;
     } else {
         /* 

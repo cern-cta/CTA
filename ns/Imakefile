@@ -19,7 +19,7 @@ NSLIBCSEC += -ldl
 CPPFLAGS += -DCNS_HOST=NsHost -DSCNS_HOST=SNsHost \
             -DCNSHOSTPFX=NsHostPfx -DSCNSHOSTPFX=SNsHostPfx \
             -DLCGDM_MAPFILE=\"IdMapFile\" \
-            -DNSLOGFILE=NsLogFile -DNSCONFIG=NsConfigFile -DUSE_ORACLE \
+            -DNSLOGFILE=NsLogFile -DNSCONFIG=NsConfigFile \
 	    -I$(ORACLE_HOME)/precomp/public
 
 NSD_OBJS	=	Cns_main.o \

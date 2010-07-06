@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.1 $ $Date: 2008/01/31 09:57:44 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
 
 /*
  * vdqm_QueueOp.c - Queue volume and drive requests (server only).

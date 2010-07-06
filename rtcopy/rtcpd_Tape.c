@@ -1389,17 +1389,6 @@ void *tapeIOthread(void *arg) {
             }
             CHECK_PROC_ERR(tape,NULL,"rtcpd_CtapeInit() error");
         }
-#if defined(CTAPE_DUMMIES)
-        /*
-         * If we run with dummy Ctape we need to assign the
-         * drive here
-         */
-        rc = rtcpd_Assign(tape);
-        if ( rc == -1 ) {
-            (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
-        }
-        CHECK_PROC_ERR(tape,NULL,"rtcpd_Assign() error");
-#endif /* CTAPE_DUMMIES */
         /*
          * Reserve the unit (client should have made sure that all
          * requested volumes are in same dgn).

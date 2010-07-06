@@ -34,7 +34,7 @@ CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS += $(CXXFLAGS)
 CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
-CPPFLAGS += -DBIN=\"InstallBinDir\" -DSACCT -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile -DNFSROOT=NfsRoot
+CPPFLAGS += -DBIN=\"InstallBinDir\" -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile -DNFSROOT=NfsRoot
 LDFLAGS += -pthread
 
 PERLLIBDIR = /usr/lib/perl/CASTOR

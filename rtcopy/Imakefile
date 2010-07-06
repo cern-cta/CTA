@@ -16,7 +16,7 @@ AddLdFlags(-ldl)
 
 CPPFLAGS += -DRTCOPY_LOGFILE=RtcpdLogFile -DNOMORETAPES=RtcpNoMoreTapes \
 	    -DAUTH_HOSTS=AuthorizedHosts -DWORKDIR=RtcpWorkDir \
-	    -DNS_ROOT=NsRoot -DRTCP_SERVER -DVMGR -DVDQM -DCTAPE \
+	    -DNS_ROOT=NsRoot -DRTCP_SERVER \
 	    -DRTCPCLD_NOTIFY_HOST=RtcpclientdHost -DRTCPCLD_USER=StagerSuperUser \
 	    -DRTCPCLD_GROUP=StagerSuperGroup
 
@@ -76,7 +76,7 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_TapeIO.o rtcp_InitNW.o \
 		rtcpd_ConvertData.o \
 		rtcpc_BuildReq.o rtcpapi.o rtcp_RetvalSHIFT.o \
-		rtcpd_tpdump.o Ctape_dummies.o rtcp_accounting.o
+		rtcpd_tpdump.o rtcp_accounting.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
 TapeProgramTarget(killjid,killjid.o,$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpd)

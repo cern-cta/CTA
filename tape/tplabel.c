@@ -15,9 +15,7 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-#if VMGR
 #include "vmgr_api.h"
-#endif
 int Ctape_kill_needed;
 int reserve_done;
 char path[CA_MAXPATHLEN+1];
@@ -41,10 +39,6 @@ void usage(char *cmd)
 int main(int	argc,
          char	**argv)
 {
-#ifdef TMS
-	char acctname[7];
-	char *p;
-#endif
 	int c;
 	void cleanup();
 	int count;
@@ -205,38 +199,17 @@ int main(int	argc,
 	signal (SIGTERM, cleanup);
 
         if (*dgn == '\0') {
-#if TMS || VMGR
 
-	/* If dgn not specified, get it from VMGR or TMS (if installed) */
+	/* If dgn not specified, get it from VMGR */
 
-#if VMGR
 		uid = getuid();
 		gid = getgid();
 		if ((c = vmgrcheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, uid, gid))) {
-#if TMS
-			if (c != ETVUNKN)
-#endif
 			{
 				fprintf (stderr, "%s\n", sstrerror(c));
 				exit_prog (USERR);
 			}
-#endif
-#if TMS
-			p = getacct();
-			if (p == NULL) {
-				fprintf (stderr, TP027);
-				exit_prog (USERR);
-			}
-			strcpy (acctname, p);
-			if (tmscheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, acctname))
-				exit_prog (USERR);
-#endif
-#if VMGR
 		}
-#endif
-#else
-		strcpy (dgn, DEFDGN);
-#endif
 	}
 	strcpy (path, tempnam(NULL, "tp"));
 

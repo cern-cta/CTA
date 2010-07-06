@@ -3,9 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.10 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>

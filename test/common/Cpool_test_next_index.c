@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)Cpool_test_next_index.c,v 1.2 1999-12-09 14:47:48+01 CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* not lint */
 
 #include <Cpool_api.h>
 #include <stdio.h>

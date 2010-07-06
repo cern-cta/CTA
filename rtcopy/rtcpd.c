@@ -158,9 +158,6 @@ int rtcpd_main() {
             return(1);
     }
 
-#if defined(CTAPE_DUMMIES)
-    rc = Ctape_InitDummy();
-#endif /* CTAPE_DUMMIES */
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"main() Ctape_InitDummy(): %s\n",
                  sstrerror(serrno));
@@ -209,11 +206,7 @@ int rtcpd_main() {
             continue;
         }
 
-#if !defined(CTAPE_DUMMIES)
         pid = (int)fork();
-#else  /* !CTAPE_DUMMIES */
-        pid = 0;
-#endif /* !CTAPE_DUMMIES */
         if ( pid == -1 ) {
             rtcp_log(LOG_ERR,"main() failed to fork(): %s\n",
                      sstrerror(errno));
@@ -231,7 +224,6 @@ int rtcpd_main() {
         /*
          * Child
          */
-#if !defined(CTAPE_DUMMIES)
         signal(SIGPIPE,SIG_IGN);
         /*
          * Ignoring SIGXFSZ signals before logging anything
@@ -240,12 +232,9 @@ int rtcpd_main() {
         closesocket(*listen_socket);
         free(listen_socket);
         listen_socket = NULL;
-#endif /* !CTAPE_DUMMIES */
         *request_socket = accept_socket;
         rc = rtcpd_MainCntl(request_socket);
-#if !defined(CTAPE_DUMMIES)
         break;
-#endif /* !CTAPE_DUMMIES */
     }
     (void)rtcp_CleanUp(&listen_socket,rc);
     if ( request_socket != NULL ) free(request_socket);
@@ -286,8 +275,6 @@ int main(int argc, char *argv[]) {
 
     if ( Debug == TRUE ) exit(rtcpd_main());
 
-#if !defined(CTAPE_DUMMIES)
     if ( Cinitdaemon("rtcpd",SIG_IGN) == -1 ) exit(1);
-#endif /* CTAPE_DUMMIES */
     exit(rtcpd_main());
 }

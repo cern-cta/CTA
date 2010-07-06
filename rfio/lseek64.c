@@ -40,11 +40,6 @@ off64_t rfio_lseek64(int      s,
   INIT_TRACE("RFIO_TRACE") ;
   TRACE(1,"rfio","rfio_lseek64(%d, %s, %x)",s,i64tostr(offset,tmpbuf,0),how) ;
 
-#if defined(CLIENTLOG)
-  /* Client logging */
-  rfio_logls(s,offset,how);
-#endif /* CLIENTLOG */
-
   /*
    * The file is local
    */

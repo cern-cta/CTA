@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.4 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>

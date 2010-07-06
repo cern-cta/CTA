@@ -7,7 +7,6 @@
  * All rights reserved
  */
 
-/* NOTE(fuji): AIX might support O_DIRECT as well, to be verified. */
 #if defined(linux) && !defined(__ia64__)
 #define _GNU_SOURCE  /* O_DIRECT */
 #endif
@@ -15,7 +14,6 @@
 /*
  * Remote file I/O flags and declarations.
  */
-#define DEBUG           0
 #define RFIO_KERNEL     1
 #include <stdlib.h>
 #include <stdio.h>
@@ -206,9 +204,7 @@ int srlockf64(int      s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-#if defined(SACCT)
   rfioacct(RQST_LOCKF,-1,-1,s,op,(int)siz,status,rcode,NULL,NULL,NULL);
-#endif /* SACCT */
   log(LOG_DEBUG, "srlockf64:  sending back status %d rcode %d\n", status, rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srlockf64:  write(): %s\n", strerror(errno));
@@ -708,9 +704,7 @@ int  sropen64(int     s,
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
   marshall_HYPER(p,offsetout);
-#if defined(SACCT)
   rfioacct(RQST_OPEN64,uid,gid,s,(int)ntohopnflg(flags),(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
-#endif /* SACCT */
   log(LOG_DEBUG, "sropen64: sending back status(%d) and errno(%d)\n", status, rcode);
   replen = WORDSIZE+3*LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
@@ -1834,9 +1828,7 @@ int  sropen64_v3(int         s,
       }
       log(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on ctrl socket %d\n", ctrl_sock);
     }
-#if defined(SACCT)
   rfioacct(RQST_OPEN64_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
-#endif /* SACCT */
   return fd;
 }
 
@@ -1897,9 +1889,7 @@ int   srclose64_v3(int       s,
   }
 
   /* Issue accounting                                        */
-#if defined(SACCT)
   rfioacct(RQST_CLOSE64_V3,0,0,s,0,0,status,rcode,&myinfo,NULL,NULL);
-#endif /* SACCT */
 
   /* Send the answer to the client via ctrl_sock             */
   p= rqstbuf;

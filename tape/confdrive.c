@@ -3,32 +3,17 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.12 $ $Date: 2008/03/05 10:15:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
-#if defined(_AIX) && defined(RS6000PCTA)
-#include <sys/ioctl.h>
-#include <sys/mtio.h>
-#endif
-#if defined(ADSTAR)
-#include <sys/Atape.h>
-#endif
 #include "Ctape.h"
 #include "Ctape_api.h"
-#if SACCT
 #include "sacct.h"
 #include "serrno.h"
-#endif
-#if VDQM
 #include "net.h"
 #include "vdqm_api.h"
-#endif
 #include <unistd.h>
 #include "tplogger_api.h"
 #if defined(linux)
@@ -251,16 +236,11 @@ int main(int	argc,
 				close (tapefd);
 			}
 		}
-#if SACCT
 		if (c == 0)
 			tapeacct (TPCONFUP, 0, 0, jid, dgn, drive, "", 0, reason);
-#endif
 	} else {
-#if SACCT
 		tapeacct (TPCONFDN, 0, 0, jid, dgn, drive, "", 0, reason);
-#endif
 	}
-#if VDQM
 	if (c == 0) {
 		vdqm_status = (status == CONF_UP) ? VDQM_UNIT_UP : VDQM_UNIT_DOWN;
 		tplogit (func, "calling vdqm_UnitStatus\n");
@@ -278,7 +258,6 @@ int main(int	argc,
                                     "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
                                     "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok");
 	}
-#endif
 	if (rpfd >= 0)
 		sendrep (rpfd, TAPERC, c);
 

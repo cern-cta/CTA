@@ -70,11 +70,6 @@ int rfio_read64_v2(int s,
     return(0);
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logrd(s,size);
-#endif
-
   /*
    * The file is local.
    */

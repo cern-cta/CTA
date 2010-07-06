@@ -94,9 +94,7 @@
 #endif
 #define DMC_PORT 8888
 #define DMC_OP_PORT 8889
-#ifndef DEBUG
 #define DMC_HOST "shd34"
-#endif
 #define DMC_ADDRESS_OFFSET 0    /* Address offset for MRU calls (slot 0 == 1 ...etc.) */
 
 #define C_MAGIC 0x10aa5b
@@ -269,7 +267,6 @@ typedef struct {
 /*
  * Prototypes
  */
-#if defined(__STDC__)
 extern int dmc_build_inventory(DMCinventory_t **);
 extern int dmc_destroy_inventory(DMCinventory_t **);
 extern int dmc_rehash(DMCinventory_t *);
@@ -297,33 +294,4 @@ extern DMCrequest_t *dmc_restore();
 extern int dmc_check_port(DMCinventory_t *);
 extern int dmc_message(DMCreply_t *, char *, ... );
 extern int dmc_rbterr(int, int, int *);
-#else /* !defined(__STDC__) */
-extern int dmc_build_inventory();
-extern int dmc_destroy_inventory();
-extern int dmc_rehash();
-extern DMCcart_t *dmc_find_vid();
-extern DMCcart_t *dmc_nearest_empty();
-extern int dmc_move_vid();
-extern int dmc_swap_position();
-extern int dmc_mount();
-extern int dmc_unmount();
-extern int dmc_wait_client();
-extern int dmc_init_network();
-extern int dmc_init_options();
-extern int dmc_init_handlers();
-extern int dmc_alrm();
-extern DMCrequest_t *dmc_from_client();
-extern int dmc_to_client();
-extern void dmc_shutdown();
-extern int dmc_print_content();
-extern int dmc_home();
-extern int dmc_move();
-extern int dmc_eject();
-extern int dmc_partition();
-extern int dmc_save();
-extern DMCrequest_t *dmc_restore();
-extern int dmc_check_port();
-extern int dmc_message();
-extern int dmc_rbterr();
-#endif /* __STDC__ */
 #endif /* _DMC_H */

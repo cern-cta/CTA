@@ -1,7 +1,4 @@
 #include <stdlib.h>
-#if defined(DEBUG)
-#include <stdio.h>
-#endif /* DEBUG */
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
@@ -83,17 +80,11 @@ int vdqm_Connect(vdqmnw_t **nw) {
 #endif /* VDQM_PORT */
 	}
 	if ( vdqm_port < 0 ) {
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_Connnect() vdqm_port = %d\n",vdqm_port);
-#endif /* DEBUG */
 		return(-1);
 	}
 	if ( *nw == NULL ) {
 		*nw = (vdqmnw_t *)calloc(1,sizeof(vdqmnw_t));
 		if ( *nw == NULL ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_Connect() malloc() %s\n",ERRTXT);
-#endif /* DEBUG */
 			return(-1);
 		}
 		(*nw)->listen_socket = (*nw)->accept_socket = 
@@ -102,9 +93,6 @@ int vdqm_Connect(vdqmnw_t **nw) {
 
 	(*nw)->connect_socket = socket(AF_INET,SOCK_STREAM,0);
 	if ( (*nw)->connect_socket == INVALID_SOCKET ) {
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_Connect() socket(): %s\n",NWERRTXT);
-#endif /* DEBUG */
         free(*nw);
 		return(-1);
 	}
@@ -114,10 +102,6 @@ int vdqm_Connect(vdqmnw_t **nw) {
      */
     for (;;) {
     	if ( (hp = gethostbyname(try_host)) == NULL ) {
-#ifdef DEBUG
-	    	fprintf(stderr,"vdqm_Connect(): gethostbyname(%s) %s\n",
-		    	try_host,NWERRTXT);
-#endif /* DEBUG */
             free(*nw);
     		return(-1);
 	    }
@@ -127,9 +111,6 @@ int vdqm_Connect(vdqmnw_t **nw) {
 
     	if ( connect((*nw)->connect_socket,(struct sockaddr *)&sin, sizeof(struct sockaddr_in)) ==
     		SOCKET_ERROR) {
-#ifdef DEBUG
-    		fprintf(stderr,"vdqm_Connect() connect(): %s\n",NWERRTXT);
-#endif /* DEBUG */
             if ( vdqm_replica == NULL || vdqm_replica == try_host ) {
                 closesocket((*nw)->connect_socket);
                 free(*nw);
@@ -150,16 +131,9 @@ int vdqm_Disconnect(vdqmnw_t **nw) {
     if ( nw == NULL || *nw == NULL ) return(-1);
 	if ( (*nw)->connect_socket != INVALID_SOCKET ) {
 		if ( (rc = shutdown((*nw)->connect_socket,2)) == SOCKET_ERROR ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_Disconnect() shutdown():%s\n",NWERRTXT);
-#endif /* DEBUG */
 			return(-1);
 		}
 		if ( (rc = closesocket((*nw)->connect_socket)) == SOCKET_ERROR ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_Disconnect() closesocket(): %s\n",
-				NWERRTXT);
-#endif /* DEBUG */
 			return(-1);
 		}
 		free(*nw);
@@ -195,10 +169,6 @@ int vdqm_SendVolReq(vdqmnw_t *nw,
 	rc = vdqm_SendReq(tmpnw,NULL,&volreq,NULL);
 	if ( rc != -1 ) {
 		rc = vdqm_RecvAckn(tmpnw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_SendVolReq() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(tmpnw,NULL,&volreq,NULL);
 			if ( rc != -1 ) {
@@ -244,10 +214,6 @@ int vdqm_DelVolumeReq(vdqmnw_t *nw,
 	rc = vdqm_SendReq(tmpnw,&hdr,&volreq,NULL);
 	if ( rc != -1 ) {
 		rc = vdqm_RecvAckn(tmpnw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_DelVolReq() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(tmpnw,&hdr,&volreq,NULL);
 			if ( rc != -1 ) {
@@ -272,23 +238,13 @@ int vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
 		if ( rc < 0 ) return(rc);
         memset(&hdr,'\0',sizeof(hdr));
         hdr.reqtype = VDQM_GET_VOLQUEUE;
-#ifdef DEBUG
-        fprintf(stderr,"vdqm_NextVol() dgn=%s\n",volreq->dgn);
-#endif /* DEBUG */
 	    rc = vdqm_SendReq(*nw,&hdr,volreq,NULL);
     }
     if ( rc != -1 ) {
         rc = vdqm_RecvReq(*nw,&hdr,volreq,NULL);
-#ifdef DEBUG
-        fprintf(stderr,"vdqm_NextVol(): vdqm_RecvReq() rc=%d\n",rc);
-#endif /* DEBUG */
     }
     if ( rc == -1 || volreq->VolReqID == -1 ) {
 		rc = vdqm_RecvAckn(*nw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_NextVol() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(*nw,&hdr,volreq,NULL);
 			if ( rc != -1 ) {
@@ -330,10 +286,6 @@ int vdqm_UnitStatus(vdqmnw_t *nw,
 		len = sizeof(drvreq.server)-1;
 		rc = gethostname(drvreq.server,len);
 		if ( rc == SOCKET_ERROR ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_UnitStatus() gethostname() %s\n",
-				NWERRTXT);
-#endif /* DEBUG */
 			return(-1);
 		}
 	}
@@ -350,10 +302,6 @@ int vdqm_UnitStatus(vdqmnw_t *nw,
     rc = vdqm_SendReq(tmpnw,NULL,NULL,&drvreq);
 	if ( rc != -1 ) {
 		rc = vdqm_RecvAckn(tmpnw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_SendDrvReq() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(tmpnw,NULL,NULL,&drvreq);
 			if ( rc != -1 ) {
@@ -395,10 +343,6 @@ int vdqm_DelDrive(vdqmnw_t *nw,
 		len = sizeof(drvreq.server)-1;
 		rc = gethostname(drvreq.server,len);
 		if ( rc == SOCKET_ERROR ) {
-#ifdef DEBUG
-			fprintf(stderr,"vdqm_DelDrive() gethostname() %s\n",
-				NWERRTXT);
-#endif /* DEBUG */
 			return(-1);
 		}
 	}
@@ -408,10 +352,6 @@ int vdqm_DelDrive(vdqmnw_t *nw,
 	rc = vdqm_SendReq(tmpnw,&hdr,NULL,&drvreq);
 	if ( rc != -1 ) {
 		rc = vdqm_RecvAckn(tmpnw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_DelDrive() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(tmpnw,&hdr,NULL,&drvreq);
 			if ( rc != -1 ) {
@@ -444,10 +384,6 @@ int vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
     }
     if ( rc == -1 || drvreq->DrvReqID == -1 ) {
 		rc = vdqm_RecvAckn(*nw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_NextDrive() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(*nw,&hdr,NULL,drvreq);
 			if ( rc != -1 ) {
@@ -478,10 +414,6 @@ int vdqm_admin(vdqmnw_t *nw, int admin_req) {
     rc = vdqm_SendReq(tmpnw,&hdr,NULL,NULL);
 	if ( rc != -1 ) {
 		rc = vdqm_RecvAckn(tmpnw);
-#ifdef DEBUG
-		fprintf(stderr,"vdqm_admin() vdqm_RecvAckn() rc = 0x%x\n",
-			rc);
-#endif /* DEBUG */
 		if ( rc == VDQM_COMMIT ) {
 			rc = vdqm_RecvReq(tmpnw,&hdr,NULL,NULL);
 			if ( rc != -1 ) {

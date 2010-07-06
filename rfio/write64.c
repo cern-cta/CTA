@@ -61,11 +61,6 @@ int rfio_write64_v2(int     s,
     return(0);
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logwr(s,size);
-#endif
-
   /*
    * The file is local.
    */

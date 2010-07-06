@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: create_test_file.c,v $ $Revision: 1.2 $ $Date: 2000/03/30 14:50:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <fcntl.h>

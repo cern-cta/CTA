@@ -24,9 +24,6 @@
  * @author Olof Barring
  *****************************************************************************/
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.14 $ $Date: 2007/04/23 15:33:17 $ CERN IT/FIO Olof Barring";
-#endif /* lint */
 
 
 #include <stdlib.h>

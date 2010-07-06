@@ -133,7 +133,7 @@ int rfio_open(char    *filepath,
   if ( flags & O_LARGEFILE ) return( rfio_open64(filepath, flags, mode) );
 #endif /* O_LARGEFILE */
 
-#if ( defined(__osf__) && defined(__alpha) ) || defined(IRIX64) || defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
+#if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
   /* Try to promote into rfio 64 bits call                           */
   /* If 64 is not supported goes to rfio_open_ext                    */
   return( rfio_open64(filepath, flags, mode) );
@@ -232,7 +232,7 @@ int rfio_open_ext(char    * filepath,
   int      rt ;  /* daemon in site(0) or not (1) */
   int    bufsize ;  /* socket buffer size   */
   struct sockaddr_in      to;
-#if (defined(_AIX) || defined(linux))
+#if defined(linux)
   socklen_t tolen;
 #else
   int     tolen;
@@ -281,10 +281,6 @@ int rfio_open_ext(char    * filepath,
   }
 
   /* Version 2 behaviour starts here */
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logst();
-#endif /* CLIENTLOG */
 
   /*
    * The file is local.
@@ -305,10 +301,6 @@ int rfio_open_ext(char    * filepath,
     if ( status < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE() ;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logop(status,filename,host,flags);
-#endif /* CLIENTLOG */
     return status ;
   }
   if (parserc < 0) {
@@ -490,10 +482,6 @@ int rfio_open_ext(char    * filepath,
     rfp->offset= status ;
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logop(rfp->s,filename,host,flags);
-#endif
   /*
    * The file is open, update rfp->fp
    */

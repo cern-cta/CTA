@@ -58,17 +58,7 @@ int Ctape_mount(char *path,
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();
-#ifdef TMS
-	p = getacct();
-	if (p == NULL) {
-		Ctape_errmsg (func, TP027);
-		serrno = SENOMAPFND;
-		return (-1);
-	}
-	strcpy (acctname, p);
-#else
 	strcpy (acctname, "NOACCT");
-#endif
 
 	/* path */
 
@@ -120,7 +110,6 @@ int Ctape_mount(char *path,
 
 	/* Set default values */
 
-#if TMS || VMGR
 	if (! vsn)
 		actual_vsn[0] = '\0';
 	else {
@@ -140,53 +129,9 @@ int Ctape_mount(char *path,
 	else
 		strcpy (actual_lbltype, lbltype);
 
-#if VMGR
 	if ((c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
 	    actual_lbltype, mode, uid, gid))) {
-#if TMS
-		if (c != ETVUNKN)
-#endif
-		{
-#if !defined(VDQM)
-            /* Only return an error in case the tape cannot
-               be accessed when VDQM isn't used. The mountape process does the
-               check anyway and unloads the drive if necessary (BC)*/
-			Ctape_errmsg ("vmgrcheck", "%s\n", sstrerror(c));
-			serrno = c;
-			return (-1);
-#endif
-		}
-#endif
-#if TMS
-		if (c = tmscheck (actual_vid, actual_vsn, actual_dgn, actual_den,
-		    actual_lbltype, mode, acctname)) {
-			serrno = c;
-			return (-1);
-		}
-#endif
-#if VMGR
 	}
-#endif
-#else
-	if (! vsn)
-		strcpy (actual_vsn, actual_vid);
-	else {
-		strcpy (actual_vsn, vsn);
-		UPPER (actual_vsn);
-	}
-	if (! dgn)
-		strcpy (actual_dgn, DEFDGN);
-	else
-		strcpy (actual_dgn, dgn);
-	if (! density)
-		strcpy (actual_den, "0");
-	else
-		strcpy (actual_den, density);
-	if (! lbltype)
-		strcpy (actual_lbltype, "sl");
-	else
-		strcpy (actual_lbltype, lbltype);
-#endif
  
         /* Build request header */
  

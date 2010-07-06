@@ -98,35 +98,20 @@
 #define D1000GC	(D1000G | IDRC)
 
 #ifdef NOTRACE
-#ifdef __STDC__
 #define ENTRY(x) \
 	{ \
 	(void) strcpy (func, #x); \
 	}
-#else
-#define ENTRY(x) \
-	{ \
-	(void) strcpy (func, "x"); \
-	}
-#endif
 #define RETURN(x) \
 	{ \
 	return ((x)); \
 	}
 #else
-#ifdef __STDC__
 #define ENTRY(x) \
 	{ \
 	(void) strcpy (func, #x); \
 	tplogit (func, "function entered\n"); \
 	}
-#else
-#define ENTRY(x) \
-	{ \
-	(void) strcpy (func, "x"); \
-	tplogit (func, "function entered\n"); \
-	}
-#endif
 #define RETURN(x) \
 	{ \
 	if ((x) >= 0) \

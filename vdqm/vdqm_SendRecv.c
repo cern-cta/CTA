@@ -624,10 +624,6 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
     int n;
 #endif
 
-#if defined(DEBUG)
-    log(LOG_DEBUG,"vdqm_ConnectToRTCP(): DEBUG MODE! no action\n");
-    return(0);
-#endif
     if ( connect_socket == NULL ) return(-1);
     if ( RTCPserver == NULL ) gethostname(servername,CA_MAXHOSTNAMELEN);
     else strcpy(servername,RTCPserver);
@@ -692,10 +688,6 @@ int vdqm_SendToRTCP(SOCKET connect_socket, vdqmVolReq_t *VolReq,
     char *p;
     int len,msglen,rc,magic,reqtype,status;
 
-#if defined(DEBUG)
-    log(LOG_DEBUG,"vdqm_ConnectToRTCP(): DEBUG MODE! no action\n");
-    return(0);
-#endif
     if ( VolReq == NULL || DrvReq == NULL ) return(-1);
     p = buf;
     len = vdqm_MarshallRTCPReq(p,VolReq,DrvReq,SendTo);

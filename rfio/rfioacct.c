@@ -32,7 +32,6 @@ void rfioacct(int reqtype,
               char *filename1,
               char *filename2)
 {
-#if defined(SACCT)
   int acctreclen;
   struct acctrfio64  acct_rfio;
   struct sockaddr_in local_addr;
@@ -90,6 +89,5 @@ void rfioacct(int reqtype,
   acct_rfio.rc = rc;
   acctreclen = ((char *)acct_rfio.filename - (char *) &acct_rfio) + strlen(acct_rfio.filename) + 1;
   wsacct(ACCTRFIO64, (void*)&acct_rfio, acctreclen);
-#endif /* SACCT */
   return;
 }

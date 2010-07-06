@@ -41,11 +41,6 @@ off_t rfio_lseek(int      s,
   INIT_TRACE("RFIO_TRACE") ;
   TRACE(1,"rfio","rfio_lseek(%d, %d, %x)",s,offset,how) ;
 
-#if defined(CLIENTLOG)
-  /* Client logging */
-  rfio_logls(s,offset,how);
-#endif /* CLIENTLOG */
-
   /*
    * The file is local
    */

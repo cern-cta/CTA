@@ -5,10 +5,6 @@
 
 /* socket.c     Generalized network interface                           */
 
-
-#undef DEBUG
-/* Define DUMP to print buffers contents - heavy debug mode             */
-
 #define READ(x,y,z)     recv(x,y,z,0)   /* Actual read system call      */
 #define WRITE(x,y,z)    send(x,y,z,0)   /* Actual write system  call    */
 #define CLOSE(x)        close(x)        /* Actual close system call     */
@@ -40,9 +36,6 @@ static int timeout_set=0;
 #include <setjmp.h>
 #include <signal.h>
 #include <net.h>                        /* networking specifics         */
-#if defined(DEBUG) || defined(DUMP)
-#include <log.h>                        /* logging functions            */
-#endif /* DEBUG || DUMP */
 #include <serrno.h>                     /* special errors               */
 
 #ifdef READTIMEOUT
@@ -53,48 +46,6 @@ static void     (* defsigalrm) ();
 #ifndef min
 #define min(x, y)       (((x-y) > 0) ? y : x)
 #endif /* min */
-
- 
-#ifdef DUMP
-
-#include <ctype.h>
-
-static  int
-Dump(buf, nbytes)
-char    *buf;
-int     nbytes;
-{
-    register int    i, j;
-    register char   c;
-
-    log(LOG_DEBUG ," *** Hexadecimal dump *** \n");
-
-    for (i=0;i<nbytes/20;i++)       {
-        for (j=0;j<20;j++)      {
-            log(LOG_DEBUG ,"<%2.2X>", (char) buf[i*20+j]);
-        }
-        log(LOG_DEBUG ,"\n");
-    }
-    for (i=0;i<nbytes%20;i++)       {
-        log(LOG_DEBUG ,"<%2.2X>",buf[(nbytes/20)*20+i]);
-    }
-    log(LOG_DEBUG ,"\n *** Interpreted dump *** \n");
-    for (i=0;i<nbytes/80;i++)       {
-        for (j=0;j<80;j++)      {
-            c = (char) buf[i*80+j];
-            if (isprint(c)) log(LOG_DEBUG ,"%c", c);
-            else log(LOG_DEBUG ,".");
-        }
-        log(LOG_DEBUG ,"\n");
-    }
-    for (i=0;i<nbytes%80;i++)       {
-        c = (char) buf[(nbytes/80)*80+i];
-        if (isprint(c)) log(LOG_DEBUG ,"%c", c);
-        else log(LOG_DEBUG ,".");
-    }
-    log(LOG_DEBUG ,"\n");
-}
-#endif /* DUMP */
 
 #ifdef READTIMEOUT
 void    catch()
@@ -117,28 +68,14 @@ int    nbytes;
     timeout.tv_sec = rtimeout;
     timeout.tv_usec = 0;
 
-#if defined(DEBUG)
-    fprintf(stdout,"select(%d, %x, %x, %x, %d.%d)\n",
-        FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,timeout.tv_sec, timeout.tv_usec);
-#endif /* DEBUG */
     switch(select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout)) {
     case -1:
-#if defined(DEBUG)
-        fprintf(stdout,"select returned -1\n");
-#endif /* DEBUG */
         return (-1);        /* an error has occured */
     case 0:
-#if defined(DEBUG)
-        fprintf(stdout,"select timed out\n");
-        syslog(LOG_ALERT, "[%d]: socket: network recv timed out", getpid());
-#endif /* DEBUG */
         serrno = SETIMEDOUT; return(-1);
     default: break;
     }
 
-#if defined(DEBUG)
-    fprintf(stdout,"select returned data\n");
-#endif /* DEBUG */
 #ifdef BLOCKSIZE
     return( READ(s, buf, min(BLOCKSIZE, nbytes)));
 #else
@@ -158,10 +95,6 @@ int     nbytes;
       serrno = EINVAL;
       return(-1);
     }
-
-#if defined(DEBUG)
-    log(LOG_DEBUG ,"dorecv(%x, %x, %d)\n", s, buf, nbytes);
-#endif /* DEBUG */
 
 #ifdef READTIMEOUT
     if (setjmp(alarmbuf) == 1)      {
@@ -200,19 +133,8 @@ int     nbytes;
                 serrno=SECONNDROP;
                 return(0);
             }
-#if defined(DEBUG)
-            log(LOG_DEBUG ,"ERROR: %d while n=%d,nb-n=%d,buf=%x\n",
-                errno, n, nb, buf);
-#endif /* DEBUG */
             return (n);
         }
-#if defined(DEBUG)
-        log(LOG_DEBUG ,"dorecv: %d bytes received\n",n);
-#if defined(DUMP)
-        log(LOG_DEBUG ,"dorecv: dump follows\n");
-        Dump(buf,n);
-#endif /* DUMP */
-#endif /* DEBUG */
         buf += n;
     }
     return (nbytes);
@@ -231,9 +153,6 @@ int     nbytes;
       return(-1);
     }
 
-#if defined(DEBUG)
-    log(LOG_DEBUG, "dosend(%x, %x, %d)\n", s, buf, nbytes);
-#endif
     nb = nbytes;
 
     for (; nb >0;)       {
@@ -248,24 +167,10 @@ int     nbytes;
                 serrno=SECONNDROP;
                 return(0);
             }
-#if defined(DEBUG)
-            log(LOG_DEBUG ,"ERROR: %d while n=%d,nb-n=%d,buf=%x\n",
-                errno, n, nb, buf);
-#endif /* DEBUG */
             return (n);
         }
-#if defined(DEBUG)
-#if defined(DUMP)
-        log(LOG_DEBUG ,"dosend: dump follows\n");
-        Dump(buf,n);
-#endif /* DUMP */
-        log(LOG_DEBUG ,"dosend: %d bytes sent\n",n);
-#endif /* DEBUG */
         buf += n;
     }
-#if defined(DEBUG)
-    log(LOG_DEBUG, "dosend(%x) returns %d\n", s, nbytes);
-#endif /* DEBUG */
     return (nbytes);
 }
 
@@ -314,9 +219,6 @@ int setrtimo(int     val)
 
     otimeout = rtimeout;
     rtimeout=val;
-#if defined(DEBUG)
-    fprintf(stdout,"setrtimo: switching to time'dout recv\n");
-#endif /* DEBUG */
     timeout_set = 1;
     return(otimeout);
 }

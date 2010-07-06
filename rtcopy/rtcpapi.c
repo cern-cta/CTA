@@ -30,9 +30,6 @@
 #include <rfio_api.h>
 #include <log.h>
 #include <osdep.h>
-#if !defined(VDQM)
-#include <marshall.h>
-#endif /* VDQM */
 #include <net.h>
 #include <Cuuid.h>
 #include <rtcp_constants.h>
@@ -79,12 +76,7 @@ extern int rtcp_CloseConnection (SOCKET *);
 
 extern int rtcp_Listen (SOCKET, SOCKET *, int, int);
 extern int rtcp_CheckConnect (SOCKET *, tape_list_t *);
-#if TMS
-extern int rtcp_CallTMS (tape_list_t *, char *);
-#endif
-#if VMGR
 extern int rtcp_CallVMGR (tape_list_t *, char *);
-#endif
 extern int rtcpc_InitReqStruct (
 				rtcpTapeRequest_t *, 
 				rtcpFileRequest_t *
@@ -1238,31 +1230,9 @@ int rtcpc(tape_list_t *tape) {
   rc = rtcpc_InitReq(&socks,&port,tape);
   if ( rc == -1 ) return(-1);
 
-#if VMGR
   /* Call VMGR */
   if ((rc = rtcp_CallVMGR(tape,realVID)) != 0) {
-#endif
-#if TMS
-#if VMGR
-    /* VMGR fails with acceptable serrno and TMS is available */
-    if (serrno == ETVUNKN) {
-#endif
-      /* Call TMS */
-      rc = rtcp_CallTMS(tape,realVID);
-#if VMGR
-    }
-#endif
-#elif (! defined(VMGR))
-    /* No TMS nor VMGR : take argument as it is */
-    if ( realVID != NULL ) {
-      strcpy(realVID,tape->tapereq.vid);
-      UPPERCASE(realVID);
-    }
-    rc = 0;
-#endif
-#if VMGR
   }
-#endif
   if ( rc == -1 || rtcpc_killed != 0 ) {
     save_serrno = serrno;
     (void)rtcpc_finished(&socks,NULL,NULL);
@@ -1273,11 +1243,7 @@ int rtcpc(tape_list_t *tape) {
     } else {
       local_severity = RTCP_FAILED|RTCP_SYERR;
     }
-#if TMS
-    rtcp_log(LOG_ERR,"rtcpc() rtcp_CallTMS(): %s\n",sstrerror(save_serrno));
-#else
     rtcp_log(LOG_ERR,"rtcpc() rtcp_CallVMGR(): %s\n",sstrerror(save_serrno));
-#endif
     serrno = save_serrno;
     return(rtcpc_SetLocalErrorStatus(tape,serrno,"rtcp_CallTMS() error",
                                      local_severity,rc));

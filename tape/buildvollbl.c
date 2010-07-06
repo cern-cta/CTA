@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	buildvollbl - build VOL1 */
 #include <string.h>

@@ -24,9 +24,6 @@
  * @author Olof Barring
  *****************************************************************************/
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dataSource.c,v $ $Revision: 1.1 $ $Date: 2005/05/31 15:37:17 $ CERN IT/FIO Olof Barring";
-#endif /* lint */
 
 
 #include <stdlib.h>

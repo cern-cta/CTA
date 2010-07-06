@@ -28,9 +28,7 @@
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "net.h"
-#if SACCT
 #include "sacct.h"
-#endif
 #include "serrno.h"
 #ifdef TPCSEC
 #include "Csec_api.h"
@@ -102,10 +100,8 @@ void procrstatreq( char*, char* );
 
 char *getconfent();
 
-#if VDQM
 static int tpdrvidle( struct tptab* );
 static int vdqmdrvstate( struct tptab* );
-#endif
 
 int tpd_main() {
 	int c, l;
@@ -128,10 +124,8 @@ int tpd_main() {
 	struct servent *sp;
 	struct timeval timeval;
 	time_t lasttime, tm, lasttime_monitor_msg_sent;
-#if VDQM
         time_t lasttime_vdqm_update;
         int vdqmchkintvl = VDQMCHKINTVLDFT;
-#endif
 #ifdef TPCSEC
 	Csec_context_t sec_ctx;
 #endif
@@ -150,9 +144,7 @@ int tpd_main() {
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "tape daemon has started." );
-#if SACCT
 	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
-#endif
 
 	if (Cdomainname (domainname, sizeof(domainname)) < 0) {
 
@@ -175,9 +167,7 @@ int tpd_main() {
 
 	lasttime = time(0);
 	lasttime_monitor_msg_sent = lasttime;
-#if VDQM
         lasttime_vdqm_update = 0;
-#endif
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
 	signal (SIGPIPE,SIG_IGN);
@@ -349,7 +339,6 @@ int tpd_main() {
 			clean4jobdied();  
 			lasttime = tm;
 		}
-#if VDQM                
         /* 
         ** Confirm to VDQM if drives are free 
         */
@@ -444,7 +433,6 @@ int tpd_main() {
                 lasttime_vdqm_update = tm;
             }
         }
-#endif
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;	/* must set each time for linux */
 		timeval.tv_usec = 0;
@@ -1157,10 +1145,8 @@ void procfrdrvreq(char *req_data,
             tunp->vsn[0] = '\0';
         }
         tunp->tobemounted = 0;
-#if SACCT
         tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
                   tunp->dgn, tunp->drive, "", 0, 0);
-#endif
         if (tunp->up <= 0) {
             (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
             tunp->up = 0;
@@ -1574,10 +1560,8 @@ void procmountreq(char *req_data,
 	strcpy (tunp->acctname, acctname);
 	tunp->jid = jid;
 
-#if SACCT
 	tapeacct (TPASSIGN, tunp->uid, tunp->gid, tunp->jid,
 		tunp->dgn, tunp->drive, vid, 0, 0);
-#endif
 
 	tunp->filp = (struct tpfil *) calloc (1, sizeof(struct tpfil));
 
@@ -2230,12 +2214,10 @@ void procrsltreq(char *req_data,
 
 	unlink (tunp->filp->path);	/* delete previous path */
 
-#if SACCT
 	tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
 		oldtunp->dgn, oldtunp->drive, "", 0, 0);
 	tapeacct (TPASSIGN, tunp->uid, tunp->gid, tunp->jid,
 		tunp->dgn, tunp->drive, "", 0, 0);
-#endif
 	if (oldtunp->up <= 0) {
 		(void) confdrive (tunp, -1, CONF_DOWN, -oldtunp->up);
 		oldtunp->up = 0;

@@ -13,9 +13,6 @@
 
 #ifndef _CNS_SERVER_H
 #define _CNS_SERVER_H
-#ifdef USE_MYSQL
-#include <mysql.h>
-#endif
 #include "Cns_struct.h"
 #include "Csec_api.h"
 
@@ -79,23 +76,13 @@
 
 struct Cns_dbfd {
         int                idx;                /* index in array of Cns_dbfd */
-#ifdef USE_MYSQL
-        MYSQL              mysql;
-#endif
         int                tr_mode;
         int                tr_started;
         int                connected;
 };
 
-#ifdef USE_ORACLE
 typedef char Cns_dbrec_addr[19];
 typedef int DBLISTPTR;
-#else
-#ifdef USE_MYSQL
-typedef char Cns_dbrec_addr[21];
-typedef MYSQL_RES *DBLISTPTR;
-#endif
-#endif
 
 struct Cns_class_metadata {
         int                classid;

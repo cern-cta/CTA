@@ -9,7 +9,6 @@
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
 
-#define DEBUG           0               /* Debugging flag               */
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
 #include <errno.h>

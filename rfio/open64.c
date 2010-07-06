@@ -153,10 +153,6 @@ int rfio_open64_ext(char    * filepath,
   }
 
   /* Version 2 behaviour starts here */
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logst();
-#endif /* CLIENTLOG */
 
   /*
    * The file is local.
@@ -180,10 +176,6 @@ int rfio_open64_ext(char    * filepath,
     if ( status < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE() ;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logop(status,filename,host,flags);
-#endif /* CLIENTLOG */
     return status ;
   }
   if (parserc < 0) {
@@ -382,10 +374,6 @@ int rfio_open64_ext(char    * filepath,
     rfp->offset64= offset ;
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logop(rfp->s,filename,host,flags);
-#endif
   /*
    * The file is open, update rfp->fp
    */

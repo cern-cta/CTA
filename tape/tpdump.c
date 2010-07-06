@@ -16,9 +16,7 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-#if VMGR
 #include "vmgr_api.h"
-#endif
 int Ctape_kill_needed;
 char *dvrname;
 char infil[CA_MAXPATHLEN+1];
@@ -68,9 +66,6 @@ int main(int	argc,
 	struct dgn_rsv dgn_rsv;
 	char *dp;
 	char drive[CA_MAXUNMLEN+1];
-#if defined(_AIX) && defined(_IBMR2)
-	char driver_name[7];
-#endif
 	int errflg = 0;
 	int flags = 0;
 	int fromblock = -1;
@@ -272,30 +267,15 @@ int main(int	argc,
 	signal (SIGTERM, cleanup);
 
 	if (*dgn == '\0') {
-#if TMS || VMGR
 
-		/* If dgn not specified, get it from VMGR or TMS (if installed) */
+		/* If dgn not specified, get it from VMGR */
 
-#if VMGR
 		if ((c = vmgrcheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, 0, 0))) {
-#if TMS
-			if (c != ETVUNKN)
-#endif
 			{
 				fprintf (stderr, "%s\n", sstrerror(c));
 				exit_prog (USERR);
 			}
-#endif
-#if TMS
-			if (tmscheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, NULL))
-				exit_prog (USERR);
-#endif
-#if VMGR
 		}
-#endif
-#else
-		strcpy (dgn, DEFDGN);
-#endif
 	}
 	strcpy (infil, tempnam (NULL, "tp"));
 

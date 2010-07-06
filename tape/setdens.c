@@ -3,9 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.7 $ $Date: 2007/03/08 09:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
  
 /*	setdens - set density and compression flag */
 #include <errno.h>

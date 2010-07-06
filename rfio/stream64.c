@@ -154,11 +154,6 @@ int rfio_open64_ext_v3(char    * filepath,
   TRACE(1,"rfio","rfio_open64_ext(%s, 0%o, 0%o, %d, %d, %d, %s)",
         filepath,flags,mode,uid,gid,passwd,reqhost) ;
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logst();
-#endif /* CLIENTLOG */
-
   /*
    * The file is local.
    */
@@ -177,10 +172,6 @@ int rfio_open64_ext_v3(char    * filepath,
     status= open64(filename, flags, mode) ;
     END_TRACE() ;
     rfio_errno = 0;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logop(status,filename,host,flags);
-#endif /* CLIENTLOG */
     return status ;
   }
   if (parserc < 0) {
@@ -436,10 +427,6 @@ int rfio_open64_ext_v3(char    * filepath,
   }
   TRACE(2,"rfio","open64_v3: setsockopt nodelay option set on data socket");
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logop(rfp->s,filename,host,flags);
-#endif
   /*
    * The file is open, update rfp->fp
    */
@@ -487,11 +474,6 @@ int rfio_read64_v3(int     ctrl_sock,
     END_TRACE();
     return(0);
   }
-
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logrd(ctrl_sock,size);
-#endif
 
   /*
    * The file is local.
@@ -712,11 +694,6 @@ int rfio_write64_v3(int     ctrl_sock,
     return(size);
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logwr(ctrl_sock,size);
-#endif
-
   /*
    * The file is local.
    */
@@ -872,10 +849,6 @@ int rfio_close64_v3(int     s)
     TRACE(2, "rfio", "rfio_close64_v3: using local close(%d)",s) ;
     status= close(s) ;
     save_errno = errno;
-#if defined (CLIENTLOG)
-    /* Client logging */
-    rfio_logcl(s);
-#endif
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;
@@ -890,10 +863,6 @@ int rfio_close64_v3(int     s)
     return(status);
   }
 
-#if defined (CLIENTLOG)
-  /* Client logging */
-  rfio_logcl(s);
-#endif
   /*
    * Checking magic number
    */
@@ -1056,11 +1025,6 @@ off64_t rfio_lseek64_v3(int       s,
 
   INIT_TRACE("RFIO_TRACE") ;
   TRACE(1, "rfio", "rfio_lseek64_v3(%d,%s,%x)",s,i64tostr(offset,tmpbuf,0),how);
-
-#if defined(CLIENTLOG)
-  /* Client logging */
-  rfio_logls(s,offset,how);
-#endif /* CLIENTLOG */
 
   /*
    * The file is local

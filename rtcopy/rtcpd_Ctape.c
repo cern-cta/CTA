@@ -260,13 +260,6 @@ int rtcpd_Deassign(int VolReqID,
             (void)setgid((gid_t)client->gid);
         if ( client != NULL && getuid() != (uid_t)client->uid ) 
             (void)setuid((uid_t)client->uid);
-#if defined(CTAPE_DUMMIES)
-        /*
-         * If we run with dummy Ctape we need to assign the
-         * drive here
-         */
-        (void) rtcpd_Assign(tape);
-#endif /* CTAPE_DUMMIES */
         (void)rtcpd_Reserve(tape);
         *(nexttape->tapereq.dgn) = '\0';
         nexttape->tapereq.mode = WRITE_DISABLE;

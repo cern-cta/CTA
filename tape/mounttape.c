@@ -21,17 +21,11 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
-#if SACCT
 #include "sacct.h"
-#endif
 #include "serrno.h"
-#if VDQM
 #include "net.h"
 #include "vdqm_api.h"
-#endif
-#if VMGR
 #include "vmgr_api.h"
-#endif
 #include "tplogger_api.h"
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -218,7 +212,6 @@ int main(int	argc,
                 }
         }
 
-#if VDQM
 	vdqm_status = VDQM_UNIT_ASSIGN;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_ASSIGN)\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -238,14 +231,11 @@ int main(int	argc,
                             "JobID"  , TL_MSG_PARAM_INT  , jid,
                             "vid"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-#endif
 
 	updvsn_done = 0;
-#if VMGR
 	density[0] = '\0';
 	if ((c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost)))
 		goto reply;
-#endif
 
 	if (tpmounted) {	/* tape already mounted */
 		if (!scsi)
@@ -274,9 +264,7 @@ int main(int	argc,
 		goto reply;
 	updvsn_done = 1;
 
-#if SACCT
 	tapeacct (TP2MOUNT, uid, gid, jid, dgn, drive, vid, 0, why4a);
-#endif
 
 	if (*loader != 'm')
 		needrbtmnt = 1;
@@ -340,7 +328,6 @@ remount_loop:
                                                             "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 	                                if (strcmp (devtype, "3592") == 0) {
-#if VDQM
 	                                  vdqm_status = VDQM_VOL_MOUNT;
 	                                  tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
                                           tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -360,7 +347,6 @@ remount_loop:
                                                                       "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                                       "vid"    , TL_MSG_PARAM_STR  , vid,
                                                                       "TPVID"  , TL_MSG_PARAM_TPVID, vid); 
-#endif
                                         }
 				}
 
@@ -410,10 +396,8 @@ remount_loop:
 
 			close (tapefd);
 			why = "wrong ring status";
-#if SACCT
 			why4a = TPU_WNGR;
 			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, TPU_WNGR);
-#endif
 			continue;
 		}
 #if linux
@@ -516,10 +500,8 @@ remount_loop:
 			}
 		close (tapefd);
 		why = "wrong vsn";
-#if SACCT
 		why4a = TPM_WNGV;
 		tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, TPU_WNGV);
-#endif
 		if (*loader == 'm')
 			continue;
 		demountforce = 1;
@@ -731,12 +713,9 @@ remount_loop:
             }
     }
 
-#if SACCT
 	tapeacct (TPMOUNTED, uid, gid, jid, dgn, drive, vid, 0, 0);
-#endif
 	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode)))
 		goto reply;
-#if VMGR
 	(void) vmgr_seterrbuf (errbuf, sizeof(errbuf));
 	errbuf[0] = '\0';
 	if (vmgr_tpmounted (vid, mode, jid) && serrno != ENOENT) {
@@ -760,9 +739,7 @@ remount_loop:
 		c = -1;
 		goto reply;
 	}
-#endif
 mounted:
-#if VDQM
 	vdqm_status = VDQM_VOL_MOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -782,7 +759,6 @@ mounted:
                             "JobID"  , TL_MSG_PARAM_INT  , jid,
                             "vid"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-#endif
 
 	/* do the prelabel if flag is set */
 

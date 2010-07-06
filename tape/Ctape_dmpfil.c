@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.31 $ $Date: 2009/02/24 14:44:55 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
 #include <errno.h>
@@ -165,9 +162,6 @@ int Ctape_dmpinit(char *path,
 
 	if (maxblksize < 0)
 		maxblksize = devinfo->maxblksize;
-#if defined(_AIX) && defined(RS6000PCTA)
-	if (maxblksize > 65535) maxblksize = 65535;
-#endif
 	if (maxbyte < 0) maxbyte = 320;
 	if (maxfile < 0) {
 		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD) {
@@ -799,30 +793,6 @@ int Ctape_dmpfil(char *path,
 		perc = tape_used / 100000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (10GB) *****\n",
 			perc);
-#if defined(_AIX) && defined(_IBMR2) && defined(ADSTAR)
-	    } else if (strcmp (dmpparm.devtype, "3590") == 0) {
-		unsigned int cpos;
-		unsigned char sense[128];
-		unsigned int tach;
-		unsigned int wrap;
-
-		if (ioctl (infd, SIOC_REQSENSE, sense) < 0) {
-			Ctape_dmpmsg (MSG_ERR, " DUMP ! UNABLE TO DETERMINE TAPE OCCUPANCY");
-			serrno = EIO;
-			close (infd);
-			return (-1);
-		}
-		tach = sense[25];
-		wrap = sense[53];
-		cpos = sense[53] * 235;
-		if ((wrap % 2) == 0)
-			cpos += (tach - 9);
-		else
-			cpos += (244 - tach);
-		perc = (cpos * 100) / (235 * 8);
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3590 CARTRIDGE *****\n",
-			perc);
-#endif
 	    }
 	} else if (den == D20G || den == D20GC) {
 	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {

@@ -311,6 +311,6 @@ const char* castor::RepresentationsIdStrings[RepresentationsIdsNb] = {
   "STREAM",
   "DATABASE",
   "ORACLE",
-  "MYSQL",
-  "PGSQL"
+  "DELETED REPRESENTATION",
+  "DELETED REPRESENTATION"
 };

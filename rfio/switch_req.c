@@ -11,7 +11,6 @@
  *
  */
 
-#define DEBUG           0               /* Debugging flag               */
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
 #include "rfio.h"                       /* Remote file I/O              */

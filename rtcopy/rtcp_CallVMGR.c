@@ -35,7 +35,6 @@ static char vmgr_error_buffer[512];        /* Vmgr error buffer */
 
 int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     int rc = 0;
-#if defined(VMGR)
     tape_list_t *tl;
     rtcpTapeRequest_t *tapereq;
     char *firstVID;
@@ -105,6 +104,5 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
             LOWERCASE(tapereq->label);
         }
     } CLIST_ITERATE_END(tape,tl);
-#endif /* VMGR */
     return(rc);
 }

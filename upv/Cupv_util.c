@@ -19,11 +19,7 @@
 #include "Cupv_util.h"
 #include "Cupv_constants.h"
 
-#ifdef __STDC__
 #define NAMEOFVAR(x) #x
-#else
-#define NAMEOFVAR(x) "x"
-#endif
 
 #ifdef SIXMONTHS
 #undef SIXMONTHS

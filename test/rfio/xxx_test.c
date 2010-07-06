@@ -271,10 +271,6 @@ int main(int argc,
 	}
 	fprintf(stdout,"OK\n");
 
-#ifdef PRIVDEBUG
-	exit(0);
-#endif
-	
 	/* Stat the file */
 	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Stating %s... ", v3, rfio64, ++t, argv[Coptind]);
 	if (rfio64 == 64) {
@@ -368,10 +364,6 @@ int main(int argc,
 	}
 	
 
-#ifdef PRIVDEBUG
-	exit(0);
-#endif
-	
 	/* Open it in readmode */
 	if (rfio64 == 64) {
 		fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Opening %s in 64bits-read-mode... ", v3, rfio64, ++t, argv[Coptind]);

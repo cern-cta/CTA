@@ -3,9 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.8 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
-#endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
 #include <stdlib.h>
@@ -17,7 +14,6 @@
 #include "Ctape_api.h"
 #include "sacct.h"
 #include "serrno.h"
-#if SACCT
 struct confrsn {
 	char *text;
 	int code;
@@ -40,7 +36,6 @@ struct confrsn confuprsn[] = {
 	{"upgraded",	TPCU_UPG},
         {"ops",	        TPCU_OPS}
 };
-#endif
 
 void usage(char *cmd)
 {
@@ -69,7 +64,6 @@ int main(int	argc,
 		usage (argv[0]);
 		exit (USERR);
 	}
-#if SACCT
 	if (argc == 4) {
 		if (status == CONF_UP) {
 			for (n = 0; n < sizeof(confuprsn)/sizeof(struct confrsn); n++)
@@ -89,7 +83,6 @@ int main(int	argc,
 			reason = confdnrsn[n].code;
 		}
 	}
-#endif
 	if (Ctape_config (argv[1], status, reason) < 0) {
 		fprintf (stderr, TP009, argv[1], sstrerror(serrno));
 		if (serrno == EINVAL || serrno == ETIDN)

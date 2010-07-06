@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool_test2.c,v $ $Revision: 1.3 $ $Date: 2004/03/16 15:02:11 $ CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* not lint */
-
 #include <Cpool_api.h>
 #include <stdio.h>
 #include <errno.h>
