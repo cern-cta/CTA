@@ -244,6 +244,58 @@ DROP PROCEDURE INPUTMIGRPOLICYGATEWAY;
 
 DROP PROCEDURE INPUTMIGRPOLICYRTCP;
 
+/* attach tapecopies to streams for tapegateway */
+CREATE OR REPLACE PROCEDURE attachTCGateway
+(tapeCopyIds IN castor."cnumList",
+ tapePoolId IN NUMBER)
+AS
+  unused NUMBER;
+  streamId NUMBER; -- stream attached to the tapepool
+  nbTapeCopies NUMBER;
+BEGIN
+  -- WARNING: tapegateway ONLY version
+  FOR str IN (SELECT id FROM Stream WHERE tapepool = tapePoolId) LOOP
+    BEGIN
+      -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
+      SELECT id INTO streamId FROM stream WHERE id = str.id FOR UPDATE;
+      -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
+      FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+         BEGIN
+           SELECT /*+ index(tapecopy, PK_TAPECOPY_ID)*/ id INTO unused
+             FROM TapeCopy
+            WHERE Status in (2,7) AND id = tapeCopyIds(i) FOR UPDATE;
+           DECLARE CONSTRAINT_VIOLATED EXCEPTION;
+           PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED, -1);
+           BEGIN
+             INSERT INTO stream2tapecopy (parent ,child)
+             VALUES (streamId, tapeCopyIds(i));
+             UPDATE /*+ index(tapecopy, PK_TAPECOPY_ID)*/ TapeCopy
+                SET Status = 2 WHERE status = 7 AND id = tapeCopyIds(i);
+           EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+             -- if the stream does not exist anymore
+             -- it might also be that the tapecopy does not exist anymore
+             -- already exist the tuple parent-child
+             NULL;
+           END;
+         EXCEPTION WHEN NO_DATA_FOUND THEN
+           -- Go on the tapecopy has been resurrected or migrated
+           NULL;
+         END;
+      END LOOP; -- loop tapecopies
+      COMMIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- no stream anymore
+      NULL;
+    END;
+  END LOOP; -- loop streams
+
+  -- resurrect the ones never attached
+  FORALL i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST
+    UPDATE TapeCopy SET status = 1 WHERE id = tapeCopyIds(i) AND status = 7;
+  COMMIT;
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
