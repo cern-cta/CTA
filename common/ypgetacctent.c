@@ -19,9 +19,7 @@
 
 #include <ypgetacctent.h>
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 typedef struct Cyp_spec {
         char _name[NAME_LEN];
@@ -45,9 +43,7 @@ static int ypcall(instatus, inkey, inkeylen, inval, invallen, indata)
     char      *cp = NULL; 
     char      buf[BUFSIZ];
     Cyp_spec_t *Cyp;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
     /*
      * There is an error
@@ -109,9 +105,7 @@ char *ypgetacctent(pwd, account, buffer, bufferlen)
     char          buf[BUFSIZ];
     char          *outval = NULL;
     int           outvallen = 0;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 
     /*

@@ -28,7 +28,6 @@ typedef struct Coptions Coptions_t;
 #define REQUIRED_ARGUMENT 1
 #define OPTIONAL_ARGUMENT 2
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 /*
  * Multi-thread (MT) environment
  */
@@ -47,17 +46,6 @@ EXTERN_C char **C__Coptarg (void);
 #define Coptopt (*C__Coptopt())
 #define Coptreset (*C__Coptreset())
 #define Coptarg (*C__Coptarg())
-
-#else /* _REENTRANT || _THREAD_SAFE ... */
-/*
- * non-MT environment
- */
-EXTERN_C  int Copterr;
-EXTERN_C  int Coptind;
-EXTERN_C  int Coptopt;
-EXTERN_C  int Coptreset;
-EXTERN_C  char *Coptarg;
-#endif /* _REENTRANT || _TREAD_SAFE */
 
 EXTERN_C int Cgetopt (int, char * const *, const char *);
 EXTERN_C int Cgetopt_long (int, char **, const char *, Coptions_t *, int *);

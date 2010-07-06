@@ -16,9 +16,7 @@
 #define PATH_CONFIG "/etc/castor/castor.conf"
 #endif /* PATH_CONFIG */
 
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 
 static char *getconfent_r (const char *, const char *, const char *, int, char *, int);
@@ -36,9 +34,7 @@ static char *getconfent_r(const char *filename,
     int     found = 0;
     char    path_config[CA_MAXPATHLEN+1];
     char    *separator;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
     if (filename == NULL) {
       /* Use default config file is not in the parameters */

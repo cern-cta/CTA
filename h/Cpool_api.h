@@ -12,25 +12,6 @@
 #define __cpool_api_h
 
 #include <Cthread_api.h>
-/* Memory allocation wrappers - JUST used in case of         */
-/* Cthread_environment() returning CTHREAD_MULTI_PROCESS     */
-/* 07-JUN-1999       Jean-Damien Durand and Olof Barring     */
-
-#ifndef _CTHREAD
-/* Cthread_environment would return CTHREAD_MULTI_PROCESS */
-#ifndef malloc
-#define malloc(a)        Cpool_malloc(__FILE__,__LINE__,a)
-#endif
-#ifndef free
-#define free(a)          Cpool_free(__FILE__,__LINE__,a)
-#endif
-#ifndef realloc
-#define realloc(a,b)     Cpool_realloc(__FILE__,__LINE__,a,b)
-#endif
-#ifndef calloc
-#define calloc(a,b)      Cpool_calloc(__FILE__,__LINE__,a,b)
-#endif
-#endif /* _CTHREAD */
 
 EXTERN_C void *Cpool_calloc (char *, int, size_t, size_t);
 EXTERN_C void *Cpool_malloc (char *, int, size_t);

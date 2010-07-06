@@ -21,12 +21,6 @@
 struct passwd *Cgetpwnam(name)
 const char *name;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
-    /*
-     * If single-threaded compilation we don't do anything.
-     */
-    return(getpwnam(name));
-#else
     /*
      * linux or __APPLE__
      * The final POSIX.1c standard: the return value is int and
@@ -51,18 +45,11 @@ const char *name;
     rc = getpwnam_r(name,pwd,pwdbuf,pwdbuflen,&result);
     serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
     return(result);
-#endif
 }
 
 struct passwd *Cgetpwuid(uid)
 uid_t uid;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
-    /*
-     * If single-threaded compilation we don't do anything.
-     */
-    return(getpwuid(uid));
-#else
     /*
      * linux or __APPLE__
      * The final POSIX.1c standard: the return value is int and
@@ -87,6 +74,5 @@ uid_t uid;
     rc = getpwuid_r(uid,pwd,pwdbuf,pwdbuflen,&result);
     serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
     return(result);
-#endif
 }
 

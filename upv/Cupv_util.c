@@ -154,17 +154,11 @@ void Cupv_util_time(time_t this,
                     char *timestr)
 {
   time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
 
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
   localtime_r(&(this),&tmstruc);
   tp = &tmstruc;
-#else
-  tp = localtime(&(this));
-#endif /* _REENTRANT || _THREAD_SAFE */
   if ((this - this_time) > SIXMONTHS) {
     strftime(timestr,64,strftime_format_sixmonthsold,tp);
   } else {

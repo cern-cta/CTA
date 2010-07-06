@@ -22,21 +22,15 @@ int vmgrlogit(char *func, char *msg, ...)
 	int save_errno;
 	int Tid = 0;
 	struct tm *tm;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	struct tm tmstruc;
-#endif
 	time_t current_time;
 	int fd_log;
 
 	save_errno = errno;
 	va_start (args, msg);
 	(void) time (&current_time);		/* Get current time */
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 	(void) localtime_r (&current_time, &tmstruc);
 	tm = &tmstruc;
-#else
-	tm = localtime (&current_time);
-#endif
 	Cglobals_getTid(&Tid);
 	if (Tid < 0)	/* main thread */
 		sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,

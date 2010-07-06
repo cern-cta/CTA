@@ -472,7 +472,6 @@
  *------------------------------------------------------------------------
  */
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 /*
  * Multi-thread (MT) environment
  */
@@ -483,13 +482,6 @@ EXTERN_C int *C__serrno (void);
  * rather than serror.c .
  */
 #define serrno (*C__serrno())
-
-#else /* _REENTRANT || _THREAD_SAFE ... */
-/*
- * non-MT environment
- */
-extern  int     serrno;                 /* Global error number          */
-#endif /* _REENTRANT || _TREAD_SAFE */
 
 EXTERN_C char *sstrerror_r (int,char *, size_t);
 EXTERN_C char *sstrerror (int);

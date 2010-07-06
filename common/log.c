@@ -92,9 +92,7 @@ void logit(int level, char *format, ...)
 {
   va_list args ;          /* Variable argument list               */
   time_t  clock;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
   char    timestr[64] ;   /* Time in its ASCII format             */
   char    line[BUFSIZ] ;  /* Formatted log message                */
@@ -106,12 +104,8 @@ void logit(int level, char *format, ...)
   va_start(args, format);
   if (loglevel >= level)  {
     (void) time(&clock);
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)))
     (void)localtime_r(&clock,&tmstruc);
     tp = &tmstruc;
-#else
-    tp = localtime(&clock);
-#endif /* _REENTRANT || _THREAD_SAFE */
     (void) strftime(timestr,64,strftime_format,tp);
     Cglobals_getTid(&Tid);
     if ( Tid < 0 ) {

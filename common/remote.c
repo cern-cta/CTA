@@ -23,9 +23,7 @@
 #include <serrno.h>
 #include <Cnetdb.h>
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 #ifndef LOCALHOSTSFILE
 #define LOCALHOSTSFILE "/etc/shift.localhosts"
@@ -60,9 +58,7 @@ int isremote(struct in_addr from_host,
     } adr,*ladd;
     struct in_addr in ;
     struct  sockaddr_in addr;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 #if defined(__STDC__)
     char lhfile[CA_MAXPATHLEN+1] =  LOCALHOSTSFILE;

@@ -21,7 +21,6 @@
 #endif
 #include <stddef.h>                 /* For size_t                    */
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 /*
  * Multi-thread (MT) environment
  */
@@ -32,13 +31,6 @@ EXTERN_C int *C__rfio_errno (void);
  * than rfio/error.c .
  */
 #define rfio_errno (*C__rfio_errno())
-
-#else /* _REENTRANT || _THREAD_SAFE ... */
-/*
- * non-MT environment
- */
-extern  int     rfio_errno;                 /* Global error number          */
-#endif /* _REENTRANT || _TREAD_SAFE */
 
 EXTERN_C char *rfio_errmsg_r (int, int, char*, size_t);
 EXTERN_C char *rfio_errmsg (int, int);

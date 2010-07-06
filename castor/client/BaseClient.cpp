@@ -104,17 +104,11 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 
 void BaseClient_util_time(time_t then, char *timestr) {
   time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
 
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
   localtime_r(&(then),&tmstruc);
   tp = &tmstruc;
-#else
-  tp = localtime(&(then));
-#endif /* _REENTRANT || _THREAD_SAFE */
   if ((this_time >= then) && ((this_time - then) > SIXMONTHS)) {
     // Too much in past
     strftime(timestr,64,strftime_format_sixmonthsold,tp);

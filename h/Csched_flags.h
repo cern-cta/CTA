@@ -38,7 +38,6 @@
 #endif
 #define CSCHED_UNKNOWN -1
 
-#ifdef _CTHREAD
 /* Thread Environment */
 /* - First In, First Out */
 #ifdef SCHED_FIFO
@@ -70,22 +69,6 @@
 #else
 #define CSCHED_BG_NP CSCHED_UNKNOWN
 #endif
-
-#else /* _CTHREAD */
-
-/* Not a Thread Environment */
-/* - First In, First Out */
-#define CSCHED_FIFO CSCHED_UNKNOWN
-/* - Round Robin */
-#define CSCHED_RR CSCHED_UNKNOWN
-/* - Default (other) */
-#define CSCHED_OTHER CSCHED_UNKNOWN
-/* - Default (new primitive or non portable) */
-#define CSCHED_FG_NP CSCHED_UNKNOWN
-/* - Background */
-#define CSCHED_BG_NP CSCHED_UNKNOWN
-
-#endif /* _CTHREAD */
 
 /* Force the standard definition of scheduling parameter structure      */
 /* This also ensures that programs interfaced with Cthread will compile */

@@ -13,9 +13,7 @@
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POSIX release
  */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 
 #include <osdep.h>
@@ -32,9 +30,7 @@ char *getacctent(struct passwd   *pwd,       /* Pointer to the password entry */
 
         FILE      *fp = NULL; /* Pointer to /etc/account file  */
         char acct_file[256];
-#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
         char *last = NULL;
-#endif /* (_REENTRANT || _THREAD_SAFE) */ 
 
         if (pwd == (struct passwd *)NULL) return(NULL);
 

@@ -25,9 +25,7 @@
 #include <common.h>
 #include <string.h>
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
@@ -95,9 +93,7 @@ int rfio_connect_with_port(char    *node,                  /* remote host to con
   char    nomorebuf1[BUFSIZ], nomorebuf2[BUFSIZ]; /* NOMORERFIO buffers */
   char *last_host = NULL;
   int   last_host_len = 256;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
-#endif
   int timeout;
   int secure_connection = 0;
   char tmphost[CA_MAXHOSTNAMELEN+1];

@@ -22,9 +22,7 @@
 static char *infile = MAPPING_FILE;
 
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 /*
  * function finds the corresponding entry in the
@@ -52,9 +50,7 @@ int get_user(char *from_node,
     char mapuid[6] ;
     char mapgid[6] ;
     int counter ;
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
     if  ( (fsin=fopen(infile,"r"))==NULL ) {
        log(LOG_ERR, "Could not open file %s, errno %d\n", infile, errno);

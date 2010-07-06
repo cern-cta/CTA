@@ -26,9 +26,7 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif
 
 #include <sys/time.h>
 #include <stdlib.h>
@@ -1207,9 +1205,7 @@ int     data_rfio_connect(char    *node,                  /* remote host to conn
   struct sockaddr_in sin; /* socket address (internet) struct     */
   char    *host;          /* host name chararcter string          */
   char    *p, *cp;        /* character string pointers            */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
-#endif
   register int    retrycnt; /* number of NOMORERFIO retries       */
   register int    retryint; /* interval between NOMORERFIO retries*/
   register int    crtycnt = 0; /* connect retry count             */

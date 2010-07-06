@@ -16,7 +16,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "nw.h"
-#define _THREAD_SAFE
 #include <Csec_api.h>
 
 static  FILE *log;

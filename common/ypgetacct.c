@@ -14,9 +14,7 @@
 #include <rpcsvc/ypclnt.h>
 #include "osdep.h"
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 typedef struct Cyp_spec {
     char _name[10];
@@ -38,9 +36,7 @@ static int ypcall(instatus,inkey,inkeylen,inval,invallen,indata)
 {
     Cyp_spec_t *Cyp;
     char          * cp ; 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
-#endif /* _REENTRANT || _THREAD_SAFE */
 
     /*
      * There is an error.

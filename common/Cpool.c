@@ -16,8 +16,6 @@
 #undef Cpool_next_index
 #undef Cpool_next_index_timeout
 #include <serrno.h>
-/* All that stuff is for CTHREAD_MULTI_PROCESS support on */
-/* Unix-like systems.                                     */
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -37,18 +35,6 @@
 
 int Cpool_debug = 0;
 
-#ifndef _CTHREAD
-/* ------------------------------------ */
-/* Undefinition of memory wrappers      */
-/* ------------------------------------ */
-/* We don't want to recursively call   */
-/* ourselves...                        */
-#undef calloc
-#undef malloc
-#undef realloc
-#undef free
-#endif 
-
 /* ------------------------------------ */
 /* Linked list of pools                 */
 /* ------------------------------------ */
@@ -58,10 +44,8 @@ struct Cpool_t {
 	int                     nbelem;   /* Nb of elems                        */
 	int                    *cid;      /* Elements Cthread ID                */
 	int                     forceid;  /* Index forcing the assignment to    */
-	/* If CTHREAD_MULTI_PROCESS */
 	int                    *writefd;  /* Parent->Child (only on unix)       */
 	int                    *readfd;   /* Child->Parent (only on unix)       */
-	/* If CTHREAD_TRUE_THREAD */
 	int                    *state;    /* Elements current status (0=READY)  */
 	/*                        (1=RUNNING) */
 	/*                       (-1=STARTED) */
@@ -168,12 +152,10 @@ int Cpool_create_ext(int nbreq,
 	int                     j;
 	int                     k;
 	int                     poolnb, nbcreated;
-	/* If CTHREAD_MULTI_PROCESS */
 	int                     p_to_c[2];
 	int                     c_to_p[2];
 	int                    *to_close = NULL;
 	int                     pid = 0;
-	/* If CTHREAD_TRUE_THREAD */
 	void                   *cpool_arg = NULL;
 
 	/* We makes sure that Cthread pakage is initalized */
@@ -213,7 +195,7 @@ int Cpool_create_ext(int nbreq,
 		poolnb = -1;
 	}
 
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		/* To let know the child which parent is the creator */
 		/* and to die in case of non-parent existence        */
 		/* (on unix only, this is to prevent zombies)        */
@@ -254,7 +236,7 @@ int Cpool_create_ext(int nbreq,
 
 	/* Allocation for Cthread ID's */
 	if ((current->cid = malloc(nbreq * sizeof(int))) == NULL) {
-		if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+		if (Cthread_environment() == 2) {
 			free(to_close);
 		}
 		free(current);
@@ -267,7 +249,7 @@ int Cpool_create_ext(int nbreq,
 		serrno = SEINTERNAL;
 		return(-1);
 	}
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		/* Allocation for writing pipes (unix only) */
 		if ((current->writefd = malloc(nbreq * sizeof(int))) == NULL) {
 			free(to_close);
@@ -431,7 +413,7 @@ int Cpool_create_ext(int nbreq,
 		}
 	}
 	current->next = NULL;
-	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() != 2) {
 		/* We tell that there is no dispatch at this time */
 		current->flag = -2;
 	}
@@ -439,7 +421,7 @@ int Cpool_create_ext(int nbreq,
 	nbcreated = j = k = 0;
 	/* We create the pools */
 	for (i = 0; i < nbreq; i++) {
-		if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+		if (Cthread_environment() == 2) {
 			/* The pipes */
 			if (pipe(p_to_c))
 				continue;
@@ -526,13 +508,13 @@ int Cpool_create_ext(int nbreq,
 		if (current->cid[i] < 0) {
 			/* Error at cthread_create : we clean fd created an try the */
 			/* next iteration                                           */
-			if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+			if (Cthread_environment() == 2) {
 				for (j=0; j <= 3; j++) {
 					close(tubes[j]);
 				}
 			}
 		} else {
-			if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+			if (Cthread_environment() == 2) {
 				current->writefd[i] = p_to_c[1];
 				current->readfd[i] = c_to_p[0];
 				to_close[k++] = p_to_c[0];
@@ -543,7 +525,7 @@ int Cpool_create_ext(int nbreq,
 		}
 	}
 
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		for (j=0; j < k; j++) {
 			close(to_close[j]);
 		}
@@ -595,7 +577,7 @@ void *_Cpool_starter(void *arg)
 			_Cpool_self(),_Cthread_self(),(unsigned long) arg);
 #endif
 
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		/*----------------------- */
 		/* Non-Thread only        */
 		/*----------------------- */
@@ -1342,7 +1324,7 @@ void *Cpool_calloc(char *file,
 	struct Cmalloc_t *previous = &Cmalloc;
 	char             *dummy;
 
-	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() != 2) {
 		/* We are in multi-threaded mode : memory is shared    */
 		/* and there is no need to try to know every allocated */
 		/* memory in the Cmalloc linked list.                  */
@@ -1405,7 +1387,7 @@ void *Cpool_malloc(char *file,
 	struct Cmalloc_t *previous = &Cmalloc;
 	char             *dummy;
 
-	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() != 2) {
 		/* We are in multi-threaded mode : memory is shared    */
 		/* and there is no need to try to know every allocated */
 		/* memory in the Cmalloc linked list.                  */
@@ -1470,7 +1452,7 @@ void Cpool_free(char *file,
 	/* We test to see if the user wants to */
 	/* to free something really allocated  */
 
-	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() != 2) {
 		free(ptr);
 		return;
 	}
@@ -1533,7 +1515,7 @@ void *Cpool_realloc(char *file,
 	int               n = 1;
 	char             *dummy;
 
-	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() != 2) {
 		return(realloc(ptr,size));
 	}
 
@@ -1627,10 +1609,7 @@ int Cpool_assign_ext(int poolnb,
 			_Cpool_self(),_Cthread_self(),poolnb, (unsigned long) startroutine, (unsigned long) arg, timeout);
 #endif
     
-	/* THIS ROUTINE IS EXPLICITELY SPLITTED IN TWO PARTS    */
-	/* - The _NOCTHREAD one (using pipes)                   */
-	/* - The _CTHREAD one (using shared mem. and cond. var. */
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		/*----------------------- */
 		/* Non-Thread only        */
 		/*----------------------- */
@@ -2415,10 +2394,7 @@ int Cpool_next_index_timeout_ext(int poolnb,
 			_Cpool_self(),_Cthread_self(),poolnb,(unsigned long) pooladdr, timeout);
 #endif
     
-	/* THIS ROUTINE IS EXPLICITELY SPLITTED IN TWO PARTS    */
-	/* - The _NOCTHREAD one (using pipes)                   */
-	/* - The _CTHREAD one (using shared mem. and cond. var. */
-	if (Cthread_environment() == CTHREAD_MULTI_PROCESS) {
+	if (Cthread_environment() == 2) {
 		/*----------------------- */
 		/* Non-Thread only        */
 		/*----------------------- */

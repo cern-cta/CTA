@@ -69,11 +69,6 @@ int main() {
       } else {
         fprintf(stderr,"... Okay for assign to pool No %d of the %d-th routine\n",
                ipool[i],j);
-#ifndef _CTHREAD
-        /* Non-thread environment: the child is in principle not allowed */
-        /* to do free himself                                            */
-        free(arg);
-#endif
       }
     }
   }
@@ -92,10 +87,8 @@ void *testit(void *arg) {
 
   caller_pid = (int) * (int *) arg;
 
-#ifdef _CTHREAD
   /* Thread environment : we free the memory */
   free(arg);
-#endif
 
   fprintf(stderr,"... I am PID=%d called by pool %d, try No %d\n",
          my_pid,caller_pid/10,caller_pid - 10*(caller_pid/10));

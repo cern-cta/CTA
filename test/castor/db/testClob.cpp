@@ -42,7 +42,7 @@ using namespace std;
 */
 /*
 This code has been compiled with:
-g++ -fPIC -D_LARGEFILE64_SOURCE -Wall -Wno-long-long -g -O0 -I /.../instantclient/10.2.0.3/slc4_ia32_gcc34/rdbms/public -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT -c testClob.cpp
+g++ -fPIC -D_LARGEFILE64_SOURCE -Wall -Wno-long-long -g -O0 -I /.../instantclient/10.2.0.3/slc4_ia32_gcc34/rdbms/public -pthread -c testClob.cpp
 g++ -o testClob -pthread testClob.o -L /.../instantclient/10.2.0.3/slc4_ia32_gcc34/lib -locci -lclntsh
 */
 // These will tell the type of read/write we use

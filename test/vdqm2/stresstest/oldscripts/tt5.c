@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <log.h>
 #include <Cthread_api.h>
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define localtime(X) localtime_r(X,&ts)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 int sub1(void *arg) {
     int Tid;
@@ -17,9 +15,7 @@ int sub1(void *arg) {
 
 int main(int argc, char *argv[]) {
     char buf[BUFSIZ];
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
     struct tm ts;
-#endif /* _REENTRANT || _THREAD_SAFE */
     struct tm *tp;
     time_t tt;
 

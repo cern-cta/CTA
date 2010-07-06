@@ -22,9 +22,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 int
 Cns_selectsrvr(path, current_directory_server, server, actual_path)
@@ -38,9 +36,7 @@ Cns_selectsrvr(path, current_directory_server, server, actual_path)
   char func[16];
   char *getconfent();
   char *getenv();
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
-#endif
   int n;
   char *p;
   char *securemode;

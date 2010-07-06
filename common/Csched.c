@@ -29,11 +29,7 @@
 /* For the Cthread_self() command       */
 /* (Thread-Specific Variable)           */
 /* ------------------------------------ */
-#ifdef _CTHREAD
 EXTERN_C Cth_spec_t cid_key;
-#else
-EXTERN_C int cid_key;
-#endif
 EXTERN_C Cth_once_t cid_once;
 
 /* ============================================ */
@@ -51,9 +47,7 @@ EXTERN_C Cth_once_t cid_once;
 /* from the Cthread point of view.              */
 /* -------------------------------------------- */
 EXTERN_C struct Cid_element_t   Cid;
-#ifdef _CTHREAD
 EXTERN_C struct Cmtx_element_t  Cmtx;
-#endif
 EXTERN_C struct Cthread_protect_t Cthread;
 EXTERN_C struct Cspec_element_t Cspec;
 EXTERN_C Cth_once_t             once;
@@ -126,21 +120,11 @@ int Csched_Getschedparam(char *file,
     return(-1);
   }
 
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   if (policy == NULL || Cparam == NULL) {
     /* policy and param are required to be non-NULL */
     serrno = EINVAL;
     return(-1);
   }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   {
     struct sched_param param;
 
@@ -152,31 +136,6 @@ int Csched_Getschedparam(char *file,
 
     Cparam->sched_priority = param.sched_priority;
   }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_getscheduler(current->pid)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-  *policy = n;
-  if ((n = pthread_getprio(current->pid)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-  Cparam->sched_priority = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  {
-    struct sched_param param;
-
-    if ((n = pthread_getschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-
-    Cparam->sched_priority = param.sched_priority;
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
   /* OK */
   return(0);
 }
@@ -237,11 +196,6 @@ int Csched_Setschedparam(char *file,
     return(-1);
   }
 
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   if (policy == CSCHED_UNKNOWN) {
     /* Known to be unsupported */
     serrno = SEOPNOTSUP;
@@ -252,11 +206,6 @@ int Csched_Setschedparam(char *file,
     serrno = EINVAL;
     return(-1);
   }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   {
     struct sched_param param;
 
@@ -268,25 +217,6 @@ int Csched_Setschedparam(char *file,
       return(-1);
     }
   }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_setscheduler(current->pid, policy, Cparam->sched_priority)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  {
-    struct sched_param param;
-
-    param.sched_priority = Cparam->sched_priority;
-
-    if ((n = pthread_setschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
   /* OK */
   return(0);
 }
@@ -320,21 +250,11 @@ int Csched_Get_priority_min(char *file,
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   if (policy == CSCHED_UNKNOWN) {
     /* Known to be unsupported */
     serrno = SEOPNOTSUP;
     return(-1);
   }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   {
     int min;
 
@@ -346,8 +266,6 @@ int Csched_Get_priority_min(char *file,
 
     return(min);
   }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
 }
 
 /* =============================================== */
@@ -379,21 +297,11 @@ int Csched_Get_priority_max(char *file,
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   if (policy == CSCHED_UNKNOWN) {
     /* Known to be unsupported */
     serrno = SEOPNOTSUP;
     return(-1);
   }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   {
     int max;
 
@@ -405,8 +313,6 @@ int Csched_Get_priority_max(char *file,
 
     return(max);
   }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
 }
 
 /* =============================================== */
@@ -438,21 +344,11 @@ int Csched_Get_priority_mid(char *file,
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   if (policy == CSCHED_UNKNOWN) {
     /* Known to be unsupported */
     serrno = SEOPNOTSUP;
     return(-1);
   }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
   {
     int min, max;
 
@@ -469,6 +365,4 @@ int Csched_Get_priority_mid(char *file,
       return((max - min) / 2);
     }
   }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
 }
