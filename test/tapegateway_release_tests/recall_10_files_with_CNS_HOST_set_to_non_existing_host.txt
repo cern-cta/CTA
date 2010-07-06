@@ -1,7 +1,7 @@
 THE NAME OF TEST
 ================
 
-Recall 10 files modifying ns checksum whilst TAPECOPY TOBERECALLED
+Recall 10 files with CNS HOST set to non existing host.
 
 THE PURPOSE OF THE TEST
 =======================
