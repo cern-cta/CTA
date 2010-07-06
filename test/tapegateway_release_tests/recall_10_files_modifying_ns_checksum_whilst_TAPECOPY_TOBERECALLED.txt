@@ -47,18 +47,21 @@ ps -ef | grep 'tapegatewayd' | grep -v grep
 
 2. Identify a test-directory in CASTOR where contain 10 files.
 
-3. Chech that the files are stored on tape.
+/castor/cern.ch/dev/m/murrayc3/<folder_name>
 
-nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep -v '^m' | wc -l
-[output] 0
+3. Check that the ten files has at least one copy on tape.
+
+nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
+[output] 10
 
 4. Chech that the file are not on disk.
 
-stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name>
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
-stager_rm -M /castor/cern.ch/dev/m/murrayc3/<folder_name>
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
 
 6. Make sure the test service-class will use exactly 1 drive for recall.
 
@@ -67,7 +70,6 @@ modifySvcClass --Name default --NbDrives 1
 7. Dedicate the test-drive to the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
-
 
 
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
@@ -128,3 +130,8 @@ INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 1. Revoke the dedication the test-drive from the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+
+2. Remove the ten files from the name server since it will be impossible to
+   recall them.
+
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm $TESTDIR/$F;
