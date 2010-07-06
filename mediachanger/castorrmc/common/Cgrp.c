@@ -22,12 +22,6 @@
 struct group *Cgetgrnam(name)
 const char *name;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
-    /*
-     * If single-threaded compilation we don't do anything.
-     */
-    return(getgrnam(name));
-#else
     /*
      * linux or APPLE
      * The final POSIX.1c standard: the return value is int and
@@ -52,18 +46,11 @@ const char *name;
     rc = getgrnam_r(name,grp,grpbuf,grpbuflen,&result);
     serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
     return(result);
-#endif
 }
 
 struct group *Cgetgrgid(gid)
 gid_t gid;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
-    /*
-     * If single-threaded compilation we don't do anything.
-     */
-    return(getgrgid(gid));
-#else
     /*
      * linux or APPLE
      * The final POSIX.1c standard: the return value is int and
@@ -88,6 +75,5 @@ gid_t gid;
     rc = getgrgid_r(gid,grp,grpbuf,grpbuflen,&result);
     serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
     return(result);
-#endif
 }
 

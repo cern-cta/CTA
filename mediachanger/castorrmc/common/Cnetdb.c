@@ -21,7 +21,7 @@
 struct hostent *Cgethostbyname(name)
 const char *name;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
+#if defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already
@@ -62,7 +62,7 @@ const void *addr;
 size_t len;
 int type;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
+#if defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already
@@ -102,7 +102,7 @@ struct servent *Cgetservbyname(name,proto)
 const char *name;
 const char *proto;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__APPLE__)
+#if defined(__APPLE__)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows, MACOSX and Digital UNIX v4 and higher already
