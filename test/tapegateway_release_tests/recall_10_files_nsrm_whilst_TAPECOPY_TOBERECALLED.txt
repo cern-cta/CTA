@@ -31,8 +31,6 @@ THE PREREQUISITES OF THE TEST
   stager.
 * One free tape-drive which can access the test-tape.
 * A user account that permits the dedication of drives within the VDQM.
-* A copy of the utility test script from the CASTOR svn repository,
-  "trunk/test/tapegateway_release_tests/createAndCopyFilesToCastor.sh".
 * Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
   which contains a function of the same name which returns 0 in the case of a
   ENOENT error code.
