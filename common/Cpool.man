@@ -24,19 +24,17 @@ See \fBCthread\fP corresponding section.
 
 \fBCpool\fP is a layer built upon \fBCthread\fP, the \fPCASTOR Thread\fP interface. It allows the user to create dedicated pools, and then to assign to one of them a given routine to execute.
 .P
-The created processes or threads will remain alive, unless the routines assigned to are crashing, or explicitely calling an exit statement, like exit() or pthread_exit().
+The created threads will remain alive, unless the routines assigned to are crashing, or explicitely calling an exit statement, like exit() or pthread_exit().
 .P
-Typical use might be writing a server, with a bunch of pre-created processes or pools (depending on the environment with which \fBCthread\fP has been compiled), and assign to a given pool a routine with the socket file descriptor as argument address.
-.P
-In principle \fBCpool\fP should be compiled with the same relevant flags with which \fBCthread\fP has been.
+Typical use might be writing a server, with a bunch of pre-created pools, and assign to a given pool a routine with the socket file descriptor as argument address.
 .P
 .BI "int Cpool_create(int " nbwanted ", int * " nbget ");"
 .P
 This method is creating a pool of
 .I nbwanted
-processes or threads. If the second argument, 
+threads. If the second argument, 
 .I nbget
-, is not NULL, its location will contain the number of effectively created threads or processes.
+, is not NULL, its location will contain the number of effectively created threads.
 .P
 Return value is the pool ID, a number greater or equal to zero, or -1 in case of error.
 .P
@@ -62,74 +60,6 @@ Those methods returns that next available thread number that will be assigned if
 .B Cpool_assign
 immediately after. If you specify a timeout lower or equal than zero, then this is a blocking method until one thread is available at least. Those methods, so, returns a number greater or equal than zero, and -1 if there is an error.
 
-.SH NOTE
-.RS
-.B Arguments passing in a non-thread environment
-
-Since a forked process can only address its namespace data segment, the address of the arguments, if any, valid in its parent, will not be directly accessible for
-the child we are talking about. 
-.P
-This means that Cpool, in a non-thread environment, have to trace-back all the memory allocation visible for the parent. Then, Cpool is not passing the address
-of the arguments, but its content to the child through a child-parent communication, monitored with a simple protocol. 
-.P
-There are four cases: 
-.RS
-    1.The address is NULL: nothing will be transmitted to the child 
-    2.The address is exactly a pointer returned by malloc() or realloc(): the full malloced area will be tranmitted. 
-    3.The address is somewhere in a memory allocate block: the remaining memory block, e.g. starting from the address up to its end, will be transmitted. 
-    4.the address do not point to any memory allocated area: Cpool will assume it is a pointer-like argument, probably to some static variables, visible for all processes, and will transmit the content of the memory pointed by the address, assuming it is coded on 64-bits. 
-.RE
-In any case, the user is passing a pointer, and the routine will see a pointer, pointing to a (hopefully, see the point 4., listed upper) same-content area. 
-.P
-.B Arguments design to work on both thread and non-thread environments
-.P
-The thread and non-thread arguments can have conceptually a different design when dealing with arguments; 
-.P
-In a thread environment, the routined passed to Cpool_assign, is sharing memory, so is allowed to free() the argument, because memory is then shared.
-On the contrary, in a non-thread environment, this may be a segmentation fault. 
-.P
-This means that it is recommended to use static variables, containing simple value, like an integer (for example: a socket file descriptor), and not allocated memory. If, neverthless, you persist to use free() in your routine, you can use the following trick: 
-.ft 3
-.nf
-.sp
-/* ------------------------ */
-/* In the Caller Routine    */
-/* ------------------------ */
-
-arg = malloc(...);
-
-if (! Cpool_assign(...)) {
-  if (Cthread_environment() != CTHREAD_TRUE_THREAD) {
-    /* Non-Thread environment */
-    free(arg);
-  } else {
-    /* Thread environment     */
-    /* ... do nothing         */
-  }
-} else {
-    /* In cany case it is OK  */
-    free(arg);
-}
-
-/* ------------------------ */
-/* In the Execution Routine */
-/* ------------------------ */
-
-void *routine(void *arg) {
-  ./..
-  if (Cthread_environment() == CTHREAD_TRUE_THREAD) {
-    /* Thread environment */
-    free(arg);
-  } else {
-    /* Non-Thread environment */
-    /* ... do nothing         */
-  }
-  ./..
-}
-.ft
-.LP
-.fi
-.RE
 .SH EXAMPLE
 .nf
 .sp

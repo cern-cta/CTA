@@ -31,20 +31,20 @@
 /* Internal Prototypes                          */
 /* ============================================ */
 /* Add a Cthread ID */
-int   _Cthread_addcid (const char *, int, const char *, int, Cth_pid_t *, unsigned, void *(*)(void *), int);
+int   _Cthread_addcid (const char *, int, const char *, int, pthread_t *, unsigned, void *(*)(void *), int);
 /* Add a mutex */
 int   _Cthread_addmtx (const char *, int, struct Cmtx_element_t *);
 /* Add a TSD */
 int   _Cthread_addspec (const char *, int, struct Cspec_element_t *);
 /* Obain a mutex lock */
 #ifndef CTHREAD_DEBUG
-int   _Cthread_obtain_mtx (const char *, int, Cth_mtx_t *, int);
+int   _Cthread_obtain_mtx (const char *, int, pthread_mutex_t *, int);
 #else
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-int   _Cthread_obtain_mtx_debug (const char *, int, const char *, int, Cth_mtx_t *, int);
+int   _Cthread_obtain_mtx_debug (const char *, int, const char *, int, pthread_mutex_t *, int);
 #endif
 /* Release a mutex lock */
-int   _Cthread_release_mtx (const char *, int, Cth_mtx_t *);
+int   _Cthread_release_mtx (const char *, int, pthread_mutex_t *);
 /* Methods to create a mutex to protect Cthread */
 /* internal tables and linked lists             */
 /* This is useful only in thread environment    */
@@ -67,8 +67,8 @@ void _Cthread_cid_once (void);
 /* For the Cthread_self() command       */
 /* (Thread-Specific Variable)           */
 /* ------------------------------------ */
-Cth_spec_t cid_key;
-Cth_once_t cid_once = 0;
+pthread_key_t cid_key;
+pthread_once_t cid_once = 0;
 
 /* ============================================ */
 /* Static variables                             */
@@ -88,7 +88,7 @@ struct Cid_element_t   Cid;
 struct Cmtx_element_t  Cmtx;
 struct Cthread_protect_t Cthread;
 struct Cspec_element_t Cspec;
-Cth_once_t             once = 0;
+pthread_once_t         once = 0;
 int _Cthread_unprotect = 0;
 int Cthread_debug = 0;
 int _Cthread_once_status = -1;
@@ -200,7 +200,7 @@ int _Cthread_init() {
 void *_Cthread_start_pthread(void *arg) {
   Cthread_start_params_t *start_params; /* params         */
   void                 *status;    /* Thread status     */
-  Cth_pid_t             pid;       /* pthread_t         */
+  pthread_t             pid;       /* pthread_t         */
   unsigned              thID = 0;  /* Thread ID (WIN32) */
   void               *(*routine)(void *);
   void               *routineargs;
@@ -265,7 +265,7 @@ int Cthread_Create(const char *file,
                    void *(*startroutine) (void *),
                    void *arg)
 {
-  Cth_pid_t pid;                        /* Thread/Process ID */
+  pthread_t pid;                        /* Thread/Process ID */
   unsigned thID = 0;                    /* Thread ID (WIN32) */
   Cthread_start_params_t *starter;      /* Starter           */
   int            n;                     /* status            */
@@ -353,7 +353,7 @@ int Cthread_Create_Detached(const char *file,
                             void *(*startroutine) (void *),
                             void *arg)
 {
-  Cth_pid_t pid;                        /* Thread/Process ID */
+  pthread_t pid;                        /* Thread/Process ID */
   unsigned thID = 0;                       /* Thread ID (WIN32) */
   Cthread_start_params_t *starter;
   int            n;                   /* status            */
@@ -1569,7 +1569,7 @@ int Cthread_Mutex_Destroy(const char *file,
 
 int _Cthread_release_mtx(const char *file,
                          int line,
-                         Cth_mtx_t *mtx)
+                         pthread_mutex_t *mtx)
 {
    int               n;
 
@@ -1630,7 +1630,7 @@ int _Cthread_release_mtx(const char *file,
 
 int _Cthread_obtain_mtx(const char *file,
                         int line,
-                        Cth_mtx_t *mtx,
+                        pthread_mutex_t *mtx,
                         int timeout)
 {
   int               n;
@@ -1743,7 +1743,7 @@ int _Cthread_obtain_mtx_debug(const char *Cthread_file,
                               int Cthread_line,
                               const char *file,
                               int line,
-                              Cth_mtx_t *mtx,
+                              pthread_mutex_t *mtx,
                               int timeout)
 {
   int               n;
@@ -1909,7 +1909,7 @@ int _Cthread_addcid(const char *Cthread_file,
                     int Cthread_line,
                     const char *file,
                     int line,
-                    Cth_pid_t *pid,
+                    pthread_t *pid,
                     unsigned thID,
                     void *(*startroutine) (void *),
                     int detached)
@@ -1918,7 +1918,7 @@ int _Cthread_addcid(const char *Cthread_file,
   int                 current_cid = -1;    /* Curr Cthread ID    */
   void               *tsd = NULL;          /* Thread-Specific Variable */
   int n;
-  Cth_pid_t           ourpid;             /* We will need to identify ourself */
+  pthread_t           ourpid;             /* We will need to identify ourself */
 
 #ifdef CTHREAD_DEBUG
   if (Cthread_file != NULL) {
@@ -2172,7 +2172,7 @@ int _Cthread_addcid(const char *Cthread_file,
 /* Cthread variables.                           */
 /* ============================================ */
 void _Cthread_once() {
-  Cth_pid_t pid;
+  pthread_t pid;
   unsigned thID = 0;       /* WIN32 thread ID  */
   pthread_mutexattr_t  mattr;
   int                  n;
@@ -2191,7 +2191,7 @@ void _Cthread_once() {
 	return;
   }
   pthread_mutexattr_destroy(&mattr);
-  pid = (Cth_pid_t) pthread_self();
+  pid = (pthread_t) pthread_self();
   /* Initialize the structures */
   Cid.cid      = -1;
   Cid.pid      = pid;
@@ -2543,76 +2543,6 @@ int _Cthread_addspec(const char *file,
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
 
   return(0);
-}
-
-/* ============================================ */
-/* Routine  : Cthread_proto                     */
-/* Arguments:                                   */
-/* -------------------------------------------- */
-/* Output   : 0 (ERROR) or Thread Protocol      */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 02-JUN-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* ============================================ */
-/* Notes:                                       */
-/* Thread Protocol is, for the moment:          */
-/* 1         POSIX                              */
-/* 2         DCE                                */
-/* 3         LinuxThreads                       */
-/* 4         WIN32                              */
-/* ============================================ */
-int Cthread_proto() {
-  return(1);
-}
-
-/* ============================================ */
-/* Routine  : Cthread_isproto                   */
-/* Arguments:                                   */
-/* -------------------------------------------- */
-/* Output   : 0 (OK) or 1 (ERROR)               */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 02-JUN-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* ============================================ */
-/* Notes:                                       */
-/* Thread Protocol is, for the moment:          */
-/* 1         POSIX                              */
-/* 2         DCE                                */
-/* 3         LinuxThreads                       */
-/* 4         WIN32                              */
-/* ============================================ */
-int Cthread_isproto(char *proto)
-{
-  if (proto == NULL) {
-    serrno = EINVAL;
-    return(1);
-  }
-  if (strcmp(proto,"POSIX") != 0) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  return(0);
-}
-
-/* ============================================ */
-/* Routine  : Cthread_environment               */
-/* Arguments:                                   */
-/* -------------------------------------------- */
-/* Output   : CTHREAD_TRUE_THREAD (1) or        */
-/*            CTHREAD_MULTI_PROCESS (2)         */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 02-JUN-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* ============================================ */
-/* Notes:                                       */
-/* Says if the implementation is singlethreaded */
-/* or not.                                      */
-/* ============================================ */
-int Cthread_environment() {
-  return(1);
 }
 
 /* ============================================ */

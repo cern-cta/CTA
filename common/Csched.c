@@ -29,8 +29,8 @@
 /* For the Cthread_self() command       */
 /* (Thread-Specific Variable)           */
 /* ------------------------------------ */
-EXTERN_C Cth_spec_t cid_key;
-EXTERN_C Cth_once_t cid_once;
+EXTERN_C pthread_key_t cid_key;
+EXTERN_C pthread_once_t cid_once;
 
 /* ============================================ */
 /* Static variables                             */
@@ -50,7 +50,7 @@ EXTERN_C struct Cid_element_t   Cid;
 EXTERN_C struct Cmtx_element_t  Cmtx;
 EXTERN_C struct Cthread_protect_t Cthread;
 EXTERN_C struct Cspec_element_t Cspec;
-EXTERN_C Cth_once_t             once;
+EXTERN_C pthread_once_t         once;
 EXTERN_C int _Cthread_unprotect;
 
 EXTERN_C int Cthread_debug;
@@ -58,10 +58,10 @@ EXTERN_C int _Cthread_once_status;
 
 #ifdef CTHREAD_DEBUG
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-EXTERN_C int _Cthread_obtain_mtx_debug (char *, int, char *, int, Cth_mtx_t *, int);
+EXTERN_C int _Cthread_obtain_mtx_debug (char *, int, char *, int, pthread_mutex_t *, int);
 #endif
 EXTERN_C int _Cthread_init (void);
-EXTERN_C int _Cthread_release_mtx (char *, int, Cth_mtx_t *);
+EXTERN_C int _Cthread_release_mtx (char *, int, pthread_mutex_t *);
 
 /* =============================================== */
 /* Routine  : Csched_Getschedparam                 */

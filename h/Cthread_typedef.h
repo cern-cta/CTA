@@ -19,29 +19,6 @@
 #include <Cthread_flags.h>
 #include <Cglobals.h>
 
-/* ============================================ */
-/* Typedefs                                     */
-/* ============================================ */
-/* -------------------------------------------- */
-/* Uniform definition of a thread/process ID    */
-/* -------------------------------------------- */
-typedef pthread_t Cth_pid_t;
-/* -------------------------------------------- */
-/* Uniform definition of a lock variable        */
-/* -------------------------------------------- */
-/* This is a pthread mutex */
-typedef pthread_mutex_t Cth_mtx_t;
-
-/* -------------------------------------------- */
-/* Uniform definition of a cond variable        */
-/* -------------------------------------------- */
-typedef pthread_cond_t Cth_cond_t;
-
-/* -------------------------------------------- */
-/* Uniform definition of a specific variable    */
-/* -------------------------------------------- */
-typedef pthread_key_t Cth_spec_t;
-
 /* -------------------------------------------- */
 /* Thread starter                               */
 /* -------------------------------------------- */
@@ -50,8 +27,6 @@ typedef struct Cthread_start_params {
   void *_thread_arg;
   int   detached;
 } Cthread_start_params_t;
-
-typedef pthread_once_t Cth_once_t;
  
 /* ============================================ */
 /* Structures                                   */
@@ -68,7 +43,7 @@ typedef pthread_once_t Cth_once_t;
 /* -------------------------------------------- */
 struct Cid_element_t {
   int       cid;            /* Cthread ID       */
-  Cth_pid_t pid;            /* Thread/Proc. ID  */
+  pthread_t pid;            /* Thread/Proc. ID  */
   unsigned thID;            /* WIN32 thread ID  */
   void   *(*addr) (void *);  /* Start-up         */
   int       detached;       /* Is it detached ? */
@@ -92,8 +67,8 @@ struct Cid_element_t {
 /* -------------------------------------------- */
 struct Cmtx_element_t {
   void                *addr; /* Adress to lock  */
-  Cth_mtx_t            mtx; /* Associated mutex */
-  Cth_cond_t           cond; /* Associate cond  */
+  pthread_mutex_t            mtx; /* Associated mutex */
+  pthread_cond_t           cond; /* Associate cond  */
   struct Cmtx_element_t *next; /* Next element  */
   int                  nwait; /* cond_wait nb   */
 };
@@ -112,7 +87,7 @@ struct Cmtx_element_t {
 /* -------------------------------------------- */
 struct Cspec_element_t {
   int          *global_key; /* Client Glob. Key */
-  Cth_spec_t          key;  /* Key              */
+  pthread_key_t          key;  /* Key              */
   struct Cspec_element_t *next; /* Next element */
 };
 
@@ -133,7 +108,7 @@ struct Cspec_element_t {
 /* - The mutex address                          */
 /* -------------------------------------------- */
 struct Cthread_protect_t {
-  Cth_mtx_t            mtx; /* Associated mutex */
+  pthread_mutex_t            mtx; /* Associated mutex */
 };
 
 #endif /* __Cthread_typedef_h */

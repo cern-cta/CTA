@@ -46,13 +46,11 @@
 
 .SH DESCRIPTION
 
-\fBCthread\fP is a common API interface for multithreaded programs, although there is also support for nonthreaded application, where some of the \fBCthread\fP functions then becomes useless.
+\fBCthread\fP is a wrapper interface for multithreaded programs using POSIX threads.
 .P
-For non-thread applications see the section \fBNON-THREAD ENVIRONMENT\fP
+It used to be a common API supporting different threading implementations but has been restricted to POSIX.
 .P
 Any created thread is identified uniquely with a \fBcid\fP, standing for \fBC\fPthread \fBid\fPentifier.
-.P
-In multithread environment, \fBCthread\fP is an interface to \fBpthread\fP functions on \fBUNIX\fP, and an interface to \fBWin32\fP C-runtime library on \fBWindows/NT\fP.
 .P
 \fBCthread_create\fP is creating a thread given its starting point
 .I "startroutine"
@@ -74,7 +72,7 @@ Return value is the \fBCthread\fP identifier
 .P
 \fBCthread_exit\fP makes current thread exiting. If
 .BI status
-isn't NULL, it is assumed to point to an integer whose value if the status that a \fBCthread_join\fP would received, in case the thread is joinable. Please note that \fBCthread_exit\fP is dangerous and non-recommended on Windows platform.
+isn't NULL, it is assumed to point to an integer whose value if the status that a \fBCthread_join\fP would received, in case the thread is joinable.
 .P
 Return value is 0 on success, or -1 on error.
 .P
@@ -82,7 +80,7 @@ Return value is 0 on success, or -1 on error.
 .BI signo
 signal number to the thread
 .BI cid.
-This affect the status that a \fBCthread_join\fP would received, in case the thread to be killed is joinable. Please note that \fBCthread_kill\fP is not supported on DCE threads.
+This affect the status that a \fBCthread_join\fP would received, in case the thread to be killed is joinable.
 .P
 Return value is 0 on success, or -1 on error.
 .P
@@ -202,21 +200,14 @@ Beyond the errno value, \fBCthread\fP is setting the serrno value to generic val
 .RS
 CASTOR Thread interface initialization error
 .P
-A thread initialisation call failed. In principle, on UNIX this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed, on Windows/NT this might be a call to CreateMutex.
+A thread initialisation call failed. In principle, this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed.
 .RE
 .P
 .B SECTHREADERR
 .RS
 CASTOR Thread interface failure in calling your thread library
 .P
-A thread call to your native system library (like the pthread one on UNIX) failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
-.RE
-.P
-.B SEOPNOTSUP
-.RS
-Operation not supported
-.P
-This can be generated only if you compiled Cthread with a -DCTHREAD_PROTO flag that Cthread do not know about. Check your CASTOR configuration site.def.
+A thread call failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
 .RE
 .P
 .B SEINTERNAL
@@ -311,33 +302,8 @@ void testit() {
   return;
 }
 .fi
-.SH NON-THREAD ENVIRONMENT
-
-In such an environment, almost all methods becomes no-op, except:
-.P
-.RS
-Creation of process(es):
-.RS
-.B Cthread_create
-.br
-.B Cthread_create_detached
-(equivalent to \fBCthread_create\fP)
-.br
-.B Cthread_join
-.P
-.RE
-Use of "Process"-specific variables:
-.RS
-.B Cthread_getspecific
-.br
-.B Cthread_setspecific
-.br
-.RE
-.P
-For these two last functions, \fBCthread\fP will garbage itself its eventual list of "Process"-specific variables. This means that, \fBas in a thread environment\fP, the user will \fBnot\fP have to free memory allocated \fBand\fP registered with a call to \fBCthread_setspecific\fP.
-.RE
 .SH SEE ALSO
-\fBpthread\fP, \fBDCE\fP, \fBLinuxThreads\fP, \fBWin32\fP
+\fBpthread\fP
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
