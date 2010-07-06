@@ -51,7 +51,6 @@ debian/castor/usr/share/man/man3/Cns_updatefile_checksum.3castor
 debian/castor/usr/share/man/man3/Cns_utime.3castor
 debian/castor/usr/share/man/man3/Cpool.3castor
 debian/castor/usr/share/man/man3/Cpwd.3castor
-debian/castor/usr/share/man/man3/Csched.3castor
 debian/castor/usr/share/man/man3/Csetprocname.3castor
 debian/castor/usr/share/man/man3/Ctape_dmpfil.3castor
 debian/castor/usr/share/man/man3/Ctape_info.3castor

@@ -14,7 +14,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 readc.o remote.o \
 		 serror.o setnetio.o socket.o solveln.o trace.o \
 		 wsacct.o ypgetacct.o ypgetacctent.o \
-		 Cdlopen.o Cthread.o Csched.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
+		 Cdlopen.o Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
 		 Cregexp.o Csetprocname.o Cexportconf.o Csnprintf.o util.o \
@@ -36,6 +36,5 @@ LIBMANPAGE(Cuuid)
 LIBMANPAGE(Cmutex)
 LIBMANPAGE(Cpool)
 LIBMANPAGE(Cpwd)
-LIBMANPAGE(Csched)
 LIBMANPAGE(Csetprocname)
 LIBMANPAGE(Cthread)

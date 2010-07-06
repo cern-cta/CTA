@@ -16,8 +16,6 @@
 %attr(0644,root,root) usr/include/shift/Cpwd.h
 %attr(0644,root,root) usr/include/shift/Cregexp.h
 %attr(0644,root,root) usr/include/shift/Cregexp_magic.h
-%attr(0644,root,root) usr/include/shift/Csched_api.h
-%attr(0644,root,root) usr/include/shift/Csched_flags.h
 %attr(0644,root,root) usr/include/shift/Csec.h
 %attr(0644,root,root) usr/include/shift/Csec_api.h
 %attr(0644,root,root) usr/include/shift/Csec_common.h
