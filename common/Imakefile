@@ -6,7 +6,7 @@ COMM
 
 COMM		Make common routines library
 
-CPPFLAGS += -DCTHREAD_DEBUG -DCPOOL_DEBUG -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
+CPPFLAGS += -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \

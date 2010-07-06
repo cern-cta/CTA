@@ -13,9 +13,6 @@ char *timestamp (time_t);
 int npools;
 int nthreads_per_pool;
 
-extern int Cpool_debug;
-extern int Cthread_debug;
-
 int main(int argc,
          char **argv)
 {
@@ -37,9 +34,6 @@ int main(int argc,
 		exit(1);
 	}
 	
-	Cpool_debug = 0;
-	Cthread_debug = 0;
-
 	initlog("Cpool_forevertest",LOG_INFO,"");
 
 	for (i = 0; i < n; i++) {

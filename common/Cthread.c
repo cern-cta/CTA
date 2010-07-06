@@ -17,16 +17,6 @@
 #include <signal.h>
 #include <string.h>
 
-#ifdef DEBUG
-#ifndef CTHREAD_DEBUG
-#define CTHREAD_DEBUG
-#endif
-#endif
-
-#ifdef CTHREAD_DEBUG
-#include <log.h>
-#endif
-
 /* ============================================ */
 /* Internal Prototypes                          */
 /* ============================================ */
@@ -37,12 +27,7 @@ int   _Cthread_addmtx (const char *, int, struct Cmtx_element_t *);
 /* Add a TSD */
 int   _Cthread_addspec (const char *, int, struct Cspec_element_t *);
 /* Obain a mutex lock */
-#ifndef CTHREAD_DEBUG
 int   _Cthread_obtain_mtx (const char *, int, pthread_mutex_t *, int);
-#else
-#define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-int   _Cthread_obtain_mtx_debug (const char *, int, const char *, int, pthread_mutex_t *, int);
-#endif
 /* Release a mutex lock */
 int   _Cthread_release_mtx (const char *, int, pthread_mutex_t *);
 /* Methods to create a mutex to protect Cthread */
@@ -90,7 +75,6 @@ struct Cthread_protect_t Cthread;
 struct Cspec_element_t Cspec;
 pthread_once_t         once = 0;
 int _Cthread_unprotect = 0;
-int Cthread_debug = 0;
 int _Cthread_once_status = -1;
 
 /* ============================================ */
@@ -206,12 +190,6 @@ void *_Cthread_start_pthread(void *arg) {
   void               *routineargs;
   int                detached;
 
-#ifdef CTHREAD_DEBUG
-  if (Cthread_debug != 0)
-    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_start_pthread(0x%lx)\n",
-        _Cthread_self(),(unsigned long) arg);
-#endif
-
   if (arg == NULL) {
     serrno = EINVAL;
     return(NULL);
@@ -271,17 +249,6 @@ int Cthread_Create(const char *file,
   int            n;                     /* status            */
   pthread_attr_t attr;                  /* Thread attribute  */
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_create(0x%lx,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) startroutine, (unsigned long) arg,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -359,17 +326,6 @@ int Cthread_Create_Detached(const char *file,
   int            n;                   /* status            */
   pthread_attr_t attr;                /* Thread attribute  */
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_create_detached(0x%lx,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) startroutine, (unsigned long) arg,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -444,17 +400,6 @@ int Cthread_Join(const char *file,
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_join(%d,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (int) cid, (unsigned long) status,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -514,15 +459,6 @@ int Cthread_Detach(const char *file,
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                 n;                  /* Status           */
   int detached = 0;                       /* Local store      */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_detach(%d) called at/behind %s:%d\n",
-          _Cthread_self(),cid,file,line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -585,14 +521,8 @@ int Cthread_Self(const char *file,
   void               *tsd = NULL;       /* Thread-Specific Variable */
   int                   n;              /* Return value     */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_self() called at/behind %s:%d\n",
-          _Cthread_self(),file,line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -666,14 +596,6 @@ int _Cthread_destroy(const char *file,
   struct Cid_element_t *previous = NULL;  /* Curr Cid_element */
   int                 n;                /* Status           */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_destroy(%d) called at/behind %s:%d\n",
-          _Cthread_self(),cid,file,line);
-  }
-#endif
-
   /* We check that this cid correspond to a known */
   /* process                                      */
   if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
@@ -705,12 +627,6 @@ int _Cthread_destroy(const char *file,
    * status.
    */
   if ( current->detached || current->joined ) {
-#ifdef CTHREAD_DEBUG
-  if (Cthread_debug != 0)
-    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_destroy(%d), detached=%d, joined=%d\n",
-        _Cthread_self(),cid,current->detached,current->joined);
-#endif
-
     /* It is a known process - We delete the entry */
     if (previous != NULL) {
       previous->next = current->next;
@@ -744,16 +660,8 @@ int Cthread_Cond_Broadcast_ext(const char *file,
   struct Cmtx_element_t *current = addr;  /* Curr Cmtx_element */
   int                  rc;
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_cond_broadcast_ext(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) addr,
-          file, line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -800,16 +708,6 @@ int Cthread_Cond_Broadcast(const char *file,
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
   int                  rc;
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_cond_broadcast(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) addr,
-          file, line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -893,17 +791,8 @@ int Cthread_Wait_Condition_ext(const char *file,
   int                    n;                 /* Status            */
   int                    rc;
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_wait_condition_ext(0x%lx,%d) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) addr,(int) timeout,
-          file, line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -981,17 +870,6 @@ int Cthread_Wait_Condition(const char *file,
   int                    n;                 /* Status            */
   int                    rc;
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_wait_condition(0x%lx,%d) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) addr,(int) timeout,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -1112,17 +990,6 @@ int Cthread_Lock_Mtx(const char *file,
 {
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_lock_mtx(0x%lx,%d) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) addr,(int) timeout,
-          file, line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -1268,17 +1135,6 @@ int Cthread_Lock_Mtx_ext(const char *file,
 {
   struct Cmtx_element_t *current = addr;  /* Curr Cmtx_element */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_lock_mtx_ext(0x%lx,%d) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) addr,(int) timeout,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -1316,17 +1172,6 @@ void *Cthread_Lock_Mtx_addr(const char *file,
 {
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_lock_mtx_addr(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) addr,
-          file, line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(NULL);
@@ -1384,16 +1229,6 @@ int Cthread_Mutex_Unlock_ext(const char *file,
 {
   struct Cmtx_element_t *current = addr;   /* Curr Cmtx_element */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_unlock_mtx_ext(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) addr,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -1425,16 +1260,6 @@ int Cthread_Mutex_Unlock(const char *file,
 {
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_unlock_mtx(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) addr,
-          file, line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -1491,15 +1316,6 @@ int Cthread_Mutex_Destroy(const char *file,
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   struct Cmtx_element_t *previous = NULL;   /* Prev Cmtx_element */
   int                    n;                 /* Status            */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_mutex_destroy(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) addr,file,line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -1573,20 +1389,13 @@ int _Cthread_release_mtx(const char *file,
 {
    int               n;
 
+  (void) line;
    if (_Cthread_unprotect != 0) {
      if (mtx == &(Cthread.mtx)) {
        /* Unprotect mode */
        return(0);
      }
    }
-
-#ifdef CTHREAD_DEBUG
-   if (file != NULL) {
-     if (Cthread_debug != 0)
-       log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_release_mtx(0x%lx) called at/behind %s:%d\n",
-           _Cthread_self(),(unsigned long) mtx, file, line);
-   }
-#endif
 
   /* This is a thread environment */
   if ((n = pthread_mutex_unlock(mtx))) {
@@ -1600,7 +1409,6 @@ int _Cthread_release_mtx(const char *file,
   }
 }
 
-#ifndef CTHREAD_DEBUG
 /* ============================================ */
 /* Routine  : _Cthread_obtain_mtx               */
 /* Arguments: address of a mutex                */
@@ -1635,20 +1443,13 @@ int _Cthread_obtain_mtx(const char *file,
 {
   int               n;
 
+  (void) line;
   if (_Cthread_unprotect != 0) {
     if (mtx == &(Cthread.mtx)) {
       /* Unprotect mode */
       return(0);
     }
   }
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_obtain_mtx(0x%lx,%d) called at/behind %s:%d\n",_Cthread_self(),
-          (unsigned long) mtx,(int) timeout, file, line);
-  }
-#endif
 
   /* This is a thread implementation */
   if (timeout < 0) {
@@ -1678,7 +1479,6 @@ int _Cthread_obtain_mtx(const char *file,
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
-    struct timeval ts;
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -1710,125 +1510,6 @@ int _Cthread_obtain_mtx(const char *file,
   }
 }
 
-#else /* CTHREAD_DEBUG */
-
-/* ============================================ */
-/* Routine  : _Cthread_obtain_mtx_debug         */
-/* Arguments: address of a mutex                */
-/*            integer - timeout                 */
-/* -------------------------------------------- */
-/* Output   : 0 (OK) -1 (ERROR)                 */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 07-APR-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* ============================================ */
-/* Notes:                                       */
-/* This routine tries to get a mutex lock, with */
-/* the use of a conditionnal variable if there  */
-/* is one (the argument can be NULL), and an    */
-/* eventual timeout:                            */
-/* timeout < 0          - mutex_lock            */
-/* timeout = 0          - mutex_trylock         */
-/* timeout > 0          - cond_timedwait        */
-/*                     or lock_mutex            */
-/* The use of cond_timedwait is caution to the  */
-/* non-NULL value to the second argument.       */
-/* ============================================ */
-/* ==================================================================================== */
-/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
-/* ==================================================================================== */
-
-int _Cthread_obtain_mtx_debug(const char *Cthread_file,
-                              int Cthread_line,
-                              const char *file,
-                              int line,
-                              pthread_mutex_t *mtx,
-                              int timeout)
-{
-  int               n;
-
-  if (_Cthread_unprotect != 0) {
-    if (mtx == &(Cthread.mtx)) {
-      /* Unprotect mode */
-      return(0);
-    }
-  }
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_obtain_mtx_debug(0x%lx,%d) called at %s:%d and behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) mtx,(int) timeout, 
-          Cthread_file, Cthread_line,
-          file, line);
-  }
-#endif
-
-  /* This is a thread implementation */
-  if (timeout < 0) {
-    /* Try to get the lock */
-    if ((n = pthread_mutex_lock(mtx))) {
-      if (file != NULL) {
-        serrno = SECTHREADERR;
-      }
-      errno = n;
-      return(-1);
-    }
-    return(0);
-  } else if (timeout == 0) {
-    if ((n = pthread_mutex_trylock(mtx))) {
-      /* EBUSY or EINVAL */
-      errno = n;
-      if (file != NULL) {
-        serrno = SECTHREADERR;
-      }
-      return(-1);
-    } else {
-      return(0);
-    }
-  } else {
-    /* This code has been kept from comp.programming.threads */
-    /* timeout > 0 */
-    int gotmutex   = 0;
-    unsigned long timewaited = 0;
-    unsigned long Timeout = 0;
-#if !(defined(linux))
-    struct timeval ts;
-#endif
-    /* Convert timeout in milliseconds */
-    Timeout = timeout * 1000;
-
-    while (timewaited < Timeout && ! gotmutex) {
-      if ((n = pthread_mutex_trylock(mtx)))
-        errno = n;
-      if (errno == EDEADLK || n == 0) {
-        gotmutex = 1;
-        return(0);
-      }
-      if (errno == EBUSY) {
-        timewaited += Timeout / 20;
-#if defined(linux)
-        /* usleep is in micro-seconds, not milli seconds... */
-        usleep((Timeout * 1000)/20);
-#else
-        /* This method deadlocks on IRIX or linux (poll() via select() bug)*/
-        ts.tv_sec = Timeout;
-        ts.tv_usec = 0;
-        select(0,NULL,NULL,NULL,&ts);
-#endif
-      }
-    }
-    if (file != NULL) {
-      serrno = SETIMEDOUT;
-    }
-    return(-1);
-  }
-}
-
-#endif /* CTHREAD_DEBUG */
-
 /* ============================================ */
 /* Routine  : _Cthread_addmtx                   */
 /* Arguments: Cmtx_new - New Cmtx_element       */
@@ -1848,14 +1529,8 @@ int _Cthread_addmtx(const char *file,
 {
   struct Cmtx_element_t *current = &Cmtx;    /* Curr Cmtx_element */
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addmtx(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),(unsigned long) Cmtx_new, file, line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /*
     if ( _Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1) ) 
       return(-1);
@@ -1920,26 +1595,8 @@ int _Cthread_addcid(const char *Cthread_file,
   int n;
   pthread_t           ourpid;             /* We will need to identify ourself */
 
-#ifdef CTHREAD_DEBUG
-  if (Cthread_file != NULL) {
-    /* To avoid recursion */
-    if (file == NULL) {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid(0x%lx,%d,0x%lx,%d) called at %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) pid,(int) thID, (unsigned long) startroutine, (int) detached,
-            Cthread_file, Cthread_line);
-    } else {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid(0x%lx,%d,0x%lx,%d) called at %s:%d and behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) pid,(int) thID, (unsigned long) startroutine, (int) detached,
-            Cthread_file, Cthread_line,
-            file, line);
-    }
-  }
-#endif
-  
+  (void) Cthread_file;
+  (void) Cthread_line;
   /* In the case of threaded environment, and if the entry we wanted */
   /* to insert is... us, then we check the Thread Specific Variable  */
   /* right now.                                                      */
@@ -1997,23 +1654,6 @@ int _Cthread_addcid(const char *Cthread_file,
     if (pthread_equal(current->pid,*pid)) {
       current->detached = detached;
       current->joined = 0;
-#    ifdef CTHREAD_DEBUG
-      if (Cthread_file != NULL) {
-        /* To avoid recursion */
-        if (file == NULL) {
-          if (Cthread_debug != 0)
-            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Already existing cid=%d (current pid=%d)\n",_Cthread_self(),
-                Cthread_file,Cthread_line,
-                current->cid,getpid());
-        } else {
-          if (Cthread_debug != 0)
-            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid=%d (current pid=%d)\n",_Cthread_self(),
-                Cthread_file,Cthread_line,
-                file, line,
-                current->cid,getpid());
-        }
-      }
-#    endif
       current_cid = current->cid;
       break;
     }
@@ -2022,23 +1662,6 @@ int _Cthread_addcid(const char *Cthread_file,
   /* Not found                         */
   
   if (current_cid < 0) {
-#ifdef CTHREAD_DEBUG
-  if (Cthread_file != NULL) {
-    /* To avoid recursion */
-    if (file == NULL) {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : cid not found. Will process a new one.\n",
-            _Cthread_self(),
-            Cthread_file,Cthread_line);
-    } else {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : cid not found. Will process a new one.\n",
-            _Cthread_self(),
-            Cthread_file,Cthread_line,
-            file, line);
-    }
-  }
-#endif
     /* Not found */
     if (startroutine == NULL) {
       /* This is the special case of initialization */
@@ -2078,26 +1701,6 @@ int _Cthread_addcid(const char *Cthread_file,
     ((struct Cid_element_t *) current->next)->cid      = current_cid;
     ((struct Cid_element_t *) current->next)->next     = NULL;
     
-#ifdef CTHREAD_DEBUG
-    if (Cthread_file != NULL) {
-      /* To avoid recursion */
-      if (file == NULL) {
-        if (Cthread_debug != 0)
-          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : created a new cid element with CthreadID=%d.\n",
-              _Cthread_self(),
-              Cthread_file,Cthread_line,
-              current_cid);
-      } else {
-        if (Cthread_debug != 0)
-          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : created a new cid element with CthreadID=%d.\n",
-              _Cthread_self(),
-              Cthread_file,Cthread_line,
-              file, line,
-              current_cid);
-      }
-    }
-#endif
-
     current = current->next;
 
   }
@@ -2108,51 +1711,11 @@ int _Cthread_addcid(const char *Cthread_file,
     /* We, the calling thread, is the same that is asking for a new cid */
     /* We update our tsd.                                               */
     * (int *) tsd = current_cid;
-#    ifdef CTHREAD_DEBUG
-    if (Cthread_file != NULL) {
-      /* To avoid recursion */
-      if (file == NULL) {
-        if (Cthread_debug != 0)
-          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : We are the same thread that own found CthreadID=%d. Now our output of _Cthread_self() should be equal to %d, please verify: _Cthread_self() = %d\n",
-              _Cthread_self(),
-              Cthread_file,Cthread_line,
-              current_cid,
-              current_cid,_Cthread_self());
-      } else {
-        if (Cthread_debug != 0)
-          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : We are the same thread that own found CthreadID=%d. Now our output of _Cthread_self() should be equal to %d, please verify: _Cthread_self() = %d\n",
-              _Cthread_self(),
-              Cthread_file,Cthread_line,
-              file, line,
-              current_cid,
-              current_cid,_Cthread_self());
-      }
-    }
-#    endif
   }
 
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
   
   /* Returns cid */
-#ifdef CTHREAD_DEBUG
-  if (Cthread_file != NULL) {
-    /* To avoid recursion */
-    if (file == NULL) {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Returning cid=%d (current pid=%d)\n",
-            _Cthread_self(),
-            Cthread_file,Cthread_line,
-            current_cid,getpid());
-    } else {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Returning cid=%d (current pid=%d)\n",
-            _Cthread_self(),
-            Cthread_file,Cthread_line,
-            file, line,
-            current_cid,getpid());
-    }
-  }
-#endif
   return(current_cid);
 }
 
@@ -2231,10 +1794,6 @@ void _Cthread_once() {
 void _Cthread_keydestructor(void *addr)
 {
   /* Release the Thread-Specific key */
-#ifdef CTHREAD_DEBUG
-  if (Cthread_debug != 0)
-    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_keydestructor(0x%lx)\n",_Cthread_self(),(unsigned long) addr);
-#endif
   free(addr);
 }
 
@@ -2325,17 +1884,6 @@ int Cthread_Setspecific(const char *file,
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
   int                  n;                 /* Status            */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    /* To avoid recursion */
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_setspecific(0x%lx,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) global_key, (unsigned long) addr,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -2425,17 +1973,6 @@ int Cthread_Getspecific(const char *file,
   int                     n;                  /* Status             */
   void                   *tsd = NULL;         /* TSD address        */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    /* to avoid recursion */
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_getspecific(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) global_key,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -2517,14 +2054,6 @@ int _Cthread_addspec(const char *file,
 {
   struct Cspec_element_t *current = &Cspec;    /* Curr Cmtx_element */
   
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addspec(0x%lx) called at/behind %s:%d\n",_Cthread_self(),
-          (unsigned long) Cspec_new,file,line);
-  }
-#endif
-
   if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
     return(-1);
 
@@ -2658,17 +2187,6 @@ int Cthread_Kill(const char *file,
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_kill(%d,%d) called at/behind %s:%d\n",
-          _Cthread_self(),
-          cid, signo,
-          file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -2721,17 +2239,8 @@ void Cthread_Exit(const char *file,
                   void *status)
 {
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,
-          "[Cthread    [%2d]] In Cthread_exit(0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) status,
-          file, line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return;
 

@@ -21,18 +21,12 @@ static char sccsid[] = "@(#)$RCSfile: Cpool_test.c,v $ $Revision: 1.3 $ $Date: 2
 #define TIMEOUT 2
 void *testit(void *);
 
-extern int Cthread_debug;
-extern int Cpool_debug;
-
 int main() {
   int pid;
   int i, j;
   int ipool[NPOOL];
   int npool[NPOOL];
   int *arg;
-
-  Cthread_debug = 0;
-  Cpool_debug = 0;
 
   initlog("Cpool_test_next_index",LOG_DEBUG,"");
 

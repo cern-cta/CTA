@@ -26,17 +26,11 @@ int special_pid = -1;
 
 static int arguments[NPOOL + 1][PROCS_PER_POOL+1];
 
-extern int Cthread_debug;
-extern int Cpool_debug;
-
 int main() {
   int pid;
   int i, j;
   int ipool[NPOOL + 1];
   int npool[NPOOL + 1];
-
-  Cthread_debug = 0;
-  Cpool_debug = 0;
 
   /* initlog("Cpool_test_next_index",LOG_DEBUG,""); */
 

@@ -15,8 +15,6 @@ int poolid[NMASTER_THREADS];
 int cid[NMASTER_THREADS];
 int nassign[NMASTER_THREADS] = {1000,100000,100000,100000,100000,100000,100000,100000,100000,100000};
 
-extern int Cpool_debug;
-
 int main(int argc,
          char **argv)
 {
@@ -44,8 +42,6 @@ int main(int argc,
 		}
 	}
 	
-	Cpool_debug = 0;
-
 	initlog("Cpool_multiple_pools",LOG_DEBUG,"");
 
 	for (i = 0; i < n; i++) {

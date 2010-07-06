@@ -15,16 +15,6 @@
 #include <errno.h>
 #include <osdep.h>
 
-#ifdef DEBUG
-#ifndef CTHREAD_DEBUG
-#define CTHREAD_DEBUG
-#endif
-#endif
-
-#ifdef CTHREAD_DEBUG
-#include <log.h>
-#endif
-
 /* ------------------------------------ */
 /* For the Cthread_self() command       */
 /* (Thread-Specific Variable)           */
@@ -53,13 +43,8 @@ EXTERN_C struct Cspec_element_t Cspec;
 EXTERN_C pthread_once_t         once;
 EXTERN_C int _Cthread_unprotect;
 
-EXTERN_C int Cthread_debug;
 EXTERN_C int _Cthread_once_status;
-
-#ifdef CTHREAD_DEBUG
-#define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-EXTERN_C int _Cthread_obtain_mtx_debug (char *, int, char *, int, pthread_mutex_t *, int);
-#endif
+EXTERN_C int _Cthread_obtain_mtx (const char *, int, pthread_mutex_t *, int);
 EXTERN_C int _Cthread_init (void);
 EXTERN_C int _Cthread_release_mtx (char *, int, pthread_mutex_t *);
 
@@ -88,14 +73,6 @@ int Csched_Getschedparam(char *file,
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Getschedparam(%d,0x%lx,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),cid,(unsigned long) policy,(unsigned long) Cparam,file, line);
-  }
-#endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
@@ -165,14 +142,6 @@ int Csched_Setschedparam(char *file,
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                   n;                /* Status           */
 
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Setschedparam(%d,%d,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),cid,policy,(unsigned long) Cparam,file, line);
-  }
-#endif
-
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -239,14 +208,8 @@ int Csched_Get_priority_min(char *file,
                             int line,
                             int policy)
 {
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_min(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -286,14 +249,8 @@ int Csched_Get_priority_max(char *file,
                             int line,
                             int policy)
 {
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_max(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -333,14 +290,8 @@ int Csched_Get_priority_mid(char *file,
                             int line,
                             int policy)
 {
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_mid(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
+  (void) file;
+  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
