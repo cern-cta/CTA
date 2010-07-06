@@ -37,36 +37,39 @@ THE PREREQUISITES OF THE TEST
   which contains a function of the same name which returns 0 in the case of a
   ENOENT error code.
 
+
 NSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 =================================================================
 
 1. Check that the tapeGateway is up and running.
 
-ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
+ps -ef | grep 'tapegatewayd' | grep -v grep
 
 2. Identify a test-directory in CASTOR where contain 10 files.
 
-3. Chech that the files are stored on tape.
+/castor/cern.ch/dev/m/murrayc3/<folder_name>
 
-nsls -l /castor/cern.ch/dev/m/murrayc3/... | egrep -v '^m' | wc -l
+3. Check that the ten files has at least one copy on tape.
+
+nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
 [output] 0
 
 4. Chech that the file are not on disk.
 
-stager_qry -M /castor/cern.ch/dev/m/murrayc3/.../file
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
-stager_rm -M /castor/cern.ch/dev/m/murrayc3/.../file
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
 
 6. Make sure the test service-class will use exactly 1 drive for recall.
 
 modifySvcClass --Name default --NbDrives 1
 
-8. Dedicate the test-drive to the test-stager.
+7. Dedicate the test-drive to the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
-
 
 
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
@@ -78,34 +81,30 @@ INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 
 2. stager_get the 10 files.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/.....; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
 
 3. Waiting for all 10 files to be in TAPECOPY_CREATED (tragic number 0).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
        FROM castorfile
             INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
-      WHERE lastknownfilename like '%/xxxxxxxxxxxxxxxxxxxxxx/%';
+      WHERE lastknownfilename like '%/<folder_name>/%';
 
-4. Display the current checksum value for each of the 10 test-files.
+4. Use nsrm to remove all 10 test-files from the name seerver.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/...; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsls -l --checksum $TESTDIR/$F | awk '{print $10" " $NF}'; done
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name> for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm $TESTDIR/$F; done
 
-5. Use nsrm to remove all 10 test-files from the name seerver.
-
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/...; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsrm  $TESTDIR/$F; done
-
-6. Start the tepegateway daemon.
+5. Start the tepegateway daemon.
 
 /usr/bin/tapegatewayd start
 
-7. Wait for the status of the tapecopy of each test-file to become
+6. Wait for the status of the tapecopy of each test-file to become
    TAPECOPY_FAILED (tragic number 6).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
        FROM castorfile
             INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
-      WHERE lastknownfilename like '%/xxxxxxxxxxxxxxxxxxxxxx/%';
+      WHERE lastknownfilename like '%/<folder_name>/%';
 
 
 EXPECTED RESULTS
@@ -114,10 +113,10 @@ EXPECTED RESULTS
 The tape-gateway should have failed all 10 of the test-files being recalled from
 tape.  In addition to the status output of step 6 of the above test
 instructions, nsls -l should show that none of the 10 test files have been
-migrated.  The following command-line should therefore display 0 as its result.
+migrated.  The following command-line should therefore display 10 as its result.
 
-nsls -l /castor/cern.ch/dev/n/nbessone/migrate_10_files_with_wrong_checksum | egrep -v '^m' | wc -l
-[output] 0
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
@@ -126,15 +125,3 @@ INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 1. Revoke the dedication the test-drive from the test-stager.
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
-
-
-
-
-
-
-
-Stop the tape gateway
-stager_get the 10 files
-Wait until all 10 tape copies in status TAPECOPY_TOBERECALLED have been created
-nsrm the 10 files
-Re-start the tape gateway

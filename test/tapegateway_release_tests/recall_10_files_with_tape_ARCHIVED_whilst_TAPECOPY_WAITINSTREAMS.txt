@@ -11,7 +11,7 @@ The principle responsibility of the tape gateway is to coordinate the transfer
 of files to and from tape.
 
 This test verifies that the tape-gateway will fail the recall of a file 
-if the tape containing it is move to an ARCHIVED state.
+if the tape containing them is move to an ARCHIVED state.
 
 The tape-gateway is responsible for retying failed recall based on a
 user-define policy. The tape-gateway does this by executing a Python-script
@@ -48,18 +48,21 @@ ps -ef | grep 'tapegatewayd' | grep -v grep
 
 2. Identify a test-directory in CASTOR where contain 10 files.
 
-3. Chech that the files are stored on tape.
+/castor/cern.ch/dev/m/murrayc3/<folder_name>
 
-nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep -v '^m' | wc -l
+3. Check that the ten files has at least one copy on tape.
+
+nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
 [output] 0
 
 4. Chech that the file are not on disk.
 
-stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name>
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
-stager_rm -M /castor/cern.ch/dev/m/murrayc3/<folder_name>
+TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
 
 6. Make sure the test service-class will use exactly 1 drive for recall.
 
@@ -116,10 +119,10 @@ EXPECTED RESULTS
 The tape-gateway should have failed all 10 of the test-files being recalled from
 tape.  In addition to the status output of step 6 of the above test
 instructions, nsls -l should show that none of the 10 test files have been
-recalled.  The following command-line should therefore display 0 as its result.
+recalled.  The following command-line should therefore display 10 as its result.
 
-nsls -l /castor/cern.ch/dev/n/nbessone/<folder_name> | egrep -v '^m' | wc -l
-[output] 0
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
@@ -129,9 +132,7 @@ INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
 
-2. Set to the original status the test_tape(s).
+2. Set the status the test_tape(s) to the original value.
 
 TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
 for I in $TAPES; do vmgrmodifytape -V $I --st ""; done;
-
-

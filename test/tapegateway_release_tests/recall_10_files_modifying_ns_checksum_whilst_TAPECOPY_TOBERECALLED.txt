@@ -3,6 +3,7 @@ THE NAME OF TEST
 
 Recall 10 files modifying ns checksum whilst TAPECOPY TOBERECALLED
 
+
 THE PURPOSE OF THE TEST
 =======================
 
@@ -118,10 +119,10 @@ EXPECTED RESULTS
 The tape-gateway should have failed all 10 of the test-files being recalled from
 tape.  In addition to the status output of step 6 of the above test
 instructions, nsls -l should show that none of the 10 test files have been
-recalled.  The following command-line should therefore display 0 as its result.
+recalled.  The following command-line should therefore display 10 as its result.
 
-nsls -l /castor/cern.ch/dev/n/nbessone/<folder_name> | egrep -v '^m' | wc -l
-[output] 0
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
