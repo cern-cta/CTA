@@ -21,15 +21,13 @@ THE PREREQUISITES OF THE TEST
 * A test service-class with the following properties:
   - A set of one or more disk-pools that has enough free space to store ten
     100MB test-files.
-  - Stream policy set to one which always returns 1.
-  - Migrator policy set to one which always returns 1.
+  - A set of one or more tape-pools that has enough free space to store ten
+    100MB test-files.
+  - nbDrivs set to at least 1.
+  - A stream policy which always returns 1.
+  - A migrator policy which always returns 1.
   - Recaller policy set to 'None'.
-* A user account that permits the modification of the service-class within the
-  stager.
-* One test-tape which must have enough free space to store ten 100MB files.
-* A user account that permits the creation of a new tape-pool within the VMGR.
 * One free tape-drive which can access the test-tape.
-* A user account that permits the dedication of drives within the VDQM.
 * A file class with a value of 1 for nbCopies (the number of desired
   tape-copies).
 * A user account that allows the creation and population of a CASTOR directory
@@ -41,30 +39,12 @@ THE PREREQUISITES OF THE TEST
 INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 =================================================================
 
-1. Check that the tapeGateway is up and running.
-
-ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
-
-2. Create yourself a tape-pool containing the test-tape.
-
-vmgrenterpool --name gatewaytest --user murrayc3 --group c3
-vmgrmodifytape -V I12017 --pool gatewaytest
-
-3. Make sure the test service-class has the test tape-pool as its one and only
-   tape-pool.
-
-modifySvcClass --Name default --AddTapePools gatewaytest
-
-4. Make sure the test service-class will use exactly 1 drive for migrations.
-
-modifySvcClass --Name default --NbDrives 1
-
-5. Create the empty test-directory in CASTOR where test-files will be copied
+1. Create the empty test-directory in CASTOR where test-files will be copied
    to.
 
 nsmkdir /castor/cern.ch/dev/m/murrayc3/migrate_and_recall_10_single_tape_copy_files
 
-6. Determine the name of a file-class with one tape-copy.
+2. Determine the name of a file-class with one tape-copy.
 
 nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 'NBCOPIES 1'
 [output] ...
@@ -73,20 +53,16 @@ nslistclass | egrep 'CLASS_ID|CLASS_NAME|NBCOPIES' | grep -B2 'NBCOPIES 1'
 [output] NBCOPIES 1
 [output] ...
 
-7. Set the file-class of the test-directory to be that of the previous step.
+3. Set the file-class of the test-directory to be that of the previous step.
 
 nschclass largeuser /castor/cern.ch/user/m/murrayc3/gatewayendtape
 
-8. Dedicate the test-drive to the test-stager.
-
-vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
-
-9. Determine whether or not there is a migHunter daemon running for the 
+4. Determine whether or not there is a migHunter daemon running for the 
    test-service-class.
 
 ps -ef | egrep "/usr/bin/mighunterd.* default" | grep -v grep
 
-10. If no mighunter daemon is running for the test service-class, then start
+5. If no mighunter daemon is running for the test service-class, then start
     one as user root.
 
 /usr/bin/mighunterd -t 60 default

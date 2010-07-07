@@ -1,7 +1,7 @@
 THE NAME OF TEST
 ================
 
-Repack 2 tapes using 2 drives reading 6 drives writing
+Repack 2 tapes.
 
 
 THE PURPOSE OF THE TEST
@@ -10,111 +10,110 @@ THE PURPOSE OF THE TEST
 The principle responsibility of the tape gateway is to coordinate the transfer
 of files to and from tape.
 
-This test verifies that the tape-gateway will.... 
-
-The tape-gateway is responsible for retying failed recall based on a
-user-define policy. The tape-gateway does this by executing a Python-script
-which provides the policy user-coded logic for deciding whether or not a failed
-recall should be repeated based on the error code that is being generating
-and the number of prevous retries.
+This test verifies that the tape-gateway will be able to repack 2 tapes
+without mixing up the files.
 
 
 THE PREREQUISITES OF THE TEST
 =============================
 
 * A test-stager running the tape-gateway where you can carry out the test.
-* A user account that permits the modification of the service-class within the
-  stager.
-* Eight free tape-drive which can access the test-tapes.
-* A user account that permits the dedication of drives within the VDQM.
-* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
-  which contains a function of the same name which returns 0 in the case of a
-  ........ error code.
+* A test service-class to act as the destination for repack with the following
+  properties:
+  - A set of one or more disk-pools that has enough free space to store 2TB
+    worth of 100MB test-files.
+  - A set of one or more tape-pools that has enough free space to store 2TB
+    worth of 100MB test-files. Ideally a total 6 tapes would be advantageous
+    because writing 100MB is generally 3 times slower than reaidng 100MB files
+  - nbDrives set to at least 1 but 6 is advised because migrating 100 MB is
+    generally 3 times slower than recalling them.
+  - A stream policy which always returns 1.
+  - A migrator policy which always returns 1.
+  - Recaller policy set to 'None'.
+* Two input test-tapes to be repacked.
+* Free tape-drives which can access both the two input test-tapes and the tapes
+  in the test repack destination service-class.  An ideal setup would be two
+  tape-drives for reading and six tape-drives for writing.  This is ideal
+  because the writing of 100MB files is roughly 3 times slower than reading
+  100 MB files.
 
 
 INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 =================================================================
 
-1. Dedicate read-only (mode=0), 2 tape drives which can read the 2 input test-tapes:
+1. Completely fill the two input test-tapes full with 100MB tes-files.  The
+   contents of each test-file should be unique.  Two such tapes can be created
+   by carrying out the following test and not deleting the files from the name
+   server at the end:
 
-vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'mode=0'
-vdqm_admin -dedicate -dgn 359B1B -drive 35921012 -server tpsrv213 -match 'mode=0'
-
-2. Create yourself a repack-destination tape-pool with 6 tapes.  It would be ideal if
-   there are enough drives to mount in parallel each tape for writing.
-
-vmgrenterpool --name gatewayrepack --user murrayc3 --group c3
-
-vmgrmodifytape -V I12021 --pool gatewayrepack
-vmgrmodifytape -V I12025 --pool gatewayrepack
-vmgrmodifytape -V I12027 --pool gatewayrepack
-vmgrmodifytape -V I12029 --pool gatewayrepack
-vmgrmodifytape -V I12030 --pool gatewayrepack
-vmgrmodifytape -V I12031 --pool gatewayrepack
-
-3. Choose a service class for your test and make sure it has your newly created tape pool as its one and only tape pool:
-
-modifySvcClass --Name default --AddTapePools gatewaytest
-
-4. Make sure your service class will use exactly 6 drives for migrations:
-
-modifySvcClass --Name default --NbDrives 6
-
-
-modifySvcClass --Name largedisk1 --RemoveTapePools gatewaystress
-modifySvcClass --Name largedisk1 --AddTapePools gatewayrepack
-
-5. Modify the migrate an stram policies to return always TRUE.
-
-vi /etc/castor/policies/migration.py
-...
-def migratorPolicyAlwaysReturning1(tapepool, castorfilename,copynb,fileId,fileSize,fileMode,uid,gid,aTime,mTime,cTime,fileClass):
-  return 1
-...
-
-
-vi /etc/castor/policies/stream.py
-...
-def streamPolicyAlwaysReturning1(runningStreams,numFiles,dataVolume,maxNumStreams,age):
-  return 1
-...
-
-modifySvcClass --Name largedisk1 --MigratorPolicy migratorPolicyAlwaysReturning1
-modifySvcClass --Name largedisk1 --StreamPolicy streamPolicyAlwaysReturning1
+svn+ssh://svn.cern.ch/reps/CASTOR/CASTOR2/trunk/test/tapegateway_release_tests/migrate_until_end_of_2_tapes
 
 
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 =================================================
 
-1. For each of the two input test-tapes, store the list of files on the tape in
-   file.
+1. Create two files each listing the full contents of one of the input
+   test-tapes.
 
-nslisttape -V I12018 > ~/nslisttape_I12018.txt
-nslisttape -V I12017 > ~/nslisttape_I12017.txt
+CNS_HOST=castorns nslisttape -V I12019 > ~/castorns_nslisttape_I12019
+CNS_HOST=castorns nslisttape -V I12022 > ~/castorns_nslisttape_I12022
 
-5. repack 2 tapes
 
-repack -V I12017:I12018 -o largedisk1
-[Output]Operation succeeded for tape I12017
-[Output]Operation succeeded for tape I12018
+2. Start repacking the 2 test-tapes.
 
-6. Monitor the repack process until its end.
+repack -V I12019:I12022 -o largedisk2
+[Output]Operation succeeded for tape I12019
+[Output]Operation succeeded for tape I12022
 
-7. Check that all files on the 2 tapes has been repacked.
+6. Monitor the repack of the two test-tapes until they have been both repacked.
 
 -bash-3.2$ repack -s
 
-=======================================================================================================================
-CurrentTime       SubmitTime           Vid        Total        Size  toRecall toMigr    Failed  Migrated      Status
------------------------------------------------------------------------------------------------------------------------
-07-Jul-10_11:54   04-Jul-10_15:36     I12017       8463   826.47GiB         0 0         0      8463        DONE
-07-Jul-10_11:54   02-Jul-10_14:53     I12018       8186   799.41GiB         0 0         0      8186        DONE
 
 EXPECTED RESULTS
 ================
 
+Using the two file screated at step 1 of the test, verify that all of the
+files have been repacked to one of the 6 tapes in the test service-class.
+
+1. Determine the 6 destination tapes:
+
+-bash-3.2$ vmgrlisttape -P gatewayrepack2
+I02001   I02001 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100211
+I02008   I02008 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100211
+I05581   I05581 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091219
+I05583   I05583 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091218
+I05584   I05584 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100216
+I05587   I05587 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091217
+
+2. From the 2 files craeted in step 1 of the test create 2 more files, each
+   listing the segment information of each test-file.
+
+for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12019`; do CNS_HOST=castorns nsls -T $F; done > ~/castorns_nsls_T_I12019
+for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12022`; do CNS_HOST=castorns nsls -T $F; done > ~/castorns_nsls_T_I12022
+
+3. Check that each file has a segment.  The number of files on each tape
+   should match the number of segments found in the previous step.
+
+wc -l ~/castorns_nslisttape_I12019
+wc -l ~/castorns_nsls_T_I12019
+wc -l ~/castorns_nslisttape_I12022
+wc -l ~/castorns_nsls_T_I12022
+
+4. Using the list of 6 destination tapes, count the number of segments on
+   those tapes.  The result should each the total number of test-files which
+   were on each of input test-tapes before repack was started.
+
+wc -l ~/castorns_nslisttape_I12019
+egrep 'I02001|I02008|I05581|I05583|I05584|I05587' castorns_nsls_T_I12019 | wc
+wc -l ~/castorns_nslisttape_I12022
+egrep 'I02001|I02008|I05581|I05583|I05584|I05587' castorns_nsls_T_I12022 | wc
+-l
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 ====================================================================
 
+Remove all of the 100 MB test-files from the name server.
+
+for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12019`; do CNS_HOST=castorns nsrm $F; done
