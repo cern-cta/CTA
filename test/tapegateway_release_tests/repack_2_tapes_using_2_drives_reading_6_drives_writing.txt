@@ -1,3 +1,40 @@
+THE NAME OF TEST
+================
+
+Repack 2 tapes using 2 drives reading 6 drives writing
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+The principle responsibility of the tape gateway is to coordinate the transfer
+of files to and from tape.
+
+This test verifies that the tape-gateway will.... 
+
+The tape-gateway is responsible for retying failed recall based on a
+user-define policy. The tape-gateway does this by executing a Python-script
+which provides the policy user-coded logic for deciding whether or not a failed
+recall should be repeated based on the error code that is being generating
+and the number of prevous retries.
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+* A test-stager running the tape-gateway where you can carry out the test.
+* A user account that permits the modification of the service-class within the
+  stager.
+* Eight free tape-drive which can access the test-tapes.
+* A user account that permits the dedication of drives within the VDQM.
+* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
+  which contains a function of the same name which returns 0 in the case of a
+  ........ error code.
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
 1. Dedicate read-only (mode=0), 2 tape drives which can read the 2 input test-tapes:
 
 vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'mode=0'
@@ -27,6 +64,7 @@ modifySvcClass --Name default --NbDrives 6
 modifySvcClass --Name largedisk1 --RemoveTapePools gatewaystress
 modifySvcClass --Name largedisk1 --AddTapePools gatewayrepack
 
+5. Modify the migrate an stram policies to return always TRUE.
 
 vi /etc/castor/policies/migration.py
 ...
@@ -44,16 +82,31 @@ def streamPolicyAlwaysReturning1(runningStreams,numFiles,dataVolume,maxNumStream
 modifySvcClass --Name largedisk1 --MigratorPolicy migratorPolicyAlwaysReturning1
 modifySvcClass --Name largedisk1 --StreamPolicy streamPolicyAlwaysReturning1
 
-For each of the two input test-tapes, store the list of files on the tape in
-file.
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. For each of the two input test-tapes, store the list of files on the tape in
+   file.
 
 nslisttape -V I12018 > ~/nslisttape_I12018.txt
 nslisttape -V I12017 > ~/nslisttape_I12017.txt
 
 5. repack 2 tapes
 
--bash-3.2$ repack -V I12017:I12018 -o largedisk1
-Operation succeeded for tape I12017
-Operation succeeded for tape I12018
+repack -V I12017:I12018 -o largedisk1
+[Output]Operation succeeded for tape I12017
+[Output]Operation succeeded for tape I12018
 
--bash-3.2$
+6. Monitor the repack process until its end.
+
+7. Check that all files on the 2 tapes has been repacked.
+
+EXPECTED RESULTS
+================
+
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
