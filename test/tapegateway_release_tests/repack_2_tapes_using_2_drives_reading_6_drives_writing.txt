@@ -102,6 +102,14 @@ repack -V I12017:I12018 -o largedisk1
 
 7. Check that all files on the 2 tapes has been repacked.
 
+-bash-3.2$ repack -s
+
+=======================================================================================================================
+CurrentTime       SubmitTime           Vid        Total        Size  toRecall toMigr    Failed  Migrated      Status
+-----------------------------------------------------------------------------------------------------------------------
+07-Jul-10_11:54   04-Jul-10_15:36     I12017       8463   826.47GiB         0 0         0      8463        DONE
+07-Jul-10_11:54   02-Jul-10_14:53     I12018       8186   799.41GiB         0 0         0      8186        DONE
+
 EXPECTED RESULTS
 ================
 
