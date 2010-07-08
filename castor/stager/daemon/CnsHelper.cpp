@@ -16,7 +16,6 @@
 #include "stager_constants.h"
 #include "Cns_api.h"
 #include "Cns_struct.h"
-#include "Cglobals.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "u64subr.h"

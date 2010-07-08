@@ -50,7 +50,6 @@
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Server.hpp"
 #include "castor/rh/RHThread.hpp"
-#include "Cglobals.h"
 #include "Cthread_api.h"
 
 #include <iostream>
@@ -61,6 +60,8 @@
 
 // Flag to indicate whether the first thread has been created.
 static bool firstThreadInit = true;
+pthread_key_t castor::rh::RHThread::s_rateLimiterKey(-1);
+pthread_once_t castor::rh::RHThread::s_rateLimiterOnce(PTHREAD_ONCE_INIT);
 
 //------------------------------------------------------------------------------
 // Cconstructor
@@ -172,15 +173,37 @@ void castor::rh::RHThread::stop() {
 }
 
 //------------------------------------------------------------------------------
+// makeRateLimiterKey
+//------------------------------------------------------------------------------
+void castor::rh::RHThread::makeRateLimiterKey()
+  throw (castor::exception::Exception)  {
+  int rc = pthread_key_create(&s_rateLimiterKey, NULL);
+  if (rc != 0) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Error caught in call to pthread_key_create";
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getRateLimiterFromTLS
 //------------------------------------------------------------------------------
 castor::rh::RateLimiter *
 castor::rh::RHThread::getRateLimiterFromTLS()
   throw (castor::exception::Exception) {
-  void **tls;
-  static int rateLimiter_TLSkey = -1;
-  getTLS(&rateLimiter_TLSkey, (void **)&tls);
+  // make a new key if we are in the first call to this
+  int rc = pthread_once(&castor::rh::RHThread::s_rateLimiterOnce,
+			castor::rh::RHThread::makeRateLimiterKey);
+  if (rc != 0) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Error caught in call to pthread_once";
+    throw e;
+  }
+  // retrieve the thread specific data
+  void **tls = 0;
+  getTLS(s_rateLimiterKey, tls);
   if (0 == *tls) {
+    // and create content if it was just allocated
     *tls = (void *)(new castor::rh::RateLimiter());
   }
   return (castor::rh::RateLimiter*) *tls;

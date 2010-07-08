@@ -68,7 +68,6 @@ castor::db::ora::DLFInit::DLFInit() {
      { 24, "Created new Oracle connection" },
      { 25, "Oracle connection dropped" },
      { 26, "Failed to drop the Oracle connection" },
-     { 27, "Error caught when calling Cglobals_get" },
      { 28, "Error caught when calling Cns_seterrbuf" },
      { 29, "The following file should have been deleted from the nameserver but couldn't because of a previous error" },
      { 30, "Error caught while listing fileids - giving up" },

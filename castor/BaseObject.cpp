@@ -30,31 +30,19 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "Cglobals.h"
 #include <Cmutex.h>
 
 //------------------------------------------------------------------------------
 // static values initialization
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::s_sharedServices(0);
+pthread_key_t castor::BaseObject::s_servicesKey(-1);
+pthread_once_t castor::BaseObject::s_servicesOnce(PTHREAD_ONCE_INIT);
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::BaseObject::BaseObject() throw() {}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::BaseObject::~BaseObject() throw() {
-  // clean the TLS for Services
-  void **tls;
-  static int C_BaseObject_TLSkey = -1;
-  getTLS(&C_BaseObject_TLSkey, (void **)&tls);
-  if (0 != *tls) {
-    *tls = 0;
-  }
-}
 
 //------------------------------------------------------------------------------
 // sharedServices
@@ -82,31 +70,57 @@ castor::Services* castor::BaseObject::svcs()
 }
 
 //------------------------------------------------------------------------------
+// makeServicesKey
+//------------------------------------------------------------------------------
+void castor::BaseObject::makeServicesKey()
+  throw (castor::exception::Exception)  {
+  int rc = pthread_key_create(&s_servicesKey, NULL);
+  if (rc != 0) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Error caught in call to pthread_key_create";
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
 // services
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::services()
   throw (castor::exception::Exception) {
-  void **tls;
-  static int C_BaseObject_TLSkey = -1;
-  getTLS(&C_BaseObject_TLSkey, (void **)&tls);
+  // make a new key if we are in the first call to this
+  int rc = pthread_once(&castor::BaseObject::s_servicesOnce,
+			castor::BaseObject::makeServicesKey);
+  if (rc != 0) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Error caught in call to pthread_once";
+    throw e;
+  }
+  // retrieve the thread specific data
+  void **tls = 0;
+  getTLS(castor::BaseObject::s_servicesKey, tls);
   if (0 == *tls) {
+    // and create content if it was just allocated
     *tls = (void *)(new castor::Services());
   }
-  return (castor::Services*) *tls;
+  return (castor::Services*)(*tls);
 }
 
 //------------------------------------------------------------------------------
 // getTLS
 //------------------------------------------------------------------------------
-void castor::BaseObject::getTLS(int *key, void **thip)
-  throw (castor::exception::Exception) {
-  int rc = Cglobals_get (key, (void **) thip, sizeof(void *));
-  if (*thip == NULL) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Could not get thread local storage";
-    throw ex;
-  }
-  if (rc == 1) {
-    *(void **)(*thip) = 0;
+void castor::BaseObject::getTLS(pthread_key_t &key, void **&tls)
+  throw(castor::exception::Exception) {
+  // retrieve the thread specific data
+  tls = (void**)pthread_getspecific(key);
+  if (NULL == tls) {
+    // the thread specific data does not exist yet, let's create it
+    tls = (void**)calloc(1,sizeof(void*));
+    int rc = pthread_setspecific(key, (void*)tls);
+    if (rc != 0) {
+      castor::exception::Exception e(rc);
+      e.getMessage() << "Error caught in call to pthread_setspecific";
+      throw e;
+    }
+    *tls = 0;
   }
 }

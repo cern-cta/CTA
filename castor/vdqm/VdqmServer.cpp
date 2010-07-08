@@ -40,7 +40,6 @@
 #include "h/Cgetopt.h"
 #include "h/Cinit.h"
 #include "h/Cuuid.h"
-#include "h/Cpool_api.h"
 #include "h/common.h"
 #include "h/net.h"
 

@@ -37,7 +37,6 @@
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cuuid.h"
-#include "Cpool_api.h"
 #include "marshall.h"
 #include <iostream>
 #include <sstream>

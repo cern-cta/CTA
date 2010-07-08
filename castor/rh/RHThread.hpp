@@ -73,6 +73,12 @@ namespace castor {
       virtual void run(void *param);
 
     private:
+      
+      /**
+       * small function that creates a thread-specific storage key
+       * for the rate limiter
+       */
+      static void makeRateLimiterKey() throw (castor::exception::Exception);
 
       /**
        * Return a RateLimiter object from thread local storage
@@ -106,6 +112,17 @@ namespace castor {
 
       /// List of trusted SRM hosts
       std::vector<std::string> m_srmHostList;
+
+      /**
+       * The key to thread-specific storage for the RateLimiter
+       */
+      static pthread_key_t s_rateLimiterKey;
+      
+      /**
+       * The key for creating only once the thread-specific storage
+       * key for the RateLimiter
+       */
+      static pthread_once_t s_rateLimiterOnce;
 
     }; // class RHThread
 

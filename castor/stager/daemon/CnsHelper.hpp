@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include "Cns_api.h"
 #include "Cns_struct.h"
-#include "Cglobals.h"
 #include "serrno.h"
 #include <errno.h>
 #include <iostream>

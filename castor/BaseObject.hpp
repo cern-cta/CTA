@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include <pthread.h>
 
 namespace castor {
 
@@ -51,7 +52,7 @@ namespace castor {
     /**
      * destructor
      */
-    virtual ~BaseObject() throw();
+    virtual ~BaseObject() throw() {};
 
     /**
      * Static access to the underlying thread-safe Services object
@@ -68,11 +69,28 @@ namespace castor {
      */
     Services* svcs() throw(castor::exception::Exception);
 
+  protected:
+
     /**
      * gets the thread local storage for a given key
+     * Note that the key must have been created with
+     * pthread_key_create or .... Otherwise, the behavior is
+     * undefined (see the pthread_getspecific man page)
+     * @param key the thread local storage key
+     * @param tls a pointer to the thread local storage,
+     * itself containing a pointer. This contained pointer
+     * will be set to 0 in case of creation of the storage
      */
-    static void getTLS(int* key, void** thip)
+    static void getTLS(pthread_key_t& key, void**& tls)
       throw(castor::exception::Exception);
+
+  private:
+
+    /**
+     * small function that creates a thread-specific storage key
+     * for the services 
+     */
+    static void makeServicesKey() throw (castor::exception::Exception);
 
   protected:
 
@@ -80,6 +98,18 @@ namespace castor {
      * The thread-shared services catalog
      */
     static Services* s_sharedServices;
+
+  private:
+
+    /**
+     * The key to thread-specific storage for Services
+     */
+    static pthread_key_t s_servicesKey;
+
+    /**
+     * The key for creating only once the thread-specific storage key for services
+     */
+    static pthread_once_t s_servicesOnce;
 
   }; // end of class BaseObject
 

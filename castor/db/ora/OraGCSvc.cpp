@@ -72,7 +72,6 @@
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
 #include <errno.h>
-#include "Cglobals.h"
 #include <Cuuid.h>
 #include <string>
 #include <sstream>
@@ -284,6 +283,21 @@ void castor::db::ora::OraGCSvc::filesDeleted
       createStatement(s_filesDeletedTruncateStatementString);
     m_filesDeletedTruncateStatement->setAutoCommit(true);
   }
+  // Prepare a buffer for the error messages that may come from the nameserver
+  // Note that this is a client side action that we prefer to do now rather
+  // than later so that the error handling does not involve database interaction
+  char errBuf[1024];  /* Cns error buffer */
+  *errBuf = 0;
+  if (0 != Cns_seterrbuf((char*)errBuf, sizeof(errBuf))) {
+    // "Error caught when calling Cns_seterrbuf"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+			    DLF_BASE_ORACLELIB + 28, 1, params);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught when calling Cns_seterrbuf";
+    throw ex;
+  }
   // Execute statement and get result
   //unsigned long id;
   ub2 *lens = 0;
@@ -328,75 +342,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     oracle::occi::ResultSet::Status status = rs->next();
     if (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
 
-      /////////////////////////////////////////////////////////
-      // Here we just want to go through the files to delete //
-      // from the nameserver. However, the interface to the  //
-      // name server is such that it is quite complicated !  //
-      /////////////////////////////////////////////////////////
-
-      // First thing, we need a thread safe variable to store
-      // the error messages comming from the name server
-      // XXX LIMITATION ON A STRING LENGTH : hardcoded to 1024 !
-      static int nsErrBufKey = -1;
-      void *errBuf = NULL;
-      int errBufLen = 1024;
-      bool gotError = false;
-      if (-1 == Cglobals_get(&nsErrBufKey, &errBuf, errBufLen)) {
-        // "Error caught when calling Cglobals_get"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                DLF_BASE_ORACLELIB + 27, 1, params);
-        gotError = true;
-      }
-      if (!gotError) {
-        // Now let's give this buffer to the name server
-        if (0 != Cns_seterrbuf((char*)errBuf, errBufLen)) {
-          // "Error caught when calling Cns_seterrbuf"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                  DLF_BASE_ORACLELIB + 28, 1, params);
-          gotError = true;
-        }
-      }
-
-      if (gotError) {
-        try {
-          oracle::occi::ResultSet::Status status = rs->next();
-          while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-            // "The following file should have been deleted from the
-            //  nameserver but couldn't because of a previous error"
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                    DLF_BASE_ORACLELIB + 29,
-                                    (u_signed64)rs->getDouble(1),
-                                    rs->getString(2));
-            status = rs->next();
-          }
-          m_filesDeletedStatement->closeResultSet(rs);
-        } catch (oracle::occi::SQLException e) {
-          // "Error caught while listing fileids - giving up"
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                  DLF_BASE_ORACLELIB + 30);
-        }
-        // Cleanup the DB
-        try {
-          m_filesDeletedTruncateStatement->execute();
-        } catch (oracle::occi::SQLException e) {
-          // "Error caught while truncating FilesDeletedProcOutput"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("Message", e.getMessage())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                  DLF_BASE_ORACLELIB + 31, 1, params);
-        }
-        //free allocated memory
-        free(lens);
-        free(buffer);
-        return;
-      }
-
-      // Second thing, we need a buffer to store the castor
-      // file names.
+      // we need a buffer to store the castor file names.
       // XXX LIMITATION ON A STRING LENGTH
       // XXX THIS IS INHERITED FROM THE NAMESERVER INTERFACE
       // XXX IT IS A RISK OF MEMORY CORRUPTION IN CASE THE
@@ -413,7 +359,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
         if (0 != Cns_getpath((char*)nsHost.c_str(), fileid, castorFileName)) {
           if (serrno != ENOENT) {
             if (!strcmp((char *)errBuf, "")) {
-              strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+              strncpy((char *)errBuf, sstrerror(serrno), sizeof(errBuf));
             }
             // "Error caught when calling Cns_getpath. This file won't be
             //  deleted from the nameserver when it should have been"
@@ -427,7 +373,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
         } else {
           if (0 != Cns_unlink(castorFileName)) {
             if (!strcmp((char *)errBuf, "")) {
-              strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+              strncpy((char *)errBuf, sstrerror(serrno), sizeof(errBuf));
             }
             // "Error caught when unlinking file"
             castor::dlf::Param params[] =
