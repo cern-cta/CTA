@@ -52,7 +52,6 @@
 #define  Cthread_cond_broadcast_ext(a) Cthread_Cond_Broadcast_ext(__FILE__,__LINE__,a)
 #define  Cthread_detach(a)            Cthread_Detach(__FILE__,__LINE__,a)
 #define  Cthread_mutex_destroy(a)     Cthread_Mutex_Destroy(__FILE__,__LINE__,a)
-#define  Cthread_self()               Cthread_Self(__FILE__,__LINE__)
 #define  Cthread_getspecific(a,b)     Cthread_Getspecific(__FILE__,__LINE__,a,b)
 #define  Cthread_setspecific(a,b)     Cthread_Setspecific(__FILE__,__LINE__,a,b)
 #define  Cthread_kill(a,b)            Cthread_Kill(__FILE__,__LINE__,a,b)
@@ -73,11 +72,8 @@ EXTERN_C int    Cthread_Cond_Broadcast (const char *, int, void *);
 EXTERN_C int    Cthread_Cond_Broadcast_ext (const char *, int, void *);
 EXTERN_C int    Cthread_Detach (const char *, int, int);
 EXTERN_C int    Cthread_Mutex_Destroy (const char *, int, void *);
-EXTERN_C int    Cthread_Self (const char *, int);
-EXTERN_C int    Cthread_Self0 (void);
-EXTERN_C int   _Cthread_self (void);
+EXTERN_C int    Cthread_self ();
 EXTERN_C int    Cthread_Getspecific (const char *, int, int *, void **);
-EXTERN_C int    Cthread_Getspecific0 (int *, void **);
 EXTERN_C int    Cthread_Getspecific_init (int *, void **);
 EXTERN_C int    Cthread_Setspecific (const char *, int, int *, void *);
 EXTERN_C int    Cthread_Setspecific0 (int *, void *);

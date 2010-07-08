@@ -1087,7 +1087,7 @@ int _Cpool_self() {
   Cthread_init();
   
   /* We get current Cthread ID */
-  if ((cid = _Cthread_self()) < 0) {
+  if ((cid = Cthread_self()) < 0) {
     return(-1);
   }
   

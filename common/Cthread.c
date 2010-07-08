@@ -87,7 +87,7 @@ int _Cthread_once_status = -1;
 /* 17-SEP-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-/* Notes: See Cthread_Self().                   */
+/* Notes: See Cthread_self().                   */
 /* ============================================ */
 void _Cthread_cid_destructor(void *ptr)
 {
@@ -105,7 +105,7 @@ void _Cthread_cid_destructor(void *ptr)
 /* 17-SEP-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-/* Notes: See Cthread_Self().                   */
+/* Notes: See Cthread_self().                   */
 /* ============================================ */
 void _Cthread_cid_once()
 {
@@ -501,7 +501,7 @@ int Cthread_Detach(const char *file,
 }
 
 /* ============================================ */
-/* Routine  : Cthread_Self                      */
+/* Routine  : Cthread_self                      */
 /* Arguments: caller source file                */
 /*            caller source line                */
 /* -------------------------------------------- */
@@ -512,17 +512,11 @@ int Cthread_Detach(const char *file,
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int Cthread_Self0() {
-  return(_Cthread_self());
-}
-int Cthread_Self(const char *file,
-                 int line)
+int Cthread_self()
 {
   void               *tsd = NULL;       /* Thread-Specific Variable */
   int                   n;              /* Return value     */
 
-  (void) file;
-  (void) line;
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
@@ -1767,9 +1761,9 @@ void _Cthread_once() {
   Cspec.next = NULL;
   _Cthread_once_status = 0;
   /* We now check if the caller has a Thread-Specific variable  */
-  /* If it has not such one, yet, then _Cthread_self() will     */
+  /* If it has not such one, yet, then Cthread_self() will     */
   /* return -2, and by the way will have created the TSD for us */
-  if (_Cthread_self() == -2) {
+  if (Cthread_self() == -2) {
     /* Cthread do not know, yet, of this thread. This can occur   */
     /* only in the main thread. We, so, just have to create an    */
     /* entry in the Cthread linked list, so that subsequent calls */
@@ -1778,7 +1772,7 @@ void _Cthread_once() {
   }
   /* Initialize thread specific globals environment*/
 
-  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) (void)) Cthread_Self0); 
+  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) (void)) Cthread_self); 
   Cmutex_init(Cthread_Lock_Mtx_init,Cthread_Mutex_Unlock_init);
   return;
 }
@@ -1935,12 +1929,6 @@ int Cthread_Setspecific(const char *file,
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-int Cthread_Getspecific0(int *global_key,
-                         void **addr)
-{
-  return(Cthread_Getspecific("Cthread.c(Cthread_Getspecific0)",__LINE__,global_key,addr));
-}
-
 int Cthread_Getspecific_init(int *global_key,
                              void **addr)
 {
@@ -2072,77 +2060,6 @@ int _Cthread_addspec(const char *file,
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
 
   return(0);
-}
-
-/* ============================================ */
-/* Routine  : _Cthread_self                     */
-/* Arguments:                                   */
-/* -------------------------------------------- */
-/* Output   : >= 0    - Cthread-ID              */
-/*            <  0    - ERROR                   */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 08-APR-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* ============================================ */
-int _Cthread_self() {
-  void               *tsd = NULL;       /* Thread-Specific Variable */
-  int                   n;              /* Return value     */
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-  /* In a threaded environment, we get Thread Specific   */
-  /* Variable, directly with the thread interface        */
-  /* Yes, Because we want the less overhead as possible. */
-  /* A previous version of Cthread was always looking to */
-  /* the internal linked list. Generated a lot of        */
-  /* _Cthread_obtain_mtx()/_Cthread_release_mtx()        */
-  /* overhead. Now those two internal methods are called */
-  /* only once, to get the cid. After it is stored in a  */
-  /* Thread-Specific variable, whose associated key is   */
-  /* cid_key.                                            */
-
-  /* We makes sure that a key is associated once for all */
-  /* with what we want.                                  */
-  if ((n = pthread_once(&cid_once,&_Cthread_cid_once)) != 0) {
-    errno = n;
-    /* serrno = SECTHREADERR; */
-    return(-1);
-  }
-
-  /* We look if there is already a Thread-Specific       */
-  /* Variable.                                           */
-  tsd = pthread_getspecific(cid_key);
-
-  if (tsd == NULL) {
-
-    /* We try to create the key-value */
-    if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
-      /* serrno = SEINTERNAL; */
-      return(-1);
-    }
-
-    /* We associate the key-value with the key   */
-    if ((n = pthread_setspecific(cid_key, tsd))) {
-      errno = n;
-      /* serrno = SECTHREADERR; */
-      return(-1);
-    }
-    
-    /* And we don't yet know the cid... So we set it to -2 */
-
-    * (int *) tsd = -2;
-    
-    return(-2);
-
-  } else {
-
-    /* Thread-Specific variable already exist ! */
-
-    return((int) * (int *) tsd);
-
-  }
 }
 
 /* =============================================== */
