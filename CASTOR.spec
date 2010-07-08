@@ -23,17 +23,6 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 ExclusiveOs: linux
 ExclusiveArch: i386 x86_64
 
-# RPM specific definitions
-#-------------------------
-# Should unpackaged files in a build root terminate a build?
-%define __check_files %{nil}
-# Don't build debuginfo packages
-%define debug_package %{nil}
-# Prevents binaries stripping
-%define __spec_install_post %{nil}
-# Falls back to original find_provides and find_requires
-%define _use_internal_dependency_generator 0
-
 %description
 The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to handle LHC data in a fully distributed environment.
 

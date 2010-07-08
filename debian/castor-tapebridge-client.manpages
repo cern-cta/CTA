@@ -1,3 +1,3 @@
-debian/castor/usr/share/man/man1/dumptp.1castor
-debian/castor/usr/share/man/man1/readtp.1castor
-debian/castor/usr/share/man/man1/writetp.1castor
+debian/castor/usr/share/man/man1/dumptp.1castor.gz
+debian/castor/usr/share/man/man1/readtp.1castor.gz
+debian/castor/usr/share/man/man1/writetp.1castor.gz

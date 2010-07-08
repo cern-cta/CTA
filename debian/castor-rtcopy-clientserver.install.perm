@@ -1,3 +1,4 @@
+%attr(0644,root,root) etc/sysconfig/rtcpclientd.example
 %attr(0755,root,root) etc/init.d/rtcpclientd
 %attr(0644,root,root) etc/logrotate.d/castor-rtcopy-clientserver
 %attr(0755,root,root) usr/bin/tperrhandler

@@ -22,7 +22,6 @@ COMM
 COMM @author Sebastien Ponce, sebastien.ponce@cern.ch
 COMM
 
-include LOCAL_PATH/format/Makefile
 include LOCAL_PATH/gatewayprotocol/Makefile
 include LOCAL_PATH/python/Makefile
 include LOCAL_PATH/tapegateway/Makefile
