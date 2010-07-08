@@ -728,15 +728,15 @@ mt rewind; i=0; while test $i -lt 12; do echo "READING BLOCK $i"; dd if=/dev/nst
 How to see the status of a tape robot
 =====================================
 
-smc -h ibmlib3rmc -l /dev/smc -q D
+ssh root@tpsrv250 smc -h tpsrv250 -l /dev/smc -q D
 
 
 How to mount, unload and then dismount a tape
 =============================================
 
-smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I07754
-mt -f /dev/nst0 eject
-smc -d -D 5 -h ibmlib3rmc -l /dev/smc
+ssh root@tpsrv250 smc -m -D 5 -h tpsrv250 -l /dev/smc -V I07754
+ssh root@tpsrv250 mt -f /dev/nst0 eject
+ssh root@tpsrv250 smc -d -D 5 -h tpsrv250 -l /dev/smc
 
 
 How to set the read priority of tape for a single-mount
@@ -3857,3 +3857,19 @@ Setup the password file:
 
 Start the repackd
 
+
+How to get useful information about the migration streams
+=========================================================
+
+SQL> select stream.id stream, stream.status, tape, tape.vid, stats.nbtapecopies, tapepool.name tapepool, svcclass.name svcclass, svcclass.id svcclass_id from stream left outer join (select parent, count(*) nbtapecopies from stream2tapecopy group by parent) stats on (stream.id = stats.parent) left outer join tapepool on(stream.tapepool = tapepool.id) inner join svcclass2tapepool on (tapepool.id = svcclass2tapepool.child) inner join svcclass on (svcclass2tapepool.parent = svcclass.id) left outer join tape on (stream.tape = tape.id) order by tapepool.name;
+
+    STREAM     STATUS       TAPE VID     NBTAPECOPIES TAPEPOOL
+SVCCLASS SVCCLASS_ID
+---------- ---------- ---------- ------- ------------ --------------------
+-------- -----------
+5209843158          0                            2352 gatewayendtape
+default        11640
+5209843157          3 5209879812 I12034          2352 gatewayendtape
+default        11640
+
+SQL>
