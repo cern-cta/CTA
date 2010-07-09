@@ -4,8 +4,7 @@ CREATE OR REPLACE PROCEDURE ops_resetTapeCopy(
 
 -- This procedure resets the tape-copy with the specified id to
 -- TAPECOPY_CREATED.  This includes detaching the tape-copy from the streams
--- and deleting the corresponding tape-gateway sub-request if the tape-gateway
--- is running.
+-- and deleting the corresponding tape-gateway sub-request if there is one.
 --
 -- Please note that this procedure does NOT commit the transaction, this is the
 -- responsibility of the caller.
@@ -29,14 +28,11 @@ BEGIN
   -- Detach the tape-copy from the streams
   DELETE FROM Stream2TapeCopy WHERE child = tapeCopyIdVar;
 
-  -- If the tape-gateway is running then delete the corresponding tape-gateway
-  -- sub-request
-  IF tapegatewaydIsRunning THEN
-    DELETE FROM TapeGatewaySubRequest WHERE tapeCopy = tapeCopyIdVar
-      RETURNING id INTO tapeGatewaySubRequestIdVar;
-    IF SQL%ROWCOUNT != 0 THEN
-      DELETE FROM id2Type WHERE id = tapeGatewaySubRequestIdVar;
-    END IF;
+  -- If there is a the corresponding tape-gateway sub-request the delete it
+  DELETE FROM TapeGatewaySubRequest WHERE tapeCopy = tapeCopyIdVar
+    RETURNING id INTO tapeGatewaySubRequestIdVar;
+  IF SQL%ROWCOUNT != 0 THEN
+    DELETE FROM id2Type WHERE id = tapeGatewaySubRequestIdVar;
   END IF;
 END;
 /
