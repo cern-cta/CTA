@@ -60,7 +60,7 @@
 
 // Flag to indicate whether the first thread has been created.
 static bool firstThreadInit = true;
-pthread_key_t castor::rh::RHThread::s_rateLimiterKey(-1);
+pthread_key_t castor::rh::RHThread::s_rateLimiterKey(0);
 pthread_once_t castor::rh::RHThread::s_rateLimiterOnce(PTHREAD_ONCE_INIT);
 
 //------------------------------------------------------------------------------
