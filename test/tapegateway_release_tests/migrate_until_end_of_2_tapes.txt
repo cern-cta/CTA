@@ -143,10 +143,11 @@ vmgrmodifytape -V I12020 --pool gatewayendtape
 
 watch 'showqueues -x | grep I12020'
 
-14. Check that all of the 100MB files making up the 2TB of test-data have been
+14. Check that all 20480 100MB files making up the 2TB of test-data have been
     succesfully migrated.
 
-nsls -l /castor/cern.ch/user/m/murrayc3/gatewayendtape | egrep -v ^m | wc -l
+nsls -l /castor/cern.ch/user/m/murrayc3/gatewayendtape | egrep ^m | wc -l
+[output] 20480
 
 
 EXPECTED RESULTS
@@ -160,41 +161,74 @@ instructions, it should be possible to remove all of the test-files from the
 test-stager disk cache and then successfully recall all of them from the 3
 test-tapes.  This acceptance-test can be done as follows.
 
-1. Create a file containing the full paths of all of the test-files in the
-   test-directory.
+1. Create a file containing the full paths of all 20480 of the test-files in
+   the test-directory.
 
 TEST_DIR=/castor/cern.ch/user/m/murrayc3/gatewayendtape; nsls $TEST_DIR | awk "{print \"$TEST_DIR/\"\$NF;}" | sort > gatewayendtape_file_list.txt
 
-2. Remove all of the test-files from the test-stager disk cache.
+2. Split the file of the previous step into 4 files with 5120 test-files each.
 
-stager_rm -S'*' -f gatewayendtape_file_list.txt
+split -d -l 5120 ~/gatewayendtape_file_list.txt ~/gatewayendtape_file_list_split.txt
+ls -rt ~ | tail -n 5
+[output] gatewayendtape_file_list.txt
+[output] gatewayendtape_file_list_split.txt03
+[output] gatewayendtape_file_list_split.txt02
+[output] gatewayendtape_file_list_split.txt01
+[output] gatewayendtape_file_list_split.txt00
 
-3. Create a file containing the stager status of each of the test-files.
+3. Remove all of the test-files from the test-stager disk cache.
 
-stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_after_stager_rm_list.txt
+stager_rm -S '*' -f ~/gatewayendtape_file_list_split.txt00
+stager_rm -S '*' -f ~/gatewayendtape_file_list_split.txt01
+stager_rm -S '*' -f ~/gatewayendtape_file_list_split.txt02
+stager_rm -S '*' -f ~/gatewayendtape_file_list_split.txt03
 
-4. Check that all 20480 files have been removed from the disk cache.
+4. Create 4 files containing the stager status of 5120 of the test-files.
 
-grep "not on disk cache" gatewayendtape_file_status_after_stager_rm_list.txt |
-wc -l
-[output] 20480
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt00 > ~/gatewayendtape_file_status_after_stager_rm_list_split.txt00
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt01 > ~/gatewayendtape_file_status_after_stager_rm_list_split.txt01
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt02 > ~/gatewayendtape_file_status_after_stager_rm_list_split.txt02
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt03 > ~/gatewayendtape_file_status_after_stager_rm_list_split.txt03
 
-3. Recall all of the test-files from the 3 test-tapes.
+5. Check that all 20480 of the test-files have been removed from the disk cache.
 
-stager_get -f gatewayendtape_file_list.txt
+egrep 'INVALID|not on disk cache' ~/gatewayendtape_file_status_after_stager_rm_list_split.txt00 | wc -l
+[output] 5120
+egrep 'INVALID|not on disk cache' ~/gatewayendtape_file_status_after_stager_rm_list_split.txt01 | wc -l
+[output] 5120
+egrep 'INVALID|not on disk cache' ~/gatewayendtape_file_status_after_stager_rm_list_split.txt02 | wc -l
+[output] 5120
+egrep 'INVALID|not on disk cache' ~/gatewayendtape_file_status_after_stager_rm_list_split.txt03 | wc -l
+[output] 5120
 
-4. Wait for all of the files to be recalled.
+6. Recall all 20480 of the test-files from the 3 test-tapes.
+
+stager_get -f ~/gatewayendtape_file_list_split.txt00
+stager_get -f ~/gatewayendtape_file_list_split.txt01
+stager_get -f ~/gatewayendtape_file_list_split.txt02
+stager_get -f ~/gatewayendtape_file_list_split.txt03
+
+7. Wait for all of the files to be recalled.
 
 watch "showqueues -x | egrep 'I12018|I12019|I12020'"
 
-5. Create a file containing the stager status of each of the test-files.
+8. Create a file containing the stager status of each of the test-files.
 
-stager_qry -f gatewayendtape_file_list.txt > gatewayendtape_file_status_after_stager_get_list.txt
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt00 > ~/gatewayendtape_file_status_after_stager_get_list_split.txt00
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt01 > ~/gatewayendtape_file_status_after_stager_get_list_split.txt01
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt02 > ~/gatewayendtape_file_status_after_stager_get_list_split.txt02
+stager_qry -S '*' -f ~/gatewayendtape_file_list_split.txt03 > ~/gatewayendtape_file_status_after_stager_get_list_split.txt03
 
-6. Check that all 20480 test-files have been successfully recalled.
+9. Check that all 20480 test-files have been successfully recalled.
 
-grep STAGED gatewayendtape_file_status_after_stager_get_list.txt | wc -l
-[output] 20480
+grep STAGED ~/gatewayendtape_file_status_after_stager_get_list_split.txt00 | wc -l
+[output] 5120
+grep STAGED ~/gatewayendtape_file_status_after_stager_get_list_split.txt01 | wc -l
+[output] 5120
+grep STAGED ~/gatewayendtape_file_status_after_stager_get_list_split.txt02 | wc -l
+[output] 5120
+grep STAGED ~/gatewayendtape_file_status_after_stager_get_list_split.txt03 | wc -l
+[output] 5120
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
