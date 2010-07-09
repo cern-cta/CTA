@@ -4,9 +4,10 @@ CREATE OR REPLACE PROCEDURE ops_resetTapeCopy(
 
 -- This procedure resets the tape-copy with the specified id to
 -- TAPECOPY_CREATED.  This includes detaching the tape-copy from the streams
--- and deleting the corresponding tape-gateway sub-request.
+-- and deleting the corresponding tape-gateway sub-request if the tape-gateway
+-- is running.
 --
--- Please note that this procedure doe NOT commit the transaction, this is the
+-- Please note that this procedure does NOT commit the transaction, this is the
 -- responsibility of the caller.
 --
 -- This procedure raises an application error with code -20001 if the specified
