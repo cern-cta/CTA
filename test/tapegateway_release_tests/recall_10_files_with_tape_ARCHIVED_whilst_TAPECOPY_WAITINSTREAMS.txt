@@ -51,16 +51,16 @@ ps -ef | grep 'tapegatewayd' | grep -v grep
 3. Check that the ten files has at least one copy on tape.
 
 nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
-[output] 0
+[output] 10
 
 4. Chech that the file are not on disk.
 
-stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_qry -M $TESTDIR/$F; done | wc -l
 [output] 10
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
+TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
 
 6. Make sure the test service-class will use exactly 1 drive for recall.
 
@@ -76,11 +76,11 @@ INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 
 1. Stop the tepegateway daemon.
 
-/usr/bin/tapegatewayd stop
+/etc/init.d/tapegatewayd stop
 
 2. stager_get the 10 files.
 
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
 
 3. Waiting for all 10 files to be in TAPECOPY_CREATED (tragic number 0).
 
@@ -89,20 +89,16 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
             INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
       WHERE lastknownfilename like '%/<folder_name>/%';
 
-4. Display the current checksum value for each of the 10 test-files.
-
-TESTDIR=/castor/cern.ch/dev/m/murrayc3/<folder_name>; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do nsls -l --checksum $TESTDIR/$F | awk '{print $10" " $NF}'; done
-
-5. Modify the status of the test_tape(s) to ARCHIVED.
+4. Modify the status of the test_tape(s) to ARCHIVED.
 
 TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
 for I in $TAPES; do vmgrmodifytape -V $I --st ARCHIVED; done;
 
-6. Start the tepegateway daemon.
+5. Start the tepegateway daemon.
 
-/usr/bin/tapegatewayd start
+/etc/init.d/tapegatewayd start
 
-7. Wait for the status of the tapecopy of each test-file to become
+6. Wait for the status of the tapecopy of each test-file to become
    TAPECOPY_FAILED (tragic number 6).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
