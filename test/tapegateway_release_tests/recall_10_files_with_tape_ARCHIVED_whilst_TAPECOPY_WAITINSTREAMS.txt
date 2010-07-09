@@ -53,9 +53,9 @@ ps -ef | grep 'tapegatewayd' | grep -v grep
 nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
 [output] 10
 
-4. Chech that the file are not on disk.
+4. Chech that the files are not on disk.
 
-TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_qry -M $TESTDIR/$F; done | wc -l
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
 [output] 10
 
 5. If the previous test show that the files are on disk, stager_rm them.
