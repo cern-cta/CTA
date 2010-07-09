@@ -120,19 +120,16 @@ grep "No tape available in such tapepool.*poolname='gatewayendtape'"
 4. Determine the mount transaction ids of the mounts which resulted in the
    ends of the 2 test-tapes being reached
 
-grep 'submitting to vdqm.* TPVID=I12017 ' /var/log/castor/tapegatewayd.log |
-tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
+grep 'submitting to vdqm.* TPVID=I12017 ' /var/log/castor/tapegatewayd.log | tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
 [output] mountTransactionId=414885
 
-grep 'submitting to vdqm.* TPVID=I12018 ' /var/log/castor/tapegatewayd.log |
-tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
+grep 'submitting to vdqm.* TPVID=I12018 ' /var/log/castor/tapegatewayd.log | tail -n 1 | sed 's/ /\n/g' | grep mountTransactionId
 [output] mountTransactionId=414863
 
 11. Using the mount transaction ids from the previous step, check that the
     tap-gateway logged a warning when the end of each test-tape was reached.
 
-egrep "mountTransactionId=(414885|414863) .* TAPE VOLUMES OVERFLOW"
-/var/log/castor/tapegatewayd.log
+egrep "mountTransactionId=(414885|414863) .* TAPE VOLUMES OVERFLOW" /var/log/castor/tapegatewayd.log
 [output] 2010-06-30T00:27:44.311889+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18403 MSG="Worker: received end notification error report" mountTransactionId=414863 tapebridgeTransId=16389 errorcode=28 errorMessage="File=BridgeProtocolEngine.cpp Line=964 Function=rtcpFileErrReqRtcpdCallback: Received an error from rtcpd:  CPDSKTP !  ERROR, TAPE VOLUMES OVERFLOW  CPDSKTP ! TAPE IS NOW INCORRECTLY TERMINATED"
 [output] 2010-06-30T03:46:43.788630+02:00 lxbrl2709 tapegatewayd[18348]: LVL=Warn TID=18385 MSG="Worker: received end notification error report" mountTransactionId=414885 tapebridgeTransId=10777 errorcode=28 errorMessage="File=BridgeProtocolEngine.cpp Line=964 Function=rtcpFileErrReqRtcpdCallback: Received an error from rtcpd:  CPDSKTP !  ERROR, TAPE VOLUMES OVERFLOW  CPDSKTP ! TAPE IS NOW INCORRECTLY TERMINATED"
 
