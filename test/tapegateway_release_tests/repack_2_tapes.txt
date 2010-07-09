@@ -117,3 +117,4 @@ INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 Remove all of the 100 MB test-files from the name server.
 
 for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12019`; do CNS_HOST=castorns nsrm $F; done
+for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12022`; do CNS_HOST=castorns nsrm $F; done
