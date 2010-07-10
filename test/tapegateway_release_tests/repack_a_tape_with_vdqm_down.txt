@@ -1,7 +1,0 @@
-Create a source tape with 10 100MB files:
-
-Setup a destination service class with a dedicated repack-destination tape-pool:
-
-Logon to the vdqm instance and shutdown the daemon
-
-Start the repack of a tape:

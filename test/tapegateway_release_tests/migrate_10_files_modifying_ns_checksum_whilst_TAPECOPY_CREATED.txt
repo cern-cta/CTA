@@ -10,14 +10,15 @@ THE PURPOSE OF THE TEST
 The principle responsibility of the tape-gateway is to coordinate the transfer
 of files to and from tape.
 
-This test verifies that the tape-gateway will fail the migration of a file with
-a bad checksum.
-
 The tape-gateway is responsible for retying failed migrations based on a
-user-define policy. The tape-gateway does this by executing a Python-script
+user-defined policy. The tape-gateway does this by executing a Python-script
 which provides the policy user-coded logic for deciding whether or not a failed
 migration should be repeated based on the error code that is being generating
 and the number of prevous retries.
+
+This test verifies that the tape-gateway will fail the migration of a file with
+a bad checksum and then call and follow correctly the user-define retry-policy
+Python-script.
 
 
 THE PREREQUISITES OF THE TEST
