@@ -53,7 +53,7 @@ INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 
 1. Check that the tapeGateway is up and running.
 
-ps -ef | grep 'tapegatewayd|rtcpclientd' | grep -v grep
+ps -ef | egrep 'tapegatewayd|rtcpclientd' | grep -v grep
 
 2. Create yourself a tape-pool containing the test-tape.
 
