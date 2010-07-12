@@ -52,20 +52,53 @@ svn+ssh://svn.cern.ch/reps/CASTOR/CASTOR2/trunk/test/tapegateway_release_tests/m
 INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 =================================================
 
-1. Create two files each listing the full contents of one of the input
+1. Make sure the two input test-tapes are marked as FULL in the vmgr
+
+vmgrmodifytape -V I02001 --st FULL
+vmgrmodifytape -V I05581 --st FULL
+
+2. Create two files each listing the full contents of one of the input
    test-tapes.
 
-CNS_HOST=castorns nslisttape -V I12019 > ~/castorns_nslisttape_I12019
-CNS_HOST=castorns nslisttape -V I12022 > ~/castorns_nslisttape_I12022
+VIDS='I02001 I05581';for VID in $VIDS; do CNS_HOST=castorns nslisttape -V $VID | awk '{print $NF;}' > ~/castorns_nslisttape_repack_src_$VID; done
 
+3. Split the lists of files into lists wit 5120 entries:
 
-2. Start repacking the 2 test-tapes.
+VIDS='I02001 I05581'; for VID in $VIDS; do split -d -l 5120 ~/castorns_nslisttape_repack_src_$VID ~/castorns_nslisttape_repack_src_split_$VID; done
 
-repack -V I12019:I12022 -o largedisk2
-[Output]Operation succeeded for tape I12019
-[Output]Operation succeeded for tape I12022
+4. Clear the disk cache of all the files on the 2 tapes to be repacked:
 
-6. Monitor the repack of the two test-tapes until they have been both repacked.
+for F in `ls ~ | grep castorns_nslisttape_repack_src_split_* | grep -v after_`; do stager_rm -S '*' -f ~/$F; done
+
+5. Get the status of each of the files to be repacked
+
+for F in `ls ~ | grep castorns_nslisttape_repack_src_split_* | grep -v after_`; do stager_qry -S '*' -f ~/$F > ~/${F}_after_stager_rm; done
+
+6. Check that all of the files to be repacked have been cleared from the disk
+   cache.
+
+for F in ~/castorns_nslisttape_repack_src_split_*_after_stager_rm; do echo $F; wc -l $F; egrep 'INVALID|not on disk cache' $F | wc -l; done
+[ouput] 5120
+[ouput] /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_split_I0200100_after_stager_rm
+[ouput] 5120
+[ouput] /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_split_I0200101_after_stager_rm
+[ouput] 4886
+[ouput] /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_split_I0200101_after_stager_rm
+[ouput] 4886
+[ouput] /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_split_I0558100_after_stager_rm
+[ouput] 4628
+[ouput] /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_split_I0558100_after_stager_rm
+[ouput] 4628
+
+7. Start repacking the 2 test-tapes.
+
+repack -V I02001 -o largedisk2
+[Output]Operation succeeded for tape I02001
+
+repack -V I05581 -o largedisk2
+[Output]Operation succeeded for tape I05581
+
+8. Monitor the repack of the two test-tapes until they have both been repacked.
 
 -bash-3.2$ repack -s
 
@@ -73,42 +106,26 @@ repack -V I12019:I12022 -o largedisk2
 EXPECTED RESULTS
 ================
 
-Using the two file screated at step 1 of the test, verify that all of the
-files have been repacked to one of the 6 tapes in the test service-class.
-
-1. Determine the 6 destination tapes:
-
--bash-3.2$ vmgrlisttape -P gatewayrepack2
-I02001   I02001 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100211
-I02008   I02008 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100211
-I05581   I05581 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091219
-I05583   I05583 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091218
-I05584   I05584 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20100216
-I05587   I05587 IBMLIB1B 1000GC   aul gatewayrepack2   931.00GiB 20091217
-
-2. From the 2 files craeted in step 1 of the test create 2 more files, each
+1. From the 2 files created in step 2 of the test create 2 more files, each
    listing the segment information of each test-file.
 
-for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12019`; do CNS_HOST=castorns nsls -T $F; done > ~/castorns_nsls_T_I12019
-for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12022`; do CNS_HOST=castorns nsls -T $F; done > ~/castorns_nsls_T_I12022
+VIDS='I02001 I05581'; for VID in $VIDS; do for F in `cat ~/castorns_nslisttape_repack_src_$VID`; do CNS_HOST=castorns nsls -T $F; done > ~/castorns_nslisttape_repack_dst_from_$VID; done
 
-3. Check that each file has a segment.  The number of files on each tape
+2. Check that each file has a segment.  The number of files on each tape
    should match the number of segments found in the previous step.
 
-wc -l ~/castorns_nslisttape_I12019
-wc -l ~/castorns_nsls_T_I12019
-wc -l ~/castorns_nslisttape_I12022
-wc -l ~/castorns_nsls_T_I12022
+wc -l ~/castorns_nslisttape_repack_src_I02001
+wc -l ~/castorns_nslisttape_repack_dst_from_I02001
+wc -l ~/castorns_nslisttape_repack_src_I05581
+wc -l ~/castorns_nslisttape_repack_dst_from_I05581
 
-4. Using the list of 6 destination tapes, count the number of segments on
-   those tapes.  The result should each the total number of test-files which
-   were on each of input test-tapes before repack was started.
+3. Check that each file has moved to one of the destination tapes
 
-wc -l ~/castorns_nslisttape_I12019
-egrep 'I02001|I02008|I05581|I05583|I05584|I05587' castorns_nsls_T_I12019 | wc
-wc -l ~/castorns_nslisttape_I12022
-egrep 'I02001|I02008|I05581|I05583|I05584|I05587' castorns_nsls_T_I12022 | wc
--l
+
+wc -l ~/castorns_nslisttape_repack_src_I02001
+egrep 'I02008|I05583|I05584|I05587' ~/castorns_nslisttape_repack_dst_from_I02001 | wc -l
+wc -l ~/castorns_nslisttape_repack_src_I05581
+egrep 'I02008|I05583|I05584|I05587' ~/castorns_nslisttape_repack_dst_from_I05581 | wc -l
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
@@ -116,5 +133,5 @@ INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
 
 Remove all of the 100 MB test-files from the name server.
 
-for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12019`; do CNS_HOST=castorns nsrm $F; done
-for F in `awk '{print $NF;}' ~/castorns_nslisttape_I12022`; do CNS_HOST=castorns nsrm $F; done
+for F in `cat ~/castorns_nslisttape_repack_src_I02001`; do CNS_HOST=castorns nsrm $F; done
+for F in `cat ~/castorns_nslisttape_repack_src_I05581`; do CNS_HOST=castorns nsrm $F; done
