@@ -17,7 +17,18 @@ The following kind of error is created ny a security scan:
 Warns to ignore
 ===============
 
-The following kinds of wraning are created by rtcpd encountering an error.  It
+The following error occurs when there is a network problem.  It can be ignored
+as the tape-gateway will retry the associated recall/migration requests:
+
+2010-07-12T13:33:41.142527+02:00 lxbrl2709 tapegatewayd[963]: LVL=Warn
+TID=1001 MSG="Worker: received end notification error report"
+mountTransactionId=416712 tapebridgeTransId=2774 errorcode=125
+errorMessage="Failed to send FileMigratedNotification: File=ClientTxRx.cpp
+Line=748 Function=sendMessage: Failed to connect to client:
+clientHost=lxbrl2709.cern.ch: clientPort=62801: clientNetRWTimeout=55: Unable
+to connect socket to 128.142.240.182:62801"
+
+The following kinds of warning are created by rtcpd encountering an error.  It
 is normal for rtcpd to encounter errors and therefore these warning can be
 ignored as long as they are not permanent:
 
