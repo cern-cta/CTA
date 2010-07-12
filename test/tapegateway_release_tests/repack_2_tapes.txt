@@ -102,6 +102,14 @@ repack -V I05581 -o largedisk2
 
 -bash-3.2$ repack -s
 
+repack -s
+
+[output] =======================================================================================================================
+[output] CurrentTime       SubmitTime           Vid        Total        Size  toRecall toMigr    Failed  Migrated      Status
+[output] -----------------------------------------------------------------------------------------------------------------------
+[output] 12-Jul-10_16:37   12-Jul-10_12:07     I05581       4628   451.95GiB         0      0         0      4628        DONE
+[output] 12-Jul-10_16:37   12-Jul-10_12:05     I02001      10006   977.15GiB         0      0         0     10006        DONE
+
 
 EXPECTED RESULTS
 ================
@@ -115,17 +123,24 @@ VIDS='I02001 I05581'; for VID in $VIDS; do for F in `cat ~/castorns_nslisttape_r
    should match the number of segments found in the previous step.
 
 wc -l ~/castorns_nslisttape_repack_src_I02001
+[output] 10006 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_I02001
 wc -l ~/castorns_nslisttape_repack_dst_from_I02001
+[output] 10006 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_dst_from_I02001
 wc -l ~/castorns_nslisttape_repack_src_I05581
+[output] 4628 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_I05581
 wc -l ~/castorns_nslisttape_repack_dst_from_I05581
+[output] 4628 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_dst_from_I05581
 
 3. Check that each file has moved to one of the destination tapes
 
-
 wc -l ~/castorns_nslisttape_repack_src_I02001
+[output] 10006 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_I02001
 egrep 'I02008|I05583|I05584|I05587' ~/castorns_nslisttape_repack_dst_from_I02001 | wc -l
+[output] 10006
 wc -l ~/castorns_nslisttape_repack_src_I05581
+[output] 4628 /afs/cern.ch/user/m/murrayc3/castorns_nslisttape_repack_src_I05581
 egrep 'I02008|I05583|I05584|I05587' ~/castorns_nslisttape_repack_dst_from_I05581 | wc -l
+[output] 4628
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
