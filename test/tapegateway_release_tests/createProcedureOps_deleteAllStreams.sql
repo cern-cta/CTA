@@ -2,7 +2,7 @@ CREATE OR REPLACE PROCEDURE ops_deleteAllStreams AS
 
 -- This procedure deletes all the streams.
 --
--- Pleaee nothe that all mighunter and tape-gateway daemons must be shutdown
+-- Please note that all mighunter and tape-gateway daemons must be shutdown
 -- before this procedure is called.
 --
 -- Please note that this procedure doe NOT commit or rollback the transaction,
@@ -16,9 +16,14 @@ CREATE OR REPLACE PROCEDURE ops_deleteAllStreams AS
 
 streamIdsVar           "numList";
 attachedTapeCopyIdsVar "numList";
+tapeGatewayRequestIdVar NUMBER(38);
 
 BEGIN
-  -- Try to get a lock on and the database ids of all of the tape-streams
+  -- Try to get a lock on and the database id of each of the tape-streams.
+  --
+  -- A lock is being taken on each tape-stream in-case a mighunter or
+  -- tape-gateway daemon is running.  These daemons should have been shutdown
+  -- before this procedure was called, however it is always best to be safe.
   BEGIN
     SELECT id BULK COLLECT INTO streamIdsVar FROM Stream FOR UPDATE;
   EXCEPTION
@@ -27,21 +32,34 @@ BEGIN
         'Failed to take a lock on all tape-streams: SQLCODE=' || SQLCODE);
   END;
 
-  -- Get the database ids of all the tape-copies attached to 1 or more
+  -- Get the database ids of all the tape-copies attached to the now locked
   -- tape-streams
-  SELECT DISTINCT child BULK COLLECT INTO attachedTapeCopyIdsVar
-    FROM Stream2TapeCopy;
+  SELECT DISTINCT /*+ CARDINALITY(StreamIdsVarTable 5) */ child
+    BULK COLLECT INTO attachedTapeCopyIdsVar
+    FROM Stream2TapeCopy
+    WHERE parent IN (
+      SELECT /*+ CARDINALITY(StreamIdsVarTable 5) */ *
+        FROM TABLE(streamIdsVar) StreamIdsVarTable);
 
   -- Detach all of the attached tape-copies
   FOR i IN 1 .. attachedTapeCopyIdsVar.COUNT LOOP
     ops_resetTapeCopy(attachedTapeCopyIdsVar(i));
   END LOOP;
 
-  -- Delete all of the tape-streams and any associated tape-gateway requests
   BEGIN
+    -- For each tape-stream
     FOR i IN 1 .. streamIdsVar.COUNT LOOP
-      DELETE FROM TapeGatewayRequest WHERE streamMigration=streamIdsVar(i);
-      DELETE FROM Stream WHERE id=streamIdsVar(i);
+
+      -- Delete the associated tape-gateway request if there is one
+      DELETE FROM TapeGatewayRequest WHERE streamMigration=streamIdsVar(i)
+        RETURNING id INTO tapeGatewayRequestIdVar;
+      IF SQL%ROWCOUNT != 0 THEN
+        DELETE FROM id2Type WHERE id = tapeGatewayRequestIdVar;
+      END IF;
+
+      -- Delete the tape-stream
+      DELETE FROM Stream  WHERE id=streamIdsVar(i);
+      DELETE FROM id2Type WHERE id=streamIdsVar(i);
     END LOOP;
   EXCEPTION
     WHEN OTHERS THEN
