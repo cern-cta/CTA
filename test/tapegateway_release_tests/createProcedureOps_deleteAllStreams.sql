@@ -34,7 +34,7 @@ BEGIN
 
   -- Get the database ids of all the tape-copies attached to the now locked
   -- tape-streams
-  SELECT DISTINCT /*+ CARDINALITY(StreamIdsVarTable 5) */ child
+  SELECT DISTINCT /*+ CARDINALITY(StreamIdsVarTable 10) */ child
     BULK COLLECT INTO attachedTapeCopyIdsVar
     FROM Stream2TapeCopy
     WHERE parent IN (
