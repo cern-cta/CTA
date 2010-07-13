@@ -44,7 +44,7 @@ start() {
         echo -n $"Starting $prog: "
         echo
 
-        # Start logprocessords
+        # Start logprocessor daemons
         for i in ${ROLES}; do
 
                 # Load the appropriate sysconfig file for role
@@ -79,7 +79,7 @@ stop() {
         echo -n $"Stopping $prog: "
         echo
 
-        # Stop logprocessords
+        # Stop logprocessor daemons
         for i in ${ROLES}; do
 
                 # Load the appropriate sysconfig file for role
@@ -115,9 +115,10 @@ restart() {
 }
 
 status() {
-        # Loop over rhds
+        # Loop over roles
         for i in ${ROLES}; do
-                # Check if the rhd associated to this role running
+
+                # Check if the logprocessord associated to this role is running
                 pid=`pidofproc $prog.$i`
                 if [ -n "$pid" ]; then
                         echo $"$prog for role: $i (pid $pid) is running..."
