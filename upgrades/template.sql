@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/16 09:13:00 $ $Author: waldron $
  *
- * This script upgrades a CASTOR vprevRelease DBNAME database to vnewRelease
+ * This script upgrades a CASTOR vprevRelease SCHEMANAME database to vnewRelease
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -36,15 +36,16 @@ BEGIN
 END;
 /
 
-/* Version cross check and update */
+/* Verify that the script is running against the correct schema and version */
 DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE release LIKE 'prevRelTag%';
+   WHERE schemaName = 'SCHEMANAME'
+     AND release LIKE 'prevRelTag%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
-  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the SCHEMANAME before this one.');
 END;
 /
 
