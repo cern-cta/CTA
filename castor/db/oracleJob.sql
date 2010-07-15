@@ -394,7 +394,7 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
-(dcId IN INTEGER, srcDcId IN INTEGER) AS
+(dcId IN INTEGER, srcDcId IN INTEGER, replicaFileSize IN INTEGER) AS
   srId       INTEGER;
   cfId       INTEGER;
   srcStatus  INTEGER;
@@ -414,6 +414,7 @@ BEGIN
    WHERE id = dcId;
   SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Try to get the source diskcopy status
+  srcFsId := -1;
   BEGIN
     SELECT status, gcWeight, diskCopySize, fileSystem
       INTO srcStatus, gcw, fileSize, srcFsId
@@ -421,12 +422,22 @@ BEGIN
      WHERE id = srcDcId
        AND status IN (0, 10);  -- STAGED, CANBEMIGR
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- If no diskcopy was returned it means that the source has either:
-    --   A) Been GCed while the copying was taking place or
-    --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
-    -- As we do not know which status to put the new copy in and/or cannot
-    -- trust that the file was not modified mid transfer, we invalidate the
-    -- new copy.
+    NULL;
+  END;
+  -- If no diskcopy was returned it means that the source has either:
+  --   A) Been garbage collected while the copying was taking place OR
+  --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state. As
+  --      A result we do not know which status to put the new copy in
+  --      and/or cannot trust that the file was not modified mid transfer
+  --
+  -- If a diskcopy was returned but the size of the original file in
+  -- comparison to the replica is different then some corruption has
+  -- occurred and the new copy should not be kept
+  --
+  -- In all cases we invalidate the new copy! 
+  IF (srcFsId IS NULL) OR
+     (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
+    -- Begin the process of invalidating the file replica
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile INTO cfId;
     -- Restart the SubRequests waiting for the copy
@@ -438,8 +449,13 @@ BEGIN
                           lastModificationTime = getTime(),
                           parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
-    -- Archive the diskCopy replica request
-    archiveSubReq(srId, 8);  -- FINISHED
+    -- Archive the diskCopy replica request, status FAILED_FINISHED
+    -- for abnormal transfer termination
+    IF (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
+      archiveSubReq(srId, 9);  -- FAILED_FINISHED
+    ELSE
+      archiveSubReq(srId, 8);  -- FINISHED
+    END IF;
     -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
@@ -449,9 +465,18 @@ BEGIN
        AND (diskCopy = srcDcId
         OR  parent = srcDcId);
     drainFileSystem(srcFsId);
+    -- If a file size mismatch has occurred raise an exception which
+    -- will be logged by the d2dtransfer mover.
+    IF (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
+      -- Commit the invalidation of the replica. If we dont the raising of
+      -- an application_error will trigger a rollback and the diskcopy will
+      -- be stuck in WAITDISK2DISKCOPY
+      COMMIT;
+      raise_application_error(-20119, 'File replication size mismatch: (original size: '||fileSize||' - replica size: '||replicaFileSize||')');
+    END IF;
     RETURN;
-  END;
-  -- Otherwise, we can validate the new diskcopy
+  END IF;
+  -- The new replica looks OK, so lets keept it!
   -- update SubRequest and get data
   UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
                         lastModificationTime = getTime()

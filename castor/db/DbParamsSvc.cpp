@@ -33,7 +33,7 @@
 // and provide their versioning.
 namespace castor {
   namespace db {
-    const std::string STAGERSCHEMAVERSION = "2_1_9_4";
+    const std::string STAGERSCHEMAVERSION = "2_1_10_0";
   }
 }
 

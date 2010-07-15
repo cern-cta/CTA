@@ -107,6 +107,7 @@ void castor::io::StreamDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress* 
   ad->stream() << obj->sourceDiskCopyId();
   ad->stream() << obj->fileId();
   ad->stream() << obj->nsHost();
+  ad->stream() << obj->replicaFileSize();
   ad->stream() << obj->id();
 }
 
@@ -169,6 +170,9 @@ castor::IObject* castor::io::StreamDisk2DiskCopyDoneRequestCnv::createObj(castor
   std::string nsHost;
   ad->stream() >> nsHost;
   object->setNsHost(nsHost);
+  u_signed64 replicaFileSize;
+  ad->stream() >> replicaFileSize;
+  object->setReplicaFileSize(replicaFileSize);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -45,6 +45,7 @@ castor::stager::Disk2DiskCopyDoneRequest::Disk2DiskCopyDoneRequest() throw() :
   m_sourceDiskCopyId(0),
   m_fileId(0),
   m_nsHost(""),
+  m_replicaFileSize(0),
   m_id(0) {
 }
 
@@ -73,6 +74,7 @@ void castor::stager::Disk2DiskCopyDoneRequest::print(std::ostream& stream,
   stream << indent << "sourceDiskCopyId : " << m_sourceDiskCopyId << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "nsHost : " << m_nsHost << std::endl;
+  stream << indent << "replicaFileSize : " << m_replicaFileSize << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

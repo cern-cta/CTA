@@ -185,13 +185,15 @@ namespace castor {
        * @param sourceDiskCopyId the id of the source diskCopy
        * @param fileId the id of the castorFile
        * @param nsHost the name server hosting this castorFile
+       * @param replicaFileSize the size of the newly replicated file
        * @exception Exception in case of error
        */
       virtual void disk2DiskCopyDone
       (u_signed64 diskCopyId,
        u_signed64 sourceDiskCopyId,
        u_signed64 fileId,
-       const std::string nsHost)
+       const std::string nsHost,
+       u_signed64 replicaFileSize)
         throw (castor::exception::Exception) = 0;
 
       /**

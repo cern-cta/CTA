@@ -174,6 +174,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_replicaFileSize
+       * The size of the newly replicated file
+       * @return the value of m_replicaFileSize
+       */
+      u_signed64 replicaFileSize() const {
+        return m_replicaFileSize;
+      }
+
+      /**
+       * Set the value of m_replicaFileSize
+       * The size of the newly replicated file
+       * @param new_var the new value of m_replicaFileSize
+       */
+      void setReplicaFileSize(u_signed64 new_var) {
+        m_replicaFileSize = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -204,6 +222,9 @@ namespace castor {
 
       /// The name server hosting this castor file
       std::string m_nsHost;
+
+      /// The size of the newly replicated file
+      u_signed64 m_replicaFileSize;
 
       /// The id of this object
       u_signed64 m_id;

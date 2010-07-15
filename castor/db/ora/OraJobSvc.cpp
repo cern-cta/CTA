@@ -108,7 +108,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementStrin
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
-  "BEGIN disk2DiskCopyDone(:1, :2); END;";
+  "BEGIN disk2DiskCopyDone(:1, :2, :3); END;";
 
 /// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
@@ -278,7 +278,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
       ex.getMessage() << error.substr(error.find("ORA-") + 11,
-				      error.find("ORA-", 4) - 12);
+                                      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;
@@ -341,12 +341,12 @@ castor::db::ora::OraJobSvc::putStart
     handleException(e);
     // Application specific errors
     if ((e.getErrorCode() == 20104) ||
-	(e.getErrorCode() == 20107) ||
-	(e.getErrorCode() == 20114)) {
+        (e.getErrorCode() == 20107) ||
+        (e.getErrorCode() == 20114)) {
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
       ex.getMessage() << error.substr(error.find("ORA-") + 11,
-				      error.find("ORA-", 4) - 12);
+                                      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;
@@ -488,12 +488,12 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     if ((e.getErrorCode() == 20108) ||
         (e.getErrorCode() == 20109) ||
         (e.getErrorCode() == 20110) ||
-	(e.getErrorCode() == 20111) ||
-	(e.getErrorCode() == 20112)) {
+        (e.getErrorCode() == 20111) ||
+        (e.getErrorCode() == 20112)) {
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
       ex.getMessage() << error.substr(error.find("ORA-") + 11,
-				      error.find("ORA-", 4) - 12);
+                                      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;
@@ -511,7 +511,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
  u_signed64 sourceDiskCopyId,
  u_signed64,
- const std::string)
+ const std::string,
+ u_signed64 replicaFileSize)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -523,10 +524,19 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
     // execute the statement and see whether we found something
     m_disk2DiskCopyDoneStatement->setDouble(1, diskCopyId);
     m_disk2DiskCopyDoneStatement->setDouble(2, sourceDiskCopyId);
+    m_disk2DiskCopyDoneStatement->setDouble(3, replicaFileSize);
 
     m_disk2DiskCopyDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    // Application specific errors
+    if (e.getErrorCode() == 20119) {
+      castor::exception::Internal ex;
+      std::string error = e.what();
+      ex.getMessage() << error.substr(error.find("ORA-") + 11,
+                                      error.find("ORA-", 4) - 12);
+      throw ex;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in disk2DiskCopyDone."
@@ -833,7 +843,7 @@ void castor::db::ora::OraJobSvc::firstByteWritten
       castor::exception::Busy ex;
       std::string error = e.what();
       ex.getMessage() << error.substr(error.find("ORA-") + 11,
-				      error.find("ORA-", 4) - 12);
+                                      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;

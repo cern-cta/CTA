@@ -117,6 +117,7 @@ castor::job::d2dtransfer::DiskCopyTransfer::DiskCopyTransfer():
     { 34, "Source end of mover terminated" },
     { 35, "Downloading resource file" },
     { 39, "DiskCopy Transfer successful" },
+    { 44, "Failed to stat replicated file" },
 
     // Exit
     { 41, "DiskCopy Transfer failed" },

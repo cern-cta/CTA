@@ -379,7 +379,8 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
  u_signed64 sourceDiskCopyId,
  u_signed64 fileId,
- const std::string nsHost)
+ const std::string nsHost,
+ u_signed64 replicaFileSize)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
@@ -387,6 +388,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
   req.setSourceDiskCopyId(sourceDiskCopyId);
   req.setFileId(fileId);
   req.setNsHost(nsHost);
+  req.setReplicaFileSize(replicaFileSize);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

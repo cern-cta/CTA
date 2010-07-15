@@ -335,10 +335,12 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       // "Invoking disk2DiskCopyDone"
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
-         castor::dlf::Param("SourceDiskCopyId", srcDcId)};
+         castor::dlf::Param("SourceDiskCopyId", srcDcId),
+         castor::dlf::Param("ReplicaFileSize", uReq->replicaFileSize())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_D2DCOK,
-                              fileId, nsHost, 2, params);
-      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost);
+                              fileId, nsHost, 3, params);
+      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost,
+                                uReq->replicaFileSize());
     }
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"

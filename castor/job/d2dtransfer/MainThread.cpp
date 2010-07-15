@@ -499,10 +499,27 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
   // Transfer successful. Note: we don't need to call disk2DiskCopyFailed if
   // an exception is thrown here. The stager will do this automatically for us.
   try {
+    // Construct the local filename (i.e. the destination path)
+    std::string outputFile = diskCopy->mountPoint() + diskCopy->diskCopyPath();
+    u_signed64 replicaFileSize = 0;
+
+    // Determine the size of the newly created file replica
+    struct stat64 statbuf;
+    if (stat64((char*)outputFile.c_str(), &statbuf) != 0) {
+      // "Failed to stat replicated file"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Path", outputFile),
+         castor::dlf::Param("Message", strerror(errno))};
+      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_WARNING, 44, 2, params, &m_fileId);
+    } else {
+      replicaFileSize = statbuf.st_size;
+    }
+
     m_jobSvc->disk2DiskCopyDone(m_diskCopyId,
                                 m_sourceDiskCopyId,
                                 m_fileId.fileid,
-                                m_fileId.server);
+                                m_fileId.server,
+                                replicaFileSize);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught trying to finalize disk2disk copy transfer, transfer
