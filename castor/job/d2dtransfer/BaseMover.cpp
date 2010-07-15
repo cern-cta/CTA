@@ -31,7 +31,7 @@
 //-----------------------------------------------------------------------------
 castor::job::d2dtransfer::BaseMover::BaseMover() :
   m_shutdown(0),
-  m_fileSize(0),
+  m_sourceFileSize(0),
   m_bytesTransferred(0) {
 
 }

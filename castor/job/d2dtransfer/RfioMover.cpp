@@ -124,7 +124,7 @@ void castor::job::d2dtransfer::RfioMover::destination
   }
 
   // Set the file size of the source file
-  m_fileSize = statbuf.st_size;
+  m_sourceFileSize = statbuf.st_size;
 
   // Activate V3 RFIO protocol again (???)
   rfiosetopt(RFIO_READOPT, &v, 4);
@@ -284,8 +284,8 @@ void castor::job::d2dtransfer::RfioMover::copyFile()
     }
 
     // By definition totalsize is always positive
-    if ((m_fileSize - m_totalBytes) < (u_signed64)bufsize) {
-      bufsize = m_fileSize - m_totalBytes;
+    if ((m_sourceFileSize - m_totalBytes) < (u_signed64)bufsize) {
+      bufsize = m_sourceFileSize - m_totalBytes;
     }
 
     // Read data from the source/destination
@@ -322,7 +322,7 @@ void castor::job::d2dtransfer::RfioMover::copyFile()
                      << m_inputFile << " : " << rfio_serror() << std::endl;
       throw e;
     }
-  } while ((m_fileSize != m_totalBytes) && (n > 0));
+  } while ((m_sourceFileSize != m_totalBytes) && (n > 0));
   free(copyBuffer);
 
   // Attempt to close the file descriptors and deal with errors gracefully.

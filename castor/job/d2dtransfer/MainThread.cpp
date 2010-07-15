@@ -548,7 +548,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
   // "DiskCopyTransfer successful"
   castor::dlf::Param params2[] =
     {castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
-     castor::dlf::Param("FileSize", m_mover->fileSize()),
+     castor::dlf::Param("SourceFileSize", m_mover->sourceFileSize()),
      castor::dlf::Param("Direction",
                         sourceDiskCopy->svcClass() + " -> " +
                         diskCopy->svcClass()),
@@ -668,7 +668,7 @@ void castor::job::d2dtransfer::MainThread::terminate
   if (m_mover) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("ExitCode", status),
-       castor::dlf::Param("FileSize", m_mover->fileSize()),
+       castor::dlf::Param("SourceFileSize", m_mover->sourceFileSize()),
        castor::dlf::Param("BytesTransferred", m_mover->bytesTransferred()),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 41, 4, params, &m_fileId);

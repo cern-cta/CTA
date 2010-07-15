@@ -93,7 +93,7 @@ namespace castor {
          * stager. Note: it is not mandatory for the mover to provide this
          * information.
          */      
-        virtual u_signed64 fileSize() = 0;
+        virtual u_signed64 sourceFileSize() = 0;
 
         /**
          * Returns the number of bytes transferred from the client to the
