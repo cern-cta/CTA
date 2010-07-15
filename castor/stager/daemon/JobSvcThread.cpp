@@ -396,9 +396,10 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     castor::dlf::Param params[] =
       {castor::dlf::Param("ChkSumType", mcReq->csumType()),
        castor::dlf::Param("ChkSumValue", mcReq->csumValue()),
-       castor::dlf::Param("SubReqId", mcReq->subReqId())};
+       castor::dlf::Param("SubReqId", mcReq->subReqId()),
+       castor::dlf::Param("FileSize", mcReq->fileSize())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_PFMIG,
-                            fileId, nsHost, 3, params);
+                            fileId, nsHost, 4, params);
     try {
       jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
                                   fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
