@@ -869,12 +869,12 @@ class DLFMsgParser:
            MSG="(?P<msg> .*?)" # message
 
            # Some optional fields that must come in the right order
-           (?: \s+ REQID=(?P<reqid> [\w\-]+)           )? # reqid
-           (?: \s+ NSHOSTNAME=(?P<nshostname> [\w\-]+) )? # nshostname
-           (?: \s+ NSFILEID=(?P<nsfileid> [\d]+)       )? # nsfileid
+           (?: \s+ REQID=(?P<reqid> [\w\-]+)             )? # reqid
+           (?: \s+ NSHOSTNAME=(?P<nshostname> [\w\-\.]+) )? # nshostname
+           (?: \s+ NSFILEID=(?P<nsfileid> [\d]+)         )? # nsfileid
 
-           (?P<message> .*)                               # message
-           $                                              # the end
+           (?P<message> .*)                                 # message
+           $                                                # the end
               """, re.VERBOSE )
 
         self.mexp = re.compile( r"""
