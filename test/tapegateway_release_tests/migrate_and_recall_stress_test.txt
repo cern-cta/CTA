@@ -172,14 +172,14 @@ ls -rt ~ | tail -n 11
 
 for I in `seq 0 9`; do stager_rm -S '*' -f ~/gatewaystress_81920_file_list_split.txt0$I; done
 
-14. Verify that all 81920 test-files have been removed from the disk-cache.
+14.  Determine the status of all 81920 test-files in the disk-cache.
+
+for I in `seq 0 9`; do stager_qry -S '*' -f ~/gatewaystress_81920_file_list_split.txt0$I; done > ~/gatewaystress_81920_file_status_after_stager_rm.txt
+
+15. Verify that all 81920 test-files have been removed from the disk-cache.
 
 egrep 'INVALID|not on disk cache' ~/gatewaystress_81920_file_status_after_stager_rm.txt | wc -l
 [output] 81920
-
-15. Determine the status of all 81920 test-files in the disk-cache.
-
-for I in `seq 0 9`; do stager_qry -S '*' -f ~/gatewaystress_81920_file_list_split.txt0$I; done > ~/gatewaystress_81920_file_status_after_stager_rm.txt
 
 16. Recall all 81920 test-files back from tape.
 
@@ -187,7 +187,7 @@ for I in `seq 0 9`; do stager_get -S largedisk2 -f ~/gatewaystress_81920_file_li
 
 17. Determine the status of all of 81920 test-files.
 
-for I in `seq 0 9`; do stager_qry -S '*' -f ~/gatewaystress_file_list_split.txt0$I; done > ~/gatewaystress_81920_file_status_after_stager_get.txt
+for I in `seq 0 9`; do stager_qry -S '*' -f ~/gatewaystress_81920_file_list_split.txt0$I; done > ~/gatewaystress_81920_file_status_after_stager_get.txt
 
 18. Verify that all 81920 of the test-files have been successfully recalled.
 
