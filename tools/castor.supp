@@ -1,4 +1,34 @@
 {
+   Globus
+   Memcheck:Cond
+   ...
+   fun:globus_i_gsi_gss_handshake
+}
+{
+   Globus value
+   Memcheck:Value8
+   ...
+   fun:globus_i_gsi_gss_handshake
+}
+{
+   soap
+   Memcheck:Cond
+   ...
+   obj:*/libcastorsrmgsoapclient.so*
+}
+{
+   soap param
+   Memcheck:Param
+   ...
+   obj:*/libcastorsrmgsoapclient.so*
+}
+{
+   soap value
+   Memcheck:Value8
+   ...
+   obj:*/libcastorsrmgsoapclient.so*
+}
+{
    Oracle's library, use of uninitialized value
    Memcheck:Value4
    obj:*/libclntsh.so*
@@ -37,14 +67,14 @@
 }
 {
    Oracle's call to pthread
-   core:PThread
+   Core:PThread
    fun:pthread_error
    fun:pthread_mutex_destroy
    fun:snsbittrm_ts
 }
 {
    Oracle's call to pthread(2)
-   core:PThread
+   Core:PThread
    fun:pthread_error
    fun:pthread_mutex_destroy
    fun:sltsmxd
