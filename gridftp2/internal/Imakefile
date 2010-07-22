@@ -35,9 +35,6 @@ CPPFLAGS += -I$(GLOBUS_LOCATION)/include/$(FLAVOR)
 CFLAGS += $(MOPTION) -fPIC
 AddLdFlags(-L$(GLOBUS_LOCATION)/lib -lglobus_ftp_control_$(FLAVOR) $(MOPTION) -shared -lz)
 
-DSI_LIBDIR = $(GLOBUS_LOCATION)/lib
-DSI_LIBNAME = globus_gridftp_server_CASTOR2int_$(FLAVOR)
-
-PlacedSharedLibraryTarget($(DSI_LIBNAME),globus_gridftp_server_CASTOR2int.o,,,$(DSI_LIBDIR))
+PlacedSharedLibraryTarget(globus_gridftp_server_CASTOR2int_$(FLAVOR),globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LOCATION)/lib)
 LOGROTATE(castor-gridftp-dsi-common,install)
 MakeDir(/var/log,0755)
