@@ -43,7 +43,7 @@ $ActionExecOnlyWhenPreviousIsSuspended off
 # The default output file format, syslog style format
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
 
-# Required by openssh-server (SL4 machines)
+# Required by openssh-server (SLC4 machines)
 $AddUnixListenSocket /var/empty/sshd/dev/log
 
 # The default file creation mode
