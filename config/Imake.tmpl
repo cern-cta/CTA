@@ -65,7 +65,7 @@ endif
 ifndef LOCAL_PATH
 LOCAL_PATH = 1
 
-.PHONY: PREFIX(clean) PREFIX(clobber) PREFIX(exportman)
+.PHONY: PREFIX(clean) PREFIX(clobber)
 
 clean : PREFIX(clean)
 PREFIX(clean):
@@ -74,8 +74,6 @@ PREFIX(clean):
 clobber : PREFIX(clobber)
 PREFIX(clobber): clean
 	RemoveFiles($(PREFIX(FilesToClobber)))
-
-exportman : PREFIX(exportman)
 
 #include INCLUDE_IMAKEFILE
 

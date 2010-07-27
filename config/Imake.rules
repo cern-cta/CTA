@@ -12,18 +12,24 @@
 #define ManPageTargetName(name,suffix) $(EXPORTMAN)/man/**/suffix/name.suffix/**/castor
 #define UglyTarget(suffix) 's/^\.so \.?\/?(\w+)(.*)/\.so man'/**/suffix/**/'\/$${1}\.'/**/suffix/**/'castor/g'
 
-#define MANPAGE(name,suffix)                                              \
+#define MANPAGE(name,suffix,insttarget)                                   \
 ManPageTargetName(name,suffix):	LOCAL_PATH/$(PREFIX(MANSUBDIR))name.man	@@\
 	@echo Installing $@                                             @@\
 	install -d $(EXPORTMAN)/man/**/suffix                           @@\
 	cat LOCAL_PATH/$(PREFIX(MANSUBDIR))name.man | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $${1} \"$${2}castor\"/g' | perl -pe UglyTarget(suffix) > ManPageTargetName(name,suffix) @@\
-PREFIX(exportman): ManPageTargetName(name,suffix)
+insttarget: ManPageTargetName(name,suffix)
 
-#define EXEMANPAGE(name) MANPAGE(name,1)
-#define SYSMANPAGE(name) MANPAGE(name,2)
-#define LIBMANPAGE(name) MANPAGE(name,3)
-#define FILEMANPAGE(name) MANPAGE(name,4)
-#define ADMMANPAGE(name) MANPAGE(name,8)
+#define EXEMANPAGE(name) MANPAGE(name,1,install)
+#define SYSMANPAGE(name) MANPAGE(name,2,install)
+#define LIBMANPAGE(name) MANPAGE(name,3,install)
+#define FILEMANPAGE(name) MANPAGE(name,4,install)
+#define ADMMANPAGE(name) MANPAGE(name,8,install)
+
+#define TAPEEXEMANPAGE(name) MANPAGE(name,1,installtape)
+#define TAPESYSMANPAGE(name) MANPAGE(name,2,installtape)
+#define TAPELIBMANPAGE(name) MANPAGE(name,3,installtape)
+#define TAPEFILEMANPAGE(name) MANPAGE(name,4,installtape)
+#define TAPEADMMANPAGE(name) MANPAGE(name,8,installtape)
 
 #define RemoveFiles(files) rm -f files
 #define AddLdFlags(flags) PREFIX(LDFLAGS) += flags
@@ -119,27 +125,24 @@ InternalInstallTarget(file,mode,dest,install,,)
 #define InstallNonExecFileSubdir(file,dest,mode,subdir) \
 InternalInstallTarget(file,mode,dest,install,,subdir)
 
-#define MakeDir(dirname,mode)   \
+#define GenericMakeDir(dirname,mode,insttarget) \
 ifndef dirname                                @@\
   dirname = 1                                 @@\
 $(DESTDIR)/dirname:                           @@\
 	install -d $(DESTDIR)/dirname -m mode @@\
-install: $(DESTDIR)/dirname                   @@\
-endif
-#define TapeMakeDir(dirname,mode)   \
-ifndef dirname                                @@\
-  dirname = 1                                 @@\
-$(DESTDIR)/dirname:                           @@\
-	install -d $(DESTDIR)/dirname -m mode @@\
-installtape: $(DESTDIR)/dirname               @@\
-endif
+endif                                         @@\
+insttarget: $(DESTDIR)/dirname
+
+#define MakeDir(dirname,mode) GenericMakeDir(dirname,mode,install)
+#define TapeMakeDir(dirname,mode) GenericMakeDir(dirname,mode,installtape)
+
 #define MakeDirWithOwnership(dirname,owner,group,mode)   \
 ifndef dirname                                @@\
   dirname = 1                                 @@\
 $(DESTDIR)/dirname:                           @@\
 	if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dirname -o owner -g group -m mode; else install -d $(DESTDIR)dirname -m mode; fi @@\
-install: $(DESTDIR)/dirname                   @@\
-endif
+endif                                         @@\
+install: $(DESTDIR)/dirname
 
 #define ProgramTarget(program,objects,deplibs,libs,mode,alltarget,installtarget)   \
 LOCAL_PATH/program: objects deplibs	                                         @@\
@@ -159,7 +162,6 @@ ProgramTarget(program,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB))
 
 #define TapeProgramTarget(program,objects,deplibs,libs,mode) \
 ProgramTarget(program,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(TAPEDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(TAPELIBS)) libs,mode,tape,tape)
-
 
 /* manual list of dependencies to solve the -rpath issue. Not very nice */
 #define commonRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/common

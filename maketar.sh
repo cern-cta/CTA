@@ -108,15 +108,16 @@ function copyInstallPerm {
 #
 ## Append all sub-packages to CASTOR.spec
 #
-for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-server-nostk; do
+for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-tape-server` castor-tape-server castor-tape-server-nostk; do
     package=$this
     actualPackage=$package
 
-    #
-    ## Do we have an %if dependency ?
-    #
+    # handle nostk vs normal compilation of castor-tape-server
+    if [ "$package" = "castor-tape-server" ]; then
+	echo "%if ! %compiling_nostk" >> CASTOR.spec
+    fi
     if [ "$package" = "castor-tape-server-nostk" ]; then
-        echo "%else" >> CASTOR.spec # compiling_notstk if
+        echo "%else" >> CASTOR.spec
         package="castor-tape-server"
     fi
 

@@ -40,16 +40,11 @@ export MINOR_CASTOR_VERSION
 %if 0%{?clientonly:1} > 0
 %define compiling_client 1
 %endif
-%if %compiling_nostk
-echo "Compiling in NOSTK mode, that is only tape part with no STK dependency"
-make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2)) tape
-%else
 %if %compiling_client
 echo "Only compiling client part"
 make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
 %else
 make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2))
-%endif
 %endif
 
 %install
@@ -59,17 +54,11 @@ MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 rm -rf ${RPM_BUILD_ROOT}
-%if %compiling_nostk
-make installtape DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
-%else
 %if %compiling_client
 make installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %else
 make install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %endif
-%endif
-
-%if ! %compiling_nostk
 
 %clean
 rm -rf $RPM_BUILD_ROOT

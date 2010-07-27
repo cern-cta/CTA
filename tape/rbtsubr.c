@@ -94,6 +94,8 @@ int rbtmount (char *vid,
 #if defined(CDK)
 	if (*loader == 'a')
 		return (acsmount (vid, loader, ring));
+#else
+	(void)ring;
 #endif
 
 	if (*loader == 'd')

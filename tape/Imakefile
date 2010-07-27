@@ -7,11 +7,11 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 COMM 	Make tape daemon programs.
 
 TAPEACCT = tapeacct.o
-#if !CASTOR_NOSTK
-CDKFLG = -DCDK -DLINUX
-CDKINC = -I/usr/include/CDK
-LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
-#endif
+ifeq ($(CASTOR_NOSTK),)
+  CDKFLG = -DCDK -DLINUX
+  CDKINC = -I/usr/include/CDK
+  LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
+endif
 #if BuildSecureTape
 CPPFLAGS += -DTPCSEC
 AddLdFlags(-ldl)

@@ -8,9 +8,27 @@ DLFCONF=/var/www/conf/dlf
 
 .PHONY : install clean clobber checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION client installclient tape installtape purge
 
+/**
+ * Meaning of the different rules :
+ * - all will build all the software
+ * - tape will build only the tape part, that is the software that runs on the tapeservers
+ * - client will build the client part, that is the software running on client nodes
+ * - install will build AND install the whole software
+ * - installtape will build AND install the tape part
+ * - installclient will build AND install the client part
+ * - clean is cleaning all intermediate files (e.g. .o) but leaves libraries and exes around
+ * - clobber is cleaning all files resulting from compilation
+ * - purge is clobber + the drop of all Makefiles
+ * - the check rules are testing the presence of one component and exiting if they fail
+ *   + checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT are obvious
+ *   + checkDESTDIR checks whether the DESTDIR environment variable is set
+ *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables
+ *     are set
+ */
+
 all: checkORACLE checkLSF checkGLOBUS checkXROOT tape client
 tape: checkSTK
-install: checkDESTDIR checkVERSION all exportman installtape installclient
+install: checkDESTDIR checkVERSION all installtape installclient
 
 EXPORTMAN?=$(DESTDIR)/usr/share
 checkDESTDIR:
