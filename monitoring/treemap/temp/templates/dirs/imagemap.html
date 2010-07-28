@@ -1,0 +1,159 @@
+{% load userDefinedFilters %}
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd" >
+<html>
+<head>
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="PRIVATE">
+<title>TreeMaps</title>
+</head>
+<body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#000000">
+    
+    {% if nodes %}
+
+ <!--      
+       	<p>
+	       	<table width="100%" height="100%">
+	  			<tr>
+	    			<td align="center" valign="middle" width="100%" height="100%"> 
+	    			    <p><a href="http://127.0.0.1:8000/simpletext/bydir/{{parentid}}"> <img border="0" title="one level back" src="file:///home/kblaszcz/FasticView/templates/dirs/images/arrow.png"></a></p>
+			       		<img src="file:////home/kblaszcz/{{filename}}" width="500" height="600" border="0" alt="TheMap" usemap="#TreeMap"> 
+				       	<map name="TreeMap">
+				  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
+						        <area shape="rect" coords="{{ x1 }}, {{ y1 }}, {{ x2 }}, {{ y2 }}" 
+						        	href="http://127.0.0.1:8000/simpletext/bydir/{{theid}}"
+						        	alt="{{ info }}" 
+						        	title="{{ info }}">
+				        	{% endfor %}
+				        </map> 
+				     </td>
+	  			</tr>
+			</table> 
+        </p>
+-->
+    <p><table width="100%" height="100%"><tr><td align="center" valign="middle" width="100%" height="100%"> 
+	    			
+        <p><a href="http://127.0.0.1:8000/simpletext/bydir/{{parentid}}"> <img border="0" title="one level back" src="file:///home/kblaszcz/FasticView/templates/dirs/images/arrow.png"></a></p>
+       	
+        <ul id="map">
+ 			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
+				<li>
+					<a class="cls{{theid}}" href="http://127.0.0.1:8000/simpletext/bydir/{{theid}}" title = "">
+						<span>
+							{{ info|escapefilter }}
+						</span>
+					</a>
+				</li>
+        	{% endfor %}
+		</ul>  
+		
+		
+        <style type="text/css">
+			#map {
+				position:relative;
+				margin:0;
+				padding:0;
+				width:{{imagewidth}}px;
+				height:{{imageheight}}px;
+				background:url(file:////home/kblaszcz/{{filename}}) top left no-repeat #fff;
+				font-family:arial, helvetica, sans-serif;
+				font-size:12pt;
+				color:#FFF;
+				text-align: left;
+			}
+			
+			#map li {
+				margin:0;
+				padding:0;
+				list-style:none;
+			}
+			
+			#map li a {
+				position:absolute;
+				display:block;
+				/*
+				   Specifying a background image
+				   (a 1px by 1px transparent gif)
+				   fixes a bug in older versions of
+				   IE that causeses the block to not
+				   render at its full dimensions.
+				*/
+	   			background:url(file:///home/kblaszcz/FasticView/templates/dirs/images/blank.gif);
+	   			text-decoration:none;
+				color:#000;
+			}
+			
+			#map li a span { display:none; }
+			
+			#map li a:hover span {
+				position:relative;
+				display:block;
+				width:600px;
+				left:20px;
+				top:20px;
+				border:1px solid #000;
+				background:#fff;
+				padding:5px;
+	 			filter:alpha(opacity=80);
+				opacity:0.8;
+	  		}
+		
+		 	{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
+				#map a.cls{{theid}} 
+				{
+					top:{{y1}}px;
+					left:{{x1}}px;
+					width:{{x2|sub:x1}}px;
+					height:{{y2|sub:y1}}px;
+				}
+        	{% endfor %}
+	   </style>  
+	   <br>{% for dirname, flname, theid in navilink %}<a href="http://127.0.0.1:8000/simpletext/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
+	
+	</td></tr></table></p>
+    {% else %}
+        <p>No data available / A file or an empty folder</p>
+    {% endif %}
+
+
+
+
+<!--
+<style type="text/css">
+	<!--
+	img {border:none;}
+	
+	#box
+	{
+		height:500px;
+		width:500px;
+		padding:0;
+		margin:20px;
+		border:1px solid black;
+		font:bold 14px verdana, sans-serif;
+	}
+	
+	#box div{display:none;}
+	
+	#box:hover div
+	{
+		display:block;
+		width:300px;
+		position:absolute;top:20px;right:20px;
+		border:1px dashed black;
+		padding:15px;
+		font:normal 14px verdana, sans-serif;
+	}
+	-->
+</style>
+
+<div id="box"><a href="info.htm"><img src="bild.png" width="80" height="80" alt=""></a>
+	<div>
+	<p><strong>INFO</strong></p>
+	<p>Lorem ipsum dolor sit amet. <br> And so on... </p>
+	</div>
+</div>
+-->
+
+</body>
+</html>

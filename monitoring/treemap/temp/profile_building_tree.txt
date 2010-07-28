@@ -1,0 +1,34 @@
+ 17848323 function calls (17846655 primitive calls) in 60.250 CPU seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+
+  1893111    2.600    0.000    2.600    0.000 :0(id)
+   213501    0.470    0.000    0.470    0.000 :0(isinstance)
+69870/69369    0.100    0.000    0.130    0.000 :0(len)
+    561/1    0.000    0.000   60.250   60.250 <string>:1(?)
+     1120    2.970    0.003   55.500    0.050 ObjectTree.py:46(sortChildren)
+  1756734   22.390    0.000   52.530    0.000 ObjectTree.py:47(childrenCompare)
+      560    0.020    0.000   55.550    0.099 ObjectTree.py:84(getChild)
+
+    561/1    0.040    0.000   60.250   60.250 TreeBuilder.py:35(addChildrenRecursion)
+  5674736   10.300    0.000   10.360    0.000 TreeNode.py:34(evaluate)
+  3786453   11.700    0.000   17.260    0.000 TreeNode.py:64(getObject)
+  3786453    5.560    0.000    5.560    0.000 Wrapper.py:73(getObject)
+     9456    0.060    0.000    1.930    0.000 __init__.py:609(format_number)
+    10878    0.150    0.000    0.950    0.000 decimal.py:1076(__mul__)
+    30436    0.570    0.000    1.690    0.000 decimal.py:473(__new__)
+        1    0.000    0.000    3.790    3.790 models.py:117(getFilesAndFolders)
+      561    0.000    0.000    0.630    0.001 models.py:162(hasAnyChildren)
+      564    0.000    0.000    3.780    0.007 query.py:183(iterator)
+      564    0.000    0.000    3.700    0.007 query.py:281(results_iter)
+      561    0.080    0.000    3.460    0.006 query.py:41(resolve_columns)
+    13464    0.210    0.000    3.320    0.000 query.py:56(convert_values)
+        3    0.010    0.003    3.790    1.263 query.py:73(__len__)
+     9456    0.080    0.000    1.870    0.000 util.py:122(format_number)
+     1010    0.020    0.000    0.530    0.001 util.py:16(execute)
+     9456    0.040    0.000    0.990    0.000 util.py:95(typecast_decimal)
+
+	 1    0.000    0.000   60.250   60.250 profile:0(tree = tb.generateObjectTree(ch[0], 'bla'))
+	 1    0.000    0.000   60.250   60.250 TreeBuilder.py:23(generateObjectTree)
