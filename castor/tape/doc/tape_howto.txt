@@ -3873,3 +3873,9 @@ default        11640
 default        11640
 
 SQL>
+
+
+How to get trace information from rfcp
+======================================
+
+export RFIO_TRACE=3
