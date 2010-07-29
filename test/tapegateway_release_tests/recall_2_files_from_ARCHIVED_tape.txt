@@ -1,7 +1,7 @@
 THE NAME OF TEST
 ================
 
-Recall 10 files with tape ARCHIVED whilst TAPECOPY_WAITINSTREAMS.
+Recall 2 files from an ARCHIVED tape.
 
 
 THE PURPOSE OF THE TEST
@@ -44,19 +44,19 @@ INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
 
 ps -ef | grep 'tapegatewayd' | grep -v grep
 
-2. Identify a test-directory in CASTOR where contain 10 files.
+2. Identify a test-directory in CASTOR where contain 2 files.
 
 /castor/cern.ch/dev/m/murrayc3/<folder_name>
 
-3. Check that the ten files has at least one copy on tape.
+3. Check that the two files has at least one copy on tape.
 
 nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
-[output] 10
+[output] 2
 
 4. Chech that the files are not on disk.
 
 stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
-[output] 10
+[output] 2
 
 5. If the previous test show that the files are on disk, stager_rm them.
 
@@ -78,11 +78,12 @@ INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
 
 /etc/init.d/tapegatewayd stop
 
-2. stager_get the 10 files.
+2. rfcp the 2 files from two separate shell.
 
-TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+SHELL1# rfcp /castor/cern.ch/dev/m/murrayc3/<folder_name>/File_1 /tmp
+SHELL2# rfcp /castor/cern.ch/dev/m/murrayc3/<folder_name>/File_2 /tmp
 
-3. Waiting for all 10 files to be in TAPECOPY_CREATED (tragic number 0).
+3. Waiting for all 2 files to be in TAPECOPY_CREATED (tragic number 0).
 
 SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
        FROM castorfile
@@ -91,7 +92,7 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
 
 4. Modify the status of the test_tape(s) to ARCHIVED.
 
-TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
+TAPES=`nsls -lT  /castor/cern.ch/dev/m/murrayc3/<folder_name> | awk '{print $4}' | sort | uniq`;
 for I in $TAPES; do vmgrmodifytape -V $I --st ARCHIVED; done;
 
 5. Start the tepegateway daemon.
@@ -110,13 +111,17 @@ SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
 EXPECTED RESULTS
 ================
 
-The tape-gateway should have failed all 10 of the test-files being recalled from
+The tape-gateway should have failed all 2 of the test-files being recalled from
 tape.  In addition to the status output of step 6 of the above test
-instructions, nsls -l should show that none of the 10 test files have been
-recalled.  The following command-line should therefore display 10 as its result.
+instructions, nsls -l should show that none of the 2 test files have been
+recalled.  The following command-line should therefore display 2 as its result.
 
 stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
-[output] 10
+[output] 2
+
+The output of the rfcp command must be similar to the following:
+
+/castor/cern.ch/user/m/murrayc3/<folder_name>/File_1 : Internal error
 
 
 INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
@@ -128,5 +133,5 @@ vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
 
 2. Set the status the test_tape(s) to the original value.
 
-TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
+TAPES=`nsls -lT  /castor/cern.ch/dev/m/murrayc3/<folder_name> | awk '{print $4}' | sort | uniq`;
 for I in $TAPES; do vmgrmodifytape -V $I --st ""; done;
