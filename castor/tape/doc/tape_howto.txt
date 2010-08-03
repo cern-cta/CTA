@@ -3329,17 +3329,17 @@ Open the web page at the following url:
 http://c2adm.cern.ch/dlf
 
 
-How to compile all INVALID procedures in your schema
-====================================================
+How to compile all INVALID functions and procedures in your schema
+==================================================================
 
 BEGIN
   FOR obj in (
-    SELECT object_name
+    SELECT *
       FROM user_objects
       WHERE
-            object_type = 'PROCEDURE'
+            object_type IN ('FUNCTION', 'PROCEDURE')
         AND status = 'INVALID') LOOP
-     EXECUTE IMMEDIATE 'ALTER PROCEDURE ' || obj.object_name || ' COMPILE';
+     EXECUTE IMMEDIATE 'ALTER ' || obj.object_type || ' ' || obj.object_name || ' COMPILE';
    END LOOP;
 END;
 /
