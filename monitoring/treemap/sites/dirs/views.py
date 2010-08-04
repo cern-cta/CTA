@@ -23,6 +23,16 @@ from sites.dirs.models import *
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
 
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
+from django.conf import settings
+from django.template import resolve_variable
+from django.utils.http import urlquote
+from django.utils.hashcompat import md5_constructor
+
+
+
+
 def plain(request, depth):
     p = get_list_or_404(Dirs, depth = depth)
     return render_to_response('dirs/dir_list.html', {'object_list': p})
@@ -52,6 +62,7 @@ def xxxplainbydir(request, id):
     response = '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>' + response
     return HttpResponse(response)#render_to_response('dirs/dir_list.html', {'object_list': children, 'time': totaltime})
 
+@cache_page(60 *60 * 24 * 3) #cache for 3 days
 def plainbydir(request, theid):    
     time = datetime.datetime.now()
     try:
@@ -63,7 +74,27 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
+    serverip = "http://137.138.35.26"
+    serverport = "8080"
+    serverdict = "/var/www/html"
+    treemapdir = "/images/treemaps"
+    icondir = "/images/icons"
+    treemapurl = serverip + treemapdir + "/"
+    iconsurl = serverip + icondir + "/"
+    clickurl = serverip + ":" + serverport
     
+    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    fragment_name = theid.__str__()
+    vary_on = [(2,3,5,7),(11,13,17,19,23,29)]
+    args = md5_constructor(u':'.join([urlquote(resolve_variable("145", theid))]))                 
+    cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
+    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
+    
+    value = cache.get(cache_key)
+    
+    if value is not None:
+        return HttpResponse(value)
+
     lr = LevelRules()
     
     lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 0)
@@ -135,7 +166,7 @@ def plainbydir(request, theid):
     drawer = SquaredTreemapDrawer(tree)
     filenm = root.fileid.__str__().replace('/','') + "test_tree.png"
     print filenm
-    drawer.drawTreemap(filenm)
+    drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     #------------------------------------------------------------
     print "preparing response"
     
@@ -184,8 +215,10 @@ def plainbydir(request, theid):
         
     del otree
     del tree
-    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight} , context_instance=None)
+    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapurl': treemapurl, 'iconsurl': iconsurl, 'clickurl': clickurl} , context_instance=None)
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
+    
+    cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
 

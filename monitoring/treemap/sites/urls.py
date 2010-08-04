@@ -15,5 +15,5 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
 #     (r'^admin/', include(admin.site.urls)),
-     (r'^simpletext/', include('sites.dirs.urls')),
+     (r'^treemaps/', include('sites.dirs.urls')),
 )
