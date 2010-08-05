@@ -3879,3 +3879,23 @@ How to get trace information from rfcp
 ======================================
 
 export RFIO_TRACE=3
+
+
+How to fix an installation of the globus rpms
+=============================================
+
+When the globus rpms have installed themselves incorrectly the castor build
+will fail with error messages of the form:
+
+In file included from /opt/globus/include/gcc64dbgpthr/globus_common.h:58,
+                 from /opt/globus/include/gcc64dbgpthr/gssapi.h:44,
+                 from 
+/opt/globus/include/gcc64dbgpthr/globus_gss_assist.h:38,
+                 from 
+/var/CASTOR_SVN_CO/trunk/security/Csec_plugin_GSS.c:51:
+/opt/globus/include/gcc64dbgpthr/globus_common_include.h:19:27: error: 
+globus_config.h: No such file or directory
+
+Run the follwing as root in order to fix the installation of the globus rpms:
+
+rpm -qa | grep -E 'VDT|globus|GSI' | xargs rpm -e --nodeps; spma_wrapper.sh
