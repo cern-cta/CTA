@@ -18,8 +18,8 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'django.db.backends.oracle'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'test2_nolb'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'CASTOR_NS_08_APR10'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'mase52yu'         # Not used with sqlite3.
+DATABASE_USER = 'castor_ns_ro'             # Not used with sqlite3.
+DATABASE_PASSWORD = 'xxx'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.           # Set to empty string for default. Not used with sqlite3.
 
@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 259200
-CACHE_MIDDLEWARE_KEY_PREFIX = ''
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94lf_ik=^#jf@l+>/|aqz~$khjk57!&lfj*6jqn\"'
 
 ROOT_URLCONF = 'sites.urls'
 

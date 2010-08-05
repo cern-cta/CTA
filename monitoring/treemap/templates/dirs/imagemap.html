@@ -16,12 +16,12 @@
 	       	<table width="100%" height="100%">
 	  			<tr>
 	    			<td align="center" valign="middle" width="100%" height="100%"> 
-	    			    <p><a href="{{clickurl}}/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{iconsurl}}arrow.png"></a></p>
-			       		<img src="{{treemapurl}}{{filename}}" width="500" height="600" border="0" alt="TheMap" usemap="#TreeMap"> 
+	    			    <p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{iconsdir}}/arrow.png"></a></p>
+			       		<img src="{{treemapdir}}/{{filename}}" width="500" height="600" border="0" alt="TheMap" usemap="#TreeMap"> 
 				       	<map name="TreeMap">
 				  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
 						        <area shape="rect" coords="{{ x1 }}, {{ y1 }}, {{ x2 }}, {{ y2 }}" 
-						        	href="{{clickurl}}/treemaps/bydir/{{theid}}"
+						        	href="/treemaps/bydir/{{theid}}"
 						        	alt="{{ info }}" 
 						        	title="{{ info }}">
 				        	{% endfor %}
@@ -33,12 +33,12 @@
 -->
     <p><table width="100%" height="100%"><tr><td align="center" valign="middle" width="100%" height="100%"> 
 	    			
-        <p><a href="{{clickurl}}/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{iconsurl}}arrow.png"></a></p>
+        <p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{iconsdir}}/arrow.png"></a></p>
        	
         <ul id="map">
  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
 				<li>
-					<a class="cls{{theid}}" href="{{clickurl}}/treemaps/bydir/{{theid}}" title = "">
+					<a class="cls{{theid}}" href="/treemaps/bydir/{{theid}}" title = "">
 						<span>
 							{{ info|escapefilter }}
 						</span>
@@ -55,7 +55,7 @@
 				padding:0;
 				width:{{imagewidth}}px;
 				height:{{imageheight}}px;
-				background:url({{treemapurl}}{{filename}}) top left no-repeat #fff;
+				background:url({{treemapdir}}/{{filename}}) top left no-repeat #fff;
 				font-family:arial, helvetica, sans-serif;
 				font-size:12pt;
 				color:#FFF;
@@ -78,7 +78,7 @@
 				   IE that causeses the block to not
 				   render at its full dimensions.
 				*/
-	   			background:url({{iconsurl}}blank.gif);
+	   			background:url({{iconsdir}}blank.gif);
 	   			text-decoration:none;
 				color:#000;
 			}
@@ -108,7 +108,7 @@
 				}
         	{% endfor %}
 	   </style>  
-	   <br>{% for dirname, flname, theid in navilink %}<a href="{{clickurl}}/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
+	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
 	
 	</td></tr></table></p>
     {% else %}

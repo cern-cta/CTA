@@ -41,8 +41,6 @@ class TreeBuilder(object):
     chcount = 0
     
     def addChildrenRecursion(self, tree, level, parent, area_factor):
-#        if parent.getObject().__str__() == "/castor/cern.ch/grid/cms/HMM/x18751u11598":
-#            print 'dbg:', self.count, parent.getObject(), level
 
         if area_factor < self.lowest_area_factor: return
         if not self.rules.indexIsValid(level + 1): return
@@ -62,14 +60,9 @@ class TreeBuilder(object):
         except KeyError:
             return
         
-#        print '3'
-#        
-#        if (nested_object.__str__() == "/castor/cern.ch/compass/data/2008/oracle_dst") or (nested_object.__str__() == "/castor/cern.ch/grid/lhcb") or (nested_object.__str__() == "/castor/cern.ch/grid/atlas") or (nested_object.__str__() == "/castor/cern.ch/compass/data/2006/raw") or (nested_object.__str__() == "/castor/cern.ch/grid") or (nested_object.__str__() == "/castor/cern.ch/cms"):
-#            print "stop"
         print countmethodname, nested_object, nested_object.__class__
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
-        
-#        print '4'
+
         if nbchildren <= 0 or (nbchildren > self.max_children_to_read and level > 0):
             return
         

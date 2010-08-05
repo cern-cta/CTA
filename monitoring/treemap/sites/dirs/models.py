@@ -17,7 +17,6 @@ from sites.treemap.objecttree.Wrapper import Wrapper
 from sites.treemap.objecttree.columntransformation import *
 import profile
 import datetime
-from sites.tools.ListChain import ListChain
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -191,7 +190,7 @@ class Dirs(models.Model):
 #            d+=f
 #        d+=f
         
-        return d+f#ListChain(d,f)
+        return d+f
 
     
     def getFilesOf(self, id):
@@ -269,19 +268,17 @@ class Dirs(models.Model):
         print 'start generating object tree for ' + ch[0].__str__()
         tb = TreeBuilder(lr)
         
-        if ch[0].__str__() == "/castor/cern.ch/totem/offlinea":
-            print 'profiling'
-            profile.runctx('tree = tb.generateObjectTree(ch[0], \'bla\')', globals(), {'tb':tb, 'ch':ch})
-        else:
-            tree = tb.generateObjectTree(ch[0], 'bla')
+        # if ch[0].__str__() == "/castor/cern.ch/totem/offlinea":
+            # print 'profiling'
+            # profile.runctx('tree = tb.generateObjectTree(ch[0], \'bla\')', globals(), {'tb':tb, 'ch':ch})
+        # else:
+        tree = tb.generateObjectTree(ch[0], 'bla')
             
         print 'time was: ' + (datetime.datetime.now() - start ).__str__()
         print ''
         
         start = datetime.datetime.now()
         print 'start calculating rectangle sizes'
-        if ch[0].__str__() == "/castor/cern.ch/cms/store":
-            print "debug here"
             
         props = BasicViewTreeProps(width = 500.0, height = 600.0)    
         tc = SquaredTreemapCalculator(otree = tree, basic_properties = props)
@@ -373,7 +370,7 @@ class CnsFileMetadata(models.Model):
 #    sigfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
 #    newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
 #    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfileontapelastmod = models.Decistart generating object tree for /castor/cern.ch/nomad/tapemalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
 #    sigfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
 #    newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
 #    timetomigrate = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)

@@ -74,14 +74,10 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
-    serverip = "http://137.138.35.26"
-    serverport = "8080"
+    serverip = "http://pcitdmssd"
     serverdict = "/var/www/html"
     treemapdir = "/images/treemaps"
     icondir = "/images/icons"
-    treemapurl = serverip + treemapdir + "/"
-    iconsurl = serverip + icondir + "/"
-    clickurl = serverip + ":" + serverport
     
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = theid.__str__()
@@ -125,21 +121,19 @@ def plainbydir(request, theid):
     
     print 'start generating object tree for ' + root.__str__()
     tb = TreeBuilder(lr)
-    otree = None
+#    otree = None
     
-    if root.__str__() == "/castor/cern.ch/totem/offlinea":
-        print 'profiling'
-        profile.runctx('otree = tb.generateObjectTree(root, \'bla\')', globals(), {'tb':tb, 'root':root})
-    else:
-        otree = tb.generateObjectTree(root, 'bla')
+#    if root.__str__() == "/castor/cern.ch/totem/offlinea":
+#        print 'profiling'
+#        profile.runctx('otree = tb.generateObjectTree(root, \'bla\')', globals(), {'tb':tb, 'root':root})
+#    else:
+    otree = tb.generateObjectTree(root, 'bla')
         
     print 'time was: ' + (datetime.datetime.now() - start ).__str__()
     print ''
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
-    if root.__str__() == "/castor/cern.ch/cms/store":
-        print "debug here"
         
     props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
     tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
@@ -215,7 +209,7 @@ def plainbydir(request, theid):
         
     del otree
     del tree
-    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapurl': treemapurl, 'iconsurl': iconsurl, 'clickurl': clickurl} , context_instance=None)
+    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapdir': treemapdir, 'icondir': icondir} , context_instance=None)
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     
