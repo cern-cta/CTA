@@ -32,5 +32,5 @@ int main(int argc, char **argv) {
 
   castor::tape::tpcp::DumpTpCommand command;
 
-  return command.main("dumptp", argc, argv);
+  return command.main(argc, argv);
 }

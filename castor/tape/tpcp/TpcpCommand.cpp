@@ -50,6 +50,7 @@
 #include "h/vmgr_api.h"
 
 #include <ctype.h>
+#include <exception>
 #include <getopt.h>
 #include <iostream>
 #include <list>
@@ -81,7 +82,9 @@ bool castor::tape::tpcp::TpcpCommand::s_receivedSigint = false;
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
+castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
+  throw () :
+  m_programName(programName),
   m_userId(getuid()),
   m_groupId(getgid()),
   m_callbackSock(false),
@@ -124,544 +127,592 @@ castor::tape::tpcp::TpcpCommand::~TpcpCommand() throw () {
 }
 
 
+
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
-  const int argc, char **argv) throw() {
+int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
+  // Parse the command line
   try {
-
-    // Get the local hostname
-    gethostname(m_hostname, sizeof(m_hostname));    
-
-    // Check if the hostname of the machine is set to "localhost"
-    if(strcmp(m_hostname, "localhost") == 0) {
-      std::cerr <<
-         programName << " cannot be ran on a machine where hostname is set to "
-         "\"localhost\"" << std::endl << std::endl;
-      return 1;
-    }
-    
-    // Get the Current Working Directory
-    getcwd(m_cwd, PATH_MAX);
-    if(m_cwd == NULL){
-      std::cerr <<
-        programName << " cannot be ran on a machine where the current working "
-        "directory is not been set" << std::endl << std::endl;
-      return 1;
-    }
-
-    // Exit with an error message if this command is being ran as root
-    if(m_userId == 0 && m_groupId == 0) {
-      std::cerr <<
-        programName << " cannot be ran as root" << std::endl << std::endl;
-      return 1;
-    }
-
-    // Set the VMGR error buffer so that the VMGR does not write errors to
-    // stderr
-    vmgr_error_buffer[0] = '\0';
-    if (vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
-      std::cerr << "Failed to set VMGR error buffer" << std::endl;
-      return 1;
-    }
-
-    // Parse the command line
-    try {
-      parseCommandLine(argc, argv);
-    } catch (castor::exception::Exception &ex) {
-      std::cerr
-        << std::endl
-        << "Failed to parse the command-line:\n\n"
-        << ex.getMessage().str() << std::endl
-        << std::endl;
-      usage(std::cerr, programName);
-      std::cerr << std::endl;
-      return 1;
-    }
-
-    // If debug, then display parsed command-line arguments
-    if(m_cmdLine.debugSet) {
-      std::ostream &os = std::cout;
-
-      os << "Parsed command-line = " << m_cmdLine << std::endl;
-    }
-
-    // Display usage message and exit if help option found on command-line
-    if(m_cmdLine.helpSet) {
-      std::cout << std::endl;
-      usage(std::cout, programName);
-      std::cout << std::endl;
-      return 0;
-    }
-
-    // Abort if the requested action type is not yet supportd
-    if(m_cmdLine.action != Action::read  &&
-       m_cmdLine.action != Action::write &&
-       m_cmdLine.action != Action::dump) {
-      castor::exception::Internal ex;
-
-      ex.getMessage() << "Unknown action";
-
-      throw ex;
-    }
-
-    // Fill the list of filenames to be processed.
-    //
-    // The list of filenames will either come from the command-line arguments
-    // or (exclusive or) from a "filelist" file specified with the
-    // "-f, --filelist" option.
-    if(m_cmdLine.fileListSet) {
-      // Parse the "filelist" file into the list of filenames to be
-      // processed
-      utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
-        m_filenames);
-    } else {
-      // Copy the command-line argument filenames into the list of filenames
-      // to be processed
-      for(FilenameList::const_iterator
-        itor=m_cmdLine.filenames.begin();
-        itor!=m_cmdLine.filenames.end(); itor++) {
-        m_filenames.push_back(*itor);
-      }
-    }
-
-    //check the format of the filename: hostname:/filepath/filename
-    checkFilenameFormat();
-
-    // If debug, then display the list of files to be processed by the action
-    // handlers
-    if(m_cmdLine.debugSet) {
-      std::ostream &os = std::cout;
-
-      os << "Filenames to be processed = " << m_filenames << std::endl;
-    }
-
-    // Set the iterator pointing to the next RFIO filename to be processed
-    m_filenameItor = m_filenames.begin();
-
-    if(m_cmdLine.action == Action::read) {
-
-      // Determine the number of tape files based on the sequence of tape
-      // file sequence numbers they would produce
-      //
-      // Note that the number maybe infinite if the user has requested to read
-      // until the end of the tape
-      TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
-
-      // Throw an exception if the number of tape files is finite and does not
-      // match the number of RFIO file names
-      if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
-        castor::exception::InvalidArgument ex;
-
-        ex.getMessage() <<
-          "The number of tape files does not match the number of RFIO "
-          "filenames"
-          ": Number of tape files=" << seq.totalSize() <<
-          " Number of RFIO filenames=" << m_filenames.size();
-
-        throw ex;
-      }
-
-      // RFIO stat the directory to which the first file to be recalled file
-      // will be written to in order to check the RFIO daemon is running
-      {
-        FilenameList::const_iterator itor = m_filenames.begin();
-
-        // Sanity check - there should be at least one file to be migrated
-        if(itor == m_filenames.end()) {
-          TAPE_THROW_EX(exception::Internal,
-            ": List of filenames to be processed is unexpectedly empty");
-        }
-
-        const std::string &filename = *itor;
-        std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
-
-        // Command-line user feedback
-        std::ostream &os = std::cout;
-        time_t       now = time(NULL);
-
-        utils::writeTime(os, now, TIMEFORMAT);
-        os << " RFIO stat the directory of the first file \""
-           << filepath << "\"" << std::endl;
-
-        // Perform the RFIO stat
-        struct stat64 statBuf;
-        rfioStat(filepath.c_str(), statBuf);
-
-        // Test if the filepath is not a directory
-        if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
-          castor::exception::Exception ex(ECANCELED);
-          ex.getMessage() <<
-            ": Invalid RFIO filename syntax"
-            ": Filepath must identify a regular directory"
-            ": filepath=\"" << filepath.c_str() <<"\"";
-
-          throw ex;
-        }
-      }
-    }
-
-    if(m_cmdLine.action == Action::write) {
-
-      // Check that there is at least one file to be migrated
-      if(m_filenames.size() == 0) {
-        castor::exception::InvalidArgument ex;
-
-        ex.getMessage()
-          << "There must be at least one file to be migrated";
-
-        throw ex;
-      }
-
-      // RFIO stat the first file to be migrated in order to check the RFIO
-      // daemon is running
-      {
-        FilenameList::const_iterator itor = m_filenames.begin();
-
-        // Sanity check - there should be at least one file to be migrated
-        if(itor == m_filenames.end()) {
-          TAPE_THROW_EX(exception::Internal,
-            ": List of filenames to be processed is unexpectedly empty");
-        }
-
-        const std::string &filename = *itor;
-
-        // Command-line user feedback
-        std::ostream &os = std::cout;
-        time_t       now = time(NULL);
-
-        utils::writeTime(os, now, TIMEFORMAT);
-        os << " RFIO stat the first file \""
-           << filename << "\"" << std::endl;
-
-        // Perform the RFIO stat
-        struct stat64 statBuf;
-        rfioStat(filename.c_str(), statBuf);
-
-        // Test if the filename corrispond to a directory
-        if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
-          castor::exception::Exception ex(ECANCELED);
-          ex.getMessage() <<
-            ": Invalid RFIO filename syntax"
-            ": Filename must identify a regular file"
-            ": filename=\"" << filename.c_str() <<"\"";
-
-          throw ex;
-	}
-
-        // Test if the filesize is greather than zero
-        if(statBuf.st_size == 0){
-          castor::exception::Exception ex(ECANCELED);
-          ex.getMessage() <<
-            ": Invalid file size: File size must be greater than zero"
-            ": filename=\"" << filename.c_str() <<"\"";
-
-          throw ex;
-        }
-      }
-    }
-
-    // Get information about the tape to be used from the VMGR
-    try {
-      const int side = 0;
-      vmgrQueryTape(m_cmdLine.vid, side);
-    } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception ex2(ECANCELED);
-
-      std::ostream &os = ex2.getMessage();
-      os << "Failed to query the VMGR about tape: VID = "
-         << m_cmdLine.vid;
-
-      // If the tape does not exist
-      if(ex.code() == ENOENT) {
-        os << ": Tape does not exist";
-      } else {
-        os << ": " << ex.getMessage().str();
-      }
-
-      throw ex2;
-    }
-
-    // If debug, then display the tape information retrieved from the VMGR
-    if(m_cmdLine.debugSet) {
-      std::ostream &os = std::cout;
-
-      os << "vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo << std::endl;
-
-      os << "DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
-    }
-
-    // Check that the VID returned in the VMGR tape information matches that of
-    // the requested tape
-    if(strcmp(m_cmdLine.vid, m_vmgrTapeInfo.vid) != 0) {
-       castor::exception::Exception ex(ECANCELED);
-       std::ostream &os = ex.getMessage();
-
-       os <<
-         "VID in tape information retrieved from VMGR does not match that of "
-         "the requested tape"
-         ": Request VID = " << m_cmdLine.vid <<
-         " VID returned from VMGR = " << m_vmgrTapeInfo.vid;
-
-       throw ex;
-    }
-
-    // If writing to tape then check that the user has permission to write to
-    // the tape
-    if(m_cmdLine.action == Action::write) {
-      checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
-        m_groupId, m_hostname);
-    }
-
-    // Check the tape is available
-    if(m_vmgrTapeInfo.status & DISABLED ||
-       m_vmgrTapeInfo.status & EXPORTED ||
-       m_vmgrTapeInfo.status & ARCHIVED) {
-
-       castor::exception::Exception ex(ECANCELED);
-       std::ostream &os = ex.getMessage();
-
-       os << "Tape is not available: Tape is: ";
-
-       if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
-       if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
-       if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
-
-       throw ex;
-    }
-
-    // Check if the access mode of the tape is compatible with the action to be
-    // performed by tpcp
-    if(m_cmdLine.action == Action::write &&
-      m_vmgrTapeInfo.status & TAPE_RDONLY) {
-
-      castor::exception::Exception ex(ECANCELED);
-
-       ex.getMessage() << "Tape cannot be written to"
-         ": Tape marked as TAPE_RDONLY";
-
-       throw ex;
-    }
-
-    // Setup the tapebridge callback socket
-    setupCallbackSock();
-
-    // If debug, then display a textual description of the tapebridge callback
-    // socket
-    if(m_cmdLine.debugSet) {
-      std::ostream &os = std::cout;
-
-      os << "Tapebridge callback socket details = ";
-      net::writeSockDescription(os, m_callbackSock.socket());
-      os << std::endl;
-    }
-
-    // Send the request for a drive to the VDQM
-    {
-      const int mode = m_cmdLine.action == Action::write ?
-        WRITE_ENABLE : WRITE_DISABLE;
-      char *const server = m_cmdLine.serverSet ?
-        m_cmdLine.server : NULL;
-      requestDriveFromVdqm(mode, server);
-    }
-
-    // Command-line user feedback
-    {
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " Waiting for a drive: Volume request ID = " << m_volReqId
-         << std::endl;
-    }
-
-    // Socket file descriptor for a callback connection from the tapebridge
-    int connectionSockFd = 0;
-
-    // Wait for a callback connection from the tapebridge
-    {
-      bool   waitForCallback = true;
-      time_t timeout         = WAITCALLBACKTIMEOUT;
-      while(waitForCallback) {
-        try {
-          connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
-            WAITCALLBACKTIMEOUT);
-
-          waitForCallback = false;
-        } catch(castor::exception::TimeOut &tx) {
-
-          // Command-line user feedback
-          std::ostream &os = std::cout;
-          time_t       now = time(NULL);
-
-          utils::writeTime(os, now, TIMEFORMAT);
-          os <<
-            " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
-            "Continuing to wait." <<  std::endl;
-
-          // Wait again for the default timeout
-          timeout = WAITCALLBACKTIMEOUT;
-          
-        } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
-
-          // If a SIGINT signal was received (control-c)
-          if(s_receivedSigint) {
-
-            castor::exception::Exception ex(ECANCELED);
-            ex.getMessage() << "Received SIGNINT";
-
-            throw(ex);
-
-          // Else received a signal other than SIGINT
-          } else {
-
-            // Wait again for the remaining amount of time
-            timeout = ix.remainingTime();
-          }
-        }
-      }
-    }
-
-    // Command-line user feedback
-    {
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " Selected tape server is ";
-
-      char hostName[net::HOSTNAMEBUFLEN];
-
-      net::getPeerHostName(connectionSockFd, hostName);
-
-      os << hostName << std::endl;
-    }
-
-    // Wrap the connection socket descriptor in a CASTOR framework socket in
-    // order to get access to the framework marshalling and un-marshalling
-    // methods
-    castor::io::AbstractTCPSocket callbackConnectionSock(connectionSockFd);
-
-    // Read in the object sent by the tapebridge
-    std::auto_ptr<castor::IObject> obj(callbackConnectionSock.readObject());
-
-    // Pointer to the received object with the object's type
-    tapegateway::VolumeRequest *volumeRequest = NULL;
-
-    // Cast the object to its type
-    volumeRequest = dynamic_cast<tapegateway::VolumeRequest*>(obj.get());
-    if(volumeRequest == NULL) {
-      castor::exception::InvalidArgument ex;
-
-      ex.getMessage()
-        << "Received the wrong type of object from the tapebridge"
-        << ": Actual=" << utils::objectTypeToString(obj->type())
-        << " Expected=VolumeRequest";
-
-      throw ex;
-    }
-
-    Helper::displayRcvdMsgIfDebug(*volumeRequest, m_cmdLine.debugSet);
-
-    {
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " Selected drive unit is " << volumeRequest->unit() << std::endl;
-    }
-
-    // Check the volume request ID of the VolumeRequest object matches that of
-    // the reply from the VDQM when the drive was requested
-    if(volumeRequest->mountTransactionId() != (uint64_t)m_volReqId) {
-      castor::exception::InvalidArgument ex;
-
-      ex.getMessage()
-        << "Received the wrong mount transaction ID from the tapebridge"
-        << ": Actual=" << volumeRequest->mountTransactionId()
-        << " Expected=" <<  m_volReqId;
-
-      throw ex;
-    }
-
-    // Create the volume message for the tapebridge
-    castor::tape::tapegateway::Volume volumeMsg;
-    volumeMsg.setVid(m_vmgrTapeInfo.vid);
-    switch(m_cmdLine.action.value()) {
-    case Action::READ:
-      volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
-      volumeMsg.setMode(castor::tape::tapegateway::READ);
-      break;
-    case Action::WRITE:
-      volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
-      volumeMsg.setMode(castor::tape::tapegateway::WRITE);
-      break;
-    case Action::DUMP:
-      volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
-      volumeMsg.setMode(castor::tape::tapegateway::DUMP);
-      break;
-    default:
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Unknown action type: value=" << m_cmdLine.action.value());
-    }
-    volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
-    volumeMsg.setMountTransactionId(m_volReqId);
-    volumeMsg.setAggregatorTransactionId(
-      volumeRequest->aggregatorTransactionId());
-    volumeMsg.setDensity(m_vmgrTapeInfo.density);
-
-    // Send the volume message to the tapebridge
-    callbackConnectionSock.sendObject(volumeMsg);
-
-    Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
-
-    // Close the connection to the tapebridge
-    callbackConnectionSock.close();
-
-    // Perform the transfer, either READ, WRITE or DUMP
-    try {
-      performTransfer();
-    } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception ex2(ECANCELED);
-
-      ex2.getMessage() << "Failed to perform " << m_cmdLine.action <<
-        ": " << ex.getMessage().str();
-
-      throw ex2;
-    }
+    parseCommandLine(argc, argv);
+  } catch (castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to parse the command-line:\n\n"
+      << ex.getMessage().str() << std::endl
+      << std::endl;
+    usage(std::cerr);
+    std::cerr << std::endl;
+    return 1;
+  }
+
+  // If debug, then display parsed command-line arguments
+  if(m_cmdLine.debugSet) {
+    std::cout <<
+      "Parsed command-line = " << m_cmdLine << std::endl;
+  }
+
+  // Display usage message and exit if help option found on command-line
+  if(m_cmdLine.helpSet) {
+    std::cout << std::endl;
+    usage(std::cout);
+    std::cout << std::endl;
+    return 0;
+  }
+
+  // Abort if the requested action type is not yet supportd
+  if(m_cmdLine.action != Action::read  &&
+     m_cmdLine.action != Action::write &&
+     m_cmdLine.action != Action::dump) {
+     castor::exception::Internal ex;
+
+     ex.getMessage() << "Unknown action";
+
+     throw ex;
+  }
+
+  // Execute the command
+  try {
+    executeCommand();
   } catch(castor::exception::Exception &ex) {
+    displayErrorMsgCleanUpAndExit(ex.getMessage().str().c_str());
+  } catch(std::exception &se) {
+    displayErrorMsgCleanUpAndExit(se.what());
+  } catch(...) {
+    displayErrorMsgCleanUpAndExit("Caught unknown exception");
+  }
 
-    // Command-line user feedback
+  return 0; // Success
+}
+
+
+//------------------------------------------------------------------------------
+// displayErrorMsgCleanUpAndExit
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::displayErrorMsgCleanUpAndExit(
+  const char *msg) throw() {
+
+  // Display error message
+  {
+    const time_t now = time(NULL);
+    utils::writeTime(std::cerr, now, TIMEFORMAT);
+    std::cerr <<
+      " " << m_programName << " failed"
+      ": " << msg << std::endl;
+  }
+
+  // Clean up
+  if(m_gotVolReqId) {
+    const time_t now = time(NULL);
+    utils::writeTime(std::cerr, now, TIMEFORMAT);
+    std::cerr <<
+      " Deleting volume request with ID = " << m_volReqId << std::endl;
+
+    try {
+      deleteVdqmVolumeRequest();
+    } catch(castor::exception::Exception &ex) {
+
+      const time_t now = time(NULL);
+  
+      utils::writeTime(std::cerr, now, TIMEFORMAT);
+      std::cerr << " Failed to delete VDQM volume request: "
+         << ex.getMessage().str() << std::endl;
+    }
+  }
+
+  exit(1); // Error
+}
+
+
+//------------------------------------------------------------------------------
+// executeCommand
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::executeCommand() {
+
+  // Get the local hostname
+  gethostname(m_hostname, sizeof(m_hostname));    
+
+  // Check if the hostname of the machine is set to "localhost"
+  if(strcmp(m_hostname, "localhost") == 0) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      m_programName << " cannot be ran on a machine where hostname is set to "
+      "\"localhost\"";
+    throw ex;
+  }
+    
+  // Get the Current Working Directory
+  getcwd(m_cwd, PATH_MAX);
+  if(m_cwd == NULL){
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      m_programName << " cannot be ran on a machine where the current working "
+      "directory is not been set";
+    throw ex;
+  }
+
+  // This command cannot be ran as root
+  if(m_userId == 0 && m_groupId == 0) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      m_programName << " cannot be ran as root";
+    throw ex;
+  }
+
+  // Set the VMGR error buffer so that the VMGR does not write errors to
+  // stderr
+  vmgr_error_buffer[0] = '\0';
+  if(vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      "Failed to set VMGR error buffer";
+    throw ex;
+  }
+
+  // Fill the list of filenames to be processed.
+  //
+  // The list of filenames will either come from the command-line arguments
+  // or (exclusive or) from a "filelist" file specified with the
+  // "-f, --filelist" option.
+  if(m_cmdLine.fileListSet) {
+    // Parse the "filelist" file into the list of filenames to be
+    // processed
+    utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
+      m_filenames);
+  } else {
+    // Copy the command-line argument filenames into the list of filenames
+    // to be processed
+    for(FilenameList::const_iterator
+      itor=m_cmdLine.filenames.begin();
+      itor!=m_cmdLine.filenames.end(); itor++) {
+      m_filenames.push_back(*itor);
+    }
+  }
+
+  //check the format of the filename: hostname:/filepath/filename
+  checkFilenameFormat();
+
+  // If debug, then display the list of files to be processed by the action
+  // handlers
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "Filenames to be processed = " << m_filenames << std::endl;
+  }
+
+  // Set the iterator pointing to the next RFIO filename to be processed
+  m_filenameItor = m_filenames.begin();
+
+  if(m_cmdLine.action == Action::read) {
+
+    // Determine the number of tape files based on the sequence of tape
+    // file sequence numbers they would produce
+    //
+    // Note that the number maybe infinite if the user has requested to read
+    // until the end of the tape
+    TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
+
+    // Throw an exception if the number of tape files is finite and does not
+    // match the number of RFIO file names
+    if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage() <<
+        "The number of tape files does not match the number of RFIO "
+        "filenames"
+        ": Number of tape files=" << seq.totalSize() <<
+        " Number of RFIO filenames=" << m_filenames.size();
+
+      throw ex;
+    }
+
+    // RFIO stat the directory to which the first file to be recalled file
+    // will be written to in order to check the RFIO daemon is running
+    {
+      FilenameList::const_iterator itor = m_filenames.begin();
+
+      // Sanity check - there should be at least one file to be migrated
+      if(itor == m_filenames.end()) {
+        TAPE_THROW_EX(exception::Internal,
+          ": List of filenames to be processed is unexpectedly empty");
+      }
+
+      const std::string &filename = *itor;
+      std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
+
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+      time_t       now = time(NULL);
+
+      utils::writeTime(os, now, TIMEFORMAT);
+      os << " RFIO stat the directory of the first file \""
+         << filepath << "\"" << std::endl;
+
+      // Perform the RFIO stat
+      struct stat64 statBuf;
+      rfioStat(filepath.c_str(), statBuf);
+
+      // Test if the filepath is not a directory
+      if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
+        castor::exception::Exception ex(ECANCELED);
+        ex.getMessage() <<
+          ": Invalid RFIO filename syntax"
+          ": Filepath must identify a regular directory"
+          ": filepath=\"" << filepath.c_str() <<"\"";
+
+        throw ex;
+      }
+    }
+  } // if(m_cmdLine.action == Action::read)
+
+  if(m_cmdLine.action == Action::write) {
+
+    // Check that there is at least one file to be migrated
+    if(m_filenames.size() == 0) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage()
+        << "There must be at least one file to be migrated";
+
+      throw ex;
+    }
+
+    // RFIO stat the first file to be migrated in order to check the RFIO
+    // daemon is running
+    {
+      FilenameList::const_iterator itor = m_filenames.begin();
+
+      // Sanity check - there should be at least one file to be migrated
+      if(itor == m_filenames.end()) {
+        TAPE_THROW_EX(exception::Internal,
+          ": List of filenames to be processed is unexpectedly empty");
+      }
+
+      const std::string &filename = *itor;
+
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+      time_t       now = time(NULL);
+
+      utils::writeTime(os, now, TIMEFORMAT);
+      os << " RFIO stat the first file \""
+         << filename << "\"" << std::endl;
+
+      // Perform the RFIO stat
+      struct stat64 statBuf;
+      rfioStat(filename.c_str(), statBuf);
+
+      // Test if the filename corrispond to a directory
+      if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
+        castor::exception::Exception ex(ECANCELED);
+        ex.getMessage() <<
+          ": Invalid RFIO filename syntax"
+          ": Filename must identify a regular file"
+          ": filename=\"" << filename.c_str() <<"\"";
+
+        throw ex;
+      }
+
+      // Test if the filesize is greather than zero
+      if(statBuf.st_size == 0){
+        castor::exception::Exception ex(ECANCELED);
+        ex.getMessage() <<
+          ": Invalid file size: File size must be greater than zero"
+          ": filename=\"" << filename.c_str() <<"\"";
+
+        throw ex;
+      }
+    }
+  } // if(m_cmdLine.action == Action::write)
+
+  // Get information about the tape to be used from the VMGR
+  try {
+    const int side = 0;
+    vmgrQueryTape(m_cmdLine.vid, side);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ECANCELED);
+
+    std::ostream &os = ex2.getMessage();
+    os << "Failed to query the VMGR about tape: VID = "
+       << m_cmdLine.vid;
+
+    // If the tape does not exist
+    if(ex.code() == ENOENT) {
+      os << ": Tape does not exist";
+    } else {
+      os << ": " << ex.getMessage().str();
+    }
+
+    throw ex2;
+  }
+
+  // If debug, then display the tape information retrieved from the VMGR
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo << std::endl;
+
+    os << "DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
+  }
+
+  // Check that the VID returned in the VMGR tape information matches that of
+  // the requested tape
+  if(strcmp(m_cmdLine.vid, m_vmgrTapeInfo.vid) != 0) {
+     castor::exception::Exception ex(ECANCELED);
+     std::ostream &os = ex.getMessage();
+
+     os <<
+       "VID in tape information retrieved from VMGR does not match that of "
+       "the requested tape"
+       ": Request VID = " << m_cmdLine.vid <<
+       " VID returned from VMGR = " << m_vmgrTapeInfo.vid;
+
+     throw ex;
+  }
+
+  // If writing to tape then check that the user has permission to write to
+  // the tape
+  if(m_cmdLine.action == Action::write) {
+    checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
+      m_groupId, m_hostname);
+  }
+
+  // Check the tape is available
+  if(m_vmgrTapeInfo.status & DISABLED ||
+     m_vmgrTapeInfo.status & EXPORTED ||
+     m_vmgrTapeInfo.status & ARCHIVED) {
+
+     castor::exception::Exception ex(ECANCELED);
+     std::ostream &os = ex.getMessage();
+
+     os << "Tape is not available: Tape is: ";
+
+     if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
+     if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+     if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+
+     throw ex;
+  }
+
+  // Check if the access mode of the tape is compatible with the action to be
+  // performed by tpcp
+  if(m_cmdLine.action == Action::write &&
+    m_vmgrTapeInfo.status & TAPE_RDONLY) {
+
+    castor::exception::Exception ex(ECANCELED);
+
+     ex.getMessage() << "Tape cannot be written to"
+       ": Tape marked as TAPE_RDONLY";
+
+     throw ex;
+  }
+
+  // Setup the tapebridge callback socket
+  setupCallbackSock();
+
+  // If debug, then display a textual description of the tapebridge callback
+  // socket
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "Tapebridge callback socket details = ";
+    net::writeSockDescription(os, m_callbackSock.socket());
+    os << std::endl;
+  }
+
+  // Send the request for a drive to the VDQM
+  {
+    const int mode = m_cmdLine.action == Action::write ?
+      WRITE_ENABLE : WRITE_DISABLE;
+    char *const server = m_cmdLine.serverSet ?
+      m_cmdLine.server : NULL;
+    requestDriveFromVdqm(mode, server);
+  }
+
+  // Command-line user feedback
+  {
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
     utils::writeTime(os, now, TIMEFORMAT);
-    os << " Error occured: " << ex.getMessage().str() << std::endl;
+    os << " Waiting for a drive: Volume request ID = " << m_volReqId
+       << std::endl;
+  }
 
-    if(m_gotVolReqId) {
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " Deleting volume request with ID = " << m_volReqId << std::endl;
+  // Socket file descriptor for a callback connection from the tapebridge
+  int connectionSockFd = 0;
 
+  // Wait for a callback connection from the tapebridge
+  {
+    bool   waitForCallback = true;
+    time_t timeout         = WAITCALLBACKTIMEOUT;
+    while(waitForCallback) {
       try {
-        deleteVdqmVolumeRequest();
-      } catch(castor::exception::Exception &ex2) {
+        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+          WAITCALLBACKTIMEOUT);
+
+        waitForCallback = false;
+      } catch(castor::exception::TimeOut &tx) {
 
         // Command-line user feedback
-        std::ostream &os = std::cerr;
+        std::ostream &os = std::cout;
         time_t       now = time(NULL);
 
         utils::writeTime(os, now, TIMEFORMAT);
-        os << " Failed to delete VDQM volume request: "
-           << ex2.getMessage().str() << std::endl;
+        os <<
+          " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
+          "Continuing to wait." <<  std::endl;
+
+        // Wait again for the default timeout
+        timeout = WAITCALLBACKTIMEOUT;
+        
+      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+
+        // If a SIGINT signal was received (control-c)
+        if(s_receivedSigint) {
+
+          castor::exception::Exception ex(ECANCELED);
+          ex.getMessage() << "Received SIGNINT";
+
+          throw(ex);
+
+        // Else received a signal other than SIGINT
+        } else {
+
+          // Wait again for the remaining amount of time
+          timeout = ix.remainingTime();
+        }
       }
     }
-
-    return 1;
   }
 
-  return 0;
+  // Command-line user feedback
+  {
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os << " Selected tape server is ";
+
+    char hostName[net::HOSTNAMEBUFLEN];
+
+    net::getPeerHostName(connectionSockFd, hostName);
+
+    os << hostName << std::endl;
+  }
+
+  // Wrap the connection socket descriptor in a CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket callbackConnectionSock(connectionSockFd);
+
+  // Read in the object sent by the tapebridge
+  std::auto_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
+
+  switch (firstObj->type()) {
+  case OBJ_VolumeRequest:
+    // Do nothing as this is the type of message we expect in the
+    // good-day scenario
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      // Cast the object to its type
+      tapegateway::EndNotificationErrorReport &endNotificationErrorReport =
+        dynamic_cast<tapegateway::EndNotificationErrorReport&>(
+          *(firstObj.get()));
+
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        "Tape-bridge reported an error"
+        ": " << endNotificationErrorReport.errorMessage();
+      throw ex;
+    }
+  default:
+    {
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        "Received the wrong type of object from the tapebridge" <<
+        ": Actual=" << utils::objectTypeToString(firstObj->type()) <<
+        " Expected=VolumeRequest or EndNotificationErrorReport";
+      throw ex;
+    }
+  } //switch (firstObj->type())
+
+  // Cast the object to its type
+  tapegateway::VolumeRequest &volumeRequest =
+    dynamic_cast<tapegateway::VolumeRequest&>(*(firstObj.get()));
+
+  Helper::displayRcvdMsgIfDebug(volumeRequest, m_cmdLine.debugSet);
+
+  {
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os << " Selected drive unit is " << volumeRequest.unit() << std::endl;
+  }
+
+  // Check the volume request ID of the VolumeRequest object matches that of
+  // the reply from the VDQM when the drive was requested
+  if(volumeRequest.mountTransactionId() != (uint64_t)m_volReqId) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage()
+      << "Received the wrong mount transaction ID from the tapebridge"
+      << ": Actual=" << volumeRequest.mountTransactionId()
+      << " Expected=" <<  m_volReqId;
+
+    throw ex;
+  }
+
+  // Create the volume message for the tapebridge
+  castor::tape::tapegateway::Volume volumeMsg;
+  volumeMsg.setVid(m_vmgrTapeInfo.vid);
+  switch(m_cmdLine.action.value()) {
+  case Action::READ:
+    volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
+    volumeMsg.setMode(castor::tape::tapegateway::READ);
+    break;
+  case Action::WRITE:
+    volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
+    volumeMsg.setMode(castor::tape::tapegateway::WRITE);
+    break;
+  case Action::DUMP:
+    volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
+    volumeMsg.setMode(castor::tape::tapegateway::DUMP);
+    break;
+  default:
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Unknown action type: value=" << m_cmdLine.action.value());
+  }
+  volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
+  volumeMsg.setMountTransactionId(m_volReqId);
+  volumeMsg.setAggregatorTransactionId(
+    volumeRequest.aggregatorTransactionId());
+  volumeMsg.setDensity(m_vmgrTapeInfo.density);
+
+  // Send the volume message to the tapebridge
+  callbackConnectionSock.sendObject(volumeMsg);
+
+  Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
+
+  // Close the connection to the tapebridge
+  callbackConnectionSock.close();
+
+  // Perform the transfer, either READ, WRITE or DUMP
+  try {
+    performTransfer();
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ECANCELED);
+
+    ex2.getMessage() <<
+      "Failed to perform " << m_cmdLine.action <<
+      ": " << ex.getMessage().str();
+
+    throw ex2;
+  }
 }
 
 
@@ -669,11 +720,11 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 // vmgrQueryTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
-  char (&)[CA_MAXVIDLEN+1], const int side)
+  char (&vid)[CA_MAXVIDLEN+1], const int side)
   throw (castor::exception::Exception) {
 
   serrno=0;
-  const int rc = vmgr_querytape(m_cmdLine.vid, side, &m_vmgrTapeInfo, m_dgn);
+  const int rc = vmgr_querytape(vid, side, &m_vmgrTapeInfo, m_dgn);
   const int savedSerrno = serrno;
 
   if(rc != 0) {

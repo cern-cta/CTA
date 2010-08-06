@@ -54,9 +54,8 @@ protected:
    * Writes the command-line usage message of to the specified output stream.
    *
    * @param os Output stream to be written to.
-   * @param programName The program name to be used in the message.
    */
-  void usage(std::ostream &os, const char *const programName) throw();
+  void usage(std::ostream &os) throw();
 
   /**
    * Parses the specified command-line arguments.

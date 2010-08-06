@@ -57,10 +57,10 @@ namespace tpcp   {
  * <ul>
  * <li>Delegates to a sub-class the parsing of the command-line.
  * <li>Gets the DGN of the tape to be used from the VMGR.
- * <li>Creates the Tapebridge callback socket.
+ * <li>Creates the tape-bridge callback socket.
  * <li>Sends the request for a drive to the VDQM.
- * <li>Waits for the callback from the Tapebridge on the chosen tape server.
- * <li>Receives and replies to the volume request from the Tapebridge.
+ * <li>Waits for the callback from the tape-bridge on the chosen tape server.
+ * <li>Receives and replies to the volume request from the tape-bridge.
  * <li>Delegates the tape transfer action (DUMP, READ, WRITE or VERIFY) to a
  *     sub-class.
  * </ul>
@@ -79,7 +79,7 @@ namespace tpcp   {
  * </ul>
  *
  * Please note that TpcpCommand checks the mount transaction ID of all
- * incomming Tapebridge messages.  Sub-classes therefore do not need to check
+ * incomming tape-bridge messages.  Sub-classes therefore do not need to check
  * the mount transaction ID in their message handler methods.
  */
 class TpcpCommand : public castor::BaseObject {
@@ -87,8 +87,10 @@ public:
 
   /**
    * Constructor.
+   *
+   * @param programName The program name.
    */
-  TpcpCommand() throw();
+  TpcpCommand(const char *const programName) throw();
 
   /**
    * Destructor.
@@ -98,13 +100,10 @@ public:
   /**
    * The entry function of the tpcp command.
    *
-   * @param programName The program name.
-   * @param argc        The number of command-line arguments including the
-   *                    process name.
-   * @param argv        The command-line arguments including the process name
-   *                    (argv[0]).
+   * @param argc The number of command-line arguments.
+   * @param argv The command-line arguments.
    */
-  int main(const char *const programName, const int argc, char **argv) throw();
+  int main(const int argc, char **argv) throw();
 
 
 protected:
@@ -118,16 +117,15 @@ protected:
    * @param os Output stream to be written to.
    * @param programName The program name to be used in the message.
    */
-  virtual void usage(std::ostream &os, const char *const programName) throw()
-    = 0;
+  virtual void usage(std::ostream &os) throw() = 0;
 
   /**
    * To be implemented by sub-classes.
    *
    * Parses the specified command-line arguments.
    *
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
+   * @param argc Argument count from the executable's main().
+   * @param argv Argument vector from the executable's main().
    */
   virtual void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception) = 0;
@@ -138,6 +136,11 @@ protected:
    * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
    */
   virtual void performTransfer() throw(castor::exception::Exception) = 0;
+
+  /**
+   * The program name.
+   */
+  const char *const m_programName;
 
   /**
    * Initially set to false, but set to true if a SIGNINT interrupt is received
@@ -156,14 +159,14 @@ protected:
   const gid_t m_groupId;
 
   /**
-   * The results of parsing the command-line.
-   */
-  ParsedCommandLine m_cmdLine;
-
-  /**
    * Vmgr error buffer.
    */
   static char vmgr_error_buffer[VMGRERRORBUFLEN];
+
+  /**
+   * The parsed command-line.
+   */
+  ParsedCommandLine m_cmdLine;
 
   /**
    * The list of RFIO filenames to be processed by the request handlers.
@@ -186,7 +189,7 @@ protected:
   char m_dgn[CA_MAXDGNLEN + 1];
 
   /**
-   * TCP/IP Tapebridge callback socket.
+   * TCP/IP tape-bridge callback socket.
    */
   castor::io::ServerSocket m_callbackSock;
 
@@ -221,7 +224,7 @@ protected:
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
-   * callbacks from the Tapebridge daemon.
+   * callbacks from the tape-bridge daemon.
    */
   void setupCallbackSock() throw(castor::exception::Exception);
 
@@ -239,23 +242,24 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Registers the specified Tapebridge message handler member function.
+   * Registers the specified tape-bridge message handler member function.
    *
-   * @param messageType The type of Tapebridge message.
-   * @param func        The member function to handle the Tapebridge message.
-   * @param obj         The object to handler the Tapebridge message.
+   * @param messageType The type of tape-bridge message.
+   * @param obj         The object to handle the tape-bridge message.
+   * @param func        The member function to handle the tape-bridge message.
    */
   template<class T> void registerMsgHandler(
     const int messageType,
-    bool (T::*func)(castor::IObject *, castor::io::AbstractSocket &),
-    T *obj) throw() {
+    T         *obj,
+    bool (T::*func)(castor::IObject *, castor::io::AbstractSocket &))
+    throw() {
 
-    m_msgHandlers[messageType] = new MsgHandler<T>(func, obj);
+    m_msgHandlers[messageType] = new MsgHandler<T>(obj, func);
   }
 
   /**
-   * Waits for and accepts an incoming Tapebridge connection, reads in the
-   * Tapebridge message and then dispatches it to appropriate message handler
+   * Waits for and accepts an incoming tape-bridge connection, reads in the
+   * tape-bridge message and then dispatches it to appropriate message handler
    * member function.
    *
    * @return True if there is more work to be done, else false.
@@ -265,8 +269,8 @@ protected:
   /**
    * PingNotification message handler.
    *
-   * @param obj  The Tapebridge message to be processed.
-   * @param sock The socket on which to reply to the Tapebridge.
+   * @param obj  The tape-bridge message to be processed.
+   * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *obj,
@@ -275,8 +279,8 @@ protected:
   /**
    * EndNotification message handler.
    *
-   * @param obj  The Tapebridge message to be processed.
-   * @param sock The socket on which to reply to the Tapebridge.
+   * @param obj  The tape-bridge message to be processed.
+   * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *obj,
@@ -285,31 +289,31 @@ protected:
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param obj  The Tapebridge message to be processed.
-   * @param sock The socket on which to reply to the Tapebridge.
+   * @param obj  The tape-bridge message to be processed.
+   * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * Acknowledges the end of the session to the Tapebridge.
+   * Acknowledges the end of the session to the tape-bridge.
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
 
   /**
    * Convenience method for sending EndNotificationErrorReport messages to the
-   * Tapebridge.
+   * tape-bridge.
    *
    * Note that this method intentionally does not throw any exceptions.  The
    * method tries to send an EndNotificationErrorReport messages to the
-   * Tapebridge and fails silently in the case it cannot.
+   * tape-bridge and fails silently in the case it cannot.
    *
-   * @param Tapebridge The Tapebridge transaction ID.
+   * @param tapebridgeTransactionId The tape-bridge transaction ID.
    * @param errorCode               The error code.
    * @param errorMessage            The error message.
    * @param sock                    The socket on which to reply to the
-   *                                Tapebridge.
+   *                                tape-bridge.
    */
   void sendEndNotificationErrorReport(
     const uint64_t             tapebridgeTransactionId,
@@ -328,7 +332,7 @@ protected:
    * @param obj  The CASTOR framework object.
    * @param msg  Out parameter. The pointer to the Gateway massage that will be
    *             set by this method.
-   * @param sock The socket on which to reply to the Tapebridge with an
+   * @param sock The socket on which to reply to the tape-bridge with an
    *             EndNotificationErrorReport message if the cast fails.
    */
   template<class T> void castMessage(castor::IObject *obj, T *&msg,
@@ -365,6 +369,22 @@ protected:
 private:
 
   /**
+   * Displays the specified error message, cleans up (at least deletes the
+   * volume-request id if there is one) and then calls exit(1) indicating ani
+   * error.
+   */
+  void displayErrorMsgCleanUpAndExit(
+    const char *msg) throw();
+
+  /**
+   * Executes the main code of the command.
+   *
+   * The specification of this method intentionally does not have a throw()
+   * clause so that any type of exception can be thrown.
+   */
+  void executeCommand();
+
+  /**
    * Throws a permission denied exception if the user of the tpcp command
    * does not have permission to write to tape.
    *
@@ -384,7 +404,7 @@ private:
   void deleteVdqmVolumeRequest() throw (castor::exception::Exception);
 
   /**
-   * An abstract functor to handle incomming Tapebridge messages.
+   * An abstract functor to handle incomming tape-bridge messages.
    */
   class AbstractMsgHandler {
   public:
@@ -392,13 +412,14 @@ private:
     /**
      * operator().
      *
-     * @param obj The Tapebridge message to be processed.
-     * @param sock The socket on which to reply to the Tapebridge.
-     * @return True if there is more work to be done else false.
+     * @param obj  The tape-bridge message to be processed.
+     * @param sock The socket on which to reply to the tape-bridge.
+     * @return     True if there is more work to be done else false.
      */
-    virtual bool operator()(castor::IObject *obj,
-      castor::io::AbstractSocket &sock) const
-      throw(castor::exception::Exception) = 0;
+    virtual bool operator()(
+      castor::IObject            *obj,
+      castor::io::AbstractSocket &sock
+      ) const throw(castor::exception::Exception) = 0;
 
     /**
      * Destructor.
@@ -409,7 +430,7 @@ private:
   };
 
   /**
-   * Concrete Tapebridge message handler template functor.
+   * Concrete tape-bridge message handler template functor.
    */
   template<class T> class MsgHandler : public AbstractMsgHandler {
   public:
@@ -417,20 +438,24 @@ private:
     /**
      * Constructor.
      */
-    MsgHandler(bool (T::*const func)(castor::IObject *obj,
-        castor::io::AbstractSocket &sock), T *const obj) :
-      m_func(func), m_obj(obj) {
+    MsgHandler(
+      T *const obj,
+      bool (T::*const func)(
+        castor::IObject            *obj,
+        castor::io::AbstractSocket &sock)) :
+      m_obj(obj), m_func(func) {
       // Do nothing
     }
 
     /**
      * operator().
      *
-     * @param obj The Tapebridge message to be processed.
-     * @param sock The socket on which to reply to the Tapebridge.
-     * @return True if there is more work to be done else false.
+     * @param obj  The tape-bridge message to be processed.
+     * @param sock The socket on which to reply to the tape-bridge.
+     * @return     True if there is more work to be done else false.
      */
-    virtual bool operator()(castor::IObject *obj,
+    virtual bool operator()(
+      castor::IObject            *obj,
       castor::io::AbstractSocket &sock) const
       throw(castor::exception::Exception) {
 
@@ -444,16 +469,20 @@ private:
       // Do nothing
     }
 
+  private:
+
+    /**
+     * The object of class T on which the member function pointed to by m_func
+     * will be called when the operator() function is called.
+     */
+    T *const m_obj;
+
     /**
      * The member function of class T to be called by operator().
      */
-    bool (T::*const m_func)(castor::IObject *obj,
+    bool (T::*const m_func)(
+      castor::IObject            *obj,
       castor::io::AbstractSocket &sock);
-
-    /**
-     * The object on which the member function shall be called by operator().
-     */
-    T *const m_obj;
   };  // template<class T> class MsgHandler
 
   /**

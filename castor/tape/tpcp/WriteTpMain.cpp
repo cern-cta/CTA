@@ -32,5 +32,5 @@ int main(int argc, char **argv) {
 
   castor::tape::tpcp::WriteTpCommand command;
 
-  return command.main("writetp", argc, argv);
+  return command.main(argc, argv);
 }

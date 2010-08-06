@@ -54,6 +54,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
+  TpcpCommand("readtp"),
   m_umask(umask(0)),
   m_nbRecalledFiles(0) {
 
@@ -61,16 +62,16 @@ castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
   umask(m_umask);
 
   // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_FileToRecallRequest,
-    &ReadTpCommand::handleFileToRecallRequest, this);
-  registerMsgHandler(OBJ_FileRecalledNotification,
-    &ReadTpCommand::handleFileRecalledNotification, this);
-  registerMsgHandler(OBJ_EndNotification,
-    &ReadTpCommand::handleEndNotification, this);
-  registerMsgHandler(OBJ_EndNotificationErrorReport,
-    &ReadTpCommand::handleEndNotificationErrorReport, this);
-  registerMsgHandler(OBJ_PingNotification,
-    &ReadTpCommand::handlePingNotification, this);
+  registerMsgHandler(OBJ_FileToRecallRequest, this,
+    &ReadTpCommand::handleFileToRecallRequest);
+  registerMsgHandler(OBJ_FileRecalledNotification, this,
+    &ReadTpCommand::handleFileRecalledNotification);
+  registerMsgHandler(OBJ_EndNotification, this,
+    &ReadTpCommand::handleEndNotification);
+  registerMsgHandler(OBJ_EndNotificationErrorReport, this,
+    &ReadTpCommand::handleEndNotificationErrorReport);
+  registerMsgHandler(OBJ_PingNotification, this,
+    &ReadTpCommand::handlePingNotification);
 }
 
 
@@ -85,11 +86,10 @@ castor::tape::tpcp::ReadTpCommand::~ReadTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os,
-  const char *const programName) throw() {
+void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) throw() {
   os <<
     "Usage:\n"
-    "\t" << programName << " VID SEQUENCE [OPTIONS] [FILE]...\n"
+    "\t" << m_programName << " VID SEQUENCE [OPTIONS] [FILE]...\n"
     "\n"
     "Where:\n"
     "\n"

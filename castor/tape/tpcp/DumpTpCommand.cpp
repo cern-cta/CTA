@@ -39,19 +39,20 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw() {
+castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw():
+  TpcpCommand("dumptp") {
 
   // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_DumpParametersRequest,
-    &DumpTpCommand::handleDumpParametersRequest, this);
-  registerMsgHandler(OBJ_DumpNotification,
-    &DumpTpCommand::handleDumpNotification, this);
-  registerMsgHandler(OBJ_EndNotification,
-    &DumpTpCommand::handleEndNotification, this);
-  registerMsgHandler(OBJ_EndNotificationErrorReport,
-    &DumpTpCommand::handleEndNotificationErrorReport, this);
-  registerMsgHandler(OBJ_PingNotification,
-    &DumpTpCommand::handlePingNotification, this);
+  registerMsgHandler(OBJ_DumpParametersRequest, this,
+    &DumpTpCommand::handleDumpParametersRequest);
+  registerMsgHandler(OBJ_DumpNotification, this,
+    &DumpTpCommand::handleDumpNotification);
+  registerMsgHandler(OBJ_EndNotification, this,
+    &DumpTpCommand::handleEndNotification);
+  registerMsgHandler(OBJ_EndNotificationErrorReport, this,
+    &DumpTpCommand::handleEndNotificationErrorReport);
+  registerMsgHandler(OBJ_PingNotification, this,
+    &DumpTpCommand::handlePingNotification);
 }
 
 
@@ -66,11 +67,10 @@ castor::tape::tpcp::DumpTpCommand::~DumpTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os,
-  const char *const programName) throw() {
+void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os) throw() {
   os <<
     "Usage:\n"
-    "\t" << programName << " VID [OPTIONS]\n"
+    "\t" << m_programName << " VID [OPTIONS]\n"
     "\n"
     "Where:\n"
     "\n"

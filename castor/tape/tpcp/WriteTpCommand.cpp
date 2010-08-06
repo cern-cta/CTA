@@ -50,19 +50,20 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::WriteTpCommand::WriteTpCommand() throw() :
+  TpcpCommand("writetp"),
   m_nbMigratedFiles(0) {
 
   // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_FileToMigrateRequest,
-    &WriteTpCommand::handleFileToMigrateRequest, this);
-  registerMsgHandler(OBJ_FileMigratedNotification,
-    &WriteTpCommand::handleFileMigratedNotification, this);
-  registerMsgHandler(OBJ_EndNotification,
-    &WriteTpCommand::handleEndNotification, this);
-  registerMsgHandler(OBJ_EndNotificationErrorReport,
-    &WriteTpCommand::handleEndNotificationErrorReport, this);
-  registerMsgHandler(OBJ_PingNotification,
-    &WriteTpCommand::handlePingNotification, this);
+  registerMsgHandler(OBJ_FileToMigrateRequest, this,
+    &WriteTpCommand::handleFileToMigrateRequest);
+  registerMsgHandler(OBJ_FileMigratedNotification, this,
+    &WriteTpCommand::handleFileMigratedNotification);
+  registerMsgHandler(OBJ_EndNotification, this,
+    &WriteTpCommand::handleEndNotification);
+  registerMsgHandler(OBJ_EndNotificationErrorReport, this,
+    &WriteTpCommand::handleEndNotificationErrorReport);
+  registerMsgHandler(OBJ_PingNotification, this,
+    &WriteTpCommand::handlePingNotification);
 }
 
 
@@ -77,11 +78,10 @@ castor::tape::tpcp::WriteTpCommand::~WriteTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os,
-  const char *const programName) throw() {
+void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) throw() {
   os <<
     "Usage:\n"
-    "\t" << programName << " VID POSITION [OPTIONS] [FILE]...\n"
+    "\t" << m_programName << " VID POSITION [OPTIONS] [FILE]...\n"
     "\n"
     "Where:\n"
     "\n"
