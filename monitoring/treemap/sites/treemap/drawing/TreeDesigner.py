@@ -3,13 +3,15 @@ Created on Jul 7, 2010
 
 @author: kblaszcz
 '''
-
-import cairo
-from sites.treemap.defaultproperties.SquaredViewProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
-from sites.treemap.viewtree.ViewTree import ViewTree
 from sites.tools.HsvConverter import *
-import random
+from sites.treemap.defaultproperties.SquaredViewProperties import \
+    BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
+from sites.treemap.objecttree.Annex import Annex
+from sites.treemap.viewtree.ViewTree import ViewTree
+import cairo
+import random
+
 
 class SquaredTreemapDesigner(object):
     '''
@@ -107,6 +109,8 @@ class SquaredTreemapDesigner(object):
             except KeyError:
                 raise Exception("Level information for node is missing")
             
+        if isinstance (vnode.getProperty('treenode').getObject(), Annex):
+            r,g,b = 0.0, 0.0, 0.0
         vnode.setProperty('fillcolor', {'r':r, 'g':g,'b':b} )
         
     def setStrokeColor(self,vnode):

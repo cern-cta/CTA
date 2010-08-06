@@ -53,7 +53,7 @@ class SquaredTreemapCalculator(object):
         vnode.setProperty('y', 0)
         vnode.setProperty('width', width)
         vnode.setProperty('height', height)
-        vnode.setProperty('level', self.otree.getLevel())
+        vnode.setProperty('level', self.otree.getCurrentObject().getDepth())
         
         viewtree.setRoot(vnode)
         viewtree.traverseInto(vnode)
@@ -131,7 +131,7 @@ class SquaredTreemapCalculator(object):
                     vn.setProperty('y', y)
                     vn.setProperty('width', chwidth)
                     vn.setProperty('height', chheight)
-                    vn.setProperty('level', self.otree.getLevel() + 1)
+                    vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                     totalchildnodes.append(ch)
                     totalviewnodes.append(vn)
@@ -190,7 +190,7 @@ class SquaredTreemapCalculator(object):
                 vn.setProperty('y', y)
                 vn.setProperty('width', chwidth)
                 vn.setProperty('height', chheight)
-                vn.setProperty('level', self.otree.getLevel() + 1)
+                vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                 totalchildnodes.append(ch)
                 totalviewnodes.append(vn)

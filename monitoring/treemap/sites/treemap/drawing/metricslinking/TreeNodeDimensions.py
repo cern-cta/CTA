@@ -69,6 +69,16 @@ class LevelDimension(ViewNodeDimensionBase):
         else:
             raise Exception("invalid level in LevelDimension")
         
+class BlackDimension(ViewNodeDimensionBase):
+    '''
+    classdocs
+    '''
+    def __init__(self):
+        ViewNodeDimensionBase.__init__(self, 'level', 0, 0, True, False)
+        
+    def getValue(self, tnode):
+        return 0
+        
     
         
 class ColumnTransformatorInterface(object):
