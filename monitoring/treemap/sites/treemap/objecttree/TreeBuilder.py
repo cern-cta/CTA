@@ -21,7 +21,8 @@ class TreeBuilder(object):
         Constructor
         '''
         self.rules = levelrules
-        self.lowest_area_factor = 0.01443375672974064411 #smallest accepted percentage of the area, if the node evaluates below that percentage the child will not be added
+        max_items_to_show = 100
+        self.lowest_area_factor = 1.0/max_items_to_show #smallest accepted percentage of the area, if the node evaluates below that percentage the child will not be added
         self.max_children_to_read = 100
         
     def generateObjectTree(self, rootobject, fparam = None):
@@ -84,10 +85,11 @@ class TreeBuilder(object):
             thechild = None
             
             annexevalsum = 0.0
-            annexchildren = []
-            annexrawchildren = []
             
-            for i, child in enumerate(children):
+            treenodechildren = []
+            
+            #calculate sum of all entries and keep the generated Treenodes in treenodechildren
+            for child in children:
                 
                 chmodulename = inspect.getmodule(child).__name__
                 chclassname = child.__class__.__name__
@@ -95,35 +97,40 @@ class TreeBuilder(object):
                 chcolumnname = self.rules.getColumnNameFor(level + 1, chmodulename, chclassname)
                 chparam = self.rules.getParamFor(level + 1, chmodulename, chclassname)
                 
-                if i < self.max_children_to_read:
-                    thechild = tree.addChild(child, chcolumnname, parentmethodname, chparam)
-                else:
-                    thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
-                    annexchildren.append(thechild)
-                    annexrawchildren.append(child)
-                    annexevalsum = annexevalsum + thechild.evaluate()
-                
+                thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
+                treenodechildren.append(thechild)
+
                 evalsum = evalsum + thechild.evaluate()
-#                print "   ", child
 
             if evalsum <= 0: 
                 tree.deleteChildren()
                 return
             
+            #set siblingssum to all children
+            for thechild in treenodechildren:
+                thechild.setSiblingsSum(evalsum)
+            
+            for child in treenodechildren:
+                if (child.evaluate()*area_factor) >= self.lowest_area_factor:
+                    tree.addTreeNodeChild(child)
+                else:
+                    annexevalsum = annexevalsum + thechild.evaluate()
+            
             childnodes = tree.getChildren()
             
-            #add max_children_to_read number of children and go recursively for their children
+            if(annexevalsum > 0):
+                print("-------------------potential annex")
+            #set do the recursion of children which can be shown
             for thechild in childnodes:
-                
-                thechild.setSiblingsSum(evalsum)
                 tree.traverseInto(thechild)
                 self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
                 tree.traverseBack()
             
             #add the annex object representing the rest of the children
             if(annexevalsum > 0):
+                print("-------------------adding annex")
                 #create Annex as TreeNode
-                annexchild = Annex(annexrawchildren, nested_object)
+                annexchild = Annex(self.rules, level, nested_object, childnodes)
                 annexchild.evaluation = annexevalsum
                 chmodulename = inspect.getmodule(annexchild).__name__
                 chclassname = annexchild.__class__.__name__
@@ -133,26 +140,9 @@ class TreeBuilder(object):
                 
                 annexnode = tree.addChild(annexchild, chcolumnname, parentmethodname, chparam)
                 annexnode.setSiblingsSum(evalsum)
-#                self.addChildrenRecursion(tree, level, annexnode, area_factor * annexnode.evaluate() )
                 
-#                tree.traverseInto(annexchild)
-#                
-#                for child in annexrawchildren:
-#                    
-#                    chmodulename = inspect.getmodule(child).__name__
-#                    chclassname = child.__class__.__name__
-#                    chcolumnname = self.rules.getColumnNameFor(level, chmodulename, chclassname)
-#                    chparam = self.rules.getParamFor(level, chmodulename, chclassname)
-#                        
-#                    thechild = tree.addChild(child, chcolumnname, parentmethodname, chparam)
-#                    thechild.setSiblingsSum(annexevalsum)
-#                    tree.traverseInto(thechild)
-#                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
-#                    tree.traverseBack()
-#                    
-#                tree.traverseBack()
-                           
-                
+                print("-------------------annex added")
+                             
 def print_tabs(n):
     for i in range(n):
         print "   ",

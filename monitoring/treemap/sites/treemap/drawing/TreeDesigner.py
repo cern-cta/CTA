@@ -78,6 +78,8 @@ class SquaredTreemapDesigner(object):
             self.vtree.traverseBack()
             
     def googleColors(self, number):
+        if number < 0: return 0.0, 0.0, 0.0
+        
         number = number%4
         if number == 0:
             return 1.0, 0.67, 0.0
@@ -109,8 +111,6 @@ class SquaredTreemapDesigner(object):
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-        if isinstance (vnode.getProperty('treenode').getObject(), Annex):
-            r,g,b = 0.0, 0.0, 0.0
         vnode.setProperty('fillcolor', {'r':r, 'g':g,'b':b} )
         
     def setStrokeColor(self,vnode):

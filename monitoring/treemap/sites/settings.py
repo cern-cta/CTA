@@ -19,7 +19,7 @@ MANAGERS = ADMINS
 DATABASE_ENGINE = 'django.db.backends.oracle'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'test2_nolb'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'castor_ns_ro'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'xxxxxx'         # Not used with sqlite3.
+DATABASE_PASSWORD = 'xxx'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.           # Set to empty string for default. Not used with sqlite3.
 
@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 259200
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94lf_ik=^#jf@l+>/|aqz~$khjk57!&lfj*6jqn\"'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ik=^#jf@l+>/|aqz~$kh8jk57!&lfj*6jqn\"'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -99,4 +99,18 @@ INSTALLED_APPS = (
 OPTIONS = {
     "autocommit": True,
 }
+
+#user defined settings, specific to monitoring
+
+#Apache URL that serves the files
+PUBLIC_APACHE_URL = "http://pcitdmssd"
+
+#local URL that contains the files
+LOCAL_APACHE_DICT = "/var/www/html"
+
+#Where to save the generated images, files having the same file name will be overwritten
+REL_TREEMAP_DICT = "/imagesdev/treemaps"
+
+#Where to find icons
+REL_ICON_DICT = "/imagesdev/icons"
 

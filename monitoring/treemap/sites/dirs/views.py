@@ -74,10 +74,11 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
-    serverip = "http://pcitdmssd"
-    serverdict = "/var/www/html"
-    treemapdir = "/images/treemaps"
-    icondir = "/images/icons"
+
+    apacheserver = settings.PUBLIC_APACHE_URL
+    serverdict = settings.LOCAL_APACHE_DICT
+    treemapdir = settings.REL_TREEMAP_DICT
+    icondir = settings.REL_ICON_DICT
     
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = theid.__str__()
@@ -154,7 +155,7 @@ def plainbydir(request, theid):
     print "linking metrics to graphical properties"
     mlinker = MetricsLinker()
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Annex', 'fillcolor', BlackDimension())
+    mlinker.addPropertyLink('Annex', 'fillcolor', NegativeDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
@@ -218,7 +219,7 @@ def plainbydir(request, theid):
         
     del otree
     del tree
-    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapdir': treemapdir, 'icondir': icondir} , context_instance=None)
+    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapdir': (apacheserver + treemapdir), 'icondir': icondir} , context_instance=None)
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     

@@ -96,6 +96,23 @@ class ObjectTree(object):
             self.children_inscope.append(child)
         self.children_sorted = False
         return child
+    
+    def addTreeNodeChild(self, theobject):
+        if self.root == None:
+            raise ConfigError( 'Cannot add child if no root specified')
+        
+        if self.node_inscope is theobject:
+            print "error!!!"
+            raise ConfigError( 'Parent cannot contain itself as child')
+        
+        assert(isinstance(theobject, TreeNode))
+        
+        self.graph.add_node(theobject, value = theobject.evaluate())
+        self.graph.add_edge(self.node_inscope, theobject)
+        if self.children_cached:
+            self.children_inscope.append(theobject)
+        self.children_sorted = False
+        return theobject
 
     def addChildren(self, objects, columnname, parentmethodname, fparam = None):
         if self.root == None:

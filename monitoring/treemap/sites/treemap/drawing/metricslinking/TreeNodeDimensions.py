@@ -69,7 +69,7 @@ class LevelDimension(ViewNodeDimensionBase):
         else:
             raise Exception("invalid level in LevelDimension")
         
-class BlackDimension(ViewNodeDimensionBase):
+class NegativeDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
@@ -77,7 +77,7 @@ class BlackDimension(ViewNodeDimensionBase):
         ViewNodeDimensionBase.__init__(self, 'level', 0, 0, True, False)
         
     def getValue(self, tnode):
-        return 0
+        return -1
         
     
         
