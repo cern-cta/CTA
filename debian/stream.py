@@ -7,6 +7,9 @@
 
 import time
 
+def streamPolicyAlwaysReturning1(runningStreams,numFiles,dataVolume,maxNumStreams,age):
+  return 1
+
 def defaultStreamPolicy(runningStreams,numFiles,dataVolume,maxNumStreams,age):
   """the defaultStreamPolicy will start streams only when there are files at least 4h old. The number of streams started is a function of the data volume, roughly starting one stream per 300GB"""
   # check whether files are old enough to start something
