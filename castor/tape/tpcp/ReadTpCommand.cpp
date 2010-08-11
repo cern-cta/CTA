@@ -100,16 +100,18 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) throw() {
     "Options:\n"
     "\n"
     "\t-d, --debug         Turn on the printing of debug information.\n"
-    "\t-h, --help          Print this help and exit.\n"
+    "\t-h, --help          Print this help messgae and exit.\n"
     "\t-s, --server server Specifies the tape server to be used, therefore\n"
     "\t                    overriding the drive scheduling of the VDQM.\n"
     "\t-f, --filelist file File containing a list of filenames in RFIO\n"
-    "\t                    notation [host:]local_path\n"
+    "\t                    notation [host:]local_path.\n"
+    "\t-n, --nodata        Send all data read from tape to the /dev/null of the\n"
+    "\t                    tape server.\n"
     "\n"
     "Constraints:\n"
     "\n"
-    "\tThe [FILE].. command-line arguments and the \"-f, --filelist\" option\n"
-    "\tare mutually exclusive\n"
+    "\tThe [FILE].. command-line arguments, the -f/--filelist option and\n"
+    "\tthe -n/--nodata option are mutually exclusive\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -128,6 +130,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
     {"filelist", 1, NULL, 'f'},
     {"help"    , 0, NULL, 'h'},
     {"server"  , 1, NULL, 's'},
+    {"nodata"  , 0, NULL, 'n'},
     {NULL      , 0, NULL,  0 }
   };
 
@@ -136,7 +139,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
   char c;
 
-  while((c = getopt_long(argc, argv, ":df:hs:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":df:hs:n", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
@@ -145,7 +148,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
     case 'f':
       m_cmdLine.fileListSet = true;
-      m_cmdLine.fileListFilename  = optarg;
+      m_cmdLine.fileListFilename = optarg;
       break;
 
     case 'h':
@@ -162,6 +165,10 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
           " into the internal data structures"
           ": " << ex.getMessage().str());
       }
+      break;
+
+    case 'n':
+      m_cmdLine.nodataSet = true;
       break;
 
     case ':':
@@ -189,9 +196,9 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
     default:
       {
         castor::exception::Internal ex;
-        ex.getMessage()
-          << "\tgetopt_long returned the following unknown value: 0x"
-          << std::hex << (int)c;
+        ex.getMessage() <<
+          "\tgetopt_long returned the following unknown value: 0x" <<
+          std::hex << (int)c;
         throw ex;
       }
     } // switch (c)
@@ -209,7 +216,8 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   if(nbArgs < 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\tThe VID and SEQUENCE have not been specified";
+    ex.getMessage() <<
+      "\tThe VID and SEQUENCE have not been specified";
 
     throw ex;
   }
@@ -225,13 +233,13 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   }
 
   // If no filenames have been specified on the command-line and the
-  // -f,--filelist option has not been set
-  if(nbArgs < 3 && !m_cmdLine.fileListSet) {
+  // -f/--filelist option has not been set and the
+  // -n/--nodata option has not been set
+  if(nbArgs < 3 && !m_cmdLine.fileListSet && !m_cmdLine.nodataSet){
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() <<
-      "\tThere must be at least one filename on the command-line if the\n"
-      "\t-f, --fileist option is not used";
+      "\tNo destination file has been specified";
 
     throw ex;
   }
@@ -239,13 +247,16 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   // -2 = -1 for the VID and -1 for the SEQUENCE
   const int nbFilenamesOnCommandLine = argc - optind - 2;
 
-  // Filenames on the command-line and the "-f, --filelist" option are mutually
-  // exclusive
-  if(nbFilenamesOnCommandLine > 0 && m_cmdLine.fileListSet) {
+  // Filenames on the command-line, the -f/--filelist option and the
+  // -n/--nodata option are mutually exclusive
+  if( (nbFilenamesOnCommandLine > 0 && m_cmdLine.fileListSet)||
+      (nbFilenamesOnCommandLine > 0 && m_cmdLine.nodataSet)||
+      (m_cmdLine.fileListSet && m_cmdLine.nodataSet) ){
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\t[FILE].. command-line arguments and the"
-       " \"-f, --filelist\" option are\n\tmutually exclusive";
+    ex.getMessage() <<
+      "\t[FILE].. command-line arguments, the -f/--filelist option\n"
+      "\tand the -n/--nodata option are mutually exclusive";
 
     throw ex;
   }
@@ -256,7 +267,8 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   } catch(castor::exception::InvalidArgument &ex) {
     castor::exception::InvalidArgument ex2;
 
-    ex2.getMessage() << "\tFirst command-line argument must be a valid VID:\n"
+    ex2.getMessage() <<
+      "\tFirst command-line argument must be a valid VID:\n"
       "\t" << ex.getMessage().str();
 
     throw ex2;
@@ -290,8 +302,8 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   if(m_cmdLine.tapeFseqRanges.size() == 0) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage()
-      << "\tThere must be at least one tape file sequence number";
+    ex.getMessage() <<
+      "\tThere must be at least one tape file sequence number";
 
     throw ex;
   }
@@ -302,9 +314,9 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   if(nbRangesWithEnd > 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage()
-      << "\tThere cannot be more than one tape file sequence range whose upper "
-         "boundary is end of tape";
+    ex.getMessage() <<
+      "\tThere cannot be more than one tape file sequence range whose upper "
+      "boundary is end of tape";
 
     throw ex;
   }
@@ -398,12 +410,21 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
+  // Note that in case of -n/--nodata, m_filenames would by empty.
   const bool anotherFile = m_tapeFseqSequence.hasMore() &&
-    m_filenameItor != m_filenames.end();
+    (m_cmdLine.nodataSet ? true : m_filenameItor != m_filenames.end());
 
   if(anotherFile) {
 
-    std::string filename = *(m_filenameItor++);
+    std::string filename;
+    if(m_cmdLine.nodataSet){ 
+      // If the opion -n/--nodata is set, the destination filename is hardcoded
+      // to NODATAFILENAME = localhost:/dev/null
+      filename = NODATAFILENAME;
+    }
+    else { 
+      filename = *(m_filenameItor++);
+    }  
 
     std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
 

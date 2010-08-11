@@ -80,6 +80,11 @@ struct ParsedCommandLine {
   bool serverSet;
 
   /**
+   * True if the nodata option has been set.
+   */
+  bool nodataSet;
+
+  /**
    * The tape server to be used therefore overriding the drive scheduling of
    * the VDQM.
    */
@@ -151,6 +156,7 @@ struct ParsedCommandLine {
     fileListSet(false),
     helpSet(false),
     serverSet(false),
+    nodataSet(false),
     tapeFseqPosition(0),
     dumpTapeMaxBytes(320),
     dumpTapeBlockSize(DEFAULTDUMPBLOCKSIZE),

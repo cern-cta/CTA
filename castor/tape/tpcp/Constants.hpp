@@ -51,6 +51,13 @@ namespace tpcp   {
    */
   const int32_t DEFAULTDUMPBLOCKSIZE = 262144;
 
+  /**
+   * The default file destination to be used when recalling with -n/--nodata
+   * option.
+   */
+  const char *const NODATAFILENAME = "localhost:/dev/null";
+
+
 } // namespace tpcp
 } // namespace tape
 } // namespace castor

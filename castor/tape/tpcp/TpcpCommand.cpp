@@ -281,17 +281,23 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
       m_filenames);
   } else {
-    // Copy the command-line argument filenames into the list of filenames
-    // to be processed
-    for(FilenameList::const_iterator
-      itor=m_cmdLine.filenames.begin();
-      itor!=m_cmdLine.filenames.end(); itor++) {
-      m_filenames.push_back(*itor);
+    if(!m_cmdLine.nodataSet) {
+      // Copy the command-line argument filenames into the list of filenames
+      // to be processed
+      for(FilenameList::const_iterator
+        itor=m_cmdLine.filenames.begin();
+        itor!=m_cmdLine.filenames.end(); itor++) {
+        m_filenames.push_back(*itor);
+      }
     }
   }
 
-  //check the format of the filename: hostname:/filepath/filename
-  checkFilenameFormat();
+  // In the case of -n/--nodata the destination filename is hardcoded to
+  // localhost:/dev/null and should not he checked
+  if(!m_cmdLine.nodataSet) {
+    //check the format of the filename: hostname:/filepath/filename
+    checkFilenameFormat();
+  }
 
   // If debug, then display the list of files to be processed by the action
   // handlers
@@ -304,7 +310,14 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   // Set the iterator pointing to the next RFIO filename to be processed
   m_filenameItor = m_filenames.begin();
 
-  if(m_cmdLine.action == Action::read) {
+  // If the -n/--nodata option is set, then the destination file location in
+  // hardcoded and assigned at runtime, there is no need to validate the 
+  // filename format.
+  // The destination filename is local to the selected tape-server and the 
+  // process would run as user Stage, there is no need for rfio_stat the
+  // location.
+
+  if(m_cmdLine.action == Action::read && !m_cmdLine.nodataSet) {
 
     // Determine the number of tape files based on the sequence of tape
     // file sequence numbers they would produce
