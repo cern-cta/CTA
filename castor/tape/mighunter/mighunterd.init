@@ -228,7 +228,9 @@ case "$1" in
                 restart $2
                 ;;
         condrestart)
-                if [ -n "$2" ]; then
+                if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 ]; then
+                        [ -f /var/lock/subsys/$prog ] && restart || :
+                elif [ -n "$2" ]; then
                         [ -f /var/lock/subsys/$prog.$2 ] && restart $2 || :
                 elif [ -z "$2" ]; then
                         count=`find /var/lock/subsys/ -name $prog.* -type f | wc -l`
