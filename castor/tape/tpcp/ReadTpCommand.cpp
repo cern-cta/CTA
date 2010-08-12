@@ -424,21 +424,20 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     }
     else { 
       filename = *(m_filenameItor++);
-    }  
+      std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
 
-    std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
+      // RFIO stat the directory to which the recalled file will be written to in
+      // order to check the RFIO daemon is running
+      try {
+        struct stat64 statBuf;
+        rfioStat(filepath.c_str(), statBuf);
+      } catch(castor::exception::Exception &ex) {
 
-    // RFIO stat the directory to which the recalled file will be written to in
-    // order to check the RFIO daemon is running
-    try {
-      struct stat64 statBuf;
-      rfioStat(filepath.c_str(), statBuf);
-    } catch(castor::exception::Exception &ex) {
-
-      // Notify the tapebridge about the exception and rethrow
-      sendEndNotificationErrorReport(msg->aggregatorTransactionId(), ex.code(),
-        ex.getMessage().str(), sock);
-      throw(ex);
+        // Notify the tapebridge about the exception and rethrow
+        sendEndNotificationErrorReport(msg->aggregatorTransactionId(), ex.code(),
+          ex.getMessage().str(), sock);
+        throw(ex);
+      }
     }
 
     // Get the tape file sequence number and RFIO filename
