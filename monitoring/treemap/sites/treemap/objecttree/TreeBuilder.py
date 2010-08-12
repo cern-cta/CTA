@@ -21,9 +21,10 @@ class TreeBuilder(object):
         Constructor
         '''
         self.rules = levelrules
-        max_items_to_show = 100
-        self.lowest_area_factor = 1.0/max_items_to_show #smallest accepted percentage of the area, if the node evaluates below that percentage the child will not be added
-        self.max_children_to_read = 100
+        max_tree_leafes = 4000
+        self.lowest_area_factor = 1.0/max_tree_leafes #smallest accepted percentage of the area, if the node evaluates below that percentage the child will not be added
+        self.max_items_to_read = 100
+        self.max_items_for_recursion = 80
         
     def generateObjectTree(self, rootobject, fparam = None):
         tree = ObjectTree()
@@ -48,6 +49,8 @@ class TreeBuilder(object):
         if area_factor < self.lowest_area_factor: return
         if not self.rules.indexIsValid(level + 1): return
         
+        enableannex = True
+        
 #        self.count = self.count + 1
         #if not (self.count % 1000) :
         #print self.count, parent.getObject()
@@ -66,7 +69,7 @@ class TreeBuilder(object):
         print countmethodname, nested_object, nested_object.__class__
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
 
-        if nbchildren <= 0:
+        if nbchildren <= 0 or (nbchildren > self.max_items_to_read and level > 0):
             return
         
         methodname = self.rules.getMethodNameFor(level, modulename, classname)
@@ -114,21 +117,30 @@ class TreeBuilder(object):
                 if (child.evaluate()*area_factor) >= self.lowest_area_factor:
                     tree.addTreeNodeChild(child)
                 else:
-                    annexevalsum = annexevalsum + thechild.evaluate()
+                    annexevalsum = annexevalsum + child.getEvalValue()
+                    
+#            if annexevalsum == evalsum:
+#                tree.deleteChildren()
+#                return
             
             childnodes = tree.getChildren()
             
-            if(annexevalsum > 0):
-                print("-------------------potential annex")
-            #set do the recursion of children which can be shown
-            for thechild in childnodes:
-                tree.traverseInto(thechild)
-                self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
-                tree.traverseBack()
+#            do the annex thing only if annex enabled      
+            if not enableannex:
+                evalsum = evalsum - annexevalsum
+                annexevalsum = 0
+                for thechild in childnodes:
+                    thechild.setSiblingsSum(evalsum)
+            
+            #do the recursion if not too many children
+            if len(childnodes) < self.max_items_for_recursion:
+                for thechild in childnodes:
+                    tree.traverseInto(thechild)
+                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
+                    tree.traverseBack()
             
             #add the annex object representing the rest of the children
             if(annexevalsum > 0):
-                print("-------------------adding annex")
                 #create Annex as TreeNode
                 annexchild = Annex(self.rules, level, nested_object, childnodes)
                 annexchild.evaluation = annexevalsum

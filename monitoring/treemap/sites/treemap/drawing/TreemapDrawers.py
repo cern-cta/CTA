@@ -60,14 +60,15 @@ class SquaredTreemapDrawer(object):
             inbordersize = child.getProperty('inbordersize')
             
             self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), inbordersize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
+            
             if child.getProperty('headersize') > 0.0:
                 txt = child.getProperty('headertext')
                 self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headertextsize'))
-            self.vtree.traverseInto(child)
-            
-            self.drawRecursion()
                 
-            self.vtree.traverseBack()
+                #inside of if because: go deeper only if header is still possible to display
+                self.vtree.traverseInto(child)
+                self.drawRecursion()
+                self.vtree.traverseBack()
         
         
     def drawRect(self, x, y, subwidth, subheight, bordersize, level, fillcolor, strokecolor, radiallight):
@@ -78,31 +79,21 @@ class SquaredTreemapDrawer(object):
         y0 = pix_y*y
         width = pix_x*(subwidth)
         height = pix_y*(subheight)
-        
-        #bigger rectangle
-        pat = cairo.LinearGradient (x0, y0, x0+width, y0+height)
-        r,g,b = strokecolor['r'], strokecolor['g'], strokecolor['b']
-        pat.add_color_stop_rgba (0, r, g, b, 1.0) #
-        
-        self.ctx.rectangle (x0,y0,width,height) # Rectangle(x0, y0, x1, y1)
-        self.ctx.set_source (pat)
-        self.ctx.fill ()
 
         #smaller rectangle coordinates
-        x0 = x0+pix_x*bordersize
-        y0 = y0+pix_y*bordersize
-        width = width-2*pix_x*bordersize
-        height = height-2*pix_y*bordersize
+#        x0 = x0+pix_x*bordersize
+#        y0 = y0+pix_y*bordersize
+#        width = width-2*pix_x*bordersize
+#        height = height-2*pix_y*bordersize
         
         #gradient inside of smaller rectangle
-        r,g,b = fillcolor['r'], fillcolor['g'], fillcolor['b']
-        a = 1.0
-#        r,g,b = addValueToRgb(r,g,b,0.4)
+        r,g,b,a = fillcolor['r'], fillcolor['g'], fillcolor['b'], fillcolor['a']
+
         pat = cairo.LinearGradient (x0, y0, x0+width, y0)
 #        pat.add_color_stop_rgba (0.0, r, g, b, 1.0)
 #        r,g,b = fillcolor['r'], fillcolor['g'], fillcolor['b']
-        pat.add_color_stop_rgba (0.0, r, g ,b , 1.0) # last number is opacity
-        pat.add_color_stop_rgba (1.0, r, g ,b , 1.0) # last number is opacity
+        pat.add_color_stop_rgba (0.0, r, g ,b, a) # last number is opacity
+        pat.add_color_stop_rgba (1.0, r, g ,b, a) # last number is opacity
         
         
         self.ctx.rectangle (x0,y0,width,height) # Rectangle(x0, y0, x1, y1)
@@ -153,21 +144,32 @@ class SquaredTreemapDrawer(object):
         self.ctx.set_source (radial)
         self.ctx.fill ()
         
-#        ctx.stroke ()
-
-#        ctx.translate (0.1, 0.1) # Changing the current transformation matrix
-#        
-#        ctx.move_to (0, 0)
-#        ctx.arc (0.2, 0.1, 0.1, -math.pi/2, 0) # Arc(cx, cy, radius, start_angle, stop_angle)
-#        ctx.line_to (0.5, 0.1) # Line to (x,y)
-#        ctx.curve_to (0.5, 0.2, 0.5, 0.4, 0.2, 0.8) # Curve(x1, y1, x2, y2, x3, y3)
-#        ctx.close_path ()
-#        
-#        ctx.set_source_rgb (0.3, 0.2, 0.5) # Solid color
-#        ctx.set_line_width (0.02)
-#        ctx.stroke ()
+        x0 = pix_x*(x+bordersize*0.5)
+        y0 = pix_y*(y+bordersize*0.5)
+        width = pix_x*(subwidth-bordersize)
+        height = pix_y*(subheight-bordersize)
         
-#        self.surface.write_to_png ("test1233.png") # Output to PNG
+        #rectangle border
+        r,g,b,a = strokecolor['r'], strokecolor['g'], strokecolor['b'], strokecolor['a']
+        
+        self.ctx.move_to (x0, y0 )
+        
+        self.ctx.set_line_width (pix_y*bordersize)
+        self.ctx.line_to (x0 + width, y0)
+        
+        self.ctx.set_line_width (pix_x*bordersize)
+        self.ctx.line_to (x0 + width, y0 + height)
+        
+        self.ctx.set_line_width (pix_y*bordersize)
+        self.ctx.line_to (x0 , y0 + height)
+        
+        self.ctx.set_line_width (pix_x*bordersize)
+        self.ctx.line_to (x0 , y0)
+        
+        self.ctx.close_path ()
+
+        self.ctx.set_source_rgba(r,g,b,a) 
+        self.ctx.stroke ()
         
     def printText(self, text, x, y, max_text_width, max_text_height): #text, x, y, subwidth, subheight, bordersize, level):
         pix_x = 1.0/self.mapwidth

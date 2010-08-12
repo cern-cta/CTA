@@ -39,6 +39,12 @@ class TreeNode(object):
             self.evaled = True
         return self.evalvalue/self.siblings_sum
     
+    def getEvalValue(self):
+        if not self.evaled:
+            self.evalvalue = self.wrapped.evaluate(self.fparam)
+            self.evaled = True
+        return self.evalvalue/1.0
+    
     def getNakedParent(self):
         nested_object = self.wrapped.getObject()
         
@@ -73,6 +79,9 @@ class TreeNode(object):
     def setSiblingsSum(self, sum):
         if sum > 0.0:
             self.siblings_sum = sum
+            
+    def getSiblingsSum(self):
+            return self.siblings_sum 
     
     def setDepth(self, value): 
         if value >= 0:

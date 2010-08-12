@@ -30,8 +30,7 @@ from django.template import resolve_variable
 from django.utils.http import urlquote
 from django.utils.hashcompat import md5_constructor
 
-
-
+from sites.treemap.objecttree.Annex import Annex
 
 def plain(request, depth):
     p = get_list_or_404(Dirs, depth = depth)
@@ -154,8 +153,14 @@ def plainbydir(request, theid):
     
     print "linking metrics to graphical properties"
     mlinker = MetricsLinker()
+    mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
+    mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
+    mlinker.addPropertyLink('Annex', 'htmlinfotext', AnnexHtmlInfoDimension())
+    mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
+    mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
+    
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Annex', 'fillcolor', NegativeDimension())
+    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
@@ -190,8 +195,7 @@ def plainbydir(request, theid):
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
-#        coord =  (x1,y1,x2,y2).__str__()[1:-1]#(''.join([num for num in (x1,y1,x2,y2).__str__()]))[1:-1]    
-        theid = node.getProperty('treenode').getObject().pk
+        theid = node.getProperty('treenode').getObject().pk.__str__()
         info = node.getProperty('htmlinfotext')
         
         mapparams[idx] = (x1,y1,x2,y2,theid,info)
@@ -215,11 +219,11 @@ def plainbydir(request, theid):
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        navlinkparts.append( (pr.name, pr.fullname, pr.fileid) )
+        navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
         
     del otree
     del tree
-    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapdir': (apacheserver + treemapdir), 'icondir': icondir} , context_instance=None)
+    response = render_to_string('dirs/imagemap.html', {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     

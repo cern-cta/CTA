@@ -1,11 +1,19 @@
 from django.db import connection, transaction, models
 import inspect
 
+class TheFakeIdService(object):
+    id = 0
+
+def newfakeid(self):  
+    TheFakeIdService.id = TheFakeIdService.id - 1
+    return TheFakeIdService.id.__str__()
+
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
 class Annex(models.Model):
     
+    #if you rename the id you have to rename it in the hack inside of constructor, too!
+    id = models.CharField(unique=True, max_length=255, blank=True, primary_key=True)#models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True, default = -1)
     evaluation = models.IntegerField(default = 1.0)
-    id = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True, default = -1)
     
     def __init__(self, rules = None, level = 0, parent = None, excludedchildren = []):
         assert(hasattr(excludedchildren,'__iter__'))
@@ -18,6 +26,9 @@ class Annex(models.Model):
         
         self.children_cache = []
         self.valid_cache = False
+        
+        #hack to fake id's to django
+        self.__dict__['id'] = newfakeid(self)
     
     #DUAL is Oracle's fake Table
     class Meta:
@@ -27,7 +38,7 @@ class Annex(models.Model):
         return unicode(self.__str__())
     
     def __str__(self):
-        return "rest of the items"
+        return "The rest"
     
     def getItems(self):
         if not(self.valid_cache):
@@ -54,7 +65,14 @@ class Annex(models.Model):
             return False
             
     def countItems(self):
-        return len(self.children_cache)
+        if(self.valid_cache):
+            return len(self.children_cache)
+        else:
+            chmodulename = inspect.getmodule(self.parent).__name__
+            chclassname = self.parent.__class__.__name__
+            methodname = self.rules.getCountMethodNameFor(self.level + 1, chmodulename, chclassname)
+            allcount = self.parent.__class__.__dict__[methodname](self.parent)
+            return allcount - len(self.excludedchildren)
     
     def getAnnexParent(self):
         return self.parent

@@ -78,17 +78,24 @@ class SquaredTreemapDesigner(object):
             self.vtree.traverseBack()
             
     def googleColors(self, number):
-        if number < 0: return 0.0, 0.0, 0.0
+        #strokecolor
+        if number == -1: return 1.0, 1.0, 1.0, 0.0
+        #fillcolor of Annex
+        if number == -2: return 0.0, 0.0, 0.0, 0.0
         
         number = number%4
+        
         if number == 0:
-            return 1.0, 0.67, 0.0
+            return 1.0, 0.67, 0.0, 1.0
         if number == 1:
-            return 0.0, 0.44, 0.055
+            return 0.0, 0.44, 0.055, 1.0
         if number == 2:
-            return 0.689, 0.0852, 0.155 
+            return 0.689, 0.0852, 0.155, 1.0
         if number == 3:
-            return 0.191, 0.307, 0.66 
+            return 0.191, 0.307, 0.66, 1.0
+        #extra
+        if number == 4:
+            return 0.08235, 0.6901, 0.6901, 1.0
         
     def setHeaderText(self, vnode):
         try:
@@ -104,25 +111,25 @@ class SquaredTreemapDesigner(object):
         
     def setFillColor(self, vnode):
         try:
-            r,g,b = self.googleColors(self.metricslinkage.getLinkedValue('fillcolor', vnode))
+            r,g,b,a = self.googleColors(self.metricslinkage.getLinkedValue('fillcolor', vnode))
         except:
             try:
-                r,g,b = self.googleColors(vnode.getProperty('level'))
+                r,g,b,a = self.googleColors(vnode.getProperty('level'))
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-        vnode.setProperty('fillcolor', {'r':r, 'g':g,'b':b} )
+        vnode.setProperty('fillcolor', {'r':r, 'g':g, 'b':b, 'a':a} )
         
     def setStrokeColor(self,vnode):
         try:
-            r,g,b = self.googleColors(self.metricslinkage.getLinkedValue('strokecolor', vnode))
+            r,g,b,a = self.googleColors(self.metricslinkage.getLinkedValue('strokecolor', vnode))
         except:
             try:
-                r,g,b = self.googleColors(vnode.getProperty('level') + 2)
+                r,g,b,a = self.googleColors(vnode.getProperty('level') + 2)
             except KeyError:
                 raise Exception("Level information for node is missing")
 #        r,g,b = addValueToRgb(r,g,b,-0.3)
-        vnode.setProperty('strokecolor', {'r':r, 'g':g,'b':b} )
+        vnode.setProperty('strokecolor', {'r':r, 'g':g, 'b':b, 'a':a} )
         
     def setInBorderSize(self,vnode):
         try:

@@ -12,6 +12,7 @@ import string
 from sites.errors.ConfigError import ConfigError
 import math
 from sites.dirs.models import *
+from sites.treemap.objecttree.Annex import Annex
 
 class ViewNodeDimensionBase(object):
     '''
@@ -69,16 +70,15 @@ class LevelDimension(ViewNodeDimensionBase):
         else:
             raise Exception("invalid level in LevelDimension")
         
-class NegativeDimension(ViewNodeDimensionBase):
+class ConstantDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self):
-        ViewNodeDimensionBase.__init__(self, 'level', 0, 0, True, False)
+    def __init__(self, constant):
+        ViewNodeDimensionBase.__init__(self, 'level', constant, constant, isinstance(constant, float), isinstance(constant, str) or isinstance(constant, unicode))
         
     def getValue(self, tnode):
-        return -1
-        
+        return self.min
     
         
 class ColumnTransformatorInterface(object):
@@ -310,7 +310,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'htmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self, 'dirhtmlinfo', None, None, False, True)
 
         
     def getValue(self, tnode):
@@ -375,7 +375,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'htmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self, 'filehtmlinfo', None, None, False, True)
 
         
     def getValue(self, tnode):
@@ -429,4 +429,68 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append("%")
 
         
+        return ''.join([bla for bla in ret])
+    
+class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
+    '''
+    classdocs
+    '''
+    def __init__(self): #transformation.transform (db object)
+        
+        ViewNodeDimensionBase.__init__(self, 'annexhtmlinfo', None, None, False, True)
+
+        
+    def getValue(self, tnode):
+        assert(tnode is not None and isinstance(tnode, ViewNode))
+        tnobj = tnode.getProperty('treenode')
+        dbobj = tnobj.getObject()
+        #parent = tnode.getProperty('treenode').getNakedParent()
+        
+        assert(isinstance(dbobj, Annex))
+        
+        ret = []
+        size = tnobj.getEvalValue()
+        psize = tnobj.getSiblingsSum()
+        
+        ret.append("<b>The rest of the items</b> ")
+
+        ret.append("<br><b>size:</b> ")
+        
+        if size < 1024:
+            ret.append(size.__str__())
+            ret.append(" B")
+        elif size < 1048576:
+            ret.append("%.2f"%(size/1024))
+            ret.append(" KB")
+        elif size < 1073741824:
+            ret.append("%.2f"%(size/1048576))
+            ret.append(" MB")
+        elif size < 1099511627776:
+            ret.append("%.2f"%(size/1073741824))
+            ret.append(" GB")
+        elif size < 1125899906842624:
+            ret.append("%.2f"%(size/1099511627776))
+            ret.append(" TB")
+        elif size < 1152921504606846976:
+            ret.append("%.2f"%(size/1125899906842624))
+            ret.append(" PB")
+        else:
+            ret.append("%.2f"%(size/1152921504606846976))
+            ret.append(" XB")
+            
+        ret.append(" (")
+        ret.append((long(size)).__str__())
+        ret.append(" Bytes)")
+        
+        ret.append("<br><b>parent percentage:</b> ")
+        if(psize == 0):
+            ret.append("%.2f"%(100))
+        else:
+            ret.append("%.2f"%(size/psize*100))
+            
+        ret.append("%")
+        
+        ret.append("<br><b>number of items: </b> ")
+        ret.append(dbobj.countItems().__str__())
+
         return ''.join([bla for bla in ret])
