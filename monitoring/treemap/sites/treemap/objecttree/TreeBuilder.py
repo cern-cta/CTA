@@ -134,7 +134,10 @@ class TreeBuilder(object):
 #                tree.deleteChildren()
 #                return
             
-            childnodes = tree.getChildren()
+            #[:] to copy the content 
+            #childnodes is a direct reference to the tree content, which we don't want to have in Annex
+            #if there is no copy excludedchildren are the same as childnodes, so annexnode = tree.addChild(annexchild... would also add an item to Annex
+            childnodes = tree.getChildren()[:] 
             
 #            do the annex thing only if annex enabled      
             if not enableannex:
