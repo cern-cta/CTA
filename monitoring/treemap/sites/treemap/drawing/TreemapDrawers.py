@@ -65,10 +65,9 @@ class SquaredTreemapDrawer(object):
                 txt = child.getProperty('headertext')
                 self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headertextsize'))
                 
-                #inside of if because: go deeper only if header is still possible to display
-                self.vtree.traverseInto(child)
-                self.drawRecursion()
-                self.vtree.traverseBack()
+            self.vtree.traverseInto(child)
+            self.drawRecursion()
+            self.vtree.traverseBack()
         
         
     def drawRect(self, x, y, subwidth, subheight, bordersize, level, fillcolor, strokecolor, radiallight):

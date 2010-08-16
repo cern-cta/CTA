@@ -81,6 +81,11 @@ class SquaredTreemapCalculator(object):
         startyold = starty
         nblines = 0 #counts how many lines are completed before the cleanup code starts
         
+        #go deeper only if parent had a header
+        parenthsize = viewtree.getCurrentObject().getProperty('headersize')
+        if parenthsize <= 0.0:
+            return
+        
         #children at the current position, ordered from the biggest to smallest, the algorithm works only if children[i] <= children[i+1]
         children = self.otree.getSortedChildren()
         if len(children) <= 0: return
@@ -95,8 +100,13 @@ class SquaredTreemapCalculator(object):
         line_collection = [] #Nodes collected for current line
         
         VERTICAL, HORIZONTAL = range(2)
-        direction = HORIZONTAL
-        linelen = width
+        if width > height:
+            direction = VERTICAL
+            linelen = height
+        else:
+            direction = HORIZONTAL
+            linelen = width
+            
         
         for child in children:
             
@@ -144,8 +154,8 @@ class SquaredTreemapCalculator(object):
                     vn.setProperty('spacesize', spacesize)
                     vn.setProperty('x', x)
                     vn.setProperty('y', y)
-                    vn.setProperty('width', chwidth - 2*spacesize)
-                    vn.setProperty('height', chheight -2 *spacesize)
+                    vn.setProperty('width', chwidth - 2.0 * spacesize)
+                    vn.setProperty('height', chheight - 2.0 * spacesize)
                     vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                     totalchildnodes.append(ch)
@@ -157,18 +167,34 @@ class SquaredTreemapCalculator(object):
                         startx = startx + child_width
                     else:
                         starty = starty + child_width
-                        
-                #calculate coordinates for the next line
+                
+                #see what the ratio of the remaining area is
+                remaining_ratio = 1.0        
                 if(direction == HORIZONTAL):
-                    direction = VERTICAL
-                    linelen = height - (starty-startyold) -chheight 
-                    startx = xbeginning
-                    starty = starty + chheight
+                    remaining_ratio = (height-(starty-startyold)-chheight)/(width-(xbeginning - startxold))
                 else:
-                    direction = HORIZONTAL
-                    linelen = width - (startx-startxold) -chwidth
-                    starty = ybeginning
-                    startx = startx + chwidth
+                    remaining_ratio = (height-(ybeginning - startyold))/(width-(startx-startxold)-chwidth)
+        
+                #calculate coordinates and direction for the next line
+                if (direction == HORIZONTAL):
+                    if remaining_ratio < 1.0:
+                        direction = VERTICAL
+                        linelen = height - (starty-startyold) -chheight 
+                        startx = xbeginning
+                        starty = starty + chheight
+                    else:
+                        starty = starty + chheight
+                        startx = xbeginning
+                        
+                elif (direction == VERTICAL):
+                    if remaining_ratio >= 1.0:
+                        direction = HORIZONTAL
+                        linelen = width - (startx-startxold) -chwidth
+                        starty = ybeginning
+                        startx = startx + chwidth
+                    else:
+                        starty = ybeginning
+                        startx = startx + chwidth
                 
                 #take care of the remaining child which belongs to the next line
                 linesum = sqwidth
@@ -201,7 +227,7 @@ class SquaredTreemapCalculator(object):
                 child_area = percentage_of_line * areasum
                 child_width = child_area/line_height
                 
-                #calculate final values
+                #calculate final valuesxbeginning
                 x = startx+spacesize
                 y = starty+spacesize
                 
@@ -212,12 +238,12 @@ class SquaredTreemapCalculator(object):
                     chheight = child_width
                     chwidth = line_height
                 
-                if ((chwidth <= 0) or (chheight <= 0)):
+                if (((chwidth-2.0*spacesize) <= 0) or ((chheight-2.0*spacesize) <= 0)):
                     continue
                     
                 #store the calculated values
                 vn = ViewNode()
-                if 2.0 * headersize > (chheight-2):
+                if 2.0 * headersize > (chheight-2.0):
                     vn.setProperty('headersize', 0.0)
                 else:
                     vn.setProperty('headersize', headersize)
@@ -226,8 +252,8 @@ class SquaredTreemapCalculator(object):
                 vn.setProperty('spacesize', spacesize)
                 vn.setProperty('x', x)
                 vn.setProperty('y', y)
-                vn.setProperty('width', chwidth-2*spacesize)
-                vn.setProperty('height', chheight-2*spacesize)
+                vn.setProperty('width', chwidth-2.0*spacesize)
+                vn.setProperty('height', chheight-2.0*spacesize)
                 vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                 totalchildnodes.append(ch)
@@ -240,16 +266,16 @@ class SquaredTreemapCalculator(object):
                     starty = starty + child_width
             
             #calculate coordinates for the next line
-            if(direction == HORIZONTAL):
-                direction = VERTICAL
-                linelen = height - (starty-startyold) -chheight 
-                startx = xbeginning
-                starty = starty + chheight
-            else:
-                direction = HORIZONTAL
-                linelen = width - (startx-startxold) -chwidth
-                starty = ybeginning
-                startx = startx + chwidth
+#            if(direction == HORIZONTAL):
+#                direction = VERTICAL
+#                linelen = height - (starty-startyold) -chheight 
+#                startx = xbeginning
+#                starty = starty + chheight
+#            else:
+#                direction = HORIZONTAL
+#                linelen = width - (startx-startxold) -chwidth
+#                starty = ybeginning
+#                startx = startx + chwidth
             
         #now that parent is ready, do recursion
         

@@ -21,9 +21,20 @@ class TreeBuilder(object):
         Constructor
         '''
         self.rules = levelrules
-        max_tree_leafes = 4000
-        self.lowest_area_factor = 1.0/max_tree_leafes #smallest accepted percentage of the area, if the node evaluates below that percentage the child will not be added
-        self.max_items_to_read = 100
+        
+        #imagine it would be possible to divide the root area in equally big squares
+        #max_tree_leafes defines how many rectangles there are maximum allowed to divide that area
+        max_tree_leafes = 1500
+        
+        #smallest accepted percentage of the area
+        #if the node evaluates below that value the child will be considered as not worth going deeper
+        self.lowest_area_factor = 1.0/max_tree_leafes
+        
+        #if the number of subitems is bigger than max_items_to_read_initial * the current area_factor
+        #the child will be considered as not worth going deeper
+        self.max_items_to_read_initial = 500
+        
+        #to avoid recursions over thousands of child items
         self.max_items_for_recursion = 80
         
     def generateObjectTree(self, rootobject, fparam = None):
@@ -69,7 +80,7 @@ class TreeBuilder(object):
         print countmethodname, nested_object, nested_object.__class__
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
 
-        if nbchildren <= 0 or (nbchildren > self.max_items_to_read and level > 0):
+        if nbchildren <= 0 or (nbchildren > (self.max_items_to_read_initial * area_factor) and level > 0):
             return
         
         methodname = self.rules.getMethodNameFor(level, modulename, classname)
@@ -152,8 +163,6 @@ class TreeBuilder(object):
                 
                 annexnode = tree.addChild(annexchild, chcolumnname, parentmethodname, chparam)
                 annexnode.setSiblingsSum(evalsum)
-                
-                print("-------------------annex added")
                              
 def print_tabs(n):
     for i in range(n):

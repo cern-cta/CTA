@@ -79,7 +79,7 @@ class SquaredTreemapDesigner(object):
             
     def googleColors(self, number):
         #strokecolor
-        if number == -1: return 1.0, 1.0, 1.0, 0.0
+        if number == -1: return 0.5, 0.5, 0.5, 1.0
         #fillcolor of Annex
         if number == -2: return 0.0, 0.0, 0.0, 0.0
         
