@@ -195,10 +195,22 @@ class SquaredTreemapDrawer(object):
         self.ctx.set_source_rgb(0.0, 0.0, 0.0)
         self.ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         self.ctx.set_font_size(pix_y*max_text_height)
+        
+        #trying to fit the text into the defined area
         x_bearing, y_bearing, width, height = self.ctx.text_extents(text)[:4]
-        if width > max_text_width/self.mapwidth: 
-            self.ctx.scale(1.0/scalex, 1.0/scaley)
-            return
+        if width > max_text_width/(self.mapwidth*scalex): 
+            x_bearing, y_bearing, width, height = self.ctx.text_extents(text[0]+"..")[:4]
+            if width > max_text_width/(self.mapwidth*scalex): 
+                self.ctx.scale(1.0/scalex, 1.0/scaley)
+                return
+            else:
+                tl = 0
+                while width < max_text_width/(self.mapwidth*scalex):
+                    tl = tl + 1
+                    x_bearing, y_bearing, width, height = self.ctx.text_extents(text[0:tl]+"..")[:4]
+                
+                text = text[0:(tl-1)] + ".."
+                x_bearing, y_bearing, width, height = self.ctx.text_extents(text)[:4]
 #        self.ctx.move_to(pix_x * x, pix_y * (y+height))
 #        self.ctx.move_to(x - width / 2 - x_bearing, y - height / 2 - y_bearing)
         self.ctx.move_to(x*pix_x - x_bearing, y*pix_y - y_bearing)

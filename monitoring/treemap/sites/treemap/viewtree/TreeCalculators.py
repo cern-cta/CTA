@@ -118,10 +118,10 @@ class SquaredTreemapCalculator(object):
             area = percentage*pixels #needed area for that child in square pixels
             sqwidth = math.sqrt(area) #in best case you wish to have a square, so calculate the dimension of the ideal square
             
-            #if collecting items for current line is completed, add all items to TreeView except of the current one, 
-            #the current item is collected for the next line
+            #if collecting items for current line is completed, because the next addition would go over the border
+            #add all items to TreeView except of the current overflow one
             if (((linesum + sqwidth) > linelen)):
-                #save the starting coordinates
+                #save the coordinates where the line starts
                 xbeginning = startx
                 ybeginning = starty
                 #they all together have to be squeezed to same height and parent's size
@@ -175,7 +175,7 @@ class SquaredTreemapCalculator(object):
                 else:
                     remaining_ratio = (height-(ybeginning - startyold))/(width-(startx-startxold)-chwidth)
         
-                #calculate coordinates and direction for the next line
+                #calculate start coordinates and direction for the next line
                 if (direction == HORIZONTAL):
                     if remaining_ratio < 1.0:
                         direction = VERTICAL
@@ -212,10 +212,8 @@ class SquaredTreemapCalculator(object):
                 line_collection.append(child)
         
         #cleanup code: In case of unprocessed items in line_collection
-        #if the precalculation is good that condition should always evaluate to False
-        
         if line_collection:
-            #line_collection, areasum, percentagesum have correct values from the previous loop
+            #assuming line_collection, areasum, percentagesum have correct values from the previous loop
             xbeginning = startx
             ybeginning = starty
             
@@ -227,7 +225,7 @@ class SquaredTreemapCalculator(object):
                 child_area = percentage_of_line * areasum
                 child_width = child_area/line_height
                 
-                #calculate final valuesxbeginning
+                #calculate final values
                 x = startx+spacesize
                 y = starty+spacesize
                 
@@ -260,22 +258,11 @@ class SquaredTreemapCalculator(object):
                 totalviewnodes.append(vn)
                 viewtree.addChild(vn)
                     
+                #fix start position for next child
                 if(direction == HORIZONTAL):
                     startx = startx + child_width
                 else:
                     starty = starty + child_width
-            
-            #calculate coordinates for the next line
-#            if(direction == HORIZONTAL):
-#                direction = VERTICAL
-#                linelen = height - (starty-startyold) -chheight 
-#                startx = xbeginning
-#                starty = starty + chheight
-#            else:
-#                direction = HORIZONTAL
-#                linelen = width - (startx-startxold) -chwidth
-#                starty = ybeginning
-#                startx = startx + chwidth
             
         #now that parent is ready, do recursion
         

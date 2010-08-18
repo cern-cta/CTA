@@ -37,7 +37,7 @@ class TreeBuilder(object):
         #to avoid recursions over thousands of child items
         self.max_items_for_recursion = 80
         
-    def generateObjectTree(self, rootobject, fparam = None):
+    def generateObjectTree(self, rootobject, fparam = None, rootevalcolumn = None, siblingssum = 1.0):
         tree = ObjectTree()
         
         modulename = inspect.getmodule(rootobject).__name__
@@ -46,7 +46,7 @@ class TreeBuilder(object):
         
         parentmethodname =  self.rules.getParentMethodNameFor(level, modulename, classname)
         
-        tree.setRoot(rootobject, parentmethodname, fparam)
+        tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, siblingssum)
         
         self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0)
         
@@ -77,14 +77,12 @@ class TreeBuilder(object):
         except KeyError:
             return
         
-        print countmethodname, nested_object, nested_object.__class__
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
 
         if nbchildren <= 0 or (nbchildren > (self.max_items_to_read_initial * area_factor) and level > 0):
             return
         
         methodname = self.rules.getMethodNameFor(level, modulename, classname)
-        parentmethodname =  self.rules.getParentMethodNameFor(level, modulename, classname)
 
         children = list(nested_object.__class__.__dict__[methodname](nested_object))
 
@@ -110,6 +108,7 @@ class TreeBuilder(object):
                 
                 chcolumnname = self.rules.getColumnNameFor(level + 1, chmodulename, chclassname)
                 chparam = self.rules.getParamFor(level + 1, chmodulename, chclassname)
+                parentmethodname =  self.rules.getParentMethodNameFor(level + 1, chmodulename, chclassname)
                 
                 thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
                 treenodechildren.append(thechild)
@@ -134,10 +133,8 @@ class TreeBuilder(object):
 #                tree.deleteChildren()
 #                return
             
-            #[:] to copy the content 
-            #childnodes is a direct reference to the tree content, which we don't want to have in Annex
-            #if there is no copy excludedchildren are the same as childnodes, so annexnode = tree.addChild(annexchild... would also add an item to Annex
-            childnodes = tree.getChildren()[:] 
+            childnodes = tree.getChildren()
+#            annexchildnodes = tree.getChildren()[:]
             
 #            do the annex thing only if annex enabled      
             if not enableannex:
@@ -153,6 +150,11 @@ class TreeBuilder(object):
                     self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
                     tree.traverseBack()
             
+            #[:] to copy the content 
+            #childnodes is a direct reference to the tree content, which we don't want to have in Annex
+            #if there is no copy excludedchildren are the same as childnodes, so annexnode = tree.addChild(annexchild... would also add an item to Annex
+            childnodes = tree.getChildren()[:] 
+            
             #add the annex object representing the rest of the children
             if(annexevalsum > 0):
                 #create Annex as TreeNode
@@ -162,6 +164,7 @@ class TreeBuilder(object):
                 chclassname = annexchild.__class__.__name__
                 chcolumnname = self.rules.getColumnNameFor(level, chmodulename, chclassname)
                 chparam = self.rules.getParamFor(level, chmodulename, chclassname)
+                parentmethodname =  self.rules.getParentMethodNameFor(level, chmodulename, chclassname)
                 #annexnode = TreeNode(annexchild, chcolumnname, parentmethodname, chparam, level)
                 
                 annexnode = tree.addChild(annexchild, chcolumnname, parentmethodname, chparam)

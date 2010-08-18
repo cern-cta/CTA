@@ -43,13 +43,17 @@ class Wrapper(object):
             command = command + ", fparam)"
         else:
             command = command + ")"
-
+        
+#        if(self.classname == 'Annex'):
+#           result = self.__class__.column_transformators[self.fullmodule].transform_evaluation(self.wrapped.evaluation, fparam)
+        
         exec(command)
         return result
     
     def setColumnname(self, newname):
         if newname == None:
-            newname = self.__class__.column_transformators[self.fullmodule].getColumnFinder().guessPk().name
+            columnt = self.__class__.column_transformators[self.fullmodule]
+            newname = columnt.getColumnFinder().guessPk().name
             if newname == None:
                 raise ConfigError( 'Wrapper was not able to find any default column for ' + self.fullmodule)
             warnings.warn('cloumnname = None: Wrapper decided to evaluate using columnname = ' + newname + ' , model: ' + self.fullmodule, Warning)

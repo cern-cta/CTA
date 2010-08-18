@@ -36,7 +36,7 @@ class ColumnFinder:
     
     def getPk(self):
         for column in self.columns:
-            if isinstance(column, DecimalField) and column.primary_key:
+            if column.primary_key:
                 return column
         return None
     
@@ -45,9 +45,9 @@ class ColumnFinder:
         if pk is None:
             max = 0  
             for column in self.columns:
-                if not column.related:
+                if column.rel is None:
                     evl = evalStringBySimilarity(column.name, 'id')
-                    if (evl>max) and isinstance(column, DecimalField):
+                    if (evl>max):
                         max = evl
                         pk = column
         return pk

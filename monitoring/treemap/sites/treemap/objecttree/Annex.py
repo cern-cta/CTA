@@ -1,12 +1,7 @@
 from django.db import connection, transaction, models
 import inspect
+from sites.tools.GroupIdService import newGroupId
 
-class TheFakeIdService(object):
-    id = 0
-
-def newfakeid(self):  
-    TheFakeIdService.id = TheFakeIdService.id - 1
-    return TheFakeIdService.id.__str__()
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
 class Annex(models.Model):
@@ -15,11 +10,11 @@ class Annex(models.Model):
     id = models.CharField(unique=True, max_length=255, blank=True, primary_key=True)#models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True, default = -1)
     evaluation = models.IntegerField(default = 1.0)
     
-    def __init__(self, rules = None, level = 0, parent = None, excludedchildren = []):
-        assert(hasattr(excludedchildren,'__iter__'))
+    def __init__(self, rules = None, level = 0, parent = None, excludednodes = [], exclusioncount = 0):
+        assert(hasattr(excludednodes,'__iter__'))
         assert(level >= 0)
         models.Model.__init__(self)
-        self.excludedchildren = excludedchildren
+        self.excludednodes = excludednodes
         self.rules = rules
         self.level = level
         self.parent = parent
@@ -27,8 +22,17 @@ class Annex(models.Model):
         self.children_cache = []
         self.valid_cache = False
         
+        #how many exclusions were done before, used to identify an Annex in a not process specific way
+        self.exclusioncount = exclusioncount
+        
         #hack to fake id's to django
-        self.__dict__['id'] = newfakeid(self)
+        
+        if parent == None:
+            ppk = -1
+        else:
+            ppk = self.parent.pk
+            
+        self.__dict__['id'] = newGroupId(self, ppk, self.parent.__class__.__name__, self.exclusioncount)
     
     #DUAL is Oracle's fake Table
     class Meta:
@@ -47,16 +51,20 @@ class Annex(models.Model):
             methodname = self.rules.getMethodNameFor(self.level + 1, chmodulename, chclassname)
             self.children_cache = list(self.parent.__class__.__dict__[methodname](self.parent))
             
+            newcache = []
             #filter children to display the remaining ones
             for child in self.children_cache:
-                for toexclude in self.excludedchildren:
-                    if child == toexclude:
-                        self.children_cache.remove(child)
-            
+                remove = False
+                for toexclude in self.excludednodes:
+                    if child.pk == toexclude.getObject().pk:
+                        remove = True
+                        
+                if(not remove): newcache.append(child)
+                
+            self.children_cache = newcache
             self.valid_cache = True
-        else:
-            return self.children_cache
 
+        return self.children_cache
     
     def hasItems(self):
         if len(self.children_cache) > 0:
@@ -72,7 +80,7 @@ class Annex(models.Model):
             chclassname = self.parent.__class__.__name__
             methodname = self.rules.getCountMethodNameFor(self.level + 1, chmodulename, chclassname)
             allcount = self.parent.__class__.__dict__[methodname](self.parent)
-            return allcount - len(self.excludedchildren)
+            return allcount - len(self.excludednodes)
     
     def getAnnexParent(self):
         return self.parent

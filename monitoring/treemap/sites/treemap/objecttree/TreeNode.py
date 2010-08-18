@@ -58,7 +58,8 @@ class TreeNode(object):
         
         #check methodname
         found = False
-        for membername in instance.__class__.__dict__.keys():
+        members = instance.__class__.__dict__.keys()
+        for membername in members:
             if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == self.parentmethodname:
                 found = True
                 break

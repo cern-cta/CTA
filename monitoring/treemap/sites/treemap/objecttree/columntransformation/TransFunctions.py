@@ -6,7 +6,7 @@ Created on May 11, 2010
 import warnings
 from django.db.models.fields import *
 
-def evalDecimalField(attr):
+def evalDecimalField(attr, fparam = None):
     "Defines how to evaluate a decimal field"
 #    val = 0
 #    count = len(attr._int)
@@ -18,7 +18,7 @@ def evalDecimalField(attr):
 #        return True
     return attr.__float__()
 
-def evalIntegerField(attr):
+def evalIntegerField(attr, fparam = None):
     "Defines how to evaluate a integer field"
     def isStandard():
         return True
@@ -51,10 +51,10 @@ def evalStringBySimilarity(attr, searchtext = None):
                     map[substring] = 1
                 found = sattr.find(substring, found + 1)
                 matches = matches + 1
-    similarity = matches/((len(ssearchtext)*((len(ssearchtext) + 1.0)))/2)
+    similarity = matches/((len(ssearchtext)*((len(ssearchtext) + 1.0)))/2.0)
     return similarity
 
-def evalDateField(attr):
+def evalDateField(attr, fparam = None):
     "Defines how to evaluate a date or datetime field"
     def isStandard():
         return True

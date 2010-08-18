@@ -321,8 +321,8 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         assert(isinstance(dbobj, Dirs))
         
         ret = []
-        size = dbobj.totalsize
-        psize = parent.totalsize
+        size = float(dbobj.totalsize)
+        psize = tnode.getProperty('treenode').getSiblingsSum()
         
         ret.append("<b>Directory name:</b> ")
         ret.append(dbobj.fullname.__str__())
@@ -385,13 +385,14 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         assert(isinstance(dbobj, CnsFileMetadata))
         
         ret = []
-        size = dbobj.filesize
-        psize = parent.totalsize
+        size = float(dbobj.filesize)
+        psize = tnode.getProperty('treenode').getSiblingsSum()
+        dirname = parent.__str__()
         
         ret.append("<b>File name:</b> ")
         ret.append(dbobj.name)
         ret.append("<br><b>Directory:</b> ")
-        ret.append(dbobj.parent_fileid.fullname)
+        ret.append(dirname)
         ret.append("<br><b>size:</b> ")
         
         if size < 1024:
@@ -444,16 +445,18 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         tnobj = tnode.getProperty('treenode')
         dbobj = tnobj.getObject()
-        #parent = tnode.getProperty('treenode').getNakedParent()
+        parent = tnode.getProperty('treenode').getNakedParent()
         
         assert(isinstance(dbobj, Annex))
         
         ret = []
         size = tnobj.getEvalValue()
         psize = tnobj.getSiblingsSum()
+        dirname = parent.__str__()
         
         ret.append("<b>The rest of the items</b> ")
-
+        ret.append("<br><b>Directory:</b> ")
+        ret.append(dirname)
         ret.append("<br><b>size:</b> ")
         
         if size < 1024:

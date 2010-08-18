@@ -28,9 +28,9 @@ class ObjectTree(object):
         self.children_sorted = False
         self.children_cached= False
 
-    def setRoot(self, theobject, parentmethodname, fparam = None):
+    def setRoot(self, theobject, parentmethodname, fparam = None, evalcolumn = None, siblingssum = 1.0):
         self.graph.clear()
-        theroot = TreeNode(theobject, None, parentmethodname, fparam, 0) #(self, theobject, evalcolumnname, fpar = None, dpt = -1)
+        theroot = TreeNode(theobject = theobject, evalcolumnname = evalcolumn, parentmethodname = parentmethodname, fpar = fparam, siblings_sum = siblingssum, dpt = 0) 
         self.graph.add_node(theroot, value = 1)
         self.root = theroot
         self.node_inscope = theroot
