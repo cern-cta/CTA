@@ -2,7 +2,7 @@
 #   -c <file>      configuration file
 #
 # Options to pass to the logprocessor daemon
-#LOGPROCESSORDD_OPTIONS=
+#LOGPROCESSORD_OPTIONS=
 
 # What roles should the logprocessor run for. For each role you can
 # overwrite the default options using a dedicate sysconfig file
