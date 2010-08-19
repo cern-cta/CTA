@@ -75,8 +75,8 @@ MIDDLEWARE_CLASSES = (
 )
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
-CACHE_MIDDLEWARE_SECONDS  = 259200
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ik=^#7jf@l+>/|a&z~$kh8jk57!&|fj*6j!n\"'
+CACHE_MIDDLEWARE_SECONDS  = 172800
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^c#7#d@df$#!jl5a|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 

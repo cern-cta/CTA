@@ -321,11 +321,11 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         assert(isinstance(dbobj, Dirs))
         
         ret = []
-        size = float(dbobj.totalsize)
+        size = long(dbobj.totalsize)
         psize = tnode.getProperty('treenode').getSiblingsSum()
         
-        ret.append("<b>Directory name:</b> ")
-        ret.append(dbobj.fullname.__str__())
+        ret.append("<b>Directory:</b> ")
+        ret.append(splitText(dbobj.fullname.__str__(), 50, 39))
         ret.append("<br><b>size:</b> ")
         
         if size < 1024:
@@ -366,6 +366,10 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(dbobj.countFiles().__str__())
         ret.append("<br><b>number of directories: </b> ")
         ret.append(dbobj.countDirs().__str__())
+        ret.append("<br><br><b>number of files in subtree: </b> ")
+        ret.append(dbobj.nbfiles.__str__())
+        ret.append("<br><b>number of directories in subtree: </b> ")
+        ret.append(dbobj.nbsubdirs.__str__())
         
         return ''.join([bla for bla in ret])
         
@@ -390,9 +394,9 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         dirname = parent.__str__()
         
         ret.append("<b>File name:</b> ")
-        ret.append(dbobj.name)
+        ret.append(splitText(dbobj.name.__str__(), 50, 39))
         ret.append("<br><b>Directory:</b> ")
-        ret.append(dirname)
+        ret.append(splitText(dirname, 50, 39))
         ret.append("<br><b>size:</b> ")
         
         if size < 1024:
@@ -456,7 +460,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         
         ret.append("<b>The rest of the items</b> ")
         ret.append("<br><b>Directory:</b> ")
-        ret.append(dirname)
+        ret.append(splitText(dirname, 50, 39))
         ret.append("<br><b>size:</b> ")
         
         if size < 1024:
@@ -497,3 +501,26 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(dbobj.countItems().__str__())
 
         return ''.join([bla for bla in ret])
+    
+def splitText(text, limit, firstlimit):
+    limitold = limit
+    limit = firstlimit
+    assert(limit > 1)
+    ret = []
+    while len(text) > 0:
+        if(len(text)<=limit):
+            ret.append(text)
+            break
+        else:
+            bestlimit = limit
+            alternativelimit = text[:limit].rfind('/')
+            if alternativelimit > 1: bestlimit = alternativelimit
+            
+            ret.append(text[:bestlimit])
+            ret.append('<br>')
+            text = text[bestlimit:]
+        limit = limitold
+            
+    return ''.join([bla for bla in ret])
+        
+        

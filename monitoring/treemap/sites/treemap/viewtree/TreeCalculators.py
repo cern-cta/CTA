@@ -54,6 +54,7 @@ class SquaredTreemapCalculator(object):
         vnode.setProperty('width', width)
         vnode.setProperty('height', height)
         vnode.setProperty('level', self.otree.getCurrentObject().getDepth())
+        vnode.setProperty('nbchildren', self.otree.countChildren())
         
         viewtree.setRoot(vnode)
         viewtree.traverseInto(vnode)
@@ -150,6 +151,7 @@ class SquaredTreemapCalculator(object):
                         vn.setProperty('headersize', 0.0)
                     else:
                         vn.setProperty('headersize', headersize)
+                        
                     vn.setProperty('treenode', ch)
                     vn.setProperty('spacesize', spacesize)
                     vn.setProperty('x', x)
@@ -157,6 +159,11 @@ class SquaredTreemapCalculator(object):
                     vn.setProperty('width', chwidth - 2.0 * spacesize)
                     vn.setProperty('height', chheight - 2.0 * spacesize)
                     vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
+                    
+                    currently_inscope = self.otree.getCurrentObject()
+                    self.otree.traverseInto(child)
+                    vn.setProperty('nbchildren', self.otree.countChildren())
+                    self.otree.traverseInto(currently_inscope)
                     
                     totalchildnodes.append(ch)
                     totalviewnodes.append(vn)
@@ -253,6 +260,11 @@ class SquaredTreemapCalculator(object):
                 vn.setProperty('width', chwidth-2.0*spacesize)
                 vn.setProperty('height', chheight-2.0*spacesize)
                 vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
+                
+                currently_inscope = self.otree.getCurrentObject()
+                self.otree.traverseInto(child)
+                vn.setProperty('nbchildren', self.otree.countChildren())
+                self.otree.traverseInto(currently_inscope)
                     
                 totalchildnodes.append(ch)
                 totalviewnodes.append(vn)

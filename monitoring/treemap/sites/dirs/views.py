@@ -62,7 +62,7 @@ def xxxplainbydir(request, id):
     response = '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>' + response
     return HttpResponse(response)#render_to_response('dirs/dir_list.html', {'object_list': children, 'time': totaltime})
 
-@cache_page(60 *60 * 24 * 3) #cache for 3 days
+#@cache_page(60 *60 * 24 * 3) #cache for 3 days
 def plainbydir(request, theid):  
     time = datetime.datetime.now()
     try:
@@ -74,12 +74,9 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
-    tooltipwidth = int(600)
 
-    apacheserver = settings.PUBLIC_APACHE_URL
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
-    icondir = settings.REL_ICON_DICT
     
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = theid.__str__()
@@ -169,6 +166,8 @@ def plainbydir(request, theid):
     mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
     
+    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    
     print "designing tree"
     designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
     designer.designTreemap()
@@ -179,64 +178,14 @@ def plainbydir(request, theid):
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     #------------------------------------------------------------
-    print "preparing response"
+    response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
     
-    parentid = tree.getRoot().getProperty('treenode').getNakedParent().fileid
-    print "PARENTID ", parentid
-    parentidstr = parentid.__str__()
-    
-    nodes = tree.getAllNodes()
-    mapparams = [None] * len(nodes)
-    
-    for (idx, node) in enumerate(nodes):
-        x1 = int(round(node.getProperty('x'),0))
-        y1 = int(round(node.getProperty('y'),0))
-        x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))  
-        hsize = node.getProperty('headersize')
-        if((not(tree.nodeHasChildren(node)))):
-            hsize = node.getProperty('height')
-        y2 = int(round(node.getProperty('y') + hsize,0))
-        
-        theid = node.getProperty('treenode').getObject().pk.__str__()
-        info = node.getProperty('htmlinfotext')
-        
-        mapparams[idx] = (x1,y1,x2,y2,theid,info)
-        
-    rt = tree.getRoot().getProperty('treenode').getObject()
-    parents = []
-    
-    while True:
-        modulename = inspect.getmodule(rt).__name__
-        classname = rt.__class__.__name__
-        level = 0
-        
-        parentmethodname =  lr.getParentMethodNameFor(level, modulename, classname)
-        pr = rt.__class__.__dict__[parentmethodname](rt)
-        if rt is pr: break
-        parents.append(pr)
-
-        rt = pr
-
-    
-    parents.reverse()
-    navlinkparts = []
-    for pr in parents:  
-        navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
-        
-    del otree
     del tree
-    
-    response = render_to_string('dirs/imagemap.html', \
-    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight,\
-     'tooltipwidth': tooltipwidth, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
-    
-    totaltime = datetime.datetime.now() - time
-    response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
-    
-    cache.add(cache_key, response, cache_expire)
-    return HttpResponse(response)
+    del otree
+    return response
 
-@cache_page(60 *60 * 24 * 3) #cache for 3 days
+#@cache_page(60 *60 * 24 * 3) #cache for 3 days
 def groupView(request, parentpk, depth, model):    
     depth = int(depth)
     time = datetime.datetime.now()
@@ -250,12 +199,9 @@ def groupView(request, parentpk, depth, model):
     
     imagewidth = 800.0
     imageheight = 600.0
-    tooltipwidth = int(600)
 
-    apacheserver = settings.PUBLIC_APACHE_URL
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
-    icondir = settings.REL_ICON_DICT
     
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ model
@@ -360,6 +306,8 @@ def groupView(request, parentpk, depth, model):
     mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
     
+    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    
     print "designing tree"
     designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
     designer.designTreemap()
@@ -370,21 +318,35 @@ def groupView(request, parentpk, depth, model):
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     #------------------------------------------------------------
+    response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
+    
+    del tree
+    del otree
+    return response
+
+def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time):
     print "preparing response"
     
-    parentid = tree.getRoot().getProperty('treenode').getNakedParent().fileid
+    apacheserver = settings.PUBLIC_APACHE_URL
+    serverdict = settings.LOCAL_APACHE_DICT
+    treemapdir = settings.REL_TREEMAP_DICT
+    icondir = settings.REL_ICON_DICT
+    
+    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().fileid
     print "PARENTID ", parentid
     parentidstr = parentid.__str__()
     
-    nodes = tree.getAllNodes()
+    nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
+    tooltipshift = [None] * len(nodes)
     
     for (idx, node) in enumerate(nodes):
         x1 = int(round(node.getProperty('x'),0))
         y1 = int(round(node.getProperty('y'),0))
         x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))  
         hsize = node.getProperty('headersize')
-        if((not(tree.nodeHasChildren(node)))):
+        if((not(vtree.nodeHasChildren(node)))):
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
@@ -393,7 +355,60 @@ def groupView(request, parentpk, depth, model):
         
         mapparams[idx] = (x1,y1,x2,y2,theid,info)
         
-    rt = tree.getRoot().getProperty('treenode').getObject()
+        textlines = 1
+        oldpos, fpos = 0 ,0
+        fpos = info.find('<br>', fpos)
+        maxtooltipwidth = 0
+        
+        while fpos != -1:
+            textlines = textlines + 1
+            
+            tooltipwidth = 0.0
+            for character in info[oldpos:fpos]:
+                if character.islower():
+                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.61
+                else:
+                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.66
+            tooltipwidth = int(tooltipwidth)
+                    
+            if tooltipwidth > maxtooltipwidth: maxtooltipwidth = tooltipwidth
+            oldpos = fpos
+            fpos = info.find('<br>', fpos + 1)
+
+        if maxtooltipwidth > 0: 
+            tooltipwidth =  maxtooltipwidth
+        else:
+            tooltipwidth = 600
+            
+        tooltipheight = int(round(textlines * 12 * 1.6))
+
+        itemwidth = int(round(x2-x1))
+        itemheight = int(round(y2-y1)) 
+        
+        shiftx = 20
+        shifty = 20
+        
+#        if(shifty) < 20:
+#            shifty = shifty * 2
+#        else:
+#            shifty = shifty + 20
+#            
+#        if(shiftx) < 20:
+#            shiftx = shiftx * 2
+#        else:
+#            shiftx = shiftx + 20
+        
+        if(x1 + shiftx + tooltipwidth) > imagewidth:
+            shiftx = round(imagewidth - (x1 + tooltipwidth))
+            
+        if(y1 + shifty) > imageheight + 50:
+            shifty = 50
+#        elif (y1 + shifty) > imageheight and shifty <= 20:
+#            shifty = 2*shifty
+            
+        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, theid)
+        
+    rt = vtree.getRoot().getProperty('treenode').getObject()
     parents = []
     
     while True:
@@ -401,7 +416,7 @@ def groupView(request, parentpk, depth, model):
         classname = rt.__class__.__name__
         level = 0
         
-        parentmethodname =  lr.getParentMethodNameFor(level, modulename, classname)
+        parentmethodname =  lrules.getParentMethodNameFor(level, modulename, classname)
         pr = rt.__class__.__dict__[parentmethodname](rt)
         if rt is pr: break
         parents.append(pr)
@@ -413,17 +428,13 @@ def groupView(request, parentpk, depth, model):
     navlinkparts = []
     for pr in parents:  
         navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
-        
-    del otree
-    del tree
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight,\
-     'tooltipwidth': tooltipwidth, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
+     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
-

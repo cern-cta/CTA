@@ -43,6 +43,7 @@ class SquaredTreemapDesigner(object):
         self.inbordersize = self.design_properties.getProperty('inbordersize')
         self.headertextsize = self.design_properties.getProperty('headertextsize')
         self.radiallightbrightness = self.design_properties.getProperty('radiallightbrightness')
+        self.headertextisbold = self.design_properties.getProperty('headertext.isbold')
 
     def designTreemap(self):
         inbordersize = self.inbordersize
@@ -57,6 +58,7 @@ class SquaredTreemapDesigner(object):
         self.setRadialLight(root)
         self.setHeaderText(root)
         self.setHtmlInfoText(root)
+        self.setHeaderTextIsbold(root)
         
         self.designRecursion(0+1)
             
@@ -72,6 +74,7 @@ class SquaredTreemapDesigner(object):
             self.setRadialLight(child)
             self.setHeaderText(child)
             self.setHtmlInfoText(child)
+            self.setHeaderTextIsbold(child)
             
             self.vtree.traverseInto(child)
             self.designRecursion(level + 1)
@@ -102,6 +105,12 @@ class SquaredTreemapDesigner(object):
             vnode.setProperty('headertext', self.metricslinkage.getLinkedValue('headertext', vnode))
         except Exception, e:
             vnode.setProperty('headertext', vnode.getProperty('treenode').getObject().__str__())
+            
+    def setHeaderTextIsbold(self, vnode):
+        try:
+            vnode.setProperty('headertext.isbold', self.metricslinkage.getLinkedValue('headertext.isbold', vnode))
+        except Exception, e:
+            vnode.setProperty('headertext.isbold', self.headertextisbold)
             
     def setHtmlInfoText(self, vnode):
         try:

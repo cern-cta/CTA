@@ -87,7 +87,7 @@ class ViewTreeDesignProps(Properties):
     classdocs
     '''
 
-    def __init__(self, calc_properties, inbordersize = 0.0, headertextsize = 12.0, radiallightbrightness = 0.4, tree = None):
+    def __init__(self, calc_properties, inbordersize = 0.0, headertextsize = 12.0, radiallightbrightness = 0.4, tree = None, htextisbold = True):
         '''
         Constructor
         '''
@@ -119,5 +119,7 @@ class ViewTreeDesignProps(Properties):
             self.props['radiallightbrightness'] = radiallightbrightness
         
         self.props['viewtree'] = tree
+        
+        self.props['headertext.isbold'] = htextisbold
 
         

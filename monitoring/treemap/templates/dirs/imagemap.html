@@ -15,79 +15,86 @@
 	    			
         <p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
        	
-        <ul id="map">
+        	<ul id="map">
  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
-				<li>
-					<a class="cls{{theid}}" href="/treemaps/bydir/{{theid}}" title = "">
-						<span>
-							{{ info|escapefilter }}
-						</span>
-					</a>
-				</li>
+					<li>
+						<a class="cls{{theid}}" href="/treemaps/bydir/{{theid}}" title = "">
+							<span>
+								{{ info|escapefilter }}
+							</span>
+						</a>
+					</li>
         	{% endfor %}
-		</ul>  
+        	</ul> 
+ 
 		
-		
-        <style type="text/css">
-			#map {
-				position:relative;
-				margin:0;
-				padding:0;
-				width:{{imagewidth}}px;
-				height:{{imageheight}}px;
-				background:url({{treemapdir}}/{{filename}}) top left no-repeat #fff;
-				font-family:arial, helvetica, sans-serif;
-				font-size:12pt;
-				color:#FFF;
-				text-align: left;
-			}
-			
-			#map li {
-				margin:0;
-				padding:0;
-				list-style:none;
-			}
-			
-			#map li a {
-				position:absolute;
-				display:block;
-				/*
-				   Specifying a background image
-				   (a 1px by 1px transparent gif)
-				   fixes a bug in older versions of
-				   IE that causeses the block to not
-				   render at its full dimensions.
-				*/
-	   			background:url({{icondir}}/blank.gif);
-	   			text-decoration:none;
-				color:#000;
-			}
-			
-			#map li a span { display:none; }
-			
-			#map li a:hover span {
-				position:relative;
-				display:block;
-				width:{{tooltipwidth}}px;
-				left:20px;
-				top:20px;
-				border:1px solid #000;
-				background:#fff;
-				padding:5px;
-	 			filter:alpha(opacity=80);
-				opacity:0.8;
-	  		}
-		
-		 	{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
-				#map a.cls{{theid}} 
-				{
-					top:{{y1}}px;
-					left:{{x1}}px;
-					width:{{x2|sub:x1}}px;
-					height:{{y2|sub:y1}}px;
-				}
-        	{% endfor %}
-	   </style>  
+		        <style type="text/css">
+					#map {
+						position:relative;
+						margin:0;
+						padding:0;
+						width:{{imagewidth}}px;
+						height:{{imageheight}}px;
+						background:url({{treemapdir}}/{{filename}}) top left no-repeat #fff;
+						font-family:arial, helvetica, sans-serif;
+						font-size:{{tooltipfontsize}}pt;
+						color:#FFF;
+						text-align: left;
+					}
+					
+					#map li {
+						margin:0;
+						padding:0;
+						list-style:none;
+					}
+					
+					#map li a {
+						position:absolute;
+						display:block;
+						/*
+						   Specifying a background image
+						   (a 1px by 1px transparent gif)
+						   fixes a bug in older versions of
+						   IE that causeses the block to not
+						   render at its full dimensions.
+						*/
+			   			background:url({{icondir}}/blank.gif);
+			   			text-decoration:none;
+						color:#000;
+					}
+					
+					#map li a span { display:none; }
+					
+				{% for shiftx, shifty, twidth, theight, theid in tooltipshift %}
+					#map li a.cls{{theid}}:hover span 
+					{
+						position:relative;
+						display:block;
+						width:{{twidth}}px;
+						height:{{theight}}px;
+						left:{{shiftx}}px;
+						top:{{shifty}}px;
+						border:1px solid #000;
+						background:#fff;
+						padding:5px;
+			 			filter:alpha(opacity=70);
+						opacity:0.8;
+			  		}
+			  	{% endfor %}
+				
+				{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
+					#map a.cls{{theid}} 
+					{
+						top:{{y1}}px;
+						left:{{x1}}px;
+						width:{{x2|sub:x1}}px;
+						height:{{y2|sub:y1}}px;
+					}
+				{% endfor %}
+				
+			   </style>  
+			  
+		   
 	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
 	
 	</td></tr></table></p>

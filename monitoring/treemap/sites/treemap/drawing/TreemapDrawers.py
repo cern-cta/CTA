@@ -41,13 +41,26 @@ class SquaredTreemapDrawer(object):
         self.ctx = cairo.Context (self.surface)
         self.ctx.scale (self.mapwidth/1.0, self.mapheight/1.0) # Normalizing the canvas
         
+        #setting background color
+        pat = cairo.LinearGradient (0, 0, 1, 1)
+        pat.add_color_stop_rgba (0.0, 0.7137, 0.9294, 0.0, 1.0) # last number is opacity
+        pat.add_color_stop_rgba (1.0, 0.6666, 0.9294, 0.0, 1.0) # last number is opacity
+        self.ctx.rectangle (0,0,1,1) # Rectangle(x0, y0, x1, y1)
+        self.ctx.set_source (pat)
+        self.ctx.fill ()
+        
+        #enable antialiasing for text
+        fo = cairo.FontOptions()
+        fo.set_antialias(cairo.ANTIALIAS_GRAY)
+        self.ctx.set_font_options(fo)
+        
     def drawTreemap(self, filename):
 
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headertextsize'))
+        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headertextsize'), root.getProperty('headertext.isbold'))
         
         self.drawRecursion()
         
@@ -63,7 +76,7 @@ class SquaredTreemapDrawer(object):
             
             if child.getProperty('headersize') > 0.0:
                 txt = child.getProperty('headertext')
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headertextsize'))
+                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headertextsize'), child.getProperty('headertext.isbold'))
                 
             self.vtree.traverseInto(child)
             self.drawRecursion()
@@ -170,7 +183,7 @@ class SquaredTreemapDrawer(object):
         self.ctx.set_source_rgba(r,g,b,a) 
         self.ctx.stroke ()
         
-    def printText(self, text, x, y, max_text_width, max_text_height): #text, x, y, subwidth, subheight, bordersize, level):
+    def printText(self, text, x, y, max_text_width, max_text_height, isbold): #text, x, y, subwidth, subheight, bordersize, level):
         pix_x = 1.0/self.mapwidth
         pix_y = 1.0/self.mapheight
 #        
@@ -193,7 +206,11 @@ class SquaredTreemapDrawer(object):
         self.ctx.scale(scalex, scaley)
 
         self.ctx.set_source_rgb(0.0, 0.0, 0.0)
-        self.ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        if isbold:
+            self.ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        else:
+            self.ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+            
         self.ctx.set_font_size(pix_y*max_text_height)
         
         #trying to fit the text into the defined area
