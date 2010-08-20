@@ -856,7 +856,7 @@ class DLFMsgParser:
            (?P<date>     \d{4}-\d\d-\d\d)        T   # date
            (?P<time>     \d\d:\d\d:\d\d[.]\d{6})     # time
            (?P<timezone> [+\-]\d\d:\d\d)         \s+ # timezone
-           (?P<host>     [\w\-]+)                \s+ # host
+           (?P<host>     [\w\-\.]+)              \s+ # host
            (?P<ident>    [\w\-]+)                    # process identifier
 
            \[
