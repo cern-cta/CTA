@@ -37,7 +37,7 @@ class TreeBuilder(object):
         #to avoid recursions over thousands of child items
         self.max_items_for_recursion = 80
         
-    def generateObjectTree(self, rootobject, fparam = None, rootevalcolumn = None, siblingssum = 1.0):
+    def generateObjectTree(self, rootobject):
         tree = ObjectTree()
         
         modulename = inspect.getmodule(rootobject).__name__
@@ -45,8 +45,12 @@ class TreeBuilder(object):
         level = 0
         
         parentmethodname =  self.rules.getParentMethodNameFor(level, modulename, classname)
+        fparam = self.rules.getParamFor(level, modulename, classname)
+        rootevalcolumn = self.rules.getColumnNameFor(0, modulename, classname)
         
-        tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, siblingssum)
+        rootobjnode = TreeNode(rootobject, rootevalcolumn, parentmethodname, fparam, 0)
+        
+        tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, rootobjnode.getEvalValue())
         
         self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0)
         

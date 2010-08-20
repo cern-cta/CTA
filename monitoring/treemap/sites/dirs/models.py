@@ -56,6 +56,9 @@ class Dirs(models.Model):
     files = QuerySet(model = 'CnsFileMetadata')
     files_cached = False
     
+    parent_cached = False
+    theparent = None
+    
     class Meta:
         db_table = u'dirs'
         ordering = ["-totalsize"]
@@ -134,9 +137,12 @@ class Dirs(models.Model):
     def countFilesAndDirs(self):
         return self.countFiles() + self.countDirs()
     
+    #expensive operation if you call it too often (example: 243 calls makes 6.5 seconds)
     def getDirParent(self):
         try:
-            return self.parent
+            if not self. parent_cached:
+                self.theparent = self.parent
+            return self.theparent
         except Dirs.DoesNotExist:
             return self
         

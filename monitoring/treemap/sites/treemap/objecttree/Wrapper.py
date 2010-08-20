@@ -52,11 +52,11 @@ class Wrapper(object):
     
     def setColumnname(self, newname):
         if newname == None:
-            columnt = self.__class__.column_transformators[self.fullmodule]
-            newname = columnt.getColumnFinder().guessPk().name
-            if newname == None:
-                raise ConfigError( 'Wrapper was not able to find any default column for ' + self.fullmodule)
-            warnings.warn('cloumnname = None: Wrapper decided to evaluate using columnname = ' + newname + ' , model: ' + self.fullmodule, Warning)
+#            columnt = self.__class__.column_transformators[self.fullmodule]
+#            newname = columnt.getColumnFinder().guessPk().name
+#            if newname == None:
+            raise ConfigError( 'Wrapper was not able to find any default column for ' + self.fullmodule)
+#            warnings.warn('cloumnname = None: Wrapper decided to evaluate using columnname = ' + newname + ' , model: ' + self.fullmodule, Warning)
             
         if self.__class__.column_transformators[self.fullmodule].getColumns():
             found = False

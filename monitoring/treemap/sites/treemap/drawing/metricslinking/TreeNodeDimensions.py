@@ -316,7 +316,6 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
-        parent = tnode.getProperty('treenode').getNakedParent()
         
         assert(isinstance(dbobj, Dirs))
         

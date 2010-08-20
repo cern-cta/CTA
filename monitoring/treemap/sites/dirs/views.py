@@ -1,37 +1,35 @@
 # Create your views here.
-from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response
-from django.template import Context, loader
-from sites.dirs.models import Dirs
-from django.shortcuts import render_to_response, get_list_or_404, get_object_or_404
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.conf.urls.defaults import *
+from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.db.models.query import QuerySet
-import datetime
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render_to_response, render_to_response, \
+    get_list_or_404, get_object_or_404
+from django.template import Context, loader, resolve_variable
 from django.template.loader import render_to_string
-
-from sites.treemap.objecttree.ObjectTree import ObjectTree
-from sites.treemap.objecttree.TreeBuilder import TreeBuilder
-from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
-from sites.treemap.objecttree.TreeRules import LevelRules
-import profile
-from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
+from django.utils.hashcompat import md5_constructor
+from django.utils.http import urlquote
+from django.views.decorators.cache import cache_page
+from sites.dirs.models import *
+from sites.tools.GroupIdService import resolveGroupId
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from sites.dirs.models import *
+from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
-
-from django.views.decorators.cache import cache_page
-from django.core.cache import cache
-from django.conf import settings
-from django.template import resolve_variable
-from django.utils.http import urlquote
-from django.utils.hashcompat import md5_constructor
-
 from sites.treemap.objecttree.Annex import Annex
-from sites.tools.GroupIdService import resolveGroupId
+from sites.treemap.objecttree.ObjectTree import ObjectTree
+from sites.treemap.objecttree.TreeBuilder import TreeBuilder
+from sites.treemap.objecttree.TreeNode import TreeNode
+from sites.treemap.objecttree.TreeRules import LevelRules
+from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+import datetime
+import profile
+
+
+
 
 def plain(request, depth):
     p = get_list_or_404(Dirs, depth = depth)
@@ -45,7 +43,6 @@ def xxxplainbydir(request, id):
         
     except Dirs.DoesNotExist:
         raise Http404
-        return render_to_response('dirs/dir_list.html', {'object_list': p})
         
     children = list(p.getDirs())#list(Dirs.objects.filter(parent=id))
     
@@ -63,6 +60,14 @@ def xxxplainbydir(request, id):
     return HttpResponse(response)#render_to_response('dirs/dir_list.html', {'object_list': children, 'time': totaltime})
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
+
+#def plainbydirprofiling(request, theid): 
+#    print 'profiling'
+#    response = None
+#    profile.runctx('response =  plainbydir1(request, theid)', globals(), {'request':request, 'theid': theid, 'response':response})
+#    return response
+#    #plainbydir1(request, theid)
+
 def plainbydir(request, theid):  
     time = datetime.datetime.now()
     try:
@@ -74,10 +79,12 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
+    nbdefinedlevels = 8
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     
+    #caching part
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = theid.__str__()
     vary_on = [(2,3,5,7),(11,13,17,19,23,29)]
@@ -87,57 +94,24 @@ def plainbydir(request, theid):
     
     value = cache.get(cache_key)
     
+    #if already in cache
     if value is not None:
         return HttpResponse(value)
 
     lr = LevelRules()
     
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 0)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 0)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 0)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 1)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 1)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 1)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 2)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 2)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 2)   
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 3)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 3)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 3)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 4)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 4)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 4)
-
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 5)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 5)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 5)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 6)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 6)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 6)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 7)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 7)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 7)
+    for i in range(nbdefinedlevels):
+        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
     
     start = datetime.datetime.now()
     
     print 'start generating object tree for ' + root.__str__()
     tb = TreeBuilder(lr)
-#    otree = None
     
-#    if root.__str__() == "/castor/cern.ch/totem/offlinea":
-#        print 'profiling'
-#        profile.runctx('otree = tb.generateObjectTree(root, \'bla\')', globals(), {'tb':tb, 'root':root})
-#    else:
-    otree = tb.generateObjectTree(root, 'bla')
-        
-    print 'time was: ' + (datetime.datetime.now() - start ).__str__()
-    print ''
+    otree = tb.generateObjectTree(rootobject = root) 
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
@@ -146,10 +120,9 @@ def plainbydir(request, theid):
     tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
 
     tree = tc.calculate()
-        
-    print 'time was: ' + (datetime.datetime.now() - start ).__str__()
-    print ''
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    start = datetime.datetime.now()
     print "linking metrics to graphical properties"
     mlinker = MetricsLinker()
     mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
@@ -167,22 +140,31 @@ def plainbydir(request, theid):
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
     
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    start = datetime.datetime.now()
     print "designing tree"
     designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
     designer.designTreemap()
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
     filenm = root.pk.__str__().replace('/','') + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
+    start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
     
     del tree
     del otree
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+    
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
@@ -199,10 +181,12 @@ def groupView(request, parentpk, depth, model):
     
     imagewidth = 800.0
     imageheight = 600.0
+    nbdefinedlevels = 8
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     
+    #caching part
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ model
     vary_on = [(2,3,5,7),(11,13,17,19,23,29)]
@@ -212,57 +196,24 @@ def groupView(request, parentpk, depth, model):
     
     value = cache.get(cache_key)
     
+    #if the response is cached
     if value is not None:
         return HttpResponse(value)
-
+    
+    #define LevelRules
     lr = LevelRules()
     
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 0)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 0)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 0)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 1)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 1)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 1)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 2)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 2)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 2)   
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 3)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 3)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 3)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 4)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 4)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 4)
-
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 5)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 5)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 5)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 6)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 6)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 6)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 7)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 7)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 7)
+    for i in range(nbdefinedlevels):
+        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
     
     start = datetime.datetime.now()
-    
     print 'start generating first object tree ' + root.__str__()
     tb = TreeBuilder(lr)
-#    otree = None
-    
-#    if root.__str__() == "/castor/cern.ch/totem/offlinea":
-#        print 'profiling'
-#        profile.runctx('otree = tb.generateObjectTree(root, \'bla\')', globals(), {'tb':tb, 'root':root})
-#    else:
-    otree = tb.generateObjectTree(root, 'bla')
-        
-    print 'time was: ' + (datetime.datetime.now() - start ).__str__()
-    print ''
+
+    otree = tb.generateObjectTree(rootobject = root)    
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     otree.traveseToRoot()
     firstlevelch = otree.getChildren()
@@ -272,12 +223,13 @@ def groupView(request, parentpk, depth, model):
         if flch.getObject().__class__.__name__ == 'Annex':
             anxnode = flch
             break
-        
+    
+    #if there is an Annex then display it, otherwise you can just display the directory without it
     if anxnode is not None:
         anx = anxnode.getObject()
         
-        print 'start generating second object tree ' + anx.__str__()
-        otree = tb.generateObjectTree(anx, 'bla', 'evaluation', anxnode.getEvalValue())
+        print 'start generating object subtree ' + anx.__str__()
+        otree = tb.generateObjectTree(anx)
         
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
@@ -287,9 +239,9 @@ def groupView(request, parentpk, depth, model):
 
     tree = tc.calculate()
         
-    print 'time was: ' + (datetime.datetime.now() - start ).__str__()
-    print ''
-    
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+
+    start = datetime.datetime.now()
     print "linking metrics to graphical properties"
     mlinker = MetricsLinker()
     mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
@@ -307,22 +259,29 @@ def groupView(request, parentpk, depth, model):
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
     
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    start = datetime.datetime.now()
     print "designing tree"
     designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
     designer.designTreemap()
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
     filenm = root.pk.__str__().replace('/','') + "annex.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
+    start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
     
     del tree
     del otree
+    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
 def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time):
