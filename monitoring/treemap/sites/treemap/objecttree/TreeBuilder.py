@@ -43,7 +43,11 @@ class TreeBuilder(object):
         modulename = inspect.getmodule(rootobject).__name__
         classname = rootobject.__class__.__name__
         level = 0
+        rootisannex = False
         
+        if classname == 'Annex':
+            rootisannex = True
+
         parentmethodname =  self.rules.getParentMethodNameFor(level, modulename, classname)
         fparam = self.rules.getParamFor(level, modulename, classname)
         rootevalcolumn = self.rules.getColumnNameFor(0, modulename, classname)
@@ -52,14 +56,14 @@ class TreeBuilder(object):
         
         tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, rootobjnode.getEvalValue())
         
-        self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0)
+        self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0, rootisannex)
         
         return tree
     
 #    count = 0
     chcount = 0
     
-    def addChildrenRecursion(self, tree, level, parent, area_factor):
+    def addChildrenRecursion(self, tree, level, parent, area_factor, rootisannex):
 
         if area_factor < self.lowest_area_factor: return
         if not self.rules.indexIsValid(level + 1): return
@@ -151,18 +155,23 @@ class TreeBuilder(object):
             if len(childnodes) < self.max_items_for_recursion:
                 for thechild in childnodes:
                     tree.traverseInto(thechild)
-                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate() )
+                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate(), False )
                     tree.traverseBack()
             
             #[:] to copy the content 
             #childnodes is a direct reference to the tree content, which we don't want to have in Annex
             #if there is no copy excludedchildren are the same as childnodes, so annexnode = tree.addChild(annexchild... would also add an item to Annex
-            childnodes = tree.getChildren()[:] 
+            childnodes = tree.getChildren()[:]
             
             #add the annex object representing the rest of the children
             if(annexevalsum > 0):
+                
+                annexdepth = 0
+                if(rootisannex):
+                    annexdepth = tree.getRoot().getDepth() + 1
+                    
                 #create Annex as TreeNode
-                annexchild = Annex(self.rules, level, nested_object, childnodes)
+                annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
                 annexchild.evaluation = annexevalsum
                 chmodulename = inspect.getmodule(annexchild).__name__
                 chclassname = annexchild.__class__.__name__

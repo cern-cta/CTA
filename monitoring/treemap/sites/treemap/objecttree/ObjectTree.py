@@ -201,6 +201,22 @@ class ObjectTree(object):
     
     def getLevel(self):
         return self.depth_inscope
+    
+    def getRootAnnex(self):
+        currinscope = self.node_inscope
+        self.traveseToRoot()
+        firstlevelitems =self.getChildren()
+
+        #find Annex
+        anxnode = None
+        for item in firstlevelitems:
+            if item.getObject().__class__.__name__ == 'Annex':
+                anxnode = item
+                break
+        
+        self.traverseInto(currinscope)
+        
+        return anxnode
         
         
 

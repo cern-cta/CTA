@@ -145,7 +145,7 @@ def plainbydir(request, theid):
     start = datetime.datetime.now()
     print "designing tree"
     designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
-    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
+#    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
@@ -203,10 +203,15 @@ def groupView(request, parentpk, depth, model):
     #define LevelRules
     lr = LevelRules()
     
-    for i in range(nbdefinedlevels):
-        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
-        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
-        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
+    #define only the first level
+    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 0)
+    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 0)
+    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 0)
+    
+    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 1)
+    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 1)
+    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 1)
+    
     
     start = datetime.datetime.now()
     print 'start generating first object tree ' + root.__str__()
@@ -216,21 +221,38 @@ def groupView(request, parentpk, depth, model):
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     otree.traveseToRoot()
-    firstlevelch = otree.getChildren()
-    #find Annex
-    anxnode = None
-    for flch in firstlevelch:
-        if flch.getObject().__class__.__name__ == 'Annex':
-            anxnode = flch
-            break
+    anxnode = otree.getRootAnnex()
+    anx = anxnode.getObject()
     
     #if there is an Annex then display it, otherwise you can just display the directory without it
     if anxnode is not None:
-        anx = anxnode.getObject()
+        for i in range(depth):
+            print 'start generating object subtree ' + anx.__str__()
+            otree = tb.generateObjectTree(anx)
+            
+            newanxnode = otree.getRootAnnex()
+            
+            if newanxnode is not None: 
+                anx.addExcludedNodes(newanxnode.getObject().getExcludedNodes())
+            else:
+                raise Http404 
+                
+        for i in range(1,nbdefinedlevels):
+            lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+            lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+            lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)   
         
-        print 'start generating object subtree ' + anx.__str__()
-        otree = tb.generateObjectTree(anx)
+        otree = tb.generateObjectTree(anx) 
+            
+    else:
+        for i in range(1,nbdefinedlevels):
+            lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+            lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+            lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
+            
+            otree = tb.generateObjectTree(rootobject = root)     
         
+     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
         

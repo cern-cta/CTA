@@ -10,7 +10,7 @@ class Annex(models.Model):
     id = models.CharField(unique=True, max_length=255, blank=True, primary_key=True)#models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True, default = -1)
     evaluation = models.IntegerField(default = 1.0)
     
-    def __init__(self, rules = None, level = 0, parent = None, excludednodes = [], exclusioncount = 0):
+    def __init__(self, rules = None, level = 0, parent = None, excludednodes = [], depth = 0):
         assert(hasattr(excludednodes,'__iter__'))
         assert(level >= 0)
         models.Model.__init__(self)
@@ -18,21 +18,28 @@ class Annex(models.Model):
         self.rules = rules
         self.level = level
         self.parent = parent
+        self.depth = depth
         
         self.children_cache = []
         self.valid_cache = False
         
-        #how many exclusions were done before, used to identify an Annex in a not process specific way
-        self.exclusioncount = exclusioncount
+        #how many exclusions were done before, used to have process independend annex id
+        self.depth = depth
         
         #hack to fake id's to django
-        
+        classname = self.parent.__class__.__name__
         if parent == None:
             ppk = -1
-        else:
+        elif not isinstance(parent, Annex):
             ppk = self.parent.pk
+        elif isinstance(parent, Annex): #parent is Annex
+            ppk = self.parent.getAnnexParent().pk
+            classname = self.parent.getAnnexParent().__class__.__name__
+        else:
+            raise Exception("unexpected error")
             
-        self.__dict__['id'] = newGroupId(self, ppk, self.parent.__class__.__name__, self.exclusioncount)
+            
+        self.__dict__['id'] = newGroupId(self, ppk, classname, self.depth)
     
     #DUAL is Oracle's fake Table
     class Meta:
@@ -84,3 +91,17 @@ class Annex(models.Model):
     
     def getAnnexParent(self):
         return self.parent
+    
+    def getDepth(self):
+        return self.depth
+    
+    def addExcludedNodes(self, newexcluded):
+        if len(newexcluded) > 0:
+            for excl in newexcluded:
+                self.excludednodes.append(excl)
+                
+            self.valid_cache = False
+    
+    def getExcludedNodes(self):
+        return self.excludednodes
+        
