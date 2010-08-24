@@ -95,13 +95,45 @@ class Annex(models.Model):
     def getDepth(self):
         return self.depth
     
+    def getCopyWithIncDepth(self, newexcluded, evaluation):
+        ret = Annex(rules = self.rules, level = self.level, parent = self.parent, excludednodes = self.excludednodes[:], depth = (self.depth + 1))
+        ret.__setattr__('children_cache', self.children_cache[:])
+        ret.__setattr__('valid_cache', True)
+        ret.addExcludedNodes(newexcluded)
+        ret.evaluation = evaluation
+        return ret
+    
     def addExcludedNodes(self, newexcluded):
         if len(newexcluded) > 0:
             for excl in newexcluded:
                 self.excludednodes.append(excl)
+      
+            if self.valid_cache:
+                newcache = []
+                #filter children to display the remaining ones
+                for child in self.children_cache:
+                    remove = False
+                    for toexclude in newexcluded:
+                        if child.pk == toexclude.getObject().pk:
+                            remove = True
+                            
+                    if(not remove): newcache.append(child)
                 
-            self.valid_cache = False
+                del self.children_cache
+                self.children_cache = newcache
+                self.valid_cache = True
     
     def getExcludedNodes(self):
         return self.excludednodes
+    
+    def getDbParent(self):
+        if self.parent == None:
+            ppk = -1
+        elif not isinstance(self.parent, Annex):
+            ppk = self.parent.pk
+        elif isinstance(self.parent, Annex): #parent is Annex
+            ppk = self.parent.getDbParent().pk
+        else:
+            raise Exception("unexpected error")
+        return ppk
         

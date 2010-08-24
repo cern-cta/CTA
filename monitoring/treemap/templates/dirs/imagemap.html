@@ -11,10 +11,17 @@
     
     {% if nodes %}
 
-    <p><table width="100%" height="100%"><tr><td align="center" valign="middle" width="100%" height="100%"> 
-	    			
-        <p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
-       	
+    <p><table style="width: auto; height: auto;" align="center">
+    
+    <tr>
+      <td align="center" valign="middle">
+    	<p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
+      </td>
+    </tr>
+    
+    
+    <tr>
+    <td align="center" valign="middle" width={{imagewidth}} style="height: auto">     	
         	<ul id="map">
  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
 					<li>
@@ -51,7 +58,7 @@
 					#map li a {
 						position:absolute;
 						display:block;
-						/*
+						/*style="width: auto"
 						   Specifying a background image
 						   (a 1px by 1px transparent gif)
 						   fixes a bug in older versions of
@@ -93,11 +100,22 @@
 				{% endfor %}
 				
 			   </style>  
-			  
 		   
 	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
 	
-	</td></tr></table></p>
+	</td>
+		<td align="left" valign="top" height={{imageheight}}>
+			<select name="not implemented yet">
+			   <option value="0" selected> not implemented yet </option>
+			   <option value="1"> metric1 </option>
+			   <option value="2"> metric2 </option>
+			   <option value="3"> metric3 </option>
+			   <option value="4"> metric4 </option>
+			</select>
+			<input type="submit" value="Apply" />
+		</td>
+	
+	</tr></table></p>
     {% else %}
         <p>No data available / A file or an empty folder</p>
     {% endif %}

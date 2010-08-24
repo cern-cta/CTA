@@ -188,9 +188,9 @@ def groupView(request, parentpk, depth, model):
     
     #caching part
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ model
-    vary_on = [(2,3,5,7),(11,13,17,19,23,29)]
-    args = md5_constructor(u':'.join([urlquote(resolve_variable("145", parentpk.__str__() + '_'+ depth.__str__() + '_'+ model))]))                 
+    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in model.__str__()])
+    vary_on = [(2,3,5,7),(11,17,19,23,29)]
+    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))                 
     cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     
@@ -203,14 +203,11 @@ def groupView(request, parentpk, depth, model):
     #define LevelRules
     lr = LevelRules()
     
-    #define only the first level
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 0)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 0)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 0)
-    
-    lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', 1)
-    lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', 1)
-    lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', 1)
+    #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
+    for i in range(2):
+        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i) 
     
     
     start = datetime.datetime.now()
@@ -220,6 +217,7 @@ def groupView(request, parentpk, depth, model):
     otree = tb.generateObjectTree(rootobject = root)    
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
+    #---------------------------------------------
     otree.traveseToRoot()
     anxnode = otree.getRootAnnex()
     anx = anxnode.getObject()
@@ -233,19 +231,19 @@ def groupView(request, parentpk, depth, model):
             newanxnode = otree.getRootAnnex()
             
             if newanxnode is not None: 
-                anx.addExcludedNodes(newanxnode.getObject().getExcludedNodes())
+                anx = anx.getCopyWithIncDepth(newexcluded = newanxnode.getObject().getExcludedNodes(), evaluation = newanxnode.getEvalValue())    
             else:
                 raise Http404 
                 
-        for i in range(1,nbdefinedlevels):
+        for i in range(2,nbdefinedlevels):
             lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
             lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
             lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)   
         
         otree = tb.generateObjectTree(anx) 
             
-    else:
-        for i in range(1,nbdefinedlevels):
+    else: #no Annex display needed
+        for i in range(2,nbdefinedlevels):
             lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
             lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
             lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
@@ -292,7 +290,7 @@ def groupView(request, parentpk, depth, model):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = root.pk.__str__().replace('/','') + "annex.png"
+    filenm = root.pk.__str__().replace('/','') + "annex"+depth.__str__()+ ".png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -411,7 +409,7 @@ def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cac
         navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
     
     response = render_to_string('dirs/imagemap.html', \
-    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': imagewidth, 'imageheight': imageheight,\
+    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time

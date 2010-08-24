@@ -168,7 +168,7 @@ class TreeBuilder(object):
                 
                 annexdepth = 0
                 if(rootisannex):
-                    annexdepth = tree.getRoot().getDepth() + 1
+                    annexdepth = tree.getRoot().getObject().getDepth() + 1
                     
                 #create Annex as TreeNode
                 annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
