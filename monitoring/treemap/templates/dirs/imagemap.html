@@ -105,14 +105,10 @@
 	
 	</td>
 		<td align="left" valign="top" height={{imageheight}}>
-			<select name="not implemented yet">
-			   <option value="0" selected> not implemented yet </option>
-			   <option value="1"> metric1 </option>
-			   <option value="2"> metric2 </option>
-			   <option value="3"> metric3 </option>
-			   <option value="4"> metric4 </option>
-			</select>
+			<form action="/treemaps/bydir/{{rootid}}/" method="post">
+				{{ metricscombo.as_p }}
 			<input type="submit" value="Apply" />
+			</form>
 		</td>
 	
 	</tr></table></p>

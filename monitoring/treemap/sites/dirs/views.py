@@ -27,8 +27,7 @@ from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import profile
-
-
+from django import forms
 
 
 def plain(request, depth):
@@ -69,6 +68,16 @@ def xxxplainbydir(request, id):
 #    #plainbydir1(request, theid)
 
 def plainbydir(request, theid):  
+    metric = ''
+    if request.method == 'POST':
+        print "POST!"
+        posted = request.POST
+        metric = posted['metric']
+        print metric
+#        for form in form_list:
+#            if form.is_valid():
+#                pass
+
     time = datetime.datetime.now()
     try:
         #Directory you want to show its content
@@ -159,7 +168,7 @@ def plainbydir(request, theid):
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, metric = metric)
     
     del tree
     del otree
@@ -297,15 +306,32 @@ def groupView(request, parentpk, depth, model):
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk)
     
     del tree
     del otree
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time):
+class MetricsForm(forms.Form):
+    metric = forms.ChoiceField(label="Metrics")
+    
+    def __init__(self, metric, *args, **kwargs):
+        super(MetricsForm, self).__init__(*args, **kwargs)
+        
+        self.fields['metric'].choices = [(a.__str__(), a.__str__()) for a in metric]
+        self.choices_dict = dict(self.fields['metric'].choices)
+
+        pass
+
+    def save(self, commit=True):
+        pass
+
+
+def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, metric = ''):
     print "preparing response"
+    
+    metricscombo = MetricsForm(('not implemented yet', 'metric1', 'metric2', 'metric3', 'metric4', 'metric5'))
     
     apacheserver = settings.PUBLIC_APACHE_URL
     serverdict = settings.LOCAL_APACHE_DICT
@@ -410,7 +436,8 @@ def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cac
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
-     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir} , context_instance=None)
+     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
+     'metricscombo': metricscombo, 'rootid': rootid} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
