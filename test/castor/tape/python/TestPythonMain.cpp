@@ -38,7 +38,7 @@
 void *startRoutine(void *arg) {
   using namespace castor::tape;
 
-  std::cout << "Entered startRoutine()" << std::endl;
+  std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
   PyObject *const pyFunc = (PyObject *)arg;
 
@@ -93,7 +93,7 @@ int exceptionThrowingMain()
     python::ScopedPythonLock scopedPythonLock;
 
     const char *const moduleName   = "migration";
-    const char *const functionName = "atlasT0MigrPolicy";
+    const char *const functionName = "defaultMigrationPolicy";
     PyObject *const pyDict = python::importPolicyPythonModule(moduleName);
     pyFunc = python::getPythonFunction(pyDict, functionName);
 
@@ -106,7 +106,7 @@ int exceptionThrowingMain()
     }
   }
 
-  // Import a non-existant module
+  // Try to import a non-existant module
   try {
     python::ScopedPythonLock scopedPythonLock;
 
@@ -142,6 +142,10 @@ int exceptionThrowingMain()
       std::endl;
   }
 
+  std::cout <<
+    "New scopedPythonLock released" <<
+    std::endl;
+
   {
     python::ScopedPythonLock scopedPythonLock;
 
@@ -149,6 +153,10 @@ int exceptionThrowingMain()
       "Inside yet another new scopedPythonLock" <<
       std::endl;
   }
+
+  std::cout <<
+    "Yet another new scopedPythonLock released" <<
+    std::endl;
 
   pthread_t thread;
 
@@ -168,6 +176,10 @@ int exceptionThrowingMain()
       "Inside new scopedPythonLock after utils::pthreadJoin() and sleep(1)" <<
       std::endl;
   }
+
+  std::cout <<
+    "New scopedPythonLock after utils::pthreadJoin() and sleep(1) released" <<
+    std::endl;
 
   python::finalizePython();
 
