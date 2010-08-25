@@ -1534,19 +1534,24 @@ BEGIN
                 AND FileSystem.diskserver = DiskServer.id
                 AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
         IF nbDSs > 0 THEN
-          -- yes, we can replicate. Select the best candidate for replication
-          getBestDiskCopyToReplicate(cfId, -1, -1, 1, svcClassId, srcDcId, svcClassId);
-          -- and create a replication request without waiting on it.
-          createDiskCopyReplicaRequest(0, srcDcId, svcClassId, svcClassId, reuid, regid);
-          -- result is different for logging purposes
-          result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY
+	  BEGIN
+            -- yes, we can replicate. Select the best candidate for replication
+            getBestDiskCopyToReplicate(cfId, -1, -1, 1, svcClassId, srcDcId, svcClassId);
+            -- and create a replication request without waiting on it.
+            createDiskCopyReplicaRequest(0, srcDcId, svcClassId, svcClassId, reuid, regid);
+            -- result is different for logging purposes
+            result := dconst.DISKCOPY_WAITDISK2DISKCOPY;
+          EXCEPTION WHEN NO_DATA_FOUND THEN
+            -- replication failed. We still go ahead with the access
+            result := dconst.DISKCOPY_STAGED;  
+          END;
         ELSE
           -- no replication to be done
-          result := 0;  -- DISKCOPY_STAGED
+          result := dconst.DISKCOPY_STAGED;
         END IF;
       ELSE
         -- no replication to be done
-        result := 0;  -- DISKCOPY_STAGED
+        result := dconst.DISKCOPY_STAGED;
       END IF;
     END IF;   -- end internal replication processing
   ELSE
