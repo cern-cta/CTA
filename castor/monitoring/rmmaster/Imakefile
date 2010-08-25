@@ -25,7 +25,7 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public
-AddLdFlags(-lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh)
+AddLdFlags(-L $(LSF_LIB_LOCATION) -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

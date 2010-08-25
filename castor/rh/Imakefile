@@ -25,7 +25,6 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 #if UseGSI
-GLOBUS_LOCATION=GlobusLocation
 #if defined(__STDC__)
 GLOBUS_FLAVOUR=GlobusFlavour##pthr
 #else
@@ -36,7 +35,8 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).s
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
-AddLdFlags(-lmemcached -lstdc++)
+CPPFLAGS += -I $(MEMCACHED_LOCATION)/include
+AddLdFlags(-L $(MEMCACHED_LIB_LOCATION) -lmemcached -lstdc++)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

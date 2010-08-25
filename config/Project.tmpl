@@ -20,13 +20,13 @@ DLFCONF=/var/www/conf/dlf
  * - clobber is cleaning all files resulting from compilation
  * - purge is clobber + the drop of all Makefiles
  * - the check rules are testing the presence of one component and exiting if they fail
- *   + checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT are obvious
+ *   + checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkMEMCACHED checkXFS are obvious
  *   + checkDESTDIR checks whether the DESTDIR environment variable is set
  *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables
  *     are set
  */
 
-all: checkORACLE checkLSF checkGLOBUS checkXROOT tape client
+all: checkORACLE checkLSF checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
 tape: checkSTK
 install: checkDESTDIR checkVERSION all installtape installclient
 
@@ -51,8 +51,10 @@ checkORACLE:
 	  exit 1; \
 	fi
 
+LSF_LIB_LOCATION ?= $(LIBDIR)
+LSF_LOCATION ?= $(dir $(LSF_LIB_LOCATION))
 checkLSF:
-	@if [ ! -e $(LIBDIR)/liblsf.so -o ! -d /usr/include/lsf ]; then \
+	@if [ ! -e $(LSF_LIB_LOCATION)/liblsf.so -o ! -d $(LSF_LOCATION)/include/lsf ]; then \
 	  echo "Could not find LSF installation. Giving up."; \
 	  exit 1; \
 	fi
@@ -84,6 +86,21 @@ checkXROOT:
 	  echo "Could not find XROOT installation at ${XROOT_LOCATION}. Giving up."; \
 	  exit 1; \
 	fi
+
+MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
+MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))
+checkMEMCACHED:
+	@if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so.3 -o ! -e $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
+          echo "Could not find memcached installation at ${MEMCACHED_LOCATION}. Giving up."; \
+          exit 1; \
+        fi
+
+XFS_LOCATION ?= /usr
+checkXFS:
+	@if [ ! -e $(XFS_LOCATION)/include/xfs/xfs.h ]; then \
+          echo "Could not find xfs devel installation at ${XFS_LOCATION}. Giving up."; \
+          exit 1; \
+        fi
 
 checkVERSION:
 	@if [ -z "${MAJOR_CASTOR_VERSION}" -o -z "${MINOR_CASTOR_VERSION}" ]; then \

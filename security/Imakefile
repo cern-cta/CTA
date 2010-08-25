@@ -23,7 +23,6 @@ ClientDependsOnLibrary(common,castorcommon)
 ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS))
 
 #if UseGSI
-GLOBUS_LOCATION=GlobusLocation
 #if UseVOMS
 VOMS_LOCATION=VomsLocation
 #endif

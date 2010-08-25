@@ -13,21 +13,17 @@ COMM
 
 CPPFLAGS += -DSACCT -DNOMORERFIO=RfioNoMore -DRFIOLOGFILE=RfioLogFile \
 	    -DCNS_ROOT=NsRoot $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+CFLAGS += -DUSE_XFSPREALLOC
 
 RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
 
 #if UseGSI
-GLOBUS_LOCATION=GlobusLocation
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
 LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 AddLdFlags(-ldl)
-
-#if UseXFSPrealloc
-CFLAGS += -DUSE_XFSPREALLOC
-#endif
 
 CKSUMLIB = -lz
 
@@ -134,10 +130,8 @@ SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		checkkey.o fio.o rfstatfs.o alrm.o \
 		rfioacct.o RemoteJobSvc.o stager_catalogInterface.o \
 		stager_util.o stager_messages.o stager_extern_globals.o \
-		stager_uuid.o
-#if UseXFSPrealloc
-SRVOBJS += rfio_alignedbuf.o rfio_xfsprealloc.o
-#endif
+		stager_uuid.o rfio_alignedbuf.o rfio_xfsprealloc.o
+CPPFLAGS += -I $(XFS_LOCATION)/include
 
 NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(CKSUMLIB),755)
 LOGROTATE(castor-rfio-server,install)

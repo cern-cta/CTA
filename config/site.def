@@ -86,9 +86,6 @@ COMM server.
 COMM Define the remote tape copy daemon log file.
 #define RtcpdLogFile    LOGPATH(rtcpd_legacy.log)
 
-
-#define UseXFSPrealloc	        YES
-
 /* 
  * The following flag enables rfio client interface
  * To follow links. It brings an overhead at rfio_open()
@@ -118,7 +115,6 @@ COMM Define the remote tape copy daemon log file.
 #if UseGSI
 #define GSIMech GSI
 #define SecAuthMechGSI       -DGSI 
-#define GlobusLocation  /opt/globus
 #define VomsLocation    /opt/edg
 #if defined(__ia64__) || defined(__x86_64)
 #define GlobusFlavour   gcc64dbg

@@ -82,7 +82,7 @@ def main(argv):
     if inc:
 	flags += '-I%s -L%s/config ' % (sysconfig['INCLUDEPY'], sysconfig['BINLIBDEST'])
     if libs:
-        flags += '-lpython%s %s %s' % (sysconfig['VERSION'], sysconfig['LIBS'], sysconfig['LIBM'])
+        flags += '-L%s -lpython%s %s %s' % (sysconfig['LIBDIR'], sysconfig['VERSION'], sysconfig['LIBS'], sysconfig['LIBM'])
 
 	# for some version of python the shared objects to link against need 
 	# to be defined explicitly
