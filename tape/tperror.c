@@ -47,7 +47,7 @@ struct sk_info sk_codmsg[] = {
 	{"Copy aborted", 0},
 	{"Aborted command", 0},
 	{"Equal", 0},
-	{"Volume overflow", 0},
+	{"Volume overflow", ENOSPC},
 	{"Miscompare", 0},
 	{"Reserved", 0},
 	{"SCSI handshake failure", ETHWERR},

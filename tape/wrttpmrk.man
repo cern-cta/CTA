@@ -8,7 +8,8 @@ wrttpmrk \- flush tape drive buffer or write tape marks
 .SH SYNOPSIS
 .BI "int wrttpmrk (int " tapefd ,
 .BI "char *" path ,
-.BI "int " n );
+.BI "int " n , 
+.BI "int " immed);
 .SH DESCRIPTION
 .B wrttpmrk
 flushes the tape drive buffer or writes tape marks.
@@ -30,6 +31,9 @@ is only used for the error messages.
 is the number of tape marks to be written. If
 .I n
 is zero or greater than 1, the tape drive buffer is flushed.
+.TP
+.I immed
+if immed is exactly 1, the tape mark will be written in buffered mode.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -42,6 +46,9 @@ I/O error.
 .TP
 .B EBADF
 Bad file number.
+.TP
+.B ENOSPC
+Volume overflow.
 .TP
 .B ETCOMPA
 Drive/cartridge compatibility problem.

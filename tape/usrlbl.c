@@ -16,6 +16,7 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 #include "rtcp_lbl.h"
+#include "getconfent.h"
 
 /*	checkeofeov - check for EOF or EOV */
 /*	return	-1 and serrno set in case of error
@@ -71,6 +72,8 @@ int wrthdrlbl (int	tapefd,
 	int fsec;
 	char hdr1[80], hdr2[80];
 	char uhl1[80], vol1[80];
+	const char *useBuffTpm;
+	int  immed;
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
@@ -79,7 +82,7 @@ int wrthdrlbl (int	tapefd,
 	else
 		fsec = 1;
 	if (fsec == 1 && dlip->fseq != 1 && dlip->rewritetm)
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
 	if (dlip->lblcode == NL) return (0);	/* tape is unlabelled */
 	if (dlip->fseq == 1 || fsec > 1) {
 		memcpy (vol1, dlip->vol1, 80);
@@ -96,7 +99,14 @@ int wrthdrlbl (int	tapefd,
 		memcpy (uhl1, dlip->uhl1, 80);
 		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
 	}
-	return (wrttpmrk (tapefd, path, 1));
+	immed=0;
+	useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
+	if (0 != useBuffTpm) {
+		if (0 == strcasecmp(useBuffTpm,"YES")) {
+			immed=1;
+		}
+	}
+	return (wrttpmrk (tapefd, path, 1, immed));
 }
 
 int wrteotmrk(int tapefd,
@@ -109,16 +119,16 @@ int wrteotmrk(int tapefd,
 		return (-1);
 	if (! dlip->dev1tm) {
 		/* write 2 tape marks */
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
 		/* for Exabytes in 8200 mode, position in front of the 2 tapemarks,
 		   otherwise position between the 2 tapemarks */
 		if ((c = skiptpfb (tapefd, path, dlip->rewritetm+1)) < 0) return (c);
 	} else {
 		/* write 1 tape mark */
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
 		/* flush the buffer */
-		if ((c = wrttpmrk (tapefd, path, 0)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 0, 0)) < 0) return (c); 
 	}
 	return (0);
 }
@@ -137,11 +147,20 @@ int wrttrllbl (int	tapefd,
 	struct mtget mt_info;
 #endif
 	char uhl1[80];
+	const char *useBuffTpm;
+	int immed;
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
 	if (dlip->lblcode == NL) return (wrteotmrk (tapefd, path));	/* tape is unlabelled */
-	if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+	immed=0;
+	useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
+	if (0 != useBuffTpm) {
+		if (0 == strcasecmp(useBuffTpm,"YES")) {
+			immed=1;
+		}
+	}
+	if ((c = wrttpmrk (tapefd, path, 1, immed)) < 0) return (c);
 
 	memcpy (hdr1, dlip->hdr1, 80);
 	memcpy (hdr1, labelid, 3);

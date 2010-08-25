@@ -183,6 +183,6 @@ EXTERN_C int usrmsg        (char *, char *, ...);
 EXTERN_C int writelbl      (int, char *, char*);
 
 /* tape/wrttpmrk.c     */
-EXTERN_C int wrttpmrk      (int, char *, int);
+EXTERN_C int wrttpmrk      (int, char *, int, int);
 
 #endif

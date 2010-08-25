@@ -801,11 +801,11 @@ mounted:
 				}
 			}
 		}
-		if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
+		if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
 		if (devinfo->eoitpmrks == 2 || Tflag)
-			if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
+			if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
 		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */
-			if  ((c = wrttpmrk (tapefd, path, 0)) < 0) goto reply;
+			if  ((c = wrttpmrk (tapefd, path, 0, 0)) < 0) goto reply;
 		goto reply;
 	}
 
