@@ -105,10 +105,48 @@
 	
 	</td>
 		<td align="left" valign="top" height={{imageheight}}>
-			<form action="/treemaps/bydir/{{rootid}}/" method="post">
-				{{ metricscombo.as_p }}
-			<input type="submit" value="Apply" />
-			</form>
+			<table>
+				<form action="/treemaps/bydir/83790844/changemetrics/" method="post">
+				
+					<tr>
+					<td class="descriptiontext">Level:</td> 
+					
+					<td><select class="dmenuwidth" name="level" id="id_level">
+						{% for value, name in leveldropdown %}
+							<option value="{{value}}">{{name}}</option>
+						{% endfor %}
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Model:</td>
+					<td><select class="dmenuwidth" name="model" id="id_model">
+						{% for value, name in modeldropdown %}
+							<option value="{{value}}">{{name}}</option>
+						{% endfor %}
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Metric:</td>
+					<td><select class="dmenuwidth" name="metric" id="id_metric">
+						{% for value, name in metricdropdown %}
+							<option value="{{value}}">{{name}}</option>
+						{% endfor %}
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Getting children:</td>
+					<td><select class="dmenuwidth" name="childmethod" id="id_childmethod">
+						{% for value, name in childmethoddropdown %}
+							<option value="{{value}}">{{name}}</option>
+						{% endfor %}
+					</select></td></tr>
+					<tr><td>
+						<br>
+						<input class="applybutton" type="submit" value="Apply" />
+					</td></tr>
+				</form>
+
+			</table>
 		</td>
 	
 	</tr></table></p>
@@ -116,7 +154,27 @@
         <p>No data available / A file or an empty folder</p>
     {% endif %}
 
-
+    <style type="text/css">
+     .dmenuwidth {
+     width:200px;
+     background-color:#1F1F1F;
+     color:#7F7F7F;
+     }
+    </style>
+    
+    <style type="text/css">
+     .descriptiontext {
+		font-size: 14px;
+		color:#CFCFCF;
+     }
+    </style>
+    
+    <style type="text/css">
+     .applybutton {
+     background-color:#000000;
+     color:#FF0000;
+     }
+    </style>
 
 
 <!--

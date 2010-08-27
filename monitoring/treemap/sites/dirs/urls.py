@@ -15,6 +15,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
 #     (r'^admin/', include(admin.site.urls)),
+    (r'bydir/(?P<theid>\d+)/changemetrics/$', 'dirs.views.changeMetrics'),
     (r'bydir/(?P<theid>\d+)/$', 'dirs.views.plainbydir'),
     (r'bydir/group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)/$', 'dirs.views.groupView'),
     (r'(?P<depth>\d+)/$', 'dirs.views.plain'),

@@ -48,8 +48,9 @@ class Dirs(models.Model):
     timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     opttimetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     
-#    def __init__(self):
-#        Dirs.__init__(self)
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        
     children = QuerySet(model = 'self')
     children_cached = False
     
@@ -77,7 +78,6 @@ class Dirs(models.Model):
         return children
     
     def getDirs(self):
-
         if self.children_cached:
             return self.children
         else:
@@ -159,10 +159,6 @@ class Dirs(models.Model):
         return self.files
     
     def getFilesAndFolders(self):
-#            if self.children: self.hasChildren =  True 
-#            if not self.children: self.hasChildren = False
-#        children = self.dirs_set.all(depth = deeper)
-#        result = []
 
         d = self.getDirs()
         if not d: 
@@ -227,6 +223,14 @@ class Dirs(models.Model):
         
     def hasAnyChildren(self):
         return self.hasChildren() or self.hasFiles()
+    
+    def getUserFriendlyName(self):
+        return "Directory"
+    
+#mark children methods for Dirs
+Dirs.getDirs.__dict__['methodtype'] = 'children'
+Dirs.getFiles.__dict__['methodtype'] = 'children'
+Dirs.getFilesAndFolders.__dict__['methodtype'] = 'children'
         
 class CnsFileMetadata(models.Model):
     fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
@@ -274,6 +278,10 @@ class CnsFileMetadata(models.Model):
             return self.parent_fileid
         except Dirs.DoesNotExist:
             return self
+        
+    def getUserFriendlyName(self):
+        return "File"
+CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

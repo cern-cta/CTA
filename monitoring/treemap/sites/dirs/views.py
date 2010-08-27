@@ -28,6 +28,10 @@ from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import profile
 from django import forms
+from django.db import models
+from django.db.models.base import ModelBase
+from sites.tools.ObjectCreator import createObject
+from sites.tools.ColumnFinder import ColumnFinder
 
 
 def plain(request, depth):
@@ -68,16 +72,6 @@ def xxxplainbydir(request, id):
 #    #plainbydir1(request, theid)
 
 def plainbydir(request, theid):  
-    metric = ''
-    if request.method == 'POST':
-        print "POST!"
-        posted = request.POST
-        metric = posted['metric']
-        print metric
-#        for form in form_list:
-#            if form.is_valid():
-#                pass
-
     time = datetime.datetime.now()
     try:
         #Directory you want to show its content
@@ -168,7 +162,7 @@ def plainbydir(request, theid):
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, metric = metric)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels)
     
     del tree
     del otree
@@ -306,32 +300,31 @@ def groupView(request, parentpk, depth, model):
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels )
     
     del tree
     del otree
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-class MetricsForm(forms.Form):
-    metric = forms.ChoiceField(label="Metrics")
-    
-    def __init__(self, metric, *args, **kwargs):
-        super(MetricsForm, self).__init__(*args, **kwargs)
+def changeMetrics(request, theid):
+
+    if request.method == 'POST':
+        posted = {}
+        posted = request.POST
         
-        self.fields['metric'].choices = [(a.__str__(), a.__str__()) for a in metric]
-        self.choices_dict = dict(self.fields['metric'].choices)
-
-        pass
-
-    def save(self, commit=True):
-        pass
-
-
-def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, metric = ''):
-    print "preparing response"
+        response = "</p><b><u>This is not implemented yet</b></u></p><br><br><p>received POST data: <br><br>"
+        for key, value in posted.items():
+            response = response + "<b>Form Object:</b> " + key.__str__() + "<br><b>value:</b> " + value.__str__() + "<br><br>"
+        response = response + "</p>"
+        
+    else:
+        raise Http404
     
-    metricscombo = MetricsForm(('not implemented yet', 'metric1', 'metric2', 'metric3', 'metric4', 'metric5'))
+    return HttpResponse(response)
+
+def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, nblevels, metric = ''):
+    print "preparing response"
     
     apacheserver = settings.PUBLIC_APACHE_URL
     serverdict = settings.LOCAL_APACHE_DICT
@@ -433,14 +426,74 @@ def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cac
     navlinkparts = []
     for pr in parents:  
         navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
+          
+    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, 'Dirs')
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'metricscombo': metricscombo, 'rootid': rootid} , context_instance=None)
+     'rootid': rootid, 'leveldropdown': leveldropdown, 'modeldropdown': modeldropdown, 'metricdropdown': metricdropdown, 'childmethoddropdown': childmethoddropdown} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
+
+def generateDropdownValues(nblevels, themodel):
+    #generating drop down menu content
+    #create level dropdown
+    leveldropdown = []
+    leveldropdown.append((-1, 'all levels'))
+    for i in range(nblevels):
+        leveldropdown.append((i, "level "+i.__str__()))
+    
+    #look for available models    
+    #create model dropdown
+    modulename = None
+    themodelfound = False
+    modeldropdown = []
+    if settings.MODELS_LOCATION in settings.INSTALLED_APPS:
+        modulename = settings.MODELS_LOCATION + '.models'
+        if not modulename in sys.modules.keys():
+            try:
+                module = __import__( modulename )
+            except ImportError, e:
+                raise ConfigError( 'Unable to load module: ' + module )
+        else:
+            module = sys.modules[modulename]
+            
+        classes = dict(inspect.getmembers( module, inspect.isclass ))
+        
+        for classname in classes:
+            cls = classes[classname]
+            if isinstance(cls, ModelBase):
+                modelname = cls._base_manager.model._meta.object_name
+                if modelname == themodel: themodelfound = True
+                modeldropdown.append((modelname, cls.getUserFriendlyName(createObject(modulename , classname))))
+    else:
+        raise Exception("Configuration Error in settings.py: settings.MODELS_LOCATION must contain a value which is in settings.INSTALLED_APPS ")
+    
+    if not themodelfound: raise Exception('the given model couldn\'t be found')
+    
+    metricdropdown = []
+    cf = ColumnFinder(modulename, themodel)
+    columns = cf.getColumnnames()
+    for column in columns:
+        metricdropdown.append((column, column))
+        
+    childmethoddropdown = []
+    instance = createObject(modulename, themodel)  
+    #check methodname
+    found = False
+    for membername in instance.__class__.__dict__.keys():
+        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
+            function = instance.__class__.__dict__[membername]
+            try:
+                print function.__dict__['methodtype']
+                if function.__dict__['methodtype'] == 'children':
+                    childmethoddropdown.append((membername, membername))
+            except:
+                continue
+    
+    return leveldropdown, modeldropdown, metricdropdown, childmethoddropdown

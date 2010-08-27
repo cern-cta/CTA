@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^c#7#d@df$#!jl5a|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~op$e\ddd%dlr7#d@df>%d^$d%h$#!jl5a|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -113,4 +113,7 @@ REL_TREEMAP_DICT = "/imagesdev/treemaps"
 
 #Where to find icons
 REL_ICON_DICT = "/imagesdev/icons"
+
+#location of models
+MODELS_LOCATION = 'sites.dirs'
 
