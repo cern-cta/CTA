@@ -331,22 +331,22 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
             ret.append(size.__str__())
             ret.append(" B")
         elif size < 1048576:
-            ret.append("%.2f"%(size/1024))
+            ret.append("%.2f"%(size/1024.0))
             ret.append(" KB")
         elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576))
+            ret.append("%.2f"%(size/1048576.0))
             ret.append(" MB")
         elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824))
+            ret.append("%.2f"%(size/1073741824.0))
             ret.append(" GB")
         elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776))
+            ret.append("%.2f"%(size/1099511627776.0))
             ret.append(" TB")
         elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624))
+            ret.append("%.2f"%(size/1125899906842624.0))
             ret.append(" PB")
         else:
-            ret.append("%.2f"%(size/1152921504606846976))
+            ret.append("%.2f"%(size/1152921504606846976.0))
             ret.append(" XB")
             
         ret.append(" (")
@@ -357,7 +357,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         if(psize == 0):
             ret.append("%.2f"%(100))
         else:
-            ret.append("%.2f"%(size/psize*100))
+            ret.append("%.2f"%(size/psize*100.0))
             
         ret.append("%")
         
@@ -402,22 +402,22 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
             ret.append(size.__str__())
             ret.append(" B")
         elif size < 1048576:
-            ret.append("%.2f"%(size/1024))
+            ret.append("%.2f"%(size/1024.0))
             ret.append(" KB")
         elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576))
+            ret.append("%.2f"%(size/1048576.0))
             ret.append(" MB")
         elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824))
+            ret.append("%.2f"%(size/1073741824.0))
             ret.append(" GB")
         elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776))
+            ret.append("%.2f"%(size/1099511627776.0))
             ret.append(" TB")
         elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624))
+            ret.append("%.2f"%(size/1125899906842624.0))
             ret.append(" PB")
         else:
-            ret.append("%.2f"%(size/1152921504606846976))
+            ret.append("%.2f"%(size/1152921504606846976.0))
             ret.append(" XB")
             
         ret.append(" (")
@@ -428,7 +428,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         if(psize == 0):
             ret.append("%.2f"%(100))
         else:
-            ret.append("%.2f"%(size/psize*100))
+            ret.append("%.2f"%(size/psize*100.0))
             
         ret.append("%")
 
@@ -466,22 +466,22 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
             ret.append(size.__str__())
             ret.append(" B")
         elif size < 1048576:
-            ret.append("%.2f"%(size/1024))
+            ret.append("%.2f"%(size/1024.0))
             ret.append(" KB")
         elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576))
+            ret.append("%.2f"%(size/1048576.0))
             ret.append(" MB")
         elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824))
+            ret.append("%.2f"%(size/1073741824.0))
             ret.append(" GB")
         elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776))
+            ret.append("%.2f"%(size/1099511627776.0))
             ret.append(" TB")
         elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624))
+            ret.append("%.2f"%(size/1125899906842624.0))
             ret.append(" PB")
         else:
-            ret.append("%.2f"%(size/1152921504606846976))
+            ret.append("%.2f"%(size/1152921504606846976.0))
             ret.append(" XB")
             
         ret.append(" (")
@@ -492,7 +492,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         if(psize == 0):
             ret.append("%.2f"%(100))
         else:
-            ret.append("%.2f"%(size/psize*100))
+            ret.append("%.2f"%(size/psize*100.0))
             
         ret.append("%")
         
