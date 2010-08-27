@@ -221,7 +221,12 @@ public:
       os << "ADDRESS=" << element;
       os << ",index="  << element->index;
       os << ",isFree=" << boolToString(element->isFree);
-      os << ",data="   << element->data;
+      os << ",data=";
+      if(element->isFree) {
+        os << "N/A";
+      } else {
+        os << element->data;
+      }
       os << ",next="   << element->next;
       os << "}";
     }
