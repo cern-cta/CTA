@@ -34,39 +34,55 @@ namespace castor {
 namespace tape   {
 namespace utils  {
 
+/**
+ * A smart file descriptor list that owns a list of basic file descriptors.
+ * When the smart file descriptor list goes out of scope, it will close all
+ * of the file descriptor it owns.
+ */
+class SmartFdList: public std::list<int> {
+
+public:
+
   /**
-   * A smart file descriptor list that owns a list of basic file descriptors.
-   * When the smart file descriptor list goes out of scope, it will close all
-   * of the file descriptor it owns.
+   * Destructor.
+   *
+   * Closes the owned file descriptor if release() has not been called
+   * previously.
    */
-  class SmartFdList: public std::list<int> {
+  ~SmartFdList();
 
-  public:
+  /**
+   * Appends a copy of the specified file descriptor to the end of list.
+   * A file descriptor must not be closed twice, there an exception is thrown
+   * if the file descriptor already exists in the list.
+   */
+  void push_back(const int &fd) throw(castor::exception::Exception);
 
-    /**
-     * Destructor.
-     *
-     * Closes the owned file descriptor if release() has not been called
-     * previously.
-     */
-    ~SmartFdList();
+  /**
+   * Releases the specified file descriptor.  After a call to this function,
+   * the desctructor of the smart file descriptor list will not close the
+   * specified file descriptor.
+   *
+   * @return The released file descriptor.
+   */
+  int release(const int fd) throw(castor::exception::Exception);
 
-    /**
-     * Appends a copy of the specified file descriptor to the end of list.
-     * A file descriptor must not be closed twice, there an exception is thrown
-     * if the file descriptor already exists in the list.
-     */
-    void push_back(const int &fd) throw(castor::exception::Exception);
 
-    /**
-     * Releases the specified file descriptor.  After a call to this function,
-     * the desctructor of the smart file descriptor list will not close the
-     * specified file descriptor.
-     *
-     * @return The released file descriptor.
-     */
-    int release(const int fd) throw(castor::exception::Exception);
-  };
+private:
+
+  /**
+   * Private copy-constructor to prevent users from trying to create a new
+   * copy of an object of this class.
+   */
+  SmartFdList(const SmartFdList &obj) throw();
+
+  /**
+   * Private assignment-operator to prevent users from trying to assign one
+   * object of this class to another.
+   */
+  SmartFdList &operator=(SmartFdList& obj) throw();
+
+}; // class SmartFdList
 
 } // namespace utils
 } // namespace tape

@@ -50,10 +50,10 @@ CPP_SRCS=TestPythonMain.cpp\
 OBJS=$(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
 testpython: $(OBJS)
-	g++ -pthread -o $@ $^ $(PYTHONLIBS)
+	g++ -g -pthread -o $@ $^ $(PYTHONLIBS)
 
 clean:
 	rm -f testpython *.o
 
 %.o: %.cpp
-	g++ -pthread $(INCLUDE_OPTIONS) -c -o $@ $^
+	g++ -g -pthread $(INCLUDE_OPTIONS) -c -o $@ $^

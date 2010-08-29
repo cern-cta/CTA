@@ -384,10 +384,10 @@ void readFileIntoList(const char *filename, std::list<std::string> &lines)
  * </ul>
  *
  * @param filename The filename of the "filelist" file.
- * @param list The to which the filenames will be appended.
+ * @param list     The list to which the filenames will be appended.
  */
 void parseFileList(const char *filename, std::list<std::string> &list)
-  throw (castor::exception::Exception);
+  throw(castor::exception::Exception);
 
 /**
  * Creates and returns an std::string which is the result of the stripping
@@ -539,7 +539,6 @@ void pthreadCreate(
 void pthreadJoin(pthread_t thread, void **const valuePtr)
   throw(castor::exception::Exception);
 
-
 /**
  * C++ wrapper function of the C getconfent() function.  This wrapper
  * converts a return value of null or empty string into an
@@ -552,11 +551,17 @@ void pthreadJoin(pthread_t thread, void **const valuePtr)
 const char *getMandatoryValueFromConfiguration(const char *const category,
   const char *const name) throw(castor::exception::InvalidConfiguration);
 
-
 /**
  * Returns true if the specified C string is empty else returns false.
  */
 bool isAnEmptyString(const char *const str) throw();
+
+
+/**
+ * Returns a comma separated list string-representation of the specified vector
+ * of strings.
+ */
+std::string vectorOfStringToString(const std::vector<std::string> &v) throw();
 
 } // namespace utils
 } // namespace tape

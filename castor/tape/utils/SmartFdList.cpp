@@ -32,6 +32,35 @@
 
 
 //-----------------------------------------------------------------------------
+// copy-constructor
+//-----------------------------------------------------------------------------
+castor::tape::utils::SmartFdList::SmartFdList(const SmartFdList &) throw() :
+  std::list<int>() {
+
+  // This code is never executed because the copy-constructor is private and
+  // should never be called by another method of this class.
+
+  // Do nothing
+}
+
+
+//-----------------------------------------------------------------------------
+// assignment-operator
+//-----------------------------------------------------------------------------
+castor::tape::utils::SmartFdList
+  &castor::tape::utils::SmartFdList::operator=(SmartFdList&)
+  throw() {
+
+  // This code is never executed because the assignment-operator is private and
+  // should never be called by another method of this class
+
+  // Do nothing
+
+  return *this;
+}
+
+
+//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::tape::utils::SmartFdList::~SmartFdList() {

@@ -46,6 +46,18 @@ castor::tape::utils::SmartFd::SmartFd(const int fd) throw():
 
 
 //-----------------------------------------------------------------------------
+// copy-constructor
+//-----------------------------------------------------------------------------
+castor::tape::utils::SmartFd::SmartFd(const SmartFd &) throw() {
+
+  // This code is never executed because the copy-constructor is private and
+  // should never be called by another method of this class.
+
+  // Do nothing
+}
+
+
+//-----------------------------------------------------------------------------
 // setClosedCallback
 //-----------------------------------------------------------------------------
 void castor::tape::utils::SmartFd::setClosedCallback
@@ -105,7 +117,7 @@ castor::tape::utils::SmartFd::~SmartFd() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::get() throw() {
+int castor::tape::utils::SmartFd::get() const throw() {
 
   return m_fd;
 }

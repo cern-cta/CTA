@@ -33,7 +33,14 @@
 
 #include <iostream>
 #include <pthread.h>
+#include <string>
+#include <vector>
 
+/**
+ * The arguments names a migration-policy Python-function must have in order
+ * to be considered valid.
+ */
+static std::vector<std::string> s_expectedMigrationPolicyArgNames;
 
 void *startRoutine(void *arg) {
   using namespace castor::tape;
@@ -84,6 +91,21 @@ int exceptionThrowingMain()
   throw(castor::exception::Exception) {
 
   using namespace castor::tape;
+
+  // Set the argument names a migration-policy Python-function must have in
+  // order to be considered valid
+  s_expectedMigrationPolicyArgNames.push_back("tapepool");
+  s_expectedMigrationPolicyArgNames.push_back("castorfilename");
+  s_expectedMigrationPolicyArgNames.push_back("copynb");
+  s_expectedMigrationPolicyArgNames.push_back("fileId");
+  s_expectedMigrationPolicyArgNames.push_back("fileSize");
+  s_expectedMigrationPolicyArgNames.push_back("fileMode");
+  s_expectedMigrationPolicyArgNames.push_back("uid");
+  s_expectedMigrationPolicyArgNames.push_back("gid");
+  s_expectedMigrationPolicyArgNames.push_back("aTime");
+  s_expectedMigrationPolicyArgNames.push_back("mTime");
+  s_expectedMigrationPolicyArgNames.push_back("cTime");
+  s_expectedMigrationPolicyArgNames.push_back("fileClass");
 
   python::initializePython();
 

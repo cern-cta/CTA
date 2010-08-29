@@ -32,51 +32,51 @@ namespace castor {
 namespace tape   {
 namespace utils  {
 
+/**
+ * A simple scoped-lock on a mutex.  When the scoped-lock goes out of scope,
+ * it will unlock the mutex.
+ */
+class ScopedLock {
+
+public:
+
   /**
-   * A simple scoped-lock on a mutex.  When the scoped-lock goes out of scope,
-   * it will unlock the mutex.
+   * Constructor.
+   *
+   * Takes a lock on the specified mutex.
+   *
+   * @param mutex The mutex on which the lock should be taken.
    */
-  class ScopedLock {
+  ScopedLock(pthread_mutex_t &mutex) throw(castor::exception::Exception);
 
-  public:
-
-    /**
-     * Constructor.
-     *
-     * Takes a lock on the specified mutex.
-     *
-     * @param mutex The mutex on which the lock should be taken.
-     */
-    ScopedLock(pthread_mutex_t &mutex) throw(castor::exception::Exception);
-
-    /**
-     * Destructor.
-     *
-     * Unlocks the mutex.
-     */
-    ~ScopedLock() throw();
+  /**
+   * Destructor.
+   *
+   * Unlocks the mutex.
+   */
+  ~ScopedLock() throw();
 
 
-  private:
+private:
 
-    /**
-     * Private copy constructor to prevent users from trying to copy a
-     * ScopedLock.
-     */
-    ScopedLock(const ScopedLock &s) throw();
+  /**
+   * Private copy-constructor to prevent users from trying to create a new
+   * copy of an object of this class.
+   */
+  ScopedLock(const ScopedLock &s) throw();
 
-    /**
-     * Private assignment operator to prevent users from trying to copy a
-     * ScopedLock.
-     */
-    ScopedLock &operator=(ScopedLock& obj) throw();
+  /**
+   * Private assignment-operator to prevent users from trying to assign one
+   * object of this class to another.
+   */
+  ScopedLock &operator=(ScopedLock& obj) throw();
 
-    /**
-     * The mutex on which the lock has been taken.
-     */
-    pthread_mutex_t *m_mutex;
+  /**
+   * The mutex on which the lock has been taken.
+   */
+  pthread_mutex_t *m_mutex;
 
-  };
+}; // class ScopedLock
 
 } // namespace utils
 } // namespace tape

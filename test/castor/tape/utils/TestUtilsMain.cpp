@@ -1,9 +1,14 @@
 
 #include "castor/tape/utils/IndexedContainer.hpp"
+#include "castor/tape/utils/SmartOcciResultSet.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
+#include <list>
 #include <stdlib.h>
+#include <string>
+#include <vector>
+#include "occi.h"
 
 
 int testIndexedContainer() {
@@ -117,7 +122,7 @@ int testIndexedContainer() {
 
   os << std::endl;
 
-  return(0);
+  return(0); // Test passed
 }
 
 
@@ -159,7 +164,7 @@ int testToHex() {
     return(-1); // Test failed
   }
 
-  return(0);
+  return(0); // Test passed
 }
 
 
@@ -225,14 +230,137 @@ int testParseTpconfig() {
       std::endl;
   }
 
-  return(0);
+  return(0); // Test passed
 }
 
 
-int main() {
+std::string getStagerDbConfigParam(std::list<std::string> configLines,
+  const char *const service,  const char *const name)
+  throw(castor::exception::Exception) {
+  using namespace castor::tape;
+
+  for(std::list<std::string>::const_iterator lineItor = configLines.begin();
+    lineItor != configLines.end(); lineItor++) {
+
+    std::vector<std::string> columns;
+    utils::splitString(utils::singleSpaceString(utils::trimString(*lineItor)),
+      ' ', columns);
+
+    if(columns.size() >=3 && columns[0] == service && columns[1] == name) {
+      return columns[2];
+    }
+  }
+
+  castor::exception::Exception ex(ECANCELED);
+  ex.getMessage() <<
+    "Failed to find stager configuration parameter"
+    ": name=" << name;
+  throw(ex);
+}
+
+
+int testSmartOcciResultSet() {
+  using namespace castor::tape;
+
+  std::ostream &os = std::cout;
+
+  os << std::endl;
+  utils::writeBanner(os, __FUNCTION__);
+
+  os <<
+    "SmartOcciResultSet((oracle::occi::Statement *)NULL,"
+    " (oracle::occi::ResultSet *)1)" << std::endl;
+  try {
+    utils::SmartOcciResultSet rs((oracle::occi::Statement *)NULL,
+      (oracle::occi::ResultSet *)1);
+    os << "Failed to detect NULL statement" << std::endl;
+    return(-1); // Test failed
+  } catch(castor::exception::Exception &ex) {
+    os << "Correctly caught castor::exception::Exception: "
+          "ex.code()=" << ex.code()
+       << " ex.getMessage().str()=\"" << ex.getMessage().str() << "\"";
+    os << std::endl;
+  }
+
+  os <<
+    "SmartOcciResultSet((oracle::occi::Statement *)1,"
+    " (oracle::occi::ResultSet *)NULL)" << std::endl;
+  try {
+    utils::SmartOcciResultSet rs((oracle::occi::Statement *)1,
+      (oracle::occi::ResultSet *)NULL);
+    os << "Failed to detect NULL statement" << std::endl;
+    return(-1); // Test failed
+  } catch(castor::exception::Exception &ex) {
+    os << "Correctly caught castor::exception::Exception: "
+          "ex.code()=" << ex.code()
+       << " ex.getMessage().str()=\"" << ex.getMessage().str() << "\"";
+    os << std::endl;
+  }
+
+  // Get the connection details of the stager database
+  std::list<std::string> configLines;
+  utils::parseFileList("/etc/castor/ORASTAGERCONFIG", configLines);
+
+  const std::string user   =
+    getStagerDbConfigParam(configLines, "DbCnvSvc", "user"  );
+  const std::string passwd =
+    getStagerDbConfigParam(configLines, "DbCnvSvc", "passwd");
+  const std::string dbName =
+    getStagerDbConfigParam(configLines, "DbCnvSvc", "dbName");
+
+  oracle::occi::Environment *const env =
+    oracle::occi::Environment::createEnvironment();
+  oracle::occi::Connection *conn = env->createConnection(user, passwd, dbName);
+
+  std::cout << "Test SmartOcciResultSet::close()" << std::endl;
+  {
+    oracle::occi::Statement *stmt = conn->createStatement(
+      "SELECT Dummy FROM Dual");
+    {
+      utils::SmartOcciResultSet rs(stmt, stmt->executeQuery());
+
+      while(rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+        std::string dummy = rs->getString(1);
+
+        std::cout << "dummy=" << dummy << std::endl;
+      }
+
+      rs.close();
+    }
+
+    conn->terminateStatement(stmt);
+  }
+
+  std::cout << "Test close in SmartOcciResultSet::~SmartOcciResultSet()" <<
+    std::endl;
+  {
+    oracle::occi::Statement *stmt = conn->createStatement(
+      "SELECT Dummy FROM Dual");
+    {
+      utils::SmartOcciResultSet rs(stmt, stmt->executeQuery());
+  
+      while(rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+        std::string dummy = rs->getString(1);
+
+        std::cout << "dummy=" << dummy << std::endl;
+      }
+
+      // Explicitly no rs.close() to test close in constructor
+    }
+
+    conn->terminateStatement(stmt);
+  }
+
+  env->terminateConnection(conn);
+  oracle::occi::Environment::terminateEnvironment(env);
+
+  return(0); // Test passed
+}
+
+
+int exceptionThrowingMain() {
   unsigned int nbTests  = 0;
   unsigned int nbFailed = 0;
-
 
   if(testIndexedContainer()) nbFailed++;
   nbTests++;
@@ -243,9 +371,36 @@ int main() {
   if(testParseTpconfig()) nbFailed++;
   nbTests++;
 
+  if(testSmartOcciResultSet()) nbFailed++;
+  nbTests++;
+
   std::cout << std::endl;
   std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
   std::cout << std::endl;
 
   return(nbFailed == 0 ? 0 : -1);
+}
+
+
+int main() {
+  try {
+    return exceptionThrowingMain();
+  } catch(castor::exception::Exception &ex) {
+    std::cout <<
+      "Tests failed"
+      ": Caught a castor::exception::Exception"
+      ": code=" << ex.code() <<
+      ", message=" << ex.getMessage().str() << std::endl;
+  } catch(std::exception &se) {
+    std::cout <<
+      "Tests failed"
+      ": Caught a std::exception"
+      ": what=" << se.what() << std::endl;
+  } catch(...) {
+    std::cout <<
+      "Tests failed"
+      ": Caught an unknown exception" << std::endl;
+  }
+
+  exit(-1); // Tests failed because an exception was caught
 }

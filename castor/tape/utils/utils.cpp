@@ -34,17 +34,17 @@
 #include "h/rtcp_constants.h"
 #include "h/serrno.h"
 
-#include <arpa/inet.h>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <locale>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <time.h>
-#include <algorithm>
 #include <unistd.h>
-#include <locale>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 
 //-----------------------------------------------------------------------------
@@ -905,4 +905,27 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
 //------------------------------------------------------------------------------
 bool castor::tape::utils::isAnEmptyString(const char *const str) throw() {
   return *str == '\0';
+}
+
+
+//------------------------------------------------------------------------------
+// vectorOfStringToString
+//------------------------------------------------------------------------------
+std::string castor::tape::utils::vectorOfStringToString(
+  const std::vector<std::string> &v) throw() {
+
+  std::ostringstream oss;
+
+  for(std::vector<std::string>::const_iterator itor=v.begin(); itor != v.end();
+    itor++) {
+
+    // Append a comma if this is not the first string in the list
+    if(itor!=v.begin()) {
+      oss << ",";
+    }
+
+    oss << *itor;
+  }
+
+  return oss.str();
 }

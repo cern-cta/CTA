@@ -108,6 +108,12 @@ private:
    */ 
   FILE *m_file;
 
+  /**
+   * Private copy-constructor to prevent users from trying to create a new
+   * copy of an object of this class.
+   */
+  SmartFILEPtr(const SmartFILEPtr &obj) throw();
+
 }; // class SmartFILEPtr
 
 } // namespace utils
