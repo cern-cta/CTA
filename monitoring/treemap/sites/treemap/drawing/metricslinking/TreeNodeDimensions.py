@@ -13,6 +13,7 @@ from sites.errors.ConfigError import ConfigError
 import math
 from sites.dirs.models import *
 from sites.treemap.objecttree.Annex import Annex
+from sites.tools.TextTools import sizeInBytes
 
 class ViewNodeDimensionBase(object):
     '''
@@ -327,27 +328,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(splitText(dbobj.fullname.__str__(), 50, 39))
         ret.append("<br><b>size:</b> ")
         
-        if size < 1024:
-            ret.append(size.__str__())
-            ret.append(" B")
-        elif size < 1048576:
-            ret.append("%.2f"%(size/1024.0))
-            ret.append(" KB")
-        elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576.0))
-            ret.append(" MB")
-        elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824.0))
-            ret.append(" GB")
-        elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776.0))
-            ret.append(" TB")
-        elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624.0))
-            ret.append(" PB")
-        else:
-            ret.append("%.2f"%(size/1152921504606846976.0))
-            ret.append(" XB")
+        ret.append(sizeInBytes(size))
             
         ret.append(" (")
         ret.append(size.__str__())
@@ -398,27 +379,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(splitText(dirname, 50, 39))
         ret.append("<br><b>size:</b> ")
         
-        if size < 1024:
-            ret.append(size.__str__())
-            ret.append(" B")
-        elif size < 1048576:
-            ret.append("%.2f"%(size/1024.0))
-            ret.append(" KB")
-        elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576.0))
-            ret.append(" MB")
-        elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824.0))
-            ret.append(" GB")
-        elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776.0))
-            ret.append(" TB")
-        elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624.0))
-            ret.append(" PB")
-        else:
-            ret.append("%.2f"%(size/1152921504606846976.0))
-            ret.append(" XB")
+        ret.append(sizeInBytes(size))
             
         ret.append(" (")
         ret.append(size.__str__())
@@ -462,27 +423,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(splitText(dirname, 50, 39))
         ret.append("<br><b>size:</b> ")
         
-        if size < 1024:
-            ret.append(size.__str__())
-            ret.append(" B")
-        elif size < 1048576:
-            ret.append("%.2f"%(size/1024.0))
-            ret.append(" KB")
-        elif size < 1073741824:
-            ret.append("%.2f"%(size/1048576.0))
-            ret.append(" MB")
-        elif size < 1099511627776:
-            ret.append("%.2f"%(size/1073741824.0))
-            ret.append(" GB")
-        elif size < 1125899906842624:
-            ret.append("%.2f"%(size/1099511627776.0))
-            ret.append(" TB")
-        elif size < 1152921504606846976:
-            ret.append("%.2f"%(size/1125899906842624.0))
-            ret.append(" PB")
-        else:
-            ret.append("%.2f"%(size/1152921504606846976.0))
-            ret.append(" XB")
+        ret.append(sizeInBytes(size))
             
         ret.append(" (")
         ret.append((long(size)).__str__())

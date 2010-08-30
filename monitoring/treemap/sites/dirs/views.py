@@ -161,7 +161,7 @@ def plainbydir(request, theid):
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
-    response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
+    response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels)
     
     del tree
@@ -299,7 +299,7 @@ def groupView(request, parentpk, depth, model):
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
-    response = respond (vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
+    response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels )
     
     del tree
@@ -310,20 +310,30 @@ def groupView(request, parentpk, depth, model):
 def changeMetrics(request, theid):
 
     if request.method == 'POST':
+        response = ""
+        
+        cookiesenabled = request.session.test_cookie_worked()
+        if not cookiesenabled:
+            response = response + "---------PLEASE ENABLE COOKIES, IF YOU ALREADY HAVE DONE THAT, PLEASE REFRESH THE PAGE----------<br><br>"
+            request.session.set_test_cookie()
+        else:
+            response = response + "---------COOKIES SEEM TO WORK----------<br><br>"
+            
         posted = {}
         posted = request.POST
         
-        response = "</p><b><u>This is not implemented yet</b></u></p><br><br><p>received POST data: <br><br>"
+        response = response + "</p><b><u>This is not implemented yet</b></u></p><br><br><p>received POST data: <br><br>"
         for key, value in posted.items():
             response = response + "<b>Form Object:</b> " + key.__str__() + "<br><b>value:</b> " + value.__str__() + "<br><br>"
         response = response + "</p>"
         
     else:
         raise Http404
-    
+        
+    request.session.set_test_cookie()
     return HttpResponse(response)
 
-def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, nblevels, metric = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, nblevels, metric = ''):
     print "preparing response"
     
     apacheserver = settings.PUBLIC_APACHE_URL
@@ -429,6 +439,8 @@ def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cac
           
     leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, 'Dirs')
     
+    print request.session.test_cookie_worked()
+    
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
@@ -437,6 +449,7 @@ def respond(vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cac
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
     
+    request.session.set_test_cookie()
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
 

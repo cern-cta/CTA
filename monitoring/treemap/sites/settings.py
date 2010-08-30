@@ -30,7 +30,7 @@ DATABASE_PORT = ''             # Set to empty string for default. Not used with 
 # system time zone.
 TIME_ZONE = 'Europe/Zurich'
 
-# Language code for this installation. All choices can be found here:
+# Language code for this installation. All choices can be found here:django.contrib.sessions.backends.file
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
@@ -55,7 +55,7 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '^m!i98fj@$_xl@=h3_r=o0=(+&$*#af9fmfb0$v!gy&scdzaka'
+SECRET_KEY = '^m!i98fj@$_xl@=h3_rD=o0=(+&$*#af9fmfb0$v!gy&sczaka'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~op$e\ddd%dlr7#d@df>%d^$d%h$#!jl5a|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~op$e\d%dffdYk%dlr7#d@df>%d^$d%h$#!jl5a|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -90,7 +90,7 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    #'django.contrib.sessions', not DB bases sessions
     'django.contrib.sites',
     'sites.dirs',
 #    'django.contrib.admin'
@@ -99,6 +99,9 @@ INSTALLED_APPS = (
 OPTIONS = {
     "autocommit": True,
 }
+
+#using a file to store sessions
+SESSION_ENGINE ="django.contrib.sessions.backends.file"
 
 #user defined settings, specific to monitoring
 
@@ -117,3 +120,5 @@ REL_ICON_DICT = "/imagesdev/icons"
 #location of models
 MODELS_LOCATION = 'sites.dirs'
 
+#tell django where to create a session file, the directory must be read-write
+SESSION_FILE_PATH = "/var/www/html/sessions"

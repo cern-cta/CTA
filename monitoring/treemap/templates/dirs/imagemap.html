@@ -6,6 +6,7 @@
 <head>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="PRIVATE">
 <title>TreeMaps</title>
+
 </head>
 <body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#000000">
     
@@ -102,9 +103,15 @@
 			   </style>  
 		   
 	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
-	
-	</td>
-		<td align="left" valign="top" height={{imageheight}}>
+	</td>	
+		<td name = "optionsmenu" align="left" valign="top" height={{imageheight}} style="display:none;">	
+		
+		<!--  make the menu visible if JavaScript is activated -->
+		<script LANGUAGE="JavaScript">
+			var optmenu = document.getElementsByName("optionsmenu")[0];
+			optmenu.style.display = "inline"
+		</script>
+		
 			<table>
 				<form action="/treemaps/bydir/83790844/changemetrics/" method="post">
 				
@@ -119,7 +126,7 @@
 					
 					<tr>
 					<td class="descriptiontext">Model:</td>
-					<td><select class="dmenuwidth" name="model" id="id_model">
+					<td><select class="dmenuwidth" name="model" id="id_model" onchange="window.open(this.options[this.selectedIndex].value,'_top')">
 						{% for value, name in modeldropdown %}
 							<option value="{{value}}">{{name}}</option>
 						{% endfor %}
@@ -147,8 +154,14 @@
 				</form>
 
 			</table>
-		</td>
-	
+		</td>	
+		<noscript>
+			<div style="color:#FF0000" align = "center">
+				This page requires JavaScript! <br>
+				Please enable JavaScript and reload the page
+			</div>
+		</noscript>
+		
 	</tr></table></p>
     {% else %}
         <p>No data available / A file or an empty folder</p>
