@@ -110,7 +110,8 @@ void castor::tape::python::initializePython()
 //---------------------------------------------------------------------------
 // finalizePython
 //---------------------------------------------------------------------------
-void castor::tape::python::finalizePython() throw() {
+void castor::tape::python::finalizePython()
+  throw() {
 
   // Get a lock on the global embedded Python interpreter using
   // PyGILState_Ensure() so that the Py_Finalize() function which will be
@@ -126,64 +127,38 @@ void castor::tape::python::finalizePython() throw() {
 
 
 //---------------------------------------------------------------------------
-// importPolicyPythonModule
+// importPythonModule
 //---------------------------------------------------------------------------
-PyObject * castor::tape::python::importPolicyPythonModule(
-  const char *const moduleName) throw(castor::exception::Exception) {
+PyObject * castor::tape::python::importPythonModule(
+  const char *const moduleName)
+  throw(castor::exception::Exception) {
 
   if(moduleName == NULL) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Failed to import policy python-module"
+      ": Failed to import python-module"
       ": moduleName parameter is NULL");
-  }
-
-  // Check the module file exists in the CASTOR_POLICIES_DIRECTORY as it is
-  // difficult to obtain errors from the embedded Python interpreter
-  {
-    std::string fullPathname(CASTOR_POLICIES_DIRECTORY);
-
-    fullPathname += "/";
-    fullPathname += moduleName;
-    fullPathname += ".py";
-
-    struct stat buf;
-    try {
-      utils::statFile(fullPathname.c_str(), buf);
-    } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception ex2(ex.code());
-
-      ex2.getMessage() <<
-        "Failed to import policy python-module"
-        ": moduleName=" << moduleName <<
-        ": Failed to get information about the CASTOR-policy Python-module file"
-        ": " << ex.getMessage().str();
-
-      throw(ex2);
-    }
-
-    // Throw an exception if the module file is not a regular file
-    if(!S_ISREG(buf.st_mode)) {
-      castor::exception::Exception ex(ECANCELED);
-
-      ex.getMessage() <<
-        "Failed to import policy python-module"
-        ": moduleName=" << moduleName <<
-        ": " << fullPathname << " is not a regular file";
-
-      throw(ex);
-    }
   }
 
   castor::tape::python::SmartPyObjectPtr
     module(PyImport_ImportModule((char *)moduleName));
 
   if(module.get() == NULL) {
+    // Try to determine the Python exception if there was a Python error
+    PyObject *const pyEx = PyErr_Occurred();
+    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+    // Clear the Python error if there was one
+    if(pyEx != NULL) {
+      PyErr_Clear();
+    }
+
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() <<
-      "Failed to import policy python-module"
+      "Failed to import python-module"
+      ": PyImport_ImportModule() call failed"
       ": moduleName=" << moduleName <<
-      ": PyImport_ImportModule() call failed";
+      ", pythonException=" << pyExStr;
 
     throw(ex);
   }
@@ -194,7 +169,7 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() <<
-      "Failed to import policy python-module"
+      "Failed to import python-module"
       ": moduleName=" << moduleName <<
       "PyModule_GetDict() call failed";
 
@@ -206,21 +181,107 @@ PyObject * castor::tape::python::importPolicyPythonModule(
 
 
 //---------------------------------------------------------------------------
+// importPythonModuleWithLock
+//---------------------------------------------------------------------------
+PyObject * castor::tape::python::importPythonModuleWithLock(
+  const char *const moduleName)
+  throw(castor::exception::Exception) {
+  // Get a lock on the embedded Python-interpreter
+  ScopedPythonLock scopedLock;
+
+  return(importPythonModule(moduleName));
+}
+
+
+//---------------------------------------------------------------------------
+// importPolicyPythonModule
+//---------------------------------------------------------------------------
+PyObject * castor::tape::python::importPolicyPythonModule(
+  const char *const moduleName)
+  throw(castor::exception::Exception) {
+
+  if(moduleName == NULL) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Failed to import policy python-module"
+      ": moduleName parameter is NULL");
+  }
+
+  // Check the module file exists in the CASTOR_POLICIES_DIRECTORY as it is
+  // difficult to obtain errors from the embedded Python interpreter
+  checkPolicyModuleIsInCastorPoliciesDirectory(moduleName);
+
+  return importPythonModule(moduleName);
+}
+
+
+//---------------------------------------------------------------------------
+// checkPolicyModuleIsInCastorPoliciesDirectory
+//---------------------------------------------------------------------------
+void castor::tape::python::checkPolicyModuleIsInCastorPoliciesDirectory(
+  const char *const moduleName)
+  throw(castor::exception::Exception) {
+  std::string fullPathname(CASTOR_POLICIES_DIRECTORY);
+
+  fullPathname += "/";
+  fullPathname += moduleName;
+  fullPathname += ".py";
+
+  struct stat buf;
+  try {
+    utils::statFile(fullPathname.c_str(), buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to import policy python-module"
+      ": moduleName=" << moduleName <<
+      ": Failed to get information about the CASTOR-policy Python-module file"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+
+  // Throw an exception if the module file is not a regular file
+  if(!S_ISREG(buf.st_mode)) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "Failed to import policy python-module"
+      ": moduleName=" << moduleName <<
+      ": " << fullPathname << " is not a regular file";
+
+    throw(ex);
+  }
+}
+
+
+//---------------------------------------------------------------------------
 // importPolicyPythonModuleWithLock
 //---------------------------------------------------------------------------
 PyObject * castor::tape::python::importPolicyPythonModuleWithLock(
-  const char *const moduleName) throw(castor::exception::Exception) {
-  ScopedPythonLock scopedLock;
+  const char *const moduleName)
+  throw(castor::exception::Exception) {
+  if(moduleName == NULL) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Failed to import policy python-module"
+      ": moduleName parameter is NULL");
+  }
 
-  return(importPolicyPythonModule(moduleName));
+  // Check the module file exists in the CASTOR_POLICIES_DIRECTORY as it is
+  // difficult to obtain errors from the embedded Python interpreter
+  checkPolicyModuleIsInCastorPoliciesDirectory(moduleName);
+
+  return importPythonModuleWithLock(moduleName);
 }
 
 
 //---------------------------------------------------------------------------
 // getPythonFunction
 //---------------------------------------------------------------------------
-PyObject *castor::tape::python::getPythonFunction(PyObject *const pyDict,
-  const char *const functionName) throw(castor::exception::Exception) {
+PyObject *castor::tape::python::getPythonFunction(
+  PyObject   *const pyDict,
+  const char *const functionName)
+  throw(castor::exception::Exception) {
 
   if(pyDict == NULL) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
@@ -266,9 +327,24 @@ PyObject *castor::tape::python::getPythonFunction(PyObject *const pyDict,
 
 
 //---------------------------------------------------------------------------
+// getPythonFunctionWithLock
+//---------------------------------------------------------------------------
+PyObject *castor::tape::python::getPythonFunctionWithLock(
+  PyObject   *const pyDict,
+  const char *const functionName)
+  throw(castor::exception::Exception) {
+  // Get a lock on the embedded Python-interpreter
+  ScopedPythonLock scopedLock;
+
+  return(getPythonFunction(pyDict, functionName));
+}
+
+
+//---------------------------------------------------------------------------
 // pythonExceptionToStr
 //---------------------------------------------------------------------------
-const char *castor::tape::python::stdPythonExceptionToStr(PyObject *const pyEx)
+const char *castor::tape::python::stdPythonExceptionToStr(
+  PyObject *const pyEx)
   throw() {
 
   if(pyEx == NULL) {
@@ -330,4 +406,176 @@ const char *castor::tape::python::stdPythonExceptionToStr(PyObject *const pyEx)
   } else {
     return "UNKNOWN";
   }
+}
+
+
+//---------------------------------------------------------------------------
+// getPythonFunctionArgumentNames
+//---------------------------------------------------------------------------
+std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
+  PyObject          *const inspectGetargspecFunc,
+  PyObject          *const pyFunc,
+  std::vector<std::string> &argumentNames) throw(castor::exception::Exception) {
+
+  // Build the input Python-object for the inspect.getargspec Python-function
+  castor::tape::python::SmartPyObjectPtr inputObj(
+    Py_BuildValue((char *)"(O)", pyFunc));
+
+  // Throw an exception if the creation of the input Python-object
+  if(inputObj.get() == NULL) {
+    // Try to determine the Python exception if there was a Python error
+    PyObject *const pyEx = PyErr_Occurred();
+    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+    // Clear the Python error if there was one
+    if(pyEx != NULL) {
+      PyErr_Clear();
+    }
+
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Failed to create input Python-object for inspect.getargspec"
+      ": Call to Py_BuildValue failed"
+      ": pythonException=" << pyExStr;
+    throw(ex);
+  }
+
+  // Call the inspect.getmembers method on the stream-policy Python-module
+  SmartPyObjectPtr resultObj(PyObject_CallObject(inspectGetargspecFunc,
+    inputObj.get()));
+
+  // Throw an exception if the invocation of the Python-function failed
+  if(resultObj.get() == NULL) {
+    // Try to determine the Python exception if there was a Python error
+    PyObject *const pyEx = PyErr_Occurred();
+    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+    // Clear the Python error if there was one
+    if(pyEx != NULL) {
+      PyErr_Clear();
+    }
+
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Failed to get result from Python-function"
+      ": moduleName=inspect"
+      ", functionName=getargspec"
+      ", pythonException=" << pyExStr;
+    throw(ex);
+  }
+
+  // Throw an exception if the result of inspect.getargsspec is not a
+  // Python-sequence
+  if(!PySequence_Check(resultObj.get())) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Python-function returned unexpected result-type"
+      ": moduleName=inspect"
+      ", functionName=getargspec"
+      ", expectedResultType=PySequence";
+    throw(ex);
+  }
+
+  // Get a handle on the array of function argument names
+  PyObject *const argumentNamesPySequence = PySequence_GetItem(resultObj.get(),
+    0);
+
+  // Throw an exception if the handle cound not be obtained
+  if(argumentNamesPySequence == NULL) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Failed to get a handle on the array of function argument names"
+      ": moduleName=inspect"
+      ", functionName=getargspec";
+    throw(ex);
+  }
+
+  // Throw an exception if the function argument names are not a
+  // Python-sequence
+  if(!PySequence_Check(argumentNamesPySequence)) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Function argument names are not of the expected Python-type"
+      ": expectedResultType=PySequence";
+    throw(ex);
+  }
+
+  const int nbArgumentNames = PySequence_Size(argumentNamesPySequence);
+
+  // Throw an exception if the number of function argument names could not be
+  // determined
+  if(nbArgumentNames == -1) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      __FUNCTION__ << "() failed"
+      ": Failed to determine the number of function argument names"
+      ": Call to PySequence_Size() failed";
+    throw(ex);
+  }
+
+  // Push each function argument name on onto the back of the output list of
+  // function argument names
+  for(int i=0; i<nbArgumentNames; i++) {
+    PyObject *argumentNamePyObject =
+      PySequence_GetItem(argumentNamesPySequence, i);
+
+    // Throw an exception if the function argument name could not be retreived
+    if(argumentNamePyObject == NULL) {
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        __FUNCTION__ << "() failed"
+        ": Failed to retreive function argument name"
+        ": Call to PySequence_GetItem() failed";
+      throw(ex);
+    }
+
+    char *const argumentName = PyString_AsString(argumentNamePyObject);
+
+    // Throw an exception if the function argument name could not be converted
+    // to a C string
+    if(argumentName == NULL) {
+      // Try to determine the Python exception if there was a Python error
+      PyObject *const pyEx = PyErr_Occurred();
+      const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+      // Clear the Python error if there was one
+      if(pyEx != NULL) {
+        PyErr_Clear();
+      }
+
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        __FUNCTION__ << "() failed"
+        ": Failed to convert function argument name to a C string"
+        ": Call to PyString_AsString() failed"
+        ": pythonException=" << pyExStr;
+      throw(ex);
+    }
+
+    argumentNames.push_back(argumentName);
+  }
+
+  return argumentNames;
+}
+
+
+//---------------------------------------------------------------------------
+// getPythonFunctionArgumentNamesWithLock
+//---------------------------------------------------------------------------
+std::vector<std::string>
+  &castor::tape::python::getPythonFunctionArgumentNamesWithLock(
+  PyObject          *const inspectGetargspecFunc,
+  PyObject          *const pyFunc,
+  std::vector<std::string> &argumentNames)
+  throw(castor::exception::Exception) {
+  // Get a lock on the embedded Python-interpreter
+  ScopedPythonLock scopedPythonLock;
+
+  return getPythonFunctionArgumentNames(inspectGetargspecFunc, pyFunc,
+    argumentNames);
 }

@@ -31,6 +31,8 @@
 
 #include "castor/exception/Exception.hpp"
 
+#include <string>
+#include <vector>
 
 namespace castor {
 namespace tape   {
@@ -49,7 +51,8 @@ namespace python {
  * lock using a ScopedPythonLock object before acsessing the API of the
  * embedded Python interpreter.
  */
-void initializePython() throw(castor::exception::Exception);
+void initializePython()
+  throw(castor::exception::Exception);
 
 /**
  * Finalizes the embedded Python interpreter.
@@ -57,7 +60,48 @@ void initializePython() throw(castor::exception::Exception);
  * Please note that the calling thread must NOT have a lock on the global
  * Python interpreter.
  */
-void finalizePython() throw();
+void finalizePython()
+  throw();
+
+/**
+ * Imports the Python-module with the specified name.
+ *
+ * Please note that initPython() must be called before this function is called.
+ *
+ * Please note that the calling thread MUST have a lock on the global Python
+ * interpreter through a call to PyGILState_Ensure() or through the strongly
+ * recommended use of a ScopedPythonLock object.
+ *
+ * @param moduleName The name of the Python-module.
+ * @return           The Python dictionary object of the imported library.  The
+ *                   documentation of the embedded Python-interpreter describes
+ *                   the return value as being a "borrowed reference".  This
+ *                   means the caller does not need to call Py_XDECREF when the
+ *                   dictionary is no longer required.
+ */
+PyObject* importPythonModule(
+  const char *const moduleName)
+  throw(castor::exception::Exception);
+
+/**
+ * Convenient wrapper method around importPythonModule() that takes a
+ * lock on the global Python interpreter and then calls
+ * importPythonModule().  The lock is released before this method
+ * returns.
+ *
+ * For further information please see the documentation for the
+ * importPythonModule() method.
+ *
+ * @param moduleName The name of the Python-module.
+ * @return           The Python dictionary object of the imported library.  The
+ *                   documentation of the embedded Python-interpreter describes
+ *                   the return value as being a "borrowed reference".  This
+ *                   means the caller does not need to call Py_XDECREF when the
+ *                   dictionary is no longer required.
+ */
+PyObject* importPythonModuleWithLock(
+  const char *const moduleName)
+  throw(castor::exception::Exception);
 
 /**
  * Imports a CASTOR-policy implemented as a Python module from the
@@ -74,7 +118,7 @@ void finalizePython() throw();
  *
  * Please note that initPython() must be called before this function is called.
  *
- * Please not that the calling thread MUST have a lock on the global Python
+ * Please note that the calling thread MUST have a lock on the global Python
  * interpreter through a call to PyGILState_Ensure() or through the strongly
  * recommended use of a ScopedPythonLock object.
  *
@@ -85,14 +129,24 @@ void finalizePython() throw();
  *                   means the caller does not need to call Py_XDECREF when the
  *                   dictionary is no longer required.
  */
-PyObject* importPolicyPythonModule(const char *const moduleName)
+PyObject* importPolicyPythonModule(
+  const char *const moduleName)
   throw(castor::exception::Exception);
 
 /**
- * Convenient wrapper method around importPolicyPythonModule() that takes a
- * lock on the global Python interpreter and then calls
- * importPolicyPythonModule().  The lock is released before this method
- * returns.
+ * Checks that the module file of the specified policy Python-module exists in
+ * the CASTOR_POLICIES_DIRECTORY as it is difficult to obtain errors from the
+ * embedded Python interpreter.
+ *
+ * This method raises a castor::exception::Exception if the check fails.
+ */
+void checkPolicyModuleIsInCastorPoliciesDirectory(
+  const char *const moduleName)
+  throw(castor::exception::Exception);
+
+/**
+ * The same functionality as importPolicyPythonModule but with the additional
+ * taking and releasing of the lock on the global Python interpreter.
  *
  * For further information please see the documentation for the
  * importPolicyPythonModule() method.
@@ -104,7 +158,8 @@ PyObject* importPolicyPythonModule(const char *const moduleName)
  *                   means the caller does not need to call Py_XDECREF when the
  *                   dictionary is no longer required.
  */
-PyObject* importPolicyPythonModuleWithLock(const char *const moduleName)
+PyObject* importPolicyPythonModuleWithLock(
+  const char *const moduleName)
   throw(castor::exception::Exception);
 
 /**
@@ -113,7 +168,7 @@ PyObject* importPolicyPythonModuleWithLock(const char *const moduleName)
  *
  * Please note that initPython() must be called before this function is called.
  *
- * Please not that the calling thread MUST have a lock on the global Python
+ * Please note that the calling thread MUST have a lock on the global Python
  * interpreter through a call to PyGILState_Ensure() or through the strongly
  * recommended use of a ScopedPythonLock object.
  *
@@ -128,8 +183,35 @@ PyObject* importPolicyPythonModuleWithLock(const char *const moduleName)
  *                     need to call Py_XDECREF when the function is no longer
  *                     required.
  */
-PyObject* getPythonFunction(PyObject *const pyDict,
-  const char *const functionName) throw(castor::exception::Exception);
+PyObject* getPythonFunction(
+  PyObject   *const pyDict,
+  const char *const functionName)
+  throw(castor::exception::Exception);
+
+/**
+ * Convenient wrapper method around getPythonFunction() that takes a
+ * lock on the global Python interpreter and then calls
+ * getPythonFunction().  The lock is released before this method
+ * returns.
+ *
+ * For further information please see the documentation for the
+ * getPythonFunction() method.
+ *
+ * @param pyDict       The Python dictionary in which the specified function is
+ *                     to be found.
+ * @param functionName The name of the Python function.
+ * @return             The Python function object representing the specified
+ *                     function or NULL if the named function is not in the
+ *                     specified dictionary.  The documentation of the embedded
+ *                     Python-interpreter describes the return value as being a
+ *                     "borrowed reference".  This means the caller does not
+ *                     need to call Py_XDECREF when the function is no longer
+ *                     required.
+ */
+PyObject* getPythonFunctionWithLock(
+  PyObject   *const pyDict,
+  const char *const functionName)
+  throw(castor::exception::Exception);
 
 /**
  * Returns a string representation of the specified Python exception.  This
@@ -148,7 +230,47 @@ PyObject* getPythonFunction(PyObject *const pyDict,
  * @param pyEx Python exception or NULL if there isn't one.
  * @return     String representation of the specified Python exception.
  */
-const char *stdPythonExceptionToStr(PyObject *const pyDict) throw();
+const char *stdPythonExceptionToStr(
+  PyObject *const pyDict)
+  throw();
+
+/**
+ * Returns the argument names of the specified Python-function.
+ *
+ * @param inspectGetargspecFunc The inspect.getargspec Python-function.
+ * @param pyFunc                The Python-function whose argument names will
+ *                              be returned.
+ * @param argumentNames         The list of argument names to be filled by this
+ *                              function.
+ * @return                      The function argument names
+ */
+std::vector<std::string> &getPythonFunctionArgumentNames(
+  PyObject          *const inspectGetargspecFunc,
+  PyObject          *const pyFunc,
+  std::vector<std::string> &argumentNames)
+  throw(castor::exception::Exception);
+
+/**
+ * Convenient wrapper method around getPythonFunctionArgumentNames that takes a
+ * lock on the global Python interpreter and then calls
+ * getPythonFunctionArgumentNames().  The lock is released before this method
+ * returns.
+ *
+ * For further information please see the documentation for the
+ * getPythonFunctionArgumentNames() method.
+ *
+ * @param inspectGetargspecFunc The inspect.getargspec Python-function.
+ * @param pyFunc                The Python-function whose argument names will
+ *                              be returned.
+ * @param argumentNames         The list of argument names to be filled by this
+ *                              function.
+ * @return                      The function argument names
+ */
+std::vector<std::string> &getPythonFunctionArgumentNamesWithLock(
+  PyObject          *const inspectGetargspecFunc,
+  PyObject          *const pyFunc,
+  std::vector<std::string> &argumentNames)
+  throw(castor::exception::Exception);
 
 } // namespace python
 } // namespace tape

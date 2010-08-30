@@ -110,12 +110,12 @@ int exceptionThrowingMain()
   python::initializePython();
 
   // Import a valid module and get a valid function
-  PyObject * pyFunc = NULL;
+  const char *const functionName = "defaultMigrationPolicy";
+  PyObject *pyFunc = NULL;
   {
     python::ScopedPythonLock scopedPythonLock;
 
     const char *const moduleName   = "migration";
-    const char *const functionName = "defaultMigrationPolicy";
     PyObject *const pyDict = python::importPolicyPythonModule(moduleName);
     pyFunc = python::getPythonFunction(pyDict, functionName);
 
@@ -127,6 +127,62 @@ int exceptionThrowingMain()
       return 1;
     }
   }
+
+  PyObject *const inspectDict = python::importPythonModuleWithLock("inspect");
+
+  // Get a handle on the inspect.getargspec Python-function
+  PyObject *const inspectGetargspecFunc = python::getPythonFunctionWithLock(
+    inspectDict, "getargspec");
+
+  // Set the argument names a migration-policy Python-function must have in
+  // order to be considered valid
+  std::vector<std::string> expectedArgumentNames;
+  expectedArgumentNames.push_back("tapepool");
+  expectedArgumentNames.push_back("castorfilename");
+  expectedArgumentNames.push_back("copynb");
+  expectedArgumentNames.push_back("fileId");
+  expectedArgumentNames.push_back("fileSize");
+  expectedArgumentNames.push_back("fileMode");
+  expectedArgumentNames.push_back("uid");
+  expectedArgumentNames.push_back("gid");
+  expectedArgumentNames.push_back("aTime");
+  expectedArgumentNames.push_back("mTime");
+  expectedArgumentNames.push_back("cTime");
+  expectedArgumentNames.push_back("fileClass");
+
+  std::cout << "Getting the names of the arguments of " << functionName <<
+    std::endl;
+
+  std::vector<std::string> actualArgumentNames;
+  python::getPythonFunctionArgumentNamesWithLock(inspectGetargspecFunc, pyFunc,
+    actualArgumentNames);
+
+  std::cout << "Argument names of " << functionName << ": " <<
+    utils::vectorOfStringToString(actualArgumentNames) << std::endl;
+
+  if(actualArgumentNames.size() != expectedArgumentNames.size()) {
+    std::cout << "Test failed " << functionName <<
+      " has the wrong number of arguments"
+      ": expectedArgumentNames.size()=" << expectedArgumentNames.size() <<
+      ", actualArgumentNames.size()=" << actualArgumentNames.size();
+
+    return 1; // Test failed
+  } else {
+    std::cout << functionName << " has the correct number of arguments: " <<
+      expectedArgumentNames.size() << std::endl;
+  }
+
+  for(std::vector<std::string>::size_type i=0;
+    i<expectedArgumentNames.size(); i++) {
+    if(expectedArgumentNames[i] != actualArgumentNames[i]) {
+      std::cout << functionName << " has an unexpected argument name"
+        ": argumentIndex="       << i <<
+        ", expectedName="        << expectedArgumentNames[i] <<
+        ", actualName="          << actualArgumentNames[i];
+      return 1; // Test failed
+    }
+  }
+  std::cout << functionName << " has the correct argument names" << std::endl;
 
   // Try to import a non-existant module
   try {
@@ -182,7 +238,7 @@ int exceptionThrowingMain()
 
   pthread_t thread;
 
-  utils::pthreadCreate(&thread , NULL, startRoutine , pyFunc);
+  utils::pthreadCreate(&thread , NULL, startRoutine, pyFunc);
 
   utils::pthreadJoin(thread, NULL);
 
