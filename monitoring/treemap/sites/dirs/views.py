@@ -32,6 +32,7 @@ from django.db import models
 from django.db.models.base import ModelBase
 from sites.tools.ObjectCreator import createObject
 from sites.tools.ColumnFinder import ColumnFinder
+from django.shortcuts import redirect
 
 
 def plain(request, depth):
@@ -72,6 +73,7 @@ def xxxplainbydir(request, id):
 #    #plainbydir1(request, theid)
 
 def plainbydir(request, theid):  
+    
     time = datetime.datetime.now()
     try:
         #Directory you want to show its content
@@ -82,7 +84,7 @@ def plainbydir(request, theid):
     
     imagewidth = 800.0
     imageheight = 600.0
-    nbdefinedlevels = 8
+    nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
@@ -100,13 +102,14 @@ def plainbydir(request, theid):
     #if already in cache
     if value is not None:
         return HttpResponse(value)
-
-    lr = LevelRules()
     
-    for i in range(nbdefinedlevels):
-        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
-        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
-        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
+    #load levelRules from cookie, if cookie doesn't exist, load defaults
+    lr = None
+    if(request.session.test_cookie_worked()):
+        createCookieIfMissing(request, nbdefinedlevels)
+        lr = request.session['levelrules']
+    else:
+        lr = getDefaultRules(nbdefinedlevels)
     
     start = datetime.datetime.now()
     
@@ -184,7 +187,7 @@ def groupView(request, parentpk, depth, model):
     
     imagewidth = 800.0
     imageheight = 600.0
-    nbdefinedlevels = 8
+    nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
@@ -203,14 +206,20 @@ def groupView(request, parentpk, depth, model):
     if value is not None:
         return HttpResponse(value)
     
+    
+    cookielr = None
+    if(request.session.test_cookie_worked()):
+        createCookieIfMissing(request, nbdefinedlevels)
+        cookielr = request.session['levelrules']
+    else:
+        cookielr = getDefaultRules(nbdefinedlevels)
+    
     #define LevelRules
     lr = LevelRules()
     
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
     for i in range(2):
-        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
-        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
-        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i) 
+        lr.appendRuleObject(cookielr.getRuleObject(i))
     
     
     start = datetime.datetime.now()
@@ -237,19 +246,17 @@ def groupView(request, parentpk, depth, model):
                 anx = anx.getCopyWithIncDepth(newexcluded = newanxnode.getObject().getExcludedNodes(), evaluation = newanxnode.getEvalValue())    
             else:
                 raise Http404 
-                
+        
+        lr = LevelRules()        
         for i in range(2,nbdefinedlevels):
-            lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
-            lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
-            lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)   
+            lr.appendRuleObject(cookielr.getRuleObject(i))  
         
         otree = tb.generateObjectTree(anx) 
             
     else: #no Annex display needed
+        
         for i in range(2,nbdefinedlevels):
-            lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
-            lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
-            lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
+            lr.appendRuleObject(cookielr.getRuleObject(i))  
             
             otree = tb.generateObjectTree(rootobject = root)     
         
@@ -308,30 +315,31 @@ def groupView(request, parentpk, depth, model):
     return response
 
 def changeMetrics(request, theid):
-
+    nblevels = getDefaultNumberOfLevels()
+    
     if request.method == 'POST':
-        response = ""
+        createCookieIfMissing(request, nblevels)
         
         cookiesenabled = request.session.test_cookie_worked()
         if not cookiesenabled:
-            response = response + "---------PLEASE ENABLE COOKIES, IF YOU ALREADY HAVE DONE THAT, PLEASE REFRESH THE PAGE----------<br><br>"
-            request.session.set_test_cookie()
-        else:
-            response = response + "---------COOKIES SEEM TO WORK----------<br><br>"
+            return redirect(to = '..', args = {'request':request, 'theid':theid})
+
             
         posted = {}
         posted = request.POST
         
-        response = response + "</p><b><u>This is not implemented yet</b></u></p><br><br><p>received POST data: <br><br>"
-        for key, value in posted.items():
-            response = response + "<b>Form Object:</b> " + key.__str__() + "<br><b>value:</b> " + value.__str__() + "<br><br>"
-        response = response + "</p>"
+        if not PostedDataCheckSuccessful(posted, nblevels):
+            raise Http404
         
+        model = posted['model']
+        level = int(posted['level'])
+        metric = posted['metric']
+        childmethodname = posted['childmethod']
     else:
         raise Http404
         
     request.session.set_test_cookie()
-    return HttpResponse(response)
+    return redirect(to = '..', args = {'request':request, 'theid':theid})
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, nblevels, metric = ''):
     print "preparing response"
@@ -396,16 +404,6 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         shiftx = 20
         shifty = 20
         
-#        if(shifty) < 20:
-#            shifty = shifty * 2
-#        else:
-#            shifty = shifty + 20
-#            
-#        if(shiftx) < 20:
-#            shiftx = shiftx * 2
-#        else:
-#            shiftx = shiftx + 20
-        
         if(x1 + shiftx + tooltipwidth) > imagewidth:
             shiftx = round(imagewidth - (x1 + tooltipwidth))
             
@@ -436,15 +434,16 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     navlinkparts = []
     for pr in parents:  
         navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
-          
-    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, 'Dirs')
+
+    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, getDefaultModel())
     
     print request.session.test_cookie_worked()
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'rootid': rootid, 'leveldropdown': leveldropdown, 'modeldropdown': modeldropdown, 'metricdropdown': metricdropdown, 'childmethoddropdown': childmethoddropdown} , context_instance=None)
+     'rootid': rootid, 'leveldropdown': leveldropdown, 'modeldropdown': modeldropdown, 'metricdropdown': metricdropdown, 'childmethoddropdown': childmethoddropdown,\
+     } , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
@@ -452,6 +451,31 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     request.session.set_test_cookie()
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
+
+def PostedDataCheckSuccessful(posted, nblevels):
+    availablemodels = getAvailableModels()
+    if posted['model'] not in availablemodels: return False
+    
+    expectedlevels, expectedmodels, expectedmetrics, expectedchildmethods = generateDropdownValues(nblevels, posted['model'])
+    
+    level = int(posted['level'])
+    if level < -1 or level >= nblevels: return False
+    
+    postedisexpected = False
+    for expected in expectedmetrics:
+        if str(posted['metric']) == expected[1]:
+            postedisexpected = True 
+            break    
+    if not postedisexpected: return False
+    
+    postedisexpected = False
+    for expected in expectedchildmethods:
+        if str(posted['childmethod']) == expected[1]:
+            postedisexpected = True 
+            break    
+    if not postedisexpected: return False
+    
+    return True
 
 def generateDropdownValues(nblevels, themodel):
     #generating drop down menu content
@@ -510,3 +534,57 @@ def generateDropdownValues(nblevels, themodel):
                 continue
     
     return leveldropdown, modeldropdown, metricdropdown, childmethoddropdown
+
+def createCookieIfMissing(request, nblevels):
+    try:
+        request.session['userhascookie']
+    except KeyError:
+        request.session['userhascookie'] = True
+        lr = getDefaultRules(nblevels)  
+        request.session['levelrules'] = lr
+        
+def getDefaultRules(nblevels):
+    lr = LevelRules()
+    print lr.getUniqueLevelRulesId()
+    for i in range(nblevels):
+        lr.addRules('sites.dirs.models', 'Dirs', 'getFilesAndFolders', 'countFilesAndDirs', 'getDirParent', 'totalsize', i)
+        lr.addRules('sites.dirs.models', 'CnsFileMetadata', 'getChildren', 'countChildren', 'getDirParent', 'filesize', i)
+        lr.addRules('sites.treemap.objecttree.Annex', 'Annex', 'getItems', 'countItems', 'getAnnexParent', 'evaluation', i)
+    return lr
+
+def getDefaultModel():
+    return 'Dirs'
+
+def getDefaultNumberOfLevels():
+    return 8
+
+def getAvailableModels():
+    modulename = None
+    availablemodels = []
+    if settings.MODELS_LOCATION in settings.INSTALLED_APPS:
+        modulename = settings.MODELS_LOCATION + '.models'
+        if not modulename in sys.modules.keys():
+            try:
+                module = __import__( modulename )
+            except ImportError, e:
+                raise ConfigError( 'Unable to load module: ' + module )
+        else:
+            module = sys.modules[modulename]
+            
+        classes = dict(inspect.getmembers( module, inspect.isclass ))
+        
+        for classname in classes:
+            cls = classes[classname]
+            if isinstance(cls, ModelBase):
+                modelname = cls._base_manager.model._meta.object_name
+                availablemodels.append(modelname)
+                
+    return availablemodels
+
+#def calcCacheKey(parentpk, parentmodel, depth , selectedmodel):
+#    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+#    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
+#    vary_on = [(2,3,5,7),(11,17,19,23,29)]
+#    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))                 
+#    cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
+#    return cache_key

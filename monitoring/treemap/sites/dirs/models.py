@@ -231,6 +231,19 @@ class Dirs(models.Model):
 Dirs.getDirs.__dict__['methodtype'] = 'children'
 Dirs.getFiles.__dict__['methodtype'] = 'children'
 Dirs.getFilesAndFolders.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+Dirs.countDirs.__dict__['methodtype'] = ('childrencount')
+Dirs.countDirs.__dict__['countsfor'] = ('getDirs')
+
+Dirs.countFiles.__dict__['methodtype'] = ('childrencount')
+Dirs.countFiles.__dict__['countsfor'] = ('getFiles')
+
+Dirs.countFilesAndDirs.__dict__['methodtype'] = ('childrencount')
+Dirs.countFilesAndDirs.__dict__['countsfor'] = ('getFilesAndFolders')
+
+#mark parent Methods
+Dirs.getDirParent.__dict__['methodtype'] = 'parent'
         
 class CnsFileMetadata(models.Model):
     fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
@@ -281,7 +294,16 @@ class CnsFileMetadata(models.Model):
         
     def getUserFriendlyName(self):
         return "File"
+
+#mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+CnsFileMetadata.countChildren.__dict__['methodtype'] = ('childrencount')
+CnsFileMetadata.countChildren.__dict__['countsfor'] = ('getChildren')
+
+#mark parent Methods
+CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

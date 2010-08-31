@@ -36,6 +36,13 @@ class ChildRules(object):
             self.parentmethods[index] = parentmethodname
         else: 
             raise Warning('Rule for ' + modulename + '.' + classname + ' could not be added. Methodname is ' + methodname)
+    
+    def infoDict(self):
+        ret = []
+        indexkeys = self.methods.keys()
+        for index in indexkeys:
+            ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'columnname': self.columnnames[index], 'fparam': self.fparams[index]})
+        return ret
             
     def getMethodNameFor(self, modulename, classname):
         return self.methods[modulename.__str__() + '.' + classname]
@@ -61,11 +68,15 @@ class ChildRules(object):
             return False 
         
         #check methodname
-        found = False
+        childrenmethods = []
         for membername in instance.__class__.__dict__.keys():
             if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
-                found = True
-                break
+                try:
+                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'children':
+                        found = True
+                        childrenmethods.append(membername)
+                except KeyError:
+                    continue
         
         if not found: return False
         
@@ -73,8 +84,13 @@ class ChildRules(object):
         found = False
         for membername in instance.__class__.__dict__.keys():
             if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == countmethodname:
-                found = True
-                break
+                try:
+                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount' and \
+                    instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods:
+                        found = True
+                        break
+                except KeyError:
+                    continue
         
         if not found: return False
         
@@ -82,8 +98,9 @@ class ChildRules(object):
         found = False
         for membername in instance.__class__.__dict__.keys():
             if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == parentmethodname:
-                found = True
-                break
+                if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'parent':
+                    found = True
+                    break
         
         if not found: return False
         
@@ -114,7 +131,11 @@ class LevelRules(object):
             
         self.rules[level].addRule(modulename, classname, methodname, countmethodname, parentmethodname, columnname, fparam)
             
-
+    def appendRuleObject(self, obj):
+        self.rules.append(obj)
+        
+    def getRuleObject(self, level):
+        return self.rules[level]
         
     def getMethodNameFor(self, level, modulename, classname):
         try:
@@ -152,4 +173,32 @@ class LevelRules(object):
             return True
         except IndexError:
             return False
+        
+    def getUniqueLevelRulesId(self):
+        idparts = []
+        oldcontent = None
+        for number, rule in enumerate(self.rules):
+            idparts.append(number.__str__())
+            
+            content = rule.infoDict()
+            if content != oldcontent:
+                idparts.append(content['model'])
+                idparts.append(content['method'])
+                idparts.append(content['countmethod'])
+                idparts.append(content['parentmethod'])
+                idparts.append(content['columnname'])
+                idparts.append(content['fparam'])
+                oldcontent = content
+            else:
+                idparts.append('FA56') #some fixed random number
+        
+        return ''.join([bla for bla in idparts])
+        
+    
+#    #returns data structured like this: [level][ruleindex]{rulesdict}    
+#    def infoDict(self):
+#        ret = []
+#        for rule in self.rules:
+#            ret.append(rule.infoDict())
+#        return ret
     

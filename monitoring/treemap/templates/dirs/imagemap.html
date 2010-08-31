@@ -113,7 +113,7 @@
 		</script>
 		
 			<table>
-				<form action="/treemaps/bydir/83790844/changemetrics/" method="post">
+				<form action="/treemaps/bydir/{{rootid}}/changemetrics/" method="post">
 				
 					<tr>
 					<td class="descriptiontext">Level:</td> 
@@ -126,11 +126,22 @@
 					
 					<tr>
 					<td class="descriptiontext">Model:</td>
-					<td><select class="dmenuwidth" name="model" id="id_model" onchange="window.open(this.options[this.selectedIndex].value,'_top')">
+					<td><select class="dmenuwidth" name="model" id="id_model" onchange="setModel()">
 						{% for value, name in modeldropdown %}
 							<option value="{{value}}">{{name}}</option>
 						{% endfor %}
 					</select></td></tr>
+					
+					<script LANGUAGE="JavaScript">
+					function setModel()
+					{
+						modelsmenu = document.getElementsByName("model")[0];
+						//alert(modelsmenu);
+						alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
+						//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')
+						//optmenu.style.display = "inline"
+					}
+					</script>
 					
 					<tr>
 					<td class="descriptiontext">Metric:</td>

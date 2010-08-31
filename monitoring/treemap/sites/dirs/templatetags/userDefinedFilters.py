@@ -26,6 +26,10 @@ div.is_safe = False
 #    return int(value) / int(arg)
 #div.is_safe = False
 
+def equals(value, arg):
+    return value == arg
+equals.is_safe = True
+
 def escapefilter(text, autoescape = None):
     if autoescape:
         esc = conditional_escape
@@ -41,3 +45,4 @@ register.filter('mult', mult)
 register.filter('sub', sub)
 register.filter('div', div)
 register.filter('escapefilter', escapefilter)
+register.filter('equals', equals)
