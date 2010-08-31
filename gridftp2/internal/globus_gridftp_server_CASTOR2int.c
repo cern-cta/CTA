@@ -156,6 +156,12 @@ unsigned long  adler32_combine_(adler1, adler2, len2)
     return sum1 | (sum2 << 16);
 }
 
+unsigned long  adler32_0chunks(len)
+     unsigned int len;   
+{
+  return ((len%BASE) << 16) | 1;
+}
+
 /*************************************************************************
  *  start
  *  -----
@@ -421,43 +427,44 @@ globus_l_gfs_file_net_read_cb(
 			CASTOR2int_handle->done = GLOBUS_TRUE;
 		}
 		else if(nbytes > 0) {
-			start_offset = lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
-			if(start_offset != offset) {
-				CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek");
-				CASTOR2int_handle->done = GLOBUS_TRUE;
-			}
-			else {
-				bytes_written = write(CASTOR2int_handle->fd, buffer, nbytes);
-			    if (CASTOR2int_handle->useCksum) {
-                    /* fill the checksum list  */
-                    /* we will have a lot of checksums blocks in the list */
-                    adler = adler32(0L, Z_NULL, 0);
-                    adler = adler32(adler, buffer, nbytes);
+		  start_offset = lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
+		  if(start_offset != offset) {
+		    CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek");
+		    CASTOR2int_handle->done = GLOBUS_TRUE;
+		  } else {
+		    bytes_written = write(CASTOR2int_handle->fd, buffer, nbytes);
+		    if (CASTOR2int_handle->useCksum) {
+		      /* fill the checksum list  */
+		      /* we will have a lot of checksums blocks in the list */
+		      adler = adler32(0L, Z_NULL, 0);
+		      adler = adler32(adler, buffer, nbytes);
                     
-                    CASTOR2int_handle->checksum_list_p->next=(checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
+		      CASTOR2int_handle->checksum_list_p->next=(checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
                     
-                    if (CASTOR2int_handle->checksum_list_p->next==NULL) {
+		      if (CASTOR2int_handle->checksum_list_p->next==NULL) {
                         CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
                         globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
                         CASTOR2int_handle->done = GLOBUS_TRUE;
                         globus_mutex_unlock(&CASTOR2int_handle->mutex);
                         return;
-                    }
-                    CASTOR2int_handle->checksum_list_p->next->next=NULL;
-                    CASTOR2int_handle->checksum_list_p->offset=offset;
-                    CASTOR2int_handle->checksum_list_p->size=bytes_written;
-                    CASTOR2int_handle->checksum_list_p->csumvalue=adler;
-                    CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list_p->next;
-                    CASTOR2int_handle->number_of_blocks++;
-                    /* end of the checksum section */
-                }
-				if(bytes_written < nbytes) {
-					errno = ENOSPC;
-					CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write");
-					CASTOR2int_handle->done = GLOBUS_TRUE;
-					free_checksum_list(CASTOR2int_handle->checksum_list);
-				} else globus_gridftp_server_update_bytes_written(op,offset,nbytes);
-			}
+		      }
+		      CASTOR2int_handle->checksum_list_p->next->next=NULL;
+		      CASTOR2int_handle->checksum_list_p->offset=offset;
+		      CASTOR2int_handle->checksum_list_p->size=bytes_written;
+		      CASTOR2int_handle->checksum_list_p->csumvalue=adler;
+		      CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list_p->next;
+		      CASTOR2int_handle->number_of_blocks++;
+		      /* end of the checksum section */
+		    }
+		    if(bytes_written < nbytes) {
+		      errno = ENOSPC;
+		      CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write");
+		      CASTOR2int_handle->done = GLOBUS_TRUE;
+		      free_checksum_list(CASTOR2int_handle->checksum_list);
+		    } else {
+		      globus_gridftp_server_update_bytes_written(op,offset,nbytes);
+		    }
+		  }
 		}
 
 		globus_free(buffer);
@@ -465,48 +472,72 @@ globus_l_gfs_file_net_read_cb(
 		if(!CASTOR2int_handle->done) globus_l_gfs_CASTOR2int_read_from_net(CASTOR2int_handle);
 		/* if done and there are no outstanding callbacks finish */
 		else if(CASTOR2int_handle->outstanding == 0){
-		    if (CASTOR2int_handle->useCksum) {
-                /* checksum calculation */
-                checksum_array=(checksum_block_list_t**)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_list_t*));
-                if (checksum_array==NULL){
-                    free_checksum_list(CASTOR2int_handle->checksum_list);
-                    CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
-                    globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
-                    CASTOR2int_handle->done = GLOBUS_TRUE;
-                    close(CASTOR2int_handle->fd);
-                    globus_mutex_unlock(&CASTOR2int_handle->mutex);
-                    return;
-                }
-                checksum_list_pp=CASTOR2int_handle->checksum_list;
-                /* sorting of the list to the array */
-                index = 0;
-                while (checksum_list_pp->next != NULL) { /* the latest block is always empty and has next pointer as NULL */
-                  checksum_array[index] = checksum_list_pp;
-                  checksum_list_pp=checksum_list_pp->next;
-                  index++;
-                }
-                qsort(checksum_array, index, sizeof(checksum_block_list_t*), offsetComparison);
-                /* combine here  */
-                file_checksum=checksum_array[0]->csumvalue;
-                for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
-                  file_checksum=adler32_combine_(file_checksum,checksum_array[i]->csumvalue,checksum_array[i]->size);
-                }
-                globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",func,CASTOR2int_handle->fullDestPath,file_checksum);
-                globus_free(checksum_array);
-                free_checksum_list(CASTOR2int_handle->checksum_list);
-                /* set extended attributes */
-                sprintf(ckSumbuf,"%lx",file_checksum);
-                if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) {
-                    ;/* ignore all errors */
-                } else if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
-                        ; /* ignore all errors */
-                        }
-                /* end of checksum section */
-			}
-			close(CASTOR2int_handle->fd);
-			
-			globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
+		  if (CASTOR2int_handle->useCksum) {
+		    /* checksum calculation */
+		    checksum_array=(checksum_block_list_t**)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_list_t*));
+		    if (checksum_array==NULL){
+		      free_checksum_list(CASTOR2int_handle->checksum_list);
+		      CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
+		      globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
+		      CASTOR2int_handle->done = GLOBUS_TRUE;
+		      close(CASTOR2int_handle->fd);
+		      globus_mutex_unlock(&CASTOR2int_handle->mutex);
+		      return;
 		    }
+		    checksum_list_pp=CASTOR2int_handle->checksum_list;
+		    /* sorting of the list to the array */
+		    index = 0;
+		    while (checksum_list_pp->next != NULL) { /* the latest block is always empty and has next pointer as NULL */
+		      checksum_array[index] = checksum_list_pp;
+		      checksum_list_pp=checksum_list_pp->next;
+		      index++;
+		    }
+		    qsort(checksum_array, index, sizeof(checksum_block_list_t*), offsetComparison);
+		    /* combine checksums, while making sure that we deal with missing chunks */
+		    globus_off_t offset = 0;
+		    /* check whether first chunk is missing */
+		    if (checksum_array[0]->offset != 0) {
+		      /* first chunk is missing. Consider it full of 0s */
+		      file_checksum = adler32_combine_(adler32_0chunks(offset),
+						       checksum_array[0]->csumvalue,
+						       checksum_array[0]->size);
+		      offset = checksum_array[0]->offset;
+		    } else {
+		      file_checksum = checksum_array[0]->csumvalue;
+		    }
+		    offset += checksum_array[0]->size;
+		    /* go over all received chunks */
+		    for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
+		      /* check the continuity with previous chunk */
+		      if (checksum_array[i]->offset != offset) {
+			// not continuous, a chunk is missing, consider it full of 0s
+			globus_off_t doff = checksum_array[i]->offset - offset;
+			file_checksum = adler32_combine_(file_checksum, adler32_0chunks(doff), doff);
+			offset = checksum_array[i]->offset;
+		      }
+		      /* now handle the next chunk */
+		      file_checksum=adler32_combine_(file_checksum,
+						     checksum_array[i]->csumvalue,
+						     checksum_array[i]->size);
+		      offset += checksum_array[i]->size;
+		    }
+
+		    globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",func,CASTOR2int_handle->fullDestPath,file_checksum);
+		    globus_free(checksum_array);
+		    free_checksum_list(CASTOR2int_handle->checksum_list);
+		    /* set extended attributes */
+		    sprintf(ckSumbuf,"%lx",file_checksum);
+		    if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) {
+		      ;/* ignore all errors */
+		    } else if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
+		      ; /* ignore all errors */
+		    }
+		    /* end of checksum section */
+		  }
+		  close(CASTOR2int_handle->fd);
+			
+		  globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
+		}
 	}
 	globus_mutex_unlock(&CASTOR2int_handle->mutex);
 }
@@ -523,7 +554,7 @@ globus_l_gfs_CASTOR2int_read_from_net(
 	
 	GlobusGFSName(globus_l_gfs_CASTOR2int_read_from_net);
 	
-	/* in the read case tis number will vary */
+	/* in the read case this number will vary */
 	globus_gridftp_server_get_optimal_concurrency(CASTOR2int_handle->op, &CASTOR2int_handle->optimal_count);
 	
 	while(CASTOR2int_handle->outstanding < CASTOR2int_handle->optimal_count) {
