@@ -147,7 +147,7 @@ void parseUsers(char *susers,
         getUserId(couple.substr(0, colonPos), u);
         getGroupId(couple.substr(colonPos + 1), u);
       }
-      if (u->euid() && (u->egid() == -1)) {
+      if (u->euid() != -1 && (u->egid() == -1)) {
         castor::exception::InvalidArgument e;
         e.getMessage() << "Unable to determine group for uid: " << u->euid();
         throw e;
