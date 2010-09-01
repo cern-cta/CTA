@@ -136,4 +136,14 @@ class Annex(models.Model):
         else:
             raise Exception("unexpected error")
         return ppk
+    
+#mark children Methods   
+Annex.getItems.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+Annex.countItems.__dict__['methodtype'] = 'childrencount'
+Annex.countItems.__dict__['countsfor'] = 'getItems'
+
+#mark parent Methods
+Annex.getAnnexParent.__dict__['methodtype'] = 'parent'
         

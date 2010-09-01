@@ -233,14 +233,14 @@ Dirs.getFiles.__dict__['methodtype'] = 'children'
 Dirs.getFilesAndFolders.__dict__['methodtype'] = 'children'
 
 #mark count Methods
-Dirs.countDirs.__dict__['methodtype'] = ('childrencount')
-Dirs.countDirs.__dict__['countsfor'] = ('getDirs')
+Dirs.countDirs.__dict__['methodtype'] = 'childrencount'
+Dirs.countDirs.__dict__['countsfor'] = 'getDirs'
 
-Dirs.countFiles.__dict__['methodtype'] = ('childrencount')
-Dirs.countFiles.__dict__['countsfor'] = ('getFiles')
+Dirs.countFiles.__dict__['methodtype'] = 'childrencount'
+Dirs.countFiles.__dict__['countsfor'] = 'getFiles'
 
-Dirs.countFilesAndDirs.__dict__['methodtype'] = ('childrencount')
-Dirs.countFilesAndDirs.__dict__['countsfor'] = ('getFilesAndFolders')
+Dirs.countFilesAndDirs.__dict__['methodtype'] = 'childrencount'
+Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndFolders'
 
 #mark parent Methods
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
@@ -299,8 +299,8 @@ class CnsFileMetadata(models.Model):
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
 
 #mark count Methods
-CnsFileMetadata.countChildren.__dict__['methodtype'] = ('childrencount')
-CnsFileMetadata.countChildren.__dict__['countsfor'] = ('getChildren')
+CnsFileMetadata.countChildren.__dict__['methodtype'] = 'childrencount'
+CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
