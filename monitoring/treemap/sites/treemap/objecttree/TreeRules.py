@@ -68,6 +68,7 @@ class ChildRules(object):
             return False 
         
         #check methodname
+        found = False
         childrenmethods = []
         for membername in instance.__class__.__dict__.keys():
             if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
