@@ -329,7 +329,7 @@ def changeMetrics(request, theid):
         posted = request.POST
         
         if not PostedDataCheckSuccessful(posted, nblevels):
-            raise Http404
+            return HttpResponse("Posted data is not correct")
         
         model = posted['model']
         level = int(posted['level'])
