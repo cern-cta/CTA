@@ -10,9 +10,9 @@
 <script LANGUAGE="JavaScript">
 //define global menu values
 
-function DropDownPair(key, value)
+function DropDownPair(text, value)
 {
-	this.key = key;
+	this.text = text;
 	this.value = value;
 }
 
@@ -28,97 +28,50 @@ menu = new Object();
 
 function initMenu()
 {
+{% for submenuname, submenu in dynamicmenu.items %}
 	levels = [];
-	levels[0] = new DropDownPair('all levels', -1);
-	levels[1] = new DropDownPair('level 0', 0);
-	levels[2] = new DropDownPair('level 1', 1);
-	levels[3] = new DropDownPair('level 2', 2);
-	levels[4] = new DropDownPair('level 3', 3);
-	levels[5] = new DropDownPair('level 4', 4);
-	levels[6] = new DropDownPair('level 5', 5);
-	levels[7] = new DropDownPair('level 6', 6);
-	levels[8] = new DropDownPair('level 7', 7);
-	
 	models = [];
-	models[0] = new DropDownPair("File", "CnsFileMetadata");
-	models[1] = new DropDownPair("Directory", "Dirs");
-	
 	metrics = [];
-	metrics[0] = new DropDownPair("fileid", "fileid");
-	metrics[1] = new DropDownPair("parent", "parent");
-	metrics[2] = new DropDownPair("name", "name");
-	metrics[3] = new DropDownPair("depth", "depth");
-	metrics[4] = new DropDownPair("fullname", "fullname");
-	metrics[5] = new DropDownPair("totalsize", "totalsize");
-	metrics[6] = new DropDownPair("sizeontape", "sizeontape");
-	metrics[7] = new DropDownPair("dataontape", "dataontape");
-	metrics[8] = new DropDownPair("nbfiles", "nbfiles");
-	metrics[9] = new DropDownPair("nbtapes", "nbtapes");
-	metrics[10] = new DropDownPair("nbfilesontape", "nbfilesontape");
-	metrics[11] = new DropDownPair("nbfilecopiesontape", "nbfilecopiesontape");
-	metrics[12] = new DropDownPair("nbsubdirs", "nbsubdirs");
-	metrics[13] = new DropDownPair("oldestfilelastmod", "oldestfilelastmod");
-	metrics[14] = new DropDownPair("avgfilelastmod", "avgfilelastmod");
-	metrics[15] = new DropDownPair("sigfilelastmod", "sigfilelastmod");
-	metrics[16] = new DropDownPair("newestfilelastmod", "newestfilelastmod");
-	metrics[17] = new DropDownPair("avgfileontapelastmod", "avgfileontapelastmod");
-	metrics[18] = new DropDownPair("sigfileontapelastmod", "sigfileontapelastmod");
-	metrics[19] = new DropDownPair("newestfileontapelastmod", "newestfileontapelastmod");
-	metrics[20] = new DropDownPair("timetomigrate", "timetomigrate");
-	metrics[21] = new DropDownPair("timetorecall", "timetorecall");
-	metrics[22] = new DropDownPair("timelostintapemarks", "timelostintapemarks");
-	metrics[23] = new DropDownPair("opttimetorecall", "opttimetorecall");
-	
 	childrenmethods = [];
-	childrenmethods[0] = new DropDownPair("getFiles", "getFiles");
-	childrenmethods[1] = new DropDownPair("getDirs", "getDirs");
-	childrenmethods[2] = new DropDownPair("getFilesAndFolders", "getFilesAndFolders");
 	
-	menu["Dirs"] = new Modelmenu(levels, models, metrics, childrenmethods);
+	{% for dropdownname, dropdown in submenu.items %}
 	
-	levels = [];
-	levels[0] = new DropDownPair("all levels", -1);
-	levels[1] = new DropDownPair("level 0", 0);
-	levels[2] = new DropDownPair("level 1", 1);
-	levels[3] = new DropDownPair("level 2", 2);
-	levels[4] = new DropDownPair("level 3", 3);
-	levels[5] = new DropDownPair("level 4", 4);
-	levels[6] = new DropDownPair("level 5", 5);
-	levels[7] = new DropDownPair("level 6", 6);
-	levels[8] = new DropDownPair("level 7", 7);
+		{% if dropdownname|equals:"levels" %}
+			{% for ddentry in dropdown %}
+	levels[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
+			{% endfor %}
+		{% endif %}
+		{% if dropdownname|equals:"models" %}
+			{% for ddentry in dropdown %}
+	models[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
+			{% endfor %}
+		{% endif %}
+		{% if dropdownname|equals:"metrics" %}
+			{% for ddentry in dropdown %}
+	metrics[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
+			{% endfor %}
+		{% endif %}
+		{% if dropdownname|equals:"childmethods" %}
+			{% for ddentry in dropdown %}
+	childrenmethods[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
+			{% endfor %}
+		{% endif %}
+	{% endfor %}
 	
-	models = [];
-	models[0] = new DropDownPair("File", "CnsFileMetadata");
-	models[1] = new DropDownPair("Directory", "Dirs");
-	
-	metrics = [];
-	metrics[0] = new DropDownPair("fileid", "fileid");
-	metrics[1] = new DropDownPair("parent_fileid", "parent_fileid");
-	metrics[2] = new DropDownPair("name", "name");
-	metrics[3] = new DropDownPair("filemode", "filemode");
-	metrics[4] = new DropDownPair("nlink", "nlink");
-	metrics[5] = new DropDownPair("owner_uid", "owner_uid");
-	metrics[6] = new DropDownPair("gid", "gid");
-	metrics[7] = new DropDownPair("filesize", "atime");
-	metrics[8] = new DropDownPair("atime", "atime");
-	metrics[9] = new DropDownPair("mtime", "mtime");
-	metrics[10] = new DropDownPair("ctime", "ctime");
-	metrics[11] = new DropDownPair("status", "status");
-	metrics[12] = new DropDownPair("fileclass", "fileclass");
-	metrics[13] = new DropDownPair("guid", "guid");
-	metrics[14] = new DropDownPair("csumtype", "csumvalue");
-	metrics[15] = new DropDownPair("acl", "acl");
-	
-	childrenmethods = [];
-	childrenmethods[0] = new DropDownPair("getChildren", "getChildren");
-	
-	menu["CnsFileMetadata"] = new Modelmenu(levels, models, metrics, childrenmethods);
+	menu["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods);
+{% endfor %}
 
-	activateJsObjects()
+	activateJsObjects();
 }
 
 function activateJsObjects()
-{
+{		
+	modelsmenu = document.getElementsByName("model")[0];
+	modelsmenu.options.lenght = 0
+	modelsmenu.options.add(new Option("Directory", "Dirs"))
+	modelsmenu.selectedIndex = 0
+	
+	setModel()
 	var optmenu = document.getElementsByName("optionsmenu")[0];
 	optmenu.style.display = "inline"
 }
@@ -131,36 +84,38 @@ function notImplementedWarning()
 function setModel()
 {
 	modelsmenu = document.getElementsByName("model")[0];
-	selected = modelsmenu.options[modelsmenu.selectedIndex].value
+	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
 	newmenu = menu[selected];
 
 	//levelsmenu
 	levelsmenu = document.getElementsByName("level")[0];
-	levelsmenu.options.length = 0
+	levelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.levels.length; i++)
-		levelsmenu.options.add(new Option(newmenu.levels[i].key, newmenu.levels[i].value))
+		levelsmenu.options.add(new Option(newmenu.levels[i].text, newmenu.levels[i].value));
 		
 	//modelsmenu
 	modelsmenu = document.getElementsByName("model")[0];
-	modelsmenu.options.length = 0
+	modelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.models.length; i++)
 	{	
-		modelsmenu.options.add(new Option(newmenu.models[i].key, newmenu.models[i].value))
+		modelsmenu.options.add(new Option(newmenu.models[i].text, newmenu.models[i].value));
 		if (newmenu.models[i].value == selected)
-			modelsmenu.selectedIndex = i
+		{
+			modelsmenu.selectedIndex = i;
+		}
 	}
 
 	//metricsmenu
 	metricsmenu = document.getElementsByName("metric")[0];
-	metricsmenu.options.length = 0
+	metricsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.metrics.length; i++)
-		metricsmenu.options.add(new Option(newmenu.metrics[i].key, newmenu.metrics[i].value))
+		metricsmenu.options.add(new Option(newmenu.metrics[i].text, newmenu.metrics[i].value));
 		
 	//childrenmenu
 	childrenmenu = document.getElementsByName("childmethod")[0];
-	childrenmenu.options.length = 0
+	childrenmenu.options.length = 0;
 	for (var i = 0; i < newmenu.childrenmethods.length; i++)
-		childrenmenu.options.add(new Option(newmenu.childrenmethods[i].key, newmenu.childrenmethods[i].value))	 	
+		childrenmenu.options.add(new Option(newmenu.childrenmethods[i].text, newmenu.childrenmethods[i].value)); 	
 		
 	//alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
 	//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')

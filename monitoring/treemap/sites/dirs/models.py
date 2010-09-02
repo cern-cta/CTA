@@ -172,26 +172,6 @@ class Dirs(models.Model):
         else:
             f = list(f)
         
-#        temp = 0
-#        cnt = 0.99
-#        for fi in f:
-#            temp = (temp + cnt) * temp
-#            
-#        for di in d:
-#            temp = (temp + cnt) * temp
-#            
-#            print 'bla'
-#        d.extend(f)
-
-#        result = []
-#        
-#        for dr in d:
-#            result.append(dr)
-#            
-#        for fl in f:
-#            d+=f
-#        d+=f
-        
         return d+f
 
     
@@ -304,6 +284,23 @@ CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
+
+class Requests(models.Model):
+    subreqid = models.CharField(unique=True, max_length=36)
+    timestamp = models.DateField()
+    reqid = models.CharField(max_length=36)
+    nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
+    type = models.CharField(max_length=255, blank=True)
+    svcclass = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=2048, blank=True)
+    filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    class Meta:
+        db_table = u'requests'
+        
+    def getUserFriendlyName(self):
+        return "Amount of Requests"
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

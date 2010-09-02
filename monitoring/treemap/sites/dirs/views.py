@@ -435,15 +435,14 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     for pr in parents:  
         navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
 
-    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, getDefaultModel())
+#    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, getDefaultModel())
     
     print request.session.test_cookie_worked()
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'rootid': rootid, 'leveldropdown': leveldropdown, 'modeldropdown': modeldropdown, 'metricdropdown': metricdropdown, 'childmethoddropdown': childmethoddropdown,\
-     } , context_instance=None)
+     'rootid': rootid, "dynamicmenu": generateMenuData(nblevels) } , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
@@ -463,27 +462,61 @@ def PostedDataCheckSuccessful(posted, nblevels):
     
     postedisexpected = False
     for expected in expectedmetrics:
-        if str(posted['metric']) == expected[1]:
+        if str(posted['metric']) == expected.value:
             postedisexpected = True 
             break    
     if not postedisexpected: return False
     
     postedisexpected = False
     for expected in expectedchildmethods:
-        if str(posted['childmethod']) == expected[1]:
+        if str(posted['childmethod']) == expected.value:
             postedisexpected = True 
             break    
     if not postedisexpected: return False
     
     return True
 
+class DropDownEntry(object):
+    def __init__(self, text, value):
+        self.text = text
+        self.value = value
+        
+def generateMenuData(nblevels):
+    menu = {}
+    
+    models = []
+    if settings.MODELS_LOCATION in settings.INSTALLED_APPS:
+        modulename = settings.MODELS_LOCATION + '.models'
+        if not modulename in sys.modules.keys():
+            try:
+                module = __import__( modulename )
+            except ImportError, e:
+                raise ConfigError( 'Unable to load module: ' + module )
+        else:
+            module = sys.modules[modulename]
+            
+        classes = dict(inspect.getmembers( module, inspect.isclass ))
+        
+        for classname in classes:
+            cls = classes[classname]
+            if isinstance(cls, ModelBase):
+                modelname = cls._base_manager.model._meta.object_name
+                models.append(DropDownEntry(cls.getUserFriendlyName(createObject(modulename , classname)), modelname))
+                
+    for model in models:
+        leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, model.value)
+        menu[model.value] = {"levels":leveldropdown, "models":modeldropdown, "metrics":metricdropdown, "childmethods":childmethoddropdown}
+        
+    return menu
+        
+
 def generateDropdownValues(nblevels, themodel):
     #generating drop down menu content
     #create level dropdown
     leveldropdown = []
-    leveldropdown.append((-1, 'all levels'))
+    leveldropdown.append(DropDownEntry('all levels', -1))
     for i in range(nblevels):
-        leveldropdown.append((i, "level "+i.__str__()))
+        leveldropdown.append(DropDownEntry( "level "+i.__str__(), i))
     
     #look for available models    
     #create model dropdown
@@ -507,7 +540,7 @@ def generateDropdownValues(nblevels, themodel):
             if isinstance(cls, ModelBase):
                 modelname = cls._base_manager.model._meta.object_name
                 if modelname == themodel: themodelfound = True
-                modeldropdown.append((modelname, cls.getUserFriendlyName(createObject(modulename , classname))))
+                modeldropdown.append(DropDownEntry(cls.getUserFriendlyName(createObject(modulename , classname)), modelname))
     else:
         raise Exception("Configuration Error in settings.py: settings.MODELS_LOCATION must contain a value which is in settings.INSTALLED_APPS ")
     
@@ -517,7 +550,7 @@ def generateDropdownValues(nblevels, themodel):
     cf = ColumnFinder(modulename, themodel)
     columns = cf.getColumnnames()
     for column in columns:
-        metricdropdown.append((column, column))
+        metricdropdown.append(DropDownEntry(column, column))
         
     childmethoddropdown = []
     instance = createObject(modulename, themodel)  
@@ -529,7 +562,7 @@ def generateDropdownValues(nblevels, themodel):
             try:
                 print function.__dict__['methodtype']
                 if function.__dict__['methodtype'] == 'children':
-                    childmethoddropdown.append((membername, membername))
+                    childmethoddropdown.append(DropDownEntry(membername, membername))
             except:
                 continue
     

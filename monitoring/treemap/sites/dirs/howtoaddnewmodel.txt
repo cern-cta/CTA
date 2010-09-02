@@ -1,0 +1,46 @@
+1. You need to scan the db to generate the models
+Enter the required data for db access into settings.py. 
+You need a read-wrie access. If you connect to a read-only account, django is not able to find the tables.
+The standard way django scans for existing tables won't work.
+
+DATABASE_NAME = 'rwnetworkalias'		 
+DATABASE_USER = 'rwusername'          
+DATABASE_PASSWORD = 'rwpassword' 
+
+Now, open a terminal and go to the directory where you have your manage.py
+You can generate your model into a file:
+
+python manage.py inspectdb > ./dirs/yourfile.txt
+
+If you use a readonly account to the same data, you might want to restore settings in settings.py
+
+DATABASE_NAME = 'ronetworkalias'	
+DATABASE_USER = 'rousername'             
+DATABASE_PASSWORD = 'ropassword' 
+
+By default, django generates models for all the tables. Open yourfile.py, choose the model(class) you need and copy&paste it to your models.py
+
+You will probably need a SYNONYM for the table you generated the model for. Here is an example how to create a synonym in your database:
+CREATE SYNONYM "CASTOR_NS_RO"."REQUESTS" FOR "MON_C2ATLAS"."REQUESTS";
+
+2. Now you need to verify if the generated data is correct. Example:
+
+class Requests(models.Model):
+    subreqid = models.CharField(unique=True, max_length=36)
+    timestamp = models.DateField()
+    reqid = models.CharField(max_length=36)
+    nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
+    type = models.CharField(max_length=255, blank=True)
+    svcclass = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=2048, blank=True)
+    filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    class Meta:
+        db_table = u'requests'
+        
+In this Example there is no information about what is the primary key
+
+
+
+Define method getUserFriendlyName. This method should return the name(as string) that will be used for that model on the user interface
