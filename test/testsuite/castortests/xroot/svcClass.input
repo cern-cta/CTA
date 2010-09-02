@@ -1,9 +1,9 @@
-<xrdcp> <localFileName> <xrdcpURLparam>svcClass=<noTapeServiceClass>
-stager_qry -M <noTapeFileName> -S <noTapeServiceClass>
-stager_qry -M <noTapeFileName> -S <noTapeServiceClass1>
-<xrdcp> <xrdcpURLparam>svcClass=<noTapeServiceClass1> <tmpLocalFileName>
-stager_qry -M <noTapeFileName> -S <noTapeServiceClass>
-stager_qry -M <noTapeFileName> -S <noTapeServiceClass1>
+<xrdcp> <localFileName> <xrdcpURLparam>svcClass=<tapeServiceClass>
+stager_qry -M <noTapeFileName> -S <tapeServiceClass>
+stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass>
+<xrdcp> <xrdcpURLparam>svcClass=<diskOnlyServiceClass> <tmpLocalFileName>
+stager_qry -M <noTapeFileName> -S <tapeServiceClass>
+stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass>
 diff <tmpLocalFileName> <localFileName>
 rm <tmpLocalFileName>
 nsrm <noTapeFileName>
