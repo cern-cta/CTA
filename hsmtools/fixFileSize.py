@@ -85,7 +85,7 @@ try:
            WHERE fileid = :fid
              AND bitand(filemode, 32768) = 32768) FOR UPDATE;
       UPDATE cns_file_metadata SET fileSize = :fs WHERE fileid = :fid;
-      UPDATE cns_seg_metadata SET segsize = :fs, checksum_name = null, checksum = null WHERE s_fileid = :fid;
+      UPDATE cns_seg_metadata SET segsize = :fs WHERE s_fileid = :fid;
     END;'''
     print "Fixing nameserver..."
     for f in fileids:
