@@ -751,7 +751,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   request.tpErrAction          = -1;
   request.convert              = ASCCONV;
   request.checkFid             = -1;
-  request.concat               = mode == WRITE_ENABLE ? NOCONCAT : OPEN_NOTRUNC;
+  request.concat               = NOCONCAT;
   request.procStatus           = RTCP_WAITING;
   request.blockId[0]           = blockId[0];
   request.blockId[1]           = blockId[1];
