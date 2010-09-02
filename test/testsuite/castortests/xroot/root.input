@@ -1,7 +1,7 @@
-echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<tapeServiceClass>&mkpath=1","RECREATE");#TNtuple *ntuple = new TNtuple("ntuple","test","x:y:z");#ntuple->Fill(1,2,3);#ntuple->Fill(4,5,6);#f->Write();' | sed 's/#/\n/g' > <tmpLocalFileName>
+echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<noTapeServiceClass>&mkpath=1","RECREATE");#TNtuple *ntuple = new TNtuple("ntuple","test","x:y:z");#ntuple->Fill(1,2,3);#ntuple->Fill(4,5,6);#f->Write();' | sed 's/#/\n/g' > <tmpLocalFileName>
 cat <tmpLocalFileName> | <rootbin>
 sleep 3
 nsls -l <noTapeFileName>
 stager_qry -M <noTapeFileName>
-echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<tapeServiceClass>","READ");#f->ls();#ntuple.Print()' | sed 's/#/\n/g' > <tmpLocalFileName1>
+echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<noTapeServiceClass>","READ");#f->ls();#ntuple.Print()' | sed 's/#/\n/g' > <tmpLocalFileName1>
 cat <tmpLocalFileName1> | <rootbin>

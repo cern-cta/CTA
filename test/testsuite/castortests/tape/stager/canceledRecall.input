@@ -5,7 +5,7 @@ stager_rm -M <tapeFileName>
 stager_qry -M <tapeFileName>
 stager_get -S <tapeServiceClass> -M <tapeFileName>
 stager_qry -S <tapeServiceClass> -M <tapeFileName>
-stager_rm -S <tapeServiceClass1> -M <tapeFileName>
+stager_rm -S <diskOnlyServiceClass> -M <tapeFileName>
 stager_qry -S <tapeServiceClass> -M <tapeFileName>
 stager_rm -S <tapeServiceClass> -M <tapeFileName>
 stager_qry -S <tapeServiceClass> -M <tapeFileName>

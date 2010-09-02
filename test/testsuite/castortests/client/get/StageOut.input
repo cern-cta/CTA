@@ -2,4 +2,4 @@ stager_put -M <noTapeFileName> -S <tapeServiceClass>
 STAGE_SVCCLASS=<tapeServiceClass> rfcp <localFileName> <noTapeFileName>
 stager_qry -M <noTapeFileName> -S <tapeServiceClass>
 stager_get -M <noTapeFileName> -S <tapeServiceClass>
-stager_get -M <noTapeFileName> -S <tapeServiceClass1>
+stager_get -M <noTapeFileName> -S <diskOnlyServiceClass>
