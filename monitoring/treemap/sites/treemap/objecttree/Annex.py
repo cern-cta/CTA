@@ -137,6 +137,10 @@ class Annex(models.Model):
             raise Exception("unexpected error")
         return ppk
     
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        return self.pk.__str__()
+    
 #mark children Methods   
 Annex.getItems.__dict__['methodtype'] = 'children'
 

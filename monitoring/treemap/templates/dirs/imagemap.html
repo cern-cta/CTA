@@ -131,7 +131,7 @@ function setModel()
     
     <tr>
       <td align="center" valign="middle">
-    	<p><a href="/treemaps/bydir/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
+    	<p><a href="/treemaps/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
       </td>
     </tr>
     
@@ -141,7 +141,7 @@ function setModel()
         	<ul id="map">
  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
 					<li>
-						<a class="cls{{theid}}" href="/treemaps/bydir/{{theid}}" title = "">
+						<a class="cls{{theid}}" href="/treemaps/{{theid}}" title = "">
 							<span>
 								{{ info|escapefilter }}
 							</span>
@@ -217,13 +217,13 @@ function setModel()
 				
 			   </style>  
 		   
-	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/bydir/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
+	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
 	</td>	
 		<td name = "optionsmenu" align="left" valign="top" height={{imageheight}} style="display:none;">	
 		
 		<!--  make the menu visible if JavaScript is activated -->
 			<table>
-				<form action="/treemaps/bydir/{{rootid}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
+				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
 				
 					<tr>
 					<td class="descriptiontext">Level:</td> 

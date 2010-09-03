@@ -34,74 +34,32 @@ from sites.tools.ObjectCreator import createObject
 from sites.tools.ColumnFinder import ColumnFinder
 from django.shortcuts import redirect
 
+def redirectOldLink(request, theid):
+    return HttpResponse("Please use the new link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
+#    return treeView(request, 'Dirs', theid)
 
-def plain(request, depth):
-    p = get_list_or_404(Dirs, depth = depth)
-    return render_to_response('dirs/dir_list.html', {'object_list': p})
+def redirectHome(request):
+    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_3')
 
-def xxxplainbydir(request, id):
-    time = datetime.datetime.now()
-    try:
-        #Directory you want to show its content
-        p = Dirs.objects.get(pk=id)
-        
-    except Dirs.DoesNotExist:
-        raise Http404
-        
-    children = list(p.getDirs())#list(Dirs.objects.filter(parent=id))
-    
-    if (children):
-        try:
-            back = p.parent #Django knows from the model that this is a foreign key, so dirs.objects... is not needed
-            back.fullname = '..'
-            children.insert(0, back)
-        except Dirs.DoesNotExist:
-            return render_to_response('dirs/dir_list.html', {'object_list': children})
-    totaltime = datetime.datetime.now() - time
-    response = render_to_string('dirs/dir_list.html', {'object_list': children, 'time': totaltime, 'number_entries': children.__len__(),} , context_instance=None)
-    totaltime = datetime.datetime.now() - time
-    response = '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>' + response
-    return HttpResponse(response)#render_to_response('dirs/dir_list.html', {'object_list': children, 'time': totaltime})
-
-#@cache_page(60 *60 * 24 * 3) #cache for 3 days
-
-#def plainbydirprofiling(request, theid): 
-#    print 'profiling'
-#    response = None
-#    profile.runctx('response =  plainbydir1(request, theid)', globals(), {'request':request, 'theid': theid, 'response':response})
-#    return response
-#    #plainbydir1(request, theid)
-
-def plainbydir(request, theid):  
+def treeView(request, rootmodel, theid):  
     
     time = datetime.datetime.now()
     try:
         #Directory you want to show its content
-        root = Dirs.objects.get(pk=theid)   
+        root = None
+        command = "root = "+ rootmodel.__str__()+ ".objects.get(pk="+theid.__str__()+")" 
+        exec(command)
+        
     except Dirs.DoesNotExist:
         raise Http404
-        return render_to_response('dirs/dir_list.html', {'object_list': root}) 
+        return render_to_response("Error") 
     
     imagewidth = 800.0
     imageheight = 600.0
     nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
-    treemapdir = settings.REL_TREEMAP_DICT
-    
-    #caching part
-    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-    fragment_name = theid.__str__()
-    vary_on = [(2,3,5,7),(11,13,17,19,23,29)]
-    args = md5_constructor(u':'.join([urlquote(resolve_variable("145", theid))]))                 
-    cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
-    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
-    
-    value = cache.get(cache_key)
-    
-    #if already in cache
-    if value is not None:
-        return HttpResponse(value)
+    treemapdir = settings.REL_TREEMAP_DICT 
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
     lr = None
@@ -110,6 +68,13 @@ def plainbydir(request, theid):
         lr = request.session['levelrules']
     else:
         lr = getDefaultRules(nbdefinedlevels)
+        
+    cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
+    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
+    value = cache.get(cache_key)
+    #if already in cache
+    if value is not None:
+        return HttpResponse(value)
     
     start = datetime.datetime.now()
     
@@ -158,14 +123,14 @@ def plainbydir(request, theid):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = root.pk.__str__().replace('/','') + "treemap.png"
+    filenm = root.getIdReplacement() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels)
     
     del tree
     del otree
@@ -192,27 +157,19 @@ def groupView(request, parentpk, depth, model):
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     
-    #caching part
-    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in model.__str__()])
-    vary_on = [(2,3,5,7),(11,17,19,23,29)]
-    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))                 
-    cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
-    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
-    
-    value = cache.get(cache_key)
-    
-    #if the response is cached
-    if value is not None:
-        return HttpResponse(value)
-    
-    
     cookielr = None
     if(request.session.test_cookie_worked()):
         createCookieIfMissing(request, nbdefinedlevels)
         cookielr = request.session['levelrules']
     else:
         cookielr = getDefaultRules(nbdefinedlevels)
+        
+    cache_key = calcCacheKey(parentpk = parentpk, parentmodel = "Annex", depth = depth, lr = cookielr)
+    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
+    value = cache.get(cache_key)
+    #if already in cache
+    if value is not None:
+        return HttpResponse(value)
     
     #define LevelRules
     lr = LevelRules()
@@ -300,14 +257,14 @@ def groupView(request, parentpk, depth, model):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = root.pk.__str__().replace('/','') + "annex"+depth.__str__()+ ".png"
+    filenm = "Annex" + root.getIdReplacement() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootid = root.pk, nblevels = nbdefinedlevels )
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.pk, nblevels = nbdefinedlevels )
     
     del tree
     del otree
@@ -341,7 +298,7 @@ def changeMetrics(request, theid):
     request.session.set_test_cookie()
     return redirect(to = '..', args = {'request':request, 'theid':theid})
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootid, nblevels, metric = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, metric = ''):
     print "preparing response"
     
     apacheserver = settings.PUBLIC_APACHE_URL
@@ -349,9 +306,9 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     treemapdir = settings.REL_TREEMAP_DICT
     icondir = settings.REL_ICON_DICT
     
-    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().fileid
+    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
     print "PARENTID ", parentid
-    parentidstr = parentid.__str__()
+    parentidstr = vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -366,7 +323,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
-        theid = node.getProperty('treenode').getObject().pk.__str__()
+        theid = node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmlinfotext')
         
         mapparams[idx] = (x1,y1,x2,y2,theid,info)
@@ -433,7 +390,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        navlinkparts.append( (pr.name, pr.fullname, pr.pk) )
+        navlinkparts.append( (pr.name, pr.fullname, pr.getIdReplacement()) )
 
 #    leveldropdown, modeldropdown, metricdropdown, childmethoddropdown = generateDropdownValues(nblevels, getDefaultModel())
     
@@ -442,7 +399,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'rootid': rootid, "dynamicmenu": generateMenuData(nblevels) } , context_instance=None)
+     'rootsuffix': rootsuffix, "dynamicmenu": generateMenuData(nblevels) } , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
     response = response + '<p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p>'
@@ -614,10 +571,11 @@ def getAvailableModels():
                 
     return availablemodels
 
-#def calcCacheKey(parentpk, parentmodel, depth , selectedmodel):
-#    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-#    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
-#    vary_on = [(2,3,5,7),(11,17,19,23,29)]
-#    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))                 
-#    cache_key = 'template.cache.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest())
-#    return cache_key
+def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
+    key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
+    vary_on = [(2,3,5,7),(11,17,19,23,29)]
+    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))     
+    lrkeypart = lr.getUniqueLevelRulesId()            
+    cache_key = 'template.cache.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart)
+    return cache_key

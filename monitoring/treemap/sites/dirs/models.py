@@ -207,6 +207,11 @@ class Dirs(models.Model):
     def getUserFriendlyName(self):
         return "Directory"
     
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+        
+    
 #mark children methods for Dirs
 Dirs.getDirs.__dict__['methodtype'] = 'children'
 Dirs.getFiles.__dict__['methodtype'] = 'children'
@@ -274,6 +279,10 @@ class CnsFileMetadata(models.Model):
         
     def getUserFriendlyName(self):
         return "File"
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -301,6 +310,10 @@ class Requests(models.Model):
         
     def getUserFriendlyName(self):
         return "Amount of Requests"
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

@@ -15,5 +15,6 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
 #     (r'^admin/', include(admin.site.urls)),
+     (r'^treemaps/$', 'dirs.views.redirectHome'),
      (r'^treemaps/', include('sites.dirs.urls')),
 )

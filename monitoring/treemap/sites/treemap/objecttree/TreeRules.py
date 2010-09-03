@@ -178,22 +178,25 @@ class LevelRules(object):
     def getUniqueLevelRulesId(self):
         idparts = []
         oldcontent = None
-        for number, rule in enumerate(self.rules):
-            idparts.append(number.__str__())
+        for nr, rule in enumerate(self.rules):
+            idparts.append(nr.__str__())
             
             content = rule.infoDict()
             if content != oldcontent:
-                idparts.append(content['model'])
-                idparts.append(content['method'])
-                idparts.append(content['countmethod'])
-                idparts.append(content['parentmethod'])
-                idparts.append(content['columnname'])
-                idparts.append(content['fparam'])
-                oldcontent = content
+                for entry in content:
+                    idparts.append(entry['model'])
+                    idparts.append(entry['method'])
+                    idparts.append(entry['countmethod'])
+                    idparts.append(entry['parentmethod'])
+                    idparts.append(entry['columnname'])
+                    idparts.append(entry['fparam'].__str__())
             else:
-                idparts.append('FA56') #some fixed random number
+                idparts.append('h8gates') #some fixed random number  
+            oldcontent = content
         
-        return ''.join([bla for bla in idparts])
+        text = (''.join([bla for bla in idparts]))
+        hashvalue = str(hash(text[:len(text)/2])) + str(hash(text[len(text)/2:])) 
+        return hashvalue
         
     
 #    #returns data structured like this: [level][ruleindex]{rulesdict}    
