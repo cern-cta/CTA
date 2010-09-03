@@ -236,7 +236,7 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
 //  applyRecallPolicy
 //-----------------------------------------------------------------
 
-bool castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPolicyElement& elem)
+int castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPolicyElement& elem)
   throw (castor::exception::Exception ){
 
   //apply the policy using a scoped lock as protection
