@@ -1095,8 +1095,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
       // Notify the tape gateway
       // If migrating
       if(m_volume.mode() == tapegateway::WRITE) {
-        const uint64_t fileSize           = body.bytesIn; // "in" to the tape
-        const uint64_t compressedFileSize = fileSize; // Ignore compression
+        const uint64_t fileSize     = body.bytesIn;  //  "in" from the disk
+        uint64_t compressedFileSize = fileSize;      // without compression
+        if(0 < body.bytesOut && body.bytesOut < fileSize) {
+          compressedFileSize        = body.bytesOut; //   "Out" to the tape
+        } 
 
         time_t connectDuration = 0;
         const uint64_t aggregatorTransactionId =
