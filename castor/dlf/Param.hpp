@@ -113,8 +113,13 @@ namespace castor {
       Param(const char* name, const long unsigned int value) :
         m_deallocate(false) {
         m_cParam.name = (char*) name;
+#if __WORDSIZE == 64
+        m_cParam.type = DLF_MSG_PARAM_INT64;
+        m_cParam.value.par_u64 = value;
+#else
         m_cParam.type = DLF_MSG_PARAM_INT;
         m_cParam.value.par_int = value;
+#endif
       };
 
       /**
