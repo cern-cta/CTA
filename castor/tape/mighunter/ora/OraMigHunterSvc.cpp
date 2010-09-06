@@ -51,7 +51,11 @@
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 
+#include "castor/tape/mighunter/TapePoolForStreamPolicy.hpp"
 #include "castor/tape/mighunter/ora/OraMigHunterSvc.hpp"
+#include "castor/tape/utils/SmartOcciResultSet.hpp"
+
+#include "errno.h"
 
 
 // -----------------------------------------------------------------------
@@ -82,7 +86,30 @@ const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_attachTapeCop
 
 /// SQL statement for inputForStreamPolicy
 const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_inputForStreamPolicyStatementString = 
-  "BEGIN inputForStreamPolicy(:1,:2,:3,:4,:5); END;";
+  "BEGIN "
+    "inputForStreamPolicy("
+      ":inSvcClassName,"
+      ":outSvcClassId,"
+      ":outStreamPolicyName,"
+      ":outNbDrives,"
+      ":outStreamsForPolicy);"
+  "END;";
+
+/// SQL statement for tapePoolsForStreamPolicy
+const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_tapePoolsForStreamPolicyStatementString =
+  "SELECT TapePool.id, "
+         "TapePool.name, "
+         "NVL(TapePoolStreamStats.nbRunningStreams, 0) nbRunningStreams "
+    "FROM TapePool "
+    "LEFT OUTER JOIN ( "
+     "SELECT SvcClass2TapePool.child tapePool, "
+            "COUNT(*) nbRunningStreams "
+       "FROM SvcClass2TapePool "
+      "INNER JOIN Stream ON (SvcClass2TapePool.child = Stream.tapePool) "
+      "WHERE SvcClass2TapePool.parent = :svcClassId "
+        "AND Stream.status = 3 /* STREAM_RUNNING */ "
+      "GROUP BY SvcClass2TapePool.child) TapePoolStreamStats "
+      "ON (TapePool.id = TapePoolStreamStats.tapePool)";
 
 /// SQL statement for startChosenStreams
 
@@ -124,6 +151,7 @@ castor::tape::mighunter::ora::OraMigHunterSvc::OraMigHunterSvc(const std::string
   m_inputForMigrationPolicyStatement(0),
   m_createOrUpdateStreamStatement(0),
   m_inputForStreamPolicyStatement(0),
+  m_tapePoolsForStreamPolicyStatement(0),
   m_startChosenStreamsStatement(0),
   m_stopChosenStreamsStatement(0),
   m_resurrectCandidatesStatement(0),
@@ -163,28 +191,30 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
   OraCommonSvc::reset();
   try {
  
-    if  (m_inputForMigrationPolicyStatement) deleteStatement(m_inputForMigrationPolicyStatement);
-    if  (m_createOrUpdateStreamStatement) deleteStatement(m_createOrUpdateStreamStatement);
-    if  (m_inputForStreamPolicyStatement) deleteStatement(m_inputForStreamPolicyStatement);
-    if  (m_startChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
-    if  (m_stopChosenStreamsStatement) deleteStatement(m_stopChosenStreamsStatement);
-    if (m_resurrectCandidatesStatement) deleteStatement(m_resurrectCandidatesStatement);
+    if (m_inputForMigrationPolicyStatement)   deleteStatement(m_inputForMigrationPolicyStatement);
+    if (m_createOrUpdateStreamStatement)      deleteStatement(m_createOrUpdateStreamStatement);
+    if (m_inputForStreamPolicyStatement)      deleteStatement(m_inputForStreamPolicyStatement);
+    if (m_tapePoolsForStreamPolicyStatement)  deleteStatement(m_tapePoolsForStreamPolicyStatement);
+    if (m_startChosenStreamsStatement)        deleteStatement(m_startChosenStreamsStatement);
+    if (m_stopChosenStreamsStatement)         deleteStatement(m_stopChosenStreamsStatement);
+    if (m_resurrectCandidatesStatement)       deleteStatement(m_resurrectCandidatesStatement);
     if (m_attachTapeCopiesToStreamsStatement) deleteStatement(m_attachTapeCopiesToStreamsStatement); 
-    if ( m_selectTapePoolNamesStatement )deleteStatement(m_selectTapePoolNamesStatement);
-    if ( m_migHunterCleanUpStatement )deleteStatement(m_migHunterCleanUpStatement);
+    if (m_selectTapePoolNamesStatement)       deleteStatement(m_selectTapePoolNamesStatement);
+    if (m_migHunterCleanUpStatement)          deleteStatement(m_migHunterCleanUpStatement);
 
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
 
-  m_inputForMigrationPolicyStatement=0;
-  m_createOrUpdateStreamStatement=0;
-  m_inputForStreamPolicyStatement=0;
-  m_startChosenStreamsStatement=0; 
-  m_stopChosenStreamsStatement=0;
-  m_resurrectCandidatesStatement=0;
-  m_attachTapeCopiesToStreamsStatement=0;
-  m_selectTapePoolNamesStatement=0;
-  m_migHunterCleanUpStatement=0;
+  m_inputForMigrationPolicyStatement   = 0;
+  m_createOrUpdateStreamStatement      = 0;
+  m_inputForStreamPolicyStatement      = 0;
+  m_tapePoolsForStreamPolicyStatement  = 0;
+  m_startChosenStreamsStatement        = 0;
+  m_stopChosenStreamsStatement         = 0;
+  m_resurrectCandidatesStatement       = 0;
+  m_attachTapeCopiesToStreamsStatement = 0;
+  m_selectTapePoolNamesStatement       = 0;
+  m_migHunterCleanUpStatement          = 0;
 }
 
 
@@ -458,70 +488,183 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(co
 //--------------------------------------------------------------------------
 // inputForStreamPolicy
 //--------------------------------------------------------------------------
-
-void castor::tape::mighunter::ora::OraMigHunterSvc::inputForStreamPolicy(std::string svcClassName,std::list<castor::tape::mighunter::StreamPolicyElement>& candidates  ) throw (castor::exception::Exception){
-  oracle::occi::ResultSet *rs =NULL;
+void castor::tape::mighunter::ora::OraMigHunterSvc::inputForStreamPolicy(
+  const std::string         &svcClassName,
+  u_signed64                &svcClassId,
+  std::string               &streamPolicyName,
+  u_signed64                &nbDrives,
+  StreamForStreamPolicyList &streamsForPolicy)
+  throw (castor::exception::Exception) {
 
   try {
-    // Check whether the statements are ok
-    if (0 == m_inputForStreamPolicyStatement) {
+    // Create and setup the oracle statement object if one does not already
+    // exist
+    if (m_inputForStreamPolicyStatement == NULL) {
       m_inputForStreamPolicyStatement  =
-        createStatement(s_inputForStreamPolicyStatementString);       
+        createStatement(s_inputForStreamPolicyStatementString);
       m_inputForStreamPolicyStatement->registerOutParam
-        (2, oracle::occi::OCCISTRING,2048);
+        (2, oracle::occi::OCCIDOUBLE);       // :outSvcClassId
       m_inputForStreamPolicyStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
+        (3, oracle::occi::OCCISTRING, 2048); // :outStreamPolicyName
       m_inputForStreamPolicyStatement->registerOutParam
-        (4, oracle::occi::OCCIINT);
+        (4, oracle::occi::OCCIDOUBLE);       // :outNbDrives
       m_inputForStreamPolicyStatement->registerOutParam
-        (5, oracle::occi::OCCICURSOR);
+        (5, oracle::occi::OCCICURSOR);       // :outStreamsForPolicy
 
       m_inputForStreamPolicyStatement->setAutoCommit(true);
     }
-    // execute the statement and see whether we found something
-     
 
+    // Execute the statement
     m_inputForStreamPolicyStatement->setString(1, svcClassName);
-    
     m_inputForStreamPolicyStatement->executeUpdate();
-    
-      
-    std::string policyName= m_inputForStreamPolicyStatement->getString(2);
-    u_signed64 runningStream= m_inputForStreamPolicyStatement->getInt(3);
-    u_signed64 nbDrives= m_inputForStreamPolicyStatement->getInt(4);
-    
-    rs =
-      m_inputForStreamPolicyStatement->getCursor(5);
-    // Run through the cursor
-    
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::tape::mighunter::StreamPolicyElement elem;
-      elem.svcClassName=svcClassName;
-      elem.policyName=policyName;
-      elem.maxNumStreams = nbDrives;
-      elem.streamId=(u_signed64)rs->getDouble(1);
-      elem.numFiles=(u_signed64)rs->getDouble(2);
-      elem.numBytes=(u_signed64)rs->getDouble(3);
-      elem.age=(u_signed64)rs->getDouble(4);
-      elem.runningStream=runningStream;
-      candidates.push_back(elem);
-      status = rs->next();
-    } 
-    
-  } catch (oracle::occi::SQLException e) {
-    if (rs !=NULL) m_inputForStreamPolicyStatement->closeResultSet(rs);
-    rs=NULL;
-    handleException(e);
+
+    // Get the database ID of the service-class
+    svcClassId = (u_signed64)m_inputForStreamPolicyStatement->getDouble(2);
+
+    // Get the name of the stream-policy from the result
+    streamPolicyName = m_inputForStreamPolicyStatement->getString(3);
+
+    // Get the number of drives of the service-class
+    nbDrives = (u_signed64)m_inputForStreamPolicyStatement->getDouble(4);
+
+    // Get the list of candidate streams for the stream-policy
+    utils::SmartOcciResultSet
+      resultSet(m_inputForStreamPolicyStatement,
+        m_inputForStreamPolicyStatement->getCursor(5));
+
+    while(resultSet->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      StreamForStreamPolicy streamForPolicy;
+
+      streamForPolicy.streamId            = (u_signed64)resultSet->getDouble(1);
+      streamForPolicy.numTapeCopies       = (u_signed64)resultSet->getDouble(2);
+      streamForPolicy.totalBytes          = (u_signed64)resultSet->getDouble(3);
+      streamForPolicy.ageOfOldestTapeCopy = (u_signed64)resultSet->getDouble(4);
+      streamForPolicy.tapePoolId          = (u_signed64)resultSet->getDouble(5);
+
+      streamsForPolicy.push_back(streamForPolicy);
+    }
+
+    resultSet.close();
+
+  } catch (oracle::occi::SQLException &oe) {
+
+    // Inform the framework the occi exception was caught
+    handleException(oe);
+
     castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in inputForStreamPolicy"
-      << std::endl << e.what();
-    throw ex;
+
+    ex.getMessage() <<
+      "inputForStreamPolicy() failed"
+      ": Caught an oracle::occi::SQLException"
+      ": " << oe.what();
+
+    throw(ex);
+  } catch(castor::exception::Exception &ce) {
+    castor::exception::Exception ex(ce.code());
+
+    ex.getMessage() <<
+      "inputForStreamPolicy() failed"
+      ": Caught a castor::exception::Exception"
+      ": " << ce.getMessage().str();
+
+    throw(ex);
+  } catch(std::exception &se) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "inputForStreamPolicy() failed"
+      ": Caught a std::exception"
+      ": " << se.what();
+
+    throw(ex);
+  } catch(...) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "inputForStreamPolicy() failed"
+      ": Caught an unknown exception";
+
+    throw(ex);
   }
-  
-  if (rs !=NULL) m_inputForStreamPolicyStatement->closeResultSet(rs);
-  rs=NULL;
+}
+
+
+//--------------------------------------------------------------------------
+// tapePoolsForStreamPolicy
+//--------------------------------------------------------------------------
+void castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy(
+  const u_signed64               svcClassId,
+  IdToTapePoolForStreamPolicyMap &tapePoolsForPolicy)
+  throw (castor::exception::Exception) {
+
+  try {
+    // Create and setup the oracle statement object if one does not already
+    // exist
+    if (m_tapePoolsForStreamPolicyStatement == NULL) {
+      m_tapePoolsForStreamPolicyStatement  =
+        createStatement(s_tapePoolsForStreamPolicyStatementString);
+
+      m_tapePoolsForStreamPolicyStatement->setAutoCommit(false);
+    }
+
+    // Execute the statement
+    m_tapePoolsForStreamPolicyStatement->setDouble(1, svcClassId);
+    utils::SmartOcciResultSet
+      resultSet(m_tapePoolsForStreamPolicyStatement,
+        m_tapePoolsForStreamPolicyStatement->executeQuery());
+
+    // Get the list of candidate streams for the stream-policy
+    while(resultSet->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      const u_signed64 tapePoolId = (u_signed64)resultSet->getDouble(1);
+
+      TapePoolForStreamPolicy tapePool;
+      tapePool.tapePoolName     =             resultSet->getString(2);
+      tapePool.nbRunningStreams = (u_signed64)resultSet->getDouble(3);
+
+      tapePoolsForPolicy[tapePoolId] = tapePool;
+    }
+
+    resultSet.close();
+  } catch (oracle::occi::SQLException &oe) {
+
+    // Inform the framework the occi exception was caught
+    handleException(oe);
+
+    castor::exception::Internal ex;
+
+    ex.getMessage() <<
+      "tapePoolsForStreamPolicy() failed"
+      ": Caught an oracle::occi::SQLException"
+      ": " << oe.what();
+
+    throw(ex);
+  } catch(castor::exception::Exception &ce) {
+    castor::exception::Exception ex(ce.code());
+
+    ex.getMessage() <<
+      "tapePoolsForStreamPolicy() failed"
+      ": Caught a castor::exception::Exception"
+      ": " << ce.getMessage().str();
+
+    throw(ex);
+  } catch(std::exception &se) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "tapePoolsForStreamPolicy() failed"
+      ": Caught a std::exception"
+      ": " << se.what();
+
+    throw(ex);
+  } catch(...) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "tapePoolsForStreamPolicy() failed"
+      ": Caught an unknown exception";
+
+    throw(ex);
+  }
 }
 
 
@@ -587,6 +730,68 @@ void  castor::tape::mighunter::ora::OraMigHunterSvc::startChosenStreams(const st
         
 }
 
+
+//--------------------------------------------------------------------------
+// startChosenStreams
+//--------------------------------------------------------------------------
+void castor::tape::mighunter::ora::OraMigHunterSvc::startChosenStreams(
+  const std::list<u_signed64> &streamIds)
+  throw (castor::exception::Exception) {
+  unsigned char (*buffer)[21] = 0;
+  ub2           *lens         = 0;
+
+  try {
+    // Create the database statement if one does not exist
+    if (0 ==  m_startChosenStreamsStatement) {
+      m_startChosenStreamsStatement  =
+        createStatement(s_startChosenStreamsStatementString); 
+      m_startChosenStreamsStatement->setAutoCommit(true);
+    }
+    const unsigned int nb = streamIds.size();
+    
+    if (nb == 0 ) return;
+
+    lens = (ub2 *)malloc (sizeof(ub2)*nb);
+    buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+
+    if ( buffer == 0 || lens == 0 ) {
+       if (buffer != 0) free(buffer);
+       if (lens != 0) free(lens);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+ 
+    int i=0;
+    for(std::list<u_signed64>::const_iterator streamIdItor = streamIds.begin();
+      streamIdItor != streamIds.end(); streamIdItor++, i++) {
+      oracle::occi::Number n = (double)(*streamIdItor);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+    ub4 unused = nb;
+    m_startChosenStreamsStatement->setDataBufferArray
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+   
+    m_startChosenStreamsStatement->executeUpdate();
+    
+    //free allocated memory needed because of oracle unfriendly interface
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+
+  } catch (oracle::occi::SQLException e) {
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in startChosensStreams."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
 //--------------------------------------------------------------------------
 // stopChosenStreams
 //--------------------------------------------------------------------------
@@ -651,6 +856,67 @@ void  castor::tape::mighunter::ora::OraMigHunterSvc::stopChosenStreams(const std
 }
 
 
+//--------------------------------------------------------------------------
+// stopChosenStreams
+//--------------------------------------------------------------------------
+void castor::tape::mighunter::ora::OraMigHunterSvc::stopChosenStreams(
+  const std::list<u_signed64> &streamIds)
+  throw (castor::exception::Exception) {
+  unsigned char (*buffer)[21] = 0;
+  ub2           *lens         = 0;
+
+  try {
+    // Create the database statement if one does not exist
+    if (0 ==  m_stopChosenStreamsStatement) {
+      m_stopChosenStreamsStatement  =
+        createStatement(s_stopChosenStreamsStatementString); 
+      m_stopChosenStreamsStatement->setAutoCommit(true);
+    }
+
+    const unsigned int nb = streamIds.size();
+
+    if (nb == 0 ) return;
+
+    buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    lens = (ub2 *)malloc (sizeof(ub2)*nb);
+
+    if ( buffer == 0 || lens == 0 ) {
+      if (buffer != 0) free(buffer);
+      if (lens != 0) free(lens);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
+
+    int i=0;
+    for(std::list<u_signed64>::const_iterator streamIdItor=streamIds.begin();
+      streamIdItor!=streamIds.end(); streamIdItor++, i++) {
+      oracle::occi::Number n = (double)(*streamIdItor);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+
+    ub4 unused = nb;
+    m_stopChosenStreamsStatement->setDataBufferArray
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+   
+    m_stopChosenStreamsStatement->executeUpdate();
+
+    //free allocated memory needed because of oracle unfriendly interface
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+
+  } catch (oracle::occi::SQLException e) {
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in stopChosensStreams."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
 
 
 //---------------------------------------------------------------------
@@ -811,4 +1077,3 @@ void   castor::tape::mighunter::ora::OraMigHunterSvc::migHunterCleanUp(std::stri
     throw ex;
   }
 }
-

@@ -1,0 +1,985 @@
+#!/usr/bin/perl -w
+###############################################################################
+#                  test/castor/tape/mighunter/testmighunter
+# 
+#  This file is part of the Castor project.
+#  See http://castor.web.cern.ch/castor
+# 
+#  Copyright (C) 2003  CERN
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# 
+# 
+# 
+#  @author Steven.Murray@cern.ch
+###############################################################################
+
+use DBI;
+use POSIX;
+use strict;
+
+# Prints the usage message for this script
+sub printUsage {
+  print("Usage: test.py mighunterdExecutable\n");
+  print("Note: This script mjust be ran as root\n");
+}
+
+# Parses the command-line arguments.
+#
+# This method prints an appropriate error message and aborts the script if it
+# fails to parse the command-line arguments.
+#
+# @return The path to the executable of the mighunter daemon.
+sub parseCommandLine {
+  my $expectedNbCmdLineArgs = 1;
+  my $actualNbCmdLineArgs   = @ARGV;
+  if($expectedNbCmdLineArgs != $actualNbCmdLineArgs) {
+    print("ABORT: Wrong number of command-line arguments:");
+    print(" expectedNbCmdLineArgs=$expectedNbCmdLineArgs");
+    print(" actualNbCmdLineArgs=$actualNbCmdLineArgs\n");
+    &printUsage();
+    exit(-1);
+  }
+
+  my $mighunterdExecutable = $ARGV[0];
+
+  return $mighunterdExecutable;
+}
+
+# Returns the value of the specified ORASTAGERCONFIG parameter.
+#
+# This subroutine prints an error message and aborts the entire tes script if
+# it fails to get the value of the specified parameter.
+#
+# @param  paramName The name of the parameter whose value is to be retrieved.
+# @return           The value of the parameter.
+sub getOrastagerconfigParam {
+  my $paramName = $_[0];
+
+  open(CONFIG, "</etc/castor/ORASTAGERCONFIG")
+    or die "Failed to open /etc/castor/ORASTAGERCONFIG: $!";
+
+  while(<CONFIG>) {
+    chomp;
+    if(m/^DbCnvSvc\s+$paramName\s+(\w+)/) {
+      return $1;
+    }
+  }
+
+  close CONFIG;
+
+  print("ABORT: Failed to get ORASTAGERCONFIG parameter: paramName=$paramName\n");
+  exit(-1);
+}
+
+# Returns true if the daemon with specfied name is running else false.
+#
+# @param  daemonName The name of the daemon.
+# @return            True if the daemon is runn ing, else false.
+sub daemonIsRunning {
+  my $daemonName = $_[0];
+
+  my $psResult = `ps -e | grep $daemonName`;
+  chomp($psResult);
+
+  return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+}
+
+# Tries to kill the specified daemon within the specified time-out period.  If
+# the daemon is dead within the time-out period, then this subroutine returns
+# 0, else this subroutine prints an error message and returns a value of 1.
+#
+# If the daemon process to be killed is already dead when this subroutine is
+# called, then this method will succeed immediately.
+#
+# @param  processName The process name of the daemon to be killed.
+# @param  timeOutSecs The time-out period in seconds.
+# @return             0 on success and 1 on failure.
+sub killDaemonWithTimeout {
+  my $processName = $_[0];
+  my $timeOutSecs = $_[1];
+
+  `killall $processName`;
+
+  my $startTime  = time();
+  my $timeOutTime = $startTime + $timeOutSecs;
+
+  while(1) {
+    if(!&daemonIsRunning($processName)) {
+      return 0; # Success
+    }
+
+    if(time() >= $timeOutTime) {
+      print("Failed to kill $processName\n");
+      return 1; # Failure
+    }
+
+    sleep(1);
+  }
+}
+
+# Returns a back-up filename based on the specified original filename.
+#
+# Please note that this subroutine does not create or modify any files.
+#
+# The back-up filename is the original plus a unique extension.
+#
+# @param  originalFilename The full path-name of the original file.
+# @return                 The full path-name of the back-up copy.
+sub genBackupFileName {
+  my $originalFilename = $_[0];
+
+  my $uuid = `uuidgen`;
+  chomp($uuid);
+  my $date = `date | sed 's/ /_/g;s/:/_/g'`;
+  chomp($date);
+  my $hostname = `hostname`;
+  chomp($hostname);
+  my $backupFilename = "${originalFilename}_${uuid}_${hostname}_${date}_backup";
+
+  return($backupFilename);
+}
+
+# Creates a backs-up copy of the specified original-file and returns the name of
+# the back-up copy.
+#
+# @param  originalFilename The full path-name of the original file.
+# @return                  The full path-name of the back-up copy.
+sub createBackupCopy {
+  my $originalFilename = $_[0];
+
+  my $backupFilename = &genBackupFileName($originalFilename);
+  print("Creating $backupFilename from $originalFilename\n");
+  `cp $originalFilename $backupFilename`;
+
+  return $backupFilename;
+}
+
+# Restores the original-copy of a file from its backup-copy and then deletes
+# the back-up copy.
+#
+# @param originalFilename The full path-name of the original file.
+# @param backupFilename   The full path-name of the back-up copy.
+sub restoreFileFromBackupCopy {
+  my $originalFilename = $_[0];
+  my $backupFilename   = $_[1];
+
+  print("Restoring $originalFilename from $backupFilename\n");
+  `cp $backupFilename $originalFilename`;
+  print("Deleting $backupFilename\n");
+  `rm -f $backupFilename`;
+}
+
+# Test the mighunter detectsi missing MIGHUNTER/MIGRATION_POLICY parameter.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @return                      0 if the test passed, else 1.
+sub testNoCastorConfMIGHUNTER_MIGRATION_POLICY {
+  my $mighunterdExecutable = $_[0];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS MISSING MIGHUNTER/MIGRATION_POLICY parameter");
+  print("\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  # Back-up the original /etc/castor/castor.conf
+  my $configFilename       = "/etc/castor/castor.conf";
+  my $configBackupFilename = &createBackupCopy($configFilename);
+
+  # Comment out the MIGHUNTER/MIGRATION_POLICY parameter
+  `sed -i 's/^MIGHUNTER\\([[:space:]]\\+\\)MIGRATION_POLICY/#MIGHUNTER\\1MIGRATION_POLICY/' $configFilename`;
+
+  # Start the mighunter and check that it stops with the correct error message
+  my $expectedMighunterdResult = "Failed to start daemon: Failed to get the value of the mandatory configuration parameter MIGHUNTER/MIGRATION_POLICY: The parameter is not specified in castor.conf";
+  my $mighunterdResult = `2>&1 $mighunterdExecutable -f -t 1 default`;
+  $mighunterdResult =~ s/\n//g;
+  print("result=\"$mighunterdResult\"\n");
+  my $testPassed = $mighunterdResult eq $expectedMighunterdResult;
+
+  # Restore /etc/castor/castor.conf using the back-up copy and then delete the
+  # back-up copy
+  &restoreFileFromBackupCopy($configFilename, $configBackupFilename);
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test the mighunter detects missing MIGHUNTER/STREAM_POLICY parameter.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @return                      0 if the test passed, else 1.
+sub testNoCastorConfMIGHUNTER_STREAM_POLICY {
+  my $mighunterdExecutable = $_[0];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS MISSING MIGHUNTER/STREAM_POLICY PARAMETER\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  # Back-up the original /etc/castor/castor.conf
+  my $configFilename       = "/etc/castor/castor.conf";
+  my $configBackupFilename = &createBackupCopy($configFilename);
+
+  # Comment out the MIGHUNTER/STREAM_POLICY parameter
+  `sed -i 's/^MIGHUNTER\\([[:space:]]\\+\\)STREAM_POLICY/#MIGHUNTER\\1STREAM_POLICY/' $configFilename`;
+
+  # Start the mighunter and check that it stops with the correct error message
+  my $expectedMighunterdResult = "Failed to start daemon: Failed to get the value of the mandatory configuration parameter MIGHUNTER/STREAM_POLICY: The parameter is not specified in castor.conf";
+  my $mighunterdResult = `2>&1 $mighunterdExecutable -f -t 1 default`;
+  $mighunterdResult =~ s/\n//g;
+  print("result=\"$mighunterdResult\"\n");
+  my $testPassed = $mighunterdResult eq $expectedMighunterdResult;
+
+  # Restore /etc/castor/castor.conf using the back-up copy and then delete the
+  # back-up copy
+  &restoreFileFromBackupCopy($configFilename, $configBackupFilename);
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test the mighunter detects missing migration-policy Python-module.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable;
+# @return                      0 if the test passed, else 1.
+sub testNonExistantMigrationPolicyModule {
+  my $mighunterdExecutable = $_[0];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS MISSING MIGRATION-POLICY PYTHON-MODULE\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  # Back-up the original migration-policy Python-module
+  my $moduleFilename       = "/etc/castor/policies/migration.py";
+  my $moduleBackupFilename = &createBackupCopy($moduleFilename);
+
+  # Remove the original migration-policy Python-module
+  `rm -f $moduleFilename`;
+
+  # Start the mighunter and check that it stops with the correct error message
+  my $expectedMighunterdResult = "Failed to start daemon: Failed to import policy python-module: moduleName=migration: Failed to get information about the CASTOR-policy Python-module file: stat() call failed: filename=/etc/castor/policies/migration.py: No such file or directory";
+  my $mighunterdResult = `2>&1 $mighunterdExecutable -f -t 1 default`;
+  $mighunterdResult =~ s/\n//g;
+  print("result=\"$mighunterdResult\"\n");
+  my $testPassed = $mighunterdResult eq $expectedMighunterdResult;
+
+  # Restore the migration-policy Python-module using the back-up copy and
+  # then delete the back-up copy
+  &restoreFileFromBackupCopy($moduleFilename, $moduleBackupFilename);
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test the mighunter detects missing stream-policy Python-module.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable;
+# @return                      0 if the test passed, else 1.
+sub testNonExistantStreamPolicyModule {
+  my $mighunterdExecutable = $_[0];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS MISSING STREAM-POLICY PYTHON-MODULE\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  # Back-up the original stream-policy Python-module
+  my $moduleFilename       = "/etc/castor/policies/stream.py";
+  my $moduleBackupFilename = &createBackupCopy($moduleFilename);
+
+  # Remove the original stream-policy Python-module
+  `rm -f $moduleFilename`;
+
+  # Start the mighunter and check that it stops with the correct error message
+  my $expectedMighunterdResult = "Failed to start daemon: Failed to import policy python-module: moduleName=stream: Failed to get information about the CASTOR-policy Python-module file: stat() call failed: filename=/etc/castor/policies/stream.py: No such file or directory";
+  my $mighunterdResult = `2>&1 $mighunterdExecutable -f -t 1 default`;
+  $mighunterdResult =~ s/\n//g;
+  print("result=\"$mighunterdResult\"\n");
+  my $testPassed = $mighunterdResult eq $expectedMighunterdResult;
+
+  # Restore the stream-policy Python-module using the back-up copy and
+  # then delete the back-up copy
+  &restoreFileFromBackupCopy($moduleFilename, $moduleBackupFilename);
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Connects to the stager database and returns the database handle.
+#
+# This subroutine prints an error message and aborts the entire test program if
+# it fails to get the database handle.
+#
+# This subroutine does not set any of the attributes of the
+# database-connection.
+sub connectToStagerDb {
+  my $user   = &getOrastagerconfigParam("user");
+  my $passwd = &getOrastagerconfigParam("passwd");
+  my $dbName = &getOrastagerconfigParam("dbName");
+
+  my $dbh = DBI->connect("dbi:Oracle:$dbName", $user, $passwd)
+    or die "Failed to connect to database: $DBI::errstr\n";
+
+  return($dbh);
+}
+
+# Returns the number of tape-copies in the stager-database.
+#
+# @param dbh The handle to the stager-database.
+# @return    The number of tape-copies in the stager database.
+sub getNbTapeCopiesInStagerDb {
+  my $dbh = $_[0];
+
+  my $stmt = "SELECT COUNT(*) FROM TapeCopy";
+  my $rows = $dbh->selectall_arrayref($stmt);
+  my $nbTapeCopies = $$rows[0][0];
+
+  return($nbTapeCopies);
+}
+
+# Inserts a row into the CastorFile table and returns its database ID.
+#
+# This subroutine does not insert a row into the id2type table.
+#
+# @param  dbh                The handle to the stager-database.
+# @param  nsHost             The name-server hostname.
+# @param  fileId
+# @param  fileSize
+# @param  creationTime
+# @param  lastUpdateTime
+# @param  lastAccessTime
+# @param  lastKnownFilename
+# @param  svcClassName
+# @param  fileClassName
+# @return The database ID of the newly inserted CastorFile.
+sub insertCastorFile {
+  my $dbh               = $_[0];
+  my $nsHost            = $_[1];
+  my $fileId            = $_[2];
+  my $fileSize          = $_[3];
+  my $creationTime      = $_[4];
+  my $lastUpdateTime    = $_[5];
+  my $lastAccessTime    = $_[6];
+  my $lastKnownFilename = $_[7];
+  my $svcClassName      = $_[8];
+  my $fileClassName     = $_[9];
+
+  my $stmt = "
+    DECLARE
+      varSvcClassId  NUMBER(38) := NULL;
+      varFileClassId NUMBER(38) := NULL;
+    BEGIN
+      /* Deteremine the database IDs of the service and file classes */
+      SELECT id INTO varSvcClassId  FROM SvcClass  WHERE name = :SVCCLASSNAME;
+      SELECT id INTO varFileClassId FROM FileClass WHERE name = :FILECLASSNAME;
+
+      INSERT INTO CastorFile(id, nsHost, fileId, fileSize, creationTime,
+                  lastUpdateTime, lastAccessTime, lastKnownFilename, svcClass,
+                  fileClass)
+           VALUES (ids_seq.NEXTVAL, :NSHOST, :FILEID, :FILESIZE,
+                  :CREATIONTIME, :LASTUPDATETIME, :LASTACCESSTIME,
+                  :LASTKNOWNFILENAME, varSvcClassId, varFileClassId)
+        RETURNING id INTO :CASTORFILEID;
+    END;";
+
+  # The castor-file database ID will be the return value
+  my $castorFileId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":SVCCLASSNAME",\$svcClassName,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":FILECLASSNAME",\$fileClassName,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":NSHOST",\$nsHost,2048) or die $sth->errstr;
+  $sth->bind_param_inout(":FILEID",\$fileId,20) or die $sth->errstr;
+  $sth->bind_param_inout(":FILESIZE",\$fileSize,20) or die $sth->errstr;
+  $sth->bind_param_inout(":CREATIONTIME",\$creationTime,20) or die $sth->errstr;
+  $sth->bind_param_inout(":LASTUPDATETIME",\$lastUpdateTime,20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":LASTACCESSTIME",\$lastAccessTime,20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":LASTKNOWNFILENAME",\$lastKnownFilename,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID",\$castorFileId,20) or die $sth->errstr;
+  $sth->execute();
+
+  return $castorFileId;
+}
+
+# Deletes the row from the CastorFile table with the specified database ID.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The castor database ID.
+sub deleteCastorFile {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+
+  my $stmt = "
+    DELETE FROM CastorFile
+          WHERE id = :CASTORFILEID";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param(":CASTORFILEID", $castorFileId)
+    or die $sth->errstr;
+  $sth->execute();
+}
+
+# Inserts a row into the TapeCopy table and returns the database ID.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The database ID of the associated castor-file.
+# @param status       The initial status of the tape-copy.
+# @return             The database ID of the newly inserted tape-copy.
+sub insertTapeCopy {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+  my $status       = $_[2];
+
+  my $stmt = "
+     INSERT INTO TapeCopy(id, copyNb, castorFile, status)
+          VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
+       RETURNING id INTO :TAPECOPYID";
+
+  # The tape-copy database ID will be the return value
+  my $tapeCopyId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param(":CASTORFILEID", $castorFileId) or die $sth->errstr;
+  $sth->bind_param(":STATUS", $status) or die $sth->errstr;
+  $sth->bind_param_inout(":TAPECOPYID", \$tapeCopyId, 20) or die $sth->errstr;
+  $sth->execute();
+
+  return $tapeCopyId;
+}
+
+# Deletes the row from the TapeCopy table with the specified database ID.
+#
+# @param dbh        The handle to the stager-database.
+# @param tapeCopyId The castor database ID.
+sub deleteTapeCopy {
+  my $dbh        = $_[0];
+  my $tapeCopyId = $_[1];
+
+  my $stmt = "
+    DECLARE
+      varTapeCopyId NUMBER(38) := :TAPECOPYID;
+    BEGIN
+      DELETE FROM Stream2TapeCopy WHERE child = varTapeCopyId;
+      DELETE FROM TapeCopy        WHERE id    = varTapeCopyId;
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":TAPECOPYID", \$tapeCopyId, 20) or die $sth->errstr;
+  $sth->execute();
+}
+
+# Test mighunterd detects an invalid migration-policy Python-function name.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @param  dbh                  The handle to the stager-database.
+# @return                      0 if the test passed, else 1.
+sub testInvalidMigrationPolicyFunctionName {
+  my $mighunterdExecutable = $_[0];
+  my $dbh                  = $_[1];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS INVALID MIGRATION-POLICY FUNCTION-NAME\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  my $nsHost            = 'TestMigHunterNameServer';
+  my $fileId            = 12345678;
+  my $fileSize          = 1000;
+  my $creationTime      = time();
+  my $lastUpdateTime    = $creationTime;
+  my $lastAccessTime    = $creationTime;
+  my $lastKnownFilename = 'TestMigHunterFilename';
+  my $svcClassName      = 'default';
+  my $fileClassName     = 'largeuser';
+ 
+  print("lastAccessTime=$lastAccessTime\n");
+
+  # Insert a new castor-file
+  my $castorFileId = &insertCastorFile(
+    $dbh,
+    $nsHost,
+    $fileId,
+    $fileSize,
+    $creationTime,
+    $lastUpdateTime,
+    $lastAccessTime,
+    $lastKnownFilename,
+    $svcClassName,
+    $fileClassName);
+  $dbh->commit();
+  print("Inserted castor-file: castorFileId=$castorFileId\n");
+
+  # Insert a new tape-copy
+  my $TAPECOPY_CREATED = 0;
+  my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
+  $dbh->commit();
+  print("Inserted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  # Get the current (and valid) migration-policy Python-function name
+  my $validFunctionName =
+    `printSvcClass default | grep migratorpolicy | awk '{print \$NF;}'`;
+  chomp($validFunctionName);
+  print("validFunctionName=$validFunctionName\n");
+
+  # Set the migration-policy Python-function name to an invalid value
+  my $invalidFunctionName = "invalidMigrationPolicy";
+  print("invalidFunctionName=$invalidFunctionName\n");
+  `modifySvcClass --Name default --MigratorPolicy $invalidFunctionName`;
+
+  # Truncate the mighunterd log-file
+  `echo -n > /var/log/castor/mighunterd.log`;
+
+  # Start mighunterd
+  `2>&1 $mighunterdExecutable -Z -f -t 1 default`;
+
+  # Look for the expected error log
+  my $expectedLogMessage = " error=\"Invalid configuration: migratorPolicy function not found in Python-module\" functionName=\"$invalidFunctionName\"";
+  print("expectedLogMessage=$expectedLogMessage\n");
+  my $mighunterdResult = `grep '$expectedLogMessage' /var/log/castor/mighunterd.log | wc -l`;
+  chomp($mighunterdResult);
+
+  my $testPassed = $mighunterdResult eq "1";
+
+  # Restore the migration-policy Python-function name to its original valid value
+  `modifySvcClass --Name default --MigratorPolicy $validFunctionName`;
+
+  &deleteTapeCopy($dbh, $tapeCopyId);
+  $dbh->commit();
+  print("Deleted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  &deleteCastorFile($dbh, $castorFileId);
+  $dbh->commit();
+  print("Deleted castor-file: castorFileId=$castorFileId\n");
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test mighunterd detects an invalid stream-policy Python-function name.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @param  dbh                  The handle to the stager-database.
+# @return                      0 if the test passed, else 1.
+sub testInvalidStreamPolicyFunctionName {
+  my $mighunterdExecutable = $_[0];
+  my $dbh                  = $_[1];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS INVALID STREAM-POLICY FUNCTION-NAME\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  my $nsHost            = 'TestMigHunterNameServer';
+  my $fileId            = 12345678;
+  my $fileSize          = 1000;
+  my $creationTime      = time();
+  my $lastUpdateTime    = $creationTime;
+  my $lastAccessTime    = $creationTime;
+  my $lastKnownFilename = 'TestMigHunterFilename';
+  my $svcClassName      = 'default';
+  my $fileClassName     = 'largeuser';
+ 
+  print("lastAccessTime=$lastAccessTime\n");
+
+  # Insert a new castor-file
+  my $castorFileId = &insertCastorFile(
+    $dbh,
+    $nsHost,
+    $fileId,
+    $fileSize,
+    $creationTime,
+    $lastUpdateTime,
+    $lastAccessTime,
+    $lastKnownFilename,
+    $svcClassName,
+    $fileClassName);
+  $dbh->commit();
+  print("Inserted castor-file: castorFileId=$castorFileId\n");
+
+  # Insert a new tape-copy
+  my $TAPECOPY_CREATED = 0;
+  my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
+  $dbh->commit();
+  print("Inserted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  # Get the current (and valid) stream-policy Python-function name
+  my $validFunctionName =
+    `printSvcClass default | grep streampolicy | awk '{print \$NF;}'`;
+  chomp($validFunctionName);
+  print("validFunctionName=$validFunctionName\n");
+
+  # Set the stream-policy Python-function name to an invalid value
+  my $invalidFunctionName = "invalidStreamPolicy";
+  print("invalidFunctionName=$invalidFunctionName\n");
+  `modifySvcClass --Name default --StreamPolicy $invalidFunctionName`;
+
+  # Truncate the mighunterd log-file
+  `echo -n > /var/log/castor/mighunterd.log`;
+
+  # Start mighunterd
+  `2>&1 $mighunterdExecutable -f -t 1 default`;
+
+  # Look for the expected error log
+  my $expectedLogMessage="Failed to apply stream-policy to service-class: Invalid configuration: Failed to get a handle on the stream-policy Python-function: streamPolicy function not found in Python-module: streamPolicyName=$invalidFunctionName";
+  print("expectedLogMessage=$expectedLogMessage\n");
+  my $mighunterdResult = `grep "$expectedLogMessage" /var/log/castor/mighunterd.log | wc -l`;
+  chomp($mighunterdResult);
+
+  my $testPassed = $mighunterdResult eq "1";
+
+  # Restore the stream-policy Python-function name to its original valid value
+  `modifySvcClass --Name default --StreamPolicy $validFunctionName`;
+
+  &deleteTapeCopy($dbh, $tapeCopyId);
+  $dbh->commit();
+  print("Deleted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  &deleteCastorFile($dbh, $castorFileId);
+  $dbh->commit();
+  print("Deleted castor-file: castorFileId=$castorFileId\n");
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test mighunterd detects an invalid migration-policy function-parameter.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @param  dbh                  The handle to the stager-database.
+# @return                      0 if the test passed, else 1.
+sub testInvalidMigrationPolicyFunctionParameter {
+  my $mighunterdExecutable = $_[0];
+  my $dbh                  = $_[1];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS INVALID MIGRATION-POLICY FUNCTION-PARAMETER");
+  print("\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  my $nsHost            = 'TestMigHunterNameServer';
+  my $fileId            = 12345678;
+  my $fileSize          = 1000;
+  my $creationTime      = time();
+  my $lastUpdateTime    = $creationTime;
+  my $lastAccessTime    = $creationTime;
+  my $lastKnownFilename = 'TestMigHunterFilename';
+  my $svcClassName      = 'default';
+  my $fileClassName     = 'largeuser';
+ 
+  print("lastAccessTime=$lastAccessTime\n");
+
+  # Insert a new castor-file
+  my $castorFileId = &insertCastorFile(
+    $dbh,
+    $nsHost,
+    $fileId,
+    $fileSize,
+    $creationTime,
+    $lastUpdateTime,
+    $lastAccessTime,
+    $lastKnownFilename,
+    $svcClassName,
+    $fileClassName);
+  $dbh->commit();
+  print("Inserted castor-file: castorFileId=$castorFileId\n");
+
+  # Insert a new tape-copy
+  my $TAPECOPY_CREATED = 0;
+  my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
+  $dbh->commit();
+  print("Inserted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  # Get the migration-policy Python-function name
+  my $functionName =
+    `printSvcClass default | grep migratorpolicy | awk '{print \$NF;}'`;
+  chomp($functionName);
+  print("functionName=$functionName\n");
+
+  # Back-up the original policy-file
+  my $policyFilename       = "/etc/castor/policies/migration.py";
+  my $policyBackupFilename = &createBackupCopy($policyFilename);
+
+  # Invalidate the second function-parameter
+  print("Invalidating function-parameter\n");
+  `sed -i 's/\\(^def \\+$functionName *( *tapepool *, *\\)castorfilename/\\1invalidParameter/' $policyFilename`;
+
+  # Truncate the mighunterd log-file
+  `echo -n > /var/log/castor/mighunterd.log`;
+
+  # Start mighunterd
+  `2>&1 $mighunterdExecutable -Z -f -t 1 default`;
+
+  # Look for the expected error log
+  my $expectedLogMessage="Invalid configuration: Migration-policy Python-function has an unexpected argument name: migrationPolicyName=$functionName, argumentIndex=1, expectedName=castorfilename, actualName=invalidParameter, expectedParams=tapepool,castorfilename,copynb,fileId,fileSize,fileMode,uid,gid,aTime,mTime,cTime,fileClass, actualParams=tapepool,invalidParameter,copynb,fileId,fileSize,fileMode,uid,gid,aTime,mTime,cTime,fileClass";
+  print("expectedLogMessage=$expectedLogMessage\n");
+  my $mighunterdResult = `grep "$expectedLogMessage" /var/log/castor/mighunterd.log | wc -l`;
+  chomp($mighunterdResult);
+
+  my $testPassed = $mighunterdResult eq "1";
+
+  # Restore the original policy-file and then delete the back-up copy
+  &restoreFileFromBackupCopy($policyFilename, $policyBackupFilename);
+
+  &deleteTapeCopy($dbh, $tapeCopyId);
+  $dbh->commit();
+  print("Deleted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  &deleteCastorFile($dbh, $castorFileId);
+  $dbh->commit();
+  print("Deleted castor-file: castorFileId=$castorFileId\n");
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+# Test mighunterd detects an invalid stream-policy function-parameter.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @param  dbh                  The handle to the stager-database.
+# @return                      0 if the test passed, else 1.
+sub testInvalidStreamPolicyFunctionParameter {
+  my $mighunterdExecutable = $_[0];
+  my $dbh                  = $_[1];
+
+  print("\n\n");
+  print("TEST MIGHUNTERD DETECTS INVALID STREAM-POLICY FUNCTION-PARAMETER");
+  print("\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  my $nsHost            = 'TestMigHunterNameServer';
+  my $fileId            = 12345678;
+  my $fileSize          = 1000;
+  my $creationTime      = time();
+  my $lastUpdateTime    = $creationTime;
+  my $lastAccessTime    = $creationTime;
+  my $lastKnownFilename = 'TestMigHunterFilename';
+  my $svcClassName      = 'default';
+  my $fileClassName     = 'largeuser';
+ 
+  print("lastAccessTime=$lastAccessTime\n");
+
+  # Insert a new castor-file
+  my $castorFileId = &insertCastorFile(
+    $dbh,
+    $nsHost,
+    $fileId,
+    $fileSize,
+    $creationTime,
+    $lastUpdateTime,
+    $lastAccessTime,
+    $lastKnownFilename,
+    $svcClassName,
+    $fileClassName);
+  $dbh->commit();
+  print("Inserted castor-file: castorFileId=$castorFileId\n");
+
+  # Insert a new tape-copy
+  my $TAPECOPY_CREATED = 0;
+  my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
+  $dbh->commit();
+  print("Inserted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  # Get the stream-policy Python-function name
+  my $functionName =
+    `printSvcClass default | grep streampolicy | awk '{print \$NF;}'`;
+  chomp($functionName);
+  print("functionName=$functionName\n");
+
+  # Back-up the original policy-file
+  my $policyFilename       = "/etc/castor/policies/stream.py";
+  my $policyBackupFilename = &createBackupCopy($policyFilename);
+
+  # Invalidate the second function-parameter
+  print("Invalidating function-parameter\n");
+  `sed -i 's/\\(^def \\+$functionName *( *streamId *, *\\)numTapeCopies/\\1invalidParameter/' $policyFilename`;
+
+  # Truncate the mighunterd log-file
+  `echo -n > /var/log/castor/mighunterd.log`;
+
+  # Start mighunterd
+  `2>&1 $mighunterdExecutable -Z -f -t 1 default`;
+
+  # Look for the expected error log
+  my $expectedLogMessage = "Stream-policy Python-function has an unexpected argument name: streamPolicyName=$functionName, argumentIndex=1, expectedName=numTapeCopies, actualName=invalidParameter, expectedParams=streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,nbRunningStreams,svcClassName, actualParams=streamId,invalidParameter,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,nbRunningStreams,svcClassName";
+  print("expectedLogMessage=$expectedLogMessage\n");
+  my $mighunterdResult = `grep "$expectedLogMessage" /var/log/castor/mighunterd.log | wc -l`;
+  chomp($mighunterdResult);
+
+  my $testPassed = $mighunterdResult eq "1";
+
+  # Restore the original policy-file and then delete the back-up copy
+  &restoreFileFromBackupCopy($policyFilename, $policyBackupFilename);
+
+  &deleteTapeCopy($dbh, $tapeCopyId);
+  $dbh->commit();
+  print("Deleted tape-copy: tapeCopyId=$tapeCopyId\n");
+
+  &deleteCastorFile($dbh, $castorFileId);
+  $dbh->commit();
+  print("Deleted castor-file: castorFileId=$castorFileId\n");
+
+  if($testPassed) {
+    print("PASSED\n");
+    return 0;
+  } else {
+    print("FAILED\n");
+    return 1;
+  }
+}
+
+
+################################################################################
+# MAIN PROGRAM STARTS HERE
+################################################################################
+
+# Print error message and abort if the user is not root
+my $uid = POSIX::getuid;
+my $gid = POSIX::getgid;
+print("UID=$uid\n");
+print("GID=$gid\n");
+if($uid != 0 || $gid !=0) {
+  print("ABORT: This script must be ran as root\n");
+  exit(-1);
+}
+
+my $mighunterdExecutable = &parseCommandLine();
+
+# Check the mighunterd executable exists and is executable
+print("mighunterdExecutable=$mighunterdExecutable\n");
+if(! -e $mighunterdExecutable) {
+  print("ABORT: $mighunterdExecutable does not exist\n");
+  &printUsage();
+  exit(-1);
+}
+if(! -x $mighunterdExecutable) {
+  print("ABORT: $mighunterdExecutable is not executable\n");
+  &printUsage();
+  exit(-1);
+}
+
+# Kill all daemons accessing the stager database
+`killall mighunterd`;
+`killall rtcpclientd`;
+`killall tapegatewayd`;
+`killall stagerd`;
+
+# Run the mighunterd /etc/castor.conf tests
+if(&testNoCastorConfMIGHUNTER_MIGRATION_POLICY($mighunterdExecutable)) {
+  exit(-1);
+}
+if(&testNoCastorConfMIGHUNTER_STREAM_POLICY($mighunterdExecutable)) {
+  exit(-1);
+}
+if(&testNonExistantMigrationPolicyModule($mighunterdExecutable)) {
+  exit(-1);
+}
+if(&testNonExistantStreamPolicyModule($mighunterdExecutable)) {
+  exit(-1);
+}
+
+# Connect to the stager database
+my $dbh = &connectToStagerDb();
+$dbh->{AutoCommit} = 0;
+
+# Run database-driven tests
+if(&testInvalidMigrationPolicyFunctionName($mighunterdExecutable, $dbh)) {
+  exit(-1);
+}
+if(&testInvalidStreamPolicyFunctionName($mighunterdExecutable, $dbh)) {
+  exit(-1);
+}
+if(&testInvalidMigrationPolicyFunctionParameter($mighunterdExecutable, $dbh)) {
+  exit(-1);
+}
+if(&testInvalidStreamPolicyFunctionParameter($mighunterdExecutable, $dbh)) {
+  exit(-1);
+}
+
+END {
+  $dbh->disconnect if defined($dbh);
+}

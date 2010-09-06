@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamThread.cpp,v $ $Author: waldron $
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 // Include Python.h before any standard headers because Python.h may define
@@ -65,16 +64,35 @@
 //------------------------------------------------------------------------------
 castor::tape::mighunter::StreamThread::StreamThread(
   const std::list<std::string>             &svcClassArray,
-  PyObject *const                          streamPolicyDict,
-  castor::tape::mighunter::MigHunterDaemon &daemon) throw() :
+  PyObject                          *const inspectGetargspecFunc,
+  PyObject                          *const streamPolicyDict,
+  castor::tape::mighunter::MigHunterDaemon &daemon)
+  throw(castor::exception::Exception) :
   m_listSvcClass(svcClassArray),
+  m_inspectGetargspecFunc(inspectGetargspecFunc),
   m_streamPolicyDict(streamPolicyDict),
   m_daemon(daemon) {
+
+  if(inspectGetargspecFunc == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": inspectGetargspecFunc parameter is NULL");
+  }
 
   if(streamPolicyDict == NULL) {
     TAPE_THROW_CODE(EINVAL,
       ": streamPolicyDict parameter is NULL");
   }
+
+  // Set the argument names a stream-policy Python-function must have in order
+  // to be considered valid
+  m_expectedStreamPolicyArgNames.push_back("streamId");
+  m_expectedStreamPolicyArgNames.push_back("numTapeCopies");
+  m_expectedStreamPolicyArgNames.push_back("totalBytes");
+  m_expectedStreamPolicyArgNames.push_back("ageOfOldestTapeCopy");
+  m_expectedStreamPolicyArgNames.push_back("tapePoolId");
+  m_expectedStreamPolicyArgNames.push_back("tapePoolName");
+  m_expectedStreamPolicyArgNames.push_back("nbRunningStreams");
+  m_expectedStreamPolicyArgNames.push_back("svcClassName");
 }
 
 
@@ -83,32 +101,22 @@ castor::tape::mighunter::StreamThread::StreamThread(
 //------------------------------------------------------------------------------
 void castor::tape::mighunter::StreamThread::run(void *arg) {
 
+ // Run the code of the stream thread, logging any raised exceptions
  try {
-
     exceptionThrowingRun(arg);
-
   } catch(castor::exception::Exception &ex) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   } catch(std::exception &ex) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.what())};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   } catch(...) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", "Unknown exception")};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   }
 }
 
@@ -137,324 +145,441 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
     throw(ex);
   }
 
-  // For each service-class name
-  for(
-    std::list<std::string>::const_iterator svcClassName=m_listSvcClass.begin();
-    svcClassName != m_listSvcClass.end();
-    svcClassName++) {
+  // Apply the stream-policy for each service-class managed by this
+  // daemon
+  for(std::list<std::string>::const_iterator svcClassNameItor =
+    m_listSvcClass.begin(); svcClassNameItor != m_listSvcClass.end();
+    svcClassNameItor++) {
 
-    StreamPolicyElementList infoCandidateStreams;
-    StreamPolicyElementList eligibleStreams;
-    StreamPolicyElementList streamsToRestore;
+    const std::string &svcClassName = *svcClassNameItor;
 
-    try { // to catch exceptions specific of a svcclass
+    try {
+      applyStreamPolicyToSvcClass(oraSvc, svcClassName);
+    } catch (castor::exception::InvalidConfiguration &ex) {
+      // Gracefully shutdown the daemon in the event of an invalid configuration
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("SvcClass", svcClassName         ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
-      // Retrieve information from the db to know which stream should be
-      // started and attach the eligible tapecopy
-
-      timeval tvStart;
-      gettimeofday(&tvStart, NULL);
-
-      oraSvc->inputForStreamPolicy(*svcClassName,infoCandidateStreams);
-
-      timeval tvEnd;
-      gettimeofday(&tvEnd, NULL);
-      signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
-        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-      castor::dlf::Param paramsDb[] = {
-        castor::dlf::Param("SvcClass", *svcClassName),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
-
-      // Skip this service class if there are no candidate streams
-      if (infoCandidateStreams.empty()) {
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NO_STREAM, paramsDb);
-        continue; // For each service-class name
-      } else {
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAMS_FOUND,
-        paramsDb);
-      }
-
-      const bool atLeastOneStream = infoCandidateStreams.size() > 0;
-
-      // The following information is the same for all candidate streams
-      // associated with the same svcclass
-      u_signed64 runningStreams =
-        atLeastOneStream ? infoCandidateStreams.begin()->runningStream : 0;
-
-      // counters for logging
-      u_signed64 nbNoTapeCopies       = 0;
-      u_signed64 nbAllowedByPolicy    = 0;
-      u_signed64 nbNotAllowedByPolicy = 0;
-
-      gettimeofday(&tvStart, NULL);
-
-      // For each infoCandidateStream
-      for (
-        StreamPolicyElementList::iterator infoCandidateStream =
-          infoCandidateStreams.begin();
-         infoCandidateStream != infoCandidateStreams.end();
-         infoCandidateStream++) {
- 
-        // Get new potential value
-        infoCandidateStream->runningStream = runningStreams;
-
-        // If there are no candidates then there is no point to call the policy,
-        // therefore skip this infoCandidateStream
-        if (infoCandidateStream->numBytes==0) {
-          streamsToRestore.push_back(*infoCandidateStream);
-          nbNoTapeCopies++;
-          continue; // For each infoCandidateStream
-        }
-
-        castor::dlf::Param paramsInput[] = {
-          castor::dlf::Param("SvcClass", *svcClassName),
-          castor::dlf::Param("stream id",
-            infoCandidateStream->streamId),
-          castor::dlf::Param("running streams",
-            infoCandidateStream->runningStream),
-          castor::dlf::Param("bytes attached",
-            infoCandidateStream->numBytes),
-          castor::dlf::Param("number of files",
-            infoCandidateStream->numFiles),
-          castor::dlf::Param("max number of streams", 
-            infoCandidateStream->maxNumStreams),
-          castor::dlf::Param("age", infoCandidateStream->age)};
-
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAM_INPUT, 
-          paramsInput);
-
-        // Gracefully shutdown the daemon if the streamPolicy attribute of the
-        // service class is an empty string, as this is an invalid configuration
-        if(infoCandidateStream->policyName.empty()) {
-          castor::dlf::Param params[] = {
-          castor::dlf::Param("SVCCLASS" , *svcClassName                ),
-          castor::dlf::Param("stream id", infoCandidateStream->streamId),
-          castor::dlf::Param("error"    ,
-            "Invalid configuration: streamPolicy is an empty string")};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-            GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
-
-          oraSvc->stopChosenStreams(infoCandidateStreams);
-          m_daemon.shutdownGracefully(); // Non-blocking
-          threadPool->shutdown(); // Non-blocking
-          return; // run() will not be called again
-        }
-
-        castor::dlf::Param paramsOutput[] = {
-          castor::dlf::Param("SvcClass", *svcClassName),
-          castor::dlf::Param("stream id", infoCandidateStream->streamId)};
-
-        try {
-
-          // Get a lock on the embedded Python-interpreter
-          castor::tape::python::ScopedPythonLock scopedPythonLock;
-
-          // Try to get a handle on the stream-policy Python-function
-          PyObject *const streamPolicyFunc =python::getPythonFunction(
-            m_streamPolicyDict, infoCandidateStream->policyName.c_str());
-
-          // Gracefully shutdown the daemon if the function does not exist in
-          // the Python-module, as this is an invalid configuration
-          if(streamPolicyFunc == NULL) {
-            castor::dlf::Param params[] = {
-            castor::dlf::Param("SVCCLASS"    ,*svcClassName                  ),
-            castor::dlf::Param("stream id"   ,infoCandidateStream->streamId  ),
-            castor::dlf::Param("error"       ,"Invalid configuration: "
-              "streamPolicy function not found in Python-module"             ),
-            castor::dlf::Param("functionName",infoCandidateStream->policyName)};
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
-
-            oraSvc->stopChosenStreams(infoCandidateStreams);
-            m_daemon.shutdownGracefully(); // Non-blocking
-            threadPool->shutdown(); // Non-blocking
-            return; // run() will not be called again
-          }
-
-          // Apply stream the policy
-          int policyResult = 0;
-          try {
-
-            policyResult = applyStreamPolicy(streamPolicyFunc,
-              *infoCandidateStream);
-
-          } catch(castor::exception::Exception &ex) {
-
-
-            // Gracefully shutdown the daemon if the migration policy could not
-            // be applied
-            castor::dlf::Param params[] = {
-            castor::dlf::Param("SVCCLASS"    ,*svcClassName                  ),
-            castor::dlf::Param("stream id"   ,infoCandidateStream->streamId  ),
-            castor::dlf::Param("error"       ,
-              "Failed to apply stream policy"                                ),
-            castor::dlf::Param("functionName",infoCandidateStream->policyName),
-            castor::dlf::Param("Message"     ,ex.getMessage().str()          ),
-            castor::dlf::Param("Code"        ,ex.code()                      )};
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
-
-            oraSvc->stopChosenStreams(infoCandidateStreams);
-            m_daemon.shutdownGracefully(); // Non-blocking
-            threadPool->shutdown(); // Non-blocking
-            return; // run() will not be called again
-          }
-
-          // Start the stream if this is the result of applying the policy
-          if (policyResult) {
-
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 
-              ALLOWED_BY_STREAM_POLICY, paramsOutput);
-
-            eligibleStreams.push_back(*infoCandidateStream);
-
-            runningStreams++;
-            nbAllowedByPolicy++;
-
-          // Else do not start the stream
-          } else {
-
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-              NOT_ALLOWED_BY_STREAM_POLICY, paramsOutput);
-            streamsToRestore.push_back(*infoCandidateStream);
-            nbNotAllowedByPolicy++;
-
-          }
-
-        } catch (castor::exception::Exception &e) {
-          // An exception here is fatal.  Log a message and exit
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("policy","Stream Policy"),
-            castor::dlf::Param("code", sstrerror(e.code())),
-            castor::dlf::Param("stream",infoCandidateStream->streamId),
-            castor::dlf::Param("message", e.getMessage().str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR,
-             params);
-          exit(-1);
-        }
-
-      } // For each infoCandidateStream
-
-      gettimeofday(&tvEnd, NULL);
-      gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
-        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-      // Log in the dlf with the summary
-      const bool allCandidatesProcessed =
-        infoCandidateStreams.size() ==
-          nbAllowedByPolicy    +
-          nbNotAllowedByPolicy +
-          nbNoTapeCopies;
-      const char *const allCandidatesProcessedStr =
-        allCandidatesProcessed ? "TRUE" : "FALSE";
-      castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"          , (*svcClassName)            ),
-        castor::dlf::Param("total"             , infoCandidateStreams.size()),
-        castor::dlf::Param("nbNoTapeCopies"    , nbNoTapeCopies             ),
-        castor::dlf::Param("allowedByPolicy"   , nbAllowedByPolicy          ),
-        castor::dlf::Param("notAllowedByPolicy", nbNotAllowedByPolicy       ),
-        castor::dlf::Param("allProcessed"      , allCandidatesProcessedStr  ),
-        castor::dlf::Param("runningStreams"    , runningStreams             ),
-        castor::dlf::Param("ProcessingTime"    , procTime * 0.000001       )};
-
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
-        paramsPolicy);
-
-      // Start streams which should be started
-      if(eligibleStreams.size() > 0) {
-        gettimeofday(&tvStart, NULL);
-        oraSvc->startChosenStreams(eligibleStreams);
-        gettimeofday(&tvEnd, NULL);
-
-        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
-          ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-        castor::dlf::Param paramsStart[]={
-          castor::dlf::Param("SvcClass"      ,(*svcClassName)     ),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
-          paramsStart);
-      }
-
-      // Stop streams which should be stopped
-      if(streamsToRestore.size() > 0) {
-        gettimeofday(&tvStart, NULL);
-        oraSvc->stopChosenStreams(streamsToRestore);
-        gettimeofday(&tvEnd, NULL);
-
-        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
-          ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-        castor::dlf::Param paramsStop[]={
-          castor::dlf::Param("SvcClass"      ,(*svcClassName)     ),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
-          paramsStop);
-      }
-
-    } catch (castor::exception::Exception e){
-        // exception due to problems specific to the service class
-    } catch (...){
-      // Do nothing
+      m_daemon.shutdownGracefully(); // Non-blocking
+      threadPool->shutdown(); // Non-blocking
+      return; // run() will not be called again
+    } catch (castor::exception::Exception &ex) {
+      // Log an error and continue
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("SvcClass", svcClassName         ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        APPLY_STREAM_POLICY_TO_SVCCLASS_EXCEPT, params);
+    } catch (...) {
+      // Log an error and continue
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("SvcClass", svcClassName       ),
+        castor::dlf::Param("Message" , "Unknown exception")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 
+        APPLY_STREAM_POLICY_TO_SVCCLASS_EXCEPT, params);
     }
-
-  } // loop for svcclass
+  }
 }
 
 
 //------------------------------------------------------------------------------
-// applyStreamPolicy
+// applyStreamPolicyToSvcClass
 //------------------------------------------------------------------------------
-int castor::tape::mighunter::StreamThread::applyStreamPolicy(
-  PyObject *const                              pyFunc,
-  castor::tape::mighunter::StreamPolicyElement &elem)
-  throw(castor::exception::Exception) {
+void castor::tape::mighunter::StreamThread::applyStreamPolicyToSvcClass(
+  castor::tape::mighunter::IMigHunterSvc *const oraSvc,
+  const std::string                             &svcClassName)
+  throw(castor::exception::InvalidConfiguration, castor::exception::Exception) {
 
-  if(pyFunc == NULL) {
-    TAPE_THROW_EX(castor::exception::InvalidArgument,
-     ": pyFunc parameter is NULL");
-  }
-  
-  // Create the input tuple for the stream-policy Python-function
-  //
-  // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
-  // K must be used for unsigned (feature not documented at all but available)
-  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue(
-    (char *)"(K,K,K,K,K)",
-    elem.runningStream,
-    elem.numFiles,
-    elem.numBytes,
-    elem.maxNumStreams,
-    elem.age));
+  // For the service-class specified by svcClassName, get the service-class
+  // database ID, the stream-policy name and the list of candidate streams to
+  // be passed to the stream-policy
+  u_signed64 svcClassId = 0;
+  std::string streamPolicyName;
+  u_signed64 nbDrives = 0; // For debugging, stream-policy cannot create streams
+  StreamForStreamPolicyList streamsForPolicy;
+  {
+    timeval start, end;
+    gettimeofday(&start, NULL);
+    oraSvc->inputForStreamPolicy(svcClassName, svcClassId, streamPolicyName,
+      nbDrives, streamsForPolicy);
+    gettimeofday(&end, NULL);
+    signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
+      ((start.tv_sec * 1000000) + start.tv_usec);
 
-  // Call the stream-policy Python-function
-  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc,
-    inputObj.get()));
-
-  // Throw an exception if the stream-policy Python-function call failed
-  if(resultObj.get() == NULL) {
-
-    // Try to determine the Python exception if there was aPython error
-    PyObject *const pyEx = PyErr_Occurred();
-    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
-
-    // Clear the Python error if there was one
-    if(pyEx != NULL) {
-      PyErr_Clear();
+    if(streamsForPolicy.empty()) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("SvcClass"      , svcClassName       ),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NO_STREAM, params);
+    } else {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("SvcClass"      , svcClassName           ),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001    ),
+        castor::dlf::Param("nbStreams"     , streamsForPolicy.size())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAMS_FOUND, params);
     }
+  }
 
-    castor::exception::Internal ex;
+  // If the stream-policy function name has not been set then throw an
+  // invalid-configuration exception to cause this daemon to gracefully
+  // shutdown
+  if(streamPolicyName.empty()) {
+    castor::exception::InvalidConfiguration ex;
 
     ex.getMessage() <<
-      "Failed to execute stream-policy Python-function" <<
-      ": functionName=" <<  elem.policyName.c_str() <<
-      ": pythonException=" << pyExStr;
+      "Failed to apply stream-policy to service-class"
+      ": Invalid configuration"
+      ": The streamPolicy attribute of the service-class is not set";
 
-    throw ex;
+    throw(ex);
   }
 
-  // Return the result of the Python function
-  return PyInt_AsLong(resultObj.get());
+  // Try to get a handle on the stream-policy Python-function
+  PyObject *const streamPolicyPyFunc = python::getPythonFunctionWithLock(
+    m_streamPolicyDict, streamPolicyName.c_str());
+
+  // If the function does not exist in the Python-module, then throw an
+  // invalid-configuration exception to cause this daemon to gracefully
+  // shutdown
+  if(streamPolicyPyFunc == NULL) {
+    castor::exception::InvalidConfiguration ex;
+    ex.getMessage() <<
+      "Failed to apply stream-policy to service-class"
+      ": Invalid configuration"
+      ": Failed to get a handle on the stream-policy Python-function"
+      ": streamPolicy function not found in Python-module"
+      ": streamPolicyName=" << streamPolicyName;
+
+    throw(ex);
+  }
+
+  // Throw an InvalidConfiguration exception if the signature of the
+  // stream-policy Python-function is incorrect
+  checkStreamPolicyArgNames(streamPolicyName, streamPolicyPyFunc);
+
+  // Return if there are no streams for the stream-policy.
+  //
+  // This return is purposely made after the check of the signature of the
+  // stream-policy Python-function, because invalid configurations should be
+  // detected as soon as possible.
+  if(streamsForPolicy.empty()) {
+    return;
+  }
+
+  // Get the database ID, name and number of running streams for each of the
+  // tape-pools associated with the service-class
+  IdToTapePoolForStreamPolicyMap tapePoolsForPolicy;
+  {
+    timeval start, end;
+    gettimeofday(&start, NULL);
+    oraSvc->tapePoolsForStreamPolicy(svcClassId, tapePoolsForPolicy);
+    gettimeofday(&end, NULL);
+    signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
+      ((start.tv_sec * 1000000) + start.tv_usec);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("SvcClass"      , svcClassName             ),
+      castor::dlf::Param("svcClassId"    , svcClassId               ),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001      ),
+      castor::dlf::Param("nbTapePools"   , tapePoolsForPolicy.size())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+      GOT_TAPE_POOLS_FOR_STREAM_POLICY, params);
+  }
+
+  // Call the stream-policy for each stream and log a summary
+  std::list<u_signed64> streamsAcceptedByPolicy;
+  std::list<u_signed64> streamsRejectedByPolicy;
+  std::list<u_signed64> streamsNoTapeCopies;
+  {
+    timeval start, end;
+    gettimeofday(&start, NULL);
+    callStreamPolicyForEachStream(svcClassName, streamPolicyName,
+      streamPolicyPyFunc, streamsForPolicy, tapePoolsForPolicy,
+      streamsAcceptedByPolicy, streamsRejectedByPolicy, streamsNoTapeCopies);
+    gettimeofday(&end, NULL);
+    signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
+      ((start.tv_sec * 1000000) + start.tv_usec);
+
+    const bool allProcessed = streamsForPolicy.size() ==
+      streamsAcceptedByPolicy.size() + streamsRejectedByPolicy.size() +
+      streamsNoTapeCopies.size();
+    const char *const allProcessedStr = allProcessed ? "TRUE" : "FALSE";
+
+    castor::dlf::Param paramsPolicy[] = {
+      castor::dlf::Param("SvcClass"          , svcClassName                  ),
+      castor::dlf::Param("nbStreamsForPolicy", streamsForPolicy.size()       ),
+      castor::dlf::Param("nbAcceptedByPolicy", streamsAcceptedByPolicy.size()),
+      castor::dlf::Param("nbRejectedByPolicy", streamsRejectedByPolicy.size()),
+      castor::dlf::Param("nbNoTapeCopies"    , streamsNoTapeCopies.size()    ),
+      castor::dlf::Param("allProcessed"      , allProcessedStr               ),
+      castor::dlf::Param("ProcessingTime"    , procTime * 0.000001           )};
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
+      paramsPolicy);
+  }
+
+  // Start the streams that were accepted by the stream-policy
+  if(!streamsAcceptedByPolicy.empty()) {
+    timeval start, end;
+    gettimeofday(&start, NULL);
+    oraSvc->startChosenStreams(streamsAcceptedByPolicy);
+    gettimeofday(&end, NULL);
+    signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
+      ((start.tv_sec * 1000000) + start.tv_usec);
+
+    castor::dlf::Param paramsStart[]={
+      castor::dlf::Param("SvcClass"      , svcClassName                  ),
+      castor::dlf::Param("nbStreams"     , streamsAcceptedByPolicy.size()),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001           )};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
+      paramsStart);
+  }
+
+  // Create the list of streams that should be deleted or stopped.  This list
+  // is the concatentation of the list of streams rejected by the stream-policy
+  // and the list of streams with no tape-copies attached.
+  std::list<u_signed64> streamsToBeDeletedOrStopped(streamsRejectedByPolicy);
+  streamsToBeDeletedOrStopped.insert(streamsToBeDeletedOrStopped.end(),
+    streamsNoTapeCopies.begin(), streamsNoTapeCopies.end());
+
+  // Delete or stop streams that should be deleted or stopped
+  if(!streamsToBeDeletedOrStopped.empty()) {
+    timeval start, end;
+    gettimeofday(&start, NULL);
+    oraSvc->stopChosenStreams(streamsToBeDeletedOrStopped);
+    gettimeofday(&end, NULL);
+    signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
+      ((start.tv_sec * 1000000) + start.tv_usec);
+
+    castor::dlf::Param paramsStop[]={
+      castor::dlf::Param("SvcClass"      , svcClassName        ),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
+      paramsStop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkStreamPolicyArgNames
+//------------------------------------------------------------------------------
+void castor::tape::mighunter::StreamThread::checkStreamPolicyArgNames(
+  const std::string &streamPolicyName,
+  PyObject   *const streamPolicyPyFunc)
+  throw(castor::exception::InvalidConfiguration) {
+
+  // Get the names of the actual arguments of the stream-policy Python-function
+  std::vector<std::string> actualArgNames;
+  actualArgNames = python::getPythonFunctionArgumentNamesWithLock(
+    m_inspectGetargspecFunc, streamPolicyPyFunc, actualArgNames);
+
+  // Throw an InvalidConfiguration exception if the number of parameters is
+  // wrong
+  if(actualArgNames.size() != m_expectedStreamPolicyArgNames.size()) {
+    castor::exception::InvalidConfiguration ex;
+    ex.getMessage() <<
+      "Stream-policy has the wrong number of parameters"
+      ": streamPolicyName=" << streamPolicyName <<
+      ", expectedNbParams=" << m_expectedStreamPolicyArgNames.size() <<
+      ", actualNbParams="   << actualArgNames.size() <<
+      ", expectedParams='"  << utils::vectorOfStringToString(
+                                m_expectedStreamPolicyArgNames) << "'" <<
+      ", actualParams='"    << utils::vectorOfStringToString(actualArgNames) <<
+                               "'";
+    throw(ex);
+  }
+
+  // Throw an InvalidConfiguration exception if one of the function argument
+  // names does not match what is expected
+  for(std::vector<std::string>::size_type i=0;
+    i<m_expectedStreamPolicyArgNames.size(); i++) {
+    if(m_expectedStreamPolicyArgNames[i] != actualArgNames[i]) {
+      castor::exception::InvalidConfiguration ex;
+      ex.getMessage() <<
+        "Stream-policy Python-function has an unexpected argument name"
+        ": streamPolicyName=" << streamPolicyName <<
+        ", argumentIndex="    << i <<
+        ", expectedName="     << m_expectedStreamPolicyArgNames[i] <<
+        ", actualName="       << actualArgNames[i] <<
+        ", expectedParams="   << utils::vectorOfStringToString(
+                                   m_expectedStreamPolicyArgNames) <<
+        ", actualParams="     << utils::vectorOfStringToString(actualArgNames);
+      throw(ex);
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// callStreamPolicyForEachStream
+//------------------------------------------------------------------------------
+void castor::tape::mighunter::StreamThread::callStreamPolicyForEachStream(
+  const std::string               &svcClassName,
+  const std::string               &streamPolicyName,
+  PyObject *const                 streamPolicyPyFunc,
+  const StreamForStreamPolicyList &streamsForPolicy,
+  IdToTapePoolForStreamPolicyMap  &tapePoolsForPolicy,
+  std::list<u_signed64>           &streamsAcceptedByPolicy,
+  std::list<u_signed64>           &streamsRejectedByPolicy,
+  std::list<u_signed64>           &streamsNoTapeCopies)
+  throw(castor::exception::Exception) {
+
+  // For each candidate stream
+  for(StreamForStreamPolicyList::const_iterator streamForPolicyItor =
+    streamsForPolicy.begin(); streamForPolicyItor != streamsForPolicy.end();
+    streamForPolicyItor++) {
+
+    const StreamForStreamPolicy &streamForPolicy = *streamForPolicyItor;
+
+    // If the stream has no tape-copies, then push it on to the list of streams
+    // with no tape-copies
+    if(streamForPolicy.numTapeCopies == 0) {
+      streamsNoTapeCopies.push_back(streamForPolicy.streamId);
+
+    } else {
+
+      // Call the stream-policy Python-function, updating the number of running
+      // streams per tape-pool if the stream is accepted
+      const bool streamAcceptedByPolicy = callStreamPolicyPyFuncForStream(
+        svcClassName, streamPolicyName, streamPolicyPyFunc, streamForPolicy,
+        tapePoolsForPolicy);
+
+      // Push the stream accordingly onto either the list of streams accepted
+      // by the policy or the list of streams rejected by the policy
+      if(streamAcceptedByPolicy) {
+        streamsAcceptedByPolicy.push_back(streamForPolicy.streamId);
+      } else {
+        streamsRejectedByPolicy.push_back(streamForPolicy.streamId);
+      }
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// callStreamPolicyPyFuncForStream
+//------------------------------------------------------------------------------
+bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
+  const std::string              &svcClassName,
+  const std::string              &streamPolicyName,
+  PyObject *const                streamPolicyPyFunc,
+  const StreamForStreamPolicy    &streamForPolicy,
+  IdToTapePoolForStreamPolicyMap &tapePoolsForPolicy)
+  throw(castor::exception::Exception) {
+
+  // Get a handle on the tape-pool of the stream
+  IdToTapePoolForStreamPolicyMap::iterator tapePoolItor =
+    tapePoolsForPolicy.find(streamForPolicy.tapePoolId);
+
+  // If the tape-pool of the stream could not be found, then log an error
+  // message and reject the stream
+  if(tapePoolItor == tapePoolsForPolicy.end()) {
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("SvcClass"           , svcClassName                 ),
+      castor::dlf::Param("streamId"           , streamForPolicy.streamId     ),
+      castor::dlf::Param("numTapeCopies"      , streamForPolicy.numTapeCopies),
+      castor::dlf::Param("totalBytes"         , streamForPolicy.totalBytes   ),
+      castor::dlf::Param("ageOfOldestTapeCopy",
+        streamForPolicy.ageOfOldestTapeCopy                                  ),
+      castor::dlf::Param("tapePoolId"         , streamForPolicy.tapePoolId   ),
+      castor::dlf::Param("streamPolicyName"   , streamPolicyName             )};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      FAILED_TO_FIND_TAPE_POOL_FOR_STREAM, params);
+
+    return false;
+  }
+
+  TapePoolForStreamPolicy &tapePoolForPolicy = tapePoolItor->second;
+
+  bool streamAcceptedByPolicy = false;
+  {
+    // Get a lock on the embedded Python-interpreter
+    castor::tape::python::ScopedPythonLock scopedPythonLock;
+
+    // Create the input-tuple for the stream-policy Python-function
+    //
+    // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
+    // K must be used for unsigned (feature not documented at all but available)
+    castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue(
+      (char *)"(K,K,K,K,K,s,K,s)",
+      streamForPolicy.streamId,
+      streamForPolicy.numTapeCopies,
+      streamForPolicy.totalBytes,
+      streamForPolicy.ageOfOldestTapeCopy,
+      streamForPolicy.tapePoolId,
+      tapePoolForPolicy.tapePoolName.c_str(),
+      tapePoolForPolicy.nbRunningStreams,
+      svcClassName.c_str()));
+
+    // Throw an exception if the creation of the input-tuple failed
+    if(inputObj.get() == NULL) {
+      // Try to determine the Python exception if there was a Python error
+      PyObject *const pyEx = PyErr_Occurred();
+      const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+      // Clear the Python error if there was one
+      if(pyEx != NULL) {
+        PyErr_Clear();
+      }
+
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        "Failed to create input-tuple for stream-policy Python-function"
+        ": moduleName=stream"
+        ", functionName=" << streamPolicyName <<
+        ", pythonException=" << pyExStr;
+      throw(ex);
+    }
+
+    // Call the stream-policy Python-function
+    castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(
+      streamPolicyPyFunc, inputObj.get()));
+
+    // Throw an exception if the stream-policy Python-function call failed
+    if(resultObj.get() == NULL) {
+
+      // Try to determine the Python exception if there was a Python error
+      PyObject *const pyEx = PyErr_Occurred();
+      const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+      // Clear the Python error if there was one
+      if(pyEx != NULL) {
+        PyErr_Clear();
+      }
+
+      castor::exception::Internal ex;
+
+      ex.getMessage() <<
+        "Failed to apply stream-policy to stream"
+        ": Failed to execute stream-policy Python-function"
+        ": streamId="            << streamForPolicy.streamId            <<
+        ", numTapeCopies="       << streamForPolicy.numTapeCopies       <<
+        ", totalBytes="          << streamForPolicy.totalBytes          <<
+        ", ageOfOldestTapeCopy=" << streamForPolicy.ageOfOldestTapeCopy <<
+        ", tapePoolId="          << streamForPolicy.tapePoolId          <<
+        ", tapePoolName="        << tapePoolForPolicy.tapePoolName      <<
+        ", nbRunningStreams="    << tapePoolForPolicy.nbRunningStreams  <<
+        ": streamPolicyName="    << streamPolicyName                    <<
+        ": pythonException="     << pyExStr;
+
+      throw ex;
+    }
+
+    streamAcceptedByPolicy = PyInt_AsLong(resultObj.get()) != 0;
+
+  } // The lock on the embedded Python-interpreter is released here
+
+  // Increment the number of running streams for the tape-pool if the
+  // stream-policy has accepted the stream
+  if(streamAcceptedByPolicy) {
+    tapePoolForPolicy.nbRunningStreams++;
+  }
+
+  return streamAcceptedByPolicy;
 }

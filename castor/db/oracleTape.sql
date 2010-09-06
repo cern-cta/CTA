@@ -44,6 +44,19 @@ CREATE OR REPLACE PACKAGE castorTape AS
     byteVolume NUMBER,
     age NUMBER);
   TYPE DbStreamInfo_Cur IS REF CURSOR RETURN DbStreamInfo;
+  /**
+   * The StreamForPolicy record is used to pass information about a specific
+   * stream to the stream-policy Python-function of a service-class.  The
+   * Python-function is responsible for deciding whether or not the stream
+   * should be started.
+   */
+  TYPE StreamForPolicy IS RECORD (
+    id                  NUMBER,
+    numTapeCopies       NUMBER,
+    totalBytes          NUMBER,
+    ageOfOldestTapeCopy NUMBER,
+    tapePool            NUMBER);
+  TYPE StreamForPolicy_Cur IS REF CURSOR RETURN StreamForPolicy;
   TYPE DbRecallInfo IS RECORD (
     vid VARCHAR2(2048),
     tapeId NUMBER,
@@ -1097,79 +1110,138 @@ END;
 /
 
 
-/* Get input for python Stream Policy */
-CREATE OR REPLACE PROCEDURE inputForStreamPolicy
-(svcClassName IN VARCHAR2,
- policyName OUT NOCOPY VARCHAR2,
- runningStreams OUT INTEGER,
- maxStream OUT INTEGER,
- dbInfo OUT castorTape.DbStreamInfo_Cur)
+CREATE OR REPLACE PROCEDURE inputForStreamPolicy (
+  inSvcClassName                 IN  VARCHAR2,
+  outSvcClassId                  OUT NUMBER,
+  outStreamPolicyName            OUT NOCOPY VARCHAR2,
+  outNbDrives                    OUT INTEGER,
+  outStreamsForPolicy            OUT castorTape.StreamForPolicy_Cur)
+/**
+ * For the service-class specified by inSvcClassName, this procedure gets the
+ * service-class database ID, the stream-policy name and the list of candidate
+ * streams to be passed to the stream-policy.
+ *
+ * Please note the list of candidate streams includes streams with no
+ * tape-copies attached.
+ *
+ * On success this function sets and commits the status of the streams for the
+ * stream-policy to STREAM_WAITPOLICY (tragic number 7).
+ *
+ * This procedure raises application error -20001 if the service-class specified
+ * by inSvcClassName is unknown.  In this case no modification is made to the
+ * database and no commit is executed.
+ *
+ * @param inSvcClassName      The name of the service-class 
+ * @param outSvcClassId       The database ID of the service-class.
+ * @param outStreamPolicyName The name of the stream-policy of the
+ *                            service-class.
+ * @param outNbDrives         The maximum number of drives the service-class
+ *                            can use at any single moment in time.
+ * @param outStreamsForPolicy Cursor to the set of candidate streams to be
+ *                            processed by the stream-policy.
+ */
 AS
-  tpId NUMBER; -- used in the loop
-  tcId NUMBER; -- used in the loop
-  streamId NUMBER; -- stream attached to the tapepool
-  svcId NUMBER; -- id for the svcclass
-  strIds "numList";
-  tcNum NUMBER;
+  varStreamIds "numList"; -- Stream ids to be passed to the stream-policy
+  varNumTapeCopies NUMBER := 0;  -- Number of tape-copies on the policy-streams
+  varTooManyTapeCopiesToQuery BOOLEAN := FALSE; -- True if there are too many
+                                                -- tape-copies to query
 BEGIN
-  -- info for policy
-  SELECT streamPolicy, nbDrives, id INTO policyName, maxStream, svcId
-    FROM SvcClass WHERE SvcClass.name = svcClassName;
-  SELECT count(*) INTO runningStreams
-    FROM Stream, SvcClass2TapePool
-   WHERE Stream.TapePool = SvcClass2TapePool.child
-     AND SvcClass2TapePool.parent = svcId
-     AND Stream.status = 3;
-  UPDATE stream SET status = 7
-   WHERE Stream.status IN (4, 5, 6)
-     AND Stream.id
-      IN (SELECT Stream.id FROM Stream,SvcClass2TapePool
-           WHERE Stream.Tapepool = SvcClass2TapePool.child
-             AND SvcClass2TapePool.parent = svcId)
-  RETURNING Stream.id BULK COLLECT INTO strIds;
+  -- Get the id, stream-policy name and number of drives of the service-class
+  -- specified by inSvcClassName
+  BEGIN
+    SELECT id, streamPolicy, nbDrives
+      INTO outSvcClassId, outStreamPolicyName, outNbDrives
+      FROM SvcClass
+     WHERE SvcClass.name = inSvcClassName;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20001,
+        'Unknown service-class name' ||
+        ': inSvcClassName=' || inSvcClassName);
+  END;
+
+  -- Mark the streams to be processed by the stream-policy
+  --
+  -- Note that there is a COMMIT statement which means the database cannot help
+  -- if the mighunter daemon crashes and forgets which streams it has marked
+  -- for itself
+  UPDATE Stream
+     SET Stream.status = 7 -- STREAM_WAITPOLICY
+   WHERE Stream.status IN (4, 5, 6) -- STREAM_WAITSPACE, CREATED, STOPPED
+     AND Stream.id IN (
+           SELECT Stream.id
+             FROM Stream
+            INNER JOIN SvcClass2TapePool
+               ON (Stream.Tapepool = SvcClass2TapePool.child)
+            WHERE SvcClass2TapePool.parent = outSvcClassId)
+  RETURNING Stream.id BULK COLLECT INTO varStreamIds;
   COMMIT;
   
-  -- check for overloaded streams
-  SELECT count(*) INTO tcNum FROM stream2tapecopy 
-   WHERE parent IN 
-    (SELECT /*+ CARDINALITY(stridTable 5) */ *
-       FROM TABLE(strIds) stridTable);
-  IF (tcnum > 10000 * maxstream) AND (maxstream > 0) THEN
-    -- emergency mode
-    OPEN dbInfo FOR
-      SELECT Stream.id, 10000, 10000, gettime
-        FROM Stream
-       WHERE Stream.id IN
-         (SELECT /*+ CARDINALITY(stridTable 5) */ *
-            FROM TABLE(strIds) stridTable)
-         AND Stream.status = 7
-       GROUP BY Stream.id;
+  -- Get the total number of tape-copies on the policy-streams
+  SELECT count(*)
+    INTO varNumTapeCopies
+    FROM Stream2tapecopy 
+   WHERE parent IN (
+           SELECT /*+ CARDINALITY(streamIdTable 5) */ *
+             FROM TABLE(varStreamIds) streamIdTable);
+
+  -- Determine whether or not there are too many tape-copies to query, taking
+  -- into account that nbDrives may have been modified and may be invalid
+  -- (nbDrives < 1)
+  IF outNbDrives >= 1 THEN
+    varTooManyTapeCopiesToQuery := varNumTapeCopies > 10000 * outNbDrives;
   ELSE
-  -- return for policy
-  OPEN dbInfo FOR
-    SELECT /*+ INDEX(CastorFile PK_CastorFile_Id) */ Stream.id,
-           count(distinct Stream2TapeCopy.child),
-           sum(CastorFile.filesize), gettime() - min(CastorFile.creationtime)
-      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
-     WHERE Stream.id IN
-        (SELECT /*+ CARDINALITY(stridTable 5) */ *
-           FROM TABLE(strIds) stridTable)
-       AND Stream2TapeCopy.child = TapeCopy.id
-       AND TapeCopy.castorfile = CastorFile.id
-       AND Stream.id = Stream2TapeCopy.parent
-       AND Stream.status = 7
-     GROUP BY Stream.id
-   UNION ALL
-    SELECT Stream.id, 0, 0, 0
-      FROM Stream WHERE Stream.id IN
-        (SELECT /*+ CARDINALITY(stridTable 5) */ *
-           FROM TABLE(strIds) stridTable)
-       AND Stream.status = 7
-       AND NOT EXISTS 
-        (SELECT 'x' FROM Stream2TapeCopy ST WHERE ST.parent = Stream.ID);
+    varTooManyTapeCopiesToQuery := varNumTapeCopies > 10000;
+  END IF;
+
+  IF varTooManyTapeCopiesToQuery THEN
+    -- Enter emergency mode
+    OPEN outStreamsForPolicy FOR
+      SELECT Stream.id,
+             10000, -- numTapeCopies
+             10000, -- totalBytes
+             gettime(), -- ageOfOldestTapeCopy
+             Stream.tapepool
+        FROM Stream
+       WHERE Stream.id IN (
+                SELECT /*+ CARDINALITY(streamIdTable 5) */ *
+                  FROM TABLE(varStreamIds) streamIdTable)
+         AND Stream.status = 7;  -- STREAM_WAITPOLICY
+  ELSE
+    OPEN outStreamsForPolicy FOR
+      SELECT /*+ INDEX(CastorFile PK_CastorFile_Id) */ Stream.id,
+             count(Stream2TapeCopy.child), -- numTapeCopies
+             sum(CastorFile.filesize), -- totalBytes
+             gettime() - min(CastorFile.creationtime), -- ageOfOldestTapeCopy
+             Stream.tapepool
+        FROM Stream2TapeCopy
+       INNER JOIN Stream     ON (Stream2TapeCopy.parent = Stream.id    )
+       INNER JOIN TapeCopy   ON (Stream2TapeCopy.child  = TapeCopy.id  )
+       INNER JOIN CastorFile ON (TapeCopy.castorFile    = CastorFile.id)
+       WHERE Stream.id IN (
+               SELECT /*+ CARDINALITY(stridTable 5) */ *
+                 FROM TABLE(varStreamIds) streamIdTable)
+                  AND Stream.status = 7 -- STREAM_WAITPOLICY
+       GROUP BY Stream.tapepool, Stream.id
+      UNION ALL /* Append streams with no tape-copies attached */
+      SELECT Stream.id,
+             0, -- numTapeCopies
+             0, -- totalBytes
+             0, -- ageOfOldestTapeCopy
+             0  -- tapepool
+        FROM Stream
+       WHERE Stream.id IN (
+               SELECT /*+ CARDINALITY(streamIdTable 5) */ *
+                 FROM TABLE(varStreamIds) streamIdTable)
+         AND Stream.status = 7 -- STREAM_WAITPOLICY
+         AND NOT EXISTS (
+               SELECT 'x'
+                 FROM Stream2TapeCopy ST
+                WHERE ST.parent = Stream.ID);
   END IF;         
-END;
+END inputForStreamPolicy;
 /
+
 
 /* createOrUpdateStream */
 CREATE OR REPLACE PROCEDURE createOrUpdateStream

@@ -41,3 +41,6 @@
 40,MIGHUNTERTHREAD_SKIPPING_SRVCCLASS,"MigHunter thread skipping service class because there are no candidate tape copies"
 41,DAEMON_START,"Service started"
 42,GRACEFUL_SHUTDOWN_DUE_TO_ERROR,"Graceful shutdown due to error"
+43,APPLY_STREAM_POLICY_TO_SVCCLASS_EXCEPT,"Exception raised when applying stream-policy to service-class"
+44,GOT_TAPE_POOLS_FOR_STREAM_POLICY,"Got the tape-pools for the stream-policy"
+45,FAILED_TO_FIND_TAPE_POOL_FOR_STREAM,"Failed to find tape-pool for stream"
