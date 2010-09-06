@@ -357,8 +357,9 @@ void castor::tape::mighunter::StreamThread::applyStreamPolicyToSvcClass(
       ((start.tv_sec * 1000000) + start.tv_usec);
 
     castor::dlf::Param paramsStop[]={
-      castor::dlf::Param("SvcClass"      , svcClassName        ),
-      castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+      castor::dlf::Param("SvcClass"      , svcClassName                      ),
+      castor::dlf::Param("nbStreams"     , streamsToBeDeletedOrStopped.size()),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001               )};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
       paramsStop);
   }
