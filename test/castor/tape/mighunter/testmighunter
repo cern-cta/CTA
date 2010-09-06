@@ -27,6 +27,9 @@ use DBI;
 use POSIX;
 use strict;
 
+# castor/cern.ch/dev/m/murrayc3/simpleTest_Sat_Aug_7.txt
+my $DEV_FILE_NS_FILEID=5000043410;
+
 # Prints the usage message for this script
 sub printUsage {
   print("Usage: test.py mighunterdExecutable\n");
@@ -182,7 +185,6 @@ sub restoreFileFromBackupCopy {
 # Test the mighunter detectsi missing MIGHUNTER/MIGRATION_POLICY parameter.
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
-# @return                      0 if the test passed, else 1.
 sub testNoCastorConfMIGHUNTER_MIGRATION_POLICY {
   my $mighunterdExecutable = $_[0];
 
@@ -216,17 +218,14 @@ sub testNoCastorConfMIGHUNTER_MIGRATION_POLICY {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
 # Test the mighunter detects missing MIGHUNTER/STREAM_POLICY parameter.
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
-# @return                      0 if the test passed, else 1.
 sub testNoCastorConfMIGHUNTER_STREAM_POLICY {
   my $mighunterdExecutable = $_[0];
 
@@ -259,17 +258,14 @@ sub testNoCastorConfMIGHUNTER_STREAM_POLICY {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
 # Test the mighunter detects missing migration-policy Python-module.
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable;
-# @return                      0 if the test passed, else 1.
 sub testNonExistantMigrationPolicyModule {
   my $mighunterdExecutable = $_[0];
 
@@ -302,17 +298,14 @@ sub testNonExistantMigrationPolicyModule {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
 # Test the mighunter detects missing stream-policy Python-module.
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable;
-# @return                      0 if the test passed, else 1.
 sub testNonExistantStreamPolicyModule {
   my $mighunterdExecutable = $_[0];
 
@@ -345,10 +338,8 @@ sub testNonExistantStreamPolicyModule {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
@@ -413,8 +404,9 @@ sub insertCastorFile {
 
   my $stmt = "
     DECLARE
-      varSvcClassId  NUMBER(38) := NULL;
-      varFileClassId NUMBER(38) := NULL;
+      varSvcClassId   NUMBER(38) := NULL;
+      varFileClassId  NUMBER(38) := NULL;
+      varCastorFileId NUMBER(38) := NULL;
     BEGIN
       /* Deteremine the database IDs of the service and file classes */
       SELECT id INTO varSvcClassId  FROM SvcClass  WHERE name = :SVCCLASSNAME;
@@ -426,7 +418,11 @@ sub insertCastorFile {
            VALUES (ids_seq.NEXTVAL, :NSHOST, :FILEID, :FILESIZE,
                   :CREATIONTIME, :LASTUPDATETIME, :LASTACCESSTIME,
                   :LASTKNOWNFILENAME, varSvcClassId, varFileClassId)
-        RETURNING id INTO :CASTORFILEID;
+        RETURNING id INTO varCastorFileId;
+
+      INSERT INTO Id2Type(id, type) VALUES(varCastorFileId, 2);
+
+      :CASTORFILEID := varCastorFileId;
     END;";
 
   # The castor-file database ID will be the return value
@@ -462,12 +458,15 @@ sub deleteCastorFile {
   my $castorFileId = $_[1];
 
   my $stmt = "
-    DELETE FROM CastorFile
-          WHERE id = :CASTORFILEID";
+    DECLARE
+      varCastorFileId NUMBER(38) := :CASTORFILEID;
+    BEGIN
+      DELETE FROM CastorFile WHERE id = varCastorFileId;
+      DELETE FROM Id2Type    WHERE id = varCastorFileId;
+    END;";
 
   my $sth = $dbh->prepare($stmt);
-  $sth->bind_param(":CASTORFILEID", $castorFileId)
-    or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
   $sth->execute();
 }
 
@@ -483,17 +482,25 @@ sub insertTapeCopy {
   my $status       = $_[2];
 
   my $stmt = "
-     INSERT INTO TapeCopy(id, copyNb, castorFile, status)
-          VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
-       RETURNING id INTO :TAPECOPYID";
+    DECLARE
+      varTapeCopyId NUMBER(38) := NULL;
+    BEGIN
+      INSERT INTO TapeCopy(id, copyNb, castorFile, status)
+           VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
+        RETURNING id INTO varTapeCopyId;
+
+      INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
+
+      :TAPECOPYID := varTapeCopyId;
+    END;";
 
   # The tape-copy database ID will be the return value
   my $tapeCopyId;
 
   my $sth = $dbh->prepare($stmt);
-  $sth->bind_param(":CASTORFILEID", $castorFileId) or die $sth->errstr;
-  $sth->bind_param(":STATUS", $status) or die $sth->errstr;
-  $sth->bind_param_inout(":TAPECOPYID", \$tapeCopyId, 20) or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
+  $sth->bind_param_inout(":STATUS"      , \$status      , 20) or die $sth->errstr;
+  $sth->bind_param_inout(":TAPECOPYID"  , \$tapeCopyId  , 20) or die $sth->errstr;
   $sth->execute();
 
   return $tapeCopyId;
@@ -513,6 +520,7 @@ sub deleteTapeCopy {
     BEGIN
       DELETE FROM Stream2TapeCopy WHERE child = varTapeCopyId;
       DELETE FROM TapeCopy        WHERE id    = varTapeCopyId;
+      DELETE FROM Id2Type         WHERE id    = varTapeCopyId;
     END;";
 
   my $sth = $dbh->prepare($stmt);
@@ -524,7 +532,6 @@ sub deleteTapeCopy {
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
 # @param  dbh                  The handle to the stager-database.
-# @return                      0 if the test passed, else 1.
 sub testInvalidMigrationPolicyFunctionName {
   my $mighunterdExecutable = $_[0];
   my $dbh                  = $_[1];
@@ -539,7 +546,7 @@ sub testInvalidMigrationPolicyFunctionName {
   &killDaemonWithTimeout('stagerd'     , 2);
 
   my $nsHost            = 'TestMigHunterNameServer';
-  my $fileId            = 12345678;
+  my $fileId            = $DEV_FILE_NS_FILEID;
   my $fileSize          = 1000;
   my $creationTime      = time();
   my $lastUpdateTime    = $creationTime;
@@ -609,10 +616,8 @@ sub testInvalidMigrationPolicyFunctionName {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
@@ -620,7 +625,6 @@ sub testInvalidMigrationPolicyFunctionName {
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
 # @param  dbh                  The handle to the stager-database.
-# @return                      0 if the test passed, else 1.
 sub testInvalidStreamPolicyFunctionName {
   my $mighunterdExecutable = $_[0];
   my $dbh                  = $_[1];
@@ -635,7 +639,7 @@ sub testInvalidStreamPolicyFunctionName {
   &killDaemonWithTimeout('stagerd'     , 2);
 
   my $nsHost            = 'TestMigHunterNameServer';
-  my $fileId            = 12345678;
+  my $fileId            = $DEV_FILE_NS_FILEID;
   my $fileSize          = 1000;
   my $creationTime      = time();
   my $lastUpdateTime    = $creationTime;
@@ -705,10 +709,8 @@ sub testInvalidStreamPolicyFunctionName {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
@@ -716,7 +718,6 @@ sub testInvalidStreamPolicyFunctionName {
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
 # @param  dbh                  The handle to the stager-database.
-# @return                      0 if the test passed, else 1.
 sub testInvalidMigrationPolicyFunctionParameter {
   my $mighunterdExecutable = $_[0];
   my $dbh                  = $_[1];
@@ -732,7 +733,7 @@ sub testInvalidMigrationPolicyFunctionParameter {
   &killDaemonWithTimeout('stagerd'     , 2);
 
   my $nsHost            = 'TestMigHunterNameServer';
-  my $fileId            = 12345678;
+  my $fileId            = $DEV_FILE_NS_FILEID;
   my $fileSize          = 1000;
   my $creationTime      = time();
   my $lastUpdateTime    = $creationTime;
@@ -805,10 +806,8 @@ sub testInvalidMigrationPolicyFunctionParameter {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
 
@@ -816,7 +815,6 @@ sub testInvalidMigrationPolicyFunctionParameter {
 #
 # @param  mighunterdExecutable The filename of the mighunterd executable.
 # @param  dbh                  The handle to the stager-database.
-# @return                      0 if the test passed, else 1.
 sub testInvalidStreamPolicyFunctionParameter {
   my $mighunterdExecutable = $_[0];
   my $dbh                  = $_[1];
@@ -832,7 +830,7 @@ sub testInvalidStreamPolicyFunctionParameter {
   &killDaemonWithTimeout('stagerd'     , 2);
 
   my $nsHost            = 'TestMigHunterNameServer';
-  my $fileId            = 12345678;
+  my $fileId            = $DEV_FILE_NS_FILEID;
   my $fileSize          = 1000;
   my $creationTime      = time();
   my $lastUpdateTime    = $creationTime;
@@ -905,12 +903,86 @@ sub testInvalidStreamPolicyFunctionParameter {
 
   if($testPassed) {
     print("PASSED\n");
-    return 0;
   } else {
-    print("FAILED\n");
-    return 1;
+    die("FAILED\n");
   }
 }
+
+# Stress test mighunterd.
+#
+# @param  mighunterdExecutable The filename of the mighunterd executable.
+# @param  dbh                  The handle to the stager-database.
+sub stressTest {
+  my $mighunterdExecutable = $_[0];
+  my $dbh                  = $_[1];
+
+  print("\n\n");
+  print("STRESS TEST MIGHUNTERD\n");
+
+  # Ensure all of the daemons accessing the stager-database are dead
+  &killDaemonWithTimeout('mighunterd'  , 2);
+  &killDaemonWithTimeout('rtcpclientd' , 2);
+  &killDaemonWithTimeout('tapegatewayd', 2);
+  &killDaemonWithTimeout('stagerd'     , 2);
+
+  print("Inserting a single castor-file\n");
+
+  my $nsHost            = 'TestMigHunterNameServer';
+  my $fileId            = $DEV_FILE_NS_FILEID;
+  my $fileSize          = 1000;
+  my $creationTime      = time();
+  my $lastUpdateTime    = $creationTime;
+  my $lastAccessTime    = $creationTime;
+  my $lastKnownFilename = "TestMigHunterFilename$fileId";
+  my $svcClassName      = 'default';
+  my $fileClassName     = 'largeuser';
+  my $castorFileId = &insertCastorFile(
+    $dbh,
+    $nsHost,
+    $fileId,
+    $fileSize,
+    $creationTime,
+    $lastUpdateTime,
+    $lastAccessTime,
+    $lastKnownFilename,
+    $svcClassName,
+    $fileClassName);
+  $dbh->commit();
+  print("Committed insert\n");
+
+  my $nbTapeCopies = 100000;
+  print("Inserting $nbTapeCopies tape-copies\n");
+  my @tapeCopyIds;
+  for(my $i=0; $i<$nbTapeCopies; $i++) {
+    # Insert a new tape-copy
+    my $TAPECOPY_CREATED = 0;
+    my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
+    push(@tapeCopyIds, $tapeCopyId);
+  }
+  $dbh->commit();
+  print("Committed inserts\n");
+
+  # Start mighunterd
+  `2>&1 $mighunterdExecutable -Z -t 1 default`;
+
+  sleep(600);
+
+  &killDaemonWithTimeout('mighunterd', 10);
+
+  print("Deleting inserted tape-copies\n");
+  foreach my $tapeCopyId (@tapeCopyIds) {
+    &deleteTapeCopy($dbh, $tapeCopyId);
+    print("#");
+  }
+  $dbh->commit();
+  print("\nCommitted deletes\n");
+
+  print("Deleting inserted castor-file\n");
+  &deleteCastorFile($dbh, $castorFileId);
+  $dbh->commit();
+  print("\nCommitted delete\n");
+}
+
 
 
 ################################################################################
@@ -949,36 +1021,21 @@ if(! -x $mighunterdExecutable) {
 `killall stagerd`;
 
 # Run the mighunterd /etc/castor.conf tests
-if(&testNoCastorConfMIGHUNTER_MIGRATION_POLICY($mighunterdExecutable)) {
-  exit(-1);
-}
-if(&testNoCastorConfMIGHUNTER_STREAM_POLICY($mighunterdExecutable)) {
-  exit(-1);
-}
-if(&testNonExistantMigrationPolicyModule($mighunterdExecutable)) {
-  exit(-1);
-}
-if(&testNonExistantStreamPolicyModule($mighunterdExecutable)) {
-  exit(-1);
-}
+&testNoCastorConfMIGHUNTER_MIGRATION_POLICY($mighunterdExecutable);
+&testNoCastorConfMIGHUNTER_STREAM_POLICY($mighunterdExecutable);
+&testNonExistantMigrationPolicyModule($mighunterdExecutable);
+&testNonExistantStreamPolicyModule($mighunterdExecutable);
 
 # Connect to the stager database
 my $dbh = &connectToStagerDb();
 $dbh->{AutoCommit} = 0;
 
 # Run database-driven tests
-if(&testInvalidMigrationPolicyFunctionName($mighunterdExecutable, $dbh)) {
-  exit(-1);
-}
-if(&testInvalidStreamPolicyFunctionName($mighunterdExecutable, $dbh)) {
-  exit(-1);
-}
-if(&testInvalidMigrationPolicyFunctionParameter($mighunterdExecutable, $dbh)) {
-  exit(-1);
-}
-if(&testInvalidStreamPolicyFunctionParameter($mighunterdExecutable, $dbh)) {
-  exit(-1);
-}
+#&testInvalidMigrationPolicyFunctionName($mighunterdExecutable, $dbh);
+#&testInvalidStreamPolicyFunctionName($mighunterdExecutable, $dbh);
+#&testInvalidMigrationPolicyFunctionParameter($mighunterdExecutable, $dbh);
+#&testInvalidStreamPolicyFunctionParameter($mighunterdExecutable, $dbh);
+#&stressTest($mighunterdExecutable, $dbh);
 
 END {
   $dbh->disconnect if defined($dbh);
