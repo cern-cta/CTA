@@ -91,8 +91,10 @@ castor::tape::mighunter::StreamThread::StreamThread(
   m_expectedStreamPolicyArgNames.push_back("ageOfOldestTapeCopy");
   m_expectedStreamPolicyArgNames.push_back("tapePoolId");
   m_expectedStreamPolicyArgNames.push_back("tapePoolName");
-  m_expectedStreamPolicyArgNames.push_back("nbRunningStreams");
+  m_expectedStreamPolicyArgNames.push_back("tapePoolNbRunningStreams");
+  m_expectedStreamPolicyArgNames.push_back("svcClassId");
   m_expectedStreamPolicyArgNames.push_back("svcClassName");
+  m_expectedStreamPolicyArgNames.push_back("svcClassNbDrives");
 }
 
 
@@ -200,13 +202,13 @@ void castor::tape::mighunter::StreamThread::applyStreamPolicyToSvcClass(
   // be passed to the stream-policy
   u_signed64 svcClassId = 0;
   std::string streamPolicyName;
-  u_signed64 nbDrives = 0; // For debugging, stream-policy cannot create streams
+  u_signed64 svcClassNbDrives = 0;
   StreamForStreamPolicyList streamsForPolicy;
   {
     timeval start, end;
     gettimeofday(&start, NULL);
     oraSvc->inputForStreamPolicy(svcClassName, svcClassId, streamPolicyName,
-      nbDrives, streamsForPolicy);
+      svcClassNbDrives, streamsForPolicy);
     gettimeofday(&end, NULL);
     signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
       ((start.tv_sec * 1000000) + start.tv_usec);
@@ -298,8 +300,8 @@ void castor::tape::mighunter::StreamThread::applyStreamPolicyToSvcClass(
   {
     timeval start, end;
     gettimeofday(&start, NULL);
-    callStreamPolicyForEachStream(svcClassName, streamPolicyName,
-      streamPolicyPyFunc, streamsForPolicy, tapePoolsForPolicy,
+    callStreamPolicyForEachStream(svcClassId, svcClassName, svcClassNbDrives,
+      streamPolicyName, streamPolicyPyFunc, streamsForPolicy, tapePoolsForPolicy,
       streamsAcceptedByPolicy, streamsRejectedByPolicy, streamsNoTapeCopies);
     gettimeofday(&end, NULL);
     signed64 procTime = ((end.tv_sec * 1000000) + end.tv_usec) -
@@ -420,7 +422,9 @@ void castor::tape::mighunter::StreamThread::checkStreamPolicyArgNames(
 // callStreamPolicyForEachStream
 //------------------------------------------------------------------------------
 void castor::tape::mighunter::StreamThread::callStreamPolicyForEachStream(
+  const u_signed64                svcClassId,
   const std::string               &svcClassName,
+  const u_signed64                svcClassNbDrives,
   const std::string               &streamPolicyName,
   PyObject *const                 streamPolicyPyFunc,
   const StreamForStreamPolicyList &streamsForPolicy,
@@ -447,8 +451,8 @@ void castor::tape::mighunter::StreamThread::callStreamPolicyForEachStream(
       // Call the stream-policy Python-function, updating the number of running
       // streams per tape-pool if the stream is accepted
       const bool streamAcceptedByPolicy = callStreamPolicyPyFuncForStream(
-        svcClassName, streamPolicyName, streamPolicyPyFunc, streamForPolicy,
-        tapePoolsForPolicy);
+        svcClassId, svcClassName, svcClassNbDrives, streamPolicyName,
+        streamPolicyPyFunc, streamForPolicy, tapePoolsForPolicy);
 
       // Push the stream accordingly onto either the list of streams accepted
       // by the policy or the list of streams rejected by the policy
@@ -466,7 +470,9 @@ void castor::tape::mighunter::StreamThread::callStreamPolicyForEachStream(
 // callStreamPolicyPyFuncForStream
 //------------------------------------------------------------------------------
 bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
+  const u_signed64               svcClassId,
   const std::string              &svcClassName,
+  const u_signed64               svcClassNbDrives,
   const std::string              &streamPolicyName,
   PyObject *const                streamPolicyPyFunc,
   const StreamForStreamPolicy    &streamForPolicy,
@@ -508,15 +514,17 @@ bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
     // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
     // K must be used for unsigned (feature not documented at all but available)
     castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue(
-      (char *)"(K,K,K,K,K,s,K,s)",
+      (char *)"(K,K,K,K,K,s,K,K,s,K)",
       streamForPolicy.streamId,
       streamForPolicy.numTapeCopies,
       streamForPolicy.totalBytes,
       streamForPolicy.ageOfOldestTapeCopy,
       streamForPolicy.tapePoolId,
-      tapePoolForPolicy.tapePoolName.c_str(),
+      tapePoolForPolicy.name.c_str(),
       tapePoolForPolicy.nbRunningStreams,
-      svcClassName.c_str()));
+      svcClassId,
+      svcClassName.c_str(),
+      svcClassNbDrives));
 
     // Throw an exception if the creation of the input-tuple failed
     if(inputObj.get() == NULL) {
@@ -559,15 +567,18 @@ bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
       ex.getMessage() <<
         "Failed to apply stream-policy to stream"
         ": Failed to execute stream-policy Python-function"
-        ": streamId="            << streamForPolicy.streamId            <<
-        ", numTapeCopies="       << streamForPolicy.numTapeCopies       <<
-        ", totalBytes="          << streamForPolicy.totalBytes          <<
-        ", ageOfOldestTapeCopy=" << streamForPolicy.ageOfOldestTapeCopy <<
-        ", tapePoolId="          << streamForPolicy.tapePoolId          <<
-        ", tapePoolName="        << tapePoolForPolicy.tapePoolName      <<
-        ", nbRunningStreams="    << tapePoolForPolicy.nbRunningStreams  <<
-        ": streamPolicyName="    << streamPolicyName                    <<
-        ": pythonException="     << pyExStr;
+        ": streamId="                 << streamForPolicy.streamId            <<
+        ", numTapeCopies="            << streamForPolicy.numTapeCopies       <<
+        ", totalBytes="               << streamForPolicy.totalBytes          <<
+        ", ageOfOldestTapeCopy="      << streamForPolicy.ageOfOldestTapeCopy <<
+        ", tapePoolId="               << streamForPolicy.tapePoolId          <<
+        ", tapePoolName="             << tapePoolForPolicy.name              <<
+        ", tapePoolNbRunningStreams=" << tapePoolForPolicy.nbRunningStreams  <<
+        ", svcClassId="               << svcClassId                          <<
+        ", svcClassName="             << svcClassName                        <<
+        ", svcClassNbDrives="         << svcClassNbDrives                    <<
+        ": streamPolicyName="         << streamPolicyName                    <<
+        ": pythonException="          << pyExStr;
 
       throw ex;
     }

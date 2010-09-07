@@ -506,6 +506,47 @@ sub insertTapeCopy {
   return $tapeCopyId;
 }
 
+# Inserts the specified number of rows into the TapeCopy table all pointing to
+# the specified castor-file and all with the specified status.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The database ID of the associated castor-file.
+# @param status       The initial status of the tape-copies.
+# @param nbTapeCopies The number of rows to insert into the TapeCopy table.
+sub insertTapeCopies {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+  my $status       = $_[2];
+  my $nbTapeCopies = $_[3];
+
+  my $stmt = "
+    DECLARE
+      varTapeCopyId NUMBER(38) := NULL;
+    BEGIN
+      FOR i IN 1 .. :NBTAPECOPIES LOOP
+        INSERT INTO TapeCopy(id, copyNb, castorFile, status)
+             VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
+          RETURNING id INTO varTapeCopyId;
+
+        INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
+      END LOOP;
+    END;";
+
+  # The tape-copy database ID will be the return value
+  my $tapeCopyId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":NBTAPECOPIES", \$nbTapeCopies, 20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":STATUS"      , \$status      , 20)
+    or die $sth->errstr;
+  $sth->execute();
+
+  return $tapeCopyId;
+}
+
 # Deletes the row from the TapeCopy table with the specified database ID.
 #
 # @param dbh        The handle to the stager-database.
@@ -775,9 +816,9 @@ sub testInvalidMigrationPolicyFunctionParameter {
   my $policyFilename       = "/etc/castor/policies/migration.py";
   my $policyBackupFilename = &createBackupCopy($policyFilename);
 
-  # Invalidate the second function-parameter
-  print("Invalidating function-parameter\n");
-  `sed -i 's/\\(^def \\+$functionName *( *tapepool *, *\\)castorfilename/\\1invalidParameter/' $policyFilename`;
+  # Create a replacement policy-file with an invalid function-parameter inside
+  `echo "def $functionName(tapepool,invalidParameter,copynb,fileId,fileSize,fileMode,uid,gid,aTime,mTime,cTime,fileClass):" > $policyFilename`;
+  `echo "  return 1" >> $policyFilename`;
 
   # Truncate the mighunterd log-file
   `echo -n > /var/log/castor/mighunterd.log`;
@@ -872,9 +913,9 @@ sub testInvalidStreamPolicyFunctionParameter {
   my $policyFilename       = "/etc/castor/policies/stream.py";
   my $policyBackupFilename = &createBackupCopy($policyFilename);
 
-  # Invalidate the second function-parameter
-  print("Invalidating function-parameter\n");
-  `sed -i 's/\\(^def \\+$functionName *( *streamId *, *\\)numTapeCopies/\\1invalidParameter/' $policyFilename`;
+  # Create a replacement policy-file with an invalid function-parameter inside
+  `echo "def $functionName(streamId,invalidParameter,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives):" > $policyFilename`;
+  `echo "  return 1" >> $policyFilename`;
 
   # Truncate the mighunterd log-file
   `echo -n > /var/log/castor/mighunterd.log`;
@@ -883,7 +924,7 @@ sub testInvalidStreamPolicyFunctionParameter {
   `2>&1 $mighunterdExecutable -Z -f -t 1 default`;
 
   # Look for the expected error log
-  my $expectedLogMessage = "Stream-policy Python-function has an unexpected argument name: streamPolicyName=$functionName, argumentIndex=1, expectedName=numTapeCopies, actualName=invalidParameter, expectedParams=streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,nbRunningStreams,svcClassName, actualParams=streamId,invalidParameter,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,nbRunningStreams,svcClassName";
+  my $expectedLogMessage = "Stream-policy Python-function has an unexpected argument name: streamPolicyName=$functionName, argumentIndex=1, expectedName=numTapeCopies, actualName=invalidParameter, expectedParams=streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives, actualParams=streamId,invalidParameter,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives";
   print("expectedLogMessage=$expectedLogMessage\n");
   my $mighunterdResult = `grep "$expectedLogMessage" /var/log/castor/mighunterd.log | wc -l`;
   chomp($mighunterdResult);
@@ -950,37 +991,16 @@ sub stressTest {
   $dbh->commit();
   print("Committed insert\n");
 
-  my $nbTapeCopies = 100000;
+  my $TAPECOPY_CREATED = 0;
+  my $nbTapeCopies     = 100000;
   print("Inserting $nbTapeCopies tape-copies\n");
-  my @tapeCopyIds;
-  for(my $i=0; $i<$nbTapeCopies; $i++) {
-    # Insert a new tape-copy
-    my $TAPECOPY_CREATED = 0;
-    my $tapeCopyId = &insertTapeCopy($dbh, $castorFileId, $TAPECOPY_CREATED);
-    push(@tapeCopyIds, $tapeCopyId);
-  }
+  &insertTapeCopies($dbh, $castorFileId, $TAPECOPY_CREATED, $nbTapeCopies);
   $dbh->commit();
   print("Committed inserts\n");
 
   # Start mighunterd
+  print("Starting mighunterd\n");
   `2>&1 $mighunterdExecutable -Z -t 1 default`;
-
-  sleep(600);
-
-  &killDaemonWithTimeout('mighunterd', 10);
-
-  print("Deleting inserted tape-copies\n");
-  foreach my $tapeCopyId (@tapeCopyIds) {
-    &deleteTapeCopy($dbh, $tapeCopyId);
-    print("#");
-  }
-  $dbh->commit();
-  print("\nCommitted deletes\n");
-
-  print("Deleting inserted castor-file\n");
-  &deleteCastorFile($dbh, $castorFileId);
-  $dbh->commit();
-  print("\nCommitted delete\n");
 }
 
 
@@ -1031,11 +1051,11 @@ my $dbh = &connectToStagerDb();
 $dbh->{AutoCommit} = 0;
 
 # Run database-driven tests
-#&testInvalidMigrationPolicyFunctionName($mighunterdExecutable, $dbh);
-#&testInvalidStreamPolicyFunctionName($mighunterdExecutable, $dbh);
-#&testInvalidMigrationPolicyFunctionParameter($mighunterdExecutable, $dbh);
-#&testInvalidStreamPolicyFunctionParameter($mighunterdExecutable, $dbh);
-#&stressTest($mighunterdExecutable, $dbh);
+&testInvalidMigrationPolicyFunctionName($mighunterdExecutable, $dbh);
+&testInvalidStreamPolicyFunctionName($mighunterdExecutable, $dbh);
+&testInvalidMigrationPolicyFunctionParameter($mighunterdExecutable, $dbh);
+&testInvalidStreamPolicyFunctionParameter($mighunterdExecutable, $dbh);
+&stressTest($mighunterdExecutable, $dbh);
 
 END {
   $dbh->disconnect if defined($dbh);

@@ -40,7 +40,7 @@ namespace mighunter {
  * stream-policy of a service-class.
  */
 struct TapePoolForStreamPolicy {
-  std::string tapePoolName;
+  std::string name;
   u_signed64  nbRunningStreams;
 }; // struct TapePoolForStreamPolicy
 

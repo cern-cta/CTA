@@ -135,7 +135,10 @@ private:
    * streams rejected by the policy together with the streams with no
    * tape-copies should be deleted or stopped.
    *
+   * @param svcClassId              Input: The database ID of the service-class.
    * @param svcClassName            Input: The name of the service-class.
+   * @param svcClassNbDrives        Input: The nbDrives attribute of the
+   *                                service-class.
    * @param streamPolicyName        Input: The name of the stream-policy Python
    *                                function to be called.
    * @param streamPolicyPyFunc      Input: The stream-policy Python-function.
@@ -159,7 +162,9 @@ private:
    *                                therefore be deleted or stopped.
    */
   void callStreamPolicyForEachStream(
+    const u_signed64                svcClassId,
     const std::string               &svcClassName,
+    const u_signed64                svcClassNbDrives,
     const std::string               &streamPolicyName,
     PyObject *const                 streamPolicyPyFunc,
     const StreamForStreamPolicyList &streamsForPolicy,
@@ -176,7 +181,9 @@ private:
    * This method updates the number of running streams per tape-pool if the
    * specified stream is accepted.
    *
+   * @param svcClassId         Input: The database ID of the service-class.
    * @param svcClassName       Input: The name of the service-class.
+   * @param svcClassNbDrives   Input: The nbDrives attribute of the service-class.
    * @param streamPolicyName   Input: The name of the stream-policy Python
    *                           function to be called.
    * @param streamPolicyPyFunc Input: The stream-policy Python-function.
@@ -192,7 +199,9 @@ private:
    *                           therefore be deleted or stopped.
    */
   bool callStreamPolicyPyFuncForStream(
+    const u_signed64               svcClassId,
     const std::string              &svcClassName,
+    const u_signed64               svcClassNbDrives,
     const std::string              &streamPolicyName,
     PyObject *const                streamPolicyPyFunc,
     const StreamForStreamPolicy    &streamForPolicy,

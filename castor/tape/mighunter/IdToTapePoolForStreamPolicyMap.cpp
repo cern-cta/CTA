@@ -42,7 +42,7 @@ void castor::tape::mighunter::writeIdToTapePoolForStreamPolicyMapToString(
     os <<
       "("
       "id=" << itor->first <<
-      ", name='" << itor->second.tapePoolName << "'"
+      ", name='" << itor->second.name << "'"
       ", nbRunningStreams=" << itor->second.nbRunningStreams <<
       ")";
   }

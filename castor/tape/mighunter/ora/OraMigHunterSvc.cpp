@@ -618,7 +618,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy(
       const u_signed64 tapePoolId = (u_signed64)resultSet->getDouble(1);
 
       TapePoolForStreamPolicy tapePool;
-      tapePool.tapePoolName     =             resultSet->getString(2);
+      tapePool.name             =             resultSet->getString(2);
       tapePool.nbRunningStreams = (u_signed64)resultSet->getDouble(3);
 
       tapePoolsForPolicy[tapePoolId] = tapePool;
