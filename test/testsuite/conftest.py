@@ -177,7 +177,7 @@ def buildTagErrorMsg(setup, text, output, tagValue, outputStart, outputEnd, gold
     return r
 
 def parseAndReplace(setup, text, testName):
-    ''' parse a text and replaces the tags in between '<' and '>' setup and testName'''
+    ''' parse a text and replaces the tags in between '<' and '>' with knows tags'''
     parsedText = ''
     currIndex = 0
     while 1:
@@ -189,36 +189,57 @@ def parseAndReplace(setup, text, testName):
         # find out the tag and add its value to the parsed text
         endTag = text.find('>', tagIndex+1)
         tag = text[tagIndex+1:endTag]
-        tagValue = setup.getTag(testName, tag)
-        # did we get a sequence of values ?
-        if getattr(tagValue,'__iter__',False):
-            # Yes, we have an iterable, let's spit out
-            # all possible replacements by calling recursively
-            # this method after we replaced that tag globally
-            for v in tagValue:
-                newtext = parsedText+v+text[endTag+1:].replace('<'+tag+'>',v)
-                for r in parseAndReplace(setup, newtext, testName):
-                    yield r
-            return
-        else:
-            # regular value, we simply use the value
-            parsedText = parsedText + tagValue
+        try:
+            tagValue = setup.getTag(testName, tag)
+            # did we get a sequence of values ?
+            if getattr(tagValue,'__iter__',False):
+                # Yes, we have an iterable, let's spit out
+                # all possible replacements by calling recursively
+                # this method after we replaced that tag globally
+                for v in tagValue:
+                    newtext = parsedText+v+text[endTag+1:].replace('<'+tag+'>',v)
+                    for r in parseAndReplace(setup, newtext, testName):
+                        yield r
+                return
+            else:
+                # regular value, we simply use the value
+                parsedText = parsedText + tagValue
+        except NameError:
+            # keep tag, supposing it will be a local time, defined at run time
+            parsedText = parsedText + '<' + tag + '>'
         # and loop
         currIndex = endTag + 1
     yield parsedText + text[currIndex:]
+
+def parseAndReplaceLocals(text, localTags):
+    ''' parse a text and replaces the tags in between '<' and '>' with contextual local tags'''
+    parsedText = ''
+    currIndex = 0
+    while 1:
+        # check if there is any tag to process
+        tagIndex = text.find('<', currIndex)
+        if tagIndex == -1: break
+        # else add standard text before the tag to the parsed one
+        parsedText = parsedText + text[currIndex:tagIndex]
+        # find out the tag and add its value to the parsed text
+        endTag = text.find('>', tagIndex+1)
+        tag = text[tagIndex+1:endTag]
+        parsedText = parsedText + localTags[tag][0]
+        # and loop
+        currIndex = endTag + 1
+    return parsedText + text[currIndex:]
 
 def _handleDrop(match):
     needle = match.group(0)
     return needle[:match.start(1)-match.start(0)]+needle[match.end(1)-match.start(0):]
     
-def compareOutput(setup, output, gold, testName):
+def compareOutput(setup, output, gold, testName, localTags):
     # drop unwanted stuff from the output
     for t in setup.suppressRegExps:
         output = re.sub(t, _handleDrop, output)
     # then compare
     outIndex = 0
     goldIndex = 0
-    localTags = {}
     randomOrderNeeded = {}
     randomOrderFound = {}
     while 1:
@@ -453,15 +474,17 @@ class Setup:
             # go through them
             print
             i = 0
+            localTags = {}
             for cmd in cmds.split(os.linesep):
                 # skip empty lines in the input file
                 if len(cmd) > 0:
+                    cmd = parseAndReplaceLocals(cmd, localTags)
                     print "Executing ", cmd
                     try:
                         # run the command
                         output = Popen(cmd)
                         # and check its output
-                        compareOutput(self, output, open(fileName+'.output'+str(i)).read(), testName)
+                        compareOutput(self, output, open(fileName+'.output'+str(i)).read(), testName, localTags)
                     except Timeout:
                         assert False, "Time out"
                     i = i + 1
