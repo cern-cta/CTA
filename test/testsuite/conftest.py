@@ -1,25 +1,8 @@
 #
-# Put a nice header here
-#
-# this is the core of the CASTOR test suite, based on py.test
+# this is the core of the test suite infrastructure, based on py.test
 #
 
 import time, ConfigParser, os, py, tempfile, re, types, datetime, signal
-
-################
-# some configs #
-################
-
-# regexps of parts of the output that should be dropped
-# Note that regexps must have exactly one group matching the part to
-# be dropped
-suppressRegExps = [
-    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))' # drop rfcp speed info as it varies too much
-]
-
-# list of tags that may appear several times in a single output
-# the the different values in random order e.g. file name list
-randomOrderTags = [ 'noTapeFileName', 'tapeFileName', 'fileid@ns' ]
 
 #########################
 # Some useful functions #
@@ -33,18 +16,18 @@ def getUUID():
         UUID = str(uuid.uuid4())
     return UUID
 
-def listTests(testDir, listResources=False):
+def listTests(testdir, topdir, listResources=False):
     '''lists all tests in a given tree and spit out the fileNames'''
     # find out the complete list of test cases
-    for dirpath, dirs, files in os.walk(testDir):
+    for dirpath, dirs, files in os.walk(testdir):
         # do not enter the 'resources' path
-        if not listResources and dirpath.startswith('castortests'+os.sep+'resources'): continue
+        if not listResources and dirpath.startswith(os.sep.join([topdir,'resources'])): continue
         # In each directory, only use the '.input' files
         for f in filter(lambda x: x.endswith('.input'),files):
             # extract file name, test set and test case name
             f = f[:-6]
             fn = os.path.join(dirpath, f)
-            tn = fn.replace('castortests'+os.sep,'')
+            tn = fn.replace(topdir+os.sep,'')
             ts = tn[0:tn.find(os.sep)]
             tn = tn.replace(os.sep,'_')
             yield ts, tn, fn
@@ -85,27 +68,30 @@ def handleAllOption(option, opt, value, parser):
         setattr(parser.values,d,True)
     
 def pytest_addoption(parser):
-    for d in filter(lambda f:os.path.isdir(os.path.join('castortests',f)), os.listdir('castortests')):
-        # 'resources' is not really a test suite directory
-        if d == 'resources' or d[0] == '.': continue
-        # create 2 options to set and unset each test suite. By default, nothing is ran
-        parser.addoption("--"+d,   action="store_true",  dest=d, help='Run the '+d+' tests')
-        parser.addoption("--no"+d, action="store_false", dest=d, help='Do not run the '+d+' tests')
-        mainTestDirs.append(d)
+    # try to guess the test directory
+    candidates = filter(lambda x:x.endswith('tests'), os.listdir('.'))
+    for testdir in candidates:
+        group = parser.addgroup(testdir, "Specific options for " + testdir)
+        for d in filter(lambda f:os.path.isdir(os.path.join(testdir,f)), os.listdir(testdir)):
+            # 'resources' is not really a test suite directory
+            if d == 'resources' or d[0] == '.': continue
+            # create 2 options to set and unset each test suite. By default, nothing is ran
+            group.addoption("--"+d,   action="store_true",  dest=d, help='Run the '+d+' tests')
+            group.addoption("--no"+d, action="store_false", dest=d, help='Do not run the '+d+' tests')
+            mainTestDirs.append(d)
     # add a set of other options
-    parser.addoption("-A", "--all",      action="callback",   callback=handleAllOption,       help='Forces all tests to run')
-    parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Prevents the cleanup of temporary files created by the test suite to take place (both in namespace and local disk)')
+    parser.addoption("-A", "--all", action="callback", callback=handleAllOption, help='Forces all tests to run')
+    parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Do not cleanup temporary files created by the test suite')
     parser.addoption("--failnores",action="store_true", dest='failNoRes',help='Forces to fail when a resource is not available, instead of skipping the tests')
     parser.addoption("--skipnores",action="store_false", dest='failNoRes',help='Forces to skip when a resource is not available, instead of failing the tests')
-    #parser.addoption("--fast",action="callback",   callback=handleFastOption, help='Selects test suitable to check an instance after an upgrade, aka fast testsuite')
-    parser.addoption("-C", "--configfile", action="store", default='CastorTestSuite.options', dest='configFile', help='Name of the config file to be used. Defaults to CastorTestSuite.options')
+    parser.addoption("-T", "--testdir", action="store", dest='testdir', help='Test directory to use')
 
 
 ########################
 # option file handling #
 ########################
 
-class CastorConfigParser(ConfigParser.ConfigParser):
+class CustomConfigParser(ConfigParser.ConfigParser):
     # predefine defaults for some options
     def __init__(self):
         ConfigParser.ConfigParser.__init__(self)
@@ -219,7 +205,7 @@ def _handleDrop(match):
     
 def compareOutput(setup, output, gold, testName):
     # drop unwanted stuff from the output
-    for t in suppressRegExps:
+    for t in setup.suppressRegExps:
         output = re.sub(t, _handleDrop, output)
     # then compare
     outIndex = 0
@@ -262,7 +248,7 @@ def compareOutput(setup, output, gold, testName):
             # try to see whether the tag is one of the random order type
             matchObject = reduce(lambda x,y : x == None and y or x,
                                  map(lambda x : re.match('('+x+')\d*', tag),
-                                     randomOrderTags))
+                                     setup.randomOrderTags))
             if matchObject:
                 # special case for tags that may be reordered...
                 baseTag = matchObject.group(1)
@@ -309,55 +295,43 @@ class Setup:
         self.config = request.config
         # handling of tags. Note values can also be functions generating values depending on the test name
         self.tags = {}
+        # list of tags that may appear several times in a single output
+        # with the different values in random order e.g. file name list
+        self.randomOrderTags = []
+        # regexps of parts of the output that should be dropped
+        # Note that regexps must have exactly one group matching the part to be dropped
+        self.suppressRegExps = []
         # whether a resource is ok or not. Contains True if ok, false if not, and no entry if not checked
         self.checkedResources = {}
         # instantiate an option parser with some defaults
-        self.options = CastorConfigParser()
-        # read the option file
-        assert os.path.isfile(self.config.option.configFile), \
-               'Could not find config file : ' + self.config.option.configFile
-        self.options.read(self.config.option.configFile)
+        self.options = CustomConfigParser()
+        # find out the test directory to use
+        # Note that the testdir option has been set in the pytest_generate_tests function
+        self.testdir = getattr(self.config.option,'testdir')
+        # read the option file.
+        optionFileCandidates = filter(lambda x:x.endswith('.options'), os.listdir(self.testdir))
+        assert len(optionFileCandidates) > 0, \
+            "No .options file found in " + self.testdir
+        assert len(optionFileCandidates) < 2, \
+            "Do not know which .options file to use in " + self.testdir + " : " + ' '.join(optionFileCandidates)
+        self.options.read(os.sep.join([self.testdir, optionFileCandidates[0]]))
         # setup the environment
-        for v in ['STAGE_SVCCLASS', 'STAGE_HOST', 'STAGE_PORT', 'STAGER_TRACE']:
-            if os.environ.has_key(v): del os.environ[v]
         if self.options.has_section('Environment'):
             print os.linesep+"Setting environment :"
             for o in self.options.items('Environment'):
                 print "  " + o[0] + ' = ' + o[1]
                 os.environ[o[0].upper()] = o[1]
-
-    def noCleanup(self) :
-        if self.config.option.noCleanup:
-            return True
-        else :
-            return self.options.getboolean('Generic','NoCleanup')
     
     def cleanupAndReset(self):
-        # get rid of all files used in castor by droping the namespace temporary directories
-        for entry in ['noTapePath', 'tapePath']:
-            if self.tags.has_key(entry) and not self.noCleanup():
-                path = self.tags[entry]
-                output = Popen('nsrm -r ' + path)
-                assert len(output) == 0, \
-                       'Failed to cleanup working directory ' + path + \
-                       '. You may have to do manual cleanup' + os.linesep + \
-                       "Error :" + os.linesep + output
-                del self.tags[entry]
-        # also get rid of local files created
-        if self.tags.has_key('tmpLocalDir') and not self.noCleanup():
-            # recursive deletion of all files and directories
-            for root, dirs, files in os.walk(self.tags['tmpLocalDir'], topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
-            del self.tags['tmpLocalDir']
-        # and get rid of remote files created
-        if self.tags.has_key('remoteDir') and not self.noCleanup():
-            path = self.tags['remoteDir']
-            output = Popen('yes | rfrm -r ' + path)
-            # note that there is no way to know whether it worked...
-            del self.tags['remoteDir']
+        if self.config.option.noCleanup or self.options.getboolean('Generic','NoCleanup'): return
+        for f in filter(lambda x:x.startswith("cleanup_"),dir(self)):
+            getattr(self,f)()
+
+    def declareRandomOrderTag(self, tag):
+        self.randomOrderTags.append(tag)
+
+    def suppressRegExp(self, re):
+        self.suppressRegExps.append(re)
 
     def getTag(self, testName, tag):
         if self.tags.has_key(tag):
@@ -399,11 +373,11 @@ class Setup:
             print os.linesep+'Checking resource ' + name
             try:
                 # find the resource
-                path = os.sep.join(['castortests','resources',name])
+                path = os.sep.join([self.testdir,'resources',name])
                 if not os.path.isdir(path):
                     raise NameError('Could not find resource ' + name)
                 # run all tests
-                for ts, tn, fn in listTests(path, listResources=True):
+                for ts, tn, fn in listTests(path, self.testdir, listResources=True):
                     self.runTest(ts,tn,fn)
                 # resource available
                 self.checkedResources[name] = True
@@ -420,6 +394,11 @@ class Setup:
             py.test.skip("skipped as resource " + name + " is missing")
 
     def checkResources(self, path, skip=True, noRec=False):
+        # recursively check parent, if not top level, nor resources
+        if not noRec and path != os.sep.join([self.testdir,'resources']):
+            parent = os.path.dirname(path)
+            if len(parent) != 0:
+                self.checkResources(parent,skip)
         # distinguish files and directories
         if os.path.isfile(path):
             try:
@@ -435,11 +414,6 @@ class Setup:
                 execfile(path+os.sep+'tags.py')
             # check all resources in default.resources file
             self.checkResources(path+os.sep+'default.resources',skip, noRec=True)
-        # recursively check parent, if not top level, nor resources
-        if not noRec and path != os.sep.join(['castortests','resources']):
-            parent = os.path.dirname(path)
-            if len(parent) != 0:
-                self.checkResources(parent,skip)
 
     def isTestEnabled(self, set, name):
         # check options
@@ -483,134 +457,6 @@ class Setup:
                     except Timeout:
                         assert False, "Time out"
                     i = i + 1
-
-    ###########################
-    ### tag related methods ###
-    ###########################
-
-    def getTag_noTapeFileName(self, nb=0):
-        return (lambda test : self.getTag(test, 'noTapePath')+os.sep+test+str(nb))
-             
-    def getTag_tapeFileName(self, nb=0):
-        return (lambda test : self.getTag(test, 'tapePath')+os.sep+test+str(nb))
-
-    def _checkDirPath(self, name, isTape):
-        try:
-            print "Checking whether " + name + " has proper fileclass"
-            # get the fileclass of the path
-            fileClass = Popen('nsls --class -d ' + name).split()[0]
-            # check the number of tapeCopies in this file class
-            nslistOutput = Popen('nslistclass --id=' + fileClass).split()
-            nbCopies = int(nslistOutput[nslistOutput.index('NBCOPIES')+1])
-            # Check whether it is consistent with what is expected
-            if isTape:
-                assert nbCopies > 0, \
-                       name + ' should have a tape fileclass, but has fileclass ' + \
-                       fileClass + ' that has nbCopies = 0'
-            else:
-                assert nbCopies == 0, \
-                       name + ' should have a no tape fileclass, but has fileclass ' + \
-                       fileClass + ' that has nbCopies = ' + str(nbCopies)
-        except ValueError:
-            assert False, "Invalid nbCopies got for fileclass " + fileClass + \
-                   " when checking path " + name
-             
-    def getTag_noTapePath(self):
-        # get the noTape path and check it
-        notapepath = self.options.get('Generic','CastorNoTapeDir')
-        self._checkDirPath(notapepath, False)
-        # create a unique directory
-        p = notapepath + os.sep + getUUID()
-        output = Popen('nsmkdir ' + p)
-        assert len(output) == 0 or output.find('File exists') > -1, \
-               'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
-        print os.linesep+"Working in directory " + p + " for non tape files"
-        return p
-
-    def getTag_tapePath(self):
-        # get the tape path and check it
-        tapepath = self.options.get('Generic','CastorTapeDir')
-        self._checkDirPath(tapepath, True)
-        # create a unique directory
-        p = tapepath + os.sep + getUUID()
-        output = Popen('nsmkdir ' + p)
-        assert len(output) == 0 or output.find('File exists'), \
-               'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
-        print os.linesep+"Working in directory " + p + " for tape files"
-        return p
-
-    def _getAndCheckSvcClassTag(self, test, tagName, nb, msg):
-        l = self.getTag(test, tagName)
-        assert nb < len(l), 'Not enough ' + msg + ' service classes declared in option files. Need ' + str(nb+1) + ', got ' + repr(l)
-        return l[nb]
-
-    def getTag_tapeServiceClass(self, nb=0):
-        return lambda test : self._getAndCheckSvcClassTag(test, 'tapeServiceClassList', nb, 'tape')
-   
-    def getTag_diskOnlyServiceClass(self, nb=0):
-        return lambda test : self._getAndCheckSvcClassTag(test, 'diskOnlyServiceClassList', nb, 'disk only')
-
-    def _checkServiceClass(self, name, expectedStatus):
-        # write a small file
-        os.environ['STAGE_SVCCLASS'] = name
-        cmd = 'rfcp ' + self.getTag('IsTapeSvcClass-'+name, 'localFileName') + ' ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
-        print 'Executing ' + cmd
-        output = Popen(cmd)
-        del os.environ['STAGE_SVCCLASS']
-        # and check it's status
-        cmd = 'stager_qry -S ' + name + ' -M ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
-        print 'Executing ' + cmd
-        output = Popen(cmd)
-        assert(output.strip().endswith(expectedStatus))
-
-    def getTag_tapeServiceClassList(self):
-        # get list from config file
-        l = map(lambda s: s.strip(), self.options.get('Generic','TapeServiceClasses').split(','))
-        # check that they are tape enabled
-        for sc in l:
-            print os.linesep+'Testing Service Class ' + sc
-            try:
-                self._checkServiceClass(sc, 'CANBEMIGR')
-                print os.linesep+'Service Class ' + sc + ' is ok'
-            except AssertionError:
-                raise AssertionError('Service class "' + sc + '" is supposed to be tape enabled but does not seem to be')
-        return l
-
-    def getTag_diskOnlyServiceClassList(self):
-        # get list from config file
-        l = map(lambda s: s.strip(), self.options.get('Generic','DiskOnlyServiceClasses').split(','))
-        # check that they are tape enabled
-        for sc in l:
-            try:
-                self._checkServiceClass(sc, 'STAGED')
-                print os.linesep+'Service Class ' + sc + ' is ok'
-            except AssertionError:
-                raise AssertionError('Service class "' + sc + '" is supposed to be disk only but does not seem to be')
-        return l
-
-    def getTag_tmpLocalDir(self):
-        d = tempfile.mkdtemp(prefix='CastorTestSuite')
-        print os.linesep+'Temporary files will be stored in directory ' + d
-        return d
-
-    def getTag_remoteDir(self):
-        # create a unique directory name
-        p = self.options.get('Generic','remoteSpace') + os.sep + getUUID()
-        # create the directory
-        output = Popen('rfmkdir ' + p)
-        assert len(output) == 0, \
-               'Failed to create remote directory ' + p + os.linesep + "Error :" + os.linesep + output
-        print os.linesep+"Working in directory " + p + " for remote files"
-        return p
-
-    def getTag_tmpLocalFileName(self, nb=0):
-        return (lambda test : self.getTag(test, 'tmpLocalDir') + os.sep + test + '.' + str(nb))
-
-    def getTag_remoteFileName(self, nb=0):
-        return (lambda test : self.getTag(test, 'remoteDir') + os.sep + test + '.' + str(nb))
-
-    def getTag_castorTag(self, nb=0):
-        return (lambda test : 'castorTag'+getUUID()+test+str(nb))
 
 ###############################################################
 # funcarg function used by all tests for their setup argument #

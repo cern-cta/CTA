@@ -1,3 +1,6 @@
+# drop rfcp speed info as it varies too much
+self.suppressRegExp('seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))')
+
 def rfcp(self):
     return ['rfcp', 'rfcp -v2']
 Setup.getTag_rfcp = rfcp

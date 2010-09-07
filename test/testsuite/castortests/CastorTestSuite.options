@@ -47,6 +47,7 @@ remoteSpace = lxc2disk01.cern.ch:/tmp/rfiod
 STAGE_HOST = lxcastordev01
 STAGE_PORT = 9002
 STAGER_TRACE = 3
+STAGE_SVCCLASS =
 
 # ROOT related
 ROOTSYS = /afs/cern.ch/sw/lcg/app/releases/ROOT/5.24.00/x86_64-slc5-gcc34-opt/root
