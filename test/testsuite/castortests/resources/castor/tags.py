@@ -97,11 +97,12 @@ def _checkServiceClass(self, name, expectedStatus):
     print 'Executing ' + cmd
     output = Popen(cmd)
     del os.environ['STAGE_SVCCLASS']
+    assert output.strip().endswith('bytes in remote file'), 'Could not check service class, transfer failed :\n' + output
     # and check it's status
     cmd = 'stager_qry -S ' + name + ' -M ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
     print 'Executing ' + cmd
     output = Popen(cmd)
-    assert(output.strip().endswith(expectedStatus))
+    assert output.strip().endswith(expectedStatus), 'Not properly configured'
 Setup._checkServiceClass = _checkServiceClass
 
 def tapeServiceClassList(self):
@@ -109,12 +110,9 @@ def tapeServiceClassList(self):
     l = map(lambda s: s.strip(), self.options.get('Generic','TapeServiceClasses').split(','))
     # check that they are tape enabled
     for sc in l:
-        print os.linesep+'Testing Service Class ' + sc
-        try:
-            self._checkServiceClass(sc, 'CANBEMIGR')
-            print os.linesep+'Service Class ' + sc + ' is ok'
-        except AssertionError:
-            raise AssertionError('Service class "' + sc + '" is supposed to be tape enabled but does not seem to be')
+        print os.linesep+'Checking Service Class ' + sc + ', should be tape enabled'
+        self._checkServiceClass(sc, 'CANBEMIGR')
+        print os.linesep+'Service Class ' + sc + ' is ok'
         return l
 Setup.getTag_tapeServiceClassList = tapeServiceClassList
 
@@ -123,12 +121,9 @@ def diskOnlyServiceClassList(self):
     l = map(lambda s: s.strip(), self.options.get('Generic','DiskOnlyServiceClasses').split(','))
     # check that they are tape enabled
     for sc in l:
-        print os.linesep+'Testing Service Class ' + sc
-        try:
-            self._checkServiceClass(sc, 'STAGED')
-            print os.linesep+'Service Class ' + sc + ' is ok'
-        except AssertionError:
-            raise AssertionError('Service class "' + sc + '" is supposed to be disk only but does not seem to be')
+        print os.linesep+'Checking Service Class ' + sc + ', should be tape disk only'
+        self._checkServiceClass(sc, 'STAGED')
+        print os.linesep+'Service Class ' + sc + ' is ok'
         return l
 Setup.getTag_diskOnlyServiceClassList = diskOnlyServiceClassList
 
