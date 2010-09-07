@@ -1,4 +1,3 @@
-stager_put -M <noTapeFileName> >& <tmpLocalFileName>
-cat <tmpLocalFileName>
-stager_abort -r `grep 'to send the request' <tmpLocalFileName> | awk '{print $2;}'` -M 123@nonexistingns
+stager_put -M <noTapeFileName>
+stager_abort -r <uuid> -M 123@nonexistingns
 stager_qry -M <noTapeFileName>

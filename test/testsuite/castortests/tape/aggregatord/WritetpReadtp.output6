@@ -1,4 +1,2 @@
-Number of files to be recalled = <nbFiles>
-Number of recall requests      = <nbFiles>
-Number of successfull recalls  = <nbFiles>
-Number of incomplete transfers = 0
+10485760 bytes in <duration2> through eth0 (in) and local (out)
+10485760 bytes in remote file

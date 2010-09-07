@@ -1,21 +1,21 @@
-<month> <d> <h>:<m>:<s> tpwrite[<pid>]: selecting tape server ...
-<month1> <d1> <h1>:<m1>:<s1> tpwrite[<pid>]: * <tapesrvW> is a possible tape server.
-<month2> <d2> <h2>:<m2>:<s2> tpwrite[<pid>]: ! selected tape server is <tapesrvW>.
+<date10> tpread[<pid1>]: selecting tape server ...
+<date11> tpread[<pid1>]: * <tapesrvR> is a possible tape server.
+<date12> tpread[<pid1>]: ! selected tape server is <tapesrvR>.
 
 
- CPDSKTP - TAPE MOUNTED ON UNIT <unit>
- CPDSKTP - RECORD FORMAT: F
- CPDSKTP - BLOCK SIZE: <blocksize>
- CPDSKTP - RECORD LENGTH: <blocksize>
- CPDSKTP - CHECK SUM: <checksumDec>, <checksumHex>
- CPDSKTP - END OF TRANSFER
- CPDSKTP - KBYTES SENT BY HOST      : <kbytesWSent>
- CPDSKTP - KBYTES WRITTEN TO TAPE   : <kbytesWReceived>
- CPDSKTP - COMPRESSION RATE ON TAPE : <compressionW>
+ CPTPDSK - TAPE MOUNTED ON UNIT <unit1>
+ CPTPDSK - RECORD FORMAT: F
+ CPTPDSK - BLOCK SIZE: <blocksize>
+ CPTPDSK - RECORD LENGTH: <blocksize>
+ CPTPDSK - CHECK SUM: <checksumDec>, <checksumHex>
+ CPTPDSK - END OF FILE
+ CPTPDSK - KBYTES RECEIVED BY HOST  : <kbytesRSent>
+ CPTPDSK - KBYTES READ BY TAPE DRIVE: <kbytesRReceived>
+ CPTPDSK - COMPRESSION RATE ON TAPE : <compressionR>
 
 
- CPDSKTP - <bytes> BYTES COPIED
- CPDSKTP - <nb> RECORDS COPIED
- CPDSKTP - DATA TRANSFER BANDWIDTH (<bandwidth> Kbytes through <eth>): <bandwidth2> KB/sec
+ CPTPDSK - 10485760 BYTES COPIED
+ CPTPDSK - <nb> RECORDS COPIED
+ CPTPDSK - DATA TRANSFER BANDWIDTH (10240 Kbytes through <eth1>): <bandwidth1> KB/sec
 
-<month3> <d3> <h3>:<m3>:<s3> tpwrite[<pid>]: command successful
+<date13> tpread[<pid1>]: command successful

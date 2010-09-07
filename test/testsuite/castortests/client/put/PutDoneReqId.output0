@@ -10,7 +10,7 @@
     stager: <sending time> Sending request
     stager: <uuid> SND <send duration> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid> CBK <answer duration1> s before callback from <server ip> was received
+    stager: <uuid> CBK <answer duration> s before callback from <server ip> was received
 Received 1 responses
 <noTapeFileName> SUBREQUEST_READY
 Stager request ID: <uuid>

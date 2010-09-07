@@ -1,4 +1,3 @@
 rpm -qa | grep castor-vmgr-client
-vmgrlistpool | grep <tapepool> | wc -l
-vmgrlisttape -P <tapepool> -x | wc -l
-vmgrlisttape -P <tapepool> -x | awk  '{ if(NF == 19){ print "VID="$1;}else print "NOT FREE"; }'
+vmgrlistpool | grep <tapepool>
+vmgrlisttape -P <tapepool> -x | grep -v "FULL|DISABLED|ARCHIVE" | awk '{print $1" "$8}'
