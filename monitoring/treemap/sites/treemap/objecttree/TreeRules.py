@@ -4,7 +4,7 @@ Created on May 18, 2010
 @author: kblaszcz
 '''
 from sites.errors import ConfigError
-from sites.tools.ColumnFinder import ColumnFinder
+from sites.tools.ModelsInspection import *
 from sites.tools.ObjectCreator import createObject
 import exceptions
 import inspect
@@ -26,8 +26,9 @@ class ChildRules(object):
         self.fparams = {}
         self.columnnames = {}
     
-    def addRule(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname, fparam = None):
-        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname):
+    def createOrUpdate(self, modulename, classname, methodname, parentmethodname, columnname, fparam = None):
+        countmethodname = getCountMethodFor(classname, methodname)
+        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname) and countmethodname is not None:
             index = modulename.__str__() + '.' + classname
             self.methods[index] = methodname
             self.countmethods[index] = countmethodname
@@ -36,6 +37,14 @@ class ChildRules(object):
             self.parentmethods[index] = parentmethodname
         else: 
             raise Warning('Rule for ' + modulename + '.' + classname + ' could not be added. Methodname is ' + methodname)
+        
+    def getUsedClassNames(self):
+        fullmodels = self.methods.keys()
+        ret = {}
+        for index in fullmodels:
+            ret[index[(index.rfind(".")+1):]] = True
+            
+        return ret.keys()
     
     def infoDict(self):
         ret = []
@@ -118,19 +127,19 @@ class LevelRules(object):
     def __init__(self):
         self.rules = []
         
-    def addRules(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname, level, fparam = None):
+    def addRules(self, modulename, classname, methodname, parentmethodname, columnname, level, fparam = None):
         try:
             self.rules[level]
         except IndexError:   
             if level <= len(self.rules):               
                 r = ChildRules()
-                r.addRule(modulename, classname, methodname, countmethodname, parentmethodname, columnname, fparam)
+                r.createOrUpdate(modulename, classname, methodname, parentmethodname, columnname, fparam)
                 self.rules.append(r) 
                 return
             else:
                 raise ConfigError('Before you create Rule for level ' + level + ' you need to have all rules up to level ' + (len(self.rules)-1) + ' defined.')
             
-        self.rules[level].addRule(modulename, classname, methodname, countmethodname, parentmethodname, columnname, fparam)
+        self.rules[level].createOrUpdate(modulename, classname, methodname, parentmethodname, columnname, fparam)
             
     def appendRuleObject(self, obj):
         self.rules.append(obj)
@@ -197,7 +206,33 @@ class LevelRules(object):
         text = (''.join([bla for bla in idparts]))
         hashvalue = str(hash(text[:len(text)/2])) + str(hash(text[len(text)/2:])) 
         return hashvalue
-        
+     
+    def describeRuleToUser(self, level):
+        models = self.rules[level].getUsedClassNames()
+        description = []
+
+        for model in models:
+            if model == 'Annex': continue
+            description.append("All items on level ")
+            description.append(level.__str__())
+            description.append(" being the model ")
+            description.append(model)
+            
+            description.append(" are evaluated by ")
+            description.append(self.rules[level].getColumnNameFor(getModelsModuleName(model), model))
+            description.append("<br>")
+            
+            description.append("Children of ")
+            description.append(model) 
+            description.append(" in level ")
+            description.append(level.__str__())
+            description.append(" will be requested using the method ")
+            description.append(self.rules[level].getMethodNameFor(getModelsModuleName(model), model))
+            description.append("<br>")
+            description.append("<br>")
+
+        return (''.join([bla for bla in description ]))
+         
     
 #    #returns data structured like this: [level][ruleindex]{rulesdict}    
 #    def infoDict(self):

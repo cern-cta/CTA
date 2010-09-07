@@ -27,8 +27,13 @@ div.is_safe = False
 #div.is_safe = False
 
 def equals(value, arg):
-    return value == arg
+    bool = (value == arg)
+    return bool
 equals.is_safe = True
+
+def contains(array, value):
+    return value in array
+contains.is_safe = True
 
 def escapefilter(text, autoescape = None):
     if autoescape:
@@ -46,3 +51,4 @@ register.filter('sub', sub)
 register.filter('div', div)
 register.filter('escapefilter', escapefilter)
 register.filter('equals', equals)
+register.filter('contains', contains)

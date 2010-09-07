@@ -8,20 +8,16 @@ from django.db.models.fields import *
 
 def evalDecimalField(attr, fparam = None):
     "Defines how to evaluate a decimal field"
-#    val = 0
-#    count = len(attr._int)
-#    for number in attr._int:
-#        count = count - 1
-#        val = val + number * 10**count
-#
-#    def isStandard():
-#        return True
+    def isStandard():
+        return True
+    if(attr is None): return 0.0
     return attr.__float__()
 
 def evalIntegerField(attr, fparam = None):
     "Defines how to evaluate a integer field"
     def isStandard():
         return True
+    if(attr is None): return 0
     return attr
 
 def evalStringBySimilarity(attr, searchtext = None):
@@ -58,4 +54,5 @@ def evalDateField(attr, fparam = None):
     "Defines how to evaluate a date or datetime field"
     def isStandard():
         return True
+    if(attr is None): return 0
     return datetime.datetime.now() - attr

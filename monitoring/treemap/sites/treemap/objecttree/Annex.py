@@ -1,6 +1,7 @@
 from django.db import connection, transaction, models
 import inspect
 from sites.tools.GroupIdService import newGroupId
+from sites.tools.ModelsInspection import *
 
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
@@ -150,4 +151,5 @@ Annex.countItems.__dict__['countsfor'] = 'getItems'
 
 #mark parent Methods
 Annex.getAnnexParent.__dict__['methodtype'] = 'parent'
+Annex.getAnnexParent.__dict__['returntype'] = getAvailableModels()
         

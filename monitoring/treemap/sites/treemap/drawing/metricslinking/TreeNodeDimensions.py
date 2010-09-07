@@ -5,7 +5,7 @@ Created on Jul 14, 2010
 '''
 import exceptions
 from sites.treemap.viewtree.ViewNode  import ViewNode
-from sites.tools.ColumnFinder import ColumnFinder
+from sites.tools.ModelsInspection import ColumnFinder
 import sys
 import inspect
 import string

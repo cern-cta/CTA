@@ -12,7 +12,7 @@ from django.db.models.fields import *
 import datetime
 #import math
 from sites.errors import ConfigError
-from sites.tools.ColumnFinder import ColumnFinder
+from sites.tools.ModelsInspection import ColumnFinder
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.columntransformation.TransFunctions import *
 

@@ -51,7 +51,7 @@ function initMenu()
 	metrics[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
 			{% endfor %}
 		{% endif %}
-		{% if dropdownname|equals:"childmethods" %}
+		{% if dropdownname|equals:"childrenmethods" %}
 			{% for ddentry in dropdown %}
 	childrenmethods[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
 			{% endfor %}
@@ -78,7 +78,11 @@ function activateJsObjects()
 
 function notImplementedWarning()
 {
-	alert("Not implemented yet");
+	childrenmenu = document.getElementsByName("childmethod")[0];
+	childrenmenu.disabled = false;
+	levelsmenu = document.getElementsByName("level")[0];
+	levelsmenu.disabled = false;
+	alert("This is advanced experimental Configuration! Reset to \"Directory\" and \"totalsize\" if you messed up your configuration");
 }
 
 function setModel()
@@ -88,12 +92,23 @@ function setModel()
 	newmenu = menu[selected];
 
 	//levelsmenu
+	{% for key, value in defaultselections.items %}{% if key|equals:"level" %}valueofdefaultitem = {{value}};{% endif %}{% endfor %}
 	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.levels.length; i++)
+	{
 		levelsmenu.options.add(new Option(newmenu.levels[i].text, newmenu.levels[i].value));
+		if (newmenu.levels[i].value == valueofdefaultitem) 
+		{
+			levelsmenu.selectedIndex = i;
+		}
+	}
+	levelsmenu.disabled = true;
+	
+
 		
 	//modelsmenu
+	{% for key, value in defaultselections.items %}{% if key|equals:"model" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	modelsmenu = document.getElementsByName("model")[0];
 	modelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.models.length; i++)
@@ -106,17 +121,31 @@ function setModel()
 	}
 
 	//metricsmenu
+	{% for key, value in defaultselections.items %}{% if key|equals:"metric" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	metricsmenu = document.getElementsByName("metric")[0];
 	metricsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.metrics.length; i++)
+	{
 		metricsmenu.options.add(new Option(newmenu.metrics[i].text, newmenu.metrics[i].value));
+		if (newmenu.metrics[i].value == valueofdefaultitem) 
+		{
+			metricsmenu.selectedIndex = i;
+		}
+	}
 		
 	//childrenmenu
+	{% for key, value in defaultselections.items %}{% if key|equals:"childrenmethod" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	childrenmenu = document.getElementsByName("childmethod")[0];
 	childrenmenu.options.length = 0;
 	for (var i = 0; i < newmenu.childrenmethods.length; i++)
-		childrenmenu.options.add(new Option(newmenu.childrenmethods[i].text, newmenu.childrenmethods[i].value)); 	
-		
+	{
+		childrenmenu.options.add(new Option(newmenu.childrenmethods[i].text, newmenu.childrenmethods[i].value)); 
+		if (newmenu.childrenmethods[i].value == valueofdefaultitem) 
+		{
+			childrenmenu.selectedIndex = i;
+		}
+	}	
+	childrenmenu.disabled = true;
 	//alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
 	//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')
 	//optmenu.style.display = "inline"
@@ -137,6 +166,8 @@ function setModel()
     
     
     <tr>
+    
+    <!-- The map -->
     <td align="center" valign="middle" width={{imagewidth}} style="height: auto">     	
         	<ul id="map">
  			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
@@ -219,43 +250,36 @@ function setModel()
 		   
 	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
 	</td>	
+	
+		<!-- The options -->
 		<td name = "optionsmenu" align="left" valign="top" height={{imageheight}} style="display:none;">	
 		
+		
 		<!--  make the menu visible if JavaScript is activated -->
+		<!-- The dropdown menus are hold in a table to have them ordered right -->
 			<table>
+			<tr>
 				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
 				
 					<tr>
 					<td class="descriptiontext">Level:</td> 
 					
 					<td><select class="dmenuwidth" name="level" id="id_level">
-						{% for value, name in leveldropdown %}
-							<option value="{{value}}">{{name}}</option>
-						{% endfor %}
 					</select></td></tr>
 					
 					<tr>
 					<td class="descriptiontext">Model:</td>
 					<td><select class="dmenuwidth" name="model" id="id_model" onchange="setModel()">
-						{% for value, name in modeldropdown %}
-							<option value="{{value}}">{{name}}</option>
-						{% endfor %}
 					</select></td></tr>
 					
 					<tr>
 					<td class="descriptiontext">Metric:</td>
 					<td><select class="dmenuwidth" name="metric" id="id_metric">
-						{% for value, name in metricdropdown %}
-							<option value="{{value}}">{{name}}</option>
-						{% endfor %}
 					</select></td></tr>
 					
 					<tr>
 					<td class="descriptiontext">Getting children:</td>
 					<td><select class="dmenuwidth" name="childmethod" id="id_childmethod">
-						{% for value, name in childmethoddropdown %}
-							<option value="{{value}}">{{name}}</option>
-						{% endfor %}
 					</select></td></tr>
 					<tr><td>
 						<br>
@@ -263,6 +287,21 @@ function setModel()
 					</td></tr>
 				</form>
 
+			</tr>
+			
+			<!-- Explanation of current rules -->
+			<tr>
+				<table>
+					<tr class="descriptiontext">
+						<br><br>This is only a temporary solution!<br> Example how to understand:<br>
+						
+						{% for explanation in ruleexplanations %}
+							<td class="descriptiontext">{{explanation|escapefilter}}</td>
+						{% endfor %}
+					</tr>
+					<tr><td><br><br><br><br><br><br><br><br><br><br><br><br></>Generation time: {{generationtime}}</td></tr>
+				</table>
+			</tr>
 			</table>
 		</td>	
 		<noscript>

@@ -229,6 +229,7 @@ Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndFolders'
 
 #mark parent Methods
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
+Dirs.getDirParent.__dict__['returntype'] = ['Dir']
         
 class CnsFileMetadata(models.Model):
     fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
@@ -293,6 +294,7 @@ CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
+CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
 
 class Requests(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
