@@ -68,17 +68,25 @@ def handleAllOption(option, opt, value, parser):
         setattr(parser.values,d,True)
     
 def pytest_addoption(parser):
-    # try to guess the test directory
+    # list the test directories
     candidates = filter(lambda x:x.endswith('tests'), os.listdir('.'))
+    # build a list of options to be declared. options gives the group of each option
+    options = {}
     for testdir in candidates:
-        group = parser.addgroup(testdir, "Specific options for " + testdir)
         for d in filter(lambda f:os.path.isdir(os.path.join(testdir,f)), os.listdir(testdir)):
             # 'resources' is not really a test suite directory
             if d == 'resources' or d[0] == '.': continue
-            # create 2 options to set and unset each test suite. By default, nothing is ran
-            group.addoption("--"+d,   action="store_true",  dest=d, help='Run the '+d+' tests')
-            group.addoption("--no"+d, action="store_false", dest=d, help='Do not run the '+d+' tests')
-            mainTestDirs.append(d)
+            # add option to the list, or modify it
+            if d in options:
+                options[d] = options[d] + ', ' + testdir
+            else:
+                options[d] = testdir
+    # add test related options
+    for d in options:
+        group = parser.getgroup(options[d], "Specific options for " + options[d])
+        group.addoption("--"+d,   action="store_true",  dest=d, help='Run the '+d+' tests')
+        group.addoption("--no"+d, action="store_false", dest=d, help='Do not run the '+d+' tests')
+        mainTestDirs.append(d)
     # add a set of other options
     parser.addoption("-A", "--all", action="callback", callback=handleAllOption, help='Forces all tests to run')
     parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Do not cleanup temporary files created by the test suite')
