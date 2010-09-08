@@ -66,8 +66,7 @@ class ChildRules(object):
         return self.columnnames[modulename.__str__() + '.' + classname]
 
     def getCountMethodNameFor(self, modulename, classname):
-        return self.countmethods[modulename.__str__() + '.' + classname]
-
+        return self.countmethods[modulename.__str__() + '.' + classname]   
     
     def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname):
         #check modulename and  classname
@@ -121,6 +120,88 @@ class ChildRules(object):
         else:
             return False
         
+    def attributesAreValid(self):
+        
+        for fullmodule, methodname, in self.methods.keys(), self.methods.values():
+            #check modulename and  classname
+            classname = fullmodule[(fullmodule.rfind(".")+1):]
+            modulename = fullmodule[:(fullmodule.rfind("."))]
+            try:
+                instance = createObject(modulename, classname)
+            except ConfigError:
+                return False 
+            
+            #check methodname
+            found = False
+            childrenmethods = []
+            for membername in instance.__class__.__dict__.keys():
+                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
+                    try:
+                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'children':
+                            found = True
+                            childrenmethods.append(membername)
+                    except KeyError:
+                        continue
+            
+            if not found: return False
+            
+        for fullmodule, countmethodname, in self.countmethods.keys(), self.countmethods.values():
+            #check modulename and  classname
+            classname = fullmodule[(fullmodule.rfind(".")+1):]
+            modulename = fullmodule[:(fullmodule.rfind("."))]
+            try:
+                instance = createObject(modulename, classname)
+            except ConfigError:
+                return False 
+            
+            #check count methodname
+            found = False
+            for membername in instance.__class__.__dict__.keys():
+                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == countmethodname:
+                    try:
+                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount' and \
+                        instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods:
+                            found = True
+                            break
+                    except KeyError:
+                        continue
+            
+            if not found: return False
+        
+        for fullmodule, parentmethodname, in self.parentmethods.keys(), self.parentmethods.values():
+            #check modulename and  classname
+            classname = fullmodule[(fullmodule.rfind(".")+1):]
+            modulename = fullmodule[:(fullmodule.rfind("."))]
+            try:
+                instance = createObject(modulename, classname)
+            except ConfigError:
+                return False 
+            
+            #check parent methodname
+            found = False
+            for membername in instance.__class__.__dict__.keys():
+                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == parentmethodname:
+                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'parent':
+                        found = True
+                        break
+            
+            if not found: return False
+        
+        for fullmodule, columnname, in self.columnnames.keys(), self.columnnames.values():
+            #check modulename and  classname
+            classname = fullmodule[(fullmodule.rfind(".")+1):]
+            modulename = fullmodule[:(fullmodule.rfind("."))]
+            try:
+                instance = createObject(modulename, classname)
+            except ConfigError:
+                return False 
+        
+            #check columnname
+            cf = ColumnFinder(modulename, classname)
+            if columnname not in cf.getColumnnames():
+                return False
+            
+        return True
     
 class LevelRules(object):
     
@@ -232,6 +313,12 @@ class LevelRules(object):
             description.append("<br>")
 
         return (''.join([bla for bla in description ]))
+    
+    def rulesAreValid(self):
+        for rule in self.rules:
+            if not rule.attributesAreValid():
+                return False
+        return True
          
     
 #    #returns data structured like this: [level][ruleindex]{rulesdict}    

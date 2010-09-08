@@ -141,6 +141,8 @@ class Annex(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return self.pk.__str__()
+
+Annex.nonmetrics = ['id']
     
 #mark children Methods   
 Annex.getItems.__dict__['methodtype'] = 'children'

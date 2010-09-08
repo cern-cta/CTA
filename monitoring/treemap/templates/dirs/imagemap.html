@@ -79,10 +79,10 @@ function activateJsObjects()
 function notImplementedWarning()
 {
 	childrenmenu = document.getElementsByName("childmethod")[0];
-	childrenmenu.disabled = false;
+	//childrenmenu.disabled = false;
 	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.disabled = false;
-	alert("This is advanced experimental Configuration! Reset to \"Directory\" and \"totalsize\" if you messed up your configuration");
+	alert("This is in a very early stage! If something doesn't work any more ,delete your cookies to restore the session and reload the page");
 }
 
 function setModel()
@@ -145,11 +145,37 @@ function setModel()
 			childrenmenu.selectedIndex = i;
 		}
 	}	
-	childrenmenu.disabled = true;
+	//childrenmenu.disabled = true;
 	//alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
 	//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')
 	//optmenu.style.display = "inline"
 }
+
+function showHelp()
+{
+	var text = "The advanced configuration is not user friendly yet. \nAnyway, here is an example how you are influencing a single level in the data tree:\n\n";
+	{% for explanation in ruleexplanations %}
+		text = text + "{{explanation|escapefilter}}\n";
+	{% endfor %}
+	text = text.replaceAll("<br>", "\n");
+	text = text + "If you choose \"all levels\" the same Rule will be applied to all levels.\n"
+	alert(text);
+}
+
+// Replaces all instances of the given substring.
+String.prototype.replaceAll = function(oldsubstr, substr)
+{
+	var filtered = this;
+	var match = filtered.indexOf(oldsubstr);
+	 
+	while (match != -1)
+	{
+		filtered = filtered.replace(oldsubstr, substr);
+		match = filtered.indexOf(oldsubstr);
+	}
+	return filtered;
+}
+
 </script>
 
 </head>
@@ -262,6 +288,15 @@ function setModel()
 				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
 				
 					<tr>
+					<td class="descriptiontext">Presets:</td> 
+					
+					<td><select class="dmenuwidth" name="preset" id="id_preset">
+					</select></td></tr>
+					
+					<tr><td><br></></td> </td></tr>
+					<tr><td class="advancedtext">Advanced</td> </td></tr>
+				
+					<tr>
 					<td class="descriptiontext">Level:</td> 
 					
 					<td><select class="dmenuwidth" name="level" id="id_level">
@@ -284,23 +319,11 @@ function setModel()
 					<tr><td>
 						<br>
 						<input class="applybutton" type="submit" value="Apply"/>
+						<input class="applybutton" type="button" value="Help" onclick="showHelp()"/>
+
 					</td></tr>
 				</form>
 
-			</tr>
-			
-			<!-- Explanation of current rules -->
-			<tr>
-				<table>
-					<tr class="descriptiontext">
-						<br><br>This is only a temporary solution!<br> Example how to understand:<br>
-						
-						{% for explanation in ruleexplanations %}
-							<td class="descriptiontext">{{explanation|escapefilter}}</td>
-						{% endfor %}
-					</tr>
-					<tr><td><br><br><br><br><br><br><br><br><br><br><br><br></>Generation time: {{generationtime}}</td></tr>
-				</table>
 			</tr>
 			</table>
 		</td>	
@@ -328,6 +351,13 @@ function setModel()
      .descriptiontext {
 		font-size: 14px;
 		color:#CFCFCF;
+     }
+    </style>
+    
+    <style type="text/css">
+     .advancedtext {
+		font-size: 14px;
+		color:#00CF00;
      }
     </style>
     

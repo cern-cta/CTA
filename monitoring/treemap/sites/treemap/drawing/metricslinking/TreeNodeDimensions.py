@@ -321,17 +321,24 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         assert(isinstance(dbobj, Dirs))
         
         ret = []
-        size = long(dbobj.totalsize)
+        size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
+        bytesize = long(dbobj.totalsize)
         
         ret.append("<b>Directory:</b> ")
         ret.append(splitText(dbobj.fullname.__str__(), 50, 39))
-        ret.append("<br><b>size:</b> ")
         
-        ret.append(sizeInBytes(size))
+        ret.append("<br><b> Evaluation of ")
+        ret.append(tnode.getProperty('treenode').getColumnname())
+        ret.append(":</b> ")
+        ret.append("%.2f"%(size))
+        
+        ret.append("<br><br><b>size:</b> ")
+        
+        ret.append(sizeInBytes(bytesize))
             
         ret.append(" (")
-        ret.append(size.__str__())
+        ret.append(long(bytesize).__str__())
         ret.append(" Bytes)")
         
         ret.append("<br><b>parent percentage:</b> ")
@@ -369,23 +376,30 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         assert(isinstance(dbobj, CnsFileMetadata))
         
         ret = []
-        size = float(dbobj.filesize)
+        size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
+        bytesize = long(dbobj.filesize)
         dirname = parent.__str__()
         
         ret.append("<b>File name:</b> ")
         ret.append(splitText(dbobj.name.__str__(), 50, 39))
         ret.append("<br><b>Directory:</b> ")
         ret.append(splitText(dirname, 50, 39))
-        ret.append("<br><b>size:</b> ")
         
-        ret.append(sizeInBytes(size))
+        ret.append("<br><b> Evaluation of ")
+        ret.append(tnode.getProperty('treenode').getColumnname())
+        ret.append(":</b> ")
+        ret.append("%.2f"%(size))
+        
+        ret.append("<br><br><b>size:</b> ")
+        
+        ret.append(sizeInBytes(bytesize))
             
         ret.append(" (")
-        ret.append(size.__str__())
+        ret.append(long(bytesize).__str__())
         ret.append(" Bytes)")
         
-        ret.append("<br><b>relative percentage:</b> ")
+        ret.append("<br><b>parent percentage:</b> ")
         if(psize == 0):
             ret.append("%.2f"%(100))
         else:

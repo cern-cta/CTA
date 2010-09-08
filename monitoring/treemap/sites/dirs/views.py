@@ -64,11 +64,11 @@ def treeView(request, rootmodel, theid):
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
     lr = None
-    if(request.session.test_cookie_worked()):
-        createCookieIfMissing(request, nbdefinedlevels)
+    try:
         lr = request.session['levelrules']
-    else:
+    except KeyError:
         lr = getDefaultRules(nbdefinedlevels)
+        createCookieIfMissing(request, nbdefinedlevels)
         
     cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -159,11 +159,11 @@ def groupView(request, parentpk, depth, model):
     treemapdir = settings.REL_TREEMAP_DICT
     
     cookielr = None
-    if(request.session.test_cookie_worked()):
-        createCookieIfMissing(request, nbdefinedlevels)
+    try:
         cookielr = request.session['levelrules']
-    else:
+    except KeyError:
         cookielr = getDefaultRules(nbdefinedlevels)
+        createCookieIfMissing(request, nbdefinedlevels)
         
     cache_key = calcCacheKey(parentpk = parentpk, parentmodel = "Annex", depth = depth, lr = cookielr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -206,14 +206,15 @@ def groupView(request, parentpk, depth, model):
                 raise Http404 
         
         lr = LevelRules()        
-        for i in range(2,nbdefinedlevels):
+        for i in range(nbdefinedlevels):
             lr.appendRuleObject(cookielr.getRuleObject(i))  
         
         otree = tb.generateObjectTree(anx) 
             
     else: #no Annex display needed
         
-        for i in range(2,nbdefinedlevels):
+        lr = LevelRules()
+        for i in range(nbdefinedlevels):
             lr.appendRuleObject(cookielr.getRuleObject(i))  
             
             otree = tb.generateObjectTree(rootobject = root)     
@@ -295,11 +296,11 @@ def changeMetrics(request, theid):
         childmethodname = posted['childmethod']
         
         cookielr = None
-        if(request.session.test_cookie_worked()):
-            createCookieIfMissing(request, nblevels)
+        try:
             cookielr = request.session['levelrules']
-        else:
+        except KeyError:
             cookielr = getDefaultRules(nblevels)
+            createCookieIfMissing(request, nblevels)
         
         modulename = getModelsModuleName(model)
             
@@ -530,7 +531,10 @@ def generateDropdownValues(nblevels, themodel):
     cf = ColumnFinder(modulename, themodel)
     columns = cf.getColumnnames()
     for column in columns:
-        metricdropdown.append(DropDownEntry(column, column))
+        ismetric = True
+        command = 'if column in ' + themodel +'.nonmetrics: ismetric = False'
+        exec(command)
+        if ismetric: metricdropdown.append(DropDownEntry(column, column))
         
     childmethoddropdown = []
     instance = createObject(modulename, themodel)  
@@ -569,13 +573,13 @@ def getCurrentUserSelections(request):
         return getDefaultSelection()
         
 def getDefaultSelection():
-    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndFolders'}
+    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
         
 def getDefaultRules(nblevels):
     lr = LevelRules()
     print lr.getUniqueLevelRulesId()
     for i in range(nblevels):
-        lr.addRules(getModelsModuleName('Dirs'), 'Dirs', 'getFilesAndFolders', 'getDirParent', 'totalsize', i)
+        lr.addRules(getModelsModuleName('Dirs'), 'Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
         lr.addRules(getModelsModuleName('CnsFileMetadata'), 'CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
         lr.addRules(getModelsModuleName('Annex'), 'Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
     return lr

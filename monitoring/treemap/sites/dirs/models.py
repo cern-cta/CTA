@@ -20,6 +20,7 @@ import datetime
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
+from sites.tools.ModelsInspection import *
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True)
@@ -158,7 +159,7 @@ class Dirs(models.Model):
             self.files_cached = True
         return self.files
     
-    def getFilesAndFolders(self):
+    def getFilesAndDirectories(self):
 
         d = self.getDirs()
         if not d: 
@@ -216,7 +217,7 @@ Dirs.nonmetrics = ['fileid', 'parent', 'depth', 'fullname']
 #mark children methods for Dirs
 Dirs.getDirs.__dict__['methodtype'] = 'children'
 Dirs.getFiles.__dict__['methodtype'] = 'children'
-Dirs.getFilesAndFolders.__dict__['methodtype'] = 'children'
+Dirs.getFilesAndDirectories.__dict__['methodtype'] = 'children'
 
 #mark count Methods
 Dirs.countDirs.__dict__['methodtype'] = 'childrencount'
@@ -226,7 +227,7 @@ Dirs.countFiles.__dict__['methodtype'] = 'childrencount'
 Dirs.countFiles.__dict__['countsfor'] = 'getFiles'
 
 Dirs.countFilesAndDirs.__dict__['methodtype'] = 'childrencount'
-Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndFolders'
+Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndDirectories'
 
 #mark parent Methods
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
@@ -297,10 +298,14 @@ CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
 CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
 
+CnsFileMetadata.nonmetrics = ['fileid', 'parent_fileid', 'depth', 'fullname', 'filemode', 'nlink', 'owner_uid', 'gid' ,'status', 'fileclass', 'guid', 'csumtype', 'csumvalue', 'acl']  
+
+
+
 class Requests(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField()
-    reqid = models.CharField(max_length=36)
+    reqid = models.CharField(max_length=36, primary_key=True)
     nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
     type = models.CharField(max_length=255, blank=True)
     svcclass = models.CharField(max_length=255, blank=True)
@@ -317,6 +322,8 @@ class Requests(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+       
+Requests.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
