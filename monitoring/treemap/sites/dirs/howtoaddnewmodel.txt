@@ -39,7 +39,8 @@ class Requests(models.Model):
     class Meta:
         db_table = u'requests'
         
-In this Example there is no information about what is the primary key
+mark primary key
+change fields which contains floats to models.FloatField(null=True, blank=True), DecimalField will always return 0 on a float
 
 
 

@@ -36,17 +36,17 @@ class Dirs(models.Model):
     nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     nbsubdirs = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     oldestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    avgfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    sigfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    avgfilelastmod = models.FloatField(null=True, blank=True)
+    sigfilelastmod = models.FloatField(null=True, blank=True)
     newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    avgfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    sigfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    avgfileontapelastmod = models.FloatField(null=True, blank=True)
+    sigfileontapelastmod = models.FloatField(null=True, blank=True)
     newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    timetomigrate = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    timetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    timetomigrate = models.FloatField(null=True, blank=True)
+    timetorecall = models.FloatField(null=True, blank=True)
     timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    opttimetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    opttimetorecall = models.FloatField(null=True, blank=True)
     
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)
@@ -210,7 +210,8 @@ class Dirs(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
-        
+
+Dirs.nonmetrics = ['fileid', 'parent', 'depth', 'fullname']      
     
 #mark children methods for Dirs
 Dirs.getDirs.__dict__['methodtype'] = 'children'

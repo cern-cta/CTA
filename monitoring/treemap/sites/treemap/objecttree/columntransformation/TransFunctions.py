@@ -20,6 +20,13 @@ def evalIntegerField(attr, fparam = None):
     if(attr is None): return 0
     return attr
 
+def evalFloatField(attr, fparam = None):
+    "Defines how to evaluate a integer field"
+    def isStandard():
+        return True
+    if(attr is None): return 0.0
+    return attr.__float__()
+
 def evalStringBySimilarity(attr, searchtext = None):
     "Defines how to evaluate a char field"
     "returns a value that defines the similarity of searchtext to attr"

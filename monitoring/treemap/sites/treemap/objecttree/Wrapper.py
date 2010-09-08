@@ -44,9 +44,6 @@ class Wrapper(object):
         else:
             command = command + ")"
         
-#        if(self.classname == 'Annex'):
-#           result = self.__class__.column_transformators[self.fullmodule].transform_evaluation(self.wrapped.evaluation, fparam)
-        
         exec(command)
         return result
     

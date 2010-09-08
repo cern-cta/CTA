@@ -64,6 +64,8 @@ class ColumnTransformator(dict):
                 self.__dict__[name] = evalStringBySimilarity
             if isinstance(column, DateTimeField):
                 self.__dict__[name] = evalDateField
+            if isinstance(column, FloatField):
+                self.__dict__[name] = evalFloatField
 
     def getClassname(self):
         return self.className

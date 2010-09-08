@@ -3,7 +3,7 @@ Created on May 5, 2010
 
 @author: kblaszcz
 '''
-from sites.tools.ColumnFinder import ColumnFinder
+from sites.tools.ModelsInspection import ColumnFinder
 from sites.errors import ConfigError
 
 class LevelColumn(object):
