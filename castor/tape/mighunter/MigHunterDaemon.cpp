@@ -17,6 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
+* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -41,7 +42,6 @@
 #include "castor/tape/mighunter/MigHunterDlfMessageConstants.hpp"
 #include "castor/tape/mighunter/MigHunterThread.hpp"
 #include "castor/tape/mighunter/StreamThread.hpp"
-#include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 #include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -68,8 +68,7 @@ castor::tape::mighunter::MigHunterDaemon::MigHunterDaemon()
   m_streamSleepTime(STREAM_SLEEP_TIME),
   m_migrationSleepTime(MIGRATION_SLEEP_TIME),
   m_migrationDataThreshold(MIGRATION_DATA_THRESHOLD),
-  m_doClone(false),
-  m_runInTestMode(false) {
+  m_doClone(false) {
 }
 
 
@@ -154,33 +153,6 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   PyObject *const streamPolicyDict =
     python::importPolicyPythonModuleWithLock(streamPolicyModuleName.c_str());
 
-  PyObject *const inspectDict = python::importPythonModuleWithLock("inspect");
-
-  // Get a handle on the inspect.getargspec Python-function
-  PyObject *const inspectGetargspecFunc = python::getPythonFunctionWithLock(
-    inspectDict, "getargspec");
-
-  // Throw an exception if the handle on the Python-function could not be
-  // obtained
-  if(inspectGetargspecFunc == NULL) {
-    // Try to determine the Python exception if there was a Python error
-    PyObject *const pyEx = PyErr_Occurred();
-    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
-
-    // Clear the Python error if there was one
-    if(pyEx != NULL) {
-      PyErr_Clear();
-    }
-
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-      "Failed to get handle on Python-function"
-      ": moduleName=inspect"
-      ", functionName=getargspec"
-      ", pythonException=" << pyExStr;
-    throw(ex);
-  }
-
   // Parse the command-line
   parseCommandLine(argc, argv);
 
@@ -194,7 +166,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // Create the mighunter thread pool
   std::auto_ptr<castor::tape::mighunter::MigHunterThread> migHunterThread(
     new MigHunterThread(m_listSvcClass, m_migrationDataThreshold, m_doClone,
-    inspectGetargspecFunc, migrationPolicyDict, *this, m_runInTestMode));
+    migrationPolicyDict, *this));
   std::auto_ptr<castor::server::SignalThreadPool> migHunterPool(
     new server::SignalThreadPool("MigHunterThread", migHunterThread.release(),
     m_migrationSleepTime));
@@ -203,7 +175,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   // Create the stream thread pool
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
-    inspectGetargspecFunc, streamPolicyDict, *this));
+    streamPolicyDict, *this));
   std::auto_ptr<server::SignalThreadPool> streamPool(
     new server::SignalThreadPool("StreamThread", streamThread.release(),
     m_streamSleepTime));
@@ -264,14 +236,14 @@ void castor::tape::mighunter::MigHunterDaemon::parseCommandLine(int argc,
   Coptind = 1;
   Copterr = 1;
   int c = 0;
-  while ( (c = Cgetopt(argc,argv,"fCt:s:m:v:hZ")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"fCt:s:m:v:h")) != -1 ) {
     switch (c) {
     case 'f':
-      optionStr+=" -f";
+      optionStr+=" -f ";
       m_foreground = true;
       break;
     case 'C':
-      optionStr+=" -C";
+      optionStr+=" -C ";
       m_doClone = true;
       break;
     case 't':
@@ -301,10 +273,6 @@ void castor::tape::mighunter::MigHunterDaemon::parseCommandLine(int argc,
       optionStr+=" -h ";
       usage();
       exit(0);
-    case 'Z':
-      optionStr+=" -Z";
-      m_runInTestMode = true;
-      break;
     default:
       usage();
       exit(0);

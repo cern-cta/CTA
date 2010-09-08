@@ -36,7 +36,6 @@ DependsOnLibrary(castor/tape/python,castortapepython)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 
 MIGHUNTERDAEMONBIN_SRCS = \
-  IdToTapePoolForStreamPolicyMap.cpp \
   MigHunterDaemon.cpp \
   MigHunterDlfMessageStrings.cpp \
   MigHunterMain.cpp \

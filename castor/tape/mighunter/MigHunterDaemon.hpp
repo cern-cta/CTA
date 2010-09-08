@@ -86,11 +86,6 @@ private:
   bool m_doClone;
 
   /**
-   * Set to true if the mighunter is to run in test mode.
-   */
-  bool m_runInTestMode;
-
-  /**
    * Logs the start of the daemon.
    */
   void logStart(const int argc, const char *const *const argv) throw();

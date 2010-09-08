@@ -31,10 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/mighunter/IdToTapePoolForStreamPolicyMap.hpp"
 #include "castor/tape/mighunter/MigrationPolicyElement.hpp"
 #include "castor/tape/mighunter/StreamPolicyElement.hpp"
-#include "castor/tape/mighunter/StreamForStreamPolicyList.hpp"
 
 #include <string>
 #include <list>
@@ -70,76 +68,23 @@ namespace castor {
 
       virtual int createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb) throw (castor::exception::Exception)=0;
 
-      /**
-       * Retrieves the candidate streams to be passed to the stream-policy
-       * Python-function of the specified service-class.
-       *
-       * @param svcClassName     Input: The name of the service-class for which
-       *                         the candidate streams are to be retrieved.
-       * @param svcClassId       Output: The database ID of the specified
-       *                         service-class.
-       * @param streamPolicyName Output: The name of the stream-policy
-       *                         Python-function for the specified
-       *                         service-class.
-       * @param nbDrives         Output: The maximum number of drives the
-       *                         stream-policy can have running at any single
-       *                         moment in time.  This value is for debugging
-       *                         purposes only as the stream-policy is driven
-       *                         by existing streams and cannot create new ones.
-       * @param streamsForPolicy Output: The list of candidate streams to
-       *                         be passed to the stream-policy Python-function
-       *                         of the specified service-class.
-       */
-      virtual void inputForStreamPolicy(
-        const std::string         &svcClassName,
-        u_signed64                &svcClassId,
-        std::string               &streamPolicyName,
-        u_signed64                &nbDrives,
-        StreamForStreamPolicyList &streamsForPolicy)
-        throw (castor::exception::Exception)=0;
+         /**
+         * inputForStreamPolicy,
+         */
 
-      /**
-       * Retrieves the map of database IDs to tape-pool names and numbers of
-       * running streams required by the stream-policy of a service-class.
-       *
-       * @param svcClassName       Input: The database ID of the service-class
-       *                           for which tape-pools are to be retrieved.
-       * @param tapePoolsForPolicy Output: The map of retrieved tape-pools.
-       */
-      virtual void tapePoolsForStreamPolicy(
-        const u_signed64               svcClassId,
-        IdToTapePoolForStreamPolicyMap &tapePoolsForPolicy)
-        throw (castor::exception::Exception)=0;
+      virtual void inputForStreamPolicy(std::string svcClassName,std::list<StreamPolicyElement>& candidates  )throw (castor::exception::Exception)=0;
 
-      /**
-       * Starts the specified set of streams.
-       */
-      virtual void startChosenStreams(
-        const std::list<StreamPolicyElement>& outputFromStreamPolicy)
-        throw (castor::exception::Exception)=0;
+          /**
+         * startChosenStreams 
+         */
 
-      /**
-       * Starts the specified set of streams.
-       *
-       * @param streamIds The database IDs of the streams to be started.
-       */
-      virtual void startChosenStreams(const std::list<u_signed64> &streamIds)
-        throw (castor::exception::Exception)=0;
+	virtual void startChosenStreams(const std::list<castor::tape::mighunter::StreamPolicyElement>& outputFromStreamPolicy) throw (castor::exception::Exception)=0;
 
-      /**
-       * stopChosenStreams 
-       */
-      virtual void stopChosenStreams(
-        const std::list<StreamPolicyElement>& outputFromStreamPolicy)
-        throw (castor::exception::Exception)=0;
+          /**
+         * stopChosenStreams 
+         */
 
-      /**
-       * Stops the specified set of streams.
-       *
-       * @param streamIds The database IDs of the streams to be stopped.
-       */
-      virtual void stopChosenStreams(const std::list<u_signed64> &streamIds)
-        throw (castor::exception::Exception)=0;
+	virtual void stopChosenStreams(const std::list<StreamPolicyElement>& outputFromStreamPolicy) throw (castor::exception::Exception)=0;
 
 	/** 
 	 * Attach TapeCopies To Streams

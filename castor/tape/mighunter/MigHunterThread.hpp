@@ -32,9 +32,10 @@
 // some pre-processor definitions which affect the standard headers
 #include <Python.h>
 
-#include "castor/exception/InvalidConfiguration.hpp"
 #include "castor/exception/TapeCopyNotFound.hpp"
+
 #include "castor/server/BaseDbThread.hpp"
+
 #include "castor/tape/mighunter/IMigHunterSvc.hpp"
 #include "castor/tape/mighunter/MigHunterDaemon.hpp"
 #include "castor/tape/mighunter/MigrationPolicyElement.hpp"
@@ -79,11 +80,6 @@ private:
   const bool m_doClone;
 
   /**
-   * The inspect.getargspec Python-function.
-   */
-  PyObject *const m_inspectGetargspecFunc;
-
-  /**
    * The Python dictionary object associated with the migration policy module.
    */
   PyObject *const m_migrationPolicyDict;
@@ -92,17 +88,6 @@ private:
    * The migration hunter daemon.
    */
   castor::tape::mighunter::MigHunterDaemon &m_daemon;
-
-  /**
-   * Set to true if the mighunter is to run in test mode.
-   */
-  const bool m_runInTestMode;
-
-  /**
-   * The arguments names a migration-policy Python-function must have in order
-   * to be considered valid.
-   */
-  std::vector<std::string> m_expectedMigrationPolicyArgNames;
 
   /**
    * The indirect exception throw entry point for MigHunter threads that is
@@ -163,24 +148,10 @@ private:
     const MigrationPolicyElementList &tapeCopies) throw();
 
   /**
-   * Checks whether or not the specified migration-policy Python-function has
-   * the correct argument names.
-   *
-   * This method raises an InvalidConfiguration exception if the specified
-   * migration-policy Python-function does not have the correct function
-   * argument names.
-   *
-   * @param migrationPolicyName   Input: The name of the stream-policy
-   *                              Python-function.
-   * @param migrationPolicyPyFunc Input: The stream-policy Python-function.
-   */
-  void checkMigrationPolicyArgNames(
-   const std::string &migrationPolicyName,
-    PyObject *const  migrationPolicyPyFunc)
-    throw(castor::exception::InvalidConfiguration);
-
-  /**
    * Run the migration policy using the specified policy element as input.
+   *
+   * Please note that this method does not obtain a lock on the Python
+   * interpreter.
    *
    * @param pyFunc The migration-policy Python-function.
    * @param elem   The policy element to be passed to the migration-policy
@@ -205,25 +176,18 @@ public:
    *                               streams for the service class in question.
    * @param doClone                Specifies whether or not the MigHunterDaemon
    *                               should apply stream cloning.
-   * @param inspectGetargspecFunc  The inspect.getargspec Python-function, to
-   *                               be used to determine whether or not the
-   *                               migration-policy Python-functions have the
-   *                               correct signature.
    * @param migrationPolicyDict    The Python dictionary object associated with
-   *                               the migration-policy Python-module.
-   * @param daemon                 The migration-hunter daemon.
-   * @param runInTestMode          Set to true if the mighunter is to run in
-   *                               test mode.
+   *                               the migration policy module.  This parameter
+   *                               must be set to NULL if there is no
+   *                               migration-policy Python-module.
+   * @param daemon                 The migration hunter daemon.
    */
   MigHunterThread(
-    const std::list<std::string> &svcClassList,
-    const uint64_t               migrationDataThreshold,
-    const bool                   doClone,
-    PyObject              *const inspectGetargspecFunc,
-    PyObject              *const migrationPolicyDict,
-    MigHunterDaemon              &daemon,
-    const bool                   runInTestMode)
-    throw(castor::exception::Exception);
+    const std::list<std::string>             &svcClassList,
+    const uint64_t                           migrationDataThreshold,
+    const bool                               doClone,
+    PyObject *const                          migrationPolicyDict,
+    castor::tape::mighunter::MigHunterDaemon &daemon) throw();
 
   /**
    * Destructor
