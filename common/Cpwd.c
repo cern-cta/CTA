@@ -43,7 +43,9 @@ const char *name;
     }
     errno = 0;
     rc = getpwnam_r(name,pwd,pwdbuf,pwdbuflen,&result);
-    serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
+    if (rc != 0) {
+      serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
+    }
     return(result);
 }
 
@@ -72,7 +74,9 @@ uid_t uid;
     }
     errno = 0;
     rc = getpwuid_r(uid,pwd,pwdbuf,pwdbuflen,&result);
-    serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
+    if (rc != 0) {
+      serrno = ENOENT==errno?SEUSERUNKN:SEINTERNAL;
+    }
     return(result);
 }
 

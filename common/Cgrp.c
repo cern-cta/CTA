@@ -44,7 +44,9 @@ const char *name;
     }
     errno = 0;
     rc = getgrnam_r(name,grp,grpbuf,grpbuflen,&result);
-    serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
+    if (rc != 0) {
+      serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
+    }
     return(result);
 }
 
@@ -73,7 +75,9 @@ gid_t gid;
     }
     errno = 0;
     rc = getgrgid_r(gid,grp,grpbuf,grpbuflen,&result);
-    serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
+    if (rc != 0) {
+      serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
+    }
     return(result);
 }
 
