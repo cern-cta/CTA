@@ -54,9 +54,8 @@ class Annex(models.Model):
     
     def getItems(self):
         if not(self.valid_cache):
-            chmodulename = inspect.getmodule(self.parent).__name__
             chclassname = self.parent.__class__.__name__
-            methodname = self.rules.getMethodNameFor(self.level + 1, chmodulename, chclassname)
+            methodname = self.rules.getMethodNameFor(self.level + 1, chclassname)
             self.children_cache = list(self.parent.__class__.__dict__[methodname](self.parent))
             
             newcache = []
@@ -84,9 +83,8 @@ class Annex(models.Model):
         if(self.valid_cache):
             return len(self.children_cache)
         else:
-            chmodulename = inspect.getmodule(self.parent).__name__
             chclassname = self.parent.__class__.__name__
-            methodname = self.rules.getCountMethodNameFor(self.level + 1, chmodulename, chclassname)
+            methodname = self.rules.getCountMethodNameFor(self.level + 1, chclassname)
             allcount = self.parent.__class__.__dict__[methodname](self.parent)
             return allcount - len(self.excludednodes)
     

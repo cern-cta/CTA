@@ -34,6 +34,7 @@ from sites.tools.ObjectCreator import createObject
 from sites.tools.ModelsInspection import *
 from django.shortcuts import redirect
 import random
+import sites.dirs.Presets
 
 def redirectOldLink(request, theid):
     return HttpResponse("Please use the new link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
@@ -63,12 +64,7 @@ def treeView(request, rootmodel, theid):
     treemapdir = settings.REL_TREEMAP_DICT 
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
-    lr = None
-    try:
-        lr = request.session['levelrules']
-    except KeyError:
-        lr = getDefaultRules(nbdefinedlevels)
-        createCookieIfMissing(request, nbdefinedlevels)
+    lr = getCookieRules(request, nbdefinedlevels)
         
     cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -158,12 +154,7 @@ def groupView(request, parentpk, depth, model):
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     
-    cookielr = None
-    try:
-        cookielr = request.session['levelrules']
-    except KeyError:
-        cookielr = getDefaultRules(nbdefinedlevels)
-        createCookieIfMissing(request, nbdefinedlevels)
+    cookielr = getCookieRules(request, nbdefinedlevels)
         
     cache_key = calcCacheKey(parentpk = parentpk, parentmodel = "Annex", depth = depth, lr = cookielr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -295,12 +286,7 @@ def changeMetrics(request, theid):
         metric = posted['metric']
         childmethodname = posted['childmethod']
         
-        cookielr = None
-        try:
-            cookielr = request.session['levelrules']
-        except KeyError:
-            cookielr = getDefaultRules(nblevels)
-            createCookieIfMissing(request, nblevels)
+        cookielr = getCookieRules(request, nblevels)
         
         modulename = getModelsModuleName(model)
             
@@ -308,11 +294,42 @@ def changeMetrics(request, theid):
         if(level == -1):
             for i in range(nblevels):
                 rule = cookielr.getRuleObject(i)
-                rule.createOrUpdate(modulename, model, childmethodname, parentmethodname, metric, None)
+                rule.createOrUpdate(model, childmethodname, parentmethodname, metric, None)
         else:
-            cookielr.getRuleObject(level).createOrUpdate(modulename, model, childmethodname, parentmethodname, metric, None)
+            cookielr.getRuleObject(level).createOrUpdate(model, childmethodname, parentmethodname, metric, None)
                     
         updateUserCookie(request, cookielr, level, model, metric, childmethodname)
+        
+    else:
+        raise Http404
+        
+    request.session.set_test_cookie()
+    return redirect(to = '..', args = {'request':request, 'theid':theid})
+
+def preset(request, theid):
+    nblevels = getDefaultNumberOfLevels()
+    
+    if request.method == 'POST':
+        createCookieIfMissing(request, nblevels)
+        
+        cookiesenabled = request.session.test_cookie_worked()
+        if not cookiesenabled:
+            return redirect(to = '..', args = {'request':request, 'theid':theid})
+            
+        posted = {}
+        posted = request.POST
+        
+        try:
+            presetname = posted['preset']
+        except KeyError:
+            return redirect(to = '..', args = {'request':request, 'theid':theid})
+        
+        if presetname not in sites.dirs.Presets.getPresetNames():
+            return redirect(to = '..', args = {'request':request, 'theid':theid})
+#            return HttpResponse("Posted data is not correct")
+        
+        lr = sites.dirs.Presets.getPreset(presetname)
+        request.session['levelrules'] = lr
         
     else:
         raise Http404
@@ -397,11 +414,10 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents = []
     
     while True:
-        modulename = inspect.getmodule(rt).__name__
         classname = rt.__class__.__name__
         level = 0
         
-        parentmethodname =  lrules.getParentMethodNameFor(level, modulename, classname)
+        parentmethodname =  lrules.getParentMethodNameFor(level, classname)
         pr = rt.__class__.__dict__[parentmethodname](rt)
         if rt is pr: break
         parents.append(pr)
@@ -528,7 +544,7 @@ def generateDropdownValues(nblevels, themodel):
     if not themodelfound: raise Exception('the given model couldn\'t be found')
     
     metricdropdown = []
-    cf = ColumnFinder(modulename, themodel)
+    cf = ColumnFinder(themodel)
     columns = cf.getColumnnames()
     for column in columns:
         ismetric = True
@@ -576,12 +592,20 @@ def getDefaultSelection():
     return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
         
 def getDefaultRules(nblevels):
-    lr = LevelRules()
-    print lr.getUniqueLevelRulesId()
-    for i in range(nblevels):
-        lr.addRules(getModelsModuleName('Dirs'), 'Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
-        lr.addRules(getModelsModuleName('CnsFileMetadata'), 'CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
-        lr.addRules(getModelsModuleName('Annex'), 'Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+    lr = sites.dirs.Presets.getPreset("Directory structure")
+    return lr
+
+def getCookieRules(request, nbdefinedlevels):
+    lr = None
+    try:
+        lr = request.session['levelrules']
+        if not lr.rulesAreValid() or lr.indexIsValid(nbdefinedlevels-1):
+            lr = getDefaultRules(nbdefinedlevels)
+            createCookieIfMissing(request, nbdefinedlevels)
+    except KeyError:
+        lr = getDefaultRules(nbdefinedlevels)
+        createCookieIfMissing(request, nbdefinedlevels)
+        
     return lr
 
 def getDefaultModel():

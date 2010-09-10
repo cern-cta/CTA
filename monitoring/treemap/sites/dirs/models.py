@@ -21,6 +21,7 @@ from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.tools.ModelsInspection import *
+from sites.treemap.BasicTree import BasicTree
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True)
@@ -301,7 +302,6 @@ CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
 CnsFileMetadata.nonmetrics = ['fileid', 'parent_fileid', 'depth', 'fullname', 'filemode', 'nlink', 'owner_uid', 'gid' ,'status', 'fileclass', 'guid', 'csumtype', 'csumvalue', 'acl']  
 
 
-
 class Requests(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField()
@@ -313,6 +313,7 @@ class Requests(models.Model):
     state = models.CharField(max_length=255, blank=True)
     filename = models.CharField(max_length=2048, blank=True)
     filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    
     class Meta:
         db_table = u'requests'
         
@@ -324,6 +325,24 @@ class Requests(models.Model):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
        
 Requests.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+
+Requests.generatedtree = None
+def generateRequestsTree(fromtime, totime):
+    tree = Requests.nonmetrics
+    Requests.generatedtree = BasicTree()
+    requestarray = Requests.objects.get(timestamp__gte = fromtime, timestamp__lte = totime, filename__isnull=False)
+    for dataset in requestarray:
+        addRequestToTree(tree, dataset)
+
+    def addRequestToTree(tree, requestdata):
+        if tree.hasRoot():
+            tree.traverseToRoot()
+        else:
+            entry = requestdata
+            entry.name = requestdata.filename[:]
+            tree.setRoot(entry)
+            tree.traverseToRoot()
+
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

@@ -19,6 +19,8 @@ urlpatterns = patterns('',
     
     (r'(?P<theid>\d+)/changemetrics/$', 'dirs.views.changeMetrics'),
     
+    (r'(?P<theid>\d+)/preset/$', 'dirs.views.preset'),
+    
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView'),
     
     (r'group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)/$', 'dirs.views.groupView'),

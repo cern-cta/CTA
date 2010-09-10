@@ -14,9 +14,9 @@ import sys
 
 class ColumnFinder:
 
-    def __init__(self, moduleName, className):
+    def __init__(self, className):
         """Determines all Django Columns of given model class"""
-        self.moduleName = moduleName
+        self.moduleName = getModelsModuleName(className)
         self.className = className
         self.columns = []
         self.column_names = []

@@ -15,11 +15,12 @@ from sites.errors import ConfigError
 from sites.tools.ModelsInspection import ColumnFinder
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.columntransformation.TransFunctions import *
+from sites.tools.ModelsInspection import *
 
 #USAGE EXAMPLE:
 #from sites.dirs.models import Dirs
 #from sites.treemap.node.object_extender.object_extender import *
-#t = ColumnTransformator('sites.dirs.models', 'Dirs')
+#t = ColumnTransformator('Dirs')
 #p = Dirs.objects.get(pk=4)
 #totalsize_value = t.transform_totalsize(p.totalsize)
 
@@ -34,10 +35,10 @@ class ColumnTransformator(dict):
     
     fnprefix = 'transform_'
     
-    def __init__(self, moduleName, className):
-        self.moduleName = moduleName
+    def __init__(self, className):
+        self.moduleName = getModelsModuleName(className)
         self.className = className
-        self.ci = ColumnFinder(self.moduleName, self.className)
+        self.ci = ColumnFinder(self.className)
         self.columns = self.ci.getColumns()
         self.generateDefaultFunctions()
         

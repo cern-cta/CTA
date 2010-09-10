@@ -55,7 +55,7 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '^m!i98fj@$_xl@=h3_rD=o0=(+&$*#af9fmfb0$v!gy&scz=y6aka'
+SECRET_KEY = '^m!i98fj@$_xl@=h3_rD=o0=(+&$*#af9mzfbp0$v!gy&scz=y6aka'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~op$ed\d%oi&d*k%dlr7#d@df>%d^$d%$h$#!jl5a|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~o7ed8de&df$uy\d%oi&d*k%dlr7#d@d5>%d^$u%$h$#!jl5a|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 

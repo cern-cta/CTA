@@ -26,25 +26,21 @@ class ChildRules(object):
         self.fparams = {}
         self.columnnames = {}
     
-    def createOrUpdate(self, modulename, classname, methodname, parentmethodname, columnname, fparam = None):
+    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None):
         countmethodname = getCountMethodFor(classname, methodname)
+        modulename = getModelsModuleName(classname)
         if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname) and countmethodname is not None:
-            index = modulename.__str__() + '.' + classname
+            index = classname
             self.methods[index] = methodname
             self.countmethods[index] = countmethodname
             self.fparams[index] = fparam
             self.columnnames[index] = columnname
             self.parentmethods[index] = parentmethodname
         else: 
-            raise Warning('Rule for ' + modulename + '.' + classname + ' could not be added. Methodname is ' + methodname)
+            raise Warning('Rule for ' + classname + ' could not be added. Methodname is ' + methodname)
         
-    def getUsedClassNames(self):
-        fullmodels = self.methods.keys()
-        ret = {}
-        for index in fullmodels:
-            ret[index[(index.rfind(".")+1):]] = True
-            
-        return ret.keys()
+    def getUsedClassNames(self):  
+        return self.methods.keys()
     
     def infoDict(self):
         ret = []
@@ -53,20 +49,20 @@ class ChildRules(object):
             ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'columnname': self.columnnames[index], 'fparam': self.fparams[index]})
         return ret
             
-    def getMethodNameFor(self, modulename, classname):
-        return self.methods[modulename.__str__() + '.' + classname]
+    def getMethodNameFor(self, classname):
+        return self.methods[classname]
     
-    def getParentMethodNameFor(self, modulename, classname):
-        return self.parentmethods[modulename.__str__() + '.' + classname]
+    def getParentMethodNameFor(self, classname):
+        return self.parentmethods[classname]
     
-    def getParamFor(self, modulename, classname):
-        return self.fparams[modulename.__str__() + '.' + classname]
+    def getParamFor(self, classname):
+        return self.fparams[classname]
     
-    def getColumnNameFor(self, modulename, classname):
-        return self.columnnames[modulename.__str__() + '.' + classname]
+    def getColumnNameFor(self, classname):
+        return self.columnnames[classname]
 
-    def getCountMethodNameFor(self, modulename, classname):
-        return self.countmethods[modulename.__str__() + '.' + classname]   
+    def getCountMethodNameFor(self, classname):
+        return self.countmethods[classname]   
     
     def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname):
         #check modulename and  classname
@@ -114,7 +110,7 @@ class ChildRules(object):
         if not found: return False
         
         #check columnname
-        cf = ColumnFinder(modulename, classname)
+        cf = ColumnFinder(classname)
         if columnname in cf.getColumnnames():
             return True
         else:
@@ -122,10 +118,9 @@ class ChildRules(object):
         
     def attributesAreValid(self):
         
-        for fullmodule, methodname, in self.methods.keys(), self.methods.values():
+        for classname, methodname in self.methods.items():
             #check modulename and  classname
-            classname = fullmodule[(fullmodule.rfind(".")+1):]
-            modulename = fullmodule[:(fullmodule.rfind("."))]
+            modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except ConfigError:
@@ -145,10 +140,9 @@ class ChildRules(object):
             
             if not found: return False
             
-        for fullmodule, countmethodname, in self.countmethods.keys(), self.countmethods.values():
+        for classname, countmethodname in self.countmethods.items():
             #check modulename and  classname
-            classname = fullmodule[(fullmodule.rfind(".")+1):]
-            modulename = fullmodule[:(fullmodule.rfind("."))]
+            modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except ConfigError:
@@ -168,10 +162,9 @@ class ChildRules(object):
             
             if not found: return False
         
-        for fullmodule, parentmethodname, in self.parentmethods.keys(), self.parentmethods.values():
+        for classname, parentmethodname in self.parentmethods.items():
             #check modulename and  classname
-            classname = fullmodule[(fullmodule.rfind(".")+1):]
-            modulename = fullmodule[:(fullmodule.rfind("."))]
+            modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except ConfigError:
@@ -187,17 +180,16 @@ class ChildRules(object):
             
             if not found: return False
         
-        for fullmodule, columnname, in self.columnnames.keys(), self.columnnames.values():
+        for classname, columnname in self.columnnames.items():
             #check modulename and  classname
-            classname = fullmodule[(fullmodule.rfind(".")+1):]
-            modulename = fullmodule[:(fullmodule.rfind("."))]
+            modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except ConfigError:
                 return False 
         
             #check columnname
-            cf = ColumnFinder(modulename, classname)
+            cf = ColumnFinder(classname)
             if columnname not in cf.getColumnnames():
                 return False
             
@@ -208,19 +200,19 @@ class LevelRules(object):
     def __init__(self):
         self.rules = []
         
-    def addRules(self, modulename, classname, methodname, parentmethodname, columnname, level, fparam = None):
+    def addRules(self, classname, methodname, parentmethodname, columnname, level, fparam = None):
         try:
             self.rules[level]
         except IndexError:   
             if level <= len(self.rules):               
                 r = ChildRules()
-                r.createOrUpdate(modulename, classname, methodname, parentmethodname, columnname, fparam)
+                r.createOrUpdate(classname, methodname, parentmethodname, columnname, fparam)
                 self.rules.append(r) 
                 return
             else:
                 raise ConfigError('Before you create Rule for level ' + level + ' you need to have all rules up to level ' + (len(self.rules)-1) + ' defined.')
             
-        self.rules[level].createOrUpdate(modulename, classname, methodname, parentmethodname, columnname, fparam)
+        self.rules[level].createOrUpdate(classname, methodname, parentmethodname, columnname, fparam)
             
     def appendRuleObject(self, obj):
         self.rules.append(obj)
@@ -228,33 +220,33 @@ class LevelRules(object):
     def getRuleObject(self, level):
         return self.rules[level]
         
-    def getMethodNameFor(self, level, modulename, classname):
+    def getMethodNameFor(self, level, classname):
         try:
-            return self.rules[level].getMethodNameFor(modulename, classname)
+            return self.rules[level].getMethodNameFor(classname)
         except IndexError:
             return None
         
-    def getCountMethodNameFor(self, level, modulename, classname):
+    def getCountMethodNameFor(self, level, classname):
         try:
-            return self.rules[level].getCountMethodNameFor(modulename, classname)
+            return self.rules[level].getCountMethodNameFor(classname)
         except IndexError:
             return None
         
-    def getParentMethodNameFor(self, level, modulename, classname):
+    def getParentMethodNameFor(self, level, classname):
         try:
-            return self.rules[level].getParentMethodNameFor(modulename, classname)
+            return self.rules[level].getParentMethodNameFor(classname)
         except IndexError:
             return None
     
-    def getParamFor(self, level, modulename, classname):
+    def getParamFor(self, level, classname):
         try:
-            return self.rules[level].getParamFor(modulename, classname)
+            return self.rules[level].getParamFor(classname)
         except IndexError:
             return None
         
-    def getColumnNameFor(self, level, modulename, classname):
+    def getColumnNameFor(self, level, classname):
         try:
-            return self.rules[level].getColumnNameFor(modulename, classname)
+            return self.rules[level].getColumnNameFor(classname)
         except IndexError:
             return None
 
@@ -264,6 +256,9 @@ class LevelRules(object):
             return True
         except IndexError:
             return False
+        
+    def countDefinedLevels(self):
+        return len(self.rules)
         
     def getUniqueLevelRulesId(self):
         idparts = []
@@ -300,7 +295,7 @@ class LevelRules(object):
             description.append(model)
             
             description.append(" are evaluated by ")
-            description.append(self.rules[level].getColumnNameFor(getModelsModuleName(model), model))
+            description.append(self.rules[level].getColumnNameFor(model))
             description.append("<br>")
             
             description.append("Children of ")
@@ -308,7 +303,7 @@ class LevelRules(object):
             description.append(" in level ")
             description.append(level.__str__())
             description.append(" will be requested using the method ")
-            description.append(self.rules[level].getMethodNameFor(getModelsModuleName(model), model))
+            description.append(self.rules[level].getMethodNameFor(model))
             description.append("<br>")
             description.append("<br>")
 

@@ -285,13 +285,19 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 		<!-- The dropdown menus are hold in a table to have them ordered right -->
 			<table>
 			<tr>
-				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
-				
+				<form action="/treemaps/{{rootsuffix}}/preset/" method="post" onsubmit="notImplementedWarning()">
 					<tr>
 					<td class="descriptiontext">Presets:</td> 
 					
 					<td><select class="dmenuwidth" name="preset" id="id_preset">
 					</select></td></tr>
+					
+					<tr><td>
+						<input class="applybutton" type="submit" value="Apply"/>
+					</td></tr>
+				</form>
+					
+				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
 					
 					<tr><td><br></></td> </td></tr>
 					<tr><td class="advancedtext">Advanced</td> </td></tr>

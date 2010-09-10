@@ -197,3 +197,6 @@ class BasicTree(object):
     
     def getLevel(self):
         return self.depth_inscope
+    
+    def hasRoot(self):
+        return self.root is None
