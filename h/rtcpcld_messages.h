@@ -113,7 +113,9 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_RECALLCANCELED,
     RTCPCLD_MSG_IGNORE_ENSNOSEG,
     RTCPCLD_MSG_RESERVED0,
-    RTCPCLD_MSG_RESERVED1
+    RTCPCLD_MSG_RESERVED1,
+    RTCPCLD_MSG_IGNORE_ENSCLASSNOSEGS,
+    RTCPCLD_MSG_IGNORE_ENSTOOMANYSEGS,
 };
 
 struct RtcpcldMessages {
@@ -213,6 +215,8 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_IGNORE_ENSFILECHG, DLF_LVL_WARNING, "File overwritten during migration. Error ignored"},
     { RTCPCLD_MSG_RECALLCANCELED, DLF_LVL_WARNING, "Recall has been canceled by user"},
     { RTCPCLD_MSG_IGNORE_ENSNOSEG, DLF_LVL_WARNING, "The segment to replace has been deleted already, migration canceled"},
+    { RTCPCLD_MSG_IGNORE_ENSCLASSNOSEGS, DLF_LVL_WARNING, "The file is diskonly, migration canceled"},
+    { RTCPCLD_MSG_IGNORE_ENSTOOMANYSEGS, DLF_LVL_WARNING, "The file has enough copies on tape already, migration canceled"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };

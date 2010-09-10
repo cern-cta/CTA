@@ -594,6 +594,52 @@ int rtcpcld_updateNsSegmentAttributes(
         rc = 0;
         // no need to retry here. We believe the nameserver, not like for ENOENT
         break;
+      } else if ( save_serrno == ENSCLASSNOSEGS ) {
+        /*
+         * We ignore ENSCLASSNOSEGS. This means that the segment created belongs
+         * to a file that should not be on tape. Thus migration can be considered
+	 * as completed.
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENSCLASSNOSEGS),
+                        (struct Cns_fileid *)&castorFileId,
+                        3,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs()/Cns_replacetapecopy()",
+                        "RETRY",
+                        DLF_MSG_PARAM_INT,
+                        retryNsUpdate,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno)
+                        );
+        rc = 0;
+        break;
+      } else if ( save_serrno == ENSTOOMANYSEGS ) {
+        /*
+         * We ignore ENSCLASSNOSEGS. This means that the segment created belongs
+         * to a file that already has enough copy on tape. So this segment is one too
+	 * much. Thus migration can be considered as completed.
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENSTOOMANYSEGS),
+                        (struct Cns_fileid *)&castorFileId,
+                        3,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs()/Cns_replacetapecopy()",
+                        "RETRY",
+                        DLF_MSG_PARAM_INT,
+                        retryNsUpdate,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno)
+                        );
+        rc = 0;
+        break;
       } else {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
