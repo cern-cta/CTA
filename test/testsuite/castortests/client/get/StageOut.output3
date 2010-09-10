@@ -2,14 +2,15 @@
     stager: stage_prepareToGet Usertag=NULL
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
+    stager: Looking up service class - Using <tapeServiceClass>
     stager: stage_prepareToGet file=<noTapeFileName> proto=rfio
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port1>
-    stager: <sending time1> Sending request
-    stager: <uuid4> SND <send duration> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port3>
+    stager: <sending time3> Sending request
+    stager: <uuid3> SND <send duration3> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid4> CBK <answer duration4> s before callback from <server ip1> was received
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip3> was received
 Received 1 responses
 <noTapeFileName> SUBREQUEST_READY

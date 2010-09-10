@@ -10,5 +10,5 @@
     stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
     stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
-<size> bytes in <duration> through local (in) and <interface out>
+<size> bytes in <duration1> through local (in) and <interface out>
 <size> bytes in remote file

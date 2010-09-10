@@ -1,5 +1,5 @@
 stager_put -M <noTapeFileName> -r
 rfcp <localFileName> <noTapeFileName>
 stager_qry -M <noTapeFileName>
-stager_putdone -M <noTapeFileName> -r <uuid>
+stager_putdone -M <noTapeFileName> -r <uuid0>
 stager_qry -M <noTapeFileName>

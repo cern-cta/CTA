@@ -5,10 +5,10 @@
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port3>
-    stager: <sending time3> Sending request
-    stager: <uuid4> SND <send duration> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port11>
+    stager: <sending time11> Sending request
+    stager: <uuid11> SND <send duration11> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid4> CBK <answer duration> s before callback from <server ip> was received
+    stager: <uuid11> CBK <answer duration11> s before callback from <server ip11> was received
 Received 1 responses
 <noTapeFileName> <fileid@ns> STAGED

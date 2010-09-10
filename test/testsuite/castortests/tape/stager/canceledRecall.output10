@@ -1,14 +1,15 @@
     **** : trace level set to 3
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
+    stager: Looking up service class - Using <tapeServiceClass>
     stager: stage_filequery type=0 param=<tapeFileName>
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port1>
-    stager: <sending time1> Sending request
-    stager: <uuid3> SND <send duration> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port10>
+    stager: <sending time10> Sending request
+    stager: <uuid10> SND <send duration10> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid3> CBK <answer duration3> s before callback from <server ip> was received
+    stager: <uuid10> CBK <answer duration10> s before callback from <server ip10> was received
 Received 1 responses
 <tapeFileName> <fileid@ns> INVALID

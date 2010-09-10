@@ -8,8 +8,8 @@
     stager: Localhost is: <localhost>
     stager: Creating socket for castor callback - Using port <callback port1>
     stager: <sending time1> Sending request
-    stager: <uuid5> SND <send duration2> s to send the request
+    stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid5> CBK <answer duration3> s before callback from <server ip> was received
+    stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
 Received 1 responses
 <noTapeFileName> SUBREQUEST_FAILED 16 File is being (re)created right now by another user

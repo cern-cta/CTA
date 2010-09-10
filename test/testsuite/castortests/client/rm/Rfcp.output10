@@ -7,8 +7,8 @@
     stager: Localhost is: <localhost>
     stager: Creating socket for castor callback - Using port <callback port10>
     stager: <sending time10> Sending request
-    stager: <uuid10> SND <send duration> s to send the request
+    stager: <uuid10> SND <send duration10> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid10> CBK <answer duration4> s before callback from <server ip> was received
+    stager: <uuid10> CBK <answer duration10> s before callback from <server ip10> was received
 Received 1 responses
 <noTapeFileName1> <fileid@ns1> INVALID

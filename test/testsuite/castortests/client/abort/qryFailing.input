@@ -1,2 +1,2 @@
 stager_qry -M <noTapeFileName>
-stager_abort -r <uuid>
+stager_abort -r <uuid0>

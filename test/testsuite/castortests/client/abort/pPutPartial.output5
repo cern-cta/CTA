@@ -10,7 +10,7 @@
     stager: <sending time5> Sending request
     stager: <uuid5> SND <send duration5> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid5> CBK <answer duration5> s before callback from <server ip> was received
+    stager: <uuid5> CBK <answer duration5> s before callback from <server ip5> was received
 Received 2 responses
 <noTapeFileName> <fileid>@<ns> INVALID
 <noTapeFileName1> <fileid1>@<ns> INVALID

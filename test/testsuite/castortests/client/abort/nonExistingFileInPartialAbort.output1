@@ -8,6 +8,6 @@
     stager: <sending time1> Sending request
     stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid1> CBK <answer duration1> s before callback from <server ip> was received
+    stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
 Received 1 responses
 123 :  error 2 : No subRequest found for this fileId/nsHost

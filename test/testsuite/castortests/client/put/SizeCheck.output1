@@ -7,8 +7,8 @@
     stager: Localhost is: <localhost>
     stager: Creating socket for castor callback - Using port <callback port1>
     stager: <sending time1> Sending request
-    stager: <uuid2> SND <send duration> s to send the request
+    stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid2> CBK <answer duration2> s before callback from <server ip1> was received
-<nb bytes> bytes in <time to transfer> seconds through <interface in> and <interface out>
+    stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
+<nb bytes> bytes in <time to transfer1> seconds through <interface in> and <interface out>
 <nb bytes> bytes in remote file

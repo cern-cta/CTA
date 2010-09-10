@@ -14,11 +14,11 @@
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port4>
-    stager: <sending time4> Sending request
-    stager: <uuid4> SND <send duration2> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port13>
+    stager: <sending time13> Sending request
+    stager: <uuid13> SND <send duration13> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid4> CBK <answer duration4> s before callback from <server ip1> was received
+    stager: <uuid13> CBK <answer duration13> s before callback from <server ip13> was received
 Received 10 responses
 <noTapeFileName> <fileid@ns> STAGED
 <noTapeFileName1> <fileid@ns1> STAGED

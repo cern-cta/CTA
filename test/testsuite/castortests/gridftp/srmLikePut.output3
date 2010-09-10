@@ -9,6 +9,6 @@
     stager: <sending time3> Sending request
     stager: <uuid3> SND <send duration3> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid3> CBK <answer duration3> s before callback from <server ip> was received
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip3> was received
 Received 1 responses
 <noTapeFileName> <fileid@ns> STAGEOUT

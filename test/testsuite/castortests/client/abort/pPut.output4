@@ -8,6 +8,6 @@
     stager: <sending time4> Sending request
     stager: <uuid4> SND <send duration4> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid4> CBK <answer duration4> s before callback from <server ip> was received
+    stager: <uuid4> CBK <answer duration4> s before callback from <server ip4> was received
 Received 1 responses
 <fileid> :  error 22 : Cannot abort failed subRequest

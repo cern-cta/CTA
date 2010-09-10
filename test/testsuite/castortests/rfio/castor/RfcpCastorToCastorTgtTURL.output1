@@ -9,17 +9,17 @@
     stager: <sending time1> Sending request
     stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid1> CBK <answer duration1> s before callback from <server ip> was received
+    stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
     stager: stage_put Usertag=NULL Protocol=<protocol> File=<noTapeFileName1> mode=420/size=0
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port2>
-    stager: <sending time2> Sending request
-    stager: <uuid2> SND <send duration2> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port1bis>
+    stager: <sending time1bis> Sending request
+    stager: <uuid1bis> SND <send duration1bis> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid2> CBK <answer duration2> s before callback from <server ip1> was received
-<nb bytes> bytes in <time to transfer1> seconds through <interface in1> and eth0 (out)
+    stager: <uuid1bis> CBK <answer duration1bis> s before callback from <server ip1bis> was received
+<nb bytes> bytes in <time to transfer1bis> seconds through <interface in1bis> and eth0 (out)
 <nb bytes> bytes in remote file

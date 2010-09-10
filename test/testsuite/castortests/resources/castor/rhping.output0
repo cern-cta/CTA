@@ -4,9 +4,9 @@
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port>
-    stager: <sending time> Sending request
-    stager: <uuid> SND <send duration> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port0>
+    stager: <sending time0> Sending request
+    stager: <uuid0> SND <send duration0> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid> CBK <answer duration> s before callback from <server ip> was received
+    stager: <uuid0> CBK <answer duration0> s before callback from <server ip0> was received
 <castor version>
