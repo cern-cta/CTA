@@ -412,7 +412,7 @@ const char *castor::tape::python::stdPythonExceptionToStr(
 //---------------------------------------------------------------------------
 // getPythonFunctionArgumentNames
 //---------------------------------------------------------------------------
-std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
+void castor::tape::python::getPythonFunctionArgumentNames(
   PyObject          *const inspectGetargspecFunc,
   PyObject          *const pyFunc,
   std::vector<std::string> &argumentNames) throw(castor::exception::Exception) {
@@ -421,7 +421,7 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
   castor::tape::python::SmartPyObjectPtr inputObj(
     Py_BuildValue((char *)"(O)", pyFunc));
 
-  // Throw an exception if the creation of the input Python-object
+  // Throw an exception if the creation of the input Python-object failed
   if(inputObj.get() == NULL) {
     // Try to determine the Python exception if there was a Python error
     PyObject *const pyEx = PyErr_Occurred();
@@ -480,11 +480,11 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
   }
 
   // Get a handle on the array of function argument names
-  PyObject *const argumentNamesPySequence = PySequence_GetItem(resultObj.get(),
-    0);
+  SmartPyObjectPtr
+    argumentNamesPySequence(PySequence_GetItem(resultObj.get(), 0));
 
   // Throw an exception if the handle cound not be obtained
-  if(argumentNamesPySequence == NULL) {
+  if(argumentNamesPySequence.get() == NULL) {
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() <<
       __FUNCTION__ << "() failed"
@@ -496,7 +496,7 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
 
   // Throw an exception if the function argument names are not a
   // Python-sequence
-  if(!PySequence_Check(argumentNamesPySequence)) {
+  if(!PySequence_Check(argumentNamesPySequence.get())) {
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() <<
       __FUNCTION__ << "() failed"
@@ -505,7 +505,7 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
     throw(ex);
   }
 
-  const int nbArgumentNames = PySequence_Size(argumentNamesPySequence);
+  const int nbArgumentNames = PySequence_Size(argumentNamesPySequence.get());
 
   // Throw an exception if the number of function argument names could not be
   // determined
@@ -521,11 +521,11 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
   // Push each function argument name on onto the back of the output list of
   // function argument names
   for(int i=0; i<nbArgumentNames; i++) {
-    PyObject *argumentNamePyObject =
-      PySequence_GetItem(argumentNamesPySequence, i);
+    SmartPyObjectPtr
+      argumentNamePyObj(PySequence_GetItem(argumentNamesPySequence.get(),i));
 
     // Throw an exception if the function argument name could not be retreived
-    if(argumentNamePyObject == NULL) {
+    if(argumentNamePyObj.get() == NULL) {
       castor::exception::Exception ex(ECANCELED);
       ex.getMessage() <<
         __FUNCTION__ << "() failed"
@@ -534,7 +534,16 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
       throw(ex);
     }
 
-    char *const argumentName = PyString_AsString(argumentNamePyObject);
+    // Throw an exception if the function argument name is not a Python-string
+    if(!PyString_Check(argumentNamePyObj.get())) {
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        __FUNCTION__ << "() failed"
+        ": Function argument name is not a Python-string";
+      throw(ex);
+    }
+
+    char *const argumentName = PyString_AsString(argumentNamePyObj.get());
 
     // Throw an exception if the function argument name could not be converted
     // to a C string
@@ -559,16 +568,13 @@ std::vector<std::string> &castor::tape::python::getPythonFunctionArgumentNames(
 
     argumentNames.push_back(argumentName);
   }
-
-  return argumentNames;
 }
 
 
 //---------------------------------------------------------------------------
 // getPythonFunctionArgumentNamesWithLock
 //---------------------------------------------------------------------------
-std::vector<std::string>
-  &castor::tape::python::getPythonFunctionArgumentNamesWithLock(
+void castor::tape::python::getPythonFunctionArgumentNamesWithLock(
   PyObject          *const inspectGetargspecFunc,
   PyObject          *const pyFunc,
   std::vector<std::string> &argumentNames)
@@ -576,6 +582,5 @@ std::vector<std::string>
   // Get a lock on the embedded Python-interpreter
   ScopedPythonLock scopedPythonLock;
 
-  return getPythonFunctionArgumentNames(inspectGetargspecFunc, pyFunc,
-    argumentNames);
+  getPythonFunctionArgumentNames(inspectGetargspecFunc, pyFunc, argumentNames);
 }

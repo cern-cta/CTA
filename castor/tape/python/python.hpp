@@ -242,9 +242,8 @@ const char *stdPythonExceptionToStr(
  *                              be returned.
  * @param argumentNames         The list of argument names to be filled by this
  *                              function.
- * @return                      The function argument names
  */
-std::vector<std::string> &getPythonFunctionArgumentNames(
+void getPythonFunctionArgumentNames(
   PyObject          *const inspectGetargspecFunc,
   PyObject          *const pyFunc,
   std::vector<std::string> &argumentNames)
@@ -264,9 +263,8 @@ std::vector<std::string> &getPythonFunctionArgumentNames(
  *                              be returned.
  * @param argumentNames         The list of argument names to be filled by this
  *                              function.
- * @return                      The function argument names
  */
-std::vector<std::string> &getPythonFunctionArgumentNamesWithLock(
+void getPythonFunctionArgumentNamesWithLock(
   PyObject          *const inspectGetargspecFunc,
   PyObject          *const pyFunc,
   std::vector<std::string> &argumentNames)
