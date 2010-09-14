@@ -32,3 +32,10 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Directory structure"] = lr
+
+#Preset for Number of Files
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbfiles', i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Number of Files"] = lr

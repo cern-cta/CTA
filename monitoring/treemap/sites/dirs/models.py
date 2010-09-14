@@ -335,11 +335,20 @@ def generateRequestsTree(fromtime, totime):
         addRequestToTree(tree, dataset)
 
     def addRequestToTree(tree, requestdata):
+        entry = requestdata
+        name = requestdata.filename
+        assert (name.find('/') >=0)
+        
         if tree.hasRoot():
             tree.traverseToRoot()
+            
+            pos = name.find('/')
+            while (pos >=0):
+                #todo: split and traverse
+                pos = name.find('/', pos + 1)
+                
         else:
-            entry = requestdata
-            entry.name = requestdata.filename[:]
+            entry.name = name[:name.find('/')]
             tree.setRoot(entry)
             tree.traverseToRoot()
 

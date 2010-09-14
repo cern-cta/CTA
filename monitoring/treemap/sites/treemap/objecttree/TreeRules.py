@@ -42,6 +42,20 @@ class ChildRules(object):
     def getUsedClassNames(self):  
         return self.methods.keys()
     
+    def getModelToMethod(self):  
+        ret = []
+        
+        for classname, methodname in self.methods.items():
+            ret.append((classname, methodname))
+        return ret
+    
+    def getModelToColumn(self):  
+        ret = []
+        
+        for classname, columnname in self.columnnames.items():
+            ret.append((classname, columnname))
+        return ret
+    
     def infoDict(self):
         ret = []
         indexkeys = self.methods.keys()
@@ -118,6 +132,7 @@ class ChildRules(object):
         
     def attributesAreValid(self):
         
+        childrenmethods = {}
         for classname, methodname in self.methods.items():
             #check modulename and  classname
             modulename = getModelsModuleName(classname)
@@ -127,18 +142,20 @@ class ChildRules(object):
                 return False 
             
             #check methodname
+            childrenmethods[classname] = []
             found = False
-            childrenmethods = []
             for membername in instance.__class__.__dict__.keys():
                 if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
                     try:
                         if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'children':
                             found = True
-                            childrenmethods.append(membername)
+                            childrenmethods[classname].append(membername)
                     except KeyError:
                         continue
-            
-            if not found: return False
+            if not found: 
+                print "not found"
+                return False
+
             
         for classname, countmethodname in self.countmethods.items():
             #check modulename and  classname
@@ -153,14 +170,16 @@ class ChildRules(object):
             for membername in instance.__class__.__dict__.keys():
                 if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == countmethodname:
                     try:
-                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount' and \
-                        instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods:
-                            found = True
-                            break
+                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount':
+                            if instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods[classname]:
+                                found = True
+                                break
                     except KeyError:
                         continue
             
-            if not found: return False
+            if not found: 
+                print "not found"
+                return False
         
         for classname, parentmethodname in self.parentmethods.items():
             #check modulename and  classname
@@ -178,7 +197,9 @@ class ChildRules(object):
                         found = True
                         break
             
-            if not found: return False
+            if not found: 
+                print "not found"
+                return False
         
         for classname, columnname in self.columnnames.items():
             #check modulename and  classname
@@ -219,6 +240,9 @@ class LevelRules(object):
         
     def getRuleObject(self, level):
         return self.rules[level]
+    
+    def getRules(self):
+        return self.rules
         
     def getMethodNameFor(self, level, classname):
         try:

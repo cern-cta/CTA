@@ -43,7 +43,7 @@ def redirectOldLink(request, theid):
 def redirectHome(request):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_3')
 
-def treeView(request, rootmodel, theid):  
+def treeView(request, rootmodel, theid, refresh_cache = False):  
     
     time = datetime.datetime.now()
     try:
@@ -70,11 +70,13 @@ def treeView(request, rootmodel, theid):
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
-    if value is not None:
+    #if already in cache
+    cache_hit = False
+    if (value is not None): cache_hit = True
+    if cache_hit and not refresh_cache:
         return HttpResponse(value)
     
     start = datetime.datetime.now()
-    
     print 'start generating object tree for ' + root.__str__()
     tb = TreeBuilder(lr)
     
@@ -136,7 +138,7 @@ def treeView(request, rootmodel, theid):
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, parentpk, depth, model):    
+def groupView(request, parentpk, depth, model, refresh_cache = False):    
     depth = int(depth)
     time = datetime.datetime.now()
     try:
@@ -160,7 +162,9 @@ def groupView(request, parentpk, depth, model):
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
-    if value is not None:
+    cache_hit = False
+    if (value is not None): cache_hit = True
+    if cache_hit and not refresh_cache:
         return HttpResponse(value)
     
     #define LevelRules
@@ -284,7 +288,7 @@ def changeMetrics(request, theid):
         model = posted['model']
         level = int(posted['level'])
         metric = posted['metric']
-        childmethodname = posted['childmethod']
+        childrenmethodname = posted['childrenmethod']
         
         cookielr = getCookieRules(request, nblevels)
         
@@ -294,17 +298,17 @@ def changeMetrics(request, theid):
         if(level == -1):
             for i in range(nblevels):
                 rule = cookielr.getRuleObject(i)
-                rule.createOrUpdate(model, childmethodname, parentmethodname, metric, None)
+                rule.createOrUpdate(model, childrenmethodname, parentmethodname, metric, None)
         else:
-            cookielr.getRuleObject(level).createOrUpdate(model, childmethodname, parentmethodname, metric, None)
+            cookielr.getRuleObject(level).createOrUpdate(model, childrenmethodname, parentmethodname, metric, None)
                     
-        updateUserCookie(request, cookielr, level, model, metric, childmethodname)
+        updateUserCookie(request, cookielr, level, model, metric, childrenmethodname)
         
     else:
         raise Http404
         
     request.session.set_test_cookie()
-    return redirect(to = '..', args = {'request':request, 'theid':theid})
+    return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': True})
 
 def preset(request, theid):
     nblevels = getDefaultNumberOfLevels()
@@ -335,7 +339,7 @@ def preset(request, theid):
         raise Http404
         
     request.session.set_test_cookie()
-    return redirect(to = '..', args = {'request':request, 'theid':theid})
+    return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': True})
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, metric = ''):
     print "preparing response"
@@ -435,12 +439,15 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     ruleexplanations.append(lrules.describeRuleToUser(i))
     
     generationtime = datetime.datetime.now() - time
+    cookierules = getCookieRules(request, nblevels).getRules()
+    
+    presetnames = sites.dirs.Presets.getPresetNames()
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'rootsuffix': rootsuffix, "dynamicmenu": generateMenuData(nblevels), 'defaultselections': getCurrentUserSelections(request), \
-     'ruleexplanations': ruleexplanations, 'generationtime': generationtime} , context_instance=None)
+     'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'defaultselections': getCurrentUserSelections(request), \
+     'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
@@ -468,7 +475,7 @@ def PostedDataCheckSuccessful(posted, nblevels):
     
     postedisexpected = False
     for expected in expectedvalues['childrenmethods']:
-        if str(posted['childmethod']) == expected.value:
+        if str(posted['childrenmethod']) == expected.value:
             postedisexpected = True 
             break    
     if not postedisexpected: return False
@@ -512,16 +519,20 @@ def generateMenuData(nblevels):
 def generateDropdownValues(nblevels, themodel):
     #generating drop down menu content
     #create level dropdown
+    
     leveldropdown = []
+    modeldropdown = []
+    metricdropdown = []
+    childrenmethoddropdown = []
+    
+    #level menu
     leveldropdown.append(DropDownEntry('all levels', -1))
     for i in range(nblevels):
         leveldropdown.append(DropDownEntry( "level "+i.__str__(), i))
-    
-    #look for available models    
-    #create model dropdown
+     
+    #model menu
     modulename = None
     themodelfound = False
-    modeldropdown = []
     
     modulename = getModelsModuleName("")
     if not modulename in sys.modules.keys():
@@ -543,7 +554,7 @@ def generateDropdownValues(nblevels, themodel):
     
     if not themodelfound: raise Exception('the given model couldn\'t be found')
     
-    metricdropdown = []
+    #metrics menu
     cf = ColumnFinder(themodel)
     columns = cf.getColumnnames()
     for column in columns:
@@ -551,22 +562,65 @@ def generateDropdownValues(nblevels, themodel):
         command = 'if column in ' + themodel +'.nonmetrics: ismetric = False'
         exec(command)
         if ismetric: metricdropdown.append(DropDownEntry(column, column))
-        
-    childmethoddropdown = []
+    
+    #children menu    
     instance = createObject(modulename, themodel)  
-    #check methodname
-    found = False
     for membername in instance.__class__.__dict__.keys():
         if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
             function = instance.__class__.__dict__[membername]
             try:
                 print function.__dict__['methodtype']
                 if function.__dict__['methodtype'] == 'children':
-                    childmethoddropdown.append(DropDownEntry(membername, membername))
+                    childrenmethoddropdown.append(DropDownEntry(membername, membername))
             except:
                 continue
     
-    return {'levels':leveldropdown, 'models':modeldropdown, 'metrics':metricdropdown, 'childrenmethods': childmethoddropdown}
+    return {'levels':leveldropdown, 'models':modeldropdown, 'metrics':metricdropdown, 'childrenmethods': childrenmethoddropdown}
+
+def generateLevelDynamics(request, nblevels):
+    ld = {}
+    for i in range(-1, nblevels):
+        ld[i] = getDropdownDefaultsByLevel(request, nblevels,i)
+    return ld
+
+def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
+    #generating drop down menu content
+    #create level dropdown
+    
+    levelvalue = level
+    modelvalue = ''
+    metricvalue = ''
+    childrenmethodvalue = ''
+    
+    #level menu
+    if(levelvalue < 0):
+        defselection = getDefaultSelection()
+        defselection['level'] = -1
+        return defselection
+    
+    #model menu
+    lr = getCookieRules(request, nblevels) 
+    levelmodels = lr.getRuleObject(level).getUsedClassNames()
+    levelmodels.remove('Annex')
+    
+    if(themodel is None):  
+        if len(levelmodels > 0):
+            modelvalue = levelmodels[0]
+        else:
+            raise Exception('no models available to user') 
+    else:
+        if themodel in levelmodels:
+            modelvalue = themodel
+        else:
+            raise Exception("no such model: " + themodel) 
+    
+    #metrics menu
+    metricvalue =  lr.getRuleObject(level).getColumnNameFor(modelvalue)
+    
+    #children menu    
+    childrenmethodvalue=  lr.getRuleObject(level).getMethodNameFor(modelvalue)
+    
+    return {'level':levelvalue, 'model': modelvalue, 'metric': metricvalue, 'childrenmethod': childrenmethodvalue}
 
 def createCookieIfMissing(request, nblevels):
     try:
@@ -576,9 +630,9 @@ def createCookieIfMissing(request, nblevels):
         request.session['levelrules'] = getDefaultRules(nblevels)
         request.session['defaultselection'] = getDefaultSelection()
         
-def updateUserCookie(request, rules, level, model, metric, childmethodname):
+def updateUserCookie(request, rules, level, model, metric, childrenmethodname):
     request.session['levelrules'] = rules       
-    request.session['defaultselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childmethodname}
+    request.session['defaultselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname}
 
 def getCurrentUserSelections(request):
     try:
@@ -599,7 +653,7 @@ def getCookieRules(request, nbdefinedlevels):
     lr = None
     try:
         lr = request.session['levelrules']
-        if not lr.rulesAreValid() or lr.indexIsValid(nbdefinedlevels-1):
+        if not (lr.rulesAreValid() and lr.indexIsValid(nbdefinedlevels-1)):
             lr = getDefaultRules(nbdefinedlevels)
             createCookieIfMissing(request, nbdefinedlevels)
     except KeyError:

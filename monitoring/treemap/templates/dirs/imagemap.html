@@ -24,11 +24,12 @@ function Modelmenu(levels,models,metrics,childrenmethods)
 	this.childrenmethods = childrenmethods;
 }
 
-menu = new Object();
+modeldynamic = new Object();
 
 function initMenu()
 {
-{% for submenuname, submenu in dynamicmenu.items %}
+
+{% for submenuname, submenu in modeldynamics.items %}
 	levels = [];
 	models = [];
 	metrics = [];
@@ -58,10 +59,35 @@ function initMenu()
 		{% endif %}
 	{% endfor %}
 	
-	menu["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods);
+	modeldynamic["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods);
 {% endfor %}
 
-	activateJsObjects();
+//structure:
+
+//cookielr[level]
+//	nblevels
+//	models["modelname"]
+//		["childrenmethod"]
+//  	["metric"] todo 
+//		...extendable here
+cookielr = new Array();
+cookielr.nblevels = {{cookierules|length}};
+
+{% for rule in cookierules %}
+	cookielr[{{forloop.counter0}}] = new Object();
+	cookielr[{{forloop.counter0}}].models = []; 
+	{% for model in rule.getUsedClassNames %} {% if not model|equals:'Annex' %} cookielr[{{forloop.parentloop.counter0}}].models.push("{{model}}"); {% endif %}{% endfor %}
+	{% for modelname in rule.getUsedClassNames %}
+		{% if not modelname|equals:'Annex' %}
+			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"] = new Object();
+			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["childrenmethod"] = {% for mname, methodname in rule.getModelToMethod %}{% if mname|equals:modelname%}"{{methodname}}";{% endif %}{% endfor %}
+			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["metric"] = {% for md, metric in rule.getModelToColumn %}{% if md|equals:modelname%}"{{metric}}";{% endif %}{% endfor %}
+		{% endif %}
+	{% endfor %}
+{% endfor %}
+
+
+activateJsObjects();
 }
 
 function activateJsObjects()
@@ -71,29 +97,28 @@ function activateJsObjects()
 	modelsmenu.options.add(new Option("Directory", "Dirs"))
 	modelsmenu.selectedIndex = 0
 	
-	setModel()
+	setModel();
+	setDefaultLevel();
 	var optmenu = document.getElementsByName("optionsmenu")[0];
 	optmenu.style.display = "inline"
 }
 
 function notImplementedWarning()
 {
-	childrenmenu = document.getElementsByName("childmethod")[0];
+	childrenmenu = document.getElementsByName("childrenmethod")[0];
 	//childrenmenu.disabled = false;
 	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.disabled = false;
 	alert("This is in a very early stage! If something doesn't work any more ,delete your cookies to restore the session and reload the page");
 }
 
-function setModel()
+function setDefaultLevel()
 {
-	modelsmenu = document.getElementsByName("model")[0];
 	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
-	newmenu = menu[selected];
-
+	newmenu = modeldynamic[selected];
+	levelsmenu = document.getElementsByName("level")[0];
 	//levelsmenu
 	{% for key, value in defaultselections.items %}{% if key|equals:"level" %}valueofdefaultitem = {{value}};{% endif %}{% endfor %}
-	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.levels.length; i++)
 	{
@@ -103,13 +128,21 @@ function setModel()
 			levelsmenu.selectedIndex = i;
 		}
 	}
-	levelsmenu.disabled = true;
-	
+	//levelsmenu.disabled = true;
+}
 
-		
+function setModel()
+{
+	modelsmenu = document.getElementsByName("model")[0];
+	levelsmenu = document.getElementsByName("level")[0];
+	metricsmenu = document.getElementsByName("metric")[0];
+	childrenmenu = document.getElementsByName("childrenmethod")[0];
+	
+	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
+	newmenu = modeldynamic[selected];
+	
 	//modelsmenu
 	{% for key, value in defaultselections.items %}{% if key|equals:"model" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	modelsmenu = document.getElementsByName("model")[0];
 	modelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.models.length; i++)
 	{	
@@ -122,7 +155,6 @@ function setModel()
 
 	//metricsmenu
 	{% for key, value in defaultselections.items %}{% if key|equals:"metric" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	metricsmenu = document.getElementsByName("metric")[0];
 	metricsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.metrics.length; i++)
 	{
@@ -135,7 +167,6 @@ function setModel()
 		
 	//childrenmenu
 	{% for key, value in defaultselections.items %}{% if key|equals:"childrenmethod" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	childrenmenu = document.getElementsByName("childmethod")[0];
 	childrenmenu.options.length = 0;
 	for (var i = 0; i < newmenu.childrenmethods.length; i++)
 	{
@@ -149,6 +180,84 @@ function setModel()
 	//alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
 	//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')
 	//optmenu.style.display = "inline"
+}
+
+function setLevel()
+{
+	modelsmenu = document.getElementsByName("model")[0];
+	levelsmenu = document.getElementsByName("level")[0];
+	metricsmenu = document.getElementsByName("metric")[0];
+	childrenmenu = document.getElementsByName("childrenmethod")[0];
+	
+	selectedlevel = levelsmenu.options[levelsmenu.selectedIndex].value;
+	var success = selectLevel(selectedlevel);
+	if (!success) return;
+	
+	if (selectedlevel < 0) selectedlevel = 0;
+	modeltoset = cookielr[selectedlevel].models[0];
+	var success = selectModel(modeltoset);
+	if (!success) return;
+	setModel();
+
+	metrictoset = cookielr[selectedlevel][modeltoset]["metric"];
+	var success = selectMetric(metrictoset);
+	if (!success) return;
+
+	childrenmethodtoset = cookielr[selectedlevel][modeltoset]["childrenmethod"];
+	var success = selectChildrenMethod(childrenmethodtoset);
+	if (!success) return;
+}
+
+function selectLevel(levelvalue)
+{
+	levelsmenu = document.getElementsByName("level")[0];
+	var index = -1;
+	for(var i = 0; i < levelsmenu.options.length; ++i)
+	{
+		if (levelsmenu.options[i].value == levelvalue) {index = i;}
+	}	          
+	if(index < 0) return false;                                 	
+	levelsmenu.selectedIndex = parseInt(index);
+	return true;
+}
+
+function selectModel(modelvalue)
+{
+	modelsmenu = document.getElementsByName("model")[0];
+	var index = -1;
+	for(var i = 0; i < modelsmenu.options.length; ++i)
+	{
+		if (modelsmenu.options[i].value == modelvalue) index = i;
+	}	          
+	if(index < 0) return false;                                   	
+	modelsmenu.selectedIndex = index;
+	return true;
+}
+
+function selectMetric(metricvalue)
+{
+	metricsmenu = document.getElementsByName("metric")[0];
+	var index = -1;
+	for(var i = 0; i < metricsmenu.options.length; ++i)
+	{
+		if (metricsmenu.options[i].value == metricvalue) index = i;
+	}	          
+	if(index < 0) return false;                                   	
+	metricsmenu.selectedIndex = index;
+	return true;
+}
+
+function selectChildrenMethod(childrenmethodvalue)
+{
+	childrenmethodsmenu = document.getElementsByName("childrenmethod")[0];
+	var index = -1;
+	for(var i = 0; i < childrenmethodsmenu.options.length; ++i)
+	{
+		if (childrenmethodsmenu.options[i].value == childrenmethodvalue) index = i;
+	}	          
+	if(index < 0) return false;                                   	
+	childrenmethodsmenu.selectedIndex = index;
+	return true;
 }
 
 function showHelp()
@@ -290,6 +399,9 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					<td class="descriptiontext">Presets:</td> 
 					
 					<td><select class="dmenuwidth" name="preset" id="id_preset">
+						{% for presetname in presetnames %}
+							<option value="{{presetname}}">{{presetname}}</option>
+						{% endfor %}
 					</select></td></tr>
 					
 					<tr><td>
@@ -305,7 +417,7 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					<tr>
 					<td class="descriptiontext">Level:</td> 
 					
-					<td><select class="dmenuwidth" name="level" id="id_level">
+					<td><select class="dmenuwidth" name="level" id="id_level" onchange="setLevel()">
 					</select></td></tr>
 					
 					<tr>
@@ -320,7 +432,7 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					
 					<tr>
 					<td class="descriptiontext">Getting children:</td>
-					<td><select class="dmenuwidth" name="childmethod" id="id_childmethod">
+					<td><select class="dmenuwidth" name="childrenmethod" id="id_childrenmethod">
 					</select></td></tr>
 					<tr><td>
 						<br>
