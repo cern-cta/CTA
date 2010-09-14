@@ -584,3 +584,59 @@ void castor::tape::python::getPythonFunctionArgumentNamesWithLock(
 
   getPythonFunctionArgumentNames(inspectGetargspecFunc, pyFunc, argumentNames);
 }
+
+
+//---------------------------------------------------------------------------
+// checkFuncArgNames
+//---------------------------------------------------------------------------
+void castor::tape::python::checkFuncArgNames(
+  const std::string              &funcName,
+  const std::vector<std::string> &expectedArgNames,
+  PyObject                *const inspectGetargspecFunc,
+  PyObject                *const pyFunc)
+  throw(castor::exception::InvalidConfiguration) {
+
+  // Get the names of the actual arguments of the migration-policy
+  // Python-function
+  std::vector<std::string> actualArgNames;
+  python::getPythonFunctionArgumentNamesWithLock(inspectGetargspecFunc, pyFunc,
+    actualArgNames);
+
+  // Throw an InvalidConfiguration exception if the number of parameters is
+  // wrong
+  if(actualArgNames.size() != expectedArgNames.size()) {
+    castor::exception::InvalidConfiguration ex;
+    ex.getMessage() <<
+      "Invalid configuration"
+      ": Python-function has the wrong number of arguments"
+      ": funcName="         << funcName <<
+      ", expectedNbParams=" << expectedArgNames.size() <<
+      ", actualNbParams="   << actualArgNames.size() <<
+      ", expectedParams='"  << utils::vectorOfStringToString(expectedArgNames)
+                            << "'" <<
+      ", actualParams='"    << utils::vectorOfStringToString(actualArgNames)
+                            << "'";
+    throw(ex);
+  }
+
+  // Throw an InvalidConfiguration exception if one of the function argument
+  // names does not match what is expected
+  for(std::vector<std::string>::size_type i=0;
+    i<expectedArgNames.size(); i++) {
+    if(expectedArgNames[i] != actualArgNames[i]) {
+      castor::exception::InvalidConfiguration ex;
+      ex.getMessage() <<
+        "Invalid configuration"
+        ": Python-function has an unexpected argument name"
+        ": funcName="        << funcName <<
+        ", argumentIndex="   << i <<
+        ", expectedName="    << expectedArgNames[i] <<
+        ", actualName="      << actualArgNames[i] <<
+        ", expectedParams='" << utils::vectorOfStringToString(expectedArgNames)
+                             << "'" <<
+        ", actualParams='"   << utils::vectorOfStringToString(actualArgNames)
+                             << "'";
+      throw(ex);
+    }
+  }
+}

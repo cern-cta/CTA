@@ -30,6 +30,7 @@
 #include <Python.h>
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidConfiguration.hpp"
 
 #include <string>
 #include <vector>
@@ -269,6 +270,25 @@ void getPythonFunctionArgumentNamesWithLock(
   PyObject          *const pyFunc,
   std::vector<std::string> &argumentNames)
   throw(castor::exception::Exception);
+
+/**
+ * Checks whether or not the specified Python-function has the specified
+ * argument names.
+ *
+ * This method raises an InvalidConfiguration exception if the specified
+ * Python-function does not have the correct argument-names.
+ *
+ * @param funcName              Input: The name of the Python-function.
+ * @param expectedArgNames      Input: The expected argument-names.
+ * @param inspectGetargspecFunc Input: The inspect.getargspec Python-function.
+ * @param pyFunc                Input: The Python-function.
+ */
+void checkFuncArgNames(
+  const std::string              &funcName,
+  const std::vector<std::string> &expectedArgNames,
+  PyObject                *const inspectGetargspecFunc,
+  PyObject                *const pyFunc)
+  throw(castor::exception::InvalidConfiguration);
 
 } // namespace python
 } // namespace tape
