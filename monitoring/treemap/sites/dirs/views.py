@@ -328,11 +328,31 @@ def preset(request, theid):
         except KeyError:
             return redirect(to = '..', args = {'request':request, 'theid':theid})
         
+        flatview = False
+        try:
+            posted['flat_view']
+            flatview = True
+        except KeyError:
+            pass
+        
         if presetname not in sites.dirs.Presets.getPresetNames():
             return redirect(to = '..', args = {'request':request, 'theid':theid})
 #            return HttpResponse("Posted data is not correct")
         
         lr = sites.dirs.Presets.getPreset(presetname)
+        
+        if flatview:
+            newlr = LevelRules()
+            for count, rule in enumerate(lr.getRules()):
+                newlr.appendRuleObject(rule)
+                if(count == 1): break
+            
+            for i in range(2, lr.countDefinedLevels()):
+                newlr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+                
+            lr = newlr
+            
+        request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname}
         request.session['levelrules'] = lr
         
     else:
@@ -446,8 +466,9 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
-     'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'defaultselections': getCurrentUserSelections(request), \
-     'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames} , context_instance=None)
+     'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'advanceddefault': getCurrentAdvancedSelections(request), \
+     'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
+     'presetdefault':getCurrentPresetSelections(request)} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
@@ -634,16 +655,27 @@ def updateUserCookie(request, rules, level, model, metric, childrenmethodname):
     request.session['levelrules'] = rules       
     request.session['defaultselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname}
 
-def getCurrentUserSelections(request):
+def getCurrentAdvancedSelections(request):
     try:
         request.session['userhascookie']
         return request.session['defaultselection']
     except KeyError:
         request.session['userhascookie'] = True
         return getDefaultSelection()
+    
+def getCurrentPresetSelections(request):
+    try:
+        request.session['userhascookie']
+        return request.session['defaultpreset']
+    except KeyError:
+        request.session['userhascookie'] = True
+        return getDefaultPresets()
         
 def getDefaultSelection():
     return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
+
+def getDefaultPresets():
+    return{'flat': True, 'presetname': 'default'}
         
 def getDefaultRules(nblevels):
     lr = sites.dirs.Presets.getPreset("Directory structure")

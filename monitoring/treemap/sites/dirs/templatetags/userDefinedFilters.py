@@ -31,6 +31,11 @@ def equals(value, arg):
     return bool
 equals.is_safe = True
 
+def bool(value):
+    bool = (value == True)
+    return bool
+bool.is_safe = True
+
 def contains(array, value):
     return value in array
 contains.is_safe = True
@@ -52,3 +57,4 @@ register.filter('div', div)
 register.filter('escapefilter', escapefilter)
 register.filter('equals', equals)
 register.filter('contains', contains)
+register.filter('bool', bool)

@@ -118,7 +118,7 @@ function setDefaultLevel()
 	newmenu = modeldynamic[selected];
 	levelsmenu = document.getElementsByName("level")[0];
 	//levelsmenu
-	{% for key, value in defaultselections.items %}{% if key|equals:"level" %}valueofdefaultitem = {{value}};{% endif %}{% endfor %}
+	{% for key, value in advanceddefault.items %}{% if key|equals:"level" %}valueofdefaultitem = {{value}};{% endif %}{% endfor %}
 	levelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.levels.length; i++)
 	{
@@ -142,7 +142,7 @@ function setModel()
 	newmenu = modeldynamic[selected];
 	
 	//modelsmenu
-	{% for key, value in defaultselections.items %}{% if key|equals:"model" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
+	{% for key, value in advanceddefault.items %}{% if key|equals:"model" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	modelsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.models.length; i++)
 	{	
@@ -154,7 +154,7 @@ function setModel()
 	}
 
 	//metricsmenu
-	{% for key, value in defaultselections.items %}{% if key|equals:"metric" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
+	{% for key, value in advanceddefault.items %}{% if key|equals:"metric" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	metricsmenu.options.length = 0;
 	for (var i = 0; i < newmenu.metrics.length; i++)
 	{
@@ -166,7 +166,7 @@ function setModel()
 	}
 		
 	//childrenmenu
-	{% for key, value in defaultselections.items %}{% if key|equals:"childrenmethod" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
+	{% for key, value in advanceddefault.items %}{% if key|equals:"childrenmethod" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
 	childrenmenu.options.length = 0;
 	for (var i = 0; i < newmenu.childrenmethods.length; i++)
 	{
@@ -400,9 +400,17 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					
 					<td><select class="dmenuwidth" name="preset" id="id_preset">
 						{% for presetname in presetnames %}
-							<option value="{{presetname}}">{{presetname}}</option>
+							<option {% spaceless %}
+							{% for key, value in presetdefault.items %}
+								{% if key|equals:"presetname" and value|equals:presetname %}selected{% endif %}
+							{% endfor %}
+							{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
 						{% endfor %}
 					</select></td></tr>
+					
+					<tr><td></td><td class="descriptiontext">
+						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
+					</td></tr>
 					
 					<tr><td>
 						<input class="applybutton" type="submit" value="Apply"/>

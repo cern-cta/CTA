@@ -46,8 +46,11 @@ class TreeBuilder(object):
         
         if classname == 'Annex':
             rootisannex = True
-
-        parentmethodname =  self.rules.getParentMethodNameFor(level, classname)
+        try:
+            parentmethodname =  self.rules.getParentMethodNameFor(level, classname)
+        except KeyError:
+            raise Exception("no parentmethod for " + classname + " found.")
+        
         fparam = self.rules.getParamFor(level, classname)
         rootevalcolumn = self.rules.getColumnNameFor(0, classname)
         

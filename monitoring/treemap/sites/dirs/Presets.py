@@ -39,12 +39,13 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["default"] = lr
+presetdict["Default"] = lr
 
 #Preset for Number of Files
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbfiles', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) ##just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Number of files"] = lr
 
@@ -68,6 +69,7 @@ presetdict["Data on tapes"] = lr
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbtapes', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Number of tapes"] = lr
 
@@ -91,6 +93,7 @@ presetdict["Number of file copies on tapes"] = lr
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbsubdirs', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Number of directories"] = lr
 
@@ -98,6 +101,7 @@ presetdict["Number of directories"] = lr
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'timetomigrate', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Time to migrate"] = lr
 
@@ -105,6 +109,7 @@ presetdict["Time to migrate"] = lr
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'timelostintapemarks', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Time lost in tape marks"] = lr
 
@@ -112,6 +117,7 @@ presetdict["Time lost in tape marks"] = lr
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'opttimetorecall', i)
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Optimal time to recall"] = lr
 
