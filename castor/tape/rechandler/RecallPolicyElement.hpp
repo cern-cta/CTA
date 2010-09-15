@@ -39,17 +39,19 @@ namespace rechandler {
 
       std::string svcClassName;
 
-      u_signed64 numBytes;
+      u_signed64 totalBytes;
 
-      u_signed64 numFiles;
+      u_signed64 numSegments;
 
-      u_signed64 oldest;
+      u_signed64 ageOfOldestSegment;
 
       std::string vid;
 
       u_signed64 tapeId;
 
       u_signed64 priority;
+
+      u_signed64 status;
 
     }; /* end of class RecallPolicyElement */
 

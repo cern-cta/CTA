@@ -53,6 +53,8 @@
 #include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 
+#include "castor/stager/TapeStatusCodes.hpp"
+
 // to implement the priority hack
 
 extern "C" {
@@ -87,18 +89,15 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
   std::list<castor::tape::rechandler::RecallPolicyElement>::iterator infoCandidate;
   std::list<u_signed64> eligibleTapeIds; // output with Id to resurrect
   std::list<castor::tape::rechandler::RecallPolicyElement> infoCandidateTape;
- 
-  
-  try{
 
+  try{
       
     timeval tvStart,tvEnd;
     gettimeofday(&tvStart, NULL);
 
-
-
-    // get information from the db    
-    oraSvc->inputForRecallPolicy(infoCandidateTape);
+    // get information from the db   
+    int nbMountsForRecall=0; 
+    oraSvc->tapesAndMountsForRecallPolicy(infoCandidateTape,nbMountsForRecall);
     
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
@@ -107,91 +106,99 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
 	    castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
     
-    
     if (infoCandidateTape.empty()) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, TAPE_NOT_FOUND, paramsDb);
       return;
     }
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, TAPE_FOUND, paramsDb);
-
-    // initialize the pysvc with the policy name
-
+     
     infoCandidate=infoCandidateTape.begin();
 
     while ( infoCandidate != infoCandidateTape.end() ){
-      // call the policy for each one	
-      castor::dlf::Param paramsInput[] =
-	{
-	 castor::dlf::Param("TPVID", (*infoCandidate).vid),
-	 castor::dlf::Param("numFiles", (*infoCandidate).numFiles),
-	 castor::dlf::Param("numBytes", (*infoCandidate).numBytes),
-	 castor::dlf::Param("age", (*infoCandidate).oldest),
-	 castor::dlf::Param("priority", (*infoCandidate).priority)  
-	};
-
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_INPUT, paramsInput);
-
-
-      try {
-	if ( m_pyFunction == NULL ) {
-	  //no priority sent
-
-	  eligibleTapeIds.push_back((*infoCandidate).tapeId); // tape to resurrect
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("TPVID", (*infoCandidate).vid)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,ALLOWED_WITHOUT_POLICY , params);
-
-	} else {
-	  
-	  int priorityChosen=applyRecallPolicy(*infoCandidate);
-	  
-	  if (priorityChosen >= 0) {
-	    eligibleTapeIds.push_back((*infoCandidate).tapeId); // tape to resurrect
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("TPVID", (*infoCandidate).vid),
-	       castor::dlf::Param("priority", priorityChosen)};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_BY_POLICY, params);
+      
+      bool tagForRecallAllowed=true;
+      
+      if ( castor::stager::TAPE_WAITPOLICY == infoCandidate->status ) { // tape in WAITPOLICY state
+        // here we only allow or disallow a recall from the tape
+        try {
+          if ( m_pyFunction == NULL ) {  //no priority sent
+            eligibleTapeIds.push_back(infoCandidate->tapeId); // tape to resurrect
+            nbMountsForRecall++;
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("TPVID", infoCandidate->vid)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,ALLOWED_WITHOUT_POLICY , params);
+          } else {
+	      castor::dlf::Param paramsInput[] =
+		{
+		 castor::dlf::Param("TPVID", infoCandidate->vid),
+		 castor::dlf::Param("numSegments", infoCandidate->numSegments),
+		 castor::dlf::Param("totalBytes", infoCandidate->totalBytes),
+		 castor::dlf::Param("ageOfOldestSegment", infoCandidate->ageOfOldestSegment),
+		 castor::dlf::Param("priority", infoCandidate->priority),
+		 castor::dlf::Param("nbMountsForRecall", nbMountsForRecall)  
+		};
+	
+	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_INPUT, paramsInput);
 	      
-	    // call to VDQM with the priority (temporary hack)
-	    gettimeofday(&tvStart, NULL);
-	    
-	    vdqm_SendVolPriority((char*)(*infoCandidate).vid.c_str(),0,priorityChosen,0);
-	    
-	    gettimeofday(&tvEnd, NULL);
-	    procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-	    castor::dlf::Param paramsVdqm[] =
-	      {
-		castor::dlf::Param("TPVID",(*infoCandidate).vid),
-		castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-		castor::dlf::Param("Priority", priorityChosen)
-	      };
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRIORITY_SENT, paramsVdqm);
-	     
-     
+              // call the Python function for the RecallPolicy  
+              bool priorityChosen=applyRecallPolicy(*infoCandidate,nbMountsForRecall);
 
+              if ( priorityChosen ) {  
+                eligibleTapeIds.push_back(infoCandidate->tapeId); // tape to resurrect
+                nbMountsForRecall++;
+                castor::dlf::Param params[] =
+                  {
+                   castor::dlf::Param("TPVID", infoCandidate->vid),
+                   castor::dlf::Param("priority", infoCandidate->priority)
+                  };
+                castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_BY_POLICY, params);
+               } else {
+               	 tagForRecallAllowed=false; //we do not have to update VDQM      
+                 castor::dlf::Param params[] =
+                   {castor::dlf::Param("TPVID", infoCandidate->vid)};
+                   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, NOT_ALLOWED, params);
+               }
+          }
+        } catch (castor::exception::Exception e) { // python exception
+            castor::dlf::Param params[] =
+              {
+               castor::dlf::Param("code", sstrerror(e.code())),
+               castor::dlf::Param("message", e.getMessage().str())
+             };
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PYTHON_ERROR , params);
+    
+            // we allow the recall
+            eligibleTapeIds.push_back(infoCandidate->tapeId);
+            nbMountsForRecall++;
 
+            castor::dlf::Param params2[] =
+              {castor::dlf::Param("TPVID", infoCandidate->vid)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_WITHOUT_POLICY, params2);
+        }
 
-	  } else {
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("TPVID", (*infoCandidate).vid)};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, NOT_ALLOWED, params);
-	  }
-	}
-      } catch (castor::exception::Exception e) {
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("code", sstrerror(e.code())),
-	   castor::dlf::Param("message", e.getMessage().str())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PYTHON_ERROR , params);
-	// I allow the recall
-
-	eligibleTapeIds.push_back((*infoCandidate).tapeId);
- 
-	castor::dlf::Param params2[] =
-	  {castor::dlf::Param("TPVID", (*infoCandidate).vid)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_WITHOUT_POLICY, params2);
+      } else { // tape in status PENDING or WAITDRIVE
+         ; // the tape already in VDQM 
+           // we can only change priority in the queue here 
       }
 
+      // if the recall is not allowed do not update VDQM with the priority
+      if ( tagForRecallAllowed ) {
+        gettimeofday(&tvStart, NULL);
+	    
+        vdqm_SendVolPriority((char*)infoCandidate->vid.c_str(),0,(int)infoCandidate->priority,0);
+	    
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+        castor::dlf::Param paramsVdqm[] =
+	  {
+	   castor::dlf::Param("TPVID",infoCandidate->vid),
+	   castor::dlf::Param("ProcessingTime", procTime * 0.000001),
+	   castor::dlf::Param("Priority", infoCandidate->priority)
+	  };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRIORITY_SENT, paramsVdqm);
+      }
+	     
       infoCandidate++;
 
     }
@@ -229,14 +236,13 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
  
   eligibleTapeIds.clear();
   infoCandidateTape.clear();
-
 }   
 
 //-----------------------------------------------------------------
 //  applyRecallPolicy
 //-----------------------------------------------------------------
 
-int castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPolicyElement& elem)
+bool castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPolicyElement& elem, const int nbMountsForRecall)
   throw (castor::exception::Exception ){
 
   //apply the policy using a scoped lock as protection
@@ -252,7 +258,8 @@ int castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPo
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue("(s,K,K,K,K)", (elem.vid).c_str(),elem.numFiles,elem.numBytes,elem.oldest,elem.priority));
+  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue("(s,K,K,K,K,K)", 
+  	  (elem.vid).c_str(),elem.numSegments,elem.totalBytes,elem.ageOfOldestSegment,elem.priority,nbMountsForRecall));
 
   
   // Call the retry_migration-policy Python-function
@@ -268,8 +275,8 @@ int castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallPo
   }
 
   // Return the result of the Python function
-  const int resultInt = PyInt_AsLong(resultObj.get());
-  return resultInt;
+  const bool resultBool = PyInt_AsLong(resultObj.get());
+  return resultBool;
 
 
 }

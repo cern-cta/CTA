@@ -168,47 +168,79 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
     recallFunctionName=tmpStr;
   }
 
-  // Initialize Python
-
   castor::tape::python::initializePython();
 
   // Load the policies
-
-  castor::tape::python::ScopedPythonLock scopedLock;
-
-
-  // Load the policies
-
-  PyObject* recallDict = NULL;
-
+  PyObject *recallDict = NULL;
   if (!recallPolicyName.empty()){
-
-    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName.c_str());
-
+    recallDict =
+      python::importPolicyPythonModuleWithLock(recallPolicyName.c_str());
   }
   
-  // Get the functions from the dictionaries to be used by the threads
-  // name of the function is the same as the module
-    
-  PyObject * recallFunction=NULL;
-
+  // Get the rechandler-policy Python-function if the Python-module was present.
+  // The name of the function is the same as the module.
+  PyObject * recallFunction = NULL;
   if (recallDict && !recallFunctionName.empty()) {
-
-    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallFunctionName.c_str());
-
+    recallFunction = python::getPythonFunctionWithLock(recallDict,
+      recallFunctionName.c_str());
   }
 
-  // parse command line 
+  // Check the arguments of the recall-policy Python-function are valid if the
+  // function is present
+  if(recallFunction != NULL) {
+    // Load the Python inspect module
+    PyObject *const inspectDict = python::importPythonModuleWithLock("inspect");
+
+    // Get a handle on the inspect.getargspec Python-function
+    PyObject *const inspectGetargspecFunc = python::getPythonFunctionWithLock(
+      inspectDict, "getargspec");
+
+    // Throw an exception if the handle on the Python-function could not be
+    // obtained
+    if(inspectGetargspecFunc == NULL) {
+      // Try to determine the Python exception if there was a Python error
+      PyObject *const pyEx = PyErr_Occurred();
+      const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+      // Clear the Python error if there was one
+      if(pyEx != NULL) {
+        PyErr_Clear();
+      }
+
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        "Failed to get handle on Python-function"
+        ": moduleName=inspect"
+        ", functionName=getargspec"
+        ", pythonException=" << pyExStr;
+      throw(ex);
+    }
+
+    // Define the expected function-arguments
+    std::vector<std::string> expectedRecallPolicyArgNames;
+    expectedRecallPolicyArgNames.push_back("vid");
+    expectedRecallPolicyArgNames.push_back("numSegments");
+    expectedRecallPolicyArgNames.push_back("totalBytes");
+    expectedRecallPolicyArgNames.push_back("ageOfOldestSegment");
+    expectedRecallPolicyArgNames.push_back("priority");
+    expectedRecallPolicyArgNames.push_back("nbMountsForRecall");
+
+    // The following method will throw an InvalidConfiguration exception in
+    // the case the expected and actual function-arguments do not match
+    python::checkFuncArgNames(recallFunctionName.c_str(),
+      expectedRecallPolicyArgNames, inspectGetargspecFunc, recallFunction);
+  }
 
   parseCommandLine(argc,argv);
 
-  // force it to run as stage:st
-
+  // Force it to run as stage:st
   runAsStagerSuperuser();
-
   
-  std::auto_ptr<castor::tape::rechandler::RecHandlerThread> recThread(new castor::tape::rechandler::RecHandlerThread(recallFunction));
-  std::auto_ptr<castor::server::SignalThreadPool> recPool(new castor::server::SignalThreadPool("RecHandlerThread", recThread.release(), m_sleepTime));
+  std::auto_ptr<RecHandlerThread>
+    recThread(new RecHandlerThread(recallFunction));
+  std::auto_ptr<castor::server::SignalThreadPool>
+    recPool(new castor::server::SignalThreadPool("RecHandlerThread",
+      recThread.release(), m_sleepTime));
   addThreadPool(recPool.release());
   getThreadPool('R')->setNbThreads(1);
   start();

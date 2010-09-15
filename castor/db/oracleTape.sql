@@ -52,6 +52,15 @@ CREATE OR REPLACE PACKAGE castorTape AS
     expireTime NUMBER,
     priority NUMBER);
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
+  TYPE RecallMountsForPolicy IS RECORD (
+    tapeId             NUMBER,
+    vid                VARCHAR2(2048),
+    numSegments        NUMBER,
+    totalBytes         NUMBER,
+    ageOfOldestSegment NUMBER,
+    priority           NUMBER,
+    status             NUMBER);
+  TYPE RecallMountsForPolicy_Cur IS REF CURSOR RETURN RecallMountsForPolicy;
   TYPE FileToRecallCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
@@ -1504,6 +1513,50 @@ BEGIN
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED
      GROUP BY Tape.id, Tape.vid;
 END;
+/
+
+CREATE OR REPLACE PROCEDURE tapesAndMountsForRecallPolicy (
+  outRecallMounts      OUT castorTape.RecallMountsForPolicy_Cur,
+  outNbMountsForRecall OUT NUMBER)
+AS
+-- Retrieves the input for the rechandler daemon to pass to the
+-- rechandler-policy Python-function
+--
+-- @param outRecallMounts      List of recall-mounts which are either pending,
+--                             waiting for a drive or waiting for the
+--                             rechandler-policy.
+-- @param outNbMountsForRecall The total number of recall-mounts which are
+--                             either passed by the rechandler-policy,
+--                             waiting for a drive, waiting to be mounted or
+--                             are already mounted.
+BEGIN
+  SELECT count(distinct Tape.vid )
+    INTO outNbMountsForRecall
+    FROM Tape
+   WHERE Tape.status IN (1, 2, 3, 4) -- PENDING, WAITDRIVE, WAITMOUNT, MOUNTED
+     AND TPMODE = 0; -- read requests
+
+    OPEN outRecallMounts
+     FOR SELECT /*+ NO_USE_MERGE(TAPE SEGMENT TAPECOPY CASTORFILE) NO_USE_HASH(TAPE SEGMENT TAPECOPY CASTORFILE) INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPE) INDEX_RS_ASC(TAPE I_TAPE_STATUS) INDEX_RS_ASC(TAPE
+COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
+                Tape.vid,
+                count ( distinct segment.id ),
+                sum ( CastorFile.fileSize ),
+                getTime ( ) - min ( Segment.creationTime ),
+                max ( Segment.priority ),
+                Tape.status
+           FROM TapeCopy,
+                CastorFile,
+                Segment,
+                Tape
+          WHERE Tape.id = Segment .tape
+            AND TapeCopy.id = Segment .copy
+            AND CastorFile.id = TapeCopy.castorfile
+            AND Tape.status IN (1, 2, 8) -- PENDING, WAITDRIVE, WAITPOLICY
+            AND Segment.status = 0 -- SEGMENT_UNPROCESSED
+          GROUP BY Tape.id, Tape.vid, Tape.status;
+    
+END tapesAndMountsForRecallPolicy;
 /
 
 /* resurrect tapes */

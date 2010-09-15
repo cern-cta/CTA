@@ -51,7 +51,7 @@ namespace rechandler{
     class RecHandlerThread : public castor::server::BaseDbThread {
       
       PyObject* m_pyFunction; 
-      int applyRecallPolicy(const RecallPolicyElement& elem)
+      bool applyRecallPolicy(const RecallPolicyElement& elem, const int nbMountsForRecall)
 	throw (castor::exception::Exception );
     
     public:

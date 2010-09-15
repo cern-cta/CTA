@@ -67,6 +67,14 @@ namespace rechandler {
 	virtual void resurrectTapes(const std::list<u_signed64>& eligibleTapeIds) 
 	  throw (castor::exception::Exception)=0;
 
+        /**
+         * tapesAndMountsForRecallPolicy
+         */
+
+        virtual void tapesAndMountsForRecallPolicy(std::list<RecallPolicyElement>& candidates, int& nbMountsForRecall)
+          throw (castor::exception::Exception)=0;
+
+
 
     }; // end of class IRecHandlerSvc
     

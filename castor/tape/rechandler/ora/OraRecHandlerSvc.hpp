@@ -94,6 +94,10 @@ namespace ora        {
 
 	virtual void resurrectTapes(const std::list<u_signed64>& eligibleTapeIds) throw (castor::exception::Exception);
 
+        /**
+         * tapesAndMountsForRecallPolicy
+         */
+        virtual void tapesAndMountsForRecallPolicy(std::list<RecallPolicyElement>& candidates, int& nbMountsForRecall) throw (castor::exception::Exception);
 
       private:
 
@@ -108,6 +112,12 @@ namespace ora        {
 
         /// SQL statement object for function resurrectTapes
 	oracle::occi::Statement *m_resurrectTapesStatement;
+
+        /// SQL statement for tapesAndMountsForRecallPolicy
+        static const std::string s_tapesAndMountsForRecallPolicyStatementString;
+
+        /// SQL statement object for function tapesAndMountsForRecallPolicy
+        oracle::occi::Statement *m_tapesAndMountsForRecallPolicyStatement;
 	
       }; // end of class OraRecHandlerSvc
 
