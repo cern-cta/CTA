@@ -273,11 +273,6 @@ def changeMetrics(request, theid):
     
     if request.method == 'POST':
         createCookieIfMissing(request, nblevels)
-        
-        cookiesenabled = request.session.test_cookie_worked()
-        if not cookiesenabled:
-            return redirect(to = '..', args = {'request':request, 'theid':theid})
-
             
         posted = {}
         posted = request.POST
@@ -315,10 +310,6 @@ def preset(request, theid):
     
     if request.method == 'POST':
         createCookieIfMissing(request, nblevels)
-        
-        cookiesenabled = request.session.test_cookie_worked()
-        if not cookiesenabled:
-            return redirect(to = '..', args = {'request':request, 'theid':theid})
             
         posted = {}
         posted = request.POST
@@ -615,7 +606,7 @@ def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
     
     #level menu
     if(levelvalue < 0):
-        defselection = getDefaultSelection()
+        defselection = getAdvancedSelection()
         defselection['level'] = -1
         return defselection
     
@@ -646,22 +637,26 @@ def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
 def createCookieIfMissing(request, nblevels):
     try:
         request.session['userhascookie']
+        request.session['levelrules']
+        request.session['advancedselection']
+        request.session['defaultpreset']
     except KeyError:
         request.session['userhascookie'] = True
         request.session['levelrules'] = getDefaultRules(nblevels)
-        request.session['defaultselection'] = getDefaultSelection()
+        request.session['advancedselection'] = getAdvancedSelection()
+        request.session['defaultpreset'] = getDefaultPresets()
         
 def updateUserCookie(request, rules, level, model, metric, childrenmethodname):
     request.session['levelrules'] = rules       
-    request.session['defaultselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname}
+    request.session['advancedselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname}
 
 def getCurrentAdvancedSelections(request):
     try:
         request.session['userhascookie']
-        return request.session['defaultselection']
+        return request.session['advancedselection']
     except KeyError:
         request.session['userhascookie'] = True
-        return getDefaultSelection()
+        return getAdvancedSelection()
     
 def getCurrentPresetSelections(request):
     try:
@@ -671,11 +666,11 @@ def getCurrentPresetSelections(request):
         request.session['userhascookie'] = True
         return getDefaultPresets()
         
-def getDefaultSelection():
+def getAdvancedSelection():
     return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
 
 def getDefaultPresets():
-    return{'flat': True, 'presetname': 'default'}
+    return{'flat': False, 'presetname': 'Default'}
         
 def getDefaultRules(nblevels):
     lr = sites.dirs.Presets.getPreset("Directory structure")
