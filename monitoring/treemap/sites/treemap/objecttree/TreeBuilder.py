@@ -109,9 +109,12 @@ class TreeBuilder(object):
             for child in children:
                 chclassname = child.__class__.__name__
                 
-                chcolumnname = self.rules.getColumnNameFor(level + 1, chclassname)
-                chparam = self.rules.getParamFor(level + 1, chclassname)
-                parentmethodname =  self.rules.getParentMethodNameFor(level + 1, chclassname)
+                try:
+                    chcolumnname = self.rules.getColumnNameFor(level + 1, chclassname)
+                    chparam = self.rules.getParamFor(level + 1, chclassname)
+                    parentmethodname =  self.rules.getParentMethodNameFor(level + 1, chclassname)
+                except KeyError:
+                    return
                 
                 thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
                 treenodechildren.append(thechild)
