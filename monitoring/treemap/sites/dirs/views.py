@@ -94,22 +94,7 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     
     start = datetime.datetime.now()
     print "linking metrics to graphical properties"
-    mlinker = MetricsLinker()
-    mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
-    mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
-    mlinker.addPropertyLink('Annex', 'htmlinfotext', AnnexHtmlInfoDimension())
-    mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
-    mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
-    
-    mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
-    
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    mlinker = getDefaultMetricsLinking()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
@@ -227,22 +212,7 @@ def groupView(request, parentpk, depth, model, refresh_cache = False):
 
     start = datetime.datetime.now()
     print "linking metrics to graphical properties"
-    mlinker = MetricsLinker()
-    mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
-    mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
-    mlinker.addPropertyLink('Annex', 'htmlinfotext', AnnexHtmlInfoDimension())
-    mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
-    mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
-    
-    mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
-    
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    mlinker = getDefaultMetricsLinking()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
@@ -277,7 +247,7 @@ def changeMetrics(request, theid):
         posted = {}
         posted = request.POST
         
-        if not PostedDataCheckSuccessful(posted, nblevels):
+        if not postedDataCheckSuccessful(posted, nblevels):
             return HttpResponse("Posted data is not correct")
         
         model = posted['model']
@@ -469,7 +439,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
 
-def PostedDataCheckSuccessful(posted, nblevels):
+def postedDataCheckSuccessful(posted, nblevels):
     availablemodels = getAvailableModels()
     if posted['model'] not in availablemodels: return False
     
@@ -638,9 +608,10 @@ def createCookieIfMissing(request, nblevels):
     try:
         request.session['userhascookie']
         request.session['levelrules']
+        request.session['levelrules'].getPostProcessorNameFor(0,'Annex')
         request.session['advancedselection']
         request.session['defaultpreset']
-    except KeyError:
+    except (KeyError, AttributeError):
         request.session['userhascookie'] = True
         request.session['levelrules'] = getDefaultRules(nblevels)
         request.session['advancedselection'] = getAdvancedSelection()
@@ -665,35 +636,12 @@ def getCurrentPresetSelections(request):
     except KeyError:
         request.session['userhascookie'] = True
         return getDefaultPresets()
-        
-def getAdvancedSelection():
-    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
-
-def getDefaultPresets():
-    return{'flat': False, 'presetname': 'Default'}
-        
-def getDefaultRules(nblevels):
-    lr = sites.dirs.Presets.getPreset("Directory structure")
-    return lr
 
 def getCookieRules(request, nbdefinedlevels):
     lr = None
-    try:
-        lr = request.session['levelrules']
-        if not (lr.rulesAreValid() and lr.indexIsValid(nbdefinedlevels-1)):
-            lr = getDefaultRules(nbdefinedlevels)
-            createCookieIfMissing(request, nbdefinedlevels)
-    except KeyError:
-        lr = getDefaultRules(nbdefinedlevels)
-        createCookieIfMissing(request, nbdefinedlevels)
-        
+    createCookieIfMissing(request, nbdefinedlevels)
+    lr = request.session['levelrules']
     return lr
-
-def getDefaultModel():
-    return 'Dirs'
-
-def getDefaultNumberOfLevels():
-    return 8
 
 def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
@@ -703,3 +651,38 @@ def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
     lrkeypart = lr.getUniqueLevelRulesId()            
     cache_key = 'template.cache.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart)
     return cache_key
+
+def getDefaultRules(nblevels):
+    lr = sites.dirs.Presets.getPreset("Directory structure")
+    return lr
+
+def getDefaultModel():
+    return 'Dirs'
+
+def getDefaultNumberOfLevels():
+    return 8
+
+def getAdvancedSelection():
+    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
+
+def getDefaultPresets():
+    return{'flat': False, 'presetname': 'Default'}
+    
+def getDefaultMetricsLinking():
+    mlinker = MetricsLinker()
+    mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
+    mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
+    mlinker.addPropertyLink('Annex', 'htmlinfotext', AnnexHtmlInfoDimension())
+    mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
+    mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
+    
+    mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
+    mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
+    mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
+    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
+    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
+    
+    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    return mlinker

@@ -6,6 +6,7 @@ Created on May 18, 2010
 from sites.errors import ConfigError
 from sites.tools.ModelsInspection import *
 from sites.tools.ObjectCreator import createObject
+from sites.treemap.objecttree.Postprocessors import *
 import exceptions
 import inspect
 import sys
@@ -25,17 +26,20 @@ class ChildRules(object):
         self.parentmethods = {}
         self.fparams = {}
         self.columnnames = {}
+        self.ppnames = {}
     
-    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None):
+    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None, postprocessornm = None):
         countmethodname = getCountMethodFor(classname, methodname)
+
         modulename = getModelsModuleName(classname)
-        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname) and countmethodname is not None:
+        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname, postprocessornm) and countmethodname is not None:
             index = classname
             self.methods[index] = methodname
             self.countmethods[index] = countmethodname
             self.fparams[index] = fparam
             self.columnnames[index] = columnname
             self.parentmethods[index] = parentmethodname
+            self.ppnames[index] = postprocessornm
         else: 
             raise Warning('Rule for ' + classname + ' could not be added. Methodname is ' + methodname)
         
@@ -60,7 +64,7 @@ class ChildRules(object):
         ret = []
         indexkeys = self.methods.keys()
         for index in indexkeys:
-            ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'columnname': self.columnnames[index], 'fparam': self.fparams[index]})
+            ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'columnname': self.columnnames[index], 'fparam': self.fparams[index], 'postprocessorname': self.ppnames[index]})
         return ret
             
     def getMethodNameFor(self, classname):
@@ -78,7 +82,10 @@ class ChildRules(object):
     def getCountMethodNameFor(self, classname):
         return self.countmethods[classname]   
     
-    def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname):
+    def getPostProcessorNameFor(self, classname):
+        return self.ppnames[classname] 
+    
+    def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname, postprocessornm):
         #check modulename and  classname
         try:
             instance = createObject(modulename, classname)
@@ -125,10 +132,25 @@ class ChildRules(object):
         
         #check columnname
         cf = ColumnFinder(classname)
-        if columnname in cf.getColumnnames():
-            return True
-        else:
+        if columnname not in cf.getColumnnames():
             return False
+        
+        #check postprocessornm
+        if postprocessornm is not None:
+            modulename = 'sites.treemap.objecttree.Postprocessors'
+            if not modulename in sys.modules.keys():
+                try:
+                    module = __import__( modulename )
+                except ImportError, e:
+                    return False
+            else:
+                module = sys.modules[modulename]
+        
+            classes = dict(inspect.getmembers( module, inspect.isclass ))
+            if not postprocessornm in classes:
+                return False
+        
+        return True
         
     def attributesAreValid(self):
         
@@ -214,6 +236,22 @@ class ChildRules(object):
             if columnname not in cf.getColumnnames():
                 return False
             
+        #check postprocessornm
+        for classname, ppn in self.ppnames.items():
+            if ppn is not None:
+                modulename = 'sites.treemap.objecttree.Postprocessors'
+                if not modulename in sys.modules.keys():
+                    try:
+                        module = __import__( modulename )
+                    except ImportError, e:
+                        return False
+                else:
+                    module = sys.modules[modulename]
+            
+                classes = dict(inspect.getmembers( module, inspect.isclass ))
+                if not ppn in classes:
+                    return False
+            
         return True
     
 class LevelRules(object):
@@ -221,13 +259,13 @@ class LevelRules(object):
     def __init__(self):
         self.rules = []
         
-    def addRules(self, classname, methodname, parentmethodname, columnname, level, fparam = None):
+    def addRules(self, classname, methodname, parentmethodname, columnname, level, fparam = None, postprocessorname = None):
         try:
             self.rules[level]
         except IndexError:   
             if level <= len(self.rules):               
                 r = ChildRules()
-                r.createOrUpdate(classname, methodname, parentmethodname, columnname, fparam)
+                r.createOrUpdate(classname, methodname, parentmethodname, columnname, fparam, postprocessorname)
                 self.rules.append(r) 
                 return
             else:
@@ -273,6 +311,12 @@ class LevelRules(object):
             return self.rules[level].getColumnNameFor(classname)
         except IndexError:
             return None
+        
+    def getPostProcessorNameFor(self, level,  classname):
+        try:
+            return self.rules[level].getPostProcessorNameFor(classname)
+        except IndexError:
+            return None
 
     def indexIsValid(self,index):
         try:
@@ -299,6 +343,7 @@ class LevelRules(object):
                     idparts.append(entry['parentmethod'])
                     idparts.append(entry['columnname'])
                     idparts.append(entry['fparam'].__str__())
+                    idparts.append(entry['postprocessorname'].__str__())
             else:
                 idparts.append('h8gates') #some fixed random number  
             oldcontent = content

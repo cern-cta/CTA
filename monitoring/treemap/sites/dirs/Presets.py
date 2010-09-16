@@ -121,5 +121,14 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Optimal time to recall"] = lr
 
+#Preset for oldest file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["oldest file last modification"] = lr
+
+
 
 

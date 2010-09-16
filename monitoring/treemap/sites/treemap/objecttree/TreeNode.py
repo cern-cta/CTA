@@ -3,22 +3,24 @@ Created on May 10, 2010
 
 @author: kblaszcz
 '''
-from sites.treemap.objecttree.Wrapper import Wrapper
 from sites.errors import ConfigError
 from sites.tools.ObjectCreator import createObject
+from sites.treemap.objecttree.Postprocessors import PostProcessorBase
+from sites.treemap.objecttree.Wrapper import Wrapper
 import inspect
 
 class TreeNode(object):
     '''
     classdocs
     '''
-    def __init__(self, theobject, evalcolumnname, parentmethodname, fpar = None, dpt = -1, siblings_sum = 1.0):
+    def __init__(self, theobject, evalcolumnname, parentmethodname, fpar = None, dpt = -1, siblings_sum = 1.0, postprocessobject = None):
         if dpt >= -1:
             self.depth = dpt
         else:
             raise ConfigError( 'invalid depth: ' + dpt)
         
         self.fparam = fpar
+        self.postprocessobject = postprocessobject
         self.wrapped = Wrapper(theobject, evalcolumnname)
         self.evaled = False
         self.evalvalue = 0
@@ -29,19 +31,25 @@ class TreeNode(object):
             self.siblings_sum = 1.0
             
         self.parentmethodname = parentmethodname
+        #additional attribute "metainfo" can be added from outside
     
     def __str__(self):
         return self.__class__.__name__ + ': ' + self.wrapped.__str__()
     
     def evaluate(self):
         if not self.evaled:
-            self.evalvalue = self.wrapped.evaluate(self.fparam)
+            self.evalvalue = self.wrapped.evaluate(self.fparam, self.postprocessobject)
             self.evaled = True
         return self.evalvalue/self.siblings_sum
     
+    def setPostProcessorObject(self, ppobj):
+        self.evaled = False
+        assert((ppobj is None) or isinstance(ppobj,PostProcessorBase))
+        self.postprocessobject = ppobj
+    
     def getEvalValue(self):
         if not self.evaled:
-            self.evalvalue = self.wrapped.evaluate(self.fparam)
+            self.evalvalue = self.wrapped.evaluate(self.fparam, self.postprocessobject)
             self.evaled = True
         return self.evalvalue/1.0
     

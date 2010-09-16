@@ -6,6 +6,7 @@ Created on May 19, 2010
 
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
+from sites.treemap.objecttree.Postprocessors import SubstractPostProcessor
 from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
 import inspect
@@ -55,6 +56,7 @@ class TreeBuilder(object):
         rootevalcolumn = self.rules.getColumnNameFor(0, classname)
         
         rootobjnode = TreeNode(rootobject, rootevalcolumn, parentmethodname, fparam, 0)
+#        rootobjnode.metainfo = {'minsibling': rootobjnode.getEvalValue(), 'maxsibling':rootobjnode.getEvalValue()}
         
         tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, rootobjnode.getEvalValue())
         
@@ -66,6 +68,9 @@ class TreeBuilder(object):
     chcount = 0
     
     def addChildrenRecursion(self, tree, level, parent, area_factor, rootisannex):
+        max = float('inf')*(-1)
+        min = float('inf')
+#        metainfo = {}
 
         if area_factor < self.lowest_area_factor: return
         if not self.rules.indexIsValid(level + 1): return
@@ -116,20 +121,52 @@ class TreeBuilder(object):
                     chcolumnname = self.rules.getColumnNameFor(level + 1, chclassname)
                     chparam = self.rules.getParamFor(level + 1, chclassname)
                     parentmethodname =  self.rules.getParentMethodNameFor(level + 1, chclassname)
+                    postprocessname =  self.rules.getPostProcessorNameFor(level + 1, chclassname)
                 except KeyError:
                     return
                 
                 thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
+                evl = thechild.evaluate()
+                if(evl <= 0): continue #ignore zeroes
+                
+                if evl < min: min = evl
+                if evl > max: max = evl
+                
                 treenodechildren.append(thechild)
 
-                evalsum = evalsum + thechild.evaluate()
+                evalsum = evalsum + evl
+            
+#            metainfo['minsibling'] = min
+#            metainfo['maxsibling'] = max
 
             if evalsum <= 0: 
                 tree.deleteChildren()
                 return
             
-            #set siblingssum to all children
+            evalsum = 0
+            #set PostProcessor to all children
             for thechild in treenodechildren:
+                chclassname = thechild.getObject().__class__.__name__
+                postprocessname =  self.rules.getPostProcessorNameFor(level + 1, chclassname)
+                postprocessobject = None
+                
+                if postprocessname is not None:
+                    if(postprocessname == 'SubstractPostProcessor'):
+                        postprocessobject = SubstractPostProcessor(min)
+                        pass
+                    else:
+                        command = "postprocessobject = " + postprocessname + "()"
+                        exec(command)
+                        pass
+                
+                thechild.setPostProcessorObject(postprocessobject)
+                evalsum = evalsum + thechild.getEvalValue()
+                
+            if evalsum <= 0: 
+                tree.deleteChildren()
+                return
+                
+            for thechild in treenodechildren:     
                 thechild.setSiblingsSum(evalsum)
             
             for child in treenodechildren:
@@ -178,10 +215,10 @@ class TreeBuilder(object):
                 chcolumnname = self.rules.getColumnNameFor(level, chclassname)
                 chparam = self.rules.getParamFor(level, chclassname)
                 parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
-                #annexnode = TreeNode(annexchild, chcolumnname, parentmethodname, chparam, level)
                 
                 annexnode = tree.addChild(annexchild, chcolumnname, parentmethodname, chparam)
                 annexnode.setSiblingsSum(evalsum)
+#                annexnode.metainfo = metainfo
                              
 def print_tabs(n):
     for i in range(n):

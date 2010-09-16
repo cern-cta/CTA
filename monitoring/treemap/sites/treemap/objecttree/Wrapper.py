@@ -8,6 +8,7 @@ import inspect
 from sites.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
 from sites.errors import ConfigError
 from sites.tools.ModelsInspection import *
+from sites.treemap.objecttree.Postprocessors import *
 
 class Wrapper(object):
     '''
@@ -34,7 +35,8 @@ class Wrapper(object):
     def __str__(self):
         return self.modulename.__str__() + '.' + self.classname.__str__() + ': ' + self.wrapped.__str__()
     
-    def evaluate(self, fparam = None):
+    def evaluate(self, fparam = None, postprocessobject = None):
+        result = None
         command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.columnname + "(self.wrapped."+ self.columnname
         
         if fparam:
@@ -43,6 +45,10 @@ class Wrapper(object):
             command = command + ")"
         
         exec(command)
+        
+        if (postprocessobject is not None):
+            result = postprocessobject.process(result)
+        
         return result
     
     def setColumnname(self, newname):
