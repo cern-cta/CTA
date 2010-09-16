@@ -24,6 +24,9 @@ mighunterd \- default migration candidate hunter
 .BI dataThreshold
 ]
 [
+.BI -Z
+]
+[
 .BI svcClass1
 ]
 [
@@ -89,6 +92,14 @@ option.
 Specifies the minimum amount of data required for starting a new migration.
 Note that this option has no effect if there are already running streams for
 the service class.
+.TP
+.BI \-Z
+Instructs the mighunter-daemon to run in test-mode.  This option should
+.B ONLY
+be used if you know
+.B EXACTLY
+what your are doing.  This option will for example stop the mighunter-daemon
+from calling the name-server for each file to be migrated.
 
 Two parameters in the 
 .B /etc/castor/castor.conf 
