@@ -1,0 +1,639 @@
+#!/usr/bin/perl -w
+###############################################################################
+#                  test/castor/tape/mighunter/testmighunter
+# 
+#  This file is part of the Castor project.
+#  See http://castor.web.cern.ch/castor
+# 
+#  Copyright (C) 2003  CERN
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# 
+# 
+# 
+#  @author Steven.Murray@cern.ch
+###############################################################################
+
+use DBI;
+use POSIX;
+use strict;
+
+# castor/cern.ch/dev/m/murrayc3/simpleTest_Sat_Aug_7.txt
+my $DEV_FILE_NS_FILEID=5000043410;
+
+my $adminList          = 1028; # gid=1028(c3)
+my $originalDbSchema   = "stager_oracle_create.sql";
+my $originalDropSchema = "drop_oracle_schema.sql";
+my $stageGid           = 1474;  # gid=1474(st)
+my $stageUid           = 14029; # uid=14029(stage)
+
+# Prints the usage message for this script
+sub printUsage {
+  print("Usage: test.py mighunterdExecutable\n");
+  print("Note: This script mjust be ran as root\n");
+}
+
+# Parses the command-line arguments.
+#
+# This method prints an appropriate error message and aborts the script if it
+# fails to parse the command-line arguments.
+#
+# @return The path to the executable of the mighunter daemon.
+sub parseCommandLine {
+  my $expectedNbCmdLineArgs = 1;
+  my $actualNbCmdLineArgs   = @ARGV;
+  if($expectedNbCmdLineArgs != $actualNbCmdLineArgs) {
+    print("ABORT: Wrong number of command-line arguments:");
+    print(" expectedNbCmdLineArgs=$expectedNbCmdLineArgs");
+    print(" actualNbCmdLineArgs=$actualNbCmdLineArgs\n");
+    &printUsage();
+    exit(-1);
+  }
+
+  my $mighunterdExecutable = $ARGV[0];
+
+  return $mighunterdExecutable;
+}
+
+# Returns the value of the specified ORASTAGERCONFIG parameter.
+#
+# This subroutine prints an error message and aborts the entire tes script if
+# it fails to get the value of the specified parameter.
+#
+# @param  paramName The name of the parameter whose value is to be retrieved.
+# @return           The value of the parameter.
+sub getOrastagerconfigParam {
+  my $paramName = $_[0];
+
+  open(CONFIG, "</etc/castor/ORASTAGERCONFIG")
+    or die "Failed to open /etc/castor/ORASTAGERCONFIG: $!";
+
+  while(<CONFIG>) {
+    chomp;
+    if(m/^DbCnvSvc\s+$paramName\s+(\w+)/) {
+      return $1;
+    }
+  }
+
+  close CONFIG;
+
+  print("ABORT: Failed to get ORASTAGERCONFIG parameter: paramName=$paramName\n");
+  exit(-1);
+}
+
+# Returns true if the daemon with specfied name is running else false.
+#
+# @param  daemonName The name of the daemon.
+# @return            True if the daemon is runn ing, else false.
+sub daemonIsRunning {
+  my $daemonName = $_[0];
+
+  my $psResult = `ps -e | grep $daemonName`;
+  chomp($psResult);
+
+  return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+}
+
+# Tries to kill the specified daemon within the specified time-out period.  If
+# the daemon is dead within the time-out period, then this subroutine returns
+# 0, else this subroutine prints an error message and returns a value of 1.
+#
+# If the daemon process to be killed is already dead when this subroutine is
+# called, then this method will succeed immediately.
+#
+# @param  processName The process name of the daemon to be killed.
+# @param  timeOutSecs The time-out period in seconds.
+# @return             0 on success and 1 on failure.
+sub killDaemonWithTimeout {
+  my $processName = $_[0];
+  my $timeOutSecs = $_[1];
+
+  `killall $processName`;
+
+  my $startTime  = time();
+  my $timeOutTime = $startTime + $timeOutSecs;
+
+  while(1) {
+    if(!&daemonIsRunning($processName)) {
+      return 0; # Success
+    }
+
+    if(time() >= $timeOutTime) {
+      print("Failed to kill $processName\n");
+      return 1; # Failure
+    }
+
+    sleep(1);
+  }
+}
+
+# Returns a back-up filename based on the specified original filename.
+#
+# Please note that this subroutine does not create or modify any files.
+#
+# The back-up filename is the original plus a unique extension.
+#
+# @param  originalFilename The full path-name of the original file.
+# @return                 The full path-name of the back-up copy.
+sub genBackupFileName {
+  my $originalFilename = $_[0];
+
+  my $uuid = `uuidgen`;
+  chomp($uuid);
+  my $date = `date | sed 's/ /_/g;s/:/_/g'`;
+  chomp($date);
+  my $hostname = `hostname`;
+  chomp($hostname);
+  my $backupFilename = "${originalFilename}_${uuid}_${hostname}_${date}_backup";
+
+  return($backupFilename);
+}
+
+# Creates a backs-up copy of the specified original-file and returns the name of
+# the back-up copy.
+#
+# @param  originalFilename The full path-name of the original file.
+# @return                  The full path-name of the back-up copy.
+sub createBackupCopy {
+  my $originalFilename = $_[0];
+
+  my $backupFilename = &genBackupFileName($originalFilename);
+  print("Creating $backupFilename from $originalFilename\n");
+  `cp $originalFilename $backupFilename`;
+
+  return $backupFilename;
+}
+
+# Restores the original-copy of a file from its backup-copy and then deletes
+# the back-up copy.
+#
+# @param originalFilename The full path-name of the original file.
+# @param backupFilename   The full path-name of the back-up copy.
+sub restoreFileFromBackupCopy {
+  my $originalFilename = $_[0];
+  my $backupFilename   = $_[1];
+
+  print("Restoring $originalFilename from $backupFilename\n");
+  `cp $backupFilename $originalFilename`;
+  print("Deleting $backupFilename\n");
+  `rm -f $backupFilename`;
+}
+
+# Connects to the stager database and returns the database handle.
+#
+# This subroutine prints an error message and aborts the entire test program if
+# it fails to get the database handle.
+#
+# This subroutine does not set any of the attributes of the
+# database-connection.
+sub connectToStagerDb {
+  my $user   = &getOrastagerconfigParam("user");
+  my $passwd = &getOrastagerconfigParam("passwd");
+  my $dbName = &getOrastagerconfigParam("dbName");
+
+  my $dbh = DBI->connect("dbi:Oracle:$dbName", $user, $passwd)
+    or die "Failed to connect to database: $DBI::errstr\n";
+
+  return($dbh);
+}
+
+# Returns the number of tape-copies in the stager-database.
+#
+# @param dbh The handle to the stager-database.
+# @return    The number of tape-copies in the stager database.
+sub getNbTapeCopiesInStagerDb {
+  my $dbh = $_[0];
+
+  my $stmt = "SELECT COUNT(*) FROM TapeCopy";
+  my $rows = $dbh->selectall_arrayref($stmt);
+  my $nbTapeCopies = $$rows[0][0];
+
+  return($nbTapeCopies);
+}
+
+# Inserts a row into the CastorFile table and returns its database ID.
+#
+# This subroutine does not insert a row into the id2type table.
+#
+# @param  dbh                The handle to the stager-database.
+# @param  nsHost             The name-server hostname.
+# @param  fileId
+# @param  fileSize
+# @param  creationTime
+# @param  lastUpdateTime
+# @param  lastAccessTime
+# @param  lastKnownFilename
+# @param  svcClassName
+# @param  fileClassName
+# @return The database ID of the newly inserted CastorFile.
+sub insertCastorFile {
+  my $dbh               = $_[0];
+  my $nsHost            = $_[1];
+  my $fileId            = $_[2];
+  my $fileSize          = $_[3];
+  my $creationTime      = $_[4];
+  my $lastUpdateTime    = $_[5];
+  my $lastAccessTime    = $_[6];
+  my $lastKnownFilename = $_[7];
+  my $svcClassName      = $_[8];
+  my $fileClassName     = $_[9];
+
+  my $stmt = "
+    DECLARE
+      varSvcClassId   NUMBER(38) := NULL;
+      varFileClassId  NUMBER(38) := NULL;
+      varCastorFileId NUMBER(38) := NULL;
+    BEGIN
+      /* Deteremine the database IDs of the service and file classes */
+      SELECT id INTO varSvcClassId  FROM SvcClass  WHERE name = :SVCCLASSNAME;
+      SELECT id INTO varFileClassId FROM FileClass WHERE name = :FILECLASSNAME;
+
+      INSERT INTO CastorFile(id, nsHost, fileId, fileSize, creationTime,
+                  lastUpdateTime, lastAccessTime, lastKnownFilename, svcClass,
+                  fileClass)
+           VALUES (ids_seq.NEXTVAL, :NSHOST, :FILEID, :FILESIZE,
+                  :CREATIONTIME, :LASTUPDATETIME, :LASTACCESSTIME,
+                  :LASTKNOWNFILENAME, varSvcClassId, varFileClassId)
+        RETURNING id INTO varCastorFileId;
+
+      INSERT INTO Id2Type(id, type) VALUES(varCastorFileId, 2);
+
+      :CASTORFILEID := varCastorFileId;
+    END;";
+
+  # The castor-file database ID will be the return value
+  my $castorFileId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":SVCCLASSNAME",\$svcClassName,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":FILECLASSNAME",\$fileClassName,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":NSHOST",\$nsHost,2048) or die $sth->errstr;
+  $sth->bind_param_inout(":FILEID",\$fileId,20) or die $sth->errstr;
+  $sth->bind_param_inout(":FILESIZE",\$fileSize,20) or die $sth->errstr;
+  $sth->bind_param_inout(":CREATIONTIME",\$creationTime,20) or die $sth->errstr;
+  $sth->bind_param_inout(":LASTUPDATETIME",\$lastUpdateTime,20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":LASTACCESSTIME",\$lastAccessTime,20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":LASTKNOWNFILENAME",\$lastKnownFilename,2048)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID",\$castorFileId,20) or die $sth->errstr;
+  $sth->execute();
+
+  return $castorFileId;
+}
+
+# Deletes the row from the CastorFile table with the specified database ID.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The castor database ID.
+sub deleteCastorFile {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+
+  my $stmt = "
+    DECLARE
+      varCastorFileId NUMBER(38) := :CASTORFILEID;
+    BEGIN
+      DELETE FROM CastorFile WHERE id = varCastorFileId;
+      DELETE FROM Id2Type    WHERE id = varCastorFileId;
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
+  $sth->execute();
+}
+
+# Sets the nbCopies attribute of the specified file-class to the specified
+# value.
+#
+# @param dbh           The handle to the stager-database.
+# @param fileClassName The name of the file-class.
+# @param nbCopies      The new number of tape-copies.
+sub setFileClassNbCopies {
+  my $dbh           = $_[0];
+  my $fileClassName = $_[1];
+  my $nbCopies      = $_[2];
+
+  my $stmt = "
+    BEGIN
+      UPDATE FileClass
+         SET nbCopies = :NBCOPIES
+       WHERE name = :FILECLASSNAME;
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":NBCOPIES", \$nbCopies, 20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":FILECLASSNAME", \$fileClassName, 2048)
+    or die $sth->errstr;
+  $sth->execute();
+}
+
+# Override checkPermission
+#
+# @param dbh           The handle to the stager-database.
+sub overrideCheckPermission {
+  my $dbh = $_[0];
+
+  my $stmt = "
+    CREATE OR REPLACE FUNCTION checkPermission(
+      reqSvcClass IN VARCHAR2,
+      reqEuid     IN NUMBER,
+      reqEgid     IN NUMBER,
+      reqTypeI    IN NUMBER)
+    RETURN NUMBER AS
+    BEGIN
+      RETURN 0;
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->execute();
+}
+
+# Inserts a row into the TapeCopy table and returns the database ID.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The database ID of the associated castor-file.
+# @param status       The initial status of the tape-copy.
+# @return             The database ID of the newly inserted tape-copy.
+sub insertTapeCopy {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+  my $status       = $_[2];
+
+  my $stmt = "
+    DECLARE
+      varTapeCopyId NUMBER(38) := NULL;
+    BEGIN
+      INSERT INTO TapeCopy(id, copyNb, castorFile, status)
+           VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
+        RETURNING id INTO varTapeCopyId;
+
+      INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
+
+      :TAPECOPYID := varTapeCopyId;
+    END;";
+
+  # The tape-copy database ID will be the return value
+  my $tapeCopyId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
+  $sth->bind_param_inout(":STATUS"      , \$status      , 20) or die $sth->errstr;
+  $sth->bind_param_inout(":TAPECOPYID"  , \$tapeCopyId  , 20) or die $sth->errstr;
+  $sth->execute();
+
+  return $tapeCopyId;
+}
+
+# Inserts the specified number of rows into the TapeCopy table all pointing to
+# the specified castor-file and all with the specified status.
+#
+# @param dbh          The handle to the stager-database.
+# @param castorFileId The database ID of the associated castor-file.
+# @param status       The initial status of the tape-copies.
+# @param nbTapeCopies The number of rows to insert into the TapeCopy table.
+sub insertTapeCopies {
+  my $dbh          = $_[0];
+  my $castorFileId = $_[1];
+  my $status       = $_[2];
+  my $nbTapeCopies = $_[3];
+
+  my $stmt = "
+    DECLARE
+      varTapeCopyId NUMBER(38) := NULL;
+    BEGIN
+      FOR i IN 1 .. :NBTAPECOPIES LOOP
+        INSERT INTO TapeCopy(id, copyNb, castorFile, status)
+             VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
+          RETURNING id INTO varTapeCopyId;
+
+        INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
+      END LOOP;
+    END;";
+
+  # The tape-copy database ID will be the return value
+  my $tapeCopyId;
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":NBTAPECOPIES", \$nbTapeCopies, 20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20)
+    or die $sth->errstr;
+  $sth->bind_param_inout(":STATUS"      , \$status      , 20)
+    or die $sth->errstr;
+  $sth->execute();
+
+  return $tapeCopyId;
+}
+
+# Deletes the row from the TapeCopy table with the specified database ID.
+#
+# @param dbh        The handle to the stager-database.
+# @param tapeCopyId The castor database ID.
+sub deleteTapeCopy {
+  my $dbh        = $_[0];
+  my $tapeCopyId = $_[1];
+
+  my $stmt = "
+    DECLARE
+      varTapeCopyId NUMBER(38) := :TAPECOPYID;
+    BEGIN
+      DELETE FROM Stream2TapeCopy WHERE child = varTapeCopyId;
+      DELETE FROM TapeCopy        WHERE id    = varTapeCopyId;
+      DELETE FROM Id2Type         WHERE id    = varTapeCopyId;
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  $sth->bind_param_inout(":TAPECOPYID", \$tapeCopyId, 20) or die $sth->errstr;
+  $sth->execute();
+}
+
+# Deletes all Stream2TapeCopy, Stream, TapeCopy and CastorFile rows from the
+# stager database.
+#
+# TO BE USED WITH CAUTION.
+#
+# @param dbh The handle to the stager-database.
+sub deleteAllStreamsTapeCopiesAndCastorFiles {
+  my $dbh        = $_[0];
+
+  my $stmt = "
+    BEGIN
+      DELETE FROM Stream2TapeCopy;
+      DELETE FROM Stream;
+      DELETE FROM TapeCopy;
+      DELETE FROM CastorFile;
+      DELETE FROM Id2Type WHERE type = 26; /* OBJ_STREAM     */
+      DELETE FROM Id2Type WHERE type = 30; /* OBJ_TAPECOPY   */
+      DELETE FROM Id2Type WHERE type =  2; /* OBJ_CASTORFILE */
+    END;";
+
+  my $sth = $dbh->prepare($stmt);
+  print("Deleting all streams, tape-copies and castor-files\n");
+  $sth->execute();
+}
+
+################################################################################
+# MAIN PROGRAM STARTS HERE
+################################################################################
+
+# Print error message and abort if the user is not root
+my $uid = POSIX::getuid;
+my $gid = POSIX::getgid;
+if($uid != 0 || $gid !=0) {
+  print("ABORT: This script must be ran as root\n");
+  exit(-1);
+}
+
+# Ensure all of the daemons accessing the stager-database are dead
+&killDaemonWithTimeout('jobmanagerd' , 2);
+&killDaemonWithTimeout('mighunterd'  , 2);
+&killDaemonWithTimeout('rechandlerd' , 2);
+&killDaemonWithTimeout('rhd'         , 2);
+&killDaemonWithTimeout('rmmasterd'   , 2);
+&killDaemonWithTimeout('rtcpclientd' , 2);
+&killDaemonWithTimeout('stagerd'     , 2);
+&killDaemonWithTimeout('tapegatewayd', 2);
+
+die "ABORT: $originalDropSchema does not exist\n"
+  if ! -e $originalDropSchema;
+
+die "ABORT: $originalDbSchema does not exist\n"
+  if ! -e $originalDbSchema;
+
+my $dbUser   = &getOrastagerconfigParam("user");
+my $dbPasswd = &getOrastagerconfigParam("passwd");
+my $dbName   = &getOrastagerconfigParam("dbName");
+
+my $tmpDropSchema = `echo ${originalDropSchema}_\`hostname\`_\`date | sed 's/ /_/g;s/:/_/g;'\`_\`uuidgen\``;
+chomp($tmpDropSchema);
+
+`echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpDropSchema`;
+`chmod 600 $tmpDropSchema`;
+`echo "CONNECT $dbUser/$dbPasswd\@$dbName" >> $tmpDropSchema`;
+`echo >> $tmpDropSchema`;
+`cat $originalDropSchema >> $tmpDropSchema`;
+`echo >> $tmpDropSchema`;
+`echo "EXIT;" >> $tmpDropSchema`;
+
+print("Dropping database schema\n");
+my $sqlplusDropResult = `'sqlplus' /NOLOG \@$tmpDropSchema`;
+print("\n");
+print("SQLPLUS DROP RESULT\n");
+print("===================\n");
+print($sqlplusDropResult);
+
+my $tmpDbSchema = `echo ${originalDbSchema}_\`hostname\`_\`date | sed 's/ /_/g;s/:/_/g;'\`_\`uuidgen\``;
+chomp($tmpDbSchema);
+
+`echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpDbSchema`;
+`chmod 600 $tmpDbSchema`;
+`echo "CONNECT $dbUser/$dbPasswd\@$dbName" >> $tmpDbSchema`;
+`echo >> $tmpDbSchema`;
+`cat $originalDbSchema >> $tmpDbSchema`;
+`echo >> $tmpDbSchema`;
+`echo "EXIT;" >> $tmpDbSchema`;
+`sed -i s/^ACCEPT/--ACCEPT/ $tmpDbSchema`;
+`sed -i s/^PROMPT/--PROMPT/ $tmpDbSchema`;
+`sed -i s/^UNDEF/--UNDEF/ $tmpDbSchema`;
+`sed -i s/\\&stageGid/$stageGid/g $tmpDbSchema`;
+`sed -i s/\\&stageUid/$stageUid/g $tmpDbSchema`;
+`sed -i s/\\&adminList/$adminList/g $tmpDbSchema`;
+
+print("Creating database schema\n");
+my $sqlplusSchemaResult = `'sqlplus' /NOLOG \@$tmpDbSchema`;
+print("\n");
+print("SQLPLUS SCHEMA RESULT\n");
+print("=====================\n");
+print($sqlplusSchemaResult);
+
+`/etc/init.d/jobmanagerd start`;
+#`/etc/init.d/mighunterd start`;
+`/etc/init.d/rechandlerd start`;
+`/etc/init.d/rhd start`;
+`/etc/init.d/rmmasterd start`;
+#`/etc/init.d/rtcpclientd start`;
+`/etc/init.d/stagerd start`;
+#`/etc/init.d/tapegatewayd start`;
+
+my $sleepPeriod = 2;
+print("Sleeping $sleepPeriod seconds\n");
+sleep($sleepPeriod);
+
+my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
+print("\n");
+print("rmGetNodes RESULTS\n");
+print("==================\n");
+print($rmGetNodesResult);
+
+# Fill database with the standard set-up for a dev-box
+`for cname  in \`nslistclass | grep NAME | awk '{print \$2}'\` ; do enterFileClass --Name \$cname --GetFromCns ; done`;
+`enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev04 --MigratorPolicy defaultMigrationPolicy --StreamPolicy streamPolicyAlwaysReturning1`;
+`enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
+`enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
+`moveDiskServer default lxc2disk07.cern.ch`;
+`moveDiskServer extra lxc2disk08.cern.ch`;
+`rmAdminNode -r -R -n lxc2disk07.cern.ch`;
+`rmAdminNode -r -R -n lxc2disk08.cern.ch`;
+
+# Add a tape-pool to dev service-class ready for shared tape-pool tests
+`modifySvcClass --Name dev --AddTapePool stager_dev04 --MigratorPolicy defaultMigrationPolicy --StreamPolicy streamPolicyAlwaysReturning1`;
+
+# Set the number of drives on the default and dev service-classes to 10 each
+`modifySvcClass --Name default --NbDrives 10`;
+`modifySvcClass --Name dev     --NbDrives 10`;
+
+# Connect to the stager database
+my $dbh = &connectToStagerDb();
+$dbh->{AutoCommit} = 0;
+
+# Override the nbCopies attribute of the largeuser
+&setFileClassNbCopies($dbh, "largeuser", 1);
+$dbh->commit();
+
+&overrideCheckPermission($dbh);
+
+$dbh->disconnect();
+
+undef $dbh;
+
+$sleepPeriod = 20;
+print("Sleeping $sleepPeriod seconds\n");
+sleep($sleepPeriod);
+
+exit(0);
+
+my $srcDevSvcClassTestFile = "srcDevSvcClassTestFile";
+my $dstDevSvcClassTestFile =
+  "/castor/cern.ch/dev/m/murrayc3/dstDevSvcClassTestFile";
+`echo "$srcDevSvcClassTestFile" > $srcDevSvcClassTestFile`;
+`su murrayc3 -c 'STAGE_SVCCLASS=dev rfcp $srcDevSvcClassTestFile $dstDevSvcClassTestFile'`;
+
+my $srcDefaultSvcClassTestFile = "srcDefaultSvcClassTestFile";
+my $dstDefaultSvcClassTestFile =
+  "/castor/cern.ch/dev/m/murrayc3/dstDefaultSvcClassTestFile";
+`echo "$srcDefaultSvcClassTestFile" > $srcDefaultSvcClassTestFile`;
+`su murrayc3 -c 'STAGE_SVCCLASS=default rfcp $srcDefaultSvcClassTestFile $dstDefaultSvcClassTestFile'`;
+
+`/usr/bin/mighunterd -t 1 default`;
+`/usr/bin/mighunterd -t 1 dev`;
+`/etc/init.d/rtcpclientd start`;
+
+END {
+  `rm $tmpDropSchema` if(defined($tmpDropSchema));
+  `rm $tmpDbSchema`   if(defined($tmpDbSchema));
+  $dbh->disconnect()  if(defined($dbh));
+}

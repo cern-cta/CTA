@@ -64,22 +64,47 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::mighunter::MigHunterThread::MigHunterThread(
-  const std::list<std::string>             &svcClassList,
-  const uint64_t                           migrationDataThreshold,
-  const bool                               doClone,
-  PyObject *const                          migrationPolicyDict,
-  castor::tape::mighunter::MigHunterDaemon &daemon) throw() :
+  const std::list<std::string> &svcClassList,
+  const uint64_t               migrationDataThreshold,
+  const bool                   doClone,
+  PyObject                     *const inspectGetargspecFunc,
+  PyObject                     *const migrationPolicyDict,
+  MigHunterDaemon              &daemon,
+  bool                         runInTestMode)
+  throw(castor::exception::Exception) :
 
   m_listSvcClass(svcClassList),
   m_migrationDataThreshold(migrationDataThreshold),
   m_doClone(doClone),
+  m_inspectGetargspecFunc(inspectGetargspecFunc),
   m_migrationPolicyDict(migrationPolicyDict),
-  m_daemon(daemon) {
+  m_daemon(daemon),
+  m_runInTestMode(runInTestMode) {
+
+  if(inspectGetargspecFunc == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": inspectGetargspecFunc parameter is NULL");
+  }
 
   if(migrationPolicyDict == NULL) {
     TAPE_THROW_CODE(EINVAL,
       ": migrationPolicyDict parameter is NULL");
   }
+
+  // Set the argument names a migration-policy Python-function must have in
+  // order to be considered valid
+  m_expectedMigrationPolicyArgNames.push_back("tapepool");
+  m_expectedMigrationPolicyArgNames.push_back("castorfilename");
+  m_expectedMigrationPolicyArgNames.push_back("copynb");
+  m_expectedMigrationPolicyArgNames.push_back("fileId");
+  m_expectedMigrationPolicyArgNames.push_back("fileSize");
+  m_expectedMigrationPolicyArgNames.push_back("fileMode");
+  m_expectedMigrationPolicyArgNames.push_back("uid");
+  m_expectedMigrationPolicyArgNames.push_back("gid");
+  m_expectedMigrationPolicyArgNames.push_back("aTime");
+  m_expectedMigrationPolicyArgNames.push_back("mTime");
+  m_expectedMigrationPolicyArgNames.push_back("cTime");
+  m_expectedMigrationPolicyArgNames.push_back("fileClass");
 }
 
 
@@ -88,32 +113,22 @@ castor::tape::mighunter::MigHunterThread::MigHunterThread(
 //------------------------------------------------------------------------------
 void castor::tape::mighunter::MigHunterThread::run(void* arg) {
 
+  // Run the code of the thread, logging any raised exceptions
   try {
-
     exceptionThrowingRun(arg);
-
   } catch(castor::exception::Exception &ex) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   } catch(std::exception &ex) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.what())};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   } catch(...) {
-
-    // Log the exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", "Uknown exception")};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
-
   }
 }
 
@@ -301,7 +316,22 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         // add information from the Name Server
         try {
 
-          getInfoFromNs(*svcClassName, *infoCandidate);
+          // Do not call the name-server if running in test mode
+          if(m_runInTestMode) {
+            infoCandidate->fileMode  = 0;
+            infoCandidate->nlink     = 0;
+            infoCandidate->uid       = 0;
+            infoCandidate->gid       = 0;
+            infoCandidate->aTime     = 0;
+            infoCandidate->mTime     = 0;
+            infoCandidate->cTime     = 0;
+            infoCandidate->fileClass = 0;
+            infoCandidate->status    = 0;
+
+          // Else this is not a test, therefore call the name-server
+          } else {
+            getInfoFromNs(*svcClassName, *infoCandidate);
+          }
 
         } catch(castor::exception::Exception &e){
 
@@ -364,13 +394,10 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
         // policy called for each tape copy for each tape pool
         try {
-
-          // Get a lock on the embedded Python-interpreter
-          castor::tape::python::ScopedPythonLock scopedPythonLock;
-
           // Try to get a handle on the migration-policy Python-function
-          PyObject *const migrationPolicyFunc = python::getPythonFunction(
-            m_migrationPolicyDict, infoCandidate->policyName.c_str());
+          PyObject *const migrationPolicyFunc =
+            python::getPythonFunctionWithLock(m_migrationPolicyDict,
+              infoCandidate->policyName.c_str());
 
           // Gracefully shutdown the daemon if the function does not exist in
           // the Python-module, as this is an invalid configuration
@@ -381,6 +408,27 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
             castor::dlf::Param("error"       , "Invalid configuration:"
               " migratorPolicy function not found in Python-module"),
             castor::dlf::Param("functionName", infoCandidate->policyName  )};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+              GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
+
+            oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
+            m_daemon.shutdownGracefully(); // Non-blocking
+            threadPool->shutdown(); // Non-blocking
+            return; // run() will not be called again
+          }
+
+          // Gracefully shutdown the daemon if the signature of the
+          // migration-policy Python-function is incorrect
+          try {
+            checkMigrationPolicyArgNames(infoCandidate->policyName,
+              migrationPolicyFunc);
+          } catch(castor::exception::InvalidConfiguration &ex) {
+            castor::dlf::Param params[] = {
+              castor::dlf::Param("SVCCLASS"    , *svcClassName            ),
+              castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId),
+              castor::dlf::Param("error"       , "Invalid configuration"  ),
+              castor::dlf::Param("Message"     , ex.getMessage().str()    ),
+              castor::dlf::Param("Code"        , ex.code()                )};
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
               GRACEFUL_SHUTDOWN_DUE_TO_ERROR, params);
 
@@ -619,6 +667,29 @@ void castor::tape::mighunter::MigHunterThread::getInfoFromNs(
 
 
 //------------------------------------------------------------------------------
+// checkMigrationPolicyArgNames
+//------------------------------------------------------------------------------
+void castor::tape::mighunter::MigHunterThread::checkMigrationPolicyArgNames(
+  const std::string &migrationPolicyName,
+  PyObject   *const migrationPolicyPyFunc)
+  throw(castor::exception::InvalidConfiguration) {
+
+  // If the policy-function has already been found to be valid, then return
+  if(m_namesOfValidPolicyFuncs.find(migrationPolicyName) !=
+    m_namesOfValidPolicyFuncs.end()) {
+    return;
+  }
+
+  python::checkFuncArgNames(migrationPolicyName,
+    m_expectedMigrationPolicyArgNames, m_inspectGetargspecFunc,
+    migrationPolicyPyFunc);
+
+  // Remember the policy-function is valid
+  m_namesOfValidPolicyFuncs.insert(migrationPolicyName);
+}
+
+
+//------------------------------------------------------------------------------
 // applyMigrationPolicy
 //------------------------------------------------------------------------------
 int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
@@ -630,6 +701,9 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
     TAPE_THROW_EX(castor::exception::InvalidArgument,
      ": pyFunc parameter is NULL");
   }
+
+  // Get a lock on the embedded Python-interpreter
+  castor::tape::python::ScopedPythonLock scopedPythonLock;
 
   // Create the input tuple for the migration-policy Python-function
   //

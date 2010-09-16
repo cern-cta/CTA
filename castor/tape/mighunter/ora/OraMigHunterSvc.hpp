@@ -106,11 +106,38 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * inputForStreamPolicy,
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
    */
-  virtual void inputForStreamPolicy(std::string svcClassName,
-    std::list<castor::tape::mighunter::StreamPolicyElement>& candidates)
+  virtual void getCreatedStreamsWithTapeCopies(
+    const std::string     &svcClassName,
+    std::list<u_signed64> &streamIds)
     throw(castor::exception::Exception);
+
+  /**
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
+   */
+  virtual void changeCreatedStreamToStopped(
+    const u_signed64 streamId)
+    throw(castor::exception::Exception);
+
+  /**
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
+   */
+  virtual void streamsForStreamPolicy(
+    const std::string         &svcClassName,
+    u_signed64                &svcClassId,
+    std::string               &streamPolicyName,
+    u_signed64                &nbDrives,
+    StreamForStreamPolicyList &streamsForPolicy)
+    throw (castor::exception::Exception);
+
+  /**
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
+   */
+  virtual void tapePoolsForStreamPolicy(
+    const u_signed64               svcClassId,
+    IdToTapePoolForStreamPolicyMap &tapePoolsForPolicy)
+    throw (castor::exception::Exception);
 
   /**
    * startChosenStreams 
@@ -120,11 +147,23 @@ public:
     outputFromStreamPolicy) throw (castor::exception::Exception);
 
   /**
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
+   */
+  virtual void startChosenStreams(const std::list<u_signed64> &streamIds)
+    throw (castor::exception::Exception);
+
+  /**
    * stopChosenStreams 
    */
   virtual void stopChosenStreams(
     const std::list<castor::tape::mighunter::StreamPolicyElement>&
     outputFromStreamPolicy) throw (castor::exception::Exception);
+
+  /**
+   * See documentation for castor::tape::mighunter::IMigHunterSvc.
+   */
+  virtual void stopChosenStreams(const std::list<u_signed64> &streamIds)
+    throw (castor::exception::Exception);
 
   /** 
    * Attach TapeCopies To Streams
@@ -167,11 +206,29 @@ private:
   /// SQL statement object for function createOrUpdateStream
   oracle::occi::Statement *m_createOrUpdateStreamStatement;
 
-  /// SQL statement for inputForStreamPolicy 
-  static const std::string s_inputForStreamPolicyStatementString;
+  /// SQL statement for function getCreatedStreamsWithTapeCopies 
+  static const std::string s_getCreatedStreamsWithTapeCopiesString;
 
-  /// SQL statement object for function inputForStreamPolicy
-  oracle::occi::Statement *m_inputForStreamPolicyStatement;
+  /// SQL statement object for function getCreatedStreamsWithTapeCopies
+  oracle::occi::Statement *m_getCreatedStreamsWithTapeCopiesStatement;
+
+  /// SQL statement for function changeCreatedStreamToStopped 
+  static const std::string s_changeCreatedStreamToStoppedString;
+
+  /// SQL statement object for function changeCreatedStreamToStopped
+  oracle::occi::Statement *m_changeCreatedStreamToStoppedStatement;
+
+  /// SQL statement for function streamsForStreamPolicy 
+  static const std::string s_streamsForStreamPolicyStatementString;
+
+  /// SQL statement object for function streamsForStreamPolicy
+  oracle::occi::Statement *m_streamsForStreamPolicyStatement;
+
+  /// SQL statement for function tapePoolsForStreamPolicy 
+  static const std::string s_tapePoolsForStreamPolicyStatementString;
+
+  /// SQL statement object for function tapePoolsForStreamPolicy
+  oracle::occi::Statement *m_tapePoolsForStreamPolicyStatement;
        
   /// SQL statement for startChosenStreams
   static const std::string s_startChosenStreamsStatementString;
@@ -214,7 +271,6 @@ private:
 
   /// SQL statement object clean up the db at the startup
   oracle::occi::Statement *m_migHunterCleanUpStatement;
-
 }; // class OraMigHunterSvc
       
 } // namespace ora
