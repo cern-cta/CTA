@@ -17,9 +17,9 @@ urlpatterns = patterns('',
 #     (r'^admin/', include(admin.site.urls)),
     (r'bydir/(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     
-    (r'(?P<theid>\d+)/changemetrics/$', 'dirs.views.changeMetrics'),
+    (r'(?P<urlending>\w+)/changemetrics/$', 'dirs.views.changeMetrics'),
     
-    (r'(?P<theid>\d+)/preset/$', 'dirs.views.preset'),
+    (r'(?P<urlending>\w+)/preset/$', 'dirs.views.preset'),
     
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView'),
     

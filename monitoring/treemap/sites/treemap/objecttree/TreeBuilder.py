@@ -6,9 +6,10 @@ Created on May 19, 2010
 
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
-from sites.treemap.objecttree.Postprocessors import SubstractPostProcessor
+from sites.treemap.objecttree.Postprocessors import SubstractMinPostProcessor
 from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
+from sites.treemap.objecttree.Postprocessors import *
 import inspect
 
 class TreeBuilder(object):
@@ -151,8 +152,8 @@ class TreeBuilder(object):
                 postprocessobject = None
                 
                 if postprocessname is not None:
-                    if(postprocessname == 'SubstractPostProcessor'):
-                        postprocessobject = SubstractPostProcessor(min)
+                    if(postprocessname == 'SubstractMinPostProcessor'):
+                        postprocessobject = SubstractMinPostProcessor(min)
                         pass
                     else:
                         command = "postprocessobject = " + postprocessname + "()"

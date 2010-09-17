@@ -28,7 +28,7 @@ class ChildRules(object):
         self.columnnames = {}
         self.ppnames = {}
     
-    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None, postprocessornm = None):
+    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None, postprocessornm = 'DafaultPostProcessor'):
         countmethodname = getCountMethodFor(classname, methodname)
 
         modulename = getModelsModuleName(classname)
@@ -58,6 +58,13 @@ class ChildRules(object):
         
         for classname, columnname in self.columnnames.items():
             ret.append((classname, columnname))
+        return ret
+    
+    def getModelToPostProcessor(self):
+        ret = []
+        
+        for classname, postprocessorname in self.ppnames.items():
+            ret.append((classname, postprocessorname))
         return ret
     
     def infoDict(self):
@@ -137,18 +144,7 @@ class ChildRules(object):
         
         #check postprocessornm
         if postprocessornm is not None:
-            modulename = 'sites.treemap.objecttree.Postprocessors'
-            if not modulename in sys.modules.keys():
-                try:
-                    module = __import__( modulename )
-                except ImportError, e:
-                    return False
-            else:
-                module = sys.modules[modulename]
-        
-            classes = dict(inspect.getmembers( module, inspect.isclass ))
-            if not postprocessornm in classes:
-                return False
+            if postprocessornm not in getPostProcessorNames(): return False
         
         return True
         

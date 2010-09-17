@@ -124,10 +124,83 @@ presetdict["Optimal time to recall"] = lr
 #Preset for oldest file last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["oldest file last modification"] = lr
+presetdict["Oldest file last modification"] = lr
+
+#Preset for average file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Average file last modification"] = lr
+
+#Preset for oldest file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Oldest file last modification"] = lr
+
+#Preset for oldest file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Oldest file last modification"] = lr
+
+#Preset for sigma file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Sigma file last modification"] = lr
+
+#Preset for newest file last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Newest file last modification"] = lr
+
+#Preset for oldest file on tape last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Oldest file on tape last modification"] = lr
+
+#Preset for average file on tape last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Average file on tape last modification"] = lr
+
+#Preset for sigma file on tape last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Sigma file on tape last modification"] = lr
+
+#Preset for newest file on tape last modification
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Newest file on tape last modification"] = lr
+
 
 
 

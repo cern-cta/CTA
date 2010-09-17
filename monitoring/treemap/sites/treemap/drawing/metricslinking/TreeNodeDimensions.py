@@ -331,7 +331,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append("<br><b> Evaluation of ")
         ret.append(tnode.getProperty('treenode').getColumnname())
         ret.append(":</b> ")
-        ret.append("%.2f"%(size))
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
         
         ret.append("<br><br><b>size:</b> ")
         
@@ -389,7 +389,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append("<br><b> Evaluation of ")
         ret.append(tnode.getProperty('treenode').getColumnname())
         ret.append(":</b> ")
-        ret.append("%.2f"%(size))
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
         
         ret.append("<br><br><b>size:</b> ")
         

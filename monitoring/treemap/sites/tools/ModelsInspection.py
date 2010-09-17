@@ -118,5 +118,24 @@ def getModelsModuleName(themodel):
         raise Exception("Configuration Error in settings.py: settings.MODELS_LOCATION must contain a value which is in settings.INSTALLED_APPS. The models file must be called models.py")
     
     return modulename
+
+def getPostProcessorNames(): 
+    ret = []
+    
+    modulename = settings.POSTPROCESSORS_LOCATION
+    if not modulename in sys.modules.keys():
+        try:
+            module = __import__( modulename )
+        except ImportError, e:
+            return False
+    else:
+        module = sys.modules[modulename]
+
+    classnames = dict(inspect.getmembers( module, inspect.isclass ))
+    for classname in classnames.keys():
+        if classname != 'PostProcessorBase':
+            ret.append(classname)
+    
+    return ret
                 
         

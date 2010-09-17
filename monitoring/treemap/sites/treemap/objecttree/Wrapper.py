@@ -51,6 +51,19 @@ class Wrapper(object):
         
         return result
     
+    def evaluateNoPostProcess(self, fparam = None):
+        result = None
+        command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.columnname + "(self.wrapped."+ self.columnname
+        
+        if fparam:
+            command = command + ", fparam)"
+        else:
+            command = command + ")"
+        
+        exec(command)
+        
+        return result
+    
     def setColumnname(self, newname):
         if newname == None:
 #            columnt = self.__class__.column_transformators[self.classname]

@@ -53,6 +53,9 @@ class TreeNode(object):
             self.evaled = True
         return self.evalvalue/1.0
     
+    def getEvalValueNoPostProcess(self):
+        return self.wrapped.evaluateNoPostProcess(self.fparam)
+    
     def getNakedParent(self):
         nested_object = self.wrapped.getObject()
         

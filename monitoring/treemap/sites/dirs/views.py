@@ -35,6 +35,9 @@ from sites.tools.ModelsInspection import *
 from django.shortcuts import redirect
 import random
 import sites.dirs.Presets
+from sites.treemap.objecttree.Postprocessors import *
+import re
+
 
 def redirectOldLink(request, theid):
     return HttpResponse("Please use the new link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
@@ -170,10 +173,10 @@ def groupView(request, parentpk, depth, model, refresh_cache = False):
     #---------------------------------------------
     otree.traveseToRoot()
     anxnode = otree.getRootAnnex()
-    anx = anxnode.getObject()
     
     #if there is an Annex then display it, otherwise you can just display the directory without it
     if anxnode is not None:
+        anx = anxnode.getObject()
         for i in range(depth):
             print 'start generating object subtree ' + anx.__str__()
             otree = tb.generateObjectTree(anx)
@@ -231,14 +234,31 @@ def groupView(request, parentpk, depth, model, refresh_cache = False):
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.pk, nblevels = nbdefinedlevels )
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels )
     
     del tree
     del otree
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def changeMetrics(request, theid):
+def redir(request, urlending, refreshcache):
+    treeviewexpr = r'(?P<rootmodel>\w+)_(?P<theid>\d+)'
+    groupviewexpr = r'group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)'
+    
+    if re.match(treeviewexpr, urlending):
+        match = re.match(treeviewexpr, urlending)
+        theid = match.group('theid')
+        return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': refreshcache })
+    elif re.match(groupviewexpr, urlending):
+        match = re.match(treeviewexpr, urlending)
+        parentpk = match.group('parentpk')
+        depth = match.group('depth')
+        model = match.group('model')
+        return redirect(to = '..', args = {'request':request,'parentpk':parentpk, 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+    
+    return Http404
+
+def changeMetrics(request, urlending):
     nblevels = getDefaultNumberOfLevels()
     
     if request.method == 'POST':
@@ -254,6 +274,7 @@ def changeMetrics(request, theid):
         level = int(posted['level'])
         metric = posted['metric']
         childrenmethodname = posted['childrenmethod']
+        postprocessorname = posted['postprocessor']
         
         cookielr = getCookieRules(request, nblevels)
         
@@ -263,19 +284,19 @@ def changeMetrics(request, theid):
         if(level == -1):
             for i in range(nblevels):
                 rule = cookielr.getRuleObject(i)
-                rule.createOrUpdate(model, childrenmethodname, parentmethodname, metric, None)
+                rule.createOrUpdate(model, childrenmethodname, parentmethodname, metric, None, postprocessorname)
         else:
-            cookielr.getRuleObject(level).createOrUpdate(model, childrenmethodname, parentmethodname, metric, None)
+            cookielr.getRuleObject(level).createOrUpdate(model, childrenmethodname, parentmethodname, metric, None, postprocessorname)
                     
-        updateUserCookie(request, cookielr, level, model, metric, childrenmethodname)
+        updateUserCookie(request, cookielr, level, model, metric, childrenmethodname, postprocessorname)
         
     else:
         raise Http404
         
     request.session.set_test_cookie()
-    return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': True})
+    return redir(request, urlending, True)
 
-def preset(request, theid):
+def preset(request, urlending):
     nblevels = getDefaultNumberOfLevels()
     
     if request.method == 'POST':
@@ -287,7 +308,7 @@ def preset(request, theid):
         try:
             presetname = posted['preset']
         except KeyError:
-            return redirect(to = '..', args = {'request':request, 'theid':theid})
+            redir(request, urlending, False)
         
         flatview = False
         try:
@@ -297,7 +318,7 @@ def preset(request, theid):
             pass
         
         if presetname not in sites.dirs.Presets.getPresetNames():
-            return redirect(to = '..', args = {'request':request, 'theid':theid})
+            redir(request, urlending, False)
 #            return HttpResponse("Posted data is not correct")
         
         lr = sites.dirs.Presets.getPreset(presetname)
@@ -318,9 +339,8 @@ def preset(request, theid):
         
     else:
         raise Http404
-        
-    request.session.set_test_cookie()
-    return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': True})
+    
+    return redir(request, urlending, True)
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, metric = ''):
     print "preparing response"
@@ -442,6 +462,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
 def postedDataCheckSuccessful(posted, nblevels):
     availablemodels = getAvailableModels()
     if posted['model'] not in availablemodels: return False
+    if posted['postprocessor'] not in getPostProcessorNames(): return False
     
     expectedvalues = generateDropdownValues(nblevels, posted['model'])
     
@@ -506,6 +527,8 @@ def generateDropdownValues(nblevels, themodel):
     modeldropdown = []
     metricdropdown = []
     childrenmethoddropdown = []
+    postprocessors = []
+    
     
     #level menu
     leveldropdown.append(DropDownEntry('all levels', -1))
@@ -556,8 +579,14 @@ def generateDropdownValues(nblevels, themodel):
                     childrenmethoddropdown.append(DropDownEntry(membername, membername))
             except:
                 continue
+            
+    for ppname in getPostProcessorNames():
+        pp = None
+        command = "pp = " + ppname + "()"
+        exec(command)
+        postprocessors.append(DropDownEntry(pp.getUserFriendlyName(), ppname))
     
-    return {'levels':leveldropdown, 'models':modeldropdown, 'metrics':metricdropdown, 'childrenmethods': childrenmethoddropdown}
+    return {'levels':leveldropdown, 'models':modeldropdown, 'metrics':metricdropdown, 'childrenmethods': childrenmethoddropdown, 'postprocessors': postprocessors}
 
 def generateLevelDynamics(request, nblevels):
     ld = {}
@@ -566,13 +595,11 @@ def generateLevelDynamics(request, nblevels):
     return ld
 
 def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
-    #generating drop down menu content
-    #create level dropdown
-    
     levelvalue = level
     modelvalue = ''
     metricvalue = ''
     childrenmethodvalue = ''
+    postprocessor = None
     
     #level menu
     if(levelvalue < 0):
@@ -602,7 +629,10 @@ def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
     #children menu    
     childrenmethodvalue=  lr.getRuleObject(level).getMethodNameFor(modelvalue)
     
-    return {'level':levelvalue, 'model': modelvalue, 'metric': metricvalue, 'childrenmethod': childrenmethodvalue}
+    #postprocessor menu
+    postprocessor=  lr.getRuleObject(level).getPostProcessorNameFor(modelvalue)
+    
+    return {'level':levelvalue, 'model': modelvalue, 'metric': metricvalue, 'childrenmethod': childrenmethodvalue, 'postprocessor': postprocessor}
 
 def createCookieIfMissing(request, nblevels):
     try:
@@ -610,6 +640,7 @@ def createCookieIfMissing(request, nblevels):
         request.session['levelrules']
         request.session['levelrules'].getPostProcessorNameFor(0,'Annex')
         request.session['advancedselection']
+        request.session['advancedselection']['postprocessor']
         request.session['defaultpreset']
     except (KeyError, AttributeError):
         request.session['userhascookie'] = True
@@ -617,13 +648,15 @@ def createCookieIfMissing(request, nblevels):
         request.session['advancedselection'] = getAdvancedSelection()
         request.session['defaultpreset'] = getDefaultPresets()
         
-def updateUserCookie(request, rules, level, model, metric, childrenmethodname):
+def updateUserCookie(request, rules, level, model, metric, childrenmethodname, postprocessorname):
     request.session['levelrules'] = rules       
-    request.session['advancedselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname}
+    request.session['advancedselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname, 'postprocessor': postprocessorname}
 
 def getCurrentAdvancedSelections(request):
     try:
         request.session['userhascookie']
+        if request.session['advancedselection']['postprocessor'] not in getPostProcessorNames():
+            raise KeyError()
         return request.session['advancedselection']
     except KeyError:
         request.session['userhascookie'] = True
@@ -632,6 +665,10 @@ def getCurrentAdvancedSelections(request):
 def getCurrentPresetSelections(request):
     try:
         request.session['userhascookie']
+        
+        if request.session['defaultpreset']['presetname'] not in sites.dirs.Presets.getPresetNames():
+            request.session['defaultpreset'] = getDefaultPresets()
+            
         return request.session['defaultpreset']
     except KeyError:
         request.session['userhascookie'] = True
@@ -663,7 +700,7 @@ def getDefaultNumberOfLevels():
     return 8
 
 def getAdvancedSelection():
-    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories'}
+    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories', 'postprocessor': 'DafaultPostProcessor'}
 
 def getDefaultPresets():
     return{'flat': False, 'presetname': 'Default'}

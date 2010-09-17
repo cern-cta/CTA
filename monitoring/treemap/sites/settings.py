@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~o7ed8de&df$uy\d%oi&d*k%dlr7#d@d5>%d^$u%$h$#!jl5a|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~o7ed~&%~$uo\d%ok=yk%xlrjhrty7t$=fjkdf%x=fg+u%$h$#!jl5a|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -122,4 +122,7 @@ REL_ICON_DICT = "/imagesdev/icons"
 
 #location of models
 MODELS_LOCATION = 'sites.dirs'
+
+#location of postprocessors
+POSTPROCESSORS_LOCATION = 'sites.treemap.objecttree.Postprocessors'
 

@@ -16,12 +16,13 @@ function DropDownPair(text, value)
 	this.value = value;
 }
 
-function Modelmenu(levels,models,metrics,childrenmethods) 
+function Modelmenu(levels,models,metrics,childrenmethods,postprocessors) 
 {
 	this.levels = levels;
 	this.models = models;
 	this.metrics = metrics;
 	this.childrenmethods = childrenmethods;
+	this.postprocessors = postprocessors
 }
 
 modeldynamic = new Object();
@@ -34,6 +35,7 @@ function initMenu()
 	models = [];
 	metrics = [];
 	childrenmethods = [];
+	postprocessors = [];
 	
 	{% for dropdownname, dropdown in submenu.items %}
 	
@@ -57,9 +59,15 @@ function initMenu()
 	childrenmethods[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
 			{% endfor %}
 		{% endif %}
+		{% if dropdownname|equals:"postprocessors" %}
+			{% for ddentry in dropdown %}
+	postprocessors[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
+			{% endfor %}
+		{% endif %}
+		
 	{% endfor %}
 	
-	modeldynamic["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods);
+	modeldynamic["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods, postprocessors);
 {% endfor %}
 
 //structure:
@@ -82,6 +90,7 @@ cookielr.nblevels = {{cookierules|length}};
 			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"] = new Object();
 			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["childrenmethod"] = {% for mname, methodname in rule.getModelToMethod %}{% if mname|equals:modelname%}"{{methodname}}";{% endif %}{% endfor %}
 			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["metric"] = {% for md, metric in rule.getModelToColumn %}{% if md|equals:modelname%}"{{metric}}";{% endif %}{% endfor %}
+			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["postprocessor"] = {% for md, postprocessor in rule.getModelToPostProcessor %}{% if md|equals:modelname%}"{{postprocessor}}";{% endif %}{% endfor %}
 		{% endif %}
 	{% endfor %}
 {% endfor %}
@@ -99,6 +108,7 @@ function activateJsObjects()
 	
 	setModel();
 	setDefaultLevel();
+	setDefaultPostProcessor();
 	//var optmenu = document.getElementsByName("optionsmenu")[0];
 	//optmenu.style.display = "inline"
 	document.getElementById("thesubtable").style.display = "inline";
@@ -207,6 +217,32 @@ function setLevel()
 	childrenmethodtoset = cookielr[selectedlevel][modeltoset]["childrenmethod"];
 	var success = selectChildrenMethod(childrenmethodtoset);
 	if (!success) return;
+
+	postprocessortoset = cookielr[selectedlevel][modeltoset]["postprocessor"];
+	var success = selectPostprocessor(postprocessortoset);
+	if (!success) return;
+}
+
+function setDefaultPostProcessor()
+{
+	postprocessorsmenu = document.getElementsByName("postprocessor")[0];
+	modelsmenu = document.getElementsByName("model")[0];
+	
+	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
+	newmenu = modeldynamic[selected];
+	
+	//postprocessorsmenu
+	{% for key, value in advanceddefault.items %}{% if key|equals:"postprocessor" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
+	postprocessorsmenu.options.length = 0;
+	for (var i = 0; i < newmenu.postprocessors.length; i++)
+	{	
+		postprocessorsmenu.options.add(new Option(newmenu.postprocessors[i].text, newmenu.postprocessors[i].value));
+		if (newmenu.postprocessors[i].value == valueofdefaultitem)
+		{
+			postprocessorsmenu.selectedIndex = i;
+		}
+	}
+	
 }
 
 function selectLevel(levelvalue)
@@ -245,6 +281,19 @@ function selectMetric(metricvalue)
 	}	          
 	if(index < 0) return false;                                   	
 	metricsmenu.selectedIndex = index;
+	return true;
+}
+
+function selectPostprocessor(postpvalue)
+{
+	postprocessormenu = document.getElementsByName("postprocessor")[0];
+	var index = -1;
+	for(var i = 0; i < postprocessormenu.options.length; ++i)
+	{
+		if (postprocessormenu.options[i].value == postpvalue) index = i;
+	}	          
+	if(index < 0) return false;                                   	
+	postprocessormenu.selectedIndex = index;
 	return true;
 }
 
@@ -442,6 +491,11 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					<tr>
 					<td class="descriptiontext">Getting children:</td>
 					<td><select class="dmenuwidth" name="childrenmethod" id="id_childrenmethod">
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Processing:</td>
+					<td><select class="dmenuwidth" name="postprocessor" id="id_postprocessor">
 					</select></td></tr>
 					<tr><td>
 						<br>
