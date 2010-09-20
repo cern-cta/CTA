@@ -4,7 +4,7 @@ Created on May 18, 2010
 @author: kblaszcz
 '''
 from sites.errors import ConfigError
-from sites.tools.ModelsInspection import *
+from sites.tools.Inspections import *
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.Postprocessors import *
 import exceptions
@@ -42,6 +42,11 @@ class ChildRules(object):
             self.ppnames[index] = postprocessornm
         else: 
             raise Warning('Rule for ' + classname + ' could not be added. Methodname is ' + methodname)
+        
+    def setPostProcessorName(self, classname, ppname):
+        if ppname in getPostProcessorNames() and classname in self.getUsedClassNames():
+            self.ppnames[classname] = ppname
+        
         
     def getUsedClassNames(self):  
         return self.methods.keys()

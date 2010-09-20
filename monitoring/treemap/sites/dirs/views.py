@@ -31,12 +31,13 @@ from django import forms
 from django.db import models
 from django.db.models.base import ModelBase
 from sites.tools.ObjectCreator import createObject
-from sites.tools.ModelsInspection import *
+from sites.tools.Inspections import *
 from django.shortcuts import redirect
 import random
 import sites.dirs.Presets
 from sites.treemap.objecttree.Postprocessors import *
 import re
+import copy
 
 
 def redirectOldLink(request, theid):
@@ -317,6 +318,13 @@ def preset(request, urlending):
         except KeyError:
             pass
         
+        smalltobig = False
+        try:
+            posted['smalltobig']
+            smalltobig = True
+        except KeyError:
+            pass
+        
         if presetname not in sites.dirs.Presets.getPresetNames():
             redir(request, urlending, False)
 #            return HttpResponse("Posted data is not correct")
@@ -334,7 +342,20 @@ def preset(request, urlending):
                 
             lr = newlr
             
-        request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname}
+        if smalltobig:
+            newlr = LevelRules()
+            for rule in lr.getRules():
+                therule = copy.deepcopy(rule)
+                for classname in rule.getUsedClassNames():
+                    if therule.getPostProcessorNameFor(classname) == 'SubstractMinPostProcessor':
+                        therule.setPostProcessorName(classname, 'LogAndSubstractMinPostProcessor')
+                    else:
+                        therule.setPostProcessorName(classname, 'DefaultInversePostProcessor')
+                newlr.appendRuleObject(therule)
+                
+            lr = newlr
+            
+        request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname, 'smalltobig': smalltobig}
         request.session['levelrules'] = lr
         
     else:
@@ -500,7 +521,7 @@ def generateMenuData(nblevels):
         try:
             module = __import__( modulename )
         except ImportError, e:
-            raise ConfigError( 'Unable to load module: ' + module )
+            raise ImportError( 'Unable to load module: ' + module )
     else:
         module = sys.modules[modulename]
         
@@ -544,7 +565,7 @@ def generateDropdownValues(nblevels, themodel):
         try:
             module = __import__( modulename )
         except ImportError, e:
-            raise ConfigError( 'Unable to load module: ' + module )
+            raise ImportError( 'Unable to load module: ' + module )
     else:
         module = sys.modules[modulename]
         
@@ -642,6 +663,9 @@ def createCookieIfMissing(request, nblevels):
         request.session['advancedselection']
         request.session['advancedselection']['postprocessor']
         request.session['defaultpreset']
+        request.session['defaultpreset']['smalltobig']
+        if not request.session['levelrules'].rulesAreValid(): 
+            raise AttributeError("Rules not valid or from an older version")
     except (KeyError, AttributeError):
         request.session['userhascookie'] = True
         request.session['levelrules'] = getDefaultRules(nblevels)
@@ -665,7 +689,7 @@ def getCurrentAdvancedSelections(request):
 def getCurrentPresetSelections(request):
     try:
         request.session['userhascookie']
-        
+        request.session['defaultpreset']['smalltobig']
         if request.session['defaultpreset']['presetname'] not in sites.dirs.Presets.getPresetNames():
             request.session['defaultpreset'] = getDefaultPresets()
             
@@ -703,7 +727,7 @@ def getAdvancedSelection():
     return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories', 'postprocessor': 'DafaultPostProcessor'}
 
 def getDefaultPresets():
-    return{'flat': False, 'presetname': 'Default'}
+    return{'flat': False, 'presetname': 'Default', 'smalltobig': False}
     
 def getDefaultMetricsLinking():
     mlinker = MetricsLinker()

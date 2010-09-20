@@ -40,16 +40,43 @@ class DafaultPostProcessor(PostProcessorBase):
     def getUserFriendlyName(self):
         return "--"
     
-class LogPostProcessor(PostProcessorBase):
+class DefaultInversePostProcessor(PostProcessorBase):
     
     def __init__(self):
         pass
     
     def process(self, value): 
         if value == 0: return 0
-        return 1.0/math.log(value - 1.0)
+        return 1.0/(math.log(value + 1.0)/math.log(100))
 
     
     def getUserFriendlyName(self):
         return "Logarithmic inverse"
-     
+    
+class LogAndSubstractMinPostProcessor(PostProcessorBase):
+    
+    def __init__(self, min = 0.0): #default values must always be set!
+        self.min = min
+    
+    def process(self, value): 
+        if (value-self.min) == 0: return 0
+        return 1.0/(math.log((value-self.min) + 1.0)/math.log(100))
+
+    
+    def getUserFriendlyName(self):
+        return "Substract minimum and Logarithmic inverse"
+    
+#class InversePercentagePostProcessor(PostProcessorBase):
+#    
+#    def __init__(self, max = 0.0):
+#        self.max = max
+#        
+#    def process(self, value):
+#        if self.max > 0:
+#            return 1.0-(value/self.max)
+#        else:
+#            return 0
+#    
+#    def getUserFriendlyName(self):
+#        return "Inverse Percentage of the biggest"
+    

@@ -39,7 +39,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["Default"] = lr
+presetdict["Default (Directory structure)"] = lr
 
 #Preset for Number of Files
 lr = LevelRules()

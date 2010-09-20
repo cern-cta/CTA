@@ -7,7 +7,7 @@ import warnings
 import inspect
 from sites.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
 from sites.errors import ConfigError
-from sites.tools.ModelsInspection import *
+from sites.tools.Inspections import *
 from sites.treemap.objecttree.Postprocessors import *
 
 class Wrapper(object):

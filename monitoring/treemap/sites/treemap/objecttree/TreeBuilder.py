@@ -154,7 +154,10 @@ class TreeBuilder(object):
                 if postprocessname is not None:
                     if(postprocessname == 'SubstractMinPostProcessor'):
                         postprocessobject = SubstractMinPostProcessor(min)
-                        pass
+                    elif(postprocessname == 'InversePercentagePostProcessor'):
+                        postprocessobject = InversePercentagePostProcessor(max)
+                    elif(postprocessname == 'LogAndSubstractMinPostProcessor'):
+                        postprocessobject = LogAndSubstractMinPostProcessor(min) 
                     else:
                         command = "postprocessobject = " + postprocessname + "()"
                         exec(command)

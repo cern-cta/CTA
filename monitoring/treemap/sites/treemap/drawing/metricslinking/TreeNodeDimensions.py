@@ -5,7 +5,7 @@ Created on Jul 14, 2010
 '''
 import exceptions
 from sites.treemap.viewtree.ViewNode  import ViewNode
-from sites.tools.ModelsInspection import ColumnFinder
+from sites.tools.Inspections import ColumnFinder
 import sys
 import inspect
 import string
@@ -333,6 +333,9 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(":</b> ")
         ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
         
+        ret.append("<br><b>Processed value:</b> ")
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
+        
         ret.append("<br><br><b>size:</b> ")
         
         ret.append(sizeInBytes(bytesize))
@@ -391,6 +394,9 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(":</b> ")
         ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
         
+        ret.append("<br><b>Processed value:</b> ")
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
+        
         ret.append("<br><br><b>size:</b> ")
         
         ret.append(sizeInBytes(bytesize))
@@ -435,7 +441,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append("<b>The rest of the items</b> ")
         ret.append("<br><b>Directory:</b> ")
         ret.append(splitText(dirname, 50, 39))
-        ret.append("<br><b>size:</b> ")
+        ret.append("<br><b>Processed size:</b> ")
         
         ret.append(sizeInBytes(size))
             

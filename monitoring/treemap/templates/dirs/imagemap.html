@@ -364,10 +364,128 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 						</a>
 					</li>
         	{% endfor %}
-        	</ul> 
- 
+        	</ul>  
+	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
+	</td>	
+	
+		<!-- The options -->
+		<td align="left" valign="top" height={{imageheight}}>	
 		
-		        <style type="text/css">
+		
+		<!--  make the menu visible if JavaScript is activated -->
+		<!-- The dropdown menus are hold in a table to have them ordered right -->
+			<table id = "thesubtable" name = "optionsmenu" style="display:none;">
+			<tr>
+				<form action="/treemaps/{{rootsuffix}}/preset/" method="post" onsubmit="notImplementedWarning()">
+					<tr>
+					<td class="descriptiontext">Presets:</td> 
+					
+					<td><select class="dmenuwidth" name="preset" id="id_preset">
+						{% for presetname in presetnames %}
+							<option {% spaceless %}
+							{% for key, value in presetdefault.items %}
+								{% if key|equals:"presetname" and value|equals:presetname %}selected{% endif %}
+							{% endfor %}
+							{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
+						{% endfor %}
+					</select></td></tr>
+					
+					<tr><td></td><td class="descriptiontext">
+						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
+					</td></tr>
+					<tr><td></td><td class="descriptiontext">
+						<input id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
+					</td></tr>
+					
+					<tr><td>
+						<input class="applybutton" type="submit" value="Apply"/>
+					</td></tr>
+				</form>
+					
+				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
+					
+					<tr><td><br></td></tr>
+					<tr><td class="advancedtext">Advanced</td> </td></tr>
+				
+					<tr>
+					<td class="descriptiontext">Level:</td> 
+					
+					<td><select class="dmenuwidth" name="level" id="id_level" onchange="setLevel()">
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Model:</td>
+					<td><select class="dmenuwidth" name="model" id="id_model" onchange="setModel()">
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Metric:</td>
+					<td><select class="dmenuwidth" name="metric" id="id_metric">
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Getting children:</td>
+					<td><select class="dmenuwidth" name="childrenmethod" id="id_childrenmethod">
+					</select></td></tr>
+					
+					<tr>
+					<td class="descriptiontext">Value processing:</td>
+					<td><select class="dmenuwidth" name="postprocessor" id="id_postprocessor">
+					</select></td></tr>
+					<tr><td>
+						<br>
+						<input class="applybutton" type="submit" value="Apply"/>
+						<input class="applybutton" type="button" value="Help" onclick="showHelp()"/>
+
+					</td></tr>
+				</form>
+
+			</tr>
+			</table>
+		</td>	
+		<noscript>
+			<div style="color:#7F1F1F" align = "center">
+				This page will have limited functionality <br>
+				Please enable JavaScript and reload the page
+			</div>
+		</noscript>
+		
+	</tr></table>
+    {% else %}
+        <p>No data available / A file or an empty folder</p>
+    {% endif %}
+</body>
+
+
+    <style type="text/css">
+     .dmenuwidth {
+     width:200px;
+     background-color:#1F1F1F;
+     color:#7F7F7F;
+     }
+    </style>
+    
+    <style type="text/css">
+     .descriptiontext {
+		font-size: 14px;
+		color:#CFCFCF;
+     }
+    </style>
+    
+    <style type="text/css">
+     .advancedtext {
+		font-size: 14px;
+		color:#00CF00;
+     }
+    </style>
+    
+    <style type="text/css">
+     .applybutton {
+     background-color:#000000;
+     color:#FF0000;
+     }
+    </style>
+<style type="text/css">
 					#map {
 						position:relative;
 						margin:0;
@@ -431,124 +549,5 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					}
 				{% endfor %}
 				
-			   </style>  
-		   
-	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
-	</td>	
-	
-		<!-- The options -->
-		<td align="left" valign="top" height={{imageheight}}>	
-		
-		
-		<!--  make the menu visible if JavaScript is activated -->
-		<!-- The dropdown menus are hold in a table to have them ordered right -->
-			<table id = "thesubtable" name = "optionsmenu" style="display:none;">
-			<tr>
-				<form action="/treemaps/{{rootsuffix}}/preset/" method="post" onsubmit="notImplementedWarning()">
-					<tr>
-					<td class="descriptiontext">Presets:</td> 
-					
-					<td><select class="dmenuwidth" name="preset" id="id_preset">
-						{% for presetname in presetnames %}
-							<option {% spaceless %}
-							{% for key, value in presetdefault.items %}
-								{% if key|equals:"presetname" and value|equals:presetname %}selected{% endif %}
-							{% endfor %}
-							{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
-						{% endfor %}
-					</select></td></tr>
-					
-					<tr><td></td><td class="descriptiontext">
-						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
-					</td></tr>
-					
-					<tr><td>
-						<input class="applybutton" type="submit" value="Apply"/>
-					</td></tr>
-				</form>
-					
-				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
-					
-					<tr><td><br></td></tr>
-					<tr><td class="advancedtext">Advanced</td> </td></tr>
-				
-					<tr>
-					<td class="descriptiontext">Level:</td> 
-					
-					<td><select class="dmenuwidth" name="level" id="id_level" onchange="setLevel()">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Model:</td>
-					<td><select class="dmenuwidth" name="model" id="id_model" onchange="setModel()">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Metric:</td>
-					<td><select class="dmenuwidth" name="metric" id="id_metric">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Getting children:</td>
-					<td><select class="dmenuwidth" name="childrenmethod" id="id_childrenmethod">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Processing:</td>
-					<td><select class="dmenuwidth" name="postprocessor" id="id_postprocessor">
-					</select></td></tr>
-					<tr><td>
-						<br>
-						<input class="applybutton" type="submit" value="Apply"/>
-						<input class="applybutton" type="button" value="Help" onclick="showHelp()"/>
-
-					</td></tr>
-				</form>
-
-			</tr>
-			</table>
-		</td>	
-		<noscript>
-			<div style="color:#7F1F1F" align = "center">
-				This page will have limited functionality <br>
-				Please enable JavaScript and reload the page
-			</div>
-		</noscript>
-		
-	</tr></table>
-    {% else %}
-        <p>No data available / A file or an empty folder</p>
-    {% endif %}
-
-    <style type="text/css">
-     .dmenuwidth {
-     width:200px;
-     background-color:#1F1F1F;
-     color:#7F7F7F;
-     }
-    </style>
-    
-    <style type="text/css">
-     .descriptiontext {
-		font-size: 14px;
-		color:#CFCFCF;
-     }
-    </style>
-    
-    <style type="text/css">
-     .advancedtext {
-		font-size: 14px;
-		color:#00CF00;
-     }
-    </style>
-    
-    <style type="text/css">
-     .applybutton {
-     background-color:#000000;
-     color:#FF0000;
-     }
-    </style>
-</style>
-
-</body>
+			   </style>
 </html>

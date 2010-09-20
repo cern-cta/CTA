@@ -12,10 +12,9 @@ from django.db.models.fields import *
 import datetime
 #import math
 from sites.errors import ConfigError
-from sites.tools.ModelsInspection import ColumnFinder
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.columntransformation.TransFunctions import *
-from sites.tools.ModelsInspection import *
+from sites.tools.Inspections import *
 
 #USAGE EXAMPLE:
 #from sites.dirs.models import Dirs

@@ -1,7 +1,7 @@
 from django.db import connection, transaction, models
 import inspect
 from sites.tools.GroupIdService import newGroupId
-from sites.tools.ModelsInspection import *
+from sites.tools.Inspections import *
 
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
