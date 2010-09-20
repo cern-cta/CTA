@@ -1,23 +1,57 @@
-CREATE OR REPLACE VIEW StreamStats AS
-  SELECT Stream.id                         streamId,
-         Stream.status                     streamStatus,
-         TapePool.name                     tapePoolName,
-         SvcClass.name                     svcClassName,
-         NVL(stats.nbTapeCopies       , 0) nbTapeCopies,
-         NVL(stats.totalBytes         , 0) totalBytes,
-         NVL(stats.ageOfOldestTapeCopy, 0) ageOfOldestTapeCopy
+CREATE OR REPLACE FUNCTION Ops_getTapePoolSvcClasses(
+  inTapePoolId NUMBER)
+RETURN VARCHAR2
+AS
+  varSvcClasses      VARCHAR2(2048) := '';
+  varIsFirstSvcClass BOOLEAN        := true;
+BEGIN
+  FOR recName IN (
+    SELECT SvcClass.name
+      FROM SvcClass
+     INNER JOIN SvcClass2TapePool
+        ON (SvcClass.id = SvcClass2TapePool.parent)
+     WHERE SvcClass2TapePool.child = inTapePoolId)
+  LOOP
+    IF varIsFirstSvcClass THEN
+      IF LENGTH(varSvcClasses) + LENGTH(recName.name) > 2048 THEN
+        RETURN 'TOO MANY CHARS';
+      END IF;
+
+      varSvcClasses := recName.name;
+      varIsFirstSvcClass := FALSE;
+    ELSE
+      IF LENGTH(varSvcClasses) + 1 + LENGTH(recName.name) > 2048 THEN
+        RETURN 'TOO MANY CHARS';
+      END IF;
+
+      varSvcClasses := varSvcClasses || ' ' || recName.name;
+    END IF;
+  END LOOP;
+
+  RETURN varSvcClasses;
+END Ops_getTapePoolSvcClasses;
+/
+
+CREATE OR REPLACE VIEW Ops_StreamStats AS
+    WITH Now AS (
+           SELECT getTime() time
+             FROM Dual)
+  SELECT Stream.id                              streamId,
+         Stream.status                          streamStatus,
+         TapePool.name                          tapePoolName,
+         Ops_getTapePoolSvcClasses(TapePool.id) svcClassNames,
+         NVL(stats.nbTapeCopies       , 0)      nbTapeCopies,
+         NVL(stats.totalBytes         , 0)      totalBytes,
+         NVL(stats.ageOfOldestTapeCopy, 0)      ageOfOldestTapeCopy
     FROM Stream
    INNER JOIN TapePool
       ON (Stream.tapePool = TapePool.id)
-   INNER JOIN SvcClass2TapePool
-      ON (TapePool.id = SvcClass2TapePool.child)
-   INNER JOIN SvcClass
-      ON (SvcClass2TapePool.parent = SvcClass.id)
     LEFT OUTER JOIN (
            SELECT Stream2TapeCopy.parent           streamId,
                   count(distinct TapeCopy.id)      nbTapeCopies,
-                  NVL(sum(CastorFile.fileSize), 0) totalBytes,
-                  NVL(getTime() - min(Diskcopy.creationtime), 0)
+                  sum(NVL(CastorFile.fileSize, 0)) totalBytes,
+                  (select time from Now) -
+                    min(NVL(Diskcopy.creationtime, (select time from Now)))
                                                    ageOfOldestTapeCopy
              FROM Stream2TapeCopy
             INNER JOIN TapeCopy
