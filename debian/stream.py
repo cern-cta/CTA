@@ -7,7 +7,11 @@
 
 import time
 
-# Stream-policy Python-function which always returns 1
+# An example stream-policy Python-function which always returns 1 signifying
+# the stream being considered should be started.
+#
+# This example contains a commented out section which when un-commented will
+# log the input and return values.
 #
 # @param streamId            Input unsigned 64-bit integer: The database ID of
 #                            the stream to be considered.
@@ -40,17 +44,15 @@ import time
 # @return                    Output integer: Non-zero if the stream being
 #                            considered should start running and zero if it
 #                            should not.
-def streamPolicyAlwaysReturning1(streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives):
+def defaultStreamPolicy(streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives):
 
   returnCode = 1
 
   # Log input and decision
-  logFile = open('/tmp/streamPolicy.log','a')
-  logFile.writelines("StreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+" streamId="+str(streamId)+",numTapeCopies="+str(numTapeCopies)+",totalBytes="+str(totalBytes)+",ageOfOldestTapeCopy="+str(ageOfOldestTapeCopy)+",tapePoolId="+str(tapePoolId)+",tapePoolName="+tapePoolName+",tapePoolNbRunningStreams="+str(tapePoolNbRunningStreams)+",svcClassId="+str(svcClassId)+",svcClassName="+svcClassName+",svcClassNbDrives="+str(svcClassNbDrives)+",returnCode="+str(returnCode)+'\n')
-  logFile.close()
+  # logFile = open('/tmp/streamPolicy.log','a')
+  # logFile.writelines("StreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+" streamId="+str(streamId)+",numTapeCopies="+str(numTapeCopies)+",totalBytes="+str(totalBytes)+",ageOfOldestTapeCopy="+str(ageOfOldestTapeCopy)+",tapePoolId="+str(tapePoolId)+",tapePoolName="+tapePoolName+",tapePoolNbRunningStreams="+str(tapePoolNbRunningStreams)+",svcClassId="+str(svcClassId)+",svcClassName="+svcClassName+",svcClassNbDrives="+str(svcClassNbDrives)+",returnCode="+str(returnCode)+'\n')
+  # logFile.close()
 
   return returnCode
-
-#streamPolicyAlwaysReturning1(1,2,3,4,5,"six",7,8,"nine",10);
 
 # End-of-File
