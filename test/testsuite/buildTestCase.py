@@ -1,4 +1,4 @@
-import os, re, ConfigParser, os.path, readline
+import os, sys, re, ConfigParser, os.path, readline
 
 # handling of subprocesses, depending on the python version
 try:
@@ -13,62 +13,46 @@ def Popen(cmd):
     else:
         return os.popen4(cmd)[1].read()
 
-# some methods dealing with particular tags
-def tagForCastorFileName(s):
-    try:
-        # get the fileclass of the file
-        fileClass = Popen('nsls --class ' + s).split()[0]
-        # check the number of tapeCopies in this file class
-        nslistOutput = Popen('nslistclass --id=' + fileClass).split()
-        nbCopies = int(nslistOutput[nslistOutput.index('NBCOPIES')+1])
-        # based on this, decide on the tag
-        if nbCopies > 0:
-            return 'tapeFileName'
-        else:
-            return 'noTapeFileName'
-    except ValueError:
-        # default to non tape
-        return 'noTapeFileName'
+# define and parse command line options
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-T", "--testdir", dest="testdir", action="store",  help="Test directory to use", metavar="FILE")
+(options, args) = parser.parse_args()
 
-def tagForFileName(s, context):
-    # is it a castor or a local file ?
-    if s.startswith('/castor/'):
-        return tagForCastorFileName(s)
-    elif s == options.get('Tags','localFileName'):
-        return 'localFileName'
+# find out testdir
+toptestdir = options.testdir
+if toptestdir == None:
+    # try to find default
+    candidates = filter(lambda x:x.endswith('tests'), os.listdir('.'))
+    if len(candidates) == 0:
+        print "No test directory found. use --testdir option"
+        sys.exit(0)
+    elif len(candidates) > 1:
+        print "Do not know which test directory to use. Please use --testdir option\nCandidates are " + ', '.join(candidates)
+        sys.exit(0)
     else:
-        return 'tmpLocalFileName'
+        toptestdir = candidates[0]
+        print "Using test directory " + toptestdir 
 
-isDiskOnlySvcClass = {}
-def tagForSvcClass(s, context):
-    global isDiskOnlySvcClass
-    # Ask the user if we do not now yet
-    if not isDiskOnlySvcClass.has_key(s):
-        ans = raw_input('Is the "' + s + '" service class tape enabled ? [Y/n] ')
-        isDiskOnlySvcClass[s] = (ans.lower() not in ('', 'y'))
-    # select the tag acoordingly
-    if isDiskOnlySvcClass[s]:
-        return 'diskOnlyServiceClass'
-    else:
-        return 'tapeServiceClass'
-
-def tagForXrootURL(s, context):
-    if context.find('xrdcp') > -1:
-        return 'xrdcpURL'
-    else:
-        return 'xrootURL'
-
-# setup the environment identical to the test suite one
-class CastorConfigParser(ConfigParser.ConfigParser):
+# setup the environment identical to the test suite one by reading the test suite option file
+class CustomConfigParser(ConfigParser.ConfigParser):
     def __init__(self):
         ConfigParser.ConfigParser.__init__(self)
     # overwrite the optionxform to make options case sensitive
     def optionxform(self,option):
         return option
 # instantiate an option parser with some defaults
-options = CastorConfigParser()
+options = CustomConfigParser()
 # read the option file
-options.read('CastorTestSuite.options')
+optionFileCandidates = filter(lambda x:x.endswith('.options'), os.listdir(toptestdir))
+if len(optionFileCandidates) == 0:
+    print "No .options file found in " + toptestdir
+    sys.exit(0)
+if len(optionFileCandidates) > 1:
+    print "Do not know which .options file to use in " + toptestdir + " : " + ' '.join(optionFileCandidates)
+    sys.exit(0)
+options.read(os.sep.join([toptestdir, optionFileCandidates[0]]))
+
 # setup the environment
 if options.has_section('Environment'):
     print os.linesep+"setting environment :"
@@ -82,49 +66,17 @@ if options.has_section('Environment'):
 # will be replaced with the rule name
 # Note that regexps must have exactly one group matching the part to
 # be replaced
-tagRegexps = {
-    'fileName' : ('(?:[\s=]|\A|file:///)(/[^ \t\n\r\f\v:\)]*)', tagForFileName),
-    'rhhost'   : ('Looking up RH host - Using ([\w.]+)', None),
-    'rhport'   : ('Looking up RH port - Using (\d+)', None),
-    'userid'   : ('Setting euid: (\w+)', None),
-    'groupid'  : ('Setting egid: (\w+)', None),
-    'localhost': ('Localhost is: ([\w.]+)', None),
-    'callback port' : ('Creating socket for castor callback - Using port (\d+)', None),
-    'sending time' : ('stager: ([A-Z][a-z]{2}\s+\d+\s+[\d:]+\s+\(\d+\)) Sending request', None),
-    'uuid'     : ('([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', None),
-    'send duration' : ('SND ([\d.]+) s to send the request', None),
-    'answer duration' : ('CBK ([\d.]+) s before callback', None),
-    'server ip': ('callback from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) was received', None),
-    'fileid@ns': ('(\d+@[\w.]+)', None),
-    'castorTag': ('(?:\s+-U\s+|Usertag=|stage_filequery type=2 param=)(?!NULL)(\w+)', None),
-    'svcClass' : ('(?:\s+-S\s+|STAGE_SVCCLASS=)(\w+)', tagForSvcClass),
-    'nb bytes' : ('(\d+)\s+bytes in', None),
-    'time to transfer' : ('bytes in (\d+) seconds through', None),
-    'interface in' : ('seconds through (\w+\s+\(\w+\)) and', None),    
-    'interface out' : ('seconds through (?:\w+\s+\(\w+\)|<interface in>) and (\w+\s+\(\w+\)(?:\s\(\d+\s\w+/sec\))?)', None),
-    'xrootURL' : ('.*(root://\S*/\S+)', tagForXrootURL),
-    'rfioTURL' : ('(rfio://\S*/\S+)', None),
-    'rootCastorURL' : ('(castor://\S*/\S+)', None),
-    'xrdcp'    : ('((?:\S*/)?xrdcp)\s', None),
-    'xrd'      : ('((?:\S*/)?xrd)\s', None),
-    'rfcp'     : ('((?:\S*/)?rfcp)\s', None),
-    'globus-url-copy' : ('((?:\S*/)?globus-url-copy)\s', None),
-    'transfer speed' : ('\[(?:([0-9\.]+|inf)\s[A-Z]+/s)\]', None),
-    'bytes transfered' : ('\[xrootd] Total ([0-9\.]+\s[A-Z]+)\s', None),
-    'id'       : ('Id:\s(\d+)\s', None),
-    'modtime'  : ('Modtime:\s(\d+)\s', None),
-    'stageHost': ('\s('+options.get('Environment','STAGE_HOST')+')\s', None),
-    'gsiftpURL': ('(?:\s|\A)(gsiftp://[^/]*/\S*)', None),
-    'protocol' : ('\sProtocol=(\S*)\s', None)
-    }
+tagRegexps = {}
 
 # regexps of parts of the output that should be dropped
 # Note that regexps must have exactly one group matching the part to
 # be dropped
-suppressRegExps = [
-    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))',
-    '\n(\s*stager: Looking up service class - Using \S*\s*\n)'
-]
+suppressRegExps = []
+
+# check for buildCase.py file and absorb new definitions
+buildcasefile = os.sep.join([toptestdir,'buildCase.py'])
+if os.path.isfile(buildcasefile):
+    execfile(buildcasefile)
 
 # welcome message
 print
@@ -138,7 +90,7 @@ print
 goOn = True
 cmds = []
 outputs = []
-historyPath = os.path.expanduser("~/.castorBuildTestHist")
+historyPath = os.path.expanduser("~/.buildTestHist")
 if os.path.exists(historyPath):
     readline.read_history_file(historyPath)
 while goOn:
@@ -155,7 +107,7 @@ while goOn:
 
 # we are over, get test name and place
 testName = raw_input("Very good, what is the name of this test ? ").strip()
-testDir = 'castortests'+os.sep+raw_input("Ok, and where should I put it ? ").strip()
+testDir = toptestdir+os.sep+raw_input("Ok, and where should I put it ? ").strip()
 readline.write_history_file(historyPath)
 
 def resetTags():
