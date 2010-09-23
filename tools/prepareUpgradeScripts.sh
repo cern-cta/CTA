@@ -18,7 +18,7 @@ sqlscript=`echo $1_$ver1''_to_$ver2''.sql`
 # prepare script
 schemaname=`echo $1 | tr '[a-z]' '[A-Z]'`
 [ -e $sqlscript ] && rm $sqlscript
-cat template.sql | sed 's/component/'$1'/' | sed 's/SCHEMANAME/'$schemaname'/g' | sed 's/prevRelease/'$ver1'/g' | sed 's/newRelease/'$ver2'/g' | sed 's/prevRelTag/'$dbver1'/' | sed 's/newRelTag/'$dbver2'/' > $sqlscript
+cat template.sql | sed 's/component/'`echo $1`'/' | sed 's/SCHEMANAME/'$schemaname'/g' | sed 's/prevRelease/'$ver1'/g' | sed 's/newRelease/'$ver2'/g' | sed 's/prevRelTag/'$dbver1'/' | sed 's/newRelTag/'$dbver2'/' > $sqlscript
 
 echo $sqlscript skeleton script created. Please insert schema and PL/SQL changes in the appropriate sections,
 echo and replace schemaTag with the appropriate db schema version.
