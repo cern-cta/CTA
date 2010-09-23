@@ -1,5 +1,5 @@
 /******************************************************************************
- *              prevRelease_to_newRelease.sql
+ *                 component_prevRelease_to_newRelease.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -59,7 +59,7 @@ BEGIN
   LOOP
     -- Stop any running jobs
     IF a.state = 'RUNNING' THEN
-      dbms_scheduler.stop_job(a.job_name);
+      dbms_scheduler.stop_job(a.job_name, TRUE);
     END IF;
     -- Schedule the start date of the job to 15 minutes from now. This
     -- basically pauses the job for 15 minutes so that the upgrade can
