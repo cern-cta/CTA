@@ -1345,6 +1345,10 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
   switch (sqlca.sqlcode) {
   case 0:
     *count = strtou64 (count_str);
+    if(*count == 0) {
+      serrno = ENOENT;
+      return(-1);
+    }
     *size = strtou64 (size_str);
     *maxfileid = strtou64 (maxfileid_str);
     return(0);
