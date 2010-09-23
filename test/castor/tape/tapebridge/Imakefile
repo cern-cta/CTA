@@ -23,6 +23,8 @@ COMM
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/legacymsg,castortapelegacymsg)
+DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -34,18 +36,9 @@ TAPE_TAPEGATEWAY_SRCS = \
   ../../../../castor/tape/tapebridge/LegacyTxRx.cpp \
   ../../../../castor/tape/tapebridge/VmgrTxRx.cpp
 
-TAPE_LEGACYMSG_SRCS = \
-  ../../../../castor/tape/legacymsg/CommonMarshal.cpp \
-  ../../../../castor/tape/legacymsg/VmgrMarshal.cpp
-
-TAPE_NET_SRCS = \
-  ../../../../castor/tape/net/net.cpp
-
 TESTTAPEGATEWAYBIN_SRCS = \
   TestTapebridgeMain.cpp \
-  $(TAPE_TAPEGATEWAY_SRCS) \
-  $(TAPE_LEGACYMSG_SRCS) \
-  $(TAPE_NET_SRCS)
+  $(TAPE_TAPEGATEWAY_SRCS)
 
 TESTTAPEGATEWAYBIN_OBJS = $(TESTTAPEGATEWAYBIN_SRCS:.cpp=.o)
 

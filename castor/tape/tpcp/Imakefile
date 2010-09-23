@@ -23,6 +23,7 @@ COMM
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -31,7 +32,6 @@ DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(vmgr,castorvmgr)
 
 DUMPTPBIN_SRCS = \
-  ../net/net.cpp \
   Action.cpp \
   DumpTpCommand.cpp \
   DumpTpMain.cpp \
@@ -46,7 +46,6 @@ DUMPTPBIN_SRCS = \
 DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.o)
 
 READTPBIN_SRCS = \
-  ../net/net.cpp \
   Action.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
@@ -61,7 +60,6 @@ READTPBIN_SRCS = \
 READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.o)
 
 WRITETPBIN_SRCS = \
-  ../net/net.cpp \
   Action.cpp \
   Helper.cpp \
   StreamHelper.cpp \

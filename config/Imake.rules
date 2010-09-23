@@ -192,6 +192,8 @@ ProgramTarget(program,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB))
 #define BuildRPathcastorcommonora commonRPath cnvRPath dlfRPath vmgrRPath upvRPath
 #define BuildRPathcastorinfopolicy commonRPath castorRPath oraRPath cnvRPath
 #define BuildRPathcastortapegatewayprotocol commonRPath securityRPath nsRPath dlfRPath castorRPath
+#define BuildRPathcastortapelegacymsg commonRPath securityRPath nsRPath dlfRPath castorRPath
+#define BuildRPathcastortapenet commonRPath securityRPath nsRPath dlfRPath castorRPath
 #define BuildRPathcastortapepython commonRPath securityRPath nsRPath dlfRPath castorRPath
 #define BuildRPathcastortapeutils commonRPath securityRPath nsRPath dlfRPath castorRPath
 

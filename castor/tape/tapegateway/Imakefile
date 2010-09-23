@@ -32,6 +32,7 @@ DependsOnLibrary(castor/db/newora,castorcommonora)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(rfio,castorrfio)
 DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/python,castortapepython)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(vdqm,castorvdqm)
@@ -56,8 +57,7 @@ TAPEGATEWAYDBIN_SRCS = \
 	daemon/VdqmTapeGatewayHelper.cpp  \
 	daemon/VmgrTapeGatewayHelper.cpp  \
 	daemon/WorkerThread.cpp \
-	daemon/ora/OraTapeGatewaySvc.cpp \
-	../net/net.cpp  
+	daemon/ora/OraTapeGatewaySvc.cpp
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS)
 

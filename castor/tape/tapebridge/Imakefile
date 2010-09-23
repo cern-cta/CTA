@@ -23,6 +23,7 @@ COMM
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -47,7 +48,6 @@ TAPEBRIDGEBIN_SRCS = \
   ../legacymsg/CommonMarshal.cpp \
   ../legacymsg/RtcpMarshal.cpp \
   ../legacymsg/VmgrMarshal.cpp \
-  ../net/net.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.o)
