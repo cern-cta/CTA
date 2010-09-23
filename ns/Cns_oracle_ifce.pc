@@ -1315,21 +1315,6 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
   struct sqlca sqlca;
 
   strcpy (func, "Cns_get_tapesum_by_vid");
-  EXEC SQL SELECT COUNT(*) INTO :exists
-    FROM Cns_seg_metadata
-    WHERE vid = :vid;
-  switch (sqlca.sqlcode) {
-  case 0:
-    if (exists > 0)
-      break;
-  case 1403:
-    serrno = ENOENT;
-    return(-1);
-  default:
-    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
-    return(-1);
-  }
-
   if (filter == 1) {
     EXEC SQL SELECT TO_CHAR(COUNT(*)), 
                     TO_CHAR(NVL(SUM(segsize), 0)),
