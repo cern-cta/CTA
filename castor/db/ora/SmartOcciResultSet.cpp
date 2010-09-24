@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartOcciResultSet.cpp
+ *                      castor/db/ora/SmartOcciResultSet.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartOcciResultSet.hpp"
+#include "castor/db/ora/SmartOcciResultSet.hpp"
 
 #include <errno.h>
 
@@ -31,7 +31,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartOcciResultSet::SmartOcciResultSet(
+castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
   oracle::occi::Statement *const statement,
   oracle::occi::ResultSet *const resultSet)
   throw(castor::exception::Exception) :
@@ -64,7 +64,7 @@ castor::tape::utils::SmartOcciResultSet::SmartOcciResultSet(
 //-----------------------------------------------------------------------------
 // copy-constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartOcciResultSet::SmartOcciResultSet(
+castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
   const SmartOcciResultSet &obj) throw() :
   m_statement(obj.m_statement),
   m_resultSet(obj.m_resultSet) {
@@ -79,8 +79,8 @@ castor::tape::utils::SmartOcciResultSet::SmartOcciResultSet(
 //-----------------------------------------------------------------------------
 // assignment-operator
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartOcciResultSet
-  &castor::tape::utils::SmartOcciResultSet::operator=(SmartOcciResultSet&)
+castor::db::ora::SmartOcciResultSet
+  &castor::db::ora::SmartOcciResultSet::operator=(SmartOcciResultSet&)
   throw() {
   
   // This code is never executed because the assignment-operator is private and
@@ -95,7 +95,7 @@ castor::tape::utils::SmartOcciResultSet
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartOcciResultSet::~SmartOcciResultSet() throw() {
+castor::db::ora::SmartOcciResultSet::~SmartOcciResultSet() throw() {
 
   // Close the result-set if it is still open
   if(m_resultSetIsOpen) {
@@ -112,7 +112,7 @@ castor::tape::utils::SmartOcciResultSet::~SmartOcciResultSet() throw() {
 //-----------------------------------------------------------------------------
 // close
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartOcciResultSet::close()
+void castor::db::ora::SmartOcciResultSet::close()
   throw(castor::exception::Exception, oracle::occi::SQLException) {
 
   // Throw an exception if the result-set is already closed
@@ -135,7 +135,7 @@ void castor::tape::utils::SmartOcciResultSet::close()
 // SmartOcciResultSet arrow-operator
 //-----------------------------------------------------------------------------
 oracle::occi::ResultSet
-  *castor::tape::utils::SmartOcciResultSet::operator->() const
+  *castor::db::ora::SmartOcciResultSet::operator->() const
   throw(castor::exception::Exception) {
 
   // Throw an exception if 

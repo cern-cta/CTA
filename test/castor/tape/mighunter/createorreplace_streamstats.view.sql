@@ -35,15 +35,24 @@ END Ops_getTapePoolSvcClasses;
 CREATE OR REPLACE VIEW Ops_StreamStats AS
     WITH Now AS (
            SELECT getTime() time
-             FROM Dual)
+             FROM Dual),
+         StreamVid AS (
+           SELECT Stream.id            streamId,
+                  NVL(Tape.vid, 'N/A') vid
+             FROM Stream
+             LEFT OUTER JOIN Tape
+               ON (Stream.tape = Tape.id))
   SELECT Stream.id                              streamId,
          Stream.status                          streamStatus,
+         StreamVid.vid,
          TapePool.name                          tapePoolName,
          Ops_getTapePoolSvcClasses(TapePool.id) svcClassNames,
          NVL(stats.nbTapeCopies       , 0)      nbTapeCopies,
          NVL(stats.totalBytes         , 0)      totalBytes,
          NVL(stats.ageOfOldestTapeCopy, 0)      ageOfOldestTapeCopy
     FROM Stream
+   INNER JOIN StreamVid
+      ON (Stream.id = StreamVid.streamId)
    INNER JOIN TapePool
       ON (Stream.tapePool = TapePool.id)
     LEFT OUTER JOIN (

@@ -21,15 +21,11 @@ COMM
 COMM @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 COMM
 
-CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public
-AddLdFlags(-L$(ORACLE_HOME)/lib -locci -lclntsh)
-
 TAPEUTILSLIB_SRCS = \
   ScopedLock.cpp \
   SmartFILEPtr.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
-  SmartOcciResultSet.cpp \
   utils.cpp
 
 TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.o)

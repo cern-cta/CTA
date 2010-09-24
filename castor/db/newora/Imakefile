@@ -41,6 +41,7 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             ../ora/OraJobSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraQuerySvc.cpp \
+            ../ora/SmartOcciResultSet.cpp \
             DLFInit.cpp
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.o)
 SharedLibraryTarget(castorcommonora,$(ORALIB_OBJS),,)

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartOcciResultSet.hpp
+ *                      castor/db/ora/SmartOcciResultSet.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_UTILS_SMARTOCCIRESULTSET
-#define CASTOR_TAPE_UTILS_SMARTOCCIRESULTSET
+#ifndef CASTOR_DB_ORA_SMARTOCCIRESULTSET
+#define CASTOR_DB_ORA_SMARTOCCIRESULTSET
 
 #include "castor/exception/Exception.hpp"
 
@@ -32,8 +32,8 @@
 
 
 namespace castor {
-namespace tape   {
-namespace utils  {
+namespace db     {
+namespace ora    {
 
 /**
  * A simple smart-pointer that owns an oracle::occi::ResultSet.  When the smart
@@ -126,8 +126,8 @@ private:
 
 }; // class SmartOcciResultSet
 
-} // namespace utils
-} // namespace tape
+} // namespace ora
+} // namespace db
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_SMARTOCCIRESULTSET
+#endif // CASTOR_DB_ORA_SMARTOCCIRESULTSET

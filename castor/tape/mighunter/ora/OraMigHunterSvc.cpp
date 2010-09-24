@@ -40,6 +40,8 @@
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 
+#include "castor/db/ora/SmartOcciResultSet.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidConfiguration.hpp"
@@ -53,7 +55,6 @@
 
 #include "castor/tape/mighunter/TapePoolForStreamPolicy.hpp"
 #include "castor/tape/mighunter/ora/OraMigHunterSvc.hpp"
-#include "castor/tape/utils/SmartOcciResultSet.hpp"
 
 #include "errno.h"
 
@@ -537,7 +538,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::
 
     // Execute the statement
     m_getCreatedStreamsWithTapeCopiesStatement->setString(1, svcClassName);
-    utils::SmartOcciResultSet
+    db::ora::SmartOcciResultSet
       resultSet(m_getCreatedStreamsWithTapeCopiesStatement,
         m_getCreatedStreamsWithTapeCopiesStatement->executeQuery());
 
@@ -700,7 +701,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::streamsForStreamPolicy(
     nbDrives = (u_signed64)m_streamsForStreamPolicyStatement->getDouble(4);
 
     // Get the list of candidate streams for the stream-policy
-    utils::SmartOcciResultSet
+    db::ora::SmartOcciResultSet
       resultSet(m_streamsForStreamPolicyStatement,
         m_streamsForStreamPolicyStatement->getCursor(5));
 
@@ -781,7 +782,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy(
 
     // Execute the statement
     m_tapePoolsForStreamPolicyStatement->setDouble(1, svcClassId);
-    utils::SmartOcciResultSet
+    db::ora::SmartOcciResultSet
       resultSet(m_tapePoolsForStreamPolicyStatement,
         m_tapePoolsForStreamPolicyStatement->executeQuery());
 
