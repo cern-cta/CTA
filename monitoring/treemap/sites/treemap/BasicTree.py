@@ -21,17 +21,14 @@ class BasicTree(object):
         self.depth_inscope = -1
         self.traversal_path = []
         
-        self.children_sorted = False
         self.children_cached= False
 
-    def setRoot(self, theobject, parentmethodname, fparam = None, evalcolumn = None, siblingssum = 1.0):
+    def setRoot(self, theobject):
         self.graph.clear()
-        theroot = TreeNode(theobject = theobject, evalcolumnname = evalcolumn, parentmethodname = parentmethodname, fpar = fparam, siblings_sum = siblingssum, dpt = 0) 
-        self.graph.add_node(theroot, value = 1)
-        self.root = theroot
-        self.node_inscope = theroot
+        self.graph.add_node(theobject)
+        self.root = theobject
+        self.node_inscope = theobject
         self.depth_inscope = 0
-        self.children_sorted = False
         self.children_cached= False
         self.traversal_path = []
         
@@ -42,42 +39,7 @@ class BasicTree(object):
         self.updateChildren()    
         return len(self.children_inscope)
     
-    def getSortedChildren(self):
-        def childrenCompare(child1, child2):
-            #self.graph.neighbors doesn't guarantee the same order everytime you call it
-            #so if you want to guarantee the same child order (for consistent access by index)
-            #you need to avoid equality of evaluation. This is done here by using python's objectid
-            if child1.evaluate() > child2.evaluate(): return 1
-            elif child1.evaluate() < child2.evaluate(): return -1
-            else: 
-                if id(child1.getObject()) > (child2.getObject()):
-                    return 1
-                elif id(child1.getObject()) < (child2.getObject()):
-                    return -1
-            warnings.warn('you seem to have the same object at least 2 times on the same tree level')
-            return 0
-                
-        if not self.children_sorted:
-#            print '--'
-#            for node in self.children_inscope:
-#                print node.getObject(), node.evaluate()
-#            self.children_sorted = True
-            self.updateChildren()  
-            self.children_inscope.sort(cmp=childrenCompare, key=None, reverse=True)
-            self.children_sorted = True
-#            print '--'
-#            for node in self.children_inscope:
-#                print node.getObject(), node.evaluate()
-#            self.children_sorted = True
-        return self.children_inscope
-            
-#    count = 0     
-            
-    def addChild(self, theobject, columnname, parentmethodname, fparam = None):
-#        self.count = self.count + 1
-#        print self.count
-#        if self.count%13 == 0:
-#            print "stop here"
+    def addChild(self, theobject):
         if self.root == None:
             raise ConfigError( 'Cannot add child if no root specified')
         
@@ -85,32 +47,19 @@ class BasicTree(object):
             print "error!!!"
             raise ConfigError( 'Parent cannot contain itself as child')
         
-        child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
-        self.graph.add_node(child, value = child.evaluate())
-        self.graph.add_edge(self.node_inscope, child)
-        if self.children_cached:
-            self.children_inscope.append(child)
-        self.children_sorted = False
-        return child
-    
-    def addTreeNodeChild(self, theobject):
-        if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
-        
-        if self.node_inscope is theobject:
-            print "error!!!"
-            raise ConfigError( 'Parent cannot contain itself as child')
-        
-        assert(isinstance(theobject, TreeNode))
-        
-        self.graph.add_node(theobject, value = theobject.evaluate())
+        self.graph.add_node(theobject)
         self.graph.add_edge(self.node_inscope, theobject)
+#        ng = self.graph.neighbors(theobject)
+#        print "theobject", id(theobject), theobject.namepart, hash(theobject)
+#        print "node_inscope", id(self.node_inscope), self.node_inscope.namepart, hash(self.node_inscope)
+#        for n in ng:
+#            print id(n), n.namepart
+            
         if self.children_cached:
             self.children_inscope.append(theobject)
-        self.children_sorted = False
         return theobject
 
-    def addChildren(self, objects, columnname, parentmethodname, fparam = None):
+    def addChildren(self, objects):
         if self.root == None:
             raise ConfigError( 'Cannot add child if no root specified')
     
@@ -119,13 +68,10 @@ class BasicTree(object):
     
         for theobject in objects:
             
-            child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
-            self.graph.add_node(child, value = child.evaluate())
-            self.graph.add_edge(self.node_inscope, child)
+            self.graph.add_node(theobject)
+            self.graph.add_edge(self.node_inscope, theobject)
             if self.children_cached:
-                self.children_inscope.append(child)
-                
-        self.children_sorted = False
+                self.children_inscope.append(theobject)
         
     def getChildren(self):
         self.updateChildren()
@@ -133,10 +79,7 @@ class BasicTree(object):
 
     def deleteChildren(self):
         self.graph.remove_nodes_from(self.graph.neighbors(self.node_inscope))
-        
         self.children_inscope = []
-        
-        self.children_sorted = True
         self.children_cached= True
 
     
@@ -154,7 +97,6 @@ class BasicTree(object):
         self.node_inscope = child
         
         self.children_cached = False
-        self.children_sorted = False
         self.depth_inscope = self.depth_inscope + 1
 
         
@@ -171,14 +113,12 @@ class BasicTree(object):
 #        parent = parent_edge[0][0] #first edge, first Node
         self.node_inscope = parent
         
-        self.children_sorted = False
         self.children_cached = False
 
         self.depth_inscope = self.depth_inscope - 1
     
-    def traveseToRoot(self):
+    def traverseToRoot(self):
         self.node_inscope = self.root
-        self.children_sorted = False
         self.children_cached = False
         self.depth_inscope = 0
         self.traversal_path = []
@@ -186,12 +126,12 @@ class BasicTree(object):
     def updateChildren(self):
         if not self.children_cached:
             self.children_inscope = []
+            #parent_edge = self.graph.out_edges(self.node_inscope)
             self.children_inscope = self.graph.neighbors(self.node_inscope)
             if self.children_inscope:
-                self.children_sorted = False
+                pass
             else:
                 self.children_inscope = []
-                self.children_sorted = True
                 
         self.children_cached = True
     
@@ -199,4 +139,4 @@ class BasicTree(object):
         return self.depth_inscope
     
     def hasRoot(self):
-        return self.root is None
+        return self.root is not None

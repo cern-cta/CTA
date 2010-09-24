@@ -22,6 +22,7 @@ from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.tools.Inspections import *
 from sites.treemap.BasicTree import BasicTree
+import copy
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True)
@@ -150,7 +151,7 @@ class Dirs(models.Model):
         
     def refreshChildren(self):
         self.children_cached = False
-        children = self.getDirs()
+        self.children = self.getDirs()
        
     def getFiles(self):
         if self.files_cached:
@@ -201,7 +202,7 @@ class Dirs(models.Model):
             
     def refreshFiles(self):
         self.files_cached = False
-        files = self.getFiles()
+        self.files = self.getFiles()
         
     def hasAnyChildren(self):
         return self.hasChildren() or self.hasFiles()
@@ -214,6 +215,7 @@ class Dirs(models.Model):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
 
 Dirs.nonmetrics = ['fileid', 'parent', 'depth', 'fullname']      
+Dirs.metricattributes = []
     
 #mark children methods for Dirs
 Dirs.getDirs.__dict__['methodtype'] = 'children'
@@ -300,11 +302,11 @@ CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
 CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
 
 CnsFileMetadata.nonmetrics = ['fileid', 'parent_fileid', 'depth', 'fullname', 'filemode', 'nlink', 'owner_uid', 'gid' ,'status', 'fileclass', 'guid', 'csumtype', 'csumvalue', 'acl']  
+CnsFileMetadata.metricattributes = []
 
-
-class RequestsAtlas(models.Model):
+class Requestsatlas(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
-    timestamp = models.DateField()
+    timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
     nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
     type = models.CharField(max_length=255, blank=True)
@@ -314,44 +316,168 @@ class RequestsAtlas(models.Model):
     filename = models.CharField(max_length=2048, blank=True)
     filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
     
+    #fake (not in db)
+#    requestscount = models.IntegerField(default = 1.0)
+    
     class Meta:
-        db_table = u'requests'
+        db_table = u'requestsatlas'
+    
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        self.namepart = None
+        self.requestscount = None
+#    def __init__(self, namepart = ''):
+#        assert(isinstance(namepart,str))
+#        self.namepart = namepart
+#        models.Model.__init__(self)
+##        self.__dict__['pk'] = self.getIdReplacement()
+    
+    #fixes a bug to distinguish between objects with different "namepart"
+    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
+    def __hash__(self):
+        try:
+            self.namepart
+            return hash(self._get_pk_val().__str__() + self.namepart)
+        except:
+            return hash(self._get_pk_val())
         
     def getUserFriendlyName(self):
         return "Amount of Requests"
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+        try:
+            self.namepart
+        except:
+            raise Exception("This object seems not to exist in the generated tree")
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.namepart]])
+    
+    def getChildren(self):
+        tree = findRequestInTree(self.namepart)
+        return tree.getChildren()
+    
+    def countChildren(self):
+        tree = findRequestInTree(self.namepart)
+        return tree.countChildren()
+    
+    def getParent(self):
+        tree = findRequestInTree(self.namepart)
+        return tree.getCurrentObject()
+    
+    
        
-RequestsAtlas.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+Requestsatlas.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+#metrics which are not related to columns from the database and can be accessed with the dot operator
+Requestsatlas.metricattributes = ['requestscount']
 
-RequestsAtlas.generatedtree = None
-def generateRequestsTree(fromtime, totime):
-    tree = RequestsAtlas.nonmetrics
-    RequestsAtlas.generatedtree = BasicTree()
-    requestarray = RequestsAtlas.objects.get(timestamp__gte = fromtime, timestamp__lte = totime, filename__isnull=False)
-    for dataset in requestarray:
-        addRequestToTree(tree, dataset)
+#mark children Methods   
+Requestsatlas.getChildren.__dict__['methodtype'] = 'children'
 
+#mark count Methods
+Requestsatlas.countChildren.__dict__['methodtype'] = 'childrencount'
+Requestsatlas.countChildren.__dict__['countsfor'] = 'getChildren'
+
+#mark parent Methods
+Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
+Requestsatlas.getParent.__dict__['returntype'] = ['Requestsatlas']
+
+Requestsatlas.generatedtree = None
+Requestsatlas.treeready = False
+
+def generateRequestsTree(fromminsago, tominsago):
     def addRequestToTree(tree, requestdata):
-        entry = requestdata
+        entry = copy.copy(requestdata)
         name = requestdata.filename
         assert (name.find('/') >=0)
+        oldpos = 0
+        pos = 0
         
-        if tree.hasRoot():
-            tree.traverseToRoot()
-            
-            pos = name.find('/')
-            while (pos >=0):
-                #todo: split and traverse
-                pos = name.find('/', pos + 1)
-                
-        else:
-            entry.name = name[:name.find('/')]
+        if not tree.hasRoot():
+            entry.namepart = name[:name.find('/')]
+            entry.requestscount = 1
             tree.setRoot(entry)
             tree.traverseToRoot()
+            oldpos = name.find('/') + 1
+            pos = name.find('/', oldpos)
+        else:
+            tree.traverseToRoot()
+            oldpos = 0
+            pos = name.find('/')
+            
+        while (pos >=0):
+            #todo: split and traverse
+            namepart = name[:pos]
+            entry = copy.copy(requestdata)
+            
+            entry.namepart = namepart
+            entry.requestscount = 1
+            
+            childintree = False
+            for child in tree.getChildren():
+                if child.namepart == entry.namepart:
+                    child.requestscount = child.requestscount + 1
+                    childintree = True
+                    tree.traverseInto(child)
+                    break
+            
+            if not childintree:
+                #for root: if this is the current parent
+                parent = tree.getCurrentObject()
+                if entry.namepart == parent.namepart:
+                    parent.requestscount = parent.requestscount + 1
+                else:
+                    tree.addChild(entry)
+                    tree.traverseInto(entry)
+            
+            oldpos = pos + 1
+            pos = name.find('/', pos + 1)
+            
+    
+    print "Generating Tree of Requests"
+    Requestsatlas.generatedtree = BasicTree()        
+    tree = Requestsatlas.generatedtree
+#    requestarray = list(Requestsatlas.objects.filter(timestamp__range=(fromtime, totime), filename__isnull=False))
+    requestarray = list(Requestsatlas.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN sysdate - " + str(fromminsago) + "/1140 and sysdate - " + str(tominsago)+"/1140"]))
+    for dataset in requestarray:
+        addRequestToTree(tree, dataset)
+        
+    print tree.getRoot().requestscount
+    print ''
+    
+def findRequestInTree(namepart):
 
+    tree = Requestsatlas.generatedtree
+    name = namepart
+    assert ((name.find('/') >=0) or name == '')
+    pos = 0
+    
+    if not tree.hasRoot():
+        raise Exception("Tree is empty!")
+    else:
+        tree.traverseToRoot()
+        pos = name.find('/')
+        if name == '': pos = 0
+        
+    while (pos >=0):
+        #todo: split and traverse
+        namepart = name[:pos]
+        
+        childintree = False
+        if tree.getCurrentObject().namepart == namepart:
+            return tree
+        
+        for child in tree.getChildren():
+            if child.namepart == namepart:
+                childintree = True
+                tree.traverseInto(child)
+                break
+        
+        if not childintree:
+            raise Exception("Request doesn't exist in the current tree")
+        
+        pos = name.find('/', pos + 1)
+
+        return tree
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

@@ -1,11 +1,15 @@
 # Create your views here.
+from django import forms
 from django.conf import settings
 from django.conf.urls.defaults import *
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
+from django.db import models
+from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
+from django.db.models.sql.datastructures import Date
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response, render_to_response, \
+from django.shortcuts import redirect, render_to_response, render_to_response, \
     get_list_or_404, get_object_or_404
 from django.template import Context, loader, resolve_variable
 from django.template.loader import render_to_string
@@ -14,6 +18,8 @@ from django.utils.http import urlquote
 from django.views.decorators.cache import cache_page
 from sites.dirs.models import *
 from sites.tools.GroupIdService import resolveGroupId
+from sites.tools.Inspections import *
+from sites.tools.ObjectCreator import createObject
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
@@ -21,23 +27,19 @@ from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
+from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+import copy
 import datetime
 import profile
-from django import forms
-from django.db import models
-from django.db.models.base import ModelBase
-from sites.tools.ObjectCreator import createObject
-from sites.tools.Inspections import *
-from django.shortcuts import redirect
 import random
-import sites.dirs.Presets
-from sites.treemap.objecttree.Postprocessors import *
 import re
-import copy
+from sites.tools.Inspections import  getDefaultNumberOfLevels
+
+import sites.dirs.Presets
 
 
 def redirectOldLink(request, theid):
@@ -48,13 +50,16 @@ def redirectHome(request):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_3')
 
 def treeView(request, rootmodel, theid, refresh_cache = False):  
-    
     time = datetime.datetime.now()
     try:
         #Directory you want to show its content
         root = None
-        command = "root = "+ rootmodel.__str__()+ ".objects.get(pk="+theid.__str__()+")" 
-        exec(command)
+        if(rootmodel == 'Requestsatlas'):
+            generateRequestsTree(15 , 0)
+            root = findRequestInTree(theid).getCurrentObject()
+        else:
+            command = "root = "+ rootmodel.__str__()+ ".objects.get(pk="+theid.__str__()+")" 
+            exec(command)
         
     except Dirs.DoesNotExist:
         raise Http404
@@ -582,7 +587,7 @@ def generateDropdownValues(nblevels, themodel):
     
     #metrics menu
     cf = ColumnFinder(themodel)
-    columns = cf.getColumnnames()
+    columns = cf.getColumnAndAtrributeNames()
     for column in columns:
         ismetric = True
         command = 'if column in ' + themodel +'.nonmetrics: ismetric = False'
@@ -719,9 +724,6 @@ def getDefaultRules(nblevels):
 
 def getDefaultModel():
     return 'Dirs'
-
-def getDefaultNumberOfLevels():
-    return 8
 
 def getAdvancedSelection():
     return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories', 'postprocessor': 'DafaultPostProcessor'}

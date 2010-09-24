@@ -39,6 +39,7 @@ class ColumnTransformator(dict):
         self.className = className
         self.ci = ColumnFinder(self.className)
         self.columns = self.ci.getColumns()
+        self.metricattributenames = self.ci.getMetricAttributeNames()
         self.generateDefaultFunctions()
         
         if not self.moduleName in sys.modules.keys():
@@ -66,6 +67,10 @@ class ColumnTransformator(dict):
                 self.__dict__[name] = evalDateField
             if isinstance(column, FloatField):
                 self.__dict__[name] = evalFloatField
+                
+        for attributename in self.metricattributenames:
+            name = self.__class__.fnprefix + attributename
+            self.__dict__[name] = evalAttribute
 
     def getClassname(self):
         return self.className
@@ -73,8 +78,8 @@ class ColumnTransformator(dict):
     def getModulename(self):
         return self.moduleName
     
-    def getColumns(self):
-        return self.columns
+    def getColumnAndAtrributeNames(self):
+        return self.ci.getColumnAndAtrributeNames()
     
     def getColumnFinder(self):
         return self.ci

@@ -66,16 +66,13 @@ class Wrapper(object):
     
     def setColumnname(self, newname):
         if newname == None:
-#            columnt = self.__class__.column_transformators[self.classname]
-#            newname = columnt.getColumnFinder().guessPk().name
-#            if newname == None:
             raise ConfigError( 'Wrapper was not able to find any default column for ' + self.classname)
-#            warnings.warn('cloumnname = None: Wrapper decided to evaluate using columnname = ' + newname + ' , model: ' + self.classname, Warning)
-            
-        if self.__class__.column_transformators[self.classname].getColumns():
+        
+        allnames = self.__class__.column_transformators[self.classname].getColumnAndAtrributeNames()
+        if allnames:
             found = False
-            for column in self.__class__.column_transformators[self.classname].getColumns():
-                if column.name == newname:
+            for name in allnames:
+                if name == newname:
                     found = True
                     break
             if not found:

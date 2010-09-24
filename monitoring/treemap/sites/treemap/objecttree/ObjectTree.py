@@ -90,7 +90,7 @@ class ObjectTree(object):
             raise ConfigError( 'Parent cannot contain itself as child')
         
         child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
-        self.graph.add_node(child, value = child.evaluate())
+        self.graph.add_node(child)
         self.graph.add_edge(self.node_inscope, child)
         if self.children_cached:
             self.children_inscope.append(child)
@@ -107,7 +107,7 @@ class ObjectTree(object):
         
         assert(isinstance(theobject, TreeNode))
         
-        self.graph.add_node(theobject, value = theobject.evaluate())
+        self.graph.add_node(theobject)
         self.graph.add_edge(self.node_inscope, theobject)
         if self.children_cached:
             self.children_inscope.append(theobject)
@@ -124,7 +124,7 @@ class ObjectTree(object):
         for theobject in objects:
             
             child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
-            self.graph.add_node(child, value = child.evaluate())
+            self.graph.add_node(child)
             self.graph.add_edge(self.node_inscope, child)
             if self.children_cached:
                 self.children_inscope.append(child)

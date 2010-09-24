@@ -141,7 +141,8 @@ class Annex(models.Model):
         return self.pk.__str__()
 
 Annex.nonmetrics = ['id']
-    
+Annex.metricattributes = []
+
 #mark children Methods   
 Annex.getItems.__dict__['methodtype'] = 'children'
 

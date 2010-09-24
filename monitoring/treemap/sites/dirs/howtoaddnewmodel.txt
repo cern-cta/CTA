@@ -21,9 +21,27 @@ DATABASE_PASSWORD = 'ropassword'
 By default, django generates models for all the tables. Open yourfile.py, choose the model(class) you need and copy&paste it to your models.py
 
 You will probably need a SYNONYM for the table you generated the model for. Here is an example how to create a synonym in your database:
-CREATE SYNONYM "CASTOR_NS_RO"."REQUESTS" FOR "MON_C2ATLAS"."REQUESTS";
+CREATE SYNONYM "CASTOR_NS_RO"."REQUESTS" FOR "MON_C2ATLAS"."REQUESTS"; You probably will need a permission from db admin to create synonyms.
 
-2. Now you need to verify if the generated data is correct. Example:
+If the table is not in the same database you will need to create a database link:
+CREATE DATABASE LINK
+    c2cstdev
+CONNECT TO
+    castordlf_read
+identified by
+    "yourpassword"
+using
+    'c2castordevdb';
+
+Then you can access the table like this: 
+
+SELECT * FROM requests@c2cstdev;
+
+Now you can create the SYNONYM:
+CREATE SYNONYM "CASTOR_NS_RO"."REQUESTSATLAS" FOR "MON_C2ATLAS"."REQUESTS";
+
+
+2. You need to verify if the generated data is correct. Example:
 
 class Requests(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
@@ -39,9 +57,41 @@ class Requests(models.Model):
     class Meta:
         db_table = u'requests'
         
-mark primary key
-change fields which contains floats to models.FloatField(null=True, blank=True), DecimalField will always return 0 on a float
+mark the primary key. Lets assume, in the example above it is reqid:
+reqid = models.CharField(max_length=36, primary_key=True)
 
+Change for columns which contain floats from
+models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+to 
+models.FloatField(null=True, blank=True)
 
+Django can't recognize Floats and takes DecimalField by default, but DecimalField will always return 0 on a float.
 
-Define method getUserFriendlyName. This method should return the name(as string) that will be used for that model on the user interface
+3. Define which fields are not metrics. These usually are id's or strings:
+RequestsAtlas.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+
+4. Define the getUserFriendlyName method. 
+This method has to return a string which will represent the Object in the web interface:
+
+def getUserFriendlyName(self): return "Amount of Requests"
+
+5. Define getIdReplacement method.
+This method defines how to find the same object from the database. 
+It has to be a string which describes how to find the object independently from any memory address or process id.  
+Usually it is enough to define the id as {modelname}_{id}. 
+In the code below there is an additional trick to have the best performance on joining strings together.
+What matters is [self.__class__.__name__, "_", self.pk.__str__()]
+
+def getIdReplacement(self):
+   return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+   
+The output of this method is used by the views to find that object again. 
+The object will be taken as root for generating the ObjectTree for the treemap.
+If the view has to find the object by reding that string from the url, you need to add something like:
+    
+    (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView')
+   
+Into the url.py. It is a regular expression. In that way django can read the model and the id from the url again.
+?P<rootmodel> stands for the modelname and ?P<theid> stands for the id.
+Regular expressions in python are explained in greater detail here:
+http://csil-web.cs.surrey.sfu.ca/cmpt170spring2010/wiki/RegularExpressions/

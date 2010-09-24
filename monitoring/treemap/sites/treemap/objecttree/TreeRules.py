@@ -11,6 +11,7 @@ import exceptions
 import inspect
 import sys
 import warnings
+from sites.dirs.models import *
 
 class ChildRules(object):
     '''
@@ -144,7 +145,7 @@ class ChildRules(object):
         
         #check columnname
         cf = ColumnFinder(classname)
-        if columnname not in cf.getColumnnames():
+        if columnname not in cf.getColumnAndAtrributeNames():
             return False
         
         #check postprocessornm
@@ -234,7 +235,7 @@ class ChildRules(object):
         
             #check columnname
             cf = ColumnFinder(classname)
-            if columnname not in cf.getColumnnames():
+            if columnname not in cf.getColumnAndAtrributeNames():
                 return False
             
         #check postprocessornm

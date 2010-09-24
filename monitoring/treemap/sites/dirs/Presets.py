@@ -5,7 +5,7 @@ Created on Sep 10, 2010
 '''
 from sites.treemap.objecttree.TreeRules import LevelRules
 from django.conf import settings
-from sites.dirs.views import getDefaultNumberOfLevels
+from sites.tools.Inspections import getDefaultNumberOfLevels
     
 def getPreset(presetname):
     try:
@@ -200,6 +200,13 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Newest file on tape last modification"] = lr
+
+#Preset for Requests
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["Requests from last 15 Minutes"] = lr
 
 
 

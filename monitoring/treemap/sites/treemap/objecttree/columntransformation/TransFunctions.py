@@ -62,4 +62,18 @@ def evalDateField(attr, fparam = None):
     def isStandard():
         return True
     if(attr is None): return 0
-    return datetime.datetime.now() - attr
+    return datetime.datetime(attr)
+
+def evalAttribute(attr, fparam = None):
+    def isStandard():
+        return True
+    if(attr is None): return 0
+    return float(attr)
+    
+
+#def evalDateTimeField(attr, fparam = None):
+#    "Defines how to evaluate a date or datetime field"
+#    def isStandard():
+#        return True
+#    if(attr is None): return 0
+#    return datetime.datetime(attr)

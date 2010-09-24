@@ -7,10 +7,10 @@ from django.db.models.base import ModelBase
 from django.db.models.fields import *
 from sites.errors import ConfigError
 from sites.tools.ObjectCreator import createObject
-from sites.treemap.objecttree.columntransformation.TransFunctions import \
-    evalStringBySimilarity
+from sites.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
 import inspect
 import sys
+from sites.dirs.models import *
 
 class ColumnFinder:
 
@@ -20,6 +20,7 @@ class ColumnFinder:
         self.className = className
         self.columns = []
         self.column_names = []
+        self.metricattributenames = []
     
         instance = createObject(self.moduleName, self.className)
         try:
@@ -30,7 +31,16 @@ class ColumnFinder:
         except:
             raise ConfigError( 'Unable to read Columns' )
     
+        self.metricattributenames = instance.__class__.metricattributes
+        
+        self.metricattributenames.sort()
         self.columns.sort()
+        
+    def getMetricAttributeNames(self):
+        return self.metricattributenames
+    
+    def getColumnAndAtrributeNames(self):
+        return self.column_names + self.metricattributenames
         
     def getColumns(self):
         return self.columns
@@ -137,5 +147,8 @@ def getPostProcessorNames():
             ret.append(classname)
     
     return ret
+
+def getDefaultNumberOfLevels():
+    return 8
                 
         
