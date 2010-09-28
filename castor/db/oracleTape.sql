@@ -1041,12 +1041,27 @@ END;
 
 /** Functions for the MigHunterDaemon **/
 
-/** Cleanup before starting a new MigHunterDaemon **/
 CREATE OR REPLACE PROCEDURE migHunterCleanUp(svcName IN VARCHAR2)
 AS
+-- Cleans up the migration-hunter data in the database.
+--
+-- This procedure is called during the start-up logic of a new migration-hunter
+-- daemon.
+--
+-- This procedure raises application error -20001 if the service-class
+-- specified by svcName is unknown.
   svcId NUMBER;
 BEGIN
-  SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
+  -- Get the database-ID of the service-class with the specified name
+  BEGIN
+    SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR(-20001,
+      'Failed to clean-up the migration-hunter data in the database' ||
+      ': No such service-class' ||
+      ': svcName=' || svcName);
+  END;
+
   -- clean up tapecopies, WAITPOLICY reset into TOBEMIGRATED
   UPDATE
      /*+ LEADING(TC CF)
