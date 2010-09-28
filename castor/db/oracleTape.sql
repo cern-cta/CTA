@@ -1298,8 +1298,8 @@ BEGIN
     OPEN outStreamsForPolicy FOR
       SELECT Stream.id,
              10000, -- numTapeCopies
-             10000, -- totalBytes
-             gettime(), -- ageOfOldestTapeCopy
+             10000*1073741824, -- totalBytes (Force file size to be 1 GiB)
+             48*3600, -- ageOfOldestTapeCopy (Force age to be 48 hours)
              Stream.tapepool
         FROM Stream
        WHERE Stream.id IN (

@@ -19,10 +19,8 @@ import time
 #                            tape-copies attached to the stream.
 # @param totalBytes          Input unsigned 64-bit integer: The sum of the
 #                            sizes of all the attached tape-copies.
-# @param ageOfOldestTapeCopy Input unsigned 64-bit integer: The age of the
-#                            oldest tape-copy attached to the stream as the
-#                            number of seconds since the UNIX epoch
-#                            (00:00:00 UTC on 1 January 1970).
+# @param ageOfOldestTapeCopy Input unsigned 64-bit integer: The age in seconds
+#                            of the oldest tape-copy attached to the stream.
 # @param tapePoolId          Input unsigned 64-bit integer: The database ID of
 #                            the tape-pool to which the stream belongs.
 # @param tapePoolName        Input string: The name of the tape-pool to which
