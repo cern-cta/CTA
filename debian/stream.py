@@ -35,22 +35,27 @@ import time
 # @param svcClassNbDrives    Input unsigned 64-bit integer: The nbDrives
 #                            attribute of the service-class to which the stream
 #                            belongs. This is therefore the maximum number of
-#                            running-streams the service-class SHOULD HAVE at any
-#                            single moment in time. Please note the number of
-#                            created streams may be GREATER than the number that
-#                            should be running.
+#                            running-streams the service-class SHOULD HAVE at
+#                            any single moment in time. Please note the number
+#                            of created streams may be GREATER than the number
+#                            that should be running.
+# @param svcClassNbRunningStreams Input unsigned 64-bit integer: The total
+#                            number of running streams associated with the
+#                            service-class via its tape-pools.
 # @return                    Output integer: Non-zero if the stream being
 #                            considered should start running and zero if it
 #                            should not.
-def defaultStreamPolicy(streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives):
+def defaultStreamPolicy(streamId,numTapeCopies,totalBytes,ageOfOldestTapeCopy,tapePoolId,tapePoolName,tapePoolNbRunningStreams,svcClassId,svcClassName,svcClassNbDrives,svcClassNbRunningStreams):
 
   returnCode = 1
 
   # Log input and decision
   # logFile = open('/tmp/streamPolicy.log','a')
-  # logFile.writelines("StreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+" streamId="+str(streamId)+",numTapeCopies="+str(numTapeCopies)+",totalBytes="+str(totalBytes)+",ageOfOldestTapeCopy="+str(ageOfOldestTapeCopy)+",tapePoolId="+str(tapePoolId)+",tapePoolName="+tapePoolName+",tapePoolNbRunningStreams="+str(tapePoolNbRunningStreams)+",svcClassId="+str(svcClassId)+",svcClassName="+svcClassName+",svcClassNbDrives="+str(svcClassNbDrives)+",returnCode="+str(returnCode)+'\n')
+  # logFile.writelines("StreamPolicy called "+time.strftime("%d %b %Y %H:%M:%S", time.localtime())+" streamId="+str(streamId)+",numTapeCopies="+str(numTapeCopies)+",totalBytes="+str(totalBytes)+",ageOfOldestTapeCopy="+str(ageOfOldestTapeCopy)+",tapePoolId="+str(tapePoolId)+",tapePoolName="+tapePoolName+",tapePoolNbRunningStreams="+str(tapePoolNbRunningStreams)+",svcClassId="+str(svcClassId)+",svcClassName="+svcClassName+",svcClassNbDrives="+str(svcClassNbDrives)+",svcClassNbRunningStreams="+str(svcClassNbRunningStreams)+",returnCode="+str(returnCode)+'\n')
   # logFile.close()
 
   return returnCode
+
+#defaultStreamPolicy(1,2,3,4,5,'six',7,8,'nine',10,11)
 
 # End-of-File

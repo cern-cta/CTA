@@ -41,8 +41,20 @@ namespace mighunter {
  * Map of tape-pool database IDs to the tape-pool name and number of running
  * streams.
  */
-typedef std::map<u_signed64, TapePoolForStreamPolicy>
-  IdToTapePoolForStreamPolicyMap;
+class IdToTapePoolForStreamPolicyMap:
+  public std::map<u_signed64, TapePoolForStreamPolicy> {
+
+public:
+
+  /**
+   * Returns the total number of running streams recorded in this map.
+   *
+   * @return The total number of running-streams.
+   */
+  u_signed64 getTotalNbRunningStreams() throw();
+
+}; // class IdToTapePoolForStreamPolicyMap
+
 
 /**
  * Writes to the specified output stream a string-represenation of the

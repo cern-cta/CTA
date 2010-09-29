@@ -27,6 +27,23 @@
 
 
 //------------------------------------------------------------------------------
+// getTotalNbRunningStreams
+//------------------------------------------------------------------------------
+u_signed64 castor::tape::mighunter::IdToTapePoolForStreamPolicyMap::getTotalNbRunningStreams() throw() {
+  u_signed64 totalNbRunningStreams = 0;
+
+  for(const_iterator itor = begin(); itor != end(); itor++) {
+
+    const TapePoolForStreamPolicy &tapePool = itor->second;
+
+    totalNbRunningStreams += tapePool.nbRunningStreams;
+  }
+
+  return totalNbRunningStreams;
+}
+
+
+//------------------------------------------------------------------------------
 // writeIdToTapePoolForStreamPolicyMapToString
 //------------------------------------------------------------------------------
 void castor::tape::mighunter::writeIdToTapePoolForStreamPolicyMapToString(

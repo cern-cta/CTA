@@ -95,6 +95,7 @@ castor::tape::mighunter::StreamThread::StreamThread(
   m_expectedStreamPolicyArgNames.push_back("svcClassId");
   m_expectedStreamPolicyArgNames.push_back("svcClassName");
   m_expectedStreamPolicyArgNames.push_back("svcClassNbDrives");
+  m_expectedStreamPolicyArgNames.push_back("svcClassNbRunningStreams");
 }
 
 
@@ -538,7 +539,7 @@ bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
     // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
     // K must be used for unsigned (feature not documented at all but available)
     castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue(
-      (char *)"(K,K,K,K,K,s,K,K,s,K)",
+      (char *)"(K,K,K,K,K,s,K,K,s,K,K)",
       streamForPolicy.streamId,
       streamForPolicy.numTapeCopies,
       streamForPolicy.totalBytes,
@@ -548,7 +549,8 @@ bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
       tapePoolForPolicy.nbRunningStreams,
       svcClassId,
       svcClassName.c_str(),
-      svcClassNbDrives));
+      svcClassNbDrives,
+      tapePoolsForPolicy.getTotalNbRunningStreams()));
 
     // Throw an exception if the creation of the input-tuple failed
     if(inputObj.get() == NULL) {
@@ -601,6 +603,8 @@ bool castor::tape::mighunter::StreamThread::callStreamPolicyPyFuncForStream(
         ", svcClassId="               << svcClassId                          <<
         ", svcClassName="             << svcClassName                        <<
         ", svcClassNbDrives="         << svcClassNbDrives                    <<
+        ", svcClassNbRunningStreams=" <<
+          tapePoolsForPolicy.getTotalNbRunningStreams()                      <<
         ": streamPolicyName="         << streamPolicyName                    <<
         ": pythonException="          << pyExStr;
 
