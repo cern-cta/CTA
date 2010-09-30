@@ -87,7 +87,7 @@ def getIdReplacement(self):
    
 The output of this method is used by the views to find that object again. 
 The object will be taken as root for generating the ObjectTree for the treemap.
-If the view has to find the object by reding that string from the url, you need to add something like:
+If the view has to find the object by reading that string from the url, you need to add something like:
     
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView')
    
@@ -95,3 +95,134 @@ Into the url.py. It is a regular expression. In that way django can read the mod
 ?P<rootmodel> stands for the modelname and ?P<theid> stands for the id.
 Regular expressions in python are explained in greater detail here:
 http://csil-web.cs.surrey.sfu.ca/cmpt170spring2010/wiki/RegularExpressions/
+
+6. Define __unicode__ and __str__
+
+Usually __unicode__ calls the __str__ method and converts it to unicode
+    def __unicode__(self):
+        return unicode(self.__str__())
+        
+The string method should return a string that will be shown in the headers of the graphical rectangles if there is no metrics linking for 'headertext' specified
+    def __str__(self):
+        return "\""+self.namepart+"\": " + self.requestscount.__str__()
+        
+7. Define __init__ and __hash__
+
+You only need to define __init__ if you have attributes in the model objects which are not from the database.
+__init__ MUST begin like that:
+
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        
+Now you can define the attributes that are not from the db inside of __init__:
+
+        self.namepart = None
+        self.requestscount = None
+        
+If you are such attributes which are not from the database you will need __hash__ with high probability.
+__hash__ is used by the networkx library to determine neighbours in the graph (a tree is a graph)
+Most probably you will want to be able to distinguish between object which have the same id but different non-db attributes.
+By default Django defines __hash__ by using the primary key:
+
+    def __hash__(self):
+        return hash(self._get_pk_val())
+        
+That means, if two objects represent the same data set from the db but have different non-db attributes (here: namepart and requestscount),
+the hash will be the same despite of different non-db attribute values. 
+If you want to have the hash value different, involve the extra attributes into the calculation:
+
+    def __hash__(self):
+        return hash(self._get_pk_val().__str__() + self.namepart)
+
+	or
+
+    def __hash__(self):
+        return hash(self._get_pk_val().__str__() + self.namepart + self.requestcount__str__())
+        
+    Depending on how model objects are wished to be considered different.
+    
+8. Defining children method(s)
+
+This is the most important and central part of implementing a new model.
+A children method defines how to get Children objects. The method asks an object for its children.
+This method is used to build the object tree, and the object tree is needed to generate the treemap.
+You can have more than only one children method. 
+For example if you have a Directory structure, you might be interested in Files, Subdirectories or both, 
+which are inside of that directory (and therefore children). If you want all 3 options you need to define 3 Methods:
+getFiles, getDirectories and getFilesAndDirectories. 
+
+How will TreeBuilder know that these are the children Methods?
+You have to define them in model's class object below the class definition.
+If your model is named 'Dirs' that would look like that:
+
+Dirs.getFiles.__dict__['methodtype'] = 'children'
+Dirs.getDirectories.__dict__['methodtype'] = 'children'
+Dirs.getFilesAndDirectories.__dict__['methodtype'] = 'children'
+
+In general:
+{model}.{method}.__dict__['methodtype'] = 'children'
+
+How to implement a children method?
+The children method has to return a list objects which contains all the children. 
+If there is no children the list has to be empty. 
+How do you implement your children method depends on if you have some 
+
+If you work with pure db values you just make a query using django framework:
+
+    def getDirectories(self):
+		(...)
+        children = Dirs.objects.filter(parent=self.fileid, depth = deeper)
+        (...)
+        return children
+    
+    A more complex query:
+     
+    children = CnsFileMetadata.objects.filter(parent_fileid=id).extra(where=['bitand(filemode, 16384) = 0'])
+        
+If the query is too complex for the framework, you can execute a query directly:
+
+	from django.db import connection
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT things FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND NOT EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
+        children = cursor....
+    except:
+        print "exception!"
+        
+If the model objects contain some non-db attributes or even no db values at all the implementation is really dependend on what you need.
+For example you may implement a method that generates the data tree first (You can use the BasicTree class for that) and call the methods from that tree:
+
+    def getChildren(self):
+        tree = traverseToRequestInTree(self.namepart)
+        return tree.getChildren()
+        
+9. Define count method(s)
+
+These methods are very important for performance.
+For each children method you need to define a count method. The count method is important for performance.
+It is used to predict if it makes sense to read more children with acceptable performance. So the worst thing you can do is:
+
+    def countDirectories(self):
+    	return len(self.getDirectories())
+    	
+You have to find a fast query or other way to count the children before really reading all of them. 
+If the count method is slow, the whole system is slow. So instead of doing the worst thing above you may do something like this:
+
+    def countDirs(self):
+	    try:
+	        cursor = connection.cursor()
+	        cursor.execute('SELECT count(*) FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
+	        cnt = cursor.fetchone()
+	        return cnt[0]
+	    except:
+	    	...
+
+Take your time to find the fastest way to count the children. If you don't, the generation of the object Tree will be very slow.
+For all these examples it is also recommended to cache the children, so you could say here (in case that children are in cache):
+
+	return len(self.cached_children)
+	
+10. parent method
+11. metrics linking
+11.1 TreeNodeDimensions and value Transformations

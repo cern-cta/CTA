@@ -235,6 +235,7 @@ Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndDirectories'
 #mark parent Methods
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
 Dirs.getDirParent.__dict__['returntype'] = ['Dir']
+Dirs.getDirParent.__dict__['naviname'] = 'name'
         
 class CnsFileMetadata(models.Model):
     fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
@@ -300,6 +301,7 @@ CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 #mark parent Methods
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
 CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
+CnsFileMetadata.getDirParent.__dict__['naviname'] = 'name'
 
 CnsFileMetadata.nonmetrics = ['fileid', 'parent_fileid', 'depth', 'fullname', 'filemode', 'nlink', 'owner_uid', 'gid' ,'status', 'fileclass', 'guid', 'csumtype', 'csumvalue', 'acl']  
 CnsFileMetadata.metricattributes = []
@@ -314,7 +316,7 @@ class Requestsatlas(models.Model):
     username = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
     filename = models.CharField(max_length=2048, blank=True)
-    filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=0, decimal_places=-127, blank=True)
     
     #fake (not in db)
 #    requestscount = models.IntegerField(default = 1.0)
@@ -326,11 +328,17 @@ class Requestsatlas(models.Model):
         models.Model.__init__(self, *args, **kwargs)
         self.namepart = None
         self.requestscount = None
-#    def __init__(self, namepart = ''):
-#        assert(isinstance(namepart,str))
-#        self.namepart = namepart
-#        models.Model.__init__(self)
-##        self.__dict__['pk'] = self.getIdReplacement()
+        
+    def __unicode__(self):
+        return unicode(self.__str__())
+    
+    def __str__(self):
+        txt = ''
+        if(self.namepart == ''): 
+            txt = "/"
+        else:
+            txt = self.namepart
+        return txt
     
     #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
@@ -353,15 +361,19 @@ class Requestsatlas(models.Model):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.namepart]])
     
     def getChildren(self):
-        tree = findRequestInTree(self.namepart)
+        tree = traverseToRequestInTree(self.namepart)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = findRequestInTree(self.namepart)
+        tree = traverseToRequestInTree(self.namepart)
         return tree.countChildren()
     
     def getParent(self):
-        tree = findRequestInTree(self.namepart)
+        tree = traverseToRequestInTree(self.namepart)
+        try:
+            tree.traverseBack()
+        except:
+            pass
         return tree.getCurrentObject()
     
     
@@ -380,6 +392,8 @@ Requestsatlas.countChildren.__dict__['countsfor'] = 'getChildren'
 #mark parent Methods
 Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
 Requestsatlas.getParent.__dict__['returntype'] = ['Requestsatlas']
+Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
+
 
 Requestsatlas.generatedtree = None
 Requestsatlas.treeready = False
@@ -444,10 +458,9 @@ def generateRequestsTree(fromminsago, tominsago):
     print tree.getRoot().requestscount
     print ''
     
-def findRequestInTree(namepart):
+def traverseToRequestInTree(name):
 
     tree = Requestsatlas.generatedtree
-    name = namepart
     assert ((name.find('/') >=0) or name == '')
     pos = 0
     
@@ -457,27 +470,31 @@ def findRequestInTree(namepart):
         tree.traverseToRoot()
         pos = name.find('/')
         if name == '': pos = 0
-        
-    while (pos >=0):
-        #todo: split and traverse
+    
+    lastiterationfollows = False #name is missing a slash at the very end, that is why the last iteration must be handled a bit different    
+    while (pos >=0) or lastiterationfollows :
         namepart = name[:pos]
         
-        childintree = False
-        if tree.getCurrentObject().namepart == namepart:
+        if tree.getCurrentObject().namepart == name:
             return tree
         
         for child in tree.getChildren():
-            if child.namepart == namepart:
-                childintree = True
+            if child.namepart == name:
                 tree.traverseInto(child)
-                break
-        
-        if not childintree:
-            raise Exception("Request doesn't exist in the current tree")
-        
+                return tree
+            if child.namepart == namepart:
+                tree.traverseInto(child)
+            
         pos = name.find('/', pos + 1)
+        
+        if lastiterationfollows: break
+        
+        if pos == -1 and not lastiterationfollows:
+            pos = len(name)
+            lastiterationfollows = True
+        
+    raise Exception("Request(Atlas) doesn't exist in the current tree")
 
-        return tree
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)

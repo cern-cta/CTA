@@ -355,9 +355,9 @@ String.prototype.replaceAll = function(oldsubstr, substr)
     <!-- The map -->
     <td align="center" valign="middle" width={{imagewidth}} style="height: auto">     	
         	<ul id="map">
- 			{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
+ 			{% for x1, y1 ,x2 , y2, hash, theid, info in mapparams %}
 					<li>
-						<a class="cls{{theid}}" href="/treemaps/{{theid}}" title = "">
+						<a class="cls{{hash}}" href="/treemaps/{{theid}}" title = "">
 							<span>
 								{{ info|escapefilter }}
 							</span>
@@ -522,8 +522,8 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					
 					#map li a span { display:none; }
 					
-				{% for shiftx, shifty, twidth, theight, theid in tooltipshift %}
-					#map li a.cls{{theid}}:hover span 
+				{% for shiftx, shifty, twidth, theight, hash, theid in tooltipshift %}
+					#map li a.cls{{hash}}:hover span 
 					{
 						position:relative;
 						display:block;
@@ -539,8 +539,8 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 			  		}
 			  	{% endfor %}
 				
-				{% for x1, y1 ,x2 ,y2, theid, info in mapparams %}
-					#map a.cls{{theid}} 
+				{% for x1, y1 ,x2 ,y2, hash, theid, info in mapparams %}
+					#map a.cls{{hash}} 
 					{
 						top:{{y1}}px;
 						left:{{x1}}px;

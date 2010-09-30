@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rk=z^wj~o7ed~&%~$uo\d%ok=yk%xlrjhrty7t$=fjkdf%x=fg+u%$h$#!jl5a|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rgfgs$!edsw&dgk=|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -84,7 +84,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/home/kblaszcz/workspace/FasticView/templates' 
+    '/home/kblaszcz/workspace/OverView/templates' 
 )
 
 INSTALLED_APPS = (

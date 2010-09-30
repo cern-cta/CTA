@@ -50,7 +50,7 @@ class Annex(models.Model):
         return unicode(self.__str__())
     
     def __str__(self):
-        return "The rest"
+        return "The rest [zoom = "+str(self.depth)+"]"
     
     def getItems(self):
         if not(self.valid_cache):
@@ -153,4 +153,5 @@ Annex.countItems.__dict__['countsfor'] = 'getItems'
 #mark parent Methods
 Annex.getAnnexParent.__dict__['methodtype'] = 'parent'
 Annex.getAnnexParent.__dict__['returntype'] = getAvailableModels()
+Annex.getAnnexParent.__dict__['naviname'] = '__str__'
         

@@ -305,6 +305,37 @@ class DirNameTransformator(ColumnTransformatorInterface):
     def isText(self):
         return True
     
+class TopDirNameTransformator(ColumnTransformatorInterface):
+    
+    def __init__(self):
+        ColumnTransformatorInterface.__init__(self)
+        
+    def transform(self, dbobj, columnname):
+        try:
+            ext = dbobj.__dict__[columnname]
+        except KeyError:
+            raise ConfigError("column doesn't exist")
+        
+        if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
+            raise ConfigError("string or unicode expected")
+
+        pos = ext.rfind('/')
+        if pos >= 0: ext = ext[pos:]
+        return ext
+        
+    def getMax(self):
+        return None
+    
+    def getMin(self):
+        return None
+    
+    #that information is related to the last transformation
+    def isFloat(self):
+        return False
+    
+    def isText(self):
+        return True
+    
 class DirHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     classdocs
@@ -461,6 +492,66 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append(dbobj.countItems().__str__())
 
         return ''.join([bla for bla in ret])
+    
+class RequestsAtlasHtmlInfoDimension(ViewNodeDimensionBase):
+    '''
+    classdocs
+    '''
+    def __init__(self): #transformation.transform (db object)
+        
+        ViewNodeDimensionBase.__init__(self, 'requestsatlashtmlinfo', None, None, False, True)
+
+        
+    def getValue(self, tnode):
+        assert(tnode is not None and isinstance(tnode, ViewNode))
+        dbobj = tnode.getProperty('treenode').getObject()
+        parent = tnode.getProperty('treenode').getNakedParent()
+        assert(isinstance(dbobj, Requestsatlas))
+        
+        ret = []
+        size = float(tnode.getProperty('treenode').getEvalValue())
+        psize = tnode.getProperty('treenode').getSiblingsSum()
+        
+        bytesize = dbobj.filesize
+        if bytesize is None: 
+            bytesize = 0
+        else:
+            bytesize = long(bytesize)
+            
+        nbreq = dbobj.requestscount
+        
+        ret.append("<b>File:</b> ")
+        ret.append(splitText(dbobj.namepart, 50, 39))
+        
+        ret.append("<br><b>Number of requests:</b> ")
+        ret.append(str(nbreq))
+        
+        ret.append("<br><b> Evaluation of ")
+        ret.append(tnode.getProperty('treenode').getColumnname())
+        ret.append(":</b> ")
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
+        
+        ret.append("<br><b>Processed value:</b> ")
+        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
+        
+        ret.append("<br><br><b>size:</b> ")
+        
+        ret.append(sizeInBytes(bytesize))
+            
+        ret.append(" (")
+        ret.append(long(bytesize).__str__())
+        ret.append(" Bytes)")
+        
+        ret.append("<br><b>parent percentage:</b> ")
+        if(psize == 0):
+            ret.append("%.2f"%(100))
+        else:
+            ret.append("%.2f"%(size/psize*100.0))
+            
+        ret.append("%")
+        
+        return ''.join([bla for bla in ret])   
+    
     
 def splitText(text, limit, firstlimit):
     limitold = limit

@@ -21,7 +21,9 @@ urlpatterns = patterns('',
     
     (r'(?P<urlending>\w+)/preset/$', 'dirs.views.preset'),
     
-    (r'(?P<rootmodel>\w+)_(?P<theid>\d*)/$', 'dirs.views.treeView'),
+    (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView'),
+    
+    (r'(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
     
     (r'group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)/$', 'dirs.views.groupView'),
 )

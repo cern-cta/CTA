@@ -56,7 +56,7 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
         root = None
         if(rootmodel == 'Requestsatlas'):
             generateRequestsTree(15 , 0)
-            root = findRequestInTree(theid).getCurrentObject()
+            root = traverseToRequestInTree(theid).getCurrentObject()
         else:
             command = "root = "+ rootmodel.__str__()+ ".objects.get(pk="+theid.__str__()+")" 
             exec(command)
@@ -116,7 +116,7 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = root.getIdReplacement() + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = hash(root.getIdReplacement()).__str__() + lr.getUniqueLevelRulesId() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -233,7 +233,7 @@ def groupView(request, parentpk, depth, model, refresh_cache = False):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + root.getIdReplacement() + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + lr.getUniqueLevelRulesId() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -395,8 +395,9 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         
         theid = node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmlinfotext')
+        hash = node.getProperty('treenode').getObject().__hash__()
         
-        mapparams[idx] = (x1,y1,x2,y2,theid,info)
+        mapparams[idx] = (x1,y1,x2,y2,hash,theid,info)
         
         textlines = 1
         oldpos, fpos = 0 ,0
@@ -437,9 +438,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         if(y1 + shifty) > imageheight + 50:
             shifty = 50
 #        elif (y1 + shifty) > imageheight and shifty <= 20:
-#            shifty = 2*shifty
-            
-        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, theid)
+#            shifty = 2*shifty   
+        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, hash, theid)
         
     rt = vtree.getRoot().getProperty('treenode').getObject()
     parents = []
@@ -459,7 +459,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        navlinkparts.append( (pr.name, pr.fullname, pr.getIdReplacement()) )
+        navlinkparts.append( (pr.__dict__[getNaviName(pr.__class__.__name__)], str(pr), pr.getIdReplacement()) )
     
     ruleexplanations = []
     i = int(random.random()*nblevels)
@@ -748,4 +748,9 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
     
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    
+    mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsAtlasHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
+
     return mlinker

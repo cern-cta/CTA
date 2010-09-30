@@ -118,6 +118,19 @@ def getParentMethodFor(themodel, parentmethodname):
                 continue
     return None
 
+def getParentMethodName(themodel):
+    modulename = getModelsModuleName(themodel)
+    instance = createObject(modulename, themodel)  
+    for membername in instance.__class__.__dict__.keys():
+        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
+            function = instance.__class__.__dict__[membername]
+            try:
+                if (function.__dict__['methodtype'] == 'parent'):
+                    return function.__name__
+            except:
+                continue
+    return None
+
 def getModelsModuleName(themodel):
     modulename = ""
     if(themodel == 'Annex'): return 'sites.treemap.objecttree.Annex'
@@ -147,6 +160,13 @@ def getPostProcessorNames():
             ret.append(classname)
     
     return ret
+
+def getNaviName(classname):
+    assert (classname in getAvailableModels())
+    obj = createObject(getModelsModuleName(classname), classname )
+    nvname = dict(inspect.getmembers( obj.__class__ ))['getParent'].__dict__['naviname']
+    
+    return nvname
 
 def getDefaultNumberOfLevels():
     return 8
