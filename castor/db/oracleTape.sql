@@ -1264,9 +1264,13 @@ BEGIN
   -- Note that there is a COMMIT statement which means the database cannot help
   -- if the mighunter daemon crashes and forgets which streams it has marked
   -- for itself
+  --
+  -- Note that there is a race-condition between the MigHunterThread attaching
+  -- tape-copies to newly created and empty streams and the the StreamThread
+  -- deleting newly created threads with no tape-copies attached to them
   UPDATE Stream
      SET Stream.status = 7 -- STREAM_WAITPOLICY
-   WHERE Stream.status IN (4, 6) -- STREAM_WAITSPACE, STOPPED
+   WHERE Stream.status IN (4, 5, 6) -- STREAM_WAITSPACE, CREATED, STOPPED
      AND Stream.id IN (
            SELECT Stream.id
              FROM Stream

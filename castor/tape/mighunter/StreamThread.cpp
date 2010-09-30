@@ -157,18 +157,6 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
     const std::string &svcClassName = *svcClassNameItor;
 
     try {
-      changeCreatedStreamsWithTapeCopiesToStopped(oraSvc, svcClassName);
-    } catch(castor::exception::Exception &ex) {
-      // Log an error and continue
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("SvcClass", svcClassName         ),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        FAILED_TO_MOVE_CREATED_STREAMS_TO_STOPPED, params);
-    }
-
-    try {
       applyStreamPolicyToSvcClass(oraSvc, svcClassName);
     } catch(castor::exception::InvalidConfiguration &ex) {
       // Gracefully shutdown the daemon in the event of an invalid configuration
@@ -199,44 +187,6 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 
         APPLY_STREAM_POLICY_TO_SVCCLASS_EXCEPT, params);
     }
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// changeCreatedStreamsWithTapeCopiesToStopped
-//------------------------------------------------------------------------------
-void castor::tape::mighunter::StreamThread::
-  changeCreatedStreamsWithTapeCopiesToStopped(
-  castor::tape::mighunter::IMigHunterSvc *const oraSvc,
-  const std::string                             &svcClassName)
-  throw(castor::exception::Exception) {
-
-  // Get the database IDs od the streams associated with the service-class
-  // which are in status STREAM_CREATED and have one or more tape-copies
-  // attached to them
-  std::list<u_signed64> streamIds;
-  oraSvc->getCreatedStreamsWithTapeCopies(svcClassName, streamIds);
-
-  // Log a message if some streams were found
-  if(!streamIds.empty()) {
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("SvcClass"  , svcClassName    ),
-        castor::dlf::Param("nbStreams" , streamIds.size())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        FOUND_CREATED_STREAMS_WITH_TAPECOPIES, params);
-    }
-  }
-
-  // Move each stream from status STREAM_CREATED to STREAM_STOPPED.  Streams
-  // in status STREAM_STOPPED will be picked up by the stream-thread of the
-  // mighunterd daemon process.
-  for(std::list<u_signed64>::const_iterator streamIdItor=streamIds.begin();
-    streamIdItor != streamIds.end(); streamIdItor++) {
-
-    // The following method commits the current database-transaction
-    oraSvc->changeCreatedStreamToStopped(*streamIdItor);
   }
 }
 

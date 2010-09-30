@@ -51,7 +51,7 @@ public:
    *
    * @return The total number of running-streams.
    */
-  u_signed64 getTotalNbRunningStreams() throw();
+  u_signed64 getTotalNbRunningStreams() const throw();
 
 }; // class IdToTapePoolForStreamPolicyMap
 

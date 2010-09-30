@@ -85,31 +85,6 @@ const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_createOrUpdat
 const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_attachTapeCopiesToStreamsStatementString = 
   "BEGIN attachTapeCopiesToStreams(:1,:2); END;";
 
-/// SQL statement for getCreatedStreamsWithTapeCopies
-const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_getCreatedStreamsWithTapeCopiesString =
-   "WITH CreatedStreamsInSvcClass AS ( "
-          "SELECT Stream.id "
-            "FROM Stream "
-           "INNER JOIN SvcClass2TapePool "
-              "ON (Stream.TapePool = SvcClass2TapePool.child) "
-           "INNER JOIN SvcClass "
-              "ON (SvcClass2TapePool.parent = SvcCLass.id) "
-           "WHERE Stream.status = 5 /* STREAM_CREATED */ "
-             "AND SvcClass.name = :svcClassName) "
- "SELECT CreatedStreamsInSvcClass.id "
-   "FROM CreatedStreamsInSvcClass "
-  "WHERE EXISTS ( "
-          "SELECT parent "
-            "FROM Stream2TapeCopy "
-           "WHERE Stream2TapeCopy.parent = CreatedStreamsInSvcClass.id)";
-
-/// SQL statement for changeCreatedStreamToStopped
-const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_changeCreatedStreamToStoppedString =
-   "UPDATE Stream "
-      "SET Stream.status = 6 /* STREAM_STOPPED */ "
-    "WHERE Stream.id = :streamId "
-      "AND Stream.status = 5 /* STREAM_CREATED */";
-
 /// SQL statement for streamsForStreamPolicy
 const std::string castor::tape::mighunter::ora::OraMigHunterSvc::s_streamsForStreamPolicyStatementString = 
   "BEGIN "
@@ -176,8 +151,6 @@ castor::tape::mighunter::ora::OraMigHunterSvc::OraMigHunterSvc(const std::string
   OraCommonSvc(name), 
   m_inputForMigrationPolicyStatement(0),
   m_createOrUpdateStreamStatement(0),
-  m_getCreatedStreamsWithTapeCopiesStatement(0),
-  m_changeCreatedStreamToStoppedStatement(0),
   m_streamsForStreamPolicyStatement(0),
   m_tapePoolsForStreamPolicyStatement(0),
   m_startChosenStreamsStatement(0),
@@ -221,8 +194,6 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
  
     if (m_inputForMigrationPolicyStatement)   deleteStatement(m_inputForMigrationPolicyStatement);
     if (m_createOrUpdateStreamStatement)      deleteStatement(m_createOrUpdateStreamStatement);
-    if (m_getCreatedStreamsWithTapeCopiesStatement) deleteStatement(m_getCreatedStreamsWithTapeCopiesStatement);
-    if (m_changeCreatedStreamToStoppedStatement) deleteStatement(m_changeCreatedStreamToStoppedStatement);
     if (m_streamsForStreamPolicyStatement)      deleteStatement(m_streamsForStreamPolicyStatement);
     if (m_tapePoolsForStreamPolicyStatement)  deleteStatement(m_tapePoolsForStreamPolicyStatement);
     if (m_startChosenStreamsStatement)        deleteStatement(m_startChosenStreamsStatement);
@@ -237,8 +208,6 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
 
   m_inputForMigrationPolicyStatement         = 0;
   m_createOrUpdateStreamStatement            = 0;
-  m_getCreatedStreamsWithTapeCopiesStatement = 0;
-  m_changeCreatedStreamToStoppedStatement    = 0;
   m_streamsForStreamPolicyStatement          = 0;
   m_tapePoolsForStreamPolicyStatement        = 0;
   m_startChosenStreamsStatement              = 0;
@@ -513,147 +482,6 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(co
       << "Error caught in attach tapecopies to streams"
       << std::endl << e.what();
     throw ex;
-  }
-}
-
-
-//--------------------------------------------------------------------------
-// getCreatedStreamsWithTapeCopies
-//--------------------------------------------------------------------------
-void castor::tape::mighunter::ora::OraMigHunterSvc::
-  getCreatedStreamsWithTapeCopies(
-  const std::string      &svcClassName,
-  std::list<u_signed64>  &streamIds)
-  throw(castor::exception::Exception) {
-
-  try {
-    // Create and setup the oracle statement object if one does not already
-    // exist
-    if (m_getCreatedStreamsWithTapeCopiesStatement == NULL) {
-      m_getCreatedStreamsWithTapeCopiesStatement  =
-        createStatement(s_getCreatedStreamsWithTapeCopiesString);
-
-      m_getCreatedStreamsWithTapeCopiesStatement->setAutoCommit(false);
-    }
-
-    // Execute the statement
-    m_getCreatedStreamsWithTapeCopiesStatement->setString(1, svcClassName);
-    db::ora::SmartOcciResultSet
-      resultSet(m_getCreatedStreamsWithTapeCopiesStatement,
-        m_getCreatedStreamsWithTapeCopiesStatement->executeQuery());
-
-    // Get the results
-    while(resultSet->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      const u_signed64 streamId = (u_signed64)resultSet->getDouble(1);
-
-      streamIds.push_back(streamId);
-    }
-
-    resultSet.close();
-
-  } catch (oracle::occi::SQLException &oe) {
-
-    // Inform the framework the occi exception was caught
-    handleException(oe);
-
-    castor::exception::Internal ex;
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught an oracle::occi::SQLException"
-      ": " << oe.what();
-
-    throw(ex);
-  } catch(castor::exception::Exception &ce) {
-    castor::exception::Exception ex(ce.code());
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught a castor::exception::Exception"
-      ": " << ce.getMessage().str();
-
-    throw(ex);
-  } catch(std::exception &se) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught a std::exception"
-      ": " << se.what();
-
-    throw(ex);
-  } catch(...) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught an unknown exception";
-
-    throw(ex);
-  }
-}
-
-
-//--------------------------------------------------------------------------
-// changeCreatedStreamToStopped
-//--------------------------------------------------------------------------
-void castor::tape::mighunter::ora::OraMigHunterSvc::
-  changeCreatedStreamToStopped(const u_signed64 streamId)
-  throw(castor::exception::Exception) {
-
-  try {
-    // Create and setup the oracle statement object if one does not already
-    // exist
-    if (m_changeCreatedStreamToStoppedStatement == NULL) {
-      m_changeCreatedStreamToStoppedStatement  =
-        createStatement(s_changeCreatedStreamToStoppedString);
-
-      m_changeCreatedStreamToStoppedStatement->setAutoCommit(true);
-    }
-
-    // Execute the statement
-    m_changeCreatedStreamToStoppedStatement->setDouble(1, streamId);
-    m_changeCreatedStreamToStoppedStatement->executeUpdate();
-
-  } catch (oracle::occi::SQLException &oe) {
-
-    // Inform the framework the occi exception was caught
-    handleException(oe);
-
-    castor::exception::Internal ex;
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught an oracle::occi::SQLException"
-      ": " << oe.what();
-
-    throw(ex);
-  } catch(castor::exception::Exception &ce) {
-    castor::exception::Exception ex(ce.code());
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught a castor::exception::Exception"
-      ": " << ce.getMessage().str();
-
-    throw(ex);
-  } catch(std::exception &se) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught a std::exception"
-      ": " << se.what();
-
-    throw(ex);
-  } catch(...) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      __FUNCTION__ << " failed"
-      ": Caught an unknown exception";
-
-    throw(ex);
   }
 }
 

@@ -101,25 +101,6 @@ private:
   void exceptionThrowingRun(void *const arg);
 
   /**
-   * Changes the status of the streams associated with the specified
-   * service-class which are in status STREAM_CREATED and have tape-copies
-   * attached to status STREAM_STOPPED.
-   *
-   * This method modifies and commits the modification of each stream
-   * individually to avoid dead-locks as only one database row is locked per
-   * transaction.
-   *
-   * @param oraSvc       The mighunter service for accessing the database
-   *                     back-end.
-   * @param svcClassName The name of the service-class to which the streams are
-   *                     associated.
-   */
-  void changeCreatedStreamsWithTapeCopiesToStopped(
-    castor::tape::mighunter::IMigHunterSvc *const oraSvc,
-    const std::string                             &svcClassName)
-    throw(castor::exception::Exception);
-
-  /**
    * Run the stream policy against all of the candidate streams of the
    * specified service-class.
    *

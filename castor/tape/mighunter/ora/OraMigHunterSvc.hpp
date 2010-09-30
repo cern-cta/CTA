@@ -108,21 +108,6 @@ public:
   /**
    * See documentation for castor::tape::mighunter::IMigHunterSvc.
    */
-  virtual void getCreatedStreamsWithTapeCopies(
-    const std::string     &svcClassName,
-    std::list<u_signed64> &streamIds)
-    throw(castor::exception::Exception);
-
-  /**
-   * See documentation for castor::tape::mighunter::IMigHunterSvc.
-   */
-  virtual void changeCreatedStreamToStopped(
-    const u_signed64 streamId)
-    throw(castor::exception::Exception);
-
-  /**
-   * See documentation for castor::tape::mighunter::IMigHunterSvc.
-   */
   virtual void streamsForStreamPolicy(
     const std::string         &svcClassName,
     u_signed64                &svcClassId,
@@ -205,18 +190,6 @@ private:
 
   /// SQL statement object for function createOrUpdateStream
   oracle::occi::Statement *m_createOrUpdateStreamStatement;
-
-  /// SQL statement for function getCreatedStreamsWithTapeCopies 
-  static const std::string s_getCreatedStreamsWithTapeCopiesString;
-
-  /// SQL statement object for function getCreatedStreamsWithTapeCopies
-  oracle::occi::Statement *m_getCreatedStreamsWithTapeCopiesStatement;
-
-  /// SQL statement for function changeCreatedStreamToStopped 
-  static const std::string s_changeCreatedStreamToStoppedString;
-
-  /// SQL statement object for function changeCreatedStreamToStopped
-  oracle::occi::Statement *m_changeCreatedStreamToStoppedStatement;
 
   /// SQL statement for function streamsForStreamPolicy 
   static const std::string s_streamsForStreamPolicyStatementString;

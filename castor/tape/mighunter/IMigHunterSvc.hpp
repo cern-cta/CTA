@@ -71,34 +71,6 @@ namespace castor {
       virtual int createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb) throw (castor::exception::Exception)=0;
 
       /**
-       * Gets the current list of streams associated with the specified
-       * service-class that are in status STREAM_CREATED and which have one or
-       * more tape-copies attached.
-       *
-       * @param svcClassName The name of the service-class to which the streams
-       *                     are associated.
-       * @param streamIds    Output: The database IDs of the requested streams.
-       */
-      virtual void getCreatedStreamsWithTapeCopies(
-        const std::string     &svcClassName,
-        std::list<u_signed64> &streamIds)
-        throw(castor::exception::Exception)=0;
-
-      /**
-       * If the specified stream is in status STREAM_CREATED, then this method
-       * changes its status to STREAM_STOPPED.  If the status of the stream is
-       * not STREAM_CREATED then this method does not modifiy the status.
-       *
-       * This method commits the current database transaction.
-       *
-       * @param streamId The database ID of the stream whose status is to be
-       *                 changed.
-       */
-      virtual void changeCreatedStreamToStopped(
-        const u_signed64 streamId)
-        throw(castor::exception::Exception)=0;
-
-      /**
        * Retrieves the candidate streams to be passed to the stream-policy
        * Python-function of the specified service-class.
        *

@@ -29,7 +29,8 @@
 //------------------------------------------------------------------------------
 // getTotalNbRunningStreams
 //------------------------------------------------------------------------------
-u_signed64 castor::tape::mighunter::IdToTapePoolForStreamPolicyMap::getTotalNbRunningStreams() throw() {
+u_signed64 castor::tape::mighunter::IdToTapePoolForStreamPolicyMap::
+  getTotalNbRunningStreams() const throw() {
   u_signed64 totalNbRunningStreams = 0;
 
   for(const_iterator itor = begin(); itor != end(); itor++) {
