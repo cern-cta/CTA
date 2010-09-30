@@ -23,6 +23,7 @@ from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.tools.Inspections import *
 from sites.treemap.BasicTree import BasicTree
 import copy
+from sites.tools.GroupIdService import resolveGroupId
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True)
@@ -212,7 +213,7 @@ class Dirs(models.Model):
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.fullname.__str__()]])
 
 Dirs.nonmetrics = ['fileid', 'parent', 'depth', 'fullname']      
 Dirs.metricattributes = []
@@ -289,7 +290,7 @@ class CnsFileMetadata(models.Model):
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.name.__str__()]])
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -397,6 +398,41 @@ Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
 
 Requestsatlas.generatedtree = None
 Requestsatlas.treeready = False
+
+def findObjectByIdReplacementSuffix(model, urlrest):
+    if model == 'Requestsatlas':
+        path = None
+        if urlrest.rfind('/') == (len(urlrest)-1): 
+            path = urlrest[:len(urlrest)-1]
+        else:
+            path = urlrest
+        generateRequestsTree(15 , 0)
+        found = traverseToRequestInTree(path).getCurrentObject()
+        return found
+    elif model == 'CnsFileMetadata':
+        fname = None
+        if urlrest.rfind('/') == (len(urlrest)-1): 
+            fname = urlrest[:len(urlrest)-1]
+        else:
+            fname = urlrest
+            
+        if(fname != ''):
+            found  = CnsFileMetadata.objects.get(name=fname).extra(where=['bitand(filemode, 16384) = 0'])
+        else:
+            found = CnsFileMetadata.objects.filter().extra(where=['bitand(filemode, 16384) = 0'])[0]
+            
+        return found
+    elif model == 'Dirs':
+        dirname = None
+        if urlrest.rfind('/') == (len(urlrest)-1): 
+            dirname = urlrest[:len(urlrest)-1]
+        else:
+            dirname = urlrest
+        if dirname == '': dirname = '/castor'
+        found = Dirs.objects.get(fullname=dirname)
+        return found
+    
+    raise Exception ("model " + model + " is missing in findObjectByIdReplacementSuffix")
 
 def generateRequestsTree(fromminsago, tominsago):
     def addRequestToTree(tree, requestdata):

@@ -520,7 +520,7 @@ class RequestsAtlasHtmlInfoDimension(ViewNodeDimensionBase):
             
         nbreq = dbobj.requestscount
         
-        ret.append("<b>File:</b> ")
+        ret.append("<b>Item:</b> ")
         ret.append(splitText(dbobj.namepart, 50, 39))
         
         ret.append("<br><b>Number of requests:</b> ")

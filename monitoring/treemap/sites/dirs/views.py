@@ -42,28 +42,15 @@ from sites.tools.Inspections import  getDefaultNumberOfLevels
 import sites.dirs.Presets
 
 
-def redirectOldLink(request, theid):
+def redirectOldLink(request, *args, **kwargs):
     return HttpResponse("Please use the new link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
 #    return treeView(request, 'Dirs', theid)
 
-def redirectHome(request):
-    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_3')
+def redirectHome(request, *args, **kwargs):
+    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_')
 
 def treeView(request, rootmodel, theid, refresh_cache = False):  
     time = datetime.datetime.now()
-    try:
-        #Directory you want to show its content
-        root = None
-        if(rootmodel == 'Requestsatlas'):
-            generateRequestsTree(15 , 0)
-            root = traverseToRequestInTree(theid).getCurrentObject()
-        else:
-            command = "root = "+ rootmodel.__str__()+ ".objects.get(pk="+theid.__str__()+")" 
-            exec(command)
-        
-    except Dirs.DoesNotExist:
-        raise Http404
-        return render_to_response("Error") 
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -74,7 +61,19 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
     lr = getCookieRules(request, nbdefinedlevels)
+    avmodels = lr.getRuleObject(0).getUsedClassNames()
+
+    if rootmodel not in avmodels:
+        avmodels.remove('Annex')
+        if len(avmodels) == 0: raise Exception("no sufficient rules for level 0") 
+        theid = ''
+        rootmodel = avmodels[0]
+        return treeView(request = request,rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache)
         
+    
+    root = getRootObjectForTreemap(rootmodel, theid)
+    if rootmodel == 'Requestsatlas': refresh_cache = True
+    
     cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
@@ -132,16 +131,15 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, parentpk, depth, model, refresh_cache = False):    
-    depth = int(depth)
+def groupView(request, model, depth, parentpk, refresh_cache = False):    
     time = datetime.datetime.now()
-    try:
-        #Directory you want to show its content
-        root = None
-        command = 'root = ' + model + '.objects.get(pk=' + parentpk.__str__() + ')'
-        exec(command)
-    except:
-        raise Http404
+    depth = int(depth)
+    
+    prefix = parentpk[:(len(model)+1)]
+    if(prefix == model + "_"):
+        urlrest = parentpk[(len(model)+1):]
+    
+    root = getRootObjectForTreemap(model, urlrest)
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -248,19 +246,23 @@ def groupView(request, parentpk, depth, model, refresh_cache = False):
     return response
 
 def redir(request, urlending, refreshcache):
-    treeviewexpr = r'(?P<rootmodel>\w+)_(?P<theid>\d+)'
-    groupviewexpr = r'group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)'
+    treeviewexpr = '(?P<rootmodel>\w+)_(?P<theid>.*)'
+    groupviewexpr = r'group_(?P<model>\w+)_(?P<depth>\d+)_(?P<parentpk>.*)'
     
-    if re.match(treeviewexpr, urlending):
-        match = re.match(treeviewexpr, urlending)
-        theid = match.group('theid')
-        return redirect(to = '..', args = {'request':request, 'theid':theid, 'refresh_cache': refreshcache })
-    elif re.match(groupviewexpr, urlending):
-        match = re.match(treeviewexpr, urlending)
-        parentpk = match.group('parentpk')
-        depth = match.group('depth')
-        model = match.group('model')
-        return redirect(to = '..', args = {'request':request,'parentpk':parentpk, 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+    try:
+        if re.match(treeviewexpr, urlending):
+            match = re.match(treeviewexpr, urlending)
+            theid = match.group('theid')
+            model = match.group('rootmodel')
+            return redirect(to = '..', args = {'request':request, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
+        elif re.match(groupviewexpr, urlending):
+            match = re.match(treeviewexpr, urlending)
+            parentpk = match.group('parentpk')
+            depth = match.group('depth')
+            model = match.group('model')
+            return redirect(to = '..', args = {'request':request,'parentpk':parentpk, 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+    except:
+        return redirect(to = '..', args = {'request':request, 'theid': '/castor', 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
     
     return Http404
 
@@ -459,7 +461,12 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        navlinkparts.append( (pr.__dict__[getNaviName(pr.__class__.__name__)], str(pr), pr.getIdReplacement()) )
+        nvtext = pr.__dict__[getNaviName(pr.__class__.__name__)]
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]
+        
+        navlinkparts.append( (nvtext, str(pr), pr.getIdReplacement()) )
     
     ruleexplanations = []
     i = int(random.random()*nblevels)
@@ -711,9 +718,9 @@ def getCookieRules(request, nbdefinedlevels):
 
 def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-    fragment_name = parentpk.__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
+    fragment_name = hash(parentpk).__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
     vary_on = [(2,3,5,7),(11,17,19,23,29)]
-    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", parentpk.__str__() + '_'+ fragment_name))]))     
+    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", hash(parentpk).__str__() + '_'+ fragment_name))]))     
     lrkeypart = lr.getUniqueLevelRulesId()            
     cache_key = 'template.cache.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart)
     return cache_key
@@ -754,3 +761,13 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
 
     return mlinker
+
+def getRootObjectForTreemap(rootmodel, urlrest):
+    try:
+        #Directory you want to show its content
+        root = findObjectByIdReplacementSuffix(rootmodel, urlrest)
+    except Dirs.DoesNotExist:
+        raise Http404
+        return render_to_response("Error") 
+    
+    return root

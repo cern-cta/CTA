@@ -164,7 +164,7 @@ def getPostProcessorNames():
 def getNaviName(classname):
     assert (classname in getAvailableModels())
     obj = createObject(getModelsModuleName(classname), classname )
-    nvname = dict(inspect.getmembers( obj.__class__ ))['getParent'].__dict__['naviname']
+    nvname = dict(inspect.getmembers( obj.__class__ ))[getParentMethodName(classname)].__dict__['naviname']
     
     return nvname
 

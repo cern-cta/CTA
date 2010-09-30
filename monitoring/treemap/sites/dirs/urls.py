@@ -17,13 +17,14 @@ urlpatterns = patterns('',
 #     (r'^admin/', include(admin.site.urls)),
     (r'bydir/(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     
-    (r'(?P<urlending>\w+)/changemetrics/$', 'dirs.views.changeMetrics'),
+    (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     
-    (r'(?P<urlending>\w+)/preset/$', 'dirs.views.preset'),
+    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
     
-    (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView'),
+    (r'(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
+    
+    (r'group_(?P<model>\w+)_(?P<depth>\d+)_(?P<parentpk>.*)', 'dirs.views.groupView'),
     
     (r'(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
-    
-    (r'group_(?P<parentpk>\d+)_(?P<depth>\d+)_(?P<model>\w+)/$', 'dirs.views.groupView'),
+
 )

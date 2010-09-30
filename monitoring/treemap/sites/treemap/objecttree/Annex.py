@@ -30,11 +30,11 @@ class Annex(models.Model):
         #hack to fake id's to django
         classname = self.parent.__class__.__name__
         if parent == None:
-            ppk = -1
+            ppk = -1 #no parent
         elif not isinstance(parent, Annex):
-            ppk = self.parent.pk
+            ppk = self.parent.getIdReplacement()
         elif isinstance(parent, Annex): #parent is Annex
-            ppk = self.parent.getAnnexParent().pk
+            ppk = self.parent.getAnnexParent().getIdReplacement
             classname = self.parent.getAnnexParent().__class__.__name__
         else:
             raise Exception("unexpected error")
