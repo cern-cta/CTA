@@ -399,11 +399,13 @@ Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
 Requestsatlas.generatedtree = None
 Requestsatlas.treeready = False
 
+#an empty urlrest must be accepted and it should define the very root of the tree
+#in case there is no default root you have to pick a random valid object
 def findObjectByIdReplacementSuffix(model, urlrest):
     if model == 'Requestsatlas':
         path = None
         if urlrest.rfind('/') == (len(urlrest)-1): 
-            path = urlrest[:len(urlrest)-1]
+            path = urlrest[:len(urlrest)-1] #can be empty which will lead to root
         else:
             path = urlrest
         generateRequestsTree(15 , 0)
@@ -416,7 +418,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
         else:
             fname = urlrest
             
-        if(fname != ''):
+        if(fname != ''):#if empty choose a random valid object
             found  = CnsFileMetadata.objects.get(name=fname).extra(where=['bitand(filemode, 16384) = 0'])
         else:
             found = CnsFileMetadata.objects.filter().extra(where=['bitand(filemode, 16384) = 0'])[0]
@@ -428,7 +430,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             dirname = urlrest[:len(urlrest)-1]
         else:
             dirname = urlrest
-        if dirname == '': dirname = '/castor'
+        if dirname == '': dirname = '/castor'#if empty choose a root Directory that makes sense
         found = Dirs.objects.get(fullname=dirname)
         return found
     

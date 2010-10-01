@@ -18,6 +18,7 @@ urlpatterns = patterns('',
     (r'bydir/(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
+    (r'(?P<rootmodel>\w+)_(?P<theid>\d+)$', 'dirs.views.redirectOldLink'),
     
     (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
     

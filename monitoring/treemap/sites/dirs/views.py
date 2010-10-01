@@ -140,6 +140,7 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
         urlrest = parentpk[(len(model)+1):]
     
     root = getRootObjectForTreemap(model, urlrest)
+    if model == 'Requestsatlas': refresh_cache = True
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -196,6 +197,7 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
         for i in range(nbdefinedlevels):
             lr.appendRuleObject(cookielr.getRuleObject(i))  
         
+        tb = TreeBuilder(lr)
         otree = tb.generateObjectTree(anx) 
             
     else: #no Annex display needed
@@ -204,7 +206,8 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
         for i in range(nbdefinedlevels):
             lr.appendRuleObject(cookielr.getRuleObject(i))  
             
-            otree = tb.generateObjectTree(rootobject = root)     
+        tb = TreeBuilder(lr)    
+        otree = tb.generateObjectTree(rootobject = root)     
         
      
     start = datetime.datetime.now()
@@ -245,7 +248,7 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def redir(request, urlending, refreshcache):
+def redir(request, urlending, refreshcache, newmodel = None, idsuffix = ''):
     treeviewexpr = '(?P<rootmodel>\w+)_(?P<theid>.*)'
     groupviewexpr = r'group_(?P<model>\w+)_(?P<depth>\d+)_(?P<parentpk>.*)'
     
@@ -254,12 +257,34 @@ def redir(request, urlending, refreshcache):
             match = re.match(treeviewexpr, urlending)
             theid = match.group('theid')
             model = match.group('rootmodel')
-            return redirect(to = '..', args = {'request':request, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
+            if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
+                model = newmodel
+                theid = idsuffix
+            
+            #generate the new link to redirect
+            rediraddr = request.path
+            pos = rediraddr.rfind(urlending)
+            if pos == -1: raise Exception('invalid path in the response object')          
+            rediraddr = rediraddr[:pos]
+            rediraddr = rediraddr + model + "_" + theid
+                
+            return redirect(to = rediraddr, args = {'request':request, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
         elif re.match(groupviewexpr, urlending):
             match = re.match(treeviewexpr, urlending)
             parentpk = match.group('parentpk')
             depth = match.group('depth')
             model = match.group('model')
+            if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
+                model = newmodel
+                parentpk = idsuffix
+                
+            #generate the new link to redirect
+            rediraddr = request.path
+            pos = rediraddr.rfind(urlending)
+            if pos == -1: raise Exception('invalid path in the response object')          
+            rediraddr = rediraddr[:pos]
+            rediraddr = rediraddr + model + "_" + parentpk
+            
             return redirect(to = '..', args = {'request':request,'parentpk':parentpk, 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
     except:
         return redirect(to = '..', args = {'request':request, 'theid': '/castor', 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
@@ -302,7 +327,12 @@ def changeMetrics(request, urlending):
         raise Http404
         
     request.session.set_test_cookie()
-    return redir(request, urlending, True)
+    
+    avalmodels = cookielr.getRuleObject(0).getUsedClassNames()
+    avalmodels.remove('Annex')
+    if len(avalmodels) == 0: raise Exception("no sufficient rules for level 0") 
+    
+    return redir(request, urlending, True, avalmodels[0])
 
 def preset(request, urlending):
     nblevels = getDefaultNumberOfLevels()
@@ -336,7 +366,7 @@ def preset(request, urlending):
             redir(request, urlending, False)
 #            return HttpResponse("Posted data is not correct")
         
-        lr = sites.dirs.Presets.getPreset(presetname)
+        lr = sites.dirs.Presets.getPreset(presetname).lr
         
         if flatview:
             newlr = LevelRules()
@@ -368,7 +398,7 @@ def preset(request, urlending):
     else:
         raise Http404
     
-    return redir(request, urlending, True)
+    return redir(request, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, metric = ''):
     print "preparing response"
@@ -726,7 +756,7 @@ def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
     return cache_key
 
 def getDefaultRules(nblevels):
-    lr = sites.dirs.Presets.getPreset("Directory structure")
+    lr = sites.dirs.Presets.getPreset("Default (Directory structure)").lr
     return lr
 
 def getDefaultModel():
