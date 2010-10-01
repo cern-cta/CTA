@@ -408,7 +408,9 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             path = urlrest[:len(urlrest)-1] #can be empty which will lead to root
         else:
             path = urlrest
-        generateRequestsTree(15 , 0)
+            
+#        profile.runctx('generateRequestsTree(60 , 0)', globals(), {})
+        generateRequestsTree(60 , 0)
         found = traverseToRequestInTree(path).getCurrentObject()
         return found
     elif model == 'CnsFileMetadata':
@@ -438,58 +440,76 @@ def findObjectByIdReplacementSuffix(model, urlrest):
 
 def generateRequestsTree(fromminsago, tominsago):
     def addRequestToTree(tree, requestdata):
-        entry = copy.copy(requestdata)
         name = requestdata.filename
-        assert (name.find('/') >=0)
+        pos = name.find('/')
+        assert (pos >=0)
         oldpos = 0
         pos = 0
         
         if not tree.hasRoot():
-            entry.namepart = name[:name.find('/')]
+            entry = copy.copy(requestdata)
+            entry.namepart = name[:pos]
             entry.requestscount = 1
             tree.setRoot(entry)
             tree.traverseToRoot()
-            oldpos = name.find('/') + 1
+            oldpos = pos + 1
             pos = name.find('/', oldpos)
         else:
             tree.traverseToRoot()
             oldpos = 0
             pos = name.find('/')
             
+        tempentry = copy.copy(requestdata)
+            
         while (pos >=0):
             #todo: split and traverse
             namepart = name[:pos]
-            entry = copy.copy(requestdata)
+            #entry = copy.copy(requestdata)
             
-            entry.namepart = namepart
-            entry.requestscount = 1
+            tempentry.namepart = namepart
+            tempentry.requestscount = 1
             
             childintree = False
             for child in tree.getChildren():
-                if child.namepart == entry.namepart:
-                    child.requestscount = child.requestscount + 1
-                    childintree = True
-                    tree.traverseInto(child)
-                    break
+                chnp = child.namepart
+                enp = tempentry.namepart
+                chnplen = len(chnp)
+                enplen = len(enp)
+                a = 1
+                b = 2
+                if chnplen > 1 and enplen > 1:
+                    a = chnp[chnplen-2]
+                    b = enp[enplen-2]
+                # a and b for speeding up
+                if a == b:
+                    if chnp == enp:
+                        child.requestscount = child.requestscount + 1
+                        childintree = True
+                        tree.traverseInto(child)
+                        break
             
             if not childintree:
                 #for root: if this is the current parent
                 parent = tree.getCurrentObject()
-                if entry.namepart == parent.namepart:
+                if tempentry.namepart == parent.namepart:
                     parent.requestscount = parent.requestscount + 1
                 else:
-                    tree.addChild(entry)
-                    tree.traverseInto(entry)
+                    entrytoadd = copy.copy(requestdata)
+                    entrytoadd.namepart = tempentry.namepart
+                    entrytoadd.requestscount = tempentry.requestscount
+                    tree.addChild(entrytoadd)
+                    tree.traverseInto(entrytoadd)
             
             oldpos = pos + 1
             pos = name.find('/', pos + 1)
             
     
-    print "Generating Tree of Requests"
+    print "Reading Atlas Requests"
     Requestsatlas.generatedtree = BasicTree()        
     tree = Requestsatlas.generatedtree
 #    requestarray = list(Requestsatlas.objects.filter(timestamp__range=(fromtime, totime), filename__isnull=False))
     requestarray = list(Requestsatlas.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN sysdate - " + str(fromminsago) + "/1140 and sysdate - " + str(tominsago)+"/1140"]))
+    print "Generating Tree of Requests"
     for dataset in requestarray:
         addRequestToTree(tree, dataset)
         
