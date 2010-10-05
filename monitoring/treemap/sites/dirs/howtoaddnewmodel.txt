@@ -96,6 +96,8 @@ Into the url.py. It is a regular expression. In that way django can read the mod
 Regular expressions in python are explained in greater detail here:
 http://csil-web.cs.surrey.sfu.ca/cmpt170spring2010/wiki/RegularExpressions/
 
+5.1 extend findObjectByIdReplacementSuffix
+
 6. Define __unicode__ and __str__
 
 Usually __unicode__ calls the __str__ method and converts it to unicode
@@ -225,4 +227,5 @@ For all these examples it is also recommended to cache the children, so you coul
 	
 10. parent method
 11. metrics linking
-11.1 TreeNodeDimensions and value Transformations
+12. TreeNodeDimensions and value Transformations
+13. Define a preset

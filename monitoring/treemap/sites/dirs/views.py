@@ -72,7 +72,7 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
         
     
     root = getRootObjectForTreemap(rootmodel, theid)
-    if rootmodel == 'Requestsatlas': refresh_cache = True
+    if rootmodel in getModelsNotToCache(): refresh_cache = True
     
     cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -140,7 +140,7 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
         urlrest = parentpk[(len(model)+1):]
     
     root = getRootObjectForTreemap(model, urlrest)
-    if model == 'Requestsatlas': refresh_cache = True
+    if model in getModelsNotToCache(): refresh_cache = True
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -571,9 +571,8 @@ def generateMenuData(nblevels):
     
     for classname in classes:
         cls = classes[classname]
-        if isinstance(cls, ModelBase):
-            modelname = cls._base_manager.model._meta.object_name
-            models.append(DropDownEntry(cls.getUserFriendlyName(createObject(modulename , classname)), modelname))
+        if isinstance(cls, ModelBase) and classname not in ['Annex', 'ContentType']:
+            models.append(DropDownEntry(createObject(modulename , classname).getUserFriendlyName(), classname))
                 
     for model in models:
         dropdowns = generateDropdownValues(nblevels, model.value)
@@ -615,10 +614,10 @@ def generateDropdownValues(nblevels, themodel):
     
     for classname in classes:
         cls = classes[classname]
-        if isinstance(cls, ModelBase):
-            modelname = cls._base_manager.model._meta.object_name
-            if modelname == themodel: themodelfound = True
-            modeldropdown.append(DropDownEntry(cls.getUserFriendlyName(createObject(modulename , classname)), modelname))
+        if isinstance(cls, ModelBase) and classname not in ['Annex', 'ContentType']:
+            if classname == themodel: themodelfound = True
+            modeldropdown.append(DropDownEntry(createObject(modulename , classname).getUserFriendlyName(), classname))
+
     
     if not themodelfound: raise Exception('the given model couldn\'t be found')
     
@@ -787,8 +786,12 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsAtlasHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsHtmlInfoDimension())
     mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
+    
+    mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
 
     return mlinker
 

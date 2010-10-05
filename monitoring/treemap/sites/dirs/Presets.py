@@ -208,12 +208,19 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 presetdict["Newest file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor')
 
-#Preset for Requests
+#Preset for Requests Atlas
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["Atlas Requests from last 60 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor')
+presetdict["Atlas Requests from last 180 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor')
+
+#Preset for Requests cms
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+presetdict["CMS Requests from last 180 minutes"] = Preset(lr, False, 'Requestscms', '/castor')
 
 
 
