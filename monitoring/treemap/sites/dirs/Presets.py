@@ -214,14 +214,14 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["Atlas Requests from last 120 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor', 22)
+presetdict["Requests Atlas from last 120 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor', 22)
 
 #Preset for Requests cms
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["CMS Requests from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23)
+presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23)
 
 
 

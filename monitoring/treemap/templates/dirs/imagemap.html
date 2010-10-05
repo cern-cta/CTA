@@ -436,10 +436,13 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 						<br>
 						<input class="applybutton" type="submit" value="Apply"/>
 						<input class="applybutton" type="button" value="Help" onclick="showHelp()"/>
-
+					</td></tr>
+					
+					<tr><td>
+						<br><br><br><br><br><br><br><br><br><br><br>
+						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="1" title = "Download Treemap"> </a>
 					</td></tr>
 				</form>
-
 			</tr>
 			</table>
 		</td>	
@@ -450,7 +453,7 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 			</div>
 		</noscript>
 		
-	</tr></table>
+	</tr> </table>
     {% else %}
         <p>No data available / A file or an empty folder</p>
     {% endif %}

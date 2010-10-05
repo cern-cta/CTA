@@ -633,7 +633,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             fname = urlrest
             
         if(fname != ''):#if empty choose a random valid object
-            found  = CnsFileMetadata.objects.get(name=fname).extra(where=['bitand(filemode, 16384) = 0'])
+            found  = CnsFileMetadata.objects.filter(name=fname).extra(where=['bitand(filemode, 16384) = 0'])[0]
         else:
             found = CnsFileMetadata.objects.filter().extra(where=['bitand(filemode, 16384) = 0'])[0]
             
