@@ -6,6 +6,8 @@
 	oracle-instantclient-devel
 	oracle-instantclient-tnsnames.ora
 
+*Install networkx library for python
+
 *Allow server in /etc/sysconfig/iptables (example for port 8000):
 	-A RH-Firewall-1-INPUT -p tcp -m tcp --dport 8000 -j ACCEPT
 	-A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 8000 -j ACCEPT

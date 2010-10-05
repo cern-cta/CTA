@@ -506,6 +506,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     cookierules = getCookieRules(request, nblevels).getRules()
     
     presetnames = sites.dirs.Presets.getPresetNames()
+    presetnames.sort();
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\

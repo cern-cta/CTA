@@ -352,7 +352,7 @@ class Requestsatlas(models.Model):
             return hash(self._get_pk_val())
         
     def getUserFriendlyName(self):
-        return "Amount of Requests"
+        return "Requests Atlas"
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
@@ -444,7 +444,7 @@ class Requestscms(models.Model):
             return hash(self._get_pk_val())
         
     def getUserFriendlyName(self):
-        return "Amount of Requests"
+        return "Requests CMS"
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
@@ -622,7 +622,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             path = urlrest
             
 #        profile.runctx('generateRequestsTree(60 , 0, model)', globals(), {})
-        generateRequestsTree(180 , 0, model)
+        generateRequestsTree(120 , 0, model)
         found = traverseToRequestInTree(path, model).getCurrentObject()
         return found
     elif model == 'CnsFileMetadata':
