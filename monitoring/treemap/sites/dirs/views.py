@@ -509,7 +509,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
-     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': (apacheserver + treemapdir), 'icondir': apacheserver + icondir, \
+     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'advanceddefault': getCurrentAdvancedSelections(request), \
      'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
      'presetdefault':getCurrentPresetSelections(request)} , context_instance=None)
