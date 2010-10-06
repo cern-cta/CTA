@@ -238,6 +238,24 @@ Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndDirectories'
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
 Dirs.getDirParent.__dict__['returntype'] = ['Dir']
 Dirs.getDirParent.__dict__['naviname'] = 'name'
+
+#exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)
+def getDirByName(dirname):
+    depth = 0
+    node = Dirs.objects.get(depth = depth)
+    pos = dirname.find('/')
+    if dirname == '/': return node
+    
+    while pos >= 0:
+        pos = dirname.find('/', pos + 1)
+        depth = depth + 1
+        children = list(Dirs.objects.filter(parent=node.fileid, depth = depth))
+        for child in children:
+            if child.fullname == dirname:
+                return child
+            if child.fullname == dirname[:pos]:
+                node = child
+    return None
         
 class CnsFileMetadata(models.Model):
     fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
@@ -291,7 +309,7 @@ class CnsFileMetadata(models.Model):
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.name.__str__()]])
+        return ''.join([bla for bla in [self.__class__.__name__, "_", str(self.parent_fileid.fullname), "/" ,self.name.__str__()]])
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -626,16 +644,24 @@ def findObjectByIdReplacementSuffix(model, urlrest):
         found = traverseToRequestInTree(path, model).getCurrentObject()
         return found
     elif model == 'CnsFileMetadata':
-        fname = None
+        fullpath = None
         if urlrest.rfind('/') == (len(urlrest)-1): 
-            fname = urlrest[:len(urlrest)-1]
+            fullpath = urlrest[:len(urlrest)-1]
         else:
-            fname = urlrest
+            fullpath = urlrest
+        
+        pos = fullpath.rfind('/')
+        if pos == -1:
+            fname = fullpath   
+        else:  
+            fname = fullpath[pos+1:]
+            dirname = fullpath[:pos]
+            directoryobject = getDirByName(dirname)
             
-        if(fname != ''):#if empty choose a random valid object
-            found  = CnsFileMetadata.objects.filter(name=fname).extra(where=['bitand(filemode, 16384) = 0'])[0]
-        else:
+        if(fname == ''):#if empty choose a random valid object
             found = CnsFileMetadata.objects.filter().extra(where=['bitand(filemode, 16384) = 0'])[0]
+        else:
+            found  = CnsFileMetadata.objects.filter(parent_fileid = directoryobject.fileid, name=fname).extra(where=['bitand(filemode, 16384) = 0'])[0]
             
         return found
     elif model == 'Dirs':
@@ -645,7 +671,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
         else:
             dirname = urlrest
         if dirname == '': dirname = '/castor'#if empty choose a root Directory that makes sense
-        found = Dirs.objects.get(fullname=dirname)
+        found = getDirByName(dirname)#Dirs.objects.get(fullname=dirname)
         return found
     
     raise Exception ("model " + model + " is missing in findObjectByIdReplacementSuffix")

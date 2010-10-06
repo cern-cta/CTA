@@ -70,8 +70,6 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
         rootmodel = avmodels[0]
         return treeView(request = request,rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache)
         
-    
-    root = getRootObjectForTreemap(rootmodel, theid)
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     
     cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
@@ -83,6 +81,8 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     if (value is not None): cache_hit = True
     if cache_hit and not refresh_cache:
         return HttpResponse(value)
+    
+    root = getRootObjectForTreemap(rootmodel, theid)
     
     start = datetime.datetime.now()
     print 'start generating object tree for ' + root.__str__()
@@ -139,7 +139,6 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
     if(prefix == model + "_"):
         urlrest = parentpk[(len(model)+1):]
     
-    root = getRootObjectForTreemap(model, urlrest)
     if model in getModelsNotToCache(): refresh_cache = True
     
     imagewidth = 800.0
@@ -167,6 +166,7 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
     
+    root = getRootObjectForTreemap(model, urlrest)
     
     start = datetime.datetime.now()
     print 'start generating first object tree ' + root.__str__()
