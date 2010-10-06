@@ -16,7 +16,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
 #     (r'^admin/', include(admin.site.urls)),
     (r'bydir/(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
-    
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)$', 'dirs.views.redirectOldLink'),
     
@@ -24,8 +23,8 @@ urlpatterns = patterns('',
     
     (r'(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
     
-    (r'group_(?P<model>\w+)_(?P<depth>\d+)_(?P<parentpk>.*)', 'dirs.views.groupView'),
+    (r'group_(?P<presetid>\d+)_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
-    (r'(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
+    (r'(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
 
 )

@@ -16,6 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 from django.views.decorators.cache import cache_page
+from sites.dirs.Presets import getPresetByStaticId
 from sites.dirs.models import *
 from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
@@ -37,9 +38,8 @@ import datetime
 import profile
 import random
 import re
-from sites.tools.Inspections import  getDefaultNumberOfLevels
-
 import sites.dirs.Presets
+
 
 
 def redirectOldLink(request, *args, **kwargs):
@@ -47,10 +47,11 @@ def redirectOldLink(request, *args, **kwargs):
 #    return treeView(request, 'Dirs', theid)
 
 def redirectHome(request, *args, **kwargs):
-    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/Dirs_')
+    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, rootmodel, theid, refresh_cache = False):  
+def treeView(request, rootmodel, presetid, theid, refresh_cache = False):  
     time = datetime.datetime.now()
+    presetid = int(presetid)
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -61,6 +62,8 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
     lr = getCookieRules(request, nbdefinedlevels)
+    lr = getPresetByStaticId(presetid).lr
+    
     avmodels = lr.getRuleObject(0).getUsedClassNames()
 
     if rootmodel not in avmodels:
@@ -72,7 +75,7 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
         
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     
-    cache_key = calcCacheKey(parentpk = theid, parentmodel = rootmodel, lr = lr)
+    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
@@ -115,14 +118,14 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = hash(root.getIdReplacement()).__str__() + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid)
     
     del tree
     del otree
@@ -131,13 +134,14 @@ def treeView(request, rootmodel, theid, refresh_cache = False):
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, model, depth, parentpk, refresh_cache = False):    
+def groupView(request, presetid, model, depth, theid, refresh_cache = False):    
     time = datetime.datetime.now()
     depth = int(depth)
+    presetid = int(presetid)
     
-    prefix = parentpk[:(len(model)+1)]
+    prefix = theid[:(len(model)+1)]
     if(prefix == model + "_"):
-        urlrest = parentpk[(len(model)+1):]
+        urlrest = theid[(len(model)+1):]
     
     if model in getModelsNotToCache(): refresh_cache = True
     
@@ -149,8 +153,9 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
     treemapdir = settings.REL_TREEMAP_DICT
     
     cookielr = getCookieRules(request, nbdefinedlevels)
+    cookielr = getPresetByStaticId(presetid).lr
         
-    cache_key = calcCacheKey(parentpk = parentpk, parentmodel = "Annex", depth = depth, lr = cookielr)
+    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
@@ -234,23 +239,23 @@ def groupView(request, model, depth, parentpk, refresh_cache = False):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels )
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid)
     
     del tree
     del otree
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def redir(request, urlending, refreshcache, newmodel = None, idsuffix = ''):
-    treeviewexpr = '(?P<rootmodel>\w+)_(?P<theid>.*)'
-    groupviewexpr = r'group_(?P<model>\w+)_(?P<depth>\d+)_(?P<parentpk>.*)'
+def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix = ''):
+    treeviewexpr = r'(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)'
+    groupviewexpr = r'group_(?P<presetid>\d+)_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)'
     
     try:
         if re.match(treeviewexpr, urlending):
@@ -266,28 +271,28 @@ def redir(request, urlending, refreshcache, newmodel = None, idsuffix = ''):
             pos = rediraddr.rfind(urlending)
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
-            rediraddr = rediraddr + model + "_" + theid
+            rediraddr = rediraddr + str(presetid) + "_" + model  + "_" + theid
                 
-            return redirect(to = rediraddr, args = {'request':request, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request, 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
         elif re.match(groupviewexpr, urlending):
             match = re.match(treeviewexpr, urlending)
-            parentpk = match.group('parentpk')
+            theid = match.group('theid')
             depth = match.group('depth')
             model = match.group('model')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
-                parentpk = idsuffix
+                theid = idsuffix
                 
             #generate the new link to redirect
             rediraddr = request.path
             pos = rediraddr.rfind(urlending)
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
-            rediraddr = rediraddr + model + "_" + parentpk
+            rediraddr = rediraddr + str(presetid) + "_" + model  + "_" + theid
             
-            return redirect(to = '..', args = {'request':request,'parentpk':parentpk, 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request,'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
     except:
-        return redirect(to = '..', args = {'request':request, 'theid': '/castor', 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
+        return redirect(to = '..', args = {'request':request, 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
     
     return Http404
 
@@ -332,7 +337,7 @@ def changeMetrics(request, urlending):
     avalmodels.remove('Annex')
     if len(avalmodels) == 0: raise Exception("no sufficient rules for level 0") 
     
-    return redir(request, urlending, True, avalmodels[0])
+    return redir(request, urlending, True, 0 ,avalmodels[0])
 
 def preset(request, urlending):
     nblevels = getDefaultNumberOfLevels()
@@ -346,7 +351,7 @@ def preset(request, urlending):
         try:
             presetname = posted['preset']
         except KeyError:
-            redir(request, urlending, False)
+            redir(request, urlending, False, 0)
         
         flatview = False
         try:
@@ -363,7 +368,7 @@ def preset(request, urlending):
             pass
         
         if presetname not in sites.dirs.Presets.getPresetNames():
-            redir(request, urlending, False)
+            redir(request, urlending, False, 0)
 #            return HttpResponse("Posted data is not correct")
         
         lr = sites.dirs.Presets.getPreset(presetname).lr
@@ -398,19 +403,19 @@ def preset(request, urlending):
     else:
         raise Http404
     
-    return redir(request, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
+    return redir(request, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, metric = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, metric = ''):
     print "preparing response"
+    rootsuffix = str(presetid) + "_" + rootsuffix
     
     apacheserver = settings.PUBLIC_APACHE_URL
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     icondir = settings.REL_ICON_DICT
     
-    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
-    print "PARENTID ", parentid
-    parentidstr = vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
+    parentlinksuffix = str(presetid) + "_" + vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
+    print "PARENT LINK SUFFIX", parentlinksuffix
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -425,11 +430,11 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
-        theid = node.getProperty('treenode').getObject().getIdReplacement()
+        linksuffix = str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmlinfotext')
         hash = node.getProperty('treenode').getObject().__hash__()
         
-        mapparams[idx] = (x1,y1,x2,y2,hash,theid,info)
+        mapparams[idx] = (x1,y1,x2,y2,hash,linksuffix,info)
         
         textlines = 1
         oldpos, fpos = 0 ,0
@@ -471,7 +476,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             shifty = 50
 #        elif (y1 + shifty) > imageheight and shifty <= 20:
 #            shifty = 2*shifty   
-        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, hash, theid)
+        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, hash, linksuffix)
         
     rt = vtree.getRoot().getProperty('treenode').getObject()
     parents = []
@@ -496,7 +501,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         if pos == -1: pos = 0
         nvtext = nvtext[pos:]
         
-        navlinkparts.append( (nvtext, str(pr), pr.getIdReplacement()) )
+        navlinkparts.append( (nvtext, str(pr), str(presetid) + "_" + pr.getIdReplacement()) )
     
     ruleexplanations = []
     i = int(random.random()*nblevels)
@@ -509,7 +514,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     presetnames.sort();
     
     response = render_to_string('dirs/imagemap.html', \
-    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
+    {'nodes': nodes, 'parentid': parentlinksuffix, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'advanceddefault': getCurrentAdvancedSelections(request), \
      'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
@@ -746,13 +751,12 @@ def getCookieRules(request, nbdefinedlevels):
     lr = request.session['levelrules']
     return lr
 
-def calcCacheKey(parentpk, parentmodel, lr, depth = 0):
+def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0):
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
-    fragment_name = hash(parentpk).__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
-    vary_on = [(2,3,5,7),(11,17,19,23,29)]
-    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", hash(parentpk).__str__() + '_'+ fragment_name))]))     
+    fragment_name = hash(theid).__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
+    args = md5_constructor(u':'.join([urlquote(resolve_variable("185", hash(theid).__str__() + '_'+ fragment_name))]))     
     lrkeypart = lr.getUniqueLevelRulesId()            
-    cache_key = 'template.cache.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart)
+    cache_key = 'template.cache.%s.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart, str(presetid))
     return cache_key
 
 def getDefaultRules(nblevels):

@@ -341,11 +341,11 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 <body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#9F9F9F" onload="initMenu()">
     {% if nodes %}
 
-    <table style="width: auto; height: auto;" align="center">
+    <table style="width: auto; height: auto;" align="center" cellspacing="0"  cellpadding="0">
     
     <tr>
       <td align="center" valign="middle">
-    	<p><a href="/treemaps/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a></p>
+    	<a href="/treemaps/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a>
       </td>
     </tr>
     
@@ -439,8 +439,8 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					</td></tr>
 					
 					<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br>
-						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="1" title = "Download Treemap"> </a>
+						<br><br><br><br><br><br><br><br><br><br><br><br><br>
+						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
 					</td></tr>
 				</form>
 			</tr>

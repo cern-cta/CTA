@@ -25,7 +25,15 @@ def getPreset(presetname):
             lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
             lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
             lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-        return Preset(lr, True, 'Dirs', '/castor', 0)
+        return Preset(lr, True, 'Dirs', '/castor', 0)#0 must be default
+    
+def getPresetByStaticId(staticid):
+    if staticid == 0:
+        return getPreset("blahblah")
+    for preset in presetdict.values():
+        if preset.staticid == staticid:
+            return preset
+    return None
     
 def getPresetNames():
     return presetdict.keys()
