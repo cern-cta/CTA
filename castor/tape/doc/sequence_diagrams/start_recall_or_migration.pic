@@ -1,0 +1,75 @@
+.PS
+
+copy "sequence.pic";
+
+# Put a vertical space at the top of the document
+step();
+step();
+
+# Define the objects
+object(RC,"rtcpcld");
+placeholder_object(W);
+object(V,"vdqm");
+
+# Put more horizontal space between the vdqm and rtcpd
+placeholder_object(Fake_1);
+
+object(R,"rtcpd");
+
+step();
+
+# Message sequences
+active(RC);
+message(RC,V,"connect");
+active(V);
+message(RC,V,"request drive for tape");
+message(V,RC,"ack");
+step();
+message(V,RC,"request ID");
+message(RC,V,"ack");
+message(RC,V,"disconnect");
+inactive(V);
+inactive(RC);
+
+step();
+
+active(V);
+message(V,R,"connect");
+active(R);
+
+message(V,R,"client and job info");
+message(R,V,"success");
+message(R,V,"disconnect");
+inactive(V);
+
+step();
+
+message(R,RC,"connect");
+active(RC);
+message(RC,R,"request job info");
+message(R,RC,"ack");
+step();
+message(R,RC,"job info");
+message(RC,R,"ack");
+
+step();
+
+create_message(RC,W,"worker");
+active(W);
+inactive(RC);
+message(W,R,"ClientInfo - new callback");
+message(R,W,"ack");
+message(W,R,"disconnect");
+
+step();
+
+message(R,W,"connect");
+
+step();
+
+complete(RC);
+complete(W);
+complete(V);
+complete(R);
+
+.PE
