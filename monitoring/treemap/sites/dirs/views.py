@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 from django.views.decorators.cache import cache_page
-from sites.dirs.Presets import getPresetByStaticId
+from sites.dirs.Presets import getPresetByStaticId, filterPreset
 from sites.dirs.models import *
 from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
@@ -239,7 +239,7 @@ def groupView(request, presetid, model, depth, theid, refresh_cache = False):
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + "treemap.png"
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -255,7 +255,7 @@ def groupView(request, presetid, model, depth, theid, refresh_cache = False):
 
 def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix = ''):
     treeviewexpr = r'(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)'
-    groupviewexpr = r'group_(?P<presetid>\d+)_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)'
+    groupviewexpr = r'(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'
     
     try:
         if re.match(treeviewexpr, urlending):
@@ -296,49 +296,6 @@ def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix 
     
     return Http404
 
-def changeMetrics(request, urlending):
-    nblevels = getDefaultNumberOfLevels()
-    
-    if request.method == 'POST':
-        createCookieIfMissing(request, nblevels)
-            
-        posted = {}
-        posted = request.POST
-        
-        if not postedDataCheckSuccessful(posted, nblevels):
-            return HttpResponse("Posted data is not correct")
-        
-        model = posted['model']
-        level = int(posted['level'])
-        metric = posted['metric']
-        childrenmethodname = posted['childrenmethod']
-        postprocessorname = posted['postprocessor']
-        
-        cookielr = getCookieRules(request, nblevels)
-        
-        modulename = getModelsModuleName(model)
-            
-        parentmethodname = 'getDirParent' #for now
-        if(level == -1):
-            for i in range(nblevels):
-                rule = cookielr.getRuleObject(i)
-                rule.createOrUpdate(model, childrenmethodname, parentmethodname, metric, None, postprocessorname)
-        else:
-            cookielr.getRuleObject(level).createOrUpdate(model, childrenmethodname, parentmethodname, metric, None, postprocessorname)
-                    
-        updateUserCookie(request, cookielr, level, model, metric, childrenmethodname, postprocessorname)
-        
-    else:
-        raise Http404
-        
-    request.session.set_test_cookie()
-    
-    avalmodels = cookielr.getRuleObject(0).getUsedClassNames()
-    avalmodels.remove('Annex')
-    if len(avalmodels) == 0: raise Exception("no sufficient rules for level 0") 
-    
-    return redir(request, urlending, True, 0 ,avalmodels[0])
-
 def preset(request, urlending):
     nblevels = getDefaultNumberOfLevels()
     
@@ -371,31 +328,7 @@ def preset(request, urlending):
             redir(request, urlending, False, 0)
 #            return HttpResponse("Posted data is not correct")
         
-        lr = sites.dirs.Presets.getPreset(presetname).lr
-        
-        if flatview:
-            newlr = LevelRules()
-            for count, rule in enumerate(lr.getRules()):
-                newlr.appendRuleObject(rule)
-                if(count == 1): break
-            
-            for i in range(2, lr.countDefinedLevels()):
-                newlr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-                
-            lr = newlr
-            
-        if smalltobig:
-            newlr = LevelRules()
-            for rule in lr.getRules():
-                therule = copy.deepcopy(rule)
-                for classname in rule.getUsedClassNames():
-                    if therule.getPostProcessorNameFor(classname) == 'SubstractMinPostProcessor':
-                        therule.setPostProcessorName(classname, 'LogAndSubstractMinPostProcessor')
-                    else:
-                        therule.setPostProcessorName(classname, 'DefaultInversePostProcessor')
-                newlr.appendRuleObject(therule)
-                
-            lr = newlr
+        lr = filterPreset(sites.dirs.Presets.getPreset(presetname), flatview, smalltobig).lr
             
         request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname, 'smalltobig': smalltobig}
         request.session['levelrules'] = lr
@@ -503,10 +436,6 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         
         navlinkparts.append( (nvtext, str(pr), str(presetid) + "_" + pr.getIdReplacement()) )
     
-    ruleexplanations = []
-    i = int(random.random()*nblevels)
-    ruleexplanations.append(lrules.describeRuleToUser(i))
-    
     generationtime = datetime.datetime.now() - time
     cookierules = getCookieRules(request, nblevels).getRules()
     
@@ -516,8 +445,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentlinksuffix, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
-     'rootsuffix': rootsuffix, "modeldynamics": generateMenuData(nblevels), 'advanceddefault': getCurrentAdvancedSelections(request), \
-     'ruleexplanations': ruleexplanations, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
+     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
      'presetdefault':getCurrentPresetSelections(request)} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
@@ -528,187 +456,16 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
 
-def postedDataCheckSuccessful(posted, nblevels):
-    availablemodels = getAvailableModels()
-    if posted['model'] not in availablemodels: return False
-    if posted['postprocessor'] not in getPostProcessorNames(): return False
-    
-    expectedvalues = generateDropdownValues(nblevels, posted['model'])
-    
-    level = int(posted['level'])
-    if level < -1 or level >= nblevels: return False
-    
-    postedisexpected = False
-    for expected in expectedvalues['metrics']:
-        if str(posted['metric']) == expected.value:
-            postedisexpected = True 
-            break    
-    if not postedisexpected: return False
-    
-    postedisexpected = False
-    for expected in expectedvalues['childrenmethods']:
-        if str(posted['childrenmethod']) == expected.value:
-            postedisexpected = True 
-            break    
-    if not postedisexpected: return False
-    
-    return True
-
 class DropDownEntry(object):
     def __init__(self, text, value):
         self.text = text
         self.value = value
-        
-def generateMenuData(nblevels):
-    menu = {}
-    
-    models = []
-
-    modulename = getModelsModuleName("")
-    if not modulename in sys.modules.keys():
-        try:
-            module = __import__( modulename )
-        except ImportError, e:
-            raise ImportError( 'Unable to load module: ' + module )
-    else:
-        module = sys.modules[modulename]
-        
-    classes = dict(inspect.getmembers( module, inspect.isclass ))
-    
-    for classname in classes:
-        cls = classes[classname]
-        if isinstance(cls, ModelBase) and classname not in ['Annex', 'ContentType']:
-            models.append(DropDownEntry(createObject(modulename , classname).getUserFriendlyName(), classname))
-                
-    for model in models:
-        dropdowns = generateDropdownValues(nblevels, model.value)
-        menu[model.value] = dropdowns
-        
-    return menu
-        
-
-def generateDropdownValues(nblevels, themodel):
-    #generating drop down menu content
-    #create level dropdown
-    
-    leveldropdown = []
-    modeldropdown = []
-    metricdropdown = []
-    childrenmethoddropdown = []
-    postprocessors = []
-    
-    
-    #level menu
-    leveldropdown.append(DropDownEntry('all levels', -1))
-    for i in range(nblevels):
-        leveldropdown.append(DropDownEntry( "level "+i.__str__(), i))
-     
-    #model menu
-    modulename = None
-    themodelfound = False
-    
-    modulename = getModelsModuleName("")
-    if not modulename in sys.modules.keys():
-        try:
-            module = __import__( modulename )
-        except ImportError, e:
-            raise ImportError( 'Unable to load module: ' + module )
-    else:
-        module = sys.modules[modulename]
-        
-    classes = dict(inspect.getmembers( module, inspect.isclass ))
-    
-    for classname in classes:
-        cls = classes[classname]
-        if isinstance(cls, ModelBase) and classname not in ['Annex', 'ContentType']:
-            if classname == themodel: themodelfound = True
-            modeldropdown.append(DropDownEntry(createObject(modulename , classname).getUserFriendlyName(), classname))
-
-    
-    if not themodelfound: raise Exception('the given model couldn\'t be found')
-    
-    #metrics menu
-    cf = ColumnFinder(themodel)
-    columns = cf.getColumnAndAtrributeNames()
-    for column in columns:
-        ismetric = True
-        command = 'if column in ' + themodel +'.nonmetrics: ismetric = False'
-        exec(command)
-        if ismetric: metricdropdown.append(DropDownEntry(column, column))
-    
-    #children menu    
-    instance = createObject(modulename, themodel)  
-    for membername in instance.__class__.__dict__.keys():
-        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
-            function = instance.__class__.__dict__[membername]
-            try:
-                print function.__dict__['methodtype']
-                if function.__dict__['methodtype'] == 'children':
-                    childrenmethoddropdown.append(DropDownEntry(membername, membername))
-            except:
-                continue
-            
-    for ppname in getPostProcessorNames():
-        pp = None
-        command = "pp = " + ppname + "()"
-        exec(command)
-        postprocessors.append(DropDownEntry(pp.getUserFriendlyName(), ppname))
-    
-    return {'levels':leveldropdown, 'models':modeldropdown, 'metrics':metricdropdown, 'childrenmethods': childrenmethoddropdown, 'postprocessors': postprocessors}
-
-def generateLevelDynamics(request, nblevels):
-    ld = {}
-    for i in range(-1, nblevels):
-        ld[i] = getDropdownDefaultsByLevel(request, nblevels,i)
-    return ld
-
-def getDropdownDefaultsByLevel(request, nblevels, level, themodel = None):
-    levelvalue = level
-    modelvalue = ''
-    metricvalue = ''
-    childrenmethodvalue = ''
-    postprocessor = None
-    
-    #level menu
-    if(levelvalue < 0):
-        defselection = getAdvancedSelection()
-        defselection['level'] = -1
-        return defselection
-    
-    #model menu
-    lr = getCookieRules(request, nblevels) 
-    levelmodels = lr.getRuleObject(level).getUsedClassNames()
-    levelmodels.remove('Annex')
-    
-    if(themodel is None):  
-        if len(levelmodels > 0):
-            modelvalue = levelmodels[0]
-        else:
-            raise Exception('no models available to user') 
-    else:
-        if themodel in levelmodels:
-            modelvalue = themodel
-        else:
-            raise Exception("no such model: " + themodel) 
-    
-    #metrics menu
-    metricvalue =  lr.getRuleObject(level).getColumnNameFor(modelvalue)
-    
-    #children menu    
-    childrenmethodvalue=  lr.getRuleObject(level).getMethodNameFor(modelvalue)
-    
-    #postprocessor menu
-    postprocessor=  lr.getRuleObject(level).getPostProcessorNameFor(modelvalue)
-    
-    return {'level':levelvalue, 'model': modelvalue, 'metric': metricvalue, 'childrenmethod': childrenmethodvalue, 'postprocessor': postprocessor}
 
 def createCookieIfMissing(request, nblevels):
     try:
         request.session['userhascookie']
         request.session['levelrules']
         request.session['levelrules'].getPostProcessorNameFor(0,'Annex')
-        request.session['advancedselection']
-        request.session['advancedselection']['postprocessor']
         request.session['defaultpreset']
         request.session['defaultpreset']['smalltobig']
         if not request.session['levelrules'].rulesAreValid(): 
@@ -716,22 +473,7 @@ def createCookieIfMissing(request, nblevels):
     except (KeyError, AttributeError):
         request.session['userhascookie'] = True
         request.session['levelrules'] = getDefaultRules(nblevels)
-        request.session['advancedselection'] = getAdvancedSelection()
-        request.session['defaultpreset'] = getDefaultPresets()
-        
-def updateUserCookie(request, rules, level, model, metric, childrenmethodname, postprocessorname):
-    request.session['levelrules'] = rules       
-    request.session['advancedselection'] = {'level':level, 'model': model, 'metric':metric, 'childrenmethod': childrenmethodname, 'postprocessor': postprocessorname}
-
-def getCurrentAdvancedSelections(request):
-    try:
-        request.session['userhascookie']
-        if request.session['advancedselection']['postprocessor'] not in getPostProcessorNames():
-            raise KeyError()
-        return request.session['advancedselection']
-    except KeyError:
-        request.session['userhascookie'] = True
-        return getAdvancedSelection()
+        request.session['defaultpreset'] = getDefaultPresets()     
     
 def getCurrentPresetSelections(request):
     try:
@@ -756,7 +498,7 @@ def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0):
     fragment_name = hash(theid).__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
     args = md5_constructor(u':'.join([urlquote(resolve_variable("185", hash(theid).__str__() + '_'+ fragment_name))]))     
     lrkeypart = lr.getUniqueLevelRulesId()            
-    cache_key = 'template.cache.%s.%s.%s.%s.%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart, str(presetid))
+    cache_key = 'template.cache%s%s%s%s%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart, str(presetid))
     return cache_key
 
 def getDefaultRules(nblevels):
@@ -765,9 +507,6 @@ def getDefaultRules(nblevels):
 
 def getDefaultModel():
     return 'Dirs'
-
-def getAdvancedSelection():
-    return {'level':-1, 'model': 'Dirs', 'metric':'totalsize', 'childrenmethod':'getFilesAndDirectories', 'postprocessor': 'DafaultPostProcessor'}
 
 def getDefaultPresets():
     return{'flat': False, 'presetname': 'Default', 'smalltobig': False}

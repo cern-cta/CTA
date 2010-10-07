@@ -34,7 +34,7 @@ class Annex(models.Model):
         elif not isinstance(parent, Annex):
             ppk = self.parent.getIdReplacement()
         elif isinstance(parent, Annex): #parent is Annex
-            ppk = self.parent.getAnnexParent().getIdReplacement
+            ppk = self.parent.getAnnexParent().getIdReplacement()
             classname = self.parent.getAnnexParent().__class__.__name__
         else:
             raise Exception("unexpected error")

@@ -3,9 +3,10 @@ Created on Sep 10, 2010
 
 @author: kblaszcz
 '''
-from sites.treemap.objecttree.TreeRules import LevelRules
 from django.conf import settings
 from sites.tools.Inspections import getDefaultNumberOfLevels
+from sites.treemap.objecttree.TreeRules import LevelRules
+import copy
     
 class Preset(object):
     def __init__(self, lr, cachingenabled, rootmodel, rootsuffix, staticid):
@@ -38,6 +39,38 @@ def getPresetByStaticId(staticid):
 def getPresetNames():
     return presetdict.keys()
     
+    
+def filterPreset(preset, flatview, smalltobig):
+    lr = copy.copy(preset.lr)
+    
+    newlr = None
+    if flatview:
+        newlr = LevelRules()
+        for count, rule in enumerate(lr.getRules()):
+            newlr.appendRuleObject(rule)
+            if(count == 1): break
+        
+        for i in range(2, lr.countDefinedLevels()):
+            newlr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+            
+        lr = newlr
+        
+    if smalltobig:
+        newlr = LevelRules()
+        for rule in lr.getRules():
+            therule = copy.deepcopy(rule)
+            for classname in rule.getUsedClassNames():
+                if therule.getPostProcessorNameFor(classname) == 'SubstractMinPostProcessor':
+                    therule.setPostProcessorName(classname, 'LogAndSubstractMinPostProcessor')
+                else:
+                    therule.setPostProcessorName(classname, 'DefaultInversePostProcessor')
+            newlr.appendRuleObject(therule)
+            
+    retpreset = copy.copy(preset)
+    retpreset.lr = copy.copy(lr)
+    return retpreset
+        
+        
     
 presetdict = {}
 

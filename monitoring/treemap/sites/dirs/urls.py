@@ -19,11 +19,11 @@ urlpatterns = patterns('',
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)$', 'dirs.views.redirectOldLink'),
     
-    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
+#    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
     
     (r'(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
     
-    (r'group_(?P<presetid>\d+)_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
+    (r'(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
     (r'(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
 

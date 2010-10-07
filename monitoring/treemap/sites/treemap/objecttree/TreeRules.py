@@ -353,32 +353,6 @@ class LevelRules(object):
         text = (''.join([bla for bla in idparts]))
         hashvalue = str(hash(text[:len(text)/2])) + str(hash(text[len(text)/2:])) 
         return hashvalue
-     
-    def describeRuleToUser(self, level):
-        models = self.rules[level].getUsedClassNames()
-        description = []
-
-        for model in models:
-            if model == 'Annex': continue
-            description.append("All items on level ")
-            description.append(level.__str__())
-            description.append(" being the model ")
-            description.append(model)
-            
-            description.append(" are evaluated by ")
-            description.append(self.rules[level].getColumnNameFor(model))
-            description.append("<br>")
-            
-            description.append("Children of ")
-            description.append(model) 
-            description.append(" in level ")
-            description.append(level.__str__())
-            description.append(" will be requested using the method ")
-            description.append(self.rules[level].getMethodNameFor(model))
-            description.append("<br>")
-            description.append("<br>")
-
-        return (''.join([bla for bla in description ]))
     
     def rulesAreValid(self):
         for rule in self.rules:

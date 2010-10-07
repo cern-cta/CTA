@@ -9,67 +9,8 @@
 
 <script LANGUAGE="JavaScript">
 //define global menu values
-
-function DropDownPair(text, value)
-{
-	this.text = text;
-	this.value = value;
-}
-
-function Modelmenu(levels,models,metrics,childrenmethods,postprocessors) 
-{
-	this.levels = levels;
-	this.models = models;
-	this.metrics = metrics;
-	this.childrenmethods = childrenmethods;
-	this.postprocessors = postprocessors
-}
-
-modeldynamic = new Object();
-
 function initMenu()
 {
-
-{% for submenuname, submenu in modeldynamics.items %}
-	levels = [];
-	models = [];
-	metrics = [];
-	childrenmethods = [];
-	postprocessors = [];
-	
-	{% for dropdownname, dropdown in submenu.items %}
-	
-		{% if dropdownname|equals:"levels" %}
-			{% for ddentry in dropdown %}
-	levels[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
-			{% endfor %}
-		{% endif %}
-		{% if dropdownname|equals:"models" %}
-			{% for ddentry in dropdown %}
-	models[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
-			{% endfor %}
-		{% endif %}
-		{% if dropdownname|equals:"metrics" %}
-			{% for ddentry in dropdown %}
-	metrics[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
-			{% endfor %}
-		{% endif %}
-		{% if dropdownname|equals:"childrenmethods" %}
-			{% for ddentry in dropdown %}
-	childrenmethods[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
-			{% endfor %}
-		{% endif %}
-		{% if dropdownname|equals:"postprocessors" %}
-			{% for ddentry in dropdown %}
-	postprocessors[{{forloop.counter0}}] = new DropDownPair("{{ddentry.text}}", "{{ddentry.value}}");
-			{% endfor %}
-		{% endif %}
-		
-	{% endfor %}
-	
-	modeldynamic["{{submenuname}}"] = new Modelmenu(levels, models, metrics, childrenmethods, postprocessors);
-{% endfor %}
-
 //structure:
 
 //cookielr[level]
@@ -101,16 +42,6 @@ activateJsObjects();
 
 function activateJsObjects()
 {		
-	modelsmenu = document.getElementsByName("model")[0];
-	modelsmenu.options.lenght = 0
-	modelsmenu.options.add(new Option("Directory", "Dirs"))
-	modelsmenu.selectedIndex = 0
-	
-	setModel();
-	setDefaultLevel();
-	setDefaultPostProcessor();
-	//var optmenu = document.getElementsByName("optionsmenu")[0];
-	//optmenu.style.display = "inline"
 	document.getElementById("thesubtable").style.display = "inline";
 }
 
@@ -121,218 +52,6 @@ function notImplementedWarning()
 	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.disabled = false;
 	alert("This is in a very early stage! If something doesn't work any more ,delete your cookies to restore the session and reload the page");
-}
-
-function setDefaultLevel()
-{
-	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
-	newmenu = modeldynamic[selected];
-	levelsmenu = document.getElementsByName("level")[0];
-	//levelsmenu
-	{% for key, value in advanceddefault.items %}{% if key|equals:"level" %}valueofdefaultitem = {{value}};{% endif %}{% endfor %}
-	levelsmenu.options.length = 0;
-	for (var i = 0; i < newmenu.levels.length; i++)
-	{
-		levelsmenu.options.add(new Option(newmenu.levels[i].text, newmenu.levels[i].value));
-		if (newmenu.levels[i].value == valueofdefaultitem) 
-		{
-			levelsmenu.selectedIndex = i;
-		}
-	}
-	//levelsmenu.disabled = true;
-}
-
-function setModel()
-{
-	modelsmenu = document.getElementsByName("model")[0];
-	levelsmenu = document.getElementsByName("level")[0];
-	metricsmenu = document.getElementsByName("metric")[0];
-	childrenmenu = document.getElementsByName("childrenmethod")[0];
-	
-	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
-	newmenu = modeldynamic[selected];
-	
-	//modelsmenu
-	{% for key, value in advanceddefault.items %}{% if key|equals:"model" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	modelsmenu.options.length = 0;
-	for (var i = 0; i < newmenu.models.length; i++)
-	{	
-		modelsmenu.options.add(new Option(newmenu.models[i].text, newmenu.models[i].value));
-		if (newmenu.models[i].value == selected)
-		{
-			modelsmenu.selectedIndex = i;
-		}
-	}
-
-	//metricsmenu
-	{% for key, value in advanceddefault.items %}{% if key|equals:"metric" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	metricsmenu.options.length = 0;
-	for (var i = 0; i < newmenu.metrics.length; i++)
-	{
-		metricsmenu.options.add(new Option(newmenu.metrics[i].text, newmenu.metrics[i].value));
-		if (newmenu.metrics[i].value == valueofdefaultitem) 
-		{
-			metricsmenu.selectedIndex = i;
-		}
-	}
-		
-	//childrenmenu
-	{% for key, value in advanceddefault.items %}{% if key|equals:"childrenmethod" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	childrenmenu.options.length = 0;
-	for (var i = 0; i < newmenu.childrenmethods.length; i++)
-	{
-		childrenmenu.options.add(new Option(newmenu.childrenmethods[i].text, newmenu.childrenmethods[i].value)); 
-		if (newmenu.childrenmethods[i].value == valueofdefaultitem) 
-		{
-			childrenmenu.selectedIndex = i;
-		}
-	}	
-	//childrenmenu.disabled = true;
-	//alert("Changing to " + modelsmenu.options[modelsmenu.selectedIndex].value + " not implemented yet!");
-	//window.open('updatemodel=' + this.options[this.selectedIndex].value,'_top')
-	//optmenu.style.display = "inline"
-}
-
-function setLevel()
-{
-	modelsmenu = document.getElementsByName("model")[0];
-	levelsmenu = document.getElementsByName("level")[0];
-	metricsmenu = document.getElementsByName("metric")[0];
-	childrenmenu = document.getElementsByName("childrenmethod")[0];
-	
-	selectedlevel = levelsmenu.options[levelsmenu.selectedIndex].value;
-	var success = selectLevel(selectedlevel);
-	if (!success) return;
-	
-	if (selectedlevel < 0) selectedlevel = 0;
-	modeltoset = cookielr[selectedlevel].models[0];
-	var success = selectModel(modeltoset);
-	if (!success) return;
-	setModel();
-
-	metrictoset = cookielr[selectedlevel][modeltoset]["metric"];
-	var success = selectMetric(metrictoset);
-	if (!success) return;
-
-	childrenmethodtoset = cookielr[selectedlevel][modeltoset]["childrenmethod"];
-	var success = selectChildrenMethod(childrenmethodtoset);
-	if (!success) return;
-
-	postprocessortoset = cookielr[selectedlevel][modeltoset]["postprocessor"];
-	var success = selectPostprocessor(postprocessortoset);
-	if (!success) return;
-}
-
-function setDefaultPostProcessor()
-{
-	postprocessorsmenu = document.getElementsByName("postprocessor")[0];
-	modelsmenu = document.getElementsByName("model")[0];
-	
-	selected = modelsmenu.options[modelsmenu.selectedIndex].value;
-	newmenu = modeldynamic[selected];
-	
-	//postprocessorsmenu
-	{% for key, value in advanceddefault.items %}{% if key|equals:"postprocessor" %}valueofdefaultitem = "{{value}}";{% endif %}{% endfor %}
-	postprocessorsmenu.options.length = 0;
-	for (var i = 0; i < newmenu.postprocessors.length; i++)
-	{	
-		postprocessorsmenu.options.add(new Option(newmenu.postprocessors[i].text, newmenu.postprocessors[i].value));
-		if (newmenu.postprocessors[i].value == valueofdefaultitem)
-		{
-			postprocessorsmenu.selectedIndex = i;
-		}
-	}
-	
-}
-
-function selectLevel(levelvalue)
-{
-	levelsmenu = document.getElementsByName("level")[0];
-	var index = -1;
-	for(var i = 0; i < levelsmenu.options.length; ++i)
-	{
-		if (levelsmenu.options[i].value == levelvalue) {index = i;}
-	}	          
-	if(index < 0) return false;                                 	
-	levelsmenu.selectedIndex = parseInt(index);
-	return true;
-}
-
-function selectModel(modelvalue)
-{
-	modelsmenu = document.getElementsByName("model")[0];
-	var index = -1;
-	for(var i = 0; i < modelsmenu.options.length; ++i)
-	{
-		if (modelsmenu.options[i].value == modelvalue) index = i;
-	}	          
-	if(index < 0) return false;                                   	
-	modelsmenu.selectedIndex = index;
-	return true;
-}
-
-function selectMetric(metricvalue)
-{
-	metricsmenu = document.getElementsByName("metric")[0];
-	var index = -1;
-	for(var i = 0; i < metricsmenu.options.length; ++i)
-	{
-		if (metricsmenu.options[i].value == metricvalue) index = i;
-	}	          
-	if(index < 0) return false;                                   	
-	metricsmenu.selectedIndex = index;
-	return true;
-}
-
-function selectPostprocessor(postpvalue)
-{
-	postprocessormenu = document.getElementsByName("postprocessor")[0];
-	var index = -1;
-	for(var i = 0; i < postprocessormenu.options.length; ++i)
-	{
-		if (postprocessormenu.options[i].value == postpvalue) index = i;
-	}	          
-	if(index < 0) return false;                                   	
-	postprocessormenu.selectedIndex = index;
-	return true;
-}
-
-function selectChildrenMethod(childrenmethodvalue)
-{
-	childrenmethodsmenu = document.getElementsByName("childrenmethod")[0];
-	var index = -1;
-	for(var i = 0; i < childrenmethodsmenu.options.length; ++i)
-	{
-		if (childrenmethodsmenu.options[i].value == childrenmethodvalue) index = i;
-	}	          
-	if(index < 0) return false;                                   	
-	childrenmethodsmenu.selectedIndex = index;
-	return true;
-}
-
-function showHelp()
-{
-	var text = "The advanced configuration is not user friendly yet. \nAnyway, here is an example how you are influencing a single level in the data tree:\n\n";
-	{% for explanation in ruleexplanations %}
-		text = text + "{{explanation|escapefilter}}\n";
-	{% endfor %}
-	text = text.replaceAll("<br>", "\n");
-	text = text + "If you choose \"all levels\" the same Rule will be applied to all levels.\n"
-	alert(text);
-}
-
-// Replaces all instances of the given substring.
-String.prototype.replaceAll = function(oldsubstr, substr)
-{
-	var filtered = this;
-	var match = filtered.indexOf(oldsubstr);
-	 
-	while (match != -1)
-	{
-		filtered = filtered.replace(oldsubstr, substr);
-		match = filtered.indexOf(oldsubstr);
-	}
-	return filtered;
 }
 
 </script>
@@ -391,59 +110,21 @@ String.prototype.replaceAll = function(oldsubstr, substr)
 					</select></td></tr>
 					
 					<tr><td></td><td class="descriptiontext">
-						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
+						<input disabled id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
 					</td></tr>
 					<tr><td></td><td class="descriptiontext">
-						<input id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
+						<input disabled id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
 					</td></tr>
 					
 					<tr><td>
 						<input class="applybutton" type="submit" value="Apply"/>
-					</td></tr>
-				</form>
-					
-				<form action="/treemaps/{{rootsuffix}}/changemetrics/" method="post" onsubmit="notImplementedWarning()">
-					
-					<tr><td><br></td></tr>
-					<tr><td class="advancedtext">Advanced</td> </td></tr>
-				
-					<tr>
-					<td class="descriptiontext">Level:</td> 
-					
-					<td><select class="dmenuwidth" name="level" id="id_level" onchange="setLevel()">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Model:</td>
-					<td><select class="dmenuwidth" name="model" id="id_model" onchange="setModel()">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Metric:</td>
-					<td><select class="dmenuwidth" name="metric" id="id_metric">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Getting children:</td>
-					<td><select class="dmenuwidth" name="childrenmethod" id="id_childrenmethod">
-					</select></td></tr>
-					
-					<tr>
-					<td class="descriptiontext">Value processing:</td>
-					<td><select class="dmenuwidth" name="postprocessor" id="id_postprocessor">
-					</select></td></tr>
-					<tr><td>
-						<br>
-						<input class="applybutton" type="submit" value="Apply"/>
-						<input class="applybutton" type="button" value="Help" onclick="showHelp()"/>
-					</td></tr>
-					
-					<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br><br><br>
-						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
 					</td></tr>
 				</form>
 			</tr>
+			<tr><td>
+						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
+			</td></tr>
 			</table>
 		</td>	
 		<noscript>
