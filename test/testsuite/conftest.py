@@ -2,19 +2,11 @@
 # this is the core of the test suite infrastructure, based on py.test
 #
 
-import time, ConfigParser, os, py, tempfile, re, types, datetime, signal
+import time, ConfigParser, os, sys, py, tempfile, re, types, datetime, signal
 
 #########################
 # Some useful functions #
 #########################
-
-UUID = None
-def getUUID():
-    global UUID
-    if UUID == None :
-        import uuid
-        UUID = str(uuid.uuid4())
-    return UUID
 
 def listTests(testdir, topdir, listResources=False):
     '''lists all tests in a given tree and spit out the fileNames'''
@@ -317,11 +309,8 @@ def compareOutput(setup, output, gold, testName, localTags):
 ########################################
 
 class Setup:
-    def __init__(self, request):
-        # export last used setup as a global variable. Used to avoid nasty tracebacks in case of keyboard interupts
-        global gsetup
-        gsetup = self
-        self.config = request.config
+    def __init__(self, config):
+        self.config = config
         # handling of tags. Note values can also be functions generating values depending on the test name
         self.tags = {}
         # list of tags that may appear several times in a single output
@@ -332,17 +321,22 @@ class Setup:
         self.suppressRegExps = []
         # whether a resource is ok or not. Contains True if ok, false if not, and no entry if not checked
         self.checkedResources = {}
+        # list of already processed tags.py files (actually of their directories)
+        self.processedTagspy = []
         # instantiate an option parser with some defaults
         self.options = CustomConfigParser()
         # find out the test directory to use
-        # Note that the testdir option has been set in the pytest_generate_tests function
         self.testdir = getattr(self.config.option,'testdir')
+        if self.testdir == None:
+            # try to guess
+            testDirCandidates = filter(lambda x:x.endswith('tests'), os.listdir('.'))
+            assert len(testDirCandidates) > 0, "No test directory found. Please use --testdir option"
+            assert len(testDirCandidates) < 2, "Do not know which test directory to use. Please use --testdir option\nCandidates are " + ', '.join(testDirCandidates)
+            self.testdir = testDirCandidates[0]
         # read the option file.
         optionFileCandidates = filter(lambda x:x.endswith('.options'), os.listdir(self.testdir))
-        assert len(optionFileCandidates) > 0, \
-            "No .options file found in " + self.testdir
-        assert len(optionFileCandidates) < 2, \
-            "Do not know which .options file to use in " + self.testdir + " : " + ' '.join(optionFileCandidates)
+        assert len(optionFileCandidates) > 0, "No .options file found in " + self.testdir
+        assert len(optionFileCandidates) < 2, "Do not know which .options file to use in " + self.testdir + " : " + ', '.join(optionFileCandidates)
         self.options.read(os.sep.join([self.testdir, optionFileCandidates[0]]))
         # setup the environment
         if self.options.has_section('Environment'):
@@ -439,8 +433,10 @@ class Setup:
                 pass
         elif os.path.isdir(path):
             # check for tags.py file and absorb new definitions
-            if os.path.isfile(path+os.sep+'tags.py'):
-                execfile(path+os.sep+'tags.py')
+            if path not in self.processedTagspy:
+                if os.path.isfile(path+os.sep+'tags.py'):
+                    execfile(path+os.sep+'tags.py')
+                    self.processedTagspy.append(path)
             # check all resources in default.resources file
             self.checkResources(path+os.sep+'default.resources',skip, noRec=True)
 
@@ -489,21 +485,10 @@ class Setup:
                         assert False, "Time out"
                     i = i + 1
 
-###############################################################
-# funcarg function used by all tests for their setup argument #
-###############################################################
-
-def pytest_funcarg__setup(request):
-    # the setup is cached per session
-    try:
-        return request.cached_setup(setup=lambda:Setup(request), \
-                                    teardown=lambda val: val.cleanupAndReset(), \
-                                    scope="session")
-    except AssertionError,e:
-        print 'Unable to create Setup\nError was : ' + str(e)
-        # Let's not go through other tests, they will all fail the same way !
-        request.config.option.exitfirst = True
-        raise e
+# create global setup at config stage
+def pytest_configure(config):
+    global globalsetup
+    globalsetup = Setup(config)
 
 
 #################################################
@@ -511,4 +496,34 @@ def pytest_funcarg__setup(request):
 #################################################
 
 def pytest_keyboard_interrupt(excinfo):
-    gsetup.config.option.verbose = False
+    globalsetup.config.option.verbose = False
+
+
+##################################
+# build up our own list of tests #
+##################################
+
+def pytest_collect_file(path, parent):
+    if path.basename.endswith('.input') and not path.relto(parent.config.topdir).split(os.sep)[1]=='resources':
+        return CustomFile(path, parent)
+
+class CustomItem(py.test.collect.Item):
+
+    def __init__(self, path, parent):
+        py.test.collect.Item.__init__(self, str(path), parent)
+        
+    def runtest(self):
+        filename = self.fspath.relto(self.config.topdir).replace('.input','')
+        testset = filename.split(os.sep)[1]
+        testname = filename[filename.find(os.sep)+1:].replace('/','_')
+        return globalsetup.runTest(testset,testname,filename)
+
+    def reportinfo(self):
+        filename = self.fspath.relto(os.sep.join([str(self.config.topdir),globalsetup.testdir])).replace(os.sep,'_')
+        return self.fspath, None, filename.replace('.input','')
+
+
+class CustomFile(py.test.collect.File):
+
+    def collect(self):
+        return [CustomItem(self.fspath, self)]

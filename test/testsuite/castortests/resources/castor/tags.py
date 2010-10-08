@@ -1,3 +1,16 @@
+############
+### uuid ###
+############
+UUID = None
+def sessionuuid(self):
+    global UUID
+    if UUID == None :
+        sys.path.append(str(self.config.topdir))
+        import uuid
+        UUID = str(uuid.uuid4())
+    return UUID
+Setup.getTag_sessionuuid = sessionuuid
+             
 ########################
 ### stageHost & tags ###
 ########################
@@ -6,10 +19,10 @@ def stageHost(self):
 Setup.getTag_stageHost = stageHost
              
 def castorTag(self, nb=0):
-    return (lambda test : 'castorTag'+getUUID()+test+str(nb))
+    return (lambda test : 'castorTag'+self.getTag(test, 'sessionuuid')+test+str(nb))
 Setup.getTag_castorTag = castorTag
 
-# decalre new random order tags
+# declare new random order tags
 self.declareRandomOrderTag('noTapeFileName')
 self.declareRandomOrderTag('tapeFileName')
 self.declareRandomOrderTag('fileid@ns')
@@ -39,17 +52,24 @@ def _checkDirPath(self, name, isTape):
             " when checking path " + name
 Setup._checkDirPath = _checkDirPath
 
+def _createCastorDir(self, path, filetype):
+    # create the file in the namespace
+    output = Popen('nsmkdir ' + path)
+    # check it went fine
+    assert len(output) == 0 or output.find('File exists'), \
+        'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
+    # print directory name 
+    print os.linesep+"Working in directory " + path + " for " + filetype + " files"
+    # return the created dir
+    return path
+Setup._createCastorDir = _createCastorDir
+
 def noTapePath(self):
     # get the noTape path and check it
     notapepath = self.options.get('Generic','CastorNoTapeDir')
     self._checkDirPath(notapepath, False)
     # create a unique directory
-    p = notapepath + os.sep + getUUID()
-    output = Popen('nsmkdir ' + p)
-    assert len(output) == 0 or output.find('File exists') > -1, \
-        'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
-    print os.linesep+"Working in directory " + p + " for non tape files"
-    return p
+    return self._createCastorDir(notapepath + os.sep + self.getTag(None, 'sessionuuid'), 'non tape')
 Setup.getTag_noTapePath = noTapePath
 
 def noTapeFileName(self, nb=0):
@@ -60,13 +80,8 @@ def tapePath(self):
     # get the tape path and check it
     tapepath = self.options.get('Generic','CastorTapeDir')
     self._checkDirPath(tapepath, True)
-        # create a unique directory
-    p = tapepath + os.sep + getUUID()
-    output = Popen('nsmkdir ' + p)
-    assert len(output) == 0 or output.find('File exists'), \
-        'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
-    print os.linesep+"Working in directory " + p + " for tape files"
-    return p
+    # create a unique directory
+    return self._createCastorDir(tapepath + os.sep + self.getTag(None, 'sessionuuid'), 'tape')
 Setup.getTag_tapePath = tapePath
 
 def tapeFileName(self, nb=0):

@@ -1,7 +1,7 @@
 def remoteDir(self):
     # create a unique directory name
-    p = self.options.get('Generic','remoteSpace') + os.sep + getUUID()
-        # create the directory
+    p = self.options.get('Generic','remoteSpace') + os.sep + self.getTag(None, 'sessionuuid')
+    # create the directory
     output = Popen('rfmkdir ' + p)
     assert len(output) == 0, \
         'Failed to create remote directory ' + p + os.linesep + "Error :" + os.linesep + output
