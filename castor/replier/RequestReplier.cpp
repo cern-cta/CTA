@@ -153,9 +153,6 @@ castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
   }
 
   castor::replier::RequestReplier *s_rr = static_cast<castor::replier::RequestReplier *>(arg);
-  if (0 == s_rr) {
-    return 0;
-  }
 
   return s_rr->replierThread(0);
 }
@@ -790,23 +787,28 @@ castor::replier::RequestReplier::pollStr(int val) {
   if (val & POLLIN) {
     sst << "POLLIN";
     found = true;
-  } else if (val & POLLPRI) {
+  }
+  if (val & POLLPRI) {
     if (found) sst << "|";
     sst << "POLLPRI";
     found = true;
-  } else   if (val & POLLOUT) {
+  }
+  if (val & POLLOUT) {
     if (found) sst << "|";
     sst << "POLLOUT";
     found = true;
-  } else   if (val & POLLERR) {
+  }
+  if (val & POLLERR) {
     if (found) sst << "|";
     sst << "POLLERR";
     found = true;
-  } else   if (val & POLLHUP) {
+  }
+  if (val & POLLHUP) {
     if (found) sst << "|";
     sst << "POLLHUP";
     found = true;
-  } else   if (val & POLLNVAL) {
+  }
+  if (val & POLLNVAL) {
     if (found) sst << "|";
     sst << "POLLNVAL";
     found = true;
