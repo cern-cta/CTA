@@ -33,6 +33,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static struct Coptions longopts[] = {
   { "help", NO_ARGUMENT,       NULL, 'h'},
@@ -61,13 +62,20 @@ int main(int argc, char *argv[]) {
   Coptind = 1;
   Copterr = 1;
   int ch;
+  char *invptr;
+
   while ((ch = Cgetopt_long(argc, argv, "hu:U:g:G:", longopts, NULL)) != EOF) {
     switch (ch) {
     case 'h':
       usage(progName);
-      return 0;
+      return 1;
     case 'u':
-      muid = atoi(Coptarg);
+      muid = strtol (Coptarg, &invptr, 10);
+      if ('\0' != *invptr) {
+        std::cerr <<" Invalid uid: " << Coptarg << std::endl;
+        usage(progName);
+        return 1;
+      }
       break;
     case 'U':
     {
@@ -75,13 +83,18 @@ int main(int argc, char *argv[]) {
       if (0 == pass) {
 	  std::cerr << " Not existing user." << std::endl;
 	  usage(progName);
-	  return 0;
+	  return 1;
       }
       muser = pass->pw_uid;
       break;
     }
     case 'g':
-      mgid = atoi(Coptarg);
+      mgid = strtol (Coptarg, &invptr, 10);
+      if ('\0' != *invptr) {
+        std::cerr <<" Invalid gid: " << Coptarg << std::endl;
+        usage(progName);
+        return 1;
+      }
       break;
     case 'G':
     {
@@ -89,14 +102,14 @@ int main(int argc, char *argv[]) {
       if (grp == 0){
         std::cerr <<  " Not existing group." << std::endl;
 	usage(progName);
-	return 0;
+	return 1;
       }
       mgroup = grp->gr_gid;
       break;
     }
     default:
       usage(progName);
-      return 0;
+      return 1;
     }
   }
 
@@ -104,12 +117,12 @@ int main(int argc, char *argv[]) {
   if ((muid < 0 && muser<0) && (mgid < 0 && mgroup<0)) {
     std::cerr << "options missing" << std::endl;
     usage(progName);
-    return 0;
+    return 1;
   }
   if ((muid>=0 && muser>=0) ||(mgid>=0 && mgroup>=0)) {
     std::cerr << " Invalid syntax"<<std::endl;
     usage(progName);
-    return 0;
+    return 1;
   }
 
   muid=muid<0?muser:muid;
@@ -141,6 +154,7 @@ int main(int argc, char *argv[]) {
               << e.getMessage().str() << std::endl;
     exit(1);
   }
+  return 0;
 }
 
 
