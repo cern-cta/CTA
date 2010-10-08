@@ -347,7 +347,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::createRep(castor::IAddress*,
                     << "  tapeDriveModel : " << obj->tapeDriveModel() << std::endl
                     << "  priorityLevel : " << obj->priorityLevel() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tapeAccessSpecification : " << obj->tapeAccessSpecification()->id() << std::endl;
+                    << "  tapeAccessSpecification : " << (obj->tapeAccessSpecification() ? obj->tapeAccessSpecification()->id() : 0) << std::endl;
     throw ex;
   }
 }

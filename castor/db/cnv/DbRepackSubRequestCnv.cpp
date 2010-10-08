@@ -504,7 +504,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress*,
                     << "  filesFailedSubmit : " << obj->filesFailedSubmit() << std::endl
                     << "  retryNb : " << obj->retryNb() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  repackrequest : " << obj->repackrequest()->id() << std::endl
+                    << "  repackrequest : " << (obj->repackrequest() ? obj->repackrequest()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }

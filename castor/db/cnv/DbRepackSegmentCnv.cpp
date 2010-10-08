@@ -363,7 +363,7 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress*,
                     << "  errorCode : " << obj->errorCode() << std::endl
                     << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  repacksubrequest : " << obj->repacksubrequest()->id() << std::endl;
+                    << "  repacksubrequest : " << (obj->repacksubrequest() ? obj->repacksubrequest()->id() : 0) << std::endl;
     throw ex;
   }
 }

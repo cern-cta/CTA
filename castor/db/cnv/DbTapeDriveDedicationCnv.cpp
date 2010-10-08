@@ -361,7 +361,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress*,
                     << "  endTime : " << obj->endTime() << std::endl
                     << "  reason : " << obj->reason() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tapeDrive : " << obj->tapeDrive()->id() << std::endl;
+                    << "  tapeDrive : " << (obj->tapeDrive() ? obj->tapeDrive()->id() : 0) << std::endl;
     throw ex;
   }
 }

@@ -870,13 +870,13 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress*,
                     << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  remoteCopyType : " << obj->remoteCopyType() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tape : " << obj->tape()->id() << std::endl
-                    << "  tapeAccessSpecification : " << obj->tapeAccessSpecification()->id() << std::endl
-                    << "  requestedSrv : " << obj->requestedSrv()->id() << std::endl
-                    << "  tapeDrive : " << obj->tapeDrive()->id() << std::endl
-                    << "  deviceGroupName : " << obj->deviceGroupName()->id() << std::endl
+                    << "  tape : " << (obj->tape() ? obj->tape()->id() : 0) << std::endl
+                    << "  tapeAccessSpecification : " << (obj->tapeAccessSpecification() ? obj->tapeAccessSpecification()->id() : 0) << std::endl
+                    << "  requestedSrv : " << (obj->requestedSrv() ? obj->requestedSrv()->id() : 0) << std::endl
+                    << "  tapeDrive : " << (obj->tapeDrive() ? obj->tapeDrive()->id() : 0) << std::endl
+                    << "  deviceGroupName : " << (obj->deviceGroupName() ? obj->deviceGroupName()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl
-                    << "  client : " << obj->client()->id() << std::endl;
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
     throw ex;
   }
 }

@@ -956,11 +956,11 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress*,
                     << "  totalMB : " << obj->totalMB() << std::endl
                     << "  driveName : " << obj->driveName() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tape : " << obj->tape()->id() << std::endl
-                    << "  runningTapeReq : " << obj->runningTapeReq()->id() << std::endl
-                    << "  deviceGroupName : " << obj->deviceGroupName()->id() << std::endl
+                    << "  tape : " << (obj->tape() ? obj->tape()->id() : 0) << std::endl
+                    << "  runningTapeReq : " << (obj->runningTapeReq() ? obj->runningTapeReq()->id() : 0) << std::endl
+                    << "  deviceGroupName : " << (obj->deviceGroupName() ? obj->deviceGroupName()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl
-                    << "  tapeServer : " << obj->tapeServer()->id() << std::endl;
+                    << "  tapeServer : " << (obj->tapeServer() ? obj->tapeServer()->id() : 0) << std::endl;
     throw ex;
   }
 }
