@@ -66,7 +66,7 @@ int main (int argc, char** argv) {
   try {
     svcs->createRep(&ad, cf, false);
     svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -86,7 +86,7 @@ int main (int argc, char** argv) {
     castor::IObject* cf2Obj = svcs->createObj(&ad2);
     svcs->fillObj(&ad2, cf2Obj, castor::OBJ_DiskCopy);
     cf2 = dynamic_cast<castor::stager::CastorFile*>(cf2Obj);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createObj : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -114,7 +114,7 @@ int main (int argc, char** argv) {
   try {
     svcs->updateRep(&ad, cf, false);
     svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in updateRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -128,7 +128,7 @@ int main (int argc, char** argv) {
   try {
     svcs->updateObj(&ad, cf2);
     svcs->fillObj(&ad, cf2, castor::OBJ_DiskCopy);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in updateObj : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

@@ -599,7 +599,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                         req->reqId(),
                                         uuid);
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // In case the file and/or the request did not exist, we don't consider
       // it as an error from the server point of view
       castor::dlf::Param params[] =
@@ -721,7 +721,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
         sendResponse(client, result);
       delete result;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == EINVAL) {
       // "Failed to process DiskPoolQuery"
       castor::dlf::Param params[] =
@@ -825,7 +825,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // Reply To Client
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == EACCES) {
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 0);
     } else {
@@ -843,7 +843,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     try {
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, &res, true);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // nothing that can really be done here
     }
   }
@@ -882,7 +882,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
     // Reply To Client
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "QueryRequestSvcThread::handleListPrivilege"),
@@ -896,7 +896,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
     try {
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, &res, true);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // nothing that can really be done here
     }
   }
@@ -975,7 +975,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
       cleanup(req, qrySvc, rhSvc);
       return;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // If we fail here, we do NOT have enough information
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
@@ -1010,7 +1010,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
         svcs->fillObj(&ad, req, castor::OBJ_SvcClass, false);
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (!failed) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
@@ -1067,7 +1067,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
 
     // Delete Request From the database
     svcs->deleteRep(&ad, req, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "QueryRequestSvcThread::process.3"),

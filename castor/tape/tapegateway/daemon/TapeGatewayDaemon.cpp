@@ -81,7 +81,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::main(int argc, char* argv[]){
     
     castor::server::BaseServer::dlfInit(s_dlfMessages);
 
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception& ex) {
     std::cerr << std::endl <<
       "Failed to start daemon"
       ": Failed to initialize DLF"
@@ -97,7 +97,7 @@ try {
 
     exceptionThrowingMain(argc, argv);
 
-  } catch (castor::exception::Exception &ex) {
+  } catch (castor::exception::Exception& ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
 
@@ -145,7 +145,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   try {
     oraSvc->checkConfiguration();
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
 
     castor::exception::Internal ex;
     ex.getMessage() << "Caught castor exception : "

@@ -380,7 +380,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
     castor::client::BaseClient client(getRemoteGCClientTimeout());
     client.setOptions(0);
     client.sendRequest(&req, &rh);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // Exception caught in RemoteGCSvc::nsFilesDeleted
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),
@@ -464,7 +464,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
     castor::client::BaseClient client(getRemoteGCClientTimeout());
     client.setOptions(0);
     client.sendRequest(&req, &rh);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // Exception caught in RemoteGCSvc::stgFilesDeleted
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),

@@ -46,7 +46,7 @@ extern "C" {
       (*svcs)->svcs = castor::BaseObject::services();
       (*svcs)->errorMsg = "";
       return 0;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       return -1;
     }
@@ -79,7 +79,7 @@ extern "C" {
         svcs->errorMsg = "Unable to locate/create service";
         return -1;
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -101,7 +101,7 @@ extern "C" {
     }
     try {
       svcs->svcs->createRep(address, object, endTransaction);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -123,7 +123,7 @@ extern "C" {
     }
     try {
       svcs->svcs->updateRep(address, object, endTransaction);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -145,7 +145,7 @@ extern "C" {
     }
     try {
       svcs->svcs->deleteRep(address, object, endTransaction);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -166,7 +166,7 @@ extern "C" {
     }
     try {
       *object = svcs->svcs->createObj(address);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -187,7 +187,7 @@ extern "C" {
     }
     try {
       svcs->svcs->updateObj(address, object);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -210,7 +210,7 @@ extern "C" {
     }
     try {
       svcs->svcs->fillRep(address, object, type, endTransaction);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -233,7 +233,7 @@ extern "C" {
     }
     try {
       svcs->svcs->fillObj(address, object, type, endTransaction);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -253,7 +253,7 @@ extern "C" {
     }
     try {
       svcs->svcs->commit(address);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
@@ -273,7 +273,7 @@ extern "C" {
     }
     try {
       svcs->svcs->rollback(address);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;

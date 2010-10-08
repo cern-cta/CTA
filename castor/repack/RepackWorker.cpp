@@ -106,7 +106,7 @@ void RepackWorker::run(void* param)
 	
     sock->getPeerIp(port, ip);
   
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
       // "Exception caught : ignored" message
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -129,7 +129,7 @@ void RepackWorker::run(void* param)
       resp->setErrorMessage("Invalid Request!");
       ack->addRepackresponse(resp);
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
@@ -203,7 +203,7 @@ void RepackWorker::run(void* param)
 	}
 
 
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
 	
 	castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
 				       castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -237,7 +237,7 @@ void RepackWorker::run(void* param)
 
       sock->sendObject(*ack);
 
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
   	
       // "Unable to send Ack to client" message
       castor::dlf::Param params[] =
@@ -296,7 +296,7 @@ RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq, castor
 
       resp=oraSvc->getSubRequestByVid((*tape)->vid(),true); // get the segments
 
-    } catch (castor::exception::Exception e){
+    } catch (castor::exception::Exception& e){
       RepackResponse* resp= new RepackResponse();
       resp->setErrorCode(e.code());
       resp->setErrorMessage(e.getMessage().str());
@@ -449,7 +449,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq, castor::repack::IRepa
       (*tape)->setRetryNb(rreq->retryMax()); 
       requestToSubmit->addRepacksubrequest(*tape);
       
-    } catch (castor::exception::Exception e) { 
+    } catch (castor::exception::Exception& e) { 
       // failure vmgr 
       RepackResponse* resp=new RepackResponse();
       RepackSubRequest* sub= new RepackSubRequest();
@@ -582,7 +582,7 @@ void RepackWorker::checkTapeVmgrStatus(std::string tapename) throw (castor::exce
 
        resp=oraSvc->getSubRequestByVid((*sreq)->vid(),false); // no segments
 
-     } catch (castor::exception::Exception e) {
+     } catch (castor::exception::Exception& e) {
        RepackResponse* resp= new RepackResponse();
        resp->setErrorCode(e.code());
        resp->setErrorMessage(e.getMessage().str());

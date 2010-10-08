@@ -88,7 +88,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 
     oraSvc->getTapesWithDriveReqs(tapeRequests,vids,m_timeOut);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
      // error in getting new tape to submit
 
     castor::dlf::Param params[] =
@@ -136,7 +136,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
 
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       castor::dlf::Param params[] =
 	{castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
@@ -171,7 +171,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
 	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, params);
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
  	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, params);
@@ -193,7 +193,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     
 
 
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
 
     // impossible to update the information of checked tape
 

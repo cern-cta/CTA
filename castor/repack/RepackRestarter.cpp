@@ -92,7 +92,7 @@ void RepackRestarter::run(void*) throw() {
 
 	oraSvc->restartSubRequest((*sreq)->id());
 
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 	   // log the error in Dlf
 
 	castor::dlf::Param params[] =
@@ -107,7 +107,7 @@ void RepackRestarter::run(void*) throw() {
       sreq++;
     }
      
-  }catch (castor::exception::Exception e) {
+  }catch (castor::exception::Exception& e) {
     // db error asking the tapes to restart
 
     castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),

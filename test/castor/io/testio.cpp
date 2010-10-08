@@ -70,7 +70,7 @@ int main (int argc, char** argv) {
   castor::io::StreamAddress ad(buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
   try {
     svcs->createRep(&ad, fr, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -89,7 +89,7 @@ int main (int argc, char** argv) {
   try{
     castor::IObject* fr2Obj = svcs->createObj(&ad2);
     fr2 = dynamic_cast<castor::rh::FileRequest*>(fr2Obj);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createObj : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

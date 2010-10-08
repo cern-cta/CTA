@@ -96,7 +96,7 @@ void handleRequest(castor::IObject* fr, castor::Services* svcs)
 
       tapeAccessSpec = 0;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     svcs->rollback(&ad);
 
     castor::vdqm::DeviceGroupName *dgName =
@@ -347,7 +347,7 @@ int main(int argc, char *argv[]) {
 
     delete iVdqmService;
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;
   }

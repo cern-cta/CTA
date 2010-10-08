@@ -236,7 +236,7 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
     // Run it: this is supposed to run forever
     pool->m_producerThread->run(pool);
   }
-  catch(castor::exception::Exception any) {
+  catch(castor::exception::Exception& any) {
     // "Uncaught exception in a thread from pool"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ThreadPool", pool->m_poolName),
@@ -267,7 +267,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   // Thread initialization
   try {
     pool->m_thread->init();
-  } catch (castor::exception::Exception any) {
+  } catch (castor::exception::Exception& any) {
     // "Thread run error"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(any.code())),
@@ -287,7 +287,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     try {
       pool->m_taskQueue.pop(
         (pool->m_nbThreads == pool->m_initThreads), qe);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       if (e.code() == EPERM) {
         break;          // Queue terminated, destroy thread
       } else if (e.code() == EINTR) {
@@ -330,7 +330,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                 DLF_BASE_FRAMEWORK + 22, 3, params);
       }
-    } catch(castor::exception::Exception any) {
+    } catch(castor::exception::Exception& any) {
       // "Uncaught exception in a thread from pool"
       castor::dlf::Param params[] =
         {castor::dlf::Param("ThreadPool", pool->m_poolName),
@@ -380,7 +380,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   // Notify we're exiting
   try {
     pool->m_thread->stop();
-  } catch (castor::exception::Exception any) {
+  } catch (castor::exception::Exception& any) {
     // "Thread run error"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(any.code())),
@@ -408,7 +408,7 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
     try {
       m_taskQueue.push(data, wait);
       break;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       if (e.code() == EINTR) {
         continue; // Interrupted
       }

@@ -137,7 +137,7 @@ EXTERN_C int stage_listPrivileges
         delete respvec[i];
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg("stage_listPrivileges", (e.getMessage().str().c_str()));
     return -1;

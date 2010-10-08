@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     // cleanup
     stgsvc->release();
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;
     exit(1);

@@ -166,7 +166,7 @@ std::string castor::client::BaseClient::sendRequest
   // Wait for callbacks
   try {
     pollAnswersFromStager(req, rh);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     unsigned int i;
     for (i = 0; i < m_connected.size(); i++) {
       if (m_connected[i] != 0) delete m_connected[i];
@@ -267,7 +267,7 @@ std::string castor::client::BaseClient::internalSendRequest
     delete s;
     return requestId;
   }
-  catch (castor::exception::Exception e) {
+  catch (castor::exception::Exception& e) {
     // forward any exception after closing the socket
     delete s;
     throw e;
@@ -744,7 +744,7 @@ void castor::client::BaseClient::pollAnswersFromStager
         IObject *obj = 0;
         try {
           obj = socket->readObject();
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           // Ignore "Connection closed by remote end" errors. This is just the
           // request replier of the stager terminating the connection because it
           // has nothing else to send.
@@ -796,7 +796,7 @@ void castor::client::BaseClient::pollAnswersFromStager
           // Cleanup for next iteration
           delete obj;
           replies++;
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           delete obj;
           throw e;
         }

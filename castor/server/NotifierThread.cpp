@@ -109,7 +109,7 @@ void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw 
 
     pool->m_poolMutex.release();
   }
-  catch (castor::exception::Exception any) {
+  catch (castor::exception::Exception& any) {
     // just ignore for this loop all mutex errors and try again
     if(pool) {
       // "NotifierThread exception"

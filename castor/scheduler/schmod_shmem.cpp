@@ -59,7 +59,7 @@ extern "C" {
       bool create = false;
       clusterStatus =
         castor::monitoring::ClusterStatus::getClusterStatus(create);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       ls_syslog(LOG_ERR, "shmod_shmem: failed to access shared memory: %s",
                 e.getMessage().str().c_str());
       return -1;
@@ -123,7 +123,7 @@ extern "C" {
       lsb_resreq_setobject(resreq, HANDLER_SHMEM_ID,
                            (char *)handler->jobName.c_str(),
                            handler);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // Free resources
       if (handler)
         delete handler;

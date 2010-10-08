@@ -89,7 +89,7 @@ int main (int argc, char** argv) {
     svcs->createRep(&ad, t1, false);
     svcs->fillRep(&ad, t1, castor::OBJ_Segment, false);
     svcs->createRep(&ad, t2, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -115,7 +115,7 @@ int main (int argc, char** argv) {
   // process tapes
   try {
     processTapes(stgSvc);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -127,7 +127,7 @@ int main (int argc, char** argv) {
   // Try it again, to see whether we find something or not
   try {
     processTapes(stgSvc);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -140,7 +140,7 @@ int main (int argc, char** argv) {
   try {
     svcs->deleteRep(&ad, t1, false);
     svcs->deleteRep(&ad, t2, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught in deleteRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

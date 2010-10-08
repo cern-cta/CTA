@@ -50,13 +50,13 @@ int main(int argc, char** argv) {
         s.sendObject(sr);
         std::cout << count << std::endl;
         count++;
-      } catch (castor::exception::Exception ex) {
+      } catch (castor::exception::Exception& ex) {
         std::cerr << "Caught exception: "
                   << ex.getMessage().str() << std::endl;
       }
     }
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception\n" << e.getMessage().str()
               << "\nExiting" << std::endl;
   }

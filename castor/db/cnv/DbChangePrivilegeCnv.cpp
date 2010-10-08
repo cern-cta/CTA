@@ -196,7 +196,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
     if(m_deleteRequestTypeStatement) delete m_deleteRequestTypeStatement;
     if(m_selectRequestTypeStatement) delete m_selectRequestTypeStatement;
     if(m_remoteUpdateRequestTypeStatement) delete m_remoteUpdateRequestTypeStatement;
-  } catch (castor::exception::Exception ignored) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
   m_deleteStatement = 0;
@@ -265,7 +265,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::Internal ex;
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.getMessage().str() << std::endl;
@@ -693,11 +693,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::createRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1119,7 +1119,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -1127,7 +1127,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress*,
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1171,11 +1171,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1216,11 +1216,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::deleteRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1270,7 +1270,7 @@ castor::IObject* castor::db::cnv::DbChangePrivilegeCnv::createObj(castor::IAddre
     object->setId(rset->getUInt64(14));
     delete rset;
     return object;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1333,7 +1333,7 @@ castor::db::cnv::DbChangePrivilegeCnv::bulkCreateObj(castor::IAddress* address)
     }
     delete rset;
     return res;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkSelect request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1379,7 +1379,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::updateObj(castor::IObject* obj)
     object->setIsGranted(rset->getInt(13));
     object->setId(rset->getUInt64(14));
     delete rset;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

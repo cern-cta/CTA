@@ -41,7 +41,7 @@ namespace castor{
           this->ioResponse = new castor::rh::IOResponse;
           this->requestReplier = castor::replier::RequestReplier::getInstance();
 
-        }catch(castor::exception::Exception ex){
+        }catch(castor::exception::Exception& ex){
           if( ioResponse != NULL){
             delete ioResponse;
             ioResponse = 0;

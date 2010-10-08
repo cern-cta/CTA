@@ -76,7 +76,7 @@ castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
     castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
     stgSvc->release();
     return subReq;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "ErrorSvcThread::select"),
@@ -143,7 +143,7 @@ void castor::stager::daemon::ErrorSvcThread::process
         castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOCLI, 1, params);
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // If we fail here, we do NOT have enough information
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
@@ -206,7 +206,7 @@ void castor::stager::daemon::ErrorSvcThread::process
         } else {
           castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params);
         }
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =
           {castor::dlf::Param("Function", "ErrorSvcThread::process.2"),
@@ -224,7 +224,7 @@ void castor::stager::daemon::ErrorSvcThread::process
           rr->sendEndResponse(client, req->reqId());
         }
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "ErrorSvcThread::process.3"),
@@ -237,7 +237,7 @@ void castor::stager::daemon::ErrorSvcThread::process
     // still update the DB to put the subrequest in FAILED_FINISHED
     try {
       svcs->updateRep(&ad, subReq, true);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "ErrorSvcThread::process.4"),

@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
     // cleanup
     stgsvc->release();
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == 1) {
       std::cerr << "Priority for uid: " << muid << " and gid: " << mgid
 		<< " already exists" << std::endl;

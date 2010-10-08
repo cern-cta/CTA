@@ -65,7 +65,7 @@ extern "C" {
     try {
       if (0 == stgSvc) return 0;
       if (0 != stgSvc->stgSvc) stgSvc->stgSvc->release();
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -90,7 +90,7 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *svcClass = stgSvc->stgSvc->selectSvcClass(name);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -107,7 +107,7 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *fileClass = stgSvc->stgSvc->selectFileClass(name);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -124,7 +124,7 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskPool = stgSvc->stgSvc->selectDiskPool(name);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -141,7 +141,7 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *tapePool = stgSvc->stgSvc->selectTapePool(name);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;

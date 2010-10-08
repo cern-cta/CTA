@@ -143,7 +143,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::reset() throw() {
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_checkTapeAccessSpecificationExistStatement) delete m_checkTapeAccessSpecificationExistStatement;
     if(m_updateTapeAccessSpecificationStatement) delete m_updateTapeAccessSpecificationStatement;
-  } catch (castor::exception::Exception ignored) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
   m_deleteStatement = 0;
@@ -195,7 +195,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::fillRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::Internal ex;
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.getMessage().str() << std::endl;
@@ -333,11 +333,11 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::createRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -489,7 +489,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::bulkCreateRep(castor::IAddres
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -497,7 +497,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::bulkCreateRep(castor::IAddres
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -531,11 +531,11 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::updateRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -573,11 +573,11 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::deleteRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -616,7 +616,7 @@ castor::IObject* castor::db::cnv::DbTapeDriveCompatibilityCnv::createObj(castor:
     object->setId(rset->getUInt64(3));
     delete rset;
     return object;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -668,7 +668,7 @@ castor::db::cnv::DbTapeDriveCompatibilityCnv::bulkCreateObj(castor::IAddress* ad
     }
     delete rset;
     return res;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkSelect request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -703,7 +703,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::updateObj(castor::IObject* ob
     object->setPriorityLevel(rset->getInt(2));
     object->setId(rset->getUInt64(3));
     delete rset;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

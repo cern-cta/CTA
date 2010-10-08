@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
 
     stagerDaemon.start();
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception: "
 	      << sstrerror(e.code()) << std::endl
 	      << e.getMessage().str() << std::endl;

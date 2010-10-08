@@ -158,7 +158,7 @@ void castor::jobmanager::ManagementThread::run(void*) {
   try {
     databaseJobs =  m_jobManagerService->getSchedulerJobsFromDB();
     dbExtractTime = time(NULL);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to get a list of running transfers from the "
     // stager database"
@@ -180,7 +180,7 @@ void castor::jobmanager::ManagementThread::run(void*) {
   std::map<std::string, castor::jobmanager::JobInfo> lsfJobs;
   try {
     lsfJobs = getSchedulerJobsFromLSF();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Exception caught trying to get list of LSF jobs"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
@@ -289,7 +289,7 @@ void castor::jobmanager::ManagementThread::run(void*) {
         {castor::dlf::Param(subRequestId)};
       castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 77, 1, params);
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught when trying to fail scheduler job"
     castor::dlf::Param params[] =

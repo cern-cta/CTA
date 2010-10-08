@@ -92,7 +92,7 @@ namespace castor{
             throw ex;
           }
         }
-        catch(castor::exception::Exception e) {
+        catch(castor::exception::Exception& e) {
           if(serrno != ENOENT) {
             throw e;
           }
@@ -132,7 +132,7 @@ namespace castor{
             }
           }
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           if(stgReplyHelper != NULL) {
             delete stgReplyHelper;
             stgReplyHelper = NULL;

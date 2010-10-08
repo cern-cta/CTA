@@ -58,7 +58,7 @@ castor::sharedMemory::DLFInit::DLFInit() {
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_SHAREDMEMORY, messages);
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
     // We failed to insert our messages into DLF
     // So we cannot really log to DLF.
     // On the other hand, we cannot be sure that that standard out is usable.

@@ -245,7 +245,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
   // Submit the request into LSF
   try {
     submitJob(request);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to submit a job into LSF"
     castor::dlf::Param params[] =
@@ -556,7 +556,7 @@ void castor::jobmanager::SubmissionProcess::failRequest
       (std::pair<std::string, int>(request->subReqId(), errorCode));
     std::vector<std::string> failedSubReqs =
       m_jobManagerService->jobFailed(failedJobs);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught when trying to fail scheduler job"
     castor::dlf::Param params[] =

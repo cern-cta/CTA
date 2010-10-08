@@ -154,7 +154,7 @@ void parseUsers(char *susers,
       }
       u->setRequest(req);
       users.push_back(u);
-    } catch (castor::exception::InvalidArgument e) {
+    } catch (castor::exception::InvalidArgument& e) {
       delete u;
       throw e;
     }
@@ -193,7 +193,7 @@ void parseRequestTypes(char *sreqTypes,
       r->setReqType(getRequestTypeId(type));
       r->setRequest(req);
       reqTypes.push_back(r);
-    } catch (castor::exception::InvalidArgument e) {
+    } catch (castor::exception::InvalidArgument& e) {
       delete r;
       throw e;
     }
@@ -248,7 +248,7 @@ EXTERN_C int stage_addPrivilege(char* users,
                                          struct stage_options* opts) {
   try {
     stage_changePrivilege(users, requestTypes, opts, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg("stage_addPrivilege", (e.getMessage().str().c_str()));
     return -1;
@@ -264,7 +264,7 @@ EXTERN_C int stage_removePrivilege(char* users,
                                             struct stage_options* opts) {
   try {
     stage_changePrivilege(users, requestTypes, opts, false);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg("stage_removePrivilege", (e.getMessage().str().c_str()));
     return -1;

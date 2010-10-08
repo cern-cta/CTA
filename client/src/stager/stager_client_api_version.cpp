@@ -69,11 +69,11 @@ EXTERN_C int stage_version(int *majorVersion,
     *majorRelease = vr->majorRelease();
     *minorRelease = vr->minorRelease();
     rc = 0;
-  } catch (castor::exception::Communication e) {
+  } catch (castor::exception::Communication& e) {
     stager_errmsg(func, (e.getMessage().str().c_str()));
     rc = -1;
     saved_serrno = e.code();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     stager_errmsg(func, (e.getMessage().str().c_str()));
     rc = -1;
     saved_serrno = e.code();

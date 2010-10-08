@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
       std::cerr << strerror(ack->errorCode()) << "\n"
 		<< ack->errorMessage() << std::endl;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << e.getMessage().str() << std::endl;    
   } catch (std::exception e) {
     std::cerr << "Caught standard exception : "

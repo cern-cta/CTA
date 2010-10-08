@@ -108,7 +108,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
     castor::IObject *obj = 0;
     try {
       obj = svcs->createObj(&ad);
-    } catch (castor::exception::NoEntry noe) {
+    } catch (castor::exception::NoEntry& noe) {
       // Possibly the request has been canceled via stager_rm,
       // still log a warning message
       // "Could not find subrequest associated to Request"
@@ -155,14 +155,14 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
                               fileId, nsHost, 3, params);
       try {
         dc = jobSvc->putStart(subreq, &fs, fileId, nsHost);
-      } catch (castor::exception::RequestCanceled e) {
+      } catch (castor::exception::RequestCanceled& e) {
         // special case of canceled requests, don't log
         res.setErrorCode(e.code());
         res.setErrorMessage(e.getMessage().str());
         failed = true;
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleStartRequest"),
@@ -186,7 +186,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleStartRequest.reply"),
@@ -239,7 +239,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
                                uReq->diskServer(),
                                uReq->mountPoint(),
                                dc, srcDc, fileId, nsHost);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
@@ -263,7 +263,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
                                 fileId, nsHost, 1, params);
         jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), (e.code() == ENOENT), fileId, nsHost);
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
@@ -284,7 +284,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest.reply"),
@@ -342,7 +342,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost,
                                 uReq->replicaFileSize());
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
@@ -359,7 +359,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
@@ -405,7 +405,7 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
                                   fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
       // process any potential putDone waiting for this call by waking up a "Stage" thread
       castor::server::NotifierThread::getInstance()->doNotify('S');
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       if (e.code() == ENOENT) {
         // "File was removed by another user while being modified"
         castor::dlf::Param params[] =
@@ -418,7 +418,7 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
         throw e;
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
@@ -435,7 +435,7 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest.reply"),
@@ -474,7 +474,7 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_GETUPDO,
                             fileId, nsHost, 1, params);
     jobSvc->getUpdateDone(uReq->subReqId(), fileId, nsHost);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest"),
@@ -491,7 +491,7 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest.reply"),
@@ -530,7 +530,7 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_GETUPFA,
                             fileId, nsHost, 1, params);
     jobSvc->getUpdateFailed(uReq->subReqId(), fileId, nsHost);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest"),
@@ -547,7 +547,7 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest.reply"),
@@ -586,7 +586,7 @@ void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_PUTFAIL,
                             fileId, nsHost, 1, params);
     jobSvc->putFailed(uReq->subReqId(),uReq->fileId(),uReq->nsHost());
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest"),
@@ -603,7 +603,7 @@ void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest.reply"),
@@ -642,7 +642,7 @@ void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_1STBWR,
                             fileId, nsHost, 1, params);
     jobSvc->firstByteWritten(uReq->subReqId(), fileId, nsHost);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleFirstByteWrittenRequest"),
@@ -660,7 +660,7 @@ void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleFirstByteWrittenRequest.reply"),
@@ -714,7 +714,7 @@ void castor::stager::daemon::JobSvcThread::process
       jobSvc->release();
       return;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // If we fail here, we do NOT have enough information
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
@@ -778,7 +778,7 @@ void castor::stager::daemon::JobSvcThread::process
         castor::replier::RequestReplier::getInstance();
       res.setReqAssociated(req->reqId());
       rr->sendResponse(client, &res, true);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "JobSvcThread::process.reply"),
@@ -790,7 +790,7 @@ void castor::stager::daemon::JobSvcThread::process
   try {
     // Delete Request from the database, even when it failed
     svcs->deleteRep(&ad, req, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::process.2"),

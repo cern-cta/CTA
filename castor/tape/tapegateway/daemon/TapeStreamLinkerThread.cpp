@@ -83,7 +83,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_GETTING_STREAMS, 0, NULL);
      oraSvc->getStreamsWithoutTapes(streamsToResolve, tapepools);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // error in getting new tape to submit
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -151,7 +151,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
     try {
       // last Fseq is the value which should be used for the first file
       vmgrHelper.getTapeForStream(*strItem,*tapepool,lastFseq,tapeToUse);
-    } catch(castor::exception::Exception e) {
+    } catch(castor::exception::Exception& e) {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("StreamId",(*strItem).id()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -170,7 +170,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
 	  
 	  oraSvc->deleteStreamWithBadTapePool(*strItem);
 
-	} catch (castor::exception::Exception e){
+	} catch (castor::exception::Exception& e){
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -205,7 +205,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   // update the db
   try {
     oraSvc->attachTapesToStreams(strIds, vids, fseqs);
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -222,7 +222,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_RELEASED_BUSY_TAPE, params);
       try {
 	vmgrHelper.resetBusyTape(*tapeItem);
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
 	
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("TPVID",(*tapeItem).vid()),

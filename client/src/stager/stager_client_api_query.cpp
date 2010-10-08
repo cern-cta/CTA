@@ -159,7 +159,7 @@ EXTERN_C int stage_filequery(struct stage_query_req *requests,
       delete respvec[i];
     } // for
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
@@ -275,7 +275,7 @@ EXTERN_C int stage_diskpoolquery
     // Cleanup memory
     delete respvec[0];
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
@@ -375,7 +375,7 @@ EXTERN_C int stage_diskpoolsquery
       delete respvec[i];
     }
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;

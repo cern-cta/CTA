@@ -84,7 +84,7 @@ void castor::stager::BaseTapeSvc::sendStreamReport
     sr.setDirection(direction);
     sr.setCreated(created);
     s.sendObject(sr);
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Message", "Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught."),
        castor::dlf::Param("Original Error", ex.getMessage().str())};

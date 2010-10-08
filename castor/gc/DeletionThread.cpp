@@ -92,7 +92,7 @@ void castor::gc::DeletionThread::run(void*) {
   // Determine the name of the diskserver
   try {
     m_diskServerName = castor::System::getHostName();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Exception caught trying to getHostName"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Code", strerror(e.code())),
@@ -132,7 +132,7 @@ void castor::gc::DeletionThread::run(void*) {
     std::vector<castor::stager::GCLocalFile*>* files2Delete = 0;
     try {
       files2Delete = gcSvc->selectFiles2Delete(m_diskServerName);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       // "Error caught while looking for garbage files"
       castor::dlf::Param params[] =
@@ -197,7 +197,7 @@ void castor::gc::DeletionThread::run(void*) {
 	  // Add the file to the list of deleted ones
           u_signed64 *fileid = new u_signed64((*it)->diskCopyId());
           deletedFiles.push_back(fileid);
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           filesfailed++;
           // "Failed to remove file"
           castor::dlf::Param params[] =
@@ -228,7 +228,7 @@ void castor::gc::DeletionThread::run(void*) {
       if (deletedFiles.size() > 0) {
         try {
           gcSvc->filesDeleted(deletedFiles);
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           // "Error caught while informing stager..."
           castor::dlf::Param params[] =
             {castor::dlf::Param("Code", sstrerror(e.code())),
@@ -246,7 +246,7 @@ void castor::gc::DeletionThread::run(void*) {
       if (failedFiles.size() > 0) {
         try {
           gcSvc->filesDeletionFailed(failedFiles);
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           // "Error caught while informing stager..."
           castor::dlf::Param params[] =
             {castor::dlf::Param("Code", sstrerror(e.code())),

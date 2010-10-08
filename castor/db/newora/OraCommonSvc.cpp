@@ -229,7 +229,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
       try {
         cnvSvc()->createRep(&ad, tape, false);
         return tape;
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
         delete tape;
         // XXX Change createRep in CodeGenerator to forward the oracle errorcode
         if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {

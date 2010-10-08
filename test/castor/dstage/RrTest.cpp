@@ -274,7 +274,7 @@ void *procreq(void *param) {
 
     rr->replyToClient(cl, &response2, true);
     delete(cl);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Exception while replying : "
 	      << sstrerror(e.code()) << std::endl
 	      << e.getMessage().str() << std::endl;
@@ -456,7 +456,7 @@ int test::RrTestClient::listen() {
 	  std::cout << "STATUSOK " << res->content() << std::endl;
 	}
       }
-    }  catch (castor::exception::Exception e) {
+    }  catch (castor::exception::Exception& e) {
       std::cerr << "Exception while reading object : "
 		<< sstrerror(e.code()) << std::endl
 		<< e.getMessage().str() << std::endl;

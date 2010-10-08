@@ -90,7 +90,7 @@ void RepackCleaner::run(void*) {
 	try {
 	  checkTape(*tape);
 	  oraSvc->updateSubRequest((*tape));
-	} catch (castor::exception::Exception e){
+	} catch (castor::exception::Exception& e){
 	  
 	    castor::dlf::Param params[] =
 	      {
@@ -114,7 +114,7 @@ void RepackCleaner::run(void*) {
       
       oraSvc->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
       
-    } catch (castor::exception::Exception e){
+    } catch (castor::exception::Exception& e){
 
        // log the error in Dlf
 
@@ -127,7 +127,7 @@ void RepackCleaner::run(void*) {
       
     }
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // db error asking the tapes to clean
 

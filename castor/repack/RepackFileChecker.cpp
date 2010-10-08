@@ -124,7 +124,7 @@ void RepackFileChecker::run(void*) throw(){
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 17, 1, params);  
 	  }
        
-	} catch (castor::exception::Exception e ){
+	} catch (castor::exception::Exception& e ){
 
 	  castor::dlf::Param params[] =
 	    {
@@ -139,7 +139,7 @@ void RepackFileChecker::run(void*) throw(){
       sreq++;  
     }
 
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
     // db error asking the tapes to check
 
     castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),

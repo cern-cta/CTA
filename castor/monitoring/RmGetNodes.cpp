@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
 		<< node << "'. Maybe check the domain."
 		<< std::endl;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << e.getMessage().str() << std::endl;
   }
 }

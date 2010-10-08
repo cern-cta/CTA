@@ -620,7 +620,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
         oldProtInterpreter->sendToOldClient(ptr_header, NULL, &(*it));
       }
     }
-  } catch (castor::exception::Exception ex) {  
+  } catch (castor::exception::Exception& ex) {  
     // To inform the client about the end of the queue, we send again a 
     // ptr_driveRequest with the VolReqID = -1
     ptr_driveRequest->DrvReqID = -1;

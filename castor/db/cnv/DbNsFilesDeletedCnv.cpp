@@ -177,7 +177,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::reset() throw() {
     if(m_checkSvcClassExistStatement) delete m_checkSvcClassExistStatement;
     if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
     if(m_updateIClientStatement) delete m_updateIClientStatement;
-  } catch (castor::exception::Exception ignored) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
   m_deleteStatement = 0;
@@ -240,7 +240,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::Internal ex;
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.getMessage().str() << std::endl;
@@ -560,11 +560,11 @@ void castor::db::cnv::DbNsFilesDeletedCnv::createRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -991,7 +991,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -999,7 +999,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateRep(castor::IAddress*,
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1043,11 +1043,11 @@ void castor::db::cnv::DbNsFilesDeletedCnv::updateRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1093,11 +1093,11 @@ void castor::db::cnv::DbNsFilesDeletedCnv::deleteRep(castor::IAddress*,
     if (endTransaction) {
       cnvSvc()->commit();
     }
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     // Always try to rollback
     try {
       if (endTransaction) cnvSvc()->rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1147,7 +1147,7 @@ castor::IObject* castor::db::cnv::DbNsFilesDeletedCnv::createObj(castor::IAddres
     object->setId(rset->getUInt64(14));
     delete rset;
     return object;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1210,7 +1210,7 @@ castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateObj(castor::IAddress* address)
     }
     delete rset;
     return res;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkSelect request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1256,7 +1256,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::updateObj(castor::IObject* obj)
     object->setNsHost(rset->getString(13));
     object->setId(rset->getUInt64(14));
     delete rset;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

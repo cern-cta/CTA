@@ -131,7 +131,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* subRe
     delete stgRequestHelper;
     delete stgRequestHandler;
   }
-  catch(castor::exception::Exception ex) {
+  catch(castor::exception::Exception& ex) {
 
     handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
 

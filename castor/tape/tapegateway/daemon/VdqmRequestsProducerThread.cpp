@@ -87,7 +87,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 
     oraSvc->getTapeWithoutDriveReq(*request);
 
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
     // error in getting new tape to submit
 
     castor::dlf::Param params[] =
@@ -161,7 +161,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
     vmgrHelper.getDataFromVmgr(tape);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     
     try {
       if ( e.code() == ENOENT ||  
@@ -192,7 +192,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, params);
 	
-    } catch (castor::exception::Exception e ){
+    } catch (castor::exception::Exception& e ){
       // impossible to update the information of submitted tape
 	  
       castor::dlf::Param params[] =
@@ -274,7 +274,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	// confirm to vdqm
 	try {
 	  vdqmHelper.confirmRequestToVdqm();
-	} catch (castor::exception::Exception e) {
+	} catch (castor::exception::Exception& e) {
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),
@@ -284,7 +284,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, params);	   
 	    
 	}
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 	  // impossible to update the information of submitted tape
 	  
 	  castor::dlf::Param params[] =
@@ -296,7 +296,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	   
       }
 
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 	  // impossible to submit the tape
 	  vdqmHelper.disconnectFromVdqm();
 	  throw e;
@@ -307,7 +307,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
     vdqmHelper.disconnectFromVdqm();
     
-  }catch (castor::exception::Exception e) {
+  }catch (castor::exception::Exception& e) {
       // impossible to connect/disconnect to/from vdqm
       
       castor::dlf::Param params[] =
@@ -320,7 +320,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
       try {
 	oraSvc->endTransaction();
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	   castor::dlf::Param("errorMessage",e.getMessage().str())

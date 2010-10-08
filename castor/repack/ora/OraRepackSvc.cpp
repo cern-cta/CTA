@@ -158,7 +158,7 @@ void castor::repack::ora::OraRepackSvc::reset() throw() {
     if (m_changeSubRequestsStatusStatement) deleteStatement(m_changeSubRequestsStatusStatement);
     if (m_changeAllSubRequestsStatusStatement)deleteStatement(m_changeAllSubRequestsStatusStatement);
     if (m_selectLastSegmentsSituationStatement)deleteStatement(m_selectLastSegmentsSituationStatement);     
-  } catch (castor::exception::SQLError e) {};
+  } catch (castor::exception::SQLError& e) {};
   // Now reset all pointers to 0
   m_storeRequestStatement=0; 
   m_updateSubRequestSegmentsStatement=0;
@@ -351,7 +351,7 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
 	<< std::endl << e.what();
       throw ex;
 
-    } catch (castor::exception::Exception ex){
+    } catch (castor::exception::Exception& ex){
       // clean up
       if (buffer) free(buffer);
       buffer=NULL;
@@ -534,7 +534,7 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
       << "Error caught updateSubRequestSegments"
       << std::endl << e.what();
     throw ex;   
-  }  catch (castor::exception::Exception ex) {
+  }  catch (castor::exception::Exception& ex) {
     
     // clean up
 
@@ -722,7 +722,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
       << std::endl << e.what();
     throw ex;
 
-  } catch (castor::exception::Exception  e) {
+  } catch (castor::exception::Exception&  e) {
     //clean up
     if (result) freeRepackObj(result);
     // forward the exception
@@ -806,7 +806,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
       << std::endl << e.what();
     throw ex;
 
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
 
     //clean up
     std::vector<RepackSubRequest*>::iterator toDelete= subs.begin();
@@ -887,7 +887,7 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
       << std::endl << e.what();
     throw ex;
 
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
     // clean up
     if (ack) freeRepackObj(ack);
     //forward the exception
@@ -1141,7 +1141,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
 
 
  
-  }catch (castor::exception::Exception ex){
+  }catch (castor::exception::Exception& ex){
     // clean up
     if (ack) freeRepackObj(ack);
     if (buffer) free(buffer);
@@ -1228,7 +1228,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
       << std::endl << e.what();
     throw ex;
    
-  } catch(castor::exception::Exception ex){
+  } catch(castor::exception::Exception& ex){
     //cleanup
     if (ack) freeRepackObj(ack);
     throw ex;
@@ -1320,7 +1320,7 @@ castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName, u
     throw ex;
     
     
-  } catch (castor::exception::Exception ex){
+  } catch (castor::exception::Exception& ex){
     //clean up
     std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
     while (item != result.end()){

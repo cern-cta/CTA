@@ -81,7 +81,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
 
   try {
     oraSvc->getFailedMigrations(tcList);
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -132,7 +132,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
       }
 
 
-    } catch (castor::exception::Exception e){
+    } catch (castor::exception::Exception& e){
 
       castor::dlf::Param paramsEx[] =
 	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId),
@@ -166,7 +166,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_RESULT_SAVED, paramsDbUpdate);
   
 
-} catch (castor::exception::Exception e) {
+} catch (castor::exception::Exception& e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())

@@ -62,7 +62,7 @@ void castor::stager::daemon::CleaningThread::run(void*) throw() {
     svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);
     castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
     dbSvc->dropConnection();    
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "CleaningThread::run"),

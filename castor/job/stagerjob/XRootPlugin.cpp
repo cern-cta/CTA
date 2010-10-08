@@ -201,7 +201,7 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
   // B) that xrootd has opened the file.
   try {
     recvMessage(context.socket, buf, MSGIDENTLEN, 5);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::exception::Exception ex(e.code());
     ex.getMessage() << "Failed to receive IDENT message from xrootd: "
                     << e.getMessage().str();
@@ -233,7 +233,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   // such as prepareForMigration, getUpdateDone etc... on its behalf.
   try {
     recvMessage(context.socket, buf, MSGCLOSELEN, m_closeTimeout);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::exception::Exception ex(e.code());
     ex.getMessage() << "Failed to receive CLOSE message from xrootd: "
                     << e.getMessage().str();
@@ -259,7 +259,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
     // perspective.
     strcpy(buf, "0 Success\n");
     netwrite_timeout(context.socket, buf, strlen(buf), 5);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // Notify xrootd to the failure to close the file so that it can notify its
     // associated client.

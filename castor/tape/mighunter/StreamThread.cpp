@@ -107,7 +107,7 @@ void castor::tape::mighunter::StreamThread::run(void *arg) {
  // Run the code of the thread, logging any raised exceptions
  try {
     exceptionThrowingRun(arg);
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception& ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
@@ -158,7 +158,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
 
     try {
       applyStreamPolicyToSvcClass(oraSvc, svcClassName);
-    } catch(castor::exception::InvalidConfiguration &ex) {
+    } catch(castor::exception::InvalidConfiguration& ex) {
       // Gracefully shutdown the daemon in the event of an invalid configuration
       castor::dlf::Param params[] = {
         castor::dlf::Param("SvcClass", svcClassName           ),
@@ -171,7 +171,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
       m_daemon.shutdownGracefully(); // Non-blocking
       threadPool->shutdown(); // Non-blocking
       return; // run() will not be called again
-    } catch(castor::exception::Exception &ex) {
+    } catch(castor::exception::Exception& ex) {
       // Log an error and continue
       castor::dlf::Param params[] = {
         castor::dlf::Param("SvcClass", svcClassName         ),

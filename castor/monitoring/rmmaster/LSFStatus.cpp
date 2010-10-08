@@ -127,7 +127,7 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     if (masterName != hostName) {
       production = false;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     Cthread_mutex_unlock(&m_prevMasterName);
     throw e;
   }

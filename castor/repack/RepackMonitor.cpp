@@ -104,7 +104,7 @@ namespace castor {
 	// get information for this tape querying the stager
 	try {
 	  updateTape(*tape,oraSvc);
-	} catch (castor::exception::Exception e){
+	} catch (castor::exception::Exception& e){
 	  	  
 	  castor::dlf::Param params[] =
 	    {
@@ -121,7 +121,7 @@ namespace castor {
 	tape++;
       }
 
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // db error asking the tapes to Monitor
 
       castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
@@ -213,12 +213,12 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq, castor::repack::IRepackSv
   /** get the stats by quering the stager */
   try {
    getStats(sreq, &fr);
-  } catch (castor::exception::InvalidArgument inval) {
+  } catch (castor::exception::InvalidArgument& inval) {
     // CLEANED BY THE STAGER
     sreq->setStatus(RSUBREQUEST_TOBECLEANED);
     oraSvc->updateSubRequest(sreq);
     return;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // the stager might time out
     sreq->setStatus(RSUBREQUEST_ONGOING);
     oraSvc->updateSubRequest(sreq);

@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
   // Parsing the command line and filling request
   try {
     cmd_parse(argc, argv, req);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << e.getMessage().str() << std::endl;
     usage(argv[0]);
     exit(EXIT_FAILURE);
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl;
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Unknown exception call : " << std::endl
               << e.getMessage().str() << std::endl;
   }

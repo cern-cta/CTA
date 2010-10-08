@@ -95,7 +95,7 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
   try {
     castor::monitoring::rmmaster::LSFStatus::getInstance()->
       getLSFStatus(production, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Failed to determine the status of LSF, skipping database synchronization"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Details", e.getMessage().str())};
@@ -112,7 +112,7 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
 	m_rmMasterService->retrieveClusterStatus(m_clusterStatus, false);
       }
     }
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
     // "Failed to synchronise shared memory with stager database"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),

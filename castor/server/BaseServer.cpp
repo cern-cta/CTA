@@ -202,7 +202,7 @@ void castor::server::BaseServer::resetAllMetrics() throw()
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     try {
       tp->second->resetMetrics();
-    } catch (castor::exception::Exception ignore) {}
+    } catch (castor::exception::Exception& ignore) {}
   }
 }
 
@@ -224,7 +224,7 @@ void castor::server::BaseServer::sendNotification
     sock.sendObject(notif);
     sock.close();
   }
-  catch (castor::exception::Exception ignored) {
+  catch (castor::exception::Exception& ignored) {
     // this is a best effort service, ignore any failure
   }
 }

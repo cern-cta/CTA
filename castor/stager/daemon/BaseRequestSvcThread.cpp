@@ -60,7 +60,7 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
       req = cSvc->requestToDo(m_name);
     }
     return req;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "BaseRequestSvcThread::select"),
@@ -91,7 +91,7 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
       stgReplyHelper->setAndSendIoResponse(stgRequestHelper, (stgCnsHelper ? &(stgCnsHelper->cnsFileid) : 0), errorCode, errorMessage);
       stgReplyHelper->endReplyToClient(stgRequestHelper);
       delete stgReplyHelper;
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
   }
   else {
     // if we didn't get the fileRequest, we probably got a serious failure, and we can't answer the client
@@ -99,6 +99,6 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     try {
       stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
     }
-    catch (castor::exception::Exception ignored) {}
+    catch (castor::exception::Exception& ignored) {}
   }
 }

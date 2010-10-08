@@ -84,7 +84,7 @@ void castor::server::Mutex::setValue(int newValue)
   m_var = newValue;
   try {
     release();
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
     m_var = oldValue;
     throw e;
   }

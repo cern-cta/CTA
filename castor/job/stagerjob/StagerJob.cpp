@@ -393,7 +393,7 @@ void process(castor::job::stagerjob::PluginContext &context,
        castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
     // Prefork hook for the different movers
     plugin->preForkHook(*args, context);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // If we got an exception before the fork, we need to cleanup
     // before letting the exception go further
     try {
@@ -406,7 +406,7 @@ void process(castor::job::stagerjob::PluginContext &context,
         context.jobSvc->putFailed
           (args->subRequestId, args->fileId.fileid, args->fileId.server);
       }
-    } catch (castor::exception::Exception e2) {
+    } catch (castor::exception::Exception& e2) {
       // cleanup failed, log it
       // Unable to clean up stager DB for failed job
       castor::dlf::Param params[] =
@@ -627,7 +627,7 @@ int main(int argc, char** argv) {
     // Parse the command line
     arguments = new castor::job::stagerjob::InputArguments(argc, argv);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // Something went wrong but we are not yet in a situation
     // where we can inform the client. So log it and return straight
     // "Job failed before it could send an answer to client"
@@ -705,7 +705,7 @@ int main(int argc, char** argv) {
     // Memory cleanup
     delete arguments;
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == SENOVALUE) {
       // "manually" catch the NoValue exception
       // Nothing to be done in such a case, an error was already logged
@@ -746,7 +746,7 @@ int main(int argc, char** argv) {
         ioResponse.setErrorCode(e.code());
         ioResponse.setErrorMessage(e.getMessage().str());
         castor::job::stagerjob::sendResponse(arguments->client, ioResponse);
-      } catch (castor::exception::Exception e2) {
+      } catch (castor::exception::Exception& e2) {
         // "Could not send answer to client"
         castor::dlf::Param params[] =
           {castor::dlf::Param("Error", sstrerror(e2.code())),

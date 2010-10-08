@@ -146,7 +146,7 @@ void castor::rh::RHThread::init() {
   try {
     castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
     rl->init();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Failed to initialize rate limiter"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -231,7 +231,7 @@ void castor::rh::RHThread::run(void* param) {
   unsigned long ip;
   try {
     sock->getPeerIp(port, ip);
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
     // "Exception caught : ignored"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -276,7 +276,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   }
-  catch (castor::exception::Security e) {
+  catch (castor::exception::Security& e) {
     // "Security problem"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -288,7 +288,7 @@ void castor::rh::RHThread::run(void* param) {
     ack.setErrorMessage(e.getMessage().str());
     if(obj) delete obj;
   }
-  catch (castor::exception::Exception e) {
+  catch (castor::exception::Exception& e) {
     // "Unable to read Request from socket"
     castor::dlf::Param params[] =
       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
@@ -404,7 +404,7 @@ void castor::rh::RHThread::run(void* param) {
               ack.setErrorMessage(msg.str());
             }
           }
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           // "Exception caught in rate limiter, ignoring"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -417,7 +417,7 @@ void castor::rh::RHThread::run(void* param) {
       if (ack.status()) {
         nbThreads = handleRequest(fr, ad, cuuid);
       }
-    } catch (castor::exception::PermissionDenied e) {
+    } catch (castor::exception::PermissionDenied& e) {
       // "Permission Denied"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Euid", fr->euid()),
@@ -427,7 +427,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setStatus(false);
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());
-    } catch (castor::exception::InvalidArgument e) {
+    } catch (castor::exception::InvalidArgument& e) {
       // "Invalid Request"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Euid", fr->euid()),
@@ -437,7 +437,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setStatus(false);
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -518,7 +518,7 @@ void castor::rh::RHThread::run(void* param) {
          castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 10, params2);
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unable to send Ack to client"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -530,7 +530,7 @@ void castor::rh::RHThread::run(void* param) {
       if (ack.status()) {
         svcs()->rollback(&ad);
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Exception caught : failed to rollback transaction"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -641,7 +641,7 @@ unsigned int castor::rh::RHThread::handleRequest
       svcs()->fillRep(&ad, abortReq, OBJ_NsFileId, false);
     }
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     svcs()->rollback(&ad);
     throw e;
   }

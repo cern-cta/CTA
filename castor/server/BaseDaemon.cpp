@@ -313,10 +313,10 @@ void castor::server::BaseDaemon::handleSignals()
       m_signalMutex->setValueNoMutex(0);
       m_signalMutex->release();
     }
-    catch (castor::exception::Exception e) {
+    catch (castor::exception::Exception& e) {
       try {
         m_signalMutex->release();
-      } catch (castor::exception::Exception ignored) {}
+      } catch (castor::exception::Exception& ignored) {}
       // "Exception during wait for signal loop"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Error", sstrerror(e.code())),

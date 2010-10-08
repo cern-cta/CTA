@@ -69,7 +69,7 @@ castor::job::d2dtransfer::MainThread::MainThread(int argc, char *argv[])
   // running the d2dtransfer mover manually.
   try {
     parseCommandLine(argc, argv);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << argv[0] << ": " << e.getMessage().str() << std::endl;
     help(argv[0]);
     exit(USERR);
@@ -83,7 +83,7 @@ void castor::job::d2dtransfer::MainThread::init() {
   // Drop privileges to the stage superuser.
   try {
     changeUidGid(STAGERSUPERUSER, STAGERSUPERGROUP);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Failed to change uid and gid"
     castor::dlf::Param params[] =
@@ -155,7 +155,7 @@ void castor::job::d2dtransfer::MainThread::init() {
   // Initialize the mover. For now we only support RFIO!
   try {
     m_mover = new castor::job::d2dtransfer::RfioMover();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Failed to initialize mover"
     castor::dlf::Param params[] =
@@ -170,7 +170,7 @@ void castor::job::d2dtransfer::MainThread::init() {
   try {
     m_resHelper =
       new castor::job::SharedResourceHelper(attempts, interval);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Failed to create sharedResource helper"
     castor::dlf::Param params[] =
@@ -324,7 +324,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
 
     m_resHelper->setUrl(m_resourceFile);
     content = m_resHelper->download(false);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == EINVAL) {
 
       // "Invalid Uniform Resource Indicator, cannot download resource file"
@@ -377,7 +377,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
 
   try {
     hostname = castor::System::getHostName();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to getHostName, unable to determine which
     // end of a disk2disk copy transfer is the destination"
@@ -447,7 +447,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
                                  sourceDiskCopy,
                                  m_fileId.fileid,
                                  m_fileId.server);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to get information on destination and source
     // disk copies"
@@ -484,7 +484,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 28, 6, params, &m_fileId);
     m_mover->destination(diskCopy, sourceDiskCopy);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught at the destination of the transfer"
     castor::dlf::Param params[] =
@@ -520,7 +520,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
                                 m_fileId.fileid,
                                 m_fileId.server,
                                 replicaFileSize);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to finalize disk2disk copy transfer, transfer
     // failed"
@@ -645,7 +645,7 @@ void castor::job::d2dtransfer::MainThread::terminate
     if (diskCopyId != 0) {
       m_jobSvc->disk2DiskCopyFailed(diskCopyId, false, m_fileId.fileid, m_fileId.server);
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught trying to fail disk2DiskCopy transfer"
     castor::dlf::Param params[] =

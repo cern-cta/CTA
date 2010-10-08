@@ -172,7 +172,7 @@ EXTERN_C int stage_prepareToGet(const char *userTag,
       delete respvec[i];
     } // for
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
@@ -295,14 +295,14 @@ EXTERN_C int stage_get(const char *userTag,
       }
       rc = 0;
 
-  } catch (castor::exception::Communication e) {
+  } catch (castor::exception::Communication& e) {
     stager_errmsg(func, (e.getMessage().str().c_str()));
     if (requestId != NULL && e.getRequestId().length() > 0) {
       *requestId = strdup(e.getRequestId().c_str());
     }
     rc = -1;
     saved_serrno = e.code();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     stager_errmsg(func, (e.getMessage().str().c_str()));
     rc = -1;
     saved_serrno = e.code();

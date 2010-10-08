@@ -99,7 +99,7 @@ void RepackKiller::run(void*) throw() {
 
       try {
 	abortRepack(*sreq,oraSvc);
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 	castor::dlf::Param params[] =
 	  {
 	    castor::dlf::Param("Precise Message", e.getMessage().str()),
@@ -140,7 +140,7 @@ void  RepackKiller::abortRepack(RepackSubRequest* sreq, castor::repack::IRepackS
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   try {
     sendRepackRemoveRequest(sreq);
-  }catch (castor::exception::Exception ex){
+  }catch (castor::exception::Exception& ex){
     castor::dlf::Param params[] =
     {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
      castor::dlf::Param("Precise Message", ex.getMessage().str()),

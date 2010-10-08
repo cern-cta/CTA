@@ -183,7 +183,7 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
   std::string localHostname;
   try {
     localHostname = castor::System::getHostName();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::exception::PermissionDenied pe;
 
     pe.getMessage() << "Failed to determine local hostname. messageType="
@@ -201,7 +201,7 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
 
     try {
       sock.getPeerIp(port, ip);
-    } catch(castor::exception::Exception &e) {
+    } catch(castor::exception::Exception& e) {
       castor::exception::PermissionDenied pe;
 
       pe.getMessage() << "Failed to get client ip. messageType=" << messageType
@@ -212,7 +212,7 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
 
     try {
       clientHostname = castor::System::ipAddressToHostname(ip);
-    } catch(castor::exception::Exception &e) {
+    } catch(castor::exception::Exception& e) {
       castor::exception::PermissionDenied pe;
 
       pe.getMessage() << "Failed to get client hostname from client ip. "

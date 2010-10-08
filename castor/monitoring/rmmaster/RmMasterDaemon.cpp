@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     if ((value = getconfent("RM", "PORT", 0))) {
       try {
 	listenPort = castor::System::porttoi(value);
-      } catch (castor::exception::Exception ex) {
+      } catch (castor::exception::Exception& ex) {
 	castor::exception::Exception e(EINVAL);
 	e.getMessage() << "Invalid RM/PORT value: "
 		       << ex.getMessage() << std::endl;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
     daemon.start();
     return 0;
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception: "
 	      << sstrerror(e.code()) << std::endl
 	      << e.getMessage().str() << std::endl;

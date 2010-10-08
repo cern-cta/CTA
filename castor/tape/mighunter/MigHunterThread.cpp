@@ -116,7 +116,7 @@ void castor::tape::mighunter::MigHunterThread::run(void* arg) {
   // Run the code of the thread, logging any raised exceptions
   try {
     exceptionThrowingRun(arg);
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception& ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
@@ -185,7 +185,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         // required by the migration-policy Python-function
         oraSvc->inputForMigrationPolicy((*svcClassName),
           &initialSizeToTransfer, infoCandidateTapeCopies);
-      } catch(castor::exception::InvalidConfiguration &ex) {
+      } catch(castor::exception::InvalidConfiguration& ex) {
         castor::dlf::Param params[] = {
         castor::dlf::Param("SVCCLASS", *svcClassName          ),
         castor::dlf::Param("error"   , "Invalid configuration"),
@@ -333,7 +333,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
             getInfoFromNs(*svcClassName, *infoCandidate);
           }
 
-        } catch(castor::exception::Exception &e){
+        } catch(castor::exception::Exception& e){
 
           // note that we've already logged something inside getInfoFromNS
           invalidTapeCopies.push_back(*infoCandidate);
@@ -422,7 +422,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
           try {
             checkMigrationPolicyArgNames(infoCandidate->policyName,
               migrationPolicyFunc);
-          } catch(castor::exception::InvalidConfiguration &ex) {
+          } catch(castor::exception::InvalidConfiguration& ex) {
             castor::dlf::Param params[] = {
               castor::dlf::Param("SVCCLASS"    , *svcClassName            ),
               castor::dlf::Param("tapecopy id" , infoCandidate->tapeCopyId),
@@ -445,7 +445,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
             policyResult = applyMigrationPolicy(migrationPolicyFunc,
               *infoCandidate);
 
-          } catch(castor::exception::Exception &ex) {
+          } catch(castor::exception::Exception& ex) {
 
             // Gracefully shutdown the daemon if the migration policy could not
             // be applied
@@ -485,7 +485,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
           }
 
-        } catch (castor::exception::Exception &e) {
+        } catch (castor::exception::Exception& e) {
           // An exception here is fatal.  Log a message and exit
           struct Cns_fileid castorFileId;
           memset(&castorFileId,'\0',sizeof(castorFileId));
@@ -509,7 +509,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       try {
         checkEachTapeCopyWillBeAttachedOrInvalidated(
           infoCandidateTapeCopies, eligibleCandidates, invalidTapeCopies);
-      } catch(castor::exception::TapeCopyNotFound &ex) {
+      } catch(castor::exception::TapeCopyNotFound& ex) {
         castor::dlf::Param params[] = {
           castor::dlf::Param("SVCCLASS"    , *svcClassName        ),
           castor::dlf::Param("tapecopy id" , ex.tapeCopyId()      ),
@@ -553,7 +553,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
             ATTACHED_TAPECOPIES, paramsDbUpdate);
 
-        } catch(castor::exception::Exception e) {
+        } catch(castor::exception::Exception& e) {
           castor::dlf::Param params[] = {
             castor::dlf::Param("SvcClass",(*svcClassName)),
             castor::dlf::Param("code", sstrerror(e.code())),
@@ -599,7 +599,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, INVALIDATE_TAPECOPIES,
         paramsInvalidate);
 
-    } catch (castor::exception::Exception e){
+    } catch (castor::exception::Exception& e){
       // exception due to problems specific to the service class
     } catch (...) {
       // Do nothing

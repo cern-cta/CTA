@@ -56,7 +56,7 @@ int main (int argc, char** argv) {
 
       delete client;
 
-    } catch(castor::exception::Exception ex) {
+    } catch(castor::exception::Exception& ex) {
       std::cerr << "CLIENT ERROR:" << ex.getMessage().str() << std::endl;
       exit(1);
     }
@@ -75,7 +75,7 @@ int main (int argc, char** argv) {
       std::cout << "Received Object: " << f->name() << std::endl; 
 
       
-    } catch(castor::exception::Exception ex) {
+    } catch(castor::exception::Exception& ex) {
       std::cerr << "SERVER ERROR:" << ex.getMessage().str() << std::endl;
       exit(1);
     }

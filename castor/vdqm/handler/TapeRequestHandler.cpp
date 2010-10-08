@@ -355,7 +355,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     try {
       castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive.get(),
         cuuid);
-    }catch(castor::exception::Exception &ex) {
+    }catch(castor::exception::Exception& ex) {
       // Log an error message and re-throw
       castor::dlf::Param params[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
@@ -370,7 +370,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     }
     try {
       castor::vdqm::DatabaseHelper::updateRepresentation(tapeReq.get(), cuuid);
-    }catch(castor::exception::Exception &ex) {
+    }catch(castor::exception::Exception& ex) {
       // Log an error message and re-throw
       castor::dlf::Param params[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
@@ -402,7 +402,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 
     try {
       svcs->deleteRep(&ad, tapeReq.get(), false);
-    } catch(castor::exception::Exception &ex) {
+    } catch(castor::exception::Exception& ex) {
       // Log an error message and re-throw
       castor::dlf::Param params[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
@@ -495,7 +495,7 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
         oldProtInterpreter->sendToOldClient(header, *it, NULL);
       }
     }
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
 
     // To inform the client about the end of the queue, we send again a 
     // volumeRequest with the VolReqID = -1

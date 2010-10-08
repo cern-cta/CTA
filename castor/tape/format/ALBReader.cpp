@@ -70,7 +70,7 @@ int main(int, char**) {
      
     try{ 
       myHeader = unmarshallObj.unmarshallHeader(buffer.get(), first);
-    }catch(castor::exception::Exception ex ) {
+    }catch(castor::exception::Exception& ex ) {
       std::cout << ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'"<< std::endl;
       break;
     }

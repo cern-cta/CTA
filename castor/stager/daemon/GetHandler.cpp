@@ -134,7 +134,7 @@ namespace castor{
                 try {
                   stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
                 }
-                catch (castor::exception::Exception e) {
+                catch (castor::exception::Exception& e) {
                   // should never happen, we forward any exception and we delete the object to avoid a memory leak
                   delete dc;
                   throw(e);
@@ -206,7 +206,7 @@ namespace castor{
           jobOriented();
           switchDiskCopiesForJob();
 
-        }catch(castor::exception::Exception e){
+        }catch(castor::exception::Exception& e){
           if(e.getMessage().str().empty()) {
             e.getMessage() << sstrerror(e.code());
           }

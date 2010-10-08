@@ -160,7 +160,7 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
                    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, NOT_ALLOWED, params);
                }
           }
-        } catch (castor::exception::Exception e) { // python exception
+        } catch (castor::exception::Exception& e) { // python exception
             castor::dlf::Param params[] =
               {
                castor::dlf::Param("code", sstrerror(e.code())),
@@ -220,7 +220,7 @@ void castor::tape::rechandler::RecHandlerThread::run(void*)
 
     }
 
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("code", sstrerror(e.code())),
        castor::dlf::Param("message", e.getMessage().str())};

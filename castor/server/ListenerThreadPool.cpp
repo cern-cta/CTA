@@ -87,7 +87,7 @@ bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
     try {
       m_sock->close();
     }
-    catch(castor::exception::Exception ignored) {}
+    catch(castor::exception::Exception& ignored) {}
   }
   return ret;
 }
@@ -115,7 +115,7 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
   // have a chance of logging that the thread pool is exhausted
   try {
     addTask(param, false);
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     if(e.code() == EAGAIN) {
       // "No idle thread in pool to process request"
       castor::dlf::Param params[] =
@@ -126,7 +126,7 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
         try {
           // This will now be blocking
           addTask(param, true);
-        } catch(castor::exception::Exception &e) {
+        } catch(castor::exception::Exception& e) {
           // "Error while dispatching to a thread"
           castor::dlf::Param params[] =
             {castor::dlf::Param("ThreadPool", m_poolName),

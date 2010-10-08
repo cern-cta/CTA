@@ -59,7 +59,7 @@ castor::IObject* castor::stager::daemon::BulkStageReqSvcThread::select() throw()
     castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
     req = stgSvc->processBulkRequest("BulkStageReqSvc");
     return req;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "BulkStageReqSvcThread::select"),
@@ -123,7 +123,7 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
     }
     rr->sendEndResponse(&result->client(), result->reqId());
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     for (std::vector<castor::stager::FileResult>::const_iterator it =
            result->subResults().begin();
          it != result->subResults().end();

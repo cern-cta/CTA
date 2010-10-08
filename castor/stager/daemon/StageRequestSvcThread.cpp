@@ -122,7 +122,7 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
     delete stgRequestHandler;
 
   }
-  catch(castor::exception::Exception ex){
+  catch(castor::exception::Exception& ex){
 
     handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
 

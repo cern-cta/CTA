@@ -104,7 +104,7 @@ void castor::vdqm::DatabaseHelper::storeRepresentation(
     if (0 != tapeDriveCompatibility) {
       svcs->fillRep(&ad, fr, OBJ_TapeAccessSpecification, false);
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     svcs->rollback(&ad);
     
     castor::vdqm::TapeRequest *tapeRequest =
@@ -156,7 +156,7 @@ void castor::vdqm::DatabaseHelper::deleteRepresentation
 //      {castor::dlf::Param("ID", fr->id())};
 //    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_DELETED_FROM_DB, 1, params);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     svcs->rollback(&ad);
     
     castor::exception::Exception ex(EVQREPLICA);
@@ -220,7 +220,7 @@ void castor::vdqm::DatabaseHelper::updateRepresentation
 //        {castor::dlf::Param("ID", fr->id())};
 //      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_UPDATE_REPRESENTATION_IN_DB, 1, params);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     svcs->rollback(&ad);
     
     castor::vdqm::TapeRequest *tapeRequest =

@@ -269,7 +269,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
     resHelper.setUrl(resourceFile);
     content = resHelper.download(false);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     if (e.code() == EINVAL) {
 
       // "Invalid Uniform Resource Indicator, cannot download resource file"

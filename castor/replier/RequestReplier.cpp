@@ -334,7 +334,7 @@ void castor::replier::RequestReplier::createNewClientConnection
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                               DLF_BASE_STAGERLIB + 19, 3, params);
 
-    } catch(castor::exception::Exception e) {
+    } catch(castor::exception::Exception& e) {
 
       // "RR: Exception while Creating new ClientConnection"
       castor::dlf::Param params[] =
@@ -594,7 +594,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
              castor::dlf::Param("Message", ex.getMessage().str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                   DLF_BASE_STAGERLIB + 31, 4, params);
-        } catch (castor::exception::Exception ex) {
+        } catch (castor::exception::Exception& ex) {
 
           // "RR: Exception caught in sending data"
           castor::dlf::Param params[] =
@@ -622,7 +622,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
                                   DLF_BASE_STAGERLIB + 33, 3, params);
           try {
             cr->sendNextMessage();
-          } catch (castor::exception::Exception ex) {
+          } catch (castor::exception::Exception& ex) {
 
             // "RR: Exception caught in sending data"
             castor::dlf::Param params[] =
@@ -644,7 +644,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
                                   DLF_BASE_STAGERLIB + 34, 3, params);
           try {
             cr->sendNextMessage();
-          } catch (castor::exception::Exception ex) {
+          } catch (castor::exception::Exception& ex) {
 
             // "RR: Exception caught in sending data"
             castor::dlf::Param params[] =

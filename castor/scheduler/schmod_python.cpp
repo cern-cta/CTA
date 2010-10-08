@@ -102,7 +102,7 @@ extern "C" {
         { 82, "Exception caught in initializing embedded Python interpreter" },
         { -1, "" }};
       castor::dlf::dlf_init("schedulerd", messages);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // Ignored. DLF failure is not a reason to stop the module loading
     }
 
@@ -192,7 +192,7 @@ extern "C" {
       bool create = false;
       clusterStatus =
         castor::monitoring::ClusterStatus::getClusterStatus(create);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unable to access shared memory"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Type", sstrerror(e.code())),
@@ -323,7 +323,7 @@ extern "C" {
               it2->second.insert
                 (std::make_pair(smGName,
                                 castor::monitoring::FileSystemRating())).first;
-            } catch (castor::exception::Exception e) {
+            } catch (castor::exception::Exception& e) {
               // "Unable to allocate SharedMemoryString"
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 0, 0);
               return -1;
@@ -362,7 +362,7 @@ extern "C" {
     // Initialize python
     try {
       python = new castor::scheduler::Python(policyFile);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // Exception caught in initializing embedded Python interpreter"
       castor::dlf::Param params[] =
         {castor::dlf::Param("PolicyFile", policyFile),
@@ -459,7 +459,7 @@ extern "C" {
       lsb_resreq_setobject(resreq, HANDLER_PYTHON_ID,
                            (char *)handler->jobName.c_str(),
                            handler);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // Free resources
       if (handler)
         delete handler;
@@ -960,7 +960,7 @@ extern "C" {
       if (python == NULL) {
         try {
           python = new castor::scheduler::Python(policyFile);
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception& e) {
           // Exception caught in initializing embedded Python interpreter"
           castor::dlf::Param params[] =
             {castor::dlf::Param("PolicyFile", policyFile),
@@ -1044,7 +1044,7 @@ extern "C" {
               it3->second.setWriteRating(python->pyExecute(it3->first.c_str()));
               python->pySet("OpenFlags", "o");
               it3->second.setReadWriteRating(python->pyExecute(it3->first.c_str()));
-            } catch (castor::exception::Exception e) {
+            } catch (castor::exception::Exception& e) {
 
               // We throttle error messages here as we have no delay/sleep
               // caused by the tight loop we run in

@@ -117,7 +117,7 @@ int main (int argc, char** argv) {
     svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, false);
     svcs->fillRep(&ad, dc, castor::OBJ_FileSystem, false);
     svcs->fillRep(&ad, fs, castor::OBJ_DiskServer, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught while filling DB : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -148,7 +148,7 @@ int main (int argc, char** argv) {
   try {
     client.sendRequest(&req, &rh);
     result->print();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught while calling sendRequest : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -161,7 +161,7 @@ int main (int argc, char** argv) {
     svcs->deleteRep(&ad, dc, false);
     svcs->deleteRep(&ad, fs, false);
     svcs->deleteRep(&ad, ds, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << "Error caught while cleanig DB : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

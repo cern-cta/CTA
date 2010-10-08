@@ -89,7 +89,7 @@ void castor::tape::tapegateway::RmMasterTapeGatewayHelper::sendStreamReport
     sr.setDirection(direction);
     sr.setCreated(created);
     s.sendObject(sr);
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
     
     castor::exception::Internal e;
     e.getMessage() <<"Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught"<<ex.getMessage().str();

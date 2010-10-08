@@ -420,7 +420,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -444,7 +444,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
       try {
         cnvSvc()->createRep(&ad, tape, false);
         return tape;
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
         delete tape;
         // XXX  Change createRep in CodeGenerator to forward the oracle
         // errorcode 
@@ -545,7 +545,7 @@ castor::vdqm::TapeServer*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -681,7 +681,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId1 << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId1 << ": " << e.getMessage().str();
@@ -701,7 +701,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId2 << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId2 << ": " << e.getMessage().str();
@@ -796,7 +796,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -855,7 +855,7 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -915,7 +915,7 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -973,7 +973,7 @@ unsigned int castor::db::ora::OraVdqmSvc::deleteOldVolPriorities(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1022,7 +1022,7 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1064,7 +1064,7 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
 
     throw ie;
 
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage()
       << "Failed to get list of all volume priorities:"
@@ -1097,7 +1097,7 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1139,7 +1139,7 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
 
     throw ie;
 
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage()
       << "Failed to get list of effective volume priorities:"
@@ -1172,7 +1172,7 @@ void castor::db::ora::OraVdqmSvc::getVolPriorities(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1215,7 +1215,7 @@ void castor::db::ora::OraVdqmSvc::getVolPriorities(
 
     throw ie;
 
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage()
       << "Failed to get list of effective volume priorities:"
@@ -1251,7 +1251,7 @@ void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1339,7 +1339,7 @@ castor::vdqm::TapeDrive*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1448,7 +1448,7 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1519,7 +1519,7 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1657,7 +1657,7 @@ bool castor::db::ora::OraVdqmSvc::requestSubmitted(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1737,7 +1737,7 @@ void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1797,7 +1797,7 @@ bool
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1855,7 +1855,7 @@ bool
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1910,7 +1910,7 @@ castor::vdqm::VdqmTape*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -1991,7 +1991,7 @@ castor::vdqm::TapeRequest*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2089,7 +2089,7 @@ castor::vdqm::TapeAccessSpecification*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2176,7 +2176,7 @@ castor::vdqm::DeviceGroupName*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2261,7 +2261,7 @@ void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2368,7 +2368,7 @@ void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2450,7 +2450,7 @@ void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
 
     throw ie;
 
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage()
       << "Failed to query tape drive queue:"
@@ -2536,7 +2536,7 @@ castor::vdqm::TapeRequest*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2622,7 +2622,7 @@ bool castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2687,7 +2687,7 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2745,7 +2745,7 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2799,7 +2799,7 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2915,7 +2915,7 @@ void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();
@@ -2993,7 +2993,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << oe.getMessage();
     throw ie;
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     castor::exception::Internal ie;
     ie.getMessage() << "Failed to get statement object with ID: "
       << stmtId << ": " << e.getMessage().str();

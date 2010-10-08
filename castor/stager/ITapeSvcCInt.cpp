@@ -69,7 +69,7 @@ extern "C" {
     try {
       if (0 == tpSvc) return 0;
       if (0 != tpSvc->tpSvc) tpSvc->tpSvc->release();
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -86,7 +86,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       return tpSvc->tpSvc->anySegmentsForTape(searchItem);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -111,7 +111,7 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*segmentArray)[i] = result[i];
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -129,7 +129,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       *diskcopy = tpSvc->tpSvc->bestFileSystemForSegment(segment);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -150,7 +150,7 @@ extern "C" {
       } else {
         return 0;
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -168,7 +168,7 @@ extern "C" {
     try {
       *tapecopy =
         tpSvc->tpSvc->bestTapeCopyForStream(searchItem);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -185,7 +185,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tpSvc->tpSvc->streamsForTapePool(tapePool);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -202,7 +202,7 @@ extern "C" {
     try {
       tpSvc->tpSvc->fileRecalled(tapeCopy);
       return 0;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -218,7 +218,7 @@ extern "C" {
     try {
       tpSvc->tpSvc->fileRecallFailed(tapeCopy);
       return 0;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -241,7 +241,7 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*tapeArray)[i] = result[i];
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -265,7 +265,7 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*streamArray)[i] = result[i];
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -284,7 +284,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       *tape = tpSvc->tpSvc->selectTape(vid, side, tpmode);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -308,7 +308,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       *svcClass = tpSvc->tpSvc->selectSvcClass(name);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -334,7 +334,7 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*tapeCopyArray)[i] = result[i];
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -351,7 +351,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tpSvc->tpSvc->resetStream(stream);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -376,7 +376,7 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*segmentArray)[i] = result[i];
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -395,7 +395,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tmp = tpSvc->tpSvc->checkFileForRepack(fileid);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -420,7 +420,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tpSvc->tpSvc->rtcpclientdCleanUp();
-    } catch (castor::exception::Exception e){
+    } catch (castor::exception::Exception& e){
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -462,7 +462,7 @@ extern "C" {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       numByStream=tpSvc->tpSvc->getNumFilesByStream(streamId);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       tpSvc->errorMsg = e.getMessage().str();
       return -1;

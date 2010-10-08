@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
    try{
       client->run(argc, argv);
    }
-   catch (castor::exception::Exception ex) {
+   catch (castor::exception::Exception& ex) {
       std::cout << ex.getMessage().str() << std::endl;
       exit(1);
    }
@@ -360,7 +360,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   try {
     setRemotePort();
     setRemoteHost();
-  }catch (castor::exception::Exception ex){
+  }catch (castor::exception::Exception& ex){
     std::cout << ex.getMessage().str() << " Aborting.." << std::endl;
     return NULL;
   }
@@ -447,7 +447,7 @@ void RepackClient::run(int argc, char** argv)
     freeRepackObj(req);
     freeRepackObj(ack);
 
-  } catch (castor::exception::Exception ex) {
+  } catch (castor::exception::Exception& ex) {
     	std::cout << ex.getMessage().str() << std::endl;
 	exit(1);
   }

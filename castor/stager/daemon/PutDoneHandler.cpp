@@ -99,7 +99,7 @@ namespace castor{
           }
           
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),

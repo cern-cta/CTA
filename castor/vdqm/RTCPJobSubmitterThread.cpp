@@ -77,7 +77,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
 
   try {
     vdqmSvc = getDbVdqmSvc();
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     // "Could not get DbVdqmSvc"
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function",
@@ -95,7 +95,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
   {
     obj = vdqmSvc->requestToSubmit();
     vdqmSvc->commit();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function",
         "castor::vdqm::RTCPJobSubmitterThread::select"),
@@ -201,7 +201,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
   try {
     vdqmSvc = getDbVdqmSvc();
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception& e) {
     // "Could not get DbVdqmSvc"
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function",
@@ -224,7 +224,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     submitJob(cuuid, request.get());
     requestSubmitted = true;
 
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception& ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapeDriveID", tapeDrive->id()),
       castor::dlf::Param("driveName", tapeDrive->driveName()),
@@ -278,7 +278,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         VDQM_RESET_DRIVE_AND_REQUEST, 13, params);
 
-    } catch(castor::exception::Exception &ex) {
+    } catch(castor::exception::Exception& ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapeDriveID", tapeDrive->id()),
         castor::dlf::Param("driveName", tapeDrive->driveName()),
@@ -335,7 +335,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_REQUEST_SUBMITTED_TRANSITION_FAILED, 13, params);
       }
-    } catch(castor::exception::Exception &ex) {
+    } catch(castor::exception::Exception& ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapeDriveID", tapeDrive->id()),
         castor::dlf::Param("driveName", tapeDrive->driveName()),
@@ -354,7 +354,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     services()->commit(&ad);
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception& ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
       castor::dlf::Param("Message", "Failed to commit changes" +
@@ -419,7 +419,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
 
   try {
     connection.connect();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::exception::Internal ie;
 
     ie.getMessage()
@@ -453,7 +453,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
     acknSucc = connection.sendJob(cuuid, remoteCopyType.c_str(), request->id(),
       client->userName(), client->machine(), client->port(), client->euid(),
       client->egid(), dgn->dgName(), tapeDrive->driveName());
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::exception::Internal ie;
 
     ie.getMessage()

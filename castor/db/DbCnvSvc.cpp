@@ -148,10 +148,10 @@ castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
     const unsigned int res = rset->getInt(1);
     delete rset;
     return res;
-  } catch (castor::exception::SQLError e) {
+  } catch (castor::exception::SQLError& e) {
     try {
       rollback();
-    } catch (castor::exception::Exception ignored) {}
+    } catch (castor::exception::Exception& ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in getting type from id."
                     << std::endl << e.getMessage().str();

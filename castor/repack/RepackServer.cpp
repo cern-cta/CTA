@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 
 
     }
-     catch (castor::exception::Exception e) {
+     catch (castor::exception::Exception& e) {
       		std::cerr << "Caught castor exception : "
        		<< sstrerror(e.code()) << std::endl
        		<< e.getMessage().str() << std::endl;

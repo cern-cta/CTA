@@ -96,7 +96,7 @@ void castor::monitoring::rmnode::MetricsThread::run(void*)
   // Collect metrics information
   try {
     collectDiskServerMetrics();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Failed to collect diskserver metrics"
     castor::dlf::Param params[] =
@@ -134,7 +134,7 @@ void castor::monitoring::rmnode::MetricsThread::run(void*)
       } else {
 	delete ack;
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       // "Error caught when trying to send metric information"
       castor::dlf::Param params[] =
@@ -242,7 +242,7 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
       // Get the filesystems metric information
       try {
 	collectFileSystemMetrics(metrics);
-      } catch (castor::exception::InvalidArgument e) {
+      } catch (castor::exception::InvalidArgument& e) {
 
 	// If we got this far then the mountpoint/filesystem has been considered
 	// invalid. We throttle the error message here to not fill up the log
@@ -261,7 +261,7 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	m_diskServerMetrics->removeFileSystemMetricsReports(metrics);
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     throw e;
   }
 }

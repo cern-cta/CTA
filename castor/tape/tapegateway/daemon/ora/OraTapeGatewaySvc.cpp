@@ -798,7 +798,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	try {
 	  NsTapeGatewayHelper nsHelper;
 	  nsHelper.checkFileToMigrate(file,vid);
-	} catch (castor::exception::Exception e) {
+	} catch (castor::exception::Exception& e) {
 
 	  struct Cns_fileid castorFileId;
 	  memset(&castorFileId,'\0',sizeof(castorFileId));
@@ -829,7 +829,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	    failure.setErrorCode(e.code());
 	    invalidateFile(failure);
 
-	  } catch (castor::exception::Exception ex){
+	  } catch (castor::exception::Exception& ex){
 
 	    // just log the error
 	    castor::dlf::Param params[] =
@@ -854,7 +854,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	  RmMasterTapeGatewayHelper rmMasterHelper;
 	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_WRITE,true);
 	  
-	} catch (castor::exception::Exception e){
+	} catch (castor::exception::Exception& e){
 	  
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -935,7 +935,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
 	RmMasterTapeGatewayHelper rmMasterHelper;
 	rmMasterHelper.sendStreamReport(diskserver, mountpoint, castor::monitoring::STREAMDIRECTION_WRITE,false);
   
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
 
 	castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -1055,7 +1055,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	  nsHelper.getBlockIdToRecall(file,vid);
 	  break; // found a valid file
 
-	}catch (castor::exception::Exception e) {
+	}catch (castor::exception::Exception& e) {
 	  struct Cns_fileid castorFileId;
 	  memset(&castorFileId,'\0',sizeof(castorFileId));
 	  strncpy(
@@ -1083,7 +1083,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	    failure.setErrorCode(e.code());
 	    invalidateFile(failure);
 	    
-	  } catch (castor::exception::Exception ex){
+	  } catch (castor::exception::Exception& ex){
 
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("errorCode",sstrerror(ex.code())),
@@ -1109,7 +1109,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	  RmMasterTapeGatewayHelper rmMasterHelper;
 	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,true);
 	
-	} catch (castor::exception::Exception e){
+	} catch (castor::exception::Exception& e){
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),
@@ -1189,7 +1189,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
 	RmMasterTapeGatewayHelper  rmMasterHelper;
 	rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,false);
 	
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
 	castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),

@@ -163,7 +163,7 @@ void castor::job::d2dtransfer::RfioMover::destination
   // Copy the file
   try {
     copyFile();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     throw e;
   }
 }

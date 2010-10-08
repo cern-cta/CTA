@@ -73,7 +73,7 @@ void castor::monitoring::rmmaster::UpdateThread::run(void* par) throw() {
           {castor::dlf::Param("Type", obj->type())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 1, params);
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       // "Caught exception in UpdateThread"
       castor::dlf::Param params[] =
@@ -107,7 +107,7 @@ void castor::monitoring::rmmaster::UpdateThread::handleStreamReport
     if (!production) {
       return;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // All errors are interpreted as us not being the master server. The real
     // error will be reported by the DatabaseActuatorThread
     return;

@@ -76,7 +76,7 @@ castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
     castor::jobmanager::JobSubmissionRequest *result =
       m_jobManagerService->jobToSchedule();
     return result;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Exception caught selecting a new job to schedule in
     // DispatchThread::select"
@@ -130,13 +130,13 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param)
 
   try {
     m_processPool->dispatch(*param);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // Attempt to restart the job for later selection and processing
     try {
       m_jobManagerService->updateSchedulerJob(request,
                                               castor::stager::SUBREQUEST_READYFORSCHED);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       // "Exception caught trying to restart a job in DispatchThread::process,
       // job will remain incorrectly in SUBREQUEST_BEINGSCHED"

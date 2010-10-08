@@ -140,7 +140,7 @@ static int _processFileRequest(const char *func,
       delete respvec[i];
     } // for
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;

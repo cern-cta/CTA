@@ -70,7 +70,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   try {
     castor::monitoring::rmmaster::LSFStatus::getInstance()->
       getLSFStatus(production, false);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // Ignore error
   }
 

@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
               << "out of which " << nbDeletedDS << " diskServers and "
               << nbDeletedFS << " fileSystems are deleted" << std::endl;
     
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cout << e.getMessage().str() << std::endl;
   }
 }

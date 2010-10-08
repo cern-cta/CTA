@@ -84,7 +84,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
 
   try {
     oraSvc->getFailedRecalls(tcList);
-  }  catch (castor::exception::Exception e){
+  }  catch (castor::exception::Exception& e){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -134,7 +134,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, params);
 	tcIdsToFail.push_back( (*tcItem).tapeCopyId);
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       castor::dlf::Param paramsEx[] =
 	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -166,7 +166,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, paramsDbUpdate);
     
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())

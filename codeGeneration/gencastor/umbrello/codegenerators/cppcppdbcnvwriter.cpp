@@ -1010,7 +1010,7 @@ void CppCppDbCnvWriter::writeReset() {
   }
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::Exception ignored) {};"
+            << "} catch (castor::exception::Exception& ignored) {};"
             << endl << getIndent()
             << "// Now reset all pointers to 0"
             << endl << getIndent()
@@ -1170,7 +1170,7 @@ void CppCppDbCnvWriter::writeFillRep() {
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::SQLError e) {"
+            << "} catch (castor::exception::SQLError& e) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
@@ -2312,7 +2312,7 @@ void CppCppDbCnvWriter::writeCreateRepContent(QTextStream &stream, bool &address
   m_indent--;
   // Catch exceptions if any
   stream << getIndent()
-         << "} catch (castor::exception::SQLError e) {"
+         << "} catch (castor::exception::SQLError& e) {"
          << endl;
   m_indent++;
   printSQLError(stream, "insert", members, assocs, true);
@@ -2644,7 +2644,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
   m_indent--;
   // Catch exceptions if any
   stream << getIndent()
-         << "} catch (castor::exception::SQLError e) {"
+         << "} catch (castor::exception::SQLError& e) {"
          << endl;
   // Release all buffers
   m_indent++;
@@ -2755,7 +2755,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent(QTextStream &stream,
   m_indent--;
   // Catch exceptions if any
   stream << getIndent()
-         << "} catch (castor::exception::SQLError e) {"
+         << "} catch (castor::exception::SQLError& e) {"
          << endl;
   m_indent++;
   AssocList emptyList;
@@ -2940,7 +2940,7 @@ void CppCppDbCnvWriter::writeDeleteRepContent(QTextStream &stream,
   m_indent--;
   // Catch exceptions if any
   stream << getIndent()
-         << "} catch (castor::exception::SQLError e) {"
+         << "} catch (castor::exception::SQLError& e) {"
          << endl;
   m_indent++;
   MemberList emptyList;
@@ -3064,7 +3064,7 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
   // Catch exceptions if any
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::SQLError e) {"
+            << "} catch (castor::exception::SQLError& e) {"
             << endl;
   m_indent++;
   printSQLError(*m_stream, "select", members, assocs, false);
@@ -3147,7 +3147,7 @@ void CppCppDbCnvWriter::writeBulkCreateObjContent() {
   // Catch exceptions if any
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::SQLError e) {"
+            << "} catch (castor::exception::SQLError& e) {"
             << endl;
   m_indent++;
   printSQLError(*m_stream, "bulkSelect", members, assocs, false);
@@ -3235,7 +3235,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
   // Catch exceptions if any
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::SQLError e) {"
+            << "} catch (castor::exception::SQLError& e) {"
             << endl;
   m_indent++;
   printSQLError(*m_stream, "update", members, assocs, false);
@@ -3460,7 +3460,7 @@ void CppCppDbCnvWriter::printSQLError(QTextStream &stream,
            << getIndent()
            << "  if (endTransaction) cnvSvc()->rollback();" << endl
            << getIndent()
-           << "} catch (castor::exception::Exception ignored) {}"
+           << "} catch (castor::exception::Exception& ignored) {}"
            << endl;
   }
   stream << getIndent()

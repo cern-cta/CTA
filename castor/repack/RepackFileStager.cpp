@@ -99,7 +99,7 @@ void RepackFileStager::run(void*) throw() {
 
 	startRepack(*sreq,oraSvc);
 	
-      } catch (castor::exception::Exception e){
+      } catch (castor::exception::Exception& e){
 	castor::dlf::Param params[] =
 	  {
 	    castor::dlf::Param("Precise Message", e.getMessage().str()),
@@ -140,7 +140,7 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq,castor::repack::IRepac
   std::vector<RepackSegment*>::iterator failedSegment;
   try {
     failedSegments =stageFiles(sreq);
-  }catch (castor::exception::Exception ex){
+  }catch (castor::exception::Exception& ex){
     // failure in stagin the file
     castor::dlf::Param params[] =
     {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
@@ -228,7 +228,7 @@ std::vector<RepackSegment*> RepackFileStager::stageFiles(RepackSubRequest* sreq)
   std::vector<RepackSegment*>failedSegments;
   try {
     failedSegments=sendStagerRepackRequest(sreq, &req, &reqId, &opts);
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception& e){
     /// delete the allocated Stager SubRequests
     stager_subreq = req.subRequests().begin();
     while ( stager_subreq != req.subRequests().end() )
@@ -272,7 +272,7 @@ std::vector<RepackSegment*> RepackFileStager::sendStagerRepackRequest(  RepackSu
 
     *reqId = client.createClientAndSend(req);
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // failure to reach the stager
     //clean up
     std::vector<castor::rh::Response*>::iterator respToDelete=respvec.begin();
@@ -299,7 +299,7 @@ std::vector<RepackSegment*> RepackFileStager::sendStagerRepackRequest(  RepackSu
 
   try {
     client.pollAnswersFromStager(req,&rh);
-  } catch (castor::exception::Exception ex){
+  } catch (castor::exception::Exception& ex){
     // time out that should be ignored .. however it has been submited
 
     castor::dlf::Param params[] =

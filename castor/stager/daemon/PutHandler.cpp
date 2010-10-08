@@ -124,7 +124,7 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
           }
         }
-        catch(castor::exception::Exception e) {
+        catch(castor::exception::Exception& e) {
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())
           };

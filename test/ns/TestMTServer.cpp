@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
       new castor::server::SignalThreadPool("Test", new TestThread()));
     server->parseCommandLine(argc, argv);
     server->start();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught castor exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

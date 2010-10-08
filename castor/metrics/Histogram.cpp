@@ -78,7 +78,7 @@ void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
       // our mutex before rethrowing
       try {
         m_mutex.release();
-      } catch (castor::exception::Exception ignored) {}
+      } catch (castor::exception::Exception& ignored) {}
       throw e;
     }
   }

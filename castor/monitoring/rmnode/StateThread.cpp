@@ -92,7 +92,7 @@ void castor::monitoring::rmnode::StateThread::run(void*)
   castor::monitoring::DiskServerStateReport *state = 0;
   try {
     state = collectDiskServerState();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
 
     // "Failed to collect diskserver status"
     castor::dlf::Param params[] =
@@ -178,7 +178,7 @@ void castor::monitoring::rmnode::StateThread::run(void*)
 	}
 	delete ack;
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
 
       // "Error caught when trying to send state information"
       castor::dlf::Param params[] =
@@ -299,7 +299,7 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
 				maxFreeSpace,
 				minAllowedFreeSpace));
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     delete state;
     throw e;
   }

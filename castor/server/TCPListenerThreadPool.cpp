@@ -86,7 +86,7 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
       // Handle the command
       threadAssign(s);
     }
-    catch(castor::exception::Exception any) {
+    catch(castor::exception::Exception& any) {
       // Some errors are considered fatal, such as closure of the listening
       // socket resulting in a bad file descriptor during the thread shutdown
       // process. If we encounter this problem we exit the loop.

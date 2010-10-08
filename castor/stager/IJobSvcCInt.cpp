@@ -65,7 +65,7 @@ extern "C" {
     try {
       if (0 == jobSvc) return 0;
       if (0 != jobSvc->jobSvc) jobSvc->jobSvc->release();
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -92,7 +92,7 @@ extern "C" {
       *diskCopy = jobSvc->jobSvc->getUpdateStart
         (subreq, fileSystem, &ef, fileId, nsHost);
       *emptyFile = ef ? 1 : 0;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -114,7 +114,7 @@ extern "C" {
     try {
       *diskCopy =
         jobSvc->jobSvc->putStart(subreq, fileSystem, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -145,7 +145,7 @@ extern "C" {
     try {
       jobSvc->jobSvc->prepareForMigration
 	(subReqId, fileSize, timeStamp, fileId, nsHost, csumtype, csumvalue);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -164,7 +164,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->getUpdateDone(subReqId,fileId,nsHost);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -183,7 +183,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->getUpdateFailed(subReqId, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -202,7 +202,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->putFailed(subReqId, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;
@@ -221,7 +221,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->firstByteWritten(subRequestId, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
       return -1;

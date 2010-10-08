@@ -95,7 +95,7 @@ namespace castor{
 
           typeRequest = fileRequest->type();
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           // should never happen: the db service is initialized in the main as well
           castor::dlf::Param params[]={
             castor::dlf::Param("Function","RequestHelper constructor")};
@@ -171,7 +171,7 @@ namespace castor{
 
           username = this_passwd->pw_name;
           groupname = this_gr->gr_name;
-        } catch(castor::exception::Exception e) {
+        } catch(castor::exception::Exception& e) {
           castor::dlf::Param params[]=
             {castor::dlf::Param("Filename", subrequest->fileName()),
              castor::dlf::Param("Euid", fileRequest->euid()),
@@ -250,7 +250,7 @@ namespace castor{
           dbSvc->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
           dbSvc->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           logToDlf(DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION, &(cnsFileId));
 
           castor::exception::Exception ex(e.code());
@@ -298,7 +298,7 @@ namespace castor{
             std::string localHost;
             try {
               localHost = castor::System::getHostName();
-            } catch (castor::exception::Exception e) {
+            } catch (castor::exception::Exception& e) {
               castor::exception::Exception ex(SEINTERNAL);
               ex.getMessage() << "Failed to determine the name of the localhost";
               throw ex;
@@ -330,7 +330,7 @@ namespace castor{
             break;
           }
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           if ((e.code() == SEINTERNAL) || (e.code() != EACCES)) {
             castor::dlf::Param params[] = {
               castor::dlf::Param(subrequestUuid),

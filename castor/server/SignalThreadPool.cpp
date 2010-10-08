@@ -77,12 +77,12 @@ bool castor::server::SignalThreadPool::shutdown(bool wait) throw()
     }
     return (m_notified + m_nbActiveThreads == 0);
   }
-  catch (castor::exception::Exception e) {
+  catch (castor::exception::Exception& e) {
     // This can happen in case of mutex problems.
     // We just try again at the next round.
     try {
       m_poolMutex.release();
-    } catch(castor::exception::Exception ignored) {};
+    } catch(castor::exception::Exception& ignored) {};
     return false;
   }
 }
@@ -199,7 +199,7 @@ void* castor::server::SignalThreadPool::_runner(void* param)
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                   DLF_BASE_FRAMEWORK + 22, 2, params);
         }
-        catch (castor::exception::Exception e) {
+        catch (castor::exception::Exception& e) {
           // "Exception caught in the user thread"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Error", sstrerror(e.code())),
@@ -218,7 +218,7 @@ void* castor::server::SignalThreadPool::_runner(void* param)
         pool->m_idleTime += idleTime;
         pool->m_runsCount++;
       }
-      catch (castor::exception::Exception e) {
+      catch (castor::exception::Exception& e) {
         pool->m_nbActiveThreads--;   // unsafe
         throw e;
       }
@@ -231,7 +231,7 @@ void* castor::server::SignalThreadPool::_runner(void* param)
     // e.g. for dropping a db connection
     pool->m_thread->stop();
   }
-  catch (castor::exception::Exception any) {
+  catch (castor::exception::Exception& any) {
     try {
       pool->m_thread->stop();
       pool->m_poolMutex.release();

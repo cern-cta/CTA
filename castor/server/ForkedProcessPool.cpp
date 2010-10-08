@@ -236,7 +236,7 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
   try {
     m_thread->init();
   }
-  catch(castor::exception::Exception any) {
+  catch(castor::exception::Exception& any) {
     // "Exception caught while initializing the child process"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(any.code())),
@@ -252,7 +252,7 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
       m_thread->run(obj);
       delete obj;
     }
-    catch(castor::exception::Exception any) {
+    catch(castor::exception::Exception& any) {
       int priority = DLF_LVL_ERROR;
       if (any.getMessage().str().find("closed by remote end", 0)) {
         priority = DLF_LVL_DEBUG;
@@ -270,7 +270,7 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
       // children to stop.
       try {
         m_thread->stop();
-      } catch (castor::exception::Exception ignore) {}
+      } catch (castor::exception::Exception& ignore) {}
       dlf_shutdown();
       exit(EXIT_FAILURE);
     }
@@ -278,7 +278,7 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 
   try {
     m_thread->stop();
-  } catch (castor::exception::Exception any) {
+  } catch (castor::exception::Exception& any) {
     // "Thread run error"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(any.code())),

@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     server.start();
     return 0;
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     std::cerr << "Caught castor exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
@@ -133,7 +133,7 @@ castor::rh::Server::Server() :
       // "Could not get Conversion Service for Streaming" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3);
     }
-  } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception& e) {
     // "Exception caught : server is stopping" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),

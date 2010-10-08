@@ -73,5 +73,5 @@ castor::stager::daemon::NsOverride::NsOverride() throw () {
     // ignore any failure, we assume no override is configured
     m_targetCnsHost = stgSvc->getConfigOption("stager", "nsHost", m_cnsHost);
   }
-  catch (castor::exception::Exception ignored) {}
+  catch (castor::exception::Exception& ignored) {}
 }

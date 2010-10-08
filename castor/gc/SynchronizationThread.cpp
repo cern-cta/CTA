@@ -176,7 +176,7 @@ void castor::gc::SynchronizationThread::run(void*) {
 	  std::pair<std::string, u_signed64> fid;
 	  try {
 	    fid = diskCopyIdFromFileName(file->d_name);
-	  } catch (castor::exception::Exception e) {
+	  } catch (castor::exception::Exception& e) {
 	    // "Ignoring filename that does not conform to castor naming
 	    // conventions"
 	    castor::dlf::Param params[] =
@@ -205,7 +205,7 @@ void castor::gc::SynchronizationThread::run(void*) {
 	      paths[fid.first].clear();
 	      sleep(chunkInterval);
 	    }
-	  } catch (castor::exception::Exception e) {
+	  } catch (castor::exception::Exception& e) {
 	    // "Unexpected exception caught in synchronizeFiles"
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
 	    sleep(chunkInterval);
@@ -234,7 +234,7 @@ void castor::gc::SynchronizationThread::run(void*) {
                            paths[it2->first], disableStagerSync);
 	  sleep(chunkInterval);
 	}
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 	// "Unexpected exception caught in synchronizeFiles"
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
 	sleep(chunkInterval);

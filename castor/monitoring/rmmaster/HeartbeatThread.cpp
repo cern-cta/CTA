@@ -91,7 +91,7 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void*) throw() {
 	m_lastPause = time(NULL);
 	return;
       }
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // All errors are interpreted as us not being the master server. The real
       // error will be reported by the DatabaseActuatorThread
       return;

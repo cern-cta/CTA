@@ -94,7 +94,7 @@ namespace castor{
             delete diskCopyForRecall;
           }
           
-        }catch(castor::exception::Exception e){
+        }catch(castor::exception::Exception& e){
           
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           

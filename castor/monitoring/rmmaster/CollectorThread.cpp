@@ -95,7 +95,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     try {
       obj = sock->readObject();
       sock->getPeerIp(port, ip);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unable to read object from socket"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Message", e.getMessage().str())};
@@ -116,7 +116,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     try {
       castor::monitoring::rmmaster::LSFStatus::getInstance()->
 	getLSFStatus(production, masterName, hostName, false);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // Ignore error
     }
 
@@ -180,7 +180,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
                << std::endl << "Type was " << obj->type();
           ack.setErrorMessage(stst.str());
         }
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception& e) {
 
         // "Caught exception in CollectorThread"
         castor::dlf::Param params[] =
@@ -241,7 +241,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15, 2, params2);
     try {
       sock->sendObject(ack);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception& e) {
       // "Unable to send ack to client"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Type", sstrerror(e.code())),

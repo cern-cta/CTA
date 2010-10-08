@@ -158,7 +158,7 @@ namespace castor{
             }
           }
         }
-        catch(castor::exception::Exception e){
+        catch(castor::exception::Exception& e){
           
           /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
           /* we don t execute: dbSvc->updateRep ..*/

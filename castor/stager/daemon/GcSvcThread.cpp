@@ -100,7 +100,7 @@ void castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
       gcSvc->filesDeletionFailed(arg);
     }
     delete[] argArray;
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleFilesDeletedOrFailed"),
@@ -116,7 +116,7 @@ void castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleFilesDeletedOrFailed.reply"),
@@ -149,7 +149,7 @@ void castor::stager::daemon::GcSvcThread::handleFiles2Delete
       {castor::dlf::Param("DiskServer", uReq->diskServer())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_SELF2DEL, 1, params);
     result = gcSvc->selectFiles2Delete(uReq->diskServer());
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleFiles2Delete"),
@@ -184,7 +184,7 @@ void castor::stager::daemon::GcSvcThread::handleFiles2Delete
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleFiles2Delete.reply"),
@@ -231,7 +231,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
       {castor::dlf::Param("NbFiles", uReq->files().size())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_NSFILDEL, 1, params);
     result = gcSvc->nsFilesDeleted(input, uReq->nsHost());
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleNsFilesDeleted"),
@@ -262,7 +262,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleNsFilesDeleted.reply"),
@@ -305,7 +305,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
       {castor::dlf::Param("NbFiles", uReq->files().size())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_STGFILDEL, 1, params);
     orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies, uReq->nsHost());
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleStgFilesDeleted"),
@@ -338,7 +338,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
       castor::replier::RequestReplier::getInstance();
     res.setReqAssociated(req->reqId());
     rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::handleStgFilesDeleted.reply"),
@@ -391,7 +391,7 @@ void castor::stager::daemon::GcSvcThread::process
       gcSvc->release();
       return;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // If we fail here, we do NOT have enough information
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
@@ -436,7 +436,7 @@ void castor::stager::daemon::GcSvcThread::process
   try {
     // Delete Request From the database
     svcs->deleteRep(&ad, req, true);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "GcSvcThread::process.2"),
