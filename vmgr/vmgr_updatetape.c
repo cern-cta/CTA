@@ -26,7 +26,7 @@ int vmgr_updatetape(const char *vid, int side, u_signed64 BytesWritten, int Comp
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
-        strcpy (func, "vmgr_updatetape");
+        strncpy (func, "vmgr_updatetape", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

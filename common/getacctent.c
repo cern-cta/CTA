@@ -54,7 +54,7 @@ char *getacctent(struct passwd   *pwd,       /* Pointer to the password entry */
         while (!feof(fp)) { 
             char  *cp = NULL;
 
-            if ((cp = fgets(tmpbuf, BUFSIZ, fp)) != tmpbuf) {
+            if (fgets(tmpbuf, BUFSIZ, fp) != tmpbuf) {
                 (void)fclose(fp);
                 return(NULL);
             }

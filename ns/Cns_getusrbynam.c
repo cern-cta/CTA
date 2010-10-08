@@ -29,7 +29,7 @@ Cns_getusrbynam(char *username, uid_t *uid)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getusrbynam");
+  strncpy (func, "Cns_getusrbynam", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

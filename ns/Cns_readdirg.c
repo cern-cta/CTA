@@ -34,7 +34,7 @@ Cns_readdirg(Cns_DIR *dirp)
   char sendbuf[REQBUFSZ];
   uid_t uid;
 
-  strcpy (func, "Cns_readdirg");
+  strncpy (func, "Cns_readdirg", 16);
   Cns_getid(&uid, &gid);
 
   if (! dirp) {

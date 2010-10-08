@@ -30,7 +30,7 @@ Cns_updatefile_checksum(const char *path, const char *csumtype, const char *csum
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_updatefile_checksum");
+  strncpy (func, "Cns_updatefile_checksum", 24);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

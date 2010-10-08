@@ -30,7 +30,7 @@ Cns_unlinkbyvid(char *server, const char *vid)
   uid_t uid;
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_unlinkbyvid");
+  strncpy (func, "Cns_unlinkbyvid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

@@ -30,7 +30,7 @@ vmgr_gettag(const char *vid, char *tag)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-	strcpy (func, "vmgr_gettag");
+	strncpy (func, "vmgr_gettag", 16);
 	if (vmgr_apiinit (&thip))
 		return (-1);
 	uid = geteuid();

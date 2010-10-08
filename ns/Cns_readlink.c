@@ -31,7 +31,7 @@ Cns_readlink(const char *path, char *buf, size_t bufsiz)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_readlink");
+  strncpy (func, "Cns_readlink", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

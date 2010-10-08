@@ -34,7 +34,7 @@ vmgr_listlibrary(int flags, vmgr_list *listp)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_listlibrary");
+        strncpy (func, "vmgr_listlibrary", 17);
         if (vmgr_apiinit (&thip))
                 return (NULL);
         uid = geteuid();

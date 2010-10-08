@@ -242,10 +242,10 @@ int rfio_open_ext_v3(char    * filepath,
   }
   if ((hp = Cgethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){
     strncpy(rfp->host, (char *)inet_ntoa(to.sin_addr), RESHOSTNAMELEN );
-  }
-  else    {
+  } else {
     strncpy(rfp->host,hp->h_name, RESHOSTNAMELEN );
   }
+  rfp->host[RESHOSTNAMELEN-1] = 0;
 
 
   if ( !rt && !rfp->mapping ) {

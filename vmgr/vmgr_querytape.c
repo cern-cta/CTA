@@ -29,7 +29,7 @@ int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, 
 	char tmpbuf[7];
 	uid_t uid;
 
-        strcpy (func, "vmgr_querytape");
+        strncpy (func, "vmgr_querytape", 15);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

@@ -28,7 +28,7 @@ Cns_getgrpbygid(gid_t gid, char *groupname)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getgrpbygid");
+  strncpy (func, "Cns_getgrpbygid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

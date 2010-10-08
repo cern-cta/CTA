@@ -32,7 +32,7 @@ Cns_bulkexist(const char* server, u_signed64 *fileIds, int *nbFileIds)
   uid_t uid;
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_bulkexist");
+  strncpy (func, "Cns_bulkexist", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

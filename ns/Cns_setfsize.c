@@ -33,7 +33,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_setfsize");
+  strncpy (func, "Cns_setfsize", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -102,7 +102,7 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_setfsizeg");
+  strncpy (func, "Cns_setfsizeg", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -173,7 +173,7 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid,
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_setfsizecs");
+  strncpy (func, "Cns_setfsizecs", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

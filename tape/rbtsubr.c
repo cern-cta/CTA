@@ -548,7 +548,7 @@ int acsmountresp()
 	SEQ_NO s;
 	STATUS status;
 
-	strcpy (func, "acsmountresp");
+	strncpy (func, "acsmountresp", 16);
 	status = acs_response (0, &s, &req_id, &rtype, rbuf);
 	tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
 		 status, acs_status(status), req_id, rtype);
@@ -622,7 +622,7 @@ int wait4acsfinalresp()
 
 	if (mount_req_id == 0 && dismount_req_id == 0)
 		return (0);
-	strcpy (func, "wait4acsfinalr");
+	strncpy (func, "wait4acsfinalr", 16);
 	do {
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
 		tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 

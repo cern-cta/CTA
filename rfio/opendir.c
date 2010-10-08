@@ -162,10 +162,10 @@ RDIR *rfio_opendir_ext(char *dirpath,
   }
   if ((hp = gethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){
     strncpy(rdp->host, (char *)inet_ntoa(to.sin_addr), RESHOSTNAMELEN );
-  }
-  else    {
+  } else {
     strncpy(rdp->host,hp->h_name, RESHOSTNAMELEN );
   }
+  rdp->host[RESHOSTNAMELEN-1] = 0;
 
 
   if ( !rt && !rdp->mapping ) {

@@ -26,7 +26,7 @@ Cns_modifygrpmap(gid_t gid, char *newname)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_modifygrpmap");
+  strncpy (func, "Cns_modifygrpmap", 17);
   if (Cns_apiinit (&thip))
     return (-1);
 

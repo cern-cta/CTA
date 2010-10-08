@@ -27,7 +27,7 @@ int vmgr_modifylibrary(const char *library_name, int capacity, int status)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_modifylibrary");
+        strncpy (func, "vmgr_modifylibrary", 19);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

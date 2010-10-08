@@ -52,7 +52,7 @@ int Ctape_label(char *path,
 	char *tempnam();
 	uid_t uid;
 
-	strcpy (func, "Ctape_label");
+	strncpy (func, "Ctape_label", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

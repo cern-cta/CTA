@@ -35,7 +35,7 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp, int fseq)
   uid_t uid;
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_listtape");
+  strncpy (func, "Cns_listtape", 16);
   if (Cns_apiinit (&thip))
     return (NULL);
   Cns_getid(&uid, &gid);

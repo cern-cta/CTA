@@ -28,7 +28,7 @@ Cns_deleteclass(char *server, int classid, char *class_name)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_deleteclass");
+  strncpy (func, "Cns_deleteclass", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

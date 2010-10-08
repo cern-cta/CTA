@@ -26,7 +26,7 @@ int vmgr_reclaim(const char *vid)
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
-        strcpy (func, "vmgr_reclaim");
+        strncpy (func, "vmgr_reclaim", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

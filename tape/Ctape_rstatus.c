@@ -31,7 +31,7 @@ int Ctape_rstatus(char *host,
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
-	strcpy (func, "Ctape_rstatus");
+	strncpy (func, "Ctape_rstatus", 16);
 	uid = getuid();
 	gid = getgid();
  

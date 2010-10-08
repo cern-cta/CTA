@@ -108,7 +108,7 @@ int exp_get_from_conf (int req_type,
 	int err;
 	int found;
 	
-	strcpy(func, "exp_get_from_conf");
+	strncpy(func, "exp_get_from_conf", 32);
 	
 	if ((p = getenv("EXPERT_CONFIG")) || (p = getconfent ("EXPERT", "CONFIG", 0))) {
 		strncpy (filename, p, CA_MAXPATHLEN);
@@ -193,7 +193,7 @@ int exp_srv_execute(int req_type,
 	int i, c;
 	char wdir[CA_MAXPATHLEN + 1];
 
-	strcpy (func, "exp_srv_execute");
+	strncpy (func, "exp_srv_execute", 18);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);

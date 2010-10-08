@@ -39,7 +39,7 @@ int send2expert(int *socketp,
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 
-	strcpy (func, "send2expert");
+	strncpy (func, "send2expert", 16);
 
 	/* Get the server */
     

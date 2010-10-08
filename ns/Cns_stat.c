@@ -36,7 +36,7 @@ Cns_lstat(const char *path, struct Cns_filestat *statbuf)
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_lstat");
+  strncpy (func, "Cns_lstat", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -111,7 +111,7 @@ Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filesta
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_stat");
+  strncpy (func, "Cns_stat", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -223,7 +223,7 @@ Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_files
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_statcs");
+  strncpy (func, "Cns_statcs", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -310,7 +310,7 @@ Cns_statg(const char *path, const char *guid, struct Cns_filestatg *statbuf)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_statg");
+  strncpy (func, "Cns_statg", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

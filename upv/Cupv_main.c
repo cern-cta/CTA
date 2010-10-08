@@ -41,7 +41,7 @@ struct Cupv_srv_thread_info *cupv_srv_thread_info;
 
 void Cupv_signal_handler(int sig)
 {
-  strcpy (func, "Cupv_serv");
+  strncpy (func, "Cupv_serv", 16);
   if (sig == SIGINT) {
     Cupvlogit(func, "Caught SIGINT, immediate stop\n");
     exit(0);
@@ -75,7 +75,7 @@ int Cupv_main(struct main_args *main_args)
   struct timeval timeval;
 
   jid = getpid();
-  strcpy (func, "Cupv_serv");
+  strncpy (func, "Cupv_serv", 16);
   cupvconfigfile[0] = '\0';
 
   /* process command line options if any */

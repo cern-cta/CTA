@@ -30,7 +30,7 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
   uid_t uid;
   int lensrc, lentgt;
 
-  strcpy (func, "Cupv_check");
+  strncpy (func, "Cupv_check", 16);
   if (Cupv_apiinit (&thip))
     return (-1);
   uid = geteuid();

@@ -36,7 +36,7 @@ Cns_opendirxg(char *host, const char *path, const char *guid)
   char sendbuf[REQBUFSZ];
   uid_t uid;
 
-  strcpy (func, "Cns_opendir");
+  strncpy (func, "Cns_opendir", 16);
   if (Cns_apiinit (&thip))
     return (NULL);
   Cns_getid(&uid, &gid);

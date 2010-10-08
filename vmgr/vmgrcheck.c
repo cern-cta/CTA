@@ -25,7 +25,7 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
 	struct vmgr_tape_info tape_info;
 	char vmgrdgn[CA_MAXDGNLEN+1];
 
-	strcpy (func, "vmgrcheck");
+	strncpy (func, "vmgrcheck", 16);
 	while (vmgr_querytape (vid, 0, &tape_info, vmgrdgn) < 0) {
 		if (serrno == ENOENT) {
 			return (ETVUNKN);

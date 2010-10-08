@@ -30,7 +30,7 @@ Cns_dropsegs(const char *path, struct Cns_fileid *file_uniqueid) {
   char server[CA_MAXHOSTNAMELEN+1];
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_dropsegs");
+  strncpy (func, "Cns_dropsegs", 16);
   if (Cns_apiinit (&thip)) {
     return (-1);
   }

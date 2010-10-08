@@ -27,7 +27,7 @@ int vmgr_deletetape(const char *vid)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_deletetape");
+        strncpy (func, "vmgr_deletetape", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

@@ -334,10 +334,10 @@ int rfio_open_ext(char    * filepath,
   }
   if ((hp = gethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){
     strncpy(rfp->host, (char *)inet_ntoa(to.sin_addr), RESHOSTNAMELEN );
-  }
-  else    {
+  } else {
     strncpy(rfp->host,hp->h_name, RESHOSTNAMELEN );
   }
+  rfp->host[RESHOSTNAMELEN-1] = 0;
 
 
   if ( !rt && !rfp->mapping ) {
@@ -380,7 +380,7 @@ int rfio_open_ext(char    * filepath,
     syslog(LOG_ALERT, "rfio: open: setsockopt(SO_KEEPALIVE): %s", strerror(errno));
   }
 
-  if ( (p = getenv("RFIO_TCP_NODELAY")) != NULL ) {
+  if ( getenv("RFIO_TCP_NODELAY") != NULL ) {
     rcode = 1;
     TRACE(2,"rfio","rfio_open: setsockopt(IPPROTO_TCP,TCP_NODELAY)");
     if ( setsockopt(rfp->s,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {

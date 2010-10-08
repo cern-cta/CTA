@@ -27,7 +27,7 @@ int vmgr_deletemodel(const char *model, char *media_letter)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_deletemodel");
+        strncpy (func, "vmgr_deletemodel", 17);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

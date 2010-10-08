@@ -32,7 +32,7 @@ int Ctape_rls(char *path,
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
  
-	strcpy (func, "Ctape_rls");
+	strncpy (func, "Ctape_rls", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

@@ -27,7 +27,7 @@ int vmgr_deletepool(const char *pool_name)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_deletepool");
+        strncpy (func, "vmgr_deletepool", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

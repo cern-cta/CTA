@@ -86,7 +86,7 @@ int Cns_delete_class_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_class_entry");
+  strncpy (func, "Cns_delete_class_entry", 23);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_class_metadata WHERE ROWID = :rowid_value;
   switch (sqlca.sqlcode) {
@@ -109,7 +109,7 @@ int Cns_delete_fmd_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_fmd_entry");
+  strncpy (func, "Cns_delete_fmd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_file_metadata WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -127,7 +127,7 @@ int Cns_delete_lnk_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_lnk_entry");
+  strncpy (func, "Cns_delete_lnk_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_symlinks WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -145,7 +145,7 @@ int Cns_delete_smd_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_smd_entry");
+  strncpy (func, "Cns_delete_smd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_seg_metadata WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -163,7 +163,7 @@ int Cns_delete_tppool_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_tppool_entry");
+  strncpy (func, "Cns_delete_tppool_entry", 24);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_tp_pool WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -181,7 +181,7 @@ int Cns_delete_umd_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_umd_entry");
+  strncpy (func, "Cns_delete_umd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_user_metadata WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -234,7 +234,7 @@ int Cns_get_class_by_id(dbfd, classid, class_entry, lock, rec_addr)
     WHERE classid = :classid
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_class_by_id");
+  strncpy (func, "Cns_get_class_by_id", 20);
   if (lock) {
     EXEC SQL OPEN classid_cursor4upd;
     if (sqlca.sqlcode) {
@@ -312,7 +312,7 @@ int Cns_get_class_by_name(dbfd, class_name, class_entry, lock, rec_addr)
     WHERE name = :class_name
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_class_by_name");
+  strncpy (func, "Cns_get_class_by_name", 22);
   if (lock) {
     EXEC SQL OPEN classname_cursor4upd;
     if (sqlca.sqlcode) {
@@ -396,7 +396,7 @@ int Cns_get_fmd_by_fileid(dbfd, fileid, fmd_entry, lock, rec_addr)
     WHERE fileid = TO_NUMBER(:fileid_str)
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_fmd_by_fileid");
+  strncpy (func, "Cns_get_fmd_by_fileid", 22);
   (void) u64tostr (fileid, fileid_str, -1);
   if (lock) {
     EXEC SQL OPEN fmd_fileid_cursor4upd;
@@ -501,7 +501,7 @@ int Cns_get_fmd_by_fullid(dbfd, parent_fileid, name, fmd_entry, lock, rec_addr)
     AND name = :name
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_fmd_by_fullid");
+  strncpy (func, "Cns_get_fmd_by_fullid", 22);
   (void) u64tostr (parent_fileid, parent_fileid_str, -1);
   if (lock) {
     EXEC SQL OPEN fmd_fullid_cursor4upd;
@@ -603,7 +603,7 @@ int Cns_get_fmd_by_guid(dbfd, guid, fmd_entry, lock, rec_addr)
     WHERE guid = :guid
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_fmd_by_guid");
+  strncpy (func, "Cns_get_fmd_by_guid", 20);
   if (lock) {
     EXEC SQL OPEN fmd_guid_cursor4upd;
     if (sqlca.sqlcode) {
@@ -701,7 +701,7 @@ int Cns_get_fmd_by_pfid(dbfd, bod, parent_fileid, fmd_entry, getattr, endlist, d
     WHERE parent_fileid = TO_NUMBER(:parent_fileid_str)
     ORDER BY name;
 
-  strcpy (func, "Cns_get_fmd_by_pfid");
+  strncpy (func, "Cns_get_fmd_by_pfid", 20);
   if (endlist)
     return (1);
   (void) u64tostr (parent_fileid, parent_fileid_str, -1);
@@ -778,7 +778,7 @@ int Cns_get_lnk_by_fileid(dbfd, fileid, lnk_entry, lock, rec_addr)
     WHERE fileid = TO_NUMBER(:fileid_str)
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_lnk_by_fileid");
+  strncpy (func, "Cns_get_lnk_by_fileid", 22);
   (void) u64tostr (fileid, fileid_str, -1);
   if (lock) {
     EXEC SQL OPEN lnk_fileid_cursor4upd;
@@ -827,7 +827,7 @@ int Cns_getpath_by_fileid (dbfd, fileid, path)
     SELECT getPathForFileid(:fileid_str)
     FROM Dual;
 
-  strcpy (func, "Cns_getpath");
+  strncpy (func, "Cns_getpath", 19);
   (void) u64tostr (fileid, fileid_str, -1);
   EXEC SQL OPEN getpath_cursor;
   if (sqlca.sqlcode) {
@@ -866,7 +866,7 @@ int Cns_get_max_copyno (dbfd, fileid, copyno)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str);
 
-  strcpy (func, "Cns_get_max_copyno");
+  strncpy (func, "Cns_get_max_copyno", 19);
   (void) u64tostr (fileid, fileid_str, -1);
   EXEC SQL OPEN max_copyno_cursor;
   if (sqlca.sqlcode) {
@@ -936,7 +936,7 @@ int Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, 
     AND copyno = :copyno
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_smd_by_copyno");
+  strncpy (func, "Cns_get_smd_by_copyno", 22);
 
   if (endlist)
     return (1);
@@ -1019,7 +1019,7 @@ int Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
     AND copyno = :copyno AND fsec = :fsec
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_smd_by_fullid");
+  strncpy (func, "Cns_get_smd_by_fullid", 22);
   (void) u64tostr (fileid, fileid_str, -1);
   if (lock) {
     EXEC SQL OPEN smd_fullid_cursor4upd;
@@ -1097,7 +1097,7 @@ int Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, d
     ORDER BY copyno, fsec
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_smd_by_pfid");
+  strncpy (func, "Cns_get_smd_by_pfid", 20);
   if (endlist)
     return (1);
   (void) u64tostr (fileid, fileid_str, -1);
@@ -1149,7 +1149,7 @@ int Cns_get_smd_copy_count_by_pfid(dbfd, fileid, count)
   char func[31];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_get_smd_copy_count_by_pfid");
+  strncpy (func, "Cns_get_smd_copy_count_by_pfid", 31);
   EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
     FROM Cns_seg_metadata
     WHERE s_fileid = :fileid;
@@ -1189,7 +1189,7 @@ int Cns_get_last_smd_by_vid(dbfd, vid, side, smd_entry)
                 AND side = :side
 		);
 
-  strcpy (func, "Cns_get_last_smd_by_vid");
+  strncpy (func, "Cns_get_last_smd_by_vid", 24);
   EXEC SQL OPEN last_smd_vid_cursor;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
@@ -1224,7 +1224,7 @@ int Cns_count_long_ops(dbfd, count, backup)
 {
   char func[20];
 
-  strcpy (func, "Cns_count_long_ops");
+  strncpy (func, "Cns_count_long_ops", 20);
   if (backup) {
     EXEC SQL SELECT COUNT(*) INTO :*count
       FROM V$SESSION_LONGOPS
@@ -1267,7 +1267,7 @@ int Cns_check_files_exist(dbfd, fileIds, nbFileIds)
   for (i = 0; i < *nbFileIds; i++) {
     dfileIds[i] = fileIds[i];
   }
-  strcpy (func, "Cns_check_files_exist");
+  strncpy (func, "Cns_check_files_exist", 22);
 
   /* check existence */
   EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_exist_tmp VALUES (:dfileIds);
@@ -1314,7 +1314,8 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
   int exists = 0;
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_get_tapesum_by_vid");
+  strncpy (func, "Cns_get_tapesum_by_vid", 23);
+
   if (filter == 1) {
     EXEC SQL SELECT TO_CHAR(COUNT(*)), 
                     TO_CHAR(NVL(SUM(segsize), 0)),
@@ -1394,7 +1395,7 @@ int Cns_get_smd_by_vid(dbfd, bov, vid, fseq, smd_entry, endlist, dblistptr)
     AND fseq = :fseq
     ORDER BY side, fseq;
 
-  strcpy (func, "Cns_get_smd_by_vid");
+  strncpy (func, "Cns_get_smd_by_vid", 19);
   if (endlist)
     return (1);
   if (bov) {
@@ -1467,7 +1468,7 @@ int Cns_get_tppool_by_cid(dbfd, bol, classid, tppool_entry, lock, rec_addr, endl
     WHERE classid = :classid
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_tppool_by_cid");
+  strncpy (func, "Cns_get_tppool_by_cid", 22);
   if (endlist)
     return (1);
   if (lock) {
@@ -1527,7 +1528,7 @@ int Cns_get_umd_by_fileid(dbfd, fileid, umd_entry, lock, rec_addr)
     WHERE u_fileid = TO_NUMBER(:fileid_str)
     FOR UPDATE;
 
-  strcpy (func, "Cns_get_umd_by_fileid");
+  strncpy (func, "Cns_get_umd_by_fileid", 22);
   (void) u64tostr (fileid, fileid_str, -1);
   if (lock) {
     EXEC SQL OPEN umd_fileid_cursor4upd;
@@ -1568,7 +1569,7 @@ int Cns_insert_class_entry(dbfd, class_entry)
   char func[23];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_class_entry");
+  strncpy (func, "Cns_insert_class_entry", 23);
   EXEC SQL INSERT INTO Cns_class_metadata
     (CLASSID, NAME,
      OWNER_UID, GID,
@@ -1615,7 +1616,7 @@ int Cns_insert_fmd_entry(dbfd, fmd_entry)
 
   // handle the case of NULL fileclasses
   if (0 == fmd_entry->fileclass) fileclass_indicator = -1;
-  strcpy (func, "Cns_insert_fmd_entry");
+  strncpy (func, "Cns_insert_fmd_entry", 21);
   (void) u64tostr (fmd_entry->fileid, fileid_str, -1);
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
   (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
@@ -1660,7 +1661,7 @@ int Cns_insert_lnk_entry(dbfd, lnk_entry)
   char func[21];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_lnk_entry");
+  strncpy (func, "Cns_insert_lnk_entry", 21);
   (void) u64tostr (lnk_entry->fileid, fileid_str, -1);
   EXEC SQL INSERT INTO Cns_symlinks
     (FILEID, LINKNAME)
@@ -1693,7 +1694,7 @@ int Cns_insert_smd_entry(dbfd, smd_entry)
   struct sqlca sqlca;
   EXEC SQL VAR smd_entry->blockid IS RAW(4);
 
-  strcpy (func, "Cns_insert_smd_entry");
+  strncpy (func, "Cns_insert_smd_entry", 21);
   (void) u64tostr (smd_entry->s_fileid, fileid_str, -1);
   (void) u64tostr (smd_entry->segsize, segsize_str, -1);
   EXEC SQL INSERT INTO Cns_seg_metadata
@@ -1758,7 +1759,7 @@ int Cns_insert_tppool_entry(dbfd, tppool_entry)
   char func[24];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_tppool_entry");
+  strncpy (func, "Cns_insert_tppool_entry", 24);
   EXEC SQL INSERT INTO Cns_tp_pool
     (CLASSID, TAPE_POOL)
     VALUES
@@ -1788,7 +1789,7 @@ int Cns_insert_umd_entry(dbfd, umd_entry)
   char func[21];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_umd_entry");
+  strncpy (func, "Cns_insert_umd_entry", 21);
   (void) u64tostr (umd_entry->u_fileid, fileid_str, -1);
   EXEC SQL INSERT INTO Cns_user_metadata
     (U_FILEID, COMMENTS)
@@ -1832,7 +1833,7 @@ int Cns_list_class_entry(dbfd, bol, class_entry, endlist, dblistptr)
     FROM Cns_class_metadata
     ORDER BY classid;
 
-  strcpy (func, "Cns_list_class_entry");
+  strncpy (func, "Cns_list_class_entry", 21);
   if (endlist)
     return (1);
   if (bol) {
@@ -1878,7 +1879,7 @@ int Cns_list_lnk_entry(dbfd, bol, linkname, lnk_entry, endlist, dblistptr)
     FROM Cns_symlinks
     WHERE linkname = :linkname;
 
-  strcpy (func, "Cns_list_lnk_entry");
+  strncpy (func, "Cns_list_lnk_entry", 19);
   if (endlist)
     return (1);
   if (bol) {
@@ -1918,7 +1919,7 @@ int Cns_opendb(dbfd)
   char *p;
   FILE *fp;
 
-  strcpy (func, "Cns_opendb");
+  strncpy (func, "Cns_opendb", 16);
   EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
 
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
@@ -2008,7 +2009,7 @@ int Cns_unique_id(dbfd, unique_id)
   struct sqlca sqlca;
   char uniqueid_str[21];
 
-  strcpy (func, "Cns_unique_id");
+  strncpy (func, "Cns_unique_id", 16);
   EXEC SQL SELECT TO_CHAR(Cns_unique_id.NEXTVAL) INTO :uniqueid_str FROM DUAL;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "NEXTVAL", dbfd, &sqlca);
@@ -2027,7 +2028,7 @@ int Cns_update_class_entry(dbfd, rec_addr, class_entry)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_update_class_entry");
+  strncpy (func, "Cns_update_class_entry", 23);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL UPDATE Cns_class_metadata SET
     NAME	= :class_entry->name,
@@ -2065,7 +2066,7 @@ int Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
   // handle the case of NULL fileclasses
   if ((0 == fmd_entry->fileclass) && (schemaversion >= 2190))
     fileclass_indicator = -1;
-  strcpy (func, "Cns_update_fmd_entry");
+  strncpy (func, "Cns_update_fmd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
   (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
@@ -2110,7 +2111,7 @@ int Cns_update_smd_entry(dbfd, rec_addr, smd_entry)
   struct sqlca sqlca;
   EXEC SQL VAR smd_entry->blockid IS RAW(4);
 
-  strcpy (func, "Cns_update_smd_entry");
+  strncpy (func, "Cns_update_smd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (smd_entry->segsize, segsize_str, -1);
   EXEC SQL UPDATE Cns_seg_metadata SET
@@ -2140,7 +2141,7 @@ int Cns_update_umd_entry(dbfd, rec_addr, umd_entry)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_update_umd_entry");
+  strncpy (func, "Cns_update_umd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL UPDATE Cns_user_metadata SET
     COMMENTS = :umd_entry->comments
@@ -2162,7 +2163,7 @@ int Cns_delete_group_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_group_entry");
+  strncpy (func, "Cns_delete_group_entry", 23);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_groupinfo WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -2180,7 +2181,7 @@ int Cns_delete_user_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_delete_user_entry");
+  strncpy (func, "Cns_delete_user_entry", 22);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_userinfo WHERE ROWID = :rowid_value;
   if (sqlca.sqlcode) {
@@ -2207,7 +2208,7 @@ int Cns_get_grpinfo_by_gid(dbfd, gid, group_entry, lock, rec_addr)
     SELECT ROWID, GID, GROUPNAME FROM Cns_groupinfo
     WHERE gid = :gid FOR UPDATE;
 
-  strcpy (func, "Cns_get_grpinfo_by_gid");
+  strncpy (func, "Cns_get_grpinfo_by_gid", 23);
   if (lock) {
     EXEC SQL OPEN group_id_cursor4upd;
     if (sqlca.sqlcode) {
@@ -2257,7 +2258,7 @@ int Cns_get_grpinfo_by_name(dbfd, name, group_entry, lock, rec_addr)
     SELECT ROWID, GID, GROUPNAME FROM Cns_groupinfo
     WHERE groupname = :name FOR UPDATE;
 
-  strcpy (func, "Cns_get_grpinfo_by_name");
+  strncpy (func, "Cns_get_grpinfo_by_name", 24);
   if (lock) {
     EXEC SQL OPEN group_name_cursor4upd;
     if (sqlca.sqlcode) {
@@ -2307,7 +2308,7 @@ int Cns_get_usrinfo_by_name(dbfd, name, user_entry, lock, rec_addr)
     SELECT ROWID, USERID, USERNAME FROM Cns_userinfo
     WHERE username = :name FOR UPDATE;
 
-  strcpy (func, "Cns_get_usrinfo_by_name");
+  strncpy (func, "Cns_get_usrinfo_by_name", 24);
   if (lock) {
     EXEC SQL OPEN user_name_cursor4upd;
     if (sqlca.sqlcode) {
@@ -2357,7 +2358,7 @@ int Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
     SELECT ROWID, USERID, USERNAME FROM Cns_userinfo
     WHERE userid = :uid FOR UPDATE;
 
-  strcpy (func, "Cns_get_usrinfo_by_uid");
+  strncpy (func, "Cns_get_usrinfo_by_uid", 23);
   if (lock) {
     EXEC SQL OPEN user_id_cursor4upd;
     if (sqlca.sqlcode) {
@@ -2397,7 +2398,7 @@ int Cns_insert_group_entry(dbfd, group_entry)
   char func[23];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_group_entry");
+  strncpy (func, "Cns_insert_group_entry", 23);
   EXEC SQL INSERT INTO Cns_groupinfo (GID, GROUPNAME)
     VALUES (:group_entry->gid, :group_entry->groupname);
   switch (sqlca.sqlcode) {
@@ -2424,7 +2425,7 @@ int Cns_insert_user_entry(dbfd, user_entry)
   char func[22];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_insert_user_entry");
+  strncpy (func, "Cns_insert_user_entry", 22);
   EXEC SQL INSERT INTO Cns_userinfo (USERID, USERNAME)
     VALUES (:user_entry->userid, :user_entry->username);
   switch (sqlca.sqlcode) {
@@ -2453,7 +2454,7 @@ int Cns_unique_gid(dbfd, unique_id)
   struct sqlca sqlca;
   unsigned int uniqueid;
 
-  strcpy (func, "Cns_unique_gid");
+  strncpy (func, "Cns_unique_gid", 16);
   (void) Cthread_mutex_lock (&oneuniquegid);
   EXEC SQL SELECT ID INTO :uniqueid FROM Cns_unique_gid FOR UPDATE;
   switch (sqlca.sqlcode) {
@@ -2494,7 +2495,7 @@ int Cns_unique_uid(dbfd, unique_id)
   struct sqlca sqlca;
   unsigned int uniqueid;
 
-  strcpy (func, "Cns_unique_uid");
+  strncpy (func, "Cns_unique_uid", 16);
   (void) Cthread_mutex_lock (&oneuniqueuid);
   EXEC SQL SELECT ID INTO :uniqueid FROM Cns_unique_uid FOR UPDATE;
   switch (sqlca.sqlcode) {
@@ -2535,7 +2536,7 @@ int Cns_update_group_entry(dbfd, rec_addr, group_entry)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_update_group_entry");
+  strncpy (func, "Cns_update_group_entry", 23);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL UPDATE Cns_groupinfo SET
     GROUPNAME = :group_entry->groupname
@@ -2555,7 +2556,7 @@ int Cns_update_unique_gid(dbfd, unique_id)
   struct sqlca sqlca;
   unsigned int uniqueid;
 
-  strcpy (func, "Cns_update_unique_gid");
+  strncpy (func, "Cns_update_unique_gid", 22);
   (void) Cthread_mutex_lock (&oneuniquegid);
   EXEC SQL SELECT ID INTO :uniqueid FROM Cns_unique_gid FOR UPDATE;
   switch (sqlca.sqlcode) {
@@ -2594,7 +2595,7 @@ int Cns_update_unique_uid(dbfd, unique_id)
   struct sqlca sqlca;
   unsigned int uniqueid;
 
-  strcpy (func, "Cns_update_unique_uid");
+  strncpy (func, "Cns_update_unique_uid", 22);
   (void) Cthread_mutex_lock (&oneuniqueuid);
   EXEC SQL SELECT ID INTO :uniqueid FROM Cns_unique_uid FOR UPDATE;
   switch (sqlca.sqlcode) {
@@ -2634,7 +2635,7 @@ int Cns_update_user_entry(dbfd, rec_addr, user_entry)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cns_update_user_entry");
+  strncpy (func, "Cns_update_user_entry", 22);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL UPDATE Cns_userinfo SET
     USERNAME = :user_entry->username

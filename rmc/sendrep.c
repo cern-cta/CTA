@@ -25,7 +25,7 @@ int sendrep(int rpfd, int rep_type, ...)
 	char repbuf[REPBUFSZ];
 	int repsize;
 
-	strcpy (func, "sendrep");
+	strncpy (func, "sendrep", 16);
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
 	va_start (args, rep_type);

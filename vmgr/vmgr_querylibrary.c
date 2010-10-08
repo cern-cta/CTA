@@ -30,7 +30,7 @@ int vmgr_querylibrary(const char *library_name, int *capacity, int *nb_free_slot
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_querylibrary");
+        strncpy (func, "vmgr_querylibrary", 18);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

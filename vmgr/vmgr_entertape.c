@@ -26,7 +26,7 @@ int vmgr_entertape(const char *vid, char *vsn, char *library, char *density, cha
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_entertape");
+        strncpy (func, "vmgr_entertape", 15);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

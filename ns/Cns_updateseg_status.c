@@ -28,7 +28,7 @@ Cns_updateseg_status(char *server, u_signed64 fileid, struct Cns_segattrs *oldse
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_updateseg_status");
+  strncpy (func, "Cns_updateseg_status", 21);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

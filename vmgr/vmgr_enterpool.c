@@ -27,7 +27,7 @@ int vmgr_enterpool(const char *pool_name, uid_t pool_user, gid_t pool_group)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_enterpool");
+        strncpy (func, "vmgr_enterpool", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

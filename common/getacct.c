@@ -73,7 +73,7 @@ char *resbuf;
      */
 
     if (cprv != NULL) {
-        if ((rv = strtok(cprv, COLON_STR)) != NULL) {
+        if (strtok(cprv, COLON_STR) != NULL) {
             if ((rv = strtok((char *)NULL, COLON_STR)) != NULL) {
                 strcpy(resbuf, rv);
                 return(resbuf);

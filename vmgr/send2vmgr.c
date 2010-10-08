@@ -49,7 +49,7 @@ int send2vmgr(int *socketp,
 	int secure_connection = 0;
 #endif
 
-	strcpy (func, "send2vmgr");
+	strncpy (func, "send2vmgr", 16);
 #ifdef VMGRCSEC
 	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif

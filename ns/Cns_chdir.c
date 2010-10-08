@@ -32,7 +32,7 @@ Cns_chdir(const char *path)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_chdir");
+  strncpy (func, "Cns_chdir", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

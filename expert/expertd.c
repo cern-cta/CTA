@@ -56,7 +56,7 @@ int expertd_main() {
 	char prtbuf[256];
 
 	jid = getpid();
-	strcpy (func, "expertd");
+	strncpy (func, "expertd", 16);
 	explogit (func, "started\n");
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (strchr (localhost, '.') == NULL) {

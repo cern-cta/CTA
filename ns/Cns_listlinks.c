@@ -37,7 +37,7 @@ Cns_listlinks(const char *path, const char *guid, int flags, Cns_list *listp)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_listlinks");
+  strncpy (func, "Cns_listlinks", 16);
   if (Cns_apiinit (&thip))
     return (NULL);
   Cns_getid(&uid, &gid);

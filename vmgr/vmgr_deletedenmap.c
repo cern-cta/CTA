@@ -27,7 +27,7 @@ int vmgr_deletedenmap(const char *model, char *media_letter, char *density)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_deletedenmap");
+        strncpy (func, "vmgr_deletedenmap", 18);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

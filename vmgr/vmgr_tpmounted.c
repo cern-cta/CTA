@@ -26,7 +26,7 @@ int vmgr_tpmounted(const char *vid, int mode, int jid)
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
-        strcpy (func, "vmgr_tpmounted");
+        strncpy (func, "vmgr_tpmounted", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

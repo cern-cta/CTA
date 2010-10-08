@@ -28,7 +28,7 @@ int Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
   uid_t uid;
   int lensrc, lentgt, lennewsrc, lennewtgt;
 
-  strcpy (func, "Cupv_modify");
+  strncpy (func, "Cupv_modify", 16);
   if (Cupv_apiinit (&thip))
     return (-1);
   uid = geteuid();

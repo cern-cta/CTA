@@ -31,7 +31,7 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_replacetapecopy");
+  strncpy (func, "Cns_replacetapecopy", 20);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

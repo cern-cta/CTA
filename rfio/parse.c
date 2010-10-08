@@ -107,7 +107,7 @@ static int rfio_parseln_old(char    *name,
                             char    **path,
                             int    ln)  /* solve links or not ? */
 {
-  char    *cp1, *cp2, *cp3;
+  char    *cp1, *cp2;
   register int i;
   char localhost[CA_MAXHOSTNAMELEN+1];
   char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
@@ -182,7 +182,7 @@ static int rfio_parseln_old(char    *name,
             }  else  {
               /* Host name is NOT like XXXX:/YYYYY */
               if (strchr(buffer,'$') != NULL &&
-                  (cp3 = (char *)strchr(buffer,':')) != NULL ) {
+                  ((char *)strchr(buffer,':')) != NULL ) {
                 /* This is a VMS syntax ! */
                 strcpy(buffer1,buffer);
               }
@@ -207,6 +207,7 @@ static int rfio_parseln_old(char    *name,
     /* Host name is NOT like XXXX:/YYYYY */
     /* The other case: it contains ":/". So we a sure that a strchr() of character "/" will not */
     /* return NULL - we then demand that there is no other "/" character before the one at cp1+1... */
+    char *cp3;
     cp1 = name_1;
     if ( strchr(name_1,'$') != NULL && (cp3=(char *)strchr(name_1,':')) != NULL ) {
       /* This is a VMS syntax ! */

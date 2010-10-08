@@ -31,7 +31,7 @@ int Ctape_config(char *unm,
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
  
-	strcpy (func, "Ctape_config");
+	strncpy (func, "Ctape_config", 16);
 	uid = getuid();
 	gid = getgid();
 

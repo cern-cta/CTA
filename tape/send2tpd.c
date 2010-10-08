@@ -52,7 +52,7 @@ int send2tpd(char *host,
 	int secure_connection = 0;
 #endif
 
-	strcpy (func, "send2tpd");
+	strncpy (func, "send2tpd", 16);
 #ifdef TPCSEC
 	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif

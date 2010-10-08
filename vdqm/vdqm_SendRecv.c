@@ -850,7 +850,6 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     char servername[CA_MAXHOSTNAMELEN+1];
     char *p;
     struct sockaddr_in from;
-    struct hostent *hp;
     socklen_t fromlen;
     int magic,reqtype,len,local_access; 
     int rc;
@@ -933,8 +932,8 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
 #endif /* VDQMSERV */
         return(-1);
     } 
-    if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
-        from.sin_family)) == NULL ) {
+    if ( Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
+        from.sin_family) == NULL ) {
 #if defined(VDQMSERV)
         log(LOG_ERR,
            "vdqm_RecvVolPriority_Transfer(): Cgethostbyaddr() h_errno=%d, %s\n",
@@ -1140,7 +1139,6 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     char servername[CA_MAXHOSTNAMELEN+1];
     char *p;
     struct sockaddr_in from;
-    struct hostent *hp;
     socklen_t fromlen;
     int magic,reqtype,len,local_access; 
     int rc;
@@ -1228,7 +1226,7 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
 #endif /* VDQMSERV */
           return(-1);
         } 
-        if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),from.sin_family)) == NULL ) {
+        if ( Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),from.sin_family) == NULL ) {
 #if defined(VDQMSERV)
           log(LOG_ERR,"vdqm_AggregatorVolReq_Transfer(): Cgethostbyaddr() h_errno=%d, %s\n",
               h_errno,neterror());

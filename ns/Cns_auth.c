@@ -38,7 +38,7 @@ int Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *
 
   char func[30];
   struct Cns_api_thread_info *thip;
-  strcpy (func, "Cns_client_setAuthorizationId");
+  strncpy (func, "Cns_client_setAuthorizationId", 30);
   if (Cns_apiinit (&thip))
     return (-1);
   thip->Csec_uid = uid;
@@ -78,7 +78,7 @@ int Cns_setid(uid_t uid,
   char func[16];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_setid");
+  strncpy (func, "Cns_setid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   thip->uid = uid;
@@ -97,7 +97,7 @@ int Cns_unsetid()
   char func[16];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_unsetid");
+  strncpy (func, "Cns_unsetid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   thip->uid = 0;
@@ -126,7 +126,7 @@ static int Cns_getid_ext(uid_t *uid,
   char func[16];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getid");
+  strncpy (func, "Cns_getid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

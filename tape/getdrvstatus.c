@@ -16,7 +16,7 @@ int chkdriveready(int tapefd)
 	char func[16];
 	struct mtget mt_info;
 
-	strcpy (func, "chkdriveready");
+	strncpy (func, "chkdriveready", 16);
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", strerror(errno));
 		serrno = errno;
@@ -33,7 +33,7 @@ int chkwriteprot(int tapefd)
 	char func[16];
 	struct mtget mt_info;
 
-	strcpy (func, "chkwriteprot");
+	strncpy (func, "chkwriteprot", 16);
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", strerror(errno));
 		serrno = errno;

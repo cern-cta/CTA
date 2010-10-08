@@ -30,7 +30,7 @@ Cns_chown(const char *path, uid_t new_uid, gid_t new_gid)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_chown");
+  strncpy (func, "Cns_chown", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
@@ -89,7 +89,7 @@ Cns_lchown(const char *path, uid_t new_uid, gid_t new_gid)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_chown");
+  strncpy (func, "Cns_chown", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

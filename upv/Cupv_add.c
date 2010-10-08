@@ -27,7 +27,7 @@ int Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, i
   uid_t uid;
   int lensrc, lentgt;
 
-  strcpy (func, "Cupv_add");
+  strncpy (func, "Cupv_add", 16);
   if (Cupv_apiinit (&thip))
     return (-1);
   uid = geteuid();

@@ -29,7 +29,7 @@ Cns_getgrpbynam(char *groupname, gid_t *gid)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getgrpbynam");
+  strncpy (func, "Cns_getgrpbynam", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

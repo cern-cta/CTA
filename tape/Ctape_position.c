@@ -55,7 +55,7 @@ int Ctape_position(char *path,
 	uid_t uid;
 	char vol1[81];
 
-	strcpy (func, "Ctape_position");
+	strncpy (func, "Ctape_position", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

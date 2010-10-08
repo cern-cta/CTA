@@ -29,7 +29,7 @@ Cns_startsess(char *server, char *comment)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_startsess");
+  strncpy (func, "Cns_startsess", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

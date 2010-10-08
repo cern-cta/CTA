@@ -44,7 +44,7 @@ struct vmgr_srv_thread_info *vmgr_srv_thread_info;
 
 void vmgr_signal_handler(int sig)
 {
-  strcpy (func, "vmgr_serv");
+  strncpy (func, "vmgr_serv", 16);
   if (sig == SIGINT) {
     vmgrlogit(func, "Caught SIGINT, immediate stop\n");
     exit(0);
@@ -79,7 +79,7 @@ int vmgr_main(struct main_args *main_args)
   struct timeval timeval;
 
   jid = getpid();
-  strcpy (func, "vmgr_serv");
+  strncpy (func, "vmgr_serv", 16);
   vmgrconfigfile[0] = '\0';
 
   /* process command line options if any */

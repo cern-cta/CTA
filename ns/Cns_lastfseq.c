@@ -34,7 +34,7 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
   uid_t uid;
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_listfseq");
+  strncpy (func, "Cns_listfseq", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

@@ -26,7 +26,7 @@ Cns_rmgrpmap(gid_t gid, char *groupname)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_rmgrpmap");
+  strncpy (func, "Cns_rmgrpmap", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

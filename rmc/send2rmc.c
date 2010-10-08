@@ -42,7 +42,7 @@ int send2rmc(char *host,
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 
-	strcpy (func, "send2rmc");
+	strncpy (func, "send2rmc", 16);
 	sin.sin_family = AF_INET;
 	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));

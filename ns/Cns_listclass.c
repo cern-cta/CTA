@@ -37,7 +37,7 @@ Cns_listclass(char *server, int flags, Cns_list *listp)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_listclass");
+  strncpy (func, "Cns_listclass", 16);
   if (Cns_apiinit (&thip))
     return (NULL);
   Cns_getid(&uid, &gid);

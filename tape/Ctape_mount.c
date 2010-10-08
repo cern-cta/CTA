@@ -54,7 +54,7 @@ int Ctape_mount(char *path,
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
-	strcpy (func, "Ctape_mount");
+	strncpy (func, "Ctape_mount", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

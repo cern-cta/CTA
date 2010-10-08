@@ -30,7 +30,7 @@ Cns_ping(char *host, char *info)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_ping");
+  strncpy (func, "Cns_ping", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

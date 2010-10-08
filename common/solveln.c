@@ -35,7 +35,7 @@ int seelink (char * path,
 	else
 		return -1 ;
 	
-	while ((cp = getcwd(stordir, MAXFILENAMSIZE-1)) == NULL && errno == ETIMEDOUT)
+	while (getcwd(stordir, MAXFILENAMSIZE-1) == NULL && errno == ETIMEDOUT)
 		sleep (60);
 	if ( chdir(storpath)  < 0 ) {
 		errno = ENOENT ;

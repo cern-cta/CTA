@@ -30,7 +30,7 @@ Cns_symlink(const char *target, const char *linkname)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_symlink");
+  strncpy (func, "Cns_symlink", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

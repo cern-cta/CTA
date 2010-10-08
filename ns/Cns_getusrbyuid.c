@@ -28,7 +28,7 @@ Cns_getusrbyuid(uid_t uid, char *username)
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getusrbyuid");
+  strncpy (func, "Cns_getusrbyuid", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

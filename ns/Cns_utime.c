@@ -31,7 +31,7 @@ Cns_utime(const char *path, struct utimbuf *times)
   uid_t uid;
   int user_specified_time = 0;
 
-  strcpy (func, "Cns_utime");
+  strncpy (func, "Cns_utime", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

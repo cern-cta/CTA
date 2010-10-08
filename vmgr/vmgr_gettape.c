@@ -32,7 +32,7 @@ int vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, c
 	u_signed64 u64;
 	uid_t uid;
 
-        strcpy (func, "vmgr_gettape");
+        strncpy (func, "vmgr_gettape", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

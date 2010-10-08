@@ -30,7 +30,7 @@ int Ctape_kill(char *path)
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
  
-	strcpy (func, "Ctape_kill");
+	strncpy (func, "Ctape_kill", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

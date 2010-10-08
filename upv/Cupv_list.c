@@ -35,7 +35,7 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
   struct Cupv_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cupv_list");
+  strncpy (func, "Cupv_list", 15);
   if (Cupv_apiinit (&thip))
     return (NULL);
   uid = geteuid();

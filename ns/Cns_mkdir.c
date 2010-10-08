@@ -30,7 +30,7 @@ Cns_mkdirg(const char *path, const char *guid, mode_t mode)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_mkdir");
+  strncpy (func, "Cns_mkdir", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

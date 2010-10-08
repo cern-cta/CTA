@@ -31,7 +31,7 @@ int Ctape_reserve(int count,
 	int totrsvd = 0;
 	uid_t uid;
 
-	strcpy (func, "Ctape_reserve");
+	strncpy (func, "Ctape_reserve", 16);
 	uid = getuid();
 	gid = getgid();
 	jid = findpgrp();

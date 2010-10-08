@@ -33,7 +33,7 @@ Cns_du(const char *path, int Lflag, u_signed64 *nbbytes, u_signed64 *nbentries)
   struct Cns_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "Cns_du");
+  strncpy (func, "Cns_du", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

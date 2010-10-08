@@ -452,6 +452,7 @@ int Csec_get_peer_service_name(Csec_context_t *ctx, int s, int service_type, cha
       return -1;
     } else {
       strncpy(domain, pos, sizeof(domain));
+      domain[sizeof(domain)-1] = 0;
     }
 
     rc =  Csec_get_service_name(ctx, service_type, hostname, domain,

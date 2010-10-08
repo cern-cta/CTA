@@ -138,7 +138,7 @@ int tpd_main() {
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
-	strcpy (func, "taped");
+	strncpy (func, "taped", 16);
 	jid = getpid();
 	tplogit (func, "started\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,

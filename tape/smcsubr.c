@@ -144,7 +144,7 @@ struct smc_element_info element_info[];
         int pause_mode = 1;
         int nretries = 0;
 
-	strcpy (func, "get_elem_info");
+	strncpy (func, "get_elem_info", 16);
 	if (type) {
 		element_size = get_element_size (fd, rbtdev, type);
 		if (element_size < 0) return (-1);

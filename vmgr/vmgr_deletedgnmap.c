@@ -27,7 +27,7 @@ int vmgr_deletedgnmap(const char *model, char *library)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_deletedgnmap");
+        strncpy (func, "vmgr_deletedgnmap", 18);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

@@ -42,7 +42,7 @@ Cns_selectsrvr(path, current_directory_server, server, actual_path)
   char *securemode;
   int securityOpt=0;
 
-  strcpy (func, "Cns_selectsrvr");
+  strncpy (func, "Cns_selectsrvr", 16);
   if (! path || ! server || ! actual_path) {
     serrno = EFAULT;
     return (-1);

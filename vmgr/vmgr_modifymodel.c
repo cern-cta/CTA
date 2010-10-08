@@ -27,7 +27,7 @@ int vmgr_modifymodel(const char *model, char *media_letter, int media_cost)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_modifymodel");
+        strncpy (func, "vmgr_modifymodel", 17);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

@@ -34,7 +34,7 @@ vmgr_listpool(int flags, vmgr_list *listp)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strcpy (func, "vmgr_listpool");
+        strncpy (func, "vmgr_listpool", 14);
         if (vmgr_apiinit (&thip))
                 return (NULL);
         uid = geteuid();

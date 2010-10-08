@@ -184,7 +184,7 @@ int Cns_srv_aborttrans(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_aborttrans");
+  strncpy (func, "Cns_srv_aborttrans", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -214,7 +214,7 @@ int Cns_srv_access(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_access");
+  strncpy (func, "Cns_srv_access", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -271,7 +271,7 @@ int Cns_srv_chclass(char *req_data,
   char *user;
   int count;
 
-  strcpy (func, "Cns_srv_chclass");
+  strncpy (func, "Cns_srv_chclass", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -376,7 +376,7 @@ int Cns_srv_chdir(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_chdir");
+  strncpy (func, "Cns_srv_chdir", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -428,7 +428,7 @@ int Cns_srv_chmod(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_chmod");
+  strncpy (func, "Cns_srv_chmod", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -502,7 +502,7 @@ int Cns_srv_chown(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_chown");
+  strncpy (func, "Cns_srv_chown", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -664,7 +664,7 @@ int Cns_srv_creat(int magic,
   char *user;
   uuid_t uuid;
 
-  strcpy (func, "Cns_srv_creat");
+  strncpy (func, "Cns_srv_creat", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -793,7 +793,7 @@ int Cns_srv_delcomment(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_delcomment");
+  strncpy (func, "Cns_srv_delcomment", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -860,7 +860,7 @@ int Cns_srv_delete(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_delete");
+  strncpy (func, "Cns_srv_delete", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -952,7 +952,7 @@ int Cns_srv_deleteclass(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_deleteclass");
+  strncpy (func, "Cns_srv_deleteclass", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1020,7 +1020,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
   Cns_dbrec_addr rec_addr;
   DBLISTPTR  dblistptr;
 
-  strcpy (func, "Cns_srv_delsegbycopyno");
+  strncpy (func, "Cns_srv_delsegbycopyno", 23);
 
   /* Extract and log common request attributes */
   rbp = req_data;
@@ -1176,7 +1176,7 @@ int Cns_srv_du(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_du");
+  strncpy (func, "Cns_srv_du", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1229,7 +1229,7 @@ int Cns_srv_endsess(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_endsess");
+  strncpy (func, "Cns_srv_endsess", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1250,7 +1250,7 @@ int Cns_srv_endtrans(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_endtrans");
+  strncpy (func, "Cns_srv_endtrans", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1278,7 +1278,7 @@ int Cns_srv_enterclass(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_enterclass");
+  strncpy (func, "Cns_srv_enterclass", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1352,7 +1352,7 @@ int Cns_srv_getacl(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getacl");
+  strncpy (func, "Cns_srv_getacl", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1423,7 +1423,7 @@ int Cns_srv_getcomment(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_getcomment");
+  strncpy (func, "Cns_srv_getcomment", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1488,7 +1488,7 @@ int Cns_srv_getlinks(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getlinks");
+  strncpy (func, "Cns_srv_getlinks", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1578,7 +1578,7 @@ int Cns_srv_getpath(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getpath");
+  strncpy (func, "Cns_srv_getpath", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1627,7 +1627,7 @@ int Cns_srv_getsegattrs(int magic,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getsegattrs");
+  strncpy (func, "Cns_srv_getsegattrs", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1728,7 +1728,7 @@ int Cns_srv_lchown(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_lchown");
+  strncpy (func, "Cns_srv_lchown", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1846,7 +1846,7 @@ int Cns_srv_listclass(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_listclass");
+  strncpy (func, "Cns_srv_listclass", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1957,7 +1957,7 @@ int Cns_srv_listlinks(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_listlinks");
+  strncpy (func, "Cns_srv_listlinks", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2075,7 +2075,7 @@ int Cns_srv_lastfseq(int magic,
   gid_t gid;
   uid_t uid;
 
-  strcpy(func, "Cns_srv_lastfseq");
+  strncpy(func, "Cns_srv_lastfseq", 19);
 
   /* Extract and log common request attributes */
   rbp = req_data;
@@ -2136,7 +2136,7 @@ int Cns_srv_bulkexist(char *req_data,
   u_signed64 *fileIds;
   int nbFileIds, i, c, count = 0;
 
-  strcpy(func, "Cns_srv_bulkexist");
+  strncpy(func, "Cns_srv_bulkexist", 19);
 
   /* Extract and log common request attributes */
   rbp = req_data;
@@ -2216,7 +2216,7 @@ int Cns_srv_tapesum(int magic,
   gid_t gid;
   uid_t uid;
 
-  strcpy(func, "Cns_srv_tapesum");
+  strncpy(func, "Cns_srv_tapesum", 19);
 
   /* Extract and log common request attributes */
   rbp = req_data;
@@ -2279,7 +2279,7 @@ int Cns_srv_listtape(int magic,
   char *user;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "Cns_srv_listtape");
+  strncpy (func, "Cns_srv_listtape", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2354,7 +2354,7 @@ int Cns_srv_lstat(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_lstat");
+  strncpy (func, "Cns_srv_lstat", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2428,7 +2428,7 @@ int Cns_srv_mkdir(int magic,
   char *user;
   uuid_t uuid;
 
-  strcpy (func, "Cns_srv_mkdir");
+  strncpy (func, "Cns_srv_mkdir", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2546,7 +2546,7 @@ int Cns_srv_modifyclass(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_modifyclass");
+  strncpy (func, "Cns_srv_modifyclass", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2697,7 +2697,7 @@ int Cns_srv_opendir(int magic,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_opendir");
+  strncpy (func, "Cns_srv_opendir", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2765,7 +2765,7 @@ int Cns_srv_ping(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy(func, "Cns_srv_ping");
+  strncpy(func, "Cns_srv_ping", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2803,7 +2803,7 @@ int Cns_srv_queryclass(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_queryclass");
+  strncpy (func, "Cns_srv_queryclass", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2900,7 +2900,7 @@ int Cns_srv_readdir(int magic,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_readdir");
+  strncpy (func, "Cns_srv_readdir", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3070,7 +3070,7 @@ int Cns_srv_readlink(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_readlink");
+  strncpy (func, "Cns_srv_readlink", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3143,7 +3143,7 @@ int Cns_srv_rename(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_rename");
+  strncpy (func, "Cns_srv_rename", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3340,7 +3340,7 @@ int Cns_srv_updateseg_status(char *req_data,
   u_signed64 fileid;
   uid_t uid;
 
-  strcpy (func, "Cns_srv_updateseg_status");
+  strncpy (func, "Cns_srv_updateseg_status", 25);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3440,7 +3440,7 @@ int Cns_srv_updateseg_checksum(int magic,
   char vid[CA_MAXVIDLEN+1];
   int checksum_ok;
 
-  strcpy (func, "Cns_srv_updateseg_checksum");
+  strncpy (func, "Cns_srv_updateseg_checksum", 30);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3581,7 +3581,7 @@ int Cns_srv_replaceseg(int magic,
   int checksum_ok;
   time_t last_mod_time = 0;
 
-  strcpy (func, "Cns_srv_replaceseg");
+  strncpy (func, "Cns_srv_replaceseg", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3747,7 +3747,7 @@ int Cns_srv_replacetapecopy(int magic,
 
   /* the header stuff */
 
-  strcpy (func, "Cns_srv_replacetapecopy");
+  strncpy (func, "Cns_srv_replacetapecopy", 24);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -3962,7 +3962,7 @@ int Cns_srv_rmdir(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_rmdir");
+  strncpy (func, "Cns_srv_rmdir", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4054,7 +4054,7 @@ int Cns_srv_setacl(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_setacl");
+  strncpy (func, "Cns_srv_setacl", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4182,7 +4182,7 @@ int Cns_srv_setatime(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_setatime");
+  strncpy (func, "Cns_srv_setatime", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4262,7 +4262,7 @@ int Cns_srv_setcomment(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_setcomment");
+  strncpy (func, "Cns_srv_setcomment", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4343,7 +4343,7 @@ int Cns_srv_setfsize(int magic,
   time_t last_mod_time = 0;
   time_t new_mod_time = 0;
 
-  strcpy (func, "Cns_srv_setfsize");
+  strncpy (func, "Cns_srv_setfsize", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4456,7 +4456,7 @@ int Cns_srv_setfsizecs(int magic,
   time_t last_mod_time = 0;
   time_t new_mod_time = 0;
 
-  strcpy (func, "Cns_srv_setfsizecs");
+  strncpy (func, "Cns_srv_setfsizecs", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4581,7 +4581,7 @@ int Cns_srv_setfsizeg(int magic,
   time_t last_mod_time = 0;
   time_t new_mod_time = 0;
 
-  strcpy (func, "Cns_srv_setfsizeg");
+  strncpy (func, "Cns_srv_setfsizeg", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4693,7 +4693,7 @@ int Cns_srv_setsegattrs(int magic,
   char *user;
   time_t last_mod_time = 0;
 
-  strcpy (func, "Cns_srv_setsegattrs");
+  strncpy (func, "Cns_srv_setsegattrs", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4908,7 +4908,7 @@ int Cns_srv_dropsegs(char *req_data,
   struct Cns_file_metadata fmd_entry;
   Cns_dbrec_addr rec_addr;
 
-  strcpy (func, "Cns_srv_dropsegs");
+  strncpy (func, "Cns_srv_dropsegs", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -4973,7 +4973,7 @@ int Cns_srv_startsess(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_startsess");
+  strncpy (func, "Cns_srv_startsess", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5001,7 +5001,7 @@ int Cns_srv_starttrans(int magic,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_starttrans");
+  strncpy (func, "Cns_srv_starttrans", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5040,7 +5040,7 @@ int Cns_srv_stat(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_stat");
+  strncpy (func, "Cns_srv_stat", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5111,7 +5111,7 @@ int Cns_srv_statcs(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_statcs");
+  strncpy (func, "Cns_srv_statcs", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5183,7 +5183,7 @@ int Cns_srv_statg(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_statg");
+  strncpy (func, "Cns_srv_statg", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5259,7 +5259,7 @@ int Cns_srv_symlink(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_symlink");
+  strncpy (func, "Cns_srv_symlink", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5356,7 +5356,7 @@ int Cns_srv_undelete(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_undelete");
+  strncpy (func, "Cns_srv_undelete", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5453,7 +5453,7 @@ int Cns_srv_unlink(char *req_data,
   struct Cns_user_metadata umd_entry;
   char *user;
 
-  strcpy (func, "Cns_srv_unlink");
+  strncpy (func, "Cns_srv_unlink", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5560,7 +5560,7 @@ int Cns_srv_unlinkbyvid(char *req_data,
   Cns_dbrec_addr rec_addru;
   DBLISTPTR dblistptr;
 
-  strcpy (func, "Cns_srv_unlinkbyvid");
+  strncpy (func, "Cns_srv_unlinkbyvid", 20);
 
   /* Extract and log common request attributes */
   rbp = req_data;
@@ -5688,7 +5688,7 @@ int Cns_srv_utime(char *req_data,
   char *user;
   int user_specified_time;
 
-  strcpy (func, "Cns_srv_utime");
+  strncpy (func, "Cns_srv_utime", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5771,7 +5771,7 @@ int Cns_srv_updatefile_checksum(char *req_data,
   unsigned int checksum = 0;
   char *dp   = NULL;
 
-  strcpy (func, "Cns_srv_updatefile_checksum");
+  strncpy (func, "Cns_srv_updatefile_checksum", 28);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -5854,7 +5854,7 @@ int Cns_vo_from_dn(const char *dn, char *vo)
   char *p;
   char *q;
 
-  strcpy (func, "Cns_vo_from_dn");
+  strncpy (func, "Cns_vo_from_dn", 16);
   if (! dn)
     return (EFAULT);
   if (! *lcgdmmapfile)
@@ -5911,7 +5911,7 @@ int Cns_srv_entergrpmap(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_entergrpmap");
+  strncpy (func, "Cns_srv_entergrpmap", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "entergrpmap", user, uid, gid, clienthost);
@@ -5959,7 +5959,7 @@ int Cns_srv_enterusrmap(char *req_data,
   char *user;
   struct Cns_userinfo user_entry;
 
-  strcpy (func, "Cns_srv_enterusrmap");
+  strncpy (func, "Cns_srv_enterusrmap", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "enterusrmap", user, uid, gid, clienthost);
@@ -6093,7 +6093,7 @@ int Cns_srv_getidmap(char *req_data,
   uid_t userid;
   char username[256];
 
-  strcpy (func, "Cns_srv_getidmap");
+  strncpy (func, "Cns_srv_getidmap", 17);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "getidmap", user, uid, gid, clienthost);
@@ -6162,7 +6162,7 @@ int Cns_srv_getgrpbygid(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getgrpbygid");
+  strncpy (func, "Cns_srv_getgrpbygid", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "getgrpbygid", user, uid, gid, clienthost);
@@ -6201,7 +6201,7 @@ int Cns_srv_getgrpbynam(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_getgrpbynam");
+  strncpy (func, "Cns_srv_getgrpbynam", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "getgrpbynam", user, uid, gid, clienthost);
@@ -6241,7 +6241,7 @@ int Cns_srv_getusrbynam(char *req_data,
   struct Cns_userinfo user_entry;
   char username[256];
 
-  strcpy (func, "Cns_srv_getusrbynam");
+  strncpy (func, "Cns_srv_getusrbynam", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "getusrbynam", user, uid, gid, clienthost);
@@ -6281,7 +6281,7 @@ int Cns_srv_getusrbyuid(char *req_data,
   char *user;
   struct Cns_userinfo user_entry;
 
-  strcpy (func, "Cns_srv_getusrbyuid");
+  strncpy (func, "Cns_srv_getusrbyuid", 20);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "getusrbyuid", user, uid, gid, clienthost);
@@ -6320,7 +6320,7 @@ int Cns_srv_modgrpmap(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_modgrpmap");
+  strncpy (func, "Cns_srv_modgrpmap", 18);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "modgrpmap", user, uid, gid, clienthost);
@@ -6369,7 +6369,7 @@ int Cns_srv_modusrmap(char *req_data,
   struct Cns_userinfo user_entry;
   char username[256];
 
-  strcpy (func, "Cns_srv_modusrmap");
+  strncpy (func, "Cns_srv_modusrmap", 18);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "modusrmap", user, uid, gid, clienthost);
@@ -6418,7 +6418,7 @@ int Cns_srv_rmgrpmap(char *req_data,
   uid_t uid;
   char *user;
 
-  strcpy (func, "Cns_srv_rmgrpmap");
+  strncpy (func, "Cns_srv_rmgrpmap", 18);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "rmgrpmap", user, uid, gid, clienthost);
@@ -6480,7 +6480,7 @@ int Cns_srv_rmusrmap(char *req_data,
   struct Cns_userinfo user_entry;
   char username[256];
 
-  strcpy (func, "Cns_srv_rmusrmap");
+  strncpy (func, "Cns_srv_rmusrmap", 18);
   rbp = req_data;
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "rmusrmap", user, uid, gid, clienthost);

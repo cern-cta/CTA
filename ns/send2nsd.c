@@ -58,10 +58,9 @@ int send2nsdx(int *socketp,
   struct servent *sp,*sec_sp;
   struct Cns_api_thread_info *thip = NULL;
   int timeout;
-  char *securemode;
   int securityOpt = 0;
 
-  strcpy (func, "send2nsd");
+  strncpy (func, "send2nsd", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   if (*thip->defserver)
@@ -78,8 +77,8 @@ int send2nsdx(int *socketp,
     else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0)))
       strcpy (Cnshost, p);
     else {
-      if ((securemode = getenv ("SECURE_CASTOR")) ||
-	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
+      if (getenv ("SECURE_CASTOR") ||
+	  getconfent(CNS_SCE, "SECURITY", 0)) {
 #if defined(SCNS_HOST)
         strcpy (Cnshost, SCNS_HOST);
 #else
@@ -112,6 +111,7 @@ int send2nsdx(int *socketp,
       /* If the security option is set it will try ONLY in that port, if it fails to
        * connect it won't retry in an unsecure port
        */
+      char *securemode;
       if ((securemode = getenv ("SECURE_CASTOR")) ||
 	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
         securityOpt = (strcasecmp(securemode, "YES") == 0);

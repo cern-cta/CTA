@@ -31,7 +31,7 @@ Cns_delsegbycopyno(const char *path, struct Cns_fileid *file_uniqueid, int copyn
   struct Cns_api_thread_info *thip;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_delsegbycopyno");
+  strncpy (func, "Cns_delsegbycopyno", 19);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

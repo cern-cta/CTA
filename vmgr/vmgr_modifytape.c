@@ -26,7 +26,7 @@ int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, ch
   struct vmgr_api_thread_info *thip;
   uid_t uid;
 
-  strcpy (func, "vmgr_modifytape");
+  strncpy (func, "vmgr_modifytape", 16);
   if (vmgr_apiinit (&thip))
           return (-1);
   uid = geteuid();

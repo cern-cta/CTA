@@ -81,7 +81,7 @@ int Cupv_opendb(dbfd)
   char *p;
   FILE *fp;
   
-  strcpy (func, "Cupv_opendb");
+  strncpy (func, "Cupv_opendb", 16);
   EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
   
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
@@ -196,7 +196,7 @@ int Cupv_get_privilege_entry(dbfd, priv_entry,  lock, rec_addr)
     AND TGT_HOST LIKE :priv_entry->tgthost
     ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;   
 
-  strcpy (func, "Cupv_get_priv_entry");
+  strncpy (func, "Cupv_get_priv_entry", 21);
   if (lock) {
     EXEC SQL OPEN priv_cursor4upd;
     if (sqlca.sqlcode) {
@@ -241,7 +241,7 @@ int Cupv_delete_privilege_entry(dbfd, rec_addr)
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "Cupv_delete_priv_entry");
+  strncpy (func, "Cupv_delete_priv_entry", 24);
   
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   
@@ -260,7 +260,7 @@ int Cupv_insert_privilege_entry(dbfd, priv_entry)
   char func[24];
   struct sqlca sqlca;
 
-  strcpy (func, "Cupv_insert_priv_entry");
+  strncpy (func, "Cupv_insert_priv_entry", 24);
 
   EXEC SQL INSERT INTO USER_PRIVILEGE
     (U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT)
@@ -298,7 +298,7 @@ int Cupv_update_privilege_entry(dbfd, rec_addr, priv_entry)
   char *p;
   int nbfieldupdated = 0;
   
-  strcpy (func, "Cupv_update_priv_entry");
+  strncpy (func, "Cupv_update_priv_entry", 24);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
 
   /* Building the sql statement */
@@ -371,7 +371,7 @@ int Cupv_list_privilege_entry(dbfd, bol, priv_entry, filter, endlist, dblistptr)
   struct sqlca sqlca;
   int lensrc = 0, lentgt = 0;
 
-  strcpy(func, "list_priv");
+  strncpy(func, "list_priv", 22);
 
   /*    Cupvlogit(func,"FILTER: <%d> <%d> <%s> <%s> <%d>\n", filter->uid, filter->gid, */
   /*  	    filter->srchost, filter->tgthost, filter->privcat); */
@@ -390,7 +390,7 @@ int Cupv_list_privilege_entry(dbfd, bol, priv_entry, filter, endlist, dblistptr)
     AND  ( (:filter->privcat = -1) OR (PRIV_CAT = :filter->privcat)) 
     ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;   
 
-  strcpy (func, "Cupv_list_priv_entry");
+  strncpy (func, "Cupv_list_priv_entry", 22);
   if (endlist)
     return (1);
   if (bol) {

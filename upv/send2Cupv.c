@@ -46,7 +46,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
   int secure_connection = 0;
 #endif
 
-  strcpy (func, "send2Cupv");
+  strncpy (func, "send2Cupv", 16);
 #ifdef UPVCSEC
   if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
 #endif

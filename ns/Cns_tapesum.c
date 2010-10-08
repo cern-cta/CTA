@@ -32,7 +32,7 @@ Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, 
   uid_t uid;
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_tapesum");
+  strncpy (func, "Cns_tapesum", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

@@ -30,7 +30,7 @@ Cns_getidmap (const char *username, int nbgroups, const char **groupnames, uid_t
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getidmap");
+  strncpy (func, "Cns_getidmap", 16);
   if (Cns_apiinit (&thip))
     return (-1);
 

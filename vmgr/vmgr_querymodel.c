@@ -31,7 +31,7 @@ int vmgr_querymodel(const char *model, char *media_letter, int *media_cost)
 	char tmpbuf[7];
 	uid_t uid;
 
-        strcpy (func, "vmgr_querymodel");
+        strncpy (func, "vmgr_querymodel", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

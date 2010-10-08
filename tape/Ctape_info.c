@@ -41,7 +41,7 @@ int Ctape_info(char *path,
 	char tmpbuf[20];
 	uid_t uid;
  
-	strcpy (func, "Ctape_info");
+	strncpy (func, "Ctape_info", 16);
 	uid = getuid();
 	gid = getgid();
 

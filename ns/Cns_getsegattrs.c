@@ -36,7 +36,7 @@ Cns_getsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int *nbseg, 
   uid_t uid;
   u_signed64 zero = 0;
 
-  strcpy (func, "Cns_getsegattrs");
+  strncpy (func, "Cns_getsegattrs", 16);
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);

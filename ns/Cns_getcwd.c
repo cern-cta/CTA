@@ -21,7 +21,7 @@ Cns_getcwd(char *buf, int size)
   char path[CA_MAXPATHLEN+1];
   struct Cns_api_thread_info *thip;
 
-  strcpy (func, "Cns_getcwd");
+  strncpy (func, "Cns_getcwd", 16);
   if (Cns_apiinit (&thip))
     return (NULL);
 

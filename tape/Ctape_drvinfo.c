@@ -29,7 +29,7 @@ int Ctape_drvinfo(char *drive,
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
  
-	strcpy (func, "Ctape_drvinfo");
+	strncpy (func, "Ctape_drvinfo", 16);
 	uid = getuid();
 	gid = getgid();
 

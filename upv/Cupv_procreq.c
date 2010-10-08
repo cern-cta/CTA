@@ -86,7 +86,7 @@ int check_server_perm(int uid, int gid, char *clienthost, struct Cupv_srv_thread
   char func[20];
 
   memset((void *)&requested, 0, sizeof(requested));
-  strcpy(func, "Perm_Check");
+  strncpy(func, "Perm_Check", 20);
 
   requested.privcat =  P_UPV_ADMIN;
   requested.uid = uid;
@@ -118,7 +118,7 @@ int Cupv_srv_delete(char *req_data,
   char *rbp;
   Cupv_dbrec_addr rec_addr;
 
-  strcpy (func, "Cupv_srv_delete");
+  strncpy (func, "Cupv_srv_delete", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -179,7 +179,7 @@ int Cupv_srv_add(char *req_data,
   char *rbp;
   struct Cupv_userpriv priv;
 
-  strcpy (func, "Cupv_srv_add");
+  strncpy (func, "Cupv_srv_add", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -244,7 +244,7 @@ int Cupv_srv_modify(char *req_data,
   newpriv.uid = newpriv.gid = newpriv.privcat = -1;
   newpriv.srchost[0] = newpriv.tgthost[0] = 0;
 
-  strcpy (func, "Cupv_srv_modify");
+  strncpy (func, "Cupv_srv_modify", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -358,7 +358,7 @@ int Cupv_srv_list(char *req_data,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "Cupv_srv_list");
+  strncpy (func, "Cupv_srv_list", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -426,7 +426,7 @@ int Cupv_srv_check(char *req_data,
   gid_t gid;
   char *rbp;
 
-  strcpy (func, "Cupv_srv_check");
+  strncpy (func, "Cupv_srv_check", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);

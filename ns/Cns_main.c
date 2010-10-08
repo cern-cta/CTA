@@ -49,7 +49,7 @@ struct Cns_srv_thread_info *Cns_srv_thread_info;
 
 void Cns_signal_handler(int sig)
 {
-  strcpy (func, "Cns_serv");
+  strncpy (func, "Cns_serv", 16);
   if (sig == SIGINT) {
     nslogit(func, "Caught SIGINT, immediate stop\n");
     exit(0);
@@ -86,7 +86,7 @@ int Cns_main(struct main_args *main_args)
   struct timeval timeval;
 
   jid = getpid();
-  strcpy (func, "Cns_serv");
+  strncpy (func, "Cns_serv", 16);
   nsconfigfile[0] = '\0';
   strcpy (logfile, NSLOGFILE);
 

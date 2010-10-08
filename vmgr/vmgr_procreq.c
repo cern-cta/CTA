@@ -99,7 +99,7 @@ int vmgr_srv_deletedenmap(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_deletedenmap");
+  strncpy (func, "vmgr_srv_deletedenmap", 22);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -147,7 +147,7 @@ int vmgr_srv_deletedgnmap(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_deletedgnmap");
+  strncpy (func, "vmgr_srv_deletedgnmap", 22);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -192,7 +192,7 @@ int vmgr_srv_deletelibrary(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_deletelibrary");
+  strncpy (func, "vmgr_srv_deletelibrary", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -240,7 +240,7 @@ int vmgr_srv_deletemodel(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_deletemodel");
+  strncpy (func, "vmgr_srv_deletemodel", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -287,7 +287,7 @@ int vmgr_srv_deletepool(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_deletepool");
+  strncpy (func, "vmgr_srv_deletepool", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -342,7 +342,7 @@ int vmgr_srv_deletetape(char *req_data,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_deletetape");
+  strncpy (func, "vmgr_srv_deletetape", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -426,7 +426,7 @@ int vmgr_srv_deltag(char *req_data,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_deltag");
+  strncpy (func, "vmgr_srv_deltag", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -484,7 +484,7 @@ int vmgr_srv_enterdenmap(int magic,
   char *rbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_enterdenmap");
+  strncpy (func, "vmgr_srv_enterdenmap", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -549,7 +549,7 @@ int vmgr_srv_enterdgnmap(char *req_data,
   char *rbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_enterdgnmap");
+  strncpy (func, "vmgr_srv_enterdgnmap", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -605,7 +605,7 @@ int vmgr_srv_enterlibrary(char *req_data,
   char *rbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_enterlibrary");
+  strncpy (func, "vmgr_srv_enterlibrary", 22);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -652,7 +652,7 @@ int vmgr_srv_entermodel(int magic,
   char *rbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_entermodel");
+  strncpy (func, "vmgr_srv_entermodel", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -696,7 +696,7 @@ int vmgr_srv_enterpool(char *req_data,
   char *rbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_enterpool");
+  strncpy (func, "vmgr_srv_enterpool", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -747,7 +747,7 @@ int vmgr_srv_entertape(char *req_data,
   struct vmgr_tape_info tape;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_entertape");
+  strncpy (func, "vmgr_srv_entertape", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -910,7 +910,7 @@ int vmgr_srv_gettag(char *req_data,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_gettag");
+  strncpy (func, "vmgr_srv_gettag", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -961,7 +961,7 @@ int vmgr_srv_gettape(int magic,
   u_signed64 u64;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_gettape");
+  strncpy (func, "vmgr_srv_gettape", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1103,7 +1103,7 @@ int vmgr_srv_listdenmap(int magic,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_listdenmap");
+  strncpy (func, "vmgr_srv_listdenmap", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1167,7 +1167,7 @@ int vmgr_srv_listdgnmap(char *req_data,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_listdgnmap");
+  strncpy (func, "vmgr_srv_listdgnmap", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1228,7 +1228,7 @@ int vmgr_srv_listlibrary(char *req_data,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_listlibrary");
+  strncpy (func, "vmgr_srv_listlibrary", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1291,7 +1291,7 @@ int vmgr_srv_listmodel(int magic,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_listmodel");
+  strncpy (func, "vmgr_srv_listmodel", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1356,7 +1356,7 @@ int vmgr_srv_listpool(char *req_data,
   u_signed64 tot_free_space;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_listpool");
+  strncpy (func, "vmgr_srv_listpool", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1426,7 +1426,7 @@ int vmgr_srv_listtape(int magic,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_listtape");
+  strncpy (func, "vmgr_srv_listtape", 18);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1526,7 +1526,7 @@ int vmgr_srv_modifylibrary(char *req_data,
   int status;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_modifylibrary");
+  strncpy (func, "vmgr_srv_modifylibrary", 23);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1588,7 +1588,7 @@ int vmgr_srv_modifymodel(int magic,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_modifymodel");
+  strncpy (func, "vmgr_srv_modifymodel", 21);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1649,7 +1649,7 @@ int vmgr_srv_modifypool(char *req_data,
   vmgr_dbrec_addr rec_addr;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_modifypool");
+  strncpy (func, "vmgr_srv_modifypool", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1730,7 +1730,7 @@ int vmgr_srv_modifytape(char *req_data,
   vmgr_dbrec_addr rec_addrs;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_modifytape");
+  strncpy (func, "vmgr_srv_modifytape", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -1990,7 +1990,7 @@ int vmgr_srv_querypool(char *req_data,
   u_signed64 tot_free_space;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_querypool");
+  strncpy (func, "vmgr_srv_querypool", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2035,7 +2035,7 @@ int vmgr_srv_querylibrary(char *req_data,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_querylibrary");
+  strncpy (func, "vmgr_srv_querylibrary", 22);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2079,7 +2079,7 @@ int vmgr_srv_querymodel(int magic,
   char *sbp;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_querymodel");
+  strncpy (func, "vmgr_srv_querymodel", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2130,7 +2130,7 @@ int vmgr_srv_querytape(int magic,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_querytape");
+  strncpy (func, "vmgr_srv_querytape", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2218,7 +2218,7 @@ int vmgr_srv_reclaim(char *req_data,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_reclaim");
+  strncpy (func, "vmgr_srv_reclaim", 17);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2291,7 +2291,7 @@ int vmgr_srv_settag(char *req_data,
   struct vmgr_tape_tag tag_entry;
   uid_t uid;
 
-  strcpy (func, "vmgr_srv_settag");
+  strncpy (func, "vmgr_srv_settag", 16);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2363,7 +2363,7 @@ int vmgr_srv_tpmounted(int magic,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_tpmounted");
+  strncpy (func, "vmgr_srv_tpmounted", 19);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
@@ -2445,7 +2445,7 @@ int vmgr_srv_updatetape(int magic,
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strcpy (func, "vmgr_srv_updatetape");
+  strncpy (func, "vmgr_srv_updatetape", 20);
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);

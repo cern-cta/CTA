@@ -31,7 +31,7 @@ int vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u
 	uid_t uid;
 	u_signed64 u64;
 
-        strcpy (func, "vmgr_querypool");
+        strncpy (func, "vmgr_querypool", 15);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();

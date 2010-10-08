@@ -26,7 +26,7 @@ int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
   gid_t gid;
   int lensrc, lentgt;
 
-  strcpy (func, "Cupv_delete");
+  strncpy (func, "Cupv_delete", 16);
   if (Cupv_apiinit (&thip))
     return (-1);
   uid = geteuid();
