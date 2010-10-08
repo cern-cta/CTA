@@ -7,7 +7,6 @@ from sites.tools.HsvConverter import *
 from sites.treemap.defaultproperties.SquaredViewProperties import \
     BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
-from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.viewtree.ViewTree import ViewTree
 import cairo
 import random

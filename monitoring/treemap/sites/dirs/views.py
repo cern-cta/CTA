@@ -1,45 +1,28 @@
 # Create your views here.
-from django import forms
 from django.conf import settings
 from django.conf.urls.defaults import *
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
-from django.db import models
-from django.db.models.base import ModelBase
-from django.db.models.query import QuerySet
-from django.db.models.sql.datastructures import Date
-from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render_to_response, render_to_response, \
-    get_list_or_404, get_object_or_404
-from django.template import Context, loader, resolve_variable
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect, render_to_response
+from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
-from django.views.decorators.cache import cache_page
-from sites.dirs.Presets import getPresetByStaticId, filterPreset
 from sites.dirs.models import *
-from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
-from sites.tools.ObjectCreator import createObject
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
-from sites.treemap.objecttree.Annex import Annex
-from sites.treemap.objecttree.ObjectTree import ObjectTree
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
-from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
-import copy
-import datetime
-import profile
-import random
 import re
-import sites.dirs.Presets
+from sites.tools.Inspections import  getDefaultNumberOfLevels
 
+import sites.dirs.Presets
 
 
 def redirectOldLink(request, *args, **kwargs):
@@ -49,7 +32,7 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, rootmodel, presetid, theid, refresh_cache = False):  
+def treeView(request, presetid, rootmodel, theid, refresh_cache = False):  
     time = datetime.datetime.now()
     presetid = int(presetid)
     
@@ -62,7 +45,9 @@ def treeView(request, rootmodel, presetid, theid, refresh_cache = False):
     
     #load levelRules from cookie, if cookie doesn't exist, load defaults
     lr = getCookieRules(request, nbdefinedlevels)
-    lr = getPresetByStaticId(presetid).lr
+    #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
+    #for some reason mod_python can't import Presets correctly and outputs useless error messages
+    lr = sites.dirs.Presets.getPresetByStaticId(presetid).lr
     
     avmodels = lr.getRuleObject(0).getUsedClassNames()
 
@@ -153,7 +138,9 @@ def groupView(request, presetid, model, depth, theid, refresh_cache = False):
     treemapdir = settings.REL_TREEMAP_DICT
     
     cookielr = getCookieRules(request, nbdefinedlevels)
-    cookielr = getPresetByStaticId(presetid).lr
+    #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
+    #for some reason mod_python can't import Presets correctly and outputs useless error messages
+    cookielr = sites.dirs.Presets.getPresetByStaticId(presetid).lr
         
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr)
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -326,16 +313,17 @@ def preset(request, urlending):
         
         if presetname not in sites.dirs.Presets.getPresetNames():
             redir(request, urlending, False, 0)
-#            return HttpResponse("Posted data is not correct")
-        
-        lr = filterPreset(sites.dirs.Presets.getPreset(presetname), flatview, smalltobig).lr
+
+        #an import of filterPreset from Presets won't work! you have to give an full path for everything from sites.dirs.Presets
+        #for some reason mod_python can't import Presets correctly and outputs useless error messages
+        lr = sites.dirs.Presets.filterPreset(sites.dirs.Presets.getPreset(presetname), flatview, smalltobig).lr
             
         request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname, 'smalltobig': smalltobig}
         request.session['levelrules'] = lr
         
     else:
         raise Http404
-    
+
     return redir(request, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, metric = ''):
@@ -343,12 +331,13 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     rootsuffix = str(presetid) + "_" + rootsuffix
     
     apacheserver = settings.PUBLIC_APACHE_URL
-    serverdict = settings.LOCAL_APACHE_DICT
+#    serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     icondir = settings.REL_ICON_DICT
     
-    parentlinksuffix = str(presetid) + "_" + vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
-    print "PARENT LINK SUFFIX", parentlinksuffix
+    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
+    print "PARENTID ", parentid
+    parentidstr = vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -396,8 +385,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             
         tooltipheight = int(round(textlines * 12 * 1.6))
 
-        itemwidth = int(round(x2-x1))
-        itemheight = int(round(y2-y1)) 
+#        itemwidth = int(round(x2-x1))
+#        itemheight = int(round(y2-y1)) 
         
         shiftx = 20
         shifty = 20
@@ -432,8 +421,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         nvtext = pr.__dict__[getNaviName(pr.__class__.__name__)]
         pos = nvtext.rfind('/')
         if pos == -1: pos = 0
-        nvtext = nvtext[pos:]
-        
+        nvtext = nvtext[pos:]   
+           
         navlinkparts.append( (nvtext, str(pr), str(presetid) + "_" + pr.getIdReplacement()) )
     
     generationtime = datetime.datetime.now() - time
@@ -443,7 +432,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     presetnames.sort();
     
     response = render_to_string('dirs/imagemap.html', \
-    {'nodes': nodes, 'parentid': parentlinksuffix, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
+    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
      'presetdefault':getCurrentPresetSelections(request)} , context_instance=None)

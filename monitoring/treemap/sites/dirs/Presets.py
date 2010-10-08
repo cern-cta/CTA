@@ -3,9 +3,9 @@ Created on Sep 10, 2010
 
 @author: kblaszcz
 '''
+from sites.treemap.objecttree.TreeRules import LevelRules
 from django.conf import settings
 from sites.tools.Inspections import getDefaultNumberOfLevels
-from sites.treemap.objecttree.TreeRules import LevelRules
 import copy
     
 class Preset(object):
@@ -15,6 +15,8 @@ class Preset(object):
         self.rootmodel = rootmodel
         self.rootsuffix = rootsuffix
         self.staticid = staticid
+        
+presetdict = {}
     
 def getPreset(presetname):
     try:
@@ -69,10 +71,6 @@ def filterPreset(preset, flatview, smalltobig):
     retpreset = copy.copy(preset)
     retpreset.lr = copy.copy(lr)
     return retpreset
-        
-        
-    
-presetdict = {}
 
 #Preset for Directory structure
 lr = LevelRules()
