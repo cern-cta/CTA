@@ -6,15 +6,20 @@ copy "sequence.pic";
 step();
 step();
 
-# Define the objects
+# Define the rtcpcld object
 object(RC,"rtcpcld");
+
+# Create a placeholder for the worker process (migrator or recaller)
 placeholder_object(W);
+
+# Define the vdqm object
 object(V,"vdqm");
 
-# Put more horizontal space between the vdqm and rtcpd
-placeholder_object(Fake_1);
-
+# Define the rtcpd object
 object(R,"rtcpd");
+
+# Create a placeholder for the child rtcpd process
+placeholder_object(C);
 
 step();
 
@@ -36,34 +41,37 @@ step();
 active(V);
 message(V,R,"connect");
 active(R);
+create_message(R,C,"rtcpd child");
+active(C);
+inactive(R);
 
-message(V,R,"client and job info");
-message(R,V,"success");
-message(R,V,"disconnect");
+message(V,C,"client and job info");
+message(C,V,"success");
+message(C,V,"disconnect");
 inactive(V);
 
 step();
 
-message(R,RC,"connect");
+message(C,RC,"connect");
 active(RC);
-message(RC,R,"request job info");
-message(R,RC,"ack");
+message(RC,C,"request job info");
+message(C,RC,"ack");
 step();
-message(R,RC,"job info");
-message(RC,R,"ack");
+message(C,RC,"job info");
+message(RC,C,"ack");
 
 step();
 
 create_message(RC,W,"worker");
 active(W);
 inactive(RC);
-message(W,R,"ClientInfo - new callback");
-message(R,W,"ack");
-message(W,R,"disconnect");
+message(W,C,"new client info");
+message(C,W,"ack");
+message(W,C,"disconnect");
 
 step();
 
-message(R,W,"connect");
+message(C,W,"connect");
 
 step();
 
@@ -71,5 +79,6 @@ complete(RC);
 complete(W);
 complete(V);
 complete(R);
+complete(C);
 
 .PE
