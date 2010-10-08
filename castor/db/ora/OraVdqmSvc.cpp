@@ -1035,7 +1035,7 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
 
     VolPriority p;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       p.priority         = rs->getInt(1);;
       p.clientUID        = rs->getInt(2);;
       p.clientGID        = rs->getInt(3);
@@ -1110,7 +1110,7 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
 
     VolPriority p;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       p.priority         = rs->getInt(1);;
       p.clientUID        = rs->getInt(2);;
       p.clientGID        = rs->getInt(3);
@@ -1186,7 +1186,7 @@ void castor::db::ora::OraVdqmSvc::getVolPriorities(
 
     VolPriority p;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       p.priority         = rs->getInt(1);;
       p.clientUID        = rs->getInt(2);;
       p.clientGID        = rs->getInt(3);
@@ -1280,7 +1280,7 @@ void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
 
     castor::vdqm::IVdqmSvc::VolRequest *request = NULL;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       requests.push_back(request = new castor::vdqm::IVdqmSvc::VolRequest());
 
       request->id             = (u_signed64)rs->getDouble(1);
@@ -2291,7 +2291,7 @@ void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
 
     vdqmVolReq_t *volReq = NULL;
 
-    while(rs->next())
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH)
     {
       requests.push_back(volReq = new vdqmVolReq_t());
 
@@ -2397,7 +2397,7 @@ void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
 
     vdqmDrvReq_t drvReq;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       drvReq.status    =
         translateNewStatus((castor::vdqm::TapeDriveStatusCodes)rs->getInt(1));
       drvReq.DrvReqID  = rs->getInt(2);
@@ -2934,7 +2934,7 @@ void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
     u_signed64 driveCompatibilityId = 0;
     castor::vdqm::TapeDriveCompatibility* driveCompatibility = NULL;
 
-    while(rs->next()) {
+    while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       driveCompatibilityId = (u_signed64)rs->getDouble(1);
       ad.setTarget(driveCompatibilityId);
       castor::IObject* obj = cnvSvc()->createObj(&ad);

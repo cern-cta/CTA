@@ -472,7 +472,7 @@ int castor::db::ora::OraStatement::execute(int count)
       // now run the SELECT FOR UPDATE query and populate the clob
       oracle::occi::Statement* stmt = m_cnvSvc->getConnection()->createStatement(clobQuery.str());
       oracle::occi::ResultSet* rset = stmt->executeQuery();
-      if(rset->next()) {
+      if (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
         oracle::occi::Clob clob = rset->getClob(1);
         clob.open(oracle::occi::OCCI_LOB_READWRITE);
         int len = m_clobBuf.size();

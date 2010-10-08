@@ -443,8 +443,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
     result->setReqId(m_processBulkRequestStatement->getString(5));
     oracle::occi::ResultSet *rset =
       m_processBulkRequestStatement->getCursor(6);
-    bool status = rset->next();
-    while (status) {
+    while (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       // create the new Object
       castor::stager::FileResult fr;
       // Now retrieve and set members
@@ -453,7 +452,6 @@ castor::db::ora::OraStagerSvc::processBulkRequest
       fr.setErrorCode(rset->getInt(3));
       fr.setErrorMessage(rset->getString(4));
       result->subResults().push_back(fr);
-      status = rset->next();
     }
     delete rset;
     return result;
