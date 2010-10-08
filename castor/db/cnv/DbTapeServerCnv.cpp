@@ -164,6 +164,8 @@ void castor::db::cnv::DbTapeServerCnv::reset() throw() {
   m_selectTapeDriveStatement = 0;
   m_deleteTapeDriveStatement = 0;
   m_remoteUpdateTapeDriveStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

@@ -179,6 +179,8 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   m_selectRepackSegmentStatement = 0;
   m_deleteRepackSegmentStatement = 0;
   m_remoteUpdateRepackSegmentStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

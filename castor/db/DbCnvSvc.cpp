@@ -69,9 +69,6 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
 castor::db::DbCnvSvc::~DbCnvSvc() throw() {
   // we're going away, so we notify all db oriented objects
   // that their statements are not valid any longer.
-  // XXX TODO: we should invalidate their pointer to this instance!
-  // XXX deleting a db oriented service AFTER having deleted this
-  // XXX object results in dereferencing a freed pointer!
   dropConnection();
 }
 

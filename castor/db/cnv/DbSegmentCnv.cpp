@@ -170,6 +170,8 @@ void castor::db::cnv::DbSegmentCnv::reset() throw() {
   m_updateTapeCopyStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

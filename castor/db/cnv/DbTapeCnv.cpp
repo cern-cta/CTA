@@ -200,6 +200,8 @@ void castor::db::cnv::DbTapeCnv::reset() throw() {
   m_selectSegmentStatement = 0;
   m_deleteSegmentStatement = 0;
   m_remoteUpdateSegmentStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

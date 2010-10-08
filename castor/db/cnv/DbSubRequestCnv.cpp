@@ -193,6 +193,8 @@ void castor::db::cnv::DbSubRequestCnv::reset() throw() {
   m_checkSubRequestExistStatement = 0;
   m_updateSubRequestStatement = 0;
   m_updateFileRequestStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

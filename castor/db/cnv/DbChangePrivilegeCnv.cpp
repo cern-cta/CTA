@@ -215,6 +215,8 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
   m_selectRequestTypeStatement = 0;
   m_deleteRequestTypeStatement = 0;
   m_remoteUpdateRequestTypeStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

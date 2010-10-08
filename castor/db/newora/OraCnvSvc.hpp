@@ -40,9 +40,6 @@ namespace castor {
   
   namespace db {
     
-    // Forward Declarations
-    class DbBaseObj;
-    
     namespace ora {
       
       // Forward Declarations

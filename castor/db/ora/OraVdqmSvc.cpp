@@ -376,9 +376,10 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
       // Do nothing
     }
   }
-
   // Reset the stored statements
   m_statements.clear();
+  // Call upper level reset
+  this->castor::db::DbBaseObj::reset();
 }
 
 

@@ -215,6 +215,8 @@ void castor::db::cnv::DbCastorFileCnv::reset() throw() {
   m_selectTapeCopyStatement = 0;
   m_deleteTapeCopyStatement = 0;
   m_remoteUpdateTapeCopyStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

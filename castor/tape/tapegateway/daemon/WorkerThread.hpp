@@ -29,12 +29,10 @@
 #define WORKER_THREAD_HPP 1
 
 #include "castor/exception/Internal.hpp"
-
 #include "castor/io/ServerSocket.hpp"
-
-#include "castor/server/BaseDbThread.hpp"
-
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 
 namespace castor     {
@@ -45,15 +43,28 @@ namespace tapegateway{
    * Worker  tread.
    */
   
-  class WorkerThread :
-    public castor::server::BaseDbThread {
+  class WorkerThread : public virtual castor::server::IThread,
+                       public castor::BaseObject {
 	
   public:
 
     WorkerThread();
-    virtual void init() {};
-    virtual void run(void *arg);
     virtual ~WorkerThread() throw() {};
+
+    /**
+     * Initialization of the thread.
+     */
+    virtual void init() {}
+
+    /**
+     * Main work for this thread
+     */
+    virtual void run(void* param);
+
+    /**
+     * Stop of the thread
+     */
+    virtual void stop() {}
 
   private:
 	

@@ -154,6 +154,8 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_checkTapeAccessSpecificationExistStatement = 0;
   m_updateTapeAccessSpecificationStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

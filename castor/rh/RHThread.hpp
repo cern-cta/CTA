@@ -25,7 +25,6 @@
 #ifndef RH_RHTHREAD_HPP
 #define RH_RHTHREAD_HPP 1
 
-#include "castor/server/BaseDbThread.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -34,6 +33,8 @@
 #include "castor/dlf/Param.hpp"
 #include "castor/rh/IRHSvc.hpp"
 #include "castor/rh/RateLimiter.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor {
 
@@ -42,7 +43,8 @@ namespace castor {
     /**
      * The Request Handler main thread.
      */
-    class RHThread : public castor::server::BaseDbThread {
+    class RHThread : public virtual castor::server::IThread,
+                     public castor::BaseObject {
 
     public:
 

@@ -188,6 +188,8 @@ void castor::db::cnv::DbTapePoolCnv::reset() throw() {
   m_selectStreamStatement = 0;
   m_deleteStreamStatement = 0;
   m_remoteUpdateStreamStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

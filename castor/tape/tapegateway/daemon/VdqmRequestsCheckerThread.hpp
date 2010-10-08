@@ -29,11 +29,9 @@
 #define VDQMREQUESTSCHECKER_THREAD_HPP 1
 
 #include <u64subr.h>
-
-#include "castor/server/BaseDbThread.hpp"
-
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
-
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -43,14 +41,28 @@ namespace tapegateway{
      *  VdqmRequestsChecker tread.
      */
     
-  class VdqmRequestsCheckerThread :
-    public castor::server::BaseDbThread { 
+  class VdqmRequestsCheckerThread : public virtual castor::server::IThread,
+                                    public castor::BaseObject { 
     u_signed64 m_timeOut;
   public:
 	
     VdqmRequestsCheckerThread(u_signed64 timeOut);
     virtual ~VdqmRequestsCheckerThread() throw() {};
-    virtual void run(void*);
+
+    /**
+     * Initialization of the thread.
+     */
+    virtual void init() {}
+
+    /**
+     * Main work for this thread
+     */
+    virtual void run(void* param);
+
+    /**
+     * Stop of the thread
+     */
+    virtual void stop() {}
 
   };
 

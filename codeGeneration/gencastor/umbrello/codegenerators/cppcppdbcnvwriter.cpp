@@ -1081,6 +1081,9 @@ void CppCppDbCnvWriter::writeReset() {
       }
     }
   }
+  // Call parent method
+  *m_stream << getIndent() << "// Call upper level reset" << endl
+            << getIndent() << "this->DbBaseCnv::reset();" << endl;
   // End of the method
   m_indent--;
   *m_stream << "}" << endl << endl;

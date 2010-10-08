@@ -269,6 +269,8 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
   m_updateDeviceGroupNameStatement = 0;
   m_checkTapeServerExistStatement = 0;
   m_updateTapeServerStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

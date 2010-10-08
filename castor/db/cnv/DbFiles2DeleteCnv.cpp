@@ -169,6 +169,8 @@ void castor::db::cnv::DbFiles2DeleteCnv::reset() throw() {
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

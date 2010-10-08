@@ -154,6 +154,8 @@ void castor::db::cnv::DbNsFileIdCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_checkStageAbortRequestExistStatement = 0;
   m_updateStageAbortRequestStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

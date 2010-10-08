@@ -154,6 +154,8 @@ void castor::db::cnv::DbBWUserCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_checkChangePrivilegeExistStatement = 0;
   m_updateChangePrivilegeStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

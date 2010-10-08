@@ -229,6 +229,8 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::reset() throw() {
   m_updateDiskCopyStatement = 0;
   m_checkDiskCopyExistStatement = 0;
   m_updateDiskCopyStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

@@ -37,38 +37,43 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
-  BaseObject(), m_cnvSvc(0) {
-  m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(cnvSvc);
-  if (0 == m_cnvSvc) {
-    initCnvSvc("DbCnvSvc");
-  }
-  m_cnvSvc->registerDbObj(this);
+castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* service) :
+  BaseObject(), m_cnvSvc(0), m_cnvSvcName("DbCnvSvc") {
+  // if dynamic_cast returns 0, we go back to the default "DbCnvSvc" service
+  m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(service);
+  cnvSvc()->registerDbObj(this);
 }
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
 castor::db::DbBaseObj::DbBaseObj(std::string serviceName) :
-  BaseObject(), m_cnvSvc(0) {
-  initCnvSvc(serviceName);
-  m_cnvSvc->registerDbObj(this);
+  BaseObject(), m_cnvSvc(0), m_cnvSvcName(serviceName) {
+  cnvSvc()->registerDbObj(this);
 }
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
 castor::db::DbBaseObj::~DbBaseObj() throw() {
-  m_cnvSvc->unregisterDbObj(this);
+  if (0 != m_cnvSvc) m_cnvSvc->unregisterDbObj(this);
+}
+
+// -----------------------------------------------------------------------
+// reset
+// -----------------------------------------------------------------------
+void castor::db::DbBaseObj::reset() throw() {
+  if (0 != m_cnvSvc) m_cnvSvc->release();
+  m_cnvSvc = 0;
 }
 
 // -----------------------------------------------------------------------
 // initCnvSvc
 // -----------------------------------------------------------------------
-void castor::db::DbBaseObj::initCnvSvc(std::string serviceName)
+void castor::db::DbBaseObj::initCnvSvc()
   throw (castor::exception::Exception) {
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
-    (svcs()->cnvService(serviceName, SVC_DBCNV));
+    (svcs()->cnvService(m_cnvSvcName, SVC_DBCNV));
   if (!m_cnvSvc) {
     castor::exception::Internal ex;
     ex.getMessage() << "No DbCnvSvc available";
@@ -76,23 +81,23 @@ void castor::db::DbBaseObj::initCnvSvc(std::string serviceName)
   }
 }
 
-
 // -----------------------------------------------------------------------
 // createStatement
 // -----------------------------------------------------------------------
 castor::db::IDbStatement*
 castor::db::DbBaseObj::createStatement(const std::string &stmtString)
   throw (castor::exception::Exception) {
-  return m_cnvSvc->createStatement(stmtString);
+  return cnvSvc()->createStatement(stmtString);
 }
 
 // -----------------------------------------------------------------------
 // cnvSvc
 // -----------------------------------------------------------------------
-castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc() const {
+castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc()
+  throw (castor::exception::Exception) {
+  if (0 == m_cnvSvc) initCnvSvc();
   return m_cnvSvc;
 }
-
 
 // -----------------------------------------------------------------------
 // commit
@@ -100,7 +105,7 @@ castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc() const {
 void
 castor::db::DbBaseObj::commit() {
   try {
-    m_cnvSvc->commit();
+    cnvSvc()->commit();
   } catch (castor::exception::Exception) {
     // commit failed, let's rollback for security
     rollback();
@@ -113,10 +118,10 @@ castor::db::DbBaseObj::commit() {
 void
 castor::db::DbBaseObj::rollback() {
   try {
-    m_cnvSvc->rollback();
+    cnvSvc()->rollback();
   } catch (castor::exception::Exception) {
     // rollback failed, let's drop the connection for security
-    m_cnvSvc->dropConnection();
+    cnvSvc()->dropConnection();
   }
 }
 

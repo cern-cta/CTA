@@ -25,8 +25,8 @@
 #ifndef CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP
 #define CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP 1
 
-#include "castor/server/BaseDbThread.hpp"
-
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor {
 
@@ -42,27 +42,26 @@ namespace castor {
      * Allocates free tape drives to waiting tape requests.  This class also
      * has the secondary role of deleting old volume priorities.
      */
-    class DriveSchedulerThread :
-    public virtual castor::server::BaseDbThread {
+    class DriveSchedulerThread : public virtual castor::server::IThread,
+                                 public castor::BaseObject {
 
     public:
 
       /**
-       * Constructor
+       * Initialization of the thread.
        */
-      DriveSchedulerThread() throw();
-
-      /**
-       * Destructor
-       */
-      ~DriveSchedulerThread() throw();
-
+      virtual void init() {}
+    
       /**
        * Run the tape drive scheduling algorithm, plus the secondary activity
        * of deleting old volume priorities.
        */
       virtual void run(void *param);
 
+      /**
+       * Stop of the thread
+       */
+      virtual void stop() {}
 
     private:
 

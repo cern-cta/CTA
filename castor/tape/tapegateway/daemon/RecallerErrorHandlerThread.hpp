@@ -33,8 +33,8 @@
 #include <Python.h>
 
 #include "castor/tape/tapegateway/RetryPolicyElement.hpp"
-
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -44,7 +44,8 @@ namespace tapegateway{
      * RecallerErrorHandler tread.
      */
     
-      class RecallerErrorHandlerThread :public castor::server::BaseDbThread {
+      class RecallerErrorHandlerThread : public virtual castor::server::IThread,
+                                         public castor::BaseObject {
 	PyObject* m_pyFunction; 
 	bool applyRetryRecallPolicy(const RetryPolicyElement& elem)
 	  throw (castor::exception::Exception );
@@ -64,7 +65,20 @@ namespace tapegateway{
 
       /*For thread management*/
 
-      virtual void run(void*);
+      /**
+       * Initialization of the thread.
+       */
+      virtual void init() {}
+        
+      /**
+       * Main work for this thread
+       */
+      virtual void run(void* param);
+
+      /**
+       * Stop of the thread
+       */
+      virtual void stop() {}
 
     };
 

@@ -165,6 +165,8 @@ void castor::db::cnv::DbDiskServerCnv::reset() throw() {
   m_selectFileSystemStatement = 0;
   m_deleteFileSystemStatement = 0;
   m_remoteUpdateFileSystemStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

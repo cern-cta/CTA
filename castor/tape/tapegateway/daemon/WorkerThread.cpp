@@ -68,7 +68,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 
-castor::tape::tapegateway::WorkerThread::WorkerThread():BaseDbThread(){ 
+castor::tape::tapegateway::WorkerThread::WorkerThread():BaseObject(){ 
 
   
   // populate the map with the different handlers

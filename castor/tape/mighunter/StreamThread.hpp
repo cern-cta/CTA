@@ -31,9 +31,10 @@
 #include <Python.h>
 
 #include "castor/exception/InvalidConfiguration.hpp"
-#include "castor/server/BaseDbThread.hpp"
 #include "castor/tape/mighunter/MigHunterDaemon.hpp"
 #include "h/osdep.h"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 #include <list>
 #include <set>
@@ -47,7 +48,8 @@ namespace mighunter {
 /**
  * Stream  thread.
  */
-class StreamThread : public castor::server::BaseDbThread {
+class StreamThread : public virtual castor::server::IThread,
+                     public castor::BaseObject {
 
 private:  
 
@@ -247,11 +249,21 @@ public:
   };
 
   /**
+   * Initialization of the thread.
+   */
+  virtual void init() {}
+
+  /**
    * The entry point for stream threads.
    *
    * @param arg The argument to be passed to the thread.
    */
   virtual void run(void *arg);
+
+  /**
+   * Stop of the thread
+   */
+  virtual void stop() {}
 
 }; // class StreamThread
 

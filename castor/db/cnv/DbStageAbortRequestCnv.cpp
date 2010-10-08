@@ -201,6 +201,8 @@ void castor::db::cnv::DbStageAbortRequestCnv::reset() throw() {
   m_selectNsFileIdStatement = 0;
   m_deleteNsFileIdStatement = 0;
   m_remoteUpdateNsFileIdStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

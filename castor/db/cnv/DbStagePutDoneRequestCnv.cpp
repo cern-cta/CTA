@@ -194,6 +194,8 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::reset() throw() {
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
   m_updateFileRequestStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

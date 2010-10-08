@@ -71,14 +71,14 @@ namespace castor {
          * Resets the converter. In particular any prepared
          * statements are destroyed
          */
-        virtual void reset() throw() = 0;
+        virtual void reset() throw();
 
       protected:
 
         /**
          * inits the conversion service to be used
          */
-        void initCnvSvc(std::string serviceName) throw (castor::exception::Exception);
+        void initCnvSvc() throw (castor::exception::Exception);
 
         /**
          * creates a statement from a string. Note that the
@@ -94,7 +94,7 @@ namespace castor {
         /**
          * access to the underlying database conversion service for child classes
          */
-        castor::db::DbCnvSvc* cnvSvc() const;
+        castor::db::DbCnvSvc* cnvSvc() throw (castor::exception::Exception);
 
         /**
          * helper method to commit
@@ -110,6 +110,9 @@ namespace castor {
         
         /// The corresponding conversion service
         castor::db::DbCnvSvc* m_cnvSvc;
+        
+        /// The name of the conversion service to be used
+        std::string m_cnvSvcName;
         
       };
 

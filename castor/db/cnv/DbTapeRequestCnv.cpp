@@ -251,6 +251,8 @@ void castor::db::cnv::DbTapeRequestCnv::reset() throw() {
   m_updateDeviceGroupNameStatement = 0;
   m_checkClientIdentificationExistStatement = 0;
   m_updateClientIdentificationStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

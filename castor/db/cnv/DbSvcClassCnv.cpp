@@ -204,6 +204,8 @@ void castor::db::cnv::DbSvcClassCnv::reset() throw() {
   m_selectDiskPoolStatement = 0;
   m_checkFileClassExistStatement = 0;
   m_updateFileClassStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

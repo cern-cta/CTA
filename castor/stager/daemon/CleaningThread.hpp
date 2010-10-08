@@ -30,8 +30,9 @@
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor {
   
@@ -39,24 +40,25 @@ namespace castor {
     
     namespace daemon {
       
-      class CleaningThread : public virtual castor::server::BaseDbThread {
+      class CleaningThread : public virtual castor::server::IThread,
+                             public castor::BaseObject {
 	
       public:
-      
+
         /**
-         * Default costructor
+         * Initialization of the thread.
          */
-        CleaningThread() throw();
-       
-        /**
-         * Default destructor
-         */
-        ~CleaningThread() throw() {};
+        virtual void init() {}
 
         /**
          * Main work for this thread: dump the db cleaning activity to DLF
          */
         virtual void run(void* param) throw();
+
+        /**
+         * Stop of the thread
+         */
+        virtual void stop() {}
 
       };
       

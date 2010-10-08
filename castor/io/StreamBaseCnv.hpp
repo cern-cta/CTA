@@ -75,7 +75,7 @@ namespace castor {
        * Gets the representation type, that is the type of
        * the representation this converter can deal with
        */
-      virtual unsigned int repType() const;
+      virtual unsigned int repType();
 
       /**
        * create foreign representations from a set of C++ Object

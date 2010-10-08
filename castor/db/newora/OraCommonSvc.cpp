@@ -135,6 +135,8 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   m_selectTapeStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
+  // Call upper level reset
+  this->castor::db::DbBaseObj::reset();
 }
 
 //------------------------------------------------------------------------------

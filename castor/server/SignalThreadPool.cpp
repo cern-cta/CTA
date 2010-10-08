@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/server/SignalThreadPool.hpp"
+#include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 #include <sys/time.h>
 
@@ -246,5 +247,12 @@ void* castor::server::SignalThreadPool::_runner(void* param)
                             DLF_BASE_FRAMEWORK + 5, 2, params);
   }
 
+  try {
+    // cleanup thread specific globals
+    delete (services());
+  } catch (...) {
+    // ignore errors
+  }
+  Cthread_exit(0);
   return 0;
 }

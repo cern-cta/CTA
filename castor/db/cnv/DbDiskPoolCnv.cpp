@@ -187,6 +187,8 @@ void castor::db::cnv::DbDiskPoolCnv::reset() throw() {
   m_insertSvcClassStatement = 0;
   m_deleteSvcClassStatement = 0;
   m_selectSvcClassStatement = 0;
+  // Call upper level reset
+  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

@@ -87,8 +87,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      ../DbBaseObj.cpp \
      ../DbCnvSvc.cpp \
      ../DbParamsSvc.cpp \
-     ../../server/SelectProcessThread.cpp \
-     ../../server/BaseDbThread.cpp
+     ../../server/SelectProcessThread.cpp
 CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.o)
 
 DependsOnLibrary(castor,castorclient)

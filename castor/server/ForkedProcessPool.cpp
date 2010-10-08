@@ -39,6 +39,7 @@
 
 // Include Files
 #include "castor/server/ForkedProcessPool.hpp"
+#include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 
 // We use a global variable here to indicate whether the child should stop or
@@ -287,6 +288,12 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
                             DLF_BASE_FRAMEWORK + 5, 2, params);
   }
   dlf_shutdown();
+  try {
+    // cleanup thread specific globals
+    delete (services());
+  } catch (...) {
+    // ignore errors
+  }
   exit(EXIT_SUCCESS);
 }
 

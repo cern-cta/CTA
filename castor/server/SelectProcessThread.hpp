@@ -29,7 +29,8 @@
 #define CASTOR_SERVER_SELECTPROCESSTHREAD_HPP 1
 
 #include "castor/IObject.hpp"
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 namespace castor {
 
@@ -38,13 +39,9 @@ namespace castor {
   /**
    * Basic select/process thread for internal database-driven services.
    */
-  class SelectProcessThread : public castor::server::BaseDbThread {
+  class SelectProcessThread : public virtual castor::server::IThread,
+                              public castor::BaseObject {
   public:
-
-    /**
-     * Standard constructor
-     */
-    SelectProcessThread() : BaseDbThread() {};
 
     /**
      * Select part of the service.
@@ -59,9 +56,19 @@ namespace castor {
     virtual void process(castor::IObject* param) throw() = 0;
 
     /**
+     * Initialization of the thread.
+     */
+    virtual void init() {}
+
+    /**
      * Main work for this thread
      */
     virtual void run(void* param);
+
+    /**
+     * Stop of the thread
+     */
+    virtual void stop() {}
 
   };
 

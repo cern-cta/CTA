@@ -33,10 +33,11 @@
 
 #include "castor/exception/InvalidConfiguration.hpp"
 #include "castor/exception/TapeCopyNotFound.hpp"
-#include "castor/server/BaseDbThread.hpp"
 #include "castor/tape/mighunter/IMigHunterSvc.hpp"
 #include "castor/tape/mighunter/MigHunterDaemon.hpp"
 #include "castor/tape/mighunter/MigrationPolicyElement.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 #include <list>
 #include <map>
@@ -51,7 +52,8 @@ namespace mighunter {
 /**
  * MigHunter thread.
  */
-class MigHunterThread :public castor::server::BaseDbThread {
+class MigHunterThread : public virtual castor::server::IThread,
+                        public castor::BaseObject  {
 
 private:
 
@@ -240,11 +242,21 @@ public:
   };
 
   /**
+   * Initialization of the thread.
+   */
+  virtual void init() {}
+
+  /**
    * The entry point for MigHunter threads.
    *
    * @param arg The argument to be passed to the thread.
    */
   virtual void run(void *arg);
+
+  /**
+   * Stop of the thread
+   */
+  virtual void stop() {}
 
 }; // MigHunterThread
 

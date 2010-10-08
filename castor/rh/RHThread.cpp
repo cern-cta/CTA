@@ -68,7 +68,7 @@ pthread_once_t castor::rh::RHThread::s_rateLimiterOnce(PTHREAD_ONCE_INIT);
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread()
   throw (castor::exception::Exception) :
-  BaseDbThread() {
+  BaseObject() {
   m_stagerHost = castor::PortsConfig::getInstance()->
     getHostName(castor::CASTOR_STAGER);
   m_stagerPort = castor::PortsConfig::getInstance()->
@@ -167,9 +167,6 @@ void castor::rh::RHThread::stop() {
   if (rl != 0) {
     delete rl;
   }
-  // Call the upper level stop method so that the database connection can be
-  // dropped
-  castor::server::BaseDbThread::stop();
 }
 
 //------------------------------------------------------------------------------

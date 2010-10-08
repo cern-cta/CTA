@@ -64,7 +64,7 @@ unsigned int castor::io::StreamBaseCnv::RepType() {
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-inline unsigned int castor::io::StreamBaseCnv::repType() const {
+inline unsigned int castor::io::StreamBaseCnv::repType() {
   return RepType();
 }
 

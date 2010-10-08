@@ -25,6 +25,7 @@
 // Include files
 #include <unistd.h>
 #include <sys/time.h>
+#include "castor/Services.hpp"
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/metrics/InternalCounter.hpp"
 #include "castor/server/DynamicThreadPool.hpp"
@@ -251,8 +252,14 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                             DLF_BASE_FRAMEWORK + 11, 1, params);
   }
+  try {
+    // cleanup thread specific globals
+    delete (services());
+  } catch (...) {
+    // ignore errors
+  }
   pthread_exit(0);
-  return NULL;
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -379,6 +386,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   
   // Notify we're exiting
   try {
+    // thread specific cleanup
     pool->m_thread->stop();
   } catch (castor::exception::Exception& any) {
     // "Thread run error"
@@ -388,8 +396,14 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                             DLF_BASE_FRAMEWORK + 5, 2, params);
   } 
+  try {
+    // cleanup thread specific globals
+    delete (services());
+  } catch (...) {
+    // ignore errors
+  }
   pthread_exit(0);
-  return NULL;  // Should not be here
+  return 0;  // Should not be here
 }
 
 

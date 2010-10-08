@@ -34,9 +34,9 @@
 
 // Include files
 
-#include "castor/server/BaseDbThread.hpp"
-
 #include "castor/tape/rechandler/RecallPolicyElement.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/server/IThread.hpp"
 
 
 namespace castor    {
@@ -48,7 +48,8 @@ namespace rechandler{
      * This thread cleans out the out of date failed requests and diskcopies.
      */
     
-    class RecHandlerThread : public castor::server::BaseDbThread {
+    class RecHandlerThread : public virtual castor::server::IThread,
+                             public castor::BaseObject {
       
       PyObject* m_pyFunction; 
       bool applyRecallPolicy(const RecallPolicyElement& elem, const int nbMountsForRecall)
@@ -69,10 +70,19 @@ namespace rechandler{
        */
       virtual ~RecHandlerThread() throw() {};
       
+      /**
+       * Initialization of the thread.
+       */
+      virtual void init() {}
+
       /*For thread management*/
       virtual void run(void*);
       
-      
+      /**
+       * Stop of the thread
+       */
+      virtual void stop() {}
+
     };
 
 } // end of namespace rechandler
