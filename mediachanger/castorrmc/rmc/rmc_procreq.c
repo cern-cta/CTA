@@ -107,7 +107,7 @@ int rmc_srv_export(char *req_data,
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
-	strcpy (func, "rmc_srv_export");
+	strncpy (func, "rmc_srv_export", 16);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -164,7 +164,7 @@ int rmc_srv_findcart(char *req_data,
 	int type;
 	uid_t uid;
 
-	strcpy (func, "rmc_srv_findcart");
+	strncpy (func, "rmc_srv_findcart", 17);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -241,7 +241,7 @@ int rmc_srv_getgeom(char *req_data,
 	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 
-	strcpy (func, "rmc_srv_getgeom");
+	strncpy (func, "rmc_srv_getgeom", 16);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -288,7 +288,7 @@ int rmc_srv_import(char *req_data,
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
-	strcpy (func, "rmc_srv_import");
+	strncpy (func, "rmc_srv_import", 16);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -337,7 +337,7 @@ int rmc_srv_mount(char *req_data,
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
-	strcpy (func, "rmc_srv_mount");
+	strncpy (func, "rmc_srv_mount", 16);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -395,7 +395,7 @@ int rmc_srv_readelem(char *req_data,
 	int type;
 	uid_t uid;
 
-	strcpy (func, "rmc_srv_readelem");
+	strncpy (func, "rmc_srv_readelem", 17);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -468,7 +468,7 @@ int rmc_srv_unmount(char *req_data,
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
-	strcpy (func, "rmc_srv_unmount");
+	strncpy (func, "rmc_srv_unmount", 16);
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);

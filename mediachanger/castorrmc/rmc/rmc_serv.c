@@ -95,7 +95,7 @@ int rmc_main(struct main_args *main_args)
         }
 
 	jid = getpid();
-	strcpy (func, "rmc_serv");
+	strncpy (func, "rmc_serv", 16);
 	rmclogit (func, "started\n");
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 109, 2,
                              "func"   , TL_MSG_PARAM_STR, "rmc_main",
