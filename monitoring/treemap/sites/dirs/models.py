@@ -416,7 +416,11 @@ Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
 
 
 Requestsatlas.generatedtree = None
-Requestsatlas.treeready = False
+
+#other parameters influencing tree generation
+Requestsatlas.treeprops = {'start': 0, 'stop': 0}
+Requestsatlas.start = 120 #time relative to now
+Requestsatlas.stop = 0 #time relative to now
 
 class Requestscms(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
@@ -508,7 +512,12 @@ Requestscms.getParent.__dict__['naviname'] = 'namepart'
 
 
 Requestscms.generatedtree = None
-Requestscms.treeready = False
+
+#other parameters influencing tree generation
+Requestscms.treeprops = {'start': 0, 'stop': 0}
+Requestscms.start = 120 #time relative to now
+Requestscms.stop = 0 #time relative to now
+
 
 def generateRequestsTree(fromminsago, tominsago, reqmodel):
     def addRequestToTree(tree, requestdata):
@@ -640,7 +649,11 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             path = urlrest
             
 #        profile.runctx('generateRequestsTree(60 , 0, model)', globals(), {})
-        generateRequestsTree(120 , 0, model)
+        if (globals()[model].treeprops['start'] != globals()[model].start) or (globals()[model].treeprops['stop'] != globals()[model].stop):
+            generateRequestsTree(globals()[model].start , globals()[model].stop, model)
+            globals()[model].treeprops['start'] = globals()[model].start
+            globals()[model].treeprops['stop'] = globals()[model].stop
+            
         found = traverseToRequestInTree(path, model).getCurrentObject()
         return found
     elif model == 'CnsFileMetadata':

@@ -9,12 +9,13 @@ from sites.tools.Inspections import getDefaultNumberOfLevels
 import copy
     
 class Preset(object):
-    def __init__(self, lr, cachingenabled, rootmodel, rootsuffix, staticid):
+    def __init__(self, lr, cachingenabled, rootmodel, rootsuffix, staticid, options = {}):
         self.lr = lr
         self.cachingenabled = cachingenabled
         self.rootmodel = rootmodel
         self.rootsuffix = rootsuffix
         self.staticid = staticid
+        self.options = options
         
 presetdict = {}
     
@@ -37,6 +38,15 @@ def getPresetByStaticId(staticid):
         if preset.staticid == staticid:
             return preset
     return None
+
+def presetIdToName(staticid):
+    if staticid == 0:
+        return "Default (Directory structure)"
+    for item in presetdict.items():
+        if item[1].staticid == staticid:
+            return item[0]
+    return "Default (Directory structure)"
+    
     
 def getPresetNames():
     return presetdict.keys()
@@ -253,14 +263,18 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["Requests Atlas from last 120 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor', 22)
+options = {'start':r'.*?start=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?',
+           'stop':r'.*?stop=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?'}
+presetdict["Requests Atlas from last 120 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, options)
 
 #Preset for Requests cms
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23)
+options = {'start':r'.*?start=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?',
+           'stop':r'.*?stop=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?'}
+presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23, options)
 
 
 

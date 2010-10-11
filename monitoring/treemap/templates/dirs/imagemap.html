@@ -68,7 +68,12 @@ function notImplementedWarning()
       </td>
     </tr>
     
-    
+    <tr>
+      <td align="center" valign="middle">
+    	{% for key, value in presetdefault.items %}{% if key|equals:"presetname" %} {{value}} {% endif %}{% endfor %}
+      </td>
+    </tr>
+    		
     <tr>
     
     <!-- The map -->
@@ -89,7 +94,6 @@ function notImplementedWarning()
 	
 		<!-- The options -->
 		<td align="left" valign="top" height={{imageheight}}>	
-		
 		
 		<!--  make the menu visible if JavaScript is activated -->
 		<!-- The dropdown menus are hold in a table to have them ordered right -->

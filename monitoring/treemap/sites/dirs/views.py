@@ -8,6 +8,7 @@ from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
+from sites.dirs.OptionsReader import OptionsReader
 from sites.dirs.models import *
 from sites.tools.Inspections import *
 from sites.treemap.defaultproperties.SquaredViewProperties import *
@@ -19,10 +20,10 @@ from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+import datetime
 import re
-from sites.tools.Inspections import  getDefaultNumberOfLevels
-
 import sites.dirs.Presets
+
 
 
 def redirectOldLink(request, *args, **kwargs):
@@ -32,7 +33,8 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, presetid, rootmodel, theid, refresh_cache = False):  
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
+    print options
     time = datetime.datetime.now()
     presetid = int(presetid)
     
@@ -69,6 +71,12 @@ def treeView(request, presetid, rootmodel, theid, refresh_cache = False):
     if (value is not None): cache_hit = True
     if cache_hit and not refresh_cache:
         return HttpResponse(value)
+    
+    optr = OptionsReader(options, presetid)
+    Requestsatlas.start = optr.getOption('start')
+    Requestsatlas.stop = optr.getOption('stop')
+    Requestscms.start = optr.getOption('start')
+    Requestscms.stop = optr.getOption('stop')
     
     root = getRootObjectForTreemap(rootmodel, theid)
     
@@ -119,7 +127,7 @@ def treeView(request, presetid, rootmodel, theid, refresh_cache = False):
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, presetid, model, depth, theid, refresh_cache = False):    
+def groupView(request, options, presetid, model, depth, theid, refresh_cache = False):    
     time = datetime.datetime.now()
     depth = int(depth)
     presetid = int(presetid)
@@ -157,6 +165,12 @@ def groupView(request, presetid, model, depth, theid, refresh_cache = False):
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
+        
+    optr = OptionsReader(options, presetid)
+    Requestsatlas.start = optr.getOption('start')
+    Requestsatlas.stop = optr.getOption('stop')
+    Requestscms.start = optr.getOption('start')
+    Requestscms.stop = optr.getOption('stop')
     
     root = getRootObjectForTreemap(model, urlrest)
     
@@ -435,7 +449,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
-     'presetdefault':getCurrentPresetSelections(request)} , context_instance=None)
+     'presetdefault':getCurrentPresetSelections(request, presetid)} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
@@ -464,13 +478,11 @@ def createCookieIfMissing(request, nblevels):
         request.session['levelrules'] = getDefaultRules(nblevels)
         request.session['defaultpreset'] = getDefaultPresets()     
     
-def getCurrentPresetSelections(request):
+def getCurrentPresetSelections(request, presetid):
     try:
         request.session['userhascookie']
         request.session['defaultpreset']['smalltobig']
-        if request.session['defaultpreset']['presetname'] not in sites.dirs.Presets.getPresetNames():
-            request.session['defaultpreset'] = getDefaultPresets()
-            
+        request.session['defaultpreset']['presetname'] = sites.dirs.Presets.presetIdToName(presetid)
         return request.session['defaultpreset']
     except KeyError:
         request.session['userhascookie'] = True
@@ -498,7 +510,7 @@ def getDefaultModel():
     return 'Dirs'
 
 def getDefaultPresets():
-    return{'flat': False, 'presetname': 'Default', 'smalltobig': False}
+    return{'flat': False, 'presetname': "Default (Directory structure)", 'smalltobig': False}
     
 def getDefaultMetricsLinking():
     mlinker = MetricsLinker()
