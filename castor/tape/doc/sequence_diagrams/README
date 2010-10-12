@@ -1,49 +1,19 @@
 How to generate sequence diagrams from the source in this directory
 ===================================================================
 
-1. Install UMLGraph from http://www.umlgraph.org, for example:
+1. Install pic2plot by installing the gnu plotutils package.  Instructions can
+   be found here:
+
+   http://www.gnu.org/software/plotutils
+
+2. Install UMLGraph from http://www.umlgraph.org, for example:
 
    wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'
    tar -xvzf UMLGraph-5.2.tar.gz
 
-2. Create a symbolic link to the pic2plot macros from UMLGraph for generating
+3. Create a symbolic link to the pic2plot macros from UMLGraph for generating
    UML sequence diagrams:
 
    ln -s UMLGraph-5.2/src/sequence.pic sequence.pic
 
-3. Run pic2plot followed by gv to generate and display the sequence diagrams
-   respectively:
-
-   X=aggregator_recall           ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=gateway_aggregator_no_volume; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=gateway_aggregator_recall   ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=stager_migration            ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=stager_migration_avoid_mount; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=stager_recall               ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=tpread                      ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-   X=tpwrite                     ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
-
-
-GNU man page for pic2plot
-=========================================
-
-http://www.gnu.org/software/plotutils/manual/html_node/plotutils_21.html
-
-
-Generate the .ps file with A3 font 0.014
-==========================================
-
-pic2plot -T ps --page-size "a3" -f 0.014  stager_migration.pic  > stager_migration.ps
-
-
-Commandline to print on default printer
-==========================================
-
-a2ps -C --column 1  stager_migration.ps
-
-
-Commandline to conver a .ps file to a .pdf
-==========================================
-
-ps2pdf stager_migration.ps stager_migration.pdf
-
+4. Run the helper script generatesvg.sh located in this directory
