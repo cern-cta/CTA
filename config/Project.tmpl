@@ -90,8 +90,8 @@ checkXROOT:
 MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
 MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))
 checkMEMCACHED:
-	@if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so.3 -o ! -e $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
-          echo "Could not find memcached installation at ${MEMCACHED_LOCATION}. Giving up."; \
+	@if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so -o ! -e $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
+          echo "Could not find memcached dev installation at ${MEMCACHED_LOCATION}. Giving up."; \
           exit 1; \
         fi
 
