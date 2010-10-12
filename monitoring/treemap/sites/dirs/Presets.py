@@ -78,6 +78,8 @@ def filterPreset(preset, flatview, smalltobig):
                     therule.setPostProcessorName(classname, 'DefaultInversePostProcessor')
             newlr.appendRuleObject(therule)
             
+        lr = newlr
+            
     retpreset = copy.copy(preset)
     retpreset.lr = copy.copy(lr)
     return retpreset
@@ -275,6 +277,12 @@ for i in range(getDefaultNumberOfLevels()):
 options = {'start':r'.*?start=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?',
            'stop':r'.*?stop=(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}).*?'}
 presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23, options)
+
+#options to all presets
+for preset in presetdict.items():
+    preset[1].options['smalltobig'] = r'.*?smalltobig=(?P<boolean>true|false).*?'
+    preset[1].options['flatview'] = r'.*?flatview=(?P<boolean>true|false).*?'
+
 
 
 

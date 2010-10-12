@@ -21,7 +21,7 @@ urlpatterns = patterns('',
     
 #    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
     
-    (r'(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
+    (r'(|{(?P<options>.*)})(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
     
     (r'(|{(?P<options>.*)})(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     

@@ -37,6 +37,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     print options
     time = datetime.datetime.now()
     presetid = int(presetid)
+    if options is None: options = ''
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -45,11 +46,12 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT 
     
-    #load levelRules from cookie, if cookie doesn't exist, load defaults
-    lr = getCookieRules(request, nbdefinedlevels)
+    optr = OptionsReader(options, presetid)
+
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    lr = sites.dirs.Presets.getPresetByStaticId(presetid).lr
+    thepreset = sites.dirs.Presets.getPresetByStaticId(presetid)
+    lr = sites.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
     
     avmodels = lr.getRuleObject(0).getUsedClassNames()
 
@@ -62,7 +64,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     
-    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr)
+    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr, options =  optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
@@ -72,7 +74,6 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     if cache_hit and not refresh_cache:
         return HttpResponse(value)
     
-    optr = OptionsReader(options, presetid)
     Requestsatlas.start = optr.getOption('start')
     Requestsatlas.stop = optr.getOption('stop')
     Requestscms.start = optr.getOption('start')
@@ -111,14 +112,14 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId()
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
@@ -131,6 +132,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     time = datetime.datetime.now()
     depth = int(depth)
     presetid = int(presetid)
+    if options is None: options = ''
     
     prefix = theid[:(len(model)+1)]
     if(prefix == model + "_"):
@@ -145,12 +147,14 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
     
-    cookielr = getCookieRules(request, nbdefinedlevels)
+    optr = OptionsReader(options, presetid)
+    
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    cookielr = sites.dirs.Presets.getPresetByStaticId(presetid).lr
+    thepreset = sites.dirs.Presets.getPresetByStaticId(presetid)
+    cookielr = sites.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
         
-    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr)
+    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr, options = optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
@@ -166,7 +170,6 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
         
-    optr = OptionsReader(options, presetid)
     Requestsatlas.start = optr.getOption('start')
     Requestsatlas.stop = optr.getOption('stop')
     Requestscms.start = optr.getOption('start')
@@ -240,23 +243,36 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + "treemap.png"
+    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() 
     print filenm
     drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid)
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix = ''):
-    treeviewexpr = r'(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)'
-    groupviewexpr = r'(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'
+def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = ''):
+    if options is None: options = ''
+    optrd = OptionsReader(options, presetid)
+    
+    #look for the patterns 
+    patterns = sites.dirs.urls.urlpatterns
+    groupv = r'.*?.groupView$'
+    normalv = r'.*?.treeView$'
+    treeviewexpr = r''
+    groupviewexpr = r''
+    for pattern in patterns:
+        regex = str(pattern.regex.pattern)
+        if(re.match(groupv, pattern._callback_str)):
+            groupviewexpr = pattern.regex.pattern
+        if(re.match(normalv, pattern._callback_str)):
+            treeviewexpr = pattern.regex.pattern
     
     try:
         if re.match(treeviewexpr, urlending):
@@ -272,9 +288,9 @@ def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix 
             pos = rediraddr.rfind(urlending)
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
-            rediraddr = rediraddr + str(presetid) + "_" + model  + "_" + theid
+            rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
                 
-            return redirect(to = rediraddr, args = {'request':request, 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request, 'options':  optrd.getCorrectedOptions(presetid), 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
         elif re.match(groupviewexpr, urlending):
             match = re.match(treeviewexpr, urlending)
             theid = match.group('theid')
@@ -289,19 +305,19 @@ def redir(request, urlending, refreshcache, presetid, newmodel = None, idsuffix 
             pos = rediraddr.rfind(urlending)
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
-            rediraddr = rediraddr + str(presetid) + "_" + model  + "_" + theid
+            rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
             
-            return redirect(to = rediraddr, args = {'request':request,'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
     except:
-        return redirect(to = '..', args = {'request':request, 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
+        return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
     
     return Http404
 
-def preset(request, urlending):
+def preset(request, options,  urlending):
+    if options is None: options = ''
     nblevels = getDefaultNumberOfLevels()
     
     if request.method == 'POST':
-        createCookieIfMissing(request, nblevels)
             
         posted = {}
         posted = request.POST
@@ -309,40 +325,48 @@ def preset(request, urlending):
         try:
             presetname = posted['preset']
         except KeyError:
-            redir(request, urlending, False, 0)
+            redir(request, options, urlending, False, 0)
         
-        flatview = False
         try:
             posted['flat_view']
-            flatview = True
+            #if no error here, continue:
+            pos = options.find('flatview=false')
+            if pos != -1:
+                options[pos:pos+len('flatview=false')] = 'flatview=true'
+            else:
+                if(len(options) > 0):
+                    options = 'flatview=true, ' + options 
+                else:
+                    options = 'flatview=true' 
         except KeyError:
             pass
         
-        smalltobig = False
         try:
             posted['smalltobig']
-            smalltobig = True
+            #if no error here, continue:
+            pos = options.find('smalltobig=false')
+            if pos != -1:
+                options[pos:pos+len('smalltobig=false')] = 'smalltobig=true'
+            else:
+                if(len(options) > 0):
+                    options = 'smalltobig=true, ' + options 
+                else:
+                    options = 'smalltobig=true' 
         except KeyError:
             pass
         
         if presetname not in sites.dirs.Presets.getPresetNames():
-            redir(request, urlending, False, 0)
-
-        #an import of filterPreset from Presets won't work! you have to give an full path for everything from sites.dirs.Presets
-        #for some reason mod_python can't import Presets correctly and outputs useless error messages
-        lr = sites.dirs.Presets.filterPreset(sites.dirs.Presets.getPreset(presetname), flatview, smalltobig).lr
-            
-        request.session['defaultpreset'] = {'flat': flatview, 'presetname': presetname, 'smalltobig': smalltobig}
-        request.session['levelrules'] = lr
+            redir(request, options, urlending, False, 0)
         
     else:
         raise Http404
 
-    return redir(request, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
+    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, metric = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = '', metric = ''):
     print "preparing response"
-    rootsuffix = str(presetid) + "_" + rootsuffix
+    optionsstring = '{'+ options +'}'
+    rootsuffix = optionsstring + str(presetid) + "_" + rootsuffix
     
     apacheserver = settings.PUBLIC_APACHE_URL
 #    serverdict = settings.LOCAL_APACHE_DICT
@@ -366,7 +390,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
-        linksuffix = str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
+        linksuffix = optionsstring + str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmlinfotext')
         hash = node.getProperty('treenode').getObject().__hash__()
         
@@ -437,10 +461,9 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         if pos == -1: pos = 0
         nvtext = nvtext[pos:]   
            
-        navlinkparts.append( (nvtext, str(pr), str(presetid) + "_" + pr.getIdReplacement()) )
+        navlinkparts.append( (nvtext, str(pr), optionsstring + str(presetid) + "_" + pr.getIdReplacement()) )
     
     generationtime = datetime.datetime.now() - time
-    cookierules = getCookieRules(request, nblevels).getRules()
     
     presetnames = sites.dirs.Presets.getPresetNames()
     presetnames.sort();
@@ -448,8 +471,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
-     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'cookierules': cookierules, 'presetnames': presetnames, \
-     'presetdefault':getCurrentPresetSelections(request, presetid)} , context_instance=None)
+     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, \
+     'presetdefault':getCurrentPresetSelections(request, presetid, options)} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
@@ -463,43 +486,20 @@ class DropDownEntry(object):
     def __init__(self, text, value):
         self.text = text
         self.value = value
-
-def createCookieIfMissing(request, nblevels):
-    try:
-        request.session['userhascookie']
-        request.session['levelrules']
-        request.session['levelrules'].getPostProcessorNameFor(0,'Annex')
-        request.session['defaultpreset']
-        request.session['defaultpreset']['smalltobig']
-        if not request.session['levelrules'].rulesAreValid(): 
-            raise AttributeError("Rules not valid or from an older version")
-    except (KeyError, AttributeError):
-        request.session['userhascookie'] = True
-        request.session['levelrules'] = getDefaultRules(nblevels)
-        request.session['defaultpreset'] = getDefaultPresets()     
     
-def getCurrentPresetSelections(request, presetid):
+def getCurrentPresetSelections(request, presetid, options = ''):
     try:
-        request.session['userhascookie']
-        request.session['defaultpreset']['smalltobig']
-        request.session['defaultpreset']['presetname'] = sites.dirs.Presets.presetIdToName(presetid)
-        return request.session['defaultpreset']
+        optrd = OptionsReader(options, presetid)
+        return {'flat': optrd.getOption('flatview'), 'presetname': sites.dirs.Presets.presetIdToName(presetid), 'smalltobig': optrd.getOption('smalltobig')}
     except KeyError:
-        request.session['userhascookie'] = True
         return getDefaultPresets()
 
-def getCookieRules(request, nbdefinedlevels):
-    lr = None
-    createCookieIfMissing(request, nbdefinedlevels)
-    lr = request.session['levelrules']
-    return lr
-
-def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0):
+def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0, options = ''):
     key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     fragment_name = hash(theid).__str__() + '_'+ depth.__str__() + '_'+ ''.join([ord(bla).__str__() for bla in parentmodel.__str__()])
     args = md5_constructor(u':'.join([urlquote(resolve_variable("185", hash(theid).__str__() + '_'+ fragment_name))]))     
     lrkeypart = lr.getUniqueLevelRulesId()            
-    cache_key = 'template.cache%s%s%s%s%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart, str(presetid))
+    cache_key = 'treemap%s%s%s%s%s%s' % (key_prefix, fragment_name, args.hexdigest(), lrkeypart, str(presetid), hash(options))
     return cache_key
 
 def getDefaultRules(nblevels):

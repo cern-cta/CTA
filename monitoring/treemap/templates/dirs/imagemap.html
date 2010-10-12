@@ -11,32 +11,6 @@
 //define global menu values
 function initMenu()
 {
-//structure:
-
-//cookielr[level]
-//	nblevels
-//	models["modelname"]
-//		["childrenmethod"]
-//  	["metric"] todo 
-//		...extendable here
-cookielr = new Array();
-cookielr.nblevels = {{cookierules|length}};
-
-{% for rule in cookierules %}
-	cookielr[{{forloop.counter0}}] = new Object();
-	cookielr[{{forloop.counter0}}].models = []; 
-	{% for model in rule.getUsedClassNames %} {% if not model|equals:'Annex' %} cookielr[{{forloop.parentloop.counter0}}].models.push("{{model}}"); {% endif %}{% endfor %}
-	{% for modelname in rule.getUsedClassNames %}
-		{% if not modelname|equals:'Annex' %}
-			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"] = new Object();
-			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["childrenmethod"] = {% for mname, methodname in rule.getModelToMethod %}{% if mname|equals:modelname%}"{{methodname}}";{% endif %}{% endfor %}
-			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["metric"] = {% for md, metric in rule.getModelToColumn %}{% if md|equals:modelname%}"{{metric}}";{% endif %}{% endfor %}
-			cookielr[{{forloop.parentloop.counter0}}]["{{modelname}}"]["postprocessor"] = {% for md, postprocessor in rule.getModelToPostProcessor %}{% if md|equals:modelname%}"{{postprocessor}}";{% endif %}{% endfor %}
-		{% endif %}
-	{% endfor %}
-{% endfor %}
-
-
 activateJsObjects();
 }
 
@@ -51,7 +25,7 @@ function notImplementedWarning()
 	//childrenmenu.disabled = false;
 	levelsmenu = document.getElementsByName("level")[0];
 	levelsmenu.disabled = false;
-	alert("This is in a very early stage! If something doesn't work any more ,delete your cookies to restore the session and reload the page");
+	alert("This is in an early stage! If something doesn't work any more ,delete your cookies.");
 }
 
 </script>
@@ -114,10 +88,10 @@ function notImplementedWarning()
 					</select></td></tr>
 					
 					<tr><td></td><td class="descriptiontext">
-						<input disabled id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
+						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
 					</td></tr>
 					<tr><td></td><td class="descriptiontext">
-						<input disabled id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
+						<input id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
 					</td></tr>
 					
 					<tr><td>
