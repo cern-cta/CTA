@@ -133,10 +133,9 @@ int offsetComparison(const void *first, const void *second) {
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define MOD(a) a %= BASE
 
-unsigned long  adler32_combine_(adler1, adler2, len2)
-    unsigned int adler1;
-    unsigned int adler2;
-    globus_off_t len2;
+unsigned long  adler32_combine_(unsigned int adler1,
+                                unsigned int adler2,
+                                globus_off_t len2)
 {
     unsigned int sum1;
     unsigned int sum2;
