@@ -47,8 +47,13 @@ def xrdcpURLparam(self, nb=0):
                            'root://'+os.environ['STAGE_HOST']+'/'+ self.getTag(test,'noTapeFileName'+snb)+'?stagerHost='+os.environ['STAGE_HOST']+'\\&'])
 Setup.getTag_xrdcpURLparam = xrdcpURLparam
 
-def xrdcp(self):
+def corexrdcp(self):
     return os.environ['XROOTSYS'] + os.sep + 'bin' + os.sep + 'xrdcp'
+Setup.getTag_corexrdcp = corexrdcp
+
+def xrdcp(self):
+    cmd = os.environ['XROOTSYS'] + os.sep + 'bin' + os.sep + 'xrdcp'
+    return [cmd, 'KRB5CCNAME=nonexistinghost;' + cmd]
 Setup.getTag_xrdcp = xrdcp
 
 def xrd(self):
