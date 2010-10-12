@@ -981,7 +981,8 @@ BEGIN
            HAVING COUNT(*) >= 10)
        ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                               FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
+                               FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                DBMS_Random.value)
    WHERE ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No diskcopy found that could be replicated
@@ -1012,7 +1013,8 @@ BEGIN
        AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
      ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                              FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                             FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
+                             FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+              DBMS_Random.value)
    WHERE rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No file found to be read
