@@ -1,0 +1,41 @@
+.PS
+
+copy "sequence.pic";
+
+# Put a vertical space at the top of the document
+step();
+step();
+
+# Define the worker process
+object(W,"worker");
+
+# Put horizontal space between the worker and rtcpd child processes
+placeholder_object(FakeObject1);
+
+# Define the child rtcpd process
+object(C,"rtcpd child");
+
+step();
+
+# Message sequences
+
+active(C);
+active(W);
+
+step();
+
+message(C,W,"connect for tape IO");
+
+step();
+
+message(C,W,"connect for disk IO control thread");
+message(C,W,"connect for disk IO control thread");
+message(C,W,"connect for disk IO control thread");
+
+step();
+
+complete(W);
+complete(C);
+
+.PE
+
