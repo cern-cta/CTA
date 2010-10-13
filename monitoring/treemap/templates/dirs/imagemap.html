@@ -93,14 +93,16 @@ function notImplementedWarning()
 					<tr><td></td><td class="descriptiontext">
 						<input id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
 					</td></tr>
-					
 					<tr><td>
 						<input class="applybutton" type="submit" value="Apply"/>
+					</td></tr>
+					<tr><td></td><td class="livedatawarning">
+						<br></>The displayed data <br> is not live data. <br> Exceptions are: <br> -Requests Atlas <br> -Requests CMS
 					</td></tr>
 				</form>
 			</tr>
 			<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
 			</td></tr>
 			</table>
@@ -131,6 +133,12 @@ function notImplementedWarning()
      .descriptiontext {
 		font-size: 14px;
 		color:#CFCFCF;
+     }
+    </style>
+    
+    <style type="text/css">
+     .livedatawarning {
+		font-size: 14px;
      }
     </style>
     

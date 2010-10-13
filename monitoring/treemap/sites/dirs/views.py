@@ -23,6 +23,7 @@ from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import re
 import sites.dirs.Presets
+import time
 
 
 
@@ -112,9 +113,21 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId()
-    print filenm
-    drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
+    
+    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"
+    fullfilepath= serverdict + treemapdir + "/" + filenm
+    print fullfilepath
+
+    #wait maximum 6 seconds for the file being unlocked, ignore the lock otherwise
+    sleepcounter = 0
+    while os.path.exists(fullfilepath + '.lock') and sleepcounter < 6:
+        time.sleep(1)
+        sleepcounter = sleepcounter + 1
+
+    fileobject = open(fullfilepath + '.lock', 'w+b')
+    drawer.drawTreemap(fullfilepath)
+    os.remove(fullfilepath + '.lock')
+    
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
@@ -243,9 +256,20 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() 
-    print filenm
-    drawer.drawTreemap(serverdict + treemapdir + "/" + filenm)
+    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+    fullfilepath= serverdict + treemapdir + "/" + filenm
+    print fullfilepath
+
+    #wait maximum 6 seconds for the file being unlocked, ignore the lock otherwise
+    sleepcounter = 0
+    while os.path.exists(fullfilepath + '.lock') and sleepcounter < 6:
+        time.sleep(1)
+        sleepcounter = sleepcounter + 1
+
+    fileobject = open(fullfilepath + '.lock', 'w+b')
+    drawer.drawTreemap(fullfilepath)
+    os.remove(fullfilepath + '.lock')
+    
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
@@ -471,7 +495,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
-     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, \
+     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 
      'presetdefault':getCurrentPresetSelections(request, presetid, options)} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
