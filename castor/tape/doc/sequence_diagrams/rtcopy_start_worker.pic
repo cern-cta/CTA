@@ -32,7 +32,7 @@ message(V,RC,"ack");
 step();
 message(V,RC,"request ID");
 message(RC,V,"ack");
-message(RC,V,"disconnect");
+message(RC,V,"close connection");
 inactive(V);
 inactive(RC);
 
@@ -47,7 +47,7 @@ inactive(R);
 
 message(V,C,"client and job info");
 message(C,V,"success");
-message(C,V,"disconnect");
+message(C,V,"close connection");
 inactive(V);
 
 step();
@@ -67,7 +67,7 @@ active(W);
 inactive(RC);
 message(W,C,"new client info");
 message(C,W,"ack");
-message(W,C,"disconnect");
+message(W,C,"close connection");
 
 step();
 

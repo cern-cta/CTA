@@ -24,7 +24,7 @@ message(GW,V,"volume request");
 message(V,GW,"ack");
 message(V,GW,"volReqID");
 message(GW,V,"ack");
-message(GW,V,"disconnect");
+message(GW,V,"close connection");
 inactive(V);
 
 step();
@@ -38,7 +38,7 @@ inactive(R);
 
 message(V,RF,"ClientInfo - job");
 message(RF,V,"RcpJobReply");
-message(RF,V,"disconnect");
+message(RF,V,"close connection");
 inactive(V);
 
 step();

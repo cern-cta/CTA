@@ -40,7 +40,7 @@
 <text transform="translate(1.2307,-2.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="0.06" y1="-2.65" x2="2.44" y2="-2.65" stroke-width="0.0094118" />
 <polygon points="2.34,-2.625 2.44,-2.65 2.34,-2.675 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(0.91806,-2.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >disconnect</text>
+<text transform="translate(0.73278,-2.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close connection</text>
 <text transform="translate(1.2307,-2.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.45" y1="-1.15" x2="2.45" y2="-2.65" stroke-width="0.0094118" />
 <line x1="2.55" y1="-1.15" x2="2.55" y2="-2.65" stroke-width="0.0094118" />
@@ -78,7 +78,7 @@
 <text transform="translate(3.7307,-4.3074) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="4.94" y1="-4.425" x2="2.56" y2="-4.425" stroke-width="0.0094118" />
 <polygon points="2.66,-4.45 2.56,-4.425 2.66,-4.4 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.4181,-4.3907) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >disconnect</text>
+<text transform="translate(3.2328,-4.3907) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close connection</text>
 <text transform="translate(3.7307,-4.5574) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.45" y1="-2.9" x2="2.45" y2="-4.425" stroke-width="0.0094118" />
 <line x1="2.55" y1="-2.9" x2="2.55" y2="-4.425" stroke-width="0.0094118" />
@@ -127,7 +127,7 @@
 <text transform="translate(3.1057,-7.5824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="1.31" y1="-7.7" x2="4.94" y2="-7.7" stroke-width="0.0094118" />
 <polygon points="4.84,-7.675 4.94,-7.7 4.84,-7.725 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(2.7931,-7.6657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >disconnect</text>
+<text transform="translate(2.6078,-7.6657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close connection</text>
 <text transform="translate(3.1057,-7.8324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="0" y1="-6.95" x2="0" y2="-7.95" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
 <line x1="1.2" y1="-6.95" x2="1.2" y2="-7.95" stroke-width="0.0094118" />

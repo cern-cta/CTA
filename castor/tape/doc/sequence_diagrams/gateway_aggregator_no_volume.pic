@@ -18,7 +18,7 @@ message(G,V,"volume request");
 message(V,G,"ack");
 message(V,G,"volReqID");
 message(G,V,"ack");
-message(G,V,"disconnect");
+message(G,V,"close connection");
 inactive(V);
 inactive(G);
 
@@ -34,9 +34,9 @@ message(A,R,"connect");
 active(R);
 message(A,R,"ClientInfo - job");
 message(R,A,"RcpJobReply");
-message(R,A,"disconnect");
+message(R,A,"close connection");
 message(A,V,"RcpJobReply");
-message(A,V,"disconnect");
+message(A,V,"close connection");
 inactive(V);
 
 step();
@@ -55,11 +55,11 @@ message(A,G,"connect");
 active(G);
 message(A,G,"VolumeRequest");
 message(G,A,"NoMoreFiles");
-message(A,G,"disconnect");
+message(A,G,"close connection");
 inactive(G);
 
 # Aggregator aborts mount
-message(A,R,"disconnect");
+message(A,R,"close connection");
 inactive(R);
 inactive(A);
 

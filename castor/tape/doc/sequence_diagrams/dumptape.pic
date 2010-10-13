@@ -21,7 +21,7 @@ active(M);
 message(C,M,"VMGR_QRYTAPE");      # 0x0004
 message(M,C,"MSG_DATA");          # 0x0002
 message(M,C,"VMGR_RC");           # 0x0002
-message(M,C,"disconnect");
+message(M,C,"close connection");
 inactive(M);
 
 step();
@@ -33,7 +33,7 @@ message(C,V,"VDQM_VOL_REQ");      # 0x3101
 message(V,C,"VDQM_COMMIT");       # 0x310b
 message(V,C,"VDQM_VOL_REQ");      # 0x3101
 message(C,V,"VDQM_COMMIT");       # 0x310b
-message(C,V,"disconnect");
+message(C,V,"close connection");
 inactive(V);
 
 step();
@@ -44,7 +44,7 @@ message(V,R,"connect");
 active(R);
 message(V,R,"VDQM_CLIENTINFO");         # 0x3104
 message(R,V,"VDQM_CLIENTINFO (ack)");   # 0x3104
-message(R,V,"disconnect");
+message(R,V,"close connection");
 inactive(V);
 
 step();
@@ -77,7 +77,7 @@ step();
 
 message(C,R,"RTCP_ENDOF_REQ");          # 0x2106
 message(R,C,"RTCP_ENDOF_REQ (ack)");    # 0x2106
-message(C,R,"disconnect");
+message(C,R,"close connection");
 inactive(R);
 
 step();
@@ -87,7 +87,7 @@ message(C,V,"connect");
 active(V);
 message(C,V,"VDQM_DEL_VOLREQ");
 message(V,C,"EVQREQASS");
-message(C,V,"disconnect");
+message(C,V,"close connection");
 
 inactive(V);
 inactive(C);
