@@ -16,6 +16,8 @@
 #include "serrno.h"
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"
+#include "client/src/stager/stager_client_api_query.hpp"
+#include "castor/query/DiskPoolQueryType.hpp"
 
 #define BUFSIZE 200
 
@@ -45,6 +47,8 @@ static struct Coptions longopts[] =
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {"si",                 NO_ARGUMENT,        NULL,      'i' },
     {"human-readable",     NO_ARGUMENT,        NULL,      'H' },
+    {"available",          NO_ARGUMENT,        NULL,      'a' },
+    {"total",              NO_ARGUMENT,        NULL,      't' },
     {NULL,                 0,                  NULL,       0 }
   };
 
@@ -73,6 +77,8 @@ static struct Coptions longopts_diskPoolQuery[] =
     {"svcClass",          REQUIRED_ARGUMENT,  NULL,      'S'},
     {"si",                NO_ARGUMENT,        NULL,      'i'},
     {"human-readable",    NO_ARGUMENT,        NULL,      'H' },
+    {"available",         NO_ARGUMENT,        NULL,      'a' },
+    {"total",             NO_ARGUMENT,        NULL,      't' },
     {NULL,                0,                  NULL,       0 }
   };
 
@@ -134,11 +140,13 @@ int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
  * @param svcClass the svcClass specified (if any), or NULL
  * @param siflag flag to indicate whether to display size
  * related information in powers of 1000 not 1024
+ * @param queryType flag to indicate which type of diskPoolQuery
+ * to perform (default, available space or total space)
  * @return 0 if parsing succeeded
  */
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-                              char** diskpool, char** svcClass,
-                              int* siflag);
+                              char** diskpool, char** svcClass, int* siflag,
+                              enum castor::query::DiskPoolQueryType* queryType);
 
 // -----------------------------------------------------------------------
 // main
@@ -248,6 +256,7 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
   char errbuf[BUFSIZE];
   char *diskPool = NULL;
   int siflag = 0;
+  enum castor::query::DiskPoolQueryType queryType = castor::query::DISKPOOLQUERYTYPE_DEFAULT;
   struct stage_options opts;
 
   // parsing the commane line
@@ -255,7 +264,7 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
   opts.stage_port = 0;
   opts.service_class = NULL;
   errflg = parseCmdLineDiskPoolQuery
-    (argc, argv, &diskPool, &(opts.service_class), &siflag);
+    (argc, argv, &diskPool, &(opts.service_class), &siflag, &queryType);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -274,9 +283,10 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
   if (NULL == diskPool) {
     struct stage_diskpoolquery_resp *responses;
     int i, nbresps;
-    int rc = stage_diskpoolsquery(&responses,
-                                  &nbresps,
-                                  &opts);
+    int rc = stage_diskpoolsquery_internal(&responses,
+                                           &nbresps,
+                                           &opts,
+                                           queryType);
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {
@@ -292,7 +302,7 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
     }
   } else {
     struct stage_diskpoolquery_resp response;
-    int rc = stage_diskpoolquery(diskPool, &response, &opts);
+    int rc = stage_diskpoolquery_internal(diskPool, &response, &opts, queryType);
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {
@@ -407,8 +417,8 @@ int parseCmdLineFileQuery(int argc, char *argv[],
 // parseCmdLineDiskPoolQuery
 // -----------------------------------------------------------------------
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-                              char** diskPool, char** svcClass,
-                              int *siflag) {
+                              char** diskPool, char** svcClass, int *siflag,
+                              enum castor::query::DiskPoolQueryType* queryType) {
   int Coptind, Copterr, errflg;
   char c;
 
@@ -416,8 +426,9 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
   Copterr = 1;
   errflg = 0;
   *siflag = 0;
+  *queryType = castor::query::DISKPOOLQUERYTYPE_DEFAULT;
   while ((c = Cgetopt_long (argc, argv,
-                            "sd:S:iH",
+                            "sd:S:iHat",
                             longopts_diskPoolQuery, NULL)) != -1) {
     switch (c) {
     case 'd':
@@ -431,6 +442,12 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
       break;
     case 'H':
       *siflag |= HUMANREADABLE;
+      break;
+    case 'a':
+      *queryType = castor::query::DISKPOOLQUERYTYPE_AVAILABLE;
+      break;
+    case 't':
+      *queryType = castor::query::DISKPOOLQUERYTYPE_TOTAL;
       break;
     case 's':
       break;
@@ -457,7 +474,7 @@ int checkAndCountArguments(int argc, char *argv[],
   *count = 0;
   *type = FILEQUERY;
   while ((c = Cgetopt_long
-          (argc, argv, "M:f:F:U:r:nhsd:S:iH", longopts, NULL)) != -1) {
+          (argc, argv, "M:f:F:U:r:nhsd:S:iHat", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'F':
@@ -488,6 +505,8 @@ int checkAndCountArguments(int argc, char *argv[],
     case 'n':
     case 'd':
     case 'H':
+    case 'a':
+    case 't':
       break;
     case 'h':
     default:
@@ -510,5 +529,5 @@ void usage(char *cmd) {
   fprintf (stderr, "%s",
            "[-M hsmfile [-M ...]] [-f hsmFileList] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
-  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-H] [-i] [-h]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-H] [-i] [-h] [-a]\n");
 }

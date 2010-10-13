@@ -151,6 +151,8 @@ namespace castor {
 	 * @param egid the gid of the user issuing the command
 	 * @param detailed flag to indicate whether the diskserver and
 	 * filesystem related information should be included in response
+         * @param queryType type of query to run (default, available space
+         * or total space)
          * @return a vector of diskpool descriptions. Note that the caller
          * is responsible for freeing the allocated memory
          * @exception Exception in case of error
@@ -159,7 +161,8 @@ namespace castor {
 	describeDiskPools(std::string svcClass,
 			  unsigned long euid,
 			  unsigned long egid,
-			  bool detailed)
+			  bool detailed,
+                          enum castor::query::DiskPoolQueryType queryType)
           throw (castor::exception::Exception);
         
         /**
@@ -168,6 +171,8 @@ namespace castor {
 	 * @param svcClass the Service class to consider, or empty string if none
 	 * @param detailed flag to indicate whether the diskserver and
 	 * filesystem related information should be included in response
+         * @param queryType type of query to run (default, available space
+         * or total space)
          * @return the descriptions of the DiksPool. Note that the caller
          * is responsible for freeing the allocated memory
          * @exception Exception in case of error
@@ -175,7 +180,8 @@ namespace castor {
         virtual castor::query::DiskPoolQueryResponse*
 	describeDiskPool(std::string diskPool,
 			 std::string svcClass,
-			 bool detailed)
+			 bool detailed,
+                         enum castor::query::DiskPoolQueryType queryType)
           throw (castor::exception::Exception);
 
       private:

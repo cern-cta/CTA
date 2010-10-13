@@ -237,7 +237,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StageQueryResult",
   "NsFileId",
   "BulkRequestResult",
-  "FileResult"
+  "FileResult",
+  "DiskPoolQuery"
 };
 
 

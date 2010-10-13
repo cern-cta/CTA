@@ -43,6 +43,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
+#include "castor/query/DiskPoolQueryType.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include <stdlib.h>
 #include <vector>
@@ -58,7 +59,7 @@ static castor::CnvFactory<castor::db::cnv::DbDiskPoolQueryCnv>* s_factoryDbDiskP
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_insertStatementString =
-"INSERT INTO DiskPoolQuery (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15) RETURNING id INTO :16";
+"INSERT INTO DiskPoolQuery (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client, queryType) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15,:16) RETURNING id INTO :17";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_deleteStatementString =
@@ -66,7 +67,7 @@ const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client FROM DiskPoolQuery WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client, queryType FROM DiskPoolQuery WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_bulkSelectStatementString =
@@ -77,7 +78,7 @@ const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_bulkSelectStatementStri
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client \
+     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client, queryType \
                      FROM DiskPoolQuery t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -88,7 +89,7 @@ const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_bulkSelectStatementStri
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_updateStatementString =
-"UPDATE DiskPoolQuery SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, diskPoolName = :12 WHERE id = :13";
+"UPDATE DiskPoolQuery SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, diskPoolName = :12, queryType = :13 WHERE id = :14";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDiskPoolQueryCnv::s_storeTypeStatementString =
@@ -392,7 +393,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::createRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(16, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(17, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -416,8 +417,9 @@ void castor::db::cnv::DbDiskPoolQueryCnv::createRep(castor::IAddress*,
     m_insertStatement->setString(13, obj->diskPoolName());
     m_insertStatement->setUInt64(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setUInt64(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setInt(16, (int)obj->queryType());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(16));
+    obj->setId(m_insertStatement->getUInt64(17));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -453,7 +455,8 @@ void castor::db::cnv::DbDiskPoolQueryCnv::createRep(castor::IAddress*,
                     << "  diskPoolName : " << obj->diskPoolName() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
-                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl
+                    << "  queryType : " << obj->queryType() << std::endl;
     throw ex;
   }
 }
@@ -479,7 +482,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::bulkCreateRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(16, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(17, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -802,6 +805,25 @@ void castor::db::cnv::DbDiskPoolQueryCnv::bulkCreateRep(castor::IAddress*,
     }
     m_insertStatement->setDataBuffer
       (15, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+    // build the buffers for queryType
+    int* queryTypeBuffer = (int*) malloc(nb * sizeof(int));
+    if (queryTypeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryTypeBuffer);
+    unsigned short* queryTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (queryTypeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryTypeBufLens);
+    for (int i = 0; i < nb; i++) {
+      queryTypeBuffer[i] = objs[i]->queryType();
+      queryTypeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (16, queryTypeBuffer, castor::db::DBTYPE_INT, sizeof(queryTypeBuffer[0]), queryTypeBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -816,7 +838,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (16, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (17, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -905,7 +927,8 @@ void castor::db::cnv::DbDiskPoolQueryCnv::updateRep(castor::IAddress*,
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setInt(11, time(0));
     m_updateStatement->setString(12, obj->diskPoolName());
-    m_updateStatement->setUInt64(13, obj->id());
+    m_updateStatement->setInt(13, (int)obj->queryType());
+    m_updateStatement->setUInt64(14, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -1007,6 +1030,7 @@ castor::IObject* castor::db::cnv::DbDiskPoolQueryCnv::createObj(castor::IAddress
     object->setLastModificationTime(rset->getUInt64(12));
     object->setDiskPoolName(rset->getString(13));
     object->setId(rset->getUInt64(14));
+    object->setQueryType((enum castor::query::DiskPoolQueryType)rset->getInt(17));
     delete rset;
     return object;
   } catch (castor::exception::SQLError& e) {
@@ -1066,6 +1090,7 @@ castor::db::cnv::DbDiskPoolQueryCnv::bulkCreateObj(castor::IAddress* address)
       object->setLastModificationTime(rset->getUInt64(12));
       object->setDiskPoolName(rset->getString(13));
       object->setId(rset->getUInt64(14));
+      object->setQueryType((enum castor::query::DiskPoolQueryType)rset->getInt(17));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -1117,6 +1142,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::updateObj(castor::IObject* obj)
     object->setLastModificationTime(rset->getUInt64(12));
     object->setDiskPoolName(rset->getString(13));
     object->setId(rset->getUInt64(14));
+    object->setQueryType((enum castor::query::DiskPoolQueryType)rset->getInt(17));
     delete rset;
   } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;

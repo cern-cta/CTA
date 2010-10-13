@@ -111,7 +111,7 @@ namespace castor {
 
     OBJ_DiskServerDescription = 101,
     OBJ_FileSystemDescription = 102,
-    OBJ_DiskPoolQuery = 103,
+    OBJ_DiskPoolQueryOld = 103,
 
     /* Object to replace the old response */
     OBJ_EndResponse = 104,
@@ -231,7 +231,8 @@ namespace castor {
     OBJ_StageQueryResult = 191,
     OBJ_NsFileId = 192,
     OBJ_BulkRequestResult = 193,
-    OBJ_FileResult = 194
+    OBJ_FileResult = 194,
+    OBJ_DiskPoolQuery = 195
 
   };
 
@@ -306,7 +307,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 195
+#define OBJECT_IDS_NB 196
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
+#include "castor/query/DiskPoolQueryType.hpp"
 #include "castor/stager/Request.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -42,7 +43,8 @@
 castor::query::DiskPoolQuery::DiskPoolQuery() throw() :
   Request(),
   m_diskPoolName(""),
-  m_id(0) {
+  m_id(0),
+  m_queryType(DiskPoolQueryType(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -69,6 +71,7 @@ void castor::query::DiskPoolQuery::print(std::ostream& stream,
   stream << indent << "diskPoolName : " << m_diskPoolName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "queryType : " << DiskPoolQueryTypeStrings[m_queryType] << std::endl;
 }
 
 //------------------------------------------------------------------------------

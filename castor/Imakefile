@@ -131,6 +131,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamFileSystemDescriptionCnv.cpp \
               io/StreamDiskServerDescriptionCnv.cpp \
               io/StreamDiskPoolQueryCnv.cpp \
+              io/StreamDiskPoolQueryCnvOld.cpp \
               io/StreamVersionQueryCnv.cpp \
               io/StreamVersionResponseCnv.cpp \
               io/StreamPrivilegeCnv.cpp \
@@ -293,6 +294,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               query/FileSystemDescription.cpp \
               query/DiskServerDescription.cpp \
               query/DiskPoolQuery.cpp \
+              query/DiskPoolQueryType.cpp \
               query/VersionQuery.cpp \
               query/VersionResponse.cpp \
               sharedMemory/BasicBlock.cpp \

@@ -251,11 +251,15 @@ CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR2(2048), euid NUM
 /* SQL statements for type NsFileId */
 CREATE TABLE NsFileId (fileid INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFileId_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type DiskPoolQuery */
-CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type VersionQuery */
 CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type DiskPoolQuery */
+CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 
 /* SQL statements for type ChangePrivilege */
 CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isGranted NUMBER, id INTEGER CONSTRAINT PK_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -353,7 +357,7 @@ INSERT INTO Type2Obj (type, object) VALUES (98, 'RepackSegment');
 INSERT INTO Type2Obj (type, object) VALUES (99, 'RepackAck');
 INSERT INTO Type2Obj (type, object) VALUES (101, 'DiskServerDescription');
 INSERT INTO Type2Obj (type, object) VALUES (102, 'FileSystemDescription');
-INSERT INTO Type2Obj (type, object) VALUES (103, 'DiskPoolQuery');
+INSERT INTO Type2Obj (type, object) VALUES (103, 'DiskPoolQueryOld');
 INSERT INTO Type2Obj (type, object) VALUES (104, 'EndResponse');
 INSERT INTO Type2Obj (type, object) VALUES (105, 'FileResponse');
 INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
@@ -441,5 +445,6 @@ INSERT INTO Type2Obj (type, object) VALUES (191, 'StageQueryResult');
 INSERT INTO Type2Obj (type, object) VALUES (192, 'NsFileId');
 INSERT INTO Type2Obj (type, object) VALUES (193, 'BulkRequestResult');
 INSERT INTO Type2Obj (type, object) VALUES (194, 'FileResult');
+INSERT INTO Type2Obj (type, object) VALUES (195, 'DiskPoolQuery');
 COMMIT;
 

@@ -682,7 +682,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
       // Invoking the method
       std::vector<castor::query::DiskPoolQueryResponse*>* result =
-        qrySvc->describeDiskPools(uReq->svcClassName(), req->euid(), req->egid(), detailed);
+        qrySvc->describeDiskPools(uReq->svcClassName(), req->euid(), req->egid(),
+                                  detailed, uReq->queryType());
       if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPools returned NULL";
@@ -710,7 +711,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
       // Invoking the method
       castor::query::DiskPoolQueryResponse* result =
-        qrySvc->describeDiskPool(uReq->diskPoolName(), uReq->svcClassName(), detailed);
+        qrySvc->describeDiskPool(uReq->diskPoolName(), uReq->svcClassName(),
+                                 detailed, uReq->queryType());
       if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPool returned NULL";

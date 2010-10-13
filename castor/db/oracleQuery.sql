@@ -334,19 +334,23 @@ BEGIN
 END;
 /
 
-/* Internal function used by describeDiskPool[s] to return free available
- * space, i.e. the free space on PRODUCTION status resources */
-CREATE OR REPLACE FUNCTION getAvailFreeSpace(status IN NUMBER, freeSpace IN NUMBER) RETURN NUMBER IS
+/* Internal function used by describeDiskPool[s] to return either available
+ * (i.e. the space on PRODUCTION status resources) or total space depending on
+ * the type of query */
+CREATE OR REPLACE FUNCTION getSpace(status IN NUMBER, space IN NUMBER,
+                                    queryType IN NUMBER, spaceType IN NUMBER)
+RETURN NUMBER IS
 BEGIN
-  IF status > 0 THEN
-    -- anything but PRODUCTION == 0 means no space
-    RETURN 0;
-  END IF;
-  IF freeSpace < 0 THEN
+  IF space < 0 THEN
     -- over used filesystems may report negative numbers, just cut to 0
     RETURN 0;
+  END IF;
+  IF (status > 0) AND  -- not in production
+     (queryType = dconst.DISKPOOLQUERYTYPE_AVAILABLE OR
+      (queryType = dconst.DISKPOOLQUERYTYPE_DEFAULT AND spaceType = dconst.DISKPOOLSPACETYPE_FREE)) THEN
+    return 0;
   ELSE
-    RETURN freeSpace;
+    RETURN space;
   END IF;
 END;
 /
@@ -355,7 +359,7 @@ END;
  * PL/SQL method implementing the diskPoolQuery when listing pools
  */
 CREATE OR REPLACE PROCEDURE describeDiskPools
-(svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER,
+(svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER, queryType IN INTEGER,
  res OUT NUMBER, result OUT castor.DiskPoolsQueryLine_Cur) AS
 BEGIN
   -- We use here analytic functions and the grouping sets functionality to
@@ -367,19 +371,25 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
              dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-             sum(fs.totalSize),
+             sum(getSpace(fs.status + ds.status,
+                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+             sum(getSpace(fs.status + ds.status,
+                          fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
        WHERE dp.id = fs.diskPool
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-               getAvailFreeSpace(fs.status + ds.status,
-                                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-               fs.totalSize,
-               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              getSpace(fs.status + ds.status,
+                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
+              getSpace(fs.status + ds.status,
+                       fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
              (dp.name)
             )
@@ -389,9 +399,12 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
              dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-             sum(fs.totalSize),
+             sum(getSpace(fs.status + ds.status,
+                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+             sum(getSpace(fs.status + ds.status,
+                          fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
              DiskPool2SvcClass d2s, SvcClass sc
@@ -403,10 +416,13 @@ BEGIN
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-               getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-               fs.totalSize,
-               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              getSpace(fs.status + ds.status,
+                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
+              getSpace(fs.status + ds.status,
+                       fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
              (dp.name)
             )
@@ -433,7 +449,7 @@ END;
  * PL/SQL method implementing the diskPoolQuery for a given pool
  */
 CREATE OR REPLACE PROCEDURE describeDiskPool
-(diskPoolName IN VARCHAR2, svcClassName IN VARCHAR2,
+(diskPoolName IN VARCHAR2, svcClassName IN VARCHAR2, queryType IN INTEGER,
  res OUT NUMBER, result OUT castor.DiskPoolQueryLine_Cur) AS
 BEGIN
   -- We use here analytic functions and the grouping sets functionnality to
@@ -445,9 +461,12 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
              ds.name, ds.status, fs.mountPoint,
-             sum(getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-             sum(fs.totalSize),
+             sum(getSpace(fs.status + ds.status,
+                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+             sum(getSpace(fs.status + ds.status,
+                          fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
        WHERE dp.id = fs.diskPool
@@ -455,10 +474,13 @@ BEGIN
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
-               getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-               fs.totalSize,
-               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              getSpace(fs.status + ds.status,
+                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
+              getSpace(fs.status + ds.status,
+                       fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
              (dp.name)
             )
@@ -468,9 +490,12 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
              ds.name, ds.status, fs.mountPoint,
-             sum(getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-             sum(fs.totalSize),
+             sum(getSpace(fs.status + ds.status,
+                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+             sum(getSpace(fs.status + ds.status,
+                          fs.totalSize,
+                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
              DiskPool2SvcClass d2s, SvcClass sc
@@ -482,10 +507,13 @@ BEGIN
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
-               getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-               fs.totalSize,
-               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              getSpace(fs.status + ds.status,
+                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
+              getSpace(fs.status + ds.status,
+                       fs.totalSize,
+                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
              (dp.name)
             )

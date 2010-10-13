@@ -21,13 +21,13 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
-#include "StreamDiskPoolQueryCnv.hpp"
+#include "StreamDiskPoolQueryCnvOld.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -41,7 +41,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
-#include "castor/query/DiskPoolQueryType.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <rfcntl.h>
@@ -50,46 +49,46 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamDiskPoolQueryCnv>* s_factoryStreamDiskPoolQueryCnv =
-  new castor::CnvFactory<castor::io::StreamDiskPoolQueryCnv>();
+static castor::CnvFactory<castor::io::StreamDiskPoolQueryCnvOld>* s_factoryStreamDiskPoolQueryCnvOld =
+  new castor::CnvFactory<castor::io::StreamDiskPoolQueryCnvOld>();
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamDiskPoolQueryCnv::StreamDiskPoolQueryCnv(castor::ICnvSvc* cnvSvc) :
- StreamBaseCnv(cnvSvc) {}
+castor::io::StreamDiskPoolQueryCnvOld::StreamDiskPoolQueryCnvOld(castor::ICnvSvc* cnvSvc) :
+  StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamDiskPoolQueryCnv::~StreamDiskPoolQueryCnv() throw() {
+castor::io::StreamDiskPoolQueryCnvOld::~StreamDiskPoolQueryCnvOld() throw() {
 }
 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-unsigned int castor::io::StreamDiskPoolQueryCnv::ObjType() {
-  return castor::query::DiskPoolQuery::TYPE();
+unsigned int castor::io::StreamDiskPoolQueryCnvOld::ObjType() {
+  return OBJ_DiskPoolQueryOld;
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-unsigned int castor::io::StreamDiskPoolQueryCnv::objType() const {
+unsigned int castor::io::StreamDiskPoolQueryCnvOld::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::io::StreamDiskPoolQueryCnv::createRep(castor::IAddress* address,
-                                                   castor::IObject* object,
-                                                   bool,
-                                                   unsigned int)
+void castor::io::StreamDiskPoolQueryCnvOld::createRep(castor::IAddress* address,
+                                                      castor::IObject* object,
+                                                      bool,
+                                                      unsigned int)
   throw (castor::exception::Exception) {
-  castor::query::DiskPoolQuery* obj = 
+  castor::query::DiskPoolQuery* obj =
     dynamic_cast<castor::query::DiskPoolQuery*>(object);
-  StreamAddress* ad = 
+  StreamAddress* ad =
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << htolopnflg(obj->flags());
@@ -106,15 +105,14 @@ void castor::io::StreamDiskPoolQueryCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->diskPoolName();
   ad->stream() << obj->id();
-  ad->stream() << obj->queryType();
 }
 
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamDiskPoolQueryCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::io::StreamDiskPoolQueryCnvOld::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  StreamAddress* ad = 
+  StreamAddress* ad =
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
   castor::query::DiskPoolQuery* object = new castor::query::DiskPoolQuery();
@@ -162,20 +160,17 @@ castor::IObject* castor::io::StreamDiskPoolQueryCnv::createObj(castor::IAddress*
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int queryType;
-  ad->stream() >> queryType;
-  object->setQueryType((castor::query::DiskPoolQueryType)queryType);
   return object;
 }
 
 //------------------------------------------------------------------------------
 // marshalObject
 //------------------------------------------------------------------------------
-void castor::io::StreamDiskPoolQueryCnv::marshalObject(castor::IObject* object,
-                                                       castor::io::StreamAddress* address,
-                                                       castor::ObjectSet& alreadyDone)
+void castor::io::StreamDiskPoolQueryCnvOld::marshalObject(castor::IObject* object,
+                                                          castor::io::StreamAddress* address,
+                                                          castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::query::DiskPoolQuery* obj = 
+  castor::query::DiskPoolQuery* obj =
     dynamic_cast<castor::query::DiskPoolQuery*>(object);
   if (0 == obj) {
     // Case of a null pointer
@@ -196,15 +191,15 @@ void castor::io::StreamDiskPoolQueryCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 // unmarshalObject
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamDiskPoolQueryCnv::unmarshalObject(castor::io::biniostream& stream,
-                                                                     castor::ObjectCatalog& newlyCreated)
+castor::IObject* castor::io::StreamDiskPoolQueryCnvOld::unmarshalObject(castor::io::biniostream& stream,
+                                                                        castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
-  castor::query::DiskPoolQuery* obj = 
+  castor::query::DiskPoolQuery* obj =
     dynamic_cast<castor::query::DiskPoolQuery*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);

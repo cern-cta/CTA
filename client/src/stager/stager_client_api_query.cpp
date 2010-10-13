@@ -27,7 +27,7 @@
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "stager_client_api_common.hpp"
-#include "stager_client_api.h"
+#include "stager_client_api_query.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
@@ -214,11 +214,23 @@ void stage_translateDiskPoolResponse
 //    stage_diskpoolquery                                 //
 ////////////////////////////////////////////////////////////
 
+// This is the C function which is part of the CASTOR official API.
+// As this interface cannot be changed easily, it stayed without
+// support for useAvailableSpace. Only the internal C++ function has it.
 EXTERN_C int stage_diskpoolquery
 (char *diskPoolName,
  struct stage_diskpoolquery_resp *response,
  struct stage_options* opts) {
+  return stage_diskpoolquery_internal(diskPoolName, response, opts, castor::query::DISKPOOLQUERYTYPE_DEFAULT);
+}
 
+// This is the C++ function implementing the call to the stager
+// for the diskpool queries. This is an internal API not exposed
+// to the end users.
+int stage_diskpoolquery_internal (char *diskPoolName,
+                                  struct stage_diskpoolquery_resp *response,
+                                  struct stage_options* opts,
+                                  enum castor::query::DiskPoolQueryType queryType) {
   int ret;
   const char *func = "stage_diskpoolquery";
 
@@ -227,6 +239,7 @@ EXTERN_C int stage_diskpoolquery
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
     req.setDiskPoolName(diskPoolName);
+    req.setQueryType(queryType);
 
     // Dealing with options
     ret = setDefaultOption(opts);
@@ -288,11 +301,24 @@ EXTERN_C int stage_diskpoolquery
 //    stage_diskpoolsquery                                //
 ////////////////////////////////////////////////////////////
 
+// This is the C function which is part of the CASTOR official API.
+// As this interface cannot be changed easily, it stayed without
+// support for useAvailableSpace. Only the internal C++ function has it.
 EXTERN_C int stage_diskpoolsquery
 (struct stage_diskpoolquery_resp **responses,
  int *nbresps,
  struct stage_options* opts) {
+  return stage_diskpoolsquery_internal(responses, nbresps, opts, castor::query::DISKPOOLQUERYTYPE_DEFAULT);
+}
 
+// This is the C++ function implementing the call to the stager
+// for the diskpool queries. This is an internal API not exposed
+// to the end users.
+int stage_diskpoolsquery_internal
+(struct stage_diskpoolquery_resp **responses,
+ int *nbresps,
+ struct stage_options* opts,
+ enum castor::query::DiskPoolQueryType queryType) {
   int ret;
   const char *func = "stage_diskpoolsquery";
 
@@ -300,6 +326,7 @@ EXTERN_C int stage_diskpoolsquery
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
+    req.setQueryType(queryType);
 
     // Dealing with options
     ret = setDefaultOption(opts);

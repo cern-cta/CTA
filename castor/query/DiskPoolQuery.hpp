@@ -30,6 +30,7 @@
 #define CASTOR_QUERY_DISKPOOLQUERY_HPP
 
 // Include Files
+#include "castor/query/DiskPoolQueryType.hpp"
 #include "castor/stager/Request.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -136,6 +137,26 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_queryType
+       * Type of diskpool query, that is type of space to report (default, available or
+       * total)
+       * @return the value of m_queryType
+       */
+      DiskPoolQueryType queryType() const {
+        return m_queryType;
+      }
+
+      /**
+       * Set the value of m_queryType
+       * Type of diskpool query, that is type of space to report (default, available or
+       * total)
+       * @param new_var the new value of m_queryType
+       */
+      void setQueryType(DiskPoolQueryType new_var) {
+        m_queryType = new_var;
+      }
+
     private:
 
       /// Name of the diskpool that should be described, or empty string for a description of all existing diskpools
@@ -143,6 +164,9 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      /// Type of diskpool query, that is type of space to report (default, available or total)
+      DiskPoolQueryType m_queryType;
 
     }; /* end of class DiskPoolQuery */
 

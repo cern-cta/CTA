@@ -62,6 +62,12 @@ stager_qry \- query the CASTOR stager for files and requests
 [
 .BI -h
 ]
+[
+.BI -a
+]
+[
+.BI -t
+]
 .SH DESCRIPTION
 The
 .B stager_qry
@@ -72,7 +78,9 @@ submitted using the
 .BI stager_put(1castor)
 or
 .BI rfcp(1castor) 
-commands as well as for getting statistics concerning the diskpools (-s option).
+commands as well as for getting statistics concerning the diskpools with
+.BI \-s
+option.
 .fi
 
 .BI File\ querying
@@ -98,9 +106,14 @@ the file has no valid diskcopy/tapecopy, or a failure happened concerning the fi
 .TP 0
 .BI DiskPool\ querying
 
-All disk servers and file systems composing the disk pool are listed. For each filesystem, the mountpoint, status, capacity, free space, reserved space and garbage collector bounds are given. These bounds are the minimum and maximum amout of free space desired (given as fraction of the total space).
-For each diskserver, the name, status, aggregated capacity, free space and reserved space are given.
-Finally for each pool, the aggregated capacity, free and reserved space are given.
+All disk servers and file systems composing the disk pool are listed. For each filesystem, the mountpoint, status, capacity, free space and garbage collector bounds are given. These bounds are the minimum and maximum amout of free space desired (given as fraction of the total space).
+For each diskserver, the name, status, aggregated capacity and free space are given.
+Finally for each pool, the aggregated capacity and free space are given.
+Note that by default, the capacity given is the total capacity, irrespectively of the availability of the hardware while the free space is the available free space. Use
+.B \-a,\ \-\-available
+and
+.B \-t,\ \-\-total
+options for alternative values.
 
 
 .SH OPTIONS
@@ -176,6 +189,14 @@ Specifies the disk pool for which statistics should be displayed. It has to be u
 .BI \-s
 and takes precedence over
 .BI \-S
+.TP
+.BI \-a,\ \-\-available
+Reports available capacity rather than total capacity. Hardware not currently in production will thus not be considered. This has to be used in conjunction with
+.BI \-s
+.TP
+.BI \-t,\ \-\-total
+Reports total free space rather than available free space. Free space on hardware out of production will thus be reported. It has to be used in conjunction with
+.BI \-s
 .TP
 .BI \-H,\ \-\-human\-readable
 Print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024.

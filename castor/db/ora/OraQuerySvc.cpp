@@ -75,10 +75,10 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagLastRecallsS
   "BEGIN userTagLastRecallsStageQuery(:1, :2, :3, :4); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementString =
-  "BEGIN describeDiskPools(:1, :2, :3, :4, :5); END;";
+  "BEGIN describeDiskPools(:1, :2, :3, :4, :5, :6); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolStatementString =
-  "BEGIN describeDiskPool(:1, :2, :3, :4); END;";
+  "BEGIN describeDiskPool(:1, :2, :3, :4, :5); END;";
 
 //------------------------------------------------------------------------------
 // OraQuerySvc
@@ -384,7 +384,8 @@ castor::db::ora::OraQuerySvc::describeDiskPools
 (std::string svcClass,
  unsigned long euid,
  unsigned long egid,
- bool detailed)
+ bool detailed,
+ enum castor::query::DiskPoolQueryType queryType)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -392,14 +393,15 @@ castor::db::ora::OraQuerySvc::describeDiskPools
       m_describeDiskPoolsStatement =
         createStatement(s_describeDiskPoolsStatementString);
       m_describeDiskPoolsStatement->registerOutParam
-        (4, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCIINT);
       m_describeDiskPoolsStatement->registerOutParam
-        (5, oracle::occi::OCCICURSOR);
+        (6, oracle::occi::OCCICURSOR);
     }
     // execute the statement and gather results
     m_describeDiskPoolsStatement->setString(1, svcClass);
     m_describeDiskPoolsStatement->setInt(2, euid);
     m_describeDiskPoolsStatement->setInt(3, egid);
+    m_describeDiskPoolsStatement->setInt(4, queryType);
     unsigned int nb = m_describeDiskPoolsStatement->executeUpdate();
     if(0 == nb) {
       castor::exception::Internal ex;
@@ -407,7 +409,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
         << "describeDiskPools : unable to execute query.";
       throw ex;
     }
-    oracle::occi::ResultSet *rset = m_describeDiskPoolsStatement->getCursor(5);
+    oracle::occi::ResultSet *rset = m_describeDiskPoolsStatement->getCursor(6);
     std::vector<castor::query::DiskPoolQueryResponse*>* result =
       new std::vector<castor::query::DiskPoolQueryResponse*>();
     castor::query::DiskPoolQueryResponse* resp = 0;
@@ -456,7 +458,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
     if (0 == result->size()) {
       delete result;
       castor::exception::InvalidArgument ex;
-      int rc = m_describeDiskPoolsStatement->getInt(4);
+      int rc = m_describeDiskPoolsStatement->getInt(5);
       if (rc == -1) {
         ex.getMessage() << "Insufficient user privileges to view DiskPools for service class '";
       } else if (rc > 0) {
@@ -484,7 +486,8 @@ castor::query::DiskPoolQueryResponse*
 castor::db::ora::OraQuerySvc::describeDiskPool
 (std::string diskPool,
  std::string svcClass,
- bool detailed)
+ bool detailed,
+ enum castor::query::DiskPoolQueryType queryType)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -492,13 +495,14 @@ castor::db::ora::OraQuerySvc::describeDiskPool
       m_describeDiskPoolStatement =
         createStatement(s_describeDiskPoolStatementString);
       m_describeDiskPoolStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
+        (4, oracle::occi::OCCIINT);
       m_describeDiskPoolStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);
+        (5, oracle::occi::OCCICURSOR);
     }
     // execute the statement and gather results
     m_describeDiskPoolStatement->setString(1, diskPool);
     m_describeDiskPoolStatement->setString(2, svcClass);
+    m_describeDiskPoolStatement->setInt(3, queryType);
     castor::query::DiskPoolQueryResponse* result = 0;
     unsigned int nb = m_describeDiskPoolStatement->executeUpdate();
     if(0 == nb) {
@@ -507,7 +511,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
         << "describeDiskPool : unable to execute query.";
       throw ex;
     }
-    oracle::occi::ResultSet *rset = m_describeDiskPoolStatement->getCursor(4);
+    oracle::occi::ResultSet *rset = m_describeDiskPoolStatement->getCursor(5);
     castor::query::DiskServerDescription* dsd = 0;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       if (rset->getInt(1) == 1) {
@@ -548,7 +552,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
     // if nothing found, send error
     if (0 == result) {
       castor::exception::InvalidArgument ex;
-      int rc = m_describeDiskPoolStatement->getInt(3);
+      int rc = m_describeDiskPoolStatement->getInt(4);
       if (rc == -1) {
         ex.getMessage() << "Insufficient user privileges to view DiskPools";
       } else if (rc > 0) {
