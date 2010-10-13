@@ -11,7 +11,6 @@ object(W,"worker");
 
 # Put horizontal space between the worker and rtcpd child processes
 placeholder_object(FakeObject1);
-placeholder_object(FakeObject2);
 
 # Define the child rtcpd process
 object(C,"rtcpd child");
@@ -25,13 +24,27 @@ active(W);
 
 step();
 
-message(C,W,"create control-connection for tape IO thread");
+message(C,W,"request more work");
 
 step();
 
-message(C,W,"create control-connection for disk IO thread");
-message(C,W,"create control-connection for disk IO thread");
-message(C,W,"create control-connection for disk IO thread");
+# Start of getRequestList
+message(W,C,"file");
+message(C,W,"ack");
+
+step();
+
+message(W,C,"request future callback");
+message(C,W,"ack");
+
+step();
+
+message(W,C,"end of work list");
+message(C,W,"ack");
+
+step();
+
+message(W,C,"ack of request for more work");
 
 step();
 
