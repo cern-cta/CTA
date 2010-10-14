@@ -84,7 +84,8 @@ def pytest_addoption(parser):
     parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Do not cleanup temporary files created by the test suite')
     parser.addoption("--failnores",action="store_true", dest='failNoRes',help='Forces to fail when a resource is not available, instead of skipping the tests')
     parser.addoption("--skipnores",action="store_false", dest='failNoRes',help='Forces to skip when a resource is not available, instead of failing the tests')
-    parser.addoption("-T", "--testdir", action="store", dest='testdir', help='Test directory to use')
+    parser.addoption("-C", "--configfile", action="store", dest='configFile', help='Name of the config file to be used. Defaults to any .options files in the test directory')
+    parser.addoption("-T", "--testdir", action="store", dest='testdir', help='Test directory to use. Defaults to any local directory whose name ends with "tests"')
 
 
 ########################
@@ -333,11 +334,19 @@ class Setup:
             assert len(testDirCandidates) > 0, "No test directory found. Please use --testdir option"
             assert len(testDirCandidates) < 2, "Do not know which test directory to use. Please use --testdir option\nCandidates are " + ', '.join(testDirCandidates)
             self.testdir = testDirCandidates[0]
-        # read the option file.
-        optionFileCandidates = filter(lambda x:x.endswith('.options'), os.listdir(self.testdir))
-        assert len(optionFileCandidates) > 0, "No .options file found in " + self.testdir
-        assert len(optionFileCandidates) < 2, "Do not know which .options file to use in " + self.testdir + " : " + ', '.join(optionFileCandidates)
-        self.options.read(os.sep.join([self.testdir, optionFileCandidates[0]]))
+        # read the config file.
+        configFile = getattr(self.config.option, 'configFile')
+        if configFile == None:
+            # try to guess
+            configFileCandidates = filter(lambda x:x.endswith('.options'), os.listdir(self.testdir))
+            assert len(configFileCandidates) > 0, "No .options file found in " + self.testdir
+            assert len(configFileCandidates) < 2, "Do not know which .options file to use in " + self.testdir + " : " + ', '.join(configFileCandidates)
+            configFile = os.sep.join([self.testdir, configFileCandidates[0]])
+        else:
+            # check it's a valid file
+            assert os.path.isfile(configFile), 'Could not find config file : ' + configFile
+        # read option file
+        self.options.read(configFile)
         # setup the environment
         if self.options.has_section('Environment'):
             print os.linesep+"Setting environment :"
