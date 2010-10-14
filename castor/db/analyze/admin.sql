@@ -28,6 +28,8 @@ https://oraweb.cern.ch/pls/castor_dev/webinstance.sessions.show_sessions
 BEGIN
   DBMS_STATS.GATHER_TABLE_STATS (ownname=>'CASTOR_STAGER', tabname=>'...', estimate_percent=>100, 
 	  method_opt=>'FOR ALL COLUMNS SIZE 1',no_invalidate=>FALSE,force=>TRUE);
+  DBMS_STATS.GATHER_INDEX_STATS (ownname=>'CASTOR_STAGER', indname=>'...', estimate_percent=>100, 
+	  granularity=>'ALL',no_invalidate=>FALSE,FORCE=>TRUE);
 END;
 /
 
