@@ -324,7 +324,7 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
 // -----------------------------------------------------------------------
 int parseCmdLineFileQuery(int argc, char *argv[],
                           struct cmd_args *args) {
-  int nbargs, Coptind, Copterr, errflg, getNextMode, i;
+  int nbargs, errflg, getNextMode, i;
   char c;
 
   Coptind = 1;
@@ -419,7 +419,7 @@ int parseCmdLineFileQuery(int argc, char *argv[],
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
                               char** diskPool, char** svcClass, int *siflag,
                               enum castor::query::DiskPoolQueryType* queryType) {
-  int Coptind, Copterr, errflg;
+  int errflg;
   char c;
 
   Coptind = 1;
@@ -465,7 +465,7 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
 // -----------------------------------------------------------------------
 int checkAndCountArguments(int argc, char *argv[],
                            int* count, enum queryType* type) {
-  int Coptind, Copterr, errflg;
+  int errflg;
   char c;
 
   Coptind = 1;
