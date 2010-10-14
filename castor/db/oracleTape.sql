@@ -99,26 +99,6 @@ END castorTape;
 /
 
 
-/* Used to create a row in FileSystemsToCheck
-   whenever a new FileSystem is created */
-CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
-BEFORE INSERT ON FileSystem
-FOR EACH ROW
-BEGIN
-  INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
-END;
-/
-
-/* Used to delete rows in FileSystemsToCheck
-   whenever a FileSystem is deleted */
-CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
-BEFORE DELETE ON FileSystem
-FOR EACH ROW
-BEGIN
-  DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
-END;
-/
-
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
 CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
@@ -250,14 +230,8 @@ BEGIN
          WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
         findNewFS := 0;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
+      EXCEPTION WHEN NO_DATA_FOUND OR LockError THEN
         -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
-        NULL;
-      WHEN LockError THEN
-        -- We have observed ORA-00054 errors (resource busy and acquire with
-        -- NOWAIT) even with the SKIP LOCKED clause. This is a workaround to
-        -- ignore the error until we understand what to do, another thread will
-        -- pick up the request so we don't do anything.
         NULL;
       END;
     END IF;

@@ -93,43 +93,62 @@ CREATE OR REPLACE PACKAGE castor AS
 END castor;
 /
 
- /* Checks consistency of DiskCopies when a FileSystem comes  	 
-  * back in production after a period spent in a DRAINING or a 	 
-  * DISABLED status. 	 
-  * Current checks/fixes include : 	 
-  *   - Canceling recalls for files that are STAGED or CANBEMIGR 	 
-  *     on the fileSystem that comes back. (Scheduled for bulk 	 
-  *     operation) 	 
-  *   - Dealing with files that are STAGEOUT on the fileSystem 	 
-  *     coming back but already exist on another one 	 
-  */ 	 
+/* Used to create a row in FileSystemsToCheck
+   whenever a new FileSystem is created */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
+BEFORE INSERT ON FileSystem
+FOR EACH ROW
+BEGIN
+  INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
+END;
+/
 
- CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS 	 
+/* Used to delete rows in FileSystemsToCheck
+   whenever a FileSystem is deleted */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
+BEFORE DELETE ON FileSystem
+FOR EACH ROW
+BEGIN
+  DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
+END;
+/
+
+/* Checks consistency of DiskCopies when a FileSystem comes  	 
+ * back in production after a period spent in a DRAINING or a 	 
+ * DISABLED status. 	 
+ * Current checks/fixes include : 	 
+ *   - Canceling recalls for files that are STAGED or CANBEMIGR 	 
+ *     on the fileSystem that comes back. (Scheduled for bulk 	 
+ *     operation) 	 
+ *   - Dealing with files that are STAGEOUT on the fileSystem 	 
+ *     coming back but already exist on another one 	 
+ */ 	 
+CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS 	 
    srIds "numList"; 	 
- BEGIN 	 
-   -- Flag the filesystem for processing in a bulk operation later. 	 
-   -- We need to do this because some operations are database intensive 	 
-   -- and therefore it is often better to process several filesystems 	 
-   -- simultaneous with one query as opposed to one by one. Especially 	 
-   -- where full table scans are involved. 	 
-   UPDATE FileSystemsToCheck SET toBeChecked = 1 	 
-    WHERE fileSystem = fsId; 	 
-   -- Look for files that are STAGEOUT on the filesystem coming back to life 	 
-   -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/ 	 
-   -- WAITFS_SCHEDULING somewhere else 	 
-   FOR cf IN (SELECT UNIQUE d.castorfile, d.id 	 
-                FROM DiskCopy d, DiskCopy e 	 
-               WHERE d.castorfile = e.castorfile 	 
-                 AND d.fileSystem = fsId 	 
-                 AND e.fileSystem != fsId 	 
-                 AND d.status = 6 -- STAGEOUT 	 
-                 AND e.status IN (0, 10, 2, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING 	 
-     -- Invalidate the DiskCopy 	 
-     UPDATE DiskCopy 	 
-        SET status = 7  -- INVALID 	 
-      WHERE id = cf.id;
-   END LOOP; 	 
- END; 	 
+BEGIN 	 
+  -- Flag the filesystem for processing in a bulk operation later. 	 
+  -- We need to do this because some operations are database intensive 	 
+  -- and therefore it is often better to process several filesystems 	 
+  -- simultaneous with one query as opposed to one by one. Especially 	 
+  -- where full table scans are involved. 	 
+  UPDATE FileSystemsToCheck SET toBeChecked = 1 	 
+   WHERE fileSystem = fsId; 	 
+  -- Look for files that are STAGEOUT on the filesystem coming back to life 	 
+  -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/ 	 
+  -- WAITFS_SCHEDULING somewhere else 	 
+  FOR cf IN (SELECT UNIQUE d.castorfile, d.id 	 
+               FROM DiskCopy d, DiskCopy e 	 
+              WHERE d.castorfile = e.castorfile 	 
+                AND d.fileSystem = fsId 	 
+                AND e.fileSystem != fsId 	 
+                AND d.status = 6 -- STAGEOUT 	 
+                AND e.status IN (0, 10, 2, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING 	 
+    -- Invalidate the DiskCopy 	 
+    UPDATE DiskCopy 	 
+       SET status = 7  -- INVALID 	 
+     WHERE id = cf.id;
+  END LOOP; 	 
+END; 	 
 /
 
 /* PL/SQL method implementing bulkCheckFSBackInProd for processing
