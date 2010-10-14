@@ -222,7 +222,7 @@ ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 ALTER TABLE Tape ADD CONSTRAINT UN_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (NAME);
+ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
 
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -416,9 +416,10 @@ ACCEPT adminList CHAR PROMPT 'List of admins: ';
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
 UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38, 119);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type IN (39, 42, 95);
-UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155);
+UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155, 195);
 UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
+UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
