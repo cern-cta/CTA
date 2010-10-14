@@ -162,7 +162,7 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
   return ret;
 }
 
-#define NB_FILE_STATUS 10
+#define NB_FILE_STATUS 9
 static const char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "INVALID",
   "STAGEOUT",
@@ -172,8 +172,7 @@ static const char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "WAITINGMIGR",  // deprecated
   "BEINGMIGR",    // deprecated   
   "PUTFAILED",    // deprecated
-  "STAGED",
-  "CANBEMIGR"
+  "STAGEABLE"
 };
 
 EXTERN_C char *stage_fileStatusName(int statusCode) {

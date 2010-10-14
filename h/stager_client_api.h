@@ -1468,8 +1468,7 @@ enum stage_fileStatus {
   FILE_WAITINGMIGR = 5,  /* deprecated */
   FILE_BEINGMIGR = 6,    /* deprecated */
   FILE_PUTFAILED = 7,    /* deprecated */
-  FILE_STAGED_DRAINING = 8,
-  FILE_CANBEMIGR_DRAINING = 9
+  FILE_STAGEABLE = 8
 };
 
 /**

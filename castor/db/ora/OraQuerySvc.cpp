@@ -28,7 +28,7 @@
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/ora/OraQuerySvc.hpp"
-#include "castor/stager/DiskCopyInfo.hpp"
+#include "castor/stager/StageQueryResult.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/TooBig.hpp"
@@ -57,10 +57,10 @@ static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
 //------------------------------------------------------------------------------
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-  "BEGIN fileIdStageQuery(:1, :2, :3, :4, :5); END;";
+"BEGIN fileIdStageQuery(:1, :2, :3, :4, :5, :6, :7); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileNameStatementString =
-  "BEGIN fileNameStageQuery(:1, :2, :3, :4); END;";
+"BEGIN fileNameStageQuery(:1, :2, :3, :4, :5, :6); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4ReqIdStatementString =
   "BEGIN reqIdStageQuery(:1, :2, :3, :4); END;";
@@ -146,15 +146,15 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
 //------------------------------------------------------------------------------
 // gatherResults
 //------------------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>*
+std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
   throw (oracle::occi::SQLException) {
   // Gather the results
-  std::list<castor::stager::DiskCopyInfo*>* result =
-    new std::list<castor::stager::DiskCopyInfo*>();
+  std::list<castor::stager::StageQueryResult*>* result =
+    new std::list<castor::stager::StageQueryResult*>();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    castor::stager::DiskCopyInfo* item =
-      new castor::stager::DiskCopyInfo();
+    castor::stager::StageQueryResult* item =
+      new castor::stager::StageQueryResult();
     item->setFileId((u_signed64)rset->getDouble(1));
     item->setNsHost(rset->getString(2));
     item->setId((u_signed64)rset->getDouble(3));
@@ -163,7 +163,6 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
 			    rset->getInt(6));
     item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)0);
-    item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
     item->setDiskServer(rset->getString(7));
     item->setMountPoint(rset->getString(8));
     item->setNbAccesses(rset->getInt(9));
@@ -171,6 +170,7 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     item->setCreationTime((u_signed64)rset->getDouble(11));
     item->setSvcClass(rset->getString(12));
     item->setLastAccessTime((u_signed64)rset->getDouble(13));
+    item->setHwStatus(rset->getInt(14));
     result->push_back(item);
   }
   return result;
@@ -179,9 +179,9 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
 //------------------------------------------------------------------------------
 // diskCopies4FileName
 //------------------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>*
+std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4FileName
-(std::string fileName, u_signed64 svcClassId)
+(std::string fileName, u_signed64 svcClassId, unsigned euid, unsigned egid)
   throw (castor::exception::Exception) {
   // default value for the maximal number of responses to give
   unsigned long maxNbResponses = 10000;
@@ -191,12 +191,12 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       m_diskCopies4FileNameStatement =
         createStatement(s_diskCopies4FileNameStatementString);
       m_diskCopies4FileNameStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);
+        (6, oracle::occi::OCCICURSOR);
     }
     // get max number of responses for a file name query
     char* p;
     if ((p = getenv("FILEQUERY_MAXNBRESPONSES")) ||
-	(p = getconfent("FILEQUERY", "MAXNBRESPONSES", 0))) {
+        (p = getconfent("FILEQUERY", "MAXNBRESPONSES", 0))) {
       char* pend = p;
       unsigned long ip = strtoul(p, &pend, 0);
       if (*pend != 0) {
@@ -222,7 +222,9 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
     // execute the statement and see whether we found something
     m_diskCopies4FileNameStatement->setString(1, fileName);
     m_diskCopies4FileNameStatement->setDouble(2, svcClassId);
-    m_diskCopies4FileNameStatement->setInt(3, maxNbResponses);
+    m_diskCopies4FileNameStatement->setInt(3, euid);
+    m_diskCopies4FileNameStatement->setInt(4, egid);
+    m_diskCopies4FileNameStatement->setInt(5, maxNbResponses);
     unsigned int nb = m_diskCopies4FileNameStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -231,8 +233,8 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4FileNameStatement->getCursor(4);
-    std::list<castor::stager::DiskCopyInfo*>* result = gatherResults(rset);
+      m_diskCopies4FileNameStatement->getCursor(6);
+    std::list<castor::stager::StageQueryResult*>* result = gatherResults(rset);
     m_diskCopies4FileNameStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -255,10 +257,10 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
 //------------------------------------------------------------------------------
 // diskCopies4File
 //------------------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>*
+std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4File
 (u_signed64 fileId, std::string nsHost,
- u_signed64 svcClassId, std::string& fileName)
+ u_signed64 svcClassId, unsigned euid, unsigned egid, std::string& fileName)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -266,13 +268,15 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       m_diskCopies4FileStatement =
         createStatement(s_diskCopies4FileStatementString);
       m_diskCopies4FileStatement->registerOutParam
-        (5, oracle::occi::OCCICURSOR);
+        (7, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4FileStatement->setDouble(1, fileId);
     m_diskCopies4FileStatement->setString(2, nsHost);
     m_diskCopies4FileStatement->setDouble(3, svcClassId);
-    m_diskCopies4FileStatement->setString(4, fileName);
+    m_diskCopies4FileStatement->setInt(4, euid);
+    m_diskCopies4FileStatement->setInt(5, egid);
+    m_diskCopies4FileStatement->setString(6, fileName);
     unsigned int nb = m_diskCopies4FileStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -281,8 +285,8 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4FileStatement->getCursor(5);
-    std::list<castor::stager::DiskCopyInfo*>* result = gatherResults(rset);
+      m_diskCopies4FileStatement->getCursor(7);
+    std::list<castor::stager::StageQueryResult*>* result = gatherResults(rset);
     m_diskCopies4FileStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -297,7 +301,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
 //------------------------------------------------------------------------------
 // diskCopies4Request
 //------------------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>*
+std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4Request
 (castor::stager::RequestQueryType reqType, std::string param, u_signed64 svcClassId)
   throw (castor::exception::Exception) {
@@ -364,7 +368,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     if(requestStatement->getInt(3) == 1)
       return 0;
     oracle::occi::ResultSet *rset = requestStatement->getCursor(4);
-    std::list<castor::stager::DiskCopyInfo*>* result = gatherResults(rset);
+    std::list<castor::stager::StageQueryResult*>* result = gatherResults(rset);
     requestStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {

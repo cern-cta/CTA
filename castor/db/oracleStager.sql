@@ -35,7 +35,8 @@ CREATE OR REPLACE PACKAGE castor AS
     lastKnownFileName VARCHAR2(2048),
     creationTime INTEGER,
     svcClass VARCHAR2(2048),
-    lastAccessTime INTEGER);
+    lastAccessTime INTEGER,
+    hwStatus INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
   TYPE DiskPoolQueryLine IS RECORD (
@@ -1500,7 +1501,7 @@ BEGIN
       result := 0;  -- DISKCOPY_STAGED
     ELSE
       -- check whether we need to replicate, i.e. compare total current
-      -- # of diskcopies, regardless harware availability and including
+      -- # of diskcopies, regardless hardware availability and including
       -- outstanding replications (cf. replicateOnClose), against maxReplicaNb.
       SELECT COUNT(*), max(maxReplicaNb) INTO nbDCs, maxDCs FROM (
         SELECT DiskCopy.id, maxReplicaNb
@@ -1724,6 +1725,8 @@ BEGIN
    WHERE SubRequest.request = R.id
      AND SubRequest.id = srId;
   -- create the required number of tapecopies for the files
+  -- XXX For the time being, nbTC will be 1 for sure until we're able
+  -- XXX to handle repacking of dual-copy files 
   internalPutDoneFunc(cfId, fs, 0, nbTC, svcClassId);
   -- set svcClass in the CastorFile for the migration
   UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
@@ -1836,10 +1839,8 @@ BEGIN
           -- then we should make the request wait on the first repack (it may be
           -- for a different service class than the one being used right now).
           -- In the second case, we just have to fail this request.
-          -- However at the moment it's not easy to restart a waiting repack after
-          -- a migration (relevant db callback should be put in rtcpcld_updcFileMigrated(),
-          -- rtcpcldCatalogueInterface.c:3300), so we simply fail this repack
-          -- request and rely for the time being on Repack to submit
+          -- However at the moment the tapegateway does not handle double repacks,
+          -- so we simply fail this repack and rely on Repack to submit
           -- such double tape repacks one by one.
           UPDATE SubRequest
              SET status = 7,  -- FAILED

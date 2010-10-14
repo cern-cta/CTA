@@ -29,7 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#include "castor/stager/DiskCopyInfo.hpp"
+#include "castor/stager/StageQueryResult.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
@@ -97,12 +97,16 @@ namespace castor {
          * the old name will still be known
          * @param fileName the fileName to be used for the query
          * @param svcClassId the Id of the service class we're using
+         * @param euid the uid of the requestor
+         * @param guid the gid of the requestor
          * @return the list of DiskCopies available
          * @exception in case of error
          */
-        virtual std::list<castor::stager::DiskCopyInfo*>*
+        virtual std::list<castor::stager::StageQueryResult*>*
         diskCopies4FileName (std::string fileName,
-                             u_signed64 svcClassId)
+                             u_signed64 svcClassId,
+                             unsigned euid,
+                             unsigned egid)
           throw (castor::exception::Exception);
 
         /**
@@ -112,13 +116,17 @@ namespace castor {
          * @param fileId the fileId identifying the file
          * @param nsHost the name server host for this file
          * @param svcClassId the Id of the service class we're using
+         * @param euid the uid of the requestor
+         * @param guid the gid of the requestor
          * @return the list of DiskCopies available
          * @exception in case of error
          */
-        virtual std::list<castor::stager::DiskCopyInfo*>*
+        virtual std::list<castor::stager::StageQueryResult*>*
         diskCopies4File (u_signed64 fileId,
                          std::string nsHost,
                          u_signed64 svcClassId,
+                         unsigned euid,
+                         unsigned egid,
                          std::string& fileName)
           throw (castor::exception::Exception);
 
@@ -138,7 +146,7 @@ namespace castor {
          * been found.
          * @exception in case of error
          */
-        virtual std::list<castor::stager::DiskCopyInfo*>*
+        virtual std::list<castor::stager::StageQueryResult*>*
         diskCopies4Request (castor::stager::RequestQueryType reqType,
                             std::string param,
                             u_signed64 svcClassId)
@@ -235,7 +243,7 @@ namespace castor {
         oracle::occi::Statement *m_describeDiskPoolStatement;
         
         /// Private function to parse and return the list of results
-        std::list<castor::stager::DiskCopyInfo*>*
+        std::list<castor::stager::StageQueryResult*>*
         gatherResults(oracle::occi::ResultSet *rset)        
           throw (oracle::occi::SQLException);
 

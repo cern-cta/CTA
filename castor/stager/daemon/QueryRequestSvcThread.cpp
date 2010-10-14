@@ -53,10 +53,11 @@
 #include "castor/query/DiskServerDescription.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/QueryParameter.hpp"
-#include "castor/stager/DiskCopyInfo.hpp"
+#include "castor/stager/StageQueryResult.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQryResponse.hpp"
@@ -89,7 +90,7 @@ castor::stager::daemon::QueryRequestSvcThread::QueryRequestSvcThread()
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
 (castor::rh::FileQryResponse* fr,
- castor::stager::DiskCopyInfo* dc,
+ castor::stager::StageQueryResult* dc,
  bool& foundDiskCopy) throw() {
 
   // 1. Mapping diskcopy status to file status
@@ -112,20 +113,26 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     st = FILE_STAGEIN;
     break;
 
-  case  DISKCOPY_STAGED:
-    st = FILE_STAGED;
+  case DISKCOPY_STAGED:
+    st = dc->hwStatus() == castor::stager::DISKSERVER_DRAINING ?
+      FILE_STAGEABLE : FILE_STAGED;
     diskServer = dc->diskServer();
     break;
 
   case DISKCOPY_WAITFS:
   case DISKCOPY_WAITFS_SCHEDULING:
   case DISKCOPY_STAGEOUT:
+    if(dc->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+      // Don't show unaccessible STAGEOUT files
+      return;
+    }
     st = FILE_STAGEOUT;
     diskServer = dc->diskServer();
     break;
 
   case DISKCOPY_CANBEMIGR:
-    st = FILE_CANBEMIGR;
+    st = dc->hwStatus() == castor::stager::DISKSERVER_DRAINING ?
+      FILE_STAGEABLE : FILE_CANBEMIGR;
     diskServer = dc->diskServer();
     break;
   }
@@ -138,7 +145,9 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     foundDiskCopy = true;
   } else {
     // If there are several diskcopies for the file, we apply some precedence
-    // rules : STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID
+    // rules : STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID.
+    // STAGEABLE only applies to the "ALLSC"
+    // query type and no reduction is performed.
     if (((FILE_STAGEOUT == st || FILE_STAGEIN == st) &&
          (FILE_INVALID_STATUS == fr->status())) ||
         ((FILE_STAGED == st || FILE_CANBEMIGR == st))) {
@@ -165,7 +174,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
  castor::IClient *client,
  std::string& fileName,
  u_signed64 svcClassId,
- std::string reqId,
+ castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid,
  bool all)
   throw (castor::exception::Exception) {
@@ -173,15 +182,15 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
   castor::dlf::Param params[] =
     {castor::dlf::Param("Filename", fileName)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_FQUERY, 1, params);
-  // Regular expression supported is no longer supported
+  // Regular expressions are no longer supported
   if (fileName.compare(0, 7, "regexp:") == 0) {
     castor::exception::Exception ex(SEOPNOTSUP);
     ex.getMessage() << "Operation not supported for regular expressions";
     throw ex;
   }
   // List diskCopies
-  std::list<castor::stager::DiskCopyInfo*>* result =
-    qrySvc->diskCopies4FileName(fileName, svcClassId);
+  std::list<castor::stager::StageQueryResult*>* result =
+    qrySvc->diskCopies4FileName(fileName, svcClassId, req.euid(), req.egid());
   if (result == 0 || result->size() == 0) { // sanity check, result always is != 0
     castor::exception::Exception e(ENOENT);
     if (svcClassId > 0)
@@ -192,32 +201,36 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
       delete result;
     throw e;
   }
-  // Iterates over the list of disk copies, and returns one result
-  // per fileid to the client. It needs the SQL statement to return the
-  // diskcopies sorted by fileid/nshost.
+  // Iterates over the list of disk copies, and returns either all results
+  // if all == true or one result per fileid to the client.
+  // It needs the SQL statement to return the diskcopies sorted by fileid/nshost.
   u_signed64 fileid = 0;
   std::string nshost = "";
   castor::rh::FileQryResponse res;
-  res.setReqAssociated(reqId);
+  res.setReqAssociated(req.reqId());
   bool foundDiskCopy = false;
 
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
-    castor::stager::DiskCopyInfo* diskcopy = *dcit;
+    castor::stager::StageQueryResult* diskcopy = *dcit;
 
     if (all) {
+      // All available diskcopies are sent individually
       std::ostringstream sst;
       sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
       res.setFileName(sst.str());
       res.setFileId(diskcopy->fileId());
-      // Send the response
       setFileResponseStatus(&res, *dcit, foundDiskCopy);
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, &res);
       foundDiskCopy = false;
     } else {
+      // Group responses, and discard diskcopies on DRAINING hardware
+      if (diskcopy->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+        continue;
+      }
       if (diskcopy->fileId() != fileid ||
           diskcopy->nsHost() != nshost) {
         // Send the response for the previous castor file being processed
@@ -244,13 +257,23 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
       sendResponse(client, &res);
   }
   // Cleanup
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
     delete *dcit;
   }
   delete result;
+  // Make sure we send a response even when the only present diskcopies
+  // are on non available hardware 
+  if (!all && fileid == 0) {
+    castor::exception::Exception e(ENOENT);
+    if (svcClassId > 0)
+      e.getMessage() << "File " << fileName << " not on this service class";
+    else
+      e.getMessage() << "File " << fileName << " not on disk cache";
+    throw e;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -264,14 +287,14 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  std::string &nshost,
  std::string &fileName,
  u_signed64 svcClassId,
- std::string reqId,
+ castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid,
  bool all)
   throw (castor::exception::Exception) {
   // Processing File Query by fileid
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, fid, nshost);
-  std::list<castor::stager::DiskCopyInfo*>* result =
-    qrySvc->diskCopies4File(fid, nshost, svcClassId, fileName);
+  std::list<castor::stager::StageQueryResult*>* result =
+    qrySvc->diskCopies4File(fid, nshost, svcClassId, req.euid(), req.egid(), fileName);
   if (result == 0 || result->size() == 0) { // sanity check, result.size() must be == 1
     castor::exception::Exception e(ENOENT);
     if (svcClassId > 0)
@@ -286,17 +309,20 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
 
   // Preparing the response
   castor::rh::FileQryResponse res;
-  res.setReqAssociated(reqId);
+  res.setReqAssociated(req.reqId());
   std::ostringstream sst;
   sst << fid << "@" << nshost;
   res.setFileName(sst.str());
   res.setFileId(fid);
 
   // Iterates over the list of disk copies, and computes status
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
+    if (!all && (*dcit)->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+      continue;
+    }
     setFileResponseStatus(&res, *dcit, foundDiskCopy);
     // If we are reporting information for all diskcopies then send the response
     if (all) {
@@ -312,13 +338,23 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
       sendResponse(client, &res);
   }
   // Cleanup
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
     delete *dcit;
   }
   delete result;
+  // Make sure we send a response even when the only present diskcopies
+  // are on non available hardware 
+  if (!all && !foundDiskCopy) {
+    castor::exception::Exception e(ENOENT);
+    if (svcClassId > 0)
+      e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on this service class";
+    else
+      e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on disk cache";
+    throw e;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -331,7 +367,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
  castor::stager::RequestQueryType reqType,
  std::string &val,
  u_signed64 svcClassId,
- std::string reqId,
+ castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // Processing File Query by Request
@@ -339,7 +375,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
     {castor::dlf::Param("ReqId", val),
      castor::dlf::Param("QueryType", reqType)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_RQUERY, 2, params);
-  std::list<castor::stager::DiskCopyInfo*>* result;
+  std::list<castor::stager::StageQueryResult*>* result;
   result = qrySvc->diskCopies4Request(reqType, val, svcClassId);
   if (result == 0) {
     castor::exception::Exception e(EINVAL);
@@ -364,13 +400,13 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
   u_signed64 fileid = 0;
   std::string nshost = "";
   castor::rh::FileQryResponse res;
-  res.setReqAssociated(reqId);
+  res.setReqAssociated(req.reqId());
   bool foundDiskCopy = false;
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
-    castor::stager::DiskCopyInfo* diskcopy = *dcit;
+    castor::stager::StageQueryResult* diskcopy = *dcit;
     if (diskcopy->fileId() != fileid
         || diskcopy->nsHost() != nshost) {
       // Sending the response for the previous
@@ -397,7 +433,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
       sendResponse(client, &res);
   }
   // Cleanup
-  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+  for (std::list<castor::stager::StageQueryResult*>::iterator dcit
          = result->begin();
        dcit != result->end();
        ++dcit) {
@@ -436,42 +472,22 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
     try {
       std::string nshost, reqidtag;
       u_signed64 fid = 0;
-      bool queryOk = false;
       bool pall = false;
-      switch(ptype) {
-      case REQUESTQUERYTYPE_FILEID:
-        {
-          std::string::size_type idx = pval.find('@');
-          if (idx == std::string::npos) {
-            fid = strtou64(pval.c_str());
-            nshost = '%';
-          } else {
-            fid = strtou64(pval.substr(0, idx).c_str());
-            nshost = pval.substr(idx + 1);
-          }
-          queryOk = true;
+      if(REQUESTQUERYTYPE_FILEID == ptype) {
+        std::string::size_type idx = pval.find('@');
+        if (idx == std::string::npos) {
+          fid = strtou64(pval.c_str());
+          nshost = '%';
+        } else {
+          fid = strtou64(pval.substr(0, idx).c_str());
+          nshost = pval.substr(idx + 1);
         }
-        break;
-      case REQUESTQUERYTYPE_FILENAME:
-      case REQUESTQUERYTYPE_FILENAME_ALLSC:
-      case REQUESTQUERYTYPE_REQID:
-      case REQUESTQUERYTYPE_USERTAG:
-      case REQUESTQUERYTYPE_REQID_GETNEXT:
-      case REQUESTQUERYTYPE_USERTAG_GETNEXT:
-        queryOk = true;
-        break;
-      }
-      if (!queryOk) {
-        castor::exception::Exception e(EINVAL);
-        e.getMessage() << "Could not parse parameter: "
-                       << ptype << "/"
-                       << pval;
-        throw e;
       }
 
       // Verify whether we are querying a directory
       if ((ptype == REQUESTQUERYTYPE_FILEID) ||
-          (ptype == REQUESTQUERYTYPE_FILENAME)) {
+          (ptype == REQUESTQUERYTYPE_FILENAME) ||
+          (ptype == REQUESTQUERYTYPE_FILENAME_ALLSC)) {
         // Get PATH for queries by fileId
         if (ptype == REQUESTQUERYTYPE_FILEID) {
           char cfn[CA_MAXPATHLEN + 1];
@@ -504,6 +520,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           pval = cfn;
         }
         // Check to see if we return information for all copies of the file
+        // first old way with CUPV check
         else if ((ptype == REQUESTQUERYTYPE_FILENAME) &&
                  (pval.compare(0, 4, "all:") == 0)) {
           // Get the name of the client hostname to pass into the Cupv interface
@@ -527,6 +544,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
             throw e;
           }
           pval = pval.substr(4);
+          pall = true;
+        }
+        // then new way without CUPV check
+        else if (ptype == REQUESTQUERYTYPE_FILENAME_ALLSC) {
           pall = true;
         }
         // Check if the filename is valid (it has to start with /)
@@ -577,7 +598,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                          client,
                                          pval,
                                          svcClassId,
-                                         req->reqId(),
+                                         *uReq,
                                          uuid,
                                          pall);
       } else if (ptype == REQUESTQUERYTYPE_FILEID) {
@@ -587,7 +608,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                        nshost,
                                        pval,
                                        svcClassId,
-                                       req->reqId(),
+                                       *uReq,
                                        uuid,
                                        pall);
       } else {
@@ -596,7 +617,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                         ptype,
                                         pval,
                                         svcClassId,
-                                        req->reqId(),
+                                        *uReq,
                                         uuid);
       }
     } catch (castor::exception::Exception& e) {

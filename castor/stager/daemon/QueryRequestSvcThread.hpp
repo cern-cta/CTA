@@ -29,6 +29,7 @@
 
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 
 namespace castor {
@@ -47,7 +48,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class DiskCopyInfo;
+    class StageQueryResult;
 
     namespace daemon {
 
@@ -77,7 +78,7 @@ namespace castor {
          * defines the status of a fileResponse
          */
         void setFileResponseStatus(castor::rh::FileQryResponse* fr,
-                                   castor::stager::DiskCopyInfo* dc,
+                                   castor::stager::StageQueryResult* dc,
                                    bool& foundDiskCopy) throw();
 
         /**
@@ -87,7 +88,7 @@ namespace castor {
                                               castor::IClient *client,
                                               std::string& fileName,
                                               u_signed64 svcClassId,
-                                              std::string reqId,
+                                              castor::stager::StageFileQueryRequest& req,
                                               Cuuid_t uuid,
                                               bool all)
           throw (castor::exception::Exception);
@@ -101,7 +102,7 @@ namespace castor {
                                             std::string &nshost,
                                             std::string& fileName,
                                             u_signed64 svcClassId,
-                                            std::string reqId,
+                                            castor::stager::StageFileQueryRequest& req,
                                             Cuuid_t uuid,
                                             bool all)
           throw (castor::exception::Exception);
@@ -114,7 +115,7 @@ namespace castor {
                                              castor::stager::RequestQueryType reqType,
                                              std::string &val,
                                              u_signed64 svcClassId,
-                                             std::string reqId,
+                                             castor::stager::StageFileQueryRequest& req,
                                              Cuuid_t uuid)
           throw (castor::exception::Exception);
 

@@ -2,7 +2,7 @@
  *
  * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.661 $ $Date: 2009/06/17 10:55:44 $ $Author: itglp $
  *
- * PL/SQL code for the stager and resource monitoring
+ * PL/SQL code for the stager query service
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
@@ -15,16 +15,18 @@
 CREATE OR REPLACE PROCEDURE internalStageQuery
  (cfs IN "numList",
   svcClassId IN NUMBER,
+  euid IN INTEGER, egid IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
-  -- Here we get the status for each cf as follows: if a valid diskCopy is found,
-  -- or if a request is found and its related diskCopy exists,
-  -- the diskCopy status is returned, else -1 (INVALID) is returned.
-  -- The case of svcClassId = 0 (i.e. '*') is handled separately for performance reasons.
+  -- Here we get the status for each castorFile as follows: if a valid diskCopy is found,
+  -- or if a request is found and its related diskCopy exists, the diskCopy status
+  -- is returned, else -1 (INVALID) is returned.
+  -- The case of svcClassId = 0 (i.e. '*') is handled separately for performance reasons
+  -- and because it may include a check for read permissions.
   IF svcClassId = 0 THEN
     OPEN result FOR
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
-             lastKnownFileName, creationTime, svcClass, lastAccessTime
+             lastKnownFileName, creationTime, svcClass, lastAccessTime, hwStatus
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize, DC.status,
@@ -40,11 +42,12 @@ BEGIN
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
-                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime
+                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
+                      FileSystem.status + DiskServer.status AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass,
                    (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses, creationTime, lastAccessTime
                       FROM DiskCopy
@@ -52,20 +55,22 @@ BEGIN
                        AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
                      GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses, creationTime, lastAccessTime)) DiskCopy
                 WHERE FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
+                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-                  AND SvcClass.id(+) = DiskPool2SvcClass.child) DC
-           WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-             AND CastorFile.id = DC.castorFile)
+                  AND SvcClass.id(+) = DiskPool2SvcClass.child
+                  AND (euid = 0 OR SvcClass.id IS NULL OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
+                       checkPermission(SvcClass.name, euid, egid, 35) = 0)   -- OBJ_StageGetRequest
+                 ) DC
+           WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL    -- search for valid diskcopies
        ORDER BY fileid, nshost;
   ELSE
     OPEN result FOR
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
              lastKnownFileName, creationTime, (SELECT name FROM svcClass WHERE id = svcClassId),
-             lastAccessTime
+             lastAccessTime, hwStatus
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize,
@@ -83,11 +88,12 @@ BEGIN
                                 AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
-                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime
+                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
+                      FileSystem.status + DiskServer.status AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass,
                    (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses, creationTime, lastAccessTime
                       FROM DiskCopy
@@ -95,12 +101,12 @@ BEGIN
                        AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
                      GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses, creationTime, lastAccessTime)) DiskCopy
                 WHERE FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
+                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
-           WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-             AND CastorFile.id = DC.castorFile)
+                  -- No extra check on read permissions here, it is not relevant
+           WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL     -- search for valid diskcopies
        ORDER BY fileid, nshost;
    END IF;
@@ -114,6 +120,8 @@ END;
 CREATE OR REPLACE PROCEDURE fileNameStageQuery
  (fn IN VARCHAR2,
   svcClassId IN INTEGER,
+  euid IN INTEGER,
+  egid IN INTEGER,
   maxNbResponses IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfIds "numList";
@@ -135,7 +143,7 @@ BEGIN
     -- We have too many rows, we just give up
     raise_application_error(-20102, 'Too many matching files');
   END IF;
-  internalStageQuery(cfIds, svcClassId, result);
+  internalStageQuery(cfIds, svcClassId, euid, egid, result);
 END;
 /
 
@@ -147,6 +155,8 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
   svcClassId IN INTEGER,
+  euid IN INTEGER,
+  egid IN INTEGER,
   fileName IN VARCHAR2,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
@@ -170,7 +180,7 @@ BEGIN
     END IF;
   END IF;
   -- Finally issue the actual query
-  internalStageQuery(cfs, svcClassId, result);
+  internalStageQuery(cfs, svcClassId, euid, egid, result);
 END;
 /
 
@@ -214,7 +224,7 @@ BEGIN
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
   IF cfs.COUNT > 0 THEN
-    internalStageQuery(cfs, svcClassId, result);
+    internalStageQuery(cfs, svcClassId, 0, 0, result);
   ELSE
     notfound := 1;
   END IF;
@@ -255,7 +265,7 @@ BEGIN
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
   IF cfs.COUNT > 0 THEN
-    internalStageQuery(cfs, svcClassId, result);
+    internalStageQuery(cfs, svcClassId, 0, 0, result);
   ELSE
     notfound := 1;
   END IF;
@@ -293,7 +303,7 @@ BEGIN
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
-    internalStageQuery(cfs, svcClassId, result);
+    internalStageQuery(cfs, svcClassId, 0, 0, result);
   ELSE
     notfound := 1;
   END IF;
@@ -327,7 +337,7 @@ BEGIN
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
-    internalStageQuery(cfs, svcClassId, result);
+    internalStageQuery(cfs, svcClassId, 0, 0, result);
   ELSE
     notfound := 1;
   END IF;

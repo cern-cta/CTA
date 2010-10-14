@@ -41,7 +41,7 @@ namespace castor {
   namespace stager {
 
     // Forward declaration
-    class DiskCopyInfo;
+    class StageQueryResult;
     class CastorFile;
     
   }
@@ -72,12 +72,16 @@ namespace castor {
        * the old name will still be known
        * @param fileName the fileName to be used for the query
        * @param svcClassId the Id of the service class we're using
+       * @param euid the uid of the requestor
+       * @param guid the gid of the requestor
        * @return the list of DiskCopies available
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyInfo*>*
+      virtual std::list<castor::stager::StageQueryResult*>*
       diskCopies4FileName (std::string fileName,
-                           u_signed64 svcClassId)
+                           u_signed64 svcClassId,
+                           unsigned euid,
+                           unsigned egid)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -87,14 +91,18 @@ namespace castor {
        * @param fileId the fileId identifying the file
        * @param nsHost the name server host for this file
        * @param svcClassId the Id of the service class we're using
+       * @param euid the uid of the requestor
+       * @param guid the gid of the requestor
        * @param fileName the current name of the file
        * @return the list of DiskCopies available
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyInfo*>*
+      virtual std::list<castor::stager::StageQueryResult*>*
       diskCopies4File (u_signed64 fileId,
                        std::string nsHost,
                        u_signed64 svcClassId,
+                       unsigned euid,
+                       unsigned egid,
                        std::string& fileName)
         throw (castor::exception::Exception) = 0;
 
@@ -115,7 +123,7 @@ namespace castor {
        * been found.
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyInfo*>*
+      virtual std::list<castor::stager::StageQueryResult*>*
       diskCopies4Request (castor::stager::RequestQueryType reqType,
 			  std::string param,
 			  u_signed64 svcClassId)
