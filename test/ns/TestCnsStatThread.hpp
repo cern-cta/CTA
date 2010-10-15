@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RHThread.hpp
+ *                      TestCnsStatThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,31 +26,39 @@
 
 #include <sys/time.h>
 #include <vector>
+#include "occi.h"
+
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Mutex.hpp"
 
-class TestThread : public castor::server::IThread {
+class TestCnsStatThread : public castor::server::IThread,
+                          public castor::BaseObject {
 
   public:
       
-    TestThread();
-    
-    virtual void init() {};
+    TestCnsStatThread();
     
     virtual void run(void *param);
     
-    virtual void stop() {};
+    virtual void init() throw() {};
     
-    ~TestThread() throw() {};
+    virtual void stop() throw() {};
+
+    ~TestCnsStatThread() throw() {};
     
   private:
+    
     u_signed64 m_procTime, m_wallTime, m_reqCount;
     timeval m_timeStart;
-    unsigned m_nbThreads;
+    unsigned int m_nbThreads;
     
     std::vector<std::string> m_files;
     
     castor::server::Mutex* m;
 
+    u_signed64 cnsStat(oracle::occi::Statement* m_cnsStatStatement, std::string filepath)
+      throw (castor::exception::Exception);
+    
 };

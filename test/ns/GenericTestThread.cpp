@@ -34,6 +34,7 @@
 
 #include "Cns_api.h"
 #include "Cns_struct.h"
+#include "stager_client_api.h"
 #include "serrno.h"
 #include "osdep.h"
 #include "TestThread.hpp"
@@ -46,21 +47,6 @@ TestThread::TestThread() :
   m_procTime(0), m_wallTime(0), m_reqCount(0), m_nbThreads(0) {
   m = new castor::server::Mutex(0);
   m_timeStart.tv_usec = 0;
-  
-  // load list of files to stat
-  std::ifstream f("castordump");
-  if(f.is_open()) {    
-    while(!f.eof()) {
-      std::string line;
-      getline(f, line);
-      m_files.push_back(line);
-    }
-    f.close();
-    std::cout << "Dump file read successfully." << std::endl;
-  }
-  else {
-    std::cout << "Couldn't read dump file castordump." << std::endl;
-  }
 }
 
 
@@ -68,21 +54,10 @@ TestThread::TestThread() :
 // run
 //------------------------------------------------------------------------------
 void TestThread::run(void* param) {
-  //char filename[] =    // fileid = 541713
-  //  "/castor/cern.ch/cms/reconstruction/muonDIGI0300/THits/muonSignal0300/MB1mu_pt1/EVD32.muonHitPU.s/cern.ch/cms/reconstruction/jetDIGI0300/Digis/1033Pileup/h200_2tau_emu";
-  //char filename[] = "/castor/cern.ch/user/i/itglp/stresstest/00000";
-  //char* filename = NULL;
-  u_signed64 i = 0;
-  int op;
-  //char server[] = "c2itdcns";   // for getpath
-  u_signed64 maxNb = (m_files.size() ? m_files.size() : 200000000);
+  int rc, Mv,mv,Mr,mr;
 
   u_signed64 c = 0;
   u_signed64 reqProcTime = 0, timeStdDev = 0;
-  struct Cns_fileid cnsFileid;
-  struct Cns_filestat cnsFilestat;
-  //char filepath[CA_MAXPATHLEN + 1];
-  
   castor::server::SignalThreadPool* p = (castor::server::SignalThreadPool*)param; 
 
   if(!m_timeStart.tv_usec) {
@@ -93,32 +68,12 @@ void TestThread::run(void* param) {
   
   timeval reqStart, reqEnd;
   while(!p->stopped()) {
-    //filepath[0] = 0;
-    //i = rand() % 10000;
-    op = rand() % 10;
-    i = rand() % maxNb;
-    //sprintf(filename + strlen(filename) - 5, "%05lld", i);
-    memset(&cnsFileid, 0, sizeof(cnsFileid));
-    memset(&cnsFilestat, 0, sizeof(cnsFilestat));
 
     gettimeofday(&reqStart, 0);
 
     // *** Do something here ***
-    
-    //Cns_getpath(server, i, filepath);
-    Cns_statx(m_files[i].c_str(), &cnsFileid, &cnsFilestat);
-    /*if(op < 6) {
-      Cns_statx(filename, &cnsFileid, &cnsFilestat);
-    }
-    else {
-      if(op < 8) {
-        Cns_creatx(filename, 0664, &cnsFileid);
-      }
-      else {
-        Cns_unlink(filename);
-      }
-    }*/
-    
+    rc = stage_version(&Mv, &mv, &Mr, &mr, NULL);
+ 
     // collect statistics    
     gettimeofday(&reqEnd, 0);
     c++;

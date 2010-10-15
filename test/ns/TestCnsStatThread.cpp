@@ -32,23 +32,28 @@
 #include <fstream>
 #include <string>
 
+#include "occi.h"
 #include "Cns_api.h"
 #include "Cns_struct.h"
-#include "serrno.h"
-#include "osdep.h"
-#include "TestThread.hpp"
+#include "stager_client_api.h"
+#include "castor/Services.hpp"
 #include "castor/server/SignalThreadPool.hpp"
+#include "castor/db/DbCnvSvc.hpp"
+#include "castor/db/newora/OraCnvSvc.hpp"
+
+#include "TestCnsStatThread.hpp"
+
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TestThread::TestThread() :
+TestCnsStatThread::TestCnsStatThread() :
   m_procTime(0), m_wallTime(0), m_reqCount(0), m_nbThreads(0) {
   m = new castor::server::Mutex(0);
   m_timeStart.tv_usec = 0;
-  
+
   // load list of files to stat
-  std::ifstream f("castordump");
+  std::ifstream f("dumpfromns");
   if(f.is_open()) {    
     while(!f.eof()) {
       std::string line;
@@ -63,27 +68,65 @@ TestThread::TestThread() :
   }
 }
 
+//------------------------------------------------------------------------------
+// cnsStat
+//------------------------------------------------------------------------------
+u_signed64 TestCnsStatThread::cnsStat(oracle::occi::Statement* m_cnsStatStatement, std::string filepath)
+  throw (castor::exception::Exception) {
+  u_signed64 fileid = 0;
+  try {
+    // Check whether the statements are ok
+    //if (0 == m_cnsStatStatement) {
+    //  m_cnsStatStatement = createStatement("BEGIN cnsStat(:1, :2); END;");
+    //  m_cnsStatStatement->registerOutParam
+    //    (2, oracle::occi::OCCICURSOR);
+    //}
+
+    // Execute the statement
+    m_cnsStatStatement->setString(1, filepath);
+    m_cnsStatStatement->executeUpdate();
+    //oracle::occi::ResultSet *rs = m_cnsStatStatement->getCursor(2);
+    fileid = 1; //(u_signed64)m_cnsStatStatement->getDouble(2);
+
+    // Get the data
+    //if(rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+    //  fileid = (u_signed64)rs->getDouble(1);
+    //}
+    //m_cnsStatStatement->closeResultSet(rs);
+  }
+  catch (oracle::occi::SQLException e) {
+    //castor::exception::Exception ex(serrno);
+    //ex.getMessage()
+    //  << "Error caught in cnsStat() " 
+    //  << std::endl << e.what();
+    //throw ex;
+  }
+  return fileid;
+}
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void TestThread::run(void* param) {
-  //char filename[] =    // fileid = 541713
-  //  "/castor/cern.ch/cms/reconstruction/muonDIGI0300/THits/muonSignal0300/MB1mu_pt1/EVD32.muonHitPU.s/cern.ch/cms/reconstruction/jetDIGI0300/Digis/1033Pileup/h200_2tau_emu";
-  //char filename[] = "/castor/cern.ch/user/i/itglp/stresstest/00000";
-  //char* filename = NULL;
-  u_signed64 i = 0;
-  int op;
+void TestCnsStatThread::run(void* param) {
+
+  u_signed64 i, c = 0;
+  u_signed64 reqProcTime = 0, timeStdDev = 0;
+  castor::server::SignalThreadPool* p = (castor::server::SignalThreadPool*)param; 
+
   //char server[] = "c2itdcns";   // for getpath
   u_signed64 maxNb = (m_files.size() ? m_files.size() : 200000000);
-
-  u_signed64 c = 0;
-  u_signed64 reqProcTime = 0, timeStdDev = 0;
   struct Cns_fileid cnsFileid;
   struct Cns_filestat cnsFilestat;
-  //char filepath[CA_MAXPATHLEN + 1];
-  
-  castor::server::SignalThreadPool* p = (castor::server::SignalThreadPool*)param; 
+
+  std::ostringstream stmt;
+  stmt << "BEGIN cnsStatFid"
+    << syscall(__NR_gettid) % 2 << "@cnsDbLink(:1, :2); END;";
+  castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>
+    (svcs()->service("DbCnvSvc", castor::SVC_DBCNV));
+  oracle::occi::Statement* m_cnsStatStatement =
+    dynamic_cast<castor::db::ora::OraCnvSvc*>
+    (dbSvc)->createOraStatement("BEGIN cnsStatFid@cnsDbLink(:1); END;");   //stmt.str());
+  //m_cnsStatStatement->registerOutParam(2, oracle::occi::OCCICURSOR);
 
   if(!m_timeStart.tv_usec) {
     // hopefully only one thread computes it
@@ -93,32 +136,16 @@ void TestThread::run(void* param) {
   
   timeval reqStart, reqEnd;
   while(!p->stopped()) {
-    //filepath[0] = 0;
-    //i = rand() % 10000;
-    op = rand() % 10;
     i = rand() % maxNb;
-    //sprintf(filename + strlen(filename) - 5, "%05lld", i);
     memset(&cnsFileid, 0, sizeof(cnsFileid));
     memset(&cnsFilestat, 0, sizeof(cnsFilestat));
 
     gettimeofday(&reqStart, 0);
 
     // *** Do something here ***
-    
-    //Cns_getpath(server, i, filepath);
-    Cns_statx(m_files[i].c_str(), &cnsFileid, &cnsFilestat);
-    /*if(op < 6) {
-      Cns_statx(filename, &cnsFileid, &cnsFilestat);
-    }
-    else {
-      if(op < 8) {
-        Cns_creatx(filename, 0664, &cnsFileid);
-      }
-      else {
-        Cns_unlink(filename);
-      }
-    }*/
-    
+    cnsStat(m_cnsStatStatement, m_files[i]);
+    //Cns_statx(m_files[i].c_str(), &cnsFileid, &cnsFilestat);
+ 
     // collect statistics    
     gettimeofday(&reqEnd, 0);
     c++;

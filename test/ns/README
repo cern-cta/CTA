@@ -31,17 +31,6 @@ To use it you need to edit the TestThread.cpp class and write anything you want 
 The example in CVS already contains code for different tests, including stats, file creations
 and unlinks, getpath, etc.
 
-It is advised to apply the following patch to castor/server/SignalThreadPool.cpp:
-
-diff -r1.20 SignalThreadPool.cpp
-144c144
-<     m_notified++;   // hack to not pass in the mutex/cond loop the 1st time, cf. ServiceThread
----
->     m_notified = m_nbThreads;   // hack to not pass in the mutex/cond loop the 1st time, cf. ServiceThread
-
-This is to make sure that all threads start at full speed since the beginning, without
-waiting for the first timeout in the thread pool.
-
 To compile the code:
 --------------------
 
@@ -53,8 +42,9 @@ To run it:
 ----------
 Start it with:
 ./nstest -T <n>
-as usual, -f will run it in foreground.
+This will run <n> threads of your code in background; as for the Castor daemons, -f will run it in foreground.
 
 Then stop it with:
 killall nstest
 The signal handler will stop the test and overall statistics will be gathered and printed.
+

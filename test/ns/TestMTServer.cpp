@@ -26,10 +26,15 @@
 
 
 // Include Files
-#include "TestMTServer.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/Services.hpp"
+#include "castor/db/DbParamsSvc.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-#include "TestThread.hpp"
+
+#include "TestMTServer.hpp"
+#include "TestCnsStatThread.hpp"
 
 #include <iostream>
 
@@ -38,16 +43,33 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    TestMTServer* server = new TestMTServer();
-    server->addThreadPool(
-      new castor::server::SignalThreadPool("Test", new TestThread()));
-    server->parseCommandLine(argc, argv);
-    server->start();
-  } catch (castor::exception::Exception& e) {
+    TestMTServer server;
+
+    // Create a db parameters service and fill with appropriate defaults
+    castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+    castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+    if(params == 0) {
+      castor::exception::Exception e(serrno);
+      e.getMessage() << "Could not instantiate the parameters service";
+      throw e;
+    }
+    params->setSchemaVersion("2_1_9_0");
+    params->setDbAccessConfFile("/etc/castor/ORANSCONFIG");
+    
+    server.addThreadPool(
+      new castor::server::SignalThreadPool("Test", new TestCnsStatThread(), 10, 20, 300));
+    //server->addThreadPool(
+    //  new castor::server::SignalThreadPool("Test", new TestThread()));
+    server.setForeground(true);
+    server.parseCommandLine(argc, argv);
+    server.start();
+  }
+  catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
-  } catch (...) {
+  }
+  catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
 
@@ -59,8 +81,9 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 TestMTServer::TestMTServer() :
-  castor::server::BaseDaemon("multi ns client") {
+  castor::server::BaseDaemon("MTTest") {
   
   // Initializes the DLF logging
-  initLog("nstest", 1);
+  castor::dlf::Message nomsgs[1];
+  dlfInit(nomsgs);
 }

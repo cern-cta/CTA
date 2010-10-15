@@ -47,7 +47,7 @@ class TestThread : public castor::server::IThread {
   private:
     u_signed64 m_procTime, m_wallTime, m_reqCount;
     timeval m_timeStart;
-    unsigned m_nbThreads;
+    unsigned int m_nbThreads;
     
     std::vector<std::string> m_files;
     
