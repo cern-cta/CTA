@@ -4,7 +4,7 @@
 <title>SVG drawing</title>
 <desc>This was produced by version 4.4 of GNU libplot, a free library for exporting 2-D vector graphics.</desc>
 <rect id="background" x="0" y="0" width="1" height="1" stroke="none" fill="white"/>
-<g id="content" transform="translate(0.23438,0.33437) scale(1,-1) scale(0.125) " xml:space="preserve" stroke="black" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10.433" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" fill="none" fill-rule="evenodd" fill-opacity="1" font-style="normal" font-variant="normal" font-weight="normal" font-stretch="normal" font-size-adjust="none" letter-spacing="normal" word-spacing="normal" text-anchor="start">
+<g id="content" transform="translate(0.23438,0.35) scale(1,-1) scale(0.125) " xml:space="preserve" stroke="black" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10.433" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" fill="none" fill-rule="evenodd" fill-opacity="1" font-style="normal" font-variant="normal" font-weight="normal" font-stretch="normal" font-size-adjust="none" letter-spacing="normal" word-spacing="normal" text-anchor="start">
 <rect x="-0.375" y="-0.8" width="0.75" height="0.3" stroke-width="0.0094118" />
 <text transform="translate(-0.19299,-0.69903) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >bridge</text>
 <line x1="-0.275" y1="-0.72" x2="0.275" y2="-0.72" stroke-width="0.0094118" />
@@ -27,15 +27,11 @@
 <polygon points="0.16,-2.175 0.06,-2.15 0.16,-2.125 " stroke-width="0.0094118" fill="black" />
 <text transform="translate(0.52597,-2.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >create control-connection for disk IO thread</text>
 <text transform="translate(1.8557,-2.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="3.69" y1="-2.4" x2="0.06" y2="-2.4" stroke-width="0.0094118" />
-<polygon points="0.16,-2.425 0.06,-2.4 0.16,-2.375 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(0.52597,-2.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >create control-connection for disk IO thread</text>
-<text transform="translate(1.8557,-2.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="-0.05" y1="-0.9" x2="-0.05" y2="-2.65" stroke-width="0.0094118" />
-<line x1="0.05" y1="-0.9" x2="0.05" y2="-2.65" stroke-width="0.0094118" />
-<line x1="-0.05" y1="-2.65" x2="0.05" y2="-2.65" stroke-width="0.0094118" />
-<line x1="3.7" y1="-0.9" x2="3.7" y2="-2.65" stroke-width="0.0094118" />
-<line x1="3.8" y1="-0.9" x2="3.8" y2="-2.65" stroke-width="0.0094118" />
-<line x1="3.7" y1="-2.65" x2="3.8" y2="-2.65" stroke-width="0.0094118" />
+<line x1="-0.05" y1="-0.9" x2="-0.05" y2="-2.4" stroke-width="0.0094118" />
+<line x1="0.05" y1="-0.9" x2="0.05" y2="-2.4" stroke-width="0.0094118" />
+<line x1="-0.05" y1="-2.4" x2="0.05" y2="-2.4" stroke-width="0.0094118" />
+<line x1="3.7" y1="-0.9" x2="3.7" y2="-2.4" stroke-width="0.0094118" />
+<line x1="3.8" y1="-0.9" x2="3.8" y2="-2.4" stroke-width="0.0094118" />
+<line x1="3.7" y1="-2.4" x2="3.8" y2="-2.4" stroke-width="0.0094118" />
 </g>
 </svg>

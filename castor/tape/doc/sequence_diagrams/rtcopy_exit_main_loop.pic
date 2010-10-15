@@ -44,9 +44,6 @@ message(W,C,"ack");
 message(C,W,"end of session for disk/tape IO thread");
 message(W,C,"ack");
 
-message(C,W,"end of session for disk/tape IO thread");
-message(W,C,"ack");
-
 step();
 
 message(W,C,"end of entire session");
@@ -55,10 +52,6 @@ message(C,W,"ack");
 step();
 
 message(W,C,"close initial connection made to worker");
-
-step();
-
-message(W,C,"close disk/tape IO thread control-connection");
 message(W,C,"close disk/tape IO thread control-connection");
 message(W,C,"close disk/tape IO thread control-connection");
 message(W,C,"close disk/tape IO thread control-connection");

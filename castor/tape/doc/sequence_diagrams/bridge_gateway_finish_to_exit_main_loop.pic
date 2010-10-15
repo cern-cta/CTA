@@ -1,0 +1,85 @@
+.PS
+
+copy "sequence.pic";
+
+# Put a vertical space at the top of the document
+step();
+step();
+
+# Define the tapegatewayd process
+object(G,"gateway");
+
+# Put a horizontal space between the tapegatewayd and tapebridged processes
+placeholder_object(Fake_1);
+
+# Define the tapebridged process
+object(B,"bridge");
+
+# Put a horizontal space between the tapebridged and rtcpd child processes
+placeholder_object(Fake_2);
+placeholder_object(Fake_3);
+
+# Define the rtcpd child process
+object(C,"rtcpd child");
+
+step();
+
+# Message sequences
+
+active(C);
+active(B);
+
+message(C,B,"request more work");
+
+step();
+
+message(B,C,"end of work list");
+message(C,B,"ack");
+
+step();
+
+message(B,C,"ack of request for more work");
+
+step();
+
+message(C,B,"end of session for disk/tape IO thread");
+message(B,C,"ack");
+
+message(C,B,"end of session for disk/tape IO thread");
+message(B,C,"ack");
+
+message(C,B,"end of session for disk/tape IO thread");
+message(B,C,"ack");
+
+step();
+
+message(B,C,"end of entire session");
+message(C,B,"ack");
+
+step();
+
+message(B,C,"close initial connection made to bridge");
+
+step();
+
+message(B,C,"close disk/tape IO thread control-connection");
+message(B,C,"close disk/tape IO thread control-connection");
+message(B,C,"close disk/tape IO thread control-connection");
+
+inactive(C);
+complete(C);
+
+step();
+
+message(B,G,"connect");
+active(G);
+message(B,G,"EndNotication");
+message(G,B,"NotificationAcknowledge");
+message(B,G,"close connection");
+
+inactive(G);
+inactive(B);
+complete(B);
+complete(G);
+
+.PE
