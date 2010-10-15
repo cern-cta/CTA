@@ -30,7 +30,7 @@ use strict;
 # castor/cern.ch/dev/m/murrayc3/simpleTest_Sat_Aug_7.txt
 my $DEV_FILE_NS_FILEID=5000043410;
 
-my $adminList          = 1028; # gid=1028(c3)
+my $adminList          = ":1028"; # gid=1028(c3)
 my $originalDbSchema   = "stager_oracle_create.sql";
 my $originalDropSchema = "drop_oracle_schema.sql";
 my $stageGid           = 1474;  # gid=1474(st)
