@@ -3899,3 +3899,108 @@ globus_config.h: No such file or directory
 Run the follwing as root in order to fix the installation of the globus rpms:
 
 rpm -qa | grep -E 'VDT|globus|GSI' | xargs rpm -e --nodeps; spma_wrapper.sh
+
+
+How to install plotutils to get the pic2plot command-line on an slc5 dev box
+============================================================================
+
+[root@lxcastordev04 ~]# ssh murrayc3@lxadmWarning: Permanently added the RSA host key for IP address '137.138.4.173' to the list of known hosts.
+*******************************************************************************
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities *
+*******************************************************************************
+
+Last login: Mon Jun 14 20:04:42 2010 from lxadm05.cern.ch
+*******************************************************************************
+*                      This system is ACTIVELY MONITORED                      *
+*                                                                             *
+*         WARNING: This system MUST NOT be used for PRIVATE PURPOSES          *
+*                  Users activity, including commands, is logged              *
+*                                                                             *
+*******************************************************************************
+[murrayc3@lxadm06 ~]$ cdbop
+quattor CDB CLI: Version 2.2.0
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <hxFKUGW5P9>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~> get -f prod/cluster/castordev/customization/headnode/dev04
+[INFO] 'prod/cluster/castordev/customization/headnode/dev04.tpl': received
+<cdbop@cdbserv.cern.ch: ~> !vi prod/cluster/castordev/customization/headnode/dev04.tpl
+
+Add the following ploutils rpm using the pkg_repl("plotuils"), for example:
+
+#
+# template cluster/castordev/customization/headnode/dev04
+#
+template cluster/castordev/customization/headnode/dev04;
+
+  "/software/packages" = {
+    pkg_repl("ghostscript");
+    pkg_repl("ghostscript-fonts");
+    pkg_repl("graphviz");
+    pkg_repl("libcroco");
+    pkg_repl("libgsf");
+    pkg_repl("librsvg2");
+    pkg_repl("screen");
+    pkg_repl("urw-fonts");
+    pkg_repl("libtermcap-devel");
+    pkg_repl("ncurses-devel");
+    pkg_repl("readline-devel");
+    pkg_repl("plotutils");
+  };
+
+<cdbop@cdbserv.cern.ch: ~> up prod/cluster/castordev/customization/headnode/dev04.tpl
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~> commit
+[INFO] '/prod/cluster/castordev/customization/headnode/dev04': will be updated
+please confirm [yes]: yes
+Comment: Adding plotutils package in order to get the pic2plot command-line program
+[INFO] please wait...
+[INFO] commit OK
+<cdbop@cdbserv.cern.ch: ~> exit
+[murrayc3@lxadm06 ~]$ exit
+logout
+Connection to lxadm closed.
+[root@lxcastordev04 ~]# spma_wrapper.sh 
+
+[INFO] NCM-NCD version 1.2.22 started by root at: Mon Oct 18 11:37:18 2010
+[INFO] executing configure on components....
+
+
+[INFO] running component: spma
+---------------------------------------------------------
+[OK]   updated SPMA configuration file /etc/spma.conf
+[OK]   updated SPMA target configuration file in /var/lib/spma-target.cf
+[INFO] configure on component spma executed, 0 errors, 0 warnings
+
+=========================================================
+
+[OK]   0 errors, 0 warnings executing configure
+[INFO] SPMA version 1.11.6 started by root at: Mon Oct 18 11:37:28 2010
+[INFO] using local package cache in: /var/spma-cache/
+[INFO] proxy server not activated
+[WARN] /bin/rpm--version produced STDERR output:
+[INFO] examining local installations..
+[INFO] reading target configuration ..
+[INFO] executing operations..
+[INFO] The following package operations are required:
+       install http://swrep/swrep/x86_64_slc5/ plotutils 2.5 5.el5 x86_64 
+[INFO] Please be patient... 1 operation(s) to verify/execute.
+[OK]   SPMA finished successfully.
+
+[INFO] NCM-NCD version 1.2.22 started by root at: Mon Oct 18 11:37:33 2010
+[INFO] executing configure on components....
+
+
+[INFO] running component: grub
+---------------------------------------------------------
+[INFO] correct kernel (2.6.18-194.17.1.el5xen) already configured
+[OK]   Updated boot kernel version to /boot/vmlinuz-2.6.18-194.17.1.el5xen
+[INFO] configure on component grub executed, 0 errors, 0 warnings
+
+=========================================================
+
+[OK]   0 errors, 0 warnings executing configure
+[root@lxcastordev04 ~]# 
+
