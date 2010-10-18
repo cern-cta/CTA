@@ -9,15 +9,14 @@ step();
 # Define the tapegatewayd process
 object(G,"gateway");
 
-# Put horizontal space between the bridge and rtcpd child processes
+# Put horizontal space between the tapegatewayd and tapebridged processes
 placeholder_object(FakeObject1);
-placeholder_object(FakeObject2);
 
 # Define the bridge process
 object(B,"bridge");
 
 # Put horizontal space between the bridge and rtcpd child processes
-placeholder_object(FakeObject3);
+placeholder_object(FakeObject2);
 
 # Define the child rtcpd process
 object(C,"rtcpd child");
@@ -33,7 +32,7 @@ message(C,B,"request more work");
 
 message(B,G,"connect");
 active(G);
-message(B,G,"FileToMigrateRequest or FileToRecallRequest");
+message(B,G,"FileTo ( Migrate | Recall ) Request");
 message(G,B,"NoMoreFiles");
 message(B,G,"close connection");
 inactive(G);
