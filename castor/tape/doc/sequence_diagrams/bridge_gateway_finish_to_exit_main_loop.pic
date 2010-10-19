@@ -29,19 +29,6 @@ step();
 active(C);
 active(B);
 
-message(C,B,"request more work");
-
-step();
-
-message(B,C,"end of work list");
-message(C,B,"ack");
-
-step();
-
-message(B,C,"ack of request for more work");
-
-step();
-
 message(C,B,"end of session for disk/tape IO thread");
 message(B,C,"ack");
 

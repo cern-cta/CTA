@@ -4,7 +4,7 @@
 <title>SVG drawing</title>
 <desc>This was produced by version 4.4 of GNU libplot, a free library for exporting 2-D vector graphics.</desc>
 <rect id="background" x="0" y="0" width="1" height="1" stroke="none" fill="white"/>
-<g id="content" transform="translate(0.078125,0.021875) scale(1,-1) scale(0.125) " xml:space="preserve" stroke="black" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10.433" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" fill="none" fill-rule="evenodd" fill-opacity="1" font-style="normal" font-variant="normal" font-weight="normal" font-stretch="normal" font-size-adjust="none" letter-spacing="normal" word-spacing="normal" text-anchor="start">
+<g id="content" transform="translate(0.078125,0.13125) scale(1,-1) scale(0.125) " xml:space="preserve" stroke="black" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10.433" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" fill="none" fill-rule="evenodd" fill-opacity="1" font-style="normal" font-variant="normal" font-weight="normal" font-stretch="normal" font-size-adjust="none" letter-spacing="normal" word-spacing="normal" text-anchor="start">
 <rect x="-0.375" y="-0.8" width="0.75" height="0.3" stroke-width="0.0094118" />
 <text transform="translate(-0.25861,-0.69903) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >gateway</text>
 <line x1="-0.275" y1="-0.72" x2="0.275" y2="-0.72" stroke-width="0.0094118" />
@@ -20,97 +20,81 @@
 <line x1="2.45" y1="-0.9" x2="2.55" y2="-0.9" stroke-width="0.0094118" />
 <line x1="6.19" y1="-1.15" x2="2.56" y2="-1.15" stroke-width="0.0094118" />
 <polygon points="2.66,-1.175 2.56,-1.15 2.66,-1.125 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.8,-1.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >request more work</text>
+<text transform="translate(3.2208,-1.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
 <text transform="translate(4.3557,-1.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-1.65" x2="6.19" y2="-1.65" stroke-width="0.0094118" />
-<polygon points="6.09,-1.625 6.19,-1.65 6.09,-1.675 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.9119,-1.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of work list</text>
+<line x1="2.56" y1="-1.4" x2="6.19" y2="-1.4" stroke-width="0.0094118" />
+<polygon points="6.09,-1.375 6.19,-1.4 6.09,-1.425 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(4.2669,-1.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
+<text transform="translate(4.3557,-1.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="6.19" y1="-1.65" x2="2.56" y2="-1.65" stroke-width="0.0094118" />
+<polygon points="2.66,-1.675 2.56,-1.65 2.66,-1.625 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(3.2208,-1.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
 <text transform="translate(4.3557,-1.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.19" y1="-1.9" x2="2.56" y2="-1.9" stroke-width="0.0094118" />
-<polygon points="2.66,-1.925 2.56,-1.9 2.66,-1.875 " stroke-width="0.0094118" fill="black" />
+<line x1="2.56" y1="-1.9" x2="6.19" y2="-1.9" stroke-width="0.0094118" />
+<polygon points="6.09,-1.875 6.19,-1.9 6.09,-1.925 " stroke-width="0.0094118" fill="black" />
 <text transform="translate(4.2669,-1.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
 <text transform="translate(4.3557,-2.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="6.19" y1="-2.15" x2="2.56" y2="-2.15" stroke-width="0.0094118" />
+<polygon points="2.66,-2.175 2.56,-2.15 2.66,-2.125 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(3.2208,-2.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
+<text transform="translate(4.3557,-2.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.56" y1="-2.4" x2="6.19" y2="-2.4" stroke-width="0.0094118" />
 <polygon points="6.09,-2.375 6.19,-2.4 6.09,-2.425 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.4951,-2.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack of request for more work</text>
+<text transform="translate(4.2669,-2.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
 <text transform="translate(4.3557,-2.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.19" y1="-2.9" x2="2.56" y2="-2.9" stroke-width="0.0094118" />
-<polygon points="2.66,-2.925 2.56,-2.9 2.66,-2.875 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.2208,-2.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
+<line x1="2.56" y1="-2.9" x2="6.19" y2="-2.9" stroke-width="0.0094118" />
+<polygon points="6.09,-2.875 6.19,-2.9 6.09,-2.925 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(3.7342,-2.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of entire session</text>
 <text transform="translate(4.3557,-3.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-3.15" x2="6.19" y2="-3.15" stroke-width="0.0094118" />
-<polygon points="6.09,-3.125 6.19,-3.15 6.09,-3.175 " stroke-width="0.0094118" fill="black" />
+<line x1="6.19" y1="-3.15" x2="2.56" y2="-3.15" stroke-width="0.0094118" />
+<polygon points="2.66,-3.175 2.56,-3.15 2.66,-3.125 " stroke-width="0.0094118" fill="black" />
 <text transform="translate(4.2669,-3.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
 <text transform="translate(4.3557,-3.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.19" y1="-3.4" x2="2.56" y2="-3.4" stroke-width="0.0094118" />
-<polygon points="2.66,-3.425 2.56,-3.4 2.66,-3.375 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.2208,-3.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
-<text transform="translate(4.3557,-3.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.56" y1="-3.65" x2="6.19" y2="-3.65" stroke-width="0.0094118" />
 <polygon points="6.09,-3.625 6.19,-3.65 6.09,-3.675 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(4.2669,-3.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
+<text transform="translate(3.1978,-3.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close initial connection made to bridge</text>
 <text transform="translate(4.3557,-3.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.19" y1="-3.9" x2="2.56" y2="-3.9" stroke-width="0.0094118" />
-<polygon points="2.66,-3.925 2.56,-3.9 2.66,-3.875 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.2208,-3.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of session for disk/tape IO thread</text>
-<text transform="translate(4.3557,-4.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.56" y1="-4.15" x2="6.19" y2="-4.15" stroke-width="0.0094118" />
 <polygon points="6.09,-4.125 6.19,-4.15 6.09,-4.175 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(4.2669,-4.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
+<text transform="translate(3.0028,-4.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
 <text transform="translate(4.3557,-4.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="2.56" y1="-4.4" x2="6.19" y2="-4.4" stroke-width="0.0094118" />
+<polygon points="6.09,-4.375 6.19,-4.4 6.09,-4.425 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(3.0028,-4.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
+<text transform="translate(4.3557,-4.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
 <line x1="2.56" y1="-4.65" x2="6.19" y2="-4.65" stroke-width="0.0094118" />
 <polygon points="6.09,-4.625 6.19,-4.65 6.09,-4.675 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.7342,-4.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >end of entire session</text>
+<text transform="translate(3.0028,-4.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
 <text transform="translate(4.3557,-4.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.19" y1="-4.9" x2="2.56" y2="-4.9" stroke-width="0.0094118" />
-<polygon points="2.66,-4.925 2.56,-4.9 2.66,-4.875 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(4.2669,-4.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >ack</text>
-<text transform="translate(4.3557,-5.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-5.4" x2="6.19" y2="-5.4" stroke-width="0.0094118" />
-<polygon points="6.09,-5.375 6.19,-5.4 6.09,-5.425 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.1978,-5.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close initial connection made to bridge</text>
-<text transform="translate(4.3557,-5.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-5.9" x2="6.19" y2="-5.9" stroke-width="0.0094118" />
-<polygon points="6.09,-5.875 6.19,-5.9 6.09,-5.925 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.0028,-5.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
-<text transform="translate(4.3557,-6.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-6.15" x2="6.19" y2="-6.15" stroke-width="0.0094118" />
-<polygon points="6.09,-6.125 6.19,-6.15 6.09,-6.175 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.0028,-6.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
-<text transform="translate(4.3557,-6.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.56" y1="-6.4" x2="6.19" y2="-6.4" stroke-width="0.0094118" />
-<polygon points="6.09,-6.375 6.19,-6.4 6.09,-6.425 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(3.0028,-6.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close disk/tape IO thread control-connection</text>
-<text transform="translate(4.3557,-6.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="6.2" y1="-0.9" x2="6.2" y2="-6.4" stroke-width="0.0094118" />
-<line x1="6.3" y1="-0.9" x2="6.3" y2="-6.4" stroke-width="0.0094118" />
-<line x1="6.2" y1="-6.4" x2="6.3" y2="-6.4" stroke-width="0.0094118" />
-<line x1="6.25" y1="-6.4" x2="6.25" y2="-6.4" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
-<line x1="2.44" y1="-6.9" x2="0.06" y2="-6.9" stroke-width="0.0094118" />
-<polygon points="0.16,-6.925 0.06,-6.9 0.16,-6.875 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(1.0068,-6.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >connect</text>
-<text transform="translate(1.2307,-7.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="0" y1="-0.8" x2="0" y2="-6.9" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
-<line x1="-0.05" y1="-6.9" x2="0.05" y2="-6.9" stroke-width="0.0094118" />
-<line x1="2.44" y1="-7.15" x2="0.06" y2="-7.15" stroke-width="0.0094118" />
-<polygon points="0.16,-7.175 0.06,-7.15 0.16,-7.125 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(0.81771,-7.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >EndNotication</text>
-<text transform="translate(1.2307,-7.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="0.06" y1="-7.4" x2="2.44" y2="-7.4" stroke-width="0.0094118" />
-<polygon points="2.34,-7.375 2.44,-7.4 2.34,-7.425 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(0.49354,-7.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >NotificationAcknowledge</text>
-<text transform="translate(1.2307,-7.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="2.44" y1="-7.65" x2="0.06" y2="-7.65" stroke-width="0.0094118" />
-<polygon points="0.16,-7.675 0.06,-7.65 0.16,-7.625 " stroke-width="0.0094118" fill="black" />
-<text transform="translate(0.73278,-7.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close connection</text>
-<text transform="translate(1.2307,-7.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
-<line x1="-0.05" y1="-6.9" x2="-0.05" y2="-7.65" stroke-width="0.0094118" />
-<line x1="0.05" y1="-6.9" x2="0.05" y2="-7.65" stroke-width="0.0094118" />
-<line x1="-0.05" y1="-7.65" x2="0.05" y2="-7.65" stroke-width="0.0094118" />
-<line x1="2.45" y1="-0.9" x2="2.45" y2="-7.65" stroke-width="0.0094118" />
-<line x1="2.55" y1="-0.9" x2="2.55" y2="-7.65" stroke-width="0.0094118" />
-<line x1="2.45" y1="-7.65" x2="2.55" y2="-7.65" stroke-width="0.0094118" />
-<line x1="2.5" y1="-7.65" x2="2.5" y2="-7.65" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
-<line x1="0" y1="-7.65" x2="0" y2="-7.65" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
+<line x1="6.2" y1="-0.9" x2="6.2" y2="-4.65" stroke-width="0.0094118" />
+<line x1="6.3" y1="-0.9" x2="6.3" y2="-4.65" stroke-width="0.0094118" />
+<line x1="6.2" y1="-4.65" x2="6.3" y2="-4.65" stroke-width="0.0094118" />
+<line x1="6.25" y1="-4.65" x2="6.25" y2="-4.65" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
+<line x1="2.44" y1="-5.15" x2="0.06" y2="-5.15" stroke-width="0.0094118" />
+<polygon points="0.16,-5.175 0.06,-5.15 0.16,-5.125 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(1.0068,-5.1157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >connect</text>
+<text transform="translate(1.2307,-5.2824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="0" y1="-0.8" x2="0" y2="-5.15" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
+<line x1="-0.05" y1="-5.15" x2="0.05" y2="-5.15" stroke-width="0.0094118" />
+<line x1="2.44" y1="-5.4" x2="0.06" y2="-5.4" stroke-width="0.0094118" />
+<polygon points="0.16,-5.425 0.06,-5.4 0.16,-5.375 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(0.81771,-5.3657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >EndNotication</text>
+<text transform="translate(1.2307,-5.5324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="0.06" y1="-5.65" x2="2.44" y2="-5.65" stroke-width="0.0094118" />
+<polygon points="2.34,-5.625 2.44,-5.65 2.34,-5.675 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(0.49354,-5.6157) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >NotificationAcknowledge</text>
+<text transform="translate(1.2307,-5.7824) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="2.44" y1="-5.9" x2="0.06" y2="-5.9" stroke-width="0.0094118" />
+<polygon points="0.16,-5.925 0.06,-5.9 0.16,-5.875 " stroke-width="0.0094118" fill="black" />
+<text transform="translate(0.73278,-5.8657) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" >close connection</text>
+<text transform="translate(1.2307,-6.0324) scale(1,-1) scale(0.0069444) " font-family="Helvetica,sans-serif" font-size="20px" stroke="none" fill="black" > </text>
+<line x1="-0.05" y1="-5.15" x2="-0.05" y2="-5.9" stroke-width="0.0094118" />
+<line x1="0.05" y1="-5.15" x2="0.05" y2="-5.9" stroke-width="0.0094118" />
+<line x1="-0.05" y1="-5.9" x2="0.05" y2="-5.9" stroke-width="0.0094118" />
+<line x1="2.45" y1="-0.9" x2="2.45" y2="-5.9" stroke-width="0.0094118" />
+<line x1="2.55" y1="-0.9" x2="2.55" y2="-5.9" stroke-width="0.0094118" />
+<line x1="2.45" y1="-5.9" x2="2.55" y2="-5.9" stroke-width="0.0094118" />
+<line x1="2.5" y1="-5.9" x2="2.5" y2="-5.9" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
+<line x1="0" y1="-5.9" x2="0" y2="-5.9" stroke-width="0.0094118" stroke-dasharray="0.05, 0.05"/>
 </g>
 </svg>
