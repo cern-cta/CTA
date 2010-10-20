@@ -4004,3 +4004,15 @@ Connection to lxadm closed.
 [OK]   0 errors, 0 warnings executing configure
 [root@lxcastordev04 ~]# 
 
+
+How do I find the source files of the CASTOR web-site?
+======================================================
+
+The CASTOR web-site has the following URL:
+
+http://castor.web.cern.ch/castor/
+
+The source files of the CASTOR web-site are located in the following afs
+directory:
+
+/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/
