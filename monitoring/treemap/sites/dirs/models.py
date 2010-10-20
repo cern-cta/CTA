@@ -586,21 +586,30 @@ def generateRequestsTree(start, stop, reqmodel):
             oldpos = pos + 1
             pos = name.find('/', pos + 1)
             
-    
-    print "Reading Atlas Requests"
     model_class = globals()[reqmodel]
     model_class.generatedtree = BasicTree()        
     tree = model_class.generatedtree
-#    requestarray = list(Requestscms.objects.filter(timestamp__range=(fromtime, totime), filename__isnull=False))
-    fromstring = DateOption.valueToString(DateOption("dummy","object"), start)
-    tostring = DateOption.valueToString(DateOption("dummy","object"), stop)
-#    test = model_class.objects.filter(filename__isnull=False).extra(where=["tmestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH:MI:SS')"])
-    requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH24:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH24:MI:SS')"]))
-#    requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN sysdate - " + str(fromminsago) + "/1140 and sysdate - " + str(tominsago)+"/1140"]))
+    
+    #preventing django from reading all data sets at once, read a part and update tree, read a part and update tree...
+    secondsperreading = 3600 #this value is empirical and seems bring good speed
+    nbsteps = int(math.ceil(((stop - start).seconds + (((stop - start).days)*24*60*60) )/float(secondsperreading)))
     print "Generating Tree of Requests"
-    for dataset in requestarray:
-        addRequestToTree(tree, dataset)
-        
+    timemeasurement = datetime.datetime.now()
+    for i in range(nbsteps):
+        if i != (nbsteps -1):
+            fromstring = DateOption.valueToString(DateOption("dummy","object"), start + (i*datetime.timedelta(seconds = secondsperreading)) )
+            tostring = DateOption.valueToString(DateOption("dummy","object"), start + ((i+1)*datetime.timedelta(seconds = secondsperreading)) )
+        elif i == (nbsteps -1):
+            fromstring = DateOption.valueToString(DateOption("dummy","object"), start + (i*datetime.timedelta(seconds = secondsperreading)))
+            tostring = DateOption.valueToString(DateOption("dummy","object"), stop)
+            
+        print "Reading Atlas Requests. Time: ", fromstring, " " ,tostring
+        requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH24:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH24:MI:SS')"]))
+    
+        for dataset in requestarray:
+            addRequestToTree(tree, dataset)
+    
+    print "time: ", datetime.datetime.now() - timemeasurement
     print tree.getRoot().requestscount
     print ''
     
