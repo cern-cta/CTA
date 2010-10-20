@@ -2312,13 +2312,17 @@ int Cns_srv_listtape(int magic,
   }
   while ((c = Cns_get_smd_by_vid (&thip->dbfd, bov, vid, fseq, smd_entry,
                                   endlist, dblistptr)) == 0) {
+    bov = 0;
     if (Cns_get_fmd_by_fileid (&thip->dbfd, smd_entry->s_fileid,
-                               fmd_entry, 0, NULL) < 0)
+                               fmd_entry, 0, NULL) < 0) {
+      /* Ignore files deleted during the listing */
+      if (serrno == ENOENT)
+        continue;
       RETURN (serrno);
+    }
     if ((int) strlen (fmd_entry->name) > maxsize) break;
     marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
     nbentries++;
-    bov = 0;
     maxsize -= ((direntsz + strlen (fmd_entry->name) + 8) / 8) * 8;
   }
   if (c < 0)
