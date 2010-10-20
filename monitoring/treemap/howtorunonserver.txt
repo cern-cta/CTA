@@ -56,5 +56,11 @@
 
 	'treemapdir': treemapdir, 'icondir': icondir
 	
+*Change imagemap.html on the top by removing absolute paths to this:
+	<link rel="stylesheet" type="text/css" media="all" href="/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
+	<script type="text/javascript" src="/js/calendar/calendar.js"></script>
+	<script type="text/javascript" src="/js/calendar/lang/calendar-en.js"></script>
+	<script type="text/javascript" src="/js/calendar/calendar-setup.js"></script>
+	
 *Start the server by typing 
 	service httpd start

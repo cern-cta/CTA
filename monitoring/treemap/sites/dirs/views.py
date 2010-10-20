@@ -122,8 +122,10 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
 
     #wait maximum 6 seconds for the file being unlocked, ignore the lock otherwise
     sleepcounter = 0
+    sleeptime = datetime.datetime.now()
     while os.path.exists(fullfilepath + '.lock') and sleepcounter < 6:
-        time.sleep(1)
+        while (datetime.datetime.now() - sleeptime).seconds < 1:
+            pass
         sleepcounter = sleepcounter + 1
 
     fileobject = open(fullfilepath + '.lock', 'w+b')
