@@ -290,7 +290,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [DateOption('start', 'start', 120), DateOption('stop', 'stop', 0), BooleanOption('Lowest values', 'smalltobig', False), BooleanOption('Flat view', 'flatview', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', False), BooleanOption('Flat view', 'flatview', False), DateOption('start', 'start', 120), DateOption('stop', 'stop', 0)]
 presetdict["Requests Atlas from last 120 minutes"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
 
 #Preset for Requests cms
@@ -298,7 +298,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [DateOption('start', 'start', 120), DateOption('stop', 'stop', 0), BooleanOption('Lowest values', 'smalltobig', False), BooleanOption('Flat view', 'flatview', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', False), BooleanOption('Flat view', 'flatview', False), DateOption('start', 'start', 120), DateOption('stop', 'stop', 0)]
 presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
 
 

@@ -45,7 +45,7 @@
 	
 	TEMPLATE_DIRS = 
 	(
-    	'/var/www/html/OverView/templates' 
+    	'/var/www/html/OverView/templates'
 	)
 
 *Change respond() in views.py:

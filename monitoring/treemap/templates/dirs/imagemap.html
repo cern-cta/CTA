@@ -6,12 +6,25 @@
 <head>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="PRIVATE">
 <title>TreeMaps</title>
+<link rel="stylesheet" type="text/css" media="all" href="http://pcitdmssd/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
+<script type="text/javascript" src="http://pcitdmssd/js/calendar/calendar.js"></script>
+<script type="text/javascript" src="http://pcitdmssd/js/calendar/lang/calendar-en.js"></script>
+<script type="text/javascript" src="http://pcitdmssd/js/calendar/calendar-setup.js"></script>
 
 <script LANGUAGE="JavaScript">
 //define global menu values
 function initMenu()
 {
 activateJsObjects();
+}
+
+function catcalc(cal) 
+{
+	var date = cal.date;
+	var time = date.getTime()
+	field = document.getElementById("f_date_a");
+	var date2 = new Date(time);
+	field.value = date2.print("%d.%m.%Y_%H:%M:%S");
 }
 
 function activateJsObjects()
@@ -86,14 +99,14 @@ function notImplementedWarning()
 							{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
 						{% endfor %}
 					</select></td></tr>
+					{% for aoption in optionshtml %}
+						<tr><td></td><td class="descriptiontext">
+							{{aoption|escapefilter}}
+						</td></tr>
+					{% endfor %}
 					
-					<tr><td></td><td class="descriptiontext">
-						<input id="id_flat" type="checkbox" name="flat_view" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"flat" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Flat view
-					</td></tr>
-					<tr><td></td><td class="descriptiontext">
-						<input id="id_smalltobig" type="checkbox" name="smalltobig" value="true" {% spaceless %}{% for key, value in presetdefault.items %}{% if key|equals:"smalltobig" and value|bool %}checked{% endif %}{% endfor %}{% endspaceless %}> Lowest values
-					</td></tr>
 					<tr><td>
+						<br>
 						<input class="applybutton" type="submit" value="Apply"/>
 					</td></tr>
 					<tr><td></td><td class="livedatawarning">
@@ -102,7 +115,7 @@ function notImplementedWarning()
 				</form>
 			</tr>
 			<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
 			</td></tr>
 			</table>

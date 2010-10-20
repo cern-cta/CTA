@@ -8,6 +8,8 @@ from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
+from sites.dirs.BooleanOption import BooleanOption
+from sites.dirs.DateOption import DateOption
 from sites.dirs.OptionsReader import OptionsReader
 from sites.dirs.models import *
 from sites.tools.Inspections import *
@@ -340,6 +342,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
 def preset(request, options,  urlending):
     if options is None: options = ''
     nblevels = getDefaultNumberOfLevels()
+    optr = None
     
     if request.method == 'POST':
             
@@ -347,44 +350,56 @@ def preset(request, options,  urlending):
         posted = request.POST
         
         try:
-            presetname = posted['preset']
+            presetname = str(posted['preset'])
         except KeyError:
             redir(request, options, urlending, False, 0)
-        
-        try:
-            posted['flat_view']
-            #if no error here, continue:
-            pos = options.find('flatview=false')
-            if pos != -1:
-                options[pos:pos+len('flatview=false')] = 'flatview=true'
-            else:
-                if(len(options) > 0):
-                    options = 'flatview=true, ' + options 
-                else:
-                    options = 'flatview=true' 
-        except KeyError:
-            pass
-        
-        try:
-            posted['smalltobig']
-            #if no error here, continue:
-            pos = options.find('smalltobig=false')
-            if pos != -1:
-                options[pos:pos+len('smalltobig=false')] = 'smalltobig=true'
-            else:
-                if(len(options) > 0):
-                    options = 'smalltobig=true, ' + options 
-                else:
-                    options = 'smalltobig=true' 
-        except KeyError:
-            pass
-        
+            
         if presetname not in sites.dirs.Presets.getPresetNames():
             redir(request, options, urlending, False, 0)
+            
+        preset = sites.dirs.Presets.getPreset(presetname)
+        optr = OptionsReader(options, preset.staticid)    
+        validoptions = preset.optionsset
+        thetime = None
         
+        for option in validoptions:
+            try:
+                posted[str(option.getName())]
+                #if no error here, continue:
+                if(isinstance(option,BooleanOption)):
+                    optr.optdict[option.getName()] = True
+                
+                if(isinstance(option,DateOption)):
+                    valuedict = {}
+                    try:
+                        try:
+                            valuedict = re.match(option.getFullExpression(), options).groupdict() 
+                            thetime = datetime.datetime.now() - datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
+                        except:
+                            try:
+                                valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
+                                thetime = datetime.datetime.now() - datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
+                                options = options + option.getName() + "=" + str(posted[option.getName()])
+                                optr = OptionsReader(options, preset.staticid) 
+                            except Exception, e:
+                                models = preset.lr.getRuleObject(0).getUsedClassNames(self)
+                                for modelname in models:
+                                    try:
+                                        thetime = datetime.datetime.now() - (globals()[modelname].__dict__[option.getName()])
+                                        break
+                                    except:
+                                        pass
+                        
+                        optr.optdict[option.getName()] = thetime.seconds/60
+                    except:
+                        pass
+                    
+            except KeyError:
+                pass    
     else:
         raise Http404
-
+    
+    options = optr.getCorrectedOptions(preset.staticid)
     return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = '', metric = ''):
@@ -492,11 +507,16 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     presetnames = sites.dirs.Presets.getPresetNames()
     presetnames.sort();
     
+    optionshtml = []
+    preset = sites.dirs.Presets.getPresetByStaticId(presetid)
+    for option in preset.optionsset:
+        optionshtml.append(option.toHtml(options))
+    
     response = render_to_string('dirs/imagemap.html', \
     {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 
-     'presetdefault':getCurrentPresetSelections(request, presetid, options)} , context_instance=None)
+     'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml} , context_instance=None)
     
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'

@@ -15,13 +15,13 @@ class OptionsReader(object):
         optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for urlopt in optset:
             try:
-                self.optdict[urlopt.getName()] = urlopt.findvalue(options)
+                self.optdict[urlopt.getName()] = urlopt.optionsToValue(options)
                 self.fromlink[urlopt.getName()] = True
             except:
                 self.optdict[urlopt.getName()] = self.getStandardValue(urlopt.getName(), presetid)
                 self.fromlink[urlopt.getName()] = False
         try:    
-            if self.optdict['start'] < self.optdict['stop']: 
+            if self.optdict['start'] > self.optdict['stop']: 
                 temp =  self.optdict['start']
                 self.optdict['start'] = self.optdict['stop']
                 self.optdict['stop'] = temp
@@ -29,9 +29,6 @@ class OptionsReader(object):
                 temp = self.fromlink['start']
                 self.fromlink['start'] = self.fromlink['stop']
                 self.fromlink['stop'] = temp
-                
-            self.optdict['start'] = self.optdict['start']/60.0
-            self.optdict['stop'] = self.optdict['start']/60.0
         except:
             pass
         
@@ -43,8 +40,9 @@ class OptionsReader(object):
     
     def getCorrectedOptions(self, presetid):
         correctedoptions = []
+        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         
-        for urlopt in sites.dirs.Presets.getPresetByStaticId(presetid).optionsset:
+        for urlopt in optset:
             if self.fromlink[urlopt.getName()]:
                 if len(correctedoptions) > 0:
                     correctedoptions.append(', ')

@@ -10,6 +10,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
+from sites.dirs.DateOption import DateOption
 from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
 from sites.treemap.BasicTree import BasicTree
@@ -27,30 +28,30 @@ import datetime
 import profile
 
 class Dirs(models.Model):
-    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True)
-    parent = models.ForeignKey('self', blank=True, null=True, related_name='dirs_set', db_column='parent')#models.DecimalField(max_digits=0, decimal_places=-127, )
+    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0, primary_key=True)
+    parent = models.ForeignKey('self', blank=True, null=True, related_name='dirs_set', db_column='parent')#models.DecimalField(max_digits=127, decimal_places=0, )
     name = models.CharField(max_length=255, blank=True)
     depth = models.IntegerField(null=True, blank=True)
     fullname = models.CharField(max_length=2048, blank=True)
-    totalsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    sizeontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    dataontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    nbfilesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    nbsubdirs = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    oldestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    totalsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    sizeontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    dataontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    nbfilesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    nbsubdirs = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    oldestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
     avgfilelastmod = models.FloatField(null=True, blank=True)
     sigfilelastmod = models.FloatField(null=True, blank=True)
-    newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    newestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
     avgfileontapelastmod = models.FloatField(null=True, blank=True)
     sigfileontapelastmod = models.FloatField(null=True, blank=True)
-    newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    newestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
     timetomigrate = models.FloatField(null=True, blank=True)
     timetorecall = models.FloatField(null=True, blank=True)
-    timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    timelostintapemarks = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
     opttimetorecall = models.FloatField(null=True, blank=True)
     
     def __init__(self, *args, **kwargs):
@@ -258,14 +259,14 @@ def getDirByName(dirname):
     return None
         
 class CnsFileMetadata(models.Model):
-    fileid = models.DecimalField(max_digits=0, decimal_places=-127, primary_key=True)
-    parent_fileid = models.ForeignKey('Dirs', blank=True, null=True, db_column='parent_fileid')#models.DecimalField(unique=True, null=True, max_digits=0, decimal_places=-127, blank=True)
+    fileid = models.DecimalField(max_digits=127, decimal_places=0, primary_key=True)
+    parent_fileid = models.ForeignKey('Dirs', blank=True, null=True, db_column='parent_fileid')#models.DecimalField(unique=True, null=True, max_digits=127, decimal_places=0, blank=True)
     name = models.CharField(unique=True, max_length=255, blank=True)
     filemode = models.IntegerField(null=True, blank=True)
     nlink = models.IntegerField(null=True, blank=True)
     owner_uid = models.IntegerField(null=True, blank=True)
     gid = models.IntegerField(null=True, blank=True)
-    filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+    filesize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
     atime = models.IntegerField(null=True, blank=True)
     mtime = models.IntegerField(null=True, blank=True)
     ctime = models.IntegerField(null=True, blank=True)
@@ -330,13 +331,13 @@ class Requestsatlas(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
-    nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
+    nsfileid = models.DecimalField(max_digits=127, decimal_places=0)
     type = models.CharField(max_length=255, blank=True)
     svcclass = models.CharField(max_length=255, blank=True)
     username = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
     filename = models.CharField(max_length=2048, blank=True)
-    filesize = models.DecimalField(null=True, default = 0, max_digits=0, decimal_places=-127, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=127, decimal_places=0, blank=True)
     
     #fake (not in db)
 #    requestscount = models.IntegerField(default = 1.0)
@@ -418,21 +419,21 @@ Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
 Requestsatlas.generatedtree = None
 
 #other parameters influencing tree generation
-Requestsatlas.treeprops = {'start': 0, 'stop': 0}
-Requestsatlas.start = 120 #time relative to now
-Requestsatlas.stop = 0 #time relative to now
+Requestsatlas.treeprops = {'start': None, 'stop': None}
+Requestsatlas.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
+Requestsatlas.stop = datetime.datetime.now() #time relative to now
 
 class Requestscms(models.Model):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
-    nsfileid = models.DecimalField(max_digits=0, decimal_places=-127)
+    nsfileid = models.DecimalField(max_digits=127, decimal_places=0)
     type = models.CharField(max_length=255, blank=True)
     svcclass = models.CharField(max_length=255, blank=True)
     username = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
     filename = models.CharField(max_length=2048, blank=True)
-    filesize = models.DecimalField(null=True, default = 0, max_digits=0, decimal_places=-127, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=127, decimal_places=0, blank=True)
     
     #fake (not in db)
 #    requestscount = models.IntegerField(default = 1.0)
@@ -514,12 +515,12 @@ Requestscms.getParent.__dict__['naviname'] = 'namepart'
 Requestscms.generatedtree = None
 
 #other parameters influencing tree generation
-Requestscms.treeprops = {'start': 0, 'stop': 0}
-Requestscms.start = 120 #time relative to now
-Requestscms.stop = 0 #time relative to now
+Requestscms.treeprops = {'start': None, 'stop': None}
+Requestscms.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
+Requestscms.stop = datetime.datetime.now() #time relative to now
 
 
-def generateRequestsTree(fromminsago, tominsago, reqmodel):
+def generateRequestsTree(start, stop, reqmodel):
     def addRequestToTree(tree, requestdata):
         name = requestdata.filename
         pos = name.find('/')
@@ -591,7 +592,11 @@ def generateRequestsTree(fromminsago, tominsago, reqmodel):
     model_class.generatedtree = BasicTree()        
     tree = model_class.generatedtree
 #    requestarray = list(Requestscms.objects.filter(timestamp__range=(fromtime, totime), filename__isnull=False))
-    requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN sysdate - " + str(fromminsago) + "/1140 and sysdate - " + str(tominsago)+"/1140"]))
+    fromstring = DateOption.valueToString(DateOption("dummy","object"), start)
+    tostring = DateOption.valueToString(DateOption("dummy","object"), stop)
+#    test = model_class.objects.filter(filename__isnull=False).extra(where=["tmestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH:MI:SS')"])
+    requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH24:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH24:MI:SS')"]))
+#    requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN sysdate - " + str(fromminsago) + "/1140 and sysdate - " + str(tominsago)+"/1140"]))
     print "Generating Tree of Requests"
     for dataset in requestarray:
         addRequestToTree(tree, dataset)
@@ -694,95 +699,95 @@ def getModelsNotToCache():
 
     
 #class Ydirs(models.Model):
-#    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
-#    parent = models.DecimalField(max_digits=0, decimal_places=-127)
+#    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
+#    parent = models.DecimalField(max_digits=127, decimal_places=0)
 #    name = models.CharField(max_length=255, blank=True)
 #    depth = models.IntegerField(null=True, blank=True)
 #    fullname = models.CharField(max_length=2048, blank=True)
-#    totalsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sizeontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    dataontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetomigrate = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    opttimetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    totalsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sizeontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    dataontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetomigrate = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timelostintapemarks = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    opttimetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'ydirs'
 #
 #class Mdirs(models.Model):
-#    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
-#    parent = models.DecimalField(max_digits=0, decimal_places=-127)
+#    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
+#    parent = models.DecimalField(max_digits=127, decimal_places=0)
 #    name = models.CharField(max_length=255, blank=True)
 #    depth = models.IntegerField(null=True, blank=True)
 #    fullname = models.CharField(max_length=2048, blank=True)
-#    totalsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sizeontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    dataontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetomigrate = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    opttimetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    totalsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sizeontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    dataontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetomigrate = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timelostintapemarks = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    opttimetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'mdirs'
 #
 #class Wdirs(models.Model):
-#    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
-#    parent = models.DecimalField(max_digits=0, decimal_places=-127)
+#    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
+#    parent = models.DecimalField(max_digits=127, decimal_places=0)
 #    name = models.CharField(max_length=255, blank=True)
 #    depth = models.IntegerField(null=True, blank=True)
 #    fullname = models.CharField(max_length=2048, blank=True)
-#    totalsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sizeontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    dataontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfilelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetomigrate = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    timelostintapemarks = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    opttimetorecall = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    totalsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sizeontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    dataontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfilelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    oldestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    sigfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    newestfileontapelastmod = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetomigrate = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    timelostintapemarks = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    opttimetorecall = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'wdirs'
 #
 #class Tapehelp(models.Model):
-#    fileid = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    parent = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    fileid = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    parent = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    vid = models.CharField(max_length=6, blank=True)
-#    fsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    lastmodtime = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    fsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    lastmodtime = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'tapehelp'
 #
@@ -791,16 +796,16 @@ def getModelsNotToCache():
 #    name = models.CharField(unique=True, max_length=15, blank=True)
 #    owner_uid = models.IntegerField(null=True, blank=True)
 #    gid = models.IntegerField(null=True, blank=True)
-#    min_filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    max_filesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    min_filesize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    max_filesize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    flags = models.IntegerField(null=True, blank=True)
 #    maxdrives = models.IntegerField(null=True, blank=True)
-#    max_segsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    migr_time_interval = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    mintime_beforemigr = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    max_segsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    migr_time_interval = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    mintime_beforemigr = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    nbcopies = models.IntegerField(null=True, blank=True)
-#    nbdirs_using_class = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    retenp_on_disk = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbdirs_using_class = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    retenp_on_disk = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'cns_class_metadata'
 #
@@ -812,7 +817,7 @@ def getModelsNotToCache():
 #        db_table = u'cns_tp_pool'
 #
 #class CnsUserMetadata(models.Model):
-#    u_fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
+#    u_fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
 #    comments = models.CharField(max_length=255, blank=True)
 #    class Meta:
 #        db_table = u'cns_user_metadata'
@@ -825,8 +830,8 @@ def getModelsNotToCache():
 #
 #class StatusValues(models.Model):
 #    status_string = models.CharField(max_length=100, blank=True)
-#    status_number = models.DecimalField(unique=True, null=True, max_digits=0, decimal_places=-127, blank=True)
-#    stat = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    status_number = models.DecimalField(unique=True, null=True, max_digits=127, decimal_places=0, blank=True)
+#    stat = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'status_values'
 #
@@ -836,13 +841,13 @@ def getModelsNotToCache():
 #    density = models.CharField(max_length=8)
 #    pool = models.CharField(max_length=20)
 #    library = models.CharFitoo bigeld(max_length=20)
-#    capacity = models.DecimalField(max_digits=0, decimal_places=-127)
+#    capacity = models.DecimalField(max_digits=127, decimal_places=0)
 #    status = models.IntegerField(null=True, blank=True)
 #    used = models.DecimalField(null=True, max_digits=8, decimal_places=3, blank=True)
 #    free_space = models.DecimalField(null=True, max_digits=8, decimal_places=3, blank=True)
 #    effective_free_space = models.DecimalField(null=True, max_digits=8, decimal_places=3, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    noseg = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    noseg = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'tape_pool'
 #
@@ -852,7 +857,7 @@ def getModelsNotToCache():
 #    density = models.CharField(max_length=8)
 #    pool = models.CharField(max_length=20)
 #    library = models.CharField(max_length=20)
-#    capacity = models.DecimalField(max_digits=0, decimal_places=-127)
+#    capacity = models.DecimalField(max_digits=127, decimal_places=0)
 #    status = models.IntegerField(null=True, blank=True)
 #    used = models.DecimalField(null=True, max_digits=8, decimal_places=3, blank=True)
 #    free_space = models.DecimalField(null=True, max_digits=8, decimal_places=3, blank=True)
@@ -873,7 +878,7 @@ def getModelsNotToCache():
 #    md_model = models.CharField(max_length=6, primary_key=True)
 #    md_media_letter = models.CharField(max_length=1, primary_key=True)
 #    md_density = models.CharField(max_length=8, primary_key=True)
-#    native_capacity = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    native_capacity = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'vmgr_tape_denmap'
 #
@@ -896,8 +901,8 @@ def getModelsNotToCache():
 #    sn = models.CharField(max_length=24, blank=True)
 #    nbsides = models.IntegerField(null=True, blank=True)
 #    etime = models.IntegerField(null=True, blank=True)
-#    rcount = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    wcount = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    rcount = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    wcount = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    rhost = models.CharField(max_length=10, blank=True)
 #    whost = models.CharField(max_length=10, blank=True)
 #    rjid = models.IntegerField(null=True, blank=True)
@@ -909,8 +914,8 @@ def getModelsNotToCache():
 #
 #class VmgrTapeLibrary(models.Model):
 #    name = models.CharField(max_length=8, primary_key=True)
-#    capacity = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nb_free_slots = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    capacity = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nb_free_slots = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    status = models.IntegerField(null=True, blank=True)
 #    class Meta:
 #        db_table = u'vmgr_tape_library'
@@ -926,8 +931,8 @@ def getModelsNotToCache():
 #    name = models.CharField(max_length=15, primary_key=True)
 #    owner_uid = models.IntegerField(null=True, blank=True)
 #    gid = models.IntegerField(null=True, blank=True)
-#    tot_free_space = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    capacity = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    tot_free_space = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    capacity = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'vmgr_tape_pool'
 #
@@ -935,8 +940,8 @@ def getModelsNotToCache():
 #    name = models.CharField(max_length=15, blank=True)
 #    owner_uid = models.IntegerField(null=True, blank=True)
 #    gid = models.IntegerField(null=True, blank=True)
-#    tot_free_space = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    capacity = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    tot_free_space = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    capacity = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'vmgr_tape_pool_back'
 #
@@ -944,8 +949,8 @@ def getModelsNotToCache():
 #    vid = models.CharField(unique=True, max_length=6)
 #    poolname = models.CharField(max_length=15, blank=True)
 #    status = models.IntegerField(null=True, blank=True)
-#    estimated_free_space = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    estimated_free_space = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    side = models.IntegerField(primary_key=True)
 #    class Meta:
 #        db_table = u'vmgr_tape_side'
@@ -957,7 +962,7 @@ def getModelsNotToCache():
 #        db_table = u'vmgr_tape_tag'
 #
 #class CnsSymlinks(models.Model):
-#    fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
+#    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
 #    linkname = models.CharField(max_length=1023, blank=True)
 #    class Meta:
 #        db_table = u'cns_symlinks'
@@ -970,7 +975,7 @@ def getModelsNotToCache():
 #        db_table = u'schema_version'
 #
 #class Pbfilesncopiesbadck(models.Model):
-#    fileid = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    fileid = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'pbfilesncopiesbadck'
 #
@@ -986,7 +991,7 @@ def getModelsNotToCache():
 #    program = models.CharField(max_length=48)
 #    startdate = models.DateTimeField(null=True, blank=True)
 #    enddate = models.DateTimeField(null=True, blank=True)
-#    failurecount = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    failurecount = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    type = models.CharField(max_length=20, blank=True)
 #    state = models.CharField(max_length=20, blank=True)
 #    schemaversion = models.CharField(max_length=20)
@@ -996,7 +1001,7 @@ def getModelsNotToCache():
 #
 ##class PlanTable(models.Model):
 ##    statement_id = models.CharField(max_length=30, blank=True)
-##    plan_id = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+##    plan_id = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 ##    timestamp = models.DateField(null=True, blank=True)
 ##    remarks = models.CharField(max_length=4000, blank=True)
 ##    operation = models.CharField(max_length=30, blank=True)
@@ -1008,7 +1013,7 @@ def getModelsNotToCache():
 ##    object_instance = models.IntegerField(null=True, blank=True)
 ##    object_type = models.CharField(max_length=30, blank=True)
 ##    optimizer = models.CharField(max_length=255, blank=True)
-##    search_columns = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+##    search_columns = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 ##    id = models.IntegerField(null=True, blank=True)
 ##    parent_id = models.IntegerField(null=True, blank=True)
 ##    depth = models.IntegerField(null=True, blank=True)
@@ -1036,35 +1041,35 @@ def getModelsNotToCache():
 #
 #class Tapedata(models.Model):
 #    vid = models.CharField(max_length=6, blank=True)
-#    nbfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    datasize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfilesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    stddevfilesize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    minfilelastmodtime = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    avgfilelastmodtime = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    stddevfilelastmodtime = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    maxfilelastmodtime = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    datasize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfilesize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    stddevfilesize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    minfilelastmodtime = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    avgfilelastmodtime = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    stddevfilelastmodtime = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    maxfilelastmodtime = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'tapedata'
 #
 #class CnsSegMetadata(models.Model):
-#    s_fileid = models.DecimalField(unique=True, max_digits=0, decimal_places=-127)
+#    s_fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
 #    copyno = models.IntegerField(primary_key=True)
 #    fsec = models.IntegerField(primary_key=True)
-#    segsize = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    segsize = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    s_status = models.CharField(max_length=1, blank=True)
 #    vid = models.CharField(unique=True, max_length=6, blank=True)
 #    fseq = models.IntegerField(unique=True, null=True, blank=True)
 #    blockid = models.TextField(blank=True) # This field type is a guess.
-#    compression = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    compression = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    side = models.IntegerField(unique=True, null=True, blank=True)
 #    checksum_name = models.CharField(max_length=16, blank=True)
-#    checksum = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    checksum = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'cns_seg_metadata'
 #
 #class CnsFilesExistTmp(models.Model):
-#    tmpfileid = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    tmpfileid = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'cns_files_exist_tmp'
 #
@@ -1074,7 +1079,7 @@ def getModelsNotToCache():
 #    timespentintapemarks = models.CharField(max_length=2048, blank=True)
 #    tapemarkspart = models.CharField(max_length=2048, blank=True)
 #    avgfilesize = models.CharField(max_length=2048, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    totalsize = models.CharField(max_length=2048, blank=True)
 #    class Meta:
 #        db_table = u'worstmigtemptable'
@@ -1084,9 +1089,9 @@ def getModelsNotToCache():
 #    esttimetorecall = models.CharField(max_length=2048, blank=True)
 #    losttime = models.CharField(max_length=2048, blank=True)
 #    lostpart = models.CharField(max_length=2048, blank=True)
-#    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    avgfilesize = models.CharField(max_length=2048, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    totalsize = models.CharField(max_length=2048, blank=True)
 #    class Meta:
 #        db_table = u'worstrecalltemptable'
@@ -1094,8 +1099,8 @@ def getModelsNotToCache():
 #class Biggestontapetemptable(models.Model):
 #    fullname = models.CharField(max_length=2048, blank=True)
 #    sizeontape = models.CharField(max_length=2048, blank=True)
-#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
-#    nbtapes = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbfilecopiesontape = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
+#    nbtapes = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    timetomigrate = models.CharField(max_length=2048, blank=True)
 #    esttimetorecall = models.CharField(max_length=2048, blank=True)
 #    class Meta:
@@ -1104,7 +1109,7 @@ def getModelsNotToCache():
 #class Biggestondisktemptable(models.Model):
 #    fullname = models.CharField(max_length=2048, blank=True)
 #    sizeofdiskonlydata = models.CharField(max_length=2048, blank=True)
-#    nbdiskonlyfiles = models.DecimalField(null=True, max_digits=0, decimal_places=-127, blank=True)
+#    nbdiskonlyfiles = models.DecimalField(null=True, max_digits=127, decimal_places=0, blank=True)
 #    class Meta:
 #        db_table = u'biggestondisktemptable'
 
