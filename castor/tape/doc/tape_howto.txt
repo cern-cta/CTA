@@ -4016,3 +4016,30 @@ The source files of the CASTOR web-site are located in the following afs
 directory:
 
 /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/
+
+How to find the locks existing in the DB?
+=========================================
+
+-- Find locks in the DB, age, SQL.
+-- This relies on sql_prev_id, which might or might not point to the sql that took the lock
+select unique s.sid, s.program, s.process, l.type, l.id1, l.id2, l.ctime, l.block, do.object_name,  sq.SQL_TEXT
+  from v$session s
+ inner join v$lock l on  l.sid = s.sid 
+  left outer join v$sql sq on sq.sql_id = s.prev_sql_id
+  left outer join dba_objects do on do.object_id = l.id1 
+where s.SCHEMANAME = 'STAGER_DEV03'
+order by OBJECT_NAME;
+
+
+How to find the blocked - blocker relationships in the DB?
+==========================================================
+
+-- Find blocker, blocked and what they do or did.
+-- This relies on sql_prev_id, which might or might not point to the sql that took the lock
+select s.sid, s.process, s.program, s_sql.sql_text, blocker.sid "blocker sid", b_sql.sql_text "blocker prev sql"
+  from v$session s 
+  left outer join v$sql s_sql on s_sql.sql_id = s.sql_id
+  left outer join v$session blocker on blocker.sid = s.blocking_session
+  left outer join v$sql b_sql on b_sql.sql_id = blocker.prev_sql_id
+  where s.username = 'STAGER_DEV03' and s.blocking_session is not null;
+
