@@ -355,6 +355,10 @@ void process(castor::job::stagerjob::PluginContext &context,
   try {
     // First switch to stage:st privileges
     switchToCastorSuperuser(args);
+    // Set the STAGE_SVCCLASS environment variable, this overrides the value in
+    // castor.conf and provides support for multiple diskpools shared across the
+    // same svcclass.
+    setenv("STAGE_SVCCLASS", args->svcClass.c_str(), 1);
     // Get an instance of the job service
     castor::stager::IJobSvc* jobSvc = getJobSvc();
     // Get full path of the file we handle
