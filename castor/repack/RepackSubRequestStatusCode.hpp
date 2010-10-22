@@ -48,14 +48,17 @@ namespace castor {
       RSUBREQUEST_TOBEREMOVED = 6,
       RSUBREQUEST_TOBERESTARTED = 7,
       RSUBREQUEST_ARCHIVED = 8,
-      RSUBREQUEST_ONHOLD = 9
+      RSUBREQUEST_ONHOLD = 9,
+      RSUBREQUEST_ONHOLD_MAXTAPES = 10,
+      RSUBREQUEST_ONHOLD_MAXFILES = 11,
+      RSUBREQUEST_ONHOLD_MULTICOPY = 12
     }; /* end of enum RepackSubRequestStatusCode */
 
     /**
      * Names of the differents representations, used to display
      * correctly the RepackSubRequestStatusCode enum
      */
-    extern const char* RepackSubRequestStatusCodeStrings[10];
+    extern const char* RepackSubRequestStatusCodeStrings[13];
 
 #ifdef __cplusplus
   } /* end of namespace repack */

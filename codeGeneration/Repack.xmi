@@ -137,6 +137,9 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="KfVjmr3Yvbk2" initialValue="7" type="f58eLbH5Mhcg" name="RSUBREQUEST_TOBERESTARTED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="3DwBgt1yYUgI" initialValue="8" type="f58eLbH5Mhcg" name="RSUBREQUEST_ARCHIVED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="LjqEKaFxbV37" initialValue="9" type="f58eLbH5Mhcg" name="RSUBREQUEST_ONHOLD" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="murrayc30001" initialValue="10" type="f58eLbH5Mhcg" name="RSUBREQUEST_ONHOLD_MAXTAPES" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="murrayc30002" initialValue="11" type="f58eLbH5Mhcg" name="RSUBREQUEST_ONHOLD_MAXFILES" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="murrayc30003" initialValue="12" type="f58eLbH5Mhcg" name="RSUBREQUEST_ONHOLD_MULTICOPY" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="kSm5JL15Uto2" xmi.id="gMJxL8Osaxu2" isRoot="false" isAbstract="false" name="RepackAck" />

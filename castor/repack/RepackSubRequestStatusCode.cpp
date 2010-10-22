@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 // RepackSubRequestStatusCodeStrings
 //------------------------------------------------------------------------------
-const char* castor::repack::RepackSubRequestStatusCodeStrings[10] = {
+const char* castor::repack::RepackSubRequestStatusCodeStrings[13] = {
   "RSUBREQUEST_TOBECHECKED",
   "RSUBREQUEST_TOBESTAGED",
   "RSUBREQUEST_ONGOING",
@@ -42,6 +42,9 @@ const char* castor::repack::RepackSubRequestStatusCodeStrings[10] = {
   "RSUBREQUEST_TOBEREMOVED",
   "RSUBREQUEST_TOBERESTARTED",
   "RSUBREQUEST_ARCHIVED",
-  "RSUBREQUEST_ONHOLD"
+  "RSUBREQUEST_ONHOLD",
+  "RSUBREQUEST_ONHOLD_MAXTAPES",
+  "RSUBREQUEST_ONHOLD_MAXFILES",
+  "RSUBREQUEST_ONHOLD_MULTICOPY"
 };
 
