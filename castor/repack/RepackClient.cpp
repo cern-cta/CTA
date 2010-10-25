@@ -556,7 +556,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
     case GET_STATUS_ALL:
       if (resp == resps.begin()) {
 	  // tittle just at the begining
-	std::cout << "\n======================================================================================================================="
+	std::cout << "\n==============================================================================================================================="
 		    << std::endl;
 	std::cout <<std::setw(13)<< "CurrentTime  "<<
 	  std::setw(17)<<"SubmitTime  "<<
@@ -567,9 +567,9 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
-	  std::setw(12)<<"Status" <<std::endl;
+	  std::setw(20)<<"Status" <<std::endl;
 
-	std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
+	std::cout << "-------------------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
 
       printTapeDetail(sub);
@@ -577,7 +577,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 
     case GET_STATUS:
       if (resp == resps.begin()) {
-	std::cout << "\n=======================================================================================================================" << std::endl;
+	std::cout << "\n===============================================================================================================================" << std::endl;
 
 	std::cout <<std::setw(13)<< "CurrentTime  "<<
 	  std::setw(17)<<"SubmitTime  "<<
@@ -588,8 +588,8 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
-	  std::setw(12)<<"Status" <<std::endl;
-        std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
+	  std::setw(20)<<"Status" <<std::endl;
+        std::cout << "-------------------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
       printTapeDetail(sub);
       break;
@@ -643,6 +643,9 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[RSUBREQUEST_TOBERESTARTED] = "RESTART";
   statuslist[RSUBREQUEST_ARCHIVED] = "ARCHIVED";
   statuslist[RSUBREQUEST_ONHOLD] = "ONHOLD";
+  statuslist[RSUBREQUEST_ONHOLD_MAXTAPES] = "ONHOLD_MAXTAPES";
+  statuslist[RSUBREQUEST_ONHOLD_MAXFILES] = "ONHOLD_MAXFILES";
+  statuslist[RSUBREQUEST_ONHOLD_MULTICOPY] = "ONHOLD_MULTICOPY";
 
   u64tostru(tape->xsize(), buf, 0);
   printTime(&current_time);
@@ -658,12 +661,14 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
       std::setw(10) << std::right << " N/A" <<
       std::setw(10) << std::right << " N/A"  <<
       std::setw(10) << std::right << " N/A" <<
-      std::setw(12) << statuslist[tape->status()] <<
+      std::setw(20) << statuslist[tape->status()] <<
       std::endl;
 
     return;
   }
-  if (tape->status() == RSUBREQUEST_TOBESTAGED || tape->status() == RSUBREQUEST_ONHOLD ) {
+  if (tape->status() == RSUBREQUEST_TOBESTAGED || tape->status() == RSUBREQUEST_ONHOLD || 
+      tape->status() == RSUBREQUEST_ONHOLD_MAXTAPES || tape->status() == RSUBREQUEST_ONHOLD_MAXFILES || 
+      tape->status() == RSUBREQUEST_ONHOLD_MULTICOPY ) {
     // not sent to the stager  yet
 
     std::cout<<
@@ -674,7 +679,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A"  <<
       std::setw(10) << std::right << "N/A" <<
-      std::setw(12) << statuslist[tape->status()] <<
+      std::setw(20) << statuslist[tape->status()] <<
       std::endl;
 
     return;
@@ -688,7 +693,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
     std::setw(10) << std::right << tape->filesMigrating() <<
     std::setw(10) << std::right << tape->filesFailed() + tape->filesFailedSubmit()   <<
     std::setw(10) << std::right << tape->filesStaged() <<
-    std::setw(12) << statuslist[tape->status()] <<
+    std::setw(20) << statuslist[tape->status()] <<
   std::endl;
 }
 

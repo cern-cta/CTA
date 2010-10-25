@@ -172,7 +172,7 @@ BEGIN
  IF st = 6 THEN 
   	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
     --	 IF TOBECHECKED or TOBESTAGED or ONHOLD -> TOBECLEANED
-    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1, 9) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId; 
+    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1, 9, 10, 11, 12) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId; 
     		INSERT INTO listOfIds (id) VALUES (srId);  
     		
     --	 ONGOING -> TOBEREMOVED
@@ -285,30 +285,65 @@ CREATE OR REPLACE
 PROCEDURE resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
-newFiles NUMBER;
+newFiles     NUMBER;
+filesOnTape  NUMBER;
 BEGIN
-	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
+  SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
   IF filesongoing IS NULL THEN
    filesongoing:=0;
   END IF;
--- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-  FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP
-			UPDATE RepackSubRequest SET status=1 WHERE id=sr.id AND status=9
-			AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes
-			AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE
-				RepackSegment.RepackSubRequest=sr.id AND
-				RepackSegment.fileid IN (SELECT DISTINCT RepackSegment.fileid FROM RepackSegment
-			             WHERE RepackSegment.RepackSubrequest
-			             	IN (SELECT RepackSubRequest.id FROM RepackSubRequest WHERE RepackSubRequest.id<>sr.id AND RepackSubRequest.status NOT IN (4,5,8,9)
-			             	 )
-				)
-			) RETURNING files INTO newFiles; -- FINISHED ARCHIVED FAILED ONHOLD
-      IF newFiles IS NOT NULL THEN
-        filesOnGoing:=filesOnGoing+newFiles;
-        tapesOnGoing:=tapesOnGoing+1;
-      END IF;
+  -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape or repack limits has not been reached
+  FOR sr IN (
+            SELECT RepackSubRequest.id 
+              FROM RepackSubRequest,RepackRequest
+             WHERE RepackRequest.id=RepackSubrequest.repackrequest
+               AND RepackSubRequest.status IN (9,10,11,12) -- All ONHOLD statuses 
+          ORDER BY RepackRequest.creationTime 
+            ) LOOP
+    -- First of all check the maximum number of tapes limit for repacking
+    IF ( tapesOnGoing + 1 ) > maxTapes THEN
+      UPDATE RepackSubRequest  SET status = 10 WHERE id = sr.id; -- ONHOLD_MAXTAPES
       COMMIT;
-   END LOOP;
+      RETURN;  -- there is no need to follow in loop anymore as soon as the tapes limit is reached
+    END IF;
+    -- Next we check the number of files limit
+    SELECT RepackSubRequest.files  INTO filesOnTape  FROM RepackSubRequest WHERE id = sr.id; -- we assume that all files will be repacked
+    IF ( filesOnTape + filesOnGoing ) > maxFiles THEN
+      UPDATE RepackSubRequest SET status = 11 WHERE id = sr.id;	-- ONHOLD_MAXFILES    
+      GOTO ENDLOOP; -- we should check the next RepackSubRequest.id, maybe we have not so much files there. GOTO to the label in the end.
+    END IF;
+    -- Update RepackSubRequest if there is no ongoing repack for any of the files on the tape
+    UPDATE RepackSubRequest 
+       SET status=1 -- TOBESTAGED
+     WHERE id=sr.id
+       AND status IN (9, 10, 11, 12) -- ONHOLD, ONHOLD_MAXTAPES, ONHOLD_MAXFILES, ONHOLD_MULTICOPY
+       AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes -- to be sure and to not modify original query
+       AND NOT EXISTS (
+                      SELECT 'x' 
+                        FROM RepackSegment
+                       WHERE RepackSegment.RepackSubRequest=sr.id 
+                         AND RepackSegment.fileid IN (
+                                                     SELECT DISTINCT RepackSegment.fileid 
+                                                       FROM RepackSegment
+ 			                              WHERE RepackSegment.RepackSubrequest IN (
+                                                                                              SELECT RepackSubRequest.id 
+                                                                                                FROM RepackSubRequest
+                                                                                               WHERE RepackSubRequest.id<>sr.id
+                                                                                                 AND RepackSubRequest.status NOT IN (4,5,8,9,10,11,12)
+			             	                                                      )
+				                     )
+	              ) 
+    RETURNING files INTO newFiles; -- FINISHED ARCHIVED FAILED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
+    -- end of update, check the result
+    IF newFiles IS NOT NULL THEN
+      filesOnGoing:=filesOnGoing+newFiles;
+      tapesOnGoing:=tapesOnGoing+1;
+    ELSE
+      UPDATE RepackSubRequest SET status = 12 WHERE id = sr.id;  -- ONHOLD_MULTICOPY      
+    END IF;
+    <<ENDLOOP>>
+    COMMIT;
+  END LOOP;
 END;
 /
 
@@ -373,30 +408,67 @@ END;
 /* PL/SQL method implementing validateRepackSubRequest */
 
 CREATE OR REPLACE PROCEDURE  validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
-unused NUMBER;
+-- Validates and commits a repack subrequest after submition , i.e. should we process it or should we put it ONHOLD
+--
+-- @param srId      Subrequest id to validate.
+-- @param maxFiles  Repack MAXFILES limit from castor.conf
+-- @param MaxTapes  Repack MAXTAPES limit from castor.conf
+--
+-- @param ret       Return true if the validation is successful or false in other case.
+-- We must always commit here as soon as before this call we have inserted request to the Repack DB
+unused       NUMBER;
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
+filesOnTape  NUMBER;
 BEGIN
-SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
-IF filesongoing is NULL THEN
-  filesongoing:=0;
-END IF;
--- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-	UPDATE RepackSubRequest SET status=1 WHERE id=srId  
-		AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE 
-			RepackSegment.RepackSubRequest=srId AND 
-			RepackSegment.fileid IN (SELECT DISTINCT RepackSegment.fileid FROM RepackSegment
-			             WHERE RepackSegment.RepackSubrequest 
-			             	IN (SELECT RepackSubRequest.id FROM RepackSubRequest WHERE RepackSubRequest.id<>srId AND RepackSubRequest.status NOT IN(4,5,8,9) 
-			             	 )
-			) 
-		) AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD
-	ret:=1;
+  SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
+  IF filesongoing is NULL THEN
+    filesongoing:=0;
+  END IF;
+  -- First of all check the maximum number of tapes limit for repacking
+  IF ( tapesOnGoing + 1 ) > maxTapes THEN
+    ret := 0;
+    UPDATE RepackSubRequest SET status = 10 WHERE id = srId; -- ONHOLD_MAXTAPES
+    COMMIT;
+    RETURN; -- no need to check all others cases
+  END IF;
+  -- Next we check the number of files limit
+  SELECT RepackSubRequest.files INTO filesOnTape FROM RepackSubRequest WHERE id = srId; -- we assume that all files will be repacked
+  IF ( filesOnTape + filesOnGoing ) > maxFiles THEN
+    ret := 0;
+    UPDATE RepackSubRequest SET status = 11 WHERE id = srId; -- ONHOLD_MAXFILES
+    COMMIT;
+    RETURN;
+  END IF;  
 
-	IF unused  IS NULL THEN  
-         ret:=0;
-      	END IF;  	
-       COMMIT;
+  -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
+  UPDATE RepackSubRequest
+     SET status=1 -- TOBESTAGED
+   WHERE id=srId  
+     AND NOT EXISTS (
+                    SELECT 'x'
+                     FROM RepackSegment
+                    WHERE RepackSegment.RepackSubRequest=srId
+                      AND RepackSegment.fileid IN (
+                                                  SELECT DISTINCT RepackSegment.fileid
+                                                             FROM RepackSegment
+                    			                    WHERE RepackSegment.RepackSubrequest IN (
+                                                                                                    SELECT RepackSubRequest.id
+                                                                                                      FROM RepackSubRequest 
+                                                                                                     WHERE RepackSubRequest.id<>srId
+                                                                                                       AND RepackSubRequest.status NOT IN(4,5,8,9,10,11,12) 
+			             	                                                            )
+			                          ) 
+		   )
+    AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes 
+    RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
+    -- end of update here, check the result
+    ret:=1;
+
+  IF unused  IS NULL THEN  
+    ret := 0;
+  END IF;  	
+  COMMIT;
 EXCEPTION  WHEN NO_DATA_FOUND THEN
   ret := 0;
   COMMIT;
