@@ -26,6 +26,7 @@ from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
+from sites import settings
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0, primary_key=True)
@@ -520,7 +521,7 @@ Requestscms.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #tim
 Requestscms.stop = datetime.datetime.now() #time relative to now
 
 
-def generateRequestsTree(start, stop, reqmodel):
+def generateRequestsTree(start, stop, reqmodel, statusfilename):
     def addRequestToTree(tree, requestdata):
         name = requestdata.filename
         pos = name.find('/')
@@ -595,6 +596,7 @@ def generateRequestsTree(start, stop, reqmodel):
     nbsteps = int(math.ceil(((stop - start).seconds + (((stop - start).days)*24*60*60) )/float(secondsperreading)))
     print "Generating Tree of Requests"
     timemeasurement = datetime.datetime.now()
+    
     for i in range(nbsteps):
         if i != (nbsteps -1):
             fromstring = DateOption.valueToString(DateOption("dummy","object"), start + (i*datetime.timedelta(seconds = secondsperreading)) )
@@ -608,6 +610,16 @@ def generateRequestsTree(start, stop, reqmodel):
     
         for dataset in requestarray:
             addRequestToTree(tree, dataset)
+        try:
+            status = ((float(i+1)/float(nbsteps))*100.0)
+            statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+            statusfile = open(statusfilefullpath, 'w')
+            statusfile.truncate(0)
+            statusfile.write("%.0f"%status)
+            statusfile.close()
+        except:
+            statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+            if(statusfilename != ''): raise Warning("Status could not be written to" + statusfilefullpath)
     
     print "time: ", datetime.datetime.now() - timemeasurement
     print tree.getRoot().requestscount
@@ -654,7 +666,7 @@ def traverseToRequestInTree(name, reqmodel):
 
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
-def findObjectByIdReplacementSuffix(model, urlrest):
+def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
     if model in('Requestsatlas', 'Requestscms'):
         path = None
         if urlrest.rfind('/') == (len(urlrest)-1): 
@@ -664,7 +676,7 @@ def findObjectByIdReplacementSuffix(model, urlrest):
             
 #        profile.runctx('generateRequestsTree(60 , 0, model)', globals(), {})
         if (globals()[model].treeprops['start'] != globals()[model].start) or (globals()[model].treeprops['stop'] != globals()[model].stop):
-            generateRequestsTree(globals()[model].start , globals()[model].stop, model)
+            generateRequestsTree(globals()[model].start , globals()[model].stop, model, statusfilename)
             globals()[model].treeprops['start'] = globals()[model].start
             globals()[model].treeprops['stop'] = globals()[model].stop
             

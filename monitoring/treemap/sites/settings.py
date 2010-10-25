@@ -76,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
-CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%rgfgs$!edsw&dgk=|fj*6j!n\"x'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%r_dfde%*gfg$$!$!edsw&dgk=|fj*6j!n\"x'
 
 ROOT_URLCONF = 'sites.urls'
 
@@ -116,6 +116,9 @@ LOCAL_APACHE_DICT = "/var/www/html"
 
 #Where to save the generated images, files having the same file name will be overwritten
 REL_TREEMAP_DICT = "/imagesdev/treemaps"
+
+#Where to save the temporary status files
+REL_STATUS_DICT = "/statusfiles"
 
 #Where to find icons
 REL_ICON_DICT = "/imagesdev/icons"

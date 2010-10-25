@@ -11,6 +11,7 @@ from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.objecttree.Postprocessors import *
 import inspect
+from sites import settings
 
 class TreeBuilder(object):
     '''
@@ -26,11 +27,11 @@ class TreeBuilder(object):
         
         #imagine it would be possible to divide the root area in equally big squares
         #max_tree_leafes defines how many rectangles there are maximum allowed to divide that area
-        max_tree_leafes = 1500
+        self.max_tree_leafes = 1500
         
         #smallest accepted percentage of the area
         #if the node evaluates below that value the child will be considered as not worth going deeper
-        self.lowest_area_factor = 1.0/max_tree_leafes
+        self.lowest_area_factor = 1.0/self.max_tree_leafes
         
         #if the number of subitems is bigger than max_items_to_read_initial * the current area_factor
         #the child will be considered as not worth going deeper
@@ -39,7 +40,7 @@ class TreeBuilder(object):
         #to avoid recursions over thousands of child items
         self.max_items_for_recursion = 80
         
-    def generateObjectTree(self, rootobject):
+    def generateObjectTree(self, rootobject, statusfilename):
         tree = ObjectTree()
 		
         classname = rootobject.__class__.__name__
@@ -61,14 +62,14 @@ class TreeBuilder(object):
         
         tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, rootobjnode.getEvalValue())
         
-        self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0, rootisannex)
+        self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0, rootisannex, statusfilename, None)
         
         return tree
     
 #    count = 0
     chcount = 0
     
-    def addChildrenRecursion(self, tree, level, parent, area_factor, rootisannex):
+    def addChildrenRecursion(self, tree, level, parent, area_factor, rootisannex, statusfilename, nbrootchildren):
         max = float('inf')*(-1)
         min = float('inf')
 #        metainfo = {}
@@ -92,6 +93,7 @@ class TreeBuilder(object):
             return
         
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
+        if nbrootchildren is None: nbrootchildren= tree.getRoot().getObject().__class__.__dict__[countmethodname](tree.getRoot().getObject())
 
         if nbchildren <= 0 or (nbchildren > (self.max_items_to_read_initial * area_factor) and level > 0):
             return
@@ -106,6 +108,25 @@ class TreeBuilder(object):
             
             self.chcount = self.chcount + len(children)
             print level, self.chcount, parent.getObject()
+            
+            try:
+                #this will always overestimate
+                #self.max_tree_leafes doesn't apply to root
+                if(nbrootchildren > self.max_tree_leafes):
+                    max_items = self.max_tree_leafes + nbrootchildren
+                else:
+                    max_items = self.max_tree_leafes
+                    
+                status = ((float(self.chcount)/float(max_items))*100.0) #adding nbchildren because root will always be read
+                statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+                statusfile = open(statusfilefullpath, 'w')
+                statusfile.truncate(0)
+                statusfile.write("%.0f"%status)
+                statusfile.close()
+            except:
+                if(statusfilename != ''): 
+                    statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+                    raise Warning("Status could not be written to" + statusfilefullpath)
         
             evalsum = 0.0
             thechild = None
@@ -197,7 +218,7 @@ class TreeBuilder(object):
             if len(childnodes) < self.max_items_for_recursion:
                 for thechild in childnodes:
                     tree.traverseInto(thechild)
-                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate(), False )
+                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate(), False, statusfilename, nbrootchildren)
                     tree.traverseBack()
             
             #[:] to copy the content 

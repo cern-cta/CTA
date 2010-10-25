@@ -23,6 +23,7 @@ from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
+from django.core import serializers
 import re
 import sites.dirs.Presets
 import time
@@ -82,13 +83,23 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     Requestscms.start = optr.getOption('start')
     Requestscms.stop = optr.getOption('stop')
     
-    root = getRootObjectForTreemap(rootmodel, theid)
+    try:
+        if request.session['statusfile']['isvalid']:
+            statusfilename = request.session['statusfile']['name']
+            request.session['statusfile']['isvalid'] = False
+        else:
+            statusfilename = ''
+    except:
+        statusfilename = ''
+    
+    root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
+    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
     
     start = datetime.datetime.now()
     print 'start generating object tree for ' + root.__str__()
     tb = TreeBuilder(lr)
     
-    otree = tb.generateObjectTree(rootobject = root) 
+    otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename) 
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
@@ -116,7 +127,6 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
     
-    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
 
@@ -140,6 +150,9 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     del tree
     del otree
+    if statusfilename != '':
+        statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+        os.remove(statusfilefullpath)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     return response
@@ -192,13 +205,23 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     Requestscms.start = optr.getOption('start')
     Requestscms.stop = optr.getOption('stop')
     
-    root = getRootObjectForTreemap(model, urlrest)
+    try:
+        if request.session['statusfile']['isvalid']:
+            statusfilename = request.session['statusfile']['name']
+            request.session['statusfile']['isvalid'] = False
+        else:
+            statusfilename = ''
+    except:
+        statusfilename = ''
+    
+    root = getRootObjectForTreemap(model, urlrest, statusfilename)
+    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
     
     start = datetime.datetime.now()
     print 'start generating first object tree ' + root.__str__()
     tb = TreeBuilder(lr)
 
-    otree = tb.generateObjectTree(rootobject = root)    
+    otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)    
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     #---------------------------------------------
@@ -210,7 +233,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
         anx = anxnode.getObject()
         for i in range(depth):
             print 'start generating object subtree ' + anx.__str__()
-            otree = tb.generateObjectTree(anx)
+            otree = tb.generateObjectTree(anx, statusfilename = statusfilename)
             
             newanxnode = otree.getRootAnnex()
             
@@ -224,7 +247,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
             lr.appendRuleObject(cookielr.getRuleObject(i))  
         
         tb = TreeBuilder(lr)
-        otree = tb.generateObjectTree(anx) 
+        otree = tb.generateObjectTree(rootobject = anx, statusfilename = statusfilename) 
             
     else: #no Annex display needed
         
@@ -233,7 +256,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
             lr.appendRuleObject(cookielr.getRuleObject(i))  
             
         tb = TreeBuilder(lr)    
-        otree = tb.generateObjectTree(rootobject = root)     
+        otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)     
         
      
     start = datetime.datetime.now()
@@ -260,7 +283,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     start = datetime.datetime.now()
     print "drawing something"
     drawer = SquaredTreemapDrawer(tree)
-    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
 
@@ -282,10 +305,13 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     
     del tree
     del otree
+    if statusfilename != '':
+        statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+        os.remove(statusfilefullpath)
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = ''):
+def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
     if options is None: options = ''
     optrd = OptionsReader(options, presetid)
     
@@ -317,8 +343,10 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
             rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
+            # = (statusfilename, already)
+            request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
                 
-            return redirect(to = rediraddr, args = {'request':request, 'options':  optrd.getCorrectedOptions(presetid), 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request, 'options':  optrd.getCorrectedOptions(presetid), 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache})
         elif re.match(groupviewexpr, urlending):
             match = re.match(treeviewexpr, urlending)
             theid = match.group('theid')
@@ -335,9 +363,9 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             rediraddr = rediraddr[:pos]
             rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
             
-            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache })
+            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache})
     except:
-        return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache })
+        return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
     
     return Http404
 
@@ -345,6 +373,7 @@ def preset(request, options,  urlending):
     if options is None: options = ''
     nblevels = getDefaultNumberOfLevels()
     optr = None
+    statusfilename = ''
     
     if request.method == 'POST':
             
@@ -355,6 +384,11 @@ def preset(request, options,  urlending):
             presetname = str(posted['preset'])
         except KeyError:
             redir(request, options, urlending, False, 0)
+            
+        try:
+            statusfilename = str(posted['statusfilename'])
+        except KeyError:
+            statusfilename = ''
             
         if presetname not in sites.dirs.Presets.getPresetNames():
             redir(request, options, urlending, False, 0)
@@ -402,9 +436,14 @@ def preset(request, options,  urlending):
         raise Http404
     
     options = optr.getCorrectedOptions(preset.staticid)
-    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix)
+    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix, statusfilename)
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = '', metric = ''):
+def getProgessStatus(request, options,  urlending):
+    if options is None: options = ''
+#    data = data = serializers.serialize('xml', "50")  
+    return HttpResponse('50', mimetype='text/plain')
+
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = ''):
     print "preparing response"
     optionsstring = '{'+ options +'}'
     rootsuffix = optionsstring + str(presetid) + "_" + rootsuffix
@@ -433,9 +472,9 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         
         linksuffix = optionsstring + str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmlinfotext')
-        hash = node.getProperty('treenode').getObject().__hash__()
+        thehash = node.getProperty('treenode').getObject().__hash__()
         
-        mapparams[idx] = (x1,y1,x2,y2,hash,linksuffix,info)
+        mapparams[idx] = (x1,y1,x2,y2,thehash,linksuffix,info)
         
         textlines = 1
         oldpos, fpos = 0 ,0
@@ -477,7 +516,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             shifty = 50
 #        elif (y1 + shifty) > imageheight and shifty <= 20:
 #            shifty = 2*shifty   
-        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, hash, linksuffix)
+        tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, thehash, linksuffix)
         
     rt = vtree.getRoot().getProperty('treenode').getObject()
     parents = []
@@ -513,13 +552,18 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     preset = sites.dirs.Presets.getPresetByStaticId(presetid)
     for option in preset.optionsset:
         optionshtml.append(option.toHtml(options))
-    
+
+    statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + ".stat"
+    relstatuspath = settings.REL_STATUS_DICT + "/" + statusfilename
+        
     response = render_to_string('dirs/imagemap.html', \
-    {'nodes': nodes, 'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
+    {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 
-     'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml} , context_instance=None)
+     'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml, 'statusfilename' : statusfilename, \
+     "relstatuspath": relstatuspath} , context_instance=None)
     
+    #mapparams, tooltipshift
     totaltime = datetime.datetime.now() - time
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
     print "total time: ", totaltime
@@ -586,10 +630,10 @@ def getDefaultMetricsLinking():
 
     return mlinker
 
-def getRootObjectForTreemap(rootmodel, urlrest):
+def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
     try:
         #Directory you want to show its content
-        root = findObjectByIdReplacementSuffix(rootmodel, urlrest)
+        root = findObjectByIdReplacementSuffix(rootmodel, urlrest, statusfilename)
     except Dirs.DoesNotExist:
         raise Http404
         return render_to_response("Error") 
