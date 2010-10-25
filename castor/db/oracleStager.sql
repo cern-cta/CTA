@@ -168,14 +168,17 @@ BEGIN
   END IF;
   -- Look for recalls concerning files that are STAGED or CANBEMIGR
   -- on all filesystems scheduled to be checked.
-  FOR cf IN (SELECT UNIQUE d.castorfile, e.id
-               FROM DiskCopy d, DiskCopy e
-              WHERE d.castorfile = e.castorfile
-                AND d.fileSystem IN
+  FOR cf IN (SELECT /*+ USE_NL(E D)
+                     INDEX_RS_ASC(E I_DiskCopy_Status)
+                     INDEX_RS_ASC(D I_DiskCopy_CastorFile) */
+                    UNIQUE D.castorfile, E.id
+               FROM DiskCopy D, DiskCopy E
+              WHERE D.castorfile = E.castorfile
+                AND D.fileSystem IN
                   (SELECT /*+ CARDINALITY(fsidTable 5) */ *
                      FROM TABLE(fsIds) fsidTable)
-                AND d.status IN (0, 10)
-                AND e.status = 2) LOOP
+                AND D.status IN (0, 10)
+                AND E.status = 2) LOOP
     -- Cancel recall and restart subrequests
     cancelRecall(cf.castorfile, cf.id, 1); -- RESTART
   END LOOP;
