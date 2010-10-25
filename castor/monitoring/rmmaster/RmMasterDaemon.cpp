@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
        ("Collector",
         new castor::monitoring::rmmaster::CollectorThread
         (daemon.clusterStatus()), listenPort));
-    daemon.getThreadPool('C')->setNbThreads(3);
+    daemon.getThreadPool('C')->setNbThreads(6);
 
     // Heartbeat threadpool
     daemon.addThreadPool
