@@ -4,14 +4,14 @@ Created on May 19, 2010
 @author: kblaszcz
 '''
 
+from sites import settings
+from sites.tools.Inspections import getStatusFileFullPath
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
-from sites.treemap.objecttree.Postprocessors import SubstractMinPostProcessor
+from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
-from sites.treemap.objecttree.Postprocessors import *
 import inspect
-from sites import settings
 
 class TreeBuilder(object):
     '''
@@ -118,7 +118,7 @@ class TreeBuilder(object):
                     max_items = self.max_tree_leafes
                     
                 status = ((float(self.chcount)/float(max_items))*100.0) #adding nbchildren because root will always be read
-                statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+                statusfilefullpath = getStatusFileFullPath(statusfilename)
                 statusfile = open(statusfilefullpath, 'w')
                 statusfile.truncate(0)
                 statusfile.write("%.0f"%status)

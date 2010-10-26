@@ -387,6 +387,11 @@ def preset(request, options,  urlending):
             
         try:
             statusfilename = str(posted['statusfilename'])
+            statusfullpath = getStatusFileFullPath(statusfilename)
+            statusfile = open(statusfullpath, 'w')
+            statusfile.truncate(0)
+            statusfile.write("%.0f"%0)
+            statusfile.close()
         except KeyError:
             statusfilename = ''
             
@@ -554,7 +559,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         optionshtml.append(option.toHtml(options))
 
     statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + ".stat"
-    relstatuspath = settings.REL_STATUS_DICT + "/" + statusfilename
+    relstatuspath = settings.PUBLIC_APACHE_URL +  settings.REL_STATUS_DICT + "/" + statusfilename
         
     response = render_to_string('dirs/imagemap.html', \
     {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\

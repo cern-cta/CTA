@@ -612,7 +612,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             addRequestToTree(tree, dataset)
         try:
             status = ((float(i+1)/float(nbsteps))*100.0)
-            statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
+            statusfilefullpath = getStatusFileFullPath(statusfilename)
             statusfile = open(statusfilefullpath, 'w')
             statusfile.truncate(0)
             statusfile.write("%.0f"%status)
