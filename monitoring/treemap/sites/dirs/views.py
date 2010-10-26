@@ -443,6 +443,15 @@ def preset(request, options,  urlending):
     options = optr.getCorrectedOptions(preset.staticid)
     return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix, statusfilename)
 
+def triggerStatus(request, statusfilename):
+    request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
+    statusfullpath = getStatusFileFullPath(statusfilename)
+    statusfile = open(statusfullpath, 'w')
+    statusfile.truncate(0)
+    statusfile.write("%.0f"%0)
+    statusfile.close()
+    return HttpResponse('done', mimetype='text/plain')
+
 def getProgessStatus(request, options,  urlending):
     if options is None: options = ''
 #    data = data = serializers.serialize('xml', "50")  
@@ -460,7 +469,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
     print "PARENTID ", parentid
-    parentidstr = vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
+    parentidstr = optionsstring + str(presetid) + "_" + vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)

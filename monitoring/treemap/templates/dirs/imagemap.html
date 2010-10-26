@@ -117,6 +117,26 @@ function showStatus()
 	setInterval ( "writeStatusToDiv()", 1000 );
 }
 
+function linkClicked(e)
+{
+	//var IE = /*@cc_on!@*/false;
+	//if (!IE) 
+	//{
+	//	tg = e.target;
+	//}
+	//else 
+	//{
+	//	tg = e.srcElement;
+	//	//window.event.srcElement
+	//}
+
+	//if (HTMLSpanElement){tg = tg.title;}
+	
+	//calls a view which sets cookie values to write the status into a file
+	document.getElementById('hiddencallframe').innerHTML = "<iframe id='thecallframe' height = '20' width = '40' frameborder='0' src='/treemaps/triggerstatus_{{statusfilename}}'></iframe>"; 
+	showStatus();
+}
+
 function catcalc(cal) 
 {
 	var date = cal.date;
@@ -129,6 +149,11 @@ function catcalc(cal)
 function activateJsObjects()
 {		
 	document.getElementById("thesubtable").style.display = "inline";
+	links = document.getElementsByTagName("a");
+	for (var i=0;i<links.length;i++)
+	{
+		links[i].onclick = linkClicked;
+	}
 }
 
 function notImplementedWarning()
@@ -148,7 +173,7 @@ function notImplementedWarning()
     
     <tr>
       <td align="center" valign="middle">
-    	<a href="/treemaps/{{parentid}}"> <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a>
+    	<a href="/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a>
       </td>
     </tr>
     
@@ -166,7 +191,7 @@ function notImplementedWarning()
  			{% for x1, y1 ,x2 , y2, hash, theid, info in mapparams %}
 					<li>
 						<a class="cls{{hash}}" href="/treemaps/{{theid}}" title = "">
-							<span>
+							<span title = "/treemaps/{{theid}}">
 								{{ info|escapefilter }}
 							</span>
 						</a>
@@ -207,8 +232,11 @@ function notImplementedWarning()
 						<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
 						<input class="applybutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
 					</td></tr>
-					<tr><td></td><td class="livedatawarning">
-						<div id=statuscontainer> <p>[Status]</p></div>
+					<tr><td></td><td>
+						<div id="statuscontainer" style='background-color: blue; color: #0F0F7F'> <p>[Status in percent]</p></div>
+					</td></tr>
+					<tr style="display: none"><td></td><td>
+						<div id="hiddencallframe"></div>
 					</td></tr>
 					<tr><td></td><td class="livedatawarning">
 						<br></>The displayed data <br> is not live data. <br> Exceptions are: <br> -Requests Atlas <br> -Requests CMS
@@ -216,7 +244,7 @@ function notImplementedWarning()
 				</form>
 			</tr>
 			<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+						<br><br><br><br><br><br><br><br><br><br><br><br><br>
 						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
 			</td></tr>
 			</table>
@@ -267,13 +295,6 @@ function notImplementedWarning()
      }
     </style>
     
-    <style type="text/css">
-     .statusframe 
-     {
-		font-size: 14px;
-		color:#CFCFCF;
-     }
-    </style>
 <style type="text/css">
 					#map {
 						position:relative;

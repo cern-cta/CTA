@@ -28,5 +28,6 @@ urlpatterns = patterns('',
     (r'(|{(?P<options>.*)})(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
     (r'(|{(?P<options>.*)})(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
-
+    
+    (r'triggerstatus_(?P<statusfilename>.*)', 'dirs.views.triggerStatus'),
 )
