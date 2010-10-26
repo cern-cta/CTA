@@ -614,7 +614,12 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	std::cout<<std::endl;
       }
       break;
-
+    case GET_MULTICOPYINFO:
+      // TO BE DONE!!!!!!
+      break;
+    default:
+      // TO BE DONE!!!!!!
+      break;
     } //end switch
     resp++;
   } // end loop for each tape
