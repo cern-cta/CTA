@@ -154,6 +154,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="HA1ZYg7iHhwS" initialValue="7" type="f58eLbH5Mhcg" name="ARCHIVE_ALL" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="JyNmlidh3NIm" initialValue="8" type="f58eLbH5Mhcg" name="GET_NS_STATUS" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="JLNc3pQLyRsW" initialValue="9" type="f58eLbH5Mhcg" name="GET_ERROR" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="murrayc30004" initialValue="10" type="f58eLbH5Mhcg" name="GET_MULTICOPYINFO" />
            </UML:Classifier.feature>
           </UML:Class>
          </UML:Namespace.ownedElement>

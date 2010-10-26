@@ -97,6 +97,7 @@ void castor::io::StreamRepackCommandCodeCnv::createRep(castor::IAddress* address
   ad->stream() << obj->ARCHIVE_ALL();
   ad->stream() << obj->GET_NS_STATUS();
   ad->stream() << obj->GET_ERROR();
+  ad->stream() << obj->GET_MULTICOPYINFO();
 }
 
 //------------------------------------------------------------------------------
@@ -136,6 +137,9 @@ castor::IObject* castor::io::StreamRepackCommandCodeCnv::createObj(castor::IAddr
   int GET_ERROR;
   ad->stream() >> GET_ERROR;
   object->setGET_ERROR(GET_ERROR);
+  int GET_MULTICOPYINFO;
+  ad->stream() >> GET_MULTICOPYINFO;
+  object->setGET_MULTICOPYINFO(GET_MULTICOPYINFO);
   return object;
 }
 

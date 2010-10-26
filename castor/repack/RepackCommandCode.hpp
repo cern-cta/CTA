@@ -47,14 +47,15 @@ namespace castor {
       ARCHIVE = 6,
       ARCHIVE_ALL = 7,
       GET_NS_STATUS = 8,
-      GET_ERROR = 9
+      GET_ERROR = 9,
+      GET_MULTICOPYINFO = 10
     }; /* end of enum RepackCommandCode */
 
     /**
      * Names of the differents representations, used to display
      * correctly the RepackCommandCode enum
      */
-    extern const char* RepackCommandCodeStrings[10];
+    extern const char* RepackCommandCodeStrings[11];
 
 #ifdef __cplusplus
   } /* end of namespace repack */
