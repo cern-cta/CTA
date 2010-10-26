@@ -41,7 +41,8 @@ CREATE TABLE DrainingFileSystem
     */
    maxTransfers   NUMBER DEFAULT 50,
    totalFiles     NUMBER DEFAULT 0,
-   totalBytes     NUMBER DEFAULT 0)
+   totalBytes     NUMBER DEFAULT 0,
+   comments       VARCHAR2(50) DEFAULT 'N/A' CONSTRAINT NN_DrainingFs_Comments NOT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
 

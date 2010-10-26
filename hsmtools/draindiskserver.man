@@ -48,6 +48,10 @@ resulted of the draining process will have the GcType: 'Draining filesystem'.
 .TP
 .B --file-mask=[\fISTAGED|CANBEMIGR|ALL\fR]
 Mask used to decide which files need to be replicated. (Default: CANBEMIGR)
+.TP
+.B --comment=\fICOMMENT\fR
+Associate a comment with the draining process. The maximum length of the comment
+is restricted to 50 characters in length.
 
 .TP
 Query options (with \fB\-q\fR or \fB\-\-query\fR):

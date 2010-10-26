@@ -94,6 +94,7 @@ AS
                   2, 'DISABLED', 'UNKNOWN') FileSystemStatus,
          DFS.username Username,
          DFS.machine Machine,
+         DFS.comments Comments,
          getTimeString(ceil(DFS.creationTime)) Created,
          DFS.maxTransfers MaxTransfers,
          DFS.totalFiles TotalFiles,
@@ -302,15 +303,26 @@ PROCEDURE startDraining(inNodeName     IN VARCHAR,
                         inSvcClass     IN VARCHAR DEFAULT NULL,
                         inFileMask     IN NUMBER DEFAULT 1,
                         inAutoDelete   IN NUMBER DEFAULT 0,
-                        inMaxTransfers IN NUMBER DEFAULT 50)
+                        inMaxTransfers IN NUMBER DEFAULT 50,
+                        inComments     IN VARCHAR DEFAULT 'N/A')
 AS
   ret    NUMBER;
   fsIds  "numList";
   svcId  NUMBER;
   unused NUMBER;
   mntPnt VARCHAR2(2048);
+  maxCommentLen NUMBER;
 BEGIN
-  -- Check that the nodename and mountpoint input options are valid
+  -- Check that the comment is not too long.
+  SELECT char_length INTO maxCommentLen
+    FROM user_tab_columns
+   WHERE table_name = 'DRAININGFILESYSTEM'
+     AND column_name = 'COMMENTS';
+  IF length(inComments) > maxCommentLen THEN
+    raise_application_error
+      (-20020, 'Comment exceeds maximum length of '|| maxCommentLen ||' bytes');
+  END IF;
+  -- Check that the nodename and mountpoint input options are valid.
   SELECT FileSystem.id BULK COLLECT INTO fsIds
     FROM FileSystem, DiskServer
    WHERE FileSystem.diskServer = Diskserver.id
@@ -403,7 +415,7 @@ BEGIN
       -- drainManager job will later pick it up and start the draining process.
       INSERT INTO DrainingFileSystem
         (userName, machine, creationTime, fileSystem, svcClass, autoDelete,
-         fileMask, maxTransfers)
+         fileMask, maxTransfers, comments)
       VALUES
         (-- For the time being the draindiskserver command is distributed with
          -- the castor-dbtools package and uses the /etc/castor/ORASTAGERCONFIG
@@ -412,7 +424,8 @@ BEGIN
          -- or stage. This is not very interesting!!
          sys_context('USERENV', 'OS_USER'),
          sys_context('USERENV', 'HOST'),
-         getTime(), fsIds(i), svcId, inAutoDelete, inFileMask, inMaxTransfers);
+         getTime(), fsIds(i), svcId, inAutoDelete, inFileMask, inMaxTransfers,
+         inComments);
     END;
   END LOOP;
 END;
