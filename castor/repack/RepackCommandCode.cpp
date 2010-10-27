@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 // RepackCommandCodeStrings
 //------------------------------------------------------------------------------
-const char* castor::repack::RepackCommandCodeStrings[11] = {
+const char* castor::repack::RepackCommandCodeStrings[10] = {
   "DELETED VALUE",
   "REPACK",
   "RESTART",
@@ -42,7 +42,6 @@ const char* castor::repack::RepackCommandCodeStrings[11] = {
   "ARCHIVE",
   "ARCHIVE_ALL",
   "GET_NS_STATUS",
-  "GET_ERROR",
-  "GET_MULTICOPYINFO"
+  "GET_ERROR"
 };
 
