@@ -524,6 +524,14 @@ Requestscms.stop = datetime.datetime.now() #time relative to now
 def generateRequestsTree(start, stop, reqmodel, statusfilename):
     def addRequestToTree(tree, requestdata):
         name = requestdata.filename
+        
+        #filter double slashes
+        doubleslashpos = name.find("//")
+        while doubleslashpos != -1:
+            name = name[:doubleslashpos]+ name[(doubleslashpos+1):]
+            doubleslashpos = name.find("//")
+            
+            
         pos = name.find('/')
         assert (pos >=0)
         oldpos = 0

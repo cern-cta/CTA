@@ -67,6 +67,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         return treeView(request = request,rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache)
         
     if rootmodel in getModelsNotToCache(): refresh_cache = True
+    statusfilename = getStatusFileNameFromCookie(request)
     
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr, options =  optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -76,21 +77,13 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     cache_hit = False
     if (value is not None): cache_hit = True
     if cache_hit and not refresh_cache:
+        deleteStatusFile(statusfilename)
         return HttpResponse(value)
     
     Requestsatlas.start = optr.getOption('start')
     Requestsatlas.stop = optr.getOption('stop')
     Requestscms.start = optr.getOption('start')
     Requestscms.stop = optr.getOption('stop')
-    
-    try:
-        if request.session['statusfile']['isvalid']:
-            statusfilename = request.session['statusfile']['name']
-            request.session['statusfile']['isvalid'] = False
-        else:
-            statusfilename = ''
-    except:
-        statusfilename = ''
     
     root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
     filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
@@ -150,9 +143,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     del tree
     del otree
-    if statusfilename != '':
-        statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
-        os.remove(statusfilefullpath)
+    deleteStatusFile(statusfilename)
+        
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     return response
@@ -169,6 +161,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
         urlrest = theid[(len(model)+1):]
     
     if model in getModelsNotToCache(): refresh_cache = True
+    statusfilename = getStatusFileNameFromCookie(request)
     
     imagewidth = 800.0
     imageheight = 600.0
@@ -191,6 +184,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     cache_hit = False
     if (value is not None): cache_hit = True
     if cache_hit and not refresh_cache:
+        deleteStatusFile(statusfilename)
         return HttpResponse(value)
     
     #define LevelRules
@@ -305,9 +299,8 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     
     del tree
     del otree
-    if statusfilename != '':
-        statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
-        os.remove(statusfilefullpath)
+    deleteStatusFile(statusfilename)
+        
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
@@ -653,3 +646,23 @@ def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
         return render_to_response("Error") 
     
     return root
+
+def deleteStatusFile(statusfilename):
+    if statusfilename != '':
+        try:
+            statusfilefullpath = getStatusFileFullPath(statusfilename)
+            os.remove(statusfilefullpath)
+        except:
+            pass
+        
+def getStatusFileNameFromCookie(request):
+    statusfilename = ''
+    try:
+        if request.session['statusfile']['isvalid']:
+            statusfilename = request.session['statusfile']['name']
+            request.session['statusfile']['isvalid'] = False
+        else:
+            statusfilename = ''
+    except:
+        pass
+    return statusfilename
