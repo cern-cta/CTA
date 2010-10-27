@@ -10,9 +10,11 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
+from sites import settings
 from sites.dirs.DateOption import DateOption
 from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
+from sites.tools.StatusTools import generateStatusFile
 from sites.treemap.BasicTree import BasicTree
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -26,7 +28,6 @@ from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
-from sites import settings
 
 class Dirs(models.Model):
     fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0, primary_key=True)
@@ -618,16 +619,9 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
     
         for dataset in requestarray:
             addRequestToTree(tree, dataset)
-        try:
-            status = ((float(i+1)/float(nbsteps))*100.0)
-            statusfilefullpath = getStatusFileFullPath(statusfilename)
-            statusfile = open(statusfilefullpath, 'w')
-            statusfile.truncate(0)
-            statusfile.write("%.0f"%status)
-            statusfile.close()
-        except:
-            statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
-            if(statusfilename != ''): raise Warning("Status could not be written to" + statusfilefullpath)
+            
+        status = ((float(i+1)/float(nbsteps)))
+        generateStatusFile(statusfilename, status)
     
     print "time: ", datetime.datetime.now() - timemeasurement
     print tree.getRoot().requestscount

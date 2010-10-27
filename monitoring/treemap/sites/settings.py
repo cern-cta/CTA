@@ -123,6 +123,9 @@ REL_STATUS_DICT = "/statusfiles"
 #Where to find icons
 REL_ICON_DICT = "/imagesdev/icons"
 
+#Where to find graphics for the progress bar
+REL_PBARIMG_DICT = "/imagesdev/progressbar"
+
 #location of models
 MODELS_LOCATION = 'sites.dirs'
 

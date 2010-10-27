@@ -171,6 +171,3 @@ def getNaviName(classname):
 def getDefaultNumberOfLevels():
     return 8
 
-def getStatusFileFullPath(statusfilename):
-    return settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
-

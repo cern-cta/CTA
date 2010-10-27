@@ -5,7 +5,7 @@ Created on May 19, 2010
 '''
 
 from sites import settings
-from sites.tools.Inspections import getStatusFileFullPath
+from sites.tools.StatusTools import generateStatusFile
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
 from sites.treemap.objecttree.Postprocessors import *
@@ -109,25 +109,17 @@ class TreeBuilder(object):
             self.chcount = self.chcount + len(children)
             print level, self.chcount, parent.getObject()
             
-            try:
-                #this will always overestimate
-                #self.max_tree_leafes doesn't apply to root
-                if(nbrootchildren > self.max_tree_leafes):
-                    max_items = self.max_tree_leafes + nbrootchildren
-                else:
-                    max_items = self.max_tree_leafes
-                    
-                status = ((float(self.chcount)/float(max_items))*100.0) #adding nbchildren because root will always be read
-                statusfilefullpath = getStatusFileFullPath(statusfilename)
-                statusfile = open(statusfilefullpath, 'w')
-                statusfile.truncate(0)
-                statusfile.write("%.0f"%status)
-                statusfile.close()
-            except:
-                if(statusfilename != ''): 
-                    statusfilefullpath = settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
-                    raise Warning("Status could not be written to" + statusfilefullpath)
-        
+
+            #this will always overestimate
+            #self.max_tree_leafes doesn't apply to root
+            if(nbrootchildren > self.max_tree_leafes):
+                max_items = self.max_tree_leafes + nbrootchildren
+            else:
+                max_items = self.max_tree_leafes
+                
+            status = ((float(self.chcount)/float(max_items))) #adding nbchildren because root will always be read
+            generateStatusFile(statusfilename, status)
+
             evalsum = 0.0
             thechild = None
             

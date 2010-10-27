@@ -98,7 +98,7 @@ function updateStatus()
 function writeStatusToDiv()
 {
 	var IE = /*@cc_on!@*/false;
-	document.getElementById('statuscontainer').innerHTML = "<iframe id='statusframe' height = '20' width = '40' frameborder='0' src='{{relstatuspath}}'></iframe>"; 
+	document.getElementById('statuscontainer').innerHTML = "<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0' src='{{relstatuspath}}'></iframe>"; 
     var stframe = document.getElementById('statusframe');
     var status = 0;
     
@@ -233,7 +233,7 @@ function notImplementedWarning()
 						<input class="applybutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
 					</td></tr>
 					<tr><td></td><td>
-						<div id="statuscontainer" style='background-color: blue; color: #0F0F7F'> <p>[Status in percent]</p></div>
+						<div id="statuscontainer" style='background-color: #1F1F1F'> <p></p></div>
 					</td></tr>
 					<tr style="display: none"><td></td><td>
 						<div id="hiddencallframe"></div>

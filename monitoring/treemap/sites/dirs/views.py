@@ -27,6 +27,7 @@ from django.core import serializers
 import re
 import sites.dirs.Presets
 import time
+from sites.tools.StatusTools import *
 
 
 
@@ -68,6 +69,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
+    generateStatusFile(statusfilename, 0)
     
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr, options =  optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -380,12 +382,8 @@ def preset(request, options,  urlending):
             
         try:
             statusfilename = str(posted['statusfilename'])
-            statusfullpath = getStatusFileFullPath(statusfilename)
-            statusfile = open(statusfullpath, 'w')
-            statusfile.truncate(0)
-            statusfile.write("%.0f"%0)
-            statusfile.close()
-        except KeyError:
+            generateStatusFile(statusfilename, 0)
+        except:
             statusfilename = ''
             
         if presetname not in sites.dirs.Presets.getPresetNames():
@@ -438,11 +436,7 @@ def preset(request, options,  urlending):
 
 def triggerStatus(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
-    statusfullpath = getStatusFileFullPath(statusfilename)
-    statusfile = open(statusfullpath, 'w')
-    statusfile.truncate(0)
-    statusfile.write("%.0f"%0)
-    statusfile.close()
+    generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
 def getProgessStatus(request, options,  urlending):
@@ -560,7 +554,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     for option in preset.optionsset:
         optionshtml.append(option.toHtml(options))
 
-    statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + ".stat"
+    statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + "stat.html"
     relstatuspath = settings.PUBLIC_APACHE_URL +  settings.REL_STATUS_DICT + "/" + statusfilename
         
     response = render_to_string('dirs/imagemap.html', \
@@ -646,14 +640,6 @@ def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
         return render_to_response("Error") 
     
     return root
-
-def deleteStatusFile(statusfilename):
-    if statusfilename != '':
-        try:
-            statusfilefullpath = getStatusFileFullPath(statusfilename)
-            os.remove(statusfilefullpath)
-        except:
-            pass
         
 def getStatusFileNameFromCookie(request):
     statusfilename = ''
