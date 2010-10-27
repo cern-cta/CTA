@@ -279,74 +279,6 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing resurrectTapesOnHold */
-
-CREATE OR REPLACE
-PROCEDURE resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
-filesOnGoing INTEGER;
-tapesOnGoing INTEGER;
-newFiles     NUMBER;
-filesOnTape  NUMBER;
-BEGIN
-  SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
-  IF filesongoing IS NULL THEN
-   filesongoing:=0;
-  END IF;
-  -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape or repack limits has not been reached
-  FOR sr IN (
-            SELECT RepackSubRequest.id 
-              FROM RepackSubRequest,RepackRequest
-             WHERE RepackRequest.id=RepackSubrequest.repackrequest
-               AND RepackSubRequest.status IN (9,10,11,12) -- All ONHOLD statuses 
-          ORDER BY RepackRequest.creationTime 
-            ) LOOP
-    -- First of all check the maximum number of tapes limit for repacking
-    IF ( tapesOnGoing + 1 ) > maxTapes THEN
-      UPDATE RepackSubRequest  SET status = 10 WHERE id = sr.id; -- ONHOLD_MAXTAPES
-      COMMIT;
-      RETURN;  -- there is no need to follow in loop anymore as soon as the tapes limit is reached
-    END IF;
-    -- Next we check the number of files limit
-    SELECT RepackSubRequest.files  INTO filesOnTape  FROM RepackSubRequest WHERE id = sr.id; -- we assume that all files will be repacked
-    IF ( filesOnTape + filesOnGoing ) > maxFiles THEN
-      UPDATE RepackSubRequest SET status = 11 WHERE id = sr.id;	-- ONHOLD_MAXFILES    
-      GOTO ENDLOOP; -- we should check the next RepackSubRequest.id, maybe we have not so much files there. GOTO to the label in the end.
-    END IF;
-    -- Update RepackSubRequest if there is no ongoing repack for any of the files on the tape
-    UPDATE RepackSubRequest 
-       SET status=1 -- TOBESTAGED
-     WHERE id=sr.id
-       AND status IN (9, 10, 11, 12) -- ONHOLD, ONHOLD_MAXTAPES, ONHOLD_MAXFILES, ONHOLD_MULTICOPY
-       AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes -- to be sure and to not modify original query
-       AND NOT EXISTS (
-                      SELECT 'x' 
-                        FROM RepackSegment
-                       WHERE RepackSegment.RepackSubRequest=sr.id 
-                         AND RepackSegment.fileid IN (
-                                                     SELECT DISTINCT RepackSegment.fileid 
-                                                       FROM RepackSegment
- 			                              WHERE RepackSegment.RepackSubrequest IN (
-                                                                                              SELECT RepackSubRequest.id 
-                                                                                                FROM RepackSubRequest
-                                                                                               WHERE RepackSubRequest.id<>sr.id
-                                                                                                 AND RepackSubRequest.status NOT IN (4,5,8,9,10,11,12)
-			             	                                                      )
-				                     )
-	              ) 
-    RETURNING files INTO newFiles; -- FINISHED ARCHIVED FAILED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
-    -- end of update, check the result
-    IF newFiles IS NOT NULL THEN
-      filesOnGoing:=filesOnGoing+newFiles;
-      tapesOnGoing:=tapesOnGoing+1;
-    ELSE
-      UPDATE RepackSubRequest SET status = 12 WHERE id = sr.id;  -- ONHOLD_MULTICOPY      
-    END IF;
-    <<ENDLOOP>>
-    COMMIT;
-  END LOOP;
-END;
-/
-
 /* PL/SQL method implementing storeRequest */
 
 CREATE OR REPLACE PROCEDURE storeRequest
@@ -404,73 +336,236 @@ BEGIN
 END;
 /
 
-
-/* PL/SQL method implementing validateRepackSubRequest */
-
-CREATE OR REPLACE PROCEDURE  validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
--- Validates and commits a repack subrequest after submition , i.e. should we process it or should we put it ONHOLD
---
--- @param srId      Subrequest id to validate.
--- @param maxFiles  Repack MAXFILES limit from castor.conf
--- @param MaxTapes  Repack MAXTAPES limit from castor.conf
---
--- @param ret       Return true if the validation is successful or false in other case.
--- We must always commit here as soon as before this call we have inserted request to the Repack DB
-unused       NUMBER;
-filesOnGoing INTEGER;
-tapesOnGoing INTEGER;
-filesOnTape  NUMBER;
+CREATE OR REPLACE FUNCTION updateOnHoldSubRequestStatus(
+/**
+ * This procedure updates the status of the repack sub-request with the
+ * specified database ID and returns the new state.
+ *
+ * @param inMaxFiles     The maximum number of files repack should be processing
+ *                       at any single moment in time.
+ * @param inMaxTapes     The maximum number of tapes epack should be processing
+ *                       at any single moment in time.
+ * @param inFilesOnGoing The total number of files currently being processed by
+ *                       repack.
+ * @param inTapesOnGoing The total number of tape currently being processed by
+ *                       repack.
+ * @param inSubRequest   The repack sub-request whose status should be updated.
+ * @return               The new status of the repack sub-request.
+ */
+  inMaxFiles        INTEGER,
+  inMaxTapes        INTEGER,
+  inFilesOnGoing    INTEGER,
+  inTapesOnGoing    INTEGER,
+  inSubRequest      RepackSubRequest%ROWTYPE)
+RETURN INTEGER AS
+  varNewStatus INTEGER := NULL;
+  varTmpStatus INTEGER := NULL;
 BEGIN
-  SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
-  IF filesongoing is NULL THEN
-    filesongoing:=0;
-  END IF;
-  -- First of all check the maximum number of tapes limit for repacking
-  IF ( tapesOnGoing + 1 ) > maxTapes THEN
-    ret := 0;
-    UPDATE RepackSubRequest SET status = 10 WHERE id = srId; -- ONHOLD_MAXTAPES
-    COMMIT;
-    RETURN; -- no need to check all others cases
-  END IF;
-  -- Next we check the number of files limit
-  SELECT RepackSubRequest.files INTO filesOnTape FROM RepackSubRequest WHERE id = srId; -- we assume that all files will be repacked
-  IF ( filesOnTape + filesOnGoing ) > maxFiles THEN
-    ret := 0;
-    UPDATE RepackSubRequest SET status = 11 WHERE id = srId; -- ONHOLD_MAXFILES
-    COMMIT;
-    RETURN;
-  END IF;  
+  -- By default assume no state change
+  varNewStatus := inSubRequest.status;
 
-  -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-  UPDATE RepackSubRequest
-     SET status=1 -- TOBESTAGED
-   WHERE id=srId  
-     AND NOT EXISTS (
-                    SELECT 'x'
-                     FROM RepackSegment
-                    WHERE RepackSegment.RepackSubRequest=srId
-                      AND RepackSegment.fileid IN (
-                                                  SELECT DISTINCT RepackSegment.fileid
-                                                             FROM RepackSegment
-                    			                    WHERE RepackSegment.RepackSubrequest IN (
-                                                                                                    SELECT RepackSubRequest.id
-                                                                                                      FROM RepackSubRequest 
-                                                                                                     WHERE RepackSubRequest.id<>srId
-                                                                                                       AND RepackSubRequest.status NOT IN(4,5,8,9,10,11,12) 
-			             	                                                            )
-			                          ) 
-		   )
-    AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes 
-    RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
-    -- end of update here, check the result
-    ret:=1;
+  -- The precedence of the on-hold statuses is ONHOLD_MAXTAPES,
+  -- ONHOLD_MAXFILES and then ONHOLD_MULTICOPY where ONHOLD_MAXTAPES has the
+  -- highest precedence.
 
-  IF unused  IS NULL THEN  
-    ret := 0;
-  END IF;  	
-  COMMIT;
-EXCEPTION  WHEN NO_DATA_FOUND THEN
-  ret := 0;
-  COMMIT;
-END;
+  -- Determine whether status should be changed to ONHOLD_MAXTAPES,
+  -- ONHOLD_MAXFILES or neither.
+  IF inTapesOnGoing + 1 > inMaxTapes THEN
+    varTmpStatus := 10; -- ONHOLD_MAXTAPES
+  ELSIF inFilesOnGoing + inSubRequest.files > inMaxFiles THEN
+    varTmpStatus := 11; -- ONHOLD_MAXFILES
+  ELSE
+    varTmpStatus := NULL;
+  END IF;
+
+  -- Update the status if it should be changed to either ONHOLD_MAXTAPES or
+  -- ONHOLD_MAXFILES
+  IF varTmpStatus is not NULL THEN
+    -- Update the status checking the orginal is still on-hold due to possible
+    -- multi-threaded access
+    UPDATE RepackSubRequest
+       SET RepackSubRequest.status = varTmpStatus
+     WHERE RepackSubRequest.status IN (9, 10, 11, 12) -- All ONHOLD statuses
+       AND RepackSubRequest.id = inSubRequest.id
+    RETURNING RepackSubRequest.status INTO varNewStatus;
+  ELSE
+    -- Try to change the status to TOBESTAGED and get the number of additional
+    -- new files that will be processed by repack as a result.
+    --
+    -- This state change may fail due to two reasons.  Firstly the tape may
+    -- contain files that have copies that are currently being processed by
+    -- repack.  Secondly the sub-request may have been modified by another
+    -- thread.
+    UPDATE RepackSubRequest 
+      SET RepackSubRequest.status = 1 -- TOBESTAGED
+    WHERE RepackSubRequest.id = inSubRequest.id
+      AND RepackSubRequest.status IN (9, 10, 11, 12) -- On-hold statuses
+      AND inFilesOnGoing + RepackSubRequest.files <= inMaxFiles
+      AND inTapesOnGoing + 1 <= inMaxTapes
+      AND NOT EXISTS (
+            SELECT 'x' 
+              FROM RepackSegment
+             WHERE RepackSegment.RepackSubRequest = inSubRequest.id 
+               AND RepackSegment.fileId IN (
+                     SELECT DISTINCT RepackSegment.fileid 
+                       FROM RepackSegment
+                      WHERE RepackSegment.RepackSubrequest IN (
+                              SELECT RepackSubRequest.id 
+                                FROM RepackSubRequest
+                               WHERE RepackSubRequest.id != inSubRequest.id
+                                 AND RepackSubRequest.status NOT IN (4,5,8,9,10,11,12)))) -- FINISHED FAILED ARCHIVED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
+    RETURNING RepackSubRequest.status
+         INTO varNewStatus;
+
+    -- If we failed to change the status to TOBESTAGED then try to change it to
+    -- ONHOLD_MULTICOPY which may fail if the sub-request has been modified by
+    -- another thread.
+    IF SQL%NOTFOUND THEN
+      UPDATE RepackSubRequest
+         SET RepackSubRequest.status = 12 -- ONHOLD_MULTICOPY
+       WHERE id = inSubRequest.id
+         AND RepackSubRequest.status IN (9, 10, 11, 12) -- On-hold statuses
+         AND EXISTS (
+            SELECT 'x'
+              FROM RepackSegment
+             WHERE RepackSegment.RepackSubRequest = inSubRequest.id
+               AND RepackSegment.fileId IN (
+                     SELECT DISTINCT RepackSegment.fileid
+                       FROM RepackSegment
+                      WHERE RepackSegment.RepackSubrequest IN (
+                              SELECT RepackSubRequest.id
+                                FROM RepackSubRequest
+                               WHERE RepackSubRequest.id != inSubRequest.id
+                                 AND RepackSubRequest.status NOT IN (4,5,8,9,10,11,12)))) -- FINISHED FAILED ARCHIVED ONHOLD ONHOLD_MAXTAPES ONHOLD_MAXFILES ONHOLD_MULTICOPY
+      RETURNING RepackSubRequest.status INTO varNewStatus;
+    END IF;
+
+  END IF;
+
+  RETURN varNewStatus;
+
+END updateOnHoldSubRequestStatus;
 /
+
+
+CREATE OR REPLACE PROCEDURE resurrectTapesOnHold(
+/**
+ * This procedure updates the status of all the subrequests (tapes) currently
+ * on-hold.  Some sub-requests will remain on-hold, maybe changing the reason
+ * they are on-hold (max tapes, max files or multi-copy).  Some tapes may be
+ * updated to status TOBESTAGED.
+ *
+ * @param inMaxFiles The maximum number of files repack should be processing at
+ *                   any single moment in time.
+ * @param inMaxTapes The maximum number of tapes epack should be processing at
+ *                   any single moment in time.
+ */
+  inMaxFiles IN INTEGER,
+  inMaxTapes IN INTEGER)
+AS
+  varFilesOnGoing INTEGER := 0;
+  varTapesOnGoing INTEGER := 0;
+  varNewStatus    NUMBER  := 0;
+BEGIN
+  -- Determine the total number of tapes and files currently being processed
+  -- by repack
+  SELECT COUNT(vid),
+         NVL(SUM(filesStaging) + SUM(filesMigrating), 0)
+    INTO varTapesOnGoing, varFilesOnGoing
+    FROM RepackSubrequest
+   WHERE status IN (
+           1,  -- TOBESTAGED
+           2); -- ONGOING
+
+  -- For each on-hold sub-request order by creation time
+  FOR curSubRequest IN (
+    SELECT RepackSubRequest.*
+      FROM RepackSubRequest
+     INNER JOIN RepackRequest
+        ON (RepackSubRequest.repackRequest = RepackRequest.id)
+     WHERE RepackSubRequest.status IN (9, 10, 11, 12) -- All ONHOLD statuses 
+     ORDER BY RepackRequest.creationTime)
+  LOOP
+
+    varNewStatus := updateOnHoldSubRequestStatus(
+      inMaxFiles,
+      inMaxTapes,
+      varFilesOnGoing,
+      varTapesOnGoing,
+      curSubRequest);
+
+    IF varNewStatus = 1 /* TOBESTAGED */ THEN
+      varFilesOnGoing := varFilesOnGoing + curSubRequest.files;
+      varTapesOnGoing := varTapesOnGoing + 1;
+    END IF;
+
+    COMMIT;
+  END LOOP;
+END resurrectTapesOnHold;
+/
+
+
+CREATE OR REPLACE PROCEDURE validateRepackSubRequest(
+/**
+* Validates and commits a repack subrequest after submition , i.e. should we
+* process it or should we put it ONHOLD
+*
+* Please not this procedure will intentionally commit the insert of a previous
+* function.  Probably a very bad design.
+*
+* @param inSubRequestId Subrequest id to validate.
+* @param inMaxFiles     Repack MAXFILES limit from castor.conf
+* @param inMaxTapes     Repack MAXTAPES limit from castor.conf
+*
+* @param outRet         Returns true if the validation is successful or false
+*                       in other case.
+*/
+ inSubRequestId IN NUMBER,
+ inMaxFiles     IN INTEGER,
+ inMaxTapes     IN INTEGER,
+ outRet        OUT INT)
+AS
+ varFilesOnGoing INTEGER := 0;
+ varTapesOnGoing INTEGER := 0;
+ varSubRequest   RepackSubRequest%ROWTYPE;
+ varNewStatus    INTEGER := NULL;
+BEGIN
+  outRet := 0; -- Assume the request is invalid until proven otherwise
+
+  BEGIN
+    -- Determine the total number of tapes and files currently being processed
+    -- by repack
+    SELECT COUNT(vid),
+           NVL(SUM(filesStaging) + SUM(filesMigrating), 0)
+      INTO varTapesOnGoing, varFilesOnGoing
+      FROM RepackSubrequest
+     WHERE status IN (
+             1,  -- TOBESTAGED
+             2); -- ONGOING
+
+    -- Retrieve the subrequest information for the update procedure
+    SELECT RepackSubRequest.*
+      INTO varSubRequest
+      FROM RepackSubRequest
+     WHERE id = inSubRequestId;
+
+    varNewStatus := updateOnHoldSubRequestStatus(
+      inMaxFiles,
+      inMaxTapes,
+      varFilesOnGoing,
+      varTapesOnGoing,
+      varSubRequest);
+
+  EXCEPTION  WHEN NO_DATA_FOUND THEN
+    NULL; -- Do nothing
+  END;
+
+  COMMIT;
+
+  IF varNewStatus = 1 /* TOBESTAGED */ THEN
+    outRet := 1;
+  END IF;
+
+END validateRepackSubRequest;
+/
+
