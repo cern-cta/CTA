@@ -21,6 +21,11 @@ def div(value, arg):
     return int(value) / int(arg)
 div.is_safe = False
 
+def modulo(arg, value):
+    "arg modulo value"
+    return int(arg) % int(value)
+mult.is_safe = False
+
 #def notzero(value, arg):
 #    "Divides the value by the arg"
 #    return int(value) / int(arg)
@@ -54,6 +59,7 @@ escapefilter.needs_autoescape = True
 register.filter('mult', mult)
 register.filter('sub', sub)
 register.filter('div', div)
+register.filter('modulo', modulo)
 register.filter('escapefilter', escapefilter)
 register.filter('equals', equals)
 register.filter('contains', contains)

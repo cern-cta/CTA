@@ -555,14 +555,14 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         optionshtml.append(option.toHtml(options))
 
     statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + "stat.html"
-    relstatuspath = settings.PUBLIC_APACHE_URL +  settings.REL_STATUS_DICT + "/" + statusfilename
+    relstatuspath = settings.REL_STATUS_DICT + "/" + statusfilename
         
     response = render_to_string('dirs/imagemap.html', \
     {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
-     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir, \
+     'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': treemapdir, 'icondir': icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 
      'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml, 'statusfilename' : statusfilename, \
-     "relstatuspath": relstatuspath} , context_instance=None)
+     'relstatuspath': relstatuspath, 'apacheserver': apacheserver, 'djangoresponseurl': settings.DJANGORESPONSE_URL} , context_instance=None)
     
     #mapparams, tooltipshift
     totaltime = datetime.datetime.now() - time

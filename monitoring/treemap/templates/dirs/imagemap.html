@@ -6,10 +6,16 @@
 <head>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="PRIVATE">
 <title>TreeMaps</title>
-<link rel="stylesheet" type="text/css" media="all" href="http://pcitdmssd/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
-<script type="text/javascript" src="http://pcitdmssd/js/calendar/calendar.js"></script>
-<script type="text/javascript" src="http://pcitdmssd/js/calendar/lang/calendar-en.js"></script>
-<script type="text/javascript" src="http://pcitdmssd/js/calendar/calendar-setup.js"></script>
+
+<link rel="stylesheet" type="text/css" media="all" href="{{apacheserver}}/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
+<script type="text/javascript" src="{{apacheserver}}/js/calendar/calendar.js"></script>
+<script type="text/javascript" src="{{apacheserver}}/js/calendar/lang/calendar-en.js"></script>
+<script type="text/javascript" src="{{apacheserver}}/js/calendar/calendar-setup.js"></script>
+
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/lightgreytext.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/blackredbutton.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/presetdropdown.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/datefield.css"/>
 
 <script LANGUAGE="JavaScript">
 //define global menu values
@@ -98,7 +104,7 @@ function updateStatus()
 function writeStatusToDiv()
 {
 	var IE = /*@cc_on!@*/false;
-	document.getElementById('statuscontainer').innerHTML = "<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0' src='{{relstatuspath}}'></iframe>"; 
+	document.getElementById('statuscontainer').innerHTML = "<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0' src='{{apacheserver}}/{{relstatuspath}}'></iframe>"; 
     var stframe = document.getElementById('statusframe');
     var status = 0;
     
@@ -133,7 +139,7 @@ function linkClicked(e)
 	//if (HTMLSpanElement){tg = tg.title;}
 	
 	//calls a view which sets cookie values to write the status into a file
-	document.getElementById('hiddencallframe').innerHTML = "<iframe id='thecallframe' height = '20' width = '40' frameborder='0' src='/treemaps/triggerstatus_{{statusfilename}}'></iframe>"; 
+	document.getElementById('hiddencallframe').innerHTML = "<iframe style='display:inline; float:left; overflow:hidden' id='thecallframe' height = '20' width = '40' frameborder='0' src='{{djangoresponseurl}}/treemaps/triggerstatus_{{statusfilename}}'></iframe>"; 
 	showStatus();
 }
 
@@ -170,15 +176,48 @@ function notImplementedWarning()
 </head>
 <body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#9F9F9F" onload="initMenu()">
     <table style="width: auto; height: auto;" align="center" cellspacing="0"  cellpadding="0">
-    
     <tr>
-      <td align="center" valign="middle">
-    	<a href="/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{icondir}}/arrow.png"></a>
-      </td>
+		<!-- The options -->
+		<td align="left" valign="top" width={{imagewidth}}>	
+		
+		<!--  make the menu visible if JavaScript is activated -->
+		<!-- The dropdown menus are hold in a table to have them ordered right -->
+			<table id = "thesubtable" name = "optionsmenu" style="display:none;" cellspacing="0"  cellpadding="0">
+				<form action="{{djangoresponseurl}}/treemaps/{{rootsuffix}}/preset/" method="post">
+					<tr>
+							<td class="lightgreytext">Presets:</td> 
+							
+							<td><select class="presetdropdown" name="preset" id="id_preset">
+								{% for presetname in presetnames %}
+									<option {% spaceless %}
+									{% for key, value in presetdefault.items %}
+										{% if key|equals:"presetname" and value|equals:presetname %}selected{% endif %}
+									{% endfor %}
+									{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
+								{% endfor %}
+							</select></td>
+							<td class="lightgreytext">
+								{% for aoption in optionshtml %}
+										{% if forloop.counter|modulo:2 %}<br>{% endif %}
+										{{aoption|escapefilter}}
+								{% endfor %}
+							</td>
+					</tr>
+					<tr>
+						<td>
+							<br>
+							<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
+							<input class="blackredbutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
+							<div id="statuscontainer" style='position:relative; top:-50px; left:100px; background-color:#1F1F1F; overflow:hidden'></div>
+						</td>
+					</tr>
+				</form>
+			</table>
+		</td>	
     </tr>
     
     <tr>
-      <td align="center" valign="middle">
+      <td align="right" valign="middle" style="font-size: 14px">
     	{% for key, value in presetdefault.items %}{% if key|equals:"presetname" %} {{value}} {% endif %}{% endfor %}
       </td>
     </tr>
@@ -190,65 +229,17 @@ function notImplementedWarning()
         	<ul id="map">
  			{% for x1, y1 ,x2 , y2, hash, theid, info in mapparams %}
 					<li>
-						<a class="cls{{hash}}" href="/treemaps/{{theid}}" title = "">
-							<span title = "/treemaps/{{theid}}">
+						<a class="cls{{hash}}" href="{{djangoresponseurl}}/treemaps/{{theid}}" title = "">
+							<span title = "{{djangoresponseurl}}/treemaps/{{theid}}">
 								{{ info|escapefilter }}
 							</span>
 						</a>
 					</li>
         	{% endfor %}
         	</ul>  
-	   <br>{% for dirname, flname, theid in navilink %}<a href="/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %}
+	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
+	   <br><br> <div style="font-size: 14px" >The displayed data is not live data. Exceptions are: Requests Atlas, Requests CMS</div>
 	</td>	
-	
-		<!-- The options -->
-		<td align="left" valign="top" height={{imageheight}}>	
-		
-		<!--  make the menu visible if JavaScript is activated -->
-		<!-- The dropdown menus are hold in a table to have them ordered right -->
-			<table id = "thesubtable" name = "optionsmenu" style="display:none;">
-			<tr>
-				<form action="/treemaps/{{rootsuffix}}/preset/" method="post">
-					<tr>
-					<td class="descriptiontext">Presets:</td> 
-					
-					<td><select class="dmenuwidth" name="preset" id="id_preset">
-						{% for presetname in presetnames %}
-							<option {% spaceless %}
-							{% for key, value in presetdefault.items %}
-								{% if key|equals:"presetname" and value|equals:presetname %}selected{% endif %}
-							{% endfor %}
-							{% endspaceless %} value="{{presetname}}">{{presetname}}</option>
-						{% endfor %}
-					</select></td></tr>
-					{% for aoption in optionshtml %}
-						<tr><td></td><td class="descriptiontext">
-							{{aoption|escapefilter}}
-						</td></tr>
-					{% endfor %}
-					
-					<tr><td>
-						<br>
-						<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
-						<input class="applybutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
-					</td></tr>
-					<tr><td></td><td>
-						<div id="statuscontainer" style='background-color: #1F1F1F'> <p></p></div>
-					</td></tr>
-					<tr style="display: none"><td></td><td>
-						<div id="hiddencallframe"></div>
-					</td></tr>
-					<tr><td></td><td class="livedatawarning">
-						<br></>The displayed data <br> is not live data. <br> Exceptions are: <br> -Requests Atlas <br> -Requests CMS
-					</td></tr>
-				</form>
-			</tr>
-			<tr><td>
-						<br><br><br><br><br><br><br><br><br><br><br><br><br>
-						<a href = "{{treemapdir}}/{{filename}}"> <img src="{{icondir}}/downloadarrow.png" border="0" title = "Download Treemap"> </a>
-			</td></tr>
-			</table>
-		</td>	
 		<noscript>
 			<div style="color:#7F1F1F" align = "center">
 				This page will have limited functionality <br>
@@ -257,43 +248,8 @@ function notImplementedWarning()
 		</noscript>
 		
 	</tr> </table>
+	<div style="display: none" id="hiddencallframe"></div>
 </body>
-
-
-    <style type="text/css">
-     .dmenuwidth {
-     width:200px;
-     background-color:#1F1F1F;
-     color:#7F7F7F;
-     }
-    </style>
-    
-    <style type="text/css">
-     .descriptiontext {
-		font-size: 14px;
-		color:#CFCFCF;
-     }
-    </style>
-    
-    <style type="text/css">
-     .livedatawarning {
-		font-size: 14px;
-     }
-    </style>
-    
-    <style type="text/css">
-     .advancedtext {
-		font-size: 14px;
-		color:#00CF00;
-     }
-    </style>
-    
-    <style type="text/css">
-     .applybutton {
-     background-color:#000000;
-     color:#FF0000;
-     }
-    </style>
     
 <style type="text/css">
 					#map {
@@ -302,7 +258,7 @@ function notImplementedWarning()
 						padding:0;
 						width:{{imagewidth}}px;
 						height:{{imageheight}}px;
-						background:url({{treemapdir}}/{{filename}}) top left no-repeat #fff;
+						background:url({{apacheserver}}/{{treemapdir}}/{{filename}}) top left no-repeat #fff;
 						font-family:arial, helvetica, sans-serif;
 						font-size:{{tooltipfontsize}}pt;
 						color:#FFF;
@@ -325,7 +281,7 @@ function notImplementedWarning()
 						   IE that causeses the block to not
 						   render at its full dimensions.
 						*/
-			   			background:url({{icondir}}/blank.gif);
+			   			background:url({{apacheserver}}/{{icondir}}/blank.gif);
 			   			text-decoration:none;
 						color:#000;
 					}

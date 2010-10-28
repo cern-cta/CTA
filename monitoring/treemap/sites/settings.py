@@ -111,6 +111,11 @@ SESSION_FILE_PATH = "/var/www/html/sessions"
 #Apache URL that serves the files
 PUBLIC_APACHE_URL = "http://pcitdmssd"
 
+#URL that django responses to
+#for testing on your local machine by running django locally enter something like "http://127.0.0.1:8000"
+#for running on a server with modpython the value should be the same as PUBLIC_APACHE_URL,
+DJANGORESPONSE_URL = "http://127.0.0.1:8000"
+
 #local URL that contains the files
 LOCAL_APACHE_DICT = "/var/www/html"
 

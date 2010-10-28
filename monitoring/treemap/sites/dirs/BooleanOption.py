@@ -3,6 +3,7 @@ Created on Oct 13, 2010
 
 @author: kblaszcz
 '''
+from django.template.loader import render_to_string
 import re
 
 
@@ -57,22 +58,12 @@ class BooleanOption(object):
         return self.stdval
     
     def toHtml(self, options):
-        htmlstrings = []
         try:
             checked = self.findvalue(options)
         except:
             checked =  self.getStdVal()
-        
-        htmlstrings.append("<input id=\"id_")
-        htmlstrings.append(self.name)
-        htmlstrings.append( "\" type=\"checkbox\" name=\"")
-        htmlstrings.append(self.name)
-        htmlstrings.append("\" value=\"true\"")
-        if checked: htmlstrings.append(" checked")
-        htmlstrings.append("> ")
-        htmlstrings.append(self.userfriendlyname)
-        
-        return ''.join([bla for bla in htmlstrings])
+
+        return render_to_string('dirs/booleanoption.html', {'name':self.name, 'checked':checked, 'userfriendlyname':self.userfriendlyname})
         
 
         

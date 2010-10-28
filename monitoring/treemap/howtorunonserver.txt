@@ -47,20 +47,8 @@
 	(
     	'/var/www/html/OverView/templates'
 	)
-
-*Change respond() in views.py:
-
-	'treemapdir': apacheserver + treemapdir, 'icondir': apacheserver + icondir
-
-	to
-
-	'treemapdir': treemapdir, 'icondir': icondir
 	
-*Change imagemap.html on the top by removing absolute paths to this:
-	<link rel="stylesheet" type="text/css" media="all" href="/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
-	<script type="text/javascript" src="/js/calendar/calendar.js"></script>
-	<script type="text/javascript" src="/js/calendar/lang/calendar-en.js"></script>
-	<script type="text/javascript" src="/js/calendar/calendar-setup.js"></script>
+	DJANGORESPONSE_URL = "http://pcitdmssd"
 	
 *Start the server by typing 
 	service httpd start

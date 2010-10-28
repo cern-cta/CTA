@@ -3,8 +3,9 @@ Created on Oct 13, 2010
 
 @author: kblaszcz
 '''
-import re
+from django.template.loader import render_to_string
 import datetime
+import re
 
 class DateOption(object):
 
@@ -104,31 +105,9 @@ class DateOption(object):
 #    </style>
    
     def toHtml(self, options):
-
-        htmlstrings = []
         try:
             defaultdate = self.optionsToValue(options)
         except:
             defaultdate = self.getStdVal()
         
-        htmlstrings.append("<input class=\"dmenuwidth\" type=\"text\" name=\"")
-        htmlstrings.append(self.name)
-        htmlstrings.append("\" value=\"")
-        htmlstrings.append(self.valueToString(defaultdate))
-        htmlstrings.append("\" id=\"id_")
-        htmlstrings.append(self.name)
-        htmlstrings.append("\" /> ")
-        htmlstrings.append(self.name)
-        htmlstrings.append("\n<script type=\"text/javascript\">\n")
-        htmlstrings.append("Calendar.setup({\n")
-        htmlstrings.append("inputField     :    \"id_")
-        htmlstrings.append(self.name)
-        htmlstrings.append("\",   // id of the input field\n")
-        htmlstrings.append("ifFormat       :    \"%d.%m.%Y_%H:%M:%S\",       // format of the input field\n")
-        htmlstrings.append("showsTime      :    true,\n")
-        htmlstrings.append("timeFormat     :    \"24\",\n")
-        htmlstrings.append("onUpdate       :    catcalc\n")
-        htmlstrings.append("});\n")
-        htmlstrings.append("</script>\n")
-        
-        return ''.join([bla for bla in htmlstrings])
+        return render_to_string('dirs/dateoption.html', {'name':self.name, 'defaultdate':self.valueToString(defaultdate), 'userfriendlyname':self.userfriendlyname})

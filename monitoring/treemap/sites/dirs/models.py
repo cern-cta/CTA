@@ -601,7 +601,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
     tree = model_class.generatedtree
     
     #preventing django from reading all data sets at once, read a part and update tree, read a part and update tree...
-    secondsperreading = 3600 #this value is empirical and seems bring good speed
+    secondsperreading = 1800 #this value is empirical and seems bring good speed
     nbsteps = int(math.ceil(((stop - start).seconds + (((stop - start).days)*24*60*60) )/float(secondsperreading)))
     print "Generating Tree of Requests"
     timemeasurement = datetime.datetime.now()
