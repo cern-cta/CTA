@@ -1,0 +1,17 @@
+.spinner
+{
+     width:45px;
+     background-color:#1F1F1F;
+     color:#7f7fff;
+}
+
+.spinnerarrow
+{
+     background-color:#1F1F1F;
+     color:#ffffff;
+     font-size:7px;
+     margin:0;
+     padding:0;
+     width:20px;
+     height:13px;
+}

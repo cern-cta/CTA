@@ -1,0 +1,44 @@
+<table cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td rowspan="2">								
+<script LANGUAGE="JavaScript">          
+      function MouseScroll{{name}} (event) {
+          var rolled = 0;
+          if (event.wheelDelta === undefined) {   // Firefox
+                  // The measurement units of the detail and wheelDelta properties are different.
+              rolled = -40 * event.detail;
+          }
+          else {
+              rolled = event.wheelDelta;
+          }
+          
+          var scrolledfield = document.getElementById ("id_{{name}}");
+          if(parseInt(scrolledfield.value) == Number.NaN) scrolledfield.value=0
+          if(rolled >=0 )
+          {
+          	scrolledfield.value = parseInt(scrolledfield.value) + {{step}};
+          }
+          else
+          {
+          	if(parseInt(scrolledfield.value)>{{min|add:step}}) scrolledfield.value = parseInt(scrolledfield.value) - {{step}};
+          }
+      }
+      function Init{{name}}spinner () 
+      {
+              // for mouse scrolling in Firefox
+          var elem = document.getElementById ("id_{{name}}");
+          
+          if (elem.addEventListener) 
+	{
+              elem.addEventListener ("DOMMouseScroll", MouseScroll{{name}}, false);
+          }
+          elem.onmouseover = null;
+      }
+         </script>
+<input onmouseover="Init{{name}}spinner()" type="text" id="id_{{name}}" name="{{name}}" value="{{defaultvalue}}" class="spinner" /></td>
+<td><input class="spinnerarrow" type="button" value=" /\ " onclick="this.form.{{name}}.value++;" ></td>
+</tr>
+<tr>
+<td><input class="spinnerarrow" type=button value=" \/ " onclick="if(parseInt(this.form.{{name}}.value)>{{min}})this.form.{{name}}.value--;" ></td>
+</tr>
+</table>

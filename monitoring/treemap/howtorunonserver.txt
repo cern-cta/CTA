@@ -50,5 +50,7 @@
 	
 	DJANGORESPONSE_URL = "http://pcitdmssd"
 	
+	REL_TREEMAP_DICT = "/images/treemaps"
+	
 *Start the server by typing 
 	service httpd start

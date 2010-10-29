@@ -16,6 +16,7 @@
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/blackredbutton.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/presetdropdown.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/datefield.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/spinner.css"/>
 
 <script LANGUAGE="JavaScript">
 //define global menu values
@@ -23,21 +24,6 @@
 function initMenu()
 {
 activateJsObjects();
-}
-
-function sleepSomeSeconds(naptime)
-{
-	naptime = naptime * 1000;
-	var sleeping = true;
-	var now = new Date();
-	var alarm;
-	var startingMSeconds = now.getTime();
-	while(sleeping)
-	{
-		alarm = new Date();
-		alarmMSeconds = alarm.getTime();
-		if(alarmMSeconds - startingMSeconds > naptime){ sleeping = false; }
-	}        
 }
 
 function getAjaxObject()
@@ -97,8 +83,7 @@ function updateStatus()
 	  };
 
 	ajax.open("GET", "{{relstatuspath}}", true);
-	ajax.send(null);
-	//sleepSomeSeconds(0.5);   
+	ajax.send(null); 
 }
 
 function writeStatusToDiv()
@@ -185,9 +170,9 @@ function notImplementedWarning()
 			<table id = "thesubtable" name = "optionsmenu" style="display:none;" cellspacing="0"  cellpadding="0">
 				<form action="{{djangoresponseurl}}/treemaps/{{rootsuffix}}/preset/" method="post">
 					<tr>
-							<td class="lightgreytext">Presets:</td> 
+							<td style="vertical-align:top" class="lightgreytext">Presets:</td> 
 							
-							<td><select class="presetdropdown" name="preset" id="id_preset">
+							<td style="vertical-align:top"><select class="presetdropdown" name="preset" id="id_preset">
 								{% for presetname in presetnames %}
 									<option {% spaceless %}
 									{% for key, value in presetdefault.items %}
@@ -197,14 +182,19 @@ function notImplementedWarning()
 								{% endfor %}
 							</select></td>
 							<td class="lightgreytext">
-								{% for aoption in optionshtml %}
-										{% if forloop.counter|modulo:2 %}<br>{% endif %}
-										{{aoption|escapefilter}}
-								{% endfor %}
+								<table  style="border-spacing:10px 0px" width="450" align="left" cellspacing="0"  cellpadding="3">
+										{% for aoption in optionshtml %}
+										{% if forloop.counter0|modulo:2|equals:0 %}<tr>{% endif %}
+											<td>
+												{{aoption|escapefilter}}
+											</td>
+										{% if forloop.counter0|modulo:2|equals:1 %}</tr>{% endif %}
+										{% endfor %}
+								</table>
 							</td>
 					</tr>
 					<tr>
-						<td>
+						<td style="vertical-align:top" >
 							<br>
 							<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
 							<input class="blackredbutton" type="submit" value="Apply" onmouseup = "showStatus();"/>

@@ -9,13 +9,14 @@ import re
 
 class DateOption(object):
 
-    def __init__(self, userfriendlyname, name, stdval = 0):
+    def __init__(self, userfriendlyname, name, template, stdval = 0):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})'
         
         self.fullexpression = r'.*?' + self.name+"="+self.valueexpr + r'.*?'
         self.stdseconddiff = stdval;
+        self.template = template
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -110,4 +111,4 @@ class DateOption(object):
         except:
             defaultdate = self.getStdVal()
         
-        return render_to_string('dirs/dateoption.html', {'name':self.name, 'defaultdate':self.valueToString(defaultdate), 'userfriendlyname':self.userfriendlyname})
+        return render_to_string(self.template, {'name':self.name, 'defaultdate':self.valueToString(defaultdate), 'userfriendlyname':self.userfriendlyname})

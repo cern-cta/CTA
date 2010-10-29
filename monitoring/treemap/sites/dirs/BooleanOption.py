@@ -9,13 +9,14 @@ import re
 
 class BooleanOption(object):
 
-    def __init__(self, userfriendlyname, name, stdval):
+    def __init__(self, userfriendlyname, name, template, stdval):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<boolean>true|false)'
         
         self.fullexpression = r'.*?' + self.name+"="+self.valueexpr + r'.*?'
         self.stdval = stdval
+        self.template = template
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -63,7 +64,7 @@ class BooleanOption(object):
         except:
             checked =  self.getStdVal()
 
-        return render_to_string('dirs/booleanoption.html', {'name':self.name, 'checked':checked, 'userfriendlyname':self.userfriendlyname})
+        return render_to_string(self.template, {'name':self.name, 'checked':checked, 'userfriendlyname':self.userfriendlyname})
         
 
         

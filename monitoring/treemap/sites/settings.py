@@ -126,10 +126,10 @@ REL_TREEMAP_DICT = "/imagesdev/treemaps"
 REL_STATUS_DICT = "/statusfiles"
 
 #Where to find icons
-REL_ICON_DICT = "/imagesdev/icons"
+REL_ICON_DICT = "/images/icons"
 
 #Where to find graphics for the progress bar
-REL_PBARIMG_DICT = "/imagesdev/progressbar"
+REL_PBARIMG_DICT = "/images/progressbar"
 
 #location of models
 MODELS_LOCATION = 'sites.dirs'

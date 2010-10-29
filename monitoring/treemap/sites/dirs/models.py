@@ -608,11 +608,11 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
     
     for i in range(nbsteps):
         if i != (nbsteps -1):
-            fromstring = DateOption.valueToString(DateOption("dummy","object"), start + (i*datetime.timedelta(seconds = secondsperreading)) )
-            tostring = DateOption.valueToString(DateOption("dummy","object"), start + ((i+1)*datetime.timedelta(seconds = secondsperreading)) )
+            fromstring = DateOption.valueToString(DateOption("dummy","object",''), start + (i*datetime.timedelta(seconds = secondsperreading)) )
+            tostring = DateOption.valueToString(DateOption("dummy","object",''), start + ((i+1)*datetime.timedelta(seconds = secondsperreading)) )
         elif i == (nbsteps -1):
-            fromstring = DateOption.valueToString(DateOption("dummy","object"), start + (i*datetime.timedelta(seconds = secondsperreading)))
-            tostring = DateOption.valueToString(DateOption("dummy","object"), stop)
+            fromstring = DateOption.valueToString(DateOption("dummy","object",''), start + (i*datetime.timedelta(seconds = secondsperreading)))
+            tostring = DateOption.valueToString(DateOption("dummy","object",''), stop)
             
         print "Reading Atlas Requests. Time: ", fromstring, " " ,tostring
         requestarray = list(model_class.objects.filter(filename__isnull=False).extra(where=["timestamp BETWEEN TO_DATE('"+ fromstring +"','DD.MM.YYYY_HH24:MI:SS') and TO_DATE('" + tostring + "','DD.MM.YYYY HH24:MI:SS')"]))
@@ -624,6 +624,8 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
         generateStatusFile(statusfilename, status)
     
     print "time: ", datetime.datetime.now() - timemeasurement
+    if tree.getRoot() is None:
+        raise Exception("no data available")
     print tree.getRoot().requestscount
     print ''
     
@@ -664,7 +666,7 @@ def traverseToRequestInTree(name, reqmodel):
             pos = len(name)
             lastiterationfollows = True
         
-    raise Exception("Request(Atlas) doesn't exist in the current tree")
+    raise Exception("Request doesn't exist in the current tree. Probably there was no Requests for the given timeframe in the given path")
 
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
