@@ -10,32 +10,22 @@
 .P
 .BI "void Cuuid_create(Cuuid_t *" uuid ");"
 .P
-.BI "void Cuuid_create_from_name(Cuuid_t *" uuid ", Cuuid_t " uuid_context ", char *" name ");"
-.P
 .BI "int Cuuid_compare(Cuuid_t *" uuid1 ", Cuuid_t *" uuid2 ");"
 
-.SH ERRORS
-\fBCuuid\fP is doing only local calls, please see
-.I errno
-documentation if there is a failure.
-
 .SH DESCRIPTION
-\fBCuuid_create\fP generate a UUID, stored in the structure
+The \fBCuuid_create\fP function creates a new universally unique identifier
+(UUID). The uuid will be generated based on high-quality randomness from
+\fI/dev/urandom\fP, if available. If it is not available, then Cuuid_create
+will use an alternative algorithm which uses the current time, the local
+ethernet MAC address (if available), and random data generated using a
+pseudo-random generator. The implementation internally uses the uuid_generate()
+function from e2fsprogs.
+
+The newly created UUID is returned in the memory location pointed to by
 .I uuid.
+
 .P
-Return value is 0 on success, or -1 on error.
-.P
-\fBCuuid_create_from_name\fP create a UUID, stored in
-.I uuid
-, using a yet existing
-.I uuid_context
-UUID as a name space, and a string
-.I name
-in input, so identical names from different name spaces generate different UUIDs.
-.P
-Return value is 0 on success, or -1 on error.
-.P
-\fBCsched_compare\fP compare two UUIDs
+The \fBCuuid_compare\fP function compares two UUIDs
 .I uuid1
 and
 .I uuid2
@@ -44,16 +34,17 @@ and
 Return value is -1 if
 .I uuid1
 is lexically before
-.I uui2
+.I uuid2
 , 0 if they are equal, 1 if
 .I uuid1
 is lexically after
-.I uui2.
+.I uuid2.
 
 .SH NOTES
-Based on http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
-.P
 Lexical ordering is not temporal ordering.
+
+.SH SEE ALSO
+\fBuuid_generate\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

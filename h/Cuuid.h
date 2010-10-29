@@ -4,11 +4,8 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
- *
  * $RCSfile: Cuuid.h,v $ $Revision: 1.10 $ $Date: 2009/03/26 11:25:41 $ CERN IT-PDP/DM Jean-Damien Durand
  */
-
 
 #ifndef _CUUID_H
 #define _CUUID_H
@@ -32,16 +29,15 @@ typedef struct _Cuuid_t {
 extern Cuuid_t nullCuuid;
 
 EXTERN_C void Cuuid_create (Cuuid_t *);
-EXTERN_C void Cuuid_create_from_name (Cuuid_t *,
-				      Cuuid_t, char *);
-EXTERN_C int  Cuuid_compare (Cuuid_t *, Cuuid_t *);
-EXTERN_C void _marshall_UUID (char**, Cuuid_t *);
-EXTERN_C void _unmarshall_UUID (char**, Cuuid_t *);
+EXTERN_C int Cuuid_compare (Cuuid_t *, Cuuid_t *);
 
 EXTERN_C int Cuuid2string (char *, size_t, Cuuid_t *);
 EXTERN_C int string2Cuuid (Cuuid_t *, const char *);
 
-#define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&(ptr), &(uuid))
-#define  marshall_UUID(ptr,uuid)  _marshall_UUID(&(ptr), &(uuid))
+EXTERN_C void _marshall_UUID (char**, Cuuid_t *);
+EXTERN_C void _unmarshall_UUID (char**, Cuuid_t *);
+
+#define unmarshall_UUID(ptr, uuid) _unmarshall_UUID(&(ptr), &(uuid))
+#define marshall_UUID(ptr, uuid) _marshall_UUID(&(ptr), &(uuid))
 
 #endif /* _CUUID_H */
