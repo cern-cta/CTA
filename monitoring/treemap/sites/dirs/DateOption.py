@@ -78,32 +78,6 @@ class DateOption(object):
     
     def getStdVal(self):
         return datetime.datetime.now() - datetime.timedelta(minutes = self.stdseconddiff)
-
-#To make the following work, you have to include 4 additional files to your html code. Here is an example with http://pcitdmssd/
-
-#<link rel="stylesheet" type="text/css" media="all" href="http://pcitdmssd/css/calendar-win2k-1.css" title="win2k-cold-1" />
-#<script type="text/javascript" src="http://pcitdmssd/js/calendar.js"></script>
-#<script type="text/javascript" src="http://pcitdmssd/js/calendar-en.js"></script>
-#<script type="text/javascript" src="http://pcitdmssd/js/calendar-setup.js"></script> 
-
-#you also need following javascript function:
-#function catcalc(cal) 
-#{
-#    var date = cal.date;
-#    var time = date.getTime()
-#    field = document.getElementById("f_date_a");
-#    var date2 = new Date(time);
-#    field.value = date2.print("%d.%m.%Y_%H:%M:%S");
-#}
-
-#and css:
-#    <style type="text/css">
-#     .dmenuwidth {
-#     width:200px;
-#     background-color:#1F1F1F;
-#     color:#7F7F7F;
-#     }
-#    </style>
    
     def toHtml(self, options):
         try:

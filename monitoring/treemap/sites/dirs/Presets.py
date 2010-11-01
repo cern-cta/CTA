@@ -6,6 +6,7 @@ Created on Sep 10, 2010
 from django.conf import settings
 from sites.dirs.BooleanOption import BooleanOption
 from sites.dirs.DateOption import DateOption
+from sites.dirs.SpinnerOption import SpinnerOption
 from sites.tools.Inspections import getDefaultNumberOfLevels
 from sites.treemap.objecttree.TreeRules import LevelRules
 import copy
@@ -289,8 +290,8 @@ presetdict["Newest file on tape last modification"] = Preset(lr, True, 'Dirs', '
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
-    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('start', 'start', 'dirs/dateoption.html', 120), DateOption('stop', 'stop', 'dirs/dateoption.html', 0)]
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)                                                                                                                                                             
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time point', 'timec', 'dirs/dateoption.html', 120/2), SpinnerOption('Interval thickness', 'interval', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests Atlas"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
 
 #Preset for Requests cms
@@ -298,7 +299,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('start', 'start', 'dirs/dateoption.html', 120), DateOption('stop', 'stop', 'dirs/dateoption.html', 0)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time point', 'timec', 'dirs/dateoption.html', 120/2), SpinnerOption('Interval thickness', 'interval', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests CMS"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
 
 

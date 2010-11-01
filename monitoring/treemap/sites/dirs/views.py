@@ -1,6 +1,7 @@
 # Create your views here.
 from django.conf import settings
 from django.conf.urls.defaults import *
+from django.core import serializers
 from django.core.cache import cache
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render_to_response
@@ -11,8 +12,10 @@ from django.utils.http import urlquote
 from sites.dirs.BooleanOption import BooleanOption
 from sites.dirs.DateOption import DateOption
 from sites.dirs.OptionsReader import OptionsReader
+from sites.dirs.SpinnerOption import SpinnerOption
 from sites.dirs.models import *
 from sites.tools.Inspections import *
+from sites.tools.StatusTools import *
 from sites.treemap.defaultproperties.SquaredViewProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
@@ -23,11 +26,9 @@ from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
 from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
-from django.core import serializers
 import re
 import sites.dirs.Presets
 import time
-from sites.tools.StatusTools import *
 
 
 
@@ -82,10 +83,10 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
     
-    Requestsatlas.start = optr.getOption('start')
-    Requestsatlas.stop = optr.getOption('stop')
-    Requestscms.start = optr.getOption('start')
-    Requestscms.stop = optr.getOption('stop')
+    Requestsatlas.start = optr.getOption('timec')-(datetime.timedelta(minutes = optr.getOption('interval'))/2)
+    Requestsatlas.stop = optr.getOption('timec')+(datetime.timedelta(minutes = optr.getOption('interval'))/2)
+    Requestscms.start = optr.getOption('timec')-(datetime.timedelta(minutes = optr.getOption('interval'))/2)
+    Requestscms.stop = optr.getOption('timec')+(datetime.timedelta(minutes = optr.getOption('interval'))/2)
     
     root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
     filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
@@ -196,10 +197,10 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
         
-    Requestsatlas.start = optr.getOption('start')
-    Requestsatlas.stop = optr.getOption('stop')
-    Requestscms.start = optr.getOption('start')
-    Requestscms.stop = optr.getOption('stop')
+    Requestsatlas.start = optr.getOption('timec')-datetime.timedelta(minutes = optr.getOption('interval'))
+    Requestsatlas.stop = optr.getOption('timec')+datetime.timedelta(minutes = optr.getOption('interval'))
+    Requestscms.start = optr.getOption('timec')-datetime.timedelta(minutes = optr.getOption('interval'))
+    Requestscms.stop = optr.getOption('timec')+datetime.timedelta(minutes = optr.getOption('interval'))
     
     try:
         if request.session['statusfile']['isvalid']:
@@ -400,6 +401,25 @@ def preset(request, options,  urlending):
                 #if no error here, continue:
                 if(isinstance(option,BooleanOption)):
                     optr.optdict[option.getName()] = True
+                    
+                if(isinstance(option,SpinnerOption)):
+                    valuedict = {}
+                    try:
+                        try: #value in options?
+                            valuedict = re.match(option.getFullExpression(), options).groupdict() 
+                            value = int(valuedict['value'])
+                        except:
+                            try: #value posted?
+                                valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
+                                value = int(valuedict['value'])
+                                options = options + option.getName() + "=" + str(posted[option.getName()])
+                                optr = OptionsReader(options, preset.staticid) 
+                            except Exception, e:#value is nowhere: take standard value
+                                value = option.getStdVal();
+                        
+                        optr.optdict[option.getName()] = value
+                    except:
+                        pass
                 
                 if(isinstance(option,DateOption)):
                     valuedict = {}
