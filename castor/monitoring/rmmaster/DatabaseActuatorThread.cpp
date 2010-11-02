@@ -109,7 +109,7 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
       if (production) {
 	m_rmMasterService->storeClusterStatus(m_clusterStatus);
       } else {
-	m_rmMasterService->retrieveClusterStatus(m_clusterStatus, false);
+	m_rmMasterService->retrieveClusterStatus(m_clusterStatus);
       }
     }
   } catch(castor::exception::Exception& e) {

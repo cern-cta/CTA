@@ -256,5 +256,5 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
 
   // "Updating cluster status information from database to shared memory"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 35, 0, 0);
-  rmMasterService->retrieveClusterStatus(m_clusterStatus, true);
+  rmMasterService->retrieveClusterStatus(m_clusterStatus);
 }

@@ -62,7 +62,7 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::StatusUpdateHelper
 // HandleStateUpdate
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
-(castor::monitoring::DiskServerStateReport* state, const bool init)
+(castor::monitoring::DiskServerStateReport* state, const bool initializing)
   throw (castor::exception::Exception) {
 
   // Get the information about who is the current resource monitoring master
@@ -114,7 +114,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   }
 
   // Update status if needed
-  if (production) {
+  if (production && !initializing) {
     if (it->second.adminStatus() == ADMIN_NONE ||
         state->adminStatus() != ADMIN_NONE) {
       it->second.setStatus(state->status());
@@ -130,7 +130,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   }
 
   // Update lastUpdate
-  if (init == false) {
+  if (!initializing) {
     it->second.setLastStateUpdate(time(0));
   }
 
@@ -172,7 +172,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     it2->second.setToBeDeleted(false);
 
     // Update status if needed
-    if (production) {
+    if (production && !initializing) {
       if (it2->second.adminStatus() == ADMIN_NONE ||
           (*itFs)->adminStatus() != ADMIN_NONE) {
         it2->second.setStatus((*itFs)->status());
@@ -188,7 +188,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     }
 
     // Update lastUpdate
-    if (init == false) {
+    if (!initializing) {
       it2->second.setLastStateUpdate(time(0));
     }
   }

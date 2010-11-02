@@ -90,13 +90,10 @@ namespace castor {
            * Retrieves the last known cluster status from the stager database
            * and updates the passed ClusterStatus
            * @param clusterStatus the ClusterStatus as known by RmMaster
-           * @param dsDisabled flag to indicate whether the diskservers should
-           * be added to the shared memory in a disabled state or the state as
-           * defined in the database
            * @exception Exception in case of error
            */
           virtual void retrieveClusterStatus
-          (castor::monitoring::ClusterStatus* clusterStatus, bool dsDisabled)
+          (castor::monitoring::ClusterStatus* clusterStatus)
             throw (castor::exception::Exception);
 
           /**

@@ -395,7 +395,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 // retrieveClusterStatus
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
-(castor::monitoring::ClusterStatus* clusterStatus, bool dsDisabled)
+(castor::monitoring::ClusterStatus* clusterStatus)
   throw (castor::exception::Exception) {
 
   // Initailize statements
@@ -418,7 +418,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
   // Flag all objects in the shared memory for deletion
   for (castor::monitoring::ClusterStatus::iterator it =
          clusterStatus->begin();
-       it != clusterStatus->end() && !dsDisabled;
+       it != clusterStatus->end();
        it++) {
     it->second.setToBeDeleted(true);
     for (castor::monitoring::DiskServerStatus::iterator it2 =
@@ -437,43 +437,28 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     // Loop over all DiskServers
     oracle::occi::ResultSet *dsRset = m_getDiskServersStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != dsRset->next()) {
+
       // Create a state report for each diskserver
       castor::monitoring::DiskServerStateReport* dsReport =
         new castor::monitoring::DiskServerStateReport();
       dsReport->setName(dsRset->getString(2));
-
-      // By default we start with everything disabled, when the node comes up
-      // rmNode will send a full report reenabling it. If the dsDisabled option
-      // is enabled then we take the status as seen in the database
-      if (dsDisabled == false) {
-        dsReport->setStatus((castor::stager::DiskServerStatusCode)dsRset->getInt(4));
-      } else {
-        dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
-      }
-
-      // Make sure an ADMIN_NONE status in db resets anything found before
-      castor::monitoring::AdminStatusCodes adStatus =
-        (castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
-      if (adStatus == castor::monitoring::ADMIN_NONE)
-        adStatus = castor::monitoring::ADMIN_RELEASE;
-      dsReport->setAdminStatus(adStatus);
+      dsReport->setAdminStatus
+        ((castor::monitoring::AdminStatusCodes)dsRset->getInt(3));
+      dsReport->setStatus
+        ((castor::stager::DiskServerStatusCode)dsRset->getInt(4));
 
       // Loop on its FileSystems
       m_getFileSystemsStatement->setDouble(1, dsRset->getDouble(1));
-      oracle::occi::ResultSet *fsRset = m_getFileSystemsStatement->executeQuery();
+      oracle::occi::ResultSet *fsRset =
+        m_getFileSystemsStatement->executeQuery();
       while (oracle::occi::ResultSet::END_OF_FETCH != fsRset->next()) {
         castor::monitoring::FileSystemStateReport* fs =
           new castor::monitoring::FileSystemStateReport();
         fs->setMountPoint(fsRset->getString(1));
-        if (dsDisabled == false) {
-          fs->setStatus((castor::stager::FileSystemStatusCodes)fsRset->getInt(3));
-        } else {
-          fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
-        }
-        adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
-        if (adStatus == castor::monitoring::ADMIN_NONE)
-          adStatus = castor::monitoring::ADMIN_RELEASE;
-        fs->setAdminStatus(adStatus);
+        fs->setAdminStatus
+          ((castor::monitoring::AdminStatusCodes)fsRset->getInt(2));
+        fs->setStatus
+          ((castor::stager::FileSystemStatusCodes)fsRset->getInt(3));
         dsReport->addFileSystemStatesReports(fs);
       }
       m_getFileSystemsStatement->closeResultSet(fsRset);
@@ -489,7 +474,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     // for deletion update the objects admin status to ADMIN_DELETED.
     for (castor::monitoring::ClusterStatus::iterator it =
            clusterStatus->begin();
-         it != clusterStatus->end() && !dsDisabled;
+         it != clusterStatus->end();
          it++) {
       if (it->second.toBeDeleted()) {
         it->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
