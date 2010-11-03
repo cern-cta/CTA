@@ -4043,3 +4043,13 @@ select s.sid, s.process, s.program, s_sql.sql_text, blocker.sid "blocker sid", b
   left outer join v$sql b_sql on b_sql.sql_id = blocker.prev_sql_id
   where s.username = 'STAGER_DEV03' and s.blocking_session is not null;
 
+How to move to subversion 1.5.7 on a dev box
+============================================
+
+In template prod/cluster/castordev/customization/headnode/dev03.tpl, add:
+  
+"/software/packages" = pkg_repl("subversion", "1.5.7-1", ELFMS_ARCH);
+"/software/packages" = pkg_add("neon", DEF, ELFMS_ARCH, "multi");
+"/software/packages" = pkg_add("neon", "0.27.2-1", ELFMS_ARCH, "multi"); 
+
+(neon is a dependancy).
