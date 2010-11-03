@@ -848,8 +848,15 @@ CREATE OR REPLACE PROCEDURE deleteOrStopStream(streamId IN INTEGER) AS
   unused NUMBER;
 
 BEGIN
-  -- Take a lock on the stream
-  SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  -- Try to take a lock on the stream, taking note that the stream may already
+  -- have been delete because the migrator, rtcpclientd and mighunterd race to
+  -- delete streams
+  BEGIN
+    SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Return because the stream has already been deleted
+    RETURN;
+  END;
 
   -- Try to delete the stream.  If the mighunter daemon is running in
   -- rtcpclientd mode, then this delete may fail for two expected reasons.  The
