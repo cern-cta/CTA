@@ -6151,7 +6151,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
     starttime NUMBER,
     lastvdqmpingtime NUMBER, 
     vdqmvolreqid NUMBER, 
-    status NUMBER,
     vid VARCHAR2(2048));
   TYPE TapeGatewayRequest_Cur IS REF CURSOR RETURN TapeGatewayRequestExtended;
   TYPE TapeGatewayRequestCore IS RECORD (
@@ -7147,81 +7146,14 @@ BEGIN
 END;
 /
 
-/* GenericInputForMigrationPolicy */
 
-/* Get input for python migration policy for the tapegateway */
-CREATE OR REPLACE PROCEDURE inputMigrPolicyGateway
-(svcclassName IN VARCHAR2,
- policyName OUT NOCOPY VARCHAR2,
- svcId OUT NUMBER,
- dbInfo OUT castorTape.DbMigrationInfo_Cur) AS
- tcIds "numList";
- tcIds2 "numList";
-BEGIN
-  -- WARNING: tapegateway ONLY version
-
-  -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
-  -- get svcClass and migrator policy
-  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId
-    FROM SvcClass
-   WHERE SvcClass.name = svcClassName;
-
-  -- get all candidates by bunches, separating repack ones from 'normal' ones
-  SELECT /*+ LEADING(R SR TC) USE_HASH(SR TC)
-            INDEX_RS_ASC(SR I_SubRequest_Request) 
-            INDEX_RS_ASC(TC I_TapeCopy_Status) */
-         TC.id BULK COLLECT INTO tcIds
-    FROM TapeCopy TC, SubRequest SR, StageRepackRequest R
-   WHERE R.svcclass = svcId
-     AND SR.request = R.id
-     AND SR.status = 12  -- SUBREQUEST_REPACK
-     AND TC.status IN (0, 1)  -- CREATED, TOBEMIGRATED
-     AND TC.castorFile = SR.castorFile
-     AND ROWNUM <= 20;
-  SELECT /*+ FIRST_ROWS(20) LEADING(TC CF)
-             INDEX_RS_ASC(TC I_TapeCopy_Status)
-             INDEX_RS_ASC(CF I_CastorFile_SvcClass) */
-	     TC.id BULK COLLECT INTO tcIds2
-    FROM TapeCopy TC, CastorFile CF
-   WHERE CF.svcClass = svcId
-     AND TC.status IN (0, 1)  -- CREATED, TOBEMIGRATED
-     AND TC.castorFile = CF.id
-     AND ROWNUM <= 20;
-
-  -- update status. Warning! this is thread unsafe!
-  IF tcIds.COUNT > 0 THEN
-    FORALL i IN tcIds.FIRST .. tcIds.LAST
-      UPDATE TapeCopy SET status = 7 -- WAITPOLICY
-       WHERE id = tcIds(i);
-  END IF;
-  IF tcIds2.COUNT > 0 THEN
-    FORALL i IN tcIds2.FIRST .. tcIds2.LAST
-      UPDATE TapeCopy SET status = 7 -- WAITPOLICY
-       WHERE id = tcIds2(i);
-  END IF;
-  COMMIT;
-  
-  -- return the full resultset
-  OPEN dbInfo FOR
-    SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename,
-           CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize
-      FROM Tapecopy,CastorFile
-     WHERE CastorFile.id = TapeCopy.castorFile
-       AND TapeCopy.id IN 
-         (SELECT /*+ CARDINALITY(tcidTable 5) */ * 
-            FROM table(tcIds) tcidTable UNION
-          SELECT /*+ CARDINALITY(tcidTable2 5) */ *
-            FROM TABLE(tcIds2) tcidTable2);
-END;
-/
-
-/* Get input for python migration policy for rtcpclientd  */
-CREATE OR REPLACE PROCEDURE inputMigrPolicyRtcp
-(svcclassName IN VARCHAR2,
- policyName OUT NOCOPY VARCHAR2,
- svcId OUT NUMBER,
- dbInfo OUT castorTape.DbMigrationInfo_Cur) AS
- tcIds "numList";
+/* Gets the tape copies to be attached to the streams of the specified service class. */
+CREATE OR REPLACE PROCEDURE inputForMigrationPolicy(
+  svcclassName IN  VARCHAR2,
+  policyName   OUT NOCOPY VARCHAR2,
+  svcId        OUT NUMBER,
+  dbInfo       OUT castorTape.DbMigrationInfo_Cur) AS
+  tcIds "numList";
 BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
@@ -7263,28 +7195,6 @@ BEGIN
 END;
 /
 
-/* GenericInputForMigrationPolicy */
-CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
-(svcclassName IN VARCHAR2,
- policyName OUT NOCOPY VARCHAR2,
- svcId OUT NUMBER,
- dbInfo OUT castorTape.DbMigrationInfo_Cur) AS
- unused VARCHAR2(2048);
-BEGIN
-  BEGIN
-    SELECT value INTO unused
-      FROM CastorConfig
-     WHERE class = 'tape'
-       AND key   = 'interfaceDaemon'
-       AND value = 'tapegatewayd';
-  EXCEPTION WHEN NO_DATA_FOUND THEN  -- rtcpclientd
-    inputMigrPolicyRtcp(svcclassName, policyName, svcId, dbInfo);  
-    RETURN;
-  END;
-  -- tapegateway
-  inputMigrPolicyGateway(svcclassName, policyName, svcId, dbInfo);
-END;
-/
 
 /* Get input for python Stream Policy */
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
@@ -7579,6 +7489,10 @@ BEGIN
       NULL;
     END;
   END LOOP; -- loop streams
+
+  -- resurrect the ones never attached
+  FORALL i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST
+    UPDATE TapeCopy SET status = 1 WHERE id = tapeCopyIds(i) AND status = 7;
   COMMIT;
 END;
 /
@@ -7933,49 +7847,54 @@ END tapegatewaydIsRunning;
 /* attach drive request to tape */
 
 
-create or replace
-PROCEDURE tg_attachDriveReqToTape( tapeRequestId IN NUMBER,
-                                                       inputVdqmId IN NUMBER, 
-                                                       inputDgn IN VARCHAR2, 
-                                                       inputLabel IN VARCHAR2,
-                                                       inputDensity IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE tg_attachDriveReqToTape(
+  tapeRequestId IN NUMBER,
+  inputVdqmId   IN NUMBER, 
+  inputDgn      IN VARCHAR2, 
+  inputLabel    IN VARCHAR2,
+  inputDensity  IN VARCHAR2) AS
 BEGIN
 
--- update tapegatewayrequest which have been submitted to vdqm =>  WAITING_TAPESERVER
-    UPDATE TapeGatewayRequest 
-      SET status=2, lastvdqmpingtime=gettime(), starttime= gettime(), vdqmvolreqid=inputVdqmId
-      WHERE id=tapeRequestId; -- these are the ones waiting for vdqm to be sent again
+  -- update tapegatewayrequest which have been submitted to vdqm =>  WAITING_TAPESERVER
+  UPDATE TapeGatewayRequest 
+    SET status           = 2, -- TG_REQUEST_WAITING_TAPESERVER
+        lastvdqmpingtime = gettime(),
+        starttime        = gettime(), vdqmvolreqid=inputVdqmId
+    WHERE id=tapeRequestId; -- these are the ones waiting for vdqm to be sent again
 
--- update stream for migration    
-    UPDATE Stream 
-      SET status=1 
-      WHERE id = 
-        (select streammigration FROM TapeGatewayRequest WHERE accessmode=1 AND  id=tapeRequestId);  
+  -- update stream for migration    
+  UPDATE Stream 
+    SET status = 1 -- STREAM_WAITDRIVE
+    WHERE id = 
+      (select streammigration FROM TapeGatewayRequest WHERE accessmode=1 AND  id=tapeRequestId);  
 
--- update tape for migration and recall    
-
-    UPDATE Tape 
-      SET status=2, dgn=inputDgn, label=inputLabel, density= inputDensity 
-      WHERE id = 
-        (SELECT tape 
-          FROM Stream, TapeGatewayRequest 
-          WHERE stream.id = tapegatewayrequest.streammigration 
-          AND tapegatewayrequest.accessmode=1 
-          AND tapegatewayrequest.id=tapeRequestId) 
-      OR id =
-        (SELECT taperecall 
-          FROM TapeGatewayRequest  
-          WHERE accessmode=0 
-          AND  id=tapeRequestId);  
+  -- update tape for migration and recall    
+  UPDATE Tape 
+    SET status  = 2, -- TAPE_WAITDRIVE
+        dgn     = inputDgn,
+        label   = inputLabel,
+        density = inputDensity 
+    WHERE id = 
+      (SELECT tape 
+        FROM Stream, TapeGatewayRequest 
+        WHERE stream.id = tapegatewayrequest.streammigration 
+        AND tapegatewayrequest.accessmode=1 
+        AND tapegatewayrequest.id=tapeRequestId) 
+    OR id =
+      (SELECT taperecall 
+        FROM TapeGatewayRequest  
+        WHERE accessmode=0 
+        AND  id=tapeRequestId);  
   COMMIT;
 END;
 /
         
 /* attach the tapes to the streams  */
 
-CREATE OR REPLACE PROCEDURE tg_attachTapesToStreams (startFseqs IN castor."cnumList",
-                                                     strIds IN castor."cnumList", 
-                                                     tapeVids IN castor."strList") AS
+CREATE OR REPLACE PROCEDURE tg_attachTapesToStreams (
+  startFseqs IN castor."cnumList",
+  strIds     IN castor."cnumList", 
+  tapeVids   IN castor."strList") AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   tapeId NUMBER;
@@ -7985,10 +7904,13 @@ BEGIN
       tapeId:=NULL;
       -- update tapegatewayrequest
       UPDATE TapeGatewayRequest 
-        SET status=1, lastfseq= startfseqs(i) 
+        SET status   =1, -- TG_REQUEST_TO_BE_SENT_TO_VDQM
+            lastfseq = startfseqs(i) 
         WHERE streammigration= strids(i); -- TO_BE_SENT_TO_VDQM
       
-      UPDATE Tape SET stream=strids(i), status=2 
+      UPDATE Tape
+        SET stream = strids(i),
+            status = 2 -- TAPE_WAITDRIVE
         WHERE tpmode=1 
         AND vid=tapeVids(i) 
         RETURNING id INTO tapeId;
@@ -8006,7 +7928,9 @@ BEGIN
         EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
 
        -- retry the select since a creation was done in between
-          UPDATE Tape SET stream=strids(i), status=2
+          UPDATE Tape
+            SET stream = strids(i),
+                status = 2 -- TAPE_WAITDRIVE
             WHERE tpmode=1 
             AND vid=tapeVids(i) 
             RETURNING id INTO tapeId;
@@ -8026,9 +7950,9 @@ END;
 
 /* update the db when a tape session is ended */
 
-create or replace
-PROCEDURE tg_endTapeSession ( transactionId IN NUMBER,
-                                                inputErrorCode IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE tg_endTapeSession(
+  transactionId IN NUMBER,
+  inputErrorCode IN INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
 
@@ -8076,51 +8000,46 @@ BEGIN
           -- if a failure is reported
           -- fail all the segments
           FORALL i in tcIds.FIRST .. tcIds.LAST
-            UPDATE Segment SET status=6
+            UPDATE Segment
+              SET status=6  -- SEGMENT_FAILED
               WHERE copy = tcIds(i);
 
           -- mark tapecopies as  REC_RETRY
           FORALL i in tcIds.FIRST .. tcIds.LAST
-            UPDATE TapeCopy  SET status=8, errorcode=inputErrorCode
+            UPDATE TapeCopy
+              SET status    = 8, -- TAPECOPY_REC_RETRY
+                  errorcode = inputErrorCode
               WHERE id=tcIds(i);
 
        END IF;
 
        -- resurrect lost tapesubrequest
-       UPDATE Segment SET status=0
-         WHERE status = 7
+       UPDATE Segment
+         SET status = 0  -- SEGMENT_UNPROCESSED
+         WHERE status = 7  -- SEGMENT_SELECTED
          AND tape=tpId;
 
        -- check if there is work for this tape
        SELECT count(*) INTO segNum
          FROM segment
          WHERE tape=tpId
-         AND status=0;
+         AND status = 0;  -- SEGMENT_UNPROCESSED
        -- still segments in zero ... to be restarted
 
        IF segNum > 0 THEN
-         UPDATE Tape SET status = 8
-           WHERE id=tpId; --WAIT POLICY for rechandler
+         UPDATE Tape
+           SET status = 8 -- TAPE_WAITPOLICY for rechandler
+           WHERE id=tpId;
        ELSE
-         UPDATE Tape SET status = 0
-           WHERE id=tpId; --UNUSED
+         UPDATE Tape
+           SET status = 0 -- TAPE_UNUSED
+           WHERE id=tpId;
        END IF;
 
     ELSE
 
-      -- write
-      -- reset stream
-       BEGIN
-         DELETE FROM Stream WHERE id = strId;
-         DELETE FROM id2type WHERE id=strId;
-
-       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-       -- constraint violation and we cannot delete the stream because there is an entry in Stream2TapeCopy
-         UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null
-           WHERE id = strId;
-       END;
-       -- reset tape
-       UPDATE Tape SET status=0, stream = null WHERE stream = strId;
+       -- write
+       deleteOrStopStream(strId);
 
        IF inputErrorCode != 0 THEN
           -- if a failure is reported
@@ -8131,10 +8050,10 @@ BEGIN
        ELSE
          -- just resurrect them if they were lost
           FORALL i in tcIds.FIRST .. tcIds.LAST
-           UPDATE TapeCopy  SET status=1
+           UPDATE TapeCopy
+              SET status = 1 -- TAPECOPY_TOBEMIGRATED
               WHERE id=tcIds(i) AND status=3;
        END IF;
-
 
     END IF;
 
@@ -8149,18 +8068,19 @@ END;
 
 /* mark a migration or recall as failed saving in the db the error code associated with the failure */
 
-CREATE OR REPLACE PROCEDURE tg_failFileTransfer(transactionId IN NUMBER,
-                                                inputFileId IN NUMBER,
-                                                inputNsHost IN VARCHAR2,
-                                                inputFseq IN INTEGER, 
-                                                inputErrorCode IN INTEGER)  AS
- cfId NUMBER;
- trId NUMBER;
- strId NUMBER;
- tpId NUMBER;
- tcId NUMBER;
- srId NUMBER;
- outMode INTEGER;
+CREATE OR REPLACE PROCEDURE tg_failFileTransfer(
+  transactionId  IN NUMBER,
+  inputFileId    IN NUMBER,
+  inputNsHost    IN VARCHAR2,
+  inputFseq      IN INTEGER, 
+  inputErrorCode IN INTEGER)  AS
+  cfId NUMBER;
+  trId NUMBER;
+  strId NUMBER;
+  tpId NUMBER;
+  tcId NUMBER;
+  srId NUMBER;
+  outMode INTEGER;
 
 BEGIN
  
@@ -8175,7 +8095,7 @@ BEGIN
     AND nshost=inputNsHost 
     FOR UPDATE;
 
- -- delete tape subrequest
+  -- delete tape subrequest
   DELETE FROM TapegatewaySubRequest 
     WHERE fseq=inputFseq 
     AND request=trId 
@@ -8187,13 +8107,18 @@ BEGIN
      -- read
      -- retry REC_RETRY 
      -- failed the segment on that tape
-     UPDATE Segment SET status=6, severity=inputErrorCode, errorCode=-1 
+     UPDATE Segment
+       SET status    = 6, -- SEGMENT_FAILED
+           severity  = inputErrorCode,
+           errorCode = -1 
        WHERE fseq= inputfseq 
        AND tape=tpId 
        RETURNING copy INTO tcId;
  
      -- mark tapecopy as REC_RETRY
-     UPDATE TapeCopy  SET status=8, errorcode=inputErrorCode 
+     UPDATE TapeCopy
+       SET status    = 8, -- TAPECOPY_REC_RETRY
+           errorcode = inputErrorCode 
        WHERE id=tcId;   
   
   ELSE 
@@ -8205,12 +8130,14 @@ BEGIN
     
      --retry MIG_RETRY
      -- mark tapecopy as MIG_RETRY
-     UPDATE TapeCopy  SET status=9, errorcode=inputErrorCode 
+     UPDATE TapeCopy
+       SET status    = 9, -- TAPECOPY_MIG_RETRY
+           errorcode = inputErrorCode 
        WHERE id=tcId; 
   
   END IF;  
 EXCEPTION WHEN  NO_DATA_FOUND THEN
-    null;
+  null;
 END;
 /
 
@@ -8223,7 +8150,7 @@ BEGIN
   OPEN tcs FOR
     SELECT copynb, id, castorFile, status, errorCode, nbretry, missingCopies 
       FROM TapeCopy
-      WHERE status=9 
+      WHERE status=9 -- TAPECOPY_MIG_RETRY
       AND ROWNUM < 1000 
       FOR UPDATE SKIP LOCKED; 
 END;
@@ -8239,7 +8166,7 @@ BEGIN
   OPEN tcs FOR
     SELECT copynb, id, castorFile, status, errorCode, nbretry, missingCopies
      FROM TapeCopy
-     WHERE status=8 
+     WHERE status=8 -- TAPECOPY_REC_RETRY
      AND ROWNUM < 1000 
      FOR UPDATE SKIP LOCKED; 
 END;
@@ -8307,13 +8234,8 @@ BEGIN
          WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
         findNewFS := 0;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
+      EXCEPTION WHEN NO_DATA_FOUND OR LockError THEN
         -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
-        NULL;
-      WHEN LockError THEN
-      -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-      -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-      -- what to do, another thread will pick up the request so we don't do anything.
         NULL;
       END;
     END IF;
@@ -8554,16 +8476,16 @@ END;
 
 /* repack migration candidate selection policy */
 
-create or replace
-PROCEDURE tg_repackMigrSelPolicy(streamId IN INTEGER,
-                                 diskServerName OUT NOCOPY VARCHAR2,
-                                 mountPoint OUT NOCOPY VARCHAR2,
-                                 path OUT NOCOPY VARCHAR2, dci OUT INTEGER,
-                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
-                                 nsHost OUT NOCOPY VARCHAR2,
-                                 fileSize OUT INTEGER,
-                                 tapeCopyId OUT INTEGER,
-                                 lastUpdateTime OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE tg_repackMigrSelPolicy(
+  streamId       IN  INTEGER,
+  diskServerName OUT NOCOPY VARCHAR2,
+  mountPoint     OUT NOCOPY VARCHAR2,
+  path           OUT NOCOPY VARCHAR2, dci OUT INTEGER,
+  castorFileId   OUT INTEGER, fileId OUT INTEGER,
+  nsHost         OUT NOCOPY VARCHAR2,
+  fileSize       OUT INTEGER,
+  tapeCopyId     OUT INTEGER,
+  lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   diskServerId NUMBER;
   lastFSChange NUMBER;
@@ -8636,10 +8558,11 @@ END;
 
 /* get a candidate for migration */
 
-create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
-                                                ret OUT INTEGER,
-                                                outVid OUT NOCOPY VARCHAR2,
-                                                outputFile OUT castorTape.FileToMigrateCore_cur) AS
+CREATE OR REPLACE PROCEDURE tg_getFileToMigrate(
+  transactionId IN  NUMBER,
+  ret           OUT INTEGER,
+  outVid        OUT NOCOPY VARCHAR2,
+  outputFile    OUT castorTape.FileToMigrateCore_cur) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   strId NUMBER;
@@ -8655,18 +8578,15 @@ create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
   tcId  INTEGER:=0;
   lastUpdateTime NUMBER;
   knownName VARCHAR2(2048);
-  newFseq NUMBER;
   trId NUMBER;
   srId NUMBER;
   unused INTEGER;
 BEGIN
   ret:=0;
   BEGIN
-    -- last fseq is the first fseq value available for this migration
-    SELECT streammigration, lastfseq, id INTO strId, newFseq, trId
+    SELECT streammigration, id INTO strId, trId
       FROM TapeGatewayRequest
-     WHERE vdqmvolreqid = transactionId
-     FOR UPDATE;
+     WHERE vdqmvolreqid = transactionId;
 
     SELECT vid INTO outVid
       FROM Tape
@@ -8703,17 +8623,14 @@ BEGIN
     policy := 'defaultMigrSelPolicy';
   END;
 
-  IF policy like 'defaultMigrSelPolicy' THEN
-    -- default policy
-    tg_defaultMigrSelPolicy(strId,ds,mp,path,dcid ,cfId, fileId,nsHost, fileSize,tcId, lastUpdateTime);
-  ELSIF  policy LIKE 'repackMigrSelPolicy' THEN
+  IF  policy = 'repackMigrSelPolicy' THEN
     -- repack policy
     tg_repackMigrSelPolicy(strId,ds,mp,path,dcid ,cfId, fileId,nsHost, fileSize,tcId, lastUpdateTime);
-  ELSIF  policy LIKE 'drainDiskMigrSelPolicy' THEN
+  ELSIF  policy = 'drainDiskMigrSelPolicy' THEN
     -- drain disk policy
     tg_drainDiskMigrSelPolicy(strId,ds,mp,path,dcid ,cfId, fileId,nsHost, fileSize,tcId, lastUpdateTime);
   ELSE
-    -- default if we don't know at this point
+    -- default
     tg_defaultMigrSelPolicy(strId,ds,mp,path,dcid ,cfId, fileId,nsHost, fileSize,tcId, lastUpdateTime);
   END IF;
 
@@ -8736,7 +8653,15 @@ BEGIN
     FROM CastorFile
    WHERE id = cfId; -- we rely on the check done before
 
+  DECLARE
+    newFseq NUMBER;
   BEGIN
+   -- Atomically increment and read the next FSEQ to be written to
+   UPDATE TapeGatewayRequest
+     SET lastfseq=lastfseq+1
+     WHERE id=trId
+     RETURNING lastfseq-1 into newFseq; -- The previous calue is where we'll write
+
     INSERT INTO TapeGatewaySubRequest
       (fseq, id, tapecopy, request,diskcopy)
       VALUES (newFseq, ids_seq.nextval, tcId,trId, dcid)
@@ -8746,10 +8671,6 @@ BEGIN
       (id,type)
       VALUES (srId,180);
   
-
-   UPDATE TapeGatewayRequest
-     SET lastfseq=lastfseq+1
-     WHERE id=trId; --increased when we have the proper value
 
    OPEN outputFile FOR
      SELECT fileId,nshost,lastUpdateTime,ds,mp,path,knownName,fseq,filesize,id
@@ -8772,22 +8693,22 @@ END;
 /* get a candidate for recall */
 
 
-create or replace
-PROCEDURE tg_getFileToRecall (transactionId IN NUMBER, 
-                                                ret OUT INTEGER, 
-                                                vidOut OUT NOCOPY VARCHAR2,
-                                                outputFile OUT castorTape.FileToRecallCore_Cur) AS
- trId INTEGER;
- ds VARCHAR2(2048);
- mp VARCHAR2(2048);
- path VARCHAR2(2048); 
- segId NUMBER;
- dcId NUMBER;
- tcId NUMBER;
- tapeId NUMBER;
- srId NUMBER;
- newFseq INTEGER;
- cfId NUMBER;
+CREATE OR REPLACE PROCEDURE tg_getFileToRecall (
+  transactionId IN  NUMBER, 
+  ret           OUT INTEGER, 
+  vidOut        OUT NOCOPY VARCHAR2,
+  outputFile    OUT castorTape.FileToRecallCore_Cur) AS
+  trId INTEGER;
+  ds VARCHAR2(2048);
+  mp VARCHAR2(2048);
+  path VARCHAR2(2048); 
+  segId NUMBER;
+  dcId NUMBER;
+  tcId NUMBER;
+  tapeId NUMBER;
+  srId NUMBER;
+  newFseq INTEGER;
+  cfId NUMBER;
 
 BEGIN 
   ret:=0;
@@ -8868,17 +8789,17 @@ END;
 /* get the information from the db for a successful migration */
 
 
-create or replace
-PROCEDURE tg_getRepackVidAndFileInfo( inputFileId IN NUMBER,
-                                      inputNsHost IN VARCHAR2,
-                                      inFseq IN INTEGER,
-                                      transactionId IN NUMBER, 
-                                      byteTransfered IN NUMBER,
-                                      outRepackVid OUT NOCOPY VARCHAR2,
-                                      strVid OUT NOCOPY VARCHAR,
-                                      outCopyNb OUT INTEGER,
-                                      outLastTime OUT NUMBER,
-                                      ret OUT INTEGER) AS 
+CREATE OR REPLACE PROCEDURE tg_getRepackVidAndFileInfo(
+  inputFileId    IN  NUMBER,
+  inputNsHost    IN  VARCHAR2,
+  inFseq         IN  INTEGER,
+  transactionId  IN  NUMBER, 
+  byteTransfered IN  NUMBER,
+  outRepackVid   OUT NOCOPY VARCHAR2,
+  strVid         OUT NOCOPY VARCHAR,
+  outCopyNb      OUT INTEGER,
+  outLastTime    OUT NUMBER,
+  ret            OUT INTEGER) AS 
   cfId NUMBER;
   fs NUMBER;
 BEGIN
@@ -8931,13 +8852,13 @@ END;
 
 
 /* get the information from the db for a successful recall */
-
-CREATE OR REPLACE PROCEDURE tg_getSegmentInfo ( transactionId IN NUMBER,
-                                                inFileId IN NUMBER, 
-                                                inHost IN VARCHAR2,
-                                                inFseq IN INTEGER, 
-                                                outVid OUT NOCOPY VARCHAR2, 
-                                                outCopy OUT INTEGER ) AS
+CREATE OR REPLACE PROCEDURE tg_getSegmentInfo(
+  transactionId IN  NUMBER,
+  inFileId      IN  NUMBER, 
+  inHost        IN  VARCHAR2,
+  inFseq        IN  INTEGER, 
+  outVid        OUT NOCOPY VARCHAR2, 
+  outCopy       OUT INTEGER ) AS
  trId NUMBER;
  cfId NUMBER;
 
@@ -8955,9 +8876,10 @@ BEGIN
 END;
 /
 
-/* get the stream without any tape associated */
 
-CREATE OR REPLACE PROCEDURE tg_getStreamsWithoutTapes (strList OUT castorTape.Stream_Cur) AS
+/* get the stream without any tape associated */
+CREATE OR REPLACE PROCEDURE tg_getStreamsWithoutTapes(
+  strList OUT castorTape.Stream_Cur) AS
 
 BEGIN
  -- get request in status TO_BE_RESOLVED
@@ -8973,11 +8895,11 @@ BEGIN
 END;
 /
 
+
 /* get tape with a pending request in VDQM */
-
-
-CREATE OR REPLACE PROCEDURE tg_getTapesWithDriveReqs (timeLimit IN NUMBER,
-                                                      taperequest OUT castorTape.tapegatewayrequest_Cur) AS
+CREATE OR REPLACE PROCEDURE tg_getTapesWithDriveReqs(
+  timeLimit   IN  NUMBER,
+  taperequest OUT castorTape.tapegatewayrequest_Cur) AS
 
  trIds "numList";
 
@@ -9022,11 +8944,11 @@ END;
 /
 
 /* get a tape without any drive requests sent to VDQM */
-
-
-
-create or replace
-PROCEDURE tg_getTapeWithoutDriveReq ( reqId OUT NUMBER,tapeMode OUT NUMBER, tapeSide OUT INTEGER, tapeVid OUT NOCOPY VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE tg_getTapeWithoutDriveReq(
+  reqId    OUT NUMBER,
+  tapeMode OUT NUMBER,
+  tapeSide OUT INTEGER,
+  tapeVid  OUT NOCOPY VARCHAR2) AS
 BEGIN
 -- get a request in TO_BE_SENT_TO_VDQM
    SELECT id, accessmode INTO reqId, tapeMode 
@@ -9053,11 +8975,10 @@ END;
 
 
 /* get tape to release in VMGR */
-
-create or replace
-PROCEDURE  tg_getTapeToRelease ( inputVdqmReqId IN INTEGER, 
-                                                   outputTape OUT NOCOPY VARCHAR2, 
-                                                   outputMode OUT INTEGER ) AS
+CREATE OR REPLACE PROCEDURE tg_getTapeToRelease(
+  inputVdqmReqId IN  INTEGER, 
+  outputTape     OUT NOCOPY VARCHAR2, 
+  outputMode     OUT INTEGER ) AS
   strId NUMBER;
   tpId NUMBER;
 BEGIN
@@ -9085,12 +9006,12 @@ END;
 
 
 /* invalidate a file that it is not possible to tape as candidate to migrate or recall */
-
-CREATE OR REPLACE PROCEDURE tg_invalidateFile (transactionId IN NUMBER,
-                                               inputFileId IN NUMBER, 
-                                               inputNsHost IN VARCHAR2,
-                                               inputFseq IN INTEGER,
-                                               inputErrorCode IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE tg_invalidateFile(
+  transactionId  IN NUMBER,
+  inputFileId    IN NUMBER, 
+  inputNsHost    IN VARCHAR2,
+  inputFseq      IN INTEGER,
+  inputErrorCode IN INTEGER) AS
 BEGIN
 
   UPDATE TapeGatewayRequest SET lastfseq=lastfseq-1 
@@ -9102,29 +9023,25 @@ END;
 /
 
 /* restart taperequest which had problems */
+CREATE OR REPLACE PROCEDURE tg_restartLostReqs(
+  trIds IN castor."cnumList") AS
 
-
-
-
-create or replace
-PROCEDURE tg_restartLostReqs(trIds IN castor."cnumList") AS
-
- vdqmId INTEGER;
+  vdqmId INTEGER;
 
 BEGIN
 
  FOR  i IN trIds.FIRST .. trIds.LAST LOOP   
-    BEGIN
+   BEGIN
  
      --  STATUS ONGOING: these are the ones which were ongoing ... crash clean up needed 
-      SELECT vdqmvolreqid INTO vdqmId 
-        FROM  TapeGatewayRequest 
-        WHERE id=trIds(i) ;
-      tg_endTapeSession(vdqmId,0);
+     SELECT vdqmvolreqid INTO vdqmId 
+       FROM  TapeGatewayRequest 
+       WHERE id=trIds(i) ;
+     tg_endTapeSession(vdqmId,0);
 
-    EXCEPTION WHEN NO_DATA_FOUND THEN
+   EXCEPTION WHEN NO_DATA_FOUND THEN
      NULL;
-    END;
+   END;
  END LOOP;
  COMMIT;
 END;
@@ -9132,21 +9049,21 @@ END;
 
 
 /* update the db after a successful migration */
-
-create or replace PROCEDURE tg_setFileMigrated  (transactionId IN NUMBER, 
-                                                inputFileId  IN NUMBER,
-                                                inputNsHost IN VARCHAR2, 
-                                                inputFseq IN INTEGER, 
-                                                inputFileTransaction NUMBER,
-                                                streamReport OUT castor.StreamReport_Cur) AS
- trId NUMBER;
- tcNumb INTEGER;
- cfId NUMBER;
- tcId NUMBER;
- srId NUMBER;
- tcIds "numList";
- srIds "numList";
- dcId NUMBER;
+CREATE OR REPLACE PROCEDURE TG_SETfILEmIGRATED(
+  transactionId        IN NUMBER, 
+  inputFileId          IN NUMBER,
+  inputNsHost          IN VARCHAR2, 
+  inputFseq            IN INTEGER, 
+  inputFileTransaction NUMBER,
+  streamReport         OUT castor.StreamReport_Cur) AS
+  trId NUMBER;
+  tcNumb INTEGER;
+  cfId NUMBER;
+  tcId NUMBER;
+  srId NUMBER;
+  tcIds "numList";
+  srIds "numList";
+  dcId NUMBER;
 
 BEGIN
  
@@ -9171,16 +9088,19 @@ BEGIN
 
   DELETE FROM id2type WHERE id= srId;
 
-  UPDATE tapecopy SET status=5 WHERE id=tcId;
+  UPDATE tapecopy
+    SET status=5 -- TAPECOPY_STAGED
+    WHERE id=tcId;
    
   SELECT count(*) INTO tcNumb 
     FROM tapecopy 
     WHERE castorfile = cfId  
-    AND STATUS != 5;
+    AND STATUS != 5; -- TAPECOPY_STAGED
 
   -- let's check if another copy should be done
   IF tcNumb = 0 THEN
-     UPDATE DiskCopy SET status=0 
+     UPDATE DiskCopy
+       SET status=0 -- DISKCOPY_STAGED
        WHERE castorfile = cfId
        AND status=10;
 
@@ -9194,7 +9114,11 @@ BEGIN
   END IF;
 
   -- archive Repack requests should any be in the db
-  FOR i IN (SELECT id FROM SubRequest WHERE castorfile=cfId AND status=12) LOOP
+  FOR i IN (
+    SELECT id FROM SubRequest
+    WHERE castorfile=cfId AND
+          status=12 -- SUBREQUEST_REPACK
+    ) LOOP
     archivesubreq(i.id, 8);
   END LOOP;
   
@@ -9209,49 +9133,15 @@ BEGIN
 END;
 /
 
-/* repack start the migration phase */
-
-create or replace PROCEDURE tg_startRepackMigration
-(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER,
- reuid OUT INTEGER, regid OUT INTEGER) AS
-  fs NUMBER;
-  svcClassId NUMBER;
-BEGIN
-  UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT
-   WHERE id = dcId RETURNING diskCopySize INTO fs;
-  -- update the Repack subRequest for this file. The status REPACK
-  -- stays until the migration to the new tape is over.
-  UPDATE SubRequest
-     SET diskCopy = dcId, status = 12  -- REPACK
-   WHERE id = srId;   
-  -- get the service class, uid and gid
-  SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
-    FROM StageRepackRequest R, SubRequest
-   WHERE SubRequest.request = R.id
-     AND SubRequest.id = srId;
-  -- create the required number of tapecopies for the files
-  -- one tapecopy by definition because we cannot repack the same file more than once at the same time.
-  internalPutDoneFunc(cfId, fs, 0, 1, svcClassId);
-  -- set svcClass in the CastorFile for the migration
-  UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
-  -- update remaining STAGED diskcopies to CANBEMIGR too
-  -- we may have them as result of disk2disk copies, and so far
-  -- we only dealt with dcId
-  UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
-   WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
-END;
-/
-
-
 
 /* update the db after a successful recall */
-
-create or replace PROCEDURE tg_setFileRecalled (transactionId IN NUMBER, 
-                                                inputFileId  IN NUMBER,
-                                                inputNsHost IN VARCHAR2, 
-                                                inputFseq IN NUMBER, 
-                                                inputFileTransaction IN NUMBER,
-                                                streamReport OUT castor.StreamReport_Cur) AS
+CREATE OR REPLACE PROCEDURE tg_setFileRecalled(
+  transactionId        IN  NUMBER, 
+  inputFileId          IN  NUMBER,
+  inputNsHost          IN  VARCHAR2, 
+  inputFseq            IN  NUMBER, 
+  inputFileTransaction IN  NUMBER,
+  streamReport         OUT castor.StreamReport_Cur) AS
   tcId NUMBER;
   dcId NUMBER;
   cfId NUMBER;
@@ -9325,27 +9215,23 @@ BEGIN
         diskCopySize = fs
     WHERE id = dcid;
   
-  IF reqType = 119 THEN  -- OBJ_StageRepackRequest
-    tg_startRepackMigration(subRequestId, cfId, dcid, ouid, ogid);
-  ELSE
-    -- restart this subrequest if it's not a repack one
-    UPDATE SubRequest
-       SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
-           lastModificationTime = getTime(), parent = 0
-       WHERE id = subRequestId;
-    -- and trigger new migrations if missing tape copies were detected
-    IF missingTCs > 0 THEN
-      DECLARE
-        newTcId INTEGER;
-      BEGIN
-        FOR i IN 1..missingTCs LOOP
-          INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
-          VALUES (ids_seq.nextval, 0, cfId, 0, 0, 0)  -- TAPECOPY_CREATED
-          RETURNING id INTO newTcId;
-          INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
-        END LOOP;
-      END;
-    END IF;
+  -- restart this subrequest so that the stager can follow it up
+  UPDATE SubRequest
+     SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+         lastModificationTime = getTime(), parent = 0
+     WHERE id = subRequestId;
+  -- and trigger new migrations if missing tape copies were detected
+  IF missingTCs > 0 THEN
+    DECLARE
+      newTcId INTEGER;
+    BEGIN
+      FOR i IN 1..missingTCs LOOP
+        INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
+        VALUES (ids_seq.nextval, 0, cfId, 0, 0, 0)  -- TAPECOPY_CREATED
+        RETURNING id INTO newTcId;
+        INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
+      END LOOP;
+    END;
   END IF;
   
   -- restart other requests waiting on this recall
@@ -9371,10 +9257,11 @@ END;
 
 /* save in the db the results returned by the retry policy for migration */
 
-CREATE OR REPLACE PROCEDURE  tg_setMigRetryResult( tcToRetry IN castor."cnumList", 
-                                                   tcToFail IN castor."cnumList"  ) AS
- srId NUMBER;
- cfId NUMBER;
+CREATE OR REPLACE PROCEDURE tg_setMigRetryResult(
+  tcToRetry IN castor."cnumList", 
+  tcToFail  IN castor."cnumList" ) AS
+  srId NUMBER;
+  cfId NUMBER;
 
 BEGIN
    -- check because oracle cannot handle empty buffer
@@ -9382,7 +9269,9 @@ BEGIN
  
     -- restarted the one to be retried
     FORALL i IN tctoretry.FIRST .. tctoretry.LAST 
-      UPDATE TapeCopy SET status=1,nbretry = nbretry+1  
+      UPDATE TapeCopy SET
+        status = 1, -- TAPECOPY_TOBEMIGRATED
+        nbretry = nbretry+1  
         WHERE id = tcToRetry(i);    
 
   END IF;
@@ -9391,7 +9280,8 @@ BEGIN
   IF tcToFail(tcToFail.FIRST) != -1 THEN 
     -- fail the tapecopies   
     FORALL i IN tctofail.FIRST .. tctofail.LAST 
-      UPDATE TapeCopy SET status=6 
+      UPDATE TapeCopy SET
+        status = 6 -- TAPECOPY_FAILED
         WHERE id = tcToFail(i);
 
     -- fail repack subrequests
@@ -9406,7 +9296,8 @@ BEGIN
 
           -- STAGED because the copy on disk most probably is valid and the failure of repack happened during the migration 
 
-          UPDATE DiskCopy SET status=0 
+          UPDATE DiskCopy
+            SET status = 0  -- DISKCOPY_STAGED
             WHERE castorfile = cfId 
             AND status=10; -- otherwise repack will wait forever
 
@@ -9423,11 +9314,11 @@ END;
 /
 
 /* save in the db the results returned by the retry policy for recall */
-
-CREATE OR REPLACE PROCEDURE  tg_setRecRetryResult( tcToRetry IN castor."cnumList", 
-                                                   tcToFail IN castor."cnumList"  ) AS
- tapeId NUMBER;
- cfId NUMBER;
+CREATE OR REPLACE PROCEDURE tg_setRecRetryResult(
+  tcToRetry IN castor."cnumList", 
+  tcToFail  IN castor."cnumList"  ) AS
+  tapeId NUMBER;
+  cfId NUMBER;
 
 BEGIN
   -- I restart the recall that I want to retry
@@ -9436,17 +9327,23 @@ BEGIN
 
     -- tapecopy => TOBERECALLED
     FORALL i IN tcToRetry.FIRST .. tcToRetry.LAST
-      UPDATE TapeCopy SET status=4, errorcode=0, nbretry= nbretry+1 
+      UPDATE TapeCopy
+        SET status    = 4, -- TAPECOPY_TOBERECALLED
+            errorcode = 0,
+            nbretry   = nbretry+1 
         WHERE id=tcToRetry(i);
     
     -- segment => UNPROCESSED
     -- tape => PENDING if UNUSED OR FAILED with still segments unprocessed
     FOR i IN tcToRetry.FIRST .. tcToRetry.LAST LOOP
-      UPDATE Segment SET status=0
-       WHERE copy = tcToRetry(i)
-      RETURNING tape INTO tapeId;
-      UPDATE Tape set status = 8
-       WHERE id = tapeId AND status IN (0, 6);
+      UPDATE Segment
+        SET status = 0 -- SEGMENT_UNPROCESSED
+        WHERE copy = tcToRetry(i)
+        RETURNING tape INTO tapeId;
+      UPDATE Tape
+        SET status = 8 -- TAPE_WAITPOLICY
+        WHERE id = tapeId AND
+          status IN (0, 6); -- TAPE_UNUSED, TAPE_FAILED
     END LOOP;
   END IF;
   
@@ -9493,29 +9390,30 @@ END;
 
 
 /* update the db when a tape session is started */
-
-create or replace
-PROCEDURE  tg_startTapeSession ( inputVdqmReqId IN NUMBER, 
-                                 outVid OUT NOCOPY VARCHAR2, 
-                                 outMode OUT INTEGER, 
-                                 ret OUT INTEGER, 
-                                 outDensity OUT NOCOPY VARCHAR2, 
-                                 outLabel OUT NOCOPY VARCHAR2 ) AS
- reqId NUMBER;
- tpId NUMBER;
- segToDo INTEGER;
- tcToDo INTEGER;
- strId NUMBER;
- unused NUMBER;
+CREATE OR REPLACE PROCEDURE  tg_startTapeSession(
+  inputVdqmReqId IN  NUMBER, 
+  outVid         OUT NOCOPY VARCHAR2, 
+  outMode        OUT INTEGER, 
+  ret            OUT INTEGER, 
+  outDensity     OUT NOCOPY VARCHAR2, 
+  outLabel       OUT NOCOPY VARCHAR2 ) AS
+  reqId NUMBER;
+  tpId NUMBER;
+  segToDo INTEGER;
+  tcToDo INTEGER;
+  strId NUMBER;
+  unused NUMBER;
 
 BEGIN
 
   ret:=-2;
   -- set the request to ONGOING
-  UPDATE TapeGatewayRequest SET status=3 
-    WHERE vdqmVolreqid = inputVdqmReqId  
-    AND status =2 
-    RETURNING id, accessmode, streammigration, taperecall INTO reqId, outMode,strId, tpId;
+  UPDATE TapeGatewayRequest
+    SET status=3  -- TG_REQUEST_ONGOING
+    WHERE
+      vdqmVolreqid = inputVdqmReqId AND
+      status       = 2 -- TG_REQUEST_WAITING_TAPESERVER
+      RETURNING id, accessmode, streammigration, taperecall INTO reqId, outMode,strId, tpId;
   
   IF reqId IS NULL THEN
   
@@ -9539,10 +9437,11 @@ BEGIN
 
       END;
 
-      UPDATE Tape SET status=4 
-          WHERE id = tpId
-          AND tpmode=0  
-          RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- tape is MOUNTED 
+      UPDATE Tape
+        SET status=4 -- TAPE_MOUNTED
+        WHERE id = tpId
+        AND tpmode=0  
+        RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- tape is MOUNTED 
         
       ret:=0;
     ELSE 
@@ -9562,14 +9461,16 @@ BEGIN
         RETURN;
       END;
       
-      UPDATE Stream SET status=3 
-       WHERE id = 
-         ( SELECT streammigration 
-             FROM TapeGatewayRequest 
-             WHERE id=reqId ) 
-             RETURNING tape INTO tpId; -- RUNNING
+      UPDATE Stream
+        SET status = 3 -- STREAM_RUNNING
+        WHERE id = (
+          SELECT streammigration 
+            FROM TapeGatewayRequest 
+            WHERE id=reqId ) 
+            RETURNING tape INTO tpId; -- RUNNING
 
-      UPDATE Tape SET status=4  
+      UPDATE Tape
+        SET status = 4 -- TAPE_MOUNTED
         WHERE id = tpId 
         RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- MOUNTED
 
@@ -9583,30 +9484,33 @@ END;
 /
 
 /* Check configuration */
-
-create or replace
-PROCEDURE tg_checkConfiguration AS
-unused VARCHAR2(2048);
+CREATE OR REPLACE PROCEDURE tg_checkConfiguration AS
+  unused VARCHAR2(2048);
 BEGIN
- SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='interfaceDaemon' AND value='tapegatewayd';
+  -- This fires an exception if the db is configured not to run the tapegateway
+  SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='interfaceDaemon' AND value='tapegatewayd';
 END;
 /
 
 
 /* delete streams for not existing tapepools */
 
-create or replace
-PROCEDURE tg_deleteStream( strId IN NUMBER ) AS
-unused NUMBER;
-tcIds "numList";
-trId NUMBER;
+CREATE OR REPLACE PROCEDURE tg_deleteStream(
+  strId IN NUMBER) AS
+  unused NUMBER;
+  tcIds  "numList";
+  trId   NUMBER;
 BEGIN
  DELETE FROM tapegatewayrequest WHERE streammigration=strId RETURNING id INTO trId;
  DELETE FROM id2type WHERE id=trId;
  SELECT id INTO unused FROM Stream WHERE id=strId FOR UPDATE;
  DELETE FROM stream2tapecopy WHERE parent=strId RETURNING child BULK COLLECT INTO tcIds;
  FORALL i IN tcIds.FIRST .. tcIds.LAST
-    UPDATE tapecopy SET status = 1 WHERE tcIds(i)=id AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE stream2tapecopy.child=tcIds(i));
+    UPDATE tapecopy
+      SET status = 1 -- TAPECOPY_TOBEMIGRATED
+      WHERE
+        tcIds(i)=id AND
+        NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE stream2tapecopy.child=tcIds(i));
  DELETE FROM id2type where id=strId;
  DELETE FROM stream where id=strId;
 END;
@@ -9615,8 +9519,7 @@ END;
 
 /* delete taperequest  for not existing tape */
 
-create or replace
-PROCEDURE tg_deleteTapeRequest( reqId IN NUMBER ) AS
+CREATE OR REPLACE PROCEDURE tg_deleteTapeRequest( reqId IN NUMBER ) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
   tpId NUMBER;
@@ -9637,11 +9540,11 @@ BEGIN
 
     DELETE FROM id2type WHERE id= reqid;
     IF reqmode = 0 THEN
-      SELECT id INTO tpId
-        FROM Tape
-        WHERE id =tpId
-        FOR UPDATE;
-        
+      -- Lock and reset the tape
+      UPDATE Tape
+        SET status = 0 -- TAPE_UNUSED
+        WHERE id = tpId;
+
       SELECT copy BULK COLLECT INTO tcIds FROM Segment WHERE tape=tpId;
     
       FOR i IN tcIds.FIRST .. tcIds.LAST  LOOP
@@ -9683,7 +9586,10 @@ BEGIN
            WHERE id = strId;
        END;
        -- reset tape
-       UPDATE Tape SET status=0, stream = null WHERE stream = strId;
+       UPDATE Tape
+         SET status = 0, -- TAPE_UNUSED
+             stream = null
+         WHERE stream = strId;
   END IF;
 END;
 /

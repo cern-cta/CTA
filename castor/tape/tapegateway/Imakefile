@@ -39,7 +39,8 @@ DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(vmgr,castorvmgr)
 
 TAPEGATEWAYDBIN_SRCS = \
-	TapeGatewayDlfMessageStrings.cpp \
+        ScopedTransaction.cpp \
+  	TapeGatewayDlfMessageStrings.cpp \
 	TapeGatewaySubRequest.cpp \
 	TapeRequestStateCode.cpp \
 	TapeGatewayRequest.cpp \

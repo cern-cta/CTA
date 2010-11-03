@@ -45,7 +45,7 @@
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
-
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -77,6 +77,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
+  ScopedTransaction scpTrans(oraSvc);
 
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
@@ -85,7 +86,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
   try {
      // get tapes to check from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_GETTING_TAPES, 0, NULL);
-
+    // This SQL take lock on a tape gateway requests and updates them without commit.
     oraSvc->getTapesWithDriveReqs(tapeRequests,vids,m_timeOut);
 
   } catch (castor::exception::Exception& e) {
@@ -181,7 +182,9 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 
     gettimeofday(&tvStart, NULL);
     
+    // This SQL commits (both reties and the previous updates of the vdqm ping time
     oraSvc->restartLostReqs(tapesToRetry);
+    scpTrans.release();
 
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);

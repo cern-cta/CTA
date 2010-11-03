@@ -144,6 +144,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   // to be dropped as soon as rtcpclientd is not supported any longer 
 
   try {
+    // Safe SQL, wrapper is direct and it only throws exceptions.
     oraSvc->checkConfiguration();
   } catch (castor::exception::Exception& e){
 

@@ -14,7 +14,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
     starttime NUMBER,
     lastvdqmpingtime NUMBER, 
     vdqmvolreqid NUMBER, 
-    status NUMBER,
     vid VARCHAR2(2048));
   TYPE TapeGatewayRequest_Cur IS REF CURSOR RETURN TapeGatewayRequestExtended;
   TYPE TapeGatewayRequestCore IS RECORD (
@@ -1539,6 +1538,10 @@ BEGIN
       NULL;
     END;
   END LOOP; -- loop streams
+
+  -- resurrect the ones never attached
+  FORALL i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST
+    UPDATE TapeCopy SET status = 1 WHERE id = tapeCopyIds(i) AND status = 7;
   COMMIT;
 END;
 /

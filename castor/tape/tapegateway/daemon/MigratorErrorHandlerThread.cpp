@@ -48,6 +48,7 @@
 
 #include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -72,6 +73,10 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0,  NULL);
     return;
   }
+  // Open a scoped transaction that will rollback is any exception is thrown.
+  // Explicit commits and rollbacks will be done through it also.
+  // (To avoid unnecessary call to the DB)
+  ScopedTransaction scpTrans (oraSvc);
 
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
@@ -80,6 +85,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_GETTING_FILES, 0, NULL);
 
   try {
+    // Find all the failed migrations (tapecopies) and lock them
     oraSvc->getFailedMigrations(tcList);
   } catch (castor::exception::Exception& e){
 
@@ -93,6 +99,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
 
   if (tcList.empty()){
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_NO_TAPECOPY, 0, NULL);
+    scpTrans.rollback();
     return;
 
   }
@@ -153,7 +160,10 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   // update the db
 
   try {
+    // TODO This function does a commit in SQL for the moment but it should be
+    // fixed (when having a single convention)
     oraSvc->setMigRetryResult(tcIdsToRetry,tcIdsToFail);
+    scpTrans.commit();
     gettimeofday(&tvEnd, NULL);
     procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
     

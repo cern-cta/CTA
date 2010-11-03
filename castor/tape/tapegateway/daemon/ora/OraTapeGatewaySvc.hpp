@@ -208,6 +208,14 @@ namespace ora         {
     virtual void deleteTapeRequest(const u_signed64& tapeRequestId)
       throw (castor::exception::Exception);
 
+    // To directly commit 
+    virtual void commit()
+      throw (castor::exception::Exception);
+
+    // To direcly rollback
+    virtual void rollback()
+      throw (castor::exception::Exception);
+
   private:
 
     // To invalidate file

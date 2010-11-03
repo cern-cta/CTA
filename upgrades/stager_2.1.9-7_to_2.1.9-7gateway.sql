@@ -1,15 +1,116 @@
-/*******************************************************************
+/******************************************************************************
+ *              stager_2.1.9-7_to_2.1.9-7gateway.sql
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.12 $ $Date: 2009/08/13 15:14:25 $ $Author: gtaur $
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
  *
- * PL/SQL code for the tape gateway daemon
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This script upgrades a CASTOR v2.1.9-6 STAGER database to v2.1.9-7
  *
  * @author Castor Dev team, castor-dev@cern.ch
- *******************************************************************/
+ *****************************************************************************/
 
-/* PROCEDURE */
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+DECLARE
+  unused VARCHAR2(30);
+BEGIN
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_9_4'
+     AND release = '2_1_9_7gateway'
+     AND state != 'COMPLETE';
+  COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
+END;
+/
 
-/* attach drive request to tape */
+/* Version cross check and update */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE release LIKE '2_1_9_7%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we can't apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
+END;
+/
+
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_9_4', '2_1_9_7gateway', 'TRANSPARENT');
+COMMIT;
+
+
+
+/* Update and revalidation of PL-SQL code */
+/******************************************/
+
+DROP PROCEDURE INPUTMIGRPOLICYGATEWAY;
+
+DROP PROCEDURE INPUTMIGRPOLICYRTCP;
+
+DROP PROCEDURE TG_STARTREPACKMIGRATION;
+
+CREATE OR REPLACE PROCEDURE inputForMigrationPolicy(
+  svcclassName IN  VARCHAR2,
+  policyName   OUT NOCOPY VARCHAR2,
+  svcId        OUT NUMBER,
+  dbInfo       OUT castorTape.DbMigrationInfo_Cur) AS
+  tcIds "numList";
+BEGIN
+  -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
+  -- we look first for repack condidates for this svcclass
+  -- we update atomically WAITPOLICY
+  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId
+    FROM SvcClass
+   WHERE SvcClass.name = svcClassName;
+
+  UPDATE
+     /*+ LEADING(TC CF)
+         INDEX_RS_ASC(CF PK_CASTORFILE_ID)
+         INDEX_RS_ASC(TC I_TAPECOPY_STATUS) */
+         TapeCopy TC
+     SET status = 7
+   WHERE status IN (0, 1)
+     AND (EXISTS
+       (SELECT 'x' FROM SubRequest, StageRepackRequest
+         WHERE StageRepackRequest.svcclass = svcId
+           AND SubRequest.request = StageRepackRequest.id
+           AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+           AND TC.castorfile = SubRequest.castorfile
+      ) OR EXISTS (
+        SELECT 'x'
+          FROM CastorFile CF
+         WHERE TC.castorFile = CF.id
+           AND CF.svcClass = svcId)) AND rownum < 10000
+    RETURNING TC.id -- CREATED / TOBEMIGRATED
+    BULK COLLECT INTO tcIds;
+  COMMIT;
+  -- return the full resultset
+  OPEN dbInfo FOR
+    SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename,
+           CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize
+      FROM Tapecopy,CastorFile
+     WHERE CastorFile.id = TapeCopy.castorfile
+       AND TapeCopy.id IN
+         (SELECT /*+ CARDINALITY(tcidTable 5) */ *
+            FROM table(tcIds) tcidTable);
+END;
+/
 
 
 CREATE OR REPLACE PROCEDURE tg_attachDriveReqToTape(
@@ -1760,3 +1861,27 @@ END;
 /
 
 
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PROCEDURE' THEN
+      EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
+    ELSIF a.object_type = 'TRIGGER' THEN
+      EXECUTE IMMEDIATE 'ALTER TRIGGER '||a.object_name||' COMPILE';
+    ELSE
+      EXECUTE IMMEDIATE 'ALTER FUNCTION '||a.object_name||' COMPILE';
+    END IF;
+  END LOOP;
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_9_7gateway';
+COMMIT;

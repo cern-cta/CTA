@@ -48,6 +48,7 @@
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -72,8 +73,11 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 
   if (0 == oraSvc) {
    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR ,0, NULL);
-   return 0;
+   return NULL;
   }
+  // This thread will call a locking sql procedure. The scoped transaction
+  // will release the locks in case of failure
+  ScopedTransaction scpTrans (oraSvc);
 
   castor::tape::tapegateway::VdqmTapeGatewayRequest* request= new  castor::tape::tapegateway::VdqmTapeGatewayRequest();
 
@@ -84,9 +88,8 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 
   // get all the tapes to send from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,PRODUCER_GETTING_TAPE, 0,  NULL);
-
+    // This PL/SQL takes locks
     oraSvc->getTapeWithoutDriveReq(*request);
-
   } catch (castor::exception::Exception& e){
     // error in getting new tape to submit
 
@@ -96,14 +99,14 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_NO_TAPE, params);
     if (request) delete request;
-    return 0;
+    return NULL;
   }
 
   if (request->vid().empty()) {
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_NO_TAPE, 0, NULL);
     delete request;
-    return 0;
+    return NULL;
     
   }
 
@@ -119,8 +122,9 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
     };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_TAPE_FOUND,params);
 
+  // On success, disengage the safety mechanism to not rollback.
+  scpTrans.release();
   return request;
-
 }
 
 
@@ -128,27 +132,27 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 // runs the thread
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObject* par)throw()
-{
+    {
 
   // connect to the db
-   // service to access the database
+  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
 
-
   if (0 == oraSvc) {
-   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
-   return;
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
+    return;
   }
+  // This thread is called with an existing dangling lock. The scoped transaction
+  // will release the locks in case of failure
+  ScopedTransaction scpTrans (oraSvc);
 
   std::auto_ptr<castor::tape::tapegateway::VdqmTapeGatewayRequest> request (dynamic_cast<castor::tape::tapegateway::VdqmTapeGatewayRequest*>(par));
 
-
   // query vmgr to check the tape status and to retrieve the dgn
   VmgrTapeGatewayHelper vmgrHelper;
-  
-  // query vmgr to check the tape status and to retrieve the dgn
 
+  // query vmgr to check the tape status and to retrieve the dgn
   castor::stager::Tape tape;
   tape.setVid(request->vid());
   tape.setTpmode(request->accessMode());
@@ -160,48 +164,51 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
   try {
 
     vmgrHelper.getDataFromVmgr(tape);
-
   } catch (castor::exception::Exception& e) {
-    
+
     try {
       if ( e.code() == ENOENT ||  
-	   e.code() == EFAULT ||
-	   e.code() == EINVAL ||
-	   e.code() == ETHELD ||
-	   e.code() == ETABSENT ||
-	   e.code() == ETARCH ) {
-	// cancell the operation in the db for this error
-	// tape is in a bad status, no need to un-BUSY it
+          e.code() == EFAULT ||
+          e.code() == EINVAL ||
+          e.code() == ETHELD ||
+          e.code() == ETABSENT ||
+          e.code() == ETARCH ) {
+        // cancell the operation in the db for this error
+        // tape is in a bad status, no need to un-BUSY it
+        // SQL's wrapper is straightforward,
+        // SQL deletes but does not commit.
+        // Commit postponed to before the return.
+        oraSvc->deleteTapeRequest(request->taperequest());
 
-	oraSvc->deleteTapeRequest(request->taperequest());
-      
       } else {
-
-	oraSvc->endTransaction(); // try again to submit this tape later
-
+        // This is indeed a commit (TODO should probably be a rollback, as usual, to check)
+        oraSvc->endTransaction(); // try again to submit this tape later
+        scpTrans.release();
       }
-	
+
       gettimeofday(&tvEnd, NULL);
       signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-      
+
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	 castor::dlf::Param("Precise Message", e.getMessage().str()),
-	 castor::dlf::Param("TPVID",tape.vid()),
-	 castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	};
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+          castor::dlf::Param("Precise Message", e.getMessage().str()),
+          castor::dlf::Param("TPVID",tape.vid()),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, params);
-	
+
     } catch (castor::exception::Exception& e ){
       // impossible to update the information of submitted tape
-	  
+
       castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str()),
-	 castor::dlf::Param("TPVID", tape.vid())
-	};
+      {castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str()),
+          castor::dlf::Param("TPVID", tape.vid())
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	    
     }
+    // Commit for non-commiting deleteTapeRequest
+    scpTrans.commit();
     return;
   }
 
@@ -209,129 +216,115 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
   signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
   castor::dlf::Param paramsVmgr[] =
-    {
+  {
       castor::dlf::Param("TPVID",tape.vid()),
       castor::dlf::Param("dgn",tape.dgn()),
       castor::dlf::Param("label",tape.label()),
       castor::dlf::Param("density",tape.density()),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-    };
+  };
 
   // tape is fine
- 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR,paramsVmgr);
-  
+
   VdqmTapeGatewayHelper vdqmHelper;
   int vdqmReqId=0;
-  
+
   gettimeofday(&tvStart, NULL);
 
   try {
     // connect to vdqm
     vdqmHelper.connectToVdqm();
-    
+
     try {
       // submit the request to vdqm
-      vdqmReqId=vdqmHelper.submitTapeToVdqm(tape, m_port );
+      vdqmReqId=vdqmHelper.createRequestForAggregator(tape, m_port );
       request->setMountTransactionId(vdqmReqId);
 
       gettimeofday(&tvEnd, NULL);
       signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
       castor::dlf::Param paramsVdqm[] =
-	{
-	  castor::dlf::Param("TPVID",tape.vid()),
-	  castor::dlf::Param("port",m_port),
-	  castor::dlf::Param("mountTransactionId",vdqmReqId),
-	  castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	};
-
+      {
+          castor::dlf::Param("TPVID",tape.vid()),
+          castor::dlf::Param("port",m_port),
+          castor::dlf::Param("mountTransactionId",vdqmReqId),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      };
 
       // submition went fine
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_SUBMITTING_VDQM, paramsVdqm);
-	
       gettimeofday(&tvStart, NULL);
 
       try {
-	// save it to the db
-	
-	
-	oraSvc->attachDriveReqToTape(*request,tape);
+        // save it to the db (this one does commit)
+        oraSvc->attachDriveReqToTape(*request,tape);
+        scpTrans.release();
 
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-      
-	castor::dlf::Param paramsDb[] =
-	  {
-	    castor::dlf::Param("TPVID",tape.vid()),
-	    castor::dlf::Param("mountTransactionId",request->mountTransactionId()),
-	    castor::dlf::Param("request id", request->taperequest()),
-	    castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_REQUEST_SAVED, paramsDb);
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
+        castor::dlf::Param paramsDb[] =
+        {
+            castor::dlf::Param("TPVID",tape.vid()),
+            castor::dlf::Param("mountTransactionId",request->mountTransactionId()),
+            castor::dlf::Param("request id", request->taperequest()),
+            castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_REQUEST_SAVED, paramsDb);
 
-	// confirm to vdqm
-	try {
-	  vdqmHelper.confirmRequestToVdqm();
-	} catch (castor::exception::Exception& e) {
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("TPVID", tape.vid()),
-	     castor::dlf::Param("mountTransactionId",vdqmReqId)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, params);	   
-	    
-	}
+        // confirm to vdqm
+        try {
+          vdqmHelper.confirmRequestToVdqm();
+        } catch (castor::exception::Exception& e) {
+          castor::dlf::Param params[] =
+          {castor::dlf::Param("errorCode",sstrerror(e.code())),
+              castor::dlf::Param("errorMessage",e.getMessage().str()),
+              castor::dlf::Param("TPVID", tape.vid()),
+              castor::dlf::Param("mountTransactionId",vdqmReqId)
+          };
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, params);
+        }
       } catch (castor::exception::Exception& e) {
-	  // impossible to update the information of submitted tape
-	  
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("TPVID", tape.vid()),
-	     castor::dlf::Param("mountTransactionId",vdqmReqId)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	   
-      }
+        // impossible to update the information of submitted tape
 
+        castor::dlf::Param params[] =
+        {castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str()),
+            castor::dlf::Param("TPVID", tape.vid()),
+            castor::dlf::Param("mountTransactionId",vdqmReqId)
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);
+      }
     } catch (castor::exception::Exception& e) {
-	  // impossible to submit the tape
-	  vdqmHelper.disconnectFromVdqm();
-	  throw e;
-	  
+      // impossible to submit the tape
+      vdqmHelper.disconnectFromVdqm();
+      throw e;
     }
-      
     // in all cases we disconnect (otherwise we leak memory)
-
     vdqmHelper.disconnectFromVdqm();
-    
-  }catch (castor::exception::Exception& e) {
-      // impossible to connect/disconnect to/from vdqm
-      
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str()),
-	 castor::dlf::Param("TPVID", tape.vid()),
-	 castor::dlf::Param("mountTransactionId",vdqmReqId)
-	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR,params);
 
-      try {
-	oraSvc->endTransaction();
-      } catch (castor::exception::Exception& e) {
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	   castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	   
-	
-      }
-	   
+  } catch (castor::exception::Exception& e) {
+    // impossible to connect/disconnect to/from vdqm
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+        castor::dlf::Param("errorMessage",e.getMessage().str()),
+        castor::dlf::Param("TPVID", tape.vid()),
+        castor::dlf::Param("mountTransactionId",vdqmReqId)
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR,params);
+
+    try {
+      oraSvc->endTransaction();
+      scpTrans.release();
+    } catch (castor::exception::Exception& e) {
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);
+    }
   }
- 
-  
 }
 
 

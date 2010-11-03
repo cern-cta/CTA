@@ -49,7 +49,7 @@ namespace castor {
 
         public:
 	void connectToVdqm()throw (castor::exception::Exception);
-	int submitTapeToVdqm( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception);
+	int createRequestForAggregator( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception);
 	void confirmRequestToVdqm() throw (castor::exception::Exception);
 	void checkVdqmForRequest(const TapeGatewayRequest& tapeRequest) throw (castor::exception::Exception);
 	void disconnectFromVdqm()throw (castor::exception::Exception);

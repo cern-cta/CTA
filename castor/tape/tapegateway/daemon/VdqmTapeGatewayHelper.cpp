@@ -52,7 +52,7 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm() throw (ca
   return;
 }
 
-int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception){
+int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception){
 
   // send vol request
 
