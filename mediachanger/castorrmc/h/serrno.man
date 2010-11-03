@@ -592,7 +592,7 @@ The following error values are returned only by the stager package:
 (1722) No filesystems available in service class
 .TP
 .B ESTNOSEGFOUND
-(1723) File has no copy on tape or no diskcopies are accessible
+(1723) File has no copy on tape and no diskcopies are accessible
 .TP
 .B ESTTAPEOFFLINE
 (1724) File is on an offline tape
