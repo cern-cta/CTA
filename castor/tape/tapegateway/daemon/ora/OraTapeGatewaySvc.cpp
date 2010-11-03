@@ -171,14 +171,14 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::~OraTapeGatewaySvc() throw() 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::id() const {
+const unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::ID() {
+const unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::ID() {
   return castor::SVC_ORATAPEGATEWAYSVC;
 }
 
@@ -793,59 +793,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	file.setFileTransactionId((u_signed64)rs->getDouble(10));
 	file.setMountTransactionId(req.mountTransactionId());
 	file.setPositionCommandCode(TPPOSIT_FSEQ);
-
-	try {
-	  NsTapeGatewayHelper nsHelper;
-	  nsHelper.checkFileToMigrate(file,vid);
-	} catch (castor::exception::Exception& e) {
-
-	  struct Cns_fileid castorFileId;
-	  memset(&castorFileId,'\0',sizeof(castorFileId));
-	  strncpy(
-		  castorFileId.server,
-		  file.nshost().c_str(),
-		  sizeof(castorFileId.server)-1
-		  );
-	  castorFileId.fileid = file.fileid();
-	  
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("TPVID", vid.c_str())
-	    };
-	  
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
-	  
-
-	  try {
-
-	    
-	    FileErrorReport failure;
-	    failure.setMountTransactionId(file.mountTransactionId()); 
-	    failure.setFileid(file.fileid());
-	    failure.setNshost(file.nshost());
-	    failure.setFseq(file.fseq());
-	    failure.setErrorCode(e.code());
-	    invalidateFile(failure);
-
-	  } catch (castor::exception::Exception& ex){
-
-	    // just log the error
-	    castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(ex.code())),
-	     castor::dlf::Param("errorMessage",ex.getMessage().str()),
-	     castor::dlf::Param("TPVID", vid)
-	    };
-    
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_DB_ERROR , 3, params, &castorFileId);
-       
-	    
-	  }  
-
-	  m_getFileToMigrateStatement->closeResultSet(rs);
-	  continue; // get another tapecopy
-
-	}
 	
 	// we have a valid candidate we send a report to RmMaster stream started
 	try{
