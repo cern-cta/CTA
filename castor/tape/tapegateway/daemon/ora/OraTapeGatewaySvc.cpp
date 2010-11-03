@@ -165,7 +165,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::~OraTapeGatewaySvc() throw() 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::id() const {
+unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::id() const {
   return ID();
 }
 
