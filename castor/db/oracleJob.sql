@@ -937,7 +937,8 @@ BEGIN
        END IF;
        -- Update the reason for termination, overriding the error code set above
        UPDATE SubRequest 
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+              errorMessage = ''
         WHERE id = srId;
        -- Record in the JobFailedProcHelper temporary table that an action was
        -- taken
