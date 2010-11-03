@@ -782,7 +782,7 @@ INNER JOIN EffectiveLifespanType ON
 
 
 /**
- * This view shows candidate tape drive allocations before any dedicatioins
+ * This view shows candidate tape drive allocations before any dedications
  * have been taken into account.
  */
 CREATE OR REPLACE VIEW PotentialMounts_VIEW AS SELECT UNIQUE
@@ -844,7 +844,8 @@ WHERE
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   VolumePriority DESC,
-  TapeRequest.creationTime ASC;
+  TapeRequest.creationTime ASC,
+  DBMS_RANDOM.value;
 
 
 /**
