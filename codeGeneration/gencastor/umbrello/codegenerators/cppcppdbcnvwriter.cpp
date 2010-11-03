@@ -48,7 +48,8 @@ void CppCppDbCnvWriter::startSQLFile() {
          << "CREATE TABLE Type2Obj "
          << "(type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY,"
          << " object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL,"
-         << " svcHandler VARCHAR2(100));" << endl
+         << " svcHandler VARCHAR2(100),
+         << " CONSTRAINT UN_Type2Obj_typeObject UNIQUE (type, object));" << endl
          << endl
          << "/* ObjStatus metatable definition */" << endl
          << "CREATE TABLE ObjStatus "
