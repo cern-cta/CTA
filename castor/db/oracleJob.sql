@@ -744,7 +744,9 @@ CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest
@@ -766,7 +768,9 @@ BEGIN
    WHERE id = srId;
   -- Fail the subRequest
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -849,7 +853,7 @@ BEGIN
     -- checkFailJobsWhenNoSpace function for every row in the output. In
     -- situations where there are many PENDING transfers in the scheduler
     -- this can be extremely inefficient and expensive.
-    SELECT /*+ NO_MERGE(NSSvc) */
+    SELECT /*+ NO_MERGE(NFSSvc) */
            SR.subReqId, Request.reqId, NSSvc.NoSpace,
            -- If there are no requested filesystems, refer to the NFSSvc
            -- output otherwise call the checkAvailOfSchedulerRFS function
@@ -922,10 +926,6 @@ BEGIN
        -- Confirm SubRequest status hasn't changed after acquisition of lock
        SELECT id INTO srId FROM SubRequest
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Update the reason for termination.
-       UPDATE SubRequest 
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the job, procedures that
        -- would have been called if the job failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
@@ -935,6 +935,10 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Update the reason for termination, overriding the error code set above
+       UPDATE SubRequest 
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
+        WHERE id = srId;
        -- Record in the JobFailedProcHelper temporary table that an action was
        -- taken
        INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));
