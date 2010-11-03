@@ -62,12 +62,6 @@
 
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
-//------------------------------------------------------------------------------
-static castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>* s_factoryOraTapeGatewaySvc =
-  new castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>();
-
-//------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 
