@@ -333,7 +333,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << getIndent()
             << "\"DECLARE \\" << endl;
   // We need to decide whether we can use the "%ROWTYPE" shortcut
-  bool useRowtype = true;
+  bool useRowtype = false; // ROWTYPE implementation is buggy. we never use it. Doh'
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
