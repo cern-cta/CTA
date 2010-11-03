@@ -83,10 +83,10 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
     
-    Requestsatlas.start = optr.getOption('timec')-(datetime.timedelta(minutes = optr.getOption('interval'))/2)
-    Requestsatlas.stop = optr.getOption('timec')+(datetime.timedelta(minutes = optr.getOption('interval'))/2)
-    Requestscms.start = optr.getOption('timec')-(datetime.timedelta(minutes = optr.getOption('interval'))/2)
-    Requestscms.stop = optr.getOption('timec')+(datetime.timedelta(minutes = optr.getOption('interval'))/2)
+    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestsatlas.stop = optr.getOption('time')
+    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestscms.stop = optr.getOption('time')
     
     root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
     filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
@@ -197,10 +197,10 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
         
-    Requestsatlas.start = optr.getOption('timec')-datetime.timedelta(minutes = optr.getOption('interval'))
-    Requestsatlas.stop = optr.getOption('timec')+datetime.timedelta(minutes = optr.getOption('interval'))
-    Requestscms.start = optr.getOption('timec')-datetime.timedelta(minutes = optr.getOption('interval'))
-    Requestscms.stop = optr.getOption('timec')+datetime.timedelta(minutes = optr.getOption('interval'))
+    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('offset'))
+    Requestsatlas.stop = optr.getOption('time')
+    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('offset'))
+    Requestscms.stop = optr.getOption('time')
     
     try:
         if request.session['statusfile']['isvalid']:

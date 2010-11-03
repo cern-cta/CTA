@@ -31,7 +31,7 @@
           var elem = document.getElementById ("id_{{name}}");
           
           if (elem.addEventListener) 
-	{
+		  {
               elem.addEventListener ("DOMMouseScroll", MouseScroll{{name}}, false);
           }
           elem.onmouseover = null;
@@ -39,7 +39,8 @@
          </script>
 <span>{{userfriendlyname}}  </span>
 <input onblur="if(isNaN(parseInt(this.form.{{name}}.value))) this.form.{{name}}.value={{defaultvalue}}; if(parseInt(this.form.{{name}}.value)>{{max}}) this.form.{{name}}.value={{max}}; if(parseInt(this.form.{{name}}.value)<{{min}}) this.form.{{name}}.value={{min}}" 
-onmouseover="Init{{name}}spinner()" type="text" id="id_{{name}}" name="{{name}}" value="{{defaultvalue}}" class="spinner" /></td>
+onmouseover="Init{{name}}spinner()" type="text" id="id_{{name}}" name="{{name}}" value="{{defaultvalue}}" class="spinner" 
+onmousewheel="MouseScroll{{name}}(event);"/></td>
 
 <td><input class="spinnerarrow" type="button" value=" /\ " onclick="if(parseInt(this.form.{{name}}.value)<{{max}})this.form.{{name}}.value++;"></td>
 </tr>

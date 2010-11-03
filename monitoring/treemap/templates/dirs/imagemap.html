@@ -54,7 +54,7 @@ function getAjaxObject()
 	return req;
 }
 
-function updateStatus()
+/*function updateStatus()
 {
 	  ajax = getAjaxObject();
 	  if (ajax == null) alert("no ajax object found!");
@@ -84,46 +84,131 @@ function updateStatus()
 
 	ajax.open("GET", "{{relstatuspath}}", true);
 	ajax.send(null); 
+}*/
+
+//
+
+function getFrameDoc(theframe)
+{
+	  //alert("1");
+	  var oDoc = (theframe.contentWindow || theframe.contentDocument || iframe)
+	  //alert("2");
+	  if (oDoc.document) oDoc = oDoc.document;
+	  //alert("3");
+	  return oDoc;
+}
+
+function enableFrameReadyVerbosity(iframe)
+{
+	iframe.ready = false;
+	if (iframe.attachEvent)
+	{
+	    iframe.attachEvent("onload", function(){this.ready = true;});
+	} 
+	else 
+	{
+	    iframe.onload = function(){this.ready = true;};
+	}
+}
+
+function findPosX(obj)
+{
+	   var curleft = 0;
+	   if(obj.offsetParent) 
+	   {
+	      while(obj.offsetParent) 
+		  {
+	         curleft += obj.offsetLeft
+	         obj = obj.offsetParent;
+	      }
+	   }
+	   else if(obj.x) 
+	     curleft = obj.x;
+	   return curleft;
+}
+function findPosY(obj) 
+{
+	   var curtop = 0;
+	   if(obj.offsetParent) 
+	   {
+	      while(obj.offsetParent) 
+		  {
+	         curtop += obj.offsetTop
+	         obj = obj.offsetParent;
+	      }
+	   }
+	   else if(obj.y)
+	      curtop = obj.y;
+	   return curtop;
+}
+
+function deactivateProgressBar()
+{
+	try
+	{
+		clearInterval(showStatus.timerid);
+		//alert("deactivate progress bar call");
+	}
+	catch(e)
+	{
+		;
+	}
+	try
+	{
+		//alert("deactivate using html");
+		savedid = parseInt(document.getElementById("timerid").innerHTML);
+		//alert(savedid);
+		if(!isNaN(savedid)) clearInterval(savedid);
+	}
+	catch(e)
+	{
+		;
+	}
+		
+	document.getElementById('statuscontainer').style.visibility ='hidden';
+
 }
 
 function writeStatusToDiv()
 {
 	var IE = /*@cc_on!@*/false;
-	document.getElementById('statuscontainer').innerHTML = "<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0' src='{{apacheserver}}/{{relstatuspath}}'></iframe>"; 
+	statcont = document.getElementById('statuscontainer');
+	statcont.style.visibility ='visible';
+	button = document.getElementById('id_blackredbutton');
+
+	statcont.style.top = findPosY(button) + "px";
+	statcont.style.left = findPosX(button) + "px";
+	
+	//statcont.innerHTML = "<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0' src='{{apacheserver}}/{{relstatuspath}}'></iframe>"; 
+
     var stframe = document.getElementById('statusframe');
-    var status = 0;
+    stframe.src = '{{apacheserver}}/{{relstatuspath}}';
+
+	//alert("unload");
+	window.onunload = deactivateProgressBar;
+	
+    var framedocument = getFrameDoc(stframe);
+    while(framedocument.readyState != 'complete'){;}
+
+    //objectcheck = framedocument.getElementsByTagName('div')[0];
+    var objectcheck = framedocument.getElementById("no404");
     
-    if (IE)
+    if(objectcheck == null)
     {
-    	var status = stframe.contentWindow.document;
-    }
-    else
-    {
-    	var status = stframe.contentDocument;
+        if(!this.failures) this.failures = 0;
+    	if(this.failures > 0) {deactivateProgressBar();}
+        ++this.failures;
     }
 }
 
 function showStatus()
 {
-	setInterval ( "writeStatusToDiv()", 1000 );
+	this.timerid = setInterval ( "writeStatusToDiv()", 1000 );
+	document.getElementById("timerid").innerHTML = this.timerid;
 }
 
 function linkClicked(e)
 {
-	//var IE = /*@cc_on!@*/false;
-	//if (!IE) 
-	//{
-	//	tg = e.target;
-	//}
-	//else 
-	//{
-	//	tg = e.srcElement;
-	//	//window.event.srcElement
-	//}
-
-	//if (HTMLSpanElement){tg = tg.title;}
-	
-	//calls a view which sets cookie values to write the status into a file
 	document.getElementById('hiddencallframe').innerHTML = "<iframe style='display:inline; float:left; overflow:hidden' id='thecallframe' height = '20' width = '40' frameborder='0' src='{{djangoresponseurl}}/treemaps/triggerstatus_{{statusfilename}}'></iframe>"; 
 	showStatus();
 }
@@ -137,6 +222,7 @@ function catcalc(cal)
 	field.value = date2.print("%d.%m.%Y_%H:%M:%S");
 }
 
+
 function activateJsObjects()
 {		
 	document.getElementById("thesubtable").style.display = "inline";
@@ -145,6 +231,8 @@ function activateJsObjects()
 	{
 		links[i].onclick = linkClicked;
 	}
+	//alert("initial disabling");
+	deactivateProgressBar();
 }
 
 function notImplementedWarning()
@@ -197,8 +285,10 @@ function notImplementedWarning()
 						<td style="vertical-align:top" >
 							<br>
 							<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
-							<input class="blackredbutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
-							<div id="statuscontainer" style='position:relative; top:-50px; left:100px; background-color:#1F1F1F; overflow:hidden'></div>
+							<input id="id_blackredbutton" class="blackredbutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
+							<div id="statuscontainer" style='visibility:hidden; position:absolute; z-index:100; top:-50px; left:100px; background-color:#1F1F1F; overflow:hidden'>
+								<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0'></iframe>
+							</div>
 						</td>
 					</tr>
 				</form>
@@ -239,6 +329,7 @@ function notImplementedWarning()
 		
 	</tr> </table>
 	<div style="display: none" id="hiddencallframe"></div>
+	<div style="display: none" id="timerid"></div>
 </body>
     
 <style type="text/css">
