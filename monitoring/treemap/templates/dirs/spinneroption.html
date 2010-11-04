@@ -1,6 +1,6 @@
 {% load userDefinedFilters %}
 
-<table cellpadding="0" cellspacing="0" border="0">
+<table style="margin:0; padding:0;" cellpadding="0" cellspacing="0" border="0">
 <tr>
 <td rowspan="2">								
 <script LANGUAGE="JavaScript">          
@@ -37,17 +37,19 @@
           elem.onmouseover = null;
       }
          </script>
-<span>{{userfriendlyname}}  </span>
-<input onblur="if(isNaN(parseInt(this.form.{{name}}.value))) this.form.{{name}}.value={{defaultvalue}}; if(parseInt(this.form.{{name}}.value)>{{max}}) this.form.{{name}}.value={{max}}; if(parseInt(this.form.{{name}}.value)<{{min}}) this.form.{{name}}.value={{min}}" 
+{{userfriendlyname}}<br>
+<input style="margin:0px; vertical-align:bottom;" onblur="if(isNaN(parseInt(this.form.{{name}}.value))) this.form.{{name}}.value={{defaultvalue}}; if(parseInt(this.form.{{name}}.value)>{{max}}) this.form.{{name}}.value={{max}}; if(parseInt(this.form.{{name}}.value)<{{min}}) this.form.{{name}}.value={{min}}" 
 onmouseover="Init{{name}}spinner()" type="text" id="id_{{name}}" name="{{name}}" value="{{defaultvalue}}" class="spinner" 
-onmousewheel="MouseScroll{{name}}(event);"/></td>
-
-<td><input class="spinnerarrow" type="button" value=" /\ " onclick="if(parseInt(this.form.{{name}}.value)<{{max}})this.form.{{name}}.value++;"></td>
-</tr>
-<tr>
-<td><input class="spinnerarrow" type=button value=" \/ " onclick="if(parseInt(this.form.{{name}}.value)>{{min}})this.form.{{name}}.value--;" ></td>
-<td>
-   <span style="color:#ffff00; position:relative; top:-7px; left:5px">{{unit}}</span>
+onmousewheel="MouseScroll{{name}}(event);"/>
+<table style="display:inline; margin:0px;" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td><input class="spinnerarrow" type="button" value=" /\ " onclick="if(parseInt(this.form.{{name}}.value)<{{max}})this.form.{{name}}.value++;"></td>
+	</tr>
+	<tr>
+		<td><input class="spinnerarrow" type=button value=" \/ " onclick="if(parseInt(this.form.{{name}}.value)>{{min}})this.form.{{name}}.value--;" ></td>
+	</tr>
+</table><span style="color:#ffff00; vertical-align:bottom;">   {{unit}}</span>
+	
 </td>
 </tr>
 </table>

@@ -21,13 +21,13 @@ urlpatterns = patterns('',
     
 #    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
     
-    (r'(|{(?P<options>.*)})(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
+    (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
     
-    (r'(|{(?P<options>.*)})(?P<urlending>.*)/progress/$', 'dirs.views.getProgessStatus'),
+    (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/progress/$', 'dirs.views.getProgessStatus'),
     
-    (r'(|{(?P<options>.*)})(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
+    (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
-    (r'(|{(?P<options>.*)})(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
+    (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
     
     (r'triggerstatus_(?P<statusfilename>.*)', 'dirs.views.triggerStatus'),
 )

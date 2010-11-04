@@ -203,7 +203,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Oldest file last modification"] = Preset(lr, True, 'Dirs', '/castor', 12, optionsset)
+presetdict["Oldest - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 12, optionsset)
 
 #Preset for average file last modification
 lr = LevelRules()
@@ -212,25 +212,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Average file last modification"] = Preset(lr, True, 'Dirs', '/castor', 13, optionsset)
-
-#Preset for oldest file last modification
-lr = LevelRules()
-for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
-    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
-    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Oldest file last modification"] = Preset(lr, True, 'Dirs', '/castor', 14, optionsset)
-
-#Preset for oldest file last modification
-lr = LevelRules()
-for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
-    lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
-    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Oldest file last modification"] = Preset(lr, True, 'Dirs', '/castor', 15, optionsset)
+presetdict["Average - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 13, optionsset)
 
 #Preset for sigma file last modification
 lr = LevelRules()
@@ -239,7 +221,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Sigma file last modification"] = Preset(lr, True, 'Dirs', '/castor', 16, optionsset)
+presetdict["Sigma - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 16, optionsset)
 
 #Preset for newest file last modification
 lr = LevelRules()
@@ -248,7 +230,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Newest file last modification"] = Preset(lr, True, 'Dirs', '/castor', 17, optionsset)
+presetdict["Newest - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 17, optionsset)
 
 #Preset for oldest file on tape last modification
 lr = LevelRules()
@@ -257,7 +239,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Oldest file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 18, optionsset)
+presetdict["Oldest - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 18, optionsset)
 
 #Preset for average file on tape last modification
 lr = LevelRules()
@@ -266,7 +248,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Average file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 19, optionsset)
+presetdict["Average - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 19, optionsset)
 
 #Preset for sigma file on tape last modification
 lr = LevelRules()
@@ -275,7 +257,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Sigma file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 20, optionsset)
+presetdict["Sigma - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 20, optionsset)
 
 #Preset for newest file on tape last modification
 lr = LevelRules()
@@ -284,7 +266,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
-presetdict["Newest file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 21, optionsset)
+presetdict["Newest - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 21, optionsset)
 
 #Preset for Requests Atlas
 lr = LevelRules()

@@ -9,44 +9,46 @@ class OptionsReader(object):
     
     def __init__(self, options, presetid):
         self.optdict = {}
-        self.fromlink = {}
+        self.fromoptions = {}
         self.options = options 
         
         optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for urlopt in optset:
             try:
                 self.optdict[urlopt.getName()] = urlopt.optionsToValue(options)
-                self.fromlink[urlopt.getName()] = True
+                self.fromoptions[urlopt.getName()] = True
             except:
                 self.optdict[urlopt.getName()] = self.getStandardValue(urlopt.getName(), presetid)
-                self.fromlink[urlopt.getName()] = False
-        try:    
-            if self.optdict['start'] > self.optdict['stop']: 
-                temp =  self.optdict['start']
-                self.optdict['start'] = self.optdict['stop']
-                self.optdict['stop'] = temp
-                
-                temp = self.fromlink['start']
-                self.fromlink['start'] = self.fromlink['stop']
-                self.fromlink['stop'] = temp
-        except:
-            pass
+                self.fromoptions[urlopt.getName()] = False
         
     def getOption(self, optionname):
         try:
             return self.optdict[optionname]
         except:
             return self.getStandardValue(optionname)
+        
+    def extendOptions(self, extension, presetid):
+        assert(isinstance(extension, str))
+        self.options = self.options + extension;
+        
+        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
+        for urlopt in optset:
+            try:
+                self.optdict[urlopt.getName()] = urlopt.optionsToValue(self.options)
+                self.fromoptions[urlopt.getName()] = True
+            except:
+                pass
+            
     
     def getCorrectedOptions(self, presetid):
         correctedoptions = []
         optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         
         for urlopt in optset:
-            if self.fromlink[urlopt.getName()]:
+            if self.fromoptions[urlopt.getName()]:
                 if len(correctedoptions) > 0:
                     correctedoptions.append(', ')
-                correctedoptions.append(urlopt.getCorrectedString(self.optdict[urlopt.getName()], self.options))
+                correctedoptions.append(urlopt.valueToOptionString(self.optdict[urlopt.getName()]))
         
         return ''.join([bla for bla in correctedoptions])
     

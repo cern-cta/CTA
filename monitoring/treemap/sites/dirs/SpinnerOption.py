@@ -34,18 +34,6 @@ class SpinnerOption(object):
     def getName(self):
         return self.name
     
-    def getCorrectedString(self, value, options):
-        valuedict = re.match(self.fullexpression, options).groupdict() 
-        correctedoptions = []
-        thevalue = int(valuedict['value'])
-        if(thevalue > self.max): thevalue = self.max
-        
-        correctedoptions.append(self.name)
-        correctedoptions.append("=")
-        correctedoptions.append('%d' % thevalue) 
-        
-        return ''.join([bla for bla in correctedoptions])
-    
     def stringToValue(self, thestring):
         expr = self.getValueExpression()
         valuedict = re.match(expr, thestring).groupdict() 
@@ -63,6 +51,16 @@ class SpinnerOption(object):
     def valueToString(self, value):
         if(value > self.max): value = self.max
         return ('%d' % (value))
+    
+    def valueToOptionString(self, value):
+        correctedoptions = []
+        
+        correctedoptions.append(self.name)
+        correctedoptions.append('=')
+        
+        correctedoptions.append(self.valueToString(value))
+        
+        return ''.join([bla for bla in correctedoptions])
     
     def getStdVal(self):
         return self.stdval

@@ -17,6 +17,7 @@
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/presetdropdown.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/datefield.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/spinner.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/now.css"/>
 
 <script LANGUAGE="JavaScript">
 //define global menu values
@@ -26,7 +27,7 @@ function initMenu()
 activateJsObjects();
 }
 
-function getAjaxObject()
+/*function getAjaxObject()
 {
 	req = null;
 	try
@@ -54,7 +55,7 @@ function getAjaxObject()
 	return req;
 }
 
-/*function updateStatus()
+function updateStatus()
 {
 	  ajax = getAjaxObject();
 	  if (ajax == null) alert("no ajax object found!");
@@ -98,7 +99,7 @@ function getFrameDoc(theframe)
 	  return oDoc;
 }
 
-function enableFrameReadyVerbosity(iframe)
+/*function enableFrameReadyVerbosity(iframe)
 {
 	iframe.ready = false;
 	if (iframe.attachEvent)
@@ -109,7 +110,7 @@ function enableFrameReadyVerbosity(iframe)
 	{
 	    iframe.onload = function(){this.ready = true;};
 	}
-}
+}*/
 
 function findPosX(obj)
 {
@@ -155,9 +156,7 @@ function deactivateProgressBar()
 	}
 	try
 	{
-		//alert("deactivate using html");
 		savedid = parseInt(document.getElementById("timerid").innerHTML);
-		//alert(savedid);
 		if(!isNaN(savedid)) clearInterval(savedid);
 	}
 	catch(e)

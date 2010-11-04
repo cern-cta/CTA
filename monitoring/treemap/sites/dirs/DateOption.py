@@ -27,26 +27,6 @@ class DateOption(object):
     def getName(self):
         return self.name
     
-    def getCorrectedString(self, value, options):
-        valuedict = re.match(self.fullexpression, options).groupdict() 
-        correctedoptions = []
-        
-        correctedoptions.append(self.name)
-        correctedoptions.append("=")
-        correctedoptions.append('%02d' % (int(valuedict['day'])) )
-        correctedoptions.append('.')
-        correctedoptions.append('%02d' % (int(valuedict['month'])) )
-        correctedoptions.append('.')
-        correctedoptions.append('%04d' % (int(valuedict['year'])) )
-        correctedoptions.append('_')
-        correctedoptions.append('%02d' % (int(valuedict['hour'])) )
-        correctedoptions.append(':')
-        correctedoptions.append('%02d' % (int(valuedict['minute'])) )
-        correctedoptions.append(':')
-        correctedoptions.append('%02d' % (int(valuedict['second'])) )
-        
-        return ''.join([bla for bla in correctedoptions])
-    
     def stringToValue(self, thestring):
         expr = self.getValueExpression()
         valuedict = re.match(expr, thestring).groupdict() 
@@ -73,6 +53,16 @@ class DateOption(object):
         correctedoptions.append('%02d' % (thetime.minute) )
         correctedoptions.append(':')
         correctedoptions.append('%02d' % (thetime.second) )
+        
+        return ''.join([bla for bla in correctedoptions])
+    
+    def valueToOptionString(self, thetime):
+        correctedoptions = []
+        
+        correctedoptions.append(self.name)
+        correctedoptions.append('=')
+        
+        correctedoptions.append(self.valueToString(thetime))
         
         return ''.join([bla for bla in correctedoptions])
     

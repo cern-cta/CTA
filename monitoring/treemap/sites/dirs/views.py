@@ -338,6 +338,8 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             pos = rediraddr.rfind(urlending)
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
+            pos = rediraddr.rfind('/{')
+            if pos != -1: rediraddr = rediraddr[:pos+1]
             rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
             # = (statusfilename, already)
             request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
@@ -354,9 +356,11 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
                 
             #generate the new link to redirect
             rediraddr = request.path
-            pos = rediraddr.rfind(urlending)
+            pos = rediraddr.rfind(options) - 1
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
+            pos = rediraddr.rfind('/{')
+            if pos != -1: rediraddr = rediraddr[:pos+1]
             rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
             
             return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache})
@@ -400,54 +404,59 @@ def preset(request, options,  urlending):
                 posted[str(option.getName())]
                 #if no error here, continue:
                 if(isinstance(option,BooleanOption)):
-                    optr.optdict[option.getName()] = True
+                        optr.optdict[option.getName()] = True
+
                     
                 if(isinstance(option,SpinnerOption)):
                     valuedict = {}
                     try:
-                        try: #value in options?
-                            valuedict = re.match(option.getFullExpression(), options).groupdict() 
+                        try: #value posted?
+                            valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
                             value = int(valuedict['value'])
                         except:
-                            try: #value posted?
-                                valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
+                            try: #value in options?
+                                valuedict = re.match(option.getFullExpression(), options).groupdict() 
                                 value = int(valuedict['value'])
-                                options = options + option.getName() + "=" + str(posted[option.getName()])
-                                optr = OptionsReader(options, preset.staticid) 
-                            except Exception, e:#value is nowhere: take standard value
+                            except Exception, e: #value is nowhere: take standard value
                                 value = option.getStdVal();
                         
+
                         optr.optdict[option.getName()] = value
+                        
                     except:
                         pass
                 
                 if(isinstance(option,DateOption)):
                     valuedict = {}
                     try:
-                        try:
-                            valuedict = re.match(option.getFullExpression(), options).groupdict() 
-                            thetime = datetime.datetime.now() - datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
+                        try: #value posted?
+                            valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
+                            thetime = datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
                         except:
-                            try:
-                                valuedict = re.match(option.getValueExpression(), str(posted[option.getName()])).groupdict() 
-                                thetime = datetime.datetime.now() - datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
-                                options = options + option.getName() + "=" + str(posted[option.getName()])
-                                optr = OptionsReader(options, preset.staticid) 
-                            except Exception, e:
+                            try: #value in options?
+                                valuedict = re.match(option.getFullExpression(), options).groupdict() 
+                                thetime = datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
+                            except Exception, e: #value is nowhere: take standard value
                                 models = preset.lr.getRuleObject(0).getUsedClassNames(self)
                                 for modelname in models:
                                     try:
-                                        thetime = datetime.datetime.now() - (globals()[modelname].__dict__[option.getName()])
+                                        thetime = option.getStdVal();
                                         break
                                     except:
                                         pass
                         
-                        optr.optdict[option.getName()] = thetime.seconds/60
+                        optr.optdict[option.getName()] = thetime
+                            
                     except:
                         pass
                     
             except KeyError:
-                pass    
+                if(isinstance(option,BooleanOption)):
+                    try:
+                        optr.optdict[option.getName()]
+                        optr.optdict[option.getName()] = False
+                    except KeyError:
+                        pass
     else:
         raise Http404
     

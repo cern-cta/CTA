@@ -49,18 +49,22 @@ class BooleanOption(object):
         else:
             return 'false'
         
-    def getCorrectedString(self, value, options = None):
-        if (value):
-            return self.name + "=" + "true"
-        else:
-            return self.name + "=" + "false"
+    def valueToOptionString(self, value):
+        correctedoptions = []
+        
+        correctedoptions.append(self.name)
+        correctedoptions.append('=')
+        
+        correctedoptions.append(self.valueToString(value))
+        
+        return ''.join([bla for bla in correctedoptions])
         
     def getStdVal(self):
         return self.stdval
     
     def toHtml(self, options):
         try:
-            checked = self.findvalue(options)
+            checked = self.optionsToValue(options)
         except:
             checked =  self.getStdVal()
 
