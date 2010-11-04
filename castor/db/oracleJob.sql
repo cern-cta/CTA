@@ -853,11 +853,11 @@ BEGIN
     -- checkFailJobsWhenNoSpace function for every row in the output. In
     -- situations where there are many PENDING transfers in the scheduler
     -- this can be extremely inefficient and expensive.
-    SELECT /*+ NO_MERGE(NFSSvc) */
-           SR.subReqId, Request.reqId, NSSvc.NoSpace,
+    SELECT /*+ NO_MERGE(NoSpSvc) */  -- NoSpSvc is a SvcClass table alias
+           SR.subReqId, Request.reqId, NoSpSvc.NoSpace,
            -- If there are no requested filesystems, refer to the NFSSvc
            -- output otherwise call the checkAvailOfSchedulerRFS function
-           decode(SR.requestedFileSystems, NULL, NFSSvc.NoFSAvail,
+           decode(SR.requestedFileSystems, NULL, NoFSSvc.NoFSAvail,
              checkAvailOfSchedulerRFS(SR.requestedFileSystems,
                                       Request.reqType)) NoFSAvail
       FROM SubRequest SR,
@@ -873,24 +873,24 @@ BEGIN
         -- Table of all service classes with a boolean flag to indicate
         -- if space is available
         (SELECT id, checkFailJobsWhenNoSpace(id) NoSpace
-           FROM SvcClass) NSSvc,
+           FROM SvcClass) NoSpSvc,
         -- Table of all service classes with a boolean flag to indicate
         -- if there are any filesystems in PRODUCTION
         (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
            LEFT JOIN 
-             (SELECT DP2Svc.CHILD, decode(count(*), 0, 1, 0) NoFSAvail
+             (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
                 FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
                WHERE DS.ID = FS.diskServer
                  AND DS.status = 0  -- DISKSERVER_PRODUCTION
                  AND FS.diskPool = DP2Svc.parent
                  AND FS.status = 0  -- FILESYSTEM_PRODUCTION
                GROUP BY DP2Svc.child) results
-             ON SvcClass.id = results.child) NFSSvc
+             ON SvcClass.id = results.child) NoFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.lastModificationTime < getTime() - 60
-       AND NSSvc.id = Request.svcClass
-       AND NFSSvc.id = Request.svcClass;
+       AND NoSpSvc.id = Request.svcClass
+       AND NoFSSvc.id = Request.svcClass;
 END;
 /
 
