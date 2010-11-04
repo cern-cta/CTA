@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/16 09:13:00 $ $Author: waldron $
- *
  * This script upgrades a CASTOR vprevRelease SCHEMANAME database to vnewRelease
  *
  * @author Castor Dev team, castor-dev@cern.ch
