@@ -49,11 +49,6 @@ class BasicTree(object):
         
         self.graph.add_node(theobject)
         self.graph.add_edge(self.node_inscope, theobject)
-#        ng = self.graph.neighbors(theobject)
-#        print "theobject", id(theobject), theobject.namepart, hash(theobject)
-#        print "node_inscope", id(self.node_inscope), self.node_inscope.namepart, hash(self.node_inscope)
-#        for n in ng:
-#            print id(n), n.namepart
             
         if self.children_cached:
             self.children_inscope.append(theobject)

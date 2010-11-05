@@ -194,6 +194,10 @@ function writeStatusToDiv()
     
     if(objectcheck == null)
     {
+        //the first failure must be ignored to make it work in opera
+        //In Opera onunload event is useless because it fires too late + for some reason the first framedocument.readystate equals complete, even if it isn't
+        //If settings.PUBLIC_APACHE_URL is not equal settings.DJANGORESPONSE_URL even this code doesn't help,
+        //objectcheck=... will throw a security error then, because the framecontent is not from the same domain as the django response
         if(!this.failures) this.failures = 0;
     	if(this.failures > 0) {deactivateProgressBar();}
         ++this.failures;
@@ -208,6 +212,7 @@ function showStatus()
 
 function linkClicked(e)
 {
+	//alert("trigger status generation");
 	document.getElementById('hiddencallframe').innerHTML = "<iframe style='display:inline; float:left; overflow:hidden' id='thecallframe' height = '20' width = '40' frameborder='0' src='{{djangoresponseurl}}/treemaps/triggerstatus_{{statusfilename}}'></iframe>"; 
 	showStatus();
 }
@@ -284,7 +289,7 @@ function notImplementedWarning()
 						<td style="vertical-align:top" >
 							<br>
 							<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
-							<input id="id_blackredbutton" class="blackredbutton" type="submit" value="Apply" onmouseup = "showStatus();"/>
+							<input id="id_blackredbutton" class="blackredbutton" type="submit" value="Apply" onmouseup = "linkClicked();"/>
 							<div id="statuscontainer" style='visibility:hidden; position:absolute; z-index:100; top:-50px; left:100px; background-color:#1F1F1F; overflow:hidden'>
 								<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0'></iframe>
 							</div>
@@ -317,7 +322,7 @@ function notImplementedWarning()
         	{% endfor %}
         	</ul>  
 	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
-	   <br><br> <div style="font-size: 14px" >The displayed data is not live data. Exceptions are: Requests Atlas, Requests CMS</div>
+	   <br><br> <div style="font-size: 14px" >The displayed data is not live data (snapshot from 08.04.2010).<br>Exceptions are: Requests Atlas, Requests CMS</div>
 	</td>	
 		<noscript>
 			<div style="color:#7F1F1F" align = "center">

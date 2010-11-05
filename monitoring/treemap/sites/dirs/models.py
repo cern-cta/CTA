@@ -349,7 +349,6 @@ class Requestsatlas(models.Model):
     
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)
-        self.namepart = None
         self.requestscount = None
         
     def __unicode__(self):
@@ -357,18 +356,18 @@ class Requestsatlas(models.Model):
     
     def __str__(self):
         txt = ''
-        if(self.namepart == ''): 
+        if(self.filename == ''): 
             txt = "/"
         else:
-            txt = self.namepart
+            txt = self.filename
         return txt
     
     #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
         try:
-            self.namepart
-            return hash(self._get_pk_val().__str__() + self.namepart)
+            self.filename
+            return hash(self._get_pk_val().__str__() + self.filename)
         except:
             return hash(self._get_pk_val())
         
@@ -378,21 +377,21 @@ class Requestsatlas(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.namepart
+            self.filename
         except:
             raise Exception("This object seems not to exist in the generated tree")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.namepart]])
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -415,7 +414,7 @@ Requestsatlas.countChildren.__dict__['countsfor'] = 'getChildren'
 #mark parent Methods
 Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
 Requestsatlas.getParent.__dict__['returntype'] = ['Requestsatlas']
-Requestsatlas.getParent.__dict__['naviname'] = 'namepart'
+Requestsatlas.getParent.__dict__['naviname'] = 'filename'
 
 
 Requestsatlas.generatedtree = None
@@ -445,7 +444,6 @@ class Requestscms(models.Model):
     
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)
-        self.namepart = None
         self.requestscount = None
         
     def __unicode__(self):
@@ -453,18 +451,18 @@ class Requestscms(models.Model):
     
     def __str__(self):
         txt = ''
-        if(self.namepart == ''): 
+        if(self.filename == ''): 
             txt = "/"
         else:
-            txt = self.namepart
+            txt = self.filename
         return txt
     
     #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
         try:
-            self.namepart
-            return hash(self._get_pk_val().__str__() + self.namepart)
+            self.filename
+            return hash(self._get_pk_val().__str__() + self.filename)
         except:
             return hash(self._get_pk_val())
         
@@ -474,21 +472,21 @@ class Requestscms(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.namepart
+            self.filename
         except:
             raise Exception("This object seems not to exist in the generated tree")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.namepart]])
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.namepart, self.__class__.__name__)
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -511,7 +509,7 @@ Requestscms.countChildren.__dict__['countsfor'] = 'getChildren'
 #mark parent Methods
 Requestscms.getParent.__dict__['methodtype'] = 'parent'
 Requestscms.getParent.__dict__['returntype'] = ['Requestscms']
-Requestscms.getParent.__dict__['naviname'] = 'namepart'
+Requestscms.getParent.__dict__['naviname'] = 'filename'
 
 
 Requestscms.generatedtree = None
@@ -540,7 +538,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
         
         if not tree.hasRoot():
             entry = copy.copy(requestdata)
-            entry.namepart = name[:pos]
+            entry.filename = name[:pos]
             entry.requestscount = 1
             tree.setRoot(entry)
             tree.traverseToRoot()
@@ -551,21 +549,21 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             oldpos = 0
             pos = name.find('/')
             
-        thenamepart = ''
+        thefilename = ''
         therequestcount = 1
             
         while (pos >=0):
             #todo: split and traverse
-            namepart = name[:pos]
+            filename = name[:pos]
             #entry = copy.copy(requestdata)
             
-            thenamepart = namepart
+            thefilename = filename
             therequestcount = 1
             
             childintree = False
             for child in tree.getChildren():
-                chnp = child.namepart
-                enp = thenamepart
+                chnp = child.filename
+                enp = thefilename
                 chnplen = len(chnp)
                 enplen = len(enp)
                 a = 1
@@ -584,11 +582,11 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             if not childintree:
                 #for root: if this is the current parent
                 parent = tree.getCurrentObject()
-                if thenamepart == parent.namepart:
+                if thefilename == parent.filename:
                     parent.requestscount = parent.requestscount + 1
                 else:
                     entrytoadd = copy.copy(requestdata)
-                    entrytoadd.namepart = thenamepart
+                    entrytoadd.filename = thefilename
                     entrytoadd.requestscount = therequestcount
                     tree.addChild(entrytoadd)
                     tree.traverseInto(entrytoadd)
@@ -646,16 +644,16 @@ def traverseToRequestInTree(name, reqmodel):
     
     lastiterationfollows = False #name is missing a slash at the very end, that is why the last iteration must be handled a bit different    
     while (pos >=0) or lastiterationfollows :
-        namepart = name[:pos]
+        filename = name[:pos]
         
-        if tree.getCurrentObject().namepart == name:
+        if tree.getCurrentObject().filename == name:
             return tree
         
         for child in tree.getChildren():
-            if child.namepart == name:
+            if child.filename == name:
                 tree.traverseInto(child)
                 return tree
-            if child.namepart == namepart:
+            if child.filename == filename:
                 tree.traverseInto(child)
             
         pos = name.find('/', pos + 1)

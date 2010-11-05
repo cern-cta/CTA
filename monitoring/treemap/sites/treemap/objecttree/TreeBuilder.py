@@ -42,7 +42,7 @@ class TreeBuilder(object):
         
     def generateObjectTree(self, rootobject, statusfilename):
         tree = ObjectTree()
-		
+
         classname = rootobject.__class__.__name__
         level = 0
         rootisannex = False
@@ -110,14 +110,17 @@ class TreeBuilder(object):
             print level, self.chcount, parent.getObject()
             
 
-            #this will always overestimate
+            #this status calculation is empiric: 
+            #-self.chcount is guaranteed smaller or equal than max_items and because of the head with text, it is always smalller
+            #-therefore float(self.chcount)/float(max_items) will heavily underestimate and is therefore multiplied by a value
+            
             #self.max_tree_leafes doesn't apply to root
             if(nbrootchildren > self.max_tree_leafes):
-                max_items = self.max_tree_leafes + nbrootchildren
+                max_items = self.max_tree_leafes + nbrootchildren #adding nbchildren because root will always be read
             else:
                 max_items = self.max_tree_leafes
                 
-            status = ((float(self.chcount)/float(max_items))) #adding nbchildren because root will always be read
+            status = ((float(self.chcount)/float(max_items))*3.0) 
             generateStatusFile(statusfilename, status)
 
             evalsum = 0.0

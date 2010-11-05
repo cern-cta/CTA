@@ -405,6 +405,7 @@ def preset(request, options,  urlending):
                 #if no error here, continue:
                 if(isinstance(option,BooleanOption)):
                         optr.optdict[option.getName()] = True
+                        optr.fromoptions[option.getName()] = True
 
                     
                 if(isinstance(option,SpinnerOption)):
@@ -422,6 +423,7 @@ def preset(request, options,  urlending):
                         
 
                         optr.optdict[option.getName()] = value
+                        optr.fromoptions[option.getName()] = True
                         
                     except:
                         pass
@@ -446,6 +448,7 @@ def preset(request, options,  urlending):
                                         pass
                         
                         optr.optdict[option.getName()] = thetime
+                        optr.fromoptions[option.getName()] = True
                             
                     except:
                         pass
@@ -531,7 +534,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         else:
             tooltipwidth = 600
             
-        tooltipheight = int(round(textlines * 12 * 1.6))
+        tooltipheight = int(round(textlines * 12.0 * 1.7))
 
 #        itemwidth = int(round(x2-x1))
 #        itemheight = int(round(y2-y1)) 
@@ -652,11 +655,11 @@ def getDefaultMetricsLinking():
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsHtmlInfoDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsHtmlInfoDimension())
-    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('namepart', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
 
     return mlinker
 
