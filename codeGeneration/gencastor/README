@@ -131,6 +131,7 @@
    v2_1_9Version branch, v2_1_9_9 tag etc...
 
    [root@lxcastordev04 trunk]# cd codeGeneration/gencastor/
+   [root@lxcastordev04 trunk]# export PATH=$PATH:/usr/lib64/qt-3.3/bin/
    [root@lxcastordev04 gencastor]# make
 
    At the end of the make process you should have a gencastor.bin binary.
