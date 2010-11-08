@@ -1,5 +1,5 @@
 DEV=$(CASTOR_ROOT)/codeGeneration/gencastor
-UMBRELLOBASE=kdesdk-3.5.10
+#UMBRELLOBASE=kdesdk-3.5.10
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)
