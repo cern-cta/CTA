@@ -156,7 +156,15 @@ sub read_config ( $ )
     chomp $local_host;
     $environment{hostname} = $local_host;
     my @per_host_vars = ( 'username', 'checkout_location', 'file_size', 'file_number', 'castor_directory',
-                          'migration_timeout', 'poll_interval', 'tapepool', 'svcclass');
+                          'migration_timeout', 'poll_interval', 'tapepool', 'svcclass', 
+			  'local_jobmanagerd',
+			  'local_mighunterd',
+			  'local_rechandlerd',
+			  'local_rhd',
+			  'local_rmmasterd',
+			  'local_rtcpclientd',
+			  'local_stagerd',
+			  'local_tapegatewayd' );
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'castor_single_subdirectory',
                           'castor_dual_subdirectory' );
@@ -753,21 +761,27 @@ sub killDaemonWithTimeout ( $$ )
 # Start demons (starts tapegatewayd from the checkout directory
 sub startDaemons ()
 {
+    my %castor_deamons_locations =
+	(
+	 'jobmanagerd' => './castor/jobmanager/jobmanagerd',
+	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
+	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
+	 'rhd'         => './castor/rh/rhd',
+	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
+	 'rtcpclientd' => './rtcopy/rtcpclientd',
+	 'stagerd'     => './castor/stager/daemon/stagerd',
+	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd'
+	 );
+
     # Simply start all of them, demons not needed will jsut not start.
-    for ('jobmanagerd',
-         'mighunterd',
-         'rechandlerd',
-         'rhd',
-         'rmmasterd',
-         'rtcpclientd',
-         'stagerd',
-         'tapegatewayd') {
-        if (/tapegatewayd/) {
+    for ( keys %castor_deamons_locations) {
+        if ($environment{"local_".$_} =~ /True/) {
+	    my $local_command = $castor_deamons_locations{$_};
             my $checkout_location=$environment{checkout_location};
-            `( cd $checkout_location; LD_LIBRARY_PATH=\`find ./ -name "*.so*" | perl -p -e \'s|[^/]*\$|\n|\' | sort | uniq | tr \"\n\" \":\" | perl -p -e \'s/:\$/\n/\'\` ./castor/tape/tapegateway/tapegatewayd)`
-        } else {
-            `service $_ start`
-        }        
+            `( cd $checkout_location; LD_LIBRARY_PATH=\`find ./ -name "*.so*" | perl -p -e \'s|[^/]*\$|\n|\' | sort | uniq | tr \"\n\" \":\" | perl -p -e \'s/:\$/\n/\'\` $local_command )`;
+	} else {
+	    `service $_ start`;
+	}        
     }
 }
 
