@@ -102,15 +102,18 @@ ALTER TABLE Cns_file_metadata
      OR  (bitand(filemode, 40960) != 40960 AND fileclass IS NOT NULL));
 
 -- Create indexes on Cns_file_metadata
-CREATE INDEX PARENT_FILEID_IDX ON Cns_file_metadata (parent_fileid);
+CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
+
+-- Create indexes on Cns_seg_metadata
+CREATE INDEX I_seg_metadata_vid_fid_segsize ON Cns_seg_metadata (vid, s_fileid, segsize);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
 
 /* SQL statements for table UpgradeLog */
-CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, SchemaName VARCHAR2(64) DEFAULT 'CNS' CONSTRAINT NN_UpgradeLog_SchemaName NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
 /* SQL statements for check constraints on the UpgradeLog table */
 ALTER TABLE UpgradeLog
@@ -122,7 +125,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_4');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -130,7 +133,8 @@ AS
   SELECT decode(type, 'TRANSPARENT', schemaVersion,
            decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
          decode(type, 'TRANSPARENT', release,
-           decode(state, 'INCOMPLETE', state, release)) release
+           decode(state, 'INCOMPLETE', state, release)) release,
+         schemaName
     FROM UpgradeLog
    WHERE startDate =
      (SELECT max(startDate) FROM UpgradeLog);

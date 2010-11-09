@@ -44,7 +44,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 
 /* SQL statements for table UpgradeLog */
-CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, SchemaName VARCHAR2(64) DEFAULT 'VDQM' CONSTRAINT NN_UpgradeLog_SchemaName NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
 /* SQL statements for check constraints on the UpgradeLog table */
 ALTER TABLE UpgradeLog
@@ -64,7 +64,8 @@ AS
   SELECT decode(type, 'TRANSPARENT', schemaVersion,
            decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
          decode(type, 'TRANSPARENT', release,
-           decode(state, 'INCOMPLETE', state, release)) release
+           decode(state, 'INCOMPLETE', state, release)) release,
+         schemaName
     FROM UpgradeLog
    WHERE startDate =
      (SELECT max(startDate) FROM UpgradeLog);
@@ -853,7 +854,7 @@ INNER JOIN EffectiveLifespanType ON
 
 
 /**
- * This view shows candidate tape drive allocations before any dedicatioins
+ * This view shows candidate tape drive allocations before any dedications
  * have been taken into account.
  */
 CREATE OR REPLACE VIEW PotentialMounts_VIEW AS SELECT UNIQUE
@@ -915,7 +916,8 @@ WHERE
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   VolumePriority DESC,
-  TapeRequest.creationTime ASC;
+  TapeRequest.creationTime ASC,
+  DBMS_RANDOM.value;
 
 
 /**
@@ -987,8 +989,6 @@ LEFT OUTER JOIN VdqmTape ON
   TapeDrive.tape = VDQMTAPE.ID
 LEFT OUTER JOIN DEVICEGROUPNAME ON
   TapeDrive.deviceGroupName = DeviceGroupName.id
---LEFT OUTER JOIN TapeDriveDedication ON
---  TapeDrive.id = TapeDriveDedication.tapeDrive
 LEFT OUTER JOIN TapeRequest ON
   TapeDrive.RunningTapeReq = TapeRequest.id
 LEFT OUTER JOIN TapeAccessSpecification ON
