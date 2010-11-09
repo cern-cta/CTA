@@ -61,7 +61,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapeCnv>* s_factoryDbTapeCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeCnv::s_insertStatementString =
-"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12,:13) RETURNING id INTO :14";
+"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, startTime, lastVdqmPingTime, vdqmVolReqId, lastFseq, tapeGatewayRequestId, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,ids_seq.nextval,:17,:18) RETURNING id INTO :19";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeCnv::s_deleteStatementString =
@@ -69,7 +69,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, id, stream, status FROM Tape WHERE id = :1";
+"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, startTime, lastVdqmPingTime, vdqmVolReqId, lastFseq, tapeGatewayRequestId, id, stream, status FROM Tape WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbTapeCnv::s_bulkSelectStatementString =
@@ -80,7 +80,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_bulkSelectStatementString =
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, id, stream, status \
+     OPEN objs FOR SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, dgn, label, density, devtype, startTime, lastVdqmPingTime, vdqmVolReqId, lastFseq, tapeGatewayRequestId, id, stream, status \
                      FROM Tape t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -91,7 +91,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_bulkSelectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeCnv::s_updateStatementString =
-"UPDATE Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, dgn = :8, label = :9, density = :10, devtype = :11, status = :12 WHERE id = :13";
+"UPDATE Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, dgn = :8, label = :9, density = :10, devtype = :11, startTime = :12, lastVdqmPingTime = :13, vdqmVolReqId = :14, lastFseq = :15, tapeGatewayRequestId = :16, status = :17 WHERE id = :18";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeCnv::s_storeTypeStatementString =
@@ -415,7 +415,7 @@ void castor::db::cnv::DbTapeCnv::fillObjStream(castor::stager::Tape* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 streamId = rset->getInt64(13);
+  u_signed64 streamId = rset->getInt64(18);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -507,7 +507,7 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(19, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -524,10 +524,15 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress*,
     m_insertStatement->setString(9, obj->label());
     m_insertStatement->setString(10, obj->density());
     m_insertStatement->setString(11, obj->devtype());
-    m_insertStatement->setUInt64(12, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
-    m_insertStatement->setInt(13, (int)obj->status());
+    m_insertStatement->setInt(12, obj->startTime());
+    m_insertStatement->setInt(13, obj->lastVdqmPingTime());
+    m_insertStatement->setInt(14, obj->vdqmVolReqId());
+    m_insertStatement->setInt(15, obj->lastFseq());
+    m_insertStatement->setInt(16, obj->tapeGatewayRequestId());
+    m_insertStatement->setUInt64(17, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setInt(18, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(14));
+    obj->setId(m_insertStatement->getUInt64(19));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -556,6 +561,11 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress*,
                     << "  label : " << obj->label() << std::endl
                     << "  density : " << obj->density() << std::endl
                     << "  devtype : " << obj->devtype() << std::endl
+                    << "  startTime : " << obj->startTime() << std::endl
+                    << "  lastVdqmPingTime : " << obj->lastVdqmPingTime() << std::endl
+                    << "  vdqmVolReqId : " << obj->vdqmVolReqId() << std::endl
+                    << "  lastFseq : " << obj->lastFseq() << std::endl
+                    << "  tapeGatewayRequestId : " << obj->tapeGatewayRequestId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  stream : " << (obj->stream() ? obj->stream()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl;
@@ -584,7 +594,7 @@ void castor::db::cnv::DbTapeCnv::bulkCreateRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(19, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -833,6 +843,101 @@ void castor::db::cnv::DbTapeCnv::bulkCreateRep(castor::IAddress*,
     }
     m_insertStatement->setDataBuffer
       (11, devtypeBuffer, castor::db::DBTYPE_STRING, devtypeMaxLen, devtypeBufLens);
+    // build the buffers for startTime
+    int* startTimeBuffer = (int*) malloc(nb * sizeof(int));
+    if (startTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(startTimeBuffer);
+    unsigned short* startTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (startTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(startTimeBufLens);
+    for (int i = 0; i < nb; i++) {
+      startTimeBuffer[i] = objs[i]->startTime();
+      startTimeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (12, startTimeBuffer, castor::db::DBTYPE_INT, sizeof(startTimeBuffer[0]), startTimeBufLens);
+    // build the buffers for lastVdqmPingTime
+    int* lastVdqmPingTimeBuffer = (int*) malloc(nb * sizeof(int));
+    if (lastVdqmPingTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastVdqmPingTimeBuffer);
+    unsigned short* lastVdqmPingTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (lastVdqmPingTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastVdqmPingTimeBufLens);
+    for (int i = 0; i < nb; i++) {
+      lastVdqmPingTimeBuffer[i] = objs[i]->lastVdqmPingTime();
+      lastVdqmPingTimeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (13, lastVdqmPingTimeBuffer, castor::db::DBTYPE_INT, sizeof(lastVdqmPingTimeBuffer[0]), lastVdqmPingTimeBufLens);
+    // build the buffers for vdqmVolReqId
+    int* vdqmVolReqIdBuffer = (int*) malloc(nb * sizeof(int));
+    if (vdqmVolReqIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(vdqmVolReqIdBuffer);
+    unsigned short* vdqmVolReqIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (vdqmVolReqIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(vdqmVolReqIdBufLens);
+    for (int i = 0; i < nb; i++) {
+      vdqmVolReqIdBuffer[i] = objs[i]->vdqmVolReqId();
+      vdqmVolReqIdBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (14, vdqmVolReqIdBuffer, castor::db::DBTYPE_INT, sizeof(vdqmVolReqIdBuffer[0]), vdqmVolReqIdBufLens);
+    // build the buffers for lastFseq
+    int* lastFseqBuffer = (int*) malloc(nb * sizeof(int));
+    if (lastFseqBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastFseqBuffer);
+    unsigned short* lastFseqBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (lastFseqBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastFseqBufLens);
+    for (int i = 0; i < nb; i++) {
+      lastFseqBuffer[i] = objs[i]->lastFseq();
+      lastFseqBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (15, lastFseqBuffer, castor::db::DBTYPE_INT, sizeof(lastFseqBuffer[0]), lastFseqBufLens);
+    // build the buffers for tapeGatewayRequestId
+    int* tapeGatewayRequestIdBuffer = (int*) malloc(nb * sizeof(int));
+    if (tapeGatewayRequestIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeGatewayRequestIdBuffer);
+    unsigned short* tapeGatewayRequestIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapeGatewayRequestIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeGatewayRequestIdBufLens);
+    for (int i = 0; i < nb; i++) {
+      tapeGatewayRequestIdBuffer[i] = objs[i]->tapeGatewayRequestId();
+      tapeGatewayRequestIdBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (16, tapeGatewayRequestIdBuffer, castor::db::DBTYPE_INT, sizeof(tapeGatewayRequestIdBuffer[0]), tapeGatewayRequestIdBufLens);
     // build the buffers for stream
     double* streamBuffer = (double*) malloc(nb * sizeof(double));
     if (streamBuffer == 0) {
@@ -851,7 +956,7 @@ void castor::db::cnv::DbTapeCnv::bulkCreateRep(castor::IAddress*,
       streamBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (12, streamBuffer, castor::db::DBTYPE_UINT64, sizeof(streamBuffer[0]), streamBufLens);
+      (17, streamBuffer, castor::db::DBTYPE_UINT64, sizeof(streamBuffer[0]), streamBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     if (statusBuffer == 0) {
@@ -870,7 +975,7 @@ void castor::db::cnv::DbTapeCnv::bulkCreateRep(castor::IAddress*,
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (13, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (18, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -885,7 +990,7 @@ void castor::db::cnv::DbTapeCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (14, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (19, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -966,8 +1071,13 @@ void castor::db::cnv::DbTapeCnv::updateRep(castor::IAddress*,
     m_updateStatement->setString(9, obj->label());
     m_updateStatement->setString(10, obj->density());
     m_updateStatement->setString(11, obj->devtype());
-    m_updateStatement->setInt(12, (int)obj->status());
-    m_updateStatement->setUInt64(13, obj->id());
+    m_updateStatement->setInt(12, obj->startTime());
+    m_updateStatement->setInt(13, obj->lastVdqmPingTime());
+    m_updateStatement->setInt(14, obj->vdqmVolReqId());
+    m_updateStatement->setInt(15, obj->lastFseq());
+    m_updateStatement->setInt(16, obj->tapeGatewayRequestId());
+    m_updateStatement->setInt(17, (int)obj->status());
+    m_updateStatement->setUInt64(18, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -1068,8 +1178,13 @@ castor::IObject* castor::db::cnv::DbTapeCnv::createObj(castor::IAddress* address
     object->setLabel(rset->getString(9));
     object->setDensity(rset->getString(10));
     object->setDevtype(rset->getString(11));
-    object->setId(rset->getUInt64(12));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(14));
+    object->setStartTime(rset->getInt(12));
+    object->setLastVdqmPingTime(rset->getInt(13));
+    object->setVdqmVolReqId(rset->getInt(14));
+    object->setLastFseq(rset->getInt(15));
+    object->setTapeGatewayRequestId(rset->getInt(16));
+    object->setId(rset->getUInt64(17));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(19));
     delete rset;
     return object;
   } catch (castor::exception::SQLError& e) {
@@ -1126,8 +1241,13 @@ castor::db::cnv::DbTapeCnv::bulkCreateObj(castor::IAddress* address)
       object->setLabel(rset->getString(9));
       object->setDensity(rset->getString(10));
       object->setDevtype(rset->getString(11));
-      object->setId(rset->getUInt64(12));
-      object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(14));
+      object->setStartTime(rset->getInt(12));
+      object->setLastVdqmPingTime(rset->getInt(13));
+      object->setVdqmVolReqId(rset->getInt(14));
+      object->setLastFseq(rset->getInt(15));
+      object->setTapeGatewayRequestId(rset->getInt(16));
+      object->setId(rset->getUInt64(17));
+      object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(19));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -1176,8 +1296,13 @@ void castor::db::cnv::DbTapeCnv::updateObj(castor::IObject* obj)
     object->setLabel(rset->getString(9));
     object->setDensity(rset->getString(10));
     object->setDevtype(rset->getString(11));
-    object->setId(rset->getUInt64(12));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(14));
+    object->setStartTime(rset->getInt(12));
+    object->setLastVdqmPingTime(rset->getInt(13));
+    object->setVdqmVolReqId(rset->getInt(14));
+    object->setLastFseq(rset->getInt(15));
+    object->setTapeGatewayRequestId(rset->getInt(16));
+    object->setId(rset->getUInt64(17));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(19));
     delete rset;
   } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;

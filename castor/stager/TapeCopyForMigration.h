@@ -160,6 +160,26 @@ int Cstager_TapeCopyForMigration_tapeGatewayRequestId(struct Cstager_TapeCopyFor
 int Cstager_TapeCopyForMigration_setTapeGatewayRequestId(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
 
 /**
+ * Get the value of vid
+ */
+int Cstager_TapeCopyForMigration_vid(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
+
+/**
+ * Set the value of vid
+ */
+int Cstager_TapeCopyForMigration_setVid(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileTransactionId
+ */
+int Cstager_TapeCopyForMigration_fileTransactionId(struct Cstager_TapeCopyForMigration_t* instance, int* var);
+
+/**
+ * Set the value of fileTransactionId
+ */
+int Cstager_TapeCopyForMigration_setFileTransactionId(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

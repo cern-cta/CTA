@@ -213,6 +213,56 @@ int Cstager_Tape_devtype(struct Cstager_Tape_t* instance, const char** var);
 int Cstager_Tape_setDevtype(struct Cstager_Tape_t* instance, const char* new_var);
 
 /**
+ * Get the value of startTime
+ */
+int Cstager_Tape_startTime(struct Cstager_Tape_t* instance, int* var);
+
+/**
+ * Set the value of startTime
+ */
+int Cstager_Tape_setStartTime(struct Cstager_Tape_t* instance, int new_var);
+
+/**
+ * Get the value of lastVdqmPingTime
+ */
+int Cstager_Tape_lastVdqmPingTime(struct Cstager_Tape_t* instance, int* var);
+
+/**
+ * Set the value of lastVdqmPingTime
+ */
+int Cstager_Tape_setLastVdqmPingTime(struct Cstager_Tape_t* instance, int new_var);
+
+/**
+ * Get the value of vdqmVolReqId
+ */
+int Cstager_Tape_vdqmVolReqId(struct Cstager_Tape_t* instance, int* var);
+
+/**
+ * Set the value of vdqmVolReqId
+ */
+int Cstager_Tape_setVdqmVolReqId(struct Cstager_Tape_t* instance, int new_var);
+
+/**
+ * Get the value of lastFseq
+ */
+int Cstager_Tape_lastFseq(struct Cstager_Tape_t* instance, int* var);
+
+/**
+ * Set the value of lastFseq
+ */
+int Cstager_Tape_setLastFseq(struct Cstager_Tape_t* instance, int new_var);
+
+/**
+ * Get the value of tapeGatewayRequestId
+ */
+int Cstager_Tape_tapeGatewayRequestId(struct Cstager_Tape_t* instance, int* var);
+
+/**
+ * Set the value of tapeGatewayRequestId
+ */
+int Cstager_Tape_setTapeGatewayRequestId(struct Cstager_Tape_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

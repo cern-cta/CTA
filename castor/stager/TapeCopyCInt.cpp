@@ -36,6 +36,7 @@
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "osdep.h"
 #include <stdlib.h>
+#include <string.h>
 #include <vector>
 
 extern "C" {
@@ -196,6 +197,39 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_setTapeGatewayRequestId(castor::stager::TapeCopy* instance, int new_var) {
     instance->setTapeGatewayRequestId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_vid
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_vid(castor::stager::TapeCopy* instance, const char** var) {
+    *var = instance->vid().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setVid
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setVid(castor::stager::TapeCopy* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setVid(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_fileTransactionId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_fileTransactionId(castor::stager::TapeCopy* instance, int* var) {
+    *var = instance->fileTransactionId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setFileTransactionId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setFileTransactionId(castor::stager::TapeCopy* instance, int new_var) {
+    instance->setFileTransactionId(new_var);
     return 0;
   }
 

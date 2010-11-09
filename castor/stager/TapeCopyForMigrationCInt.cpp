@@ -198,6 +198,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_vid
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_vid(castor::stager::TapeCopyForMigration* instance, const char** var) {
+    *var = instance->vid().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setVid
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setVid(castor::stager::TapeCopyForMigration* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setVid(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_fileTransactionId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_fileTransactionId(castor::stager::TapeCopyForMigration* instance, int* var) {
+    *var = instance->fileTransactionId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setFileTransactionId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setFileTransactionId(castor::stager::TapeCopyForMigration* instance, int new_var) {
+    instance->setFileTransactionId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_id(castor::stager::TapeCopyForMigration* instance, u_signed64* var) {

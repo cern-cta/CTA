@@ -103,6 +103,26 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of vdqmVolReqId
+ */
+int Cstager_Stream_vdqmVolReqId(struct Cstager_Stream_t* instance, int* var);
+
+/**
+ * Set the value of vdqmVolReqId
+ */
+int Cstager_Stream_setVdqmVolReqId(struct Cstager_Stream_t* instance, int new_var);
+
+/**
+ * Get the value of tapeGatewayRequestId
+ */
+int Cstager_Stream_tapeGatewayRequestId(struct Cstager_Stream_t* instance, int* var);
+
+/**
+ * Set the value of tapeGatewayRequestId
+ */
+int Cstager_Stream_setTapeGatewayRequestId(struct Cstager_Stream_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
