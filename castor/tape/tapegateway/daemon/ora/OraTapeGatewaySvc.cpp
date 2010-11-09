@@ -62,6 +62,17 @@
 
 
 //------------------------------------------------------------------------------
+// Instantiation of a static factory class
+//------------------------------------------------------------------------------
+static castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>* s_factoryOraTapeGatewaySvc =
+  new castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>();
+
+#if __GNUC__ >= 2
+#define USE(var) void use_##var (void) {var = var;}
+USE (s_factoryOraTapeGatewaySvc);
+#endif
+
+//------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 
