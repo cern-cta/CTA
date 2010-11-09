@@ -671,7 +671,7 @@ int procreq(int magic,
     c = Cns_srv_bulkexist (req_data, clienthost, thip);
     break;
   case CNS_TAPESUM:
-    c = Cns_srv_tapesum (magic, req_data, clienthost, thip);
+    c = Cns_srv_tapesum (req_data, clienthost, thip);
     break;
   case CNS_STARTSESS:
     c = procsessreq (magic, req_data, clienthost, thip);

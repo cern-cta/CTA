@@ -127,8 +127,8 @@
 #define CNS_ENTUSRMAP	        74
 #define CNS_REPLACETAPECOPY     75
 #define CNS_LASTFSEQ            76
-#define CNS_BULKEXIST	        77
-#define CNS_TAPESUM             78
+#define CNS_BULKEXIST           77
+#define CNS_TAPESUM             79
 #define CNS_PING                82
 #define CNS_SETFSIZECS          83
 #define CNS_STATCS              84

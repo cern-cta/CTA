@@ -215,7 +215,7 @@ EXTERN_C int Cns_get_smd_by_fullid (struct Cns_dbfd *, u_signed64, int, int, str
 EXTERN_C int Cns_get_smd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_smd_by_vid (struct Cns_dbfd *, int, char *, int, struct Cns_seg_metadata *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_smd_copy_count_by_pfid (struct Cns_dbfd *, u_signed64, int *);
-EXTERN_C int Cns_get_tapesum_by_vid (struct Cns_dbfd *, char *, int, u_signed64 *, u_signed64 *, u_signed64 *);
+EXTERN_C int Cns_get_tapesum_by_vid (struct Cns_dbfd *, char *, u_signed64 *, u_signed64 *, u_signed64 *, u_signed64 *);
 EXTERN_C int Cns_get_tppool_by_cid (struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_umd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_usrinfo_by_name (struct Cns_dbfd *, char *, struct Cns_userinfo *, int, Cns_dbrec_addr *);
@@ -303,7 +303,7 @@ EXTERN_C int Cns_srv_stat (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_statcs (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_statg (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_symlink (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_tapesum (int, char *, const char *, struct Cns_srv_thread_info *);
+EXTERN_C int Cns_srv_tapesum (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_undelete (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_unlink (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_unlinkbyvid (char *, const char *, struct Cns_srv_thread_info *);
