@@ -35,36 +35,36 @@
   )
    */
  
-ALTER TABLE TapeCopy ADD (fSeq NUMBER);
-ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN fSeq;
-ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN Id;
-ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN TapeCopy;
-ALTER TABLE TapeCopy ADD (TapeGatewayRequest NUMBER (*,0));
+-- ALTER TABLE TapeCopy ADD (fSeq NUMBER);
+-- ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN fSeq;
+-- ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN Id;
+-- ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN TapeCopy;
+-- ALTER TABLE TapeCopy ADD (TapeGatewayRequest NUMBER (*,0));
 ALTER TABLE TapeCopy ADD CONSTRAINT FK_TAPECOPY_TGR FOREIGN KEY (TapeGatewayRequest) REFERENCES TapeGatewayRequest (ID) ENABLE;
-ALTER TABLE TAPEGATEWAYSUBREQUEST DROP CONSTRAINT UN_TGSUBREQUEST_TR_DC;
+- -ALTER TABLE TAPEGATEWAYSUBREQUEST DROP CONSTRAINT UN_TGSUBREQUEST_TR_DC;
 -- ALTER TABLE TapeCopy ADD CONSTRAINT UN_TAPECOPY_CF_TGR UNIQUE (TAPEGATEWAYREQUEST, CASTORFILE) USING INDEX;
 -- ALTER TABLE TapeCopy DROP CONSTRAINT UN_TAPECOPY_CF_TGR;
 -- ALTER TABLE TapeCopy DROP INDEX UN_TAPECOPY_CF_TGR; -- Dripping the contraint implicitly drops the implicit index.
-ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN REQUEST;
-ALTER TABLE TapeCopy ADD (DiskCopy NUMBER(*,0));
+-- ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN REQUEST;
+-- ALTER TABLE TapeCopy ADD (DiskCopy NUMBER(*,0));
 -- ALTER TABLE TAPEGATEWAYSUBREQUEST DROP COLUMN DISKCOPY; -- Oops: SQL Error: ORA-12983: cannot drop all columns in a table 12983. 00000 -  "cannot drop all columns in a table" */
 -- There you go: */
-DROP TABLE TAPEGATEWAYSUBREQUEST;
+-- DROP TABLE TAPEGATEWAYSUBREQUEST;
 
 -- 	Fix wrongly named column in TapeGatewayRequest */
-ALTER TABLE TapeGatewayRequest RENAME COLUMN STREAMMIGRATION TO STREAM;
+-- ALTER TABLE TapeGatewayRequest RENAME COLUMN STREAMMIGRATION TO STREAM;
 
 -- Keep track of the Volume ID to which a tapecopy is being migrated */
 -- This is necessary as the life cycle of the STAGED tape copy can be longer 
 -- than the one of the tapegatewayrequest, stream and finally tape it points
 -- to. */
-ALTER TABLE TapeCopy ADD (VID VARCHAR2(2048 BYTE));
+-- ALTER TABLE TapeCopy ADD (VID VARCHAR2(2048 BYTE));
 -- We want to query this table by VID */
 CREATE INDEX I_TapeCopy_VID ON TapeCopy(VID);
 
 -- File request number has to be unique or null the life cycle is not clear, so 
 -- we'll throw exception when a null file request ID will be returned to C++ */
-ALTER TABLE TapeCopy ADD (FileTransactionId NUMBER);
+-- ALTER TABLE TapeCopy ADD (FileTransactionId NUMBER);
 ALTER TABLE TapeCopy ADD CONSTRAINT UN_TAPECOPY_FILETRID 
   UNIQUE (FileTransactionId) USING INDEX;
 -- Create sequence for the File request IDs. */

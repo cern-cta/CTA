@@ -85,37 +85,37 @@
 */
 
 /* ******** Data structure transision ******** */
-ALTER TABLE TapeGatewayRequest DROP COLUMN accessMode;
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN accessMode;
 
-ALTER TABLE Tape ADD (startTime NUMBER);
-ALTER TABLE TapeGatewayRequest DROP COLUMN startTime;
+-- ALTER TABLE Tape ADD (startTime NUMBER);
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN startTime;
 
-ALTER TABLE Tape ADD (lastVdqmPingTime NUMBER);
-ALTER TABLE TapeGatewayRequest DROP COLUMN lastVdqmPingTime;
+-- ALTER TABLE Tape ADD (lastVdqmPingTime NUMBER);
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN lastVdqmPingTime;
 
 -- For Tape reads only */
-ALTER TABLE Tape ADD (vdqmVolReqId NUMBER);
+-- ALTER TABLE Tape ADD (vdqmVolReqId NUMBER);
 -- For Tape writes only */
-ALTER TABLE Stream ADD (vdqmVolReqId NUMBER);
-ALTER TABLE TapeGatewayRequest DROP COLUMN vdqmVolReqId;
+-- ALTER TABLE Stream ADD (vdqmVolReqId NUMBER);
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN vdqmVolReqId;
 
-ALTER TABLE TapeGatewayRequest DROP COLUMN nbRetry;
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN nbRetry;
 
-ALTER TABLE Tape ADD (lastFseq NUMBER);
-ALTER TABLE TapeGatewayRequest DROP COLUMN lastFseq;
+-- ALTER TABLE Tape ADD (lastFseq NUMBER);
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN lastFseq;
 
-ALTER TABLE Stream ADD (TapeGatewayRequestId NUMBER);
-ALTER TABLE Tape ADD (TapeGatewayRequestId NUMBER);
-ALTER TABLE TapeCopy DROP CONSTRAINT "FK_TAPECOPY_TGR";
-ALTER TABLE TapeCopy RENAME COLUMN TapeGatewayRequest TO TapeGatewayRequestId;
-ALTER TABLE TapeGatewayRequest DROP CONSTRAINT PK_TAPEGATEWAYREQUEST_ID;
-ALTER TABLE TapeGatewayRequest DROP COLUMN id;
+-- ALTER TABLE Stream ADD (TapeGatewayRequestId NUMBER);
+-- ALTER TABLE Tape ADD (TapeGatewayRequestId NUMBER);
+-- ALTER TABLE TapeCopy DROP CONSTRAINT "FK_TAPECOPY_TGR";
+-- ALTER TABLE TapeCopy RENAME COLUMN TapeGatewayRequest TO TapeGatewayRequestId;
+-- ALTER TABLE TapeGatewayRequest DROP CONSTRAINT PK_TAPEGATEWAYREQUEST_ID;
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN id;
 
-ALTER TABLE TapeGatewayRequest DROP COLUMN Stream;
-ALTER TABLE TapeGatewayRequest DROP COLUMN TapeRecall;
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN Stream;
+-- ALTER TABLE TapeGatewayRequest DROP COLUMN TapeRecall;
 --ALTER TABLE TapeGatewayRequest DROP COLUMN Status;*/
 --SQL Error: ORA-12983: cannot drop all columns in a table*/
-DROP TABLE TapeGatewayRequest;
+-- DROP TABLE TapeGatewayRequest;
 
 /*******************************************************************************
 ********************************************************************************
