@@ -1,4 +1,4 @@
-#!/usr/bin/tcsh
+#!/bin/tcsh
 #
 # A wrapper script for gencastor.bin, to put files in the proper places and avoid to overwrite not modified ones.
 # It also manages the generated SQL scripts.
@@ -7,6 +7,8 @@
 #
 # @(#)$RCSfile: gencastor,v $ $Revision: 1.20 $ $Release$ $Date: 2009/06/30 10:45:58 $ $Author: itglp $
 # 
+
+set original_path=`pwd`
 
 if ("$1" == "-h" || "$1" == "") then
   echo "Usage :"
@@ -68,7 +70,7 @@ foreach f (`find . -type f`)
   else
     if (-f ${WORKDIR}/${f}_clone) then
       #echo Merging clone before upgrading $f
-      `dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
+      ${original_path}/`dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
       mv ${TMPDIR}/${f}_merge ${TMPDIR}/${f}
     endif
     set d = `diff -q ${WORKDIR}/${f} ${TMPDIR}/${f}`

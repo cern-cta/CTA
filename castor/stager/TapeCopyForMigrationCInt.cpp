@@ -29,6 +29,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -165,6 +166,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_fseq
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_fseq(castor::stager::TapeCopyForMigration* instance, int* var) {
+    *var = instance->fseq();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setFseq
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setFseq(castor::stager::TapeCopyForMigration* instance, int new_var) {
+    instance->setFseq(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_tapeGatewayRequestId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_tapeGatewayRequestId(castor::stager::TapeCopyForMigration* instance, int* var) {
+    *var = instance->tapeGatewayRequestId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setTapeGatewayRequestId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setTapeGatewayRequestId(castor::stager::TapeCopyForMigration* instance, int new_var) {
+    instance->setTapeGatewayRequestId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_id(castor::stager::TapeCopyForMigration* instance, u_signed64* var) {
@@ -206,6 +239,22 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_diskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_diskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy** var) {
+    *var = instance->diskCopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setDiskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setDiskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy* new_var) {
+    instance->setDiskCopy(new_var);
     return 0;
   }
 

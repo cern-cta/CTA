@@ -34,6 +34,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
+struct Cstager_DiskCopy_t;
 struct Cstager_Segment_t;
 struct Cstager_Stream_t;
 struct Cstager_TapeCopyForMigration_t;
@@ -139,6 +140,26 @@ int Cstager_TapeCopyForMigration_missingCopies(struct Cstager_TapeCopyForMigrati
 int Cstager_TapeCopyForMigration_setMissingCopies(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
 
 /**
+ * Get the value of fseq
+ */
+int Cstager_TapeCopyForMigration_fseq(struct Cstager_TapeCopyForMigration_t* instance, int* var);
+
+/**
+ * Set the value of fseq
+ */
+int Cstager_TapeCopyForMigration_setFseq(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
+
+/**
+ * Get the value of tapeGatewayRequestId
+ */
+int Cstager_TapeCopyForMigration_tapeGatewayRequestId(struct Cstager_TapeCopyForMigration_t* instance, int* var);
+
+/**
+ * Set the value of tapeGatewayRequestId
+ */
+int Cstager_TapeCopyForMigration_setTapeGatewayRequestId(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
@@ -165,6 +186,20 @@ int Cstager_TapeCopyForMigration_removeStream(struct Cstager_TapeCopyForMigratio
  * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopyForMigration_stream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t*** var, int* len);
+
+/**
+ * Get the value of diskCopy
+ * This is used to store the source of the migration after calling the sleection
+ * policy (last moment populated)
+ */
+int Cstager_TapeCopyForMigration_diskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of diskCopy
+ * This is used to store the source of the migration after calling the sleection
+ * policy (last moment populated)
+ */
+int Cstager_TapeCopyForMigration_setDiskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

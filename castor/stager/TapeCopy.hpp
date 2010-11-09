@@ -47,6 +47,7 @@ namespace castor {
     // Forward declarations
     class Stream;
     class Segment;
+    class DiskCopy;
     class CastorFile;
 
     /**
@@ -177,6 +178,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_fseq
+       * @return the value of m_fseq
+       */
+      int fseq() const {
+        return m_fseq;
+      }
+
+      /**
+       * Set the value of m_fseq
+       * @param new_var the new value of m_fseq
+       */
+      void setFseq(int new_var) {
+        m_fseq = new_var;
+      }
+
+      /**
+       * Get the value of m_tapeGatewayRequestId
+       * @return the value of m_tapeGatewayRequestId
+       */
+      int tapeGatewayRequestId() const {
+        return m_tapeGatewayRequestId;
+      }
+
+      /**
+       * Set the value of m_tapeGatewayRequestId
+       * @param new_var the new value of m_tapeGatewayRequestId
+       */
+      void setTapeGatewayRequestId(int new_var) {
+        m_tapeGatewayRequestId = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -221,6 +254,26 @@ namespace castor {
        */
       std::vector<Stream*>& stream() {
         return m_streamVector;
+      }
+
+      /**
+       * Get the value of m_diskCopy
+       * This is used to store the source of the migration after calling the sleection
+       * policy (last moment populated)
+       * @return the value of m_diskCopy
+       */
+      DiskCopy* diskCopy() const {
+        return m_diskCopy;
+      }
+
+      /**
+       * Set the value of m_diskCopy
+       * This is used to store the source of the migration after calling the sleection
+       * policy (last moment populated)
+       * @param new_var the new value of m_diskCopy
+       */
+      void setDiskCopy(DiskCopy* new_var) {
+        m_diskCopy = new_var;
       }
 
       /**
@@ -296,10 +349,17 @@ namespace castor {
       /// Only used in recall case. Gives the number of copies missing on tape that should be recreated via migrations in case the recall is successful.
       int m_missingCopies;
 
+      int m_fseq;
+
+      int m_tapeGatewayRequestId;
+
       /// The id of this object
       u_signed64 m_id;
 
       std::vector<Stream*> m_streamVector;
+
+      /// This is used to store the source of the migration after calling the sleection policy (last moment populated)
+      DiskCopy* m_diskCopy;
 
       std::vector<Segment*> m_segmentsVector;
 

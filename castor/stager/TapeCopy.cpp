@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -48,7 +49,10 @@ castor::stager::TapeCopy::TapeCopy() throw() :
   m_errorCode(0),
   m_nbRetry(0),
   m_missingCopies(0),
+  m_fseq(0),
+  m_tapeGatewayRequestId(0),
   m_id(0),
+  m_diskCopy(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
 }
@@ -88,6 +92,8 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "nbRetry : " << m_nbRetry << std::endl;
   stream << indent << "missingCopies : " << m_missingCopies << std::endl;
+  stream << indent << "fseq : " << m_fseq << std::endl;
+  stream << indent << "tapeGatewayRequestId : " << m_tapeGatewayRequestId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
@@ -100,6 +106,12 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
+  }
+  stream << indent << "DiskCopy : " << std::endl;
+  if (0 != m_diskCopy) {
+    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
   {
     stream << indent << "Segments : " << std::endl;

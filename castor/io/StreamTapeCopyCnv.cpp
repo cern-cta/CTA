@@ -40,6 +40,7 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -96,6 +97,8 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errorCode();
   ad->stream() << obj->nbRetry();
   ad->stream() << obj->missingCopies();
+  ad->stream() << obj->fseq();
+  ad->stream() << obj->tapeGatewayRequestId();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -122,6 +125,12 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   int missingCopies;
   ad->stream() >> missingCopies;
   object->setMissingCopies(missingCopies);
+  int fseq;
+  ad->stream() >> fseq;
+  object->setFseq(fseq);
+  int tapeGatewayRequestId;
+  ad->stream() >> tapeGatewayRequestId;
+  object->setTapeGatewayRequestId(tapeGatewayRequestId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -154,6 +163,7 @@ void castor::io::StreamTapeCopyCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
     address->stream() << obj->segments().size();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -187,6 +197,9 @@ castor::IObject* castor::io::StreamTapeCopyCnv::unmarshalObject(castor::io::bini
     castor::IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addStream(dynamic_cast<castor::stager::Stream*>(objStream));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {
