@@ -889,8 +889,6 @@ char *_Cregexp_atom(flagp,
 					}
 					for (; class <= classend; class++) {
 						_Cregexp_c((char) class,
-								   _Cregexp_parse,
-								   _Cregexp_npar,
 								   _Cregexp_dummy,
 								   _Cregexp_code,
 								   _Cregexp_size);
