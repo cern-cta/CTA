@@ -91,9 +91,6 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s\n";
     my $seed_index = CastorTapeTests::make_seed ($file_size);  
     
-    # Test with the old system
-    CastorTapeTests::startDaemons();
-    
     # On first run, clean house
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
     print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
@@ -109,14 +106,7 @@ sub main ()
     # Let the dust settle
     print "t=".CastorTapeTests::elapsed_time."s\n";
     CastorTapeTests::poll_fileserver_readyness (5,60);
-    
-    
-    # First iteration of the test
-    print "t=".CastorTapeTests::elapsed_time."s\n";
-    goodDaySingleAndDualCopyTest ($seed_index, $file_number);
-    badDayTests ($seed_index, $file_number);
-    preparePreTransitionBacklog ($seed_index, $file_number);
-    
+        
     # Migrate to the new system, with tape gateway, still running rtcpclientd
     $dbh=CastorTapeTests::open_db();
     CastorTapeTests::migrateToNewTapeGatewaySchema ();
@@ -125,8 +115,7 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched to new schema with rtcpclientd =============\n";
     
-    # Second iteration of the test
-    managePostTransitionBacklog();
+    # First iteration of the test
     goodDaySingleAndDualCopyTest ($seed_index, $file_number);
     badDayTests ($seed_index, $file_number);
     preparePreTransitionBacklog ($seed_index, $file_number);
@@ -137,7 +126,7 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched to tapegatewayd ============================\n";
 
-    # Third iteration of the test
+    # Second iteration of the test
     managePostTransitionBacklog();
     goodDaySingleAndDualCopyTest ($seed_index, $file_number);    
     badDayTests ($seed_index, $file_number);
@@ -149,7 +138,7 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched back to rtcpclientd  ========================\n";
 
-    # Fire 4th iteration of the test
+    # Fire 3rd iteration of the test
     managePostTransitionBacklog();
     goodDaySingleAndDualCopyTest ($seed_index, $file_number);
     badDayTests ($seed_index, $file_number);

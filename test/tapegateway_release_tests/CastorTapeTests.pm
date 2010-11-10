@@ -140,9 +140,9 @@ sub get_disk_servers()
 sub elapsed_time ()
 {
     if ( defined $time_reference ) {
-	return `date +%s` - $time_reference;
+	return time() - $time_reference;
     } else {
-	$time_reference = `date +%s`;
+	$time_reference = time();
 	chomp $time_reference;
 	return 0;
     }
@@ -226,15 +226,32 @@ sub register_remote ( $$ )
     return $file_index - 1;
 }
 
+# Check remote monitor has found anything
+sub poll_rm_readyness ( $$ )
+{
+    my ( $interval, $timeout ) = ( shift, shift );
+    my $start_time = time();
+    while ( ($start_time + $timeout) >= time()) {
+        my $query=`rmGetNodes`;
+        if ( $query =~ /name:/ ) {
+	    print "RM ready after ".(time() - $start_time)."s.\n";
+            return;
+        }
+	sleep ( $interval );
+    }
+    die "Timeout in poll_rm_readyness";
+ 
+}
+
 # Check fileservers ready with timeout
 sub poll_fileserver_readyness ( $$ )
 {
     my ( $interval, $timeout ) = ( shift, shift );
-    my $start_time = `date +%s`;
-    while ( ($start_time + $timeout) >= `date +%s`) {
+    my $start_time = time();
+    while ( ($start_time + $timeout) >= time()) {
         my $query=`su $environment{username} -c \"stager_qry -s\"`;
         if ( $query =~ /FILESYSTEM_PRODUCTION/ ) {
-	    print "Fileservers ready after ".(`date +%s` - $start_time)."s.\n";
+	    print "Fileservers ready after ".(time() - $start_time)."s.\n";
             return;
         }
 	sleep ( $interval );
@@ -257,7 +274,7 @@ sub make_seed ( $ )
     my $bflags="";
     
     print "t=".elapsed_time()."s. Creating seed file $file_name\n";
-    my $starttime = `date +%s`;
+    my $starttime = time();
     if ($megs != 0) {
 	`dd if=/dev/urandom of=$file_name bs=1M count=$megs 2>&1`;
 	$kflags=" oflag=append conv=notrunc";
@@ -278,7 +295,7 @@ sub make_seed ( $ )
     if (! (-s $file_name) == $size) {
 	die "In $package_name::make_seed: file $file_name created with wrong size";
     }
-    my $endtime = `date +%s`;
+    my $endtime = time();
     print "t=".elapsed_time()."s. Seed file created in ".($endtime - $starttime)."s. Speed=".
 	($size/(1024*1024)/($endtime - $starttime))."MB/s.\n";
     
@@ -555,11 +572,11 @@ sub count_to_be_moved ()
 sub poll_moving_entries ( $$$ )
 {
     my ( $poll_interval, $timeout, $options ) = ( shift, shift, shift );
-    my $starttime = `date +%s`;
-    while ( count_to_be_moved() > 0 && ((`date +%s` - $starttime) < $timeout) ) {
+    my $starttime = time();
+    while ( count_to_be_moved() > 0 && ((time() - $starttime) < $timeout) ) {
         if ( check_remote_entries () ) {
             print "t=".elapsed_time()."s. Saw at least one new migration...\n";
-            $starttime = `date +%s`;
+            $starttime = time();
         }
 	if ( $options =~ /cleanup_migrated/ ) {
 	    cleanup_migrated();
@@ -720,7 +737,7 @@ sub daemonIsRunning ( $ )
   my $psResult = `ps -e | grep $daemonName`;
   chomp($psResult);
 
-  return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+  return($psResult =~ m/^\s*\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
 }
 
 
@@ -739,7 +756,28 @@ sub killDaemonWithTimeout ( $$ )
   my $processName = $_[0];
   my $timeOutSecs = $_[1];
 
-  `killall $processName`;
+  `/sbin/service $processName stop`;
+
+  if (daemonIsRunning($processName)) {
+      sleep (1);
+  } else {
+      return 0;
+  }
+
+  if (daemonIsRunning($processName)) {
+      `killall $processName`;
+  } else {
+      return 0;
+  }
+
+  if (daemonIsRunning($processName)) {
+      sleep (1);
+  } else {
+      return 0;
+  }
+  if (daemonIsRunning($processName)) {
+      `killall -9 $processName`;
+  }
 
   my $startTime  = time();
   my $timeOutTime = $startTime + $timeOutSecs;
@@ -750,10 +788,9 @@ sub killDaemonWithTimeout ( $$ )
     }
 
     if(time() >= $timeOutTime) {
-      print("Failed to kill $processName\n");
+      die ("Failed to kill $processName\n");
       return 1; # Failure
     }
-
     sleep(1);
   }
 }
@@ -1202,9 +1239,9 @@ sub check_leftovers ( $ )
 sub check_leftovers_poll_timeout ( $$$ )
 {
     my ( $dbh, $interval, $timeout ) = ( shift, shift, shift );
-    my $start_time = `date +%s`;
+    my $start_time = time();
     while (check_leftovers($dbh)) {
-        if (`date +%s`> $start_time + $timeout) {
+        if (time()> $start_time + $timeout) {
             return 1;
         }
     }
@@ -1356,9 +1393,7 @@ sub reinstall_stager_db()
     `/etc/init.d/stagerd start`;
     #`/etc/init.d/tapegatewayd start`;
     
-    my $sleepPeriod = 5;
-    print("Sleeping $sleepPeriod seconds\n");
-    sleep($sleepPeriod);
+    poll_rm_readyness ( 1, 15 );
     
     my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
     print("\n");
