@@ -109,23 +109,24 @@ int gethdr2uhl1(int tapefd,
 	return (cfseq);
 }
 
-int posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
-	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2, uhl1)
-int tapefd;
-char *path;
-char *devtype;
-int lblcode;
-int mode;
-int *cfseq;
-char *fid;
-int filstat;
-int fsec;
-int fseq;
-int den;
-int flags;
-int Qfirst;
-int Qlast;
-char *vol1, *hdr1, *hdr2, *uhl1;
+int posittape(int tapefd,
+              char *path,
+              char *devtype,
+              int lblcode,
+              int mode,
+              int *cfseq,
+              char *fid,
+              int filstat,
+              int fsec,
+              int fseq,
+              int den,
+              int flags,
+              int Qfirst,
+              int Qlast,
+              char *vol1,
+              char *hdr1,
+              char *hdr2,
+              char *uhl1)
 {
 	char buf[7];
 	int c;

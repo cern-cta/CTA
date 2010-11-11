@@ -325,8 +325,7 @@ int main(int	argc,
 }
 
 void
-cleanup(sig)
-int sig;
+cleanup(int sig)
 {
 	signal (sig, SIG_IGN);
 	if (Ctape_kill_needed)

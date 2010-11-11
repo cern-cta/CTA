@@ -41,8 +41,7 @@ int main()
   exit(0);
 }
 
-void *doit(arg)
-     void *arg;
+void *doit(void *arg)
 {
   char *file1, *file2;
   struct stat statbuf;

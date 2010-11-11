@@ -35,8 +35,7 @@
 EXTERN_C char *getacctent();
 
 
-char *getacct_r(resbuf) 
-char *resbuf;
+char *getacct_r(char *resbuf)
 { 
     char      *account = NULL;    /* Pointer to the account env variable  */
     struct passwd *pwd = NULL;        /* Pointer to the password entry    */

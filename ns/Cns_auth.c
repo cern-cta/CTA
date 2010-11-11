@@ -183,9 +183,8 @@ int Cns_getid(uid_t *uid,
  * @param gid Pointer to where to store the gid
  * @returns 0 in case of successs, -1 otherwise.
  */
-int Cns_getrealid(uid, gid)
-     uid_t *uid;
-     gid_t *gid;
+int Cns_getrealid(uid_t *uid,
+                  gid_t *gid)
 {
   return Cns_getid_ext(uid, gid, MODE_REAL_ID);
 }

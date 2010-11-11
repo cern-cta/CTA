@@ -26,13 +26,12 @@ static int Cyp_key = -1;
 #define account Cyp->_account
 #define first Cyp->_first
 
-static int ypcall(instatus,inkey,inkeylen,inval,invallen,indata)
-    int instatus ;
-    char * inkey ;
-    int inkeylen ;
-    char * inval ;
-    int invallen ;
-    char *indata ;
+static int ypcall(int instatus,
+                  char * inkey,
+                  int inkeylen,
+                  char * inval,
+                  int invallen,
+                  char *indata)
 {
     Cyp_spec_t *Cyp;
     char          * cp ; 
@@ -81,10 +80,9 @@ static int ypcall(instatus,inkey,inkeylen,inval,invallen,indata)
 #undef account
 #undef first
 
-char *ypgetacct(pwd,account,buffer)
-    struct passwd * pwd ; 
-    char      * account ;
-    char      *  buffer ;
+char *ypgetacct(struct passwd * pwd, 
+                char      * account,
+                char      *  buffer)
 {
     struct ypall_callback call ;
     char              * domain ; 

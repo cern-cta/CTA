@@ -31,11 +31,13 @@
 
 extern int switch_read();
 
-int
-rfio_xyread(lun, buf, nrec, nwant, ngot, chopt, irc)
-     int     lun, nrec, nwant;
-     char    *buf, *chopt;
-     int     *ngot, *irc;
+int rfio_xyread(int lun,
+		char *buf,
+		int nrec,
+		int nwant,
+		int *ngot,
+		char *chopt,
+		int *irc)
 {
   char    buffer[128];            /* general purpose buffer       */
   register char *p=buf;           /* buffer pointer               */

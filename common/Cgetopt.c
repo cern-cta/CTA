@@ -55,8 +55,7 @@ static int my_place = -1; /* If Cglobals_get error in order not to crash */
 #define place (*C__place())
 static char *my_place_static = "";
 
-static char * _Cgetopt_progname(nargv0)
-     char * nargv0;
+static char * _Cgetopt_progname(char * nargv0)
 {
   char * tmp = strrchr(nargv0, '/');
   if (tmp) tmp++; else tmp = nargv0;
@@ -72,10 +71,9 @@ static char * _Cgetopt_progname(nargv0)
  *	Parse argc/argv argument vector.
  */
 int
-_Cgetopt_internal(nargc, nargv, ostr)
-     int nargc;
-     char * const *nargv;
-     const char *ostr;
+_Cgetopt_internal(int nargc,
+                      char * const *nargv,
+                      const char *ostr)
 {
   char *oli;				/* option letter list index */
   
@@ -152,10 +150,9 @@ _Cgetopt_internal(nargc, nargv, ostr)
  *	Parse argc/argv argument vector.
  */
 int 
-Cgetopt(nargc, nargv, ostr)
-     int nargc;
-     char * const *nargv;
-     const char *ostr;
+Cgetopt(int nargc,
+             char * const *nargv,
+             const char *ostr)
 {
   int retval;
 
@@ -171,12 +168,11 @@ Cgetopt(nargc, nargv, ostr)
  *	Parse argc/argv argument vector.
  */
 int
-Cgetopt_long(nargc, nargv, options, long_options, index)
-     int nargc;
-     char **nargv;
-     const char *options;
-     Coptions_t *long_options;
-     int *index;
+Cgetopt_long(int nargc,
+                 char **nargv,
+                 const char *options,
+                 Coptions_t *long_options,
+                 int *index)
 {
   int retval;
 

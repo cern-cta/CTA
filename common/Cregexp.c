@@ -282,10 +282,10 @@ char *_Cregexp_reg (int, int *, char **, int *, char *, char **, long *);
 char *_Cregexp_branch (int *, char **, int *, char *, char **, long *);
 char *_Cregexp_piece (int *, char **, int *, char *, char **, long *);
 char *_Cregexp_atom (int *, char **, int *, char *, char **, long *);
-char *_Cregexp_node ();
+char *_Cregexp_node (char op, char *_Cregexp_dummy, char **_Cregexp_code, long *_Cregexp_size);
 char *_Cregexp_next (char *, char *);
-void _Cregexp_c ();
-void _Cregexp_insert ();
+void _Cregexp_c (char b, char *_Cregexp_dummy, char **_Cregexp_code, long *_Cregexp_size);
+void _Cregexp_insert (char op, char *opnd, char *_Cregexp_dummy, char **_Cregexp_code, long *_Cregexp_size);
 void _Cregexp_tail (char *, char *, char *);
 void _Cregexp_optail (char *, char *, char *);
 int _Cregexp_try (Cregexp_t *, char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***);
@@ -295,24 +295,15 @@ int _Cregexp_gettsd (char ***, int **, char **, char ***, long **, char ***, cha
 char *_Cregexp_prop (char *);
 
 
-int _Cregexp_gettsd(_Cregexp_parse,
-					_Cregexp_npar,
-					_Cregexp_dummy,
-					_Cregexp_code,
-					_Cregexp_size,
-					_Cregexp_input,
-					_Cregexp_bol,
-					_Cregexp_startp,
-					_Cregexp_endp)
-	char ***_Cregexp_parse;
-	int  **_Cregexp_npar;
-	char **_Cregexp_dummy;
-	char ***_Cregexp_code;
-	long **_Cregexp_size;
-	char ***_Cregexp_input;
-	char ***_Cregexp_bol;
-	char ****_Cregexp_startp;
-	char ****_Cregexp_endp;
+int _Cregexp_gettsd(char ***_Cregexp_parse,
+                    int  **_Cregexp_npar,
+                    char **_Cregexp_dummy,
+                    char ***_Cregexp_code,
+                    long **_Cregexp_size,
+                    char ***_Cregexp_input,
+                    char ***_Cregexp_bol,
+                    char ****_Cregexp_startp,
+                    char ****_Cregexp_endp)
 {
 	
 	/* Get TSD variables */
@@ -483,20 +474,13 @@ Cregexp_t *Cregexp_comp(char *exp)
  * is a trifle forced, but the need to tie the tails of the branches to what
  * follows makes it hard to avoid.
  */
-char *_Cregexp_reg(paren,
-				   flagp,
-				   _Cregexp_parse,
-				   _Cregexp_npar,
-				   _Cregexp_dummy,
-				   _Cregexp_code,
-				   _Cregexp_size)
-	int paren;			/* Parenthesized? */
-	int *flagp;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+char *_Cregexp_reg(int paren,			/* Parenthesized? */
+                   int *flagp,
+                   char **_Cregexp_parse,
+                   int *_Cregexp_npar,
+                   char *_Cregexp_dummy,
+                   char **_Cregexp_code,
+                   long *_Cregexp_size)
 {
 	char *ret;
 	char *br;
@@ -600,18 +584,12 @@ char *_Cregexp_reg(paren,
  *
  * Implements the concatenation operator.
  */
-char *_Cregexp_branch(flagp,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size)
-	int *flagp;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+char *_Cregexp_branch(int *flagp,
+                      char **_Cregexp_parse,
+                      int *_Cregexp_npar,
+                      char *_Cregexp_dummy,
+                      char **_Cregexp_code,
+                      long *_Cregexp_size)
 {
 	char *ret;
 	char *chain;
@@ -663,18 +641,12 @@ char *_Cregexp_branch(flagp,
  * It might seem that this node could be dispensed with entirely, but the
  * endmarker role is not redundant.
  */
-char *_Cregexp_piece(flagp,
-					 _Cregexp_parse,
-					 _Cregexp_npar,
-					 _Cregexp_dummy,
-					 _Cregexp_code,
-					 _Cregexp_size)
-	int *flagp;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+char *_Cregexp_piece(int *flagp,
+                     char **_Cregexp_parse,
+                     int *_Cregexp_npar,
+                     char *_Cregexp_dummy,
+                     char **_Cregexp_code,
+                     long *_Cregexp_size)
 {
 	char *ret;
 	char op;
@@ -809,18 +781,12 @@ char *_Cregexp_piece(flagp,
  * faster to run.  Backslashed characters are exceptions, each becoming a
  * separate node; the code is simpler that way and it's not worth fixing.
  */
-char *_Cregexp_atom(flagp,
-					_Cregexp_parse,
-					_Cregexp_npar,
-					_Cregexp_dummy,
-					_Cregexp_code,
-					_Cregexp_size)
-	int *flagp;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+char *_Cregexp_atom(int *flagp,
+                    char **_Cregexp_parse,
+                    int *_Cregexp_npar,
+                    char *_Cregexp_dummy,
+                    char **_Cregexp_code,
+                    long *_Cregexp_size)
 {
 	char *ret;
 	int flags;
@@ -1004,15 +970,10 @@ char *_Cregexp_atom(flagp,
 /*
   - regnode - emit a node
 */
-char *_Cregexp_node(op,
-					_Cregexp_dummy,
-					_Cregexp_code,
-					_Cregexp_size)
-
-	char op;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+char *_Cregexp_node(char op,
+                    char *_Cregexp_dummy,
+                    char **_Cregexp_code,
+                    long *_Cregexp_size)
 {
 	char *ret;
 	char *ptr;
@@ -1035,14 +996,10 @@ char *_Cregexp_node(op,
 /*
  - regc - emit (if appropriate) a byte of code
  */
-void _Cregexp_c(b,
-				_Cregexp_dummy,
-				_Cregexp_code,
-				_Cregexp_size)
-	char b;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+void _Cregexp_c(char b,
+                char *_Cregexp_dummy,
+                char **_Cregexp_code,
+                long *_Cregexp_size)
 {
 	if (*_Cregexp_code != _Cregexp_dummy) {
 		*(*_Cregexp_code)++ = b;
@@ -1056,17 +1013,11 @@ void _Cregexp_c(b,
  *
  * Means relocating the operand.
  */
-void _Cregexp_insert(op,
-					 opnd,
-					 _Cregexp_dummy,
-					 _Cregexp_code,
-					 _Cregexp_size)
-
-	char op;
-	char *opnd;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
+void _Cregexp_insert(char op,
+                     char *opnd,
+                     char *_Cregexp_dummy,
+                     char **_Cregexp_code,
+                     long *_Cregexp_size)
 {
 	char *src;
 	char *dst;
@@ -1092,12 +1043,9 @@ void _Cregexp_insert(op,
 /*
  - regtail - set the next-pointer at the end of a node chain
  */
-void _Cregexp_tail(p,
-				   val,
-				   _Cregexp_dummy)
-	char *p;
-	char *val;
-	char *_Cregexp_dummy;
+void _Cregexp_tail(char *p,
+                   char *val,
+                   char *_Cregexp_dummy)
 {
 	char *scan;
 	char *temp;
@@ -1129,12 +1077,9 @@ void _Cregexp_tail(p,
 /*
  - regoptail - regtail on operand of first argument; nop if operandless
  */
-void _Cregexp_optail(p,
-					 val,
-					 _Cregexp_dummy)
-	char *p;
-	char *val;
-	char *_Cregexp_dummy;
+void _Cregexp_optail(char *p,
+                     char *val,
+                     char *_Cregexp_dummy)
 {
 	/* "Operandless" and "op != BRANCH" are synonymous in practice. */
 	if (p == NULL || p == _Cregexp_dummy || OP(p) != BRANCH) {
@@ -1275,28 +1220,17 @@ int Cregexp_exec(Cregexp_t *prog,
 /*
  - regtry - try match at specific point
  */
-int	_Cregexp_try(prog,
-				 string,
-				 _Cregexp_parse,
-				 _Cregexp_npar,
-				 _Cregexp_dummy,
-				 _Cregexp_code,
-				 _Cregexp_size,
-				 _Cregexp_input,
-				 _Cregexp_bol,
-				 _Cregexp_startp,
-				 _Cregexp_endp)
-	Cregexp_t *prog;
-	char *string;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
-	char **_Cregexp_input;
-	char **_Cregexp_bol;
-	char ***_Cregexp_startp;
-	char ***_Cregexp_endp;
+int	_Cregexp_try(Cregexp_t *prog,
+                 char *string,
+                 char **_Cregexp_parse,
+                 int *_Cregexp_npar,
+                 char *_Cregexp_dummy,
+                 char **_Cregexp_code,
+                 long *_Cregexp_size,
+                 char **_Cregexp_input,
+                 char **_Cregexp_bol,
+                 char ***_Cregexp_startp,
+                 char ***_Cregexp_endp)
 {
 	int i;
 	char **sp;
@@ -1341,26 +1275,16 @@ int	_Cregexp_try(prog,
  * need to know whether the rest of the match failed) by a loop instead of
  * by recursion.
  */
-int _Cregexp_match(prog,
-				   _Cregexp_parse,
-				   _Cregexp_npar,
-				   _Cregexp_dummy,
-				   _Cregexp_code,
-				   _Cregexp_size,
-				   _Cregexp_input,
-				   _Cregexp_bol,
-				   _Cregexp_startp,
-				   _Cregexp_endp)
-	char *prog;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
-	char **_Cregexp_input;
-	char **_Cregexp_bol;
-	char ***_Cregexp_startp;
-	char ***_Cregexp_endp;
+int _Cregexp_match(char *prog,
+                   char **_Cregexp_parse,
+                   int *_Cregexp_npar,
+                   char *_Cregexp_dummy,
+                   char **_Cregexp_code,
+                   long *_Cregexp_size,
+                   char **_Cregexp_input,
+                   char **_Cregexp_bol,
+                   char ***_Cregexp_startp,
+                   char ***_Cregexp_endp)
 {
 	char *scan;	/* Current node. */
 	char *next;		/* Next node. */
@@ -1586,10 +1510,8 @@ int _Cregexp_match(prog,
 /*
  - regrepeat - repeatedly match something simple, report how many
  */
-int _Cregexp_repeat(p,
-					_Cregexp_input)
-	char *p;
-	char **_Cregexp_input;
+int _Cregexp_repeat(char *p,
+                    char **_Cregexp_input)
 {
 	int count = 0;
 	char *scan;
@@ -1634,10 +1556,8 @@ int _Cregexp_repeat(p,
 /*
  - regnext - dig the "next" pointer out of a node
  */
-char *_Cregexp_next(p,
-					_Cregexp_dummy)
-	char *p;
-	char *_Cregexp_dummy;
+char *_Cregexp_next(char *p,
+                    char *_Cregexp_dummy)
 {
 	int offset;
 

@@ -84,10 +84,9 @@ int    nbytes;
 }
 
 int
-s_recv (s, buf, nbytes)
-SOCKET s;
-char    *buf;
-int     nbytes;
+s_recv (SOCKET s,
+            char    *buf,
+            int     nbytes)
 {
     register int    n, nb;
  
@@ -141,10 +140,9 @@ int     nbytes;
 }
  
 int
-s_send (s, buf, nbytes)
-SOCKET  s;
-char    *buf;
-int     nbytes;
+s_send (SOCKET  s,
+            char    *buf,
+            int     nbytes)
 {
     register int    n, nb;
  
@@ -175,8 +173,7 @@ int     nbytes;
 }
 
 int
-s_close(s)
-SOCKET     s;
+s_close(SOCKET     s)
 {
     return(CLOSE(s));
 }

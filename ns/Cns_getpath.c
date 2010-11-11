@@ -16,10 +16,9 @@
 #include "serrno.h"
 
 int
-Cns_getpath(server, fileid, path)
-     char *server;
-     u_signed64 fileid;
-     char *path;
+Cns_getpath(char *server,
+	    u_signed64 fileid,
+	    char *path)
 {
   int c;
   char func[16];

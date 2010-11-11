@@ -16,8 +16,7 @@
 static int Csec_api_key = -1;
 
 int
-Csec_apiinit(thip)
-     struct Csec_api_thread_info **thip;
+Csec_apiinit(struct Csec_api_thread_info **thip)
 {
   Cglobals_get (&Csec_api_key,
 		(void **) thip, sizeof(struct Csec_api_thread_info));

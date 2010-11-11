@@ -25,11 +25,10 @@
 #define strtok(X,Y) strtok_r(X,Y,&last)
 
 int
-Cns_selectsrvr(path, current_directory_server, server, actual_path)
-     const char *path;
-     char *current_directory_server;
-     char *server;
-     char **actual_path;
+Cns_selectsrvr(const char *path,
+	       char *current_directory_server,
+	       char *server,
+	       char **actual_path)
 {
   char buffer[CA_MAXPATHLEN+1];
   char *domain;

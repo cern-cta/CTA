@@ -49,14 +49,16 @@ int rfio_xysock(int lun)
 }
 
 int
-rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,uid,gid,key,reqhost)
-     char    *name, *node, *chopt;
-     int     lun, lrecl;
-     int     *irc;
-     uid_t uid;
-     gid_t gid;
-     int key;
-     char *reqhost;
+rfio_xyopen_ext(char *name,
+		char *node,
+		int lun,
+		int lrecl,
+		char *chopt,
+		int *irc,
+		uid_t uid,
+		gid_t gid,
+		int key,
+		char *reqhost)
 {
   register int    s;              /* socket descriptor            */
   int             status;         /* remote fopen() status        */

@@ -52,8 +52,7 @@ int main(int argc,
 	exit(0);
 }
 
-void *master_thread(arg)
-	void *arg;
+void *master_thread(void *arg)
 {
 	int i, j;
 	time_t thistime, newtime;

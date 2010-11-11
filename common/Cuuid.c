@@ -128,9 +128,8 @@ int string2Cuuid(Cuuid_t *uuid,
   return(0);
 }
 
-void _marshall_UUID (ptr, uuid)
-     char **ptr;
-     Cuuid_t *uuid;
+void _marshall_UUID (char **ptr,
+                     Cuuid_t *uuid)
 {
   int i;
   marshall_LONG(*ptr, uuid->time_low);
@@ -141,9 +140,8 @@ void _marshall_UUID (ptr, uuid)
   for (i = 0; i < 6; i++) marshall_BYTE(*ptr, uuid->node[i]);
 }
 
-void _unmarshall_UUID (ptr, uuid)
-     char **ptr;
-     Cuuid_t *uuid;
+void _unmarshall_UUID (char **ptr,
+                       Cuuid_t *uuid)
 {
   int i;
   unmarshall_LONG(*ptr, uuid->time_low);

@@ -44,9 +44,8 @@ void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
  *  A continuation line is prefixed by '+ '
  */
 void
-vmgr_logreq(func, logbuf)
-char *func;
-char *logbuf;
+vmgr_logreq(char *func,
+	    char *logbuf)
 {
   int n1, n2;
   char *p;

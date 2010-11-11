@@ -16,9 +16,8 @@ static int errbuflen;
 /*	rmc_seterrbuf - set receiving buffer for error messages */
 
 void
-rmc_seterrbuf(buffer, buflen)
-char *buffer;
-int buflen;
+rmc_seterrbuf(char *buffer,
+	      int buflen)
 {
 	errbufp = buffer;
 	errbuflen = buflen;
