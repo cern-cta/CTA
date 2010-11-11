@@ -197,9 +197,9 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
         
-    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('offset'))
+    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
     Requestsatlas.stop = optr.getOption('time')
-    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('offset'))
+    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
     Requestscms.stop = optr.getOption('time')
     
     try:
