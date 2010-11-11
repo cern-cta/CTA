@@ -660,6 +660,18 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsHtmlInfoDimension())
     mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    
+    mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Requestsalice', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    
+    mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Requestslhcb', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    
+    mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
+    mlinker.addPropertyLink('Requestspublic', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
 
     return mlinker
 

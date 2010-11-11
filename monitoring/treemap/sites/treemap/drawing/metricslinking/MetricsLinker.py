@@ -32,5 +32,5 @@ class MetricsLinker(object):
         
         try:
             return self.proplink[(classname, propertyname)].getValue(node)
-        except KeyError, e:
+        except Exception, e:
             raise Exception("That property is not linked")

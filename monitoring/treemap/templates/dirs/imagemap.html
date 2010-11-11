@@ -192,7 +192,7 @@ function writeStatusToDiv()
     //objectcheck = framedocument.getElementsByTagName('div')[0];
     var objectcheck = framedocument.getElementById("no404");
     
-    if(objectcheck == null)
+    if(objectcheck == null)//if there is no object with id no404 inside of the response, it was not the expected response, so deactivate progress bar
     {
         //the first failure must be ignored to make it work in opera
         //In Opera onunload event is useless because it fires too late + for some reason the first framedocument.readystate equals complete, even if it isn't
@@ -322,7 +322,7 @@ function notImplementedWarning()
         	{% endfor %}
         	</ul>  
 	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
-	   <br><br> <div style="font-size: 14px" >The displayed data is not live data (snapshot from 08.04.2010).<br>Exceptions are: Requests Atlas, Requests CMS</div>
+	   <br><br> <div style="font-size: 14px" >The displayed data is not live data (snapshot from 08.04.2010).<br>Exceptions are Requests from CERN experiments.</div>
 	</td>	
 		<noscript>
 			<div style="color:#7F1F1F" align = "center">

@@ -274,7 +274,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)                                                                                                                                                             
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
-presetdict["Requests Atlas"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
+presetdict["Requests ATLAS"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
 
 #Preset for Requests cms
 lr = LevelRules()
@@ -283,6 +283,31 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests CMS"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
+
+#Preset for Requests lhcb
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Requestslhcb', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+presetdict["Requests LHCb"] = Preset(lr, False, 'Requestslhcb', '/castor', 24, optionsset)
+
+#Preset for Requests alice
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Requestsalice', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+presetdict["Requests ALICE"] = Preset(lr, False, 'Requestsalice', '/castor', 25, optionsset)
+
+#Preset for Requests public
+lr = LevelRules()
+for i in range(getDefaultNumberOfLevels()):
+    lr.addRules(classname = 'Requestspublic', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+presetdict["Requests public"] = Preset(lr, False, 'Requestspublic', '/castor', 26, optionsset)
+
 
 
 

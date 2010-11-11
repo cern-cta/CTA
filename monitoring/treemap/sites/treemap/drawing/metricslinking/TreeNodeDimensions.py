@@ -499,14 +499,14 @@ class RequestsHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'requestsatlashtmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self, 'requestshtmlinfo', None, None, False, True)
 
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
         parent = tnode.getProperty('treenode').getNakedParent()
-        assert(isinstance(dbobj, Requestsatlas) or isinstance(dbobj, Requestscms))
+        assert(isinstance(dbobj, Requestsatlas) or isinstance(dbobj, Requestscms) or isinstance(dbobj, Requestsalice) or isinstance(dbobj, Requestslhcb) or isinstance(dbobj, Requestspublic))
         
         ret = []
         size = float(tnode.getProperty('treenode').getEvalValue())
@@ -534,15 +534,7 @@ class RequestsHtmlInfoDimension(ViewNodeDimensionBase):
         ret.append("<br><b>Processed value:</b> ")
         ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
         
-        ret.append("<br><br><b>size:</b> ")
-        
-        ret.append(sizeInBytes(bytesize))
-            
-        ret.append(" (")
-        ret.append(long(bytesize).__str__())
-        ret.append(" Bytes)")
-        
-        ret.append("<br><b>parent percentage:</b> ")
+        ret.append("<br><br><b>parent percentage:</b> ")
         if(psize == 0):
             ret.append("%.2f"%(100))
         else:

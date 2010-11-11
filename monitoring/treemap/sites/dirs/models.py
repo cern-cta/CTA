@@ -519,6 +519,290 @@ Requestscms.treeprops = {'start': None, 'stop': None}
 Requestscms.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestscms.stop = datetime.datetime.now() #time relative to now
 
+class Requestsalice(models.Model):
+    subreqid = models.CharField(unique=True, max_length=36)
+    timestamp = models.DateField(blank=True)
+    reqid = models.CharField(max_length=36, primary_key=True)
+    nsfileid = models.DecimalField(max_digits=127, decimal_places=0)
+    type = models.CharField(max_length=255, blank=True)
+    svcclass = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=2048, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=127, decimal_places=0, blank=True)
+    
+    #fake (not in db)
+#    requestscount = models.IntegerField(default = 1.0)
+    
+    class Meta:
+        db_table = u'requestsalice'
+    
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        self.requestscount = None
+        
+    def __unicode__(self):
+        return unicode(self.__str__())
+    
+    def __str__(self):
+        txt = ''
+        if(self.filename == ''): 
+            txt = "/"
+        else:
+            txt = self.filename
+        return txt
+    
+    #fixes a bug to distinguish between objects with different "namepart"
+    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
+    def __hash__(self):
+        try:
+            self.filename
+            return hash(self._get_pk_val().__str__() + self.filename)
+        except:
+            return hash(self._get_pk_val())
+        
+    def getUserFriendlyName(self):
+        return "Requests Alice"
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        try:
+            self.filename
+        except:
+            raise Exception("This object seems not to exist in the generated tree")
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.getChildren()
+    
+    def countChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.countChildren()
+    
+    def getParent(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        try:
+            tree.traverseBack()
+        except:
+            pass
+        return tree.getCurrentObject()
+    
+    
+       
+Requestsalice.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+#metrics which are not related to columns from the database and can be accessed with the dot operator
+Requestsalice.metricattributes = ['requestscount']
+
+#mark children Methods   
+Requestsalice.getChildren.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+Requestsalice.countChildren.__dict__['methodtype'] = 'childrencount'
+Requestsalice.countChildren.__dict__['countsfor'] = 'getChildren'
+
+#mark parent Methods
+Requestsalice.getParent.__dict__['methodtype'] = 'parent'
+Requestsalice.getParent.__dict__['returntype'] = ['Requestsalice']
+Requestsalice.getParent.__dict__['naviname'] = 'filename'
+
+
+Requestsalice.generatedtree = None
+
+#other parameters influencing tree generation
+Requestsalice.treeprops = {'start': None, 'stop': None}
+Requestsalice.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
+Requestsalice.stop = datetime.datetime.now() #time relative to now
+
+class Requestslhcb(models.Model):
+    subreqid = models.CharField(unique=True, max_length=36)
+    timestamp = models.DateField(blank=True)
+    reqid = models.CharField(max_length=36, primary_key=True)
+    nsfileid = models.DecimalField(max_digits=127, decimal_places=0)
+    type = models.CharField(max_length=255, blank=True)
+    svcclass = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=2048, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=127, decimal_places=0, blank=True)
+    
+    #fake (not in db)
+#    requestscount = models.IntegerField(default = 1.0)
+    
+    class Meta:
+        db_table = u'requestslhcb'
+    
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        self.requestscount = None
+        
+    def __unicode__(self):
+        return unicode(self.__str__())
+    
+    def __str__(self):
+        txt = ''
+        if(self.filename == ''): 
+            txt = "/"
+        else:
+            txt = self.filename
+        return txt
+    
+    #fixes a bug to distinguish between objects with different "namepart"
+    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
+    def __hash__(self):
+        try:
+            self.filename
+            return hash(self._get_pk_val().__str__() + self.filename)
+        except:
+            return hash(self._get_pk_val())
+        
+    def getUserFriendlyName(self):
+        return "Requests LHCb"
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        try:
+            self.filename
+        except:
+            raise Exception("This object seems not to exist in the generated tree")
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.getChildren()
+    
+    def countChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.countChildren()
+    
+    def getParent(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        try:
+            tree.traverseBack()
+        except:
+            pass
+        return tree.getCurrentObject()
+    
+    
+       
+Requestslhcb.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+#metrics which are not related to columns from the database and can be accessed with the dot operator
+Requestslhcb.metricattributes = ['requestscount']
+
+#mark children Methods   
+Requestslhcb.getChildren.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+Requestslhcb.countChildren.__dict__['methodtype'] = 'childrencount'
+Requestslhcb.countChildren.__dict__['countsfor'] = 'getChildren'
+
+#mark parent Methods
+Requestslhcb.getParent.__dict__['methodtype'] = 'parent'
+Requestslhcb.getParent.__dict__['returntype'] = ['Requestslhcb']
+Requestslhcb.getParent.__dict__['naviname'] = 'filename'
+
+
+Requestslhcb.generatedtree = None
+
+#other parameters influencing tree generation
+Requestslhcb.treeprops = {'start': None, 'stop': None}
+Requestslhcb.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
+Requestslhcb.stop = datetime.datetime.now() #time relative to now
+
+class Requestspublic(models.Model):
+    subreqid = models.CharField(unique=True, max_length=36)
+    timestamp = models.DateField(blank=True)
+    reqid = models.CharField(max_length=36, primary_key=True)
+    nsfileid = models.DecimalField(max_digits=127, decimal_places=0)
+    type = models.CharField(max_length=255, blank=True)
+    svcclass = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=2048, blank=True)
+    filesize = models.DecimalField(null=True, default = 0, max_digits=127, decimal_places=0, blank=True)
+    
+    #fake (not in db)
+#    requestscount = models.IntegerField(default = 1.0)
+    
+    class Meta:
+        db_table = u'requestspublic'
+    
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
+        self.requestscount = None
+        
+    def __unicode__(self):
+        return unicode(self.__str__())
+    
+    def __str__(self):
+        txt = ''
+        if(self.filename == ''): 
+            txt = "/"
+        else:
+            txt = self.filename
+        return txt
+    
+    #fixes a bug to distinguish between objects with different "namepart"
+    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
+    def __hash__(self):
+        try:
+            self.filename
+            return hash(self._get_pk_val().__str__() + self.filename)
+        except:
+            return hash(self._get_pk_val())
+        
+    def getUserFriendlyName(self):
+        return "Requests public"
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        try:
+            self.filename
+        except:
+            raise Exception("This object seems not to exist in the generated tree")
+        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.getChildren()
+    
+    def countChildren(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        return tree.countChildren()
+    
+    def getParent(self):
+        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        try:
+            tree.traverseBack()
+        except:
+            pass
+        return tree.getCurrentObject()
+    
+    
+       
+Requestspublic.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+#metrics which are not related to columns from the database and can be accessed with the dot operator
+Requestspublic.metricattributes = ['requestscount']
+
+#mark children Methods   
+Requestspublic.getChildren.__dict__['methodtype'] = 'children'
+
+#mark count Methods
+Requestspublic.countChildren.__dict__['methodtype'] = 'childrencount'
+Requestspublic.countChildren.__dict__['countsfor'] = 'getChildren'
+
+#mark parent Methods
+Requestspublic.getParent.__dict__['methodtype'] = 'parent'
+Requestspublic.getParent.__dict__['returntype'] = ['Requestspublic']
+Requestspublic.getParent.__dict__['naviname'] = 'filename'
+
+
+Requestspublic.generatedtree = None
+
+#other parameters influencing tree generation
+Requestspublic.treeprops = {'start': None, 'stop': None}
+Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
+Requestspublic.stop = datetime.datetime.now() #time relative to now
 
 def generateRequestsTree(start, stop, reqmodel, statusfilename):
     def addRequestToTree(tree, requestdata):
@@ -669,7 +953,7 @@ def traverseToRequestInTree(name, reqmodel):
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
 def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
-    if model in('Requestsatlas', 'Requestscms'):
+    if model in('Requestsatlas', 'Requestscms', 'Requestsalice', 'Requestslhcb', 'Requestspublic'):
         path = None
         if urlrest.rfind('/') == (len(urlrest)-1): 
             path = urlrest[:len(urlrest)-1] #can be empty which will lead to root
@@ -718,7 +1002,7 @@ def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
     raise Exception ("model " + model + " is missing in findObjectByIdReplacementSuffix")
 
 def getModelsNotToCache():
-    return ['Requestsatlas', 'Requestscms'];
+    return ['Requestsatlas', 'Requestsatlas', 'Requestscms', 'Requestsalice', 'Requestslhcb', 'Requestspublic'];
 
     
 #class Ydirs(models.Model):
