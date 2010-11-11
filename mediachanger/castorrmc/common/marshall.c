@@ -12,10 +12,9 @@
 #include "osdep.h"
 
 int
-_unmarshall_STRINGN(ptr, str, n)
-char **ptr;
-char *str;
-int n;
+_unmarshall_STRINGN(char **ptr,
+                        char *str,
+                        int n)
 {
 	char *p;
 
