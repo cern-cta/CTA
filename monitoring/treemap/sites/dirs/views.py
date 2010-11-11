@@ -87,6 +87,12 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     Requestsatlas.stop = optr.getOption('time')
     Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
     Requestscms.stop = optr.getOption('time')
+    Requestsalice.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestsalice.stop = optr.getOption('time')
+    Requestslhcb.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestslhcb.stop = optr.getOption('time')
+    Requestspublic.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestspublic.stop = optr.getOption('time')
     
     root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
     filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
@@ -201,6 +207,12 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     Requestsatlas.stop = optr.getOption('time')
     Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
     Requestscms.stop = optr.getOption('time')
+    Requestsalice.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestsalice.stop = optr.getOption('time')
+    Requestslhcb.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestslhcb.stop = optr.getOption('time')
+    Requestspublic.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+    Requestspublic.stop = optr.getOption('time')
     
     try:
         if request.session['statusfile']['isvalid']:
