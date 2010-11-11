@@ -24,12 +24,6 @@ XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
-Package: castor-devel-oracle
-Architecture: any
-Depends: castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- Oracle API
-
 Package: castor-expert-server
 Architecture: any
 Depends: logrotate
