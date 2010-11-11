@@ -103,7 +103,9 @@ $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibr
 	install $< $(DESTDIR)/directory/SharedLibraryFullName(libname)                             @@\
 	rm -f $(DESTDIR)/directory/SharedLibraryName(libname) $@                                   @@\
 	ln -s SharedLibraryFullName(libname) $(DESTDIR)/directory/SharedLibraryName(libname)       @@\
+ifeq (installtgt,installclient)                                                                    @@\
 	ln -s SharedLibraryName(libname) $@                                                        @@\
+endif                                                                                              @@\
 installtgt: $(DESTDIR)/directory/BareSharedLibraryTargetName(libname)                              @@\
 alltgt: LOCAL_PATH/SharedLibraryName(libname)                                                      @@\
 PREFIX(FilesToClean) += objects $(patsubst %.o,%.d,objects)                                        @@\
