@@ -139,8 +139,7 @@ int main(int argc,char **argv)
 }
 
 static time_t
-cvt_datime(arg)
-     char *arg;
+cvt_datime(char *arg)
 {
   int cc = 0;
   time_t curtime;

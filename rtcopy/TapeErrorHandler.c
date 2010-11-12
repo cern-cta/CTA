@@ -101,14 +101,9 @@ int inChild;
  */
 Cuuid_t childUuid, mainUuid;
 
-static int prepareForDBAccess(
-                              _dbSvc,
-                              _tpSvc,
-                              _iAddr
-                              )
-  struct Cstager_ITapeSvc_t **_tpSvc;
-  struct C_Services_t **_dbSvc;
-  struct C_IAddress_t **_iAddr;
+static int prepareForDBAccess(struct C_Services_t **_dbSvc,
+                              struct Cstager_ITapeSvc_t **_tpSvc,
+                              struct C_IAddress_t **_iAddr)
 {
   struct Cstager_ITapeSvc_t **tpSvc;
   struct C_Services_t **dbSvc;
@@ -148,10 +143,7 @@ static int prepareForDBAccess(
   return(0);
 }
 
-static int cleanupSegment(
-                          segment
-                          )
-     struct Cstager_Segment_t *segment;
+static int cleanupSegment(struct Cstager_Segment_t *segment)
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
@@ -186,12 +178,8 @@ static int cleanupSegment(
   return(0);
 }
 
-static int callExpert(
-                      mode,
-                      expertMessage
-                      )
-     int mode;
-     char *expertMessage;
+static int callExpert(int mode,
+                      char *expertMessage)
 {
   int msgLen, rc, fd = -1;
   int timeout = 30;
@@ -239,12 +227,8 @@ static int callExpert(
  *  - update the Tape status to TAPE_PENDING unless the tape
  *    is already active (TAPE_WAITDRIVE, TAPE_WAITMOUNT, TAPE_MOUNTED)
  */
-static int doRecallRetry(
-                         segment,
-                         tapeCopy
-                         )
-     struct Cstager_Segment_t *segment;
-     struct Cstager_TapeCopy_t *tapeCopy;
+static int doRecallRetry(struct Cstager_Segment_t *segment,
+                         struct Cstager_TapeCopy_t *tapeCopy)
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
@@ -420,10 +404,7 @@ static int doRecallRetry(
   return(0);
 }
 
-static int validNsSegment(
-                          nsSegment
-                          )
-     struct Cns_segattrs *nsSegment;
+static int validNsSegment(struct Cns_segattrs *nsSegment)
 {
   struct vmgr_tape_info vmgrTapeInfo;
   int rc;
@@ -448,12 +429,8 @@ static int validNsSegment(
   return(1);
 }
 
-static int checkRecallRetry(
-                            segment,
-                            tapeCopy
-                            )
-     struct Cstager_Segment_t *segment;
-     struct Cstager_TapeCopy_t *tapeCopy;
+static int checkRecallRetry(struct Cstager_Segment_t *segment,
+                            struct Cstager_TapeCopy_t *tapeCopy)
 {
   enum Cstager_SegmentStatusCodes_t segmentStatus;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
@@ -816,12 +793,8 @@ static int checkRecallRetry(
  *  - update status of associated TapeCopy to TAPECOPY_CREATED allowing
  *    it to be picked up at next mighunter iteration.
  */
-static int doMigrationRetry(
-                            segment,
-                            tapeCopy
-                            )
-     struct Cstager_Segment_t *segment;
-     struct Cstager_TapeCopy_t *tapeCopy;
+static int doMigrationRetry(struct Cstager_Segment_t *segment,
+                            struct Cstager_TapeCopy_t *tapeCopy)
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
@@ -925,14 +898,9 @@ static int doMigrationRetry(
  * admits another retry.
  *
  */
-static int checkMigrationRetry(
-                               tapeCopy,
-                               deleteDiskCopy,
-                               _fileid
-                               )
-     struct Cstager_TapeCopy_t *tapeCopy;
-     int *deleteDiskCopy;
-     struct Cns_fileid *_fileid;
+static int checkMigrationRetry(struct Cstager_TapeCopy_t *tapeCopy,
+                               int *deleteDiskCopy,
+                               struct Cns_fileid *_fileid)
 {
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;

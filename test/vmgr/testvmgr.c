@@ -76,10 +76,7 @@
 
 int tapeStatus(tape_list_t *, u_signed64 *, int *, int *);
 
-static int maxTapeFseq(
-                       labeltype
-                       )
-     char *labeltype;
+static int maxTapeFseq(char *labeltype)
 {
 	if (labeltype == NULL) return(-1);
   
@@ -95,22 +92,15 @@ static int maxTapeFseq(
 	return(-1);                           /* Unknown type : not limited */
 }
 
-static int validTape(
-                     vid,
-                     side
-                     )
-     char *vid;
-     int side;
+static int validTape(char *vid,
+                     int side)
 {
   if ( (vid == NULL) || (*vid == '\0') || 
        (strlen(vid) > CA_MAXVIDLEN) || (side < 0) ) return(0);
   return(1);
 }
 
-char *rtcpcld_tapeStatusStr(
-                            status
-                            )
-     int status;
+char *rtcpcld_tapeStatusStr(int status)
 {
   static int statusStrKey = -1;
   static char *unknown = "(unknown)";
@@ -155,10 +145,7 @@ char *rtcpcld_tapeStatusStr(
   return(buf);
 }
 
-int getVmgrErrBuf(
-                  vmgrErrBuf
-                  )
-     char **vmgrErrBuf;
+int getVmgrErrBuf(char **vmgrErrBuf)
 {
   static int vmgrErrBufKey = -1;
   void *tmpBuf = NULL;
@@ -177,14 +164,9 @@ int getVmgrErrBuf(
 }
 
 
-int rtcpcld_gettape(
-                    tapePool,
-                    initialSizeToTransfer,
-                    tape
-                    )
-     char *tapePool;
-     tape_list_t **tape;
-     u_signed64 initialSizeToTransfer;
+int rtcpcld_gettape(char *tapePool,
+                    u_signed64 initialSizeToTransfer,
+                    tape_list_t **tape)
 {
   int rc, rcGetTape, i, nbRetriesMaxFseq = 1;  
   char model[CA_MAXMODELLEN+1];
@@ -316,17 +298,11 @@ int rtcpcld_gettape(
   return(0);
 }
 
-int rtcpcld_updateTape(
-                       tape,
-                       file,
-                       endOfRequest,
-                       rtcpc_serrno,
-                       _filesWritten
-                       )
-     tape_list_t *tape;
-     file_list_t *file;
-     int endOfRequest, rtcpc_serrno;
-     int *_filesWritten;
+int rtcpcld_updateTape(tape_list_t *tape,
+                       file_list_t *file,
+                       int endOfRequest,
+                       int rtcpc_serrno,
+                       int *_filesWritten)
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq = NULL;
@@ -502,16 +478,10 @@ int rtcpcld_updateTape(
   return(0);
 }
 
-int tapeStatus(
-               tape,
-               freeSpace,
-               status,
-               nbVmgrFiles
-               )
-     tape_list_t *tape;
-     u_signed64 *freeSpace;
-     int *status;
-     int *nbVmgrFiles;
+int tapeStatus(tape_list_t *tape,
+               u_signed64 *freeSpace,
+               int *status,
+               int *nbVmgrFiles)
 {
   int rc, save_serrno;
   struct vmgr_tape_info vmgrTapeInfo;
@@ -571,10 +541,7 @@ int tapeStatus(
   return(0);
 }
 
-int rtcpcld_tapeOK(
-                   tape
-                   )
-     tape_list_t *tape;
+int rtcpcld_tapeOK(tape_list_t *tape)
 {
   return(tapeStatus(tape,NULL,NULL,NULL));
 }

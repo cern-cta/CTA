@@ -71,10 +71,9 @@ vmatch (char *pattern, char *vid)
 }
 
 static int
-get_element_size(fd, rbtdev, type)
-int fd;
-char *rbtdev;
-int type;
+get_element_size(int fd,
+                            char *rbtdev,
+                            int type)
 {
 	unsigned char buf[16];
 	unsigned char cdb[12];
@@ -117,14 +116,13 @@ int type;
 }
 
 static int
-get_element_info(opcode, fd, rbtdev, type, start, nbelem, element_info)
-char opcode;
-int fd;
-char *rbtdev;
-int type;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
+get_element_info(char opcode,
+                            int fd,
+                            char *rbtdev,
+                            int type,
+                            int start,
+                            int nbelem,
+                            struct smc_element_info element_info[])
 {
 	int avail_elem;
 	unsigned char cdb[12];

@@ -112,10 +112,7 @@ int detachTapeCopyFromStream (
  *
  * \note Thread safeness and concurrent access is managed by C_Services
  */
-static int getDbSvc(
-                    dbSvc
-                    )
-     struct C_Services_t ***dbSvc;
+static int getDbSvc(struct C_Services_t ***dbSvc)
 {
   static int svcsKey = -1;
   struct C_Services_t **svc;
@@ -166,10 +163,7 @@ static int getDbSvc(
  *
  * \note Thread safeness and concurrent access is managed by Cstager_ITapeSvc
  */
-static int getStgSvc(
-                     tpSvc
-                     )
-     struct Cstager_ITapeSvc_t ***tpSvc;
+static int getStgSvc(struct Cstager_ITapeSvc_t ***tpSvc)
 {
   struct C_Services_t **svcs = NULL;
   struct C_IService_t *iSvc = NULL;
@@ -244,10 +238,7 @@ int rtcpcld_doCommit()
 /**
  * Update the memory copy of the tape and all attached segments from the database.
  */
-static int updateTapeFromDB(
-                            tape
-                            )
-     tape_list_t *tape;
+static int updateTapeFromDB(tape_list_t *tape)
 {
   struct C_Services_t **svcs = NULL;
   struct Cstager_ITapeSvc_t **tpSvc = NULL;
@@ -371,10 +362,7 @@ static int updateTapeFromDB(
   return(0);
 }
 
-int rtcpcld_updateTapeFromDB(
-                             tape
-                             )
-     tape_list_t *tape;
+int rtcpcld_updateTapeFromDB(tape_list_t *tape)
 {
   return(updateTapeFromDB(tape));
 }
@@ -382,10 +370,7 @@ int rtcpcld_updateTapeFromDB(
 /**
  * Update the memory copy of the segment from the database.
  */
-static int updateSegmentFromDB(
-                               file
-                               )
-     file_list_t *file;
+static int updateSegmentFromDB(file_list_t *file)
 {
   struct C_Services_t **svcs = NULL;
   struct Cstager_ITapeSvc_t **tpSvc = NULL;
@@ -441,10 +426,7 @@ static int updateSegmentFromDB(
   return(0);
 }
 
-int rtcpcld_updateSegmentFromDB(
-                                file
-                                )
-     file_list_t *file;
+int rtcpcld_updateSegmentFromDB(file_list_t *file)
 {
   return(updateSegmentFromDB(file));
 }
@@ -455,10 +437,7 @@ int rtcpcld_updateSegmentFromDB(
  * else has started the VidWorker with an incorrect database key specified
  * using the -k option.
  */
-static int verifyTape(
-                      tape
-                      )
-     tape_list_t *tape;
+static int verifyTape(tape_list_t *tape)
 {
   char *vid;
   int rc, mode, side;
@@ -513,10 +492,7 @@ static int verifyTape(
 /**
  * Externalised version of getDbSvc(). Used in rtcpcldapi.c
  */
-int rtcpcld_getDbSvc(
-                     svcs
-                     )
-     struct C_Services_t ***svcs;
+int rtcpcld_getDbSvc(struct C_Services_t ***svcs)
 {
   return(getDbSvc(svcs));
 }
@@ -524,10 +500,7 @@ int rtcpcld_getDbSvc(
 /**
  * Externalised version of getStgSvc(). Used in rtcpcldapi.c
  */
-int rtcpcld_getStgSvc(
-                     tpSvc
-                     )
-     struct Cstager_ITapeSvc_t ***tpSvc;
+int rtcpcld_getStgSvc(struct Cstager_ITapeSvc_t ***tpSvc)
 {
   return(getStgSvc(tpSvc));
 }
@@ -538,12 +511,8 @@ int rtcpcld_getStgSvc(
  * list is updated with new entries if any. It is the caller's responsability
  * to free the returned tapeArray and all its tape_list_t members.
  */
-int rtcpcld_getTapesToDo(
-                         tapeArray,
-                         cnt
-                         )
-     tape_list_t ***tapeArray;
-     int *cnt;
+int rtcpcld_getTapesToDo(tape_list_t ***tapeArray,
+                         int *cnt)
 {
   struct C_IObject_t *iObj = NULL;
   struct C_IAddress_t *iAddr;
@@ -847,10 +816,7 @@ int rtcpcld_getTapesToDo(
   return(rc);
 }
 
-void rtcpcld_cleanupTape(
-                         tape
-                         )
-     tape_list_t *tape;
+void rtcpcld_cleanupTape(tape_list_t *tape)
 {
   struct Cstager_Tape_t *tp;
   struct Cstager_Segment_t *segm;
@@ -878,10 +844,7 @@ void rtcpcld_cleanupTape(
   return;
 }
 
-void rtcpcld_cleanupFile(
-                         file
-                         )
-     file_list_t *file;
+void rtcpcld_cleanupFile(file_list_t *file)
 {
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
@@ -922,11 +885,8 @@ void rtcpcld_cleanupFile(
   return;
 }
 
-static int compareSegments(
-                           arg1,
-                           arg2
-                           )
-     const void *arg1, *arg2;
+static int compareSegments(const void *arg1,
+                           const void *arg2)
 {
   struct Cstager_Segment_t **segm1, **segm2;
   int fseq1, fseq2, rc;
@@ -944,12 +904,8 @@ static int compareSegments(
   return(rc);
 }
 
-static int alreadySelected(
-                           tape,
-                           segment
-                           )
-     tape_list_t *tape;
-     struct Cstager_Segment_t *segment;
+static int alreadySelected(tape_list_t *tape,
+                           struct Cstager_Segment_t *segment)
 {
   struct Cstager_Segment_t *compSegment = NULL, *segm = NULL;
   file_list_t *fl;
@@ -988,10 +944,7 @@ static int alreadySelected(
  * caller should do a subsequent call to bestFileSystemForSegment() in order
  * complete the path.
  */
-static int procSegmentsForTape(
-                               tape
-                               )
-     tape_list_t *tape;
+static int procSegmentsForTape(tape_list_t *tape)
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -1220,12 +1173,8 @@ static int procSegmentsForTape(
 
 /** Assign path to the next incomplete segment to recall
  */
-static int nextSegmentToRecall(
-                               tape,
-                               file
-                               )
-     tape_list_t *tape;
-     file_list_t **file;
+static int nextSegmentToRecall(tape_list_t *tape,
+                               file_list_t **file)
 {
   struct Cstager_ITapeSvc_t **stgsvc = NULL;
   struct Cstager_Segment_t *segment = NULL;
@@ -1427,12 +1376,8 @@ static int nextSegmentToRecall(
   return(0);
 }
 
-int nextSegmentToMigrate(
-                         tape,
-                         file
-                         )
-     tape_list_t *tape;
-     file_list_t **file;
+int nextSegmentToMigrate(tape_list_t *tape,
+                         file_list_t **file)
 {
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
@@ -1890,12 +1835,8 @@ int nextSegmentToMigrate(
  * Externalised entry to procSegmentsForTape()
  * or procTapeCopiesForStream()
  */
-int rtcpcld_getSegmentToDo(
-                           tape,
-                           file
-                           )
-     tape_list_t *tape;
-     file_list_t **file;
+int rtcpcld_getSegmentToDo(tape_list_t *tape,
+                           file_list_t **file)
 {
   int rc;
 
@@ -1917,12 +1858,8 @@ int rtcpcld_getSegmentToDo(
   }
 }
 
-int rtcpcld_getTapeCopyNumber(
-                              file,
-                              tapeCopyNb
-                              )
-     file_list_t *file;
-     int *tapeCopyNb;
+int rtcpcld_getTapeCopyNumber(file_list_t *file,
+                              int *tapeCopyNb)
 {
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
@@ -1948,12 +1885,8 @@ int rtcpcld_getTapeCopyNumber(
   return(0);
 }
 
-int rtcpcld_getMigrSvcClassName(
-                                file,
-                                svcClassName
-                                )
-     file_list_t *file;
-     char **svcClassName;
+int rtcpcld_getMigrSvcClassName(file_list_t *file,
+                                char **svcClassName)
 {
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
@@ -1987,12 +1920,8 @@ int rtcpcld_getMigrSvcClassName(
   return(0);
 }
 
-int rtcpcld_getLastModificationTime(
-                                file,
-                                last_mod_time
-                                )
-     file_list_t *file;
-     time_t *last_mod_time;
+int rtcpcld_getLastModificationTime(file_list_t *file,
+                                    time_t *last_mod_time)
 {
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
@@ -2026,10 +1955,7 @@ int rtcpcld_getLastModificationTime(
  * tape. This method is called by the VidWorker at startup to avoid unnecessary
  * tape mounts.
  */
-int rtcpcld_anyReqsForTape(
-                           tape
-                           )
-     tape_list_t *tape;
+int rtcpcld_anyReqsForTape(tape_list_t *tape)
 {
   struct Cstager_Tape_t *tp;
   struct Cstager_Stream_t *stream;
@@ -2100,14 +2026,9 @@ int rtcpcld_anyReqsForTape(
   return(nbItems);
 }
 
-int deleteSegmentFromDB(
-                        segment,
-                        tp,
-                        tapeCopy
-                        )
-     struct Cstager_Tape_t *tp;
-     struct Cstager_Segment_t *segment;
-     struct Cstager_TapeCopy_t *tapeCopy;
+int deleteSegmentFromDB(struct Cstager_Segment_t *segment,
+                        struct Cstager_Tape_t *tp,
+                        struct Cstager_TapeCopy_t *tapeCopy)
 {
   struct Cstager_Tape_t *tmpTp = NULL;
   struct Cstager_TapeCopy_t *tmpTapeCopy = NULL;
@@ -2247,12 +2168,8 @@ int deleteSegmentFromDB(
   return(0);
 }
 
-int detachTapeCopyFromStream(
-                             tapeCopy,
-                             stream
-                             )
-     struct Cstager_TapeCopy_t *tapeCopy;
-     struct Cstager_Stream_t *stream;
+int detachTapeCopyFromStream(struct Cstager_TapeCopy_t *tapeCopy,
+                             struct Cstager_Stream_t *stream)
 {
   struct Cstager_Stream_t **streamArray = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -2360,10 +2277,7 @@ int detachTapeCopyFromStream(
   return(0);
 }
 
-int deleteTapeCopyFromDB(
-                         tapeCopy
-                         )
-     struct Cstager_TapeCopy_t *tapeCopy;
+int deleteTapeCopyFromDB(struct Cstager_TapeCopy_t *tapeCopy)
 {
   struct Cstager_Stream_t **streamArray = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -2495,12 +2409,8 @@ int deleteTapeCopyFromDB(
  * failed retries == the number of FAILED Segments associated with the TapeCopy
  * (one should never remove a FAILED Segment until the TapeCopy itself is removed).
  */
-int rtcpcld_updcMigrFailed(
-                           tape,
-                           file
-                           )
-     tape_list_t *tape;
-     file_list_t *file;
+int rtcpcld_updcMigrFailed(tape_list_t *tape,
+                           file_list_t *file)
 {
   struct Cstager_TapeCopy_t *tapeCopy;
   struct Cstager_Stream_t **streamArray = NULL;
@@ -2673,14 +2583,9 @@ int rtcpcld_updcMigrFailed(
  * (one should never remove a FAILED Segment until the TapeCopy itself is removed).
  */
 
-int rtcpcld_updcRecallFailed(
-                             tape,
-                             file,
-                             del_file
-                             )
-     tape_list_t *tape;
-     file_list_t *file;
-     int del_file;
+int rtcpcld_updcRecallFailed(tape_list_t *tape,
+                             file_list_t *file,
+                             int del_file)
 {
   struct Cstager_Segment_t *segment;
   struct Cstager_Tape_t *tp;
@@ -2826,12 +2731,8 @@ int rtcpcld_updcRecallFailed(
   return(rc);
 }
 
-int rtcpcld_updcFileRecalled(
-                             tape,
-                             file
-                             )
-     tape_list_t *tape;
-     file_list_t *file;
+int rtcpcld_updcFileRecalled(tape_list_t *tape,
+                             file_list_t *file)
 {
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
@@ -3146,12 +3047,8 @@ int rtcpcld_updcFileRecalled(
   return(0);
 }
 
-int rtcpcld_updcFileMigrated(
-                             tape,
-                             file
-                             )
-     tape_list_t *tape;
-     file_list_t *file;
+int rtcpcld_updcFileMigrated(tape_list_t *tape,
+                             file_list_t *file)
 {
   struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
@@ -3429,12 +3326,8 @@ int rtcpcld_updcFileMigrated(
  *  - Flag all DiskCopies that are in DISKCOPY_CANBEMIGR status DISKCOPY_INVALID
  *  - Flag all Segments SEGMENT_FAILED
  */
-int rtcpcld_putFailed(
-                      _tapeCopy,
-                      deleteDiskCopy
-                      )
-     struct Cstager_TapeCopy_t *_tapeCopy;
-     int deleteDiskCopy;
+int rtcpcld_putFailed(struct Cstager_TapeCopy_t *_tapeCopy,
+                      int deleteDiskCopy)
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t **svcs = NULL;
@@ -3644,14 +3537,9 @@ int rtcpcld_putFailed(
  * segments). Mostly used to mark FAILED status since most other tape
  * statuses are atomically updated by Cstager_ITapeSvc methods.
  */
-int rtcpcld_updateTapeStatus(
-                             tape,
-                             fromStatus,
-                             toStatus
-                             )
-     tape_list_t *tape;
-     enum Cstager_TapeStatusCodes_t fromStatus;
-     enum Cstager_TapeStatusCodes_t toStatus;
+int rtcpcld_updateTapeStatus(tape_list_t *tape,
+                             enum Cstager_TapeStatusCodes_t fromStatus,
+                             enum Cstager_TapeStatusCodes_t toStatus)
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -3738,10 +3626,7 @@ int rtcpcld_updateTapeStatus(
  * stream status to STREAM_PENDING to allow for a subsequent streamsToDo()
  * to pick up this stream for further processing.
  */
-int rtcpcld_returnStream(
-                         tape
-                        )
-     tape_list_t *tape;
+int rtcpcld_returnStream(tape_list_t *tape)
 {
   struct Cstager_ITapeSvc_t **tpSvc = NULL;
   struct Cstager_Tape_t *tp = NULL;
@@ -3834,10 +3719,7 @@ int rtcpcld_returnStream(
  * allowing them to be picked up by another stream.
  */
 
-int rtcpcld_restoreSelectedTapeCopies(
-                                      tape
-                                      )
-     tape_list_t *tape;
+int rtcpcld_restoreSelectedTapeCopies(tape_list_t *tape)
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -3996,10 +3878,7 @@ int rtcpcld_restoreSelectedTapeCopies(
  * configuration problem or some other fatal error that will persist over retries.
  * In this case, we leave the request for further analysis.
  */
-int rtcpcld_restoreSelectedSegments(
-                                    tape
-                                    )
-     tape_list_t *tape;
+int rtcpcld_restoreSelectedSegments(tape_list_t *tape)
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -4149,12 +4028,8 @@ int rtcpcld_restoreSelectedSegments(
  * Update the vwAddress (VidWorker address) for receiving RTCOPY kill
  * requests.
  */
-int rtcpcld_setVidWorkerAddress(
-                                tape,
-                                port
-                                )
-     tape_list_t *tape;
-     int port;
+int rtcpcld_setVidWorkerAddress(tape_list_t *tape,
+                                int port)
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -4244,12 +4119,8 @@ int rtcpcld_setVidWorkerAddress(
  * used for replacing/adding segment information after a file has been
  * written to tape.
  */
-int rtcpcld_checkFileForRepack(
-                               castorFile,
-                               repackvid
-                               )
-     struct Cns_fileid *castorFile;
-     char **repackvid;
+int rtcpcld_checkFileForRepack(struct Cns_fileid *castorFile,
+                               char **repackvid)
 {
   int rc = 0;
   struct Cstager_ITapeSvc_t **tpSvc = NULL;

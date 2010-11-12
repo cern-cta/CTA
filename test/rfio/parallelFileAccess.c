@@ -120,10 +120,7 @@ void log_callback(int level, char *msg) {
   log(logLevel,"STAGE API LOG MESSAGE: %s\n",msg);
 }
 
-void usage(
-           cmd
-           )
-     char *cmd;
+void usage(char *cmd)
 {
   int i;
   fprintf(stdout,"Usage: %s \n",cmd);
@@ -134,12 +131,8 @@ void usage(
   return;
 }
 
-void dumpTiming(
-                mode,
-                nbThreads
-                )
-     char *mode;
-     int nbThreads;
+void dumpTiming(char *mode,
+                int nbThreads)
 {
   int i;
   
@@ -205,10 +198,7 @@ int initStartFlag()
   return(0);
 }
 
-void *fileWriteThread(
-                     arg
-                     )
-     void *arg;
+void *fileWriteThread(void *arg)
 {
   int myIndex, fd, i, rc, save_serrno, save_rfio_errno, save_errno;
   char *myFile;
@@ -281,10 +271,7 @@ void *fileWriteThread(
   return((void *)&success);
 }
 
-void *fileReadThread(
-                     arg
-                     )
-     void *arg;
+void *fileReadThread(void *arg)
 {
   int myIndex, fd, i, rc, save_serrno, save_rfio_errno, save_errno;
   char *myFile;
@@ -362,12 +349,8 @@ void *fileReadThread(
   return((void *)&success);
 }
 
-int startThreads(
-                 nbThreads,
-                 threadRoutine
-                 )
-     int nbThreads;
-     void *(*threadRoutine) (void *);
+int startThreads(int nbThreads,
+                 threadRoutine)
 {
   int rc, i, *arg;
 
@@ -388,10 +371,7 @@ int startThreads(
   return(0);
 }
 
-int waitAllThreads(
-                   nbThreads
-                   )
-     int nbThreads;
+int waitAllThreads(int nbThreads)
 {
   int rc, i, *status;
   
@@ -406,12 +386,8 @@ int waitAllThreads(
   return(0);
 }
 
-int main(
-         argc,
-         argv
-         )
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   int ch, rc, nbParallelOpens = 1, nbLoops = 1, i;
   char *cmd, *directoryName = NULL, *dumpFileName, *logfile = "";

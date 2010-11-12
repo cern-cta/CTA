@@ -87,10 +87,7 @@ static void *runningSegmentLock = NULL;
  */
 static int callbackThreadPool = -1;
 
-int rtcpcld_initLocks(
-                      tape
-                      )
-     tape_list_t *tape;
+int rtcpcld_initLocks(tape_list_t *tape)
 {
   int rc;
   /*
@@ -137,10 +134,7 @@ int rtcpcld_initLocks(
 
 }
 
-static int tapeFseq(
-                    newValue
-                    )
-     int newValue;
+static int tapeFseq(int newValue)
 {
   int rc = 0, save_serrno;
 
@@ -171,10 +165,7 @@ static int tapeFseq(
   return(rc);
 }
 
-int rtcpcld_setTapeFseq(
-                        newValue
-                        )
-     int newValue;
+int rtcpcld_setTapeFseq(int newValue)
 {
   if ( newValue <= 0 ) {
     serrno = EINVAL;
@@ -230,12 +221,8 @@ int rtcpcld_unlockTape()
  *
  * @return -1 = error otherwise the Cthread id (>=0)
  */
-int rtcpcld_myDispatch(
-                       func,
-                       arg
-                       )
-     void *(*func)(void *);
-     void *arg;
+int rtcpcld_myDispatch(void *(*func)(void *),
+		       void *arg)
 {
   return(Cpool_assign(
                       callbackThreadPool,
@@ -245,10 +232,7 @@ int rtcpcld_myDispatch(
                       ));  
 }
 
-int rtcpcld_initThreadPool(
-                           mode
-                           )
-     int mode;
+int rtcpcld_initThreadPool(int mode)
 {
   int poolsize = -1;
   char *p;
