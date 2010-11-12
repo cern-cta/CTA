@@ -9,17 +9,17 @@ class OptionsReader(object):
     
     def __init__(self, options, presetid):
         self.optdict = {}
-        self.fromoptions = {}
+        self.includeasstring = {}
         self.options = options 
         
         optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for urlopt in optset:
             try:
                 self.optdict[urlopt.getName()] = urlopt.optionsToValue(options)
-                self.fromoptions[urlopt.getName()] = True
+                self.includeasstring[urlopt.getName()] = True
             except:
                 self.optdict[urlopt.getName()] = self.getStandardValue(urlopt.getName(), presetid)
-                self.fromoptions[urlopt.getName()] = False
+                self.includeasstring[urlopt.getName()] = False
         
     def getOption(self, optionname):
         try:
@@ -35,7 +35,7 @@ class OptionsReader(object):
         for urlopt in optset:
             try:
                 self.optdict[urlopt.getName()] = urlopt.optionsToValue(self.options)
-                self.fromoptions[urlopt.getName()] = True
+                self.includeasstring[urlopt.getName()] = True
             except:
                 pass
             
@@ -45,7 +45,7 @@ class OptionsReader(object):
         optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
         
         for urlopt in optset:
-            if self.fromoptions[urlopt.getName()]:
+            if self.includeasstring[urlopt.getName()]:
                 if len(correctedoptions) > 0:
                     correctedoptions.append(', ')
                 correctedoptions.append(urlopt.valueToOptionString(self.optdict[urlopt.getName()]))

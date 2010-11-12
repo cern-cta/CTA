@@ -75,24 +75,25 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr, options =  optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
-    #if already in cache
+
     #if already in cache
     cache_hit = False
     if (value is not None): cache_hit = True
+    
+    #do not cache if no time and span is defined
+    if (not optr.includeasstring['time'] and not optr.getOption('span')): cache_hit = False
+    
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
     
-    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestsatlas.stop = optr.getOption('time')
-    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestscms.stop = optr.getOption('time')
-    Requestsalice.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestsalice.stop = optr.getOption('time')
-    Requestslhcb.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestslhcb.stop = optr.getOption('time')
-    Requestspublic.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestspublic.stop = optr.getOption('time')
+    try:
+        globals()[rootmodel].start
+        globals()[rootmodel].stop
+        globals()[rootmodel].start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+        globals()[rootmodel].stop = optr.getOption('time')
+    except KeyError:
+        pass
     
     root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
     filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
@@ -159,17 +160,17 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     return response
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, options, presetid, model, depth, theid, refresh_cache = False):    
+def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache = False):    
     time = datetime.datetime.now()
     depth = int(depth)
     presetid = int(presetid)
     if options is None: options = ''
     
-    prefix = theid[:(len(model)+1)]
-    if(prefix == model + "_"):
-        urlrest = theid[(len(model)+1):]
+    prefix = theid[:(len(rootmodel)+1)]
+    if(prefix == rootmodel + "_"):
+        urlrest = theid[(len(rootmodel)+1):]
     
-    if model in getModelsNotToCache(): refresh_cache = True
+    if rootmodel in getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
     
     imagewidth = 800.0
@@ -192,6 +193,10 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     #if already in cache
     cache_hit = False
     if (value is not None): cache_hit = True
+    
+    #do not cache if no time and span is defined
+    if (not optr.includeasstring['time'] and not optr.getOption('span')): cache_hit = False
+    
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
@@ -202,18 +207,14 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
     for i in range(2):
         lr.appendRuleObject(cookielr.getRuleObject(i))
-        
-    Requestsatlas.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestsatlas.stop = optr.getOption('time')
-    Requestscms.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestscms.stop = optr.getOption('time')
-    Requestsalice.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestsalice.stop = optr.getOption('time')
-    Requestslhcb.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestslhcb.stop = optr.getOption('time')
-    Requestspublic.start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-    Requestspublic.stop = optr.getOption('time')
-    
+    try:
+        globals()[rootmodel].start
+        globals()[rootmodel].stop
+        globals()[rootmodel].start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
+        globals()[rootmodel].stop = optr.getOption('time')
+    except KeyError:
+        pass
+
     try:
         if request.session['statusfile']['isvalid']:
             statusfilename = request.session['statusfile']['name']
@@ -223,7 +224,7 @@ def groupView(request, options, presetid, model, depth, theid, refresh_cache = F
     except:
         statusfilename = ''
     
-    root = getRootObjectForTreemap(model, urlrest, statusfilename)
+    root = getRootObjectForTreemap(rootmodel, urlrest, statusfilename)
     filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
     
     start = datetime.datetime.now()
@@ -361,7 +362,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             match = re.match(treeviewexpr, urlending)
             theid = match.group('theid')
             depth = match.group('depth')
-            model = match.group('model')
+            model = match.group('rootmodel')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
                 theid = idsuffix
@@ -375,7 +376,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             if pos != -1: rediraddr = rediraddr[:pos+1]
             rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
             
-            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'model':model, 'refresh_cache': refreshcache})
+            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'rootmodel':model, 'refresh_cache': refreshcache})
     except:
         return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
     
@@ -417,7 +418,7 @@ def preset(request, options,  urlending):
                 #if no error here, continue:
                 if(isinstance(option,BooleanOption)):
                         optr.optdict[option.getName()] = True
-                        optr.fromoptions[option.getName()] = True
+                        optr.includeasstring[option.getName()] = True
 
                     
                 if(isinstance(option,SpinnerOption)):
@@ -435,7 +436,7 @@ def preset(request, options,  urlending):
                         
 
                         optr.optdict[option.getName()] = value
-                        optr.fromoptions[option.getName()] = True
+                        optr.includeasstring[option.getName()] = True
                         
                     except:
                         pass
@@ -460,7 +461,7 @@ def preset(request, options,  urlending):
                                         pass
                         
                         optr.optdict[option.getName()] = thetime
-                        optr.fromoptions[option.getName()] = True
+                        optr.includeasstring[option.getName()] = True
                             
                     except:
                         pass

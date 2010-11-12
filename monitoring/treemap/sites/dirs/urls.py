@@ -25,7 +25,7 @@ urlpatterns = patterns('',
     
     (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/progress/$', 'dirs.views.getProgessStatus'),
     
-    (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<model>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
+    (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<rootmodel>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
     (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
     

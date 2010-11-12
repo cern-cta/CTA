@@ -800,7 +800,10 @@ Requestspublic.getParent.__dict__['naviname'] = 'filename'
 Requestspublic.generatedtree = None
 
 #other parameters influencing tree generation
+
+#parameters of currently generated tree
 Requestspublic.treeprops = {'start': None, 'stop': None}
+#parameters defining how to generate the next tree
 Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestspublic.stop = datetime.datetime.now() #time relative to now
 
@@ -960,7 +963,7 @@ def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
         else:
             path = urlrest
             
-#        profile.runctx('generateRequestsTree(60 , 0, model)', globals(), {})
+#        don't generate the tree again if it's already generated with the right parameters
         if (globals()[model].treeprops['start'] != globals()[model].start) or (globals()[model].treeprops['stop'] != globals()[model].stop):
             generateRequestsTree(globals()[model].start , globals()[model].stop, model, statusfilename)
             globals()[model].treeprops['start'] = globals()[model].start
@@ -1002,7 +1005,7 @@ def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
     raise Exception ("model " + model + " is missing in findObjectByIdReplacementSuffix")
 
 def getModelsNotToCache():
-    return ['Requestsatlas', 'Requestsatlas', 'Requestscms', 'Requestsalice', 'Requestslhcb', 'Requestspublic'];
+    return [];
 
     
 #class Ydirs(models.Model):
