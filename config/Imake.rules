@@ -68,7 +68,7 @@ install/**/component: $(DESTDIR)/dest/tofile
 LOCAL_PATH/tofile: LOCAL_PATH/fromfile         @@\
 	@echo Installing $@                    @@\
 	RemoveFiles($@)                        @@\
-	ln -s $< $@                            @@\
+	(cd LOCAL_PATH; ln -s fromfile tofile) @@\
 component: LOCAL_PATH/tofile                   @@\
 FilesToClobber += LOCAL_PATH/tofile            @@\
 InstallLink(tofile,LOCAL_PATH/fromfile,mode,InstallBinDir,component)
