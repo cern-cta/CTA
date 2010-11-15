@@ -28,7 +28,7 @@ ifndef IMAKETMPL
 DEBUG = -O0 -g
 #define LOCAL_PATH __local_path__
 #define PREFIX(VAR) __root_prefix__/**/_/**/VAR
-CASTOR_ROOT = $(patsubst %/,%,$(dir $(patsubst %/,%,$(dir $(patsubst "%",%,__FILE__)))))
+CASTOR_ROOT = __back_to_root__
 CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
