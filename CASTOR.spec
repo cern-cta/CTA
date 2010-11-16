@@ -42,9 +42,9 @@ export MINOR_CASTOR_VERSION
 %endif
 %if %compiling_client
 echo "Only compiling client part"
-make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
+make -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
 %else
-make -s -j $((`grep processor /proc/cpuinfo | wc -l`*2))
+make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
 %endif
 
 %install

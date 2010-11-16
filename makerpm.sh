@@ -24,8 +24,10 @@ echo "### INFO ### Creating rpms"
 buildtree=`mktemp -d`
 mkdir -p ${buildtree}/{RPMS/{i386,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
 
+t=`date +%Y-%m-%d-%H:%M`
 rpmbuild --define "_topdir ${buildtree}" \
-         -ta castor-${a}.${b}.${c}-${d}.tar.gz
+         -ta -vvv castor-${a}.${b}.${c}-${d}.tar.gz   \
+         --pipe "tee ./castor-rpmbuild-log-${t}.txt"	
 thisstatus=$?
 
 mkdir -p RPMS

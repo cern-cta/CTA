@@ -1163,6 +1163,7 @@ END;
 *******************************************************************************/
 
 /* PL/SQL declaration for the castorTape package */
+/*
 CREATE OR REPLACE PACKAGE castorTape AS 
    TYPE TapeGatewayRequestExtended IS RECORD (
     accessMode NUMBER,
@@ -1230,6 +1231,7 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
 END castorTape;
 /
+*/
 
 /*******************************************************************************
 ********************************************************************************
@@ -1877,4 +1879,3 @@ END;
       WHERE
             object_type IN ('FUNCTION', 'PROCEDURE')
         AND status = 'INVALID';
-

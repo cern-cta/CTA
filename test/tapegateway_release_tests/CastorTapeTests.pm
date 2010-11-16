@@ -259,6 +259,23 @@ sub poll_fileserver_readyness ( $$ )
     die "Timeout in poll_fileserver_readyness";
 }
 
+# Check that lsf has accessed the shared memory
+sub poll_lsf_is_mmaped  ( $$ )
+{
+    my ( $interval, $timeout ) = ( shift, shift );
+    my $start_time = time();
+    while ( ($start_time + $timeout) >= time()) {
+        my $query=`ps ax | grep mbschd | cut -c 1-5 | xargs pmap`;
+        if ( $query =~ /shmid/ ) {
+	    print "Lsf accessing the shared memory ready after ".(time() - $start_time)."s.\n";
+            return;
+        }
+	sleep ( $interval );
+    }
+    die "Timeout in poll_lsf_is_mmaped";
+}
+
+
 # create a local seed file, returning the index to the file.
 # Take 1 parameter: the size in 
 sub make_seed ( $ )
@@ -1320,7 +1337,7 @@ sub reinstall_stager_db()
     die('ABORT: This script is only made to be run on host $stager_host\n')
       if ( ! $host =~ /^$stager_host($|\.)/i );
 
-    my @diskServers = &get_disk_servers;
+    my @diskServers = get_disk_servers();
     my $nbDiskServers = @diskServers;
 
     print("Found the following disk-servers: ");
@@ -1341,6 +1358,53 @@ sub reinstall_stager_db()
     killDaemonWithTimeout('rtcpclientd' , 2);
     killDaemonWithTimeout('stagerd'     , 2);
     killDaemonWithTimeout('tapegatewayd', 2);
+
+    # Stop lsf
+    print "Stopping lsf\n";
+    `service lsf stop`;
+
+    # Destroy the shared memory segment
+    print "Removing shared memory segment\n";
+    `ipcrm -M 0x00000946`;
+
+    # Print shared memory usage
+    print "Current shared memory usage:\n";
+    {
+	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
+	my  $current_proc;
+	foreach ( split /^/, $pm) { 
+	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
+	    elsif ( /\[\s+shmid=/ ) { 
+		print $current_proc; 
+		print $_; 
+	    } 
+	}
+    }
+
+    # Restart lsf to allow the restart of rmmasterd to recreate the shared memory, then re-stop all
+    # Not really. lsf will catch the shared memory when it appears. Not worries...
+    `service lsf start`;
+    #`service rmmasterd start`;
+    #`service lsf restart`;
+    
+    #poll_lsf_is_mmaped( 1, 60 );
+
+    #`service rmmasterd stop`;
+
+    # Re-print memory mapping. lsf should use the shmem segment
+    #print "Current shared memory usage (we now expect /usr/lsf/etc/mbschd):\n";
+    #{
+    #	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
+    #	my  $current_proc;
+    #	foreach ( split /^/, $pm) { 
+    #	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
+    #	    elsif ( /\[\s+shmid=/ ) { 
+    #		print $current_proc; 
+    #		print $_; 
+    #	    } 
+    #	}
+    #}
+    
 
     # Re-create mighunterd daemon scripts
     print("Re-creating mighunterd daemon scripts\n");
@@ -1394,6 +1458,8 @@ sub reinstall_stager_db()
     #`/etc/init.d/tapegatewayd start`;
     
     poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 15 seconds\n";
+    sleep (15);
     
     my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
     print("\n");
@@ -1404,7 +1470,7 @@ sub reinstall_stager_db()
     # Fill database with the standard set-up for a dev-box
     `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterFileClass --Name {} --GetFromCns`;
     
-    `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03 --MigratorPolicy defaultMigrationPolicy --StreamPolicy streamPolicyAlwaysReturning1`;
+    `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03 --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
     `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
     `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
     
@@ -1415,7 +1481,7 @@ sub reinstall_stager_db()
     
     # Add a tape-pool to $environment{svcclass} service-class
     my $tapePool = get_environment('tapepool');
-    `modifySvcClass --Name $environment{svcclass} --AddTapePool $tapePool --MigratorPolicy defaultMigrationPolicy --StreamPolicy streamPolicyAlwaysReturning1`;
+    `modifySvcClass --Name $environment{svcclass} --AddTapePool $tapePool --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
     
     # Set the number of drives on the default and dev service-classes to desired number for each
     `modifySvcClass --Name default --NbDrives 1`;

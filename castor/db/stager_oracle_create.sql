@@ -593,16 +593,20 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
 /* Redefinition of table TapeCopy to make it partitioned by status */
 ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
 DROP TABLE TapeCopy;
-CREATE TABLE TapeCopy
-  (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, missingCopies NUMBER,
-   id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL,
-   castorFile INTEGER, status INTEGER)
-  PCTFREE 50 PCTUSED 40 INITRANS 50
-  ENABLE ROW MOVEMENT
-  PARTITION BY LIST (STATUS)
-   (PARTITION P_STATUS_0_1   VALUES (0, 1),
+CREATE TABLE TapeCopy 
+  (
+    copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, missingCopies NUMBER, 
+    fseq NUMBER, tapeGatewayRequestId NUMBER, vid VARCHAR2(2048), 
+    fileTransactionId NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY 
+    /* This one was not generated -> */ CONSTRAINT NN_TapeCopy_Id NOT NULL, 
+    diskCopy INTEGER, castorFile INTEGER, status INTEGER
+  ) 
+    INITRANS 50 /* This one ported by hand as well -> */ PCTUSED 40 PCTFREE 50 ENABLE ROW MOVEMENT
+    PARTITION BY LIST (STATUS)
+  (
+    PARTITION P_STATUS_0_1   VALUES (0, 1),
     PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-  );
+   );
 
 /* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
 ALTER TABLE Stream2TapeCopy
