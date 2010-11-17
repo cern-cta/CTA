@@ -51,7 +51,6 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("nbCopyAccesses"));
   m_ignoreButForDB.insert(QString("gcType"));
   m_ignoreButForDB.insert(QString("migrSelectPolicy"));
-  m_ignoreButForDB.insert(QString("fileTransactionId"));
   // List of types still needing a C wrapper. To be reduce and dropped
   m_cWrappedTypes.insert(QString("CastorFile"));
   m_cWrappedTypes.insert(QString("SetFileGCWeight"));

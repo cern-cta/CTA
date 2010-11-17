@@ -101,6 +101,7 @@ void castor::io::StreamTapeCopyForMigrationCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->fseq();
   ad->stream() << obj->tapeGatewayRequestId();
   ad->stream() << obj->vid();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->id();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->mountPoint();
@@ -138,6 +139,9 @@ castor::IObject* castor::io::StreamTapeCopyForMigrationCnv::createObj(castor::IA
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
+  int fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

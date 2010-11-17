@@ -79,6 +79,22 @@ namespace castor {
         virtual void print() const;
 
         /**
+         * Get the value of m_fileTransactionId
+         * @return the value of m_fileTransactionId
+         */
+        u_signed64 fileTransactionId() const {
+          return m_fileTransactionId;
+        }
+
+        /**
+         * Set the value of m_fileTransactionId
+         * @param new_var the new value of m_fileTransactionId
+         */
+        void setFileTransactionId(u_signed64 new_var) {
+          m_fileTransactionId = new_var;
+        }
+
+        /**
          * Get the value of m_nshost
          * @return the value of m_nshost
          */
@@ -143,6 +159,8 @@ namespace castor {
         }
 
       private:
+
+        u_signed64 m_fileTransactionId;
 
         std::string m_nshost;
 

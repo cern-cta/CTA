@@ -52,6 +52,7 @@ castor::stager::TapeCopy::TapeCopy() throw() :
   m_fseq(0),
   m_tapeGatewayRequestId(0),
   m_vid(""),
+  m_fileTransactionId(0),
   m_id(0),
   m_diskCopy(0),
   m_castorFile(0),
@@ -96,6 +97,7 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   stream << indent << "fseq : " << m_fseq << std::endl;
   stream << indent << "tapeGatewayRequestId : " << m_tapeGatewayRequestId << std::endl;
   stream << indent << "vid : " << m_vid << std::endl;
+  stream << indent << "fileTransactionId : " << m_fileTransactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

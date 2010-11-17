@@ -89,6 +89,7 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   // create the new Object
   castor::tape::tapegateway::FileRecalledNotification* object = new castor::tape::tapegateway::FileRecalledNotification();
   // Now retrieve and set members
+  u_signed64 fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);

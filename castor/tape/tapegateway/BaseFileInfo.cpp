@@ -40,6 +40,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::BaseFileInfo::BaseFileInfo() throw() :
   GatewayMessage(),
+  m_fileTransactionId(0),
   m_nshost(""),
   m_fileid(0),
   m_fseq(0),
@@ -67,6 +68,7 @@ void castor::tape::tapegateway::BaseFileInfo::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "fileTransactionId : " << m_fileTransactionId << std::endl;
   stream << indent << "nshost : " << m_nshost << std::endl;
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;

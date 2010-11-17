@@ -101,6 +101,7 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->fseq();
   ad->stream() << obj->tapeGatewayRequestId();
   ad->stream() << obj->vid();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -136,6 +137,9 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
+  int fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
