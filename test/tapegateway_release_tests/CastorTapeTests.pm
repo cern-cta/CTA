@@ -1457,6 +1457,10 @@ sub reinstall_stager_db()
     `/etc/init.d/stagerd start`;
     #`/etc/init.d/tapegatewayd start`;
     
+    # Restart lsf
+    print "Restarting lsf\n";
+    `service lsf restart`;
+
     poll_rm_readyness ( 1, 15 );
     print "Sleeping extra 15 seconds\n";
     sleep (15);
