@@ -266,6 +266,10 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 
+/* DiskPool2SvcClass constraints */
+ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
+  PRIMARY KEY (parent, child);
+
 /* TapeGateway tables */
 CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -319,7 +323,7 @@ CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
   ON COMMIT PRESERVE ROWS;
 
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
-CREATE GLOBAL TEMPORARY TABLE processBulkAbortFileReqsHelper
+CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
   (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048))
   ON COMMIT DELETE ROWS;
 
