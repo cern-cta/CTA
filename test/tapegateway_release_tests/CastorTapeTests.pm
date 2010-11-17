@@ -1508,7 +1508,9 @@ sub migrateToNewTapeGatewaySchema ()
     for my $i ('switchToTapegatewayd-no-triggers.sql',
                'tape_gateway_refactor_to_drop_tgsubrequest_table.sql',
                'tape_gateway_refactor_to_drop_tgrequest_table_and_triggers.sql',
-               'tape_gateway_testing_round_001_tradeoffs.sql') {
+               'tape_gateway_testing_round_001_tradeoffs.sql',
+	       'tape_gateway_testing_round_002_tradeoffs.sql',
+	       'tape_gateway_testing_round_003_tradeoffs.sql') {
         my $dbUser   = getOrastagerconfigParam("user");
         my $dbPasswd = getOrastagerconfigParam("passwd");
         my $dbName   = getOrastagerconfigParam("dbName");
