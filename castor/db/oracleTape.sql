@@ -1701,8 +1701,8 @@ COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
                 CastorFile,
                 Segment,
                 Tape
-          WHERE Tape.id = Segment .tape
-            AND TapeCopy.id = Segment .copy
+          WHERE Tape.id = Segment.tape
+            AND TapeCopy.id = Segment.copy
             AND CastorFile.id = TapeCopy.castorfile
             AND Tape.status IN (1, 2, 8) -- PENDING, WAITDRIVE, WAITPOLICY
             AND Segment.status = 0 -- SEGMENT_UNPROCESSED
