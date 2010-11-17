@@ -616,7 +616,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
 
     statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + "stat.html"
     relstatuspath = settings.REL_STATUS_DICT + "/" + statusfilename
-    progressbardict = settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT + '/'
+    progressbardict = settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT
     progressbarsizepx = "%.0f"%(200.0)
         
     response = render_to_string('dirs/imagemap.html', \

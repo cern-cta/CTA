@@ -23,7 +23,7 @@
 .progressBar{
 	width:248px;
 	height:74px;
-	background:url({{progressbardict}}bg_bar.png) no-repeat 0 0;
+	background:url({{progressbardict}}/bg_bar.png) no-repeat 0 0;
 	position:relative;
 	margin:0;
 	padding:0;
@@ -33,7 +33,7 @@
 	display:block;
 	width:{{progressbarsizepx}}px;
 	height:25px;
-	background:url({{progressbardict}}bar.png) no-repeat 0 0;
+	background:url({{progressbardict}}/bar.png) no-repeat 0 0;
 	top:24px;
 	left:24px;
 	overflow:hidden;
@@ -44,7 +44,7 @@
 	display:block;
 	width:{{progressbarsizepx}}px;
 	height:25px;
-	background:url({{progressbardict}}bg_cover.png) repeat-x 0 0;
+	background:url({{progressbardict}}/bg_cover.png) repeat-x 0 0;
 	top:0;
 }
 </style>
@@ -54,7 +54,61 @@
 
 function initMenu()
 {
-activateJsObjects();
+	activateJsObjects();
+}
+
+function isFirefox2plus()
+{
+	return window.globalStorage;
+}
+
+function isFirefox3plus()
+{
+	return window.globalStorage && window.postMessage;
+}
+
+function isOpera()
+{
+	return window.opera;
+}
+
+function isIE()
+{
+	var IE = /*@cc_on!@*/false;
+	return IE || ('\v'=='v');
+}
+
+function IEVersion()
+{
+	//the order here is critical, don't change it!
+	if(XDomainRequest) return 8;
+	if(document.documentElement && typeof document.documentElement.style.maxHeight!="undefined") return 7;
+	if(document.compatMode && document.all) return 6;
+	if(window.createPopup) return 5.5;
+	if(window.attachEvent) return 5;
+	if(document.all) return 4;
+}
+
+function isSafari()
+{
+	return (/a/.__proto__=='//') && (window.devicePixelRatio);
+}
+
+function isChrome()
+{
+	return Boolean(window.chrome);
+
+}
+
+function detectedBrowser()
+{
+	if (isIE()) {return "IE "+IEVersion();}
+	if (isFirefox3plus()) {return "Firefox 3+";}
+	if (isFirefox2plus()) {return "Firefox 2+";}
+	if (isOpera()) {return "Opera";}
+	if (isSafari()) {return "Safari";}
+	if (isChrome()) {return "Chrome";}
+	return "not supported";
 }
 
 /*function getAjaxObject()
@@ -188,7 +242,6 @@ function deactivateProgressBar()
 
 function getStatus()
 {
-	var IE = /*@cc_on!@*/false;
 	statcont = document.getElementById('statuscontainer');
 
     var stframe = document.getElementById('statusframe');
@@ -217,19 +270,57 @@ function getStatus()
     }
 }
 
+function subProgress(targetstat)
+{
+	progressbar = document.getElementById("theem");
+	currstat = parseInt(progressbar.style.left);
+
+	if(currstat < targetstat)
+	{
+		newstat = currstat + 1;
+		progressbar.style.left = newstat + "px"; //|0 casts to integer
+	}
+	else
+	{
+		progressbar.style.left = targetstat + "px"; //|0 casts to integer
+	}
+}
+
 function writeStatusToDiv()
 {
+	//alert("writeStatusToDiv called");
 	progressbar = document.getElementById("theem");
 	status = getStatus();
 	if (isNaN(status)){return;}
-	progressbar.style.left = ((status*{{progressbarsizepx}})|0) + "px"; //|0 casts to integer
+	oldstat = parseInt(progressbar.style.left);
+	newstat = ((Math.ceil(status*{{progressbarsizepx}}))|0);
+
+	if(newstat > oldstat)
+	{
+		subtimerid = setInterval ( "subProgress("+ newstat +");", 1000/(newstat-oldstat) );
+		setTimeout("clearInterval("+subtimerid+");",999);
+	}
+	//progressbar.style.left = this.newstat + "px"; //|0 casts to integer
 }
 
 function showStatus()
 {
 	document.getElementById('progressbarcontainer').style.display ='inline';
-	this.timerid = setInterval ( "writeStatusToDiv()", 1000 );
+	
+	if(isOpera()) //no progressbar for Opera, for some reason Opera doesn't trigger the timer, but doesn't report any errors at the same time :(
+	{
+		document.getElementById('id_progressBar').style.display ='none';
+		return;
+	}
+	else
+	{
+		//no gif needed
+		document.getElementById("id_progressanim").style.display ='none';
+	}
+	
+	this.timerid = setInterval ( function(){writeStatusToDiv();}, 1000 );
 	document.getElementById("timerid").innerHTML = this.timerid;
+	
 }
 
 function linkClicked(e)
@@ -287,10 +378,16 @@ function notImplementedWarning()
 <body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#9F9F9F" onload="initMenu()">
 
 <div style="display:inline; position:absolute; z-index:100;" id="progressbarcontainer">
-<dd class="progressBar">
-<span><em id="theem" style="left:1px"></em></span>
+<img id="id_progressanim" style="display:inline; position:relative; top:70px; left:-50px;" border="0" title="requesting data..." src="{{progressbardict}}/inprogress_atom.gif">
+<dd id="id_progressBar" class="progressBar">
+<span><em id="theem" style="left:1px;"></em></span>
 </dd>	
 </div>
+
+<script type="text/javascript">
+browsertext = "Detected browser is: " + detectedBrowser();
+document.write(browsertext);
+</script>
 
     <table style="width: auto; height: auto;" align="center" cellspacing="0"  cellpadding="0">
     <tr>
