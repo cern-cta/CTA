@@ -5,7 +5,6 @@ Created on May 4, 2010
 '''
 from django.db.models.base import ModelBase
 from django.db.models.fields import *
-from sites.errors import ConfigError
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
 import inspect
@@ -29,7 +28,7 @@ class ColumnFinder:
                 self.columns.append(key)
                 self.column_names.append(key.name)
         except:
-            raise ConfigError( 'Unable to read Columns' )
+            raise Exception( 'Unable to read Columns' )
     
         self.metricattributenames = instance.__class__.metricattributes
         
@@ -78,7 +77,7 @@ def getAvailableModels():
             try:
                 module = __import__( modulename )
             except ImportError, e:
-                raise ConfigError( 'Unable to load module: ' + module )
+                raise Exception( 'Unable to load module: ' + module )
         else:
             module = sys.modules[modulename]
             

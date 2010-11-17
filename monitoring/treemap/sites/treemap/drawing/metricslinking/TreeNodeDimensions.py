@@ -9,7 +9,6 @@ from sites.tools.Inspections import ColumnFinder
 import sys
 import inspect
 import string
-from sites.errors.ConfigError import ConfigError
 import math
 from sites.dirs.models import *
 from sites.treemap.objecttree.Annex import Annex
@@ -115,10 +114,10 @@ class FileExtensionTransformator(ColumnTransformatorInterface):
         try:
             ext = self.findExtension(dbobj.__dict__[columnname])
         except KeyError:
-            raise ConfigError("column doesn't exist")
+            raise Exception("column doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
-            raise ConfigError("string or unicode expected")
+            raise Exception("string or unicode expected")
         
         return int(self.calcExtHash(ext)%(self.max-self.min))+self.min
 
@@ -161,10 +160,10 @@ class SaturatedLinearTransformator(ColumnTransformatorInterface):
         try:
             ext = self.findExtension(dbobj.__dict__[columnname])
         except KeyError:
-            raise ConfigError("column doesn't exist")
+            raise Exception("column doesn't exist")
         
         if not ((type(ext).__name__ == 'int') or (type(ext).__name__ == 'long')) or (type(ext).__name__ == 'float'):
-            raise ConfigError("number expected")
+            raise Exception("number expected")
         
         if ext >= self.maxsat:
             return 1.0
@@ -197,7 +196,7 @@ class RawLinearTransformator(ColumnTransformatorInterface):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:
-            raise ConfigError("column doesn't exist")
+            raise Exception("column doesn't exist")
         
         self.isfloat = False
         self.istext = False
@@ -285,10 +284,10 @@ class DirNameTransformator(ColumnTransformatorInterface):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:
-            raise ConfigError("column doesn't exist")
+            raise Exception("column doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
-            raise ConfigError("string or unicode expected")
+            raise Exception("string or unicode expected")
 
         return (self.prefix + ext)
         
@@ -314,10 +313,10 @@ class TopDirNameTransformator(ColumnTransformatorInterface):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:
-            raise ConfigError("column doesn't exist")
+            raise Exception("column doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
-            raise ConfigError("string or unicode expected")
+            raise Exception("string or unicode expected")
 
         pos = ext.rfind('/')
         if pos >= 0: ext = ext[pos:]

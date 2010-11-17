@@ -4,7 +4,6 @@ Created on May 4, 2010
 @author: kblaszcz
 '''
 import sys
-from sites.errors import ConfigError
 import inspect
 
  
@@ -14,13 +13,13 @@ def createObject(moduleName, className ):
         try:
             module = __import__( moduleName )
         except ImportError, e:
-            raise ConfigError( 'Unable to load module: ' + moduleName )
+            raise Exception( 'Unable to load module: ' + moduleName )
     else:
         module = sys.modules[moduleName]
 
     classes = dict(inspect.getmembers( module, inspect.isclass ))
     if not className in classes:
-        raise ConfigError( 'Unable to find ' + className + ' class in ' +
+        raise Exception( 'Unable to find ' + className + ' class in ' +
                            moduleName )
 
     cls = classes[className]

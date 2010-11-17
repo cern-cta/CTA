@@ -3,7 +3,6 @@ Created on May 18, 2010
 
 @author: kblaszcz
 '''
-from sites.errors import ConfigError
 from sites.tools.Inspections import *
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.Postprocessors import *
@@ -102,7 +101,7 @@ class ChildRules(object):
         #check modulename and  classname
         try:
             instance = createObject(modulename, classname)
-        except ConfigError:
+        except Exception:
             return False 
         
         #check methodname
@@ -162,7 +161,7 @@ class ChildRules(object):
             modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
-            except ConfigError:
+            except Exception:
                 return False 
             
             #check methodname
@@ -186,7 +185,7 @@ class ChildRules(object):
             modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
-            except ConfigError:
+            except Exception:
                 return False 
             
             #check count methodname
@@ -210,7 +209,7 @@ class ChildRules(object):
             modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
-            except ConfigError:
+            except Exception:
                 return False 
             
             #check parent methodname
@@ -230,7 +229,7 @@ class ChildRules(object):
             modulename = getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
-            except ConfigError:
+            except Exception:
                 return False 
         
             #check columnname
@@ -271,7 +270,7 @@ class LevelRules(object):
                 self.rules.append(r) 
                 return
             else:
-                raise ConfigError('Before you create Rule for level ' + level + ' you need to have all rules up to level ' + (len(self.rules)-1) + ' defined.')
+                raise Exception('Before you create Rule for level ' + level + ' you need to have all rules up to level ' + (len(self.rules)-1) + ' defined.')
             
         self.rules[level].createOrUpdate(classname, methodname, parentmethodname, columnname, fparam)
             

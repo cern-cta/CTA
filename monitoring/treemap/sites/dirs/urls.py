@@ -19,15 +19,12 @@ urlpatterns = patterns('',
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.redirectOldLink'),
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)$', 'dirs.views.redirectOldLink'),
     
-#    (r'(?P<urlending>.*)/changemetrics/$', 'dirs.views.changeMetrics'),
-    
-    (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/preset/$', 'dirs.views.preset'),
-    
-    (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/progress/$', 'dirs.views.getProgessStatus'),
+#    pprreesseett to make it more unique because it is at the end of the url and could be misinterpreted as a part of the id(ie directory name)
+    (r'({(?P<options>.*)}){0,1}(?P<urlending>.*)/pprreesseett/$', 'dirs.views.preset'),
     
     (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<rootmodel>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
     (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'dirs.views.treeView'),
     
-    (r'triggerstatus_(?P<statusfilename>.*)', 'dirs.views.triggerStatus'),
+    (r'setstatusfile_(?P<statusfilename>.*)', 'dirs.views.setStatusFileInCookie'),
 )

@@ -81,7 +81,13 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     if (value is not None): cache_hit = True
     
     #do not cache if no time and span is defined
-    if (not optr.includeasstring['time'] and not optr.getOption('span')): cache_hit = False
+    notime = False
+    try:
+        optr.includeasstring['time']
+    except KeyError:
+        notime = True
+        
+    if (notime and not optr.getOption('span')): cache_hit = False
     
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
@@ -92,18 +98,22 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         globals()[rootmodel].stop
         globals()[rootmodel].start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
         globals()[rootmodel].stop = optr.getOption('time')
-    except KeyError:
+    except AttributeError:
         pass
     
-    root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
-    filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
-    
-    start = datetime.datetime.now()
-    print 'start generating object tree for ' + root.__str__()
-    tb = TreeBuilder(lr)
-    
-    otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename) 
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+    try:
+        root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
+        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
+        
+        start = datetime.datetime.now()
+        print 'start generating object tree for ' + root.__str__()
+        tb = TreeBuilder(lr)
+        
+        otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename) 
+        print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+    except NoDataAvailableError:
+        deleteStatusFile(statusfilename)
+        return HttpResponse(render_to_string('dirs/nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
@@ -195,7 +205,13 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     if (value is not None): cache_hit = True
     
     #do not cache if no time and span is defined
-    if (not optr.includeasstring['time'] and not optr.getOption('span')): cache_hit = False
+    notime = False
+    try:
+        optr.includeasstring['time']
+    except KeyError:
+        notime = True
+        
+    if (notime and not optr.getOption('span')): cache_hit = False
     
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
@@ -212,7 +228,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
         globals()[rootmodel].stop
         globals()[rootmodel].start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
         globals()[rootmodel].stop = optr.getOption('time')
-    except KeyError:
+    except AttributeError:
         pass
 
     try:
@@ -224,15 +240,19 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     except:
         statusfilename = ''
     
-    root = getRootObjectForTreemap(rootmodel, urlrest, statusfilename)
-    filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+    try:
+        root = getRootObjectForTreemap(rootmodel, urlrest, statusfilename)
+        filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+        
+        start = datetime.datetime.now()
+        print 'start generating first object tree ' + root.__str__()
+        tb = TreeBuilder(lr)
     
-    start = datetime.datetime.now()
-    print 'start generating first object tree ' + root.__str__()
-    tb = TreeBuilder(lr)
-
-    otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)    
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+        otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)    
+        print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
+    except NoDataAvailableError:
+        deleteStatusFile(statusfilename)
+        return HttpResponse(render_to_string('dirs/nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
     
     #---------------------------------------------
     otree.traveseToRoot()
@@ -479,15 +499,10 @@ def preset(request, options,  urlending):
     options = optr.getCorrectedOptions(preset.staticid)
     return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix, statusfilename)
 
-def triggerStatus(request, statusfilename):
+def setStatusFileInCookie(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
-
-def getProgessStatus(request, options,  urlending):
-    if options is None: options = ''
-#    data = data = serializers.serialize('xml', "50")  
-    return HttpResponse('50', mimetype='text/plain')
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = ''):
     print "preparing response"
@@ -601,12 +616,14 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
 
     statusfilename = str(hash(str(cache_key)+str(request.session.session_key)+str(datetime.datetime.now()))) + "stat.html"
     relstatuspath = settings.REL_STATUS_DICT + "/" + statusfilename
+    progressbardict = settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT + '/'
+    progressbarsizepx = "%.0f"%(200.0)
         
     response = render_to_string('dirs/imagemap.html', \
     {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': treemapdir, 'icondir': icondir, \
-     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 
-     'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml, 'statusfilename' : statusfilename, \
+     'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 'progressbardict': progressbardict, 
+     'progressbarsizepx': progressbarsizepx, 'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml, 'statusfilename' : statusfilename, \
      'relstatuspath': relstatuspath, 'apacheserver': apacheserver, 'djangoresponseurl': settings.DJANGORESPONSE_URL} , context_instance=None)
     
     #mapparams, tooltipshift

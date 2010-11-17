@@ -6,7 +6,6 @@ Created on May 25, 2010
 from sites.treemap.viewtree.ViewTree import ViewTree
 import math
 from sites.treemap.viewtree.ViewNode import ViewNode
-from sites.errors import ConfigError
 from sites.treemap.defaultproperties.SquaredViewProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 
 class SquaredTreemapCalculator(object):

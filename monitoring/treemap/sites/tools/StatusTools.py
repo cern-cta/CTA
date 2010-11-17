@@ -15,12 +15,7 @@ def getStatusFileFullPath(statusfilename):
 
 def generateStatusFile(statusfilename, status):
     try:
-        progressbarsizepx = 200.0
-        progressbarsizepxstr = "%.0f"%progressbarsizepx
-        progresspx = "%.0f"%(progressbarsizepx*float(status))
-        if(progresspx=='0'): progresspx='1'
-        
-        filecontent = render_to_string('dirs/status.html', {'progresspx':progresspx, 'progressbarsizepx':progressbarsizepxstr, 'progressbardict':settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT + '/'})
+        filecontent = render_to_string('dirs/status.html', {'status':"%f"%status})
         
         statusfilefullpath = getStatusFileFullPath(statusfilename)
         statusfile = open(statusfilefullpath, 'w')

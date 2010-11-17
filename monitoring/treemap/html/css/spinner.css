@@ -3,6 +3,7 @@
      width:40px;
      background-color:#1F1F1F;
      color:#7f7fff;
+     border-color:#888888;
 }
 
 .spinnerarrow
@@ -12,4 +13,5 @@
      font-size:7px;
      width:20px;
      height:13px;
+     border-color:#888888;
 }

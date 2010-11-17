@@ -5,7 +5,6 @@ Created on May 10, 2010
 '''
 from sites.treemap.objecttree.TreeNode import TreeNode
 import networkx as nx
-from sites.errors import ConfigError
 import warnings
 
 class ObjectTree(object):
@@ -83,11 +82,11 @@ class ObjectTree(object):
 #        if self.count%13 == 0:
 #            print "stop here"
         if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
+            raise Exception( 'Cannot add child if no root specified')
         
         if self.node_inscope is theobject:
             print "error!!!"
-            raise ConfigError( 'Parent cannot contain itself as child')
+            raise Exception( 'Parent cannot contain itself as child')
         
         child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
         self.graph.add_node(child)
@@ -99,11 +98,11 @@ class ObjectTree(object):
     
     def addTreeNodeChild(self, theobject):
         if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
+            raise Exception( 'Cannot add child if no root specified')
         
         if self.node_inscope is theobject:
             print "error!!!"
-            raise ConfigError( 'Parent cannot contain itself as child')
+            raise Exception( 'Parent cannot contain itself as child')
         
         assert(isinstance(theobject, TreeNode))
         
@@ -116,10 +115,10 @@ class ObjectTree(object):
 
     def addChildren(self, objects, columnname, parentmethodname, fparam = None):
         if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
+            raise Exception( 'Cannot add child if no root specified')
     
         if self.node_inscope in objects:
-            raise ConfigError( 'Parent cannot contain itself as child')
+            raise Exception( 'Parent cannot contain itself as child')
     
         for theobject in objects:
             
@@ -150,9 +149,9 @@ class ObjectTree(object):
 
     def traverseInto(self, child):
         if not self.graph.has_node(child) and self.graph.has_edge(self.node_inscope, child):
-            raise ConfigError( 'No child like ' + child.__str__() + ' found')
+            raise Exception( 'No child like ' + child.__str__() + ' found')
         if self.root == None:
-            raise ConfigError( 'Cannot go deeper if no root specified')   
+            raise Exception( 'Cannot go deeper if no root specified')   
 
         self.traversal_path.append(self.node_inscope)
         self.node_inscope = child
@@ -164,12 +163,12 @@ class ObjectTree(object):
         
     def traverseBack(self):
         if self.depth_inscope <= 0:
-            raise ConfigError( 'root has no parents, cannot traverse back')
+            raise Exception( 'root has no parents, cannot traverse back')
         
         #find parent
 #        parent_edge = self.graph.in_edges(self.node_inscope)
         if len(self.traversal_path) <= 0:
-            raise ConfigError( 'no parents found, cannot traverse back')
+            raise Exception( 'no parents found, cannot traverse back')
         
         parent = self.traversal_path.pop()
 #        parent = parent_edge[0][0] #first edge, first Node

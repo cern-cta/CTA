@@ -11,7 +11,6 @@ from django.db.models import *
 from django.db.models.fields import *
 import datetime
 #import math
-from sites.errors import ConfigError
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.columntransformation.TransFunctions import *
 from sites.tools.Inspections import *
@@ -46,7 +45,7 @@ class ColumnTransformator(dict):
             try:
                 module = __import__( self.moduleName )
             except ImportError, e:
-                raise ConfigError( 'Unable to load module: ' + self.moduleName )
+                raise Exception( 'Unable to load module: ' + self.moduleName )
         else:
             self.module = sys.modules[self.moduleName]
 

@@ -12,6 +12,7 @@ from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
 from sites import settings
 from sites.dirs.DateOption import DateOption
+from sites.errors.NoDataAvailableError import NoDataAvailableError
 from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import generateStatusFile
@@ -379,7 +380,7 @@ class Requestsatlas(models.Model):
         try:
             self.filename
         except:
-            raise Exception("This object seems not to exist in the generated tree")
+            raise Exception("No attribute filename in current object")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
@@ -474,7 +475,7 @@ class Requestscms(models.Model):
         try:
             self.filename
         except:
-            raise Exception("This object seems not to exist in the generated tree")
+            raise Exception("No attribute filename in current object")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
@@ -569,7 +570,7 @@ class Requestsalice(models.Model):
         try:
             self.filename
         except:
-            raise Exception("This object seems not to exist in the generated tree")
+            raise Exception("No attribute filename in current object")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
@@ -664,7 +665,7 @@ class Requestslhcb(models.Model):
         try:
             self.filename
         except:
-            raise Exception("This object seems not to exist in the generated tree")
+            raise Exception("No attribute filename in current object")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
@@ -759,7 +760,7 @@ class Requestspublic(models.Model):
         try:
             self.filename
         except:
-            raise Exception("This object seems not to exist in the generated tree")
+            raise Exception("No attribute filename in current object")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     def getChildren(self):
@@ -910,7 +911,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
     
     print "time: ", datetime.datetime.now() - timemeasurement
     if tree.getRoot() is None:
-        raise Exception("no data available")
+        raise NoDataAvailableError("Server didn't returned any Request records")
     print tree.getRoot().requestscount
     print ''
     
@@ -923,7 +924,7 @@ def traverseToRequestInTree(name, reqmodel):
     pos = 0
     
     if not tree.hasRoot():
-        raise Exception("Tree is empty!")
+        raise NoDataAvailableError("Data tree is empty!")
     else:
         tree.traverseToRoot()
         pos = name.find('/')
@@ -951,7 +952,7 @@ def traverseToRequestInTree(name, reqmodel):
             pos = len(name)
             lastiterationfollows = True
         
-    raise Exception("Request doesn't exist in the current tree. Probably there was no Requests for the given timeframe in the given path")
+    raise NoDataAvailableError(name + ": No such record in the tree")
 
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
@@ -1002,7 +1003,7 @@ def findObjectByIdReplacementSuffix(model, urlrest, statusfilename):
         found = getDirByName(dirname)#Dirs.objects.get(fullname=dirname)
         return found
     
-    raise Exception ("model " + model + " is missing in findObjectByIdReplacementSuffix")
+    raise NoDataAvailableError ("no such object")
 
 def getModelsNotToCache():
     return [];

@@ -3,7 +3,6 @@ Created on May 10, 2010
 
 @author: kblaszcz
 '''
-from sites.errors import ConfigError
 from sites.tools.ObjectCreator import createObject
 from sites.treemap.objecttree.Postprocessors import PostProcessorBase
 from sites.treemap.objecttree.Wrapper import Wrapper
@@ -17,7 +16,7 @@ class TreeNode(object):
         if dpt >= -1:
             self.depth = dpt
         else:
-            raise ConfigError( 'invalid depth: ' + dpt)
+            raise Exception( 'invalid depth: ' + dpt)
         
         self.fparam = fpar
         self.postprocessobject = postprocessobject
@@ -64,7 +63,7 @@ class TreeNode(object):
         
         try:
             instance = createObject(modulename, classname)
-        except ConfigError:
+        except:
             return nested_object 
         
         #check methodname
@@ -99,7 +98,7 @@ class TreeNode(object):
         if value >= 0:
             self.depth = value
         else:
-            raise ConfigError( 'depth cannot be less than 0: ' + value)
+            raise Exception( 'depth cannot be less than 0: ' + value)
         
     def getDepth(self):
         return self.depth
@@ -116,7 +115,7 @@ class TreeNode(object):
         elif self.depth >= 0:
             return False
         else:
-            raise ConfigError( 'invalid value detected: depth = ' + self.depth)
+            raise Exception( 'invalid value detected: depth = ' + self.depth)
         
     def setToUnknown(self):
         self.depth = -1

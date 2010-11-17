@@ -4,7 +4,6 @@ Created on May 10, 2010
 @author: kblaszcz
 '''
 import networkx as nx
-from sites.errors import ConfigError
 import warnings
 from sites.treemap.defaultproperties.SquaredViewProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from  networkx import NetworkXError
@@ -126,11 +125,11 @@ class ViewTree(object):
 #        if self.count%13 == 0:
 #            print "stop here"
         if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
+            raise Exception( 'Cannot add child if no root specified')
         
         if self.node_inscope is theobject:
             print "error!!!"
-            raise ConfigError( 'Parent cannot contain itself as child')
+            raise Exception( 'Parent cannot contain itself as child')
         
         child = theobject
         self.graph.add_node(child)
@@ -145,10 +144,10 @@ class ViewTree(object):
 
     def addChildren(self, objects):
         if self.root == None:
-            raise ConfigError( 'Cannot add child if no root specified')
+            raise Exception( 'Cannot add child if no root specified')
     
         if self.node_inscope in objects:
-            raise ConfigError( 'Parent cannot contain itself as child')
+            raise Exception( 'Parent cannot contain itself as child')
     
         for theobject in objects:
             
@@ -193,9 +192,9 @@ class ViewTree(object):
 
     def traverseInto(self, child):
         if not self.graph.has_node(child) and self.graph.has_edge(self.node_inscope, child):
-            raise ConfigError( 'No child like ' + child.__str__() + ' found')
+            raise Exception( 'No child like ' + child.__str__() + ' found')
         if self.root == None:
-            raise ConfigError( 'Cannot go deeper if no root specified')   
+            raise Exception( 'Cannot go deeper if no root specified')   
         self.traversal_path.append(self.node_inscope)
         self.node_inscope = child
         
@@ -206,12 +205,12 @@ class ViewTree(object):
         
     def traverseBack(self):
         if self.depth_inscope <= 0:
-            raise ConfigError( 'root has no parents, cannot traverse back')
+            raise Exception( 'root has no parents, cannot traverse back')
         
         #find parent
 #        parent_edge = self.graph.in_edges(self.node_inscope)
         if len(self.traversal_path) <= 0:
-            raise ConfigError( 'no parents found, cannot traverse back')
+            raise Exception( 'no parents found, cannot traverse back')
         
         parent = self.traversal_path.pop()
 #        parent = parent_edge[0][0] #first edge, first Node
@@ -261,7 +260,7 @@ class ViewTree(object):
         try:
             self.nodes_per_level[level] = self.nodes_per_level[level] + number
         except IndexError:
-            raise ConfigError("Before level "+ level+ " can exist, level " + (level-1) + "must exist!")
+            raise Exception("Before level "+ level+ " can exist, level " + (level-1) + "must exist!")
         
         #cut if number of nodes is 0 now to make getMaxDepth = len(self.nodes_per_level)
         if self.nodes_per_level[level] <= 0:

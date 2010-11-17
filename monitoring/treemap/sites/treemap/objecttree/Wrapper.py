@@ -6,7 +6,6 @@ Created on May 5, 2010
 import warnings
 import inspect
 from sites.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
-from sites.errors import ConfigError
 from sites.tools.Inspections import *
 from sites.treemap.objecttree.Postprocessors import *
 
@@ -66,7 +65,7 @@ class Wrapper(object):
     
     def setColumnname(self, newname):
         if newname == None:
-            raise ConfigError( 'Wrapper was not able to find any default column for ' + self.classname)
+            raise Exception( 'Wrapper was not able to find any default column for ' + self.classname)
         
         allnames = self.__class__.column_transformators[self.classname].getColumnAndAtrributeNames()
         if allnames:
@@ -76,11 +75,11 @@ class Wrapper(object):
                     found = True
                     break
             if not found:
-                raise ConfigError( 'Wrapper was not able to find the given Column "' + newname + '" in ' + self.classname)
+                raise Exception( 'Wrapper was not able to find the given Column "' + newname + '" in ' + self.classname)
             self.columnname = newname
             
         else:
-            raise ConfigError( 'Wrapper was not able to find any Columns for ' + self.classname)
+            raise Exception( 'Wrapper was not able to find any Columns for ' + self.classname)
         
     def getColumnname(self):
         return self.columnname

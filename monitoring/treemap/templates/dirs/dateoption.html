@@ -18,7 +18,7 @@ function insertNowTo{{name}}()
 	}
 	
 	var currentTime = new Date();
-	var day = String(currentTime.getDay());
+	var day = String(currentTime.getDate());
 	day = zeroPad(day,2);
 	var month = String(currentTime.getMonth() + 1);
 	month = zeroPad(month,2);
