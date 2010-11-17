@@ -89,7 +89,6 @@ void castor::io::StreamFileErrorReportCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
@@ -111,9 +110,6 @@ castor::IObject* castor::io::StreamFileErrorReportCnv::createObj(castor::IAddres
   // create the new Object
   castor::tape::tapegateway::FileErrorReport* object = new castor::tape::tapegateway::FileErrorReport();
   // Now retrieve and set members
-  u_signed64 fileTransactionId;
-  ad->stream() >> fileTransactionId;
-  object->setFileTransactionId(fileTransactionId);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);

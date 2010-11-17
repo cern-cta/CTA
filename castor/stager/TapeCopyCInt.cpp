@@ -218,22 +218,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapeCopy_fileTransactionId
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopy_fileTransactionId(castor::stager::TapeCopy* instance, int* var) {
-    *var = instance->fileTransactionId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopy_setFileTransactionId
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopy_setFileTransactionId(castor::stager::TapeCopy* instance, int new_var) {
-    instance->setFileTransactionId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_TapeCopy_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_id(castor::stager::TapeCopy* instance, u_signed64* var) {

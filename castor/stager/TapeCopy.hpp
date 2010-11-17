@@ -226,22 +226,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_fileTransactionId
-       * @return the value of m_fileTransactionId
-       */
-      int fileTransactionId() const {
-        return m_fileTransactionId;
-      }
-
-      /**
-       * Set the value of m_fileTransactionId
-       * @param new_var the new value of m_fileTransactionId
-       */
-      void setFileTransactionId(int new_var) {
-        m_fileTransactionId = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -386,8 +370,6 @@ namespace castor {
       int m_tapeGatewayRequestId;
 
       std::string m_vid;
-
-      int m_fileTransactionId;
 
       /// The id of this object
       u_signed64 m_id;
