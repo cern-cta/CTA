@@ -1650,15 +1650,20 @@ BEGIN
            INDEX_RS_ASC(TAPE I_TAPE_STATUS)
            INDEX_RS_ASC(TAPECOPY PK_TAPECOPY_ID)
            INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
-       Tape.id, Tape.vid, count(distinct segment.id), sum(CastorFile.fileSize),
-       getTime() - min(Segment.creationTime), max(Segment.priority)
+       Tape.id,
+       Tape.vid,
+       count(distinct segment.id),
+       sum(CastorFile.fileSize),
+       getTime() - min(Segment.creationTime) age,
+       max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape
        AND TapeCopy.id = Segment.copy
        AND CastorFile.id = TapeCopy.castorfile
        AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED
-     GROUP BY Tape.id, Tape.vid;
+     GROUP BY Tape.id, Tape.vid
+     ORDER BY age DESC;
 END;
 /
 
@@ -1689,7 +1694,7 @@ COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
                 Tape.vid,
                 count ( distinct segment.id ),
                 sum ( CastorFile.fileSize ),
-                getTime ( ) - min ( Segment.creationTime ),
+                getTime ( ) - min ( Segment.creationTime ) age,
                 max ( Segment.priority ),
                 Tape.status
            FROM TapeCopy,
@@ -1701,7 +1706,8 @@ COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
             AND CastorFile.id = TapeCopy.castorfile
             AND Tape.status IN (1, 2, 8) -- PENDING, WAITDRIVE, WAITPOLICY
             AND Segment.status = 0 -- SEGMENT_UNPROCESSED
-          GROUP BY Tape.id, Tape.vid, Tape.status;
+          GROUP BY Tape.id, Tape.vid, Tape.status
+          ORDER BY age DESC;
     
 END tapesAndMountsForRecallPolicy;
 /
