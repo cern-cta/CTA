@@ -31,6 +31,12 @@ insttarget: ManPageTargetName(name,suffix)
 #define TAPEFILEMANPAGE(name) MANPAGE(name,4,installtape)
 #define TAPEADMMANPAGE(name) MANPAGE(name,8,installtape)
 
+#define CLIENTEXEMANPAGE(name) MANPAGE(name,1,installclient)
+#define CLIENTSYSMANPAGE(name) MANPAGE(name,2,installclient)
+#define CLIENTLIBMANPAGE(name) MANPAGE(name,3,installclient)
+#define CLIENTFILEMANPAGE(name) MANPAGE(name,4,installclient)
+#define CLIENTADMMANPAGE(name) MANPAGE(name,8,installclient)
+
 #define RemoveFiles(files) rm -f files
 #define AddLdFlags(flags) PREFIX(LDFLAGS) += flags
 
@@ -95,6 +101,8 @@ PREFIX(FilesToClobber) += LOCAL_PATH/BareSharedLibraryTargetName(libname)       
 obj: %.o: %.d
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,directory,alltgt,installtgt)            \
+libname: LOCAL_PATH/SharedLibraryName(libname)                                                     @@\
+BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname)                        @@\
 LOCAL_PATH/SharedLibraryName(libname): objects deplibs                                             @@\
 	@echo "  Linking" $@                                                                       @@\
 	$(CC) DYLIBLINKEROPTION --no-undefined -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs              @@\
@@ -137,6 +145,7 @@ insttarget: $(DESTDIR)/dirname
 
 #define MakeDir(dirname,mode) GenericMakeDir(dirname,mode,install)
 #define TapeMakeDir(dirname,mode) GenericMakeDir(dirname,mode,installtape)
+#define ClientMakeDir(dirname,mode) GenericMakeDir(dirname,mode,installclient)
 
 #define MakeDirWithOwnership(dirname,owner,group,mode)   \
 ifndef dirname                                @@\
@@ -147,6 +156,7 @@ endif                                         @@\
 install: $(DESTDIR)/dirname
 
 #define ProgramTarget(program,objects,deplibs,libs,mode,alltarget,installtarget)   \
+program: LOCAL_PATH/program                                                      @@\
 LOCAL_PATH/program: objects deplibs	                                         @@\
 	@echo "  Linking" $@                                                     @@\
 	$(CC) -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) objects libs                   @@\

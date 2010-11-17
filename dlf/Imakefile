@@ -30,10 +30,10 @@ ClientDependsOnLibrary(common,castorcommon)
 DLFLIB_OBJS = dlf_lib.o
 ClientSharedLibraryTarget(castordlf,$(DLFLIB_OBJS),,)
 
-LIBMANPAGE(dlf_init)
-LIBMANPAGE(dlf_isinitialized)
-LIBMANPAGE(dlf_regtext)
-LIBMANPAGE(dlf_write)
-LIBMANPAGE(dlf_shutdown)
+CLIENTLIBMANPAGE(dlf_init)
+CLIENTLIBMANPAGE(dlf_isinitialized)
+CLIENTLIBMANPAGE(dlf_regtext)
+CLIENTLIBMANPAGE(dlf_write)
+CLIENTLIBMANPAGE(dlf_shutdown)
 
 include LOCAL_PATH/web/Makefile
