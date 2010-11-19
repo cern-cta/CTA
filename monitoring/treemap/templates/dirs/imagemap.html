@@ -19,6 +19,11 @@
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/spinner.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/now.css"/>
 
+<script type="text/javascript" src="{{apacheserver}}/js/browseridentification.js"></script>
+<script type="text/javascript" src="{{apacheserver}}/js/ajax.js"></script>
+<script type="text/javascript" src="{{apacheserver}}/js/objectsize.js"></script>
+<script type="text/javascript" src="{{apacheserver}}/js/mouseposition.js"></script>
+
 <style type="text/css">
 .progressBar{
 	width:248px;
@@ -57,122 +62,6 @@ function initMenu()
 	activateJsObjects();
 }
 
-function isFirefox2plus()
-{
-	return window.globalStorage;
-}
-
-function isFirefox3plus()
-{
-	return window.globalStorage && window.postMessage;
-}
-
-function isOpera()
-{
-	return window.opera;
-}
-
-function isIE()
-{
-	var IE = /*@cc_on!@*/false;
-	return IE || ('\v'=='v');
-}
-
-function IEVersion()
-{
-	//the order here is critical, don't change it!
-	if(XDomainRequest) return 8;
-	if(document.documentElement && typeof document.documentElement.style.maxHeight!="undefined") return 7;
-	if(document.compatMode && document.all) return 6;
-	if(window.createPopup) return 5.5;
-	if(window.attachEvent) return 5;
-	if(document.all) return 4;
-}
-
-function isSafari()
-{
-	return (/a/.__proto__=='//') && (window.devicePixelRatio);
-}
-
-function isChrome()
-{
-	return Boolean(window.chrome);
-
-}
-
-function detectedBrowser()
-{
-	if (isIE()) {return "IE "+IEVersion();}
-	if (isFirefox3plus()) {return "Firefox 3+";}
-	if (isFirefox2plus()) {return "Firefox 2+";}
-	if (isOpera()) {return "Opera";}
-	if (isSafari()) {return "Safari";}
-	if (isChrome()) {return "Chrome";}
-	return "not supported";
-}
-
-/*function getAjaxObject()
-{
-	req = null;
-	try
-	{
-	    req = new XMLHttpRequest();
-	}
-	catch (e)
-	{
-	   try
-	   {
-	        req = new ActiveXObject("Msxml2.XMLHTTP");
-	   } 
-	   catch (e)
-	   {
-	      try
-	     {
-	          req = new ActiveXObject("Microsoft.XMLHTTP");
-	     } 
-	     catch (failed)
-	     {
-	         req = null;
-	     }
-	  }  
-	}	  
-	return req;
-}
-
-function updateStatus()
-{
-	  ajax = getAjaxObject();
-	  if (ajax == null) alert("no ajax object found!");
-	  ajax.onreadystatechange = function()
-	  {       
-		  //alert(ajax.responseText);
-		  //alert(ajax + ajax.readyState + "_" + ajax.status + "_" + ajax.responseText + this);
-	      if(ajax.readyState == 4) 
-	      {
-			alert(ajax.status);
-	        if(ajax.status == 200) 
-		    {
-	            alert(ajax.responseText);
-	            //document.getElementById("thesubtable").style.display = "none";
-				return true;
-	        }
-	        else
-		    {    
-				return false;
-	        }
-	      }
-	      else 
-		  {
-			  return false;
-		  }
-	  };
-
-	ajax.open("GET", "{{relstatuspath}}", true);
-	ajax.send(null); 
-}*/
-
-//
-
 function getFrameDoc(theframe)
 {
 	  //alert("1");
@@ -181,39 +70,6 @@ function getFrameDoc(theframe)
 	  if (oDoc.document) oDoc = oDoc.document;
 	  if (oDoc.contentDocument) oDoc = oDoc.contentDocument;
 	  return oDoc;
-}
-
-/*function enableFrameReadyVerbosity(iframe)
-{
-	iframe.ready = false;
-	if (iframe.attachEvent)
-	{
-	    iframe.attachEvent("onload", function(){this.ready = true;});
-	} 
-	else 
-	{
-	    iframe.onload = function(){this.ready = true;};
-	}
-}*/
-
-function Size(x, y, w, h)
-{
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-}
-        
-function getSize(n)
-{
-    var s = new Size(n.offsetLeft, n.offsetTop, n.offsetWidth, n.offsetHeight);
-    while (n.offsetParent && n.offsetParent.offsetLeft !== undefined)
-    {
-        n = n.offsetParent;
-        s.x += n.offsetLeft;
-        s.y += n.offsetTop;
-    }
-    return s;
 }
 
 function deactivateProgressBar()
@@ -310,6 +166,8 @@ function showStatus()
 	if(isOpera()) //no progressbar for Opera, for some reason Opera doesn't trigger the timer, but doesn't report any errors at the same time :(
 	{
 		document.getElementById('id_progressBar').style.display ='none';
+		document.getElementById('id_progressanim').style.left ='0px';
+		document.getElementById('id_progressanim').style.top ='0px';
 		return;
 	}
 	else
@@ -356,9 +214,9 @@ function activateJsObjects()
 
 	progress = document.getElementById("progressbarcontainer");
 	button = document.getElementById('id_blackredbutton');
-	s = getSize(button);
+	s = getObjectSize(button);
 	
-	progress.style.top = (s.y) + 40 + "px";
+	progress.style.top = (s.y) + 120 + "px";
 	leftpos = s.x + 70;
 	progress.style.left = leftpos + "px";
 }
@@ -372,12 +230,35 @@ function notImplementedWarning()
 	alert("This is in an early stage! If something doesn't work any more ,delete your cookies.");
 }
 
+function moveProgressBar(e)
+{
+	//button = document.getElementById('id_blackredbutton');
+	//alert("x: " + getMouseX() + "/ny: " + getMouseY() + "/nbuttonx: " + getObjectSize(button).x + "/nbuttony: " + getObjectSize(button).y);
+	pcontainer = document.getElementById('progressbarcontainer');
+	body = document.getElementById('thebody');
+
+	offsetx = getObjectSize(pcontainer).w/2;
+	offsety = getObjectSize(pcontainer).h/2;
+	
+	pcontainer.style.top = (getMouseY() - offsety) + "px";
+	pcontainer.style.left = (getMouseX() - offsetx) + "px";
+	body.onmousemove = function (){moveProgressBar();}
+	pcontainer.onmouseup = function (){
+										pcontainer = document.getElementById('progressbarcontainer');
+										body = document.getElementById('thebody');
+										body.onmousemove = null;
+										pcontainer.onmouseup = null;
+										pcontainer.onmouseout = null;
+									  }
+	pcontainer.onmouseout = function (){moveProgressBar();}
+}
+
 </script>
 
 </head>
-<body bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#9F9F9F" onload="initMenu()">
+<body id="thebody" bgcolor="#1F1F1F" text = "#7F7F7F" link = "#FFFFFF" vlink = "#7F7F7F" alink = "#9F9F9F" onload="initMenu()" >
 
-<div style="display:inline; position:absolute; z-index:100;" id="progressbarcontainer">
+<div onmousedown = "moveProgressBar()" style="display:inline; position:absolute; z-index:100;" id="progressbarcontainer">
 <img id="id_progressanim" style="display:inline; position:relative; top:70px; left:-50px;" border="0" title="requesting data..." src="{{progressbardict}}/inprogress_atom.gif">
 <dd id="id_progressBar" class="progressBar">
 <span><em id="theem" style="left:1px;"></em></span>

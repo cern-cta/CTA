@@ -943,6 +943,7 @@ def traverseToRequestInTree(name, reqmodel):
                 return tree
             if child.filename == filename:
                 tree.traverseInto(child)
+                break
             
         pos = name.find('/', pos + 1)
         
@@ -952,7 +953,8 @@ def traverseToRequestInTree(name, reqmodel):
             pos = len(name)
             lastiterationfollows = True
         
-    raise NoDataAvailableError(name + ": No such record in the tree")
+    #raise NoDataAvailableError(name + ": No such record in the tree")
+    return tree #if directory doesn't exist any more, return on the last successful traversal
 
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
