@@ -55,6 +55,7 @@ our @export   = qw(
                    daemonIsRunning 
                    killDaemonWithTimeout
                    startDaemons
+                   startSingleDaemon
                    genBackupFileName 
                    getNbTapeCopiesInStagerDb 
                    insertCastorFile 
@@ -812,7 +813,7 @@ sub killDaemonWithTimeout ( $$ )
   }
 }
 
-# Start demons (starts tapegatewayd from the checkout directory
+# Start demons (from config file parameters)
 sub startDaemons ()
 {
     my %castor_deamons_locations =
@@ -829,6 +830,8 @@ sub startDaemons ()
 
     # Simply start all of them, demons not needed will jsut not start.
     for ( keys %castor_deamons_locations) {
+        # First make sure the daemon is dead
+        killDaemonWithTimeout ( $_, 2 );
         if ($environment{"local_".$_} =~ /True/) {
 	    my $local_command = $castor_deamons_locations{$_};
             my $checkout_location=$environment{checkout_location};
@@ -838,6 +841,36 @@ sub startDaemons ()
 	}        
     }
 }
+
+# Start one deamon (from config file parameters)
+sub startSingleDaemon ( $ )
+{
+    my %castor_deamons_locations =
+	(
+	 'jobmanagerd' => './castor/jobmanager/jobmanagerd',
+	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
+	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
+	 'rhd'         => './castor/rh/rhd',
+	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
+	 'rtcpclientd' => './rtcopy/rtcpclientd',
+	 'stagerd'     => './castor/stager/daemon/stagerd',
+	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd'
+	 );
+
+    # Simply start all of them, demons not needed will jsut not start.
+    for ( shift ) {
+        # First make sure the daemon is dead
+        killDaemonWithTimeout ( $_, 2 );
+        if ($environment{"local_".$_} =~ /True/) {
+	    my $local_command = $castor_deamons_locations{$_};
+            my $checkout_location=$environment{checkout_location};
+            `( cd $checkout_location; LD_LIBRARY_PATH=\`find ./ -name "*.so*" | perl -p -e \'s|[^/]*\$|\n|\' | sort | uniq | tr \"\n\" \":\" | perl -p -e \'s/:\$/\n/\'\` $local_command )`;
+	} else {
+	    `service $_ start`;
+	}        
+    }
+}
+
 
 # Returns a back-up filename based on the specified original filename.
 #
@@ -1447,15 +1480,15 @@ sub reinstall_stager_db()
                            $hacked_creation, "Re-creating schema");
     unlink $hacked_creation;
     
-    # Restart the demons
-    `/etc/init.d/jobmanagerd start`;
-    #`/etc/init.d/mighunterd start`;
-    `/etc/init.d/rechandlerd start`;
-    `/etc/init.d/rhd start`;
-    `/etc/init.d/rmmasterd start`;
-    #`/etc/init.d/rtcpclientd start`;
-    `/etc/init.d/stagerd start`;
-    #`/etc/init.d/tapegatewayd start`;
+    # Restart some daemons (not all yet)
+    startSingleDaemon ( 'jobmanagerd' );
+    #startSingleDaemon ( 'mighunterd' );
+    startSingleDaemon ( 'rechandlerd' );
+    startSingleDaemon ( 'rhd' );
+    startSingleDaemon ( 'rmmasterd' );
+    #startSingleDaemon ( 'rtcpclientd' );
+    startSingleDaemon ( 'stagerd' );
+    #startSingleDaemon ( 'tapegatewayd' );
     
     # Restart lsf
     print "Restarting lsf\n";

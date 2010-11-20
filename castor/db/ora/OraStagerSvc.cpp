@@ -1577,11 +1577,11 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       case castor::stager::TAPE_FINISHED:
       case castor::stager::TAPE_FAILED:
       case castor::stager::TAPE_UNKNOWN:
+        tp->setStatus(castor::stager::TAPE_WAITPOLICY);
+        cnvSvc()->updateRep(&ad, tp, false);
         if (recallerPolicyStr.empty()) {
+          /* If there is not policy, just be the rechandler and say go! */
           resurrectSingleTapeForRecall(tp->id());
-        } else {
-          tp->setStatus(castor::stager::TAPE_WAITPOLICY);
-          cnvSvc()->updateRep(&ad, tp, false);
         }
         break;
       default:
@@ -1859,7 +1859,7 @@ void castor::db::ora::OraStagerSvc::resurrectSingleTapeForRecall(u_signed64 tape
     }
     // Execute the statement
     m_resurrectSingleTapeForRecallStatement->setInt(1, tapeId);
-    m_getConfigOptionStatement->executeQuery();
+    m_resurrectSingleTapeForRecallStatement->executeQuery();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

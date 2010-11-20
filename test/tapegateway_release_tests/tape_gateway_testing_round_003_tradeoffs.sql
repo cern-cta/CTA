@@ -12,6 +12,9 @@
 
 -- Workaround for generator inserting 0s instead of NULLs.
 
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
 create or replace
 TRIGGER TR_TapeCopy_fileTransactionId
 BEFORE INSERT OR UPDATE OF fileTransactionId ON TapeCopy
@@ -42,21 +45,10 @@ END;
           tp->setStatus(castor::stager::TAPE_PENDING);
   This bypasses all SQL procedures (this case is covered if there is a policy)
 */
-create or replace
-TRIGGER TR_Tape_TapeGatewayRequestId
-BEFORE INSERT OR UPDATE OF Status ON Tape
-FOR EACH ROW
-BEGIN
-  IF (TapegatewaydIsRunning AND :new.Status IN (1) AND 
-	:new.TapegatewayRequestId IS NULL) THEN
-    :new.tapeGatewayRequestId := ids_seq.nextval;
-  END IF;
-END;
-/
 
 create or replace
 PROCEDURE resurrectSingleTapeForRecall (
-  tapeId  IN NUMBER,
+  tapeId  IN NUMBER
 )
 AS
 BEGIN

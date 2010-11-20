@@ -8,6 +8,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+ /* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
+
 create or replace
 TRIGGER TR_TapeCopy_VID
 BEFORE INSERT OR UPDATE OF Status ON TapeCopy

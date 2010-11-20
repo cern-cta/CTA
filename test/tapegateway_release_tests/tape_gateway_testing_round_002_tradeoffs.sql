@@ -8,6 +8,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+ /* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+ 
 -- Added pickiness to the procedure to go in an exception when there is a 
 -- stream missing a tape yet asking to go to vdqm.
 --
