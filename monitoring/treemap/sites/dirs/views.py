@@ -33,7 +33,7 @@ import time
 
 
 def redirectOldLink(request, *args, **kwargs):
-    return HttpResponse("Please use the new link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
+    return HttpResponse("URL couldn't be resolved. Here is the main link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
 #    return treeView(request, 'Dirs', theid)
 
 def redirectHome(request, *args, **kwargs):
@@ -597,11 +597,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        nvtext = pr.__dict__[getNaviName(pr.__class__.__name__)]
-        pos = nvtext.rfind('/')
-        if pos == -1: pos = 0
-        nvtext = nvtext[pos:]   
-           
+        nvtext = pr.getNaviName()     
         navlinkparts.append( (nvtext, str(pr), optionsstring + str(presetid) + "_" + pr.getIdReplacement()) )
     
     generationtime = datetime.datetime.now() - time

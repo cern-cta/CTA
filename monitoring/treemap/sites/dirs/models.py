@@ -219,6 +219,9 @@ class Dirs(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.fullname.__str__()]])
+    
+    def getNaviName(self):
+        return self.name  
 
 Dirs.nonmetrics = ['fileid', 'parent', 'depth', 'fullname']      
 Dirs.metricattributes = []
@@ -240,8 +243,6 @@ Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndDirectories'
 
 #mark parent Methods
 Dirs.getDirParent.__dict__['methodtype'] = 'parent'
-Dirs.getDirParent.__dict__['returntype'] = ['Dir']
-Dirs.getDirParent.__dict__['naviname'] = 'name'
 
 #exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)
 def getDirByName(dirname):
@@ -314,6 +315,22 @@ class CnsFileMetadata(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return ''.join([bla for bla in [self.__class__.__name__, "_", str(self.parent_fileid.fullname), "/" ,self.name.__str__()]])
+    
+    def getNaviName(self):
+        nvtext = str(self.name)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -324,8 +341,6 @@ CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
-CnsFileMetadata.getDirParent.__dict__['returntype'] = ['Dir']
-CnsFileMetadata.getDirParent.__dict__['naviname'] = 'name'
 
 CnsFileMetadata.nonmetrics = ['fileid', 'parent_fileid', 'depth', 'fullname', 'filemode', 'nlink', 'owner_uid', 'gid' ,'status', 'fileclass', 'guid', 'csumtype', 'csumvalue', 'acl']  
 CnsFileMetadata.metricattributes = []
@@ -363,14 +378,9 @@ class Requestsatlas(models.Model):
             txt = self.filename
         return txt
     
-    #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
-        try:
-            self.filename
-            return hash(self._get_pk_val().__str__() + self.filename)
-        except:
-            return hash(self._get_pk_val())
+        return hash(self._get_pk_val().__str__() + self.filename)
         
     def getUserFriendlyName(self):
         return "Requests Atlas"
@@ -399,6 +409,22 @@ class Requestsatlas(models.Model):
             pass
         return tree.getCurrentObject()
     
+    def getNaviName(self):
+        nvtext = str(self.filename)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
+    
     
        
 Requestsatlas.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
@@ -414,9 +440,6 @@ Requestsatlas.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
-Requestsatlas.getParent.__dict__['returntype'] = ['Requestsatlas']
-Requestsatlas.getParent.__dict__['naviname'] = 'filename'
-
 
 Requestsatlas.generatedtree = None
 
@@ -458,14 +481,9 @@ class Requestscms(models.Model):
             txt = self.filename
         return txt
     
-    #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
-        try:
-            self.filename
-            return hash(self._get_pk_val().__str__() + self.filename)
-        except:
-            return hash(self._get_pk_val())
+        return hash(self._get_pk_val().__str__() + self.filename)
         
     def getUserFriendlyName(self):
         return "Requests CMS"
@@ -494,6 +512,22 @@ class Requestscms(models.Model):
             pass
         return tree.getCurrentObject()
     
+    def getNaviName(self):
+        nvtext = str(self.filename)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
+    
     
        
 Requestscms.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
@@ -509,9 +543,6 @@ Requestscms.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 Requestscms.getParent.__dict__['methodtype'] = 'parent'
-Requestscms.getParent.__dict__['returntype'] = ['Requestscms']
-Requestscms.getParent.__dict__['naviname'] = 'filename'
-
 
 Requestscms.generatedtree = None
 
@@ -553,14 +584,9 @@ class Requestsalice(models.Model):
             txt = self.filename
         return txt
     
-    #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
-        try:
-            self.filename
-            return hash(self._get_pk_val().__str__() + self.filename)
-        except:
-            return hash(self._get_pk_val())
+        return hash(self._get_pk_val().__str__() + self.filename)
         
     def getUserFriendlyName(self):
         return "Requests Alice"
@@ -588,6 +614,22 @@ class Requestsalice(models.Model):
         except:
             pass
         return tree.getCurrentObject()
+
+    def getNaviName(self):
+        nvtext = str(self.filename)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
     
     
        
@@ -604,9 +646,6 @@ Requestsalice.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 Requestsalice.getParent.__dict__['methodtype'] = 'parent'
-Requestsalice.getParent.__dict__['returntype'] = ['Requestsalice']
-Requestsalice.getParent.__dict__['naviname'] = 'filename'
-
 
 Requestsalice.generatedtree = None
 
@@ -648,14 +687,9 @@ class Requestslhcb(models.Model):
             txt = self.filename
         return txt
     
-    #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
-        try:
-            self.filename
-            return hash(self._get_pk_val().__str__() + self.filename)
-        except:
-            return hash(self._get_pk_val())
+        return hash(self._get_pk_val().__str__() + self.filename)
         
     def getUserFriendlyName(self):
         return "Requests LHCb"
@@ -684,6 +718,21 @@ class Requestslhcb(models.Model):
             pass
         return tree.getCurrentObject()
     
+    def getNaviName(self):
+        nvtext = str(self.filename)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
     
        
 Requestslhcb.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
@@ -699,9 +748,6 @@ Requestslhcb.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 Requestslhcb.getParent.__dict__['methodtype'] = 'parent'
-Requestslhcb.getParent.__dict__['returntype'] = ['Requestslhcb']
-Requestslhcb.getParent.__dict__['naviname'] = 'filename'
-
 
 Requestslhcb.generatedtree = None
 
@@ -743,14 +789,10 @@ class Requestspublic(models.Model):
             txt = self.filename
         return txt
     
-    #fixes a bug to distinguish between objects with different "namepart"
     #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
     def __hash__(self):
-        try:
-            self.filename
-            return hash(self._get_pk_val().__str__() + self.filename)
-        except:
-            return hash(self._get_pk_val())
+        return hash(self._get_pk_val().__str__() + self.filename)
+
         
     def getUserFriendlyName(self):
         return "Requests public"
@@ -779,6 +821,21 @@ class Requestspublic(models.Model):
             pass
         return tree.getCurrentObject()
     
+    def getNaviName(self):
+        nvtext = str(self.filename)
+        pos = nvtext.rfind('/')
+        if pos == -1: pos = 0
+        nvtext = nvtext[pos:]  
+        
+        if len(nvtext)>0:
+            while (nvtext[(len(nvtext)-1):(len(nvtext))] == '/'): 
+                nvtext = nvtext[:(len(nvtext)-1)]
+                if len(nvtext) == 0: break
+            while (nvtext[0] == '/') and len(nvtext)>0: 
+                nvtext = nvtext[1:]   
+                if len(nvtext) == 0: break
+                
+        return nvtext 
     
        
 Requestspublic.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
@@ -794,9 +851,6 @@ Requestspublic.countChildren.__dict__['countsfor'] = 'getChildren'
 
 #mark parent Methods
 Requestspublic.getParent.__dict__['methodtype'] = 'parent'
-Requestspublic.getParent.__dict__['returntype'] = ['Requestspublic']
-Requestspublic.getParent.__dict__['naviname'] = 'filename'
-
 
 Requestspublic.generatedtree = None
 
@@ -810,16 +864,23 @@ Requestspublic.stop = datetime.datetime.now() #time relative to now
 
 def generateRequestsTree(start, stop, reqmodel, statusfilename):
     def addRequestToTree(tree, requestdata):
+        def findSplittingPos(name, start = 0):
+            pos = name.find('/', start)
+            
+            if start > 0:
+                #check for multiple slashes like '//'
+                posbefore = name.find('/', start-1)
+                while posbefore == (pos -1):
+                    #print pos, posbefore
+                    start = start + 1
+                    pos = name.find('/', start)
+                    posbefore = name.find('/', start-1)
+
+            return pos
+            
         name = requestdata.filename
-        
-        #filter double slashes
-        doubleslashpos = name.find("//")
-        while doubleslashpos != -1:
-            name = name[:doubleslashpos]+ name[(doubleslashpos+1):]
-            doubleslashpos = name.find("//")
+        pos = findSplittingPos(name)
             
-            
-        pos = name.find('/')
         assert (pos >=0)
         oldpos = 0
         pos = 0
@@ -831,11 +892,11 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             tree.setRoot(entry)
             tree.traverseToRoot()
             oldpos = pos + 1
-            pos = name.find('/', oldpos)
+            pos = findSplittingPos(name, oldpos)
         else:
             tree.traverseToRoot()
             oldpos = 0
-            pos = name.find('/')
+            pos = findSplittingPos(name)
             
         thefilename = ''
         therequestcount = 1
@@ -880,7 +941,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
                     tree.traverseInto(entrytoadd)
             
             oldpos = pos + 1
-            pos = name.find('/', pos + 1)
+            pos = findSplittingPos(name, pos + 1)
             
     model_class = globals()[reqmodel]
     model_class.generatedtree = BasicTree()        

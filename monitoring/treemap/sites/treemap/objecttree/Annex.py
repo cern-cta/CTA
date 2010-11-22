@@ -139,6 +139,9 @@ class Annex(models.Model):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return self.pk.__str__()
+    
+    def getNaviName(self):
+        return str(self)
 
 Annex.nonmetrics = ['id']
 Annex.metricattributes = []
@@ -153,5 +156,4 @@ Annex.countItems.__dict__['countsfor'] = 'getItems'
 #mark parent Methods
 Annex.getAnnexParent.__dict__['methodtype'] = 'parent'
 Annex.getAnnexParent.__dict__['returntype'] = getAvailableModels()
-Annex.getAnnexParent.__dict__['naviname'] = '__str__'
         

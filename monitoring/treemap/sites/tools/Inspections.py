@@ -111,7 +111,7 @@ def getParentMethodFor(themodel, parentmethodname):
         if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
             function = instance.__class__.__dict__[membername]
             try:
-                if (function.__dict__['methodtype'] == 'parent') and (parentmethodname in function.__dict__['returntype']):
+                if (function.__dict__['methodtype'] == 'parent'): #old code: and (parentmethodname in function.__dict__['returntype'])
                     return function.__name__
             except:
                 continue
@@ -159,13 +159,6 @@ def getPostProcessorNames():
             ret.append(classname)
     
     return ret
-
-def getNaviName(classname):
-    assert (classname in getAvailableModels())
-    obj = createObject(getModelsModuleName(classname), classname )
-    nvname = dict(inspect.getmembers( obj.__class__ ))[getParentMethodName(classname)].__dict__['naviname']
-    
-    return nvname
 
 def getDefaultNumberOfLevels():
     return 8
