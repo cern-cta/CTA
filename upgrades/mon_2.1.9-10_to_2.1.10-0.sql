@@ -60,6 +60,19 @@ BEGIN
 END;
 /
 
+/* Schema changes go here */
+/**************************/
+
+/* Drop all materialized views, disabling them.
+ * See: https://savannah.cern.ch/bugs/?58500
+ */
+DROP MATERIALIZED VIEW Errors_MV;
+DROP MATERIALIZED VIEW ReqDel_MV;
+DROP MATERIALIZED VIEW GcMonitor_MV;
+DROP MATERIALIZED VIEW MainTableCounters_MV;
+DROP MATERIALIZED VIEW MigMonitor_MV;
+DROP MATERIALIZED VIEW SvcClassMap_MV;
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
