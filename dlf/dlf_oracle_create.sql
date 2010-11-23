@@ -31,7 +31,7 @@ WHENEVER SQLERROR EXIT FAILURE;
 CREATE SEQUENCE ids_seq INCREMENT BY 1 CACHE 300;
 
 /* SQL statement for table dlf_config */
-CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
+CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255) CONSTRAINT NN_Config_Value NOT NULL, description VARCHAR2(255) CONSTRAINT NN_Config_Description NOT NULL);
 ALTER TABLE dlf_config ADD CONSTRAINT UN_Config_Name UNIQUE (name) ENABLE;
 
 /* SQL statements for table dlf_messages */
@@ -39,7 +39,9 @@ CREATE TABLE dlf_messages(id NUMBER, timestamp DATE CONSTRAINT NN_Messages_Times
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 CREATE INDEX I_Messages_Timestamp ON dlf_messages (timestamp) LOCAL;
-CREATE INDEX I_Messages_Facility ON dlf_messages (facility) LOCAL;
+CREATE BITMAP INDEX I_Messages_Facility ON dlf_messages (facility) LOCAL;
+CREATE BITMAP INDEX I_Messages_Severity ON dlf_messages (severity) LOCAL;
+CREATE BITMAP INDEX I_Messages_MsgNo ON dlf_messages (msg_no) LOCAL;
 CREATE INDEX I_Messages_Pid ON dlf_messages (pid) LOCAL;
 CREATE INDEX I_Messages_Reqid ON dlf_messages (reqid) LOCAL;
 CREATE INDEX I_Messages_Subreqid ON dlf_messages (subreqid) LOCAL;
@@ -65,43 +67,22 @@ CREATE TABLE dlf_str_param_values(id NUMBER, timestamp DATE CONSTRAINT NN_Str_Pa
 CREATE INDEX I_Str_Param_Values_id ON dlf_str_param_values (id) LOCAL;
 
 /* SQL statements for table dlf_severities */
-CREATE TABLE dlf_severities(sev_no NUMBER(3), sev_name VARCHAR2(20));
-
-CREATE UNIQUE INDEX UN_Severities_Sev_NoName ON dlf_severities (sev_no, sev_name);
-
-ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_NoName UNIQUE (sev_no, sev_name) ENABLE;
+CREATE TABLE dlf_severities(sev_no NUMBER(3) CONSTRAINT PK_Severities_Sev_No PRIMARY KEY CONSTRAINT NN_Severities_Sev_No NOT NULL, sev_name VARCHAR2(20) CONSTRAINT NN_Severities_Sev_Name NOT NULL);
 
 /* SQL statements for table dlf_facilities */
-CREATE TABLE dlf_facilities(fac_no NUMBER(3), fac_name VARCHAR2(20));
-
-CREATE UNIQUE INDEX UN_Facilities_Fac_No ON dlf_facilities (fac_no);
-CREATE UNIQUE INDEX UN_Facilities_Fac_Name ON dlf_facilities (fac_name);
-
-ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_No UNIQUE (fac_no) ENABLE;
-ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_Name UNIQUE (fac_name) ENABLE;
+CREATE TABLE dlf_facilities(fac_no NUMBER(3) CONSTRAINT PK_Facilities_Fac_No PRIMARY KEY CONSTRAINT NN_Facilities_Fac_No NOT NULL, fac_name VARCHAR2(20) CONSTRAINT NN_Facilities_Fac_Name NOT NULL);
 
 /* SQL statements for table dlf_msg_texts */
-CREATE TABLE dlf_msg_texts(fac_no NUMBER(3), msg_no NUMBER(5), msg_text VARCHAR2(512));
+CREATE TABLE dlf_msg_texts(fac_no NUMBER(3) CONSTRAINT NN_Msg_Texts_Fac_No NOT NULL, msg_no NUMBER(5) CONSTRAINT NN_Msg_Texts_Msg_No NOT NULL, msg_text VARCHAR2(512) CONSTRAINT NN_Msg_Texts_Msg_Text NOT NULL);
 
-CREATE UNIQUE INDEX UN_Msg_Texts_FacMsgNo ON dlf_msg_texts (fac_no, msg_no);
+ALTER TABLE dlf_msg_texts
+  ADD CONSTRAINT PK_Msg_Texts_FacMsgNo PRIMARY KEY (fac_no, msg_no);
 
 /* SQL statements for dlf_host_map */
-CREATE TABLE dlf_host_map(hostid NUMBER, hostname VARCHAR2(64));
-
-CREATE UNIQUE INDEX UN_Host_Map_Hostid ON dlf_host_map (hostid);
-CREATE UNIQUE INDEX UN_Host_Map_Hostname ON dlf_host_map (hostname);
-
-ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostid UNIQUE (hostid) ENABLE;
-ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostname UNIQUE (hostname) ENABLE;
+CREATE TABLE dlf_host_map(hostid NUMBER CONSTRAINT PK_Host_Map_HostID PRIMARY KEY CONSTRAINT NN_Host_Map_HostID NOT NULL, hostname VARCHAR2(64) CONSTRAINT NN_Host_Map_HostName NOT NULL);
 
 /* SQL statements for dlf_nshost_map */
-CREATE TABLE dlf_nshost_map(nshostid NUMBER, nshostname VARCHAR2(64));
-
-CREATE UNIQUE INDEX UN_NSHost_Map_NSHostid ON dlf_nshost_map (nshostid);
-CREATE UNIQUE INDEX UN_NSHost_Map_NSHostname ON dlf_nshost_map (nshostname);
-
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostid UNIQUE (nshostid) ENABLE;
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostname UNIQUE (nshostname) ENABLE;
+CREATE TABLE dlf_nshost_map(nshostid NUMBER CONSTRAINT PK_NSHost_Map_NSHostID PRIMARY KEY CONSTRAINT NN_NSHost_Map_NSHostID NOT NULL, nshostname VARCHAR2(64) CONSTRAINT NN_NSHost_Map_NSHostName NOT NULL);
 
 /* Fill the dlf_config table */
 INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
@@ -112,13 +93,19 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1',  'Emerg');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('2',  'Alert');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('3',  'Error');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('4',  'Warn');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5',  'Notice'); /* Auth */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6',  'Notice'); /* Security */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7',  'Debug');  /* Usage */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8',  'Info');   /* System */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Info');   /* Monitoring */
+/* Previously Auth */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5',  'Notice');
+/* Previously Security */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6',  'Notice');
+/* Previously Usage */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7',  'Debug');
+/* Previously System */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8',  'Info');
+/* Previously Monitoring */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Info');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'Notice'); /* User Error */
+/* Previously User Error */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'Notice');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('13', 'Crit');
 
 
@@ -151,7 +138,7 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (30, 'operations');
 
 
 /* SQL statements for table UpgradeLog */
-CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, SchemaName VARCHAR2(64) DEFAULT 'DLF' CONSTRAINT NN_UpgradeLog_SchemaName NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
 /* SQL statements for check constraints on the UpgradeLog table */
 ALTER TABLE UpgradeLog
@@ -163,7 +150,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_4');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -171,7 +158,8 @@ AS
   SELECT decode(type, 'TRANSPARENT', schemaVersion,
            decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
          decode(type, 'TRANSPARENT', release,
-           decode(state, 'INCOMPLETE', state, release)) release
+           decode(state, 'INCOMPLETE', state, release)) release,
+         schemaName
     FROM UpgradeLog
    WHERE startDate =
      (SELECT max(startDate) FROM UpgradeLog);
@@ -260,12 +248,9 @@ BEGIN
        WHERE tablespace_name = tableSpaceName;
 
       IF cnt = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE TABLESPACE '||tableSpaceName||'
+        EXECUTE IMMEDIATE 'CREATE BIGFILE TABLESPACE '||tableSpaceName||'
                            DATAFILE SIZE 100M
-                           AUTOEXTEND ON NEXT 200M
-                           MAXSIZE 30G
-                           EXTENT MANAGEMENT LOCAL
-                           SEGMENT SPACE MANAGEMENT AUTO';
+                           AUTOEXTEND ON NEXT 200M';
       END IF;
 
       -- If the tablespace is read only, alter its status to read write for this
@@ -301,8 +286,8 @@ END;
 /
 
 
-/* PL/SQL method implementing archiveData */
-CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
+/* PL/SQL method implementing dropPartitions */
+CREATE OR REPLACE PROCEDURE dropPartitions (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
@@ -373,7 +358,7 @@ BEGIN
 
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'partitionCreationJob',
+      JOB_NAME        => 'createPartitionsJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
       JOB_ACTION      => 'createPartitions',
       JOB_CLASS       => 'DLF_JOB_CLASS',
@@ -384,14 +369,14 @@ BEGIN
 
   -- Create a db job to be run every day and drop old data from the database
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'archiveDataJob',
+      JOB_NAME        => 'dropPartitionsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN archiveData(-1); END;',
+      JOB_ACTION      => 'BEGIN dropPartitions(-1); END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
-      COMMENTS        => 'Daily data archiving');
+      COMMENTS        => 'Daily data removal');
 END;
 /
 

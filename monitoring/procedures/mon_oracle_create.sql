@@ -60,56 +60,82 @@ END;
 /***** EXISTING/OLD MONITORING *****/
 
 /* SQL statement for table LatencyStats */
-CREATE TABLE LatencyStats (timestamp DATE CONSTRAINT NN_LatencyStats_ts NOT NULL, interval NUMBER, RequestType VARCHAR2(255), protocol VARCHAR2(255), started NUMBER(*,3), minLatencyTime NUMBER(*,3), maxLatencyTime NUMBER(*,3), avgLatencyTime NUMBER(*,3), stddevLatencyTime NUMBER(*,3), medianLatencyTime NUMBER(*,3))
+CREATE TABLE LatencyStats (timestamp DATE CONSTRAINT NN_LatencyStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), protocol VARCHAR2(255), started NUMBER(*,3), minLatencyTime NUMBER(*,3), maxLatencyTime NUMBER(*,3), avgLatencyTime NUMBER(*,3), stddevLatencyTime NUMBER(*,3), medianLatencyTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_LatencyStats_ts ON LatencyStats (timestamp) LOCAL;
 
 /* SQL statement for table QueueTimeStats */
 CREATE TABLE QueueTimeStats (timestamp DATE CONSTRAINT NN_QueueTimeStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), dispatched NUMBER(*,3), minQueueTime NUMBER(*,3), maxQueueTime NUMBER(*,3), avgQueueTime NUMBER(*,3), stddevQueueTime NUMBER(*,3), medianQueueTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_QueueTimeStats_ts ON QueueTimeStats (timestamp) LOCAL;
+
 /* SQL statement for table GarbageCollectionStats */
 CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_GarbageCollectionStats_ts ON GarbageCollectionStats (timestamp) LOCAL;
 
 /* SQL statement for table RequestStats */
 CREATE TABLE RequestStats (timestamp DATE CONSTRAINT NN_RequestStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), hostname VARCHAR2(255), euid VARCHAR2(255), requests NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_RequestStats_ts ON RequestStats (timestamp) LOCAL;
+
 /* SQL statement for table DiskCacheEfficiencyStats */
 CREATE TABLE DiskCacheEfficiencyStats (timestamp DATE CONSTRAINT NN_DiskCacheEfficiencyStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), wait NUMBER(*,3), d2d NUMBER(*,3), recall NUMBER(*,3), staged NUMBER(*,3), waitPerc NUMBER(*,2), d2dPerc NUMBER(*,2), recallPerc NUMBER(*,2), stagedPerc NUMBER(*,2), total NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_DiskCacheEfficiencyStats_ts ON DiskCacheEfficiencyStats (timestamp) LOCAL;
 
 /* SQL statement for table FilesMigratedStats */
 CREATE TABLE FilesMigratedStats (timestamp DATE CONSTRAINT NN_FilesMigratedStats_ts NOT NULL, interval NUMBER, svcClass VARCHAR2(255), tapepool VARCHAR2(255), nbFiles NUMBER, totalFileSize NUMBER, NumBytesWriteAvg NUMBER(*,2))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_FilesMigratedStats_ts ON FilesMigratedStats (timestamp) LOCAL;
+
 /* SQL statement for table FilesRecalledStats */
 CREATE TABLE FilesRecalledStats (timestamp DATE CONSTRAINT NN_FilesRecalledStats_ts NOT NULL, interval NUMBER, nbFiles NUMBER, totalFileSize NUMBER, NumBytesReadAvg NUMBER(*,2))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_FilesRecalledStats_ts ON FilesRecalledStats (timestamp) LOCAL;
 
 /* SQL statement for table ReplicationStats */
 CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_ReplicationStats_ts ON ReplicationStats (timestamp) LOCAL;
+
 /* SQL statement for table TapeRecalledStats */
 CREATE TABLE TapeRecalledStats (timestamp DATE CONSTRAINT NN_TapeRecalledStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), username VARCHAR2(255), groupname VARCHAR2(255), tapeVid VARCHAR2(255), tapeStatus VARCHAR2(255), nbFiles NUMBER, totalFileSize NUMBER, mountsPerDay NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_TapeRecalledStats_ts ON TapeRecalledStats (timestamp) LOCAL;
 
 /* SQL statement for table ProcessingTimeStats */
 CREATE TABLE ProcessingTimeStats (timestamp DATE CONSTRAINT NN_ProcessingTimeStats_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), requestType VARCHAR2(255), svcClass VARCHAR2(255), requests NUMBER(*,3), minProcessingTime NUMBER(*,3), maxProcessingTime NUMBER(*,3), avgProcessingTime NUMBER(*,3), stddevProcessingTime NUMBER(*,3), medianProcessingTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_ProcessingTimeStats_ts ON ProcessingTimeStats (timestamp) LOCAL;
+
 /* SQL statement for table ClientVersionStats */
 CREATE TABLE ClientVersionStats (timestamp DATE CONSTRAINT NN_ClientVersionStats_ts NOT NULL, interval NUMBER, clientVersion VARCHAR2(255), requests NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_ClientVersionStats_ts ON ClientVersionStats (timestamp) LOCAL;
 
 /* SQL statement for table TapeMountStats */
 CREATE TABLE TapeMountStats (timestamp DATE CONSTRAINT NN_TapeMountStats_ts NOT NULL, interval NUMBER, direction VARCHAR2(20), nbMounts NUMBER, nbFiles NUMBER, totalFileSize NUMBER, avgRunTime NUMBER(*,3), nbFilesPerMount NUMBER(*,0), failures NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_TapeMountStats_ts ON TapeMountStats (timestamp) LOCAL;
+
 /* SQL statement for table Top10Errors */
 CREATE TABLE Top10Errors (timestamp DATE CONSTRAINT NN_TopTenErrors_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), nbErrors NUMBER, errorMessage VARCHAR2(512))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_Top10Errors_ts ON Top10Errors (timestamp) LOCAL;
 
 /* SQL statement for temporary table CacheEfficiencyHelper */
 CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
@@ -120,7 +146,7 @@ CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TapeMountsHelper table */
-CREATE INDEX I_TapeHelper_timestamp ON TapeMountsHelper (timestamp) LOCAL;
+CREATE INDEX I_TapeMountsHelper_ts ON TapeMountsHelper (timestamp) LOCAL;
 
 /* SQL statement for a view on the DLF_Config table */
 CREATE OR REPLACE VIEW DLFConfig AS
@@ -138,10 +164,10 @@ CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NUL
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Requests table */
-CREATE INDEX I_Requests_timestamp ON Requests (timestamp) LOCAL;
-CREATE INDEX I_Requests_reqId     ON Requests (reqId) LOCAL;
-CREATE INDEX I_Requests_svcclass  ON Requests (svcclass) LOCAL;
-CREATE INDEX I_Requests_filesize  ON Requests (filesize) LOCAL;
+CREATE INDEX I_Requests_ts       ON Requests (timestamp) LOCAL;
+CREATE INDEX I_Requests_reqId    ON Requests (reqId) LOCAL;
+CREATE INDEX I_Requests_svcclass ON Requests (svcclass) LOCAL;
+CREATE INDEX I_Requests_filesize ON Requests (filesize) LOCAL;
 
 /* SQL statement for table InternalDiskCopy */
 CREATE TABLE InternalDiskCopy (timestamp DATE CONSTRAINT NN_InternalDiskCopy_ts NOT NULL, svcclass VARCHAR2(255), copies NUMBER)
@@ -152,15 +178,15 @@ CREATE TABLE TotalLatency (subReqId CHAR(36) CONSTRAINT NN_TotalLatency_subReqId
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TotalLatency table */
-CREATE INDEX I_TotalLatency_timestamp    ON TotalLatency (timestamp) LOCAL;
+CREATE INDEX I_TotalLatency_ts           ON TotalLatency (timestamp) LOCAL;
 CREATE INDEX I_TotalLatency_totalLatency ON TotalLatency (totalLatency) LOCAL;
 
 /* SQL statement for table TapeRecall */
-CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT NULL CONSTRAINT PK_TapeRecall_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TapeRecall_ts NOT NULL, tapeId VARCHAR2(255 BYTE), tapeMountState VARCHAR2(255 BYTE), readLatency INTEGER, copyLatency INTEGER, CONSTRAINT FK_TapeRecall_subReqId FOREIGN KEY (subReqId) REFERENCES Requests (subReqid) ON DELETE CASCADE)
+CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT NULL CONSTRAINT PK_TapeRecall_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TapeRecall_ts NOT NULL, tapeId VARCHAR2(255 BYTE), tapeMountState VARCHAR2(255 BYTE), readLatency INTEGER, copyLatency INTEGER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TapeRecall table */
-CREATE INDEX I_TapeRecall_timestamp ON TapeRecall (timestamp) LOCAL;
+CREATE INDEX I_TapeRecall_ts ON TapeRecall (timestamp) LOCAL;
 
 /* SQL statement for table DiskCopy */
 CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL, timestamp DATE CONSTRAINT NN_DiskCopy_ts NOT NULL, originalPool VARCHAR2(255), targetPool VARCHAR2(255), readLatency INTEGER, copyLatency INTEGER, numCopiesInPools INTEGER, srcHost VARCHAR2(255), destHost VARCHAR2(255))
@@ -171,17 +197,17 @@ CREATE TABLE GcFiles (timestamp DATE CONSTRAINT NN_GCFiles_ts NOT NULL, nsFileId
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the GcFiles table */
-CREATE INDEX I_GcFiles_timestamp ON GcFiles (timestamp) LOCAL;
-CREATE INDEX I_GcFiles_filesize  ON GcFiles (filesize) LOCAL;
-CREATE INDEX I_GcFiles_fileage   ON GcFiles (fileage) LOCAL;
+CREATE INDEX I_GcFiles_ts       ON GcFiles (timestamp) LOCAL;
+CREATE INDEX I_GcFiles_filesize ON GcFiles (filesize) LOCAL;
+CREATE INDEX I_GcFiles_fileage  ON GcFiles (fileage) LOCAL;
 
 /* SQL statement for table Migration */
 CREATE TABLE Migration (subReqId CHAR(36) CONSTRAINT NN_Migration_subReqId NOT NULL CONSTRAINT PK_Migration_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Migration_ts NOT NULL, reqId CHAR(36) CONSTRAINT NN_Migration_reqId NOT NULL, nsfileid NUMBER CONSTRAINT NN_Migration_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), totalLatency NUMBER, filesize NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Migration table */
-CREATE INDEX I_Migration_timestamp ON Migration (timestamp) LOCAL;
-CREATE INDEX I_Migration_reqId     ON Migration (reqId) LOCAL;
+CREATE INDEX I_Migration_ts    ON Migration (timestamp) LOCAL;
+CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
 CREATE MATERIALIZED VIEW Errors_MV
@@ -297,7 +323,7 @@ END;
 /
 
 /* SQL statements for table UpgradeLog */
-CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, SchemaName VARCHAR2(64) DEFAULT 'MON' CONSTRAINT NN_UpgradeLog_SchemaName NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
 /* SQL statements for check constraints on the UpgradeLog table */
 ALTER TABLE UpgradeLog
@@ -309,7 +335,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_4');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -317,7 +343,8 @@ AS
   SELECT decode(type, 'TRANSPARENT', schemaVersion,
            decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
          decode(type, 'TRANSPARENT', release,
-           decode(state, 'INCOMPLETE', state, release)) release
+           decode(state, 'INCOMPLETE', state, release)) release,
+         schemaName
     FROM UpgradeLog
    WHERE startDate =
      (SELECT max(startDate) FROM UpgradeLog);
@@ -349,7 +376,7 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_7';
 
 /***** EXISTING/OLD MONITORING *****/
 
@@ -357,19 +384,19 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
  *
  * Provides statistics on the amount of time a user has had to wait since their
  * request was entered into the system and it actually being served. The
- * returned data is broken down by request type and protocol.
+ * returned data is broken down by request type, service class and protocol.
  */
 CREATE OR REPLACE PROCEDURE statsLatency (now IN DATE, interval IN NUMBER) AS
 BEGIN
   -- Stats table: LatencyStats
   -- Frequency: 5 minutes
   INSERT INTO LatencyStats
-    (timestamp, interval, requestType, protocol, started, minLatencyTime,
-     maxLatencyTime, avgLatencyTime, stddevLatencyTime, medianLatencyTime)
+    (timestamp, interval, requestType, svcClass, protocol, started,
+     minLatencyTime, maxLatencyTime, avgLatencyTime, stddevLatencyTime,
+     medianLatencyTime)
     -- Gather data
-    SELECT now - 5/1440 timestamp, interval,
-           nvl(type, 'StageDiskCopyReplicaRequest') requestType, protocol,
-           (count(*) / interval) started,
+    SELECT now - 5/1440 timestamp, interval, nvl(type, '-') requestType,
+           svcClass, protocol, (count(*) / interval) started,
            min(waitTime)         minLatencyTime,
            max(waitTime)         maxLatencyTime,
            avg(waitTime)         avgLatencyTime,
@@ -378,7 +405,8 @@ BEGIN
       FROM (
         SELECT waitTime,
                max(decode(params.name, 'Type',     params.value, NULL)) type,
-               max(decode(params.name, 'Protocol', params.value, NULL)) protocol
+               max(decode(params.name, 'Protocol', params.value, NULL)) protocol,
+               max(decode(params.name, 'SvcClass', params.value, NULL)) svcClass
           FROM (
             -- Extract the totalWaitTime for all stagerjob's or d2dtransfer's
             -- which have started.
@@ -396,19 +424,16 @@ BEGIN
                AND params.name = 'TotalWaitTime'
                AND params.timestamp >  now - 10/1440
                AND params.timestamp <= now - 5/1440
-          ) results
-      -- For facility 23 (d2dtransfer) we can assume that the request type
-      -- associated with the transfer is 133 (StageDiskCopyReplicaRequest).
-      -- However, for normal jobs we must parse the Arguments attribute of the
-      -- start message to determine the request type. Hence the left join,
-      -- NULL's are 133!!
-      LEFT JOIN &dlfschema..dlf_str_param_values params
-        ON results.id = params.id
-       AND params.name IN ('Type', 'Protocol')
-       AND params.timestamp >  now - 10/1440
-       AND params.timestamp <= now - 5/1440
-     GROUP BY waitTime)
-     GROUP BY type, protocol;
+           ) results
+         -- Attach the type, protocol and service class values
+         INNER JOIN &dlfschema..dlf_str_param_values params
+            ON results.id = params.id
+           AND params.name IN ('Type', 'Protocol', 'SvcClass')
+           AND params.timestamp >  now - 10/1440
+           AND params.timestamp <= now - 5/1440
+         GROUP BY waitTime)
+     WHERE svcClass IS NOT NULL
+   GROUP BY GROUPING SETS (svcclass, type), (svcclass, protocol);
 END;
 /
 
@@ -516,7 +541,7 @@ BEGIN
                AND params.timestamp <= now - 5/1440
              GROUP BY messages.id, messages.hostid
           ) results
-        -- Attach the gctye to the results collected above
+        -- Attach the gctype to the results collected above
         INNER JOIN &dlfschema..dlf_str_param_values params
            ON results.id = params.id
           AND params.name = 'GcType'
@@ -1378,8 +1403,8 @@ END;
 /
 
 
-/* PL/SQL method implementing archiveData */
-CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
+/* PL/SQL method implementing dropPartitions */
+CREATE OR REPLACE PROCEDURE dropPartitions (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
@@ -1449,7 +1474,7 @@ BEGIN
 
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'partitionCreationJob',
+      JOB_NAME        => 'createPartitionsJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
       JOB_ACTION      => 'createPartitions',
       JOB_CLASS       => 'DLF_JOB_CLASS',
@@ -1460,10 +1485,10 @@ BEGIN
 
   -- Create a db job to be run every day and drop old data from the database
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'archiveDataJob',
+      JOB_NAME        => 'dropPartitionsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN
-                            archiveData(-1);
+                            dropPartitions(-1);
                             FOR a IN (SELECT table_name FROM user_tables
                                        WHERE table_name LIKE ''ERR_%'')
                             LOOP
@@ -1474,7 +1499,7 @@ BEGIN
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
-      COMMENTS        => 'Daily data archiving');
+      COMMENTS        => 'Daily data removal');
 
   -- Create a job to execute the procedures that create statistical information (OLD)
   DBMS_SCHEDULER.CREATE_JOB (
