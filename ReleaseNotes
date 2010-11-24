@@ -1,3 +1,1035 @@
+------------
+- 2.1.10-0 -
+------------
+
+  Bug Fixes
+  ---------
+
+  CASTOR miscellaneous
+  --------------------
+  - #65462: RFE: Add PL/SQL constants for CASTOR magic (tragic) numbers
+  - #66367: CASTOR UUID generation is not unique enough
+  - #69659: CM : replacement of Kernighan and Ritchie declarations by ansi ones
+  - #69665: CM : Improve Makefiles and packaging
+  - #69667: CM : enable maximum level of warnings at compile time
+  - #69671: CM : Port code to gcc 4.4
+  - #69673: Remove non client code from libshift
+  - #69677: CM : Generic cleanup of the code base
+  - #69745: stripped executables and proper use of debug info in RPMs
+  - #73748: CM : cleanups triggered by coverity reports
+  - #74023: CM: enhancements in the core framework
+
+  CASTOR monitoring
+  -----------------
+  - #58500: ReqDel materialized view performing FTS 
+ 
+  CASTOR nameserver
+  -----------------
+  - #68212: Cns_setsegattrs should prevent the creation of too many copies
+  - #74024: In the Cns_tapesum API, remove support for counting 'disabled'
+            segments
+
+  CASTOR protocols
+  ----------------
+  - #69661: Bad call to writerror64_v3 in the handling of first byte written in
+            RFIO
+
+  CASTOR stager
+  -------------
+  - #27304: RFE stager_qry -s output (or new qry option)
+  - #47634: Draining diskservers remain in a DISABLED state after
+            rmMasterDaemon restart
+  - #62269: RFE: possible enhancements for stager_qry -M 'all:/castorpath'
+  - #65238: Missing unique constraint in TYPE2OBJ
+  - #67591: Cgetpwu/grgid not setting serrno properly
+  - #68216: RFE: enforce a stricter check for the ability to migrate to tape
+            before scheduling a write
+  - #68597: ADMIN_RELEASE states in rmGetNodes
+  - #68799: Error loading security modules for the rhd results in segfault
+  - #69674: RFE: implement stageAbortRequest request processing
+  - #69865: RFE: Implement file size consistency checks for replicated files
+  - #71841: Unable to read file in case of failing replication within a diskpool
+  - #72213: fixFileSize.py tool is resetting checksum of segments
+  - #73677: enterPriority should verify arguments
+  - #73750: Fixed deletion of services when a thread gets destroyed
+  - #74392: RFE: draindiskserver - add comment
+  - #74785: rmmasterd blocks boot sequence if LSF is (un-|mis-)configured
+
+  CASTOR tape
+  -----------
+  - #54597: RFE: ONHOLD explanation option
+  - #67558: dumptp, readtp and writetp should have the same file permissions as
+            tpdump, tpread and tpwrite
+  - #67740: The SQL view used by showqueues returns duplicate rows for
+            multi-dedications
+  - #74087: RFE:Bad checksum errors in migrator log should include full
+            disk-path
+
+  CASTOR test suite
+  -----------------
+  - #66522: xroot test suite: authentication methods
+  - #72092: test-suite: review tests needing two tape-backed service classes
+  - #72178: testsuite: "full" service class gives confusing assertion, real
+            error not shown
+  - #72448: CM : made test suite reusable outside CASTOR
+
+
+  Package Changes
+  ---------------
+  - Added an example rtcpclientd sysconfig file (/etc/sysconfig/rtcpclientd.example)
+    to the castor-rtcopy-clientserver package.
+
+  - Added a new tool, dumpSharedMemory to the castor-hsmtools package to dump
+    the contents of the rmmaster's shared memory to aid in debug investigations.
+
+  - Added a new stager_abort command line along with its associated man page to
+    the castor-hsmtools package. This new command line is required to pass the
+    new stager_abort test cases found in the test suite. It is not intended for
+    end user deployment.
+
+  - Removed the Csched_api.h and Csched_flags.h header files from the
+    castor-devel package.
+
+  - All manpages now have '.gz' file extensions to follow standard manpage
+    distribution guidelines.
+
+  - Removed the castor-tape-client package from the client only distribution.
+
+  - Renamed the castor-tape-client package to castor-tape-tools to reflect that
+    its contents are not for client-side distribution.
+
+
+  Upgrade Instructions from 2.1.9-10
+  ---------------------------------
+
+    Before upgrading to a 2.1.10-0 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Notes:
+      - Prior to running the STAGER, DLF, REPACK, MON and VDQM database
+        upgrades, a DBA must first grant these accounts the privileges to
+        manage scheduler jobs:
+
+        GRANT MANAGE SCHEDULER TO <user>;
+
+
+    Stager
+    ------
+
+    The upgrade of the STAGER database to 2.1.10-0 cannot be performed online
+    while the system is running. All daemons accessing the database MUST be
+    stopped! The expected downtime is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Stop all daemons on stager headnodes which have direct connections to
+          the stager database. This includes: rhd, stagerd, jobmanagerd,
+          rtcpclientd, mighunterd, rechandlerd, expertd and rmmasterd.
+
+          Note: It is not necessary to stop any services/daemons on the
+                diskservers themselves.
+
+       2. Upgrade the Stager database using the stager_2.1.9-10_to_2.1.10-0.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.10-0/dbupgrades
+
+       3. Upgrade the software on the headnodes and diskservers to 2.1.10-0.
+          Notes: All daemons involved in the upgrade will be restarted 
+          automatically.
+
+       4. Start all the daemons which were stopped in step 2.
+
+       5. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+       6. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.10-0/testsuite
+
+       7. Upgrade complete.
+
+
+    DLF, Monitoring & Repack
+    ------------------------
+
+    The upgrade of the DLF, MONITORING and REPACK databases to 2.1.10-0 can be
+    performed online while the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.10-0/dbupgrades
+
+       2. Update the appropriate software to use the 2.1.10-0 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.10-0 can be
+    performed online while the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.10-0/dbupgrades
+
+       2. Update the appropriate software to use the 2.1.10-0 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+------------
+- 2.1.9-10 -
+------------
+
+  Bug Fixes
+  ---------
+
+  CASTOR nameserver
+  -----------------
+  - #74163: nslisttape erroneously reports empty tapes
+
+  CASTOR protocols
+  ----------------
+  - #73921: gridFTP checksums wrong on 32 bits platforms
+  - #74252: RFE: GridFTP internal should support multiple service class
+            attached to the same diskpool
+
+  CASTOR stager
+  -------------
+  - #74382: Increase the default number of collector threads in the rmmaster
+            daemon
+  - #74397: BulkCheckFSBackInProd causes row lock contention
+  - #73911: RFE: improve selection logic when multiple replicas are available
+
+
+  Upgrade Instructions from 2.1.9-9
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-10 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the Stager, DLF, Monitoring and Repack databases to 2.1.9-10
+    can be performed online while the service is running. The expected upgrade
+    time is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-9_to_2.1.9-10.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-9_to_2.1.9-10.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-9_to_2.1.9-10.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/dbupgrades
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-9_to_2.1.9-10.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/dbupgrades
+       
+       6. Upgrade the software on the headnodes and diskservers to 2.1.9-10.
+          Note: All daemons involved in the upgrade will be restarted
+          automatically.
+
+       7. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+       8. Apply the commands returned in step 1.
+
+       9. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/testsuite
+
+      10. Upgrade complete.
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-9 can be
+    performed online while the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-10/dbupgrades
+
+       2. Update the appropriate software to use the 2.1.9-10 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+-----------
+- 2.1.9-9 -
+-----------
+
+  Bug Fixes
+  ---------
+
+  CASTOR nameserver
+  -----------------
+  - #68084: Prevention of segment creation on disk only file classes
+  
+  CASTOR stager
+  -------------
+  - #68246: stager_get can trigger migrations which create too many copies on
+            tape
+  - #72142: stager_removeprivilege -U ':' gives error "Unable to determine
+            group for uid: -1" 
+  - #72157: bad checksums with gridFTP in case of interupted transfers 
+
+  CASTOR tape
+  -----------
+  - #66570: RFE: need number of running streams per tape pool in policy 
+  - #67557: The error messages of dumptp, readtp and writetp incorrectly
+            use the program name tpcp 
+  - #67723: Remove inefficient tape gateway logic from the mighunter for
+            chosing tape copies to be attached to streams 
+  - #67945: RFE: The mighunter should not start if the migration and stream
+            policy modules are not configured properly 
+  - #68020: RFE: The mighunter should gracefully stop when it encounters
+            an invalid migration-policy or stream-policy function-name 
+  - #69585: RFE: Tape bridge should give compressed file size 
+  - #69634: RFE: Add TPVID to as many tape-bridge logs as possible 
+  - #71072: TapeBridge client not handling admin host error 
+  - #71230: RFE: /etc/castor/policies/stream.py.example file should include
+            an example which always returns 1 
+  - #71346: Request to provide new feature for readtp: -n/--nodata 
+  - #71875: RFE: provide support for buffered tape marks in rtcpd 
+  - #71965: castor::tape::utils::IndexContainer used by the tape-bridge
+            does not pass valgrind checks 
+  - #72101: rechandler turns rejected requests into approved ones 
+  - #72155: control for maximum number of parallel ongoing recalls
+            for a given stager 
+  - #72225: RFE: Tape-Bridge should always ask for recalls to truncate on open
+  
+  CASTOR miscellaneous
+  --------------------
+  - #71326: condrestart of mighunter fails on RPM postinstall when in
+    multi service class per process mode
+  - #72279: castor::dlf::Param constructor converts uint64_t to a
+    signed 32-bit number
+  - #73016: root related tests are hanging with latest root versions (5.25 on)
+  
+  Configuration Changes
+  ---------------------
+  
+  - Because of bugs #67945 and #68020 concerning the mighunter daemon, all
+    tape enabled service classes must have their tape related policies defined,
+    otherwise the mighunter won't successfully restart after the upgrade.
+
+  - Because of bugs #66570 and #72155, the stream and recall policies need
+    to be updated before the mighunter and the rechandler daemons are restarted.
+    Refer to the instructions for details.
+
+  - The fix for bug #67945 concerning the mighunter daemon has introduced
+    rigorous checks of the parameters passed to both the migration-policy and
+    the stream-policy python-functions. In particular the name checks are
+    case-sensitive which was not the case for 2.1.9-8. Tests of the deployment
+    procedures at CERN have shown that the migration-policy python-functions
+    do not match the case expected by the 2.1.9-9 release of the mighunter. The
+    tape-pool parameter was found to be written "tapePool" in the production
+    python-scripts contrary to what was expected by the 2.1.9-9 release of the
+    mighunter which wanted "tapepool" (all lower-case). Please make sure the
+    parameters of both the migration-policy and the stream-policy
+    python-functions in your production setup match the case of the examples
+    given by migration.py.example and stream.py.example scripts respectively.
+
+  Upgrade Instructions from 2.1.9-8
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-9 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the Stager, DLF, Monitoring and Repack databases to 2.1.9-9
+    can be performed online while the service is running. The expected upgrade
+    time is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-8_to_2.1.9-9.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-8_to_2.1.9-9.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-8_to_2.1.9-9.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/dbupgrades
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-8_to_2.1.9-9.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/dbupgrades
+
+       6. Stop the mighunter and the rechandler daemons.
+       
+       7. Upgrade the software on the headnodes and diskservers to 2.1.9-9.
+          Note: All daemons involved in the upgrade will be restarted
+          automatically.
+          
+       8. Update the stream and recall policies according to the new provided
+          examples as detailed in bugs #66570 and #72155.
+       
+       9. Restart the mighunter and the rechandler daemons.
+
+      10. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+      11. Apply the commands returned in step 1.
+
+      12. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/testsuite
+
+      13. Congratulations you have successfully upgraded to the 2.1.9-9 release
+          of CASTOR stager!!
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-8 can be
+    performed online while the system is running.
+
+      Instructions
+      ------------
+
+      1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-9/dbupgrades
+
+      2. Update the appropriate software to use the 2.1.9-9 RPMS. Note: All
+         daemons involved in the upgrade will be restarted automatically.
+
+      3. Upgrade complete.
+
+
+-----------
+- 2.1.9-8 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #69255: Castor client code is not resilient to network errors
+  - #69917: RFE: Upgrade scripts should check the schema name they are executed
+            against prior to making changes
+  - #70183: logprocessor daemon does not support NSHOSTNAME's which are fully
+            qualified
+  - #70472: castor-tape-server-nostk package has incorrect dependencies on STK
+            libraries
+
+  CASTOR nameserver
+  -----------------
+  - #68135: Creation of segments is not restricted to CUPV ADMINS
+  - #68928: RFE: improve db efficiency for `nslisttape --summary` requests
+
+  CASTOR protocols
+  ----------------
+  - #70679: Wrong recombination of checksums under certain conditions
+
+  CASTOR stager
+  -------------
+  - #69929: Logprocessor init.d script incorrectly reports 'dead but subsys
+            locked' for status requests
+
+  Upgrade Instructions from 2.1.9-7
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-8 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the Stager, DLF, Monitoring and Repack databases to 2.1.9-8
+    can be performed online while the system is running. The expected upgrade
+    time is less than 5 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-7_to_2.1.9-8.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-7_to_2.1.9-8.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-7_to_2.1.9-8.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/dbupgrades
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-7_to_2.1.9-8.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/dbupgrades
+
+       6. Upgrade the software on the headnodes and diskservers to 2.1.9-8.
+          Note: All daemons involved in the upgrade will be restarted
+          automatically.
+
+       7. Replace the logprocessord.conf file with the example one:
+
+          `mv /etc/castor/logprocessord.conf.example /etc/castor/logprocessord.conf`
+
+          This fixes the logprocessor init.d script which always reports 'dead
+          but subsys locked' for status reports. #69929
+
+       8. Restart the logprocessor daemon
+
+       9. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+      10. Apply the commands returned in step 1.
+
+      11. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/testsuite
+
+      12. Congratulations you have successfully upgraded to the 2.1.9-8 release
+          of CASTOR stager!!
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-8 can be
+    performed online while the system is running.
+
+    Please note that to improve the database performance of `nslisttape
+    --summary` queries a new index has been added to the nameserver database.
+    The creation of this index can take several hours!
+
+      Instructions
+      ------------
+
+      1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-8/dbupgrades
+
+      2. Update the appropriate software to use the 2.1.9-8 RPMS. Note: All
+         daemons involved in the upgrade will be restarted automatically.
+
+      3. Upgrade complete.
+
+
+-----------
+- 2.1.9-7 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR monitoring
+  -----------------
+  - #67684: RFE: Add new GcType to be able to determine the number of files
+            deleted through nameserver synchronization
+  - #67788: RFE: LatencyStats broken down by service class
+
+  CASTOR nameserver
+  -----------------
+  - #68762: Truncating a file with an existing tape segment does not delete
+            the tape segment from the name server
+
+  CASTOR stager
+  -------------
+  - #34707: hang disk2disk copy: Not enough hosts to meet the job's spanning
+            requirement
+  - #68205: Files involved in Disk2Disk copies should not be garbage collected
+  - #68215: Cross-stager checks not effective when performing recalls/repacks
+  - #68233: The job manager daemon should not ignore NO_DATA_FOUND exceptions
+            in the dispatch thread
+
+  Upgrade Instructions from 2.1.9-6
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-7 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the Stager, DLF, Monitoring and Repack databases to 2.1.9-7
+    can be performed online while the system is running. The expected upgrade
+    time is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-6_to_2.1.9-7.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-6_to_2.1.9-7.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-6_to_2.1.9-7.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbupgrades
+
+          If you have any monitoring scripts/sensors which access the monitoring
+          database through a read account you will need to grant them access to
+          the new LatencyStats table using the grant_oracle_user script from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbcreation
+
+          The script will prompt you for the user to grant read access to.
+          Enter the name (e.g. castor_read) and hit Enter.
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-6_to_2.1.9-7.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbupgrades
+
+       6. Upgrade the software on the diskservers to 2.1.9-7. This must be done
+          before upgrading the headnodes otherwise transfers may fail!
+
+       7. Upgrade the software on the headnodes to 2.1.9-7.
+
+       8. Reload the LSF plugin on the LSF masters with `badmin reconfig`
+
+       9. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+      10. Apply the commands returned in step 1.
+
+      11. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/testsuite
+
+      12. Congratulations you have successfully upgraded to the 2.1.9-7 release
+          of CASTOR stager!!
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-7 can be
+    performed online while the system is running:
+
+      Instructions
+      ------------
+
+      1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-7/dbupgrades
+
+      2. Update the appropriate software to use the 2.1.9-7 RPMS. Note: All
+         daemons involved in the upgrade will be restarted automatically.
+
+      3. Upgrade complete.
+
+
+-----------
+- 2.1.9-6 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #50042: Nameserver segfault on database reconnections (SLC5)
+  - #67013: logprocessor message loss during input file log rotation
+  - #67200: Use BIGFILE tablespaces in the DLF database
+
+  CASTOR monitoring
+  -----------------
+  - #66846: Data retention period not respected by the monitoring schema
+  - #66856: Error log tables not truncated
+  - #67498: MonWaitTapeMigrationStats should not count replicas of files
+
+  CASTOR protocols
+  ----------------
+  - #65241: RFE: Add STAGE_SVCCLASS and STAGER SVCCLASS to the rfcp manual page
+  - #66704: GridFTP checksum do not work when files are >4GB
+
+  CASTOR repack2
+  --------------
+  - #66349: OraRepackSvc::changeSubRequestStatus() corrupts memory
+
+  CASTOR stager
+  -------------
+  - #65652: Race condition on D2 service class may create more replicas than
+            needed
+  - #65753: RFE: listener logging improvement
+  - #65961: stager_rm of ongoing transfers results in blocked job slots and
+            database CPU load
+  - #66737: Do not delete last diskcopy in the original service class before
+            migration
+  - #66894: stager_rm on a file waiting for recall fails
+  - #67203: RFE: speed up putDone processing
+
+  CASTOR tape
+  -----------
+  - #50008: Incorrect logging of nsfileid and nshost
+  - #65074: RFE: rtcpclientd and the tape gateway should log the arguments of a
+            failed vmgr_gettape()
+  - #65928: Deadlock between rtcpclientd ending a stream and mighunterd adding
+            work to a stream
+  - #66931: castor-tapegateway-server rpm is missing migrationRetry.py.example
+            and recallRetry.py.example
+  - #66997: Correct the misleading "tape retrieved" log message of the tape
+            gateway
+  - #67108: RFE: Move tapegateway non action log messages from log level
+            DLF_LVL_SYSTEM to DLF_LVL_DEBUG
+  - #67110: RFE: MigHunter should not call the DB when no steam to start or
+            stop.
+  - #67206: Incorrectly named foreign keys on the TapeGatewayRequest table
+  - #67264: RFE: Improve the STREAM_POLICY_RESULT log message of the mighunter
+
+
+  New rsyslog version
+  -------------------
+
+  For those running rsyslog a new version 3.22.1-4 can be found in the savannah
+  release area:
+
+  RPMS:
+    - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/SL4
+    - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/SL5
+
+  This release contains the following fixes from redhat:
+    - 473419 : File creation will be disabled when setting CreateDirs to off
+    - 488068 : RFE: rsyslog rebase to support TLS and conditional filters
+               (NOT ON SLC4)
+    - 519192 : rsyslog server cannot handle more than 1000 open files
+    - 519201 : rsyslog stops logging locally if remote messages are being queued
+    - 519203 : Applications block when rsyslog has remote messages queued
+
+   Redhat Bug Fix Advisory: http://rhn.redhat.com/errata/RHBA-2010-0213.html
+
+
+  Upgrade Instructions from 2.1.9-5
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-6 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Notes: In this release of CASTOR2 the logrotation files have been changed
+           and the postrotate scriptlets are no longer required. If you
+           generate the CASTOR logrotation files please make sure to update
+           them using the examples as a reference.
+
+           New example rsyslog configuration files can be found in:
+             - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/conf
+
+           There is a slight modification to the MaxMessageSize option reducing
+           it to 4096 bytes and changing the location of the option to the
+           very beginning of the file. This is necessary as the option must be
+           known before loading any modules!
+
+    Important:
+           On some systems the logrotation of the system log files
+           (/var/log/messages, /var/log/secure, etc...) occurs only on a weekly
+           basis. It is important that the files are rotated daily in order for
+           rsyslog to reload, forcing it to reopen all open log files. If the
+           logrotation is not performed daily logging information will be lost!
+
+           Recommended additional options to /etc/logrotate.d/syslog file
+           include: rotate 5, compress and daily.
+
+    Stager & Repack
+    ---------------
+
+    The upgrade of the Stager and Repack databases to 2.1.9-6 can be performed
+    online while the system is running. The estimated upgrade time for each
+    database is less than 5 minutes.
+
+      Instructions
+      ------------
+
+      1. Due to a bug in the rmmaster which loses the state of DRAINING
+         diskservers after a restart you will need to take a note of those
+         diskservers which are in a DRAINING state before the upgrade using the
+         following command: (#47634)
+
+           rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+      2. Upgrade the Stager database using the stager_2.1.9-5_to_2.1.9-6.sql
+         upgrade script available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/dbupgrades
+
+      3. If applicable, upgrade the Repack database using the repack_2.1.9-5_to_2.1.9-6.sql
+         upgrade script available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/dbupgrades
+
+      4. Upgrade the software on the headnodes and diskservers to 2.1.9-6.
+         Note: All daemons involved in the upgrade will be restarted
+         automatically.
+
+      5. Reload the LSF plugins using `badmin reconfig` on the LSF masters
+
+      6. Wait 60 seconds to give time for the diskservers to send a heartbeat
+         message to the rmmaster daemon.
+
+      7. Apply the commands returned in step 1.
+
+      8. Test the instance by running the test suite available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/testsuite
+
+      9. Congratulations you have successfully upgraded to the 2.1.9-6 release
+         of CASTOR stager!!
+
+
+    DLF & Monitoring
+    ----------------
+
+    The upgrade of the DLF & Monitoring databases to 2.1.9-6 can be performed
+    online while the system is running. The estimated upgrade time for each
+    database is dependent on the volume of data inside each schema. It could
+    take several hours it could take several days!!
+
+      Instructions
+      ------------
+
+      1. Upgrade the DLF database using the dlf_2.1.9-5_to_2.1.9-6.sql
+         upgrade script available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
+
+      2. If applicable, upgrade the Monitoring database using the mon_2.1.9-5_to_2.1.9-6.sql
+         upgrade script available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/dbupgrades
+
+      3. Upgrade complete.
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-6 can be 
+    performed online while the system is running. In this release it is advised
+    to upgrade the CNS, VMGR and VDQM services to benefit from fixes in the
+    database reconnection logic. Without these fixes it is possible for the
+    daemons to segfault when the database connection is lost. (#67013)
+  
+      Instructions 
+      ------------ 
+ 
+      1. Apply the appropriate database upgrade script from: 
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-6/dbupgrades 
+ 
+      2. Update the appropriate software to use the 2.1.9-6 RPMS. Note: All 
+         daemons involved in the upgrade will be restarted automatically. 
+ 
+      3. Upgrade complete. 
+
+
+-----------
+- 2.1.9-5 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #62255: Logging information can be lost when files are log rotated
+  - #62688: Race condition may crash a daemon at startup time
+
+  CASTOR stager
+  -------------
+  - #58479: Incorrect handling of error use cases in stagerjob
+  - #62314: RFE: draindiskserver restart option
+  - #62440: Premature termination of Disk2Disk copies on DRAINING hardware
+  - #62456: Missing database statistics on the DrainingDiskCopy table can
+            result in poor DB performance
+  - #62717: ORA-12899: value too large for column
+            "SCHEMA_NAME"."DLF_STR_PARAM_VALUES"."NAME"
+  - #63073: Deadlock between jobFailed and disk2DiskCopyFailed
+  - #63103: Unable to clean Get/Update subRequest : "ORA-01403: no data found"
+            caused by premature job termination
+  - #63203: The logprocessor daemon stops when the input file is logrotated
+  - #63347: Missing index on StagePutRequest results in FTS in
+            checkFailJobsWhenNoSpace
+  - #63348: stager_rm of a file in a non-existent service class causes a
+            segmentation fault
+  - #63362: Database optimisations in storeClusterStatus
+  - #63008: RFE: fail a Get request as opposed to restarting it when the
+            requested file gets invalidated
+  - #63442: RFE: on stager_rm, immediately cancel ongoing disk-to-disk copies
+  - #63999: Log all input data of changePrivilege requests
+  - #64001: Rmmaster restarts should not change the lastStateUpdate time
+
+  CASTOR tape
+  -----------
+  - #59386: RFE: Aggregator should not wait for tape gateway to process requests
+  - #62317: RFE: vmgrmodifytape allow tape label type modification on non empty
+            tapes
+  - SR #112497: RFE: Modification of the vmgrmodifytape command-line user
+            feedback.
+
+  CASTOR nameserver
+  -----------------
+  - #64402: nssetcheckum (and underlying API) do not check the format of
+            checksums
+  - #64577: Cns_srv_chclass unnecessarily locks file class entries
+
+  - Added an example readonly policy to the scheduler.py.example file to
+    demonstrate how diskservers and/or filesystems can be put into READ ONLY
+    mode.
+
+  - Fixed a bug in the dynamic thread pool logic of the request handler to
+    stop newly created threads from being destroyed immediately after creation.
+    Now threads must exist for a minimum of 30 seconds.
+
+
+  Package Changes
+  ---------------
+  - The castor-aggregator-server and castor-aggregator-client packages have
+    been renamed to castor-tapebridge-server and castor-tapebridge-client
+    respectively.
+
+  - The castor-lib-policy and castor-lib-tapeutils packages have been merged
+    into a new package castor-lib-tape.
+
+
+  Configuration Changes
+  ---------------------
+
+  - The following options in castor.conf have been renamed:
+
+    Old Name                      |  New Name
+    -------------------------------------------------------------
+    Mighunter SIZECEILING         | MIGHUNTER SIZECEILING
+    Policy Migration              | MIGHUNTER MIGRATION_POLICY *
+    Policy Stream                 | MIGHUNTER STREAM_POLICY *
+    Policy Recall                 | RECHANDLER RECALL_POLICY *
+    Policy RecallFunction         | RECHANDLER RECALL_POLICY_FUN
+
+    * These options specify the python module to be loaded, all python modules
+      must exist in /etc/castor/policies. For example, if the configuration
+      value of MIGHUNTER/MIGRATION_POLICY is 'migration' then the
+      /etc/castor/policies/migration.py file must exist.
+
+
+  Upgrade Instructions from 2.1.9-4
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-5 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Notes: In this release of CASTOR2 the logrotation files have been changed
+           and an additional option, 'delaycompress' has been added to resolve
+           bug #62255 (Logging information can be lost when files are log
+           rotated). If you generate the logrotation please make sure to take
+           this into consideration.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the DLF, Monitoring and Repack databases to 2.1.9-5 can be
+    performed online while the system is running. The expected upgrade time is
+    less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-4_to_2.1.9-5.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-4_to_2.1.9-5.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-4_to_2.1.9-5.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/dbupgrades
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-4_to_2.1.9-5.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/dbupgrades
+
+       6. Update castor.conf with respect to the changes listed in the
+          'Configuration Changes' section.
+
+       7. Upgrade the software on the headnodes and diskservers to 2.1.9-5.
+          Note: The castor-lib-policy RPM has been replaced by castor-lib-tape.
+
+       8. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+       9. Apply the commands returned in step 1.
+
+      10. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/testsuite
+
+      11. Congratulations you have successfully upgraded to the 2.1.9-5 release
+          of CASTOR stager!!
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-5 can be 
+    performed online while the system is running: 
+  
+      Instructions 
+      ------------ 
+ 
+      1. Apply the appropriate database upgrade script from: 
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-5/dbupgrades 
+ 
+      2. Update the appropriate software to use the 2.1.9-5 RPMS. Note: All 
+         daemons involved in the upgrade will be restarted automatically. 
+ 
+      3. Upgrade complete. 
+
+
 -----------
 - 2.1.9-4 -
 -----------
