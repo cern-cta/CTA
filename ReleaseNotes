@@ -17,7 +17,6 @@
   - #69677: CM : Generic cleanup of the code base
   - #69745: stripped executables and proper use of debug info in RPMs
   - #73748: CM : cleanups triggered by coverity reports
-  - #74023: CM: enhancements in the core framework
 
   CASTOR monitoring
   -----------------
