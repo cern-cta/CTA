@@ -50,7 +50,7 @@ STAGER_TRACE = 3
 STAGE_SVCCLASS =
 
 # ROOT related
-ROOTSYS = /afs/cern.ch/sw/lcg/app/releases/ROOT/5.24.00/x86_64-slc5-gcc34-opt/root
+ROOTSYS = /afs/cern.ch/sw/lcg/app/releases/ROOT/5.25.04/x86_64-slc5-gcc34-opt/root
 
 # XROOT Base directory
 XROOTSYS = /opt/xrootd
