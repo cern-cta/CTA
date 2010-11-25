@@ -3,17 +3,18 @@ Created on Jul 14, 2010
 
 @author: kblaszcz
 '''
-import exceptions
-from sites.treemap.viewtree.ViewNode  import ViewNode
-from sites.tools.Inspections import ColumnFinder
-import sys
-import inspect
-import string
-import math
+from django.template.loader import render_to_string
 from sites.dirs.models import *
-from sites.treemap.objecttree.Annex import Annex
+from sites.tools.Inspections import ColumnFinder
 from sites.tools.TextTools import sizeInBytes
 from sites.treemap.drawing.metricslinking.AttributeTransformators import *
+from sites.treemap.objecttree.Annex import Annex
+from sites.treemap.viewtree.ViewNode import ViewNode
+import exceptions
+import inspect
+import math
+import string
+import sys
 
 class ViewNodeDimensionBase(object):
     '''
@@ -104,51 +105,32 @@ class DirToolTipDimension(ViewNodeDimensionBase):
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
-        
         assert(isinstance(dbobj, Dirs))
         
-        ret = []
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
         bytesize = long(dbobj.totalsize)
         
-        ret.append("<b>Directory:</b> ")
-        ret.append(splitText(dbobj.fullname.__str__(), 50, 39))
-        
-        ret.append("<br><b> Evaluation of ")
-        ret.append(tnode.getProperty('treenode').getColumnname())
-        ret.append(":</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
-        
-        ret.append("<br><b>Processed value:</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
-        
-        ret.append("<br><br><b>size:</b> ")
-        
-        ret.append(sizeInBytes(bytesize))
-            
-        ret.append(" (")
-        ret.append(long(bytesize).__str__())
-        ret.append(" Bytes)")
-        
-        ret.append("<br><b>parent percentage:</b> ")
+        itemnameparts = splitText(dbobj.fullname.__str__(), 50, 39)
+        attrnname = tnode.getProperty('treenode').getColumnname()
+        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
+        percentagestring = ''
         if(psize == 0):
-            ret.append("%.2f"%(100))
+            percentagestring = "%.2f"%(100)
         else:
-            ret.append("%.2f"%(size/psize*100.0))
-            
-        ret.append("%")
+            percentagestring = "%.2f"%(size/psize*100.0)
         
-        ret.append("<br><b>number of files: </b> ")
-        ret.append(dbobj.countFiles().__str__())
-        ret.append("<br><b>number of directories: </b> ")
-        ret.append(dbobj.countDirs().__str__())
-        ret.append("<br><br><b>number of files in subtree: </b> ")
-        ret.append(dbobj.nbfiles.__str__())
-        ret.append("<br><b>number of directories in subtree: </b> ")
-        ret.append(dbobj.nbsubdirs.__str__())
+        nbfiles = dbobj.countFiles().__str__()
+        nbdirs = dbobj.countDirs().__str__()
+        nbsubtreefiles = dbobj.nbfiles.__str__()
+        nbsubtreedirs = dbobj.nbsubdirs.__str__()
         
-        return ''.join([bla for bla in ret])
+        return render_to_string('tooltipdimensions/dirtooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+                                                'attrprocvalue':attrprocvalue, 'sizestring':sizestring, 'percentagestring':percentagestring, \
+                                                'nbfiles':nbfiles, 'nbdirs':nbdirs, 'nbsubtreefiles':nbsubtreefiles, 'nbsubtreedirs':nbsubtreedirs}, \
+                                context_instance=None)
         
 class FileToolTipDimension(ViewNodeDimensionBase):
     '''
@@ -165,43 +147,27 @@ class FileToolTipDimension(ViewNodeDimensionBase):
         parent = tnode.getProperty('treenode').getNakedParent()
         assert(isinstance(dbobj, CnsFileMetadata))
         
-        ret = []
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
         bytesize = long(dbobj.filesize)
         dirname = parent.__str__()
         
-        ret.append("<b>File name:</b> ")
-        ret.append(splitText(dbobj.name.__str__(), 50, 39))
-        ret.append("<br><b>Directory:</b> ")
-        ret.append(splitText(dirname, 50, 39))
-        
-        ret.append("<br><b> Evaluation of ")
-        ret.append(tnode.getProperty('treenode').getColumnname())
-        ret.append(":</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
-        
-        ret.append("<br><b>Processed value:</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
-        
-        ret.append("<br><br><b>size:</b> ")
-        
-        ret.append(sizeInBytes(bytesize))
-            
-        ret.append(" (")
-        ret.append(long(bytesize).__str__())
-        ret.append(" Bytes)")
-        
-        ret.append("<br><b>parent percentage:</b> ")
+        itemnameparts = splitText(dbobj.name.__str__(), 50, 39)
+        dirnameparts = splitText(dirname, 50, 39)
+        attrnname = tnode.getProperty('treenode').getColumnname()
+        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
+        percentagestring = ''
         if(psize == 0):
-            ret.append("%.2f"%(100))
+            percentagestring = "%.2f"%(100)
         else:
-            ret.append("%.2f"%(size/psize*100.0))
-            
-        ret.append("%")
+            percentagestring = "%.2f"%(size/psize*100.0)
 
-        
-        return ''.join([bla for bla in ret])
+        return render_to_string('tooltipdimensions/filetooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+                                                'attrprocvalue':attrprocvalue, 'sizestring':sizestring, 'percentagestring':percentagestring, \
+                                                'dirnameparts': dirnameparts}, \
+                                context_instance=None)
     
 class AnnexToolTipDimension(ViewNodeDimensionBase):
     '''
@@ -220,34 +186,22 @@ class AnnexToolTipDimension(ViewNodeDimensionBase):
         
         assert(isinstance(dbobj, Annex))
         
-        ret = []
         size = tnobj.getEvalValue()
         psize = tnobj.getSiblingsSum()
         dirname = parent.__str__()
         
-        ret.append("<b>The rest of the items</b> ")
-        ret.append("<br><b>Directory:</b> ")
-        ret.append(splitText(dirname, 50, 39))
-        ret.append("<br><b>Processed size:</b> ")
-        
-        ret.append(sizeInBytes(size))
-            
-        ret.append(" (")
-        ret.append((long(size)).__str__())
-        ret.append(" Bytes)")
-        
-        ret.append("<br><b>parent percentage:</b> ")
+        dirnameparts = splitText(dirname, 50, 39)
+        attrprocvalue = ''.join([bla for bla in (sizeInBytes(size), " (", long(size).__str__(), " Bytes)")])
+        percentagestring = ''
         if(psize == 0):
-            ret.append("%.2f"%(100))
+            percentagestring = "%.2f"%(100)
         else:
-            ret.append("%.2f"%(size/psize*100.0))
-            
-        ret.append("%")
-        
-        ret.append("<br><b>number of items: </b> ")
-        ret.append(dbobj.countItems().__str__())
+            percentagestring = "%.2f"%(size/psize*100.0)
+        nbitems = dbobj.countItems().__str__()
 
-        return ''.join([bla for bla in ret])
+        return render_to_string('tooltipdimensions/annextooltip.html', {'attrprocvalue':attrprocvalue, 'percentagestring':percentagestring, \
+                                                      'dirnameparts': dirnameparts, 'nbitems': nbitems}, \
+                                context_instance=None)
     
 class RequestsToolTipDimension(ViewNodeDimensionBase):
     '''
@@ -264,7 +218,6 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
         parent = tnode.getProperty('treenode').getNakedParent()
         assert(isinstance(dbobj, Requestsatlas) or isinstance(dbobj, Requestscms) or isinstance(dbobj, Requestsalice) or isinstance(dbobj, Requestslhcb) or isinstance(dbobj, Requestspublic))
         
-        ret = []
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
         
@@ -276,32 +229,24 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
             
         nbreq = dbobj.requestscount
         
-        ret.append("<b>Item:</b> ")
-        ret.append(splitText(dbobj.filename, 50, 39))
-        
-        ret.append("<br><b>Number of requests:</b> ")
-        ret.append(str(nbreq))
-        
-        ret.append("<br><b> Evaluation of ")
-        ret.append(tnode.getProperty('treenode').getColumnname())
-        ret.append(":</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess())))
-        
-        ret.append("<br><b>Processed value:</b> ")
-        ret.append("%.2f"%(float(tnode.getProperty('treenode').getEvalValue())))
-        
-        ret.append("<br><br><b>parent percentage:</b> ")
+        itemnameparts = splitText(dbobj.filename, 50, 39)
+        attrnname = tnode.getProperty('treenode').getColumnname()
+        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        percentagestring = ''
         if(psize == 0):
-            ret.append("%.2f"%(100))
+            percentagestring = "%.2f"%(100)
         else:
-            ret.append("%.2f"%(size/psize*100.0))
-            
-        ret.append("%")
+            percentagestring = "%.2f"%(size/psize*100.0)
         
-        return ''.join([bla for bla in ret])   
+        nbrequests = str(nbreq)
+        
+        return render_to_string('tooltipdimensions/requesttooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+                                                'attrprocvalue':attrprocvalue, 'percentagestring':percentagestring, 'nbrequests':nbrequests}, \
+                                context_instance=None)
     
     
-def splitText(text, limit, firstlimit):
+def splitText(text, limit = 50, firstlimit = 39):
     limitold = limit
     limit = firstlimit
     assert(limit > 1)
@@ -316,10 +261,9 @@ def splitText(text, limit, firstlimit):
             if alternativelimit > 1: bestlimit = alternativelimit
             
             ret.append(text[:bestlimit])
-            ret.append('<br>')
             text = text[bestlimit:]
         limit = limitold
             
-    return ''.join([bla for bla in ret])
+    return ret
         
         
