@@ -85,19 +85,3 @@ class ColumnTransformator(dict):
     
     def getFnprefix(self):
         return self.fnprefix
-#        obj = Dirs.__class__()
-#        obj.test123 = self.evalDecimalField#
-        #method = new.instancemethod( funcDupa, None, self.module.Dirs )
-        #self.module.Dirs.__dict__['somename'] = method
-        #new.instancemethod(self.evalDecimalField, None, self.Dirs)
-#        self.add_method(self.module_name, self.className, self.evalDecimalField, name='test123')
-        #print dir(self.module.Dirs)
-        
-    #def add_method(self, module_name, className, method, name=None):
-        ##add_method(C(), pretty_str, '__str__') Moshe Zadka
-        #class_instance = self.createObject(module_name, className)
-        
-        #if name is None: name = method.func_name 
-        #class new(class_instance.__class__): 
-            #setattr(new, name, method) 
-            #class_instance.__class__ = new

@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from django.core import serializers
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render_to_response
 from django.template import resolve_variable
@@ -704,8 +705,8 @@ def getDefaultMetricsLinking():
 def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
     try:
         #Directory you want to show its content
-        root = findObjectByIdReplacementSuffix(rootmodel, urlrest, statusfilename)
-    except Dirs.DoesNotExist:
+        root = globals()[rootmodel].__dict__['findObjectByIdReplacementSuffix'](globals()[rootmodel], urlrest, statusfilename)
+    except ObjectDoesNotExist:
         raise Http404
         return render_to_response("Error") 
     

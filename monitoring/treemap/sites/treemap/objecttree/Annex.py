@@ -142,8 +142,7 @@ class Annex(models.Model):
     
     def getNaviName(self):
         return str(self)
-
-Annex.nonmetrics = ['id']
+    
 Annex.metricattributes = []
 
 #mark children Methods   
