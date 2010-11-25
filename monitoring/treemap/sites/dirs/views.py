@@ -22,6 +22,7 @@ from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
+from sites.treemap.drawing.metricslinking.AttributeTransformators import *
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
