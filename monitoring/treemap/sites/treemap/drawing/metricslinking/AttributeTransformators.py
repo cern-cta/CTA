@@ -1,21 +1,11 @@
+import string
+
 class AttributeTransformatorInterface(object):
     def __init__(self):
         pass
     
     def transform(self, dbobj, columnname):
         raise Exception("implementation of transform() not found")
-    
-    def getMax(self):
-        raise Exception("implementation of getMax() not found")
-    
-    def getMin(self):
-        raise Exception("implementation of getMin() not found")
-    
-    def isFloat(self):
-        raise Exception("implementation of isFloat() not found")
-    
-    def isText(self):
-        raise Exception("implementation of isText() not found")
 
 class FileExtensionTransformator(AttributeTransformatorInterface):
 
@@ -52,18 +42,7 @@ class FileExtensionTransformator(AttributeTransformatorInterface):
             significant = ((c&23)|((c&16)>>1))&15
             hash = hash + significant << (idx*4)
         return hash
-    
-    def getMax(self):
-        return self.max
-    
-    def getMin(self):
-        return self.min
-    
-    def isFloat(self):
-        return False
-    
-    def isText(self):
-        return False
+
     
 class SaturatedLinearTransformator(AttributeTransformatorInterface):
     
@@ -88,18 +67,6 @@ class SaturatedLinearTransformator(AttributeTransformatorInterface):
             return 0.0
         else:
             return (ext-self.minsat)/(self.maxsat-self.minsat)
-        
-    def getMax(self):
-        return 1.0
-    
-    def getMin(self):
-        return 0.0
-    
-    def isFloat(self):
-        return True
-    
-    def isText(self):
-        return False
     
 class RawLinearTransformator(AttributeTransformatorInterface):
     
@@ -115,27 +82,14 @@ class RawLinearTransformator(AttributeTransformatorInterface):
         except KeyError:
             raise Exception("column doesn't exist")
         
-        self.isfloat = False
-        self.istext = False
+        ext.isfloat = False
+        ext.istext = False
         if (type(ext).__name__ == 'float'):
-            self.isfloat = True
+            ext.isfloat = True
         elif ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
-            self.istext = True
+            ext.istext = True
 
         return ext
-        
-    def getMax(self):
-        return None
-    
-    def getMin(self):
-        return None
-    
-    #that information is related to the last transformation
-    def isFloat(self):
-        return self.isfloat
-    
-    def isText(self):
-        return self.istext
     
 class DirNameTransformator(AttributeTransformatorInterface):
     
@@ -153,19 +107,6 @@ class DirNameTransformator(AttributeTransformatorInterface):
             raise Exception("string or unicode expected")
 
         return (self.prefix + ext)
-        
-    def getMax(self):
-        return None
-    
-    def getMin(self):
-        return None
-    
-    #that information is related to the last transformation
-    def isFloat(self):
-        return False
-    
-    def isText(self):
-        return True
     
 class TopDirNameTransformator(AttributeTransformatorInterface):
     
@@ -184,16 +125,3 @@ class TopDirNameTransformator(AttributeTransformatorInterface):
         pos = ext.rfind('/')
         if pos >= 0: ext = ext[pos:]
         return ext
-        
-    def getMax(self):
-        return None
-    
-    def getMin(self):
-        return None
-    
-    #that information is related to the last transformation
-    def isFloat(self):
-        return False
-    
-    def isText(self):
-        return True

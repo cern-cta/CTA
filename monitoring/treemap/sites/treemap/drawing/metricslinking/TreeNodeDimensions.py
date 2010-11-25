@@ -19,36 +19,11 @@ class ViewNodeDimensionBase(object):
     '''
     classdocs
     '''
-    def __init__(self, name = 'None', min = 0.0, max = 0.0, isfloat = True, istext = False):
-        '''
-        Constructor
-        '''
-        self.min = min
-        self.max = max
-        self.isfloat = isfloat
-        self.istext = istext
-        
-        self.name = name
+    def __init__(self):
+        pass
         
     def getValue(self, tnode):
         raise Exception("implementation of getValue() not found")
-    
-    def getName(self):
-        return self.name
-    
-    def getMax(self):
-        return self.max
-
-    def getMin(self):
-        return self.min
-    
-    def isFloat(self):
-        return self.isfloat
-    
-    def isText(self):
-        return self.istext
-    
-    
 
 #outputs the level number
 class LevelDimension(ViewNodeDimensionBase):
@@ -56,30 +31,26 @@ class LevelDimension(ViewNodeDimensionBase):
     classdocs
     '''
     def __init__(self):
-        ViewNodeDimensionBase.__init__(self, 'level', 0, None, False, False)
+        ViewNodeDimensionBase.__init__(self)
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         ret = tnode.getProperty('level')
-        
-        #convert to integer in case it is not supposed to be float
-        if self.isfloat == False: ret = ret - ret%1
-        
-        #None as min or/and max means there is no limitation of the number
-        if not (((self.min is not None) and (self.min > ret)) or ((self.max is not None) and (self.max < ret))):
-            return ret
-        else:
-            raise Exception("invalid level in LevelDimension")
+        #convert to integer in case it is a float
+        ret = int(ret - ret%1)
+        return ret
+
         
 class ConstantDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
     def __init__(self, constant):
-        ViewNodeDimensionBase.__init__(self, 'level', constant, constant, isinstance(constant, float), isinstance(constant, str) or isinstance(constant, unicode))
+        ViewNodeDimensionBase.__init__(self)
+        self.constant = constant
         
     def getValue(self, tnode):
-        return self.min
+        return self.constant
     
 #evaluates any column to number   
 class ColumnDimension(ViewNodeDimensionBase):
@@ -89,7 +60,7 @@ class ColumnDimension(ViewNodeDimensionBase):
     def __init__(self, columnname, transformation): #transformation.transform (db object)
         
         assert(transformation is not None)
-        ViewNodeDimensionBase.__init__(self, 'column', transformation.getMin(), transformation.getMax(), transformation.isFloat(), transformation.isText())
+        ViewNodeDimensionBase.__init__(self)
         self.transformation = transformation
         self.columnname = columnname
 
@@ -101,14 +72,7 @@ class ColumnDimension(ViewNodeDimensionBase):
         ret = self.transformation.transform(dbobj, self.columnname)
         
         #convert to integer in case it is not supposed to be float
-        if not self.isfloat and not self.istext: ret = ret - ret%1
-        
-        #None as min or/and max means there is no limitation of the number
-        if not self.istext:
-            if not (((self.min is not None) and (self.min > ret)) or ((self.max is not None) and (self.max < ret))):
-                return ret
-            else:
-                raise Exception("invalid level in LevelDimension")
+        if not ret.isfloat and not ret.istext: ret = ret - ret%1
         
         return ret
     
@@ -120,19 +84,12 @@ class RawColumnDimension(ViewNodeDimensionBase):
         ViewNodeDimensionBase.__init__(self)
         self.transformation = transformation
         self.columnname = columnname
-        self.name = 'rawcolumn'
 
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
-        
         ret = self.transformation.transform(dbobj, self.columnname)
-        self.min = self.transformation.getMin()
-        self.max = self.transformation.getMax()
-        self.isfloat = self.transformation.isFloat()
-        self.istext = self.transformation.isText()
-        
         return ret
     
 class DirHtmlInfoDimension(ViewNodeDimensionBase):
@@ -141,7 +98,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'dirhtmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self)
 
         
     def getValue(self, tnode):
@@ -199,7 +156,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'filehtmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self)
 
         
     def getValue(self, tnode):
@@ -252,7 +209,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'annexhtmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self)
 
         
     def getValue(self, tnode):
@@ -298,7 +255,7 @@ class RequestsHtmlInfoDimension(ViewNodeDimensionBase):
     '''
     def __init__(self): #transformation.transform (db object)
         
-        ViewNodeDimensionBase.__init__(self, 'requestshtmlinfo', None, None, False, True)
+        ViewNodeDimensionBase.__init__(self)
 
         
     def getValue(self, tnode):
