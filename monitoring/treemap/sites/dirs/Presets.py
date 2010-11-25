@@ -32,7 +32,7 @@ def getPreset(presetname):
             lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
             lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
             lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-        optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+        optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
         return Preset(lr, True, 'Dirs', '/castor', 0, optionsset)#0 must be default
     
 def getPresetByStaticId(staticid):
@@ -94,7 +94,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Directory structure"] = Preset(lr, True, 'Dirs', '/castor', 1, optionsset)
 
 #Preset for default
@@ -103,7 +103,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'totalsize', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Default (Directory structure)"] = Preset(lr, True, 'Dirs', '/castor', 1, optionsset)
 
 #Preset for Number of Files
@@ -112,7 +112,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbfiles', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) ##just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Number of files"] = Preset(lr, True, 'Dirs', '/castor', 2, optionsset)
 
 #Preset for Size on Tape
@@ -121,7 +121,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'sizeontape', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Size on tapes"] = Preset(lr, True, 'Dirs', '/castor', 3, optionsset)
 
 #Preset for Data on Tape
@@ -130,7 +130,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'dataontape', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Data on tapes"] = Preset(lr, True, 'Dirs', '/castor', 4, optionsset)
 
 #Preset for Number of tapes
@@ -139,7 +139,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbtapes', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Number of tapes"] = Preset(lr, True, 'Dirs', '/castor', 5, optionsset)
 
 #Preset for Number of files on tape
@@ -148,7 +148,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'nbfilesontape', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Number of files on tapes"] = Preset(lr, True, 'Dirs', '/castor', 6, optionsset)
 
 #Preset for Number of File copies on Tape
@@ -157,7 +157,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getFilesAndDirectories', 'getDirParent', 'nbfilecopiesontape', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Number of file copies on tapes"] = Preset(lr, True, 'Dirs', '/castor', 7, optionsset)
 
 #Preset for Number of directories
@@ -166,7 +166,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'nbsubdirs', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Number of directories"] = Preset(lr, True, 'Dirs', '/castor', 8, optionsset)
 
 #Preset for Time to migrate
@@ -175,7 +175,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'timetomigrate', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Time to migrate"] = Preset(lr, True, 'Dirs', '/castor', 9, optionsset)
 
 #Preset for Time lost in tape marks
@@ -184,7 +184,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'timelostintapemarks', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Time lost in tape marks"] = Preset(lr, True, 'Dirs', '/castor', 10, optionsset)
 
 #Preset for Optimal time to recall
@@ -193,7 +193,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules('Dirs', 'getDirs', 'getDirParent', 'opttimetorecall', i)
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Optimal time to recall"] = Preset(lr, True, 'Dirs', '/castor', 11, optionsset)
 
 #Preset for oldest file last modification
@@ -202,7 +202,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Oldest - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 12, optionsset)
 
 #Preset for average file last modification
@@ -211,7 +211,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Average - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 13, optionsset)
 
 #Preset for sigma file last modification
@@ -220,7 +220,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Sigma - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 16, optionsset)
 
 #Preset for newest file last modification
@@ -229,7 +229,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Newest - file last modification"] = Preset(lr, True, 'Dirs', '/castor', 17, optionsset)
 
 #Preset for oldest file on tape last modification
@@ -238,7 +238,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Oldest - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 18, optionsset)
 
 #Preset for average file on tape last modification
@@ -247,7 +247,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Average - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 19, optionsset)
 
 #Preset for sigma file on tape last modification
@@ -256,7 +256,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Sigma - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 20, optionsset)
 
 #Preset for newest file on tape last modification
@@ -265,7 +265,7 @@ for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False)]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
 presetdict["Newest - file on tape last modification"] = Preset(lr, True, 'Dirs', '/castor', 21, optionsset)
 
 #Preset for Requests Atlas
@@ -273,7 +273,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)                                                                                                                                                             
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests ATLAS"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
 
 #Preset for Requests cms
@@ -281,7 +281,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests CMS"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
 
 #Preset for Requests lhcb
@@ -289,7 +289,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestslhcb', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests LHCb"] = Preset(lr, False, 'Requestslhcb', '/castor', 24, optionsset)
 
 #Preset for Requests alice
@@ -297,7 +297,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestsalice', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests ALICE"] = Preset(lr, False, 'Requestsalice', '/castor', 25, optionsset)
 
 #Preset for Requests public
@@ -305,7 +305,7 @@ lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
     lr.addRules(classname = 'Requestspublic', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
-optionsset = [BooleanOption('Lowest values', 'smalltobig', 'dirs/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'dirs/booleanoption.html', False), DateOption('Time offset', 'time', 'dirs/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'dirs/spinneroption.html', 120,0, 60*24,3,'minutes')]
+optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests public"] = Preset(lr, False, 'Requestspublic', '/castor', 26, optionsset)
 
 

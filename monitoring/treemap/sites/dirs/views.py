@@ -115,7 +115,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     except NoDataAvailableError:
         deleteStatusFile(statusfilename)
-        return HttpResponse(render_to_string('dirs/nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
+        return HttpResponse(render_to_string('nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
@@ -254,7 +254,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
         print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     except NoDataAvailableError:
         deleteStatusFile(statusfilename)
-        return HttpResponse(render_to_string('dirs/nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
+        return HttpResponse(render_to_string('nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
     
     #---------------------------------------------
     otree.traveseToRoot()
@@ -617,7 +617,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     progressbardict = settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT
     progressbarsizepx = "%.0f"%(200.0)
         
-    response = render_to_string('dirs/imagemap.html', \
+    response = render_to_string('imagemap.html', \
     {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': treemapdir, 'icondir': icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 'progressbardict': progressbardict, 
@@ -667,38 +667,38 @@ def getDefaultMetricsLinking():
     mlinker = MetricsLinker()
     mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
     mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
-    mlinker.addPropertyLink('Annex', 'htmlinfotext', AnnexHtmlInfoDimension())
+    mlinker.addPropertyLink('Annex', 'htmlinfotext',AnnexToolTipDimension())
     mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
     mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
     
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
+    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirHtmlInfoDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileHtmlInfoDimension())
+    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
+    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileToolTipDimension())
     
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
     
     mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsalice', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestsalice', 'htmlinfotext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
     
     mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestslhcb', 'htmlinfotext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
     
     mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestspublic', 'htmlinfotext', RequestsHtmlInfoDimension())
+    mlinker.addPropertyLink('Requestspublic', 'htmlinfotext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
 
     return mlinker

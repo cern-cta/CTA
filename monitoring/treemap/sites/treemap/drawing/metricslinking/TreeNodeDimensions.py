@@ -92,7 +92,7 @@ class RawColumnDimension(ViewNodeDimensionBase):
         ret = self.transformation.transform(dbobj, self.columnname)
         return ret
     
-class DirHtmlInfoDimension(ViewNodeDimensionBase):
+class DirToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
@@ -150,7 +150,7 @@ class DirHtmlInfoDimension(ViewNodeDimensionBase):
         
         return ''.join([bla for bla in ret])
         
-class FileHtmlInfoDimension(ViewNodeDimensionBase):
+class FileToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
@@ -203,7 +203,7 @@ class FileHtmlInfoDimension(ViewNodeDimensionBase):
         
         return ''.join([bla for bla in ret])
     
-class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
+class AnnexToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
@@ -249,7 +249,7 @@ class AnnexHtmlInfoDimension(ViewNodeDimensionBase):
 
         return ''.join([bla for bla in ret])
     
-class RequestsHtmlInfoDimension(ViewNodeDimensionBase):
+class RequestsToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''

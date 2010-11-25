@@ -15,7 +15,7 @@ def getStatusFileFullPath(statusfilename):
 
 def generateStatusFile(statusfilename, status):
     try:
-        filecontent = render_to_string('dirs/status.html', {'status':"%f"%status})
+        filecontent = render_to_string('status.html', {'status':"%f"%status})
         
         statusfilefullpath = getStatusFileFullPath(statusfilename)
         statusfile = open(statusfilefullpath, 'w')
