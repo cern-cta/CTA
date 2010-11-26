@@ -1,6 +1,7 @@
 '''
 Created on May 4, 2010
-
+creates an object by module and classname,
+default constructor without parameters must be available
 @author: kblaszcz
 '''
 import sys

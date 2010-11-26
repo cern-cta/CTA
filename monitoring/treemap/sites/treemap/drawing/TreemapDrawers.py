@@ -5,8 +5,8 @@ Created on Jun 10, 2010
 '''
 import cairo
 import math
-from sites.tools.HsvConverter import *
-from sites.treemap.defaultproperties.SquaredViewProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from sites.tools.ColorFunctions import *
+from sites.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from sites.treemap.viewtree.ViewTree import ViewTree
 
 class SquaredTreemapDrawer(object):
@@ -60,7 +60,7 @@ class SquaredTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headertextsize'), root.getProperty('headertext.isbold'))
+        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headerfontsize'), root.getProperty('headertext.isbold'))
         
         self.drawRecursion()
         
@@ -76,7 +76,7 @@ class SquaredTreemapDrawer(object):
             
             if child.getProperty('headersize') > 0.0:
                 txt = child.getProperty('headertext')
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headertextsize'), child.getProperty('headertext.isbold'))
+                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headerfontsize'), child.getProperty('headertext.isbold'))
                 
             self.vtree.traverseInto(child)
             self.drawRecursion()

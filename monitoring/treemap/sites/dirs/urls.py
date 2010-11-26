@@ -1,3 +1,8 @@
+'''
+expressons to define URL's for django framework
+@author: kblaszcz
+'''
+
 from django.conf.urls.defaults import *
 from sites import dirs
 

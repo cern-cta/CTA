@@ -1,6 +1,8 @@
 '''
 Created on Oct 13, 2010
-
+This class represents a named option in the web interface.
+It includes regular expressions which define how to include that option into the URL
+and it renders html code to represent a boolean value as a check box
 @author: kblaszcz
 '''
 from django.template.loader import render_to_string

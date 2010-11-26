@@ -1,6 +1,6 @@
 '''
 Created on May 4, 2010
-
+set of useful functions enabling to easily scan for model attributes, available models etc
 @author: kblaszcz
 '''
 from django.db.models.base import ModelBase
@@ -11,7 +11,7 @@ import inspect
 import sys
 from sites.dirs.models import *
 
-class ColumnFinder:
+class ModelAttributeFinder:
 
     def __init__(self, className):
         """Determines all Django Columns of given model class"""

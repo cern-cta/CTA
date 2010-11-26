@@ -1,6 +1,6 @@
 '''
 Created on Jul 13, 2010
-
+useful string functions
 @author: kblaszcz
 '''
 
@@ -40,7 +40,28 @@ def sizeInBytes(size):
         ret.append("%.2f"%(size/1267650600228229401496703205376.0))
         ret.append(" WB") #weka
         #... 
-        #weka was the time after the death of captain Picard
+        #weka
         #vunda, uda, treda, sorta, rinta, quexa, pepta, ocha, nena, minga, luma, end of the universe?
         
     return ''.join([bla for bla in ret])
+
+#split text by slashes or character limit
+def splitText(text, limit = 50, firstlimit = 39):
+    limitold = limit
+    limit = firstlimit
+    assert(limit > 1)
+    ret = []
+    while len(text) > 0:
+        if(len(text)<=limit):
+            ret.append(text)
+            break
+        else:
+            bestlimit = limit
+            alternativelimit = text[:limit].rfind('/')
+            if alternativelimit > 1: bestlimit = alternativelimit
+            
+            ret.append(text[:bestlimit])
+            text = text[bestlimit:]
+        limit = limitold
+            
+    return ret

@@ -1,6 +1,6 @@
 '''
 Created on Jul 2, 2010
-
+color functions used to calculate treemap colors
 @author: kblaszcz
 '''
 import math

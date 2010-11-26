@@ -1,10 +1,21 @@
+'''
+additional useful filters for the django template language 
+
+to import in a template, write something like 
+{% load userDefinedFilters %}
+at the beginning of the template
+
+example of calling sub in the template:
+{{x2|sub:x1}}
+
+@author: kblaszcz
+'''
+
+
 from django import template
 register = template.Library()
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-
-
-#addutional useful filters for the django template language
 
 def mult(value, arg):
     "Multiplies the arg and the value"

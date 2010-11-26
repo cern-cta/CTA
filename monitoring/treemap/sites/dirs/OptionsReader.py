@@ -1,3 +1,12 @@
+'''
+expects the options string from the URL (the one between the {} brackets)
+It reads available options by using the presetid and looks for that options inside of the string.
+The parsed data is stored in a dictionary.
+An important function is to generate a new corrected string from the dictionary.
+An option can be excluded from the corrected string by setting includeasstring[optionname] to false
+@author: kblaszcz
+'''
+
 import re
 import datetime
 import sites.dirs

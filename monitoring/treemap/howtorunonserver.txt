@@ -18,7 +18,7 @@
 *Install modpython and edit python.conf (example included in the package under /etc/httpd/conf.d/python.conf)
 
 *The Oracle cx libraries doesn't work well with scientific linux by default, you will have to type as root
-	setenforce 0
+	/usr/sbin/setenforce 0
 
 *Start memcache to enable caching by typing
 	memcached -u kblaszcz -m 2 -vv
@@ -53,4 +53,4 @@
 	REL_TREEMAP_DICT = "/images/treemaps"
 	
 *Start the server by typing 
-	service httpd start
+	/etc/rc.d/init.d/httpd start

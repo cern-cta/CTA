@@ -1,3 +1,9 @@
+'''
+django views and helper functions
+@author: kblaszcz
+'''
+
+
 # Create your views here.
 from django.conf import settings
 from django.conf.urls.defaults import *
@@ -17,12 +23,12 @@ from sites.dirs.SpinnerOption import SpinnerOption
 from sites.dirs.models import *
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import *
-from sites.treemap.defaultproperties.SquaredViewProperties import *
+from sites.treemap.defaultproperties.TreeMapProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
-from sites.treemap.drawing.metricslinking.AttributeTransformators import *
+from sites.treemap.drawing.metricslinking.AttributeTranslators import *
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
@@ -161,7 +167,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
@@ -333,7 +339,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootsuffix = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
@@ -499,17 +505,17 @@ def preset(request, options,  urlending):
         raise Http404
     
     options = optr.getCorrectedOptions(preset.staticid)
-    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootsuffix, statusfilename)
+    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootidreplacement, statusfilename)
 
 def setStatusFileInCookie(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootsuffix, nblevels, presetid, options = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, nblevels, presetid, options = ''):
     print "preparing response"
     optionsstring = '{'+ options +'}'
-    rootsuffix = optionsstring + str(presetid) + "_" + rootsuffix
+    rootsuffix = optionsstring + str(presetid) + "_" + rootidreplacement
     
     apacheserver = settings.PUBLIC_APACHE_URL
 #    serverdict = settings.LOCAL_APACHE_DICT
@@ -674,7 +680,7 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTransformator('/')))
+    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTranslator('/')))
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
     mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileToolTipDimension())
@@ -683,23 +689,23 @@ def getDefaultMetricsLinking():
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsalice', 'htmlinfotext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestslhcb', 'htmlinfotext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestspublic', 'htmlinfotext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTransformator()))
+    mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
 
     return mlinker
 

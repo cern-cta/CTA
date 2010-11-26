@@ -1,3 +1,11 @@
+'''
+Collection of model specific functions for Requestsatlas, Requestscms, Requestslhcb...]
+These functions are supposed to help or extend with model specific functionality
+@author: kblaszcz
+'''
+
+
+
 from sites.dirs.DateOption import DateOption
 from sites.errors.NoDataAvailableError import NoDataAvailableError
 from sites.tools.StatusTools import generateStatusFile

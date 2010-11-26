@@ -1,10 +1,17 @@
 '''
 Created on Jul 7, 2010
+additonal properties that will be set for nodes:
 
+headertext
+headertext.isbold
+htmlinfotext
+fillcolor
+level
+radiallight {'brightness': b, 'hue':h, 'opacity': o }
 @author: kblaszcz
 '''
-from sites.tools.HsvConverter import *
-from sites.treemap.defaultproperties.SquaredViewProperties import \
+from sites.tools.ColorFunctions import *
+from sites.treemap.defaultproperties.TreeMapProperties import \
     BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.viewtree.ViewTree import ViewTree
@@ -40,7 +47,7 @@ class SquaredTreemapDesigner(object):
         self.metricslinkage = metricslinkage
         
         self.inbordersize = self.design_properties.getProperty('inbordersize')
-        self.headertextsize = self.design_properties.getProperty('headertextsize')
+        self.headerfontsize = self.design_properties.getProperty('headerfontsize')
         self.radiallightbrightness = self.design_properties.getProperty('radiallightbrightness')
         self.headertextisbold = self.design_properties.getProperty('headertext.isbold')
 
@@ -51,7 +58,7 @@ class SquaredTreemapDesigner(object):
         root = self.vtree.getCurrentObject()
         
         self.setInBorderSize(root)
-        self.setHeaderTextsize(root)
+        self.setHeaderFontSize(root)
         self.setFillColor(root)
         self.setStrokeColor(root)
         self.setRadialLight(root)
@@ -67,7 +74,7 @@ class SquaredTreemapDesigner(object):
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
            
             self.setInBorderSize(child)
-            self.setHeaderTextsize(child)
+            self.setHeaderFontSize(child)
             self.setFillColor(child)
             self.setStrokeColor(child)          
             self.setRadialLight(child)
@@ -150,11 +157,11 @@ class SquaredTreemapDesigner(object):
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-    def setHeaderTextsize(self,vnode):
+    def setHeaderFontSize(self,vnode):
         try:
-            vnode.setProperty('headertextsize', self.metricslinkage.getLinkedValue('headertextsize', vnode))
+            vnode.setProperty('headerfontsize', self.metricslinkage.getLinkedValue('headerfontsize', vnode))
         except:
-            vnode.setProperty('headertextsize', self.headertextsize)
+            vnode.setProperty('headerfontsize', self.headerfontsize)
             
     def setRadialLight(self, vnode):
         try:

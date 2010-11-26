@@ -13,11 +13,10 @@ from django.db.models.query import QuerySet
 from sites import settings
 from sites.dirs.DateOption import DateOption
 from sites.errors.NoDataAvailableError import NoDataAvailableError
-from sites.tools.GroupIdService import resolveGroupId
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import generateStatusFile
 from sites.treemap.BasicTree import BasicTree
-from sites.treemap.defaultproperties.SquaredViewProperties import *
+from sites.treemap.defaultproperties.TreeMapProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.objecttree.ObjectTree import ObjectTree
@@ -479,8 +478,9 @@ Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
 
 Requestsatlas.generatedtree = None
 
-#other parameters influencing tree generation
+#current parameters of the generated tree
 Requestsatlas.treeprops = {'start': None, 'stop': None}
+#wish parameters for the generated tree
 Requestsatlas.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestsatlas.stop = datetime.datetime.now() #time relative to now
 
@@ -583,8 +583,9 @@ Requestscms.getParent.__dict__['methodtype'] = 'parent'
 
 Requestscms.generatedtree = None
 
-#other parameters influencing tree generation
+#current parameters of the generated tree
 Requestscms.treeprops = {'start': None, 'stop': None}
+#wish parameters of the generated tree
 Requestscms.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestscms.stop = datetime.datetime.now() #time relative to now
 
@@ -687,8 +688,9 @@ Requestsalice.getParent.__dict__['methodtype'] = 'parent'
 
 Requestsalice.generatedtree = None
 
-#other parameters influencing tree generation
+#current parameters of the generated tree
 Requestsalice.treeprops = {'start': None, 'stop': None}
+#wish parameters of the generated tree
 Requestsalice.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestsalice.stop = datetime.datetime.now() #time relative to now
 
@@ -791,8 +793,9 @@ Requestslhcb.getParent.__dict__['methodtype'] = 'parent'
 
 Requestslhcb.generatedtree = None
 
-#other parameters influencing tree generation
+#current parameters of the generated tree
 Requestslhcb.treeprops = {'start': None, 'stop': None}
+#wish parameters of the generated tree
 Requestslhcb.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestslhcb.stop = datetime.datetime.now() #time relative to now
 

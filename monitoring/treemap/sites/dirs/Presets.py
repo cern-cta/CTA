@@ -1,6 +1,16 @@
 '''
 Created on Sep 10, 2010
 
+A Preset contains the set of rules that defines the data tree.
+ 
+It also defines available options which will be displayed on the web interface and received by a view.
+It defines the default root model and idreplacment value of that root 
+(id replacements: directory name is the idreplacement for directories, because the real id is the fileid, but you want to find a directory object by name instead by db id)
+
+staticid is hardcoded and must be unique! staticid is included in the URL and chooses the preset
+if you change the static id, you change the meaning of a URL to be a different preset!
+
+disable or enable caching for a particular preset by using cachingenabled
 @author: kblaszcz
 '''
 from django.conf import settings
@@ -12,11 +22,11 @@ from sites.treemap.objecttree.TreeRules import LevelRules
 import copy
     
 class Preset(object):
-    def __init__(self, lr, cachingenabled, rootmodel, rootsuffix, staticid, optionsset = []):
+    def __init__(self, lr, cachingenabled, rootmodel, rootidreplacement, staticid, optionsset = []):
         self.lr = lr
         self.cachingenabled = cachingenabled
         self.rootmodel = rootmodel
-        self.rootsuffix = rootsuffix
+        self.rootidreplacement = rootidreplacement
         self.staticid = staticid
         self.optionsset = optionsset
         

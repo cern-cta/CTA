@@ -143,7 +143,7 @@ class ChildRules(object):
         if not found: return False
         
         #check columnname
-        cf = ColumnFinder(classname)
+        cf = ModelAttributeFinder(classname)
         if columnname not in cf.getColumnAndAtrributeNames():
             return False
         
@@ -233,7 +233,7 @@ class ChildRules(object):
                 return False 
         
             #check columnname
-            cf = ColumnFinder(classname)
+            cf = ModelAttributeFinder(classname)
             if columnname not in cf.getColumnAndAtrributeNames():
                 return False
             

@@ -1,6 +1,13 @@
 '''
 Created on Oct 13, 2010
 
+This class represents a named option in the web interface.
+It includes regular expressions which define how to include that option into the URL
+and it renders html code to represent a date value
+
+The representation is a input field which you can click on and choose a date from a graphical calender.
+The calendar used here is an older version of the dynarch calendar. 
+The newest version doesn't seem to work so well.
 @author: kblaszcz
 '''
 from django.template.loader import render_to_string

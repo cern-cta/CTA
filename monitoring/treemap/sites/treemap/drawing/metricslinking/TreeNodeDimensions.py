@@ -5,9 +5,9 @@ Created on Jul 14, 2010
 '''
 from django.template.loader import render_to_string
 from sites.dirs.models import *
-from sites.tools.Inspections import ColumnFinder
-from sites.tools.TextTools import sizeInBytes
-from sites.treemap.drawing.metricslinking.AttributeTransformators import *
+from sites.tools.Inspections import ModelAttributeFinder
+from sites.tools.TextTools import sizeInBytes, splitText
+from sites.treemap.drawing.metricslinking.AttributeTranslators import *
 from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.viewtree.ViewNode import ViewNode
 import exceptions
@@ -58,11 +58,11 @@ class ColumnDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self, columnname, transformation): #transformation.transform (db object)
+    def __init__(self, columnname, translation): #translation.translate (db object)
         
-        assert(transformation is not None)
+        assert(translation is not None)
         ViewNodeDimensionBase.__init__(self)
-        self.transformation = transformation
+        self.translation = translation
         self.columnname = columnname
 
         
@@ -70,7 +70,7 @@ class ColumnDimension(ViewNodeDimensionBase):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
         
-        ret = self.transformation.transform(dbobj, self.columnname)
+        ret = self.translation.translate(dbobj, self.columnname)
         
         #convert to integer in case it is not supposed to be float
         if not ret.isfloat and not ret.istext: ret = ret - ret%1
@@ -81,23 +81,23 @@ class RawColumnDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self, columnname, transformation = RawLinearTransformator()): #transformation.transform (db object)
+    def __init__(self, columnname, translation = RawLinearTranslator()): #translation.translate (db object)
         ViewNodeDimensionBase.__init__(self)
-        self.transformation = transformation
+        self.translation = translation
         self.columnname = columnname
 
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         dbobj = tnode.getProperty('treenode').getObject()
-        ret = self.transformation.transform(dbobj, self.columnname)
+        ret = self.translation.translate(dbobj, self.columnname)
         return ret
     
 class DirToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self): #transformation.transform (db object)
+    def __init__(self): #translation.translate (db object)
         
         ViewNodeDimensionBase.__init__(self)
 
@@ -136,7 +136,7 @@ class FileToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self): #transformation.transform (db object)
+    def __init__(self): #translation.translate (db object)
         
         ViewNodeDimensionBase.__init__(self)
 
@@ -173,7 +173,7 @@ class AnnexToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self): #transformation.transform (db object)
+    def __init__(self): #translation.translate (db object)
         
         ViewNodeDimensionBase.__init__(self)
 
@@ -207,7 +207,7 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self): #transformation.transform (db object)
+    def __init__(self): #translation.translate (db object)
         
         ViewNodeDimensionBase.__init__(self)
 
@@ -245,25 +245,5 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
                                                 'attrprocvalue':attrprocvalue, 'percentagestring':percentagestring, 'nbrequests':nbrequests}, \
                                 context_instance=None)
     
-    
-def splitText(text, limit = 50, firstlimit = 39):
-    limitold = limit
-    limit = firstlimit
-    assert(limit > 1)
-    ret = []
-    while len(text) > 0:
-        if(len(text)<=limit):
-            ret.append(text)
-            break
-        else:
-            bestlimit = limit
-            alternativelimit = text[:limit].rfind('/')
-            if alternativelimit > 1: bestlimit = alternativelimit
-            
-            ret.append(text[:bestlimit])
-            text = text[bestlimit:]
-        limit = limitold
-            
-    return ret
         
         

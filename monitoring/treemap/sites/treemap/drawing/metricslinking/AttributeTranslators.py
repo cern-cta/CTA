@@ -1,23 +1,35 @@
+'''
+Created on Jul 13, 2010
+The attribute translators apply higher level processing on attribute values
+
+For example the FileExtensionTranslator translates a column, which is hopefully text,
+by searching for a file extension (like .raw) and returning a hash value of that extension.
+
+That translates a filename to a number
+@author: kblaszcz
+'''
+
 import string
 
-class AttributeTransformatorInterface(object):
+class AttributeTranslatorInterface(object):
     def __init__(self):
         pass
     
-    def transform(self, dbobj, columnname):
-        raise Exception("implementation of transform() not found")
+    def translate(self, dbobj, columnname):
+        raise Exception("implementation of translate() not found")
 
-class FileExtensionTransformator(AttributeTransformatorInterface):
+#untested
+class FileExtensionTranslator(AttributeTranslatorInterface):
 
     def __init__(self, min = 0, max = 23):
-        AttributeTransformatorInterface.__init__(self)
+        AttributeTranslatorInterface.__init__(self)
         if max < min: max, min = min, max
         self.max = max
         self.min = min
             
         
         
-    def transform(self, dbobj, columnname):
+    def translate(self, dbobj, columnname):
         try:
             ext = self.findExtension(dbobj.__dict__[columnname])
         except KeyError:
@@ -44,15 +56,15 @@ class FileExtensionTransformator(AttributeTransformatorInterface):
         return hash
 
     
-class SaturatedLinearTransformator(AttributeTransformatorInterface):
+class SaturatedLinearTranslator(AttributeTranslatorInterface):
     
     def __init__(self, minsat = 0.0, maxsat = 1.0):
-        AttributeTransformatorInterface.__init__(self)
+        AttributeTranslatorInterface.__init__(self)
         if maxsat < minsat: maxsat ,minsat = minsat, maxsat
         self.maxsat = max
         self.minsat = min
         
-    def transform(self, dbobj, columnname):
+    def translate(self, dbobj, columnname):
         try:
             ext = self.findExtension(dbobj.__dict__[columnname])
         except KeyError:
@@ -68,15 +80,15 @@ class SaturatedLinearTransformator(AttributeTransformatorInterface):
         else:
             return (ext-self.minsat)/(self.maxsat-self.minsat)
     
-class RawLinearTransformator(AttributeTransformatorInterface):
+class RawLinearTranslator(AttributeTranslatorInterface):
     
     def __init__(self, minsat = 0.0, maxsat = 1.0):
-        AttributeTransformatorInterface.__init__(self)
+        AttributeTranslatorInterface.__init__(self)
         self.typename = None
         self.isfloat = None
         self.istext = None
         
-    def transform(self, dbobj, columnname):
+    def translate(self, dbobj, columnname):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:
@@ -91,13 +103,13 @@ class RawLinearTransformator(AttributeTransformatorInterface):
 
         return ext
     
-class DirNameTransformator(AttributeTransformatorInterface):
+class DirNameTranslator(AttributeTranslatorInterface):
     
     def __init__(self, prefix):
-        AttributeTransformatorInterface.__init__(self)
+        AttributeTranslatorInterface.__init__(self)
         self.prefix = prefix
         
-    def transform(self, dbobj, columnname):
+    def translate(self, dbobj, columnname):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:
@@ -108,12 +120,12 @@ class DirNameTransformator(AttributeTransformatorInterface):
 
         return (self.prefix + ext)
     
-class TopDirNameTransformator(AttributeTransformatorInterface):
+class TopDirNameTranslator(AttributeTranslatorInterface):
     
     def __init__(self):
-        AttributeTransformatorInterface.__init__(self)
+        AttributeTranslatorInterface.__init__(self)
         
-    def transform(self, dbobj, columnname):
+    def translate(self, dbobj, columnname):
         try:
             ext = dbobj.__dict__[columnname]
         except KeyError:

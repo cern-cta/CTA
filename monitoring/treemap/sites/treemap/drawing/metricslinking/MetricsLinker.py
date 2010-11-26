@@ -1,5 +1,13 @@
 '''
 Created on Jul 22, 2010
+stores relations between a node properties and Dimensions (which define values of that properties)
+
+model the node is related to + specific node property (ie. text in the header) -> Dimension defining the value (ie. a db column)
+
+MetricsLinker mlinker
+mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
+
+You can find all available properties in TreeMapProperties and TreeDesigner
 
 @author: kblaszcz
 '''
@@ -7,7 +15,7 @@ Created on Jul 22, 2010
 import exceptions
 
 #at the moment following properties are available:
-#fillcolor, strokecolor, inbordersize, headertextsize, radiallight.brightness, radiallight.hue, radiallight.opacity
+#fillcolor, strokecolor, inbordersize, headerfontsize, radiallight.brightness, radiallight.hue, radiallight.opacity
 
 class MetricsLinker(object):
     '''
@@ -20,17 +28,17 @@ class MetricsLinker(object):
         self.proplink = {}
         
     
-    def addPropertyLink(self, classname, propertyname, dimensionobject):
+    def addPropertyLink(self, modelname, propertyname, dimensionobject):
         #no check reuirements like min max and istext?
-        self.proplink[(classname,propertyname)] = dimensionobject
+        self.proplink[(modelname,propertyname)] = dimensionobject
         
     def getLinkedValue(self, propertyname, node):
         try:
-            classname = node.getProperty('treenode').getObject().__class__.__name__
+            modelname = node.getProperty('treenode').getObject().__class__.__name__
         except:
             raise Exception("Viewnode has no information about related Treenode")
         
         try:
-            return self.proplink[(classname, propertyname)].getValue(node)
+            return self.proplink[(modelname, propertyname)].getValue(node)
         except Exception, e:
             raise Exception("That property is not linked")

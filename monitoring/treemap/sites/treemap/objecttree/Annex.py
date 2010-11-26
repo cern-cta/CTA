@@ -1,6 +1,5 @@
 from django.db import connection, transaction, models
 import inspect
-from sites.tools.GroupIdService import newGroupId
 from sites.tools.Inspections import *
 
 
@@ -40,7 +39,7 @@ class Annex(models.Model):
             raise Exception("unexpected error")
             
             
-        self.__dict__['id'] = newGroupId(self, ppk, classname, self.depth)
+        self.__dict__['id'] = "group_" + classname + "_" + self.depth.__str__() + "_"  + ppk.__str__()
     
     #DUAL is Oracle's fake Table
     class Meta:
