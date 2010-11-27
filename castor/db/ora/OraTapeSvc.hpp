@@ -302,6 +302,18 @@ namespace castor {
 	virtual u_signed64 getNumFilesByStream(const u_signed64 streamId)
           throw (castor::exception::Exception);
 
+        /**
+         * Locks the row in the castor-file table with the specified database
+         * ID.
+         *
+         * This procedure raises a castor::Exception when no row exists in the
+         * castor-file table with the specified database ID.
+         *
+         * @param castorFileId The database ID of the row to be locked.
+         */
+        virtual void lockCastorFileById(const u_signed64 castorFileId)
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for function tapesToDo
@@ -399,6 +411,12 @@ namespace castor {
 
         /// SQL statement object for function getNumFilesByStream
         oracle::occi::Statement *m_getNumFilesByStreamStatement;
+
+	/// SQL statement string for function lockCastorFileById
+        static const std::string s_lockCastorFileByIdStatementString;
+
+        /// SQL statement object for function lockCastorFileById
+        oracle::occi::Statement *m_lockCastorFileByIdStatement;
 
       }; // end of class OraTapeSvc
 

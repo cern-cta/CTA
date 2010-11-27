@@ -470,4 +470,21 @@ extern "C" {
     *numFile=numByStream;
     return 0;
   }
+
+  //-------------------------------------------------------------------------
+  // Cstager_ITapeSvc_lockCastorFileById
+  //-------------------------------------------------------------------------
+  int Cstager_ITapeSvc_lockCastorFileById(
+    Cstager_ITapeSvc_t *tpSvc,
+    const u_signed64   castorFileId) {
+    if (!checkITapeSvc(tpSvc)) return -1;
+    try {
+      tpSvc->tpSvc->lockCastorFileById(castorFileId);
+      return 0;
+    } catch (castor::exception::Exception& e) {
+      serrno = e.code();
+      tpSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+  }
 }

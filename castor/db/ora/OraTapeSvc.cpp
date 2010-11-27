@@ -72,6 +72,7 @@
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
 #include <Cuuid.h>
+#include <errno.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -156,6 +157,9 @@ const std::string castor::db::ora::OraTapeSvc::s_rtcpclientdCleanUpStatementStri
 const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementString =
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
+/// SQL statement string for function lockCastorFileById
+const std::string castor::db::ora::OraTapeSvc::s_lockCastorFileByIdStatementString =
+  "BEGIN lockCastorFileById(:inCastorFileId); END;";
 
 //------------------------------------------------------------------------------
 // OraTapeSvc
@@ -178,7 +182,8 @@ castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   m_failedSegmentsStatement(0),
   m_checkFileForRepackStatement(0),
   m_rtcpclientdCleanUpStatement(0),
-  m_getNumFilesByStreamStatement(0){
+  m_getNumFilesByStreamStatement(0),
+  m_lockCastorFileByIdStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -226,7 +231,8 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_checkFileForRepackStatement) deleteStatement(m_checkFileForRepackStatement);
     if (m_rtcpclientdCleanUpStatement) deleteStatement(m_rtcpclientdCleanUpStatement);
     if (m_getNumFilesByStreamStatement) deleteStatement(m_getNumFilesByStreamStatement);
-  } catch (oracle::occi::SQLException e) {};
+    if (m_lockCastorFileByIdStatement) deleteStatement(m_lockCastorFileByIdStatement);
+  } catch (oracle::occi::SQLException &e) {};
 
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -245,6 +251,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_checkFileForRepackStatement = 0;
   m_rtcpclientdCleanUpStatement = 0;
   m_getNumFilesByStreamStatement = 0;
+  m_lockCastorFileByIdStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -266,7 +273,7 @@ int castor::db::ora::OraTapeSvc::anySegmentsForTape
     m_anySegmentsForTapeStatement->setDouble(1, tape->id());
     (void)m_anySegmentsForTapeStatement->executeUpdate();
     return m_anySegmentsForTapeStatement->getInt(2);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -332,7 +339,7 @@ castor::db::ora::OraTapeSvc::segmentsForTape
       status = rs->next();
     }
     m_segmentsForTapeStatement->closeResultSet(rs);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -393,7 +400,7 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
 		     true);
     // return
     return result;
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     if (1403 == e.getErrorCode()) {
       // No data found error, this is ok
       return 0;
@@ -433,7 +440,7 @@ bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
       cnvSvc()->updateRep(&ad, searchItem, true);
     }
     return result;
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -531,7 +538,7 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
 		     true);
     // return
     return result;
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -594,7 +601,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
       tapePool->addStreams(remoteObj);
       remoteObj->setTapePool(tapePool);
     }
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -627,7 +634,7 @@ void castor::db::ora::OraTapeSvc::fileRecalled
         << "fileRecalled : unable to update SubRequest and DiskCopy status.";
       throw ex;
     }
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -660,7 +667,7 @@ void castor::db::ora::OraTapeSvc::fileRecallFailed
         << "fileRecallFailed : unable to update SubRequest and DiskCopy status.";
       throw ex;
     }
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -702,7 +709,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
       result.push_back(tape);
     }
     m_tapesToDoStatement->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -755,7 +762,7 @@ castor::db::ora::OraTapeSvc::streamsToDo()
       status = rs->next();
     }
     m_streamsToDoStatement->closeResultSet(rs);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     // cleanup memory if needed
     for (std::vector<castor::stager::Stream*>::iterator it = result.begin();
 	 it != result.end();
@@ -808,7 +815,7 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
     }
     m_selectTapeCopiesForMigrationStatement->closeResultSet(rset);
     return result;
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -834,7 +841,7 @@ void castor::db::ora::OraTapeSvc::resetStream
     // execute the statement and see whether we found something
     m_resetStreamStatement->setDouble(1, stream->id());
     (void)m_resetStreamStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -894,7 +901,7 @@ castor::db::ora::OraTapeSvc::failedSegments ()
       status = rs->next();
     }
     m_failedSegmentsStatement->closeResultSet(rs);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -926,7 +933,7 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 
     repackvid = m_checkFileForRepackStatement->getString(2);
 
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -953,7 +960,7 @@ void castor::db::ora::OraTapeSvc::rtcpclientdCleanUp()
     }
     // Execute the statement
     (void)m_rtcpclientdCleanUpStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     if (1403 == e.getErrorCode()) {
       // no data found, I should run the tapegateway instead of rtcpclientd
@@ -991,7 +998,7 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
 
     numFile = (u_signed64)m_getNumFilesByStreamStatement->getDouble(2);
 
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -1001,4 +1008,32 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
     throw ex;
   }
   return numFile;
+}
+
+
+//------------------------------------------------------------------------------
+// lockCastorFileById
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeSvc::lockCastorFileById(
+  const u_signed64 castorFileId)
+  throw (castor::exception::Exception) {
+
+  try {
+    // Check whether the statements are ok
+    if (m_lockCastorFileByIdStatement == NULL) {
+      m_lockCastorFileByIdStatement =
+        createStatement(s_lockCastorFileByIdStatementString);
+      m_lockCastorFileByIdStatement->setAutoCommit(false);
+    }
+
+    m_lockCastorFileByIdStatement->executeUpdate();
+  } catch (oracle::occi::SQLException &e) {
+    handleException(e);
+    castor::exception::Internal ie;
+    ie.getMessage() <<
+      "Error caught in lockCastorFileById()"
+      ": castorFileId=" << castorFileId <<
+      ": " << e.what();
+    throw ie;
+  }
 }

@@ -105,13 +105,12 @@ static int prepareForDBAccess(struct C_Services_t **_dbSvc,
                               struct Cstager_ITapeSvc_t **_tpSvc,
                               struct C_IAddress_t **_iAddr)
 {
-  struct Cstager_ITapeSvc_t **tpSvc;
-  struct C_Services_t **dbSvc;
-  struct C_IAddress_t *iAddr;
-  struct C_BaseAddress_t *baseAddr;
-  int rc;
+  struct Cstager_ITapeSvc_t *tpSvc    = NULL;
+  struct C_Services_t       *dbSvc    = NULL;
+  struct C_IAddress_t       *iAddr    = NULL;
+  struct C_BaseAddress_t    *baseAddr = NULL;
+  int                       rc        = 0;
 
-  dbSvc = NULL;
   rc = rtcpcld_getDbSvc(&dbSvc);
 
   if ( rc == -1 ) {
@@ -119,10 +118,9 @@ static int prepareForDBAccess(struct C_Services_t **_dbSvc,
     return(-1);
   }
 
-  tpSvc = NULL;
-  rc = rtcpcld_getStgSvc(&tpSvc);
+  rc = rtcpcld_getTpSvc(&tpSvc);
   if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("getStgSvc()");
+    LOG_SYSCALL_ERR("getTpSvc()");
     return(-1);
   }
 
@@ -136,8 +134,8 @@ static int prepareForDBAccess(struct C_Services_t **_dbSvc,
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  if ( _dbSvc != NULL ) *_dbSvc = *dbSvc;
-  if ( _tpSvc != NULL ) *_tpSvc = *tpSvc;
+  if ( _dbSvc != NULL ) *_dbSvc = dbSvc;
+  if ( _tpSvc != NULL ) *_tpSvc = tpSvc;
   if ( _iAddr != NULL ) *_iAddr = iAddr;
 
   return(0);
@@ -145,11 +143,11 @@ static int prepareForDBAccess(struct C_Services_t **_dbSvc,
 
 static int cleanupSegment(struct Cstager_Segment_t *segment)
 {
-  struct C_IObject_t *iObj = NULL;
-  struct C_Services_t *dbSvc;
-  struct C_IAddress_t *iAddr = NULL;
+  struct C_IObject_t        *iObj  = NULL;
+  struct C_Services_t       *dbSvc = NULL;
+  struct C_IAddress_t       *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
-  int rc;
+  int                       rc     = 0;
 
   if ( segment == NULL ) {
     serrno = EINVAL;
@@ -181,7 +179,9 @@ static int cleanupSegment(struct Cstager_Segment_t *segment)
 static int callExpert(int mode,
                       char *expertMessage)
 {
-  int msgLen, rc, fd = -1;
+  int msgLen  = 0;
+  int rc      = 0;
+  int fd      = -1;
   int timeout = 30;
   char answer[21]; /* boolean: 0 -> PUT_FAILED, 1 -> do retry */
 
@@ -230,19 +230,20 @@ static int callExpert(int mode,
 static int doRecallRetry(struct Cstager_Segment_t *segment,
                          struct Cstager_TapeCopy_t *tapeCopy)
 {
-  struct C_IObject_t *iObj = NULL;
-  struct C_Services_t *dbSvc;
-  struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_ITapeSvc_t *tpSvc = NULL;
-  struct Cstager_Tape_t *tape = NULL;
+  struct C_IObject_t             *iObj        = NULL;
+  struct C_Services_t            *dbSvc       = NULL;
+  struct C_IAddress_t            *iAddr       = NULL;
+  struct Cstager_ITapeSvc_t      *tpSvc       = NULL;
+  struct Cstager_Tape_t          *tape        = NULL;
   enum Cstager_TapeStatusCodes_t tapeStatus;
-  struct Cstager_Segment_t *newSegment = NULL;
-  unsigned char blockid[4];
-  u_signed64 creationTime;
-  u_signed64 priority;
-  u_signed64 offset;
-  int rc, fseq;
-  ID_TYPE key;
+  struct Cstager_Segment_t       *newSegment  = NULL;
+  unsigned char                  blockid[4];
+  u_signed64                     creationTime = 0;
+  u_signed64                     priority     = 0;
+  u_signed64                     offset       = 0;
+  int                            rc           = 0;
+  int                            fseq         = 0;
+  ID_TYPE                        key          = 0;
 
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
     serrno = EINVAL;

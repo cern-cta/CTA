@@ -423,5 +423,19 @@ int Cstager_ITapeSvc_getNumFilesByStream
  const u_signed64 streamId,
  u_signed64* numFile);
 
+/**
+ * Locks the row in the castor-file table with the specified database ID.
+ *
+ * This procedure returns -1 on error which includes when no row exists in the
+ * castor-file table with the specified database ID.
+ *
+ * @param tpSvc        The tape-service to be used.
+ * @param castorFileId The database ID of the row to be locked.
+ * @return             0 on success and -1 on error.
+ */
+int Cstager_ITapeSvc_lockCastorFileById(
+  struct Cstager_ITapeSvc_t *tpSvc,
+  const u_signed64          castorFileId);
+
 #endif // CASTOR_ITAPESVC_H
 

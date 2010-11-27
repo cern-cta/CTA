@@ -8654,6 +8654,31 @@ BEGIN
 END tapegatewaydIsRunning;
 /
 
+
+CREATE PROCEDURE lockCastorFileById(
+/**
+ * Locks the row in the castor-file table with the specified database ID.
+ *
+ * This procedure raises application error -20001 when no row exists in the
+ * castor-file table with the specified database ID.
+ *
+ * @param inCastorFileId The database ID of the row to be locked.
+ */
+  inCastorFileId INTEGER
+) AS
+  varDummyCastorFileId INTEGER := 0;
+BEGIN
+  SELECT CastorFile.id
+    INTO varDummyCastorFileId
+    FROM CastorFile
+   WHERE CastorFile.id = inCastorFileId
+     FOR UPDATE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RAISE_APPLICATION_ERROR(-20001,
+    'Castor-file does not exist' ||
+    ': inCastorFileId=' || inCastorFileId);
+END lockCastorFileById;
+/
 /*******************************************************************
  *
  * @(#)RCSfile: oracleTapeGateway.sql,v  Revision: 1.12  Date: 2009/08/13 15:14:25  Author: gtaur 
