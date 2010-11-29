@@ -1,3 +1,12 @@
+'''
+Created on Jun 10, 2010
+
+Annex is a fake model, representing the sum of the Items which were too small to display.
+
+@author: kblaszcz
+'''
+
+
 from django.db import connection, transaction, models
 import inspect
 from sites.tools.Inspections import *

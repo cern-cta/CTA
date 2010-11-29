@@ -1,6 +1,10 @@
 '''
 Created on May 18, 2010
 
+TreeRules define per level and model what count/children/parent methods to use and attributes to evaluate.
+fparams define additional parameters that will be passed to a TransFunction.
+A TransFunction translates object attributes into numbers.
+
 @author: kblaszcz
 '''
 from sites.tools.Inspections import *
@@ -25,19 +29,19 @@ class ChildRules(object):
         self.countmethods = {}
         self.parentmethods = {}
         self.fparams = {}
-        self.columnnames = {}
+        self.attrnames = {}
         self.ppnames = {}
     
-    def createOrUpdate(self, classname, methodname, parentmethodname, columnname, fparam = None, postprocessornm = 'DafaultPostProcessor'):
+    def createOrUpdate(self, classname, methodname, parentmethodname, attrname, fparam = None, postprocessornm = 'DafaultPostProcessor'):
         countmethodname = getCountMethodFor(classname, methodname)
 
         modulename = getModelsModuleName(classname)
-        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, columnname, postprocessornm) and countmethodname is not None:
+        if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, attrname, postprocessornm) and countmethodname is not None:
             index = classname
             self.methods[index] = methodname
             self.countmethods[index] = countmethodname
             self.fparams[index] = fparam
-            self.columnnames[index] = columnname
+            self.attrnames[index] = attrname
             self.parentmethods[index] = parentmethodname
             self.ppnames[index] = postprocessornm
         else: 
@@ -61,8 +65,8 @@ class ChildRules(object):
     def getModelToColumn(self):  
         ret = []
         
-        for classname, columnname in self.columnnames.items():
-            ret.append((classname, columnname))
+        for classname, attrname in self.attrnames.items():
+            ret.append((classname, attrname))
         return ret
     
     def getModelToPostProcessor(self):
@@ -76,7 +80,7 @@ class ChildRules(object):
         ret = []
         indexkeys = self.methods.keys()
         for index in indexkeys:
-            ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'columnname': self.columnnames[index], 'fparam': self.fparams[index], 'postprocessorname': self.ppnames[index]})
+            ret.append({'model': index, 'method': self.methods[index], 'countmethod': self.countmethods[index], 'parentmethod': self.parentmethods[index], 'attrname': self.attrnames[index], 'fparam': self.fparams[index], 'postprocessorname': self.ppnames[index]})
         return ret
             
     def getMethodNameFor(self, classname):
@@ -88,8 +92,8 @@ class ChildRules(object):
     def getParamFor(self, classname):
         return self.fparams[classname]
     
-    def getColumnNameFor(self, classname):
-        return self.columnnames[classname]
+    def getAttrNameFor(self, classname):
+        return self.attrnames[classname]
 
     def getCountMethodNameFor(self, classname):
         return self.countmethods[classname]   
@@ -97,7 +101,7 @@ class ChildRules(object):
     def getPostProcessorNameFor(self, classname):
         return self.ppnames[classname] 
     
-    def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, columnname, postprocessornm):
+    def ruleDataCorrect(self, modulename, classname, methodname, countmethodname, parentmethodname, attrname, postprocessornm):
         #check modulename and  classname
         try:
             instance = createObject(modulename, classname)
@@ -142,9 +146,9 @@ class ChildRules(object):
         
         if not found: return False
         
-        #check columnname
+        #check attrname
         cf = ModelAttributeFinder(classname)
-        if columnname not in cf.getColumnAndAtrributeNames():
+        if attrname not in cf.getColumnAndAtrributeNames():
             return False
         
         #check postprocessornm
@@ -224,7 +228,7 @@ class ChildRules(object):
                 print "not found"
                 return False
         
-        for classname, columnname in self.columnnames.items():
+        for classname, attrname in self.attrnames.items():
             #check modulename and  classname
             modulename = getModelsModuleName(classname)
             try:
@@ -232,9 +236,9 @@ class ChildRules(object):
             except Exception:
                 return False 
         
-            #check columnname
+            #check attrname
             cf = ModelAttributeFinder(classname)
-            if columnname not in cf.getColumnAndAtrributeNames():
+            if attrname not in cf.getColumnAndAtrributeNames():
                 return False
             
         #check postprocessornm
@@ -260,19 +264,19 @@ class LevelRules(object):
     def __init__(self):
         self.rules = []
         
-    def addRules(self, classname, methodname, parentmethodname, columnname, level, fparam = None, postprocessorname = None):
+    def addRules(self, classname, methodname, parentmethodname, attrname, level, fparam = None, postprocessorname = None):
         try:
             self.rules[level]
         except IndexError:   
             if level <= len(self.rules):               
                 r = ChildRules()
-                r.createOrUpdate(classname, methodname, parentmethodname, columnname, fparam, postprocessorname)
+                r.createOrUpdate(classname, methodname, parentmethodname, attrname, fparam, postprocessorname)
                 self.rules.append(r) 
                 return
             else:
                 raise Exception('Before you create Rule for level ' + level + ' you need to have all rules up to level ' + (len(self.rules)-1) + ' defined.')
             
-        self.rules[level].createOrUpdate(classname, methodname, parentmethodname, columnname, fparam)
+        self.rules[level].createOrUpdate(classname, methodname, parentmethodname, attrname, fparam)
             
     def appendRuleObject(self, obj):
         self.rules.append(obj)
@@ -307,9 +311,9 @@ class LevelRules(object):
         except IndexError:
             return None
         
-    def getColumnNameFor(self, level, classname):
+    def getAttrNameFor(self, level, classname):
         try:
-            return self.rules[level].getColumnNameFor(classname)
+            return self.rules[level].getAttrNameFor(classname)
         except IndexError:
             return None
         
@@ -342,7 +346,7 @@ class LevelRules(object):
                     idparts.append(entry['method'])
                     idparts.append(entry['countmethod'])
                     idparts.append(entry['parentmethod'])
-                    idparts.append(entry['columnname'])
+                    idparts.append(entry['attrname'])
                     idparts.append(entry['fparam'].__str__())
                     idparts.append(entry['postprocessorname'].__str__())
             else:

@@ -15,7 +15,7 @@ class AttributeTranslatorInterface(object):
     def __init__(self):
         pass
     
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         raise Exception("implementation of translate() not found")
 
 #untested
@@ -29,11 +29,11 @@ class FileExtensionTranslator(AttributeTranslatorInterface):
             
         
         
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         try:
-            ext = self.findExtension(dbobj.__dict__[columnname])
+            ext = self.findExtension(modelinstance.__dict__[attrname])
         except KeyError:
-            raise Exception("column doesn't exist")
+            raise Exception("attribute doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
             raise Exception("string or unicode expected")
@@ -64,11 +64,11 @@ class SaturatedLinearTranslator(AttributeTranslatorInterface):
         self.maxsat = max
         self.minsat = min
         
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         try:
-            ext = self.findExtension(dbobj.__dict__[columnname])
+            ext = self.findExtension(modelinstance.__dict__[attrname])
         except KeyError:
-            raise Exception("column doesn't exist")
+            raise Exception("attribute doesn't exist")
         
         if not ((type(ext).__name__ == 'int') or (type(ext).__name__ == 'long')) or (type(ext).__name__ == 'float'):
             raise Exception("number expected")
@@ -88,11 +88,11 @@ class RawLinearTranslator(AttributeTranslatorInterface):
         self.isfloat = None
         self.istext = None
         
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         try:
-            ext = dbobj.__dict__[columnname]
+            ext = modelinstance.__dict__[attrname]
         except KeyError:
-            raise Exception("column doesn't exist")
+            raise Exception("attribute doesn't exist")
         
         ext.isfloat = False
         ext.istext = False
@@ -109,11 +109,11 @@ class DirNameTranslator(AttributeTranslatorInterface):
         AttributeTranslatorInterface.__init__(self)
         self.prefix = prefix
         
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         try:
-            ext = dbobj.__dict__[columnname]
+            ext = modelinstance.__dict__[attrname]
         except KeyError:
-            raise Exception("column doesn't exist")
+            raise Exception("attribute doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
             raise Exception("string or unicode expected")
@@ -125,11 +125,11 @@ class TopDirNameTranslator(AttributeTranslatorInterface):
     def __init__(self):
         AttributeTranslatorInterface.__init__(self)
         
-    def translate(self, dbobj, columnname):
+    def translate(self, modelinstance, attrname):
         try:
-            ext = dbobj.__dict__[columnname]
+            ext = modelinstance.__dict__[attrname]
         except KeyError:
-            raise Exception("column doesn't exist")
+            raise Exception("attribute doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
             raise Exception("string or unicode expected")

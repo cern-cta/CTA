@@ -1,6 +1,8 @@
 '''
 Created on Jun 4, 2010
 
+holds a dictionary collecting properties of a Node (key-value pairs)
+
 @author: kblaszcz
 '''
 

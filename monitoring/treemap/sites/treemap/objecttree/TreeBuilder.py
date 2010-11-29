@@ -1,6 +1,12 @@
 '''
 Created on May 19, 2010
 
+By providing a root Object, TreeBuilder generates the data subtree originating from that root.
+To limit the amount of data there are some smart limits defined. 
+If a node would be too small to display or has too many children, TreeBuilder doesn't follow deeper paths.
+
+The children counting methods in models allow to see in advance if it's worth to read deeper levels.
+
 @author: kblaszcz
 '''
 
@@ -55,12 +61,12 @@ class TreeBuilder(object):
             raise Exception("no parentmethod for " + classname + " found.")
         
         fparam = self.rules.getParamFor(level, classname)
-        rootevalcolumn = self.rules.getColumnNameFor(0, classname)
+        rootevalattr = self.rules.getAttrNameFor(0, classname)
         
-        rootobjnode = TreeNode(rootobject, rootevalcolumn, parentmethodname, fparam, 0)
+        rootobjnode = TreeNode(rootobject, rootevalattr, parentmethodname, fparam, 0)
 #        rootobjnode.metainfo = {'minsibling': rootobjnode.getEvalValue(), 'maxsibling':rootobjnode.getEvalValue()}
         
-        tree.setRoot(rootobject, parentmethodname, fparam, rootevalcolumn, rootobjnode.getEvalValue())
+        tree.setRoot(rootobject, parentmethodname, fparam, rootevalattr, rootobjnode.getEvalValue())
         
         self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0, rootisannex, statusfilename, None)
         
@@ -135,14 +141,14 @@ class TreeBuilder(object):
                 chclassname = child.__class__.__name__
                 
                 try:
-                    chcolumnname = self.rules.getColumnNameFor(level + 1, chclassname)
+                    chattrname = self.rules.getAttrNameFor(level + 1, chclassname)
                     chparam = self.rules.getParamFor(level + 1, chclassname)
                     parentmethodname =  self.rules.getParentMethodNameFor(level + 1, chclassname)
                     postprocessname =  self.rules.getPostProcessorNameFor(level + 1, chclassname)
                 except KeyError:
                     return
                 
-                thechild = TreeNode(child, chcolumnname, parentmethodname, chparam, level + 1)
+                thechild = TreeNode(child, chattrname, parentmethodname, chparam, level + 1)
                 evl = thechild.evaluate()
                 if(evl <= 0): continue #ignore zeroes
                 
@@ -232,11 +238,11 @@ class TreeBuilder(object):
                 annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
                 annexchild.evaluation = annexevalsum
                 chclassname = annexchild.__class__.__name__
-                chcolumnname = self.rules.getColumnNameFor(level, chclassname)
+                chattrname = self.rules.getAttrNameFor(level, chclassname)
                 chparam = self.rules.getParamFor(level, chclassname)
                 parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
                 
-                annexnode = tree.addChild(annexchild, chcolumnname, parentmethodname, chparam)
+                annexnode = tree.addChild(annexchild, chattrname, parentmethodname, chparam)
                 annexnode.setSiblingsSum(evalsum)
 #                annexnode.metainfo = metainfo
                              

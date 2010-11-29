@@ -1,11 +1,13 @@
 '''
 Created on May 10, 2010
 
+holds ViewNodes in a tree structure, provides methods to access that tree
+
 @author: kblaszcz
 '''
 import networkx as nx
 import warnings
-from sites.treemap.defaultproperties.SquaredViewProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from sites.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from  networkx import NetworkXError
 
 class ViewTree(object):
@@ -76,7 +78,7 @@ class ViewTree(object):
 
     def setRoot(self, theobject):
         self.graph.clear()
-        theroot = theobject #(self, theobject, evalcolumnname, fpar = None, dpt = -1)
+        theroot = theobject #(self, theobject, evalattrname, fpar = None, dpt = -1)
         self.graph.add_node(theroot, value = 1)
         self.root = theroot
         self.node_inscope = theroot

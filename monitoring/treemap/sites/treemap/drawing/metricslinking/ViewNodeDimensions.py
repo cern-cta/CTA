@@ -1,6 +1,18 @@
 '''
 Created on Jul 14, 2010
 
+A ViewNodeDimension extracts specific information ("Dimension") from a ViewNode and provides a method getValue to access the value 
+It is like watching at ViewNode from different points of view. Sometimes you want to see the level af a node, sometimes you want to see a description of a node.
+
+This "Dimension" can then be associated with a graphical property by using MetricsLinker:
+
+mlinker = MetricsLinker()
+mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
+
+In the example above:
+A ViewNode originating from an object of type Dirs, will be represented by having a rectangle color depending on LevelDimension.getValue
+If LevelDimension.getValue() returns 1, TreeDesigner will decode and set the fillcolor associated with number 1.
+
 @author: kblaszcz
 '''
 from django.template.loader import render_to_string
@@ -53,24 +65,24 @@ class ConstantDimension(ViewNodeDimensionBase):
     def getValue(self, tnode):
         return self.constant
     
-#evaluates any column to number   
+#evaluates any attribute to number   
 class ColumnDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self, columnname, translation): #translation.translate (db object)
+    def __init__(self, attrname, translation): #translation.translate (db object)
         
         assert(translation is not None)
         ViewNodeDimensionBase.__init__(self)
         self.translation = translation
-        self.columnname = columnname
+        self.attrname = attrname
 
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        dbobj = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.getProperty('treenode').getObject()
         
-        ret = self.translation.translate(dbobj, self.columnname)
+        ret = self.translation.translate(modelinstance, self.attrname)
         
         #convert to integer in case it is not supposed to be float
         if not ret.isfloat and not ret.istext: ret = ret - ret%1
@@ -81,16 +93,16 @@ class RawColumnDimension(ViewNodeDimensionBase):
     '''
     classdocs
     '''
-    def __init__(self, columnname, translation = RawLinearTranslator()): #translation.translate (db object)
+    def __init__(self, attrname, translation = RawLinearTranslator()): #translation.translate (db object)
         ViewNodeDimensionBase.__init__(self)
         self.translation = translation
-        self.columnname = columnname
+        self.attrname = attrname
 
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        dbobj = tnode.getProperty('treenode').getObject()
-        ret = self.translation.translate(dbobj, self.columnname)
+        modelinstance = tnode.getProperty('treenode').getObject()
+        ret = self.translation.translate(modelinstance, self.attrname)
         return ret
     
 class DirToolTipDimension(ViewNodeDimensionBase):
@@ -104,15 +116,15 @@ class DirToolTipDimension(ViewNodeDimensionBase):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        dbobj = tnode.getProperty('treenode').getObject()
-        assert(isinstance(dbobj, Dirs))
+        modelinstance = tnode.getProperty('treenode').getObject()
+        assert(isinstance(modelinstance, Dirs))
         
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
-        bytesize = long(dbobj.totalsize)
+        bytesize = long(modelinstance.totalsize)
         
-        itemnameparts = splitText(dbobj.fullname.__str__(), 50, 39)
-        attrnname = tnode.getProperty('treenode').getColumnname()
+        itemnameparts = splitText(modelinstance.fullname.__str__(), 50, 39)
+        attrnname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
@@ -122,10 +134,10 @@ class DirToolTipDimension(ViewNodeDimensionBase):
         else:
             percentagestring = "%.2f"%(size/psize*100.0)
         
-        nbfiles = dbobj.countFiles().__str__()
-        nbdirs = dbobj.countDirs().__str__()
-        nbsubtreefiles = dbobj.nbfiles.__str__()
-        nbsubtreedirs = dbobj.nbsubdirs.__str__()
+        nbfiles = modelinstance.countFiles().__str__()
+        nbdirs = modelinstance.countDirs().__str__()
+        nbsubtreefiles = modelinstance.nbfiles.__str__()
+        nbsubtreedirs = modelinstance.nbsubdirs.__str__()
         
         return render_to_string('tooltipdimensions/dirtooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
                                                 'attrprocvalue':attrprocvalue, 'sizestring':sizestring, 'percentagestring':percentagestring, \
@@ -143,18 +155,18 @@ class FileToolTipDimension(ViewNodeDimensionBase):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        dbobj = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.getProperty('treenode').getObject()
         parent = tnode.getProperty('treenode').getNakedParent()
-        assert(isinstance(dbobj, CnsFileMetadata))
+        assert(isinstance(modelinstance, CnsFileMetadata))
         
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
-        bytesize = long(dbobj.filesize)
+        bytesize = long(modelinstance.filesize)
         dirname = parent.__str__()
         
-        itemnameparts = splitText(dbobj.name.__str__(), 50, 39)
+        itemnameparts = splitText(modelinstance.name.__str__(), 50, 39)
         dirnameparts = splitText(dirname, 50, 39)
-        attrnname = tnode.getProperty('treenode').getColumnname()
+        attrnname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
@@ -181,10 +193,10 @@ class AnnexToolTipDimension(ViewNodeDimensionBase):
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         tnobj = tnode.getProperty('treenode')
-        dbobj = tnobj.getObject()
+        modelinstance = tnobj.getObject()
         parent = tnode.getProperty('treenode').getNakedParent()
         
-        assert(isinstance(dbobj, Annex))
+        assert(isinstance(modelinstance, Annex))
         
         size = tnobj.getEvalValue()
         psize = tnobj.getSiblingsSum()
@@ -197,7 +209,7 @@ class AnnexToolTipDimension(ViewNodeDimensionBase):
             percentagestring = "%.2f"%(100)
         else:
             percentagestring = "%.2f"%(size/psize*100.0)
-        nbitems = dbobj.countItems().__str__()
+        nbitems = modelinstance.countItems().__str__()
 
         return render_to_string('tooltipdimensions/annextooltip.html', {'attrprocvalue':attrprocvalue, 'percentagestring':percentagestring, \
                                                       'dirnameparts': dirnameparts, 'nbitems': nbitems}, \
@@ -214,23 +226,23 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        dbobj = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.getProperty('treenode').getObject()
         parent = tnode.getProperty('treenode').getNakedParent()
-        assert(isinstance(dbobj, Requestsatlas) or isinstance(dbobj, Requestscms) or isinstance(dbobj, Requestsalice) or isinstance(dbobj, Requestslhcb) or isinstance(dbobj, Requestspublic))
+        assert(isinstance(modelinstance, Requestsatlas) or isinstance(modelinstance, Requestscms) or isinstance(modelinstance, Requestsalice) or isinstance(modelinstance, Requestslhcb) or isinstance(modelinstance, Requestspublic))
         
         size = float(tnode.getProperty('treenode').getEvalValue())
         psize = tnode.getProperty('treenode').getSiblingsSum()
         
-        bytesize = dbobj.filesize
+        bytesize = modelinstance.filesize
         if bytesize is None: 
             bytesize = 0
         else:
             bytesize = long(bytesize)
             
-        nbreq = dbobj.requestscount
+        nbreq = modelinstance.requestscount
         
-        itemnameparts = splitText(dbobj.filename, 50, 39)
-        attrnname = tnode.getProperty('treenode').getColumnname()
+        itemnameparts = splitText(modelinstance.filename, 50, 39)
+        attrnname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         percentagestring = ''

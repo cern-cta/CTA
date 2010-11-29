@@ -1,6 +1,5 @@
 '''
 Created on May 5, 2010
-
 @author: kblaszcz
 '''
 import warnings
@@ -11,11 +10,11 @@ from sites.treemap.objecttree.Postprocessors import *
 
 class Wrapper(object):
     '''
-    Wraps a Database object to make it usable for a Treemap by providing an column specific evaluate() function
+    Wraps a Database object to make it usable for a Treemap by providing an attribute specific evaluate() function
     '''
     column_transformators = {}
 
-    def __init__(self, wrapped, evalcolumnname):
+    def __init__(self, wrapped, evalattrname):
         '''
         Constructor
         '''
@@ -24,19 +23,19 @@ class Wrapper(object):
         self.modulename = inspect.getmodule(wrapped).__name__
         
         self.classname = wrapped.__class__.__name__
-        self.columnname = ""
+        self.attrname = ""
 
         if self.classname not in self.__class__.column_transformators:
             self.__class__.column_transformators[self.classname] = ColumnTransformator(self.classname)
         
-        self.setColumnname(evalcolumnname)
+        self.setAttrName(evalattrname)
     
     def __str__(self):
         return self.modulename.__str__() + '.' + self.classname.__str__() + ': ' + self.wrapped.__str__()
     
     def evaluate(self, fparam = None, postprocessobject = None):
         result = None
-        command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.columnname + "(self.wrapped."+ self.columnname
+        command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.attrname + "(self.wrapped."+ self.attrname
         
         if fparam:
             command = command + ", fparam)"
@@ -52,7 +51,7 @@ class Wrapper(object):
     
     def evaluateNoPostProcess(self, fparam = None):
         result = None
-        command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.columnname + "(self.wrapped."+ self.columnname
+        command = "result = self.__class__.column_transformators[self.classname]." + self.__class__.column_transformators[self.classname].getFnprefix() + self.attrname + "(self.wrapped."+ self.attrname
         
         if fparam:
             command = command + ", fparam)"
@@ -63,7 +62,7 @@ class Wrapper(object):
         
         return result
     
-    def setColumnname(self, newname):
+    def setAttrName(self, newname):
         if newname == None:
             raise Exception( 'Wrapper was not able to find any default column for ' + self.classname)
         
@@ -76,13 +75,13 @@ class Wrapper(object):
                     break
             if not found:
                 raise Exception( 'Wrapper was not able to find the given Column "' + newname + '" in ' + self.classname)
-            self.columnname = newname
+            self.attrname = newname
             
         else:
             raise Exception( 'Wrapper was not able to find any Columns for ' + self.classname)
         
-    def getColumnname(self):
-        return self.columnname
+    def getAttrName(self):
+        return self.attrname
     
     def getObject(self):
         return self.wrapped

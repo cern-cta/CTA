@@ -1,6 +1,9 @@
 '''
 Created on Jun 10, 2010
 
+This class reads ViewNodes from a ViewTree and draws them depending on their properties.
+The resulting output is written into a png file.
+
 @author: kblaszcz
 '''
 import cairo
@@ -60,7 +63,7 @@ class SquaredTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headerfontsize'), root.getProperty('headertext.isbold'))
+        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headerfontsize'), root.getProperty('headertextisbold'))
         
         self.drawRecursion()
         
@@ -76,7 +79,7 @@ class SquaredTreemapDrawer(object):
             
             if child.getProperty('headersize') > 0.0:
                 txt = child.getProperty('headertext')
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headerfontsize'), child.getProperty('headertext.isbold'))
+                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headerfontsize'), child.getProperty('headertextisbold'))
                 
             self.vtree.traverseInto(child)
             self.drawRecursion()

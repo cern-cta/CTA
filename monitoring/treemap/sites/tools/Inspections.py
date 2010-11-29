@@ -44,7 +44,7 @@ class ModelAttributeFinder:
     def getColumns(self):
         return self.columns
     
-    def getColumnnames(self):
+    def getAttrNames(self):
         return self.column_names
     
     def getPk(self):

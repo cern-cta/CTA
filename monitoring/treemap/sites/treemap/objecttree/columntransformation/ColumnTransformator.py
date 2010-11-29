@@ -24,12 +24,11 @@ from sites.tools.Inspections import *
 
 class ColumnTransformator(dict):
     
-    """The class will extend itself to provide functions for each column of common type from the given model"""
-    """The purpose of that functions is to define how to turn a column to a number that can be used for a tree map"""
+    """The class will extend itself to provide functions for each attribute of common type from the given model"""
+    """The purpose of that functions is to define how to turn an attribute to a number that can be used for a treemap"""
     """Just overwrite the function if the standard definition is not what you want"""
     """Why:"""   
-    """It is convenient for DateFields and separates the interpretation of the column from the rest of the code."""   
-    """You might also have the idea to do some fancy stuff like defining a function that increases very small values to display more files in you treemap""" 
+    """DB Attributes are Objects that have to be converted into a number before they can be used (ie. DecimalField)"""   
     
     fnprefix = 'transform_'
     

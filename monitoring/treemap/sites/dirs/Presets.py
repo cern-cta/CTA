@@ -209,7 +209,7 @@ presetdict["Optimal time to recall"] = Preset(lr, True, 'Dirs', '/castor', 11, o
 #Preset for oldest file last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'oldestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -218,7 +218,7 @@ presetdict["Oldest - file last modification"] = Preset(lr, True, 'Dirs', '/casto
 #Preset for average file last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'avgfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -227,7 +227,7 @@ presetdict["Average - file last modification"] = Preset(lr, True, 'Dirs', '/cast
 #Preset for sigma file last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'sigfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -236,7 +236,7 @@ presetdict["Sigma - file last modification"] = Preset(lr, True, 'Dirs', '/castor
 #Preset for newest file last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'newestfilelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -245,7 +245,7 @@ presetdict["Newest - file last modification"] = Preset(lr, True, 'Dirs', '/casto
 #Preset for oldest file on tape last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'oldestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'oldestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -254,7 +254,7 @@ presetdict["Oldest - file on tape last modification"] = Preset(lr, True, 'Dirs',
 #Preset for average file on tape last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'avgfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'avgfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -263,7 +263,7 @@ presetdict["Average - file on tape last modification"] = Preset(lr, True, 'Dirs'
 #Preset for sigma file on tape last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'sigfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'sigfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -272,7 +272,7 @@ presetdict["Sigma - file on tape last modification"] = Preset(lr, True, 'Dirs', 
 #Preset for newest file on tape last modification
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', columnname = 'newestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
+    lr.addRules(classname = 'Dirs', methodname = 'getDirs', parentmethodname = 'getDirParent', attrname = 'newestfileontapelastmod', level = i, postprocessorname = 'SubstractMinPostProcessor')
     lr.addRules('CnsFileMetadata', 'getChildren', 'getDirParent', 'filesize', i) #just to avoid errors if user applies on a file
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False)]
@@ -281,7 +281,7 @@ presetdict["Newest - file on tape last modification"] = Preset(lr, True, 'Dirs',
 #Preset for Requests Atlas
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules(classname = 'Requestsatlas', methodname = 'getChildren', parentmethodname = 'getParent', attrname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)                                                                                                                                                             
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests ATLAS"] = Preset(lr, False, 'Requestsatlas', '/castor', 22, optionsset)
@@ -289,7 +289,7 @@ presetdict["Requests ATLAS"] = Preset(lr, False, 'Requestsatlas', '/castor', 22,
 #Preset for Requests cms
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules(classname = 'Requestscms', methodname = 'getChildren', parentmethodname = 'getParent', attrname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests CMS"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
@@ -297,7 +297,7 @@ presetdict["Requests CMS"] = Preset(lr, False, 'Requestscms', '/castor', 23, opt
 #Preset for Requests lhcb
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Requestslhcb', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules(classname = 'Requestslhcb', methodname = 'getChildren', parentmethodname = 'getParent', attrname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests LHCb"] = Preset(lr, False, 'Requestslhcb', '/castor', 24, optionsset)
@@ -305,7 +305,7 @@ presetdict["Requests LHCb"] = Preset(lr, False, 'Requestslhcb', '/castor', 24, o
 #Preset for Requests alice
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Requestsalice', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules(classname = 'Requestsalice', methodname = 'getChildren', parentmethodname = 'getParent', attrname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests ALICE"] = Preset(lr, False, 'Requestsalice', '/castor', 25, optionsset)
@@ -313,7 +313,7 @@ presetdict["Requests ALICE"] = Preset(lr, False, 'Requestsalice', '/castor', 25,
 #Preset for Requests public
 lr = LevelRules()
 for i in range(getDefaultNumberOfLevels()):
-    lr.addRules(classname = 'Requestspublic', methodname = 'getChildren', parentmethodname = 'getParent', columnname = 'requestscount', level = i)
+    lr.addRules(classname = 'Requestspublic', methodname = 'getChildren', parentmethodname = 'getParent', attrname = 'requestscount', level = i)
     lr.addRules('Annex', 'getItems', 'getAnnexParent', 'evaluation', i)
 optionsset = [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), DateOption('Time offset', 'time', 'options/dateoption.html', 0), SpinnerOption('Span backwards', 'span', 'options/spinneroption.html', 120,0, 60*24,3,'minutes')]
 presetdict["Requests public"] = Preset(lr, False, 'Requestspublic', '/castor', 26, optionsset)

@@ -27,7 +27,7 @@ from sites.treemap.defaultproperties.TreeMapProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
-from sites.treemap.drawing.metricslinking.TreeNodeDimensions import *
+from sites.treemap.drawing.metricslinking.ViewNodeDimensions import *
 from sites.treemap.drawing.metricslinking.AttributeTranslators import *
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
@@ -540,7 +540,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         y2 = int(round(node.getProperty('y') + hsize,0))
         
         linksuffix = optionsstring + str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
-        info = node.getProperty('htmlinfotext')
+        info = node.getProperty('htmltooltiptext')
         thehash = node.getProperty('treenode').getObject().__hash__()
         
         mapparams[idx] = (x1,y1,x2,y2,thehash,linksuffix,info)
@@ -673,38 +673,38 @@ def getDefaultMetricsLinking():
     mlinker = MetricsLinker()
     mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
     mlinker.addPropertyLink('Annex', 'inbordersize', ConstantDimension(2))
-    mlinker.addPropertyLink('Annex', 'htmlinfotext',AnnexToolTipDimension())
+    mlinker.addPropertyLink('Annex', 'htmltooltiptext',AnnexToolTipDimension())
     mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
     mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
     
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
+    mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTranslator('/')))
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
-    mlinker.addPropertyLink('Dirs', 'htmlinfotext', DirToolTipDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'htmlinfotext', FileToolTipDimension())
+    mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
+    mlinker.addPropertyLink('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
     
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext.isbold', ConstantDimension(False))
+    mlinker.addPropertyLink('CnsFileMetadata', 'headertextisbold', ConstantDimension(False))
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'htmlinfotext', RequestsToolTipDimension())
+    mlinker.addPropertyLink('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestscms', 'htmlinfotext', RequestsToolTipDimension())
+    mlinker.addPropertyLink('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsalice', 'htmlinfotext', RequestsToolTipDimension())
+    mlinker.addPropertyLink('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'htmlinfotext', RequestsToolTipDimension())
+    mlinker.addPropertyLink('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
     
     mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestspublic', 'htmlinfotext', RequestsToolTipDimension())
+    mlinker.addPropertyLink('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
 
     return mlinker

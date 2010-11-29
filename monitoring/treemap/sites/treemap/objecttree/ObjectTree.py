@@ -1,6 +1,8 @@
 '''
 Created on May 10, 2010
 
+The class embeds model instances in TreeNodes and holds them in a tree structure.
+
 @author: kblaszcz
 '''
 from sites.treemap.objecttree.TreeNode import TreeNode
@@ -27,9 +29,9 @@ class ObjectTree(object):
         self.children_sorted = False
         self.children_cached= False
 
-    def setRoot(self, theobject, parentmethodname, fparam = None, evalcolumn = None, siblingssum = 1.0):
+    def setRoot(self, theobject, parentmethodname, fparam = None, evalattr = None, siblingssum = 1.0):
         self.graph.clear()
-        theroot = TreeNode(theobject = theobject, evalcolumnname = evalcolumn, parentmethodname = parentmethodname, fpar = fparam, siblings_sum = siblingssum, dpt = 0) 
+        theroot = TreeNode(theobject = theobject, evalattrname = evalattr, parentmethodname = parentmethodname, fpar = fparam, siblings_sum = siblingssum, dpt = 0) 
         self.graph.add_node(theroot, value = 1)
         self.root = theroot
         self.node_inscope = theroot
@@ -76,7 +78,7 @@ class ObjectTree(object):
             
 #    count = 0     
             
-    def addChild(self, theobject, columnname, parentmethodname, fparam = None):
+    def addChild(self, theobject, attrname, parentmethodname, fparam = None):
 #        self.count = self.count + 1
 #        print self.count
 #        if self.count%13 == 0:
@@ -88,7 +90,7 @@ class ObjectTree(object):
             print "error!!!"
             raise Exception( 'Parent cannot contain itself as child')
         
-        child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
+        child = TreeNode(theobject, attrname, parentmethodname, fparam, self.depth_inscope + 1)
         self.graph.add_node(child)
         self.graph.add_edge(self.node_inscope, child)
         if self.children_cached:
@@ -113,7 +115,7 @@ class ObjectTree(object):
         self.children_sorted = False
         return theobject
 
-    def addChildren(self, objects, columnname, parentmethodname, fparam = None):
+    def addChildren(self, objects, attrname, parentmethodname, fparam = None):
         if self.root == None:
             raise Exception( 'Cannot add child if no root specified')
     
@@ -122,7 +124,7 @@ class ObjectTree(object):
     
         for theobject in objects:
             
-            child = TreeNode(theobject, columnname, parentmethodname, fparam, self.depth_inscope + 1)
+            child = TreeNode(theobject, attrname, parentmethodname, fparam, self.depth_inscope + 1)
             self.graph.add_node(child)
             self.graph.add_edge(self.node_inscope, child)
             if self.children_cached:

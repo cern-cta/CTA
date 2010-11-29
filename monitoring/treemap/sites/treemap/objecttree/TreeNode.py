@@ -1,6 +1,8 @@
 '''
 Created on May 10, 2010
 
+TreeNodes wraps an object with Wrapper and provides evaluation by the attribute name defined in the object.
+
 @author: kblaszcz
 '''
 from sites.tools.ObjectCreator import createObject
@@ -12,7 +14,7 @@ class TreeNode(object):
     '''
     classdocs
     '''
-    def __init__(self, theobject, evalcolumnname, parentmethodname, fpar = None, dpt = -1, siblings_sum = 1.0, postprocessobject = None):
+    def __init__(self, theobject, evalattrname, parentmethodname, fpar = None, dpt = -1, siblings_sum = 1.0, postprocessobject = None):
         if dpt >= -1:
             self.depth = dpt
         else:
@@ -20,7 +22,7 @@ class TreeNode(object):
         
         self.fparam = fpar
         self.postprocessobject = postprocessobject
-        self.wrapped = Wrapper(theobject, evalcolumnname)
+        self.wrapped = Wrapper(theobject, evalattrname)
         self.evaled = False
         self.evalvalue = 0
         
@@ -79,8 +81,8 @@ class TreeNode(object):
         else:
             return nested_object.__class__.__dict__[self.parentmethodname](nested_object)
     
-    def setColumnname(self, newname):
-        self.wrapped.setColumnname(newname)
+    def setAttrName(self, newname):
+        self.wrapped.setAttrName(newname)
         self.evaled = False
         
     def setFparam(self, fparam):
@@ -103,8 +105,8 @@ class TreeNode(object):
     def getDepth(self):
         return self.depth
 
-    def getColumnname(self):
-        return self.wrapped.getColumnname()
+    def getAttrName(self):
+        return self.wrapped.getAttrName()
     
     def getObject(self):
         return self.wrapped.getObject()

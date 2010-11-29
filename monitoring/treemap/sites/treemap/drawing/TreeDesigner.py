@@ -1,13 +1,16 @@
 '''
 Created on Jul 7, 2010
-additonal properties that will be set for nodes:
+Sets design and web interface related properties for each node:
 
-headertext
-headertext.isbold
-htmlinfotext
-fillcolor
-level
-radiallight {'brightness': b, 'hue':h, 'opacity': o }
+headertext - text string to show in the rectangle header
+headertextisbold - defines if the header text should be bold
+htmltooltiptext - defines the tooltip text for that node
+fillcolor - color the rectangle should be filled with
+level - level inside of the data tree (root is 0, ascending)
+radiallight {'brightness': b, 'hue':h, 'opacity': o } - defines brightness, hue and opacity of the "light" shining at the rectangle
+
+If a property is not available, there is a hardcoded default value
+
 @author: kblaszcz
 '''
 from sites.tools.ColorFunctions import *
@@ -49,7 +52,7 @@ class SquaredTreemapDesigner(object):
         self.inbordersize = self.design_properties.getProperty('inbordersize')
         self.headerfontsize = self.design_properties.getProperty('headerfontsize')
         self.radiallightbrightness = self.design_properties.getProperty('radiallightbrightness')
-        self.headertextisbold = self.design_properties.getProperty('headertext.isbold')
+        self.headertextisbold = self.design_properties.getProperty('headertextisbold')
 
     def designTreemap(self):
         inbordersize = self.inbordersize
@@ -63,7 +66,7 @@ class SquaredTreemapDesigner(object):
         self.setStrokeColor(root)
         self.setRadialLight(root)
         self.setHeaderText(root)
-        self.setHtmlInfoText(root)
+        self.setToolTipInfoText(root)
         self.setHeaderTextIsbold(root)
         
         self.designRecursion(0+1)
@@ -79,7 +82,7 @@ class SquaredTreemapDesigner(object):
             self.setStrokeColor(child)          
             self.setRadialLight(child)
             self.setHeaderText(child)
-            self.setHtmlInfoText(child)
+            self.setToolTipInfoText(child)
             self.setHeaderTextIsbold(child)
             
             self.vtree.traverseInto(child)
@@ -114,15 +117,15 @@ class SquaredTreemapDesigner(object):
             
     def setHeaderTextIsbold(self, vnode):
         try:
-            vnode.setProperty('headertext.isbold', self.metricslinkage.getLinkedValue('headertext.isbold', vnode))
+            vnode.setProperty('headertextisbold', self.metricslinkage.getLinkedValue('headertextisbold', vnode))
         except Exception, e:
-            vnode.setProperty('headertext.isbold', self.headertextisbold)
+            vnode.setProperty('headertextisbold', self.headertextisbold)
             
-    def setHtmlInfoText(self, vnode):
+    def setToolTipInfoText(self, vnode):
         try:
-            vnode.setProperty('htmlinfotext', self.metricslinkage.getLinkedValue('htmlinfotext', vnode))
+            vnode.setProperty('htmltooltiptext', self.metricslinkage.getLinkedValue('htmltooltiptext', vnode))
         except Exception, e:
-            vnode.setProperty('htmlinfotext', vnode.getProperty('treenode').getObject().__str__())
+            vnode.setProperty('htmltooltiptext', vnode.getProperty('treenode').getObject().__str__())
         
     def setFillColor(self, vnode):
         try:

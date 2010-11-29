@@ -1,3 +1,7 @@
+'''
+Basic implementation of a tree
+@author: kblaszcz
+'''
 
 from sites.treemap.objecttree.TreeNode import TreeNode
 import networkx as nx
@@ -5,7 +9,7 @@ import warnings
 
 class BasicTree(object):
     '''
-    you insert your model instances, but you receive TreeNode Objects!
+    you insert your model instances, but you read TreeNode Objects!
     create and traverse the Object tree
     use traveseToRoot() to restore the traversal position
     '''

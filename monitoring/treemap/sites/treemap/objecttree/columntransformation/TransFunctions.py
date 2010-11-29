@@ -1,6 +1,8 @@
 '''
 Created on May 11, 2010
 
+Definitions how to turn an object attribute of specific Type into a number
+
 @author: kblaszcz
 '''
 import warnings

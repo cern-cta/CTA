@@ -1,6 +1,11 @@
 '''
 Created on Sep 16, 2010
 
+PostProcessors apply additional processing on metric values.
+
+For example the DefaultInversePostProcessor makes big values small and small values big.
+This enables to generate treemaps where the smallest values are displayed as the biggest.
+
 @author: kblaszcz
 '''
 import exceptions

@@ -7,7 +7,8 @@ model the node is related to + specific node property (ie. text in the header) -
 MetricsLinker mlinker
 mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
 
-You can find all available properties in TreeMapProperties and TreeDesigner
+All available ViewNode properties like 'headertext' are set by TreeBuilder and TreeCalculators.
+See there for further description
 
 @author: kblaszcz
 '''
