@@ -21,14 +21,15 @@ from sites.dirs.DateOption import DateOption
 from sites.dirs.OptionsReader import OptionsReader
 from sites.dirs.SpinnerOption import SpinnerOption
 from sites.dirs.models import *
+from sites.tools.GarbageDeleters import deleteOldImageFiles
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import *
 from sites.treemap.defaultproperties.TreeMapProperties import *
 from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
+from sites.treemap.drawing.metricslinking.AttributeTranslators import *
 from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from sites.treemap.drawing.metricslinking.ViewNodeDimensions import *
-from sites.treemap.drawing.metricslinking.AttributeTranslators import *
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeBuilder import TreeBuilder
 from sites.treemap.objecttree.TreeRules import LevelRules
@@ -48,6 +49,7 @@ def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
 def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
+    deleteOldImageFiles(60*60*24*5)
     print options
     time = datetime.datetime.now()
     presetid = int(presetid)
