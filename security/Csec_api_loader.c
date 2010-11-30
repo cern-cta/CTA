@@ -36,6 +36,7 @@
 #include <dlfcn.h>
 
 #include "Csec.h"
+#include "patchlevel.h"
 
 #define _CSEC_CALLS_PLUGIN
 #include "Csec_plugin.h"
@@ -277,9 +278,9 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
     Csec_trace(func, "Could not find library in linked list. Will try to load it\n");
 
     /* Creating the library name */
-    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s", ctx->protocols[ctx->current_protocol].id);
+    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s.so.%d.%d",
+             ctx->protocols[ctx->current_protocol].id, MAJORVERSION, MINORVERSION);
     strcpy(filename_thread,filename);
-    strcat(filename,".so");
     strcat(filename_thread,"_thread.so");
 
     handle = NULL;
