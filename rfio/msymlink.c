@@ -155,7 +155,7 @@ static int rfio_smsymlink(int s,
   }
   nbuf = (char *) malloc( status ) ;
   if ( nbuf == NULL ) {
-    TRACE(3, "rfio", "smsymlink:  malloc () failed");
+    TRACE(3, "rfio", "smsymlink: malloc () failed");
     rfio_symend_this(s,1);
     return(-1);
   }
