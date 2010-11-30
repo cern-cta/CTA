@@ -591,7 +591,7 @@ sub unblock_stuck_files ()
         # if it's a file we can do something. 
         if ( $entry{type} eq "file" ) {
 	    # check the migration status and compare checksums.
-            if (($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
+            if ($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in rfcpied state.\n";
                 # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
@@ -716,7 +716,7 @@ sub poll_moving_entries ( $$$ )
 	}
         sleep ( $poll_interval );
     }
-    /* All the expected movements completed. Done successfully */
+    # All the expected movements completed. Done successfully
     if (count_to_be_moved() == 0 ) {
 	print "t=".elapsed_time()."s. All expected moves completed.\n";
         return;
