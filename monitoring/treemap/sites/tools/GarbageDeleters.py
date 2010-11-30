@@ -16,4 +16,16 @@ def deleteOldImageFiles(seconds):
         ageinseconds = timediff.seconds + timediff.days * 24*60*60
         if ageinseconds > seconds:
             os.remove(imagedir + '/' + file)
+            
+def deleteOldStatusFiles(seconds):
+    statusdir = settings.LOCAL_APACHE_DICT+settings.REL_STATUS_DICT
+    files = os.listdir(statusdir)
+    for file in files:
+        accessed = os.stat(statusdir + '/' + file)[stat.ST_ATIME]
+        accessedtimetuple = time.localtime(accessed)
+        timeaccessed = datetime.datetime(accessedtimetuple[0], accessedtimetuple[1],accessedtimetuple[2],accessedtimetuple[3],accessedtimetuple[4], accessedtimetuple[5], accessedtimetuple[6])
+        timediff = datetime.datetime.now() - timeaccessed
+        ageinseconds = timediff.seconds + timediff.days * 24*60*60
+        if ageinseconds > seconds:
+            os.remove(statusdir + '/' + file)
     

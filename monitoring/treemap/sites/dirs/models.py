@@ -30,7 +30,46 @@ import datetime
 import profile
 #!!!sites.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 
-class Dirs(models.Model):
+
+class ModelInterface(object):
+    
+    def __init__(self, *args, **kwargs):
+        pass
+        
+    def __unicode__(self):
+        raise Exception("__unicode__ not implemented!")
+    
+    def __str__(self):
+        raise Exception("__str__ not implemented!")
+    
+    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
+    def __hash__(self):
+        raise Exception("__hash__ not implemented!")
+        
+    def getUserFriendlyName(self):
+        raise Exception("getUserFriendlyName not implemented!")
+    
+    #defines how to find an object, no matter in what process or physical address
+    def getIdReplacement(self):
+        raise Exception("getIdReplacement not implemented!")
+    
+    #finds the closest Object in the tree if the requested one doesn't exist
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+        raise Exception("findObjectByIdReplacementSuffix not implemented!")
+
+    def getNaviName(self):
+        raise Exception("getNaviName not implemented!")
+    
+def lookForMissingNonInterfaceImplementations(modelname):
+    #for now some nonsense here
+    try:
+        print globals()[modelname].__dict__["getChildren"]
+        print "getChildren!"
+    except KeyError:
+        pass
+        
+
+class Dirs(models.Model, ModelInterface):
     fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0, primary_key=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='dirs_set', db_column='parent')#models.DecimalField(max_digits=127, decimal_places=0, )
     name = models.CharField(max_length=255, blank=True)
@@ -78,6 +117,9 @@ class Dirs(models.Model):
     
     def __str__(self):
         return self.fullname
+    
+    def __hash__(self):
+        return models.Model.__hash__(self)
     
 #   not used
     def getDirsOf(self, id):
@@ -273,7 +315,7 @@ def getDirByName(dirname):
                 node = child
     raise NoDataAvailableError ("no such object")
         
-class CnsFileMetadata(models.Model):
+class CnsFileMetadata(models.Model, ModelInterface):
     fileid = models.DecimalField(max_digits=127, decimal_places=0, primary_key=True)
     parent_fileid = models.ForeignKey('Dirs', blank=True, null=True, db_column='parent_fileid')#models.DecimalField(unique=True, null=True, max_digits=127, decimal_places=0, blank=True)
     name = models.CharField(unique=True, max_length=255, blank=True)
@@ -300,6 +342,9 @@ class CnsFileMetadata(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def __hash__(self):
+        return models.Model.__hash__(self)
     
     def hasAnyChildren(self):
         return False
@@ -379,7 +424,7 @@ CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
 
 CnsFileMetadata.metricattributes = []
 
-class Requestsatlas(models.Model):
+class Requestsatlas(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
@@ -484,7 +529,7 @@ Requestsatlas.treeprops = {'start': None, 'stop': None}
 Requestsatlas.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestsatlas.stop = datetime.datetime.now() #time relative to now
 
-class Requestscms(models.Model):
+class Requestscms(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
@@ -589,7 +634,7 @@ Requestscms.treeprops = {'start': None, 'stop': None}
 Requestscms.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestscms.stop = datetime.datetime.now() #time relative to now
 
-class Requestsalice(models.Model):
+class Requestsalice(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
@@ -694,7 +739,7 @@ Requestsalice.treeprops = {'start': None, 'stop': None}
 Requestsalice.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestsalice.stop = datetime.datetime.now() #time relative to now
 
-class Requestslhcb(models.Model):
+class Requestslhcb(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)
@@ -799,7 +844,7 @@ Requestslhcb.treeprops = {'start': None, 'stop': None}
 Requestslhcb.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestslhcb.stop = datetime.datetime.now() #time relative to now
 
-class Requestspublic(models.Model):
+class Requestspublic(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
     timestamp = models.DateField(blank=True)
     reqid = models.CharField(max_length=36, primary_key=True)

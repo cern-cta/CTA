@@ -21,7 +21,8 @@ from sites.dirs.DateOption import DateOption
 from sites.dirs.OptionsReader import OptionsReader
 from sites.dirs.SpinnerOption import SpinnerOption
 from sites.dirs.models import *
-from sites.tools.GarbageDeleters import deleteOldImageFiles
+from sites.tools.GarbageDeleters import deleteOldImageFiles, \
+    deleteOldStatusFiles
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import *
 from sites.treemap.defaultproperties.TreeMapProperties import *
@@ -49,7 +50,7 @@ def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
 def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
-    deleteOldImageFiles(60*60*24*5)
+    cleanGarbageFilesRandomly(60*60*24*5, 10)
     print options
     time = datetime.datetime.now()
     presetid = int(presetid)
@@ -732,3 +733,15 @@ def getStatusFileNameFromCookie(request):
     except:
         pass
     return statusfilename
+
+#deletes old Files if the divisor results in 0 by accident (randomly)
+#the more traffic, the higher the probability that someone hits the right time and triggers the cleaning
+#the random cleaning is perfomed because 
+#-it doesn't make sense to do it every time, it just should be done somewhen before the harddrive gets full
+#-a cron job would need to know the directories, and if they change in settings.py, you could forget to change the cron job
+def cleanGarbageFilesRandomly(imagetresholdage, statusfiletresholdage):
+    if (datetime.datetime.now().second % 20) == 0:
+        deleteOldImageFiles(imagetresholdage)
+    #probability of cleaning status files should be low, because they only remain undeleted if a view doesn't finish execution
+    if (datetime.datetime.now().second % 59) == 0:    
+        deleteOldStatusFiles(statusfiletresholdage)
