@@ -579,7 +579,7 @@ sub check_remote_entries ()
 # No return values, but update the pending files repository as the calles will repoll in this list (finding it empty if all went well).
 sub unblock_stuck_files ()
 {
-    my $dbh = shift;
+    my $dbh;
     for  my $i ( 0 .. scalar (@remote_files) - 1 ) {
         my %entry = %{$remote_files[$i]};
         # check presence
@@ -592,6 +592,7 @@ sub unblock_stuck_files ()
         if ( $entry{type} eq "file" ) {
 	    # check the migration status and compare checksums.
             if ($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
+		if (!defined $dbh) { $dbh = open_db(); }
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in rfcpied state.\n";
                 # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
@@ -639,6 +640,7 @@ sub unblock_stuck_files ()
                 $remote_files[$i]->{status} = "deleted stuck file (was ".$entry{status}.")";
             # check the invalidation status
 	    } elsif ($entry{status} eq "invalidation requested" ) {
+		if (!defined $dbh) { $dbh = open_db(); }
 		if ( check_invalid $entry{name} )  {
                     $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
