@@ -148,9 +148,7 @@ sub main ()
     exit 0;
 }
 
-# Inject single and dual tape copies files, wait for them to be migrated,
-# stager_rm them and then recall them. Eventually, drop them.
-sub goodDaySingleAndDualCopyTest ( $$ )
+sub goodDayFileCreation ( $$ )
 {
     my ( $seed_index, $file_number ) = ( shift, shift);
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
@@ -160,8 +158,7 @@ sub goodDaySingleAndDualCopyTest ( $$ )
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
 
-    #for my $sd (0, 1) {
-    for my $sd (1) {
+    for my $sd (0, 1) {
         for my $i (0 .. ($file_number - 1) ) {
             my $file_name="/tmp/".`uuidgen`;
             chomp $file_name;
@@ -169,6 +166,16 @@ sub goodDaySingleAndDualCopyTest ( $$ )
             CastorTapeTests::rfcp_localfile ( $local_index, $sd );
         }
     } 
+}
+
+# Inject single and dual tape copies files, wait for them to be migrated,
+# stager_rm them and then recall them. Eventually, drop them.
+sub goodDaySingleAndDualCopyTest ( $$ )
+{
+    my ( $seed_index, $file_number ) = ( shift, shift);
+    my $poll = CastorTapeTests::get_environment('poll_interval');
+    my $timeout = CastorTapeTests::get_environment('migration_timeout');
+    goodDayFileCreation ( $seed_index, $file_number );
     CastorTapeTests::poll_moving_entries ( $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
 }
 
@@ -181,7 +188,9 @@ sub badDayTests ( $$ )
 # Inject file right before transition from one running configuration to the other.
 sub preparePreTransitionBacklog ( $$ )
 {
-    # To be fleshed out.
+    my ( $seed_index, $file_number ) = ( shift, shift);
+    # For the moment, reproduce the good day without the polling.
+    goodDayFileCreation ( $seed_index, $file_number );
 }
 
 # Follow up on the files injected in the system after the configuration switchover.
@@ -202,6 +211,9 @@ sub managePostTransitionBacklog ()
 	    }
 	}
     }
+    my $poll = CastorTapeTests::get_environment('poll_interval');
+    my $timeout = CastorTapeTests::get_environment('migration_timeout');    
+    CastorTapeTests::poll_moving_entries ( $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
 }
 
 
