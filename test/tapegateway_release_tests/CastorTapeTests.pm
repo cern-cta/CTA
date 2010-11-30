@@ -573,6 +573,118 @@ sub check_remote_entries ()
     return $changed_entries;
 }
 
+# unblock_stuck_files
+# Caller got enough and timed out. We will iterate the files as in check_remote_entries and kill whatever has a pending move.
+# Report status of files as screen printouts.
+# No return values, but update the pending files repository as the calles will repoll in this list (finding it empty if all went well).
+sub unblock_stuck_files ()
+{
+    my $dbh = shift;
+    for  my $i ( 0 .. scalar (@remote_files) - 1 ) {
+        my %entry = %{$remote_files[$i]};
+        # check presence
+        my $nslsresult=`nsls -d $entry{name} 2>&1`;
+        if ( $nslsresult =~ /No such file or directory$/) {
+            die "Entry not found in name server: $entry{name}";
+        }
+	undef $nslsresult;
+        # if it's a file we can do something. 
+        if ( $entry{type} eq "file" ) {
+	    # check the migration status and compare checksums.
+            if (($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
+                print "t=".elapsed_time()."s. File ".$entry{name}." still in rfcpied state.\n";
+                # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
+                # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
+                $dbh->prepare ("DECLARE
+                                  varCastorFileId NUMBER;
+                                  varTapeCopyIds  \"numList\";
+                                  varDiskCopyIds; \"numList\";
+                                BEGIN
+                                  SELECT cf.Id FROM CastorFile cf
+                                    INTO varCastorFileId
+                                   WHERE cf.lastKnownName = :NSNAME
+                                     FOR UPDATE;
+                                     
+                                  SELECT tc.Id FROM TapeCopy tc
+                                    BULK COLLECT INTO varTapeCopyIds
+                                   WHERE tc.CastorFile = varCastorFileId
+                                     FOR UPDATE;
+                                  
+                                  SELECT dc.Id FROM TapeCopy tc
+                                    BULK COLLECT INTO varDiskCopyIds
+                                   WHERE dc.CastorFile = varCastorFileId
+                                     FOR UPDATE;
+                                     
+                                  DELETE FROM Stream2TapeCopy sttc
+                                   WHERE sttc.child in (TABLE (varTapeCopyIds));
+                                   
+                                  DELETE FROM TapeCopy tc
+                                   WHERE tc.id in (TABLE (varTapeCopyIds));
+                                   
+                                  UPDATE DiskCopy dc
+                                     SET dc.status = 0 -- DISKCOPY_STAGED
+                                   WHERE dc.castorFile IN (TABLE (varDiskCopyIds));
+                                   
+                                  COMMIT;
+                                END;");
+                $dbh->bind_param (":NSNAME", $entry{name});
+                $dbh->execute();
+                # File is now "migrated" dump it from stager...
+                `su $environment{username} -c \"stager_rm -M $entry{name}\"`;
+                # ...and from ns
+                `su $environment{username} -c \"nsrm $entry{name}\"`;
+                print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}.
+                  " forcedfully dropped. Previous state was :".
+                  $entry{status}."\n";
+                $remote_files[$i]->{status} = "deleted stuck file (was ".$entry{status}.")";
+            # check the invalidation status
+	    } elsif ($entry{status} eq "invalidation requested" ) {
+		if ( check_invalid $entry{name} )  {
+                    $dbh->prepare ("DECLARE
+                                      varCastorFileId NUMBER;
+                                      varTapeCopyIds  \"numList\";
+                                      varDiskCopyIds; \"numList\";
+                                    BEGIN
+                                      SELECT cf.Id FROM CastorFile cf
+                                        INTO varCastorFileId
+                                       WHERE cf.lastKnownName = :NSNAME
+                                         FOR UPDATE;
+                                         
+                                      SELECT tc.Id FROM TapeCopy tc
+                                        BULK COLLECT INTO varTapeCopyIds
+                                       WHERE tc.CastorFile = varCastorFileId
+                                         FOR UPDATE;
+                                      
+                                      SELECT dc.Id FROM TapeCopy tc
+                                        BULK COLLECT INTO varDiskCopyIds
+                                       WHERE dc.CastorFile = varCastorFileId
+                                         FOR UPDATE;
+                                         
+                                      DELETE FROM Stream2TapeCopy sttc
+                                       WHERE sttc.child in (TABLE (varTapeCopyIds));
+                                       
+                                      DELETE FROM TapeCopy tc
+                                       WHERE tc.id in (TABLE (varTapeCopyIds));
+                                       
+                                      DELETE FROM DiskCopy dc
+                                       WHERE dc.castorFile IN (TABLE (varDiskCopyIds));
+                                       
+                                      DELETE FROM CastorFile cf
+                                       WHERE cf.id = varCastorFileId;
+                                       
+                                      COMMIT;
+                                    END;");
+                    $dbh->bind_param(":NSNAME", $entry{name});
+                    $dbh->execute();
+                    `su $environment{username} -c \"nsrm $entry{name}\"`;
+                    print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}." dropped via DB.\n";
+		    $remote_files[$i]->{status} = "nuked from DB after stuck rfcp";
+		}
+            }
+	}
+    }
+}
+
 # Get the number of files for which a move is expected.
 sub count_to_be_moved ()
 {
@@ -604,8 +716,16 @@ sub poll_moving_entries ( $$$ )
 	}
         sleep ( $poll_interval );
     }
+    /* All the expected movements completed. Done successfully */
     if (count_to_be_moved() == 0 ) {
 	print "t=".elapsed_time()."s. All expected moves completed.\n";
+        return;
+    }
+    # Some file are blocked. Hurray! We found errors. (It's the whole point of testing)
+    # Log'em, unblock'en (if possible) clean'em up  and carry on.
+    unblock_stuck_files();
+    if (count_to_be_moved() == 0 ) {
+	print "t=".elapsed_time()."s. WARNING. All files successfully unblocked after timeout. Carrying on.\n";
         return;
     }
     die "Timeout with ".count_to_be_moved()." files to be migrated after $timeout s.";
