@@ -592,10 +592,14 @@ sub unblock_stuck_files ()
         if ( $entry{type} eq "file" ) {
 	    # check the migration status and compare checksums.
             if ($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
-		if (!defined $dbh) { $dbh = open_db(); }
-                print "t=".elapsed_time()."s. File ".$entry{name}." still in rfcpied state.\n";
+                print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
+                my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
+                if ($nsid =~ /^\s+(\d+)/ ) {
+                        print "t=".elapsed_time()."NSFILE=".$1."\n";
+                }
                 # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
+                if (!defined $dbh) { $dbh = open_db(); }
                 $dbh->prepare ("DECLARE
                                   varCastorFileId NUMBER;
                                   varTapeCopyIds  \"numList\";
@@ -642,7 +646,12 @@ sub unblock_stuck_files ()
 	    } elsif ($entry{status} eq "invalidation requested" ) {
 		if (!defined $dbh) { $dbh = open_db(); }
 		if ( check_invalid $entry{name} )  {
-                    $dbh->prepare ("DECLARE
+                print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
+                my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
+                if ($nsid =~ /^\s+(\d+)/ ) {
+                        print "t=".elapsed_time()."NSFILE=".$1."\n";
+                }
+                $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
                                       varTapeCopyIds  \"numList\";
                                       varDiskCopyIds; \"numList\";
@@ -736,12 +745,13 @@ sub poll_moving_entries ( $$$ )
 
 # Collection of special functions which introduce broken structures in the system 
 
-# rfcp file, but give it a special traetement to asses the behaviour of the migration with bad/broken files
+# rfcp file, but give it a special traetement to assess the behaviour of the migration with bad/broken files
+# Do nothing if the string is not right. This will allow to decide the fate of the file at creation
+# and let if go through 
 sub rfcp_localfile_break ( $$ )
 {
-    my $breaking_type = shift;
-    die "TODO";
-    if ($breaking_type eq "missing castorfile") {
+    my ($dbh, $breaking_type) = (shift, shift);
+    if ($breaking_type eq "missing castorfile on rfcp") {
 	
     }
 }
