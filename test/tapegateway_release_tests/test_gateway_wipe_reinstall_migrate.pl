@@ -116,9 +116,8 @@ sub main ()
     print "Switched to new schema with rtcpclientd =============\n";
     
     # First iteration of the test
-    goodDaySingleAndDualCopyTest ($seed_index, $file_number);
-    badDayTests ($seed_index, $file_number);
-    preparePreTransitionBacklog ($seed_index, $file_number);
+    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number);
+    preparePreTransitionBacklog ( $seed_index, $file_number);
      
     # Switch to tape gateway
     CastorTapeTests::stopAndSwitchToTapeGatewayd ( $dbh );
@@ -128,8 +127,7 @@ sub main ()
 
     # Second iteration of the test
     managePostTransitionBacklog();
-    goodDaySingleAndDualCopyTest ($seed_index, $file_number);    
-    badDayTests ($seed_index, $file_number);
+    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number);    
     preparePreTransitionBacklog ($seed_index, $file_number);
 
     # Switch back to tape gateway.
@@ -140,8 +138,7 @@ sub main ()
 
     # Fire 3rd iteration of the test
     managePostTransitionBacklog();
-    goodDaySingleAndDualCopyTest ($seed_index, $file_number);
-    badDayTests ($seed_index, $file_number);
+    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number);
 
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
     print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
@@ -168,22 +165,42 @@ sub goodDayFileCreation ( $$ )
     } 
 }
 
+# Inject error conditions to chekc on the reactions of the tape system
+sub badDayFileCreation ( $$$ )
+{
+    my ( $dbh, $seed_index, $file_number ) = ( shift, shift, shift);
+    my $error_index = 0;
+    my @error_list = ( "missing ns entry on partial migration" );
+    my $castor_directory = CastorTapeTests::get_environment('castor_directory');
+    my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
+    my $dual_subdir = CastorTapeTests::get_environment('castor_dual_subdirectory');
+    my $username = CastorTapeTests::get_environment('username');
+    my $poll = CastorTapeTests::get_environment('poll_interval');
+    my $timeout = CastorTapeTests::get_environment('migration_timeout');
+
+    for my $sd (0, 1) {
+        for my $i (0 .. ($file_number - 1) ) {
+            my $file_name="/tmp/".`uuidgen`;
+            chomp $file_name;
+            my $local_index = CastorTapeTests::make_localfile( $seed_index, $file_name );
+            CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $sd );
+        }
+    } 
+}
+
 # Inject single and dual tape copies files, wait for them to be migrated,
 # stager_rm them and then recall them. Eventually, drop them.
-sub goodDaySingleAndDualCopyTest ( $$ )
+sub SingleAndDualCopyTest ( $$$ )
 {
-    my ( $seed_index, $file_number ) = ( shift, shift);
+    my ( $dbh, $seed_index, $file_number ) = ( shift, shift);
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
     goodDayFileCreation ( $seed_index, $file_number );
+    badDayFileCreation ( $dbh,  $seed_index, $file_number );
     CastorTapeTests::poll_moving_entries ( $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
 }
 
-# Inject error conditions to chekc on the reactions of the tape system
-sub badDayTests ( $$ )
-{
-    # To be fleshed out.
-}
+
 
 # Inject file right before transition from one running configuration to the other.
 sub preparePreTransitionBacklog ( $$ )

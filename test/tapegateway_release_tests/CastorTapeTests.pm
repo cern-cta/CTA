@@ -387,6 +387,285 @@ sub check_recalled_or_fully_migrated ( $ )
     return $stager_qry=~ /STAGED/;
 }
 
+# Utility functions for breaking the files
+
+# Missing structures: local to the file, and in-db
+remove_castorfile( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "BEGIN
+          DELETE FROM CastorFile cf
+           WHERE cf.lastKnowFileName = :NSNAME;
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_diskcopy( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varCastorFileId NUMBER;
+        BEGIN
+          SELECT cf.Id
+            INTO varCastorFileId
+            FROM CastorFile cf
+           WHERE cf.lastKnowFileName = :NSNAME;
+          DELETE FROM diskcopy dc
+           WHERE dc.castorFile = varCastorFileId;
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_filesystem( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varCastorFileId  NUMBER;
+          varFakeFSId      NUMBER;
+        BEGIN
+          SELECT cf.Id
+            INTO varCastorFileId
+            FROM CastorFile cf
+           WHERE cf.lastKnowFileName = :NSNAME;
+          SELECT ids_seq.nextval INTO varFakeFSId FROM DUAL;
+          UPDATE diskcopy dc
+             SET dc.fileSystem = varFakeFSId
+           WHERE dc.castorFile = varCastorFileId;
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_fileclass( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varFakeFCId  NUMBER;
+        BEGIN
+          SELECT ids_seq.nextval INTO varFakeFCId FROM DUAL;
+          UPDATE CastorFile cf
+             SET cf.fileClass = varFakeFSId
+           WHERE cf.lastKnowFileName = :NSNAME;
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_serviceclass( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varFakeSCId  NUMBER;
+        BEGIN
+          SELECT ids_seq.nextval INTO varFakeSCId FROM DUAL;
+          UPDATE CastorFile cf
+             SET cf.serviceClass = varFakeSCId
+           WHERE cf.lastKnowFileName = :NSNAME;
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_stream( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varStreamIds \"numList\";
+        BEGIN
+          SELECT s.id
+            BULK COLLECT INTO varStreamIds
+            FROM Stream s
+           RIGHT INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
+           RIGHT INNER JOIN TapeCopy tc ON tc.id = sttc.child
+           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnowFileName = :NSNAME;
+          DELETE FROM Stream2TapeCopy sttc 
+           WHERE sttc.parent IN (SELECT * FROM TABLE (varStreamIds));
+          DELETE FROM Stream s
+           WHERE s.id IN (SELECT * FROM TABLE (varStreamIds));
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_tapepool( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varStreamIds \"numList\";
+          varFakeTPId  NUMBER;
+        BEGIN
+          SELECT ids_seq.nextval INTO varFakeTPId FROM DUAL;
+          SELECT s.id
+            BULK COLLECT INTO varStreamIds
+            FROM Stream s
+           RIGHT INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
+           RIGHT INNER JOIN TapeCopy tc ON tc.id = sttc.child
+           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnowFileName = :NSNAME;
+          UPDATE Stream s
+             SET s.tapePool = varFakeTPId
+           WHERE s.id IN (SELECT * FROM TABLE (varStreamIds));
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_segment( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varTapeCopyIds \"numList\";
+        BEGIN
+          SELECT tc.id
+            BULK COLLECT INTO varTapeCopyIds
+            FROM TapeCopy tc
+           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnowFileName = :NSNAME;
+          DELETE FROM Segment seg
+           WHERE seg.copy IN (SELECT * FROM TABLE (varTapeCopyIds));
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_tape( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "DECLARE
+          varTapeIds \"numList\";
+        BEGIN
+          SELECT tc.tape
+            BULK COLLECT INTO varTapeIds
+            FROM TapeCopy tc
+           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnowFileName = :NSNAME;
+          DELETE FROM Tape t
+           WHERE t.id IN (SELECT * FROM TABLE (varTapeIds));
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+remove_ns_entry( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    `su $environment{username} -c \"nsrm $name\"`;
+}
+
+# Broken parameters: local to the file and on outside services
+corrupt_checksum( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    `su $environment{username} -c \"nssetchecksum -n AD -k deadbeef $name\"`;
+}
+
+corrupt_size( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    `su $environment{username} -c \"nssetchecksum -x 1337 $name\"`;
+}
+
+corrupt_segment( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    `su $environment{username} -c \"nssetsegment -d $name\"`;
+}
+
+# System-wide breakings (triggered during the lifecycle if the file)
+break_diskserver( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    my $stmt = $dbh->prepare(
+       "BEGIN
+          DELETE FROM DiskServer ds
+           WHERE ds.id IN (
+                SELECT fs.diskServer
+                  BULK COLLECT INTO varDiskServerIds
+                  FROM FileSystem fs
+                 RIGHT INNER JOIN DiskCopy dc ON dc.fileSystem = fs.id
+                 RIGHT INNER JOIN Castorfile cf ON cf.id = dc.castorFile
+                 WHERE cf.lastKnowFileName = :NSNAME)
+          COMMIT;
+        END;");
+    $stmt->bind_param(":NSNAME", $name);
+    $stmt->execute();
+}
+
+error_injector ( $$S )
+{
+    my ( $dbh, $index, $stage ) = ( shift, shift, shift );
+    my %file = $remote_files[$index];
+    
+    if ($file{breaking_type} =~ /on ${stage}$/ && !$file{breaking_done}) {
+        # Missing structures: local to the file, and in-db
+        if ($breaking_type =~ /^missing castorfile/) {
+             remove_castorfile($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing diskcopy/) {
+             remove_diskcopy($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing filesystem/) {
+             remove_filesystem($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing fileclass/) {
+             remove_fileclass($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing serviceclass/) {
+             remove_serviceclass($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing stream/) {
+             remove_stream($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing tapepool/) {
+             remove_tapepool($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing segment/) {
+             remove_segment($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing tape/) {
+             remove_tape($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^missing ns entry/) {
+             remove_ns_entry($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        # Broken parameters: local to the file and on outside services
+        } elsif ($breaking_type =~ /^wrong checksum/) {
+             corrupt_checksum($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^wrong size/) {
+             corrupt_size($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($breaking_type =~ /^wrong segment/) {
+             corrupt_segment($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        # System-wide breakings (triggered during the lifecycle if the file)
+        } elsif ($breaking_type =~ /^broken diskserver/) {
+             break_diskserver($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        }
+    }
+}
 
 # remote files statuses:
 # => rfcped -> partially migrated -> migrated => invalidation requested -> on tape => being recalled -> recalled
@@ -431,35 +710,84 @@ sub rfcp_localfile ( $$ )
     }
 }
 
-# Remove staged files from the stager so they can be recalled.
-sub cleanup_migrated ()
+# rfcp file, but give it a special flag that decides where it will break from the beginning. Then all the following handling
+# functions will be able to inject the problem if they have to.
+# finally, manage the error handling for the rfcp step (if needed).
+sub rfcp_localfile_break ( $$$ )
 {
+    my ($dbh, $is_dual_copy, $breaking_type) = (shift, shift, shift);
+    my $dest = $environment{castor_directory};
+    if ( $is_dual_copy ) { 
+        $dest .= $environment{castor_dual_subdirectory};
+    } else {
+        $dest .= $environment{castor_single_subdirectory};
+    }
+    my $local = $local_files[$local_index]->{name};
+    my $remote = $dest;
+    if ( $local =~ /\/([^\/]*)$/ ) {
+        $remote .= "/".$1;
+    } else {
+        die "Wrong file path in rfcp_localfile";
+    }
+    my $rfcp_ret=`su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} rfcp $local $remote\" 2>&1`;
+    my %remote_entry = ( 'name' => $remote, 
+                         'type' => "file",
+                         'size' => $local_files[$local_index]->{size},
+                         'adler32' => $local_files[$local_index]->{adler32},
+                         'status' => 'rfcped' );
+    if (defined $breaking_type) {
+        $remote_entry{breaking_type} = $breaking_type;
+        $remote_entry{breaking_done} = 0;
+    }
+    # Push new element in array and record index
+    my $remote_index = (push @remote_files, \%remote_entry) -1;
+    print "t=".elapsed_time()."s. rtcp'ed $local => $remote:\n";
+    for ( split /^/, $rfcp_ret ) {
+	if ( ! /bytes in/ ) {
+	    print $_."\n";
+	}
+    }
+    
+    # File creation is done. We might have to deal with breaking the file already
+    error_injector ( $dbh, $remote_index, "rfcp" );
+}
+
+# Remove staged files from the stager so they can be recalled.
+# Inject errors at this stage if requested.
+sub cleanup_migrated ( $ )
+{
+    my $dbh = shift;
     for ( my $i =0; $i < scalar (@remote_files); $i++ ) {
 	my %f = %{$remote_files[$i]};
 	if ( $f{type} eq "file" && $f{status} eq "migrated" ) {
 	    `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} stager_rm -M $f{name}\"`;
 	    $remote_files[$i]->{status} = "invalidation requested";
 	    print "t=".elapsed_time()."s. Removed $f{name} (was migrated) from stager.\n";
+            
+            error_injector ( $dbh, $i, "invalidation" );
 	}
     }
 }
 
 # Stager_get file
-sub stager_reget_from_tape ()
+sub stager_reget_from_tape ( $ )
 {
+    my $dbh = shift;
     for ( my $i =0; $i < scalar (@remote_files); $i++ ) {
 	my %f = %{$remote_files[$i]};
 	if ( $f{type} eq "file" && $f{status} eq "on tape" ) {
 	    `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} stager_get -M $f{name}\"`;
 	    $remote_files[$i]->{status} = "being recalled";
 	    print "t=".elapsed_time()."s. Initiated recall for $f{name}.\n";
+            
+            error_injector ( $dbh, $i, "reget" );
 	}
     }    
 }
 
 # Check remote entries: check presence (should be always true) and then status of all files listed in remote files list
 # returns true is any file has changed status, allowig a caller function to tiem out on "nothing moves anymore"
-sub check_remote_entries ()
+sub check_remote_entries ( $ )
 {
     my $dbh = shift;
     my $changed_entries = 0;
@@ -497,6 +825,7 @@ sub check_remote_entries ()
 			print "ERROR: checksum mismatch beween remote and locally stored for $entry{name}: $local_checksum != $remote_checksum\n";
 		    }
                     $changed_entries ++;
+                    error_injector ( $dbh, $i, "partial migration" );
                 }
 	    # check the number of tape copies after the full migration
 	    } elsif ( $entry{status} eq "partially migrated" ) {
@@ -524,13 +853,15 @@ sub check_remote_entries ()
 			print "ERROR: Failed to extract class for file ".$entry{name}."\n";
 		    }
 		    $changed_entries ++;
-		}
+                    error_injector ( $dbh, $i, "migrated" );
+                    }
 	    # check the invalidation status
 	    } elsif ($entry{status} eq "invalidation requested" ) {
 		if ( check_invalid $entry{name} )  {
 		    print "t=".elapsed_time()."s. File ".$entry{name}." reported as invalid by the stager.\n";
 		    $remote_files[$i]->{status} = "on tape";
 		    $changed_entries ++;
+                    error_injector ( $dbh, $i, "on tape" );
 		}
 	    # check the recall status, rfcp in and compare checksums.
             } elsif ($entry{status} eq "being recalled" ) {
@@ -566,7 +897,8 @@ sub check_remote_entries ()
 		    unlink $local_copy;
 		    print "t=".elapsed_time()."s. rfcped ".$entry{name}." back and checked it.\n";
 		    $changed_entries ++;
-		}
+                    error_injector ( $dbh, $i, "recalled" );
+                }
 	    }
 	}
     }
@@ -715,20 +1047,20 @@ sub count_to_be_moved ()
 }
 
 # Check that all the files have migrated 
-sub poll_moving_entries ( $$$ )
+sub poll_moving_entries ( $$$$ )
 {
-    my ( $poll_interval, $timeout, $options ) = ( shift, shift, shift );
+    my ( $dbh, $poll_interval, $timeout, $options ) = ( shift, shift, shift );
     my $starttime = time();
     while ( count_to_be_moved() > 0 && ((time() - $starttime) < $timeout) ) {
-        if ( check_remote_entries () ) {
+        if ( check_remote_entries ( $dbh ) ) {
             print "t=".elapsed_time()."s. Saw at least one new migration...\n";
             $starttime = time();
         }
 	if ( $options =~ /cleanup_migrated/ ) {
-	    cleanup_migrated();
+	    cleanup_migrated( $dbh );
 	}
 	if ( $options =~ /stager_reget_from_tape/ ) {
-	    stager_reget_from_tape();
+	    stager_reget_from_tape( $dbh );
 	}
         sleep ( $poll_interval );
     }
@@ -740,41 +1072,13 @@ sub poll_moving_entries ( $$$ )
     # Some file are blocked. Hurray! We found errors. (It's the whole point of testing)
     # Log'em, unblock'en (if possible) clean'em up  and carry on.
     unblock_stuck_files();
+    # Sleep a little bit to let the stager finish possible pending removals.
+    sleep (5);
     if (count_to_be_moved() == 0 ) {
 	print "t=".elapsed_time()."s. WARNING. All files successfully unblocked after timeout. Carrying on.\n";
         return;
     }
     die "Timeout with ".count_to_be_moved()." files to be migrated after $timeout s.";
-}
-
-
-# Collection of special functions which introduce broken structures in the system 
-
-# rfcp file, but give it a special traetement to assess the behaviour of the migration with bad/broken files
-# Do nothing if the string is not right. This will allow to decide the fate of the file at creation
-# and let if go through 
-sub rfcp_localfile_break ( $$ )
-{
-    my ($dbh, $breaking_type) = (shift, shift);
-    if ($breaking_type eq "missing castorfile on rfcp") {
-	
-    }
-}
-
-sub cleanup_migrated_break ()
-{
-    die "TODO";
-}
-
-sub stager_reget_from_tape_break ()
-{
-    die "TODO";
-}
-
-# Breaking can be introduced on the occasion of a transition detection as well.
-sub check_remote_entries_break ()
-{
-    die "TODO";
 }
 
 # Returns the value of the specified ORASTAGERCONFIG parameter.
