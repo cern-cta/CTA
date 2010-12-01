@@ -600,40 +600,42 @@ sub unblock_stuck_files ()
                 # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
                 if (!defined $dbh) { $dbh = open_db(); }
-                $dbh->prepare ("DECLARE
+                my $stmt = $dbh->prepare ("DECLARE
                                   varCastorFileId NUMBER;
                                   varTapeCopyIds  \"numList\";
-                                  varDiskCopyIds; \"numList\";
+                                  varDiskCopyIds  \"numList\";
                                 BEGIN
-                                  SELECT cf.Id FROM CastorFile cf
-                                    INTO varCastorFileId
-                                   WHERE cf.lastKnownName = :NSNAME
+                                  SELECT cf.Id INTO varCastorFileId
+                                    FROM CastorFile cf
+                                   WHERE cf.lastKnownFileName = :NSNAME
                                      FOR UPDATE;
                                      
-                                  SELECT tc.Id FROM TapeCopy tc
+                                  SELECT tc.Id
                                     BULK COLLECT INTO varTapeCopyIds
+                                    FROM TapeCopy tc
                                    WHERE tc.CastorFile = varCastorFileId
                                      FOR UPDATE;
                                   
-                                  SELECT dc.Id FROM TapeCopy tc
+                                  SELECT dc.Id
                                     BULK COLLECT INTO varDiskCopyIds
+                                    FROM DiskCopy dc
                                    WHERE dc.CastorFile = varCastorFileId
                                      FOR UPDATE;
                                      
                                   DELETE FROM Stream2TapeCopy sttc
-                                   WHERE sttc.child in (TABLE (varTapeCopyIds));
+                                   WHERE sttc.child in (SELECT * FROM TABLE (varTapeCopyIds));
                                    
                                   DELETE FROM TapeCopy tc
-                                   WHERE tc.id in (TABLE (varTapeCopyIds));
+                                   WHERE tc.id in (SELECT * FROM TABLE (varTapeCopyIds));
                                    
                                   UPDATE DiskCopy dc
                                      SET dc.status = 0 -- DISKCOPY_STAGED
-                                   WHERE dc.castorFile IN (TABLE (varDiskCopyIds));
+                                   WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
                                    
                                   COMMIT;
                                 END;");
-                $dbh->bind_param (":NSNAME", $entry{name});
-                $dbh->execute();
+                $stmt->bind_param (":NSNAME", $entry{name});
+                $stmt->execute();
                 # File is now "migrated" dump it from stager...
                 `su $environment{username} -c \"stager_rm -M $entry{name}\"`;
                 # ...and from ns
@@ -649,44 +651,46 @@ sub unblock_stuck_files ()
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
                 my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
                 if ($nsid =~ /^\s+(\d+)/ ) {
-                        print "t=".elapsed_time()."NSFILE=".$1."\n";
+                        print "t=".elapsed_time()."s. NSFILE=".$1."\n";
                 }
-                $dbh->prepare ("DECLARE
+                my $stmt = $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
                                       varTapeCopyIds  \"numList\";
-                                      varDiskCopyIds; \"numList\";
+                                      varDiskCopyIds  \"numList\";
                                     BEGIN
-                                      SELECT cf.Id FROM CastorFile cf
-                                        INTO varCastorFileId
-                                       WHERE cf.lastKnownName = :NSNAME
+                                      SELECT cf.Id INTO varCastorFileId
+                                        FROM CastorFile cf
+                                       WHERE cf.lastKnownFileName = :NSNAME
                                          FOR UPDATE;
                                          
-                                      SELECT tc.Id FROM TapeCopy tc
+                                      SELECT tc.Id
                                         BULK COLLECT INTO varTapeCopyIds
+                                        FROM TapeCopy tc
                                        WHERE tc.CastorFile = varCastorFileId
                                          FOR UPDATE;
                                       
-                                      SELECT dc.Id FROM TapeCopy tc
+                                      SELECT dc.Id
                                         BULK COLLECT INTO varDiskCopyIds
+                                        FROM DiskCopy dc
                                        WHERE dc.CastorFile = varCastorFileId
                                          FOR UPDATE;
                                          
                                       DELETE FROM Stream2TapeCopy sttc
-                                       WHERE sttc.child in (TABLE (varTapeCopyIds));
+                                       WHERE sttc.child IN (SELECT * FROM TABLE (varTapeCopyIds));
                                        
                                       DELETE FROM TapeCopy tc
-                                       WHERE tc.id in (TABLE (varTapeCopyIds));
+                                       WHERE tc.id IN (SELECT * FROM TABLE (varTapeCopyIds));
                                        
                                       DELETE FROM DiskCopy dc
-                                       WHERE dc.castorFile IN (TABLE (varDiskCopyIds));
+                                       WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
                                        
                                       DELETE FROM CastorFile cf
                                        WHERE cf.id = varCastorFileId;
                                        
                                       COMMIT;
                                     END;");
-                    $dbh->bind_param(":NSNAME", $entry{name});
-                    $dbh->execute();
+                    $stmt->bind_param(":NSNAME", $entry{name});
+                    $stmt->execute();
                     `su $environment{username} -c \"nsrm $entry{name}\"`;
                     print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}." dropped via DB.\n";
 		    $remote_files[$i]->{status} = "nuked from DB after stuck rfcp";
@@ -694,6 +698,7 @@ sub unblock_stuck_files ()
             }
 	}
     }
+    if ( defined $dbh ) { $dbh->disconnect(); }
 }
 
 # Get the number of files for which a move is expected.
