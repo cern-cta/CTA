@@ -1285,7 +1285,7 @@ int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
   char count_str[21];
   char size_str[21];
   char maxfileid_str[21];
-  char weigthedsum_str[21];
+  char weightedsum_str[21];
   struct sqlca sqlca;
 
   strncpy (func, "Cns_get_tapesum_by_vid", 23);
