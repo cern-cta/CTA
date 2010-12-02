@@ -3200,8 +3200,14 @@ int rtcpcld_updcFileMigrated(tape_list_t *tape,
   rc = Cstager_ITapeSvc_lockCastorFileById(tpSvc, castorFileId);
   if( rc != 0 ) {
     save_serrno = serrno;
+
     if ( iAddr  != NULL ) C_IAddress_delete(iAddr);
     if ( fileid != NULL ) free(fileid);
+
+    LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_lockCastorFileById()",
+                         Cstager_ITapeSvc_errorMsg(tpSvc),
+                         castorFileId);
+
     serrno = save_serrno;
     return(-1);
   }
