@@ -1026,6 +1026,7 @@ void castor::db::ora::OraTapeSvc::lockCastorFileById(
       m_lockCastorFileByIdStatement->setAutoCommit(false);
     }
 
+    m_lockCastorFileByIdStatement->setDouble(1, castorFileId);
     m_lockCastorFileByIdStatement->executeUpdate();
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
