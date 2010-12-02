@@ -8,12 +8,13 @@ Annex is a fake model, representing the sum of the Items which were too small to
 
 
 from django.db import connection, transaction, models
-import inspect
 from sites.tools.Inspections import *
+import inspect
+from sites.dirs.ModelInterface import ModelInterface
 
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
-class Annex(models.Model):
+class Annex(models.Model, ModelInterface):
     
     #if you rename the id you have to rename it in the hack inside of constructor, too!
     id = models.CharField(unique=True, max_length=255, blank=True, primary_key=True)#models.DecimalField(unique=True, max_digits=0, decimal_places=-127, primary_key=True, default = -1)

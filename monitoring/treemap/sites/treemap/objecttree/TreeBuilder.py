@@ -12,11 +12,11 @@ The children counting methods in models allow to see in advance if it's worth to
 
 from sites import settings
 from sites.tools.StatusTools import generateStatusFile
-from sites.treemap.objecttree.Annex import Annex
 from sites.treemap.objecttree.ObjectTree import ObjectTree
 from sites.treemap.objecttree.Postprocessors import *
 from sites.treemap.objecttree.TreeNode import TreeNode
 from sites.treemap.objecttree.TreeRules import LevelRules
+from sites.treemap.objecttree.Annex import Annex
 import inspect
 
 class TreeBuilder(object):
@@ -249,5 +249,4 @@ class TreeBuilder(object):
 def print_tabs(n):
     for i in range(n):
         print "   ",
-                
-                    
+                                     

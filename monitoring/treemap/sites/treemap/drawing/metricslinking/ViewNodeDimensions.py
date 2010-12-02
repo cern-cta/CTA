@@ -20,7 +20,7 @@ from sites.dirs.models import *
 from sites.tools.Inspections import ModelAttributeFinder
 from sites.tools.TextTools import sizeInBytes, splitText
 from sites.treemap.drawing.metricslinking.AttributeTranslators import *
-from sites.treemap.objecttree.Annex import Annex
+from sites.dirs.models import *
 from sites.treemap.viewtree.ViewNode import ViewNode
 import exceptions
 import inspect

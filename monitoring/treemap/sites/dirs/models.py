@@ -12,6 +12,10 @@ from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
 from sites import settings
 from sites.dirs.DateOption import DateOption
+from sites.dirs.ModelInterface import ModelInterface
+from sites.dirs.ModelSpecificFunctions.RequestsFunctions import \
+    generateRequestsTree, traverseToRequestInTree, \
+    findRequestObjectByIdReplacementSuffix
 from sites.errors.NoDataAvailableError import NoDataAvailableError
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import generateStatusFile
@@ -30,36 +34,6 @@ import datetime
 import profile
 #!!!sites.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 
-
-class ModelInterface(object):
-    
-    def __init__(self, *args, **kwargs):
-        pass
-        
-    def __unicode__(self):
-        raise Exception("__unicode__ not implemented!")
-    
-    def __str__(self):
-        raise Exception("__str__ not implemented!")
-    
-    #This is needed because the networkx libraray used by BasicTree uses the hash function to tell if objects are different
-    def __hash__(self):
-        raise Exception("__hash__ not implemented!")
-        
-    def getUserFriendlyName(self):
-        raise Exception("getUserFriendlyName not implemented!")
-    
-    #defines how to find an object, no matter in what process or physical address
-    def getIdReplacement(self):
-        raise Exception("getIdReplacement not implemented!")
-    
-    #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
-        raise Exception("findObjectByIdReplacementSuffix not implemented!")
-
-    def getNaviName(self):
-        raise Exception("getNaviName not implemented!")
-    
 def lookForMissingNonInterfaceImplementations(modelname):
     #for now some nonsense here
     try:
@@ -121,13 +95,6 @@ class Dirs(models.Model, ModelInterface):
     def __hash__(self):
         return models.Model.__hash__(self)
     
-#   not used
-    def getDirsOf(self, id):
-        prnt = Dirs.objects.get(pk=id)
-        deeper = prnt.depth + 1
-        children = Dirs.objects.filter(parent=id, depth = deeper,)
-        return children
-    
     def getDirs(self):
         if self.children_cached:
             return self.children
@@ -135,30 +102,14 @@ class Dirs(models.Model, ModelInterface):
             deeper = self.depth + 1
             self.children = Dirs.objects.filter(parent=self.fileid, depth = deeper)
             self.children_cached = True
-            
-#            if self.children: self.hasChildren =  True 
-#            if not self.children: self.hasChildren = False
-#        children = self.dirs_set.all(depth = deeper)
         return self.children
     
     #EXISTS is faster but not supported by Django 1.1
     #Therefore executing raw command
-    #That one is a lot slower but not Oracle specific:
+    #That one would be a lot slower but not Oracle specific:
     #    the_children = Dirs.objects.filter(parent=self.fileid).count() #.count(parent=self.fileid)[:1]
     
     #DUAL is Oracle's fake Table. It is needed to make the EXISTS Statement work, because EXISTS works only in WHERE
-    def hasChildren(self):
-        if self.children_cached:
-            if self.children: return True 
-            if not self.children: return False
-        else:
-            cursor = connection.cursor()
-            cursor.execute('SELECT 1 FROM DUAL WHERE EXISTS (SELECT 1 FROM DIRS WHERE ROWNUM <= 1 AND DIRS.parent = %s)', [self.fileid])
-            the_children = cursor.fetchone()
-#            if the_children : 
-#                self.test()
-            if the_children : return True 
-            else: return False
             
     def countDirs(self):
         if self.children_cached:
@@ -232,28 +183,10 @@ class Dirs(models.Model, ModelInterface):
             return None
         children = CnsFileMetadata.objects.filter(parent_fileid=id).extra(where=['bitand(filemode, 16384) = 0'])   #exclude(filemode=16384)
         return children
-    
-    def hasFiles(self):
-        if self.files_cached:
-            if self.files: 
-                return True 
-            if not self.files: 
-                return False
-        else:
-            cursor = connection.cursor()
-            cursor.execute('SELECT 1 FROM DUAL WHERE EXISTS (SELECT 1 FROM CNS_FILE_METADATA WHERE ROWNUM <= 1 AND CNS_FILE_METADATA.parent_fileid = %s AND bitand(filemode, 16384) = 0)', [self.fileid])
-            the_files = cursor.fetchone()
-            
-            if the_files : 
-                return True 
-            else: return False
             
     def refreshFiles(self):
         self.files_cached = False
         self.files = self.getFiles()
-        
-    def hasAnyChildren(self):
-        return self.hasChildren() or self.hasFiles()
     
     def getUserFriendlyName(self):
         return "Directory"
@@ -276,6 +209,63 @@ class Dirs(models.Model, ModelInterface):
         if dirname == '': dirname = '/castor'#if empty choose a root Directory that makes sense
         found = getDirByName(dirname)#Dirs.objects.get(fullname=dirname)
         return found
+    
+    #EXISTS is faster but not supported by Django 1.1
+    #Therefore executing raw command
+    #That one would be a lot slower but not Oracle specific:
+    #    the_children = Dirs.objects.filter(parent=self.fileid).count() #.count(parent=self.fileid)[:1]
+    
+    #DUAL is Oracle's fake Table. It is needed to make the EXISTS Statement work, because EXISTS works only in WHERE
+    def childrenMethods(self):
+        #-----------------------------------------------------------
+        def getDirs(self):
+            if self.children_cached:
+                return self.children
+            else:
+                deeper = self.depth + 1
+                self.children = Dirs.objects.filter(parent=self.fileid, depth = deeper)
+                self.children_cached = True
+            return self.children
+        
+            def countDirs(self):
+                if self.children_cached:
+                    return len(self.children)
+                else:
+                    cursor = connection.cursor()
+                    cursor.execute('SELECT count(*) FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
+                    cnt = cursor.fetchone()
+                    return cnt[0]
+        #-----------------------------------------------------------
+        def getFiles(self):
+            if self.files_cached:
+                return self.files
+            else:
+                self.files = self.getFilesOf(self.fileid)#self.cnsfilemetadata_set.all()
+                self.files_cached = True
+            return self.files
+        
+            def countFiles(self):
+                if self.files_cached:
+                    return len(self.files)
+                else:
+                    try:
+                        cursor = connection.cursor()
+                        cursor.execute('SELECT count(*) FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND NOT EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
+                        cnt = cursor.fetchone()
+                    except:
+                        print "exception!"
+                    return cnt[0]
+        
+    
+    def parentMethods(self):
+        #expensive operation if you call it too often (example: by executing profiling 243 calls made 6.5 seconds)
+        def getDirParent(self):
+            try:
+                if not self. parent_cached:
+                    self.theparent = self.parent
+                return self.theparent
+            except Dirs.DoesNotExist:
+                return self
 
 Dirs.metricattributes = []
     
@@ -346,12 +336,6 @@ class CnsFileMetadata(models.Model, ModelInterface):
     def __hash__(self):
         return models.Model.__hash__(self)
     
-    def hasAnyChildren(self):
-        return False
-    
-    def hasFiles(self):
-        return False
-    
     def countChildren(self):
         print "countChildren for files"
         return 0
@@ -411,6 +395,12 @@ class CnsFileMetadata(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+    
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -507,6 +497,12 @@ class Requestsatlas(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+    
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
     
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestsatlas.metricattributes = ['requestscount']
@@ -612,6 +608,12 @@ class Requestscms(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
     
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestscms.metricattributes = ['requestscount']
@@ -717,6 +719,12 @@ class Requestsalice(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+    
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestsalice.metricattributes = ['requestscount']
@@ -822,6 +830,12 @@ class Requestslhcb(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+    
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestslhcb.metricattributes = ['requestscount']
@@ -928,6 +942,12 @@ class Requestspublic(models.Model, ModelInterface):
                 if len(nvtext) == 0: break
                 
         return nvtext 
+    
+    def childrenMethods(self):
+        raise Exception("childrenMethods not implemented!")
+    
+    def parentMethods(self):
+        raise Exception("childrenMethods not implemented!")
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestspublic.metricattributes = ['requestscount']
@@ -953,7 +973,6 @@ Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #
 Requestspublic.stop = datetime.datetime.now() #time relative to now
 
 #this import has to be here because of circular dependency with sites.dirs.ModelSpecificFunctions.RequestsFunctions
-from sites.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
