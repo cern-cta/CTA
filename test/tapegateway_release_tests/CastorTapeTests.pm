@@ -401,6 +401,7 @@ sub remove_castorfile( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed castorfile for file: $name\n";
 }
 
 sub remove_diskcopy( $$ )
@@ -420,6 +421,7 @@ sub remove_diskcopy( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed diskcopy for file: $name\n";
 }
 
 sub remove_filesystem( $$ )
@@ -442,6 +444,7 @@ sub remove_filesystem( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed filesystem reference for file: $name\n";
 }
 
 sub remove_fileclass( $$ )
@@ -459,6 +462,7 @@ sub remove_fileclass( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed fileclass reference for file: $name\n";
 }
 
 sub remove_serviceclass( $$ )
@@ -476,6 +480,7 @@ sub remove_serviceclass( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed serviceclass reference for file: $name\n";
 }
 
 sub remove_stream( $$ )
@@ -500,6 +505,7 @@ sub remove_stream( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed stream for file: $name\n";
 }
 
 sub remove_tapepool( $$ )
@@ -525,6 +531,7 @@ sub remove_tapepool( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed tapepool reference for file: $name\n";
 }
 
 sub remove_segment( $$ )
@@ -545,6 +552,7 @@ sub remove_segment( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed segement for file: $name\n";
 }
 
 sub remove_tape( $$ )
@@ -565,12 +573,14 @@ sub remove_tape( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Removed tape for file: $name\n";
 }
 
 sub remove_ns_entry( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nsrm $name\"`;
+    print "t=".elapsed_time()."s. Removed ns entry for file: $name\n";
 }
 
 # Broken parameters: local to the file and on outside services
@@ -578,18 +588,21 @@ sub corrupt_checksum( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetchecksum -n AD -k deadbeef $name\"`;
+    print "t=".elapsed_time()."s. Corrupted checksum in ns for file: $name\n";
 }
 
 sub corrupt_size( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetchecksum -x 1337 $name\"`;
+    print "t=".elapsed_time()."s. Corrupted size in ns for file: $name\n";
 }
 
 sub corrupt_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetsegment -d $name\"`;
+    print "t=".elapsed_time()."s. Corrupted segment in ns for file: $name\n";
 }
 
 # System-wide breakings (triggered during the lifecycle if the file)
@@ -610,14 +623,17 @@ sub break_diskserver( $$ )
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
+    print "t=".elapsed_time()."s. Deleteed diskserver for file: $name\n";
 }
 
 sub error_injector ( $$$ )
 {
     my ( $dbh, $index, $stage ) = ( shift, shift, shift );
-    my %file = $remote_files[$index];
+    my %file = %{$remote_files[$index]};
     
-    if ($file{breaking_type} =~ /on ${stage}$/ && !$file{breaking_done}) {
+    if (defined $file{breaking_type} && 
+        $file{breaking_type}=~ /on ${stage}$/ && 
+	!$file{breaking_done}) {
         # Missing structures: local to the file, and in-db
         if ($file{breaking_type} =~ /^missing castorfile/) {
              remove_castorfile($dbh, $file{name});
@@ -927,7 +943,10 @@ sub unblock_stuck_files ()
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
                 my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
                 if ($nsid =~ /^\s+(\d+)/ ) {
-                        print "t=".elapsed_time()."NSFILE=".$1."\n";
+                    print "t=".elapsed_time()."s. NSFILE=".$1."\n";
+                }
+                if (defined $entry{breaking_type} && $entry{breaking_done}) {
+                    print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                 }
                 # Kill tapecopies, un queue them from stream, massage diskcopies and castorfile, stager_rm file, poll the completion of stager_rm, nsrm on top for safety...
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
@@ -983,7 +1002,10 @@ sub unblock_stuck_files ()
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
                 my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
                 if ($nsid =~ /^\s+(\d+)/ ) {
-                        print "t=".elapsed_time()."s. NSFILE=".$1."\n";
+                    print "t=".elapsed_time()."s. NSFILE=".$1."\n";
+                }
+                if (defined $entry{breaking_type} && $entry{breaking_done}) {
+                    print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                 }
                 my $stmt = $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
@@ -1049,7 +1071,7 @@ sub count_to_be_moved ()
 # Check that all the files have migrated 
 sub poll_moving_entries ( $$$$ )
 {
-    my ( $dbh, $poll_interval, $timeout, $options ) = ( shift, shift, shift );
+    my ( $dbh, $poll_interval, $timeout, $options ) = ( shift, shift, shift, shift );
     my $starttime = time();
     while ( count_to_be_moved() > 0 && ((time() - $starttime) < $timeout) ) {
         if ( check_remote_entries ( $dbh ) ) {

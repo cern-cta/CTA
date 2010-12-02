@@ -193,7 +193,7 @@ sub badDayFileCreation ( $$$ )
 # stager_rm them and then recall them. Eventually, drop them.
 sub SingleAndDualCopyTest ( $$$ )
 {
-    my ( $dbh, $seed_index, $file_number ) = ( shift, shift);
+    my ( $dbh, $seed_index, $file_number ) = ( shift, shift, shift );
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
     goodDayFileCreation ( $seed_index, $file_number );
