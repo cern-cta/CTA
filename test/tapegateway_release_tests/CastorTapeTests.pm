@@ -396,7 +396,7 @@ sub remove_castorfile( $$ )
     my $stmt = $dbh->prepare(
        "BEGIN
           DELETE FROM CastorFile cf
-           WHERE cf.lastKnowFileName = :NSNAME;
+           WHERE cf.lastKnownFileName = :NSNAME;
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
@@ -414,7 +414,7 @@ sub remove_diskcopy( $$ )
           SELECT cf.Id
             INTO varCastorFileId
             FROM CastorFile cf
-           WHERE cf.lastKnowFileName = :NSNAME;
+           WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM diskcopy dc
            WHERE dc.castorFile = varCastorFileId;
           COMMIT;
@@ -435,7 +435,7 @@ sub remove_filesystem( $$ )
           SELECT cf.Id
             INTO varCastorFileId
             FROM CastorFile cf
-           WHERE cf.lastKnowFileName = :NSNAME;
+           WHERE cf.lastKnownFileName = :NSNAME;
           SELECT ids_seq.nextval INTO varFakeFSId FROM DUAL;
           UPDATE diskcopy dc
              SET dc.fileSystem = varFakeFSId
@@ -456,8 +456,8 @@ sub remove_fileclass( $$ )
         BEGIN
           SELECT ids_seq.nextval INTO varFakeFCId FROM DUAL;
           UPDATE CastorFile cf
-             SET cf.fileClass = varFakeFSId
-           WHERE cf.lastKnowFileName = :NSNAME;
+             SET cf.fileClass = varFakeFCId
+           WHERE cf.lastKnownFileName = :NSNAME;
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
@@ -474,8 +474,8 @@ sub remove_serviceclass( $$ )
         BEGIN
           SELECT ids_seq.nextval INTO varFakeSCId FROM DUAL;
           UPDATE CastorFile cf
-             SET cf.serviceClass = varFakeSCId
-           WHERE cf.lastKnowFileName = :NSNAME;
+             SET cf.svcClass = varFakeSCId
+           WHERE cf.lastKnownFileName = :NSNAME;
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
@@ -493,10 +493,10 @@ sub remove_stream( $$ )
           SELECT s.id
             BULK COLLECT INTO varStreamIds
             FROM Stream s
-           RIGHT INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
-           RIGHT INNER JOIN TapeCopy tc ON tc.id = sttc.child
-           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
-           WHERE cf.lastKnowFileName = :NSNAME;
+           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
+           INNER JOIN TapeCopy tc ON tc.id = sttc.child
+           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM Stream2TapeCopy sttc 
            WHERE sttc.parent IN (SELECT * FROM TABLE (varStreamIds));
           DELETE FROM Stream s
@@ -520,10 +520,10 @@ sub remove_tapepool( $$ )
           SELECT s.id
             BULK COLLECT INTO varStreamIds
             FROM Stream s
-           RIGHT INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
-           RIGHT INNER JOIN TapeCopy tc ON tc.id = sttc.child
-           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
-           WHERE cf.lastKnowFileName = :NSNAME;
+           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
+           INNER JOIN TapeCopy tc ON tc.id = sttc.child
+           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnownFileName = :NSNAME;
           UPDATE Stream s
              SET s.tapePool = varFakeTPId
            WHERE s.id IN (SELECT * FROM TABLE (varStreamIds));
@@ -544,8 +544,8 @@ sub remove_segment( $$ )
           SELECT tc.id
             BULK COLLECT INTO varTapeCopyIds
             FROM TapeCopy tc
-           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
-           WHERE cf.lastKnowFileName = :NSNAME;
+           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM Segment seg
            WHERE seg.copy IN (SELECT * FROM TABLE (varTapeCopyIds));
           COMMIT;
@@ -562,11 +562,13 @@ sub remove_tape( $$ )
        "DECLARE
           varTapeIds \"numList\";
         BEGIN
-          SELECT tc.tape
+          SELECT s.tape
             BULK COLLECT INTO varTapeIds
-            FROM TapeCopy tc
-           RIGHT INNER JOIN Castorfile cf ON cf.id = tc.castorFile
-           WHERE cf.lastKnowFileName = :NSNAME;
+            FROM Stream s
+           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
+           INNER JOIN TapeCopy tc ON sttc.child = tc.id
+           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+           WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM Tape t
            WHERE t.id IN (SELECT * FROM TABLE (varTapeIds));
           COMMIT;
@@ -594,14 +596,14 @@ sub corrupt_checksum( $$ )
 sub corrupt_size( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetchecksum -x 1337 $name\"`;
+    `su $environment{username} -c \"nssetfsize -x 1337 $name\"`;
     print "t=".elapsed_time()."s. Corrupted size in ns for file: $name\n";
 }
 
 sub corrupt_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetsegment -d $name\"`;
+    `su $environment{username} -c \"nssetsegment -s 0 -d $name\"`;
     print "t=".elapsed_time()."s. Corrupted segment in ns for file: $name\n";
 }
 
@@ -616,9 +618,9 @@ sub break_diskserver( $$ )
                 SELECT fs.diskServer
                   BULK COLLECT INTO varDiskServerIds
                   FROM FileSystem fs
-                 RIGHT INNER JOIN DiskCopy dc ON dc.fileSystem = fs.id
-                 RIGHT INNER JOIN Castorfile cf ON cf.id = dc.castorFile
-                 WHERE cf.lastKnowFileName = :NSNAME)
+                 INNER JOIN DiskCopy dc ON dc.fileSystem = fs.id
+                 INNER JOIN Castorfile cf ON cf.id = dc.castorFile
+                 WHERE cf.lastKnownFileName = :NSNAME)
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
@@ -731,7 +733,7 @@ sub rfcp_localfile ( $$ )
 # finally, manage the error handling for the rfcp step (if needed).
 sub rfcp_localfile_break ( $$$$ )
 {
-    my ($dbh, $local_index, $is_dual_copy, $breaking_type) = (shift, shift, shift);
+    my ($dbh, $local_index, $is_dual_copy, $breaking_type) = (shift, shift, shift, shift );
     my $dest = $environment{castor_directory};
     if ( $is_dual_copy ) { 
         $dest .= $environment{castor_dual_subdirectory};
@@ -757,7 +759,7 @@ sub rfcp_localfile_break ( $$$$ )
     }
     # Push new element in array and record index
     my $remote_index = (push @remote_files, \%remote_entry) -1;
-    print "t=".elapsed_time()."s. rtcp'ed $local => $remote:\n";
+    print "t=".elapsed_time()."s. rtcp'ed $local => $remote with error attached: ".$breaking_type."\n";
     for ( split /^/, $rfcp_ret ) {
 	if ( ! /bytes in/ ) {
 	    print $_."\n";
@@ -811,7 +813,11 @@ sub check_remote_entries ( $ )
         my %entry = %{$remote_files[$i]};
         # check presence
         my $nslsresult=`nsls -d $entry{name} 2>&1`;
-        if ( $nslsresult =~ /No such file or directory$/) {
+        if ( $nslsresult =~ /No such file or directory$/ && 
+             !( defined $entry{breaking_type} && 
+                $entry{breaking_done} && 
+                $entry{breaking_type} =~ /^missing ns entry/ ) 
+             ) {
             die "Entry not found in name server: $entry{name}";
         }
 	undef $nslsresult;

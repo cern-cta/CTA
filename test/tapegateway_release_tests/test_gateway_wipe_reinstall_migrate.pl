@@ -170,7 +170,43 @@ sub badDayFileCreation ( $$$ )
 {
     my ( $dbh, $seed_index, $file_number ) = ( shift, shift, shift);
     my $error_index = 0;
-    my @error_list = ( "missing ns entry on partial migration" );
+    # List of the breaking/stage combinations to use (they will simply be cycled)
+    # breakings are:
+    #           missing castorfile <= gets constraint violation
+    #           missing filesystem
+    #           missing fileclass <= gets constraint violation
+    #           missing serviceclass <= gets constraint violation
+    #           missing stream
+    #           missing tapepool
+    #           missing segment
+    #           missing tape
+    #           missing ns entry
+    #           wrong checksum
+    #           wrong size
+    #           wrong segment
+    #           broken diskserver
+    #
+    # stages are:
+    #           rfcp
+    #           invalidation
+    #           reget
+    #           partial migration
+    #           migrated
+    #           on tape
+    #           recalled
+
+    my @error_list = ( "missing ns entry on rfcp",
+                       "missing filesystem on rfcp",
+                       "missing stream on rfcp",
+                       "missing tapepool on rfcp",
+                       "missing segment on rfcp",
+                       "missing tape on rfcp",
+                       "missing ns entry on rfcp",
+                       "wrong checksum on rfcp",
+                       "wrong size on rfcp",
+                       "wrong segment on rfcp",
+                       "broken diskserver on on tape"
+                       );
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
     my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
     my $dual_subdir = CastorTapeTests::get_environment('castor_dual_subdirectory');
@@ -184,7 +220,7 @@ sub badDayFileCreation ( $$$ )
             chomp $file_name;
             my $local_index = CastorTapeTests::make_localfile( $seed_index, $file_name );
             CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $sd, $error_list[$error_index] );
-	    $error_index = $error_index + 1 % scalar(@error_list);
+	    $error_index = ($error_index + 1) % scalar(@error_list);
         }
     } 
 }
