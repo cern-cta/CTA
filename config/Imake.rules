@@ -100,7 +100,7 @@ PREFIX(FilesToClean) += obj $(patsubst %.o,%.d,obj)                             
 PREFIX(FilesToClobber) += LOCAL_PATH/BareSharedLibraryTargetName(libname)                                     @@\
 obj: %.o: %.d
 
-#define BareSharedLibraryTarget(libname,objects,deplibs,libs,directory,alltgt,installtgt)            \
+#define BareSharedLibraryTarget(libname,objects,deplibs,libs,directory,alltgt,installtgt,withso)     \
 libname: LOCAL_PATH/SharedLibraryName(libname)                                                     @@\
 BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname)                        @@\
 LOCAL_PATH/SharedLibraryName(libname): objects deplibs                                             @@\
@@ -113,6 +113,10 @@ $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibr
 	ln -s SharedLibraryFullName(libname) $(DESTDIR)/directory/SharedLibraryName(libname)       @@\
 ifeq (installtgt,installclient)                                                                    @@\
 	ln -s SharedLibraryName(libname) $@                                                        @@\
+else                                                                                               @@\
+ifeq (withso,yes)                                                                                  @@\
+	ln -s SharedLibraryName(libname) $@                                                        @@\
+endif                                                                                              @@\
 endif                                                                                              @@\
 installtgt: $(DESTDIR)/directory/BareSharedLibraryTargetName(libname)                              @@\
 alltgt: LOCAL_PATH/SharedLibraryName(libname)                                                      @@\
@@ -121,10 +125,11 @@ PREFIX(FilesToClobber) += LOCAL_PATH/SharedLibraryName(libname)                 
 objects: %.o: %.d
 
 #define SchModTarget(libname,obj,deplibs,libs,directory) InternalSchModTarget(libname,$(patsubst %,LOCAL_PATH/%,obj),deplibs,libs,directory)
-#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,$(LIBDIR),all,install)
-#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install)
-#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(CLIENTDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(CLIENTLIBS)) libs,$(LIBDIR),client,installclient)
-#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(TAPEDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(TAPELIBS)) libs,$(LIBDIR),tape,installtape)
+#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,$(LIBDIR),all,install,no)
+#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install,no)
+#define PlacedSharedLibraryTargetWithSo(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install,yes)
+#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(CLIENTDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(CLIENTLIBS)) libs,$(LIBDIR),client,installclient,no)
+#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(TAPEDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(TAPELIBS)) libs,$(LIBDIR),tape,installtape,no)
 
 #define ClientInstallNonExecFile(file,dest,mode) \
 InternalInstallTarget(file,mode,dest,installclient,,)

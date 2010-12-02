@@ -37,7 +37,7 @@ AddLdFlags(-L$(GLOBUS_LOCATION)/lib -lglobus_ftp_control_$(FLAVOR) $(MOPTION) -s
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
-PlacedSharedLibraryTarget(globus_gridftp_server_CASTOR2xroot_$(FLAVOR),globus_gridftp_server_CASTOR2xroot.o,,,$(GLOBUS_LOCATION)/lib)
+PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2xroot_$(FLAVOR),globus_gridftp_server_CASTOR2xroot.o,,,$(GLOBUS_LOCATION)/lib)
 
 COMM We overwrite here the default rule for the compilation of
 COMM globus_gridftp_server_CASTOR2xroot in order to be able to alleviate the -Werror
