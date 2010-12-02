@@ -397,10 +397,17 @@ class CnsFileMetadata(models.Model, ModelInterface):
         return nvtext 
     
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            return []
+            def countChildren(self):
+                return 0
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getDirParent(self):
+            try:
+                return self.parent_fileid
+            except ObjectDoesNotExist:
+                return self
 
 #mark children Methods   
 CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
@@ -499,10 +506,21 @@ class Requestsatlas(models.Model, ModelInterface):
         return nvtext 
     
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            return tree.getChildren()
+            def countChildren(self):
+                tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+                return tree.countChildren()
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getParent(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            try:
+                tree.traverseBack()
+            except:
+                pass
+            return tree.getCurrentObject()
     
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestsatlas.metricattributes = ['requestscount']
@@ -610,10 +628,21 @@ class Requestscms(models.Model, ModelInterface):
         return nvtext 
 
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            return tree.getChildren()
+            def countChildren(self):
+                tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+                return tree.countChildren()
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getParent(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            try:
+                tree.traverseBack()
+            except:
+                pass
+            return tree.getCurrentObject()
     
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestscms.metricattributes = ['requestscount']
@@ -721,10 +750,21 @@ class Requestsalice(models.Model, ModelInterface):
         return nvtext 
     
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            return tree.getChildren()
+            def countChildren(self):
+                tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+                return tree.countChildren()
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getParent(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            try:
+                tree.traverseBack()
+            except:
+                pass
+            return tree.getCurrentObject()
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestsalice.metricattributes = ['requestscount']
@@ -832,10 +872,21 @@ class Requestslhcb(models.Model, ModelInterface):
         return nvtext 
     
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            return tree.getChildren()
+            def countChildren(self):
+                tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+                return tree.countChildren()
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getParent(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            try:
+                tree.traverseBack()
+            except:
+                pass
+            return tree.getCurrentObject()
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestslhcb.metricattributes = ['requestscount']
@@ -944,10 +995,21 @@ class Requestspublic(models.Model, ModelInterface):
         return nvtext 
     
     def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getChildren(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            return tree.getChildren()
+            def countChildren(self):
+                tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+                return tree.countChildren()
     
     def parentMethods(self):
-        raise Exception("childrenMethods not implemented!")
+        def getParent(self):
+            tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+            try:
+                tree.traverseBack()
+            except:
+                pass
+            return tree.getCurrentObject()
 
 #metrics which are not related to columns from the database and can be accessed with the dot operator
 Requestspublic.metricattributes = ['requestscount']
