@@ -178,14 +178,13 @@ void castor::stager::daemon::ErrorSvcThread::process
       }
     }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
+    // We always take the filename from the original request as it might
+    // not be normalized. Moreover, there are cases (e.g. failures of stageRm
+    // or putDone) whereby the castorFile link is not updated (in which case
+    // we don't return the fileid).
+    res.setCastorFileName(subReq->fileName());
     if(subReq->castorFile()) {
-      res.setCastorFileName(subReq->castorFile()->lastKnownFileName());
       res.setFileId(subReq->castorFile()->fileId());
-    } else {
-      // Not in all cases the castorFile is properly filled (typically
-      // failures of stageRm or putDone don't update the subReq's castorFile link),
-      // thus in general we rely on the subreq.filename
-      res.setCastorFileName(subReq->fileName());
     }
     res.setSubreqId(subReq->subreqId());
     res.setReqAssociated(req->reqId());
