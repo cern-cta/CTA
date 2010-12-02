@@ -13,9 +13,6 @@ from django.db.models.query import QuerySet
 from sites import settings
 from sites.dirs.DateOption import DateOption
 from sites.dirs.ModelInterface import ModelInterface
-from sites.dirs.ModelSpecificFunctions.RequestsFunctions import \
-    generateRequestsTree, traverseToRequestInTree, \
-    findRequestObjectByIdReplacementSuffix
 from sites.errors.NoDataAvailableError import NoDataAvailableError
 from sites.tools.Inspections import *
 from sites.tools.StatusTools import generateStatusFile
@@ -255,6 +252,24 @@ class Dirs(models.Model, ModelInterface):
                     except:
                         print "exception!"
                     return cnt[0]
+        #----------------------------------------------------------
+        def getFilesAndDirectories(self):
+            d = self.childrenMethods.getDirs()
+            if not d: 
+                d = []
+            else:
+                d = list(d)
+    #            
+            f = self.childrenMethods.getFiles()
+            if not f: 
+                f = []
+            else:
+                f = list(f)
+            
+            return d+f
+        
+            def countFilesAndDirs(self):
+                return self.childrenMethods.getFiles.countFiles() + self.childrenMethods.getFiles.countDirs()
         
     
     def parentMethods(self):
@@ -1035,7 +1050,8 @@ Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #
 Requestspublic.stop = datetime.datetime.now() #time relative to now
 
 #this import has to be here because of circular dependency with sites.dirs.ModelSpecificFunctions.RequestsFunctions
-    
+from sites.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
+
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)
 #    parent = models.DecimalField(max_digits=127, decimal_places=0)
