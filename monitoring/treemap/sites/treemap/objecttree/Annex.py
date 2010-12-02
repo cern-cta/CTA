@@ -61,42 +61,6 @@ class Annex(models.Model, ModelInterface):
     def __str__(self):
         return "The rest [zoom = "+str(self.depth)+"]"
     
-    def getItems(self):
-        if not(self.valid_cache):
-            chclassname = self.parent.__class__.__name__
-            methodname = self.rules.getMethodNameFor(self.level + 1, chclassname)
-            self.children_cache = list(self.parent.__class__.__dict__[methodname](self.parent))
-            
-            newcache = []
-            #filter children to display the remaining ones
-            for child in self.children_cache:
-                remove = False
-                for toexclude in self.excludednodes:
-                    if child.pk == toexclude.getObject().pk:
-                        remove = True
-                        
-                if(not remove): newcache.append(child)
-                
-            self.children_cache = newcache
-            self.valid_cache = True
-
-        return self.children_cache
-    
-    def hasItems(self):
-        if len(self.children_cache) > 0:
-            return True 
-        else: 
-            return False
-            
-    def countItems(self):
-        if(self.valid_cache):
-            return len(self.children_cache)
-        else:
-            chclassname = self.parent.__class__.__name__
-            methodname = self.rules.getCountMethodNameFor(self.level + 1, chclassname)
-            allcount = self.parent.__class__.__dict__[methodname](self.parent)
-            return allcount - len(self.excludednodes)
-    
     def getAnnexParent(self):
         return self.parent
     
@@ -134,17 +98,6 @@ class Annex(models.Model, ModelInterface):
     def getExcludedNodes(self):
         return self.excludednodes
     
-    def getDbParent(self):
-        if self.parent == None:
-            ppk = -1
-        elif not isinstance(self.parent, Annex):
-            ppk = self.parent.pk
-        elif isinstance(self.parent, Annex): #parent is Annex
-            ppk = self.parent.getDbParent().pk
-        else:
-            raise Exception("unexpected error")
-        return ppk
-    
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         return self.pk.__str__()
@@ -152,16 +105,49 @@ class Annex(models.Model, ModelInterface):
     def getNaviName(self):
         return str(self)
     
+    def childrenMethods(self):
+        
+        def getItems(self):
+            if not(self.valid_cache):
+                chclassname = self.parent.__class__.__name__
+                methodname = self.rules.getMethodNameFor(self.level + 1, chclassname)
+                self.children_cache = list(self.parent.__class__.__dict__[methodname](self.parent))
+                
+                newcache = []
+                #filter children to display the remaining ones
+                for child in self.children_cache:
+                    remove = False
+                    for toexclude in self.excludednodes:
+                        if child.pk == toexclude.getObject().pk:
+                            remove = True
+                            
+                    if(not remove): newcache.append(child)
+                    
+                self.children_cache = newcache
+                self.valid_cache = True
+    
+            return self.children_cache
+            def countItems(self):
+                if(self.valid_cache):
+                    return len(self.children_cache)
+                else:
+                    chclassname = self.parent.__class__.__name__
+                    methodname = self.rules.getCountMethodNameFor(self.level + 1, chclassname)
+                    allcount = self.parent.__class__.__dict__[methodname](self.parent)
+                    return allcount - len(self.excludednodes)
+    
+    def parentMethods(self):
+        
+        def getDbParent(self):
+            if self.parent == None:
+                ppk = -1
+            elif not isinstance(self.parent, Annex):
+                ppk = self.parent.pk
+            elif isinstance(self.parent, Annex): #parent is Annex
+                ppk = self.parent.getDbParent().pk
+            else:
+                raise Exception("unexpected error")
+            return ppk
+    
 Annex.metricattributes = []
-
-#mark children Methods   
-Annex.getItems.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Annex.countItems.__dict__['methodtype'] = 'childrencount'
-Annex.countItems.__dict__['countsfor'] = 'getItems'
-
-#mark parent Methods
-Annex.getAnnexParent.__dict__['methodtype'] = 'parent'
-Annex.getAnnexParent.__dict__['returntype'] = getAvailableModels()
         

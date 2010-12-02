@@ -91,88 +91,10 @@ class Dirs(models.Model, ModelInterface):
     
     def __hash__(self):
         return models.Model.__hash__(self)
-    
-    def getDirs(self):
-        if self.children_cached:
-            return self.children
-        else:
-            deeper = self.depth + 1
-            self.children = Dirs.objects.filter(parent=self.fileid, depth = deeper)
-            self.children_cached = True
-        return self.children
-    
-    #EXISTS is faster but not supported by Django 1.1
-    #Therefore executing raw command
-    #That one would be a lot slower but not Oracle specific:
-    #    the_children = Dirs.objects.filter(parent=self.fileid).count() #.count(parent=self.fileid)[:1]
-    
-    #DUAL is Oracle's fake Table. It is needed to make the EXISTS Statement work, because EXISTS works only in WHERE
-            
-    def countDirs(self):
-        if self.children_cached:
-            return len(self.children)
-        else:
-            cursor = connection.cursor()
-            cursor.execute('SELECT count(*) FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
-            cnt = cursor.fetchone()
-            return cnt[0]
-        
-    def countFiles(self):
-        if self.files_cached:
-            return len(self.files)
-        else:
-            try:
-                cursor = connection.cursor()
-                cursor.execute('SELECT count(*) FROM CNS_FILE_METADATA f WHERE f.parent_fileid = %s AND NOT EXISTS (select * from DIRS d where f.parent_fileid = d.parent)', [self.fileid])
-                cnt = cursor.fetchone()
-            except:
-                print "exception!"
-            return cnt[0]
-        
-        
-#            cnt = CnsFileMetadata.objects.filter(parent_fileid=id).extra(where=['bitand(filemode, 16384) = 0']).count()
-#            return cnt
-        
-    def countFilesAndDirs(self):
-        return self.countFiles() + self.countDirs()
-    
-    #expensive operation if you call it too often (example: 243 calls makes 6.5 seconds)
-    def getDirParent(self):
-        try:
-            if not self. parent_cached:
-                self.theparent = self.parent
-            return self.theparent
-        except Dirs.DoesNotExist:
-            return self
         
     def refreshChildren(self):
         self.children_cached = False
         self.children = self.getDirs()
-       
-    def getFiles(self):
-        if self.files_cached:
-            return self.files
-        else:
-            self.files = self.getFilesOf(self.fileid)#self.cnsfilemetadata_set.all()
-            self.files_cached = True
-        return self.files
-    
-    def getFilesAndDirectories(self):
-
-        d = self.getDirs()
-        if not d: 
-            d = []
-        else:
-            d = list(d)
-#            
-        f = self.getFiles()
-        if not f: 
-            f = []
-        else:
-            f = list(f)
-        
-        return d+f
-
     
     def getFilesOf(self, id):
         prnt = Dirs.objects.get(pk=id)
@@ -283,24 +205,6 @@ class Dirs(models.Model, ModelInterface):
                 return self
 
 Dirs.metricattributes = []
-    
-#mark children methods for Dirs
-Dirs.getDirs.__dict__['methodtype'] = 'children'
-Dirs.getFiles.__dict__['methodtype'] = 'children'
-Dirs.getFilesAndDirectories.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Dirs.countDirs.__dict__['methodtype'] = 'childrencount'
-Dirs.countDirs.__dict__['countsfor'] = 'getDirs'
-
-Dirs.countFiles.__dict__['methodtype'] = 'childrencount'
-Dirs.countFiles.__dict__['countsfor'] = 'getFiles'
-
-Dirs.countFilesAndDirs.__dict__['methodtype'] = 'childrencount'
-Dirs.countFilesAndDirs.__dict__['countsfor'] = 'getFilesAndDirectories'
-
-#mark parent Methods
-Dirs.getDirParent.__dict__['methodtype'] = 'parent'
 
 #exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)
 def getDirByName(dirname):
@@ -350,19 +254,6 @@ class CnsFileMetadata(models.Model, ModelInterface):
     
     def __hash__(self):
         return models.Model.__hash__(self)
-    
-    def countChildren(self):
-        print "countChildren for files"
-        return 0
-    
-    def getChildren(self):
-        return []
-    
-    def getDirParent(self):
-        try:
-            return self.parent_fileid
-        except ObjectDoesNotExist:
-            return self
         
     def getUserFriendlyName(self):
         return "File"
@@ -424,16 +315,6 @@ class CnsFileMetadata(models.Model, ModelInterface):
             except ObjectDoesNotExist:
                 return self
 
-#mark children Methods   
-CnsFileMetadata.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-CnsFileMetadata.countChildren.__dict__['methodtype'] = 'childrencount'
-CnsFileMetadata.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-CnsFileMetadata.getDirParent.__dict__['methodtype'] = 'parent'
-
 CnsFileMetadata.metricattributes = []
 
 class Requestsatlas(models.Model, ModelInterface):
@@ -488,22 +369,6 @@ class Requestsatlas(models.Model, ModelInterface):
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsatlas')
     
-    def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.getChildren()
-    
-    def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.countChildren()
-    
-    def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        try:
-            tree.traverseBack()
-        except:
-            pass
-        return tree.getCurrentObject()
-    
     def getNaviName(self):
         nvtext = str(self.filename)
         pos = nvtext.rfind('/')
@@ -536,19 +401,6 @@ class Requestsatlas(models.Model, ModelInterface):
             except:
                 pass
             return tree.getCurrentObject()
-    
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestsatlas.metricattributes = ['requestscount']
-
-#mark children Methods   
-Requestsatlas.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Requestsatlas.countChildren.__dict__['methodtype'] = 'childrencount'
-Requestsatlas.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-Requestsatlas.getParent.__dict__['methodtype'] = 'parent'
 
 Requestsatlas.generatedtree = None
 
@@ -610,22 +462,6 @@ class Requestscms(models.Model, ModelInterface):
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestscms')
     
-    def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.getChildren()
-    
-    def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.countChildren()
-    
-    def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        try:
-            tree.traverseBack()
-        except:
-            pass
-        return tree.getCurrentObject()
-    
     def getNaviName(self):
         nvtext = str(self.filename)
         pos = nvtext.rfind('/')
@@ -658,19 +494,6 @@ class Requestscms(models.Model, ModelInterface):
             except:
                 pass
             return tree.getCurrentObject()
-    
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestscms.metricattributes = ['requestscount']
-
-#mark children Methods   
-Requestscms.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Requestscms.countChildren.__dict__['methodtype'] = 'childrencount'
-Requestscms.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-Requestscms.getParent.__dict__['methodtype'] = 'parent'
 
 Requestscms.generatedtree = None
 
@@ -731,22 +554,6 @@ class Requestsalice(models.Model, ModelInterface):
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsalice')
-    
-    def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.getChildren()
-    
-    def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.countChildren()
-    
-    def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        try:
-            tree.traverseBack()
-        except:
-            pass
-        return tree.getCurrentObject()
 
     def getNaviName(self):
         nvtext = str(self.filename)
@@ -780,19 +587,6 @@ class Requestsalice(models.Model, ModelInterface):
             except:
                 pass
             return tree.getCurrentObject()
-
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestsalice.metricattributes = ['requestscount']
-
-#mark children Methods   
-Requestsalice.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Requestsalice.countChildren.__dict__['methodtype'] = 'childrencount'
-Requestsalice.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-Requestsalice.getParent.__dict__['methodtype'] = 'parent'
 
 Requestsalice.generatedtree = None
 
@@ -854,22 +648,6 @@ class Requestslhcb(models.Model, ModelInterface):
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestslhcb')
     
-    def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.getChildren()
-    
-    def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.countChildren()
-    
-    def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        try:
-            tree.traverseBack()
-        except:
-            pass
-        return tree.getCurrentObject()
-    
     def getNaviName(self):
         nvtext = str(self.filename)
         pos = nvtext.rfind('/')
@@ -902,19 +680,6 @@ class Requestslhcb(models.Model, ModelInterface):
             except:
                 pass
             return tree.getCurrentObject()
-
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestslhcb.metricattributes = ['requestscount']
-
-#mark children Methods   
-Requestslhcb.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Requestslhcb.countChildren.__dict__['methodtype'] = 'childrencount'
-Requestslhcb.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-Requestslhcb.getParent.__dict__['methodtype'] = 'parent'
 
 Requestslhcb.generatedtree = None
 
@@ -977,22 +742,6 @@ class Requestspublic(models.Model, ModelInterface):
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestspublic')
     
-    def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.getChildren()
-    
-    def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        return tree.countChildren()
-    
-    def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
-        try:
-            tree.traverseBack()
-        except:
-            pass
-        return tree.getCurrentObject()
-    
     def getNaviName(self):
         nvtext = str(self.filename)
         pos = nvtext.rfind('/')
@@ -1025,19 +774,6 @@ class Requestspublic(models.Model, ModelInterface):
             except:
                 pass
             return tree.getCurrentObject()
-
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestspublic.metricattributes = ['requestscount']
-
-#mark children Methods   
-Requestspublic.getChildren.__dict__['methodtype'] = 'children'
-
-#mark count Methods
-Requestspublic.countChildren.__dict__['methodtype'] = 'childrencount'
-Requestspublic.countChildren.__dict__['countsfor'] = 'getChildren'
-
-#mark parent Methods
-Requestspublic.getParent.__dict__['methodtype'] = 'parent'
 
 Requestspublic.generatedtree = None
 
