@@ -390,7 +390,7 @@ sub check_recalled_or_fully_migrated ( $ )
 # Utility functions for breaking the files
 
 # Missing structures: local to the file, and in-db
-remove_castorfile( $$ )
+sub remove_castorfile( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -403,7 +403,7 @@ remove_castorfile( $$ )
     $stmt->execute();
 }
 
-remove_diskcopy( $$ )
+sub remove_diskcopy( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -422,7 +422,7 @@ remove_diskcopy( $$ )
     $stmt->execute();
 }
 
-remove_filesystem( $$ )
+sub remove_filesystem( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -444,7 +444,7 @@ remove_filesystem( $$ )
     $stmt->execute();
 }
 
-remove_fileclass( $$ )
+sub remove_fileclass( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -461,7 +461,7 @@ remove_fileclass( $$ )
     $stmt->execute();
 }
 
-remove_serviceclass( $$ )
+sub remove_serviceclass( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -478,7 +478,7 @@ remove_serviceclass( $$ )
     $stmt->execute();
 }
 
-remove_stream( $$ )
+sub remove_stream( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -502,7 +502,7 @@ remove_stream( $$ )
     $stmt->execute();
 }
 
-remove_tapepool( $$ )
+sub remove_tapepool( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -527,7 +527,7 @@ remove_tapepool( $$ )
     $stmt->execute();
 }
 
-remove_segment( $$ )
+sub remove_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -547,7 +547,7 @@ remove_segment( $$ )
     $stmt->execute();
 }
 
-remove_tape( $$ )
+sub remove_tape( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -567,33 +567,33 @@ remove_tape( $$ )
     $stmt->execute();
 }
 
-remove_ns_entry( $$ )
+sub remove_ns_entry( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nsrm $name\"`;
 }
 
 # Broken parameters: local to the file and on outside services
-corrupt_checksum( $$ )
+sub corrupt_checksum( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetchecksum -n AD -k deadbeef $name\"`;
 }
 
-corrupt_size( $$ )
+sub corrupt_size( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetchecksum -x 1337 $name\"`;
 }
 
-corrupt_segment( $$ )
+sub corrupt_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     `su $environment{username} -c \"nssetsegment -d $name\"`;
 }
 
 # System-wide breakings (triggered during the lifecycle if the file)
-break_diskserver( $$ )
+sub break_diskserver( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
@@ -612,55 +612,55 @@ break_diskserver( $$ )
     $stmt->execute();
 }
 
-error_injector ( $$S )
+sub error_injector ( $$$ )
 {
     my ( $dbh, $index, $stage ) = ( shift, shift, shift );
     my %file = $remote_files[$index];
     
     if ($file{breaking_type} =~ /on ${stage}$/ && !$file{breaking_done}) {
         # Missing structures: local to the file, and in-db
-        if ($breaking_type =~ /^missing castorfile/) {
+        if ($file{breaking_type} =~ /^missing castorfile/) {
              remove_castorfile($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing diskcopy/) {
+        } elsif ($file{breaking_type} =~ /^missing diskcopy/) {
              remove_diskcopy($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing filesystem/) {
+        } elsif ($file{breaking_type} =~ /^missing filesystem/) {
              remove_filesystem($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing fileclass/) {
+        } elsif ($file{breaking_type} =~ /^missing fileclass/) {
              remove_fileclass($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing serviceclass/) {
+        } elsif ($file{breaking_type} =~ /^missing serviceclass/) {
              remove_serviceclass($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing stream/) {
+        } elsif ($file{breaking_type} =~ /^missing stream/) {
              remove_stream($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing tapepool/) {
+        } elsif ($file{breaking_type} =~ /^missing tapepool/) {
              remove_tapepool($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing segment/) {
+        } elsif ($file{breaking_type} =~ /^missing segment/) {
              remove_segment($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing tape/) {
+        } elsif ($file{breaking_type} =~ /^missing tape/) {
              remove_tape($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^missing ns entry/) {
+        } elsif ($file{breaking_type} =~ /^missing ns entry/) {
              remove_ns_entry($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         # Broken parameters: local to the file and on outside services
-        } elsif ($breaking_type =~ /^wrong checksum/) {
+        } elsif ($file{breaking_type} =~ /^wrong checksum/) {
              corrupt_checksum($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^wrong size/) {
+        } elsif ($file{breaking_type} =~ /^wrong size/) {
              corrupt_size($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($breaking_type =~ /^wrong segment/) {
+        } elsif ($file{breaking_type} =~ /^wrong segment/) {
              corrupt_segment($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         # System-wide breakings (triggered during the lifecycle if the file)
-        } elsif ($breaking_type =~ /^broken diskserver/) {
+        } elsif ($file{breaking_type} =~ /^broken diskserver/) {
              break_diskserver($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         }
@@ -713,9 +713,9 @@ sub rfcp_localfile ( $$ )
 # rfcp file, but give it a special flag that decides where it will break from the beginning. Then all the following handling
 # functions will be able to inject the problem if they have to.
 # finally, manage the error handling for the rfcp step (if needed).
-sub rfcp_localfile_break ( $$$ )
+sub rfcp_localfile_break ( $$$$ )
 {
-    my ($dbh, $is_dual_copy, $breaking_type) = (shift, shift, shift);
+    my ($dbh, $local_index, $is_dual_copy, $breaking_type) = (shift, shift, shift);
     my $dest = $environment{castor_directory};
     if ( $is_dual_copy ) { 
         $dest .= $environment{castor_dual_subdirectory};

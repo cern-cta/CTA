@@ -37,7 +37,7 @@ use CastorTapeTests;
 sub goodDaySingleAndDualCopyTest ( $$ );
 sub badDayTests ( $$ );
 sub preparePreTransitionBacklog ( $$ );
-sub managePostTransitionBacklog ();
+sub managePostTransitionBacklog ( $ );
 sub main ();
 
 # Make sure at least Ctrl-C triggers a cleanup
@@ -126,7 +126,7 @@ sub main ()
     print "Switched to tapegatewayd ============================\n";
 
     # Second iteration of the test
-    managePostTransitionBacklog();
+    managePostTransitionBacklog( $dbh );
     SingleAndDualCopyTest ( $dbh, $seed_index, $file_number);    
     preparePreTransitionBacklog ($seed_index, $file_number);
 
@@ -137,7 +137,7 @@ sub main ()
     print "Switched back to rtcpclientd  ========================\n";
 
     # Fire 3rd iteration of the test
-    managePostTransitionBacklog();
+    managePostTransitionBacklog( $dbh );
     SingleAndDualCopyTest ( $dbh, $seed_index, $file_number);
 
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
@@ -183,7 +183,8 @@ sub badDayFileCreation ( $$$ )
             my $file_name="/tmp/".`uuidgen`;
             chomp $file_name;
             my $local_index = CastorTapeTests::make_localfile( $seed_index, $file_name );
-            CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $sd );
+            CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $sd, $error_list[$error_index] );
+	    $error_index = $error_index + 1 % scalar(@error_list);
         }
     } 
 }
@@ -197,7 +198,7 @@ sub SingleAndDualCopyTest ( $$$ )
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
     goodDayFileCreation ( $seed_index, $file_number );
     badDayFileCreation ( $dbh,  $seed_index, $file_number );
-    CastorTapeTests::poll_moving_entries ( $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
+    CastorTapeTests::poll_moving_entries ( $dbh, $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
 }
 
 
@@ -211,9 +212,9 @@ sub preparePreTransitionBacklog ( $$ )
 }
 
 # Follow up on the files injected in the system after the configuration switchover.
-sub managePostTransitionBacklog ()
+sub managePostTransitionBacklog ( $ )
 {
-    # To be fleshed out.
+    my $dbh = shift;
 
     # Check that the tapes from the tape pool have been left in a proper state.
     my $tapepool = CastorTapeTests::get_environment('tapepool');
@@ -230,7 +231,7 @@ sub managePostTransitionBacklog ()
     }
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');    
-    CastorTapeTests::poll_moving_entries ( $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
+    CastorTapeTests::poll_moving_entries ( $dbh, $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
 }
 
 
