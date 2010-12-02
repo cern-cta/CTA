@@ -179,5 +179,7 @@ def localCleanup(self):
                 os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
+        # remove the directory itself
+        os.rmdir(self.tags['tmpLocalDir'])
         del self.tags['tmpLocalDir']
 Setup.cleanup_local = localCleanup

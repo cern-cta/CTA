@@ -499,6 +499,10 @@ def pytest_configure(config):
     global globalsetup
     globalsetup = Setup(config)
 
+# cleanup before leaving
+def pytest_unconfigure(config):
+    global globalsetup
+    globalsetup.cleanupAndReset()
 
 #################################################
 # avoid being too verbose on keyboard interupts #
