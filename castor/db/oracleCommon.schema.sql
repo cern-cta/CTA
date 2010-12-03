@@ -127,6 +127,15 @@ CREATE TABLE TapeCopy
     PARTITION P_STATUS_OTHER VALUES (DEFAULT)
    );
 
+/* Add index to allow fast lookup by VID (use for preventing 2 tape copies on the same tape.) */
+CREATE INDEX I_TapeCopy_VID ON TapeCopy(VID);
+
+/* This transaction id is the mean to track a migration, so it obviously needs to be unique */
+ALTER TABLE TapeCopy ADD CONSTRAINT UN_TAPECOPY_FILETRID 
+  UNIQUE (FileTransactionId) USING INDEX;
+/* Create sequence for the File request IDs. */
+CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
+  
 /* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT FK_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);

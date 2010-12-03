@@ -6,7 +6,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* PL/SQL declaration for the castorTape package */
+ /* PL/SQL declaration for the castorTape package */
 CREATE OR REPLACE PACKAGE castorTape AS 
    TYPE TapeGatewayRequestExtended IS RECORD (
     accessMode NUMBER,
@@ -97,6 +97,79 @@ CREATE OR REPLACE PACKAGE castorTape AS
 END castorTape;
 /
 
+/* Trigger ensuring validity of VID in state transitions */
+create or replace
+TRIGGER TR_TapeCopy_VID
+BEFORE INSERT OR UPDATE OF Status ON TapeCopy
+FOR EACH ROW
+BEGIN
+  /* Enforce the state integrity of VID in state transitions */
+
+  CASE
+    WHEN (:new.Status IN (3) AND :new.VID IS NULL) -- 3 TAPECOPY_SELECTED
+      THEN
+      /* No enforcement for rtcpclientd to let it run unmodified */
+      DECLARE
+        varRtcpcdRunning  NUMBER;
+      BEGIN
+        SELECT COUNT (*) INTO varRtcpcdRunning
+          FROM CastorConfig ccfg
+         WHERE ccfg.class = 'tape'
+           AND ccfg.key   = 'interfaceDaemon'
+           AND ccfg.value = 'rtcpclientd';
+        IF (varRtcpcdRunning = 0) THEN
+          RAISE_APPLICATION_ERROR(-20119,
+            'Moving/creating (in)to TAPECOPY_SELECTED State without a VID');
+        END IF;
+      END;
+    WHEN (UPDATING('Status') AND :new.Status IN (5, 9) AND -- 5 TAPECOPY_STAGED
+                                                      -- 9 TAPECOPY_MIG_RETRY
+      :new.VID != :old.VID)
+      THEN
+      RAISE_APPLICATION_ERROR(-20119,
+        'Moving to STAGED/MIG_RETRY State without carrying the VID over');
+    WHEN (:new.status IN (8)) -- 8 TAPECOPY_REC_RETRY
+      THEN
+      NULL; -- Free for all case
+    WHEN (:new.Status NOT IN (3,5,8,9) AND :new.VID IS NOT NULL)
+                                                     -- 3 TAPECOPY_SELECTED
+                                                     -- 5 TAPECOPY_STAGED
+                                                     -- 8 TAPECOPY_REC_RETRY
+                                                     -- 9 TAPECOPY_MIG_RETRY
+      THEN
+      RAISE_APPLICATION_ERROR(-20119,
+        'Moving/creating (in)to TapeCopy state where VID makes no sense, yet VID!=NULL');
+    ELSE
+      NULL;
+  END CASE;
+END;
+/
+
+/* Workaround for framework */
+create or replace
+TRIGGER TR_TapeCopy_fileTransactionId
+BEFORE INSERT OR UPDATE OF fileTransactionId ON TapeCopy
+FOR EACH ROW
+BEGIN
+  -- Workaround for framework allowing better constraints
+  IF (:new.fileTransactionId IN (0)) THEN
+    :new.fileTransactionId := NULL;
+  END IF;
+END;
+/
+
+/* Workaround for framework */
+create or replace
+TRIGGER TR_Tape_TapeGatewayRequestId
+BEFORE INSERT OR UPDATE OF tapeGatewayRequestId ON Tape
+FOR EACH ROW
+BEGIN
+  -- Workaround for framework allowing better constraints
+  IF (:new.tapeGatewayRequestId IN (0)) THEN
+    :new.tapeGatewayRequestId := NULL;
+  END IF;
+END;
+/
 
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
 CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
@@ -1575,14 +1648,24 @@ END;
 /
 
 /* start choosen stream */
-CREATE OR REPLACE PROCEDURE startChosenStreams
+create or replace
+PROCEDURE startChosenStreams
   (streamIds IN castor."cnumList") AS
 BEGIN
-  FORALL i IN streamIds.FIRST .. streamIds.LAST
-    UPDATE Stream
-       SET status = 0 -- PENDING
-     WHERE Stream.status = 7 -- WAITPOLICY
-       AND id = streamIds(i);
+  IF (TapegatewaydIsRunning) THEN
+    FORALL i IN streamIds.FIRST .. streamIds.LAST
+      UPDATE Stream S
+         SET S.status = 0, -- PENDING
+             S.TapeGatewayRequestId = ids_seq.nextval
+       WHERE S.status = 7 -- WAITPOLICY
+         AND S.id = streamIds(i);
+  ELSE
+    FORALL i IN streamIds.FIRST .. streamIds.LAST
+      UPDATE Stream S
+         SET S.status = 0 -- PENDING
+       WHERE S.status = 7 -- WAITPOLICY
+         AND S.id = streamIds(i);
+  ENd IF;
   COMMIT;
 END;
 /
@@ -1716,12 +1799,54 @@ END tapesAndMountsForRecallPolicy;
 /
 
 /* resurrect tapes */
-CREATE OR REPLACE PROCEDURE resurrectTapes
+create or replace
+PROCEDURE resurrectTapes
 (tapeIds IN castor."cnumList")
 AS
 BEGIN
-  FORALL i IN tapeIds.FIRST .. tapeIds.LAST
-    UPDATE Tape SET status = 1 WHERE status = 8 AND id = tapeIds(i);
+  IF (TapegatewaydIsRunning) THEN
+    FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+      UPDATE Tape T
+         SET T.TapegatewayRequestId = ids_seq.nextval,
+             T.status = 1
+       WHERE T.status = 8 AND T.id = tapeIds(i);
+      -- FIXME TODO this is a hack needed to add the TapegatewayRequestId which was missing.
+      UPDATE Tape T
+         SET T.TapegatewayRequestId = ids_seq.nextval
+       WHERE T.status = 1 AND T.TapegatewayRequestId IS NULL 
+         AND T.id = tapeIds(i);
+    END LOOP; 
+  ELSE
+    FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+      UPDATE Tape SET status = 1 WHERE status = 8 AND id = tapeIds(i);
+    END LOOP;
+  END IF;
+  COMMIT;
+END;
+/
+
+/* Single tape version of resurrect tapes used by stager when finding no policy 
+  (mighunter or rechandler will then not be involved)*/
+create or replace
+PROCEDURE resurrectSingleTapeForRecall (
+  tapeId  IN NUMBER
+)
+AS
+BEGIN
+   /* Single tape version of resurrect tapes used by stager when finding no policy 
+     (mighunter or rechandler will then not be involved)*/
+  IF (TapegatewaydIsRunning) THEN
+    UPDATE Tape T
+       SET T.TapegatewayRequestId = ids_seq.nextval,
+           T.status = 1  -- TAPE_PENDING
+     WHERE T.id = tapeId 
+       AND T.tpMode = 0; -- TAPE_READ
+  ELSE
+    UPDATE Tape T
+       SET T.status = 1  -- TAPE_PENDING
+     WHERE T.id = tapeId 
+       AND T.tpMode = 0; -- TAPE_READ
+  END IF;
   COMMIT;
 END;
 /
