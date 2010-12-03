@@ -11,12 +11,12 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-static const char *adens[CA_MAXDENNUM] = {
+static char *adens[CA_MAXDENNUM] = {
        "0",    "800",   "1600",   "6250", "38000",  "8200",  "8500",  "38KD",    "2G",     "6G",
      "10G",    "FMT",    "RAW",    "DDS",   "20G",   "25G",   "35G",   "50G",   "40G",    "60G",
     "100G",   "200G",   "110G",   "160G",  "300G",  "400G",  "500G",  "700G",  "800G",  "1000G",
    "1400G",  "1500G",  "3200G",  "5000G"};
-static const char *adensc[CA_MAXDENNUM] = {
+static char *adensc[CA_MAXDENNUM] = {
         "",       "",       "",       "",  "38KC", "8200C", "8500C", "38KDC",      "",       "",
     "10GC",       "",       "",   "DDSC",  "20GC",  "25GC",  "35GC",  "50GC",  "40GC",   "60GC",
    "100GC",  "200GC",  "110GC",  "160GC", "300GC", "400GC", "500GC", "700GC", "800GC", "1000GC",
