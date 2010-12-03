@@ -16,10 +16,10 @@ from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
-from app.dirs.BooleanOption import BooleanOption
-from app.dirs.DateOption import DateOption
-from app.dirs.OptionsReader import OptionsReader
-from app.dirs.SpinnerOption import SpinnerOption
+from app.dirs.presets.options.BooleanOption import BooleanOption
+from app.dirs.presets.options.DateOption import DateOption
+from app.dirs.presets.options.OptionsReader import OptionsReader
+from app.dirs.presets.options.SpinnerOption import SpinnerOption
 from app.dirs.models import *
 from app.tools.GarbageDeleters import deleteOldImageFiles, \
     deleteOldStatusFiles
@@ -37,7 +37,7 @@ from app.treemap.objecttree.TreeRules import LevelRules
 from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import re
-import app.dirs.Presets
+import app.dirs.presets.Presets
 import time
 
 
@@ -67,8 +67,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
 
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    thepreset = app.dirs.Presets.getPresetByStaticId(presetid)
-    lr = app.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    thepreset = app.dirs.presets.Presets.getPresetByStaticId(presetid)
+    lr = app.dirs.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
     
     avmodels = lr.getRuleObject(0).getUsedClassNames()
 
@@ -205,8 +205,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    thepreset = app.dirs.Presets.getPresetByStaticId(presetid)
-    cookielr = app.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    thepreset = app.dirs.presets.Presets.getPresetByStaticId(presetid)
+    cookielr = app.dirs.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
         
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr, options = optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -435,10 +435,10 @@ def preset(request, options,  urlending):
         except:
             statusfilename = ''
             
-        if presetname not in app.dirs.Presets.getPresetNames():
+        if presetname not in app.dirs.presets.Presets.getPresetNames():
             redir(request, options, urlending, False, 0)
             
-        preset = app.dirs.Presets.getPreset(presetname)
+        preset = app.dirs.presets.Presets.getPreset(presetname)
         optr = OptionsReader(options, preset.staticid)    
         validoptions = preset.optionsset
         thetime = None
@@ -508,7 +508,7 @@ def preset(request, options,  urlending):
         raise Http404
     
     options = optr.getCorrectedOptions(preset.staticid)
-    return redir(request, options, urlending, app.dirs.Presets.getPreset(presetname).cachingenabled, app.dirs.Presets.getPreset(presetname).staticid, app.dirs.Presets.getPreset(presetname).rootmodel, app.dirs.Presets.getPreset(presetname).rootidreplacement, statusfilename)
+    return redir(request, options, urlending, app.dirs.presets.Presets.getPreset(presetname).cachingenabled, app.dirs.presets.Presets.getPreset(presetname).staticid, app.dirs.presets.Presets.getPreset(presetname).rootmodel, app.dirs.presets.Presets.getPreset(presetname).rootidreplacement, statusfilename)
 
 def setStatusFileInCookie(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
@@ -613,11 +613,11 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     generationtime = datetime.datetime.now() - time
     
-    presetnames = app.dirs.Presets.getPresetNames()
+    presetnames = app.dirs.presets.Presets.getPresetNames()
     presetnames.sort();
     
     optionshtml = []
-    preset = app.dirs.Presets.getPresetByStaticId(presetid)
+    preset = app.dirs.presets.Presets.getPresetByStaticId(presetid)
     for option in preset.optionsset:
         optionshtml.append(option.toHtml(options))
 
@@ -650,7 +650,7 @@ class DropDownEntry(object):
 def getCurrentPresetSelections(request, presetid, options = ''):
     try:
         optrd = OptionsReader(options, presetid)
-        return {'flat': optrd.getOption('flatview'), 'presetname': app.dirs.Presets.presetIdToName(presetid), 'smalltobig': optrd.getOption('smalltobig')}
+        return {'flat': optrd.getOption('flatview'), 'presetname': app.dirs.presets.Presets.presetIdToName(presetid), 'smalltobig': optrd.getOption('smalltobig')}
     except KeyError:
         return getDefaultPresets()
 
@@ -663,7 +663,7 @@ def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0, options = ''):
     return cache_key
 
 def getDefaultRules(nblevels):
-    lr = app.dirs.Presets.getPreset("Default (Directory structure)").lr
+    lr = app.dirs.presets.Presets.getPreset("Default (Directory structure)").lr
     return lr
 
 def getDefaultModel():

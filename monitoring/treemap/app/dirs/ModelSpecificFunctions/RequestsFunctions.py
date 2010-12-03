@@ -6,7 +6,7 @@ These functions are supposed to help or extend with model specific functionality
 
 
 
-from app.dirs.DateOption import DateOption
+from app.dirs.presets.options.DateOption import DateOption
 from app.errors.NoDataAvailableError import NoDataAvailableError
 from app.tools.StatusTools import generateStatusFile
 from app.treemap.BasicTree import BasicTree

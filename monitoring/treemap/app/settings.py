@@ -19,7 +19,7 @@ MANAGERS = ADMINS
 DATABASE_ENGINE = 'django.db.backends.oracle'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'test2_nolb'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'castor_ns_ro'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'sav3th3whal3s'         # Not used with sqlite3.
+DATABASE_PASSWORD = 'xxxx'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.           # Set to empty string for default. Not used with sqlite3.
 
