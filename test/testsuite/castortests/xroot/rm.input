@@ -1,5 +1,5 @@
 <xrdcp> <localFileName> <xrdcpURL>
 stager_qry -M <noTapeFileName>
-<xrd> <stageHost> rm <noTapeFileName>?stagerm=1
+<xrd> <stageHost> rm <noTapeFileName>?stagerm=1 | sed '/^$/d'
 stager_qry -M <noTapeFileName>
 nsls <noTapeFileName>

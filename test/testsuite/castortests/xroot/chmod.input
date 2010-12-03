@@ -1,7 +1,7 @@
 <xrdcp> <localFileName> <xrdcpURL>
 nsls -l <noTapeFileName>
-<xrd> <stageHost> chmod <noTapeFileName> 7 7 7
+<xrd> <stageHost> chmod <noTapeFileName> 7 7 7 | sed '/^$/d'
 nsls -l <noTapeFileName>
-<xrd> <stageHost> chmod <noTapeFileName> 6 0 0
+<xrd> <stageHost> chmod <noTapeFileName> 6 0 0 | sed '/^$/d'
 nsls -l <noTapeFileName>
 nsrm <noTapeFileName>

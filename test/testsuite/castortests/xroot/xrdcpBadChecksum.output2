@@ -1,1 +1,1 @@
-<date> <time> 001 Xrd: CheckErrorStatus: Server declared: Unable to prepareForMigration : Cns_setfsizecs failed : Bad checksum ; Unknown error 1037(error code: 3005)
+<date> <time> 001 Xrd: CheckErrorStatus:<text>: Unable to prepareForMigration : Cns_setfsizecs failed : Bad checksum ; Unknown error 1037(error code: 3005)
