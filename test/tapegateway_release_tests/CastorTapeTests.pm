@@ -94,6 +94,10 @@ my %environment = (
 
 my $time_reference;
 
+# This variable tracks the result of the initial decision to go for it or not (safety mechanism for leftovers)
+# It will be used to determine final cleanup behavior;
+my $initial_green_light = 0;
+
 
 # Returns the numeric user ID of the user with given name
 sub get_uid_for_username( $ )
@@ -367,7 +371,8 @@ sub check_migrated_in_ns ( $ )
     if ($nsls=~ /^([\w-]+)\s+(\d+)\s+(\w+)\s+(\w+)\s+(\d+)/ ) {
         return ( ('m' eq substr ($1,0,1)) || ($5 == 0) );
     } else {
-        die "Failed to find file $file_name";
+        warn "Failed to find file $file_name in ns. Assuming m bit.";
+        return 1;
     }
 }
 
@@ -603,7 +608,7 @@ sub corrupt_size( $$ )
 sub corrupt_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetsegment -s 0 -d $name\"`;
+    `su $environment{username} -c \"nssetsegment -s 1 -c 1 -d $name\"`;
     print "t=".elapsed_time()."s. Corrupted segment in ns for file: $name\n";
 }
 
@@ -843,7 +848,7 @@ sub check_remote_entries ( $ )
 		    } else {
 			print "ERROR: Failed to interpret locally stored checksum: $entry{adler32}.\n";
 		    }
-		    if ( $local_checksum ne $remote_checksum ) {
+		    if ( defined $remote_checksum && ( $local_checksum ne $remote_checksum) ) {
 			print "ERROR: checksum mismatch beween remote and locally stored for $entry{name}: $local_checksum != $remote_checksum\n";
 		    }
                     $changed_entries ++;
@@ -934,18 +939,22 @@ sub check_remote_entries ( $ )
 sub unblock_stuck_files ()
 {
     my $dbh;
+    my @dropped_files_indexes;
     for  my $i ( 0 .. scalar (@remote_files) - 1 ) {
         my %entry = %{$remote_files[$i]};
         # check presence
         my $nslsresult=`nsls -d $entry{name} 2>&1`;
-        if ( $nslsresult =~ /No such file or directory$/) {
+        if ( $nslsresult =~ /No such file or directory$/ && 
+             !( defined $entry{breaking_type} && 
+                $entry{breaking_done} && 
+                $entry{breaking_type} =~ /^missing ns entry/ ) ) {
             die "Entry not found in name server: $entry{name}";
         }
 	undef $nslsresult;
         # if it's a file we can do something. 
         if ( $entry{type} eq "file" ) {
 	    # check the migration status and compare checksums.
-            if ($entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
+            if (0 && $entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
                 my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
                 if ($nsid =~ /^\s+(\d+)/ ) {
@@ -1001,19 +1010,20 @@ sub unblock_stuck_files ()
                   " forcedfully dropped. Previous state was :".
                   $entry{status}."\n";
                 $remote_files[$i]->{status} = "deleted stuck file (was ".$entry{status}.")";
+                push ( @dropped_files_indexes, $i ); 
             # check the invalidation status
-	    } elsif ($entry{status} eq "invalidation requested" ) {
+	    } elsif ($entry{status} =~ /^(rfcped|partially migrated|being recalled|invalidation requested)$/ ) {
 		if (!defined $dbh) { $dbh = open_db(); }
-		if ( check_invalid $entry{name} )  {
-                print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
-                my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
-                if ($nsid =~ /^\s+(\d+)/ ) {
-                    print "t=".elapsed_time()."s. NSFILE=".$1."\n";
-                }
-                if (defined $entry{breaking_type} && $entry{breaking_done}) {
-                    print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
-                }
-                my $stmt = $dbh->prepare ("DECLARE
+		if ( !check_invalid $entry{name} )  {
+                    print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
+                    my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
+                    if ($nsid =~ /^\s+(\d+)/ ) {
+                        print "t=".elapsed_time()."s. NSFILE=".$1."\n";
+                    }
+                    if (defined $entry{breaking_type} && $entry{breaking_done}) {
+                        print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
+                    }
+                    my $stmt = $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
                                       varTapeCopyIds  \"numList\";
                                       varDiskCopyIds  \"numList\";
@@ -1053,12 +1063,18 @@ sub unblock_stuck_files ()
                     $stmt->execute();
                     `su $environment{username} -c \"nsrm $entry{name}\"`;
                     print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}." dropped via DB.\n";
-		    $remote_files[$i]->{status} = "nuked from DB after stuck rfcp";
-		}
+                    $remote_files[$i]->{status} = "nuked from DB after stuck rfcp";
+                    push ( @dropped_files_indexes, $i ); 
+                }
             }
 	}
     }
+    # Drop the files from the tracking list, we don't care for them anymore, they're failed.
+    # highest index first order drop to have no index shifting effect in the array.
     if ( defined $dbh ) { $dbh->disconnect(); }
+    foreach my $i ( reverse ( @dropped_files_indexes ) ) {
+        splice ( @remote_files, $i, 1 );
+    }
 }
 
 # Get the number of files for which a move is expected.
@@ -1851,6 +1867,9 @@ sub reinstall_stager_db()
     die("ABORT: Reinstall requires at least 2 disk-servers")
       if($nbDiskServers < 2);
 
+    # This is where the final go/no go decsion is taken. Record that we got green light.
+    $initial_green_light = 1;
+
     # Ensure all of the daemons accessing the stager-database are dead
     killDaemonWithTimeout('jobmanagerd' , 2);
     killDaemonWithTimeout('mighunterd'  , 2);
@@ -2101,8 +2120,18 @@ END {
     print "t=".elapsed_time()."s. Cleanup complete. Printing leftovers.\n";
     my $dbh = open_db();
     print_leftovers ($dbh);
-    $dbh->disconnect();
     print "t=".elapsed_time()."s. End of leftovers\n";
+    if ( $initial_green_light ) {
+        print "t=".elapsed_time()."s. Nuking leftovers, if any.\n";
+        my $stmt = $dbh->prepare("BEGIN
+                                    DELETE FROM Stream2TapeCopy;
+                                    DELETE FROM DiskCopy;
+                                    DELETE FROM TapeCopy;
+                                    COMMIT;
+                                  END;");
+        $stmt->execute();
+    }
+    $dbh->disconnect();
 }
 # # create a local 
 1;                            # this should be your last line
