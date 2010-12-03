@@ -16,28 +16,28 @@ from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
-from sites.dirs.BooleanOption import BooleanOption
-from sites.dirs.DateOption import DateOption
-from sites.dirs.OptionsReader import OptionsReader
-from sites.dirs.SpinnerOption import SpinnerOption
-from sites.dirs.models import *
-from sites.tools.GarbageDeleters import deleteOldImageFiles, \
+from app.dirs.BooleanOption import BooleanOption
+from app.dirs.DateOption import DateOption
+from app.dirs.OptionsReader import OptionsReader
+from app.dirs.SpinnerOption import SpinnerOption
+from app.dirs.models import *
+from app.tools.GarbageDeleters import deleteOldImageFiles, \
     deleteOldStatusFiles
-from sites.tools.Inspections import *
-from sites.tools.StatusTools import *
-from sites.treemap.defaultproperties.TreeMapProperties import *
-from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
-from sites.treemap.drawing.metricslinking.AttributeTranslators import *
-from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
-from sites.treemap.drawing.metricslinking.ViewNodeDimensions import *
-from sites.treemap.objecttree.Postprocessors import *
-from sites.treemap.objecttree.TreeBuilder import TreeBuilder
-from sites.treemap.objecttree.TreeRules import LevelRules
-from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+from app.tools.Inspections import *
+from app.tools.StatusTools import *
+from app.treemap.defaultproperties.TreeMapProperties import *
+from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
+from app.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
+from app.treemap.drawing.metricslinking.AttributeTranslators import *
+from app.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
+from app.treemap.drawing.metricslinking.ViewNodeDimensions import *
+from app.treemap.objecttree.Postprocessors import *
+from app.treemap.objecttree.TreeBuilder import TreeBuilder
+from app.treemap.objecttree.TreeRules import LevelRules
+from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import re
-import sites.dirs.Presets
+import app.dirs.Presets
 import time
 
 
@@ -67,8 +67,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
 
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    thepreset = sites.dirs.Presets.getPresetByStaticId(presetid)
-    lr = sites.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    thepreset = app.dirs.Presets.getPresetByStaticId(presetid)
+    lr = app.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
     
     avmodels = lr.getRuleObject(0).getUsedClassNames()
 
@@ -205,8 +205,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
-    thepreset = sites.dirs.Presets.getPresetByStaticId(presetid)
-    cookielr = sites.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    thepreset = app.dirs.Presets.getPresetByStaticId(presetid)
+    cookielr = app.dirs.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
         
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr, options = optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -356,7 +356,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
     optrd = OptionsReader(options, presetid)
     
     #look for the patterns 
-    patterns = sites.dirs.urls.urlpatterns
+    patterns = app.dirs.urls.urlpatterns
     groupv = r'.*?.groupView$'
     normalv = r'.*?.treeView$'
     treeviewexpr = r''
@@ -435,10 +435,10 @@ def preset(request, options,  urlending):
         except:
             statusfilename = ''
             
-        if presetname not in sites.dirs.Presets.getPresetNames():
+        if presetname not in app.dirs.Presets.getPresetNames():
             redir(request, options, urlending, False, 0)
             
-        preset = sites.dirs.Presets.getPreset(presetname)
+        preset = app.dirs.Presets.getPreset(presetname)
         optr = OptionsReader(options, preset.staticid)    
         validoptions = preset.optionsset
         thetime = None
@@ -508,7 +508,7 @@ def preset(request, options,  urlending):
         raise Http404
     
     options = optr.getCorrectedOptions(preset.staticid)
-    return redir(request, options, urlending, sites.dirs.Presets.getPreset(presetname).cachingenabled, sites.dirs.Presets.getPreset(presetname).staticid, sites.dirs.Presets.getPreset(presetname).rootmodel, sites.dirs.Presets.getPreset(presetname).rootidreplacement, statusfilename)
+    return redir(request, options, urlending, app.dirs.Presets.getPreset(presetname).cachingenabled, app.dirs.Presets.getPreset(presetname).staticid, app.dirs.Presets.getPreset(presetname).rootmodel, app.dirs.Presets.getPreset(presetname).rootidreplacement, statusfilename)
 
 def setStatusFileInCookie(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
@@ -613,11 +613,11 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     generationtime = datetime.datetime.now() - time
     
-    presetnames = sites.dirs.Presets.getPresetNames()
+    presetnames = app.dirs.Presets.getPresetNames()
     presetnames.sort();
     
     optionshtml = []
-    preset = sites.dirs.Presets.getPresetByStaticId(presetid)
+    preset = app.dirs.Presets.getPresetByStaticId(presetid)
     for option in preset.optionsset:
         optionshtml.append(option.toHtml(options))
 
@@ -650,7 +650,7 @@ class DropDownEntry(object):
 def getCurrentPresetSelections(request, presetid, options = ''):
     try:
         optrd = OptionsReader(options, presetid)
-        return {'flat': optrd.getOption('flatview'), 'presetname': sites.dirs.Presets.presetIdToName(presetid), 'smalltobig': optrd.getOption('smalltobig')}
+        return {'flat': optrd.getOption('flatview'), 'presetname': app.dirs.Presets.presetIdToName(presetid), 'smalltobig': optrd.getOption('smalltobig')}
     except KeyError:
         return getDefaultPresets()
 
@@ -663,7 +663,7 @@ def calcCacheKey(theid, presetid, parentmodel, lr, depth = 0, options = ''):
     return cache_key
 
 def getDefaultRules(nblevels):
-    lr = sites.dirs.Presets.getPreset("Default (Directory structure)").lr
+    lr = app.dirs.Presets.getPreset("Default (Directory structure)").lr
     return lr
 
 def getDefaultModel():

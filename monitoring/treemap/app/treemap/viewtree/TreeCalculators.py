@@ -17,10 +17,10 @@ nbchildren - number of children the node has (for potential use)
 
 @author: kblaszcz
 '''
-from sites.treemap.viewtree.ViewTree import ViewTree
+from app.treemap.viewtree.ViewTree import ViewTree
 import math
-from sites.treemap.viewtree.ViewNode import ViewNode
-from sites.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.viewtree.ViewNode import ViewNode
+from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 
 class SquaredTreemapCalculator(object):
     '''

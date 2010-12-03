@@ -4,9 +4,9 @@ Created on May 5, 2010
 '''
 import warnings
 import inspect
-from sites.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
-from sites.tools.Inspections import *
-from sites.treemap.objecttree.Postprocessors import *
+from app.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
+from app.tools.Inspections import *
+from app.treemap.objecttree.Postprocessors import *
 
 class Wrapper(object):
     '''

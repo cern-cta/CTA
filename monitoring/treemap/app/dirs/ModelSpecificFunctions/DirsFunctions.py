@@ -1,5 +1,5 @@
-from sites.errors.NoDataAvailableError import NoDataAvailableError
-#!!!sites.dirs.models is imported at the end of the file!!!
+from app.errors.NoDataAvailableError import NoDataAvailableError
+#!!!app.dirs.models is imported at the end of the file!!!
 import math
 
 #exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)
@@ -20,5 +20,5 @@ def getDirByName(dirname):
                 node = child
     raise NoDataAvailableError ("no such object")
         
-#this import has to be here because of circular dependency with sites.dirs.models!
-from sites.dirs.models import *
+#this import has to be here because of circular dependency with app.dirs.models!
+from app.dirs.models import *

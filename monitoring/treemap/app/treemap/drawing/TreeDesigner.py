@@ -13,11 +13,11 @@ If a property is not available, there is a hardcoded default value
 
 @author: kblaszcz
 '''
-from sites.tools.ColorFunctions import *
-from sites.treemap.defaultproperties.TreeMapProperties import \
+from app.tools.ColorFunctions import *
+from app.treemap.defaultproperties.TreeMapProperties import \
     BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
-from sites.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
-from sites.treemap.viewtree.ViewTree import ViewTree
+from app.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
+from app.treemap.viewtree.ViewTree import ViewTree
 import cairo
 import random
 

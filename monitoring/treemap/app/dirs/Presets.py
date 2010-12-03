@@ -14,11 +14,11 @@ disable or enable caching for a particular preset by using cachingenabled
 @author: kblaszcz
 '''
 from django.conf import settings
-from sites.dirs.BooleanOption import BooleanOption
-from sites.dirs.DateOption import DateOption
-from sites.dirs.SpinnerOption import SpinnerOption
-from sites.tools.Inspections import getDefaultNumberOfLevels
-from sites.treemap.objecttree.TreeRules import LevelRules
+from app.dirs.BooleanOption import BooleanOption
+from app.dirs.DateOption import DateOption
+from app.dirs.SpinnerOption import SpinnerOption
+from app.tools.Inspections import getDefaultNumberOfLevels
+from app.treemap.objecttree.TreeRules import LevelRules
 import copy
     
 class Preset(object):

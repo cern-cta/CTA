@@ -1,4 +1,4 @@
-from sites import settings
+from app import settings
 import os
 import stat
 import time

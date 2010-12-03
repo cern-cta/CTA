@@ -20,7 +20,7 @@ This is the case for all Requests.
 '''
 
 from django.template.loader import render_to_string
-from sites import settings
+from app import settings
 import os
 
 def deleteStatusFile(statusfilename):

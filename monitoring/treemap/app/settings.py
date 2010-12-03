@@ -19,7 +19,7 @@ MANAGERS = ADMINS
 DATABASE_ENGINE = 'django.db.backends.oracle'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'test2_nolb'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'castor_ns_ro'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'xxx'         # Not used with sqlite3.
+DATABASE_PASSWORD = 'sav3th3whal3s'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.           # Set to empty string for default. Not used with sqlite3.
 
@@ -78,7 +78,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS  = 172800
 CACHE_MIDDLEWARE_KEY_PREFIX = 'f94df_ip%r_df$#%$de%*gfg$$!$!edsw&dgk=|fj*6j!n\"x'
 
-ROOT_URLCONF = 'sites.urls'
+ROOT_URLCONF = 'app.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -92,8 +92,8 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     #'django.contrib.sessions', not DB bases sessions
     'django.contrib.sites',
-    'sites.dirs',
-    #'sites.dirs.ModelSpecificFunctions',
+    'app.dirs',
+    #'app.dirs.ModelSpecificFunctions',
 #    'django.contrib.admin'
 )
 
@@ -133,8 +133,8 @@ REL_ICON_DICT = "/images/icons"
 REL_PBARIMG_DICT = "/images/progressbar"
 
 #location of models
-MODELS_LOCATION = 'sites.dirs'
+MODELS_LOCATION = 'app.dirs'
 
 #location of postprocessors
-POSTPROCESSORS_LOCATION = 'sites.treemap.objecttree.Postprocessors'
+POSTPROCESSORS_LOCATION = 'app.treemap.objecttree.Postprocessors'
 

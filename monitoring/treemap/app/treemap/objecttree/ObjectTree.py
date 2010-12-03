@@ -5,7 +5,7 @@ The class embeds model instances in TreeNodes and holds them in a tree structure
 
 @author: kblaszcz
 '''
-from sites.treemap.objecttree.TreeNode import TreeNode
+from app.treemap.objecttree.TreeNode import TreeNode
 import networkx as nx
 import warnings
 

@@ -7,7 +7,7 @@ holds ViewNodes in a tree structure, provides methods to access that tree
 '''
 import networkx as nx
 import warnings
-from sites.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from  networkx import NetworkXError
 
 class ViewTree(object):

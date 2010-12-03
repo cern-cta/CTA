@@ -7,14 +7,14 @@ A TransFunction translates object attributes into numbers.
 
 @author: kblaszcz
 '''
-from sites.tools.Inspections import *
-from sites.tools.ObjectCreator import createObject
-from sites.treemap.objecttree.Postprocessors import *
+from app.tools.Inspections import *
+from app.tools.ObjectCreator import createObject
+from app.treemap.objecttree.Postprocessors import *
 import exceptions
 import inspect
 import sys
 import warnings
-from sites.dirs.models import *
+from app.dirs.models import *
 
 class ChildRules(object):
     '''
@@ -202,7 +202,7 @@ class ChildRules(object):
         #check postprocessornm
         for classname, ppn in self.ppnames.items():
             if ppn is not None:
-                modulename = 'sites.treemap.objecttree.Postprocessors'
+                modulename = 'app.treemap.objecttree.Postprocessors'
                 if not modulename in sys.modules.keys():
                     try:
                         module = __import__( modulename )

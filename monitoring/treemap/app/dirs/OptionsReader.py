@@ -9,7 +9,7 @@ An option can be excluded from the corrected string by setting includeasstring[o
 
 import re
 import datetime
-import sites.dirs
+import app.dirs
 
 class OptionsReader(object):
     '''
@@ -21,7 +21,7 @@ class OptionsReader(object):
         self.includeasstring = {}
         self.options = options 
         
-        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
+        optset = app.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for urlopt in optset:
             try:
                 self.optdict[urlopt.getName()] = urlopt.optionsToValue(options)
@@ -40,7 +40,7 @@ class OptionsReader(object):
         assert(isinstance(extension, str))
         self.options = self.options + extension;
         
-        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
+        optset = app.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for urlopt in optset:
             try:
                 self.optdict[urlopt.getName()] = urlopt.optionsToValue(self.options)
@@ -51,7 +51,7 @@ class OptionsReader(object):
     
     def getCorrectedOptions(self, presetid):
         correctedoptions = []
-        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
+        optset = app.dirs.Presets.getPresetByStaticId(presetid).optionsset
         
         for urlopt in optset:
             if self.includeasstring[urlopt.getName()]:
@@ -62,12 +62,12 @@ class OptionsReader(object):
         return ''.join([bla for bla in correctedoptions])
     
     def getStandardValue(self, optionname, presetid = 0):
-        optset = sites.dirs.Presets.getPresetByStaticId(presetid).optionsset
+        optset = app.dirs.Presets.getPresetByStaticId(presetid).optionsset
         for option in optset:
             if option.getName() == optionname:
                 return option.getStdVal()
 
-        for preset in sites.dirs.Presets.presetdict.values():
+        for preset in app.dirs.Presets.presetdict.values():
             optset = preset.optionsset
             for option in optset:
                 if option.getName() == optionname:

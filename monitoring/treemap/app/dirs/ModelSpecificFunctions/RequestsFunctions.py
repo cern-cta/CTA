@@ -6,14 +6,14 @@ These functions are supposed to help or extend with model specific functionality
 
 
 
-from sites.dirs.DateOption import DateOption
-from sites.errors.NoDataAvailableError import NoDataAvailableError
-from sites.tools.StatusTools import generateStatusFile
-from sites.treemap.BasicTree import BasicTree
+from app.dirs.DateOption import DateOption
+from app.errors.NoDataAvailableError import NoDataAvailableError
+from app.tools.StatusTools import generateStatusFile
+from app.treemap.BasicTree import BasicTree
 import copy
 import datetime
 import math
-#!!!sites.dirs.models is imported at the end of the file!!!
+#!!!app.dirs.models is imported at the end of the file!!!
 
 #an empty urlrest must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
@@ -190,5 +190,5 @@ def traverseToRequestInTree(name, reqmodel):
     #raise NoDataAvailableError(name + ": No such record in the tree")
     return tree #if directory doesn't exist any more, return on the last successful traversal
 
-#this import has to be here because of circular dependency with sites.dirs.models!
-from sites.dirs.models import *
+#this import has to be here because of circular dependency with app.dirs.models!
+from app.dirs.models import *

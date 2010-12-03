@@ -5,11 +5,11 @@ set of useful functions enabling to easily scan for model attributes, available 
 '''
 from django.db.models.base import ModelBase
 from django.db.models.fields import *
-from sites.tools.ObjectCreator import createObject
-from sites.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
+from app.tools.ObjectCreator import createObject
+from app.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
 import inspect
 import sys
-from sites.dirs.models import *
+from app.dirs.models import *
 
 class ModelAttributeFinder:
 
@@ -108,7 +108,7 @@ def getCountMethodFor(themodel, childrenmethodname):
 
 def getModelsModuleName(themodel):
     modulename = ""
-    if(themodel == 'Annex'): return 'sites.treemap.objecttree.Annex'
+    if(themodel == 'Annex'): return 'app.treemap.objecttree.Annex'
     
     if settings.MODELS_LOCATION in settings.INSTALLED_APPS:
         modulename = settings.MODELS_LOCATION + '.models'

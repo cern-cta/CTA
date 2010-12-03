@@ -11,13 +11,13 @@ from django.db.models import *
 from django.db.models.fields import *
 import datetime
 #import math
-from sites.tools.ObjectCreator import createObject
-from sites.treemap.objecttree.columntransformation.TransFunctions import *
-from sites.tools.Inspections import *
+from app.tools.ObjectCreator import createObject
+from app.treemap.objecttree.columntransformation.TransFunctions import *
+from app.tools.Inspections import *
 
 #USAGE EXAMPLE:
-#from sites.dirs.models import Dirs
-#from sites.treemap.node.object_extender.object_extender import *
+#from app.dirs.models import Dirs
+#from app.treemap.node.object_extender.object_extender import *
 #t = ColumnTransformator('Dirs')
 #p = Dirs.objects.get(pk=4)
 #totalsize_value = t.transform_totalsize(p.totalsize)

@@ -10,27 +10,27 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
-from sites import settings
-from sites.dirs.DateOption import DateOption
-from sites.dirs.ModelInterface import ModelInterface
-from sites.errors.NoDataAvailableError import NoDataAvailableError
-from sites.tools.Inspections import *
-from sites.tools.StatusTools import generateStatusFile
-from sites.treemap.BasicTree import BasicTree
-from sites.treemap.defaultproperties.TreeMapProperties import *
-from sites.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from sites.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
-from sites.treemap.objecttree.ObjectTree import ObjectTree
-from sites.treemap.objecttree.TreeBuilder import TreeBuilder
-from sites.treemap.objecttree.TreeRules import LevelRules
-from sites.treemap.objecttree.Wrapper import Wrapper
-from sites.treemap.objecttree.columntransformation import *
-from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+from app import settings
+from app.dirs.DateOption import DateOption
+from app.dirs.ModelInterface import ModelInterface
+from app.errors.NoDataAvailableError import NoDataAvailableError
+from app.tools.Inspections import *
+from app.tools.StatusTools import generateStatusFile
+from app.treemap.BasicTree import BasicTree
+from app.treemap.defaultproperties.TreeMapProperties import *
+from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
+from app.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
+from app.treemap.objecttree.ObjectTree import ObjectTree
+from app.treemap.objecttree.TreeBuilder import TreeBuilder
+from app.treemap.objecttree.TreeRules import LevelRules
+from app.treemap.objecttree.Wrapper import Wrapper
+from app.treemap.objecttree.columntransformation import *
+from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
-from sites.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
-#!!!sites.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
+from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
+#!!!app.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 #if it is in the beginning of the file you will get a KeyError in RequestsFunctions, globals()[modelname]
 
 def lookForMissingNonInterfaceImplementations(modelname):
@@ -838,10 +838,10 @@ Requestspublic.treeprops = {'start': None, 'stop': None}
 Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestspublic.stop = datetime.datetime.now() #time relative to now
 
-#this import has to be here because of circular dependency with sites.dirs.ModelSpecificFunctions.RequestsFunctions
+#this import has to be here because of circular dependency with app.dirs.ModelSpecificFunctions.RequestsFunctions
 #Warning!!! If you use eclipse the menu Source->Organize Imports will move these entries to the top of the file, which is wrong!
-from sites.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
-from sites.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
+from app.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
+from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)

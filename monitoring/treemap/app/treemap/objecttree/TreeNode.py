@@ -5,9 +5,9 @@ TreeNodes wraps an object with Wrapper and provides evaluation by the attribute 
 
 @author: kblaszcz
 '''
-from sites.tools.ObjectCreator import createObject
-from sites.treemap.objecttree.Postprocessors import PostProcessorBase
-from sites.treemap.objecttree.Wrapper import Wrapper
+from app.tools.ObjectCreator import createObject
+from app.treemap.objecttree.Postprocessors import PostProcessorBase
+from app.treemap.objecttree.Wrapper import Wrapper
 import inspect
 
 class TreeNode(object):
