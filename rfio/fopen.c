@@ -21,9 +21,8 @@
 /*
  * Remote file open
  */
-RFILE *rfio_fopen(file, mode)
-     char * file ;
-     char * mode ;
+RFILE *rfio_fopen(char * file,
+                  char * mode)
 {
   register int f, rw, oflags ;
   int f_index;

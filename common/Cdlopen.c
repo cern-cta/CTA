@@ -46,9 +46,8 @@ static char *C__Cdlopen_buffer()
 #include <windows.h>
 
 /* Note: flag is not used on Windows */
-void *Cdlopen(filename,flag)
-     const char *filename;
-     int flag;
+void *Cdlopen(const char *filename,
+              int flag)
 {
   return((void *)LoadLibrary(filename));
 }
@@ -69,9 +68,8 @@ int Cdlclose(void *handler) {
 }
 #else
 /* Assuming standard dlopen() interface */
-void *Cdlopen(filename,flag)
-     const char *filename;
-     int flag;
+void *Cdlopen(const char *filename,
+              int flag)
 {
   return(dlopen(filename, flag));
 }

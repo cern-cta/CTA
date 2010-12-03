@@ -4,7 +4,7 @@
 .\"
 .TH CNS_tapesum 3 "$Date: 2009/07/09 12:43:40 $" CASTOR "Cns Library Functions"
 .SH NAME
-Cns_tapesum \- returns the total size and number of files on a volume and largest fileid
+Cns_tapesum \- returns the total size, the number of files on a volume, the largest fileid, and the average compression factor
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
@@ -15,7 +15,7 @@ Cns_tapesum \- returns the total size and number of files on a volume and larges
 .BI "u_signed64 *" count ,
 .BI "u_signed64 *" size ,
 .BI "u_signed64 *" maxfileid ,
-.BI "int " filter )
+.BI "u_signed64 *" avgcompression )
 .SH DESCRIPTION
 .B Cns_tapesum
 returns the total size in bytes and the number of files on a volume
@@ -32,11 +32,12 @@ specifies the address of a buffer to receive the count of the number of files on
 .I size
 specifies the address of a buffer to receive the total size of all files on the volume
 .TP
-.I size
+.I maxfileid
 specifies the address of a buffer to receive the largest fileid on the volume
 .TP
-.I filter
-specifies which type of segments to include in the count of summarized information. 1 = all, 2 = active only and 3 = logical deleted only
+.I avgcompression
+specifies the address of a buffer to receive the average compression factor of the volume,
+computed as the inverse of the average of the compression ratios weighted by the corresponding file sizes. 
 .RE
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the

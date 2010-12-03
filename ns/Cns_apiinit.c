@@ -19,8 +19,7 @@
 static int Cns_api_key = -1;
 
 int
-Cns_apiinit(thip)
-     struct Cns_api_thread_info **thip;
+Cns_apiinit(struct Cns_api_thread_info **thip)
 {
   char *p = NULL;
   Cglobals_get (&Cns_api_key,

@@ -97,7 +97,7 @@ int rfio_symlink(char *n1,
   }
   nbuf = (char *) malloc( status ) ;
   if ( nbuf == NULL ) {
-    TRACE(2, "rfio", "symlink:  malloc () failed");
+    TRACE(2, "rfio", "symlink: malloc () failed");
     (void) close(s);
     END_TRACE();
     return(-1);

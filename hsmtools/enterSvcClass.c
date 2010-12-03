@@ -85,10 +85,7 @@ static struct Coptions longopts[] = {
   {NULL                 ,                 0,       NULL,                   0}
 };
 
-void usage(
-           cmd
-           )
-     char *cmd;
+void usage(char *cmd)
 {
   int i;
   fprintf(stdout,"Usage: %s \n",cmd);
@@ -99,10 +96,7 @@ void usage(
   return;
 }
 
-int countItems(
-               itemStr
-               )
-     char *itemStr;
+int countItems(char *itemStr)
 {
   char *p;
   int nbItems = 0;
@@ -116,14 +110,9 @@ int countItems(
   return(nbItems);
 }
 
-int splitItemStr(
-                 itemStr,
-                 itemArray,
-                 nbItems
-                 )
-     char *itemStr;
-     char ***itemArray;
-     int *nbItems;
+int splitItemStr(char *itemStr,
+                 char ***itemArray,
+                 int *nbItems)
 {
   char *p, *tmpStr;
   int tmpNbItems, i;

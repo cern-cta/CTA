@@ -75,8 +75,7 @@ int main()
   exit(0);
 }
 
-void *doit(arg)
-     void *arg;
+void *doit(void *arg)
 {
   int Tid;
   int doit = * (int *) arg;

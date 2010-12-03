@@ -103,7 +103,7 @@ CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
 
 -- Create indexes on Cns_seg_metadata
-CREATE INDEX I_seg_metadata_vid_fid_segsize ON Cns_seg_metadata (vid, s_fileid, segsize);
+CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize, compression);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp

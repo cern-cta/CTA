@@ -19,10 +19,9 @@ static char *func = "tapealertcheck";
 
 /* Functions that checks 9840/9940/T10000/LTO/3592 tape flags */
 int
-get_tape_alerts(tapefd, path, devtype)
-int tapefd;
-char *path;
-char *devtype;
+get_tape_alerts(int tapefd,
+                    char *path,
+                    char *devtype)
 {
 #if defined(linux)
 	unsigned char *endpage;

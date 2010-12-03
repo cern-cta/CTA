@@ -53,7 +53,7 @@ Setup.getTag_corexrdcp = corexrdcp
 
 def xrdcp(self):
     cmd = os.environ['XROOTSYS'] + os.sep + 'bin' + os.sep + 'xrdcp'
-    return [cmd, 'KRB5CCNAME=nonexistinghost;' + cmd]
+    return [cmd, 'KRB5CCNAME=nonexistinghost ' + cmd]
 Setup.getTag_xrdcp = xrdcp
 
 def xrd(self):

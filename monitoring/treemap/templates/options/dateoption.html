@@ -1,0 +1,36 @@
+{{userfriendlyname}} <br>
+<input onclick = "insertNowTo{{name}}();" class="now" type="button" value="now" id="id_now{{name}}"/><input class="datefield" type="text" name="{{name}}" value="{{defaultdate}}" id="id_{{name}}" />
+<script type="text/javascript">
+Calendar.setup({
+inputField     :    "id_{{name}}",   // id of the input field
+ifFormat       :    "%d.%m.%Y_%H:%M:%S",       // format of the input field
+showsTime      :    true,
+timeFormat     :    "24",
+onUpdate       :    catcalc
+});
+
+function insertNowTo{{name}}()
+{
+	function zeroPad(text, len)
+	{
+		while(text.length < len) text = "0" + text; 
+		return text;
+	}
+	
+	var currentTime = new Date();
+	var day = String(currentTime.getDate());
+	day = zeroPad(day,2);
+	var month = String(currentTime.getMonth() + 1);
+	month = zeroPad(month,2);
+	var year = String(currentTime.getFullYear());
+	var hours = String(currentTime.getHours());
+	hours = zeroPad(hours,2);
+	var minutes = String(currentTime.getMinutes());
+	minutes = zeroPad(minutes,2);
+	var seconds = String(currentTime.getSeconds());
+	seconds = zeroPad(seconds,2);
+		
+	text = document.getElementById("id_{{name}}");
+	text.value = day + "."+ month+ "." + year + "_"+ hours + ":" + minutes + ":" + seconds;
+}
+</script>

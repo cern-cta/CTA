@@ -32,9 +32,8 @@ void procreq(int, char*, char*);
  *	A continuation line is prefixed by '+ '
  */
 void
-rmc_logreq(func, logbuf)
-char *func;
-char *logbuf;
+rmc_logreq(char *func,
+	   char *logbuf)
 {
 	int n1, n2;
 	char *p;

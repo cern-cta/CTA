@@ -26,7 +26,7 @@ ifndef IMAKETMPL
 #endif
 
 DEBUG = -O0 -g
-#define LOCAL_PATH __local_path__
+#define LOCAL_PATH $(CASTOR_ROOT)/__local_path__
 #define PREFIX(VAR) __root_prefix__/**/_/**/VAR
 CASTOR_ROOT = __back_to_root__
 CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror

@@ -35,9 +35,8 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 
 
 void
-exp_logreq(func, logbuf)
-     char *func;
-     char *logbuf;
+exp_logreq(char *func,
+	   char *logbuf)
 {
 	int n1, n2;
 	char *p;

@@ -88,10 +88,7 @@ Cuuid_t childUuid, mainUuid;
 
 static int use_checksum = 1, change_checksum_name = 0;
 
-static int getNsErrBuf(
-                       nsErrBuf
-                       )
-     char **nsErrBuf;
+static int getNsErrBuf(char **nsErrBuf)
 {
   static int nsErrBufKey = -1;
   void *tmpBuf = NULL;
@@ -126,12 +123,8 @@ int rtcpcld_initNsInterface()
 }
 
 
-static int checkSegment(
-                        tape,
-                        file
-                        )
-     tape_list_t *tape;
-     file_list_t *file;
+static int checkSegment(tape_list_t *tape,
+                        file_list_t *file)
 {
   struct Cstager_Segment_t *segment;
   struct Cstager_TapeCopy_t *tapeCopy;
@@ -177,18 +170,11 @@ static int checkSegment(
   return(0);
 }
 
-int rtcpcld_updateNsSegmentAttributes(
-                                      tape,
-                                      file,
-                                      tapeCopyNb,
-                                      castorFile,
-                                      last_mod_time
-                                      )
-     tape_list_t *tape;
-     file_list_t *file;
-     int tapeCopyNb;
-     struct Cns_fileid *castorFile;
-     time_t last_mod_time;
+int rtcpcld_updateNsSegmentAttributes(tape_list_t *tape,
+                                      file_list_t *file,
+                                      int tapeCopyNb,
+                                      struct Cns_fileid *castorFile,
+                                      time_t last_mod_time)
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
@@ -664,12 +650,8 @@ int rtcpcld_updateNsSegmentAttributes(
   return(rc);
 }
 
-int rtcpcld_checkNsSegment(
-                           tape,
-                           file
-                           )
-     tape_list_t *tape;
-     file_list_t *file;
+int rtcpcld_checkNsSegment(tape_list_t *tape,
+                           file_list_t *file)
 {
   int rc = 0, nbSegms = 0, i, found = 0, save_serrno;
   struct Cns_segattrs *currentSegattrs = NULL, newSegattrs;
@@ -959,10 +941,7 @@ int rtcpcld_checkNsSegment(
 
 /** assure that all copies are on different tapes
  */
-int rtcpcld_checkDualCopies(
-                            file
-                            )
-     file_list_t *file;
+int rtcpcld_checkDualCopies(file_list_t *file)
 {
   tape_list_t *tape;
   int rc, i, nbSegs = 0, dualCopyFound = 0;
@@ -1052,13 +1031,9 @@ int rtcpcld_checkDualCopies(
   return(0);
 }
 
-int rtcpcld_getOwner(
-                     fileId,
-                     uid,
-                     gid
-                     )
-     struct Cns_fileid *fileId;
-     int *uid, *gid;
+int rtcpcld_getOwner(struct Cns_fileid *fileId,
+                     int *uid,
+                     int *gid)
 {
   int rc;
   struct Cns_filestat statbuf;
@@ -1079,12 +1054,8 @@ int rtcpcld_getOwner(
   return(0);
 }
 
-int rtcpcld_getFileId(
-                      file,
-                      fileId
-                      )
-     file_list_t *file;
-     struct Cns_fileid **fileId;
+int rtcpcld_getFileId(file_list_t *file,
+                      struct Cns_fileid **fileId)
 {
   rtcpFileRequest_t *filereq;
 

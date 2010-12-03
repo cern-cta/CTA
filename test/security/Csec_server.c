@@ -53,9 +53,8 @@ void signal_pipe(int sig) {
 
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc,
+     char **argv)
 {
     u_short port = 1975;
     int s;

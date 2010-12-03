@@ -133,12 +133,9 @@ static int initLocks()
   return(0);
 }
 
-static int updateSegmCount(
-                           submitted,
-                           completed,
-                           failed
-                           )
-     int submitted,completed, failed;
+static int updateSegmCount(int submitted,
+                           int completed,
+                           int failed)
 {
   int rc;
   rc = Cthread_mutex_lock_ext(segmCountLock);
@@ -172,10 +169,7 @@ static int updateSegmCount(
   return(0);
 }
 
-static int checkAborted(
-                        segmFailed
-                        )
-     int *segmFailed;
+static int checkAborted(int *segmFailed)
 {
   int aborted = 0, rc;
   rc = Cthread_mutex_lock_ext(abortLock);
@@ -194,10 +188,7 @@ static int checkAborted(
   return(aborted);
 }
 
-static void setAborted(
-                       segmFailed
-                       )
-     int segmFailed;
+static void setAborted(int segmFailed)
 {
   int rc;
   rc = Cthread_mutex_lock_ext(abortLock);
@@ -215,12 +206,8 @@ static void setAborted(
 }
 
 
-int recallerCallbackFileCopied(
-                               tapereq,
-                               filereq
-                               )
-     rtcpTapeRequest_t *tapereq;
-     rtcpFileRequest_t *filereq;
+int recallerCallbackFileCopied(rtcpTapeRequest_t *tapereq,
+                               rtcpFileRequest_t *filereq)
 {
   file_list_t *file = NULL;
   int rc, save_serrno, finished = 0, failed = 0, ownerUid = -1, ownerGid = -1;
@@ -508,12 +495,8 @@ int recallerCallbackMoreWork(rtcpFileRequest_t *filereq)
   return(0);
 }
 
-int recallerCallback(
-                     tapereq,
-                     filereq
-                     )
-     rtcpTapeRequest_t *tapereq;
-     rtcpFileRequest_t *filereq;
+int recallerCallback(rtcpTapeRequest_t *tapereq,
+                     rtcpFileRequest_t *filereq)
 {
   int rc = 0, save_serrno, msgNo;
   struct Cns_fileid *castorFileId = NULL;
@@ -709,12 +692,8 @@ int recallerCallback(
   return(rc);
 }
 
-int main(
-         argc,
-         argv
-         )
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   char *recallerFacility = RECALLER_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   int rc, c, i, save_serrno = 0, failed = 0, runTime;

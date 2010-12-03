@@ -20,8 +20,10 @@ URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
-ExclusiveOs: linux
-ExclusiveArch: i386 x86_64
+# only build debug info if you're building the whole code
+%if %compiling_client
+%define debug_package %{nil}
+%endif
 
 %description
 The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to handle LHC data in a fully distributed environment.

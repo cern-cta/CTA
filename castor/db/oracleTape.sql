@@ -847,8 +847,15 @@ CREATE OR REPLACE PROCEDURE deleteOrStopStream(streamId IN INTEGER) AS
   unused NUMBER;
 
 BEGIN
-  -- Take a lock on the stream
-  SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  -- Try to take a lock on the stream, taking note that the stream may already
+  -- have been delete because the migrator, rtcpclientd and mighunterd race to
+  -- delete streams
+  BEGIN
+    SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Return because the stream has already been deleted
+    RETURN;
+  END;
 
   -- Try to delete the stream.  If the mighunter daemon is running in
   -- rtcpclientd mode, then this delete may fail for two expected reasons.  The
@@ -1646,15 +1653,20 @@ BEGIN
            INDEX_RS_ASC(TAPE I_TAPE_STATUS)
            INDEX_RS_ASC(TAPECOPY PK_TAPECOPY_ID)
            INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
-       Tape.id, Tape.vid, count(distinct segment.id), sum(CastorFile.fileSize),
-       getTime() - min(Segment.creationTime), max(Segment.priority)
+       Tape.id,
+       Tape.vid,
+       count(distinct segment.id),
+       sum(CastorFile.fileSize),
+       getTime() - min(Segment.creationTime) age,
+       max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape
        AND TapeCopy.id = Segment.copy
        AND CastorFile.id = TapeCopy.castorfile
        AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED
-     GROUP BY Tape.id, Tape.vid;
+     GROUP BY Tape.id, Tape.vid
+     ORDER BY age DESC;
 END;
 /
 
@@ -1685,19 +1697,20 @@ COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
                 Tape.vid,
                 count ( distinct segment.id ),
                 sum ( CastorFile.fileSize ),
-                getTime ( ) - min ( Segment.creationTime ),
+                getTime ( ) - min ( Segment.creationTime ) age,
                 max ( Segment.priority ),
                 Tape.status
            FROM TapeCopy,
                 CastorFile,
                 Segment,
                 Tape
-          WHERE Tape.id = Segment .tape
-            AND TapeCopy.id = Segment .copy
+          WHERE Tape.id = Segment.tape
+            AND TapeCopy.id = Segment.copy
             AND CastorFile.id = TapeCopy.castorfile
             AND Tape.status IN (1, 2, 8) -- PENDING, WAITDRIVE, WAITPOLICY
             AND Segment.status = 0 -- SEGMENT_UNPROCESSED
-          GROUP BY Tape.id, Tape.vid, Tape.status;
+          GROUP BY Tape.id, Tape.vid, Tape.status
+          ORDER BY age DESC;
     
 END tapesAndMountsForRecallPolicy;
 /
@@ -1916,3 +1929,28 @@ BEGIN
 END tapegatewaydIsRunning;
 /
 
+
+CREATE PROCEDURE lockCastorFileById(
+/**
+ * Locks the row in the castor-file table with the specified database ID.
+ *
+ * This procedure raises application error -20001 when no row exists in the
+ * castor-file table with the specified database ID.
+ *
+ * @param inCastorFileId The database ID of the row to be locked.
+ */
+  inCastorFileId INTEGER
+) AS
+  varDummyCastorFileId INTEGER := 0;
+BEGIN
+  SELECT CastorFile.id
+    INTO varDummyCastorFileId
+    FROM CastorFile
+   WHERE CastorFile.id = inCastorFileId
+     FOR UPDATE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RAISE_APPLICATION_ERROR(-20001,
+    'Castor-file does not exist' ||
+    ': inCastorFileId=' || inCastorFileId);
+END lockCastorFileById;
+/

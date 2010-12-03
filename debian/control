@@ -24,12 +24,6 @@ XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
-Package: castor-devel-oracle
-Architecture: any
-Depends: castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- Oracle API
-
 Package: castor-expert-server
 Architecture: any
 Depends: logrotate
@@ -67,7 +61,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
-XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages
+XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages, castor-tape-client
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
@@ -182,11 +176,10 @@ Depends: logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Stager server
 
-Package: castor-tape-client
+Package: castor-tape-tools
 Architecture: any
-XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
- Tape clients
+ Tape tools
 
 Package: castor-tape-server
 Architecture: any
@@ -276,7 +269,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: castor-lib, castor-gridftp-dsi-common, xrootd, vdt-globus-data-server, vdt-globus-essentials
+Depends: castor-lib, castor-gridftp-dsi-common, xrootd-server, vdt-globus-data-server, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 

@@ -198,9 +198,8 @@ boolean	verbose = FALSE;
 boolean	show = TRUE;
 extern char	*getenv (const char *);
 
-main(argc, argv)
-	int	argc;
-	char	**argv;
+int main(int	argc,
+         char	**argv)
 {
 	FILE	*tmpfd;
 	char	makeMacro[ BUFSIZ ];
@@ -233,8 +232,7 @@ main(argc, argv)
 }
 
 void
-showit(fd)
-	FILE	*fd;
+showit(FILE	*fd)
 {
 	char	buf[ BUFSIZ ];
 	int	red;
@@ -309,8 +307,7 @@ init()
 }
 
 void
-AddMakeArg(arg)
-	char	*arg;
+AddMakeArg(char	*arg)
 {
 	errno = 0;
 	if (make_argindex >= ARGUMENTS-1)
@@ -320,8 +317,7 @@ AddMakeArg(arg)
 }
 
 void
-AddCppArg(arg)
-	char	*arg;
+AddCppArg(char	*arg)
 {
 	errno = 0;
 	if (cpp_argindex >= ARGUMENTS-1)
@@ -331,9 +327,8 @@ AddCppArg(arg)
 }
 
 void
-SetOpts(argc, argv)
-	int	argc;
-	char	**argv;
+SetOpts(int	argc,
+             char	**argv)
 {
 	errno = 0;
 	/*
@@ -398,8 +393,7 @@ SetOpts(argc, argv)
 	cpp_argv[0] = cpp;
 }
 
-char *FindImakefile(Imakefile)
-	char	*Imakefile;
+char *FindImakefile(char	*Imakefile)
 {
 	int	fd;
 
@@ -440,8 +434,7 @@ LogFatal(char* x0,...) {
 }
 
 void
-showargs(argv)
-	char	**argv;
+showargs(char	**argv)
 {
 	for (; *argv; argv++)
 		fprintf(stderr, "%s ", *argv);
@@ -449,11 +442,10 @@ showargs(argv)
 }
 
 void
-cppit(Imakefile, template, outfd, outfname)
-	char	*Imakefile;
-	char	*template;
-	FILE	*outfd;
-	char	*outfname;
+cppit(char	*Imakefile,
+           char	*template,
+           FILE	*outfd,
+           char	*outfname)
 {
 	FILE	*pipeFile;
 #if !defined(_WIN32)
@@ -585,8 +577,7 @@ makeit()
 #endif
 }
 
-char *CleanCppInput(Imakefile)
-	char	*Imakefile;
+char *CleanCppInput(char	*Imakefile)
 {
 	FILE	*outFile = NULL;
 	int	infd;
@@ -664,9 +655,8 @@ char *CleanCppInput(Imakefile)
 }
 
 void
-CleanCppOutput(tmpfd, tmpfname)
-	FILE	*tmpfd;
-	char	*tmpfname;
+CleanCppOutput(FILE	*tmpfd,
+                    char	*tmpfname)
 {
 	char	*input;
 	int	blankline = 0;
@@ -699,8 +689,7 @@ CleanCppOutput(tmpfd, tmpfname)
  * space from the end of the line.  Cpp magic cookies are also thrown away.
  */
 boolean
-isempty(line)
-	char	*line;
+isempty(char	*line)
 {
 	char	*pend;
 
@@ -737,9 +726,8 @@ isempty(line)
 }
 
 /*ARGSUSED*/
-char *ReadLine(tmpfd, tmpfname)
-	FILE	*tmpfd;
-	char	*tmpfname;
+char *ReadLine(FILE	*tmpfd,
+               char	*tmpfname)
 {
 	static boolean	initialized = FALSE;
 	static char	*buf, *pline, *end;
@@ -818,10 +806,9 @@ NULL };
  * This function is not used. Is it ?
  *
   void
-writetmpfile(fd, buf, cnt)
-	FILE	*fd;
-	int	     cnt;
-	char	*buf;
+writetmpfile(FILE	*fd,
+                    char	*buf,
+                    int	     cnt)
 {
 	errno = 0;
 	if (fwrite(buf, cnt, 1, fd) != 1)
@@ -829,8 +816,7 @@ writetmpfile(fd, buf, cnt)
 }
 */
 
-char *Emalloc(size)
-	int	size;
+char *Emalloc(int	size)
 {
 	char	*p;
 
@@ -841,8 +827,7 @@ char *Emalloc(size)
 
 #ifdef FIXUP_CPP_WHITESPACE
 void
-KludgeOutputLine(pline)
-	char	**pline;
+KludgeOutputLine(char	**pline)
 {
 	char	*p = *pline;
 
@@ -873,8 +858,7 @@ KludgeResetRule()
 }
 #endif /* FIXUP_CPP_WHITESPACE */
 
-char *Strdup(cp)
-	register char *cp;
+char *Strdup(register char *cp)
 {
 	register char *new = Emalloc(strlen(cp) + 1);
 

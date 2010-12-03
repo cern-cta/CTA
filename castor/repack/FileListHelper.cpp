@@ -141,11 +141,12 @@ u_signed64 FileListHelper::countFilesOnTape(std::string vid)
   u_signed64 numSegmentLeft = 0;
   u_signed64 sizeLeft = 0;
   u_signed64 maxFileId = 0;
+  u_signed64 avgCompr = 0;
 
   if ( !vid.empty() )
   {
     /** the tape check was before ! */
-    Cns_tapesum((char*)m_ns.c_str(), vid.c_str(), &numSegmentLeft, &sizeLeft, &maxFileId, 2);        
+    Cns_tapesum((char*)m_ns.c_str(), vid.c_str(), &numSegmentLeft, &sizeLeft, &maxFileId, &avgCompr);
   }
   else{
       castor::exception::Internal ex;

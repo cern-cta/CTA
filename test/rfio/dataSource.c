@@ -76,11 +76,8 @@ char *voidToString(void *in, int len) {
     return(str);
 }
 
-int generateFileName(
-                     directory,
-                     fileName
-                     )
-     char *directory, **fileName;
+int generateFileName(char *directory,
+		     char **fileName)
 {
   Cuuid_t uuid;
   char buf[1024], *p;
@@ -104,13 +101,9 @@ int generateFileName(
   return(0);
 }
 
-int generateData(
-                 fileName,
-                 bufSize,
-                 fileSize
-                 )
-     char *fileName;
-     int bufSize, fileSize;
+int generateData(char *fileName,
+		 int bufSize,
+		 int fileSize)
 {
   int fd=-1, fdRandom=-1, useRandom = 0, rc, rcRandom, i;
   int v, size, cnt, save_serrno, nbBufs = 10, randSize = 0;
@@ -194,15 +187,11 @@ int generateData(
   return(0);
 }
 
-int doDataSource(
-                 directory,
-                 useFile,
-                 nbIterations,
-                 bufSize,
-                 fileSize
-                 ) 
-     char *directory, *useFile;
-     int nbIterations, bufSize, fileSize;
+int doDataSource(char *directory,
+                 char *useFile,
+                 int nbIterations,
+                 int bufSize,
+                 int fileSize) 
 {
   int i, rc, transferTime = 0;
   char *fname;

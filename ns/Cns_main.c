@@ -218,7 +218,10 @@ int Cns_main(struct main_args *main_args)
     /* Temporary workaround till we come up with something more clever to fix
      * bug related with the KRB5 and GSI mixed libraries
      */
-    void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
+    char filename[CA_MAXNAMELEN];
+    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_KRB5.so.%d.%d",
+             MAJORVERSION, MINORVERSION);
+    void *handle = dlopen (filename, RTLD_LAZY);
     if (!handle) {
       fprintf (stderr, "%s\n", dlerror());
     }
@@ -671,7 +674,7 @@ int procreq(int magic,
     c = Cns_srv_bulkexist (req_data, clienthost, thip);
     break;
   case CNS_TAPESUM:
-    c = Cns_srv_tapesum (magic, req_data, clienthost, thip);
+    c = Cns_srv_tapesum (req_data, clienthost, thip);
     break;
   case CNS_STARTSESS:
     c = procsessreq (magic, req_data, clienthost, thip);

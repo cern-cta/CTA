@@ -744,7 +744,9 @@ CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest
@@ -766,7 +768,9 @@ BEGIN
    WHERE id = srId;
   -- Fail the subRequest
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -849,11 +853,11 @@ BEGIN
     -- checkFailJobsWhenNoSpace function for every row in the output. In
     -- situations where there are many PENDING transfers in the scheduler
     -- this can be extremely inefficient and expensive.
-    SELECT /*+ NO_MERGE(NSSvc) */
-           SR.subReqId, Request.reqId, NSSvc.NoSpace,
+    SELECT /*+ NO_MERGE(NoSpSvc) */  -- NoSpSvc is a SvcClass table alias
+           SR.subReqId, Request.reqId, NoSpSvc.NoSpace,
            -- If there are no requested filesystems, refer to the NFSSvc
            -- output otherwise call the checkAvailOfSchedulerRFS function
-           decode(SR.requestedFileSystems, NULL, NFSSvc.NoFSAvail,
+           decode(SR.requestedFileSystems, NULL, NoFSSvc.NoFSAvail,
              checkAvailOfSchedulerRFS(SR.requestedFileSystems,
                                       Request.reqType)) NoFSAvail
       FROM SubRequest SR,
@@ -869,24 +873,24 @@ BEGIN
         -- Table of all service classes with a boolean flag to indicate
         -- if space is available
         (SELECT id, checkFailJobsWhenNoSpace(id) NoSpace
-           FROM SvcClass) NSSvc,
+           FROM SvcClass) NoSpSvc,
         -- Table of all service classes with a boolean flag to indicate
         -- if there are any filesystems in PRODUCTION
         (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
            LEFT JOIN 
-             (SELECT DP2Svc.CHILD, decode(count(*), 0, 1, 0) NoFSAvail
+             (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
                 FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
                WHERE DS.ID = FS.diskServer
                  AND DS.status = 0  -- DISKSERVER_PRODUCTION
                  AND FS.diskPool = DP2Svc.parent
                  AND FS.status = 0  -- FILESYSTEM_PRODUCTION
                GROUP BY DP2Svc.child) results
-             ON SvcClass.id = results.child) NFSSvc
+             ON SvcClass.id = results.child) NoFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.lastModificationTime < getTime() - 60
-       AND NSSvc.id = Request.svcClass
-       AND NFSSvc.id = Request.svcClass;
+       AND NoSpSvc.id = Request.svcClass
+       AND NoFSSvc.id = Request.svcClass;
 END;
 /
 
@@ -922,10 +926,6 @@ BEGIN
        -- Confirm SubRequest status hasn't changed after acquisition of lock
        SELECT id INTO srId FROM SubRequest
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Update the reason for termination.
-       UPDATE SubRequest 
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the job, procedures that
        -- would have been called if the job failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
@@ -935,6 +935,11 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Update the reason for termination, overriding the error code set above
+       UPDATE SubRequest 
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+              errorMessage = ''
+        WHERE id = srId;
        -- Record in the JobFailedProcHelper temporary table that an action was
        -- taken
        INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));

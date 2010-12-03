@@ -31,6 +31,12 @@ insttarget: ManPageTargetName(name,suffix)
 #define TAPEFILEMANPAGE(name) MANPAGE(name,4,installtape)
 #define TAPEADMMANPAGE(name) MANPAGE(name,8,installtape)
 
+#define CLIENTEXEMANPAGE(name) MANPAGE(name,1,installclient)
+#define CLIENTSYSMANPAGE(name) MANPAGE(name,2,installclient)
+#define CLIENTLIBMANPAGE(name) MANPAGE(name,3,installclient)
+#define CLIENTFILEMANPAGE(name) MANPAGE(name,4,installclient)
+#define CLIENTADMMANPAGE(name) MANPAGE(name,8,installclient)
+
 #define RemoveFiles(files) rm -f files
 #define AddLdFlags(flags) PREFIX(LDFLAGS) += flags
 
@@ -94,7 +100,9 @@ PREFIX(FilesToClean) += obj $(patsubst %.o,%.d,obj)                             
 PREFIX(FilesToClobber) += LOCAL_PATH/BareSharedLibraryTargetName(libname)                                     @@\
 obj: %.o: %.d
 
-#define BareSharedLibraryTarget(libname,objects,deplibs,libs,directory,alltgt,installtgt)            \
+#define BareSharedLibraryTarget(libname,objects,deplibs,libs,directory,alltgt,installtgt,withso)     \
+libname: LOCAL_PATH/SharedLibraryName(libname)                                                     @@\
+BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname)                        @@\
 LOCAL_PATH/SharedLibraryName(libname): objects deplibs                                             @@\
 	@echo "  Linking" $@                                                                       @@\
 	$(CC) DYLIBLINKEROPTION --no-undefined -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs              @@\
@@ -103,7 +111,13 @@ $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibr
 	install $< $(DESTDIR)/directory/SharedLibraryFullName(libname)                             @@\
 	rm -f $(DESTDIR)/directory/SharedLibraryName(libname) $@                                   @@\
 	ln -s SharedLibraryFullName(libname) $(DESTDIR)/directory/SharedLibraryName(libname)       @@\
+ifeq (installtgt,installclient)                                                                    @@\
 	ln -s SharedLibraryName(libname) $@                                                        @@\
+else                                                                                               @@\
+ifeq (withso,yes)                                                                                  @@\
+	ln -s SharedLibraryName(libname) $@                                                        @@\
+endif                                                                                              @@\
+endif                                                                                              @@\
 installtgt: $(DESTDIR)/directory/BareSharedLibraryTargetName(libname)                              @@\
 alltgt: LOCAL_PATH/SharedLibraryName(libname)                                                      @@\
 PREFIX(FilesToClean) += objects $(patsubst %.o,%.d,objects)                                        @@\
@@ -111,10 +125,11 @@ PREFIX(FilesToClobber) += LOCAL_PATH/SharedLibraryName(libname)                 
 objects: %.o: %.d
 
 #define SchModTarget(libname,obj,deplibs,libs,directory) InternalSchModTarget(libname,$(patsubst %,LOCAL_PATH/%,obj),deplibs,libs,directory)
-#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,$(LIBDIR),all,install)
-#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install)
-#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(CLIENTDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(CLIENTLIBS)) libs,$(LIBDIR),client,installclient)
-#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(TAPEDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(TAPELIBS)) libs,$(LIBDIR),tape,installtape)
+#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,$(LIBDIR),all,install,no)
+#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install,no)
+#define PlacedSharedLibraryTargetWithSo(libname,objects,deplibs,libs,directory) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(DEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(LIBS)) libs,directory,all,install,yes)
+#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(CLIENTDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(CLIENTLIBS)) libs,$(LIBDIR),client,installclient,no)
+#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB)) $(PREFIX(TAPEDEPLIB)) deplibs,$(PREFIX(COMMONLIBS)) $(PREFIX(TAPELIBS)) libs,$(LIBDIR),tape,installtape,no)
 
 #define ClientInstallNonExecFile(file,dest,mode) \
 InternalInstallTarget(file,mode,dest,installclient,,)
@@ -135,6 +150,7 @@ insttarget: $(DESTDIR)/dirname
 
 #define MakeDir(dirname,mode) GenericMakeDir(dirname,mode,install)
 #define TapeMakeDir(dirname,mode) GenericMakeDir(dirname,mode,installtape)
+#define ClientMakeDir(dirname,mode) GenericMakeDir(dirname,mode,installclient)
 
 #define MakeDirWithOwnership(dirname,owner,group,mode)   \
 ifndef dirname                                @@\
@@ -145,6 +161,7 @@ endif                                         @@\
 install: $(DESTDIR)/dirname
 
 #define ProgramTarget(program,objects,deplibs,libs,mode,alltarget,installtarget)   \
+program: LOCAL_PATH/program                                                      @@\
 LOCAL_PATH/program: objects deplibs	                                         @@\
 	@echo "  Linking" $@                                                     @@\
 	$(CC) -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) objects libs                   @@\

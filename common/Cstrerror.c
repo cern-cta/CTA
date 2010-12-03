@@ -23,9 +23,8 @@ static int Cstrerror_buflen_key = 0;
 static int Cstrerror_getbuf (char **, int *);
 static int Cstrerror_setbuf (char *, int);
 
-static int Cstrerror_getbuf(buffer, buflen)
-     char **buffer;
-     int *buflen;
+static int Cstrerror_getbuf(char **buffer,
+                            int *buflen)
 {
   char **bufp;
   int *buflenp;
@@ -40,9 +39,8 @@ static int Cstrerror_getbuf(buffer, buflen)
   return(0);
 }
 
-static int Cstrerror_setbuf(buffer, buflen)
-     char *buffer;
-     int buflen;
+static int Cstrerror_setbuf(char *buffer,
+                            int buflen)
 {
   char **bufp;
   int *buflenp;
@@ -57,8 +55,7 @@ static int Cstrerror_setbuf(buffer, buflen)
   return(0);
 }
 
-char *Cstrerror(code)
-     int code;
+char *Cstrerror(int code)
 {
   char *bufp;
   int buflen = INTERNAL_BUFLEN+1;

@@ -88,10 +88,7 @@ static struct Coptions longopts[] = {
   {NULL, 0, NULL, 0}
 };
 
-void usage(
-           cmd
-           )
-     char *cmd;
+void usage(char *cmd)
 {
   int i;
   fprintf(stdout,"Usage: %s \n",cmd);
@@ -102,10 +99,7 @@ void usage(
   return;
 }
 
-int countItems(
-               itemStr
-               )
-     char *itemStr;
+int countItems(char *itemStr)
 {
   char *p;
   int nbItems = 0;
@@ -119,14 +113,9 @@ int countItems(
   return(nbItems);
 }
 
-int splitItemStr(
-                 itemStr,
-                 itemArray,
-                 nbItems
-                 )
-     char *itemStr;
-     char ***itemArray;
-     int *nbItems;
+int splitItemStr(char *itemStr,
+                 char ***itemArray,
+                 int *nbItems)
 {
   char *p, *tmpStr;
   int tmpNbItems, i;
@@ -201,15 +190,10 @@ static int checkTapePoolsInVmgr(char **pools, int nbPools) {
   return rc;
 }
 
-int findTapePool(
-                 tapePoolArray,
-                 nbTapePools,
-                 foundPool,
-                 name
-                 )
-  struct Cstager_TapePool_t **tapePoolArray, **foundPool;
-  int nbTapePools;
-  char *name;
+int findTapePool(struct Cstager_TapePool_t **tapePoolArray,
+                 int nbTapePools,
+                 struct Cstager_TapePool_t **foundPool,
+                 char *name)
 {
   char *tmpName;
   int i;
@@ -226,15 +210,10 @@ int findTapePool(
   return(0);
 }
 
-int findDiskPool(
-                 diskPoolArray,
-                 nbDiskPools,
-                 foundPool,
-                 name
-                 )
-  struct Cstager_DiskPool_t **diskPoolArray, **foundPool;
-  int nbDiskPools;
-  char *name;
+int findDiskPool(struct Cstager_DiskPool_t **diskPoolArray,
+                 int nbDiskPools,
+                 struct Cstager_DiskPool_t **foundPool,
+                 char *name)
 {
   char *tmpName;
   int i;
@@ -251,18 +230,12 @@ int findDiskPool(
   return(0);
 }
 
-int addTapePools(
-                 stgSvc,
-                 svcClass,
-                 tapePoolsArray,
-                 nbTapePools,
-                 addTapePoolsArray,
-                 nbAddTapePools
-                 )
-  struct Cstager_IStagerSvc_t *stgSvc;
-  struct Cstager_SvcClass_t *svcClass;
-  char **tapePoolsArray, **addTapePoolsArray;
-  int nbTapePools, nbAddTapePools;
+int addTapePools(struct Cstager_IStagerSvc_t *stgSvc,
+                 struct Cstager_SvcClass_t *svcClass,
+                 struct Cstager_TapePool_t **tapePoolsArray,
+                 int nbTapePools,
+                 char **addTapePoolsArray,
+                 int nbAddTapePools)
 {
   struct Cstager_TapePool_t *tapePool;
   int i, rc;
@@ -305,16 +278,11 @@ int addTapePools(
   return(0);
 }
 
-int removeTapePools(
-                    svcClass,
-                    tapePoolsArray,
-                    nbTapePools,
-                    removeTapePoolsArray,
-                    nbRemoveTapePools
-                    )
-  struct Cstager_SvcClass_t *svcClass;
-  char **tapePoolsArray, **removeTapePoolsArray;
-  int nbTapePools, nbRemoveTapePools;
+int removeTapePools(struct Cstager_SvcClass_t *svcClass,
+                    struct Cstager_TapePool_t **tapePoolsArray,
+                    int nbTapePools,
+                    char **removeTapePoolsArray,
+                    int nbRemoveTapePools)
 {
   struct Cstager_TapePool_t *tapePool;
   int i;
@@ -337,18 +305,12 @@ int removeTapePools(
   return(0);
 }
 
-int addDiskPools(
-                 stgSvc,
-                 svcClass,
-                 diskPoolsArray,
-                 nbDiskPools,
-                 addDiskPoolsArray,
-                 nbAddDiskPools
-                 )
-  struct Cstager_IStagerSvc_t *stgSvc;
-  struct Cstager_SvcClass_t *svcClass;
-  char **diskPoolsArray, **addDiskPoolsArray;
-  int nbDiskPools, nbAddDiskPools;
+int addDiskPools(struct Cstager_IStagerSvc_t *stgSvc,
+                 struct Cstager_SvcClass_t *svcClass,
+                 struct Cstager_DiskPool_t **diskPoolsArray,
+                 int nbDiskPools,
+                 char **addDiskPoolsArray,
+                 int nbAddDiskPools)
 {
   struct Cstager_DiskPool_t *diskPool;
   int i, rc;
@@ -390,16 +352,11 @@ int addDiskPools(
   return(0);
 }
 
-int removeDiskPools(
-                    svcClass,
-                    diskPoolsArray,
-                    nbDiskPools,
-                    removeDiskPoolsArray,
-                    nbRemoveDiskPools
-                    )
-  struct Cstager_SvcClass_t *svcClass;
-  char **diskPoolsArray, **removeDiskPoolsArray;
-  int nbDiskPools, nbRemoveDiskPools;
+int removeDiskPools(struct Cstager_SvcClass_t *svcClass,
+                    struct Cstager_DiskPool_t **diskPoolsArray,
+                    int nbDiskPools,
+                    char **removeDiskPoolsArray,
+                    int nbRemoveDiskPools)
 {
   struct Cstager_DiskPool_t *diskPool;
   int i;

@@ -61,11 +61,13 @@ int main(int argc,char **argv)
   char tmpbuf[21];
   char tmpbuf2[21];
   char tmpbuf3[21];
+  char tmpbuf4[21];
   char *vid = NULL;
   int fseq = 0;
   u_signed64 count = 0;
   u_signed64 size = 0;
   u_signed64 maxfileid = 0;
+  u_signed64 avgcompression = 0;
 
   Coptions_t longopts[] = {
     { "display_side", NO_ARGUMENT,       &dsflag,       1  },
@@ -128,16 +130,17 @@ int main(int argc,char **argv)
   }
 
   if (sumflag) {
-    c = Cns_tapesum(server, vid, &count, &size, &maxfileid, dflag == 0 ? 1 : 3);
+    c = Cns_tapesum(server, vid, &count, &size, &maxfileid, &avgcompression);
     if (c < 0) {
       fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
       exit (USERR);
     }
     u64tostr (maxfileid, tmpbuf3, 0);
+    u64tostr (avgcompression, tmpbuf4, 0);
     if (humanflag) {
-      printf("%s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostru (size, tmpbuf2, 0), tmpbuf3);
+      printf("%s %s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostru (size, tmpbuf2, 0), tmpbuf3, tmpbuf4);
     } else {
-      printf("%s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0), tmpbuf3);
+      printf("%s %s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0), tmpbuf3, tmpbuf4);
     }
     exit (0);
   }

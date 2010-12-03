@@ -87,28 +87,14 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Attempt to find the LSF cluster and master name for logging purposes.
-    // This isn't really required but could be useful for future debugging
-    // efforts
-    std::string clusterName("Unknown");
-    std::string masterName("Unknown");
-    char **results = NULL;
-
-    // Errors are ignored here!
+    // Initialize LSF
     lsb_init((char*)"rmmasterd");
-    clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
-    if (cInfo != NULL) {
-      clusterName = cInfo[0].clusterName;
-      masterName  = cInfo[0].masterName;
-    }
 
     // "RmMaster Daemon started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Port", listenPort),
-       castor::dlf::Param("UpdateInterval", updateInterval),
-       castor::dlf::Param("Cluster", clusterName),
-       castor::dlf::Param("Master", masterName)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 4, params);
+       castor::dlf::Param("UpdateInterval", updateInterval)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 2, params);
 
     // DB threadpool
     daemon.addThreadPool
@@ -226,6 +212,7 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
     { 44, "Failed to synchronise shared memory with stager database" },
     { 47, "Assuming role as production RmMaster server. LSF failover detected" },
     { 48, "Assuming role as slave RmMaster server. LSF failover detected" },
+    { 49, "LSF initialization information" },
 
     { -1, "" }};
   dlfInit(messages);

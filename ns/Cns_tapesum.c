@@ -17,7 +17,7 @@
 #include "serrno.h"
 
 int
-Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
+Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, u_signed64* avgcompression)
 {
   /* Variables */
   char  func[16];
@@ -49,10 +49,6 @@ Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, 
     serrno = EINVAL;
     return (-1);
   }
-  if ((filter < 0) || (filter > 3)) {
-    serrno = EINVAL;
-    return (-1);
-  }
 
   /* Build the request header */
   sbp = sendbuf;
@@ -66,7 +62,6 @@ Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, 
   marshall_LONG(sbp, uid);
   marshall_LONG(sbp, gid);
   marshall_STRING(sbp, vid);
-  marshall_LONG(sbp, filter);
 
   msglen = sbp - sendbuf;
   marshall_LONG(q, msglen);  /* Update the length field */
@@ -78,6 +73,7 @@ Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, 
     unmarshall_HYPER (rbp, *count);
     unmarshall_HYPER (rbp, *size);
     unmarshall_HYPER (rbp, *maxfileid);
+    unmarshall_HYPER (rbp, *avgcompression);
   }
   if (c && serrno == SENAMETOOLONG) {
     serrno = ENAMETOOLONG;

@@ -175,17 +175,13 @@ static int getVIDFromRtcpd(SOCKET *origSocket,
   return(0);
 }
 
-static int getTapeRequestItem(
-                              VolReqID,
-                              vid,
-                              side,
-                              mode,
-                              pid,
-                              item
+static int getTapeRequestItem(int VolReqID,
+                              char *vid,
+                              int side,
+                              int mode,
+                              int pid,
+                              rtcpcld_RequestList_t **item
                               )
-     int VolReqID, side, mode, pid;
-     char *vid;
-     rtcpcld_RequestList_t **item;
 {
   rtcpcld_RequestList_t *iterator;
   int found = 0;
@@ -255,17 +251,12 @@ static int getTapeRequestItem(
   return(0);
 }
 
-static int getTapeRequest(
-                          VolReqID,
-                          vid,
-                          side,
-                          mode,
-                          pid,
-                          tape
-                          )
-     int VolReqID, side, mode, pid;
-     char *vid;
-     tape_list_t **tape;
+static int getTapeRequest(int VolReqID,
+                          char *vid,
+                          int side,
+                          int mode,
+                          int pid,
+                          tape_list_t **tape)
 {
   rtcpcld_RequestList_t *item = NULL;
   int rc;
@@ -298,12 +289,8 @@ static int getTapeRequest(
   return(rc);
 }
 
-static int updateRequestList(
-                             tape,
-                             pid
-                             )
-     tape_list_t *tape;
-     int pid;
+static int updateRequestList(tape_list_t *tape,
+                             int pid)
 {
   rtcpcld_RequestList_t *iterator;
   int found = 0;
@@ -365,10 +352,7 @@ static int updateRequestList(
   return(found);
 }
 
-static void logConnection(
-                         s
-                         )
-     SOCKET s;
+static void logConnection(SOCKET s)
 {
     char remhost[CA_MAXHOSTNAMELEN+1];
     struct sockaddr_in from;
@@ -676,10 +660,7 @@ static void *signal_handler(void *arg) {
   return NULL;
 }
 
-static void shutdownService(
-                            signo
-                            )
-     int signo;
+static void shutdownService(int signo)
 {
   rtcpcld_RequestList_t *iterator = NULL;
   int i, j;
@@ -872,12 +853,8 @@ static void startTapeErrorHandler()
   return;
 }
 
-static int startWorker(
-                       s,
-                       tape
-                       )
-     SOCKET *s;
-     tape_list_t *tape;
+static int startWorker(SOCKET *s,
+                       tape_list_t *tape)
 {
   ID_TYPE key;
   int usePipe = 0;
@@ -1525,11 +1502,8 @@ int rtcpcld_main() {
   return(0);
 }
 
-static int runAsUser(
-                     myUser,
-                     myGroup
-                     )
-     char *myUser, *myGroup;
+static int runAsUser(char *myUser,
+                     char *myGroup)
 {
   struct passwd *pw = NULL;
   struct group *grp = NULL;
@@ -1565,21 +1539,14 @@ static int runAsUser(
   return(0);
 }
 
-static void usage(
-                  cmd
-                  )
-     char *cmd;
+static void usage(char *cmd)
 {
   printf("Usage: %s [-c configurationFile] [-d] [-f facilityName] [-p port] [-u uid] [-g gid] [-h]\n",cmd);
   return;
 }
 
-int main(
-         argc,
-         argv
-         )
-     int argc;
-     char *argv[];
+int main(int argc,
+         char *argv[])
 {
   int c, rc;
   char *myUser, *myGroup;

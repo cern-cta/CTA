@@ -35,10 +35,12 @@ print the file uniqueid in front of each entry.
 print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024
 .TP
 .BI -s,\ \-\-summarize
-display only the total number of files, total size and largest fileid of all files on the volume.
+display some statistics for the tape, including the total number of files, the total size, the largest fileid
+of all files on the volume and the average compression factor. In this summary all segments are taken into account
+regardless their status.
 .TP
 .BI -D
-only display/count logical deleted segments.
+only display logical deleted segments.
 .TP
 .BI -f=FSEQ
 restrict the output to the given file sequence number.

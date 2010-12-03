@@ -38,7 +38,7 @@ AddLdFlags(-L$(GLOBUS_LOCATION)/lib -lglobus_ftp_control_$(FLAVOR) $(MOPTION) -s
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(rfio,castorrfio)
-PlacedSharedLibraryTarget(globus_gridftp_server_CASTOR2ext_$(FLAVOR),globus_gridftp_server_CASTOR2ext.o,,,$(GLOBUS_LOCATION)/lib)
+PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2ext_$(FLAVOR),globus_gridftp_server_CASTOR2ext.o,,,$(GLOBUS_LOCATION)/lib)
 InstallNonExecFile(gsiftp,/etc/xinetd.d,644)
 LOGROTATE(castor-gridftp-dsi-common,install)
 MakeDir(/var/log,0755)

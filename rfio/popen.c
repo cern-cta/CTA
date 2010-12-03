@@ -25,9 +25,8 @@
 #include <pwd.h>
 extern RFILE *rfilefdt[MAXRFD] ;
 
-RFILE *rfio_popen( rcom , type )
-     char * rcom  ;
-     char *type  ;
+RFILE *rfio_popen(char * rcom,
+                  char *type)
 {
 
   char *host  ;

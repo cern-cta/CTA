@@ -313,6 +313,18 @@ namespace castor {
       virtual u_signed64 getNumFilesByStream
       (const u_signed64 streamId) throw (castor::exception::Exception) = 0;
 
+      /**
+       * Locks the row in the castor-file table with the specified database
+       * ID.
+       *
+       * This procedure raises a castor::Exception when no row exists in the
+       * castor-file table with the specified database ID.
+       *
+       * @param castorFileId The database ID of the row to be locked.
+       */
+      virtual void lockCastorFileById(const u_signed64 castorFileId)
+        throw (castor::exception::Exception) = 0;
+
     }; // end of class ITapeSvc
 
   } // end of namespace stager

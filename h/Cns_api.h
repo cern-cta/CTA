@@ -315,7 +315,7 @@ EXTERN_C int Cns_statx (const char *, struct Cns_fileid *, struct Cns_filestat *
 EXTERN_C int Cns_statcsx (const char *, struct Cns_fileid *, struct Cns_filestatcs *);
 EXTERN_C int Cns_statcs (const char *, struct Cns_filestatcs *);
 EXTERN_C int Cns_symlink (const char *, const char *);
-EXTERN_C int Cns_tapesum (char *, const char *, u_signed64 *, u_signed64 *, u_signed64 *, int);
+EXTERN_C int Cns_tapesum (char *, const char *, u_signed64 *, u_signed64 *, u_signed64 *, u_signed64 *);
 EXTERN_C mode_t Cns_umask (mode_t);
 EXTERN_C int Cns_undelete (const char *);
 EXTERN_C int Cns_unlink (const char *);

@@ -17,9 +17,8 @@ static int errbuflen;
 /*	Ctape_seterrbuf - set receiving buffer for error messages */
 
 void
-Ctape_seterrbuf(buffer, buflen)
-char *buffer;
-int buflen;
+Ctape_seterrbuf(char *buffer,
+                     int buflen)
 {
 	errbufp = buffer;
 	errbuflen = buflen;

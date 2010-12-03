@@ -381,7 +381,7 @@ int main (int     argc,
     } else {
       if (!port) {
 
-        /* If CSEC define and security requested (set uid and gid) and user not root */
+        /* If CSEC defined and security requested (set uid and gid) and user not root */
         if (uid > 0 && gid > 0) {
           if ((p = getenv ("SRFIO_PORT")) || (p = getconfent ("SRFIO", "PORT", 0))) {
             sin.sin_port = htons ((unsigned short)atoi (p));
@@ -635,7 +635,7 @@ int doit(int      s,
     }
 
     from_port=ntohs(fromp->sin_port);
-    log(LOG_INFO, "Connection from  %s [%d]\n", from_host, from_port);
+    log(LOG_INFO, "Connection from %s [%d]\n", from_host, from_port);
 
     if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
       log(LOG_ERR, "Could not initialize context with %s [%d]: %s\n", from_host,from_port, Csec_getErrorMessage());

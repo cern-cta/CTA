@@ -82,8 +82,8 @@ checkSTK:
 
 XROOT_LOCATION ?= /opt/xrootd
 checkXROOT:
-	@if [ ! -r ${XROOT_LOCATION}/lib/libXrdPosix.so -o ! -d ${XROOT_LOCATION}/include ]; then \
-	  echo "Could not find XROOT installation at ${XROOT_LOCATION}. Giving up."; \
+	@if [ ! -r ${XROOT_LOCATION}/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
+	  echo "Could not find XROOT header files at ${XROOT_LOCATION}. Giving up."; \
 	  exit 1; \
 	fi
 

@@ -4,10 +4,7 @@
 %attr(-,root,root) usr/lib/libcastorupv.so.*
 %attr(-,root,root) usr/lib/libcastorns.so.*
 %attr(-,root,root) usr/lib/libcastorsecurity.so.*
-%attr(-,root,root) usr/lib/libcastortape.so.*
 %attr(-,root,root) usr/lib/libcastorrfio.so.*
 %attr(-,root,root) usr/lib/libcastorclient.so.*
 %attr(-,root,root) usr/lib/libcastorvdqm.so.*
-%attr(-,root,root) usr/lib/libcastorrtcopy.so.*
 %attr(-,root,root) usr/lib/libcastorvmgr.so.*
-%attr(-,root,root) usr/lib/libcastorexpert.so.*

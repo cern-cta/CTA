@@ -465,7 +465,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9001');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -751,6 +751,10 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 
+/* DiskPool2SvcClass constraints */
+ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
+  PRIMARY KEY (parent, child);
+
 /* TapeGateway tables */
 CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -804,7 +808,7 @@ CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
   ON COMMIT PRESERVE ROWS;
 
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
-CREATE GLOBAL TEMPORARY TABLE processBulkAbortFileReqsHelper
+CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
   (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048))
   ON COMMIT DELETE ROWS;
 
@@ -5842,7 +5846,9 @@ CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest
@@ -5864,7 +5870,9 @@ BEGIN
    WHERE id = srId;
   -- Fail the subRequest
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 7, -- FAILED
+         errorCode = 1015, -- SEINTERNAL
+         errorMessage = 'Job terminated with failure'
    WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -5947,11 +5955,11 @@ BEGIN
     -- checkFailJobsWhenNoSpace function for every row in the output. In
     -- situations where there are many PENDING transfers in the scheduler
     -- this can be extremely inefficient and expensive.
-    SELECT /*+ NO_MERGE(NSSvc) */
-           SR.subReqId, Request.reqId, NSSvc.NoSpace,
+    SELECT /*+ NO_MERGE(NoSpSvc) */  -- NoSpSvc is a SvcClass table alias
+           SR.subReqId, Request.reqId, NoSpSvc.NoSpace,
            -- If there are no requested filesystems, refer to the NFSSvc
            -- output otherwise call the checkAvailOfSchedulerRFS function
-           decode(SR.requestedFileSystems, NULL, NFSSvc.NoFSAvail,
+           decode(SR.requestedFileSystems, NULL, NoFSSvc.NoFSAvail,
              checkAvailOfSchedulerRFS(SR.requestedFileSystems,
                                       Request.reqType)) NoFSAvail
       FROM SubRequest SR,
@@ -5967,24 +5975,24 @@ BEGIN
         -- Table of all service classes with a boolean flag to indicate
         -- if space is available
         (SELECT id, checkFailJobsWhenNoSpace(id) NoSpace
-           FROM SvcClass) NSSvc,
+           FROM SvcClass) NoSpSvc,
         -- Table of all service classes with a boolean flag to indicate
         -- if there are any filesystems in PRODUCTION
         (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
            LEFT JOIN 
-             (SELECT DP2Svc.CHILD, decode(count(*), 0, 1, 0) NoFSAvail
+             (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
                 FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
                WHERE DS.ID = FS.diskServer
                  AND DS.status = 0  -- DISKSERVER_PRODUCTION
                  AND FS.diskPool = DP2Svc.parent
                  AND FS.status = 0  -- FILESYSTEM_PRODUCTION
                GROUP BY DP2Svc.child) results
-             ON SvcClass.id = results.child) NFSSvc
+             ON SvcClass.id = results.child) NoFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.lastModificationTime < getTime() - 60
-       AND NSSvc.id = Request.svcClass
-       AND NFSSvc.id = Request.svcClass;
+       AND NoSpSvc.id = Request.svcClass
+       AND NoFSSvc.id = Request.svcClass;
 END;
 /
 
@@ -6020,10 +6028,6 @@ BEGIN
        -- Confirm SubRequest status hasn't changed after acquisition of lock
        SELECT id INTO srId FROM SubRequest
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Update the reason for termination.
-       UPDATE SubRequest 
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the job, procedures that
        -- would have been called if the job failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
@@ -6033,6 +6037,11 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Update the reason for termination, overriding the error code set above
+       UPDATE SubRequest 
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+              errorMessage = ''
+        WHERE id = srId;
        -- Record in the JobFailedProcHelper temporary table that an action was
        -- taken
        INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));
@@ -7570,8 +7579,15 @@ CREATE OR REPLACE PROCEDURE deleteOrStopStream(streamId IN INTEGER) AS
   unused NUMBER;
 
 BEGIN
-  -- Take a lock on the stream
-  SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  -- Try to take a lock on the stream, taking note that the stream may already
+  -- have been delete because the migrator, rtcpclientd and mighunterd race to
+  -- delete streams
+  BEGIN
+    SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Return because the stream has already been deleted
+    RETURN;
+  END;
 
   -- Try to delete the stream.  If the mighunter daemon is running in
   -- rtcpclientd mode, then this delete may fail for two expected reasons.  The
@@ -8369,15 +8385,20 @@ BEGIN
            INDEX_RS_ASC(TAPE I_TAPE_STATUS)
            INDEX_RS_ASC(TAPECOPY PK_TAPECOPY_ID)
            INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
-       Tape.id, Tape.vid, count(distinct segment.id), sum(CastorFile.fileSize),
-       getTime() - min(Segment.creationTime), max(Segment.priority)
+       Tape.id,
+       Tape.vid,
+       count(distinct segment.id),
+       sum(CastorFile.fileSize),
+       getTime() - min(Segment.creationTime) age,
+       max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape
        AND TapeCopy.id = Segment.copy
        AND CastorFile.id = TapeCopy.castorfile
        AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED
-     GROUP BY Tape.id, Tape.vid;
+     GROUP BY Tape.id, Tape.vid
+     ORDER BY age DESC;
 END;
 /
 
@@ -8408,19 +8429,20 @@ COPY PK_TAPECOPY_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
                 Tape.vid,
                 count ( distinct segment.id ),
                 sum ( CastorFile.fileSize ),
-                getTime ( ) - min ( Segment.creationTime ),
+                getTime ( ) - min ( Segment.creationTime ) age,
                 max ( Segment.priority ),
                 Tape.status
            FROM TapeCopy,
                 CastorFile,
                 Segment,
                 Tape
-          WHERE Tape.id = Segment .tape
-            AND TapeCopy.id = Segment .copy
+          WHERE Tape.id = Segment.tape
+            AND TapeCopy.id = Segment.copy
             AND CastorFile.id = TapeCopy.castorfile
             AND Tape.status IN (1, 2, 8) -- PENDING, WAITDRIVE, WAITPOLICY
             AND Segment.status = 0 -- SEGMENT_UNPROCESSED
-          GROUP BY Tape.id, Tape.vid, Tape.status;
+          GROUP BY Tape.id, Tape.vid, Tape.status
+          ORDER BY age DESC;
     
 END tapesAndMountsForRecallPolicy;
 /
@@ -8639,6 +8661,31 @@ BEGIN
 END tapegatewaydIsRunning;
 /
 
+
+CREATE PROCEDURE lockCastorFileById(
+/**
+ * Locks the row in the castor-file table with the specified database ID.
+ *
+ * This procedure raises application error -20001 when no row exists in the
+ * castor-file table with the specified database ID.
+ *
+ * @param inCastorFileId The database ID of the row to be locked.
+ */
+  inCastorFileId INTEGER
+) AS
+  varDummyCastorFileId INTEGER := 0;
+BEGIN
+  SELECT CastorFile.id
+    INTO varDummyCastorFileId
+    FROM CastorFile
+   WHERE CastorFile.id = inCastorFileId
+     FOR UPDATE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RAISE_APPLICATION_ERROR(-20001,
+    'Castor-file does not exist' ||
+    ': inCastorFileId=' || inCastorFileId);
+END lockCastorFileById;
+/
 /*******************************************************************
  *
  * @(#)RCSfile: oracleTapeGateway.sql,v  Revision: 1.12  Date: 2009/08/13 15:14:25  Author: gtaur 

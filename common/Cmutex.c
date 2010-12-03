@@ -25,15 +25,13 @@ void Cmutex_init(int (*mutex_lock) (void *, int),
     return;    
 }    
 
-int Cmutex_lock(addr,timeout)
-     void *addr;
-     int timeout;
+int Cmutex_lock(void *addr,
+                int timeout)
 {
   return(local_mutex_lock != NULL ? local_mutex_lock(addr,timeout) : 0);
 }
 
-int Cmutex_unlock(addr)
-     void *addr;
+int Cmutex_unlock(void *addr)
 {
   return(local_mutex_unlock != NULL ? local_mutex_unlock(addr) : 0);
 }

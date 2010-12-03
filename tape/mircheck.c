@@ -21,11 +21,10 @@ static char *func = "mircheck";
 
 /* Functions that checks whether the 9840/9940/T10000/LTO/3592 tape MIR is valid */
 int
-is_mir_invalid(tapefd, path, devtype, checktype)
-int tapefd;
-char *path;
-char *devtype;
-int checktype;
+is_mir_invalid(int tapefd,
+                   char *path,
+                   char *devtype,
+                   int checktype)
 {
 #if defined(linux)
 	unsigned char *endpage;

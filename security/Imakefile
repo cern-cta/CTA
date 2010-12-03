@@ -102,4 +102,4 @@ IDLIB_OBJS = Csec_plugin_ID.o
 IDLIB = -lc -ldl
 SharedLibraryTarget(Csec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
-LIBMANPAGE(Csec_api)
+CLIENTLIBMANPAGE(Csec_api)

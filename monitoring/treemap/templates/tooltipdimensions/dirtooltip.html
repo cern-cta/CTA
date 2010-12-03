@@ -1,0 +1,12 @@
+<b>Directory:</b>
+{% for itemnamepart in itemnameparts %}
+	{{itemnamepart}}<br>
+{% endfor %}
+<b> Evaluation of {{attrname}}:</b> {{attrvalue}}<br>
+<b>Processed value:</b> {{attrprocvalue}}<br><br>
+<b>size:</b> {{sizestring}}<br>
+<b>parent percentage:</b> {{percentagestring}}%<br>
+<b>number of files: </b> {{nbfiles}}<br>
+<b>number of directories: </b> {{nbdirs}}<br><br>
+<b>number of files in subtree: </b> {{nbsubtreefiles}}<br>
+<b>number of directories in subtree: </b> {{nbsubtreedirs}}

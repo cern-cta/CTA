@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
 castordir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/'
 afsdir = '/afs/cern.ch/sw/lcg/external/castor/'
 version = sys.argv[1]
-packages = ['ns-client', 'upv-client', 'stager-client', 'vdqm2-client', 'rfio-server', 'lib', 'devel', 'vmgr-client', 'tape-client', 'rfio-client']
+packages = ['ns-client', 'upv-client', 'stager-client', 'vdqm2-client', 'rfio-server', 'lib', 'devel', 'vmgr-client', 'rfio-client']
 
 platformConversion = {'SL4' : 'slc4', 'SL5' : 'slc5'}
 oldArchConversion = {'i386' : 'ia32', 'x86_64' : 'amd64'}

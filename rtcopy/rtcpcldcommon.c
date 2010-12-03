@@ -129,10 +129,7 @@ void rtcpcld_extlog(
   return;
 }
 
-int rtcpcld_initLogging(
-                        facilityName
-                        )
-     char *facilityName;
+int rtcpcld_initLogging(char *facilityName)
 {
   int rc, i;
 
@@ -147,13 +144,9 @@ int rtcpcld_initLogging(
   return(0);
 }
 
-static int getServerNotifyAddr(
-                               serverHost,
-                               serverHostNameLen,
-                               serverPort
-                               )
-     char *serverHost;
-     int serverHostNameLen, *serverPort;
+static int getServerNotifyAddr(char *serverHost,
+                               int serverHostNameLen,
+                               int *serverPort)
 {
   char *p;
   struct servent *sp;
@@ -191,12 +184,8 @@ static int getServerNotifyAddr(
   return(0);
 }
 
-int rtcpcld_initNotifyByPort(
-                             notificationSocket,
-                             usePort
-                             )
-     SOCKET **notificationSocket;
-     int *usePort;
+int rtcpcld_initNotifyByPort(SOCKET **notificationSocket,
+                             int *usePort)
 {
   struct sockaddr_in sin;
   int rc, notificationPort = -1;
@@ -248,20 +237,13 @@ int rtcpcld_initNotifyByPort(
   return(0);
 }
 
-int rtcpcld_initNotify(
-                       notificationSocket
-                       )
-     SOCKET **notificationSocket;
+int rtcpcld_initNotify(SOCKET **notificationSocket)
 {
   return(rtcpcld_initNotifyByPort(notificationSocket,NULL));
 }
 
-int rtcpcld_getNotifyWithAddr(
-                              s,
-                              fromAddrStr
-                              )
-     SOCKET s;
-     char *fromAddrStr;
+int rtcpcld_getNotifyWithAddr(SOCKET s,
+                              char *fromAddrStr)
 {
   struct sockaddr_in from;
   fd_set rd_set, rd_setcp;
@@ -295,20 +277,13 @@ int rtcpcld_getNotifyWithAddr(
   return(0);
 }
 
-int rtcpcld_getNotify(
-                      s
-                      )
-     SOCKET s;
+int rtcpcld_getNotify(SOCKET s)
 {
   return(rtcpcld_getNotifyWithAddr(s,NULL));
 }
 
-int rtcpcld_sendNotifyByAddr(
-                             toHost,
-                             toPort
-                             )
-     char *toHost;
-     int toPort;
+int rtcpcld_sendNotifyByAddr(char *toHost,
+                             int toPort)
 {
   struct sockaddr_in to;
   struct hostent *hp;
@@ -343,10 +318,7 @@ int rtcpcld_sendNotifyByAddr(
   return(0);
 }
 
-int rtcpcld_sendNotify(
-                       toAddrStr
-                       )
-     char *toAddrStr;
+int rtcpcld_sendNotify(char *toAddrStr)
 {
   int toPort = -1;
   char toHost[CA_MAXHOSTNAMELEN+1], *p;
@@ -381,10 +353,7 @@ int rtcpcld_notifyRtcpclientd()
   return(rtcpcld_sendNotifyByAddr(toHost,toPort));
 }
 
-int rtcpcld_setVIDFailedStatus(
-                               tape
-                               )
-     tape_list_t *tape;
+int rtcpcld_setVIDFailedStatus(tape_list_t *tape)
 {
   int failed = 0;
 
@@ -401,10 +370,7 @@ int rtcpcld_setVIDFailedStatus(
   else return(0);
 }
 
-char *rtcpcld_fixStr(
-                     str
-                     )
-     const char *str;
+char *rtcpcld_fixStr(const char *str)
 {
   char *retStr = NULL, *p;
 
@@ -424,10 +390,7 @@ char *rtcpcld_fixStr(
 }
 
 
-int rtcpcld_validBlockid(
-                         blockid
-                         )
-     unsigned char *blockid;
+int rtcpcld_validBlockid(unsigned char *blockid)
 {
   unsigned char nullBlockid[4] = {'\0', '\0', '\0', '\0'};
 
@@ -436,30 +399,20 @@ int rtcpcld_validBlockid(
   return(1);
 }
 
-int rtcpcld_validPosition(
-                          fseq,
-                          blockid
-                          )
-     int fseq;
-     unsigned char *blockid;
+int rtcpcld_validPosition(int fseq,
+                          unsigned char *blockid)
 {
   if ( fseq > 0 ) return(1);
   else return(rtcpcld_validBlockid(blockid));
 }
 
-int rtcpcld_validPath(
-                      path
-                      )
-     char *path;
+int rtcpcld_validPath(char *path)
 {
   if ( (path == NULL) || (*path == '\0') || (strcmp(path,".") == 0) ) return(0);
   else return(1);
 }
 
-int rtcpcld_validFilereq(
-                         filereq
-                         )
-     rtcpFileRequest_t *filereq;
+int rtcpcld_validFilereq(rtcpFileRequest_t *filereq)
 {
   int rc;
 
@@ -476,11 +429,8 @@ int rtcpcld_validFilereq(
   return(1);
 }
 
-static int filereqsEqual(
-                         filereq1,
-                         filereq2
-                         )
-     rtcpFileRequest_t *filereq1, *filereq2;
+static int filereqsEqual(rtcpFileRequest_t *filereq1,
+                         rtcpFileRequest_t *filereq2)
 {
   if ( rtcpcld_validFilereq(filereq1) == 0 ) return(0);
   if ( rtcpcld_validFilereq(filereq2) == 0 ) return(0);
@@ -503,14 +453,9 @@ static int filereqsEqual(
 }
 
 
-int rtcpcld_findFile(
-                     tape,
-                     filereq,
-                     file
-                     )
-     tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
-     file_list_t **file;
+int rtcpcld_findFile(tape_list_t *tape,
+                     rtcpFileRequest_t *filereq,
+                     file_list_t **file)
 {
   file_list_t *fl;
 
@@ -537,12 +482,8 @@ int rtcpcld_findFile(
  * a valid tape fseq or blockid but no path. Used by both
  * migrator and recaller.
  */
-int rtcpcld_nextFileToProcess(
-                              tape,
-                              file
-                              )
-     tape_list_t *tape;
-     file_list_t **file;
+int rtcpcld_nextFileToProcess(tape_list_t *tape,
+                              file_list_t **file)
 {
   file_list_t *fl = NULL, *firstFound = NULL;
   rtcpFileRequest_t *filereq;
@@ -602,14 +543,9 @@ int rtcpcld_nextFileToProcess(
   return(found);
 }
 
-static int updateClientInfo(
-                            origSocket,
-                            port,
-                            tape
-                            )
-     SOCKET *origSocket;
-     int port;
-     tape_list_t *tape;
+static int updateClientInfo(SOCKET *origSocket,
+                            int port,
+                            tape_list_t *tape)
 {
   vdqmVolReq_t volReq;
   vdqmDrvReq_t drvReq;
@@ -713,10 +649,7 @@ static int updateClientInfo(
   return(0);
 }
 
-static int addPlaceholderFile(
-                              tape
-                              )
-     tape_list_t *tape;
+static int addPlaceholderFile(tape_list_t *tape)
 {
   int rc;
   file_list_t *placeHolderFile = NULL;
@@ -735,16 +668,10 @@ static int addPlaceholderFile(
   return(rc);
 }
 
-int rtcpcld_runWorker(
-                      tape,
-                      origSocket,
-                      myDispatch,
-                      myCallback
-                      )
-     tape_list_t *tape;
-     SOCKET *origSocket;
-     int (*myDispatch) (void *(*)(void *), void *);
-int (*myCallback) (rtcpTapeRequest_t *, rtcpFileRequest_t *);
+int rtcpcld_runWorker(tape_list_t *tape,
+                      SOCKET *origSocket,
+                      int (*myDispatch) (void *(*)(void *), void *),
+                      int (*myCallback) (rtcpTapeRequest_t *, rtcpFileRequest_t *))
 {
   rtcpc_sockets_t *socks;
   rtcpHdr_t hdr;
@@ -1013,16 +940,12 @@ int (*myCallback) (rtcpTapeRequest_t *, rtcpFileRequest_t *);
   return(rc);
 }
 
-static int checkArgs(
-                     vid,
-                     dgn,
-                     lbltype,
-                     density,
-                     unit,
-                     vdqmVolReqID
-                     )
-     char *vid, *dgn, *lbltype, *density, *unit;
-     int vdqmVolReqID;
+static int checkArgs(char *vid,
+                     char *dgn,
+                     char *lbltype,
+                     char *density,
+                     char *unit,
+                     int vdqmVolReqID)
 {
   int rc = 0;
 
@@ -1115,20 +1038,15 @@ static int checkArgs(
   return(rc);
 }
 
-static int initTapeReq(
-                       tape,
-                       vid,
-                       side,
-                       dgn,
-                       density,
-                       label,
-                       unit,
-                       vdqmVolReqID,
-                       tStartRequest
-                       )
-     tape_list_t *tape;
-     char *vid, *dgn, *density, *label, *unit;
-     int side, vdqmVolReqID, tStartRequest;
+static int initTapeReq(tape_list_t *tape,
+                       char *vid,
+                       int side,
+                       char *dgn,
+                       char *density,
+                       char *label,
+                       char *unit,
+                       int vdqmVolReqID,
+                       int tStartRequest)
 {
   (void)side;
   if ( (tape == NULL) || (vid == NULL) ) {
@@ -1176,16 +1094,10 @@ static int initTapeReq(
   return(0);
 }
 
-int rtcpcld_parseWorkerCmd(
-                           argc,
-                           argv,
-                           tape,
-                           sock
-                           )
-     int argc;
-     char **argv;
-     tape_list_t *tape;
-     SOCKET *sock;
+int rtcpcld_parseWorkerCmd(int argc,
+                           char **argv,
+                           tape_list_t *tape,
+                           SOCKET *sock)
 {
   char *vid = NULL, *dgn = NULL, *lbltype = NULL, *density = NULL;
   char  *unit = NULL, *mainUuidStr = NULL, optstr[3];
@@ -1350,14 +1262,9 @@ int rtcpcld_parseWorkerCmd(
   return(0);
 }
 
-static void setErrorInfo(
-                         tape,
-                         errorCode,
-                         errMsgTxt
-                         )
-     tape_list_t *tape;
-     char *errMsgTxt;
-     int errorCode;
+static void setErrorInfo(tape_list_t *tape,
+                         int errorCode,
+                         char *errMsgTxt)
 {
   if ( tape == NULL ) return;
 
@@ -1382,17 +1289,12 @@ static void setErrorInfo(
   return;
 }
 
-int rtcpcld_workerFinished(
-                           tape,
-                           filesCopied,
-                           bytesCopied,
-                           runTime,
-                           workerRC,
-                           workerErrorCode
-                           )
-     tape_list_t *tape;
-     u_signed64 bytesCopied;
-     int runTime, filesCopied, workerRC, workerErrorCode;
+int rtcpcld_workerFinished(tape_list_t *tape,
+                           int filesCopied,
+                           u_signed64 bytesCopied,
+                           int runTime,
+                           int workerRC,
+                           int workerErrorCode)
 {
   char *shiftMsg = NULL;
   int retval = 0, rc;

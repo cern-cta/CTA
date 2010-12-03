@@ -18,11 +18,11 @@ CommonDependsOnLibrary(common,castorcommon)
 CUPVLIB_OBJS = Cupv_apiinit.o Cupv_errmsg.o send2Cupv.o Cupv_delete.o Cupv_list.o Cupv_util.o Cupv_check.o Cupv_modify.o Cupv_add.o
 SharedLibraryTarget(castorupv,$(CUPVLIB_OBJS),,)
 
-LIBMANPAGE(Cupv_add)
-LIBMANPAGE(Cupv_check)
-LIBMANPAGE(Cupv_delete)
-LIBMANPAGE(Cupv_list)
-LIBMANPAGE(Cupv_modify)
+CLIENTLIBMANPAGE(Cupv_add)
+CLIENTLIBMANPAGE(Cupv_check)
+CLIENTLIBMANPAGE(Cupv_delete)
+CLIENTLIBMANPAGE(Cupv_list)
+CLIENTLIBMANPAGE(Cupv_modify)
 
 ClientDependsOnLibrary(upv,castorupv)
 ClientProgramTarget(Cupvadd, Cupvadd.o,,,755)
@@ -31,11 +31,11 @@ ClientProgramTarget(Cupvcheck, Cupvcheck.o,,,755)
 ClientProgramTarget(Cupvdelete, Cupvdelete.o,,,755)
 ClientProgramTarget(Cupvlist, Cupvlist.o,,,755)
 
-EXEMANPAGE(Cupvadd)
-EXEMANPAGE(Cupvmodify)
-EXEMANPAGE(Cupvcheck)
-EXEMANPAGE(Cupvdelete)
-EXEMANPAGE(Cupvlist)
+CLIENTEXEMANPAGE(Cupvadd)
+CLIENTEXEMANPAGE(Cupvmodify)
+CLIENTEXEMANPAGE(Cupvcheck)
+CLIENTEXEMANPAGE(Cupvdelete)
+CLIENTEXEMANPAGE(Cupvlist)
 
 PROC(Cupv_oracle_ifce)
 CUPVD_OBJS = Cupv_main.o Cupv_oracle_ifce.o Cupv_procreq.o sendrep.o Cupv_util.o Cupvlogit.o

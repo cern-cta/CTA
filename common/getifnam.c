@@ -29,10 +29,9 @@ static int ifname_key = -1;             /* Key to interface name global */
  *       it failed. With a new socket creation it works however.
  */
 
-char  *getifnam_r(s,ifname,ifnamelen)
-SOCKET     s;
-char    *ifname;
-size_t  ifnamelen;
+char  *getifnam_r(SOCKET     s,
+                  char    *ifname,
+                  size_t  ifnamelen)
 {
     struct  ifconf  ifc;            /* Interface configuration      */
     struct  ifreq   *ifr;           /* Interface request            */
@@ -121,8 +120,7 @@ size_t  ifnamelen;
     }
 }
 
-char *getifnam(s)
-SOCKET s;
+char *getifnam(SOCKET s)
 {
     char *ifname = NULL;
     size_t ifnamelen = 16;

@@ -101,6 +101,7 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
   // For stability reasons we cache the result of the query to LSF and only
   // refresh it when updating is enabled and 1 minute has passed since the
   // previous query.
+  std::string clusterName("");
   if ((m_prevMasterName == "") || (update && ((time(NULL) - m_lastUpdate) > 60))) {
 
     // Get the name of the LSF master. This is the equivalent to `lsid`
@@ -113,7 +114,8 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     }
 
     Cthread_mutex_lock(&m_prevMasterName);
-    masterName = cInfo[0].masterName;
+    clusterName = cInfo[0].clusterName;
+    masterName  = cInfo[0].masterName;
     m_lastUpdate = time(NULL);
   } else {
     Cthread_mutex_lock(&m_prevMasterName);
@@ -133,7 +135,13 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
   }
 
   // Announce if we have changed status
-  if ((m_prevMasterName != "") && (m_prevMasterName != masterName)) {
+  if (m_prevMasterName == "") {
+    // "LSF initialization information"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Cluster", clusterName),
+       castor::dlf::Param("Master", masterName)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 2, params);
+  } else if (m_prevMasterName != masterName) {
     if (production) {
       // "Assuming role as production RmMaster server, LSF failover detected"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);

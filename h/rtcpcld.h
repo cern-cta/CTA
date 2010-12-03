@@ -142,14 +142,14 @@ enum NotificationState {
 
 #if defined(CASTOR_SERVICES_H)
 int rtcpcld_getDbSvc (
-		      struct C_Services_t ***
+		      struct C_Services_t **
 		      );
 #endif /* CASTOR_SERVICES_H */
 
 #if defined(CASTOR_ITAPESVC_H)
-int rtcpcld_getStgSvc (
-		       struct Cstager_ITapeSvc_t ***
-		       );
+int rtcpcld_getTpSvc (
+		      struct Cstager_ITapeSvc_t **
+		      );
 #endif /* CASTOR_ITAPESVC_H */
 
 int rtcpcld_doCommit (

@@ -636,14 +636,14 @@ int rfio_read64_v3(int     ctrl_sock,
       if (n <= 0) {
         if (n == 0)
         {
-          TRACE(2,"rfio","read64_v3: datasoket %d  closed by remote end",
+          TRACE(2,"rfio","read64_v3: datasoket %d closed by remote end",
                 data_sock) ;
           END_TRACE() ;
           return(-1);
         }
         else
         {
-          TRACE(2,"rfio","read64_v3: datasoket %d  read(): ERROR occured (errno=%d)",
+          TRACE(2,"rfio","read64_v3: datasoket %d read(): ERROR occured (errno=%d)",
                 data_sock, errno) ;
           END_TRACE() ;
           return -1 ;

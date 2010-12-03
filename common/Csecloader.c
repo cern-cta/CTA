@@ -2,6 +2,8 @@
 #include <Cdlopen_api.h>
 #include <Csec_api.h>
 
+#include "patchlevel.h"
+
 static int (*Cclient_initContext)(Csec_context_t *, int,Csec_protocol *);
 static int (*Cclient_establishContext)(Csec_context_t *,int);
 static int (*Cserver_initContext)(Csec_context_t *,int,Csec_protocol *);
@@ -15,10 +17,15 @@ static int loaded = 0;
 static void *handle;
   
 int loader(){
+  char filename[CA_MAXNAMELEN];
+
   if (loaded == 1)
     return 1; // is already loaded
   
-  handle = Cdlopen ("libcastorsecurity.so", RTLD_LAZY);
+  snprintf(filename, CA_MAXNAMELEN, "libcastorsecurity.so.%d.%d",
+           MAJORVERSION, MINORVERSION);
+
+  handle = Cdlopen (filename, RTLD_LAZY);
   if (!handle) {
     fprintf (stderr, "%s\n", Cdlerror());
     return -1;

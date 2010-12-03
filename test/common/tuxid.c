@@ -34,9 +34,8 @@ void usage (char *);
 char *cuserid();
 
 int
-main(argc,argv)
-	int argc;
-	char **argv;
+main(int argc,
+         char **argv)
 {
 	struct group *gr;
 	char logname[L_cuserid];

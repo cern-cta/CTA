@@ -59,10 +59,7 @@ static struct Coptions longopts[] = {
   {NULL, 0, NULL, 0}
 };
 
-void usage(
-           cmd
-           )
-     char *cmd;
+void usage(char *cmd)
 {
   int i;
   fprintf(stdout,"Usage: %s \n",cmd);

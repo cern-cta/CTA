@@ -93,12 +93,8 @@ typedef struct SvcClassList {
 } SvcClassList_t;
 static SvcClassList_t *svcClassList = NULL;
 
-void updateSvcClassList(
-                        svcClassName,
-                        nbBytes
-                        )
-     char *svcClassName;
-     u_signed64 nbBytes;
+void updateSvcClassList(char *svcClassName,
+                        u_signed64 nbBytes)
 {
   SvcClassList_t *iterator;
   int found = 0;
@@ -163,12 +159,8 @@ void logSvcClassTotals()
   return;
 }
 
-int migratorCallbackFileCopied(
-                               tapereq,
-                               filereq
-                               )
-     rtcpTapeRequest_t *tapereq;
-     rtcpFileRequest_t *filereq;
+int migratorCallbackFileCopied(rtcpTapeRequest_t *tapereq,
+                               rtcpFileRequest_t *filereq)
 {
   file_list_t *file = NULL;
   int rc, save_serrno, tapeCopyNb = 0, ownerUid = -1, ownerGid = -1;
@@ -531,12 +523,8 @@ int migratorCallbackMoreWork(rtcpFileRequest_t *filereq)
   return(rc);
 }
 
-int migratorCallback(
-                     tapereq,
-                     filereq
-                     )
-     rtcpTapeRequest_t *tapereq;
-     rtcpFileRequest_t *filereq;
+int migratorCallback(rtcpTapeRequest_t *tapereq,
+                     rtcpFileRequest_t *filereq)
 {
   int rc = 0, msgNo;
   struct Cns_fileid *castorFileId = NULL;
@@ -732,12 +720,8 @@ int migratorCallback(
   return(rc);
 }
 
-int main(
-         argc,
-         argv
-         )
-     int argc;
-     char **argv;
+int main(int argc,
+         char **argv)
 {
   char *migratorFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   char *p;
