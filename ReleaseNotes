@@ -17,10 +17,6 @@
   - #69677: CM : Generic cleanup of the code base
   - #69745: stripped executables and proper use of debug info in RPMs
   - #73748: CM : cleanups triggered by coverity reports
-
-  CASTOR monitoring
-  -----------------
-  - #58500: ReqDel materialized view performing FTS 
  
   CASTOR nameserver
   -----------------
@@ -96,6 +92,9 @@
 
   - Renamed the castor-tape-client package to castor-tape-tools to reflect that
     its contents are not for client-side distribution.
+
+  - The castor-gridftp-dsi-xroot package is now dependent on the xrootd-server
+    release (v3.0.0+).
 
 
   Upgrade Instructions from 2.1.9-10
