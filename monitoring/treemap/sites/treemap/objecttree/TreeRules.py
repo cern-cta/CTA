@@ -108,42 +108,16 @@ class ChildRules(object):
         except Exception:
             return False 
         
-        #check methodname
+        #check methodname and countmethodname
         found = False
-        childrenmethods = []
-        for membername in instance.__class__.__dict__.keys():
-            if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
-                try:
-                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'children':
-                        found = True
-                        childrenmethods.append(membername)
-                except KeyError:
-                    continue
-        
+        for dic in instance.childrenMethodsPairs(): 
+            if dic['childrenmethod'] == methodname and dic['childrencounter'] == countmethodname:
+                found = True
+                break
         if not found: return False
-        
-        #check count methodname
-        found = False
-        for membername in instance.__class__.__dict__.keys():
-            if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == countmethodname:
-                try:
-                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount' and \
-                    instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods:
-                        found = True
-                        break
-                except KeyError:
-                    continue
-        
-        if not found: return False
-        
+
         #check parent methodname
-        found = False
-        for membername in instance.__class__.__dict__.keys():
-            if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == parentmethodname:
-                if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'parent':
-                    found = True
-                    break
-        
+        found = parentmethodname in instance.parentMethods()
         if not found: return False
         
         #check attrname
@@ -157,9 +131,8 @@ class ChildRules(object):
         
         return True
         
-    def attributesAreValid(self):
+    def isValid(self):
         
-        childrenmethods = {}
         for classname, methodname in self.methods.items():
             #check modulename and  classname
             modulename = getModelsModuleName(classname)
@@ -169,18 +142,13 @@ class ChildRules(object):
                 return False 
             
             #check methodname
-            childrenmethods[classname] = []
             found = False
-            for membername in instance.__class__.__dict__.keys():
-                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == methodname:
-                    try:
-                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'children':
-                            found = True
-                            childrenmethods[classname].append(membername)
-                    except KeyError:
-                        continue
+            for dic in instance.childrenMethodsPairs(): 
+                if dic['childrenmethod'] == methodname:
+                    found = True
+
             if not found: 
-                print "not found"
+                print "childmethod not found"
                 return False
 
             
@@ -193,19 +161,14 @@ class ChildRules(object):
                 return False 
             
             #check count methodname
-            found = False
-            for membername in instance.__class__.__dict__.keys():
-                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == countmethodname:
-                    try:
-                        if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'childrencount':
-                            if instance.__class__.__dict__[membername].__dict__['countsfor'] in childrenmethods[classname]:
-                                found = True
-                                break
-                    except KeyError:
-                        continue
+            found = False      
+            for dic in instance.childrenMethodsPairs():
+                if dic['childrencounter'] == countmethodname and dic['childrenmethod'] in self.methods:
+                    found = True 
+                    break
             
             if not found: 
-                print "not found"
+                print "countmethod not found"
                 return False
         
         for classname, parentmethodname in self.parentmethods.items():
@@ -216,13 +179,8 @@ class ChildRules(object):
             except Exception:
                 return False 
             
-            #check parent methodname
-            found = False
-            for membername in instance.__class__.__dict__.keys():
-                if ((type(instance.__class__.__dict__[membername]).__name__) == 'function') and membername == parentmethodname:
-                    if instance.__class__.__dict__[membername].__dict__['methodtype'] == 'parent':
-                        found = True
-                        break
+            #check parent parentmethod
+            found = parentmethodname in instance.parentMethods() 
             
             if not found: 
                 print "not found"
@@ -359,7 +317,7 @@ class LevelRules(object):
     
     def rulesAreValid(self):
         for rule in self.rules:
-            if not rule.attributesAreValid():
+            if not rule.isValid():
                 return False
         return True
          

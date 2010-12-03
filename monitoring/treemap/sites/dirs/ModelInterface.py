@@ -27,8 +27,8 @@ class ModelInterface(object):
     def getNaviName(self):
         raise Exception("getNaviName not implemented!")
     
-    def childrenMethods(self):
-        raise Exception("childrenMethods not implemented!")
+    def childrenMethodPairs(self):
+        raise Exception("childrenMethodPairs not implemented!")
     
     def parentMethods(self):
         raise Exception("parentMethods not implemented!")

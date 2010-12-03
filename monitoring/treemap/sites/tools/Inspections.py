@@ -94,41 +94,17 @@ def getAvailableModels():
 def getCountMethodFor(themodel, childrenmethodname):
     modulename = getModelsModuleName(themodel)
     instance = createObject(modulename, themodel)  
-    for membername in instance.__class__.__dict__.keys():
-        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
-            function = instance.__class__.__dict__[membername]
-            try:
-                if (function.__dict__['methodtype'] == 'childrencount') and (function.__dict__['countsfor'] == childrenmethodname):
-                    return function.__name__
-            except:
-                continue
-    return None
-
-def getParentMethodFor(themodel, parentmethodname):
-    modulename = getModelsModuleName(themodel)
-    instance = createObject(modulename, themodel)  
-    for membername in instance.__class__.__dict__.keys():
-        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
-            function = instance.__class__.__dict__[membername]
-            try:
-                if (function.__dict__['methodtype'] == 'parent'): #old code: and (parentmethodname in function.__dict__['returntype'])
-                    return function.__name__
-            except:
-                continue
-    return None
-
-def getParentMethodName(themodel):
-    modulename = getModelsModuleName(themodel)
-    instance = createObject(modulename, themodel)  
-    for membername in instance.__class__.__dict__.keys():
-        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
-            function = instance.__class__.__dict__[membername]
-            try:
-                if (function.__dict__['methodtype'] == 'parent'):
-                    return function.__name__
-            except:
-                continue
-    return None
+    methodname = None
+    methodpairs = instance.childrenMethodsPairs()
+    for pair in methodpairs:
+        try:
+            if(pair['childrenmethod'] == childrenmethodname):
+                methodname = pair['childrencounter']
+                break
+        except:
+            raise Exception("unexpected childrenmethod pair structure")
+        
+    return methodname
 
 def getModelsModuleName(themodel):
     modulename = ""
@@ -165,3 +141,12 @@ def getDefaultNumberOfLevels():
 
 def getModelsNotToCache():
     return [];
+
+def getFunctionNames(instance):
+    functions = []
+    for membername in instance.__class__.__dict__.keys():
+        if ((type(instance.__class__.__dict__[membername]).__name__) == 'function'):
+                functions.append(membername)
+    return functions
+    
+            
