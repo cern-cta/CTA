@@ -20,15 +20,29 @@ class ModelInterface(object):
     def getIdReplacement(self):
         raise Exception("getIdReplacement not implemented!")
     
-    #finds the closest Object in the tree if the requested one doesn't exist
+    #finds the closest proper root Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         raise Exception("findObjectByIdReplacementSuffix not implemented!")
 
     def getNaviName(self):
         raise Exception("getNaviName not implemented!")
     
+    #defines how to get the children and how to count them (if possible without reading all of them)
+    #childrenMethod pairs must return a list of dictionaries and use the keywords 'childrenmethod' and 'childrencounter'
+    #example:
+    #[
+    # {'childrenmethod': 'getDirs', 'childrencounter': 'countDirs'},
+    # {'childrenmethod': 'getFiles', 'childrencounter': 'countFiles'},
+    # {'childrenmethod': 'getFilesAndDirectories', 'childrencounter': 'countFilesAndDirs'},
+    #]
+ 
     def childrenMethodPairs(self):
         raise Exception("childrenMethodPairs not implemented!")
     
+    #defines how to get the Parent
     def parentMethods(self):
         raise Exception("parentMethods not implemented!")
+    
+    #metrics which are not related to columns from the database but can be accessed with the dot operator
+    def metricAttributes(self):
+        raise Exception("metricAttributes not implemented!")

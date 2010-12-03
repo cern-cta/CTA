@@ -29,6 +29,7 @@ from sites.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
+from sites.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
 #!!!sites.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 #if it is in the beginning of the file you will get a KeyError in RequestsFunctions, globals()[modelname]
 
@@ -217,26 +218,9 @@ class Dirs(models.Model, ModelInterface):
     
     def parentMethods(self):
         return['getDirParent']
-
-Dirs.metricattributes = []
-
-#exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)
-def getDirByName(dirname):
-    depth = 0
-    node = Dirs.objects.get(depth = depth)
-    pos = dirname.find('/')
-    if dirname == '/': return node
-    
-    while pos >= 0:
-        pos = dirname.find('/', pos + 1)
-        depth = depth + 1
-        children = list(Dirs.objects.filter(parent=node.fileid, depth = depth))
-        for child in children:
-            if child.fullname == dirname:
-                return child
-            if child.fullname == dirname[:pos]:
-                node = child
-    raise NoDataAvailableError ("no such object")
+        
+    def metricAttributes(self):
+        return []
         
 class CnsFileMetadata(models.Model, ModelInterface):
     fileid = models.DecimalField(max_digits=127, decimal_places=0, primary_key=True)
@@ -336,8 +320,9 @@ class CnsFileMetadata(models.Model, ModelInterface):
     
     def parentMethods(self):
         return['getDirParent']
-
-CnsFileMetadata.metricattributes = []
+        
+    def metricAttributes(self):
+        return []
 
 class Requestsatlas(models.Model, ModelInterface):
     subreqid = models.CharField(unique=True, max_length=36)
@@ -430,12 +415,11 @@ class Requestsatlas(models.Model, ModelInterface):
     
     def parentMethods(self):
         return['getParent']
-    
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestsatlas.metricattributes = ['requestscount']
+        
+    def metricAttributes(self):
+        return ['requestscount']
 
 Requestsatlas.generatedtree = None
-
 #current parameters of the generated tree
 Requestsatlas.treeprops = {'start': None, 'stop': None}
 #wish parameters for the generated tree
@@ -533,9 +517,9 @@ class Requestscms(models.Model, ModelInterface):
     
     def parentMethods(self):
         return['getParent']
-    
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestscms.metricattributes = ['requestscount']
+        
+    def metricAttributes(self):
+        return ['requestscount']
 
 Requestscms.generatedtree = None
 
@@ -637,8 +621,8 @@ class Requestsalice(models.Model, ModelInterface):
     def parentMethods(self):
         return['getParent']
 
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestsalice.metricattributes = ['requestscount']
+    def metricAttributes(self):
+        return ['requestscount']
 
 Requestsalice.generatedtree = None
 
@@ -740,8 +724,8 @@ class Requestslhcb(models.Model, ModelInterface):
     def parentMethods(self):
         return['getParent']
 
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestslhcb.metricattributes = ['requestscount']
+    def metricAttributes(self):
+        return ['requestscount']
 
 Requestslhcb.generatedtree = None
 
@@ -844,13 +828,10 @@ class Requestspublic(models.Model, ModelInterface):
     def parentMethods(self):
         return['getParent']
 
-#metrics which are not related to columns from the database and can be accessed with the dot operator
-Requestspublic.metricattributes = ['requestscount']
+    def metricAttributes(self):
+        return ['requestscount']
 
 Requestspublic.generatedtree = None
-
-#other parameters influencing tree generation
-
 #parameters of currently generated tree
 Requestspublic.treeprops = {'start': None, 'stop': None}
 #parameters defining how to generate the next tree
@@ -858,7 +839,9 @@ Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #
 Requestspublic.stop = datetime.datetime.now() #time relative to now
 
 #this import has to be here because of circular dependency with sites.dirs.ModelSpecificFunctions.RequestsFunctions
+#Warning!!! If you use eclipse the menu Source->Organize Imports will move these entries to the top of the file, which is wrong!
 from sites.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
+from sites.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)

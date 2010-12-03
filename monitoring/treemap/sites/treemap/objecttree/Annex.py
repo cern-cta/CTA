@@ -159,7 +159,8 @@ class Annex(models.Model, ModelInterface):
     
     def parentMethods(self):
         return['getAnnexParent']
-    
-Annex.metricattributes = []
+        
+    def metricAttributes(self):
+        return []
 
         
