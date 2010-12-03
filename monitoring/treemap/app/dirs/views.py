@@ -21,8 +21,7 @@ from app.dirs.presets.options.DateOption import DateOption
 from app.dirs.presets.options.OptionsReader import OptionsReader
 from app.dirs.presets.options.SpinnerOption import SpinnerOption
 from app.dirs.models import *
-from app.tools.GarbageDeleters import deleteOldImageFiles, \
-    deleteOldStatusFiles
+from app.tools.GarbageDeleters import deleteOldImageFiles, deleteOldStatusFiles
 from app.tools.Inspections import *
 from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *

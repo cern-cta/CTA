@@ -29,7 +29,6 @@ from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
-from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
 #!!!app.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 #if it is in the beginning of the file you will get a KeyError in RequestsFunctions, globals()[modelname]
 
