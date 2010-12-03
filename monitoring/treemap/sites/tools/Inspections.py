@@ -30,7 +30,7 @@ class ModelAttributeFinder:
         except:
             raise Exception( 'Unable to read Columns' )
     
-        self.metricattributenames = instance.__class__.metricattributes
+        self.metricattributenames = instance.metricAttributes()
         
         self.metricattributenames.sort()
         self.columns.sort()
