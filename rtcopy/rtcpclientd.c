@@ -1115,7 +1115,10 @@ int rtcpcld_main() {
     return(1);
   }
 
-  (void)rtcpcld_initLogging(rtcpcldFacilityName);
+  if(rtcpcld_initLogging(rtcpcldFacilityName)) {
+    fprintf(stderr, "Failed to initialise DFL: %s\n", sstrerror(errno));
+    return(1);
+  }
 
 #if defined(__DATE__) && defined (__TIME__)
   (void)dlf_write(

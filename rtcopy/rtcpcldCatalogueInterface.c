@@ -95,6 +95,11 @@ int inChild;
 /** Global switch indicating whether we should check remote disk files
  */
 int checkFile = 0;
+/** Global switch indicating whether or not a lock should be taken on the
+ * castor-file row of a file when recording the fact that a copy of that file
+ * has been successfully migrated to tape.
+ */
+int global_cFLockOnMigrated = 1; /* Default value of YES */
 /** uuid's set by calling process (rtcpclientd:mainUuid, VidWorker:childUuid)
  */
 Cuuid_t childUuid, mainUuid;
@@ -3193,23 +3198,25 @@ int rtcpcld_updcFileMigrated(tape_list_t *tape,
   }
 
   /*
-   * Lock the castor-file row in the database before accessing any disk or tape
-   * copies in the database.
+   * If the migrator is configured to do so, then take a lock on the
+   * castor-file row in the database before accessing any disk or tape copies.
    */
-  Cstager_CastorFile_id(castorFile,&castorFileId);
-  rc = Cstager_ITapeSvc_lockCastorFileById(tpSvc, castorFileId);
-  if( rc != 0 ) {
-    save_serrno = serrno;
+  if(global_cFLockOnMigrated) {
+    Cstager_CastorFile_id(castorFile,&castorFileId);
+    rc = Cstager_ITapeSvc_lockCastorFileById(tpSvc, castorFileId);
+    if( rc != 0 ) {
+      save_serrno = serrno;
 
-    if ( iAddr  != NULL ) C_IAddress_delete(iAddr);
-    if ( fileid != NULL ) free(fileid);
+      if ( iAddr  != NULL ) C_IAddress_delete(iAddr);
+      if ( fileid != NULL ) free(fileid);
 
-    LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_lockCastorFileById()",
-                         Cstager_ITapeSvc_errorMsg(tpSvc),
-                         castorFileId);
+      LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_lockCastorFileById()",
+                           Cstager_ITapeSvc_errorMsg(tpSvc),
+                           castorFileId);
 
-    serrno = save_serrno;
-    return(-1);
+      serrno = save_serrno;
+      return(-1);
+    }
   }
 
   /*
