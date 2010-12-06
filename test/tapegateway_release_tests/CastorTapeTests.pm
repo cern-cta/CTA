@@ -35,6 +35,7 @@ use strict;
 use POSIX;
 use DBI;
 use DBD::Oracle qw(:ora_types);
+use Data::Dumper;
 
 our $VERSION = 1.00;
 our @ISA = qw(Exporter);
@@ -75,6 +76,7 @@ our @export   = qw(
                    check_leftovers_poll_timeout
                    nullize_arrays_undefs
                    print_leftovers
+                   print_file_info
                    reinstall_stager_db
                    getOrastagerconfigParam
                    cleanup
@@ -1023,6 +1025,8 @@ sub unblock_stuck_files ()
                     if (defined $entry{breaking_type} && $entry{breaking_done}) {
                         print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                     }
+                    print "Full information:\n".Dumper (\%entry);
+                    print_file_info ($entry{name});
                     my $stmt = $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
                                       varTapeCopyIds  \"numList\";
@@ -1822,6 +1826,34 @@ sub print_leftovers ( $ )
         print( "Remaining tapecopy for $row[0]\n\twith diskcopy (id=$row[1], ".
                "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
     }
+}
+
+# print_file_info
+sub print_file_info ( $$ )
+{
+    my ( $dbh, $filename ) = ( shift, shift );
+    # Print as many infomation as can be regarding this file
+    # Bypass stager and just dump from the DB.
+    my $stmt = $dbh -> prepare ("SELECT cf.lastknownfilename, cf.nsHost, cf.fileId, cf.id, 
+                                        sc.name, fc.name, dc.id, dc.status, tc.id, tc.status, tc.copyNb
+                                  FROM castorfile cf
+                                  LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
+                                  LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                  LEFT OUTER JOIN svcClass sc ON sc.id = cf.svcClass
+                                  LEFT OUTER JOIN fileClass fc ON fc.id = cf.fileClass
+                                 WHERE cf.lastKnownFileName = :FILENAME");
+    $stmt->bind_param (":FILENAME", $filename);
+    $stmt->execute();
+    my $general_info_printed = 0;
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        if ( !$general_info_printed ) {
+            $general_info_printed = 1;
+            print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], svcclass=$row[4], fileclass=$row[5]\n";
+        }
+        print  "  dc.id=$row[6], dc.status=$row[7], tc.id=$row[8], tc.status=$row[9], tc.copyNb=$row[10]";
+    }
+    
 }
 
 sub reinstall_stager_db()
