@@ -45,7 +45,7 @@
 	
 	TEMPLATE_DIRS = 
 	(
-    	'/var/www/html/OverView/templates'
+    	'/var/www/html/TreeMap2/templates'
 	)
 	
 	DJANGORESPONSE_URL = "http://pcitdmssd"
