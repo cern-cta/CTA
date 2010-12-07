@@ -465,7 +465,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9002');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9003');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -10020,7 +10020,6 @@ BEGIN
    UPDATE TapeCopy TC
       SET TC.fSeq = varNewFseq,
           TC.tapeGatewayRequestId = varTgRequestId,
-          TC.diskCopy = varDiskCopyId,
           TC.fileTransactionId = TG_FileTrId_Seq.NEXTVAL
     WHERE TC.Id = varTapeCopyId;
 
@@ -10102,7 +10101,6 @@ BEGIN
   UPDATE TapeCopy TC
      SET TC.fseq = varNewFSeq,
          TC.TapeGatewayRequestId = varTgrId,
-         TC.DiskCopy = varDcId,
          TC.FileTransactionID = TG_FileTrId_Seq.NEXTVAL
    WHERE TC.id = varTcId;
    -- Update the segment's status
@@ -10465,13 +10463,11 @@ PROCEDURE TG_SetFileMigrated(
   inFileId          IN  NUMBER,
   inNsHost          IN  VARCHAR2, 
   inFseq            IN  INTEGER, 
-  inFileTransaction IN  NUMBER,
-  outStreamReport   OUT castor.StreamReport_Cur) AS
+  inFileTransaction IN  NUMBER) AS
   varUnused             NUMBER;
   varTapeCopyCount      INTEGER;
   varCfId               NUMBER;
   varTcId               NUMBER;
-  varDCId               NUMBER;
   varTcIds              "numList";
   varTapeId             NUMBER;
   varStreamId           NUMBER;
@@ -10497,8 +10493,8 @@ BEGIN
      AND CF.nsHost = inNsHost 
      FOR UPDATE;
   -- Locate the corresponding tape copy and Disk Copy, Lock
-  SELECT   TC.id, TC.DiskCopy
-    INTO varTcId,     varDcId
+  SELECT   TC.id
+    INTO varTcId
     FROM TapeCopy TC
    WHERE TC.FileTransactionId = inFileTransaction
      AND TC.fSeq = inFseq
@@ -10532,13 +10528,6 @@ BEGIN
     ) LOOP
       archivesubreq(i.id, 8); -- SUBREQUEST_FINISHED
   END LOOP;
-  -- return data for informing the rmMaster
-  OPEN outStreamReport FOR
-   SELECT DS.name,FS.mountpoint 
-     FROM DiskServer DS,FileSystem FS, DiskCopy DC 
-    WHERE DC.id = varDcId 
-      AND DC.filesystem = FS.id 
-      AND FS.diskserver = DS.id;
   COMMIT;
 END;
 /
@@ -10551,8 +10540,7 @@ PROCEDURE tg_setFileRecalled(
   inFileId           IN  NUMBER,
   inNsHost           IN  VARCHAR2, 
   inFseq             IN  NUMBER, 
-  inFileTransaction  IN  NUMBER,
-  outStreamReport   OUT castor.StreamReport_Cur) AS
+  inFileTransaction  IN  NUMBER) AS
   varTcId               NUMBER;         -- TapeCopy Id
   varDcId               NUMBER;         -- DiskCopy Id
   varCfId               NUMBER;         -- CastorFile Id
@@ -10595,10 +10583,16 @@ BEGIN
      FOR UPDATE;
   -- Find and lock the tape copy
   varTcId := NULL;
-  SELECT TC.id, TC.diskcopy INTO varTcId, varDcId
+  SELECT TC.id INTO varTcId
     FROM TapeCopy TC
    WHERE TC.FileTransactionId = inFileTransaction
      AND TC.fSeq = inFseq
+     FOR UPDATE;
+  -- find and lock the disk copy. There should be only one.
+  SELECT DC.id INTO varDcId
+    FROM DiskCopy DC
+   WHERE DC.castorFile = varCfId
+     AND DC.status = 2  -- DISKCOPY_WAITTAPERECALL
      FOR UPDATE;
   -- If nothing found, die releasing the locks
   IF varTCId = NULL THEN
@@ -10656,13 +10650,6 @@ BEGIN
    WHERE SR.parent = varSubrequestId;
   -- trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(varCfId, varEuid, varEgid);
-  -- return data for informing the rmMaster
-  OPEN outStreamReport FOR
-    SELECT DS.name, FS.mountpoint 
-      FROM DiskServer DS, FileSystem FS, DiskCopy DC
-      WHERE DC.id = varDcId
-      AND DC.filesystem = FS.id 
-      AND FS.diskserver = DS.id;
   COMMIT;
 END;
 /

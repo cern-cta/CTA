@@ -1197,7 +1197,6 @@ BEGIN
    UPDATE TapeCopy TC
       SET TC.fSeq = varNewFseq,
           TC.tapeGatewayRequestId = varTgRequestId,
-          TC.diskCopy = varDiskCopyId,
           TC.fileTransactionId = TG_FileTrId_Seq.NEXTVAL
     WHERE TC.Id = varTapeCopyId;
 
@@ -1279,7 +1278,6 @@ BEGIN
   UPDATE TapeCopy TC
      SET TC.fseq = varNewFSeq,
          TC.TapeGatewayRequestId = varTgrId,
-         TC.DiskCopy = varDcId,
          TC.FileTransactionID = TG_FileTrId_Seq.NEXTVAL
    WHERE TC.id = varTcId;
    -- Update the segment's status
@@ -1762,10 +1760,16 @@ BEGIN
      FOR UPDATE;
   -- Find and lock the tape copy
   varTcId := NULL;
-  SELECT TC.id, TC.diskcopy INTO varTcId, varDcId
+  SELECT TC.id INTO varTcId
     FROM TapeCopy TC
    WHERE TC.FileTransactionId = inFileTransaction
      AND TC.fSeq = inFseq
+     FOR UPDATE;
+  -- find and lock the disk copy. There should be only one.
+  SELECT DC.id INTO varDcId
+    FROM DiskCopy DC
+   WHERE DC.castorFile = varCfId
+     AND DC.status = 2  -- DISKCOPY_WAITTAPERECALL
      FOR UPDATE;
   -- If nothing found, die releasing the locks
   IF varTCId = NULL THEN
