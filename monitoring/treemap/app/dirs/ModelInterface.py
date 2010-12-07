@@ -21,6 +21,7 @@ class ModelInterface(object):
         raise Exception("getIdReplacement not implemented!")
     
     #finds the closest proper root Object in the tree if the requested one doesn't exist
+    #has to raise NoDataAvailableError if not found
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
         raise Exception("findObjectByIdReplacementSuffix not implemented!")
 
