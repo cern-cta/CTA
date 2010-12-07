@@ -49,7 +49,6 @@ TAPEGATEWAYDBIN_SRCS = \
 	daemon/MountIdToFseqMap.cpp \
 	daemon/NsTapeGatewayHelper.cpp \
 	daemon/RecallerErrorHandlerThread.cpp \
-	daemon/RmMasterTapeGatewayHelper.cpp \
 	daemon/TapeGatewayDaemon.cpp \
 	daemon/TapeGatewayMain.cpp \
 	daemon/TapeStreamLinkerThread.cpp  \

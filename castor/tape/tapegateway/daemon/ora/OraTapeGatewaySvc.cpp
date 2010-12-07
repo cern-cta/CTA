@@ -58,7 +58,6 @@
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/ora/OraTapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -798,24 +797,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	file.setFileTransactionId((u_signed64)rs->getDouble(10));
 	file.setMountTransactionId(req.mountTransactionId());
 	file.setPositionCommandCode(TPPOSIT_FSEQ);
-	
-	// we have a valid candidate we send a report to RmMaster stream started
-	try{
-	  
-	  RmMasterTapeGatewayHelper rmMasterHelper;
-	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_WRITE,true);
-	  
-	} catch (castor::exception::Exception& e){
-	  
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-	}
-
       }
       	
       m_getFileToMigrateStatement->closeResultSet(rs);
@@ -844,65 +825,21 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
   
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const castor::tape::tapegateway::FileMigratedNotification& resp)
   throw (castor::exception::Exception){
-  std::string diskserver;
-  std::string mountpoint;
-
-
   try {
     // Check whether the statements are ok
-
     if (0 == m_setFileMigratedStatement) {
       m_setFileMigratedStatement =
         createStatement(s_setFileMigratedStatementString);
       m_setFileMigratedStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
     }
-
     m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // transaction id
     m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
     m_setFileMigratedStatement->setString(3,resp.nshost());
     m_setFileMigratedStatement->setInt(4,resp.fseq()); 
     m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId()); 
-    
     m_setFileMigratedStatement->executeUpdate();
-
-    oracle::occi::ResultSet *rs =
-      m_setFileMigratedStatement->getCursor(6);
-
-    // Run through the cursor 
-
-    oracle::occi::ResultSet::Status status = rs->next();
-    // just one
-
-    if (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      diskserver = rs->getString(1);
-      mountpoint = rs->getString(2);
-
-    
-      // send report to RmMaster stream ended
-  
-      try{
-
-	RmMasterTapeGatewayHelper rmMasterHelper;
-	rmMasterHelper.sendStreamReport(diskserver, mountpoint, castor::monitoring::STREAMDIRECTION_WRITE,false);
-  
-      } catch (castor::exception::Exception& e){
-
-	castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-      }
-    }
-    
-    m_setFileMigratedStatement->closeResultSet(rs);
-
   } catch (oracle::occi::SQLException e) {
-   
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -910,8 +847,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
       << std::endl << e.what();
     throw ex;
   }
- 
-  
 }
 
 //----------------------------------------------------------------------------
@@ -1053,24 +988,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	  continue; // Let's get another candidate, this one was not valid
 
 	}
-   
-	// here we have a valid candidate and we send a report to RmMaster stream started    
-	  
-	try{
-
-	  RmMasterTapeGatewayHelper rmMasterHelper;
-	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,true);
-	
-	} catch (castor::exception::Exception& e){
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-	}
-	
+	// here we have a valid candidate
       }
      
       m_getFileToRecallStatement->closeResultSet(rs);
@@ -1099,9 +1017,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 //----------------------------------------------------------------------------
    
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
- std::string diskserver;
- std::string mountpoint;
-
   try {
     // Check whether the statements are ok
 
@@ -1119,42 +1034,6 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
     m_setFileRecalledStatement->setDouble(5,(double)resp.fileTransactionId());
 
     m_setFileRecalledStatement->executeUpdate();
-    
-    
-    
-    oracle::occi::ResultSet *rs =
-      m_setFileRecalledStatement->getCursor(6);
-
-    // Run through the cursor 
-
-    // just one
-
-    if (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-
-      diskserver = rs->getString(1);
-      mountpoint = rs->getString(2);
-
-    // send report to RmMaster stream ended
-      
-      try {
-      
-	RmMasterTapeGatewayHelper  rmMasterHelper;
-	rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,false);
-	
-      } catch (castor::exception::Exception& e){
-	castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-      }
-    }
-
-    // XXX potential leak!
-    m_setFileRecalledStatement->closeResultSet(rs);
-
   } catch (oracle::occi::SQLException e) {
 
     handleException(e);

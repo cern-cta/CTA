@@ -1,4 +1,10 @@
-castor (2.1.10-9002) unstable; urgency=low
+castor (2.1.10-9003) unstable; urgency=low
+
+  *  2.1.10 development release - tapgateway release branch
+
+ -- Eric Cano, 07 Dec 2010
+ 
+ castor (2.1.10-9002) unstable; urgency=low
 
   *  2.1.10 development release - tapgateway release branch
 
