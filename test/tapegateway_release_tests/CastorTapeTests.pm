@@ -626,7 +626,7 @@ sub break_diskserver( $$ )
                   FROM FileSystem fs
                  INNER JOIN DiskCopy dc ON dc.fileSystem = fs.id
                  INNER JOIN Castorfile cf ON cf.id = dc.castorFile
-                 WHERE cf.lastKnownFileName = :NSNAME)
+                 WHERE cf.lastKnownFileName = :NSNAME);
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
