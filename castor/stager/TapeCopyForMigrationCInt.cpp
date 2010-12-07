@@ -29,7 +29,6 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -272,22 +271,6 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_diskCopy
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_diskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy** var) {
-    *var = instance->diskCopy();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setDiskCopy
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setDiskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy* new_var) {
-    instance->setDiskCopy(new_var);
     return 0;
   }
 

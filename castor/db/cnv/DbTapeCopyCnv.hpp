@@ -210,14 +210,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type DiskCopy refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepDiskCopy(castor::stager::TapeCopy* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type Segment refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -251,14 +243,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjStream(castor::stager::TapeCopy* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type DiskCopy refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjDiskCopy(castor::stager::TapeCopy* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -339,18 +323,6 @@ namespace castor {
 
         /// SQL select statement object for member stream
         castor::db::IDbStatement *m_selectStreamStatement;
-
-        /// SQL checkExist statement for member diskCopy
-        static const std::string s_checkDiskCopyExistStatementString;
-
-        /// SQL checkExist statement object for member diskCopy
-        castor::db::IDbStatement *m_checkDiskCopyExistStatement;
-
-        /// SQL update statement for member diskCopy
-        static const std::string s_updateDiskCopyStatementString;
-
-        /// SQL update statement object for member diskCopy
-        castor::db::IDbStatement *m_updateDiskCopyStatement;
 
         /// SQL select statement for member segments
         static const std::string s_selectSegmentStatementString;

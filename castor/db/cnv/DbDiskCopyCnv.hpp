@@ -326,24 +326,6 @@ namespace castor {
         /// SQL remote update statement object for member subRequests
         castor::db::IDbStatement *m_remoteUpdateSubRequestStatement;
 
-        /// SQL select statement for member 
-        static const std::string s_selectTapeCopyStatementString;
-
-        /// SQL select statement object for member 
-        castor::db::IDbStatement *m_selectTapeCopyStatement;
-
-        /// SQL delete statement for member 
-        static const std::string s_deleteTapeCopyStatementString;
-
-        /// SQL delete statement object for member 
-        castor::db::IDbStatement *m_deleteTapeCopyStatement;
-
-        /// SQL remote update statement for member 
-        static const std::string s_remoteUpdateTapeCopyStatementString;
-
-        /// SQL remote update statement object for member 
-        castor::db::IDbStatement *m_remoteUpdateTapeCopyStatement;
-
         /// SQL checkExist statement for member fileSystem
         static const std::string s_checkFileSystemExistStatementString;
 

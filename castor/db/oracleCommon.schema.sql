@@ -118,7 +118,7 @@ CREATE TABLE TapeCopy
     fseq NUMBER, tapeGatewayRequestId NUMBER, vid VARCHAR2(2048), 
     fileTransactionId NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY 
     /* This one was not generated -> */ CONSTRAINT NN_TapeCopy_Id NOT NULL, 
-    diskCopy INTEGER, castorFile INTEGER, status INTEGER
+    castorFile INTEGER, status INTEGER
   ) 
     INITRANS 50 /* This one ported by hand as well -> */ PCTUSED 40 PCTFREE 50 ENABLE ROW MOVEMENT
     PARTITION BY LIST (STATUS)

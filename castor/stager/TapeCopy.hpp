@@ -47,7 +47,6 @@ namespace castor {
     // Forward declarations
     class Stream;
     class Segment;
-    class DiskCopy;
     class CastorFile;
 
     /**
@@ -289,26 +288,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_diskCopy
-       * This is used to store the source of the migration after calling the sleection
-       * policy (last moment populated)
-       * @return the value of m_diskCopy
-       */
-      DiskCopy* diskCopy() const {
-        return m_diskCopy;
-      }
-
-      /**
-       * Set the value of m_diskCopy
-       * This is used to store the source of the migration after calling the sleection
-       * policy (last moment populated)
-       * @param new_var the new value of m_diskCopy
-       */
-      void setDiskCopy(DiskCopy* new_var) {
-        m_diskCopy = new_var;
-      }
-
-      /**
        * Add a Segment* object to the m_segmentsVector list
        */
       void addSegments(Segment* add_object) {
@@ -393,9 +372,6 @@ namespace castor {
       u_signed64 m_id;
 
       std::vector<Stream*> m_streamVector;
-
-      /// This is used to store the source of the migration after calling the sleection policy (last moment populated)
-      DiskCopy* m_diskCopy;
 
       std::vector<Segment*> m_segmentsVector;
 

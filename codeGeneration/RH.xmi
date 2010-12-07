@@ -2199,12 +2199,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="1" xmi.id="7OlmgdnPP8Ro" isRoot="false" isAbstract="false" name="query" >
        <UML:Namespace.ownedElement/>
       </UML:Package>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="QIFixVr70Dxd" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="4AqWtPB3jk7g" aggregation="none" type="1191" name="" multiplicity="0..n" />
-        <UML:AssociationEnd comment="This is used to store the source of the migration after calling the sleection policy (last moment populated)" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="k6tyYIucaZCd" aggregation="none" type="1195" name="diskCopy" multiplicity="0..1" />
-       </UML:Association.connection>
-      </UML:Association>
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
       <diagrams>
@@ -2259,15 +2253,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <floatingtext usesdiagramfillcolor="1" width="34" x="537" fillcolor="none" y="755" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="NnFfHEvRxJUi" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="51" x="325" fillcolor="none" y="701" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="zPha9MjNHUyI" text="tape" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="84" x="480" fillcolor="none" y="760" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ClO3lvfcy2wX" text="segments" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1195" widgetaid="1191" xmi.id="QIFixVr70Dxd" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="660" starty="280" />
-           <endpoint endx="610" endy="192" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="28" x="660" fillcolor="none" y="260" linewidth="none" posttext="" role="701" height="20" usefillcolor="1" pretext="" isinstance="0" xmi.id="Okv7lyx9lCm0" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="28" x="580" fillcolor="none" y="200" linewidth="none" posttext="" role="702" height="20" usefillcolor="1" pretext="" isinstance="0" xmi.id="OhRMyw2B4JLC" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="66" x="610" fillcolor="none" y="190" linewidth="none" posttext="" role="710" height="20" usefillcolor="1" pretext="+" isinstance="0" xmi.id="E8JA8Fhzt4PP" text="diskCopy" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
         </associations>
        </diagram>

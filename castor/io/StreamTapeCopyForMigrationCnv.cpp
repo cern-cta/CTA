@@ -40,7 +40,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
@@ -180,7 +179,6 @@ void castor::io::StreamTapeCopyForMigrationCnv::marshalObject(castor::IObject* o
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
     address->stream() << obj->segments().size();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -214,9 +212,6 @@ castor::IObject* castor::io::StreamTapeCopyForMigrationCnv::unmarshalObject(cast
     castor::IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addStream(dynamic_cast<castor::stager::Stream*>(objStream));
   }
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {

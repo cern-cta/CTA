@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -54,7 +53,6 @@ castor::stager::TapeCopy::TapeCopy() throw() :
   m_vid(""),
   m_fileTransactionId(0),
   m_id(0),
-  m_diskCopy(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
 }
@@ -110,12 +108,6 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
-  }
-  stream << indent << "DiskCopy : " << std::endl;
-  if (0 != m_diskCopy) {
-    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
   }
   {
     stream << indent << "Segments : " << std::endl;

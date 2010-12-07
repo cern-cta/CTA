@@ -34,7 +34,6 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
-struct Cstager_DiskCopy_t;
 struct Cstager_Segment_t;
 struct Cstager_Stream_t;
 struct Cstager_TapeCopy_t;
@@ -206,20 +205,6 @@ int Cstager_TapeCopy_removeStream(struct Cstager_TapeCopy_t* instance, struct Cs
  * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopy_stream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t*** var, int* len);
-
-/**
- * Get the value of diskCopy
- * This is used to store the source of the migration after calling the sleection
- * policy (last moment populated)
- */
-int Cstager_TapeCopy_diskCopy(struct Cstager_TapeCopy_t* instance, struct Cstager_DiskCopy_t** var);
-
-/**
- * Set the value of diskCopy
- * This is used to store the source of the migration after calling the sleection
- * policy (last moment populated)
- */
-int Cstager_TapeCopy_setDiskCopy(struct Cstager_TapeCopy_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list
