@@ -2031,10 +2031,11 @@ sub reinstall_stager_db()
     `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
     `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
     
-    `moveDiskServer default $diskServers[0]`;
-    `moveDiskServer extra $diskServers[1]`;
     `rmAdminNode -r -R -n $diskServers[0]`;
     `rmAdminNode -r -R -n $diskServers[1]`;
+    sleep 10;
+    `moveDiskServer default $diskServers[0]`;
+    `moveDiskServer extra $diskServers[1]`;
     
     # Add a tape-pool to $environment{svcclass} service-class
     my $tapePool = get_environment('tapepool');
