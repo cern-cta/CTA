@@ -197,7 +197,7 @@ sub badDayFileCreation ( $$$ )
 
     my @error_list = ( "missing ns entry on rfcp",
                        "missing filesystem on rfcp",
-                       "missing stream on rfcp",
+                       #"missing stream on rfcp",
                        "missing tapepool on rfcp",
                        "missing segment on rfcp",
                        "missing tape on rfcp",

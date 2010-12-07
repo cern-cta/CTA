@@ -623,7 +623,6 @@ sub break_diskserver( $$ )
           DELETE FROM DiskServer ds
            WHERE ds.id IN (
                 SELECT fs.diskServer
-                  BULK COLLECT INTO varDiskServerIds
                   FROM FileSystem fs
                  INNER JOIN DiskCopy dc ON dc.fileSystem = fs.id
                  INNER JOIN Castorfile cf ON cf.id = dc.castorFile
@@ -1026,7 +1025,7 @@ sub unblock_stuck_files ()
                         print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                     }
                     print "Full information:\n".Dumper (\%entry);
-                    print_file_info ($entry{name});
+                    print_file_info ($dbh, $entry{name});
                     my $stmt = $dbh->prepare ("DECLARE
                                       varCastorFileId NUMBER;
                                       varTapeCopyIds  \"numList\";
@@ -1851,7 +1850,7 @@ sub print_file_info ( $$ )
             $general_info_printed = 1;
             print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], svcclass=$row[4], fileclass=$row[5]\n";
         }
-        print  "  dc.id=$row[6], dc.status=$row[7], tc.id=$row[8], tc.status=$row[9], tc.copyNb=$row[10]";
+        print  "  dc.id=$row[6], dc.status=$row[7], tc.id=$row[8], tc.status=$row[9], tc.copyNb=$row[10]\n";
     }
     
 }
