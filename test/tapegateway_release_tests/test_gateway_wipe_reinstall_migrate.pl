@@ -184,7 +184,7 @@ sub badDayFileCreation ( $$$ )
     #           wrong checksum
     #           wrong size
     #           wrong segment
-    #           broken diskserver
+    #           broken diskserver <= gets a contraint violation
     #
     # stages are:
     #           rfcp
@@ -204,8 +204,7 @@ sub badDayFileCreation ( $$$ )
                        "missing ns entry on rfcp",
                        "wrong checksum on rfcp",
                        "wrong size on rfcp",
-                       "wrong segment on rfcp",
-                       "broken diskserver on on tape"
+                       "wrong segment on rfcp"
                        );
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
     my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
