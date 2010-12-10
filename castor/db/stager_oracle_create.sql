@@ -6880,7 +6880,8 @@ BEGIN
                                                      -- 9 TAPECOPY_MIG_RETRY
       THEN
       RAISE_APPLICATION_ERROR(-20119,
-        'Moving/creating (in)to TapeCopy state where VID makes no sense, yet VID!=NULL');
+        'Moving/creating (in)to TapeCopy state where VID makes no sense, yet VID!=NULL (VID:'||
+        :old.VID||'=>'||:new.VID||' Status:'||:old.VID||'=>'||:new.VID||')');
     ELSE
       NULL;
   END CASE;
