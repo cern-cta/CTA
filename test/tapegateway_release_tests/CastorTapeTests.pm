@@ -171,7 +171,9 @@ sub read_config ( $ )
 			  'local_rmmasterd',
 			  'local_rtcpclientd',
 			  'local_stagerd',
-			  'local_tapegatewayd' );
+			  'local_tapegatewayd',
+                          'local_expertd',
+                          'local_logprocessord');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'castor_single_subdirectory',
                           'castor_dual_subdirectory' );
@@ -1031,36 +1033,42 @@ sub unblock_stuck_files ()
                                       varTapeCopyIds  \"numList\";
                                       varDiskCopyIds  \"numList\";
                                     BEGIN
-                                      SELECT cf.Id INTO varCastorFileId
-                                        FROM CastorFile cf
-                                       WHERE cf.lastKnownFileName = :NSNAME
-                                         FOR UPDATE;
-                                         
-                                      SELECT tc.Id
-                                        BULK COLLECT INTO varTapeCopyIds
-                                        FROM TapeCopy tc
-                                       WHERE tc.CastorFile = varCastorFileId
-                                         FOR UPDATE;
+                                      BEGIN
+                                        SELECT cf.Id INTO varCastorFileId
+                                          FROM CastorFile cf
+                                         WHERE cf.lastKnownFileName = :NSNAME
+                                           FOR UPDATE;
+                                      EXCEPTION WHEN NO_DATA_FOUND THEN
+                                        varCastorFileId := NULL;
+                                      END;
                                       
-                                      SELECT dc.Id
-                                        BULK COLLECT INTO varDiskCopyIds
-                                        FROM DiskCopy dc
-                                       WHERE dc.CastorFile = varCastorFileId
-                                         FOR UPDATE;
+                                      IF varCastorFileId IS NOT NULL THEN
+                                        SELECT tc.Id
+                                          BULK COLLECT INTO varTapeCopyIds
+                                          FROM TapeCopy tc
+                                         WHERE tc.CastorFile = varCastorFileId
+                                           FOR UPDATE;
+                                        
+                                        SELECT dc.Id
+                                          BULK COLLECT INTO varDiskCopyIds
+                                          FROM DiskCopy dc
+                                         WHERE dc.CastorFile = varCastorFileId
+                                           FOR UPDATE;
+                                           
+                                        DELETE FROM Stream2TapeCopy sttc
+                                         WHERE sttc.child IN (SELECT * FROM TABLE (varTapeCopyIds));
                                          
-                                      DELETE FROM Stream2TapeCopy sttc
-                                       WHERE sttc.child IN (SELECT * FROM TABLE (varTapeCopyIds));
-                                       
-                                      DELETE FROM TapeCopy tc
-                                       WHERE tc.id IN (SELECT * FROM TABLE (varTapeCopyIds));
-                                       
-                                      DELETE FROM DiskCopy dc
-                                       WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
-                                       
-                                      DELETE FROM CastorFile cf
-                                       WHERE cf.id = varCastorFileId;
-                                       
-                                      COMMIT;
+                                        DELETE FROM TapeCopy tc
+                                         WHERE tc.id IN (SELECT * FROM TABLE (varTapeCopyIds));
+                                         
+                                        DELETE FROM DiskCopy dc
+                                         WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
+                                         
+                                        DELETE FROM CastorFile cf
+                                         WHERE cf.id = varCastorFileId;
+                                         
+                                        COMMIT;
+                                      END IF;
                                     END;");
                     $stmt->bind_param(":NSNAME", $entry{name});
                     $stmt->execute();
@@ -1313,7 +1321,9 @@ sub startDaemons ()
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
 	 'rtcpclientd' => './rtcopy/rtcpclientd',
 	 'stagerd'     => './castor/stager/daemon/stagerd',
-	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd'
+	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
+         'expertd'     => './expert/expertd',
+         'logprocessord' => './logprocessor/logprocessord'
 	 );
 
     # Simply start all of them, demons not needed will jsut not start.
@@ -1342,7 +1352,9 @@ sub startSingleDaemon ( $ )
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
 	 'rtcpclientd' => './rtcopy/rtcpclientd',
 	 'stagerd'     => './castor/stager/daemon/stagerd',
-	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd'
+	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
+         'expertd'     => './expert/expertd',
+         'logprocessord' => './logprocessor/logprocessord'
 	 );
 
     # Simply start all of them, demons not needed will jsut not start.
@@ -1833,26 +1845,61 @@ sub print_file_info ( $$ )
     my ( $dbh, $filename ) = ( shift, shift );
     # Print as many infomation as can be regarding this file
     # Bypass stager and just dump from the DB.
+    # First dump general file-related info
     my $stmt = $dbh -> prepare ("SELECT cf.lastknownfilename, cf.nsHost, cf.fileId, cf.id, 
-                                        sc.name, fc.name, dc.id, dc.status, tc.id, tc.status, tc.copyNb
+                                        sc.name, fc.name
+                                   FROM castorfile cf
+                                   LEFT OUTER JOIN svcClass sc ON sc.id = cf.svcClass
+                                   LEFT OUTER JOIN fileClass fc ON fc.id = cf.fileClass
+                                  WHERE cf.lastKnownFileName = :FILENAME");
+    $stmt->bind_param (":FILENAME", $filename);
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], svcclass=$row[4], fileclass=$row[5]\n";
+    }
+    # Then dump the disk-related info
+    $stmt = $dbh -> prepare ("SELECT dc.id, dc.status
                                   FROM castorfile cf
                                   LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
-                                  LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
-                                  LEFT OUTER JOIN svcClass sc ON sc.id = cf.svcClass
-                                  LEFT OUTER JOIN fileClass fc ON fc.id = cf.fileClass
                                  WHERE cf.lastKnownFileName = :FILENAME");
     $stmt->bind_param (":FILENAME", $filename);
     $stmt->execute();
-    my $general_info_printed = 0;
     while ( my @row = $stmt->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        if ( !$general_info_printed ) {
-            $general_info_printed = 1;
-            print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], svcclass=$row[4], fileclass=$row[5]\n";
-        }
-        print  "  dc.id=$row[6], dc.status=$row[7], tc.id=$row[8], tc.status=$row[9], tc.copyNb=$row[10]\n";
+        print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
-    
+    # Then dump the migration-related info
+    $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, s.id, s.status, t.vid, t.tpmode, t.status, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
+                                  FROM castorfile cf
+                                  LEFT OUTER JOIN TapeCopy tc on tc.castorfile = cf.id
+                                  LEFT OUTER JOIN Stream2Tapecopy sttc on sttc.child = tc.id
+                                  LEFT OUTER JOIN Stream s on s.id = sttc.parent
+                                  LEFT OUTER JOIN Tape t on t.id = s.tape
+                                  LEFT OUTER JOIN TapePool tp on tp.id = s.tapepool
+                                  LEFT OUTER JOIN Segment seg on seg.copy = tc.id
+                                 WHERE cf.lastKnownFileName = :FILENAME
+                                   AND tc.status NOT IN ( 4 ) -- TAPECOPY_TO_BE RECALLED");
+    $stmt->bind_param (":FILENAME", $filename);
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    tc.id=$row[0], tc.status=$row[1] s.id=$row[2] s.status=$row[3] t.vid=$row[4] t.tpmode=$row[5] t.status=$row[6] tp.name=$row[7] seg.id=$row[8] seg.status=$row[9] seg.errorcode=$row[10] seg.errmsgtxt=$row[11] seg.tape=$row[12]\n";
+    }
+    # Finally dump the recall-related into
+    $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
+                                  FROM castorfile cf
+                                  LEFT OUTER JOIN TapeCopy tc on tc.castorfile = cf.id
+                                  LEFT OUTER JOIN Segment seg on seg.copy = tc.id
+                                  LEFT OUTER JOIN Tape t on t.id = seg.tape
+                                 WHERE cf.lastKnownFileName = :FILENAME
+                                   AND tc.status IN ( 4 ) -- TAPECOPY_TO_BE RECALLED");
+    $stmt->bind_param (":FILENAME", $filename);
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    tc.id=$row[0], tc.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
+    }
 }
 
 sub reinstall_stager_db()
