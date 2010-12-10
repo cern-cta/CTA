@@ -463,6 +463,7 @@ BEGIN
       -- retry MIG_RETRY
       UPDATE TapeCopy TC
          SET TC.status=9,  -- TAPECOPY_MIG_RETRY
+             TC.VID=NULL,
              TC.errorcode=inErrorCode,
              TC.nbretry=0
        WHERE TC.id IN (SELECT * FROM TABLE(varTcIds));
@@ -1862,7 +1863,7 @@ BEGIN
     FORALL i IN tctofail.FIRST .. tctofail.LAST
       UPDATE TapeCopy SET
         status = 6 -- TAPECOPY_FAILED
-        WHERE id = tcToFail(i);
+      WHERE id = tcToFail(i);
 
     -- fail repack subrequests
     FOR i IN tcToFail.FIRST .. tcToFail.LAST LOOP

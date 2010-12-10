@@ -6846,47 +6846,48 @@ BEFORE INSERT OR UPDATE OF Status ON TapeCopy
 FOR EACH ROW
 BEGIN
   /* Enforce the state integrity of VID in state transitions */
-
-  CASE
-    WHEN (:new.Status IN (3) AND :new.VID IS NULL) -- 3 TAPECOPY_SELECTED
-      THEN
-      /* No enforcement for rtcpclientd to let it run unmodified */
-      DECLARE
-        varRtcpcdRunning  NUMBER;
-      BEGIN
-        SELECT COUNT (*) INTO varRtcpcdRunning
-          FROM CastorConfig ccfg
-         WHERE ccfg.class = 'tape'
-           AND ccfg.key   = 'interfaceDaemon'
-           AND ccfg.value = 'rtcpclientd';
-        IF (varRtcpcdRunning = 0) THEN
-          RAISE_APPLICATION_ERROR(-20119,
-            'Moving/creating (in)to TAPECOPY_SELECTED State without a VID');
-        END IF;
-      END;
-    WHEN (UPDATING('Status') AND :new.Status IN (5, 9) AND -- 5 TAPECOPY_STAGED
-                                                      -- 9 TAPECOPY_MIG_RETRY
-      :new.VID != :old.VID)
-      THEN
-      RAISE_APPLICATION_ERROR(-20119,
-        'Moving to STAGED/MIG_RETRY State without carrying the VID over');
-    WHEN (:new.status IN (8)) -- 8 TAPECOPY_REC_RETRY
-      THEN
-      NULL; -- Free for all case
-    WHEN (:new.Status NOT IN (3,5,8,9) AND :new.VID IS NOT NULL)
-                                                     -- 3 TAPECOPY_SELECTED
-                                                     -- 5 TAPECOPY_STAGED
-                                                     -- 8 TAPECOPY_REC_RETRY
-                                                     -- 9 TAPECOPY_MIG_RETRY
-      THEN
-      RAISE_APPLICATION_ERROR(-20119,
-        'Moving/creating (in)to TapeCopy state where VID makes no sense, yet VID!=NULL (VID:'||
-        :old.VID||'=>'||:new.VID||' Status:'||:old.VID||'=>'||:new.VID||')');
+  
+  /* rtcpclientd is given full exception, no check */
+  IF rtcpclientdIsRunning THEN RETURN; END IF;
+  
+  CASE :new.status
+    WHEN  tconst.TAPECOPY_SELECTED THEN
+      /* The VID MUST be defined when the tapecopy gets selected */
+      IF :new.VID IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TAPECOPY_SELECTED State without a VID  (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+    WHEN tconst.TAPECOPY_STAGED THEN
+       /* The VID MUST be defined when the tapecopy goes to staged */
+       IF :new.VID IS NULL THEN
+         RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TAPECOPY_STAGED State without a VID (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+       END IF;
+       /* The VID MUST remain the same when going to staged */
+       IF :new.VID != :old.VID THEN
+         RAISE_APPLICATION_ERROR(-20119,
+           'Moving to STAGED State without carrying the VID over');
+       END IF;
+    WHEN  tconst.TAPECOPY_FAILED THEN
+      /* The VID MUST be defined when the tapecopy is failed */
+      IF :new.VID IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TAPECOPY_FAILED State without a VID  (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
     ELSE
-      NULL;
+      /* In all other cases, VID should be NULL */
+      IF :new.VID IS NOT NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TapeCopy state where VID makes no sense, yet VID!=NULL (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
   END CASE;
 END;
 /
+
 
 /* Workaround for framework */
 create or replace
@@ -9287,6 +9288,7 @@ BEGIN
       -- retry MIG_RETRY
       UPDATE TapeCopy TC
          SET TC.status=9,  -- TAPECOPY_MIG_RETRY
+             TC.VID=NULL,
              TC.errorcode=inErrorCode,
              TC.nbretry=0
        WHERE TC.id IN (SELECT * FROM TABLE(varTcIds));
@@ -10686,7 +10688,7 @@ BEGIN
     FORALL i IN tctofail.FIRST .. tctofail.LAST
       UPDATE TapeCopy SET
         status = 6 -- TAPECOPY_FAILED
-        WHERE id = tcToFail(i);
+      WHERE id = tcToFail(i);
 
     -- fail repack subrequests
     FOR i IN tcToFail.FIRST .. tcToFail.LAST LOOP
