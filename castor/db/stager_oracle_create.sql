@@ -9295,7 +9295,8 @@ BEGIN
     ELSE
       -- just resurrect them if they were lost
       UPDATE TapeCopy TC
-         SET TC.status = 1 -- TAPECOPY_TOBEMIGRATED
+         SET TC.status = 1, -- TAPECOPY_TOBEMIGRATED
+             TC.VID = NULL
        WHERE TC.id IN (SELECT * FROM TABLE(varTcIds))
          AND TC.status = 3; -- TAPECOPY_SELECT
     END IF;
