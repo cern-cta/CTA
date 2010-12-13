@@ -135,6 +135,13 @@ BEGIN
           'Moving/creating (in)to TAPECOPY_FAILED State without a VID  (TC.ID: '||
           :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
       END IF;
+    WHEN tconst.TAPECOPY_MIG_RETRY THEN
+      /* The VID MUST be defined when the tapecopy is a candidate migration retry */
+      IF :new.VID IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TAPECOPY_MIG_RETRY State without a VID  (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
     ELSE
       /* In all other cases, VID should be NULL */
       IF :new.VID IS NOT NULL THEN
