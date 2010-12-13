@@ -96,7 +96,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_restartLo
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToMigrateStatementString="BEGIN tg_getFileToMigrate(:1,:2,:3,:4);END;";
   
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString="BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
@@ -833,11 +833,11 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
       m_setFileMigratedStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
     }
-    m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // transaction id
-    m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
-    m_setFileMigratedStatement->setString(3,resp.nshost());
-    m_setFileMigratedStatement->setInt(4,resp.fseq()); 
-    m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId()); 
+    m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransId
+    m_setFileMigratedStatement->setDouble(2,(double)resp.fileid()); // inFileId
+    m_setFileMigratedStatement->setString(3,resp.nshost()); // inNsHost
+    m_setFileMigratedStatement->setInt(4,resp.fseq()); // inFseq
+    m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId());  // inFileTransaction
     m_setFileMigratedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
