@@ -155,12 +155,12 @@ sub goodDayFileCreation ( $$ )
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
 
-    for my $sd (0, 1) {
+    for my $is_dual_copy (0, 1) {
         for my $i (0 .. ($file_number - 1) ) {
             my $file_name="/tmp/".`uuidgen`;
             chomp $file_name;
             my $local_index = CastorTapeTests::make_localfile( $seed_index, $file_name );
-            CastorTapeTests::rfcp_localfile ( $local_index, $sd );
+            CastorTapeTests::rfcp_localfile ( $local_index, $is_dual_copy );
         }
     } 
 }
@@ -214,12 +214,12 @@ sub badDayFileCreation ( $$$ )
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');
 
-    for my $sd (0, 1) {
+    for my $is_dual_copy (0, 1) {
         for my $i (0 .. ($file_number - 1) ) {
             my $file_name="/tmp/".`uuidgen`;
             chomp $file_name;
             my $local_index = CastorTapeTests::make_localfile( $seed_index, $file_name );
-            CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $sd, $error_list[$error_index] );
+            CastorTapeTests::rfcp_localfile_break ( $dbh, $local_index, $is_dual_copy, $error_list[$error_index] );
 	    $error_index = ($error_index + 1) % scalar(@error_list);
         }
     } 
