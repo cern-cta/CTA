@@ -830,8 +830,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
     if (0 == m_setFileMigratedStatement) {
       m_setFileMigratedStatement =
         createStatement(s_setFileMigratedStatementString);
-      m_setFileMigratedStatement->registerOutParam
-        (6, oracle::occi::OCCICURSOR);
     }
     m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransId
     m_setFileMigratedStatement->setDouble(2,(double)resp.fileid()); // inFileId
