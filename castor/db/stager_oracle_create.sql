@@ -9945,7 +9945,7 @@ BEGIN
     outRet:=-1;   -- no more files
     RETURN;
   END;
- -- lock to avoid deadlock with mighunter
+  -- lock to avoid deadlock with mighunter
   SELECT S.Id INTO varUnused FROM Stream S WHERE S.Id=varStrId
      FOR UPDATE OF S.Id;
   -- get the policy name and execute the policy
@@ -9997,7 +9997,11 @@ BEGIN
     SELECT COUNT(*) INTO varConflicts
       FROM TapeCopy TC
      WHERE TC.CastorFile = varCastorFileId
-       AND TC.VID = outVID;
+       AND TC.VID = outVID
+       AND TC.Id != varTapeCopyId
+       AND TC.Status NOT IN (tconst.TAPECOPY_MIG_RETRY,
+                             tconst.TAPECOPY_REC_RETRY,
+                             tconst.TAPECOPY_FAILED);
     IF (varConflicts != 0) THEN
       RAISE_APPLICATION_ERROR (-20119, 'About to move a second copy to the same tape!');
     END IF;
