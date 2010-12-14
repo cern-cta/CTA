@@ -530,7 +530,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
       UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
        WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
                                                  dconst.DISKCOPY_WAITFS,
@@ -641,7 +641,10 @@ CREATE OR REPLACE PROCEDURE processBulkAbort(abortReqId IN INTEGER, rIpAddress O
   fileIds "numList";
   nsHosts strListTable;
   ids "numList";
+  nsHostName VARCHAR2(2048);
 BEGIN
+  -- get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', '');
   -- get request and client informations and drop them from the DB
   DELETE FROM StageAbortRequest WHERE id = abortReqId
     RETURNING reqId, parentUuid, client INTO rReqUuid, abortedReqUuid, clientId;
@@ -649,8 +652,10 @@ BEGIN
   DELETE FROM Client WHERE id = clientId
     RETURNING ipAddress, port INTO rIpAddress, rport;
   DELETE FROM Id2Type WHERE id = clientId;
-  -- list fileids to process and drop them from the DB
-  SELECT fileid, nsHost, id BULK COLLECT INTO fileIds, nsHosts, ids
+  -- list fileids to process and drop them from the DB; override the
+  -- nsHost in case it is defined in the configuration
+  SELECT fileid, decode(nsHostName, '', nsHost, nsHostName), id
+    BULK COLLECT INTO fileIds, nsHosts, ids
     FROM NsFileId WHERE request = abortReqId;
   FORALL i IN ids.FIRST .. ids.LAST DELETE FROM NsFileId WHERE id = ids(i);
   FORALL i IN ids.FIRST .. ids.LAST DELETE FROM Id2Type WHERE id = ids(i);
