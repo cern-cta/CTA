@@ -465,7 +465,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9003');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9004');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -6875,6 +6875,13 @@ BEGIN
       IF :new.VID IS NULL THEN
         RAISE_APPLICATION_ERROR(-20119,
           'Moving/creating (in)to TAPECOPY_FAILED State without a VID  (TC.ID: '||
+          :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+    WHEN tconst.TAPECOPY_MIG_RETRY THEN
+      /* The VID MUST be defined when the tapecopy is a candidate migration retry */
+      IF :new.VID IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to TAPECOPY_MIG_RETRY State without a VID  (TC.ID: '||
           :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
       END IF;
     ELSE
