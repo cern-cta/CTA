@@ -61,6 +61,36 @@ DROP TRIGGER tr_Stream_Pending;
 -- From TAPECOPY_WAITPOLICY, leave.
 -- From TAPECOPY_REC_RETRY, move to TAPECOPY_TOBERECALLED, segment is left as is.
 -- From TAPECOPY_MIG_RETRY, move back to TO BE MIGRATED.
+
+-- Streams 
+-- From STREAM_PENDING, Leave as is
+-- From STREAM_WAITDRIVE, Set to pending
+-- From STREMA_WAITMOUNT, set to pending
+-- From STREAM_RUNING, set to pending
+-- From STREAM_WAITSPACE, Leave as is.
+-- From STREAM_CREATED, Leave as is.
+-- From STREAM_STOPPED, Leave as is.
+-- From STREAM_WAITPOLICY, Leave as is.
+-- From STREAM_TOBESENTTOVDQM, we have a busy tape attached and they have to be free.
+
+-- Tapes
+-- From TAPE_UNSED, Leave as is.
+-- From TAPE_PENDING, Leave as is.
+-- From TAPE_WAITDRIVE, reset to PENDING
+-- From TAPE_WAITMOUNT, reset to PENDING
+-- From TAPE_MOUNTED, reset to PENDING
+-- From TAPE_FINISHED, Leave as is. (Assuming it is an end state).
+-- From TAPE_FAILED, Leave as is.
+-- From TAPE_UNKNOWN, Leave as is. (Assuming it is an end state).
+-- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
+
+-- Segments
+-- From SEGMENT_UNPROCESSED, Leave as is.
+-- From SEGMENT_FILECOPIED, (apparently unused)
+-- From SEGMENT_FAILED, (
+-- From SEGMENT_SELECTED,
+-- From SEGMENT_RETRIED,
+
 DECLARE
   idsList "numList";
 BEGIN
