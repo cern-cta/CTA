@@ -49,6 +49,18 @@ COMMIT;
 DROP TRIGGER tr_Tape_Pending;
 DROP TRIGGER tr_Stream_Pending;
 
+-- The major reset procedure
+-- Tape copies go back to to be migrated and we restart from basically scratch for most of the states.
+-- From TAPECOPY_CREATED, leave.
+-- From TAPECOPY_TOBEMIGRATED, leave.
+-- From TAPECOPY_WAITINSTREAMS, leave.
+-- From TAPECOPY_SELECTED, move back to TAPECOPY_TOBEMIGRATED, remove VID, no segments expected.
+-- From TAPECOPY_TOBERECALLED, leave.
+-- From TAPECOPY_STAGED, leave.
+-- From TAPECOPY_FAILED, leave.
+-- From TAPECOPY_WAITPOLICY, leave.
+-- From TAPECOPY_REC_RETRY, move to TAPECOPY_TOBERECALLED, segment is left as is.
+-- From TAPECOPY_MIG_RETRY, move back to TO BE MIGRATED.
 DECLARE
   idsList "numList";
 BEGIN
