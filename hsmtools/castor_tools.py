@@ -329,3 +329,35 @@ def getFileClass(fileClassName):
         print e
         sys.exit(-1)
 
+class CastorConf(dict):
+    '''This class allows easy manipulation of a castor.conf file from python'''
+    def __init__(self, fileName='/etc/castor/castor.conf'):
+        '''constructor'''
+        self.fileName = fileName
+        self.refresh()
+    def refresh(self):
+        '''refresh the cache of the config file by rereading and reparsing it'''
+        # reset the current configuration
+        self.clear()
+        # parse the file
+        f = open(self.fileName)
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) == 0 or line[0] == '#': continue # ignore comments
+            category, name, value = line.split(None,2)
+            if category not in self:
+                self[category] = {}
+            if name not in self[category]:
+                self[category][name] = value
+            else:
+                print "Ignoring entry %s %s %s as it's a redefinition" % (category, name, value)
+                print "Value used : " + self[category][name]
+        f.close()
+
+globalCastorConf = None
+def castorConf():
+    '''method to access a singleton CastorConf object representing the default configuration'''
+    global globalCastorConf
+    if globalCastorConf == None:
+        globalCastorConf = CastorConf()
+    return globalCastorConf
