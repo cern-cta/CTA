@@ -500,7 +500,6 @@ PROCEDURE tg_failFileTransfer(
   varStrId NUMBER;             -- Stream Id
   varTpId NUMBER;              -- Tape Id
   varTcId NUMBER;              -- TapeCopy Id
-  varAccessMode INTEGER;       -- Access mode
 BEGIN
   -- Prepare to return everything to its oroginal state in case of problem.
   SAVEPOINT MainFailFileSession;

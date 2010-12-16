@@ -56,7 +56,7 @@ DROP TRIGGER tr_Stream_Pending;
 -- From TAPECOPY_WAITINSTREAMS, leave.
 -- From TAPECOPY_SELECTED, move back to TAPECOPY_TOBEMIGRATED, remove VID, no segments expected.
 -- From TAPECOPY_TOBERECALLED, leave.
--- From TAPECOPY_STAGED, leave.
+-- From TAPECOPY_STAGED, reset to TOBEMIGRATED. (will be remigrated by rtcpclientd.)
 -- From TAPECOPY_FAILED, leave.
 -- From TAPECOPY_WAITPOLICY, leave.
 -- From TAPECOPY_REC_RETRY, move to TAPECOPY_TOBERECALLED, segment is left as is.
@@ -84,12 +84,12 @@ DROP TRIGGER tr_Stream_Pending;
 -- From TAPE_UNKNOWN, Leave as is. (Assuming it is an end state).
 -- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
 
--- Segments
+-- Segments (the gateway is not going to use)
 -- From SEGMENT_UNPROCESSED, Leave as is.
 -- From SEGMENT_FILECOPIED, (apparently unused)
--- From SEGMENT_FAILED, (
--- From SEGMENT_SELECTED,
--- From SEGMENT_RETRIED,
+-- From SEGMENT_FAILED, Reset to unprocessed.
+-- From SEGMENT_SELECTED, Move to unprocessed
+-- From SEGMENT_RETRIED, Delete segment from the database.
 
 DECLARE
   idsList "numList";
