@@ -10,5 +10,5 @@
     stager: <uuid2> SND <send duration2> s to send the request
     stager: Waiting for callback from castor
     stager: <uuid2> CBK <answer duration2> s before callback from <server ip2> was received
-POOL <anyServiceClass> <whiteSpace> CAPACITY <capacity2> FREE <free2>(<percentage2>%)
+POOL <anyServiceClass> <whiteSpace2> CAPACITY <capacity2> FREE <free2>(<percentage2>%)
 <IgnoreRestOfOutput>
