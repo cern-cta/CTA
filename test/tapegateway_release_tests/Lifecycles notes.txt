@@ -7,6 +7,8 @@ Creation and transistions of tapecopies, status by status (hopefully not missing
 In orastager.sql: internalPutDoneFunc creates it, only references castorfile.
 In oracleTape.sql: fileRecalled creates it with a copynb = 0 for remigration of missing tapecopies. (Yuck!) Same as previous otherwise.
 In oracleTapeGateway: tg_setFileRecalled, ditto.
+In rtcopy/tapeerrorhandler: static int doMigrationRetry(struct Cstager_Segment_t *segment,
+                            struct Cstager_TapeCopy_t *tapeCopy): [...]     Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
 
 - TAPECOPY TO BE MIGRATED (1)
 

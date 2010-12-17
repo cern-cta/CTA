@@ -671,14 +671,14 @@ BEGIN
           FROM FileSystem FS, DiskServer DS
          WHERE FS.diskServer = DS.id
            AND FS.id = varLastButOneFSUsed
-           AND FS.status IN (0, 1)  -- PRODUCTION, DRAINING
-           AND DS.status IN (0, 1); -- PRODUCTION, DRAINING
+           AND FS.status IN (0, 1)  -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+           AND DS.status IN (0, 1); -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
                D.path, D.id, D.castorfile, T.id
           INTO outPath, outDiskCopyId, outCastorFileId, outTapeCopyId
           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy STTC
-         WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+         WHERE decode(D.status, 10, D.status, NULL) = 10 -- DISKCOPY_CANBEMIGR
            AND D.filesystem = varLastButOneFSUsed
            AND STTC.parent = inStreamId
            AND T.status = 2 -- WAITINSTREAMS
@@ -1809,7 +1809,8 @@ BEGIN
     WHERE Dc.id = varDcId;
   -- restart this subrequest so that the stager can follow it up
   UPDATE SubRequest SR
-     SET SR.status = 1, SR.getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+     SET SR.status = dconst.SUBREQUEST_RESTART, 
+         SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
          SR.lastModificationTime = getTime(), SR.parent = 0
    WHERE SR.id = varSubrequestId;
   -- and trigger new migrations if missing tape copies were detected
@@ -1827,7 +1828,8 @@ BEGIN
   END IF;
   -- restart other requests waiting on this recall
   UPDATE SubRequest SR
-     SET SR.status = 1, SR.getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+     SET SR.status = dconst.SUBREQUEST_RESTART,
+         SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
          SR.lastModificationTime = getTime(), SR.parent = 0
    WHERE SR.parent = varSubrequestId;
   -- trigger the creation of additional copies of the file, if necessary.
@@ -1958,8 +1960,8 @@ BEGIN
       
       -- fail subrequests
       UPDATE SubRequest 
-        SET status = 7, -- SUBREQUEST_FAILED
-            getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+        SET status = dconst.SUBREQUEST_FAILED,
+            getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
             lastModificationTime = getTime(),
             errorCode = 1015,  -- SEINTERNAL
             errorMessage = 'File recall from tape has failed, please try again later',
@@ -2137,8 +2139,8 @@ BEGIN
       deleteTapeCopies(varCfId);
       -- Fail the subrequest
       UPDATE SubRequest SR
-         SET SR.status = 7, -- SUBREQUEST_FAILED
-             SR.getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+         SET SR.status = dconst.SUBREQUEST_FAILED,
+             SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
              SR.lastModificationTime = getTime(),
              SR.errorCode = 1015,  -- SEINTERNAL
              SR.errorMessage = 'File recall from tape has failed, please try again later',
