@@ -103,9 +103,6 @@ specifies the source pool  to repack
 The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repack server
 machine.
 
-\fB\-S\fR
-The stager to be used to do the repack of the tape.
-
 \fB\-r\fR
 To restart the repack of the tape which is finished but with failures.
 
@@ -115,8 +112,8 @@ To abort a repack of a tape.
 \fB\-s\fR
 Prints information about all tapes in an active repack process.
 
-\fB\-s\fR
-Prints information about a given tape in an active repack process.
+\fB\-S\fR
+Prints information about a given set of tapes in an active repack process.
 
 \fB\-x\fR
 Prints detailed information of the given volume. It lists the nameserver information of the files which were on that tape when repack has been started.
