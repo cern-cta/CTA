@@ -317,32 +317,6 @@ extern "C" {
   }
 
   //-------------------------------------------------------------------------
-  // Cstager_ITapeSvc_selectTapeCopiesForMigration
-  //-------------------------------------------------------------------------
-  int Cstager_ITapeSvc_selectTapeCopiesForMigration
-  (struct Cstager_ITapeSvc_t* tpSvc,
-   castor::stager::SvcClass* svcClass,
-   castor::stager::TapeCopy*** tapeCopyArray,
-   int *nbItems) {
-    if (!checkITapeSvc(tpSvc)) return -1;
-    try {
-      std::vector<castor::stager::TapeCopy*> result =
-        tpSvc->tpSvc->selectTapeCopiesForMigration(svcClass);
-      *nbItems = result.size();
-      *tapeCopyArray = (castor::stager::TapeCopy**)
-        malloc((*nbItems) * sizeof(castor::stager::TapeCopy*));
-      for (int i = 0; i < *nbItems; i++) {
-        (*tapeCopyArray)[i] = result[i];
-      }
-    } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      tpSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
   // Cstager_ITapeSvc_resetStream
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_resetStream

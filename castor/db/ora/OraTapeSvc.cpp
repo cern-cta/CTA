@@ -125,10 +125,6 @@ const std::string castor::db::ora::OraTapeSvc::s_fileRecalledStatementString =
 const std::string castor::db::ora::OraTapeSvc::s_fileRecallFailedStatementString =
   "BEGIN fileRecallFailed(:1); END;";
 
-/// SQL statement for selectTapeCopiesForMigration
-const std::string castor::db::ora::OraTapeSvc::s_selectTapeCopiesForMigrationStatementString =
-  "BEGIN selectTapeCopiesForMigration(:1,:2); END;";
-
 /// SQL statement for resetStream
 const std::string castor::db::ora::OraTapeSvc::s_resetStreamStatementString =
   "BEGIN resetStream(:1); END;";
@@ -177,7 +173,6 @@ castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   m_anySegmentsForTapeStatement(0),
   m_fileRecalledStatement(0),
   m_fileRecallFailedStatement(0),
-  m_selectTapeCopiesForMigrationStatement(0),
   m_resetStreamStatement(0),
   m_failedSegmentsStatement(0),
   m_checkFileForRepackStatement(0),
@@ -223,7 +218,6 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_bestFileSystemForSegmentStatement) deleteStatement(m_bestFileSystemForSegmentStatement);
     if (m_fileRecalledStatement) deleteStatement(m_fileRecalledStatement);
     if (m_fileRecallFailedStatement) deleteStatement(m_fileRecallFailedStatement);
-    if (m_selectTapeCopiesForMigrationStatement) deleteStatement(m_selectTapeCopiesForMigrationStatement);
     if (m_resetStreamStatement) deleteStatement(m_resetStreamStatement);
     if (m_segmentsForTapeStatement) deleteStatement(m_segmentsForTapeStatement);
     if (m_anySegmentsForTapeStatement) deleteStatement(m_anySegmentsForTapeStatement);
@@ -243,7 +237,6 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_bestFileSystemForSegmentStatement = 0;
   m_fileRecalledStatement = 0;
   m_fileRecallFailedStatement = 0;
-  m_selectTapeCopiesForMigrationStatement = 0;
   m_resetStreamStatement = 0;
   m_segmentsForTapeStatement = 0;
   m_anySegmentsForTapeStatement = 0;
@@ -778,51 +771,6 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     throw ex;
   }
   return result;
-}
-
-//------------------------------------------------------------------------------
-// selectTapeCopiesForMigration
-//------------------------------------------------------------------------------
-std::vector<castor::stager::TapeCopy*>
-castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
-(castor::stager::SvcClass *svcClass)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectTapeCopiesForMigrationStatement) {
-    m_selectTapeCopiesForMigrationStatement =
-      createStatement(s_selectTapeCopiesForMigrationStatementString);
-    m_selectTapeCopiesForMigrationStatement->registerOutParam
-      (2, oracle::occi::OCCICURSOR);
-    m_selectTapeCopiesForMigrationStatement->setAutoCommit(true);
-  }
-  // Execute statement and get result
-  // The procedure takes internally a lock and performs the commit
-  try {
-    m_selectTapeCopiesForMigrationStatement->setDouble(1, svcClass->id());
-    m_selectTapeCopiesForMigrationStatement->executeUpdate();
-
-    oracle::occi::ResultSet *rset =
-      m_selectTapeCopiesForMigrationStatement->getCursor(2);
-    // create result
-    std::vector<castor::stager::TapeCopy*> result;
-    // Fill it as in OraTapeCopyCnv
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
-      object->setCopyNb(rset->getInt(1));
-      object->setId((u_signed64)rset->getDouble(2));
-      object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
-      result.push_back(object);
-    }
-    m_selectTapeCopiesForMigrationStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select TapeCopies for migration :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
