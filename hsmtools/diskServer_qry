@@ -90,7 +90,7 @@ $sth->execute;
 if ($giveFileId) { printf("%-10s ", "FileId"); }
 if ($giveDCId) { printf("%-12s ", "DiskCopyId"); }
 printf("%-20s %-50s ", "Status", "Physical FileName");
-if ($giveFileId) { printf("%s", "HSM FileName"); }
+if ($giveFileId) { printf("%s", "Last known FileName"); }
 printf("\n");
 
 # display results
