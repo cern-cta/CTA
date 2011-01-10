@@ -138,8 +138,8 @@ def vdqmListPriority(listType, lifespanType, verbose):
         priorities = getVdqmPriorities(rsCursor, listType, lifespanType, verbose)
 
     except Exception, e:
-        error, = e.args
-        print COMMANDNAME+' Internal Error: \n'+error.message
+        print COMMANDNAME + ": Error:", e
+        sys.exit(-1)
 
     if stconn != None:
         rsCursor.close()
