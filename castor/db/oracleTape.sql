@@ -219,7 +219,7 @@ BEGIN
      AND DiskCopy.castorfile = TapeCopy.castorfile
      AND Stream2TapeCopy.child = TapeCopy.id
      AND Stream2TapeCopy.parent = streamId
-     AND TapeCopy.status = tconst.TAPECOPY_WAITINSTREAMS
+     AND TapeCopy.status = tconst.TAPECOPY_WAITSTREAM
      AND ROWNUM < 2; 
   res := 1;
 EXCEPTION
@@ -301,7 +301,7 @@ BEGIN
          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
            AND D.filesystem = lastButOneFSUsed
            AND ST.parent = streamId
-           AND T.status = tconst.TAPECOPY_WAITINSTREAMS
+           AND T.status = tconst.TAPECOPY_WAITSTREAM
            AND ST.child = T.id
            AND T.castorfile = D.castorfile
            AND ROWNUM < 2 FOR UPDATE OF t.id NOWAIT;
@@ -348,7 +348,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
+            AND T.status = tconst.TAPECOPY_WAITSTREAM
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -487,7 +487,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
+            AND T.status = tconst.TAPECOPY_WAITSTREAM
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -533,7 +533,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
+            AND T.status = tconst.TAPECOPY_WAITSTREAM
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -631,7 +631,7 @@ BEGIN
        -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
          AND D.filesystem = f.fileSystemId
          AND StT.parent = streamId
-         AND T.status = tconst.TAPECOPY_WAITINSTREAMS
+         AND T.status = tconst.TAPECOPY_WAITSTREAM
          AND StT.child = T.id
          AND T.castorfile = D.castorfile
          AND C.id = D.castorfile
