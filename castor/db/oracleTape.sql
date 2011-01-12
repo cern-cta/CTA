@@ -297,7 +297,8 @@ BEGIN
                D.path, D.id, D.castorfile, T.id
           INTO path, dci, castorFileId, tapeCopyId
           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
-         WHERE decode(D.status, dconst.DISKCOPY_CANBEMIGR, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+         WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+         -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
            AND D.filesystem = lastButOneFSUsed
            AND ST.parent = streamId
            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
@@ -343,7 +344,8 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status, dconst.DISKCOPY_CANBEMIGR, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = tconst.TAPECOPY_WAITINSTREAMS
@@ -443,12 +445,14 @@ BEGIN
           FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
                        DK.path path, DK.id diskcopy_id, DK.castorfile
                   FROM DiskCopy DK
-                 WHERE decode(DK.status, dconst.DISKCOPY_CANBEMIGR, DK.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+                 WHERE decode(DK.status, 10, DK.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+                 -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
                    AND DK.filesystem = lastFSUsed) D, TapeCopy T, Stream2TapeCopy ST
          WHERE T.castorfile = D.castorfile
            AND ST.child = T.id
            AND ST.parent = streamId
-           AND decode(T.status, tconst.TAPECOPY_WAITINSTREAMS, T.status, NULL) = tconst.TAPECOPY_WAITINSTREAMS
+           AND decode(T.status, 2, T.status, NULL) = tconst.TAPECOPY_WAITSTREAM
+           -- 2 = tconst.TAPECOPY_WAITSTREAM. Has to be kept as a hardcoded number in order to use a function-based index.
            AND ROWNUM < 2 FOR UPDATE OF T.id NOWAIT;   
         SELECT C.fileId, C.nsHost, C.fileSize, C.lastUpdateTime
           INTO fileId, nsHost, fileSize, lastUpdateTime
@@ -479,7 +483,8 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status, dconst.DISKCOPY_CANBEMIGR, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = tconst.TAPECOPY_WAITINSTREAMS
@@ -524,7 +529,8 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status, dconst.DISKCOPY_CANBEMIGR, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = tconst.TAPECOPY_WAITINSTREAMS
@@ -621,7 +627,8 @@ BEGIN
              f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
         INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
         FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-       WHERE decode(D.status, dconst.DISKCOPY_CANBEMIGR, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+       WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+       -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
          AND D.filesystem = f.fileSystemId
          AND StT.parent = streamId
          AND T.status = tconst.TAPECOPY_WAITINSTREAMS
