@@ -7658,7 +7658,7 @@ BEGIN
          WHERE id = dci;
         FOR i IN 1..missingTCs LOOP
           INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-          VALUES (ids_seq.nextval, 0, cfId, 0) -- TAPECOPY_CREATED
+          VALUES (ids_seq.nextval, 0, cfId, tconst.TAPECOPY_CREATED)
           RETURNING id INTO tcId;
           INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
         END LOOP;
@@ -8254,11 +8254,10 @@ BEGIN
            WHERE ROWNUM < 2;
 	END;
 
-        -- STREAM_CREATED
         INSERT INTO Stream
           (id, initialsizetotransfer, lastFileSystemChange, tape, lastFileSystemUsed,
            lastButOneFileSystemUsed, tapepool, status)
-        VALUES (ids_seq.nextval, initSize, NULL, NULL, NULL, NULL, tpId, 5)
+        VALUES (ids_seq.nextval, initSize, NULL, NULL, NULL, NULL, tpId, tconst.STREAM_CREATED)
         RETURN id INTO strId;
         INSERT INTO Id2Type (id, type) VALUES (strId,26); -- Stream type
     	IF doClone = 1 THEN

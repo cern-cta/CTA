@@ -3,12 +3,33 @@ Lifecycles notes
 
 Creation and transistions of tapecopies, status by status (hopefully not missing any due to hardcoded state values).
 
-- TAPECOPY CREATED (0)
-In orastager.sql: internalPutDoneFunc creates it, only references castorfile.
-In oracleTape.sql: fileRecalled creates it with a copynb = 0 for remigration of missing tapecopies. (Yuck!) Same as previous otherwise.
-In oracleTapeGateway: tg_setFileRecalled, ditto.
-In rtcopy/tapeerrorhandler: static int doMigrationRetry(struct Cstager_Segment_t *segment,
+=> poke
+<= peek
+
+-   TAPECOPY_CREATED      CONSTANT PLS_INTEGER := 0;
+=> In orastager.sql: internalPutDoneFunc creates it, only references castorfile.
+=> In oracleTape.sql: fileRecalled creates it with a copynb = 0 for remigration of missing tapecopies. (Yuck!) Same as previous otherwise.
+=> In oracleTapeGateway.sql: tg_setFileRecalled, ditto.
+=> In rtcopy/tapeerrorhandler: static int doMigrationRetry(struct Cstager_Segment_t *segment,
                             struct Cstager_TapeCopy_t *tapeCopy): [...]     Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
+<= In oracleTape.sql: inputForMigrationPolicy find them (in bulk) and moves them to TAPECOPY_WAITPOLICY with immediate commit.
 
-- TAPECOPY TO BE MIGRATED (1)
+- TAPECOPY_TOBEMIGRATED CONSTANT PLS_INTEGER := 1;
+=> In oracleTape.sql: rtcpclientdCleanUp moves all tapecopies from TAPECOPY_SELECTED to TAPECOPY_TOBEMIGRATED
+=> In oracleTape.sql: migHunterCleanUp moves all tapecopies from svcClass to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITPOLICY
+<= In oracleTape.sql: inputForMigrationPolicy find them (in bulk) and moves them to TAPECOPY_WAITPOLICY with immediate commit.
+=> In oracleTape.sql: attachTCRtcp resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITSTREAM or TAPECOPY_WAITPOLICY in case of problem attaching to streams. Suspect algorithm there.
+=> In oracleTape.sql: attachTCGateway resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITSTREAM or TAPECOPY_WAITPOLICY in case of problem attaching to streams. Algo looks better.
+=> In oracleTape.sql: resurrectCandidates resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITPOLICY from a list.
+[...] tbc with oracleTapeGateway.sql
 
+
+  
+  TAPECOPY_WAITSTREAM   CONSTANT PLS_INTEGER := 2;
+  TAPECOPY_SELECTED     CONSTANT PLS_INTEGER := 3;
+  TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
+  TAPECOPY_STAGED       CONSTANT PLS_INTEGER := 5;
+  TAPECOPY_FAILED       CONSTANT PLS_INTEGER := 6;
+  TAPECOPY_WAITPOLICY   CONSTANT PLS_INTEGER := 7;
+  TAPECOPY_REC_RETRY    CONSTANT PLS_INTEGER := 8;
+  TAPECOPY_MIG_RETRY    CONSTANT PLS_INTEGER := 9;
