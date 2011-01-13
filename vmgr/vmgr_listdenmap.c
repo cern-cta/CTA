@@ -15,15 +15,15 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 
-struct vmgr_tape_denmap *
-vmgr_listdenmap(int flags, vmgr_list *listp)
+struct vmgr_tape_denmap_byte_u64 *
+vmgr_listdenmap_byte_u64(int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
 	char func[16];
 	gid_t gid;
-	int listentsz = sizeof(struct vmgr_tape_denmap);
-	struct vmgr_tape_denmap *lp;
+	int listentsz = sizeof(struct vmgr_tape_denmap_byte_u64);
+	struct vmgr_tape_denmap_byte_u64 *lp;
 	int msglen;
 	int nbentries;
 	char *q;
@@ -102,17 +102,22 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 		/* unmarshall reply into vmgr_tape_denmap structures */
 
 		listp->nbentries = nbentries;
-		lp = (struct vmgr_tape_denmap *) listp->buf;
+		lp = (struct vmgr_tape_denmap_byte_u64 *) listp->buf;
 		while (nbentries--) {
 			unmarshall_STRING (rbp, lp->md_model);
 			unmarshall_STRING (rbp, lp->md_media_letter);
 			unmarshall_STRING (rbp, lp->md_density);
-			unmarshall_LONG (rbp, lp->native_capacity);
+			{
+			  int native_capacity_mebibyte_int = 0;
+			  unmarshall_LONG (rbp, native_capacity_mebibyte_int);
+			  lp->native_capacity_byte_u64 =
+			    (u_signed64)native_capacity_mebibyte_int * ONE_MB;
+			}
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);
 	}
-	lp = ((struct vmgr_tape_denmap *) listp->buf) + listp->index;
+	lp = ((struct vmgr_tape_denmap_byte_u64 *) listp->buf) + listp->index;
 	listp->index++;
 	if (listp->index >= listp->nbentries) {	/* must refill next time */
 		listp->index = 0;

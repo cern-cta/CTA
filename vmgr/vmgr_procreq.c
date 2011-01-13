@@ -87,7 +87,7 @@ int vmgr_srv_deletedenmap(char *req_data,
                           char *clienthost,
                           struct vmgr_srv_thread_info *thip)
 {
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   char density[CA_MAXDENLEN+1];
   char func[22];
   gid_t gid;
@@ -122,8 +122,8 @@ int vmgr_srv_deletedenmap(char *req_data,
 
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  if (vmgr_get_denmap_entry (&thip->dbfd, model, media_letter, density,
-      &denmap_entry, 1, &rec_addr))
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, model, media_letter,
+    density, &denmap_entry, 1, &rec_addr))
     RETURN (serrno);
   if (vmgr_delete_denmap_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
@@ -280,7 +280,7 @@ int vmgr_srv_deletepool(char *req_data,
   char func[20];
   gid_t gid;
   char logbuf[CA_MAXPOOLNAMELEN+12];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
@@ -306,10 +306,10 @@ int vmgr_srv_deletepool(char *req_data,
 
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  if (vmgr_get_pool_entry (&thip->dbfd, pool_name, &pool_entry,
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
       1, &rec_addr))
     RETURN (serrno);
-  if (pool_entry.capacity)
+  if (pool_entry.capacity_byte_u64)
     RETURN (EEXIST);
   if (vmgr_delete_pool_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
@@ -318,26 +318,27 @@ int vmgr_srv_deletepool(char *req_data,
 
 /*  vmgr_srv_deletetape - delete a tape volume */
 
-int vmgr_srv_deletetape(char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+int vmgr_srv_deletetape(
+  char *req_data,
+  char *clienthost,
+  struct vmgr_srv_thread_info *thip)
 {
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   char func[20];
   gid_t gid;
   int i;
   struct vmgr_tape_library library_entry;
   char logbuf[CA_MAXVIDLEN+12];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   vmgr_dbrec_addr pool_rec_addr;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   vmgr_dbrec_addr rec_addrl;
   vmgr_dbrec_addr rec_addrs;
   vmgr_dbrec_addr rec_addrt;
-  struct vmgr_tape_side side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_info_byte_u64 tape;
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
@@ -361,7 +362,7 @@ int vmgr_srv_deletetape(char *req_data,
 
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 1, &rec_addr))
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
 
   /* delete associated tag if present */
@@ -374,24 +375,25 @@ int vmgr_srv_deletetape(char *req_data,
 
   /* get native capacity */
 
-  if (vmgr_get_denmap_entry (&thip->dbfd, tape.model, tape.media_letter,
-      tape.density, &denmap_entry, 0, NULL))
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
+    tape.media_letter, tape.density, &denmap_entry, 0, NULL))
     RETURN (serrno);
 
   /* delete all sides */
 
   for (i = 0; i < tape.nbsides; i++) {
-    if (vmgr_get_side_by_fullid (&thip->dbfd, vid, i, &side_entry,
+    if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
         1, &rec_addrs))
       RETURN (serrno);
     if (side_entry.nbfiles)
       RETURN (EEXIST);
-    if (i == 0 && vmgr_get_pool_entry (&thip->dbfd,
+    if (i == 0 && vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
         side_entry.poolname, &pool_entry, 1, &pool_rec_addr))
       RETURN (serrno);
-    pool_entry.capacity -= denmap_entry.native_capacity;
+    pool_entry.capacity_byte_u64 -= denmap_entry.native_capacity_byte_u64;
     if (side_entry.status == 0)
-      pool_entry.tot_free_space -= side_entry.estimated_free_space;
+      pool_entry.tot_free_space_byte_u64 -=
+        side_entry.estimated_free_space_byte_u64;
     if (vmgr_delete_side_entry (&thip->dbfd, &rec_addrs))
       RETURN (serrno);
   }
@@ -403,7 +405,8 @@ int vmgr_srv_deletetape(char *req_data,
   library_entry.nb_free_slots++;
   if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl, &library_entry))
     RETURN (serrno);
-  if (vmgr_update_pool_entry (&thip->dbfd, &pool_rec_addr, &pool_entry))
+  if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &pool_rec_addr,
+    &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -417,10 +420,10 @@ int vmgr_srv_deltag(char *req_data,
   char func[16];
   gid_t gid;
   char logbuf[CA_MAXVIDLEN+8];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  struct vmgr_tape_side side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
@@ -440,14 +443,14 @@ int vmgr_srv_deltag(char *req_data,
 
   /* get pool name */
 
-  if (vmgr_get_side_by_fullid (&thip->dbfd, vid, 0, &side_entry,
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, 0, &side_entry,
       0, NULL))
     RETURN (serrno);
 
   /* get pool entry */
 
-  if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname, &pool_entry,
-      0, NULL))
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
+    &pool_entry, 0, NULL))
     RETURN (serrno);
 
   /* check if the user is authorized to delete the tag on this volume */
@@ -475,7 +478,7 @@ int vmgr_srv_enterdenmap(int magic,
                          char *clienthost,
                          struct vmgr_srv_thread_info *thip)
 {
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   char func[21];
   gid_t gid;
   char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+CA_MAXDENLEN+15];
@@ -500,7 +503,12 @@ int vmgr_srv_enterdenmap(int magic,
     RETURN (EINVAL);
   if (magic < VMGR_MAGIC2)
     RETURN (EINVAL);
-  unmarshall_LONG (rbp, denmap_entry.native_capacity);
+  {
+    int native_capacity_mebibyte_int = 0;
+    unmarshall_LONG (rbp, native_capacity_mebibyte_int);
+    denmap_entry.native_capacity_byte_u64 =
+      (u_signed64)native_capacity_mebibyte_int * ONE_MB;
+  }
   sprintf (logbuf, "enterdenmap %s %s %s", denmap_entry.md_model,
       denmap_entry.md_media_letter, denmap_entry.md_density);
   vmgr_logreq (func, logbuf);
@@ -518,17 +526,15 @@ int vmgr_srv_enterdenmap(int magic,
       strcmp (denmap_entry.md_media_letter, model_entry.m_media_letter))
     RETURN (EINVAL);
   strcpy (denmap_entry.md_media_letter, model_entry.m_media_letter);
-  if (denmap_entry.native_capacity <= 0)
+  if (denmap_entry.native_capacity_byte_u64 <= 0)
     RETURN (EINVAL);
-
-  denmap_entry.native_capacity *= 1024;  /* kB */
 
 
   /* start transaction */
 
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  if (vmgr_insert_denmap_entry (&thip->dbfd, &denmap_entry))
+  if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -691,7 +697,7 @@ int vmgr_srv_enterpool(char *req_data,
   char func[19];
   gid_t gid;
   char logbuf[CA_MAXPOOLNAMELEN+33];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   uid_t uid;
 
@@ -719,7 +725,7 @@ int vmgr_srv_enterpool(char *req_data,
 
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  if (vmgr_insert_pool_entry (&thip->dbfd, &pool_entry))
+  if (vmgr_insert_pool_entry_byte_u64 (&thip->dbfd, &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -731,19 +737,19 @@ int vmgr_srv_entertape(char *req_data,
                        struct vmgr_srv_thread_info *thip)
 {
   struct vmgr_tape_media cartridge;
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   struct vmgr_tape_dgnmap dgnmap_entry;
   char func[19];
   gid_t gid;
   int i;
   struct vmgr_tape_library library_entry;
   char logbuf[CA_MAXVIDLEN+CA_MAXPOOLNAMELEN+23];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   vmgr_dbrec_addr rec_addrl;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
   uid_t uid;
 
   strncpy (func, "vmgr_srv_entertape", 19);
@@ -805,8 +811,8 @@ int vmgr_srv_entertape(char *req_data,
 
   /* check if pool exists and lock entry */
 
-  if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname, &pool_entry,
-      1, &rec_addr)) {
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
+    &pool_entry, 1, &rec_addr)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR, "No such pool\n");
       RETURN (EINVAL);
@@ -856,8 +862,8 @@ int vmgr_srv_entertape(char *req_data,
 
   /* check if density is valid for this model and get native capacity */
 
-  memset((void *) &denmap_entry, 0, sizeof(struct vmgr_tape_denmap));
-  if (vmgr_get_denmap_entry (&thip->dbfd, tape.model,
+  memset((void *) &denmap_entry, 0, sizeof(denmap_entry));
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
       tape.media_letter, tape.density, &denmap_entry, 0, NULL)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR,
@@ -866,29 +872,32 @@ int vmgr_srv_entertape(char *req_data,
     } else 
       RETURN (serrno);
   }
-  side_entry.estimated_free_space = denmap_entry.native_capacity;
+  side_entry.estimated_free_space_byte_u64 =
+    denmap_entry.native_capacity_byte_u64;
 
   tape.etime = time (0);
   strcpy (tape.rhost, "N/A");
   strcpy (tape.whost, "N/A");
-  if (vmgr_insert_tape_entry (&thip->dbfd, &tape))
+  if (vmgr_insert_tape_entry_byte_u64 (&thip->dbfd, &tape))
     RETURN (serrno);
 
   strcpy (side_entry.vid, tape.vid);
   for (i = 0; i < tape.nbsides; i++) {
     side_entry.side = i;
-    if (vmgr_insert_side_entry (&thip->dbfd, &side_entry))
+    if (vmgr_insert_side_entry_byte_u64 (&thip->dbfd, &side_entry))
       RETURN (serrno);
-    pool_entry.capacity += denmap_entry.native_capacity;
+    pool_entry.capacity_byte_u64 += denmap_entry.native_capacity_byte_u64;
     if (side_entry.status == 0 || side_entry.status == TAPE_FULL) // Tape can be full but having free space
-      pool_entry.tot_free_space += denmap_entry.native_capacity;
+      pool_entry.tot_free_space_byte_u64 +=
+        denmap_entry.native_capacity_byte_u64;
   }
 
   library_entry.nb_free_slots--;
   if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl, &library_entry))
     RETURN (serrno);
 
-  if (vmgr_update_pool_entry (&thip->dbfd, &rec_addr, &pool_entry))
+  if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &rec_addr,
+    &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -945,19 +954,18 @@ int vmgr_srv_gettape(int magic,
   int i;
   char logbuf[CA_MAXPOOLNAMELEN+30];
   static int onealloc;
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char poolname[CA_MAXPOOLNAMELEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   char repbuf[55];
   int save_serrno;
   char *sbp;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_side side_entry1;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry1;
   u_signed64 Size;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_info_byte_u64 tape;
   char tmpbuf[21];
-  u_signed64 u64;
   uid_t uid;
 
   strncpy (func, "vmgr_srv_gettape", 17);
@@ -979,7 +987,7 @@ int vmgr_srv_gettape(int magic,
   if (! *poolname)
     strcpy (poolname, "default");
   else {  /* check if pool exists and permissions are ok */
-    if (vmgr_get_pool_entry (&thip->dbfd, poolname, &pool_entry,
+    if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, poolname, &pool_entry,
         0, NULL))
       RETURN (serrno);
     if (((pool_entry.uid > 0 && uid != pool_entry.uid) ||
@@ -998,9 +1006,9 @@ int vmgr_srv_gettape(int magic,
 
   /* get and lock entry */
 
-  memset ((void *) &side_entry, 0, sizeof(struct vmgr_tape_side));
-  if (vmgr_get_side_by_size (&thip->dbfd, poolname, Size, &side_entry, 1,
-      &rec_addr)) {
+  memset ((void *) &side_entry, 0, sizeof(side_entry));
+  if (vmgr_get_side_by_size_byte_u64 (&thip->dbfd, poolname, Size, &side_entry,
+    1, &rec_addr)) {
     if (serrno == ENOENT)
       serrno = ENOSPC;
     save_serrno = serrno;
@@ -1012,7 +1020,7 @@ int vmgr_srv_gettape(int magic,
 
   side_entry.status = TAPE_BUSY;
 
-  if (vmgr_update_side_entry (&thip->dbfd, &rec_addr, &side_entry)) {
+  if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr, &side_entry)) {
     save_serrno = serrno;
     (void) Cthread_mutex_unlock (&onealloc);
     RETURN (save_serrno);
@@ -1020,8 +1028,9 @@ int vmgr_srv_gettape(int magic,
 
   /* get base entry */
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
-  if (vmgr_get_tape_by_vid (&thip->dbfd, side_entry.vid, &tape, 0, NULL)) {
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid, &tape, 0,
+    NULL)) {
     save_serrno = serrno;
     (void) Cthread_mutex_unlock (&onealloc);
     RETURN (save_serrno);
@@ -1032,7 +1041,7 @@ int vmgr_srv_gettape(int magic,
 
   for (i = 0; i < tape.nbsides; i++) {
     if (i == side_entry.side) continue;
-    if (vmgr_get_side_by_fullid (&thip->dbfd, side_entry.vid, i,
+    if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, side_entry.vid, i,
         &side_entry1, 1, &rec_addr)) {
       save_serrno = serrno;
       (void) Cthread_mutex_unlock (&onealloc);
@@ -1040,7 +1049,7 @@ int vmgr_srv_gettape(int magic,
     }
     if (side_entry1.status == 0)
       side_entry1.status = TAPE_BUSY;
-    if (vmgr_update_side_entry (&thip->dbfd, &rec_addr,
+    if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr,
         &side_entry1)) {
       save_serrno = serrno;
       (void) Cthread_mutex_unlock (&onealloc);
@@ -1058,7 +1067,6 @@ int vmgr_srv_gettape(int magic,
   }
 
   fseq = side_entry.nbfiles + 1;
-  u64 = (u_signed64) side_entry.estimated_free_space * 1024;
   vmgrlogit(func, "%s %d %d\n", tape.vid, side_entry.side, fseq);
   sbp = repbuf;
   marshall_STRING (sbp, tape.vid);
@@ -1071,7 +1079,7 @@ int vmgr_srv_gettape(int magic,
     marshall_WORD (sbp, side_entry.side);
   }
   marshall_LONG (sbp, fseq);
-  marshall_HYPER (sbp, u64);
+  marshall_HYPER (sbp, side_entry.estimated_free_space_byte_u64);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   (void) Cthread_mutex_unlock (&onealloc);
   RETURN (0);
@@ -1088,13 +1096,12 @@ int vmgr_srv_listdenmap(int magic,
 {
   int bol;  /* beginning of list flag */
   int c;
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   int eol = 0;  /* end of list flag */
   char func[20];
   gid_t gid;
   int listentsz;  /* size of client machine vmgr_tape_denmap structure */
   int maxnbentries;  /* maximum number of entries/call */
-  int native_capacity;
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p;
@@ -1120,14 +1127,17 @@ int vmgr_srv_listdenmap(int magic,
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
   while (nbentries < maxnbentries &&
-      (c = vmgr_list_denmap_entry (&thip->dbfd, bol, &denmap_entry,
-    endlist, dblistptr)) == 0) {
-    native_capacity = denmap_entry.native_capacity / 1024;
+      (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol,
+    &denmap_entry, endlist, dblistptr)) == 0) {
     marshall_STRING (sbp, denmap_entry.md_model);
     marshall_STRING (sbp, denmap_entry.md_media_letter);
     marshall_STRING (sbp, denmap_entry.md_density);
-    if (magic >= VMGR_MAGIC2)
-      marshall_LONG (sbp, native_capacity);
+    if (magic >= VMGR_MAGIC2) {
+      int native_capacity_mebibyte_int = 0;
+      marshall_LONG (sbp, native_capacity_mebibyte_int);
+      denmap_entry.native_capacity_byte_u64 =
+        (u_signed64)native_capacity_mebibyte_int * ONE_MB;
+    }
     nbentries++;
     bol = 0;
   }
@@ -1340,7 +1350,6 @@ int vmgr_srv_listpool(char *req_data,
 {
   int bol;  /* beginning of list flag */
   int c;
-  u_signed64 capacity;
   int eol = 0;  /* end of list flag */
   char func[18];
   gid_t gid;
@@ -1349,10 +1358,9 @@ int vmgr_srv_listpool(char *req_data,
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p;
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   char *sbp;
-  u_signed64 tot_free_space;
   uid_t uid;
 
   strncpy (func, "vmgr_srv_listpool", 18);
@@ -1373,15 +1381,13 @@ int vmgr_srv_listpool(char *req_data,
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
   while (nbentries < maxnbentries &&
-      (c = vmgr_list_pool_entry (&thip->dbfd, bol, &pool_entry,
+      (c = vmgr_list_pool_entry_byte_u64 (&thip->dbfd, bol, &pool_entry,
     endlist, dblistptr)) == 0) {
     marshall_STRING (sbp, pool_entry.name);
     marshall_LONG (sbp, pool_entry.uid);
     marshall_LONG (sbp, pool_entry.gid);
-    capacity = pool_entry.capacity * 1024;
-    marshall_HYPER (sbp, capacity);
-    tot_free_space = pool_entry.tot_free_space * 1024;
-    marshall_HYPER (sbp, tot_free_space);
+    marshall_HYPER (sbp, pool_entry.capacity_byte_u64);
+    marshall_HYPER (sbp, pool_entry.tot_free_space_byte_u64);
     nbentries++;
     bol = 0;
   }
@@ -1399,13 +1405,13 @@ int vmgr_srv_listpool(char *req_data,
 
 /*      vmgr_srv_listtape - list tape volume entries */
 
-int vmgr_srv_listtape(int magic,
-                      char *req_data,
-                      char *clienthost,
-                      struct vmgr_srv_thread_info *thip,
-                      struct vmgr_tape_info *tape,
-                      int endlist,
-                      DBLISTPTR *dblistptr)
+int vmgr_srv_listtape_byte_u64(int magic,
+                               char *req_data,
+                               char *clienthost,
+                               struct vmgr_srv_thread_info *thip,
+                               struct vmgr_tape_info_byte_u64 *tape,
+                               int endlist,
+                               DBLISTPTR *dblistptr)
 {
   int bol;  /* beginning of list flag */
   int c;
@@ -1419,7 +1425,7 @@ int vmgr_srv_listtape(int magic,
   char outbuf[LISTBUFSZ+4];
   char *p;
   char pool_name[CA_MAXPOOLNAMELEN+1];
-  struct vmgr_tape_side side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry;
   char *rbp;
   char *sbp;
   uid_t uid;
@@ -1451,10 +1457,10 @@ int vmgr_srv_listtape(int magic,
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
   while (nbentries < maxnbentries &&
-      (c = vmgr_list_side_entry (&thip->dbfd, bol, vid, pool_name,
+      (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
     &side_entry, endlist, dblistptr)) == 0) {
     if (bol || strcmp (tape->vid, side_entry.vid))
-      if (vmgr_get_tape_by_vid (&thip->dbfd, side_entry.vid,
+      if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid,
           tape, 0, NULL))
         RETURN (serrno);
     marshall_STRING (sbp, tape->vid);
@@ -1480,7 +1486,19 @@ int vmgr_srv_listtape(int magic,
       marshall_WORD (sbp, side_entry.side);
     }
     marshall_STRING (sbp, side_entry.poolname);
-    marshall_LONG (sbp, side_entry.estimated_free_space);
+    {
+      /* Give the estimated free-space in kibibytes a ceiling of the */
+      /* largest posible positive 32-bit signed integer which is     */
+      /* 2^32-1 = 2147483647                                         */
+      int estimated_free_space_kibibyte_int = 0;
+      if(side_entry.estimated_free_space_byte_u64 / ONE_KB > 2147483647) {
+        estimated_free_space_kibibyte_int = 2147483647;
+      } else {
+        estimated_free_space_kibibyte_int =
+          side_entry.estimated_free_space_byte_u64 / ONE_KB;
+      }
+      marshall_LONG (sbp, estimated_free_space_kibibyte_int);
+    }
     marshall_LONG (sbp, side_entry.nbfiles);
     marshall_LONG (sbp, tape->rcount);
     marshall_LONG (sbp, tape->wcount);
@@ -1640,7 +1658,7 @@ int vmgr_srv_modifypool(char *req_data,
   char func[20];
   gid_t gid;
   char logbuf[CA_MAXPOOLNAMELEN+34];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   gid_t pool_group;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   uid_t pool_user;
@@ -1672,8 +1690,8 @@ int vmgr_srv_modifypool(char *req_data,
 
   /* get and lock entry */
 
-  memset((void *) &pool_entry, 0, sizeof(struct vmgr_tape_pool));
-  if (vmgr_get_pool_entry (&thip->dbfd, pool_name, &pool_entry,
+  memset((void *) &pool_entry, 0, sizeof(pool_entry));
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
       1, &rec_addr))
     RETURN (serrno);
 
@@ -1684,7 +1702,7 @@ int vmgr_srv_modifypool(char *req_data,
   if (pool_group != (gid_t)-1)
     pool_entry.gid = pool_group;
 
-  if (vmgr_update_pool_entry (&thip->dbfd, &rec_addr, &pool_entry))
+  if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &rec_addr, &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -1712,14 +1730,14 @@ int vmgr_srv_modifytape(char *req_data,
   char vsn[CA_MAXVSNLEN+1];
   char poolname[CA_MAXPOOLNAMELEN+1];
 
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   struct vmgr_tape_dgnmap dgnmap_entry;
   struct vmgr_tape_library library_entry;
-  struct vmgr_tape_pool newpool_entry;
-  struct vmgr_tape_denmap olddenmap_entry;
-  struct vmgr_tape_pool oldpool_entry;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_pool_byte_u64 newpool_entry;
+  struct vmgr_tape_denmap_byte_u64 olddenmap_entry;
+  struct vmgr_tape_pool_byte_u64 oldpool_entry;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
 
   gid_t gid;
   vmgr_dbrec_addr newpool_rec_addr;
@@ -1774,8 +1792,8 @@ int vmgr_srv_modifytape(char *req_data,
 
   /* get and lock tape entry */
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
-  if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 1, &rec_addr))
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
 
   if (*vsn && strcmp (vsn, tape.vsn)) {
@@ -1827,7 +1845,7 @@ int vmgr_srv_modifytape(char *req_data,
 
   /* get current tape capacity */
 
-  if (vmgr_get_denmap_entry (&thip->dbfd, tape.model,
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
       tape.media_letter, tape.density, &olddenmap_entry, 0, NULL))
     RETURN (serrno);
 
@@ -1835,8 +1853,8 @@ int vmgr_srv_modifytape(char *req_data,
 
   int density_changed = 0;
   if (*density && strcmp (density, tape.density)) {
-    memset((void *) &denmap_entry, 0, sizeof(struct vmgr_tape_denmap));
-    if (vmgr_get_denmap_entry (&thip->dbfd, tape.model,
+    memset((void *) &denmap_entry, 0, sizeof(denmap_entry));
+    if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
         tape.media_letter, density, &denmap_entry, 0, NULL)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR,
@@ -1847,7 +1865,8 @@ int vmgr_srv_modifytape(char *req_data,
     }
     strcpy (tape.density, density);
     density_changed = 1;
-    if (denmap_entry.native_capacity != olddenmap_entry.native_capacity)
+    if (denmap_entry.native_capacity_byte_u64 !=
+      olddenmap_entry.native_capacity_byte_u64)
       capacity_changed = 1;
     need_update++;
   } else
@@ -1869,7 +1888,7 @@ int vmgr_srv_modifytape(char *req_data,
   }
 
   if (need_update)
-    if (vmgr_update_tape_entry (&thip->dbfd, &rec_addr, &tape))
+    if (vmgr_update_tape_entry_byte_u64 (&thip->dbfd, &rec_addr, &tape))
       RETURN (serrno);
 
   for (i = 0; i < tape.nbsides; i++) {
@@ -1877,7 +1896,7 @@ int vmgr_srv_modifytape(char *req_data,
 
     /* get and lock side */
 
-    if (vmgr_get_side_by_fullid (&thip->dbfd, vid, i, &side_entry,
+    if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
         1, &rec_addrs))
       RETURN (serrno);
 
@@ -1894,51 +1913,54 @@ int vmgr_srv_modifytape(char *req_data,
           ((side_entry.status & ~TAPE_BUSY) > 0 &&
           (status & ~TAPE_BUSY) == 0) ||
           capacity_changed) {
-        if (vmgr_get_pool_entry (&thip->dbfd,
+        if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
             side_entry.poolname, &oldpool_entry, 1,
             &oldpool_rec_addr))
           RETURN (serrno);
         if (capacity_changed) {
-          oldpool_entry.capacity +=
-              denmap_entry.native_capacity -
-              olddenmap_entry.native_capacity;
+          oldpool_entry.capacity_byte_u64 +=
+              denmap_entry.native_capacity_byte_u64 -
+              olddenmap_entry.native_capacity_byte_u64;
           if (side_entry.status == 0)
-            oldpool_entry.tot_free_space -=
-                side_entry.estimated_free_space;
-          side_entry.estimated_free_space =
-              denmap_entry.native_capacity;
+            oldpool_entry.tot_free_space_byte_u64 -=
+                side_entry.estimated_free_space_byte_u64;
+          side_entry.estimated_free_space_byte_u64 =
+              denmap_entry.native_capacity_byte_u64;
           need_update++;
           if (status == 0 ||
               (status < 0 && side_entry.status == 0))
-            oldpool_entry.tot_free_space +=
-                side_entry.estimated_free_space;
+            oldpool_entry.tot_free_space_byte_u64 +=
+                side_entry.estimated_free_space_byte_u64;
         } else {  /* status changed */
           if (status & ~TAPE_BUSY)
-            oldpool_entry.tot_free_space -=
-                side_entry.estimated_free_space;
+            oldpool_entry.tot_free_space_byte_u64 -=
+                side_entry.estimated_free_space_byte_u64;
           else
-            oldpool_entry.tot_free_space +=
-                side_entry.estimated_free_space;
+            oldpool_entry.tot_free_space_byte_u64 +=
+                side_entry.estimated_free_space_byte_u64;
         }
-        if (vmgr_update_pool_entry (&thip->dbfd,
+        if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
             &oldpool_rec_addr, &oldpool_entry))
           RETURN (serrno);
       }
     } else {  /* move to another pool */
-      if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname,
+      if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
           &oldpool_entry, 1, &oldpool_rec_addr))
         RETURN (serrno);
-      oldpool_entry.capacity -= olddenmap_entry.native_capacity;
+      oldpool_entry.capacity_byte_u64 -=
+        olddenmap_entry.native_capacity_byte_u64;
       if (side_entry.status == 0)
-        oldpool_entry.tot_free_space -= side_entry.estimated_free_space;
-      if (vmgr_update_pool_entry (&thip->dbfd,
+        oldpool_entry.tot_free_space_byte_u64 -=
+          side_entry.estimated_free_space_byte_u64;
+      if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
           &oldpool_rec_addr, &oldpool_entry))
         RETURN (serrno);
       if (capacity_changed) {
-        side_entry.estimated_free_space = denmap_entry.native_capacity;
+        side_entry.estimated_free_space_byte_u64 =
+          denmap_entry.native_capacity_byte_u64;
         need_update++;
       }
-      if (vmgr_get_pool_entry (&thip->dbfd, poolname,
+      if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, poolname,
           &newpool_entry, 1, &newpool_rec_addr)) {
         if (serrno == ENOENT) {
           sendrep (thip->s, MSG_ERR, "No such pool\n");
@@ -1946,10 +1968,11 @@ int vmgr_srv_modifytape(char *req_data,
         } else
           RETURN (serrno);
       }
-      newpool_entry.capacity += denmap_entry.native_capacity;
+      newpool_entry.capacity_byte_u64 += denmap_entry.native_capacity_byte_u64;
       if (status == 0 || (status < 0 && side_entry.status == 0))
-        newpool_entry.tot_free_space += side_entry.estimated_free_space;
-      if (vmgr_update_pool_entry (&thip->dbfd,
+        newpool_entry.tot_free_space_byte_u64 +=
+          side_entry.estimated_free_space_byte_u64;
+      if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
           &newpool_rec_addr, &newpool_entry))
         RETURN (serrno);
       strcpy (side_entry.poolname, poolname);
@@ -1958,14 +1981,17 @@ int vmgr_srv_modifytape(char *req_data,
     if (status >= 0) {
       /*      if (status & TAPE_FULL)     // Commented out by V.Motyakov (14.03.2006) 
         side_entry.estimated_free_space = 0; // Tape can be FULL but having free space
-        else */ if (side_entry.estimated_free_space == 0)
-        status |= TAPE_FULL;
+        else */
+        if (side_entry.estimated_free_space_byte_u64 == 0) {
+          status |= TAPE_FULL;
+        }
       side_entry.status = status;
       need_update++;
     }
 
     if (need_update)
-      if (vmgr_update_side_entry (&thip->dbfd, &rec_addrs, &side_entry))
+      if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addrs,
+        &side_entry))
         RETURN (serrno);
   }
   RETURN (0);
@@ -1977,16 +2003,14 @@ int vmgr_srv_querypool(char *req_data,
                        char *clienthost,
                        struct vmgr_srv_thread_info *thip)
 {
-  u_signed64 capacity;
   char func[19];
   gid_t gid;
   char logbuf[CA_MAXPOOLNAMELEN+11];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   char *rbp;
   char repbuf[24];
   char *sbp;
-  u_signed64 tot_free_space;
   uid_t uid;
 
   strncpy (func, "vmgr_srv_querypool", 19);
@@ -2002,18 +2026,16 @@ int vmgr_srv_querypool(char *req_data,
   sprintf (logbuf, "querypool %s", pool_name);
   vmgr_logreq (func, logbuf);
 
-  memset((void *) &pool_entry, 0, sizeof(struct vmgr_tape_pool));
-  if (vmgr_get_pool_entry (&thip->dbfd, pool_name, &pool_entry,
+  memset((void *) &pool_entry, 0, sizeof(pool_entry));
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
       0, NULL))
     RETURN (serrno);
 
   sbp = repbuf;
   marshall_LONG (sbp, pool_entry.uid);
   marshall_LONG (sbp, pool_entry.gid);
-  capacity = pool_entry.capacity * 1024;
-  marshall_HYPER (sbp, capacity);
-  tot_free_space = pool_entry.tot_free_space * 1024;
-  marshall_HYPER (sbp, tot_free_space);
+  marshall_HYPER (sbp, pool_entry.capacity_byte_u64);
+  marshall_HYPER (sbp, pool_entry.tot_free_space_byte_u64);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURN (0);
 }
@@ -2124,8 +2146,8 @@ int vmgr_srv_querytape(int magic,
   char repbuf[177];
   char *sbp;
   int side;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
@@ -2146,13 +2168,13 @@ int vmgr_srv_querytape(int magic,
   sprintf (logbuf, "querytape %s %d", vid, side);
   vmgr_logreq (func, logbuf);
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
-  if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 0, NULL))
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 
   /* get side specific info */
 
-  if (vmgr_get_side_by_fullid (&thip->dbfd, vid, side, &side_entry,
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry,
       0, NULL))
     RETURN (serrno);
 
@@ -2180,7 +2202,19 @@ int vmgr_srv_querytape(int magic,
     marshall_WORD (sbp, side_entry.side);
   }
   marshall_STRING (sbp, side_entry.poolname);
-  marshall_LONG (sbp, side_entry.estimated_free_space);
+  {
+    /* Give the estimated free-space in kibibytes a ceiling of the */
+    /* largest posible positive 32-bit signed integer which is     */
+    /* 2^32-1 = 2147483647                                         */
+    int estimated_free_space_kibibyte_int = 0;
+    if(side_entry.estimated_free_space_byte_u64 / ONE_KB > 2147483647) {
+      estimated_free_space_kibibyte_int = 2147483647;
+    } else {
+      estimated_free_space_kibibyte_int =
+        side_entry.estimated_free_space_byte_u64 / ONE_KB;
+    }
+    marshall_LONG (sbp, estimated_free_space_kibibyte_int);
+  }
   marshall_LONG (sbp, side_entry.nbfiles);
   marshall_LONG (sbp, tape.rcount);
   marshall_LONG (sbp, tape.wcount);
@@ -2203,17 +2237,17 @@ int vmgr_srv_reclaim(char *req_data,
                      char *clienthost,
                      struct vmgr_srv_thread_info *thip)
 {
-  struct vmgr_tape_denmap denmap_entry;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
   char func[17];
   gid_t gid;
   int i;
   char logbuf[CA_MAXVIDLEN+9];
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addrp;
   vmgr_dbrec_addr rec_addrs;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
@@ -2239,36 +2273,37 @@ int vmgr_srv_reclaim(char *req_data,
 
   /* get and lock entries */
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
-  if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 0, NULL))
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 
   memset ((char *) &denmap_entry, 0, sizeof(denmap_entry));
-  if (vmgr_get_denmap_entry (&thip->dbfd, tape.model, tape.media_letter,
-      tape.density, &denmap_entry, 0, NULL))
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
+    tape.media_letter, tape.density, &denmap_entry, 0, NULL))
     RETURN (serrno);
 
   /* update entries */
 
-  memset((void *) &pool_entry, 0, sizeof(struct vmgr_tape_pool));
+  memset((void *) &pool_entry, 0, sizeof(pool_entry));
   for (i = 0; i < tape.nbsides; i++) {
-    if (vmgr_get_side_by_fullid (&thip->dbfd, vid, i, &side_entry,
+    if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
         1, &rec_addrs))
       RETURN (serrno);
-    if (i == 0 && vmgr_get_pool_entry (&thip->dbfd,
+    if (i == 0 && vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
         side_entry.poolname, &pool_entry, 1, &rec_addrp))
       RETURN (serrno);
 
-    side_entry.estimated_free_space = denmap_entry.native_capacity;
+    side_entry.estimated_free_space_byte_u64 =
+      denmap_entry.native_capacity_byte_u64;
     side_entry.nbfiles = 0;
     side_entry.status = 0;
 
-    if (vmgr_update_side_entry (&thip->dbfd, &rec_addrs, &side_entry))
+    if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addrs, &side_entry))
       RETURN (serrno);
 
-    pool_entry.tot_free_space += denmap_entry.native_capacity;
+    pool_entry.tot_free_space_byte_u64 += denmap_entry.native_capacity_byte_u64;
   }
-  if (vmgr_update_pool_entry (&thip->dbfd, &rec_addrp, &pool_entry))
+  if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &rec_addrp, &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -2283,10 +2318,10 @@ int vmgr_srv_settag(char *req_data,
   gid_t gid;
   char logbuf[CA_MAXVIDLEN+8];
   struct vmgr_tape_tag old_tag_entry;
-  struct vmgr_tape_pool pool_entry;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  struct vmgr_tape_side side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
   uid_t uid;
 
@@ -2309,14 +2344,14 @@ int vmgr_srv_settag(char *req_data,
 
   /* get pool name */
 
-  if (vmgr_get_side_by_fullid (&thip->dbfd, tag_entry.vid, 0, &side_entry,
-      0, NULL))
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, tag_entry.vid, 0,
+    &side_entry, 0, NULL))
     RETURN (serrno);
 
   /* get pool entry */
 
-  if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname, &pool_entry,
-      0, NULL))
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
+    &pool_entry, 0, NULL))
     RETURN (serrno);
 
   /* check if the user is authorized to add/replace the tag on this volume */
@@ -2358,7 +2393,7 @@ int vmgr_srv_tpmounted(int magic,
   char *p;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_info_byte_u64 tape;
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
@@ -2389,8 +2424,8 @@ int vmgr_srv_tpmounted(int magic,
 
   /* get and lock entry */
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
-  if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 1, &rec_addr))
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
 
   /* update entry */
@@ -2410,7 +2445,7 @@ int vmgr_srv_tpmounted(int magic,
     tape.rtime = time (0);
   }
 
-  if (vmgr_update_tape_entry (&thip->dbfd, &rec_addr, &tape))
+  if (vmgr_update_tape_entry_byte_u64 (&thip->dbfd, &rec_addr, &tape))
     RETURN (serrno);
   RETURN (0);
 }
@@ -2422,24 +2457,23 @@ int vmgr_srv_updatetape(int magic,
                         char *clienthost,
                         struct vmgr_srv_thread_info *thip)
 {
-  u_signed64 BytesWritten;
+  u_signed64 BytesWritten = 0;
   int CompressionFactor;
   char func[20];
-  int FilesWritten;
-  int Flags;
+  int FilesWritten = 0;
+  int Flags = 0;
   gid_t gid;
   int i;
   char logbuf[CA_MAXVIDLEN+52];
-  int n;
-  int diff_free_space;
-  struct vmgr_tape_pool pool_entry;
+  u_signed64 normalized_data_written_byte_u64 = 0;
+  struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   vmgr_dbrec_addr rec_addrp;
   int side;
-  struct vmgr_tape_side side_entry;
-  struct vmgr_tape_side side_entry1;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_side_byte_u64 side_entry1;
+  struct vmgr_tape_info_byte_u64 tape;
   char tmpbuf[21];
   uid_t uid;
   char vid[CA_MAXVIDLEN+1];
@@ -2476,74 +2510,54 @@ int vmgr_srv_updatetape(int magic,
 
   /* get and lock entries */
 
-  memset((void *) &side_entry, 0, sizeof(struct vmgr_tape_side));
-  if (vmgr_get_side_by_fullid (&thip->dbfd, vid, side, &side_entry, 1,
+  memset((void *) &side_entry, 0, sizeof(side_entry));
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry, 1,
       &rec_addr))
     RETURN (serrno);
 
-  memset((void *) &pool_entry, 0, sizeof(struct vmgr_tape_pool));
-  if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname, &pool_entry,
-      1, &rec_addrp))
+  memset((void *) &pool_entry, 0, sizeof(pool_entry));
+  if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
+    &pool_entry, 1, &rec_addrp))
     RETURN (serrno);
 
-  /* update entries */
+  /* Calculate the normalised amount of data written taking into account */
+  /* the compression factor                                              */
+  if(BytesWritten == 0) {
+    normalized_data_written_byte_u64 = 0;
+  } else {
+    if (CompressionFactor == 0) {
+      normalized_data_written_byte_u64 = BytesWritten;
+    } else {
+      normalized_data_written_byte_u64 = BytesWritten * 100 / CompressionFactor;
+    }
+  }
 
-  if (CompressionFactor == 0)
-    n = BytesWritten / 1024;
-  else
-    n = (BytesWritten / 1024) * 100 / CompressionFactor;
-  /*
-          // Modified by V.Motyakov (14.03.2006) 
-                // Tape can be full but having free space
-                if ((Flags & TAPE_FULL) || (n > side_entry.estimated_free_space))
-    n = side_entry.estimated_free_space;
-  */
-  if(Flags & TAPE_FULL) {                   // V.Motyakov (15.03.2006)
-          
-          if (FilesWritten == 0) {
-            diff_free_space = side_entry.estimated_free_space;
-                  side_entry.estimated_free_space = n;
-    }
-    else {
-            n = side_entry.estimated_free_space;
-      side_entry.estimated_free_space = 0;
-    }
+  /* Apply a ceiling of the estimated amount of free space */
+  if(normalized_data_written_byte_u64 >
+    side_entry.estimated_free_space_byte_u64) {
+    normalized_data_written_byte_u64 = side_entry.estimated_free_space_byte_u64;
   }
-  else {
-          if (n > side_entry.estimated_free_space)
-            n = side_entry.estimated_free_space;
-          side_entry.estimated_free_space -= n;
-  }
-  if(side_entry.estimated_free_space < 0)   // V.Motyakov (14.03.2006)
-          side_entry.estimated_free_space = 0;
+
+  /* Update the estimated amount of free space on the tape */
+  side_entry.estimated_free_space_byte_u64 -= normalized_data_written_byte_u64;
+
+  /* Update the number of files written and the status of the tape */
   side_entry.nbfiles += FilesWritten;
   side_entry.status &= ~TAPE_BUSY;
-  if (side_entry.status == 0 && (Flags & TAPE_FULL) != 0 && FilesWritten == 0)
-  {
-          n = diff_free_space;
-  }
-  else if (side_entry.status == 0 && (Flags & (DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) != 0)
-  {
-          n = side_entry.estimated_free_space;
-  }
-  else if (side_entry.status)
-  {
-    n = 0;    /* do not decrement pool free space if
-           status was already non zero */
-  }
   side_entry.status |= Flags;
-  if (side_entry.estimated_free_space == 0)
+  if (side_entry.estimated_free_space_byte_u64 == 0) {
     side_entry.status |= TAPE_FULL;
+  }
 
-  if (vmgr_update_side_entry (&thip->dbfd, &rec_addr, &side_entry))
+  if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr, &side_entry))
     RETURN (serrno);
 
   if ((Flags & TAPE_BUSY) == 0) {  /* reset BUSY flags on all sides */
-    if (vmgr_get_tape_by_vid (&thip->dbfd, vid, &tape, 0, NULL))
+    if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
       RETURN (serrno);
     for (i = 0; i < tape.nbsides; i++) {
       if (i == side_entry.side) continue;
-      if (vmgr_get_side_by_fullid (&thip->dbfd, vid, i,
+      if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i,
           &side_entry1, 1, &rec_addr))
         RETURN (serrno);
       if ((side_entry1.status & TAPE_BUSY) == 0 && Flags == 0)
@@ -2551,15 +2565,22 @@ int vmgr_srv_updatetape(int magic,
       side_entry1.status &= ~TAPE_BUSY;
       if (Flags & EXPORTED)
         side_entry1.status |= EXPORTED;
-      if (vmgr_update_side_entry (&thip->dbfd, &rec_addr,
+      if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr,
           &side_entry1))
         RETURN (serrno);
     }
   }
 
-  if (n) {
-    pool_entry.tot_free_space -= n;
-    if (vmgr_update_pool_entry (&thip->dbfd, &rec_addrp, &pool_entry))
+  /* Update the total amount of free space in the tape-pool if data was */
+  /* written, making sure the total amount does not go negative         */
+  if(normalized_data_written_byte_u64 > 0) {
+    if(normalized_data_written_byte_u64 > pool_entry.tot_free_space_byte_u64) {
+      pool_entry.tot_free_space_byte_u64 = 0;
+    } else {
+      pool_entry.tot_free_space_byte_u64 -= normalized_data_written_byte_u64;
+    }
+
+    if(vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &rec_addrp, &pool_entry))
       RETURN (serrno);
   }
 

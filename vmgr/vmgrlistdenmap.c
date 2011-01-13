@@ -22,7 +22,7 @@ int main(int argc,
 	int errflg = 0;
 	int flags;
 	vmgr_list list;
-	struct vmgr_tape_denmap *lp;
+	struct vmgr_tape_denmap_byte_u64 *lp;
 	char tmpbuf[80];
 
         if (argc > 1) {
@@ -34,12 +34,12 @@ int main(int argc,
         }
  
 	flags = VMGR_LIST_BEGIN;
-	while ((lp = vmgr_listdenmap (flags, &list)) != NULL) {
+	while ((lp = vmgr_listdenmap_byte_u64 (flags, &list)) != NULL) {
 		printf ("%-6s %-2s %-8s %-8s\n", lp->md_model, lp->md_media_letter,
 		    lp->md_density,
-		    u64tostru ((u_signed64)lp->native_capacity * ONE_MB, tmpbuf, 9));
+		    u64tostru ((u_signed64)lp->native_capacity_byte_u64, tmpbuf, 9));
 		flags = VMGR_LIST_CONTINUE;
 	}
-	(void) vmgr_listdenmap (VMGR_LIST_END, &list);
+	(void) vmgr_listdenmap_byte_u64 (VMGR_LIST_END, &list);
 	exit (0);
 }

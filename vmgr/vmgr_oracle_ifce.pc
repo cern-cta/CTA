@@ -216,26 +216,28 @@ int vmgr_end_tr(struct vmgr_dbfd *dbfd)
 	return (0);
 }
 
-int vmgr_get_denmap_entry(struct vmgr_dbfd *dbfd,
-                          char *model,
-                          char *media_letter,
-                          char *density,
-                          struct vmgr_tape_denmap *denmap_entry,
-                          int lock,
-                          vmgr_dbrec_addr *rec_addr)
+int vmgr_get_denmap_entry_byte_u64(
+	struct vmgr_dbfd *dbfd,
+	char *model,
+	char *media_letter,
+	char *density,
+	struct vmgr_tape_denmap_byte_u64 *denmap_entry,
+	int lock,
+	vmgr_dbrec_addr *rec_addr)
 {
 	char func[22];
 	char rowid_value[19];
 	struct sqlca sqlca;
+	char native_capacity_byte_str[21];
 	EXEC SQL DECLARE denmap_cursor CURSOR FOR
 		SELECT
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, TO_CHAR(NATIVE_CAPACITY)
 		FROM vmgr_tape_denmap
 		WHERE md_model = :model AND md_media_letter = :media_letter AND
 		 md_density = :density;
 	EXEC SQL DECLARE denmap_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, TO_CHAR(NATIVE_CAPACITY)
 		FROM vmgr_tape_denmap
 		WHERE md_model = :model AND md_media_letter = :media_letter AND
 		 md_density = :density
@@ -250,8 +252,10 @@ int vmgr_get_denmap_entry(struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH denmap_cursor4upd INTO
 		 :rowid_value,
-		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density, :denmap_entry->native_capacity;
+		 :denmap_entry->md_model,
+		 :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density,
+		 :native_capacity_byte_str;
 	} else {
 		EXEC SQL OPEN denmap_cursor;
 		if (sqlca.sqlcode) {
@@ -259,13 +263,17 @@ int vmgr_get_denmap_entry(struct vmgr_dbfd *dbfd,
 			return (-1);
 		}
 		EXEC SQL FETCH denmap_cursor INTO
-		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density, :denmap_entry->native_capacity;
+		 :denmap_entry->md_model,
+		 :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density,
+		 :native_capacity_byte_str;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		denmap_entry->native_capacity_byte_u64 =
+			strtou64 (native_capacity_byte_str);
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -449,17 +457,17 @@ int vmgr_get_model_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_get_pool_entry(struct vmgr_dbfd *dbfd,
-                        char *pool_name,
-                        struct vmgr_tape_pool *pool_entry,
-                        int lock,
-                        vmgr_dbrec_addr *rec_addr)
+int vmgr_get_pool_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                 char *pool_name,
+                                 struct vmgr_tape_pool_byte_u64 *pool_entry,
+                                 int lock,
+                                 vmgr_dbrec_addr *rec_addr)
 {
-	char capacity_str[21];
+	char capacity_byte_str[21];
 	char func[20];
 	char rowid_value[19];
 	struct sqlca sqlca;
-	char tot_free_space_str[21];
+	char tot_free_space_byte_str[21];
 	EXEC SQL DECLARE pool_cursor CURSOR FOR
 		SELECT
 		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY), TO_CHAR(TOT_FREE_SPACE)
@@ -482,7 +490,7 @@ int vmgr_get_pool_entry(struct vmgr_dbfd *dbfd,
 		EXEC SQL FETCH pool_cursor4upd INTO
 		 :rowid_value,
 		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
-		 :capacity_str, :tot_free_space_str;
+		 :capacity_byte_str, :tot_free_space_byte_str;
 	} else {
 		EXEC SQL OPEN pool_cursor;
 		if (sqlca.sqlcode) {
@@ -491,14 +499,15 @@ int vmgr_get_pool_entry(struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH pool_cursor INTO
 		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
-		 :capacity_str, :tot_free_space_str;
+		 :capacity_byte_str, :tot_free_space_byte_str;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
-		pool_entry->capacity = strtou64 (capacity_str);
-		pool_entry->tot_free_space = strtou64 (tot_free_space_str);
+		pool_entry->capacity_byte_u64 = strtou64 (capacity_byte_str);
+		pool_entry->tot_free_space_byte_u64 =
+			strtou64 (tot_free_space_byte_str);
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -509,24 +518,27 @@ int vmgr_get_pool_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_get_side_by_fullid (struct vmgr_dbfd *dbfd,
+int vmgr_get_side_by_fullid_byte_u64 (struct vmgr_dbfd *dbfd,
                              char *vid,
                              int side,
-                             struct vmgr_tape_side *side_entry,
+                             struct vmgr_tape_side_byte_u64 *side_entry,
                              int lock,
                              vmgr_dbrec_addr *rec_addr)
 {
 	char func[24];
 	char rowid_value[19];
 	struct sqlca sqlca;
+	char estimated_free_space_byte_str[21];
 	EXEC SQL DECLARE side_fullid_cursor CURSOR FOR
 		SELECT
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 VID, SIDE, POOLNAME, STATUS, TO_CHAR(ESTIMATED_FREE_SPACE),
+		 NBFILES
 		FROM vmgr_tape_side
 		WHERE vid = :vid AND side = :side;
 	EXEC SQL DECLARE side_fullid_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 VID, SIDE, POOLNAME, STATUS, TO_CHAR(ESTIMATED_FREE_SPACE),
+		 NBFILES
 		FROM vmgr_tape_side
 		WHERE vid = :vid AND side = :side
 		FOR UPDATE;
@@ -541,7 +553,7 @@ int vmgr_get_side_by_fullid (struct vmgr_dbfd *dbfd,
 		EXEC SQL FETCH side_fullid_cursor4upd INTO
 		 :rowid_value,
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	} else {
 		EXEC SQL OPEN side_fullid_cursor;
@@ -551,13 +563,15 @@ int vmgr_get_side_by_fullid (struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH side_fullid_cursor INTO
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		side_entry->estimated_free_space_byte_u64 =
+			strtou64 (estimated_free_space_byte_str);
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -622,11 +636,11 @@ int vmgr_get_tag_by_vid(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_get_tape_by_vid(struct vmgr_dbfd *dbfd,
-                         char *vid,
-                         struct vmgr_tape_info *tape_entry,
-                         int lock,
-                         vmgr_dbrec_addr *rec_addr)
+int vmgr_get_tape_by_vid_byte_u64(struct vmgr_dbfd *dbfd,
+                                  char *vid,
+                                  struct vmgr_tape_info_byte_u64 *tape_entry,
+                                  int lock,
+                                  vmgr_dbrec_addr *rec_addr)
 {
 	char func[21];
 	short mf_ind;	/* indicator variable for manufacturer column */
@@ -694,20 +708,22 @@ int vmgr_get_tape_by_vid(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_get_side_by_size(struct vmgr_dbfd *dbfd,
-                          char *poolname,
-                          u_signed64 Size,
-                          struct vmgr_tape_side *side_entry,
-                          int lock,
-                          vmgr_dbrec_addr *rec_addr)
+int vmgr_get_side_by_size_byte_u64(struct vmgr_dbfd *dbfd,
+                                   char *poolname,
+                                   u_signed64 Size,
+                                   struct vmgr_tape_side_byte_u64 *side_entry,
+                                   int lock,
+                                   vmgr_dbrec_addr *rec_addr)
 {
 	char func[22];
 	int reqsize = (Size + 1023) / 1024;
 	char rowid_value[19];
 	struct sqlca sqlca;
+	char estimated_free_space_byte_str[21];
 
 EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
-  SELECT ROWID, vid, side, poolname, status, estimated_free_space, nbfiles
+  SELECT ROWID, vid, side, poolname, status, TO_CHAR(estimated_free_space),
+    nbfiles
   FROM vmgr_tape_side
   WHERE
     vmgr_tape_side.vid = (
@@ -741,7 +757,8 @@ EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
   FOR UPDATE;
 
 EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
-  SELECT ROWID, vid, side, poolname, status, estimated_free_space, nbfiles
+  SELECT ROWID, vid, side, poolname, status, TO_CHAR(estimated_free_space),
+    nbfiles
   FROM vmgr_tape_side
   WHERE
     vmgr_tape_side.vid = (
@@ -783,7 +800,7 @@ EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 	EXEC SQL FETCH tape_size_cursor4upd INTO
 	 :rowid_value,
 	 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-	 :side_entry->status, :side_entry->estimated_free_space,
+	 :side_entry->status, :estimated_free_space_byte_str,
 	 :side_entry->nbfiles;
 	if (sqlca.sqlcode == 1403) {
 		EXEC SQL OPEN tape_maxsize_cursor4upd;
@@ -794,13 +811,15 @@ EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 		EXEC SQL FETCH tape_maxsize_cursor4upd INTO
 		 :rowid_value,
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		side_entry->estimated_free_space_byte_u64 =
+			strtou64 (estimated_free_space_byte_str);
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -811,18 +830,23 @@ EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 	return (-1);
 }
 
-int vmgr_insert_denmap_entry(struct vmgr_dbfd *dbfd,
-                             struct vmgr_tape_denmap *denmap_entry)
+int vmgr_insert_denmap_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                 struct vmgr_tape_denmap_byte_u64 *denmap_entry)
 {
 	char func[25];
 	struct sqlca sqlca;
+	char native_capacity_byte_str[21];
 
 	strncpy (func, "vmgr_insert_denmap_entry", 25);
+	(void) u64tostr (denmap_entry->native_capacity_byte_u64,
+		native_capacity_byte_str, -1);
 	EXEC SQL INSERT INTO vmgr_tape_denmap
 		(MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY)
 		VALUES
-		(:denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density, :denmap_entry->native_capacity);
+		(:denmap_entry->md_model,
+		 :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density,
+		 TO_NUMBER(:native_capacity_byte_str));
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -927,22 +951,24 @@ int vmgr_insert_model_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_insert_pool_entry(struct vmgr_dbfd *dbfd,
-                           struct vmgr_tape_pool *pool_entry)
+int vmgr_insert_pool_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    struct vmgr_tape_pool_byte_u64 *pool_entry)
 {
-	char capacity_str[21];
+	char capacity_byte_str[21];
 	char func[23];
 	struct sqlca sqlca;
-	char tot_free_space_str[21];
+	char tot_free_space_byte_str[21];
 
 	strncpy (func, "vmgr_insert_pool_entry", 23);
-	(void) u64tostr (pool_entry->capacity, capacity_str, -1);
-	(void) u64tostr (pool_entry->tot_free_space, tot_free_space_str, -1);
+	(void) u64tostr (pool_entry->capacity_byte_u64, capacity_byte_str, -1);
+	(void) u64tostr (pool_entry->tot_free_space_byte_u64,
+		tot_free_space_byte_str, -1);
 	EXEC SQL INSERT INTO vmgr_tape_pool
 		(NAME, OWNER_UID, GID, CAPACITY, TOT_FREE_SPACE)
 		VALUES
 		(:pool_entry->name, :pool_entry->uid, :pool_entry->gid,
-		 TO_NUMBER(:capacity_str), TO_NUMBER(:tot_free_space_str));
+		 TO_NUMBER(:capacity_byte_str),
+		 TO_NUMBER(:tot_free_space_byte_str));
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -960,18 +986,21 @@ int vmgr_insert_pool_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_insert_side_entry(struct vmgr_dbfd *dbfd,
-                           struct vmgr_tape_side *side_entry)
+int vmgr_insert_side_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    struct vmgr_tape_side_byte_u64 *side_entry)
 {
 	char func[23];
 	struct sqlca sqlca;
+	char estimated_free_space_byte_str[21];
 
 	strncpy (func, "vmgr_insert_side_entry", 23);
+	(void) u64tostr (side_entry->estimated_free_space_byte_u64,
+		estimated_free_space_byte_str, -1);
 	EXEC SQL INSERT INTO vmgr_tape_side
 		(VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES)
 		VALUES
 		(:side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, TO_NUMBER(:estimated_free_space_byte_str),
 		 :side_entry->nbfiles);
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -1018,8 +1047,8 @@ int vmgr_insert_tag_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_insert_tape_entry(struct vmgr_dbfd *dbfd,
-                           struct vmgr_tape_info *tape_entry)
+int vmgr_insert_tape_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    struct vmgr_tape_info_byte_u64 *tape_entry)
 {
 	char func[23];
 	struct sqlca sqlca;
@@ -1054,17 +1083,19 @@ int vmgr_insert_tape_entry(struct vmgr_dbfd *dbfd,
 	return (-1);
 }
 
-int vmgr_list_denmap_entry(struct vmgr_dbfd *dbfd,
-                           int bol,
-                           struct vmgr_tape_denmap *denmap_entry,
-                           int endlist,
-                           DBLISTPTR *dblistptr)
+int vmgr_list_denmap_entry_byte_u64(
+	struct vmgr_dbfd *dbfd,
+	int bol,
+	struct vmgr_tape_denmap_byte_u64 *denmap_entry,
+	int endlist,
+	DBLISTPTR *dblistptr)
 {
 	char func[23];
 	struct sqlca sqlca;
+	char native_capacity_byte_str[21];
 	EXEC SQL DECLARE list_denmap_cursor CURSOR FOR
 		SELECT
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, TO_CHAR(NATIVE_CAPACITY)
 		FROM vmgr_tape_denmap
 		ORDER BY md_model, md_media_letter, native_capacity;
 
@@ -1080,9 +1111,11 @@ int vmgr_list_denmap_entry(struct vmgr_dbfd *dbfd,
 	}
 	EXEC SQL FETCH list_denmap_cursor INTO
 	 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-	 :denmap_entry->md_density, :denmap_entry->native_capacity;
+	 :denmap_entry->md_density, :native_capacity_byte_str;
 	switch (sqlca.sqlcode) {
 	case 0:
+		denmap_entry->native_capacity_byte_u64 =
+			strtou64 (native_capacity_byte_str);
 		return (0);
 	case 1403:
 		return (1);
@@ -1206,16 +1239,16 @@ int vmgr_list_model_entry(struct vmgr_dbfd *dbfd,
 	}
 }
 
-int vmgr_list_pool_entry(struct vmgr_dbfd *dbfd,
-                         int bol,
-                         struct vmgr_tape_pool *pool_entry,
-                         int endlist,
-                         DBLISTPTR *dblistptr)
+int vmgr_list_pool_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                  int bol,
+                                  struct vmgr_tape_pool_byte_u64 *pool_entry,
+                                  int endlist,
+                                  DBLISTPTR *dblistptr)
 {
-	char capacity_str[21];
+	char capacity_byte_str[21];
 	char func[21];
 	struct sqlca sqlca;
-	char tot_free_space_str[21];
+	char tot_free_space_byte_str[21];
 	EXEC SQL DECLARE list_pool_cursor CURSOR FOR
 		SELECT
 		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY), TO_CHAR(TOT_FREE_SPACE)
@@ -1234,11 +1267,12 @@ int vmgr_list_pool_entry(struct vmgr_dbfd *dbfd,
 	}
 	EXEC SQL FETCH list_pool_cursor INTO
 	 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
-	 :capacity_str, :tot_free_space_str;
+	 :capacity_byte_str, :tot_free_space_byte_str;
 	switch (sqlca.sqlcode) {
 	case 0:
-		pool_entry->capacity = strtou64 (capacity_str);
-		pool_entry->tot_free_space = strtou64 (tot_free_space_str);
+		pool_entry->capacity_byte_u64 = strtou64 (capacity_byte_str);
+		pool_entry->tot_free_space_byte_u64 =
+			strtou64 (tot_free_space_byte_str);
 		return (0);
 	case 1403:
 		return (1);
@@ -1248,30 +1282,34 @@ int vmgr_list_pool_entry(struct vmgr_dbfd *dbfd,
 	}
 }
 
-int vmgr_list_side_entry(struct vmgr_dbfd *dbfd,
-                         int bol,
-                         char *vid,
-                         char *pool_name,
-                         struct vmgr_tape_side *side_entry,
-                         int endlist,
-                         DBLISTPTR *dblistptr)
+int vmgr_list_side_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                  int bol,
+                                  char *vid,
+                                  char *pool_name,
+                                  struct vmgr_tape_side_byte_u64 *side_entry,
+                                  int endlist,
+                                  DBLISTPTR *dblistptr)
 {
 	char func[21];
 	struct sqlca sqlca;
+	char estimated_free_space_byte_str[21];
 	EXEC SQL DECLARE list_tape_cursor CURSOR FOR
 		SELECT
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 VID, SIDE, POOLNAME, STATUS, TO_CHAR(ESTIMATED_FREE_SPACE),
+		 NBFILES
 		FROM vmgr_tape_side
 		ORDER BY vid, side;
 	EXEC SQL DECLARE list_tape_in_pool_cursor CURSOR FOR
 		SELECT
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 VID, SIDE, POOLNAME, STATUS, TO_CHAR(ESTIMATED_FREE_SPACE),
+		 NBFILES
 		FROM vmgr_tape_side
 		WHERE poolname = :pool_name
 		ORDER BY vid, side;
 	EXEC SQL DECLARE list_vid_cursor CURSOR FOR
 		SELECT
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 VID, SIDE, POOLNAME, STATUS, TO_CHAR(ESTIMATED_FREE_SPACE),
+		 NBFILES
 		FROM vmgr_tape_side
 		WHERE vid = :vid
 		ORDER BY side;
@@ -1289,7 +1327,7 @@ int vmgr_list_side_entry(struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH list_vid_cursor INTO
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	} else if (*pool_name) {
 		if (bol) {
@@ -1301,7 +1339,7 @@ int vmgr_list_side_entry(struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH list_tape_in_pool_cursor INTO
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	} else {
 		if (bol) {
@@ -1313,11 +1351,13 @@ int vmgr_list_side_entry(struct vmgr_dbfd *dbfd,
 		}
 		EXEC SQL FETCH list_tape_cursor INTO
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
-		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->status, :estimated_free_space_byte_str,
 		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
+		side_entry->estimated_free_space_byte_u64 =
+			strtou64 (estimated_free_space_byte_str);
 		return (0);
 	case 1403:
 		if (*vid && bol) {
@@ -1450,25 +1490,26 @@ int vmgr_update_model_entry(struct vmgr_dbfd *dbfd,
 	return (0);
 }
 
-int vmgr_update_pool_entry(struct vmgr_dbfd *dbfd,
-                           vmgr_dbrec_addr *rec_addr,
-                           struct vmgr_tape_pool *pool_entry)
+int vmgr_update_pool_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    vmgr_dbrec_addr *rec_addr,
+                                    struct vmgr_tape_pool_byte_u64 *pool_entry)
 {
-	char capacity_str[21];
+	char capacity_byte_str[21];
 	char func[23];
 	char rowid_value[19];
 	struct sqlca sqlca;
-	char tot_free_space_str[21];
+	char tot_free_space_byte_str[21];
 
 	strncpy (func, "vmgr_update_pool_entry", 23);
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
-	(void) u64tostr (pool_entry->capacity, capacity_str, -1);
-	(void) u64tostr (pool_entry->tot_free_space, tot_free_space_str, -1);
+	(void) u64tostr (pool_entry->capacity_byte_u64, capacity_byte_str, -1);
+	(void) u64tostr (pool_entry->tot_free_space_byte_u64,
+		tot_free_space_byte_str, -1);
 	EXEC SQL UPDATE vmgr_tape_pool SET
 		OWNER_UID = :pool_entry->uid,
 		GID = :pool_entry->gid,
-		CAPACITY = TO_NUMBER(:capacity_str),
-		TOT_FREE_SPACE = TO_NUMBER(:tot_free_space_str)
+		CAPACITY = TO_NUMBER(:capacity_byte_str),
+		TOT_FREE_SPACE = TO_NUMBER(:tot_free_space_byte_str)
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgr_oracle_error (func, "UPDATE", dbfd, &sqlca);
@@ -1477,20 +1518,23 @@ int vmgr_update_pool_entry(struct vmgr_dbfd *dbfd,
 	return (0);
 }
 
-int vmgr_update_side_entry(struct vmgr_dbfd *dbfd,
-                           vmgr_dbrec_addr *rec_addr,
-                           struct vmgr_tape_side *side_entry)
+int vmgr_update_side_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    vmgr_dbrec_addr *rec_addr,
+                                    struct vmgr_tape_side_byte_u64 *side_entry)
 {
 	char func[23];
 	char rowid_value[19];
 	struct sqlca sqlca;
+	char estimated_free_space_byte_str[21];
 
 	strncpy (func, "vmgr_update_side_entry", 23);
+	(void) u64tostr (side_entry->estimated_free_space_byte_u64,
+		estimated_free_space_byte_str, -1);
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
 	EXEC SQL UPDATE vmgr_tape_side SET
 		POOLNAME = :side_entry->poolname,
 		STATUS = :side_entry->status,
-		ESTIMATED_FREE_SPACE = :side_entry->estimated_free_space,
+		ESTIMATED_FREE_SPACE = estimated_free_space_byte_str,
 		NBFILES = :side_entry->nbfiles
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
@@ -1520,9 +1564,9 @@ int vmgr_update_tag_entry(struct vmgr_dbfd *dbfd,
 	return (0);
 }
 
-int vmgr_update_tape_entry(struct vmgr_dbfd *dbfd,
-                           vmgr_dbrec_addr *rec_addr,
-                           struct vmgr_tape_info *tape_entry)
+int vmgr_update_tape_entry_byte_u64(struct vmgr_dbfd *dbfd,
+                                    vmgr_dbrec_addr *rec_addr,
+                                    struct vmgr_tape_info_byte_u64 *tape_entry)
 {
 	char func[23];
 	char rowid_value[19];

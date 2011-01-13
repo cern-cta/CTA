@@ -311,7 +311,7 @@ int proclistreq(int magic,
   int new_req_type = -1;
   int rc = 0;
   fd_set readfd, readmask;
-  struct vmgr_tape_info tape;
+  struct vmgr_tape_info_byte_u64 tape;
   struct timeval timeval;
 
   memset (&dblistptr, 0, sizeof(DBLISTPTR));
@@ -348,7 +348,7 @@ int proclistreq(int magic,
         return (c);
       break;
     case VMGR_LISTTAPE:
-      if ((c = vmgr_srv_listtape (magic, req_data,
+      if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data,
                                   clienthost, thip, &tape, endlist, &dblistptr)))
         return (c);
       break;

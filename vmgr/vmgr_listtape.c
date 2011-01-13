@@ -15,15 +15,24 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 
-struct vmgr_tape_info *
-vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)
+struct vmgr_tape_info_byte_u64 *
+vmgr_listtape_byte_u64(char *vid, char *pool_name, int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
 	char func[14];
 	gid_t gid;
-	int listentsz = sizeof(struct vmgr_tape_info);
-	struct vmgr_tape_info *lp;
+
+        /* Please note that the size of the vmgr_tape_info_byte_u64        */
+        /* structure is larger than what is actually required.   The       */
+        /* vmgr_tape_info_byte_u64 structure stores                        */
+        /* estimated_free_space_byte_u64 as a u_signed64. The old vmgr     */
+        /* TCP/IP protocol using VMGR_MAGIC2 and VMGR_LISTTAPE marshalls a */
+        /* signed 32-bit integer it represent the estimated free-space in  */
+        /* kibibytes.                                                      */
+	int listentsz = sizeof(struct vmgr_tape_info_byte_u64);
+
+	struct vmgr_tape_info_byte_u64 *lp = NULL;
 	int msglen;
 	int nbentries;
 	char *q;
@@ -112,7 +121,7 @@ vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)
 		/* unmarshall reply into vmgr_tape_info structures */
 
 		listp->nbentries = nbentries;
-		lp = (struct vmgr_tape_info *) listp->buf;
+		lp = (struct vmgr_tape_info_byte_u64 *) listp->buf;
 		while (nbentries--) {
 			unmarshall_STRING (rbp, lp->vid);
 			unmarshall_STRING (rbp, lp->vsn);
@@ -127,7 +136,17 @@ vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)
 			unmarshall_TIME_T (rbp, lp->etime);
 			unmarshall_WORD (rbp, lp->side);
 			unmarshall_STRING (rbp, lp->poolname);
-			unmarshall_LONG (rbp, lp->estimated_free_space);
+			/* Estimated free-space is marshalled as a 32-bit */
+			/* signed-integer representing kibibytes for old  */
+                        /* clients using VMGR_MAGIC2 and VMGR_LISTTAPE.   */
+			{
+			  int estimated_free_space_kibibyte_int = 0;
+			  unmarshall_LONG (rbp,
+			    estimated_free_space_kibibyte_int);
+			  lp->estimated_free_space_byte_u64 =
+			    (u_signed64)estimated_free_space_kibibyte_int *
+			  ONE_KB;
+			}
 			unmarshall_LONG (rbp, lp->nbfiles);
 			unmarshall_LONG (rbp, lp->rcount);
 			unmarshall_LONG (rbp, lp->wcount);
@@ -142,7 +161,7 @@ vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)
 		}
 		unmarshall_WORD (rbp, listp->eol);
 	}
-	lp = ((struct vmgr_tape_info *) listp->buf) + listp->index;
+	lp = ((struct vmgr_tape_info_byte_u64 *) listp->buf) + listp->index;
 	listp->index++;
 	if (listp->index >= listp->nbentries) {	/* must refill next time */
 		listp->index = 0;

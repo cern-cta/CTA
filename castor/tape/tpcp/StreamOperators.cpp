@@ -151,35 +151,37 @@ std::ostream &operator<<(std::ostream &os,
 
 
 //------------------------------------------------------------------------------
-// ostream << operator for vmgr_tape_info 
+// ostream << operator for vmgr_tape_info_byte_u64 
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value) {
+std::ostream &operator<<(std::ostream &os,
+  const vmgr_tape_info_byte_u64 &value) {
 
   os << "{"
-        "vid=\""               << value.vid                 << "\","
-        "vsn=\""               << value.vsn                 << "\","
-        "library=\""           << value.library             << "\","
-        "density=\""           << value.density             << "\","
-        "lbltype=\""           << value.lbltype             << "\","
-        "model=\""             << value.model               << "\","
-        "media_letter=\""      << value.media_letter        << "\","
-        "manufacturer=\""      << value.manufacturer        << "\","
-        "sn= \""               << value.sn                  << "\","
-        "nbsides="             << value.nbsides             <<   ","
-        "etime="               << value.etime               <<   ","
-        "rcount="              << value.rcount              <<   ","
-        "wcount="              << value.wcount              <<   ","
-        "rhost=\""             << value.rhost               << "\","
-        "whost=\""             << value.whost               << "\","
-        "rjid="                << value.rjid                <<   ","
-        "wjid="                << value.wjid                <<   ","
-        "rtime="               << value.rtime               <<   ","
-        "wtime="               << value.wtime               <<   ","
-        "side="                << value.side                <<   ","
-        "poolname=\""          << value.poolname            << "\","
-        "status="              << value.status              <<   ","
-        "estimated_free_space="<< value.estimated_free_space<<   ","
-        "nbfiles="             << value.nbfiles
+        "vid=\""                        << value.vid                 << "\","
+        "vsn=\""                        << value.vsn                 << "\","
+        "library=\""                    << value.library             << "\","
+        "density=\""                    << value.density             << "\","
+        "lbltype=\""                    << value.lbltype             << "\","
+        "model=\""                      << value.model               << "\","
+        "media_letter=\""               << value.media_letter        << "\","
+        "manufacturer=\""               << value.manufacturer        << "\","
+        "sn= \""                        << value.sn                  << "\","
+        "nbsides="                      << value.nbsides             <<   ","
+        "etime="                        << value.etime               <<   ","
+        "rcount="                       << value.rcount              <<   ","
+        "wcount="                       << value.wcount              <<   ","
+        "rhost=\""                      << value.rhost               << "\","
+        "whost=\""                      << value.whost               << "\","
+        "rjid="                         << value.rjid                <<   ","
+        "wjid="                         << value.wjid                <<   ","
+        "rtime="                        << value.rtime               <<   ","
+        "wtime="                        << value.wtime               <<   ","
+        "side="                         << value.side                <<   ","
+        "poolname=\""                   << value.poolname            << "\","
+        "status="                       << value.status              <<   ","
+        "estimated_free_space_byte_u64="<< value.estimated_free_space_byte_u64
+          <<   ","
+        "nbfiles="                      << value.nbfiles
      << "}";
 
   return os;

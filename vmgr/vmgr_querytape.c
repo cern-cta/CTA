@@ -14,7 +14,8 @@
 #include "vmgr.h"
 #include "serrno.h"
 
-int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
+int vmgr_querytape_byte_u64(const char *vid, int side,
+  struct vmgr_tape_info_byte_u64 *tape_info, char *dgn)
 {
 	int c;
 	char func[15];
@@ -80,7 +81,15 @@ int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, 
 		unmarshall_TIME_T (rbp, tape_info->etime);
 		unmarshall_WORD (rbp, tape_info->side);
 		unmarshall_STRING (rbp, tape_info->poolname);
-		unmarshall_LONG (rbp, tape_info->estimated_free_space);
+		/* Estimated free-space is marshalled as a 32-bit   */
+		/* signed-integer for old clients using VMGR_MAGIC2 */
+		/* and VMGR_QRYTAPE.                                */
+		{
+		  int estimated_free_space_kibibyte_int = 0;
+		  unmarshall_LONG (rbp, estimated_free_space_kibibyte_int);
+		  tape_info->estimated_free_space_byte_u64 =
+		    (u_signed64)estimated_free_space_kibibyte_int * ONE_KB;
+		}
 		unmarshall_LONG (rbp, tape_info->nbfiles);
 		unmarshall_LONG (rbp, tape_info->rcount);
 		unmarshall_LONG (rbp, tape_info->wcount);
