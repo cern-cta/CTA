@@ -52,6 +52,14 @@ The
 .B stager_listprivileges
 command lists the CASTOR's Black and White list entries. This list can be restricted
 to a user, a group, a requestType, a service class or any combination of those.
+A "*" in the output for any column means that the entry does not have any restriction
+on this parameter.
+
+Note however the special value "'*'" in the output of the
+service class column. As just said, "*" (a star alone) means that this line is valid for any
+service class while "'*'" (a star surounded by simple quotes) means that this line
+concerns cross service class requests, typically queries with "-S '*'" arguments.
+See the last example below.
 
 .SH OPTIONS
 
@@ -110,7 +118,12 @@ privilege is granted on the destination service class.
 reduces the list to entries concerning the given service class.
 Note that is this parameter is not specified and the environment variable
 .B STAGE_SVCCLASS
-is set, its value will be used.
+is set, its value will be used. If this parameter is not specified and the
+environment variable
+.B STAGE_SVCCLASS
+is not set, the the 'default' service class will be used.
+Finally, the special value '*' can be used to query accross all service classes.
+
 .TP
 .BI \-h,\ \-\-help
 display command usage help
@@ -147,13 +160,59 @@ Change done successfully
 .fi
 $ stager_listprivileges 
 .fi
-ServiceClass    User     Group    RequestType           Status
+ServiceClass    User     Group    RequestType          Status
 .fi
 *               stage    st       ChangePrivilege      Denied
 .fi
 *               stage    st       *                    Granted
 .fi
 default         *        *        *                    Granted
+.fi
+
+.fi
+# and here is (an extract of a) a more complex example from a
+.fi
+# production instance. Note that the user column may show numbers
+.fi
+# if the user id is not defined on the node where the command is run
+.fi
+$ stager_listprivileges -S '*'
+.fi
+ServiceClass    User     Group    RequestType                    Status
+.fi
+\'*'             *        *        *                              Granted
+.fi
+*               *        zp       TapeRecall                     Denied
+.fi
+*               *        *        StageDiskCopyReplicaRequest    Granted
+.fi
+*               *        *        TapeRecall                     Granted
+.fi
+amscdr          [16153]  va       *                              Granted
+.fi
+amscdr          [26478]  xv       *                              Granted
+.fi
+cdr             [10684]  za       *                              Granted
+.fi
+cdr             [11075]  za       *                              Granted
+.fi
+cdr             [27109]  wj       *                              Granted
+.fi
+cdr             [27612]  wj       *                              Granted
+.fi
+compass004d     *        *        *                              Granted
+.fi
+compasscdr      *        *        *                              Granted
+.fi
+na61            *        wj       StageFileQueryRequest          Granted
+.fi
+na61            *        wj       StageGetRequest                Granted
+.fi
+na61            *        wj       StagePrepareToGetRequest       Granted
+.fi
+na61            *        wj       DiskPoolQuery                  Granted
+.fi
+recovery        *        *        *                              Granted
 .fi
 
 .SH EXIT STATUS
