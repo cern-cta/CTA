@@ -41,7 +41,7 @@ namespace castor {
      */
     enum TapeTpModeCodes {
       TPMODE_READ = 0, //When a tape is not used by any stager
-      TPMODE_WRITE = 1 //TpInfo_getVIDsToDo() has not yet been called
+      TPMODE_WRITE = 1 //Tape is being written
     }; /* end of enum TapeTpModeCodes */
 
     /**
