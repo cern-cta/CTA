@@ -17,6 +17,8 @@
 
 static sql_context ctx[VMGR_MAXNBTHREADS];
 
+static const char *const VMGRSCHEMAVERSION = "2_1_10_1";
+
 int vmgr_init_dbpkg()
 {
 	EXEC SQL ENABLE THREADS;
@@ -1382,8 +1384,13 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
 	char db_pwd[CA_MAXLINELEN+1];
 	char db_srv[CA_MAXLINELEN+1];
 	char db_name[CA_MAXLINELEN+1];
-	char *p;
-	FILE *fp;
+	char *p = NULL;
+	FILE *fp = NULL;
+	char schema_version[80];
+	EXEC SQL DECLARE schema_version_cursor CURSOR FOR
+		SELECT
+ 		 schemaVersion
+		FROM CastorVersion;
 	
 	strncpy (func, "vmgr_opendb", 16);
 	EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
@@ -1435,6 +1442,29 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
 	} else {
 		vmgr_closedb (dbfd);
 		vmgr_oracle_error (func, "CONNECT", dbfd, &sqlca);
+		return -1;
+	}
+
+	/* Verify the version of this vmgr daemon is compatible with the */
+	/* version of the vmgr database                                  */
+	EXEC SQL OPEN schema_version_cursor;
+	if (sqlca.sqlcode) {
+		vmgr_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+		return (-1);
+	}
+	EXEC SQL FETCH schema_version_cursor INTO
+	 :schema_version;
+	if (sqlca.sqlcode == 0) {
+		vmgrlogit (func, "schema version: %s\n", schema_version);
+		if (strcmp(schema_version, VMGRSCHEMAVERSION) != 0) {
+			vmgr_closedb (dbfd);
+			vmgrlogit (func, "error: require schema version %s\n",
+				VMGRSCHEMAVERSION);
+                	return -1;
+		}
+	} else {
+		vmgr_closedb (dbfd);
+		vmgr_oracle_error (func, "FETCH", dbfd, &sqlca);
 		return -1;
 	}
 
