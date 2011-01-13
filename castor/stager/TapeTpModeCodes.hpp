@@ -40,7 +40,7 @@ namespace castor {
      * Possible status codes for a Tape
      */
     enum TapeTpModeCodes {
-      TPMODE_READ = 0, //When a tape is not used by any stager
+      TPMODE_READ = 0, //Tape is being read
       TPMODE_WRITE = 1 //Tape is being written
     }; /* end of enum TapeTpModeCodes */
 
