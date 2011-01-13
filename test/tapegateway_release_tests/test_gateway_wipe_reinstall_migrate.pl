@@ -215,7 +215,7 @@ sub badDayFileCreation ( $$$$ )
 #                       "wrong size on rfcp",
 #                       "wrong segment on rfcp"
 #                       );
-    my @error_list = ( "wrong checksum on rfcp" );
+    my @error_list = ( "nothing on rfcp" );
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
     my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
     my $dual_subdir = CastorTapeTests::get_environment('castor_dual_subdirectory');

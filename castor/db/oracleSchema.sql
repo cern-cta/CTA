@@ -116,6 +116,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 's
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 6, 'TAPE_FAILED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 7, 'TAPE_UNKNOWN');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 8, 'TAPE_WAITPOLICY');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 9, 'TAPE_ATTACHEDTOSTREAM');
 
 /* SQL statements for type Segment */
 CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT PK_Segment_Id PRIMARY KEY, copy INTEGER, status INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -205,6 +206,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Stream', 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Stream', 'status', 5, 'STREAM_CREATED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Stream', 'status', 6, 'STREAM_STOPPED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Stream', 'status', 7, 'STREAM_WAITPOLICY');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Stream', 'status', 8, 'STREAM_TO_BE_SENT_TO_VDQM');
 
 /* SQL statements for type FileClass */
 CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER CONSTRAINT PK_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
