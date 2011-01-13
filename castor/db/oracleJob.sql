@@ -28,7 +28,7 @@ BEGIN
   -- in the middle of migrating it. If we are, just stop and raise
   -- a user exception
   SELECT count(*) INTO nbRes FROM TapeCopy
-    WHERE status = 3 -- TAPECOPY_SELECTED
+    WHERE status = tconst.TAPECOPY_SELECTED
     AND castorFile = cfId;
   IF nbRes > 0 THEN
     raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');

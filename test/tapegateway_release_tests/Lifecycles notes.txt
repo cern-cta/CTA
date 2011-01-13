@@ -5,6 +5,7 @@ Creation and transistions of tapecopies, status by status (hopefully not missing
 
 => poke
 <= peek
+VV Validation
 
 -   TAPECOPY_CREATED      CONSTANT PLS_INTEGER := 0;
 => In orastager.sql: internalPutDoneFunc creates it, only references castorfile.
@@ -21,13 +22,37 @@ Creation and transistions of tapecopies, status by status (hopefully not missing
 => In oracleTape.sql: attachTCRtcp resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITSTREAM or TAPECOPY_WAITPOLICY in case of problem attaching to streams. Suspect algorithm there.
 => In oracleTape.sql: attachTCGateway resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITSTREAM or TAPECOPY_WAITPOLICY in case of problem attaching to streams. Algo looks better.
 => In oracleTape.sql: resurrectCandidates resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITPOLICY from a list.
-[...] tbc with oracleTapeGateway.sql
+=> In oracleTapeGateway.sql: tg_endTapeSession failed tape copies are resurrected to TAPECOPY_TOBEMIGRATED if found with no error ("lost").
+=> In oracleTapeGateway.sql: tg_setMigRetryResult. Status set to TAPECOPY_TOBEMIGRATED (straightforward case)
+=> In oracleTapeGateway.sql: tg_deleteStream. Status reset to TAPECOPY_TOBEMIGRATED for copies orphaned by a stream deletion.
 
+- TAPECOPY_WAITSTREAM   CONSTANT PLS_INTEGER := 2;
+<= In oracleTape.sql: anyTapeCopyForStream checks the presence of any tapecopy in status TAPECOPY_WAITSTREAM (+other criterias) in a given stream
+<= In oracleTape.sql: defaultMigrSelPolicy selects a tapecopy for migration and returns the id.
+<= In oracleTape.sql: drainDiskMigrSelPolicy similar behaviour.
+<= In oracleTape.sql: repackMigrSelPolicy similar behaviour.
+=> In oracleTape.sql: attachTCRtcp sets status to TAPECOPY_WAITSTREAM after attaching it to streams.
+=> In oracleTape.sql: attachTCGateway sets status to TAPECOPY_WAITSTREAM in a similar fashion.
+<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy selects a tapecopy for migration and returns the id.
+<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy similar behaviour.
+<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy similar behaviour.
 
-  
-  TAPECOPY_WAITSTREAM   CONSTANT PLS_INTEGER := 2;
-  TAPECOPY_SELECTED     CONSTANT PLS_INTEGER := 3;
-  TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
+- TAPECOPY_SELECTED     CONSTANT PLS_INTEGER := 3;
+<= In oracleJob.sql: firstByteWrittenProc used as a check before overwriting a file. (select count (*)).
+<= In oracleStager.sql: recreateCastorFile used as a check before recreating a castorfile. (select count (*)).
+<= In oracleStager.sql: stageRelease used as a check before recreating a castorfile. (select count (*)).
+VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
+=> In oracleTape.sql: defaultMigrSelPolicy set status on selection.
+=> In oracleTape.sql: drainDiskMigrSelPolicy set status on selection.
+=> In oracleTape.sql: repackMigrSelPolicy set status on selection.
+<= In oracleTape.sql: rtcpclientdCleanUp moves all tapecopies from TAPECOPY_SELECTED to TAPECOPY_TOBEMIGRATED
+<= In oracleTapeGateway.sql: tg_endTapeSession failed tape copies are resurrected to TAPECOPY_TOBEMIGRATED if found with no error ("lost"). TAPECOPY_SELECTED is used as a marker at this point only.
+<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+??????????????????????????????drainDisk????? Algorithm should be the same.
+??????????????????????????????repack???????? Algorithm should be the same.
+=> In oracleTapeGateway.sql: tg_getFileToMigrate sets the status when a TC is selected and detached from streams.
+
+- TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
   TAPECOPY_STAGED       CONSTANT PLS_INTEGER := 5;
   TAPECOPY_FAILED       CONSTANT PLS_INTEGER := 6;
   TAPECOPY_WAITPOLICY   CONSTANT PLS_INTEGER := 7;

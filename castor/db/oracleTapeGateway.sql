@@ -473,7 +473,7 @@ BEGIN
          SET TC.status = tconst.TAPECOPY_TOBEMIGRATED,
              TC.VID = NULL
        WHERE TC.id IN (SELECT * FROM TABLE(varTcIds))
-         AND TC.status = tconst.TAPECOPY_SELECT;
+         AND TC.status = tconst.TAPECOPY_SELECTED;
     END IF;
   ELSE
 

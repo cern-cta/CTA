@@ -2136,7 +2136,7 @@ BEGIN
     END IF;
     -- check if recreation is possible for TapeCopies
     SELECT count(*) INTO nbRes FROM TapeCopy
-     WHERE status = 3 -- TAPECOPY_SELECTED
+     WHERE status = tconst.TAPECOPY_SELECTED
       AND castorFile = cfId;
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
@@ -2298,7 +2298,7 @@ BEGIN
    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   -- check if removal is possible for TapeCopies
   SELECT count(*) INTO nbRes FROM TapeCopy
-   WHERE status = 3 -- TAPECOPY_SELECTED
+   WHERE status = tconst.TAPECOPY_SELECTED
      AND castorFile = cfId;
   IF nbRes > 0 THEN
     -- We found something, thus we cannot recreate
