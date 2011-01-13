@@ -57,6 +57,7 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/stager/TapeTpModeCodes.hpp"
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
@@ -1273,7 +1274,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	      
 	      // UPDATE VMGR
 
-	      if (tape.tpmode() == 1) { // just for write
+	      if (tape.tpmode() == TPMODE_WRITE) { // just for write case
 	
 		gettimeofday(&tvStart, NULL);
      
@@ -1410,7 +1411,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      
 	    // UPDATE VMGR
 	    
-	    if (tape.tpmode() == 1) { // just for write
+	    if (tape.tpmode() == TPMODE_WRITE) { // just for write case
 	      VmgrTapeGatewayHelper vmgrHelper;
 	
 

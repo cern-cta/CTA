@@ -8887,7 +8887,7 @@ BEGIN
     SELECT T.id INTO outTapeId
       FROM TAPE T
      WHERE T.TapeGatewayRequestId = inTapeGatewayRequestId
-       AND T.tpMode = 0; -- TAPE_READ
+       AND T.tpMode = tconst.TPMODE_READ;
    EXCEPTION
      WHEN NO_DATA_FOUND THEN
        outTapeId := NULL;
@@ -8941,7 +8941,7 @@ BEGIN
     SELECT T.id INTO outTapeId
       FROM TAPE T
      WHERE T.VDQMVolReqId = inVDQMReqId
-       AND T.tpMode = 0; -- TAPE_READ
+       AND T.tpMode = tconst.TPMODE_READ;
    EXCEPTION
      WHEN NO_DATA_FOUND THEN
        outTapeId := NULL;
@@ -8997,7 +8997,7 @@ BEGIN
     SELECT T.id, T.TapeGatewayRequestId INTO varTapeId, outTgrId
       FROM TAPE T
      WHERE T.VDQMVolReqId = inVDQMReqId
-       AND T.tpMode = 0; -- TAPE_READ
+       AND T.tpMode = tconst.TPMODE_READ;
    EXCEPTION
      WHEN NO_DATA_FOUND THEN
        NULL; -- It's OK, could be a stream.
@@ -9115,7 +9115,7 @@ BEGIN
           RAISE_APPLICATION_ERROR (-20119,
             'Wrong number of tapes found for stream '||varStreamId);
       END;
-      IF (varTp.TpMode != 1) THEN -- TAPE_WRITE
+      IF (varTp.TpMode != tconst.TPMODE_WRITE) THEN
         ROLLBACK TO SAVEPOINT Tape_Mismatch;
         RAISE_APPLICATION_ERROR (-20119,
           'Wrong type of tape found for stream:'||varStreamId||' tape:'||
@@ -10324,7 +10324,7 @@ BEGIN
   SELECT T.id BULK COLLECT INTO varTapeReadIds
     FROM Tape T
    WHERE T.status IN ( tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED )
-     AND T.tpMode = 0 -- TAPE_READ
+     AND T.tpMode = tconst.TPMODE_READ
      AND T.TapeGatewayRequestId IS NOT NULL
      AND varNow - T.lastVdqmPingTime > inTimeLimit
      FOR UPDATE SKIP LOCKED;
@@ -10884,7 +10884,7 @@ BEGIN
     UPDATE Tape T
        SET T.status = tconst.TAPE_MOUNTED
      WHERE T.id = varTpId
-       AND T.tpmode = 0   -- Read
+       AND T.tpmode = tconst.TPMODE_READ
     RETURNING T.vid,  T.label,  T.density
       INTO   outVid, outLabel, outDensity; -- tape is MOUNTED
     outRet:=0;

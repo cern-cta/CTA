@@ -41,6 +41,7 @@
 #include "castor/stager/TapePool.hpp"
 
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/stager/TapeTpModeCodes.hpp"
 
 
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const castor::stager::Stream& streamToResolve, const castor::stager::TapePool& tapepool,int& startFseq,castor:: stager::Tape& tapeToUse ) throw (castor::exception::Exception){
@@ -102,7 +103,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
  
   tapeToUse.setVid(vid);
   tapeToUse.setSide(side);
-  tapeToUse.setTpmode(1); // to write
+  tapeToUse.setTpmode(TPMODE_WRITE);
   
   //Check that the returned start fseq is OK.
     
@@ -307,7 +308,7 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(const cast
   
   // in case of error we free the busy tape to be picked by someone else
 
-  if ( tape.tpmode() == 0 ) return; // read don't reset it
+  if ( tape.tpmode() == TPMODE_READ ) return; // read: don't reset it
 
   // Make sure we don't override some important status already set
 

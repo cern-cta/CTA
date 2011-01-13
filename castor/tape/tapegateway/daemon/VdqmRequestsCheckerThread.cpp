@@ -39,6 +39,7 @@
 #include "castor/stager/Stream.hpp"
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+#include "castor/stager/TapeTpModeCodes.hpp"
 
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
@@ -149,7 +150,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 	tapesToRetry.push_back(*tapeRequest);
 	if ((*tapeRequest).accessMode() == 1 ){
 	  castor::stager::Tape tapeToReset;
-	  tapeToReset.setTpmode(1);
+	  tapeToReset.setTpmode(TPMODE_WRITE);
 	  tapeToReset.setVid(*vid);
 	  tapesToReset.push_back(tapeToReset);
 	}
