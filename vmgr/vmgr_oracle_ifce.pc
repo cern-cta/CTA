@@ -1386,7 +1386,7 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
 	char db_name[CA_MAXLINELEN+1];
 	char *p = NULL;
 	FILE *fp = NULL;
-	char schema_version[80];
+	char schema_version[21];
 	EXEC SQL DECLARE schema_version_cursor CURSOR FOR
 		SELECT
  		 schemaVersion
