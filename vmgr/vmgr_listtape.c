@@ -73,7 +73,7 @@ vmgr_listtape_byte_u64(char *vid, char *pool_name, int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC2);
+		marshall_LONG (sbp, VMGR_MAGIC3);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
@@ -136,17 +136,8 @@ vmgr_listtape_byte_u64(char *vid, char *pool_name, int flags, vmgr_list *listp)
 			unmarshall_TIME_T (rbp, lp->etime);
 			unmarshall_WORD (rbp, lp->side);
 			unmarshall_STRING (rbp, lp->poolname);
-			/* Estimated free-space is marshalled as a 32-bit */
-			/* signed-integer representing kibibytes for old  */
-                        /* clients using VMGR_MAGIC2 and VMGR_LISTTAPE.   */
-			{
-			  int estimated_free_space_kibibyte_int = 0;
-			  unmarshall_LONG (rbp,
-			    estimated_free_space_kibibyte_int);
-			  lp->estimated_free_space_byte_u64 =
-			    (u_signed64)estimated_free_space_kibibyte_int *
-			  ONE_KB;
-			}
+			unmarshall_HYPER (rbp,
+				lp->estimated_free_space_byte_u64);
 			unmarshall_LONG (rbp, lp->nbfiles);
 			unmarshall_LONG (rbp, lp->rcount);
 			unmarshall_LONG (rbp, lp->wcount);

@@ -19,20 +19,20 @@ struct vmgr_tape_denmap_byte_u64 *
 vmgr_listdenmap_byte_u64(int flags, vmgr_list *listp)
 {
 	int bol = 0;
-	int c;
+	int c = 0;
 	char func[16];
-	gid_t gid;
-	int listentsz = sizeof(struct vmgr_tape_denmap_byte_u64);
-	struct vmgr_tape_denmap_byte_u64 *lp;
-	int msglen;
-	int nbentries;
-	char *q;
-	char *rbp;
+	gid_t gid = 0;
+	const int listentsz = sizeof(struct vmgr_tape_denmap_byte_u64);
+	struct vmgr_tape_denmap_byte_u64 *lp = NULL;
+	int msglen = 0;
+	int nbentries = 0;
+	char *q = NULL;
+	char *rbp = NULL;
 	char repbuf[LISTBUFSZ+4];
-	char *sbp;
+	char *sbp = NULL;
 	char sendbuf[REQBUFSZ];
-	struct vmgr_api_thread_info *thip;
-	uid_t uid;
+	struct vmgr_api_thread_info *thip = NULL;
+	uid_t uid = 0;
 
         strncpy (func, "vmgr_listdenmap", 16);
         if (vmgr_apiinit (&thip))
@@ -64,7 +64,7 @@ vmgr_listdenmap_byte_u64(int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC2);
+		marshall_LONG (sbp, VMGR_MAGIC3);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
@@ -107,12 +107,7 @@ vmgr_listdenmap_byte_u64(int flags, vmgr_list *listp)
 			unmarshall_STRING (rbp, lp->md_model);
 			unmarshall_STRING (rbp, lp->md_media_letter);
 			unmarshall_STRING (rbp, lp->md_density);
-			{
-			  int native_capacity_mebibyte_int = 0;
-			  unmarshall_LONG (rbp, native_capacity_mebibyte_int);
-			  lp->native_capacity_byte_u64 =
-			    (u_signed64)native_capacity_mebibyte_int * ONE_MB;
-			}
+			unmarshall_HYPER  (rbp, lp->native_capacity_byte_u64);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);

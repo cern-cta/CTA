@@ -15,7 +15,8 @@
 #include "serrno.h"
 #include <string.h>
 
-int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
+int vmgr_enterdenmap_byte_u64(const char *model, char *media_letter,
+  char *density, const u_signed64 native_capacity_byte_u64)
 {
 	int c;
 	char func[17];
@@ -48,7 +49,7 @@ int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int n
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC2);
+	marshall_LONG (sbp, VMGR_MAGIC3);
 	marshall_LONG (sbp, VMGR_ENTDENMAP);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -65,7 +66,7 @@ int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int n
 		marshall_STRING (sbp, " ");
 	}
 	marshall_STRING (sbp, density);
-	marshall_LONG (sbp, native_capacity);
+	marshall_HYPER (sbp, native_capacity_byte_u64);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

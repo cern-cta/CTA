@@ -44,7 +44,7 @@ int vmgr_querytape_byte_u64(const char *vid, int side,
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC2);
+	marshall_LONG (sbp, VMGR_MAGIC3);
 	marshall_LONG (sbp, VMGR_QRYTAPE);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -81,15 +81,8 @@ int vmgr_querytape_byte_u64(const char *vid, int side,
 		unmarshall_TIME_T (rbp, tape_info->etime);
 		unmarshall_WORD (rbp, tape_info->side);
 		unmarshall_STRING (rbp, tape_info->poolname);
-		/* Estimated free-space is marshalled as a 32-bit   */
-		/* signed-integer for old clients using VMGR_MAGIC2 */
-		/* and VMGR_QRYTAPE.                                */
-		{
-		  int estimated_free_space_kibibyte_int = 0;
-		  unmarshall_LONG (rbp, estimated_free_space_kibibyte_int);
-		  tape_info->estimated_free_space_byte_u64 =
-		    (u_signed64)estimated_free_space_kibibyte_int * ONE_KB;
-		}
+		unmarshall_HYPER (rbp,
+			tape_info->estimated_free_space_byte_u64);
 		unmarshall_LONG (rbp, tape_info->nbfiles);
 		unmarshall_LONG (rbp, tape_info->rcount);
 		unmarshall_LONG (rbp, tape_info->wcount);
