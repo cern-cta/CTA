@@ -409,26 +409,6 @@ BEGIN
 END;
 /
 
-/* convert black and white list to the new version of the DiskPoolQuery object (id 195 instead of 103) */
-UPDATE whiteList SET reqType = 195 WHERE reqType = 103;
-UPDATE blackList SET reqType = 195 WHERE reqType = 103;
-
-/* triggers to translate changeprivileges requests from old client to the new DiskPoolQuery object */
-CREATE OR REPLACE TRIGGER tr_WList_FixDPQueryInsert
-BEFORE INSERT ON WhiteList FOR EACH ROW
-WHEN (new.reqType = 103)     
-BEGIN
-  :new.reqType := 195;
-END;
-/
-CREATE OR REPLACE TRIGGER tr_BList_FixDPQueryInsert
-BEFORE INSERT ON BlackList FOR EACH ROW
-WHEN (new.reqType = 103)     
-BEGIN
-  :new.reqType := 195;
-END;
-/
-
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 
