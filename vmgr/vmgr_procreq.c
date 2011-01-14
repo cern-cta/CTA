@@ -1133,10 +1133,9 @@ int vmgr_srv_listdenmap(int magic,
     marshall_STRING (sbp, denmap_entry.md_media_letter);
     marshall_STRING (sbp, denmap_entry.md_density);
     if (magic >= VMGR_MAGIC2) {
-      int native_capacity_mebibyte_int = 0;
+      int native_capacity_mebibyte_int = denmap_entry.native_capacity_byte_u64
+        / ONE_MB;
       marshall_LONG (sbp, native_capacity_mebibyte_int);
-      denmap_entry.native_capacity_byte_u64 =
-        (u_signed64)native_capacity_mebibyte_int * ONE_MB;
     }
     nbentries++;
     bol = 0;
