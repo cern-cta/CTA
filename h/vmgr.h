@@ -20,6 +20,7 @@
 #include "osdep.h"
 #define VMGR_MAGIC	0x766D6701
 #define VMGR_MAGIC2	0x766D6702
+#define VMGR_MAGIC3	0x766D6703
 #define VMGR_LISTTIMEOUT 300	/* timeout while waiting for the next list sub-req */
 #define VMGR_TIMEOUT	5	/* netread timeout while receiving a request */
 #define	MAXRETRY 5
