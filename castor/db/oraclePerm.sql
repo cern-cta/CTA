@@ -463,6 +463,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
+    /* This line is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     addPrivilege(p);
   END;
 
@@ -474,6 +478,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
+    /* This line is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     removePrivilege(p);
   END;
 
@@ -481,7 +489,13 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur) AS
+    ireqTypeFixed NUMBER;
   BEGIN
+    /* ireqTypeFixed is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    ireqTypeFixed := ireqType;
+    IF ireqTypeFixed = 103 THEN ireqTypeFixed := 195; END IF; -- DiskPoolQuery fix
     OPEN plist FOR
       SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 1
@@ -489,7 +503,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
        WHERE (WhiteList.svcClass = svcClassName OR WhiteList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
          AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
-         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0)
+         AND (WhiteList.reqType = ireqTypeFixed OR WhiteList.reqType IS NULL OR ireqTypeFixed = 0)
     UNION
       SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 0
@@ -497,7 +511,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
        WHERE (BlackList.svcClass = svcClassName OR BlackList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)
          AND (BlackList.egid = iegid OR BlackList.egid IS NULL OR iegid = -1)
-         AND (BlackList.reqType = ireqType OR BlackList.reqType IS NULL OR ireqType = 0);
+         AND (BlackList.reqType = ireqTypeFixed OR BlackList.reqType IS NULL OR ireqTypeFixed = 0);
   END;
 
 END castorBW;
