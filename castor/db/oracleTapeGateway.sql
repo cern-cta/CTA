@@ -813,6 +813,7 @@ create or replace PROCEDURE tg_drainDiskMigrSelPolicy(streamId IN INTEGER,
   varLastFSChange NUMBER;
   varLastFSUsed NUMBER;
   varLastButOneFSUsed NUMBER;
+  varPenultimateDiskServer NUMBER;
   varFindNewFS NUMBER := 1;
   varNbMigrators NUMBER := 0;
   varUnused NUMBER;
@@ -879,13 +880,19 @@ BEGIN
   END IF;
   IF varFindNewFS = 1 THEN
     -- We try first to reuse the diskserver of the varLastFSUsed, even if we change filesystem
+    BEGIN
+      SELECT FS.DiskServer INTO varPenultimateDiskServer
+        FROM FileSystem FS WHERE FS.id = varLastButOneFSUsed;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+       varPenultimateDiskServer := NULL;
+    END;
     FOR f IN (
       SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
         FROM FileSystem, DiskServer
        WHERE FileSystem.diskServer = DiskServer.id
          AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
          AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-         AND DiskServer.id = varLastButOneFSUsed /* TODO TODO Should this not be either called DS or have an extra join?*/) LOOP
+         AND DiskServer.id = varPenultimateDiskServer) LOOP
        BEGIN
          -- lock the complete diskServer as we will update all filesystems
          SELECT id INTO varUnused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
