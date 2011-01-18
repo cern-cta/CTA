@@ -47,14 +47,30 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
 => In oracleTape.sql: repackMigrSelPolicy set status on selection.
 <= In oracleTape.sql: rtcpclientdCleanUp moves all tapecopies from TAPECOPY_SELECTED to TAPECOPY_TOBEMIGRATED
 <= In oracleTapeGateway.sql: tg_endTapeSession failed tape copies are resurrected to TAPECOPY_TOBEMIGRATED if found with no error ("lost"). TAPECOPY_SELECTED is used as a marker at this point only.
-<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
-??????????????????????????????drainDisk????? Algorithm should be the same.
-??????????????????????????????repack???????? Algorithm should be the same.
+<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy (x2) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy (x3) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy (x1) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
 => In oracleTapeGateway.sql: tg_getFileToMigrate sets the status when a TC is selected and detached from streams.
 
 - TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
-  TAPECOPY_STAGED       CONSTANT PLS_INTEGER := 5;
+=> In OraStageSvc.cpp: castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall: Created (for recall).
+=> In OracleTapeGateway: tg_setRecRetryResult: Status set to TAPECOPY_TOBERECALLED (from id list on input)
+
+Note: no peek as the recalls are segment driven (see segment lifecycle).
+
+- TAPECOPY_STAGED       CONSTANT PLS_INTEGER := 5;
+VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
+<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy (x2) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy (x3) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy (x1) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes)
+=> and <= In oracleTapeGateway.sql: TG_SetFileMigrated: After migration, tapecopy is marked as TAPECOPY_STAGED. When all TCs are STAGED for a given castorfile, they get destroyed.
+
   TAPECOPY_FAILED       CONSTANT PLS_INTEGER := 6;
+VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
+=> In oracleTape.sql: invalidateTapeCopies set the status of tapecopies (in bulk, from input list) when they are in TAPECOPY_WAITPOLICY.
+<= In oracleTapeGateway.sql: tg_getFileToMigrate used to rule out tapecopies in conflict check
+=> In oracleTapeGateway.sql: tg_setMigRetryResult set the status of retry policy, in bulk
+
   TAPECOPY_WAITPOLICY   CONSTANT PLS_INTEGER := 7;
   TAPECOPY_REC_RETRY    CONSTANT PLS_INTEGER := 8;
   TAPECOPY_MIG_RETRY    CONSTANT PLS_INTEGER := 9;
