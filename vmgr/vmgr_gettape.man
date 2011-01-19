@@ -24,8 +24,22 @@ vmgr_gettape \- get a tape volume to store a given amount of data
 .BI "u_signed64 *" estimated_free_space )
 .SH DESCRIPTION
 .B vmgr_gettape
-gets a tape volume to store a given amount of data.
-The tape status is changed to TAPE_BUSY.
+gets a tape volume from the specified tape-pool to store a given amount of
+data.  The status of the tape is changed to TAPE_BUSY.
+.PP
+In order to fulfill the
+.B vmgr_gettape
+request, the
+.B vmgrd
+daemon tries to find the five tapes with the least amount of free space that
+have enough space to satisfy the given amount of data.  If successfull
+.B vmgrd
+then chooses one of the five tapes at random.  If there are no tapes with
+enough space to store the given amount of data, then
+.B vmgrd
+tries to find the five tapes with the most amount of free space and then
+chooses one of those at random.
+
 .TP
 .I poolname
 specifies the name of the pool from which the cartridge should be taken.
