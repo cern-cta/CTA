@@ -50,7 +50,7 @@ EXTERN_C int vmgr_deletemodel (const char *, char *);
 EXTERN_C int vmgr_deletepool (const char *);
 EXTERN_C int vmgr_deletetape (const char *);
 EXTERN_C int vmgr_deltag (const char *);
-EXTERN_C int vmgr_enterdenmap (const char *, char *, char *, int);
+EXTERN_C int vmgr_enterdenmap_byte_u64 (const char *, char *, char *, const u_signed64);
 EXTERN_C int vmgr_enterdgnmap (const char *, char *, char *);
 EXTERN_C int vmgr_enterlibrary (const char *, int, int);
 EXTERN_C int vmgr_entermodel (const char *, char *, int);
