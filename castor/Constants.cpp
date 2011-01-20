@@ -137,7 +137,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DELETED TYPE",
   "DiskServerDescription",
   "FileSystemDescription",
-  "DiskPoolQuery",
+  "DELETED TYPE",
   "EndResponse",
   "FileResponse",
   "StringResponse",

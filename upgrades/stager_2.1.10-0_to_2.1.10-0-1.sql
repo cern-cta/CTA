@@ -1,96 +1,55 @@
-/*******************************************************************
+/******************************************************************************
+ *              stager_2.1.9-10_to_2.1.10-0.sql
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.655 $ $Date: 2009/03/26 14:11:58 $ $Author: itglp $
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
  *
- * PL/SQL code for permission and B/W list handling
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This script upgrades a CASTOR v2.1.9-10 STAGER database to v2.1.10-0
  *
  * @author Castor Dev team, castor-dev@cern.ch
- *******************************************************************/
+ *****************************************************************************/
 
-/* Process the adminList provided by the user in oracleCommon.schema */
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+BEGIN
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_10_0'
+     AND release = '2_1_10_0_1'
+     AND state != 'COMPLETE';
+  COMMIT;
+END;
+/
+
+/* Verify that the script is running against the correct schema and version */
 DECLARE
-  adminUserId NUMBER;
-  adminGroupId NUMBER;
-  ind NUMBER;
-  errmsg VARCHAR(2048);
+  unused VARCHAR(100);
 BEGIN
-  -- If the adminList is empty do nothing
-  IF '&adminList' IS NULL THEN
-    RETURN;
-  END IF;
-  -- Loop over the adminList
-  FOR admin IN (SELECT column_value AS s
-                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
-    BEGIN
-      ind := INSTR(admin.s, ':');
-      IF ind = 0 THEN
-        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
-        RAISE INVALID_NUMBER;
-      END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
-      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
-      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers VALUES (adminUserId, adminGroupId);
-    EXCEPTION WHEN INVALID_NUMBER THEN
-      dbms_output.put_line(errMsg);
-    END;
-  END LOOP;
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'STAGER'
+     AND release LIKE '2_1_10_0%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we can't apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
 END;
 /
 
-
-/* PL/SQL method implementing checkPermission
- * The return value can be
- *   0 if access is granted
- *   1 if access denied
- */
-CREATE OR REPLACE FUNCTION checkPermission(reqSvcClass IN VARCHAR2,
-                                           reqEuid IN NUMBER,
-                                           reqEgid IN NUMBER,
-                                           reqTypeI IN NUMBER)
-RETURN NUMBER AS
-  res NUMBER;
-  c NUMBER;
-BEGIN
-  -- Skip access control checks for admin/internal users
-  SELECT count(*) INTO c FROM AdminUsers 
-   WHERE egid = reqEgid
-     AND (euid = reqEuid OR euid IS NULL);
-  IF c > 0 THEN
-    -- Admin access, just proceed
-    RETURN 0;
-  END IF;
-  -- Perform the check
-  SELECT count(*) INTO c
-    FROM WhiteList
-   WHERE (svcClass = reqSvcClass OR svcClass IS NULL
-          OR (length(reqSvcClass) IS NULL AND svcClass = 'default'))
-     AND (egid = reqEgid OR egid IS NULL)
-     AND (euid = reqEuid OR euid IS NULL)
-     AND (reqType = reqTypeI OR reqType IS NULL);
-  IF c = 0 THEN
-    -- Not found in White list -> no access
-    RETURN 1;
-  ELSE
-    SELECT count(*) INTO c
-      FROM BlackList
-     WHERE (svcClass = reqSvcClass OR svcClass IS NULL
-            OR (length(reqSvcClass) IS NULL AND svcClass = 'default'))
-       AND (egid = reqEgid OR egid IS NULL)
-       AND (euid = reqEuid OR euid IS NULL)
-       AND (reqType = reqTypeI OR reqType IS NULL);
-    IF c = 0 THEN
-      -- Not Found in Black list -> access
-      RETURN 0;
-    ELSE
-      -- Found in Black list -> no access
-      RETURN 1;
-    END IF;
-  END IF;
-END;
-/
-
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_10_0', '2_1_10_0_1', 'TRANSPARENT');
+COMMIT;
 
 /**
   * Black and while list mechanism
@@ -463,9 +422,6 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
-    /* This line is a deprecated work around the issue of having changed the magic number of
-     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
-     * are 2.1.10-1 or newer */
     IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     addPrivilege(p);
   END;
@@ -478,9 +434,6 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
-    /* This line is a deprecated work around the issue of having changed the magic number of
-     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
-     * are 2.1.10-1 or newer */
     IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     removePrivilege(p);
   END;
@@ -491,9 +444,6 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
                            plist OUT PrivilegeExt_Cur) AS
     ireqTypeFixed NUMBER;
   BEGIN
-    /* ireqTypeFixed is a deprecated work around the issue of having changed the magic number of
-     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
-     * are 2.1.10-1 or newer */
     ireqTypeFixed := ireqType;
     IF ireqTypeFixed = 103 THEN ireqTypeFixed := 195; END IF; -- DiskPoolQuery fix
     OPEN plist FOR
@@ -517,3 +467,15 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /
 
+/* convert black and white list to the new version of the DiskPoolQuery object (id 195 instead of 103) */
+UPDATE whiteList SET reqType = 195 WHERE reqType = 103;
+UPDATE blackList SET reqType = 195 WHERE reqType = 103;
+
+/* cleanup obj2type table */
+DELETE FROM Type2Obj WHERE type = 103;
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_10_0_1';
+COMMIT;
