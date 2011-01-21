@@ -107,15 +107,19 @@ def getOracleEnv(withPreCompiler=False, oracleVersion=DEFAULT_ORACLE_VERSION):
 
         break  # We have a valid base directory
 
-    if not dirpath:
-        return ""
-
-    # Construct the return argument.
+    # Set default values for the return argument.
     rtn = dict()
-    rtn['home']     = dirpath
+    rtn['home']     = ""
     rtn['cppflags'] = ""
     rtn['procinc']  = ""
     rtn['libdir']   = ""
+    rtn['bindir']   = ""
+
+    if not dirpath:
+        return rtn
+
+    # Construct the return argument.
+    rtn['home']     = dirpath
     rtn['bindir']   = os.path.join(dirpath, "bin")
 
     # The values for libdir, cppflags and procinc are different between OIC
