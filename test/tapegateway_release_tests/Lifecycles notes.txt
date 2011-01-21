@@ -156,10 +156,43 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
 ====================== S E G M E N T =====================================================================================
 
 - SEGMENT_UNPROCESSED CONSTANT PLS_INTEGER := 0;
+<= In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ]
+<= In oracleTape.sql: anySegmentsForTape: sets tape status to tconst.TAPE_WAITMOUNT if any UNPROCESSED segment lives on it.
+=> In oracleTape.sql: rtcpclientdCleanUp: ressurects all SELECTED segments to UNPROCESSED (also kicks the corresponding tapes to WAITPOLICY
+<= In oracleTape.sql: inputForRecallPolicy (dead code, wrapper in rechancler, but not called): returns summaries of segments in SEGMENT_UNPROCESSED state for tapes.
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy (used by rechandler, wrapper exists, is called) very similar to inputForRecallPolicy
+<=> In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!))
+<=> In oracleTapeGateway.sql: tg_endTapeSession: some "lost" segments resurected into UNPROCESSED. Then immediately peeked to give a kick to the tape.
+<= In oracleTapeGateway.sql: tg_getFileToRecall: finds a segment to recall from a given tape and sets it to SELECCTED
+=> In oracleTapeGateway.sql: tg_setRecRetryResult: resets the segments from a given tapecopy to UNPROCESSED from tapecopy list.
+=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_restoreSelectedSegments: used to reset failed segments at the end of a tape session (see comment at the beginning of the function).
+=> In rtcopy/TapeErrorHandler.c: doRecallRetry: sets a segments to retried and clones it into UNPROCESSED.
+
+- SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5;
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcFileRecalled: some segments set to SEGMENT_FILECOPIED
+<= In rtcopy/TapeErrorHandler.c: checkRecallRetry used in some (quite intricate) error handling algorithm.
+  
+- SEGMENT_FAILED      CONSTANT PLS_INTEGER := 6;
+<= In oracleTape.sql: failedSegments lists all FAILED segments
+=> In oracleTapeGateway.sql: tg_endTapeSession: sets the segments to failed for all the tapecopies passed as a list to the procedure.
+=> In oracleTapeGateway.sql: tg_failFileTransfer: sets a segment as failed by tape/fseq id (so just one).
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcMigrFailed: "Catalogue update after failed migration"
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcRecallFailed: "Catalogue update after failed recall"
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_putFailed will move segments from SEGMENT_FAILED to SEGMENT_RETRIED
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments counts the SEGMENT_FAILED for the tape being processed (one tape, passed as an argument)
+
+- SEGMENT_SELECTED    CONSTANT PLS_INTEGER := 7;
+=> In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ]
+<= In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!))
+<= In oracleTapeGateway.sql: tg_endTapeSession: resurrect lost segments from UNPROCESSED to SELECTED. ( fishy... )
+=> In oracleTapeGateway.sql: tg_getFileToRecall: set to tconst.SEGMENT_SELECTED from tconst.SEGMENT_UNPROCESSED  for the selected tapecopy of a recall.
+<= In rtcopy/rtcpcltdCatalogueInterface.c: tcpcld_restoreSelectedSegments: restores SELECTED segments to UNPROCESSED (from an input list).
+
+- SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8;
+<= In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_updcFileRecalled: complext logic with if not status != SEGMENT_RETRIED. Boils down to a peek (in conjunction with SEGMENT_FILECOPIED)
+=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_putFailed: Flag failed segment retried so that it won't be selected for retry (from SEGMENT_FAILED)
+=> In rtcopy/TapeErrorHandler.c: doRecallRetry sets status of the segment to RETRIED
+d=> In rtcopy/TapeErrorHandler.c: oMigrationRetry  sets status of the segment to RETRIED
 
 
 
-  SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5;
-  SEGMENT_FAILED      CONSTANT PLS_INTEGER := 6;
-  SEGMENT_SELECTED    CONSTANT PLS_INTEGER := 7;
-  SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8;
