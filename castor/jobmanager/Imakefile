@@ -23,9 +23,9 @@ COMM Makefile for the CASTOR2 Job submission daemon
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public
+CPPFLAGS += $(ORACLE_CPPFLAGS)
 CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
-AddLdFlags(-L $(LSF_LIB_LOCATION) -ldl -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh)
+AddLdFlags(-L $(LSF_LIB_LOCATION) -ldl -lbat -llsf -llsbstream -L$(ORACLE_LIBDIR) -locci -lclntsh)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

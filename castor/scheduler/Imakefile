@@ -23,7 +23,7 @@ COMM Makefile for the CASTOR2 LSF External Plugin
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS += $(PYTHONINC)
+CPPFLAGS += $(PYTHON_INC)
 AddLdFlags(-L $(LSF_LIB_LOCATION) -lbat -llsf -llsbstream -lm -lstdc++)
 
 DependsOnLibrary(common,castorcommon)
@@ -34,7 +34,7 @@ SCHMOD_SHMEM_OBJS = schmod_shmem.o HandlerData.o
 SchModTarget(schmod_shmem,$(SCHMOD_SHMEM_OBJS),,,$(LIBDIR))
 
 SCHMOD_PYTHON_OBJS = schmod_python.o HandlerData.o Python.o
-SchModTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),, $(PYTHONLIBS),$(LIBDIR))
+SchModTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),, $(PYTHON_LIBS),$(LIBDIR))
 
 COMM We overwrite here the default rule for the compilation of schmod_python in order
 COMM to be able to alleviate the -Werror present in the standard flags for the case

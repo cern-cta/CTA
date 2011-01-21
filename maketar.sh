@@ -148,11 +148,10 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
     ## newlines, then look which line matches the keyword.
     ## Then we remove spaces
     #
-    ## Get requires
+    ## Get Requires
     #
     ## Requires might give ${shlibs:Depends},${misc:Depends} in the output: we will drop that
     ## This is why there are extra sed's after the original that remove the spaces
-    #
     #
     requires=`cat debian/control | perl -e '
       $package=shift;
@@ -164,12 +163,29 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
       if (defined($this{$what})) {
         print "$this{$what}\n";
       }' $package Depends |
-      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g' | sed 's/cx-Oracle/cx_Oracle/g' | sed 's/vdt-globus-essentials/vdt_globus_essentials/g' | sed 's/vdt-globus-data-server/vdt_globus_data_server/g'`
+      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ -n "${requires}" ]; then
         echo "Requires: ${requires}" >> CASTOR.spec
     fi
     #
-    ## Get provides
+    ## Get BuildRequires
+    #
+    buildrequires=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Build-Depends |
+      sed 's/ //g'`
+    if [ -n "${buildrequires}" ]; then
+        echo "BuildRequires: ${buildrequires}" >> CASTOR.spec
+    fi
+    #
+    ## Get Provides
     #
     provides=`cat debian/control | perl -e '
       $package=shift;
@@ -186,7 +202,7 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
         echo "Provides: ${provides}" >> CASTOR.spec
     fi
     #
-    ## Get conflicts
+    ## Get Conflicts
     #
     conflicts=`cat debian/control | perl -e '
       $package=shift;

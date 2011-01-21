@@ -21,13 +21,13 @@ COMM
 COMM @author Giulia Taurelli
 COMM
 
-CPPFLAGS += $(PYTHONINC)
-AddLdFlags($(PYTHONLIBS))
+CPPFLAGS += $(PYTHON_INC)
+AddLdFlags($(PYTHON_LIBS))
 
 TAPEPYTHONLIB_SRCS = \
   python.cpp \
   ScopedPythonLock.cpp \
-  SmartPyObjectPtr.cpp 
+  SmartPyObjectPtr.cpp
 
 TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.o)
 

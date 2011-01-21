@@ -24,8 +24,8 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
-CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
-AddLdFlags(-L$(ORACLE_HOME)/lib -locci -lclntsh)
+CPPFLAGS += $(ORACLE_CPPFLAGS) $(PYTHON_INC)
+AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh)
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
