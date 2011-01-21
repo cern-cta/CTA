@@ -125,9 +125,10 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions.
 => In oracleTapeGateway.sql: sets the status of stream to RUNNING (and tape to MOUNTED)
 <= In oraMigHunterSvc.cpp: s_tapePoolsForStreamPolicyStatementString (hardcoded SQL statement for castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy) looking for running streams of a given service class.
  
-- STREAM_WAITSPACE  CONSTANT PLS_INTEGER := 4; [ Probably dead state ]
+- STREAM_WAITSPACE  CONSTANT PLS_INTEGER := 4; [ Transition TO this state seems to be missing in tapegateway ]
 <= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class
 <= In oracleTape.sql: streamsForStreamPolicy finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo: Status set when VDQM fails with no tape available.
   
 - STREAM_CREATED    CONSTANT PLS_INTEGER := 5;
 (<=) In oracleTape.sql: rtcpclientdCleanUp reset some statues to pending but not from the one. (anti peek).
