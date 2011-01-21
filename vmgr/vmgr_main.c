@@ -33,6 +33,7 @@
 
 /* prototypes */
 int vmgr_init_dbpkg();
+static void *procconnection(void *);
 
 int being_shutdown = 0;
 char vmgrconfigfile[CA_MAXPATHLEN+1];
@@ -58,7 +59,6 @@ int vmgr_main(struct main_args *main_args)
 {
   int c;
   struct vmgr_dbfd dbfd;
-  void *doit(void *);
   char *dp;
   char domainname[CA_MAXHOSTNAMELEN+1];
   struct sockaddr_in from;
@@ -218,7 +218,7 @@ int vmgr_main(struct main_args *main_args)
           return (SYERR);
       }
       (vmgr_srv_thread_info + thread_index)->s = rqfd;
-      if (Cpool_assign (ipool, &doit,
+      if (Cpool_assign (ipool, &procconnection,
                         vmgr_srv_thread_info + thread_index, 1) < 0) {
         (vmgr_srv_thread_info + thread_index)->s = -1;
         vmgrlogit (func, VMG02, "Cpool_assign", sstrerror(serrno));
@@ -503,10 +503,7 @@ void procreq(int magic,
   sendrep (thip->s, VMGR_RC, c);
 }
 
-void *
-doit(arg)
-     void *arg;
-{
+void *procconnection(void *const arg) {
   int c;
   char *clienthost;
   int magic;
