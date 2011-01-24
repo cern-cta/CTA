@@ -2,20 +2,20 @@
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTTAPE 3 "$Date: 2002/02/07 06:46:24 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTTAPE_BYTE_U64 3 "$Date: 2002/02/07 06:46:24 $" CASTOR "vmgr Library Functions"
 .SH NAME
-vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
+vmgr_listtape_byte_u64 \- list all existing tape entries in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "struct vmgr_tape_info *vmgr_listtape (char *" vid ,
+.BI "struct vmgr_tape_info_byte_u64 *vmgr_listtape_byte_u64 (char *" vid ,
 .BI "char *" pool_name ,
 .BI "int " flags ,
 .BI "vmgr_list *" listp )
 .SH DESCRIPTION
-.B vmgr_listtape
+.B vmgr_listtape_byte_u64
 lists all existing tape entries in the CASTOR Volume Manager.
 .TP
 .I vid
