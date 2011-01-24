@@ -261,7 +261,7 @@ BEGIN
           'Wrong type of tape found for stream:'||varStreamId||' tape:'||
           varTp.Id||' TpMode:'||varTp.TpMode);
       END IF;
-      varTp.Status          := tconst.TAPE_ATTACHED_TO_STREAM
+      varTp.Status          := tconst.TAPE_ATTACHEDTOSTREAM
       varTp.dgn             := inDgn;
       varTp.label           := inLabel;
       varTp.density         := inDensity;
