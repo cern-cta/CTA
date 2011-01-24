@@ -27,18 +27,22 @@ vmgr_gettape \- get a tape volume to store a given amount of data
 gets a tape volume from the specified tape-pool to store a given amount of
 data.  The status of the tape is changed to TAPE_BUSY.
 .PP
-In order to fulfill the
+The
+.B vmgrd
+daemon tries to satisfy the
 .B vmgr_gettape
-request, the
+function by looking for the fullest tape that can satisfy the request, or if
+there is no such tape then the tape with the most amount of free space.  The
 .B vmgrd
-daemon tries to find the five tapes with the least amount of free space that
-have enough space to satisfy the given amount of data.  If successfull
+daemon purposely injects some randomness into its choice.
+In the case of finding the fullest tape, the
 .B vmgrd
-then chooses one of the five tapes at random.  If there are no tapes with
-enough space to store the given amount of data, then
+daemon chooses at random from the five fullest tapes (or less if there are less
+than five such tapes).
+In the case of finding the tape with the most amount of free space, the
 .B vmgrd
-tries to find the five tapes with the most amount of free space and then
-chooses one of those at random.
+daemon chooses at random from the five emptiest tapes (or less if there are
+less than five such tapes).
 
 .TP
 .I poolname
