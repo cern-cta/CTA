@@ -30,87 +30,104 @@ all: checkORACLE checkLSF checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape cl
 tape: checkSTK
 install: checkDESTDIR checkVERSION all installtape installclient
 
-EXPORTMAN?=$(DESTDIR)/usr/share
+EXPORTMAN ?= $(DESTDIR)/usr/share
 checkDESTDIR:
-	@if [ -z "${DESTDIR}" ]; then \
+	@if [ -z "$(DESTDIR)" ]; then \
 	  echo "Please set DESTDIR environment variable before invoking make install."; \
 	  exit 1; \
 	fi;
 
 checkORACLE:
-	@if [ -z ${ORACLE_HOME} ]; then \
+	@if [ -z $(ORACLE_HOME) ]; then \
 	  echo "Please define ORACLE_HOME environment variable before invoking make."; \
 	  exit 1; \
 	fi; \
-	if [ ! -r ${ORACLE_HOME}/lib/libclntsh.so ]; then \
-	  echo "Could not find libclntsh.so in ${ORACLE_HOME}/lib. Giving up."; \
+	if [ ! -r $(ORACLE_LIBDIR)/libclntsh.so ]; then \
+	  echo "Could not find libclntsh.so in $(ORACLE_LIBDIR). Giving up."; \
 	  exit 1; \
 	fi; \
-	if [ ! -r ${ORACLE_HOME}/bin/proc ]; then \
-	  echo "Could not find proc in ${ORACLE_HOME}/bin. Giving up."; \
+	if [ ! -r $(ORACLE_BIN)/proc ]; then \
+	  echo "Could not find proc executable in $(ORACLE_BIN). Giving up."; \
 	  exit 1; \
 	fi
 
 LSF_LIB_LOCATION ?= $(LIBDIR)
 LSF_LOCATION ?= $(dir $(LSF_LIB_LOCATION))
 checkLSF:
-	@if [ ! -e $(LSF_LIB_LOCATION)/liblsf.so -o ! -d $(LSF_LOCATION)/include/lsf ]; then \
-	  echo "Could not find LSF installation. Giving up."; \
+	@if [ ! -r $(LSF_LOCATION)/include/lsf/lsbatch.h ]; then \
+	  echo "Unable to find LSF header files at $(LSF_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -r $(LSF_LIB_LOCATION)/liblsf.so ]; then \
+	  echo "Unable to find LSF library files at $(LSF_LIB_LOCATION). Giving up."; \
 	  exit 1; \
 	fi
 
 GLOBUS_LOCATION ?= /opt/globus
 checkGLOBUS:
-	@if [ ! -r ${GLOBUS_LOCATION}/lib/libglobus_ftp_control_/**/GlobusFlavour.so -o ! -d ${GLOBUS_LOCATION}/include ]; then \
-	  echo "Could not find Globus installation at ${GLOBUS_LOCATION}. Giving up."; \
+	@if [ ! -r $(GLOBUS_LOCATION)/include//**/GlobusFlavour/globus_config.h -o ! -r $(GLOBUS_LOCATION)/include//**/GlobusFlavour/globus_common.h ]; then \
+	  echo "Unable to find globus header files at $(GLOBUS_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -r $(GLOBUS_LOCATION)/lib/libglobus_ftp_control_/**/GlobusFlavour.so ]; then \
+	  echo "Unable to find globus library files at $(GLOBUS_LOCATION). Giving up."; \
 	  exit 1; \
 	fi
 
 checkSTK:
-	@if [ ! -z "${CASTOR_NOSTK}" ]; then \
+	@if [ ! -z "$(CASTOR_NOSTK)" ]; then \
 	  echo "Compiling without STK support."; \
 	else \
 	  if [ ! -e $(LIBDIR)/CDK/libapi.so -o ! -e $(LIBDIR)/CDK/libutl.so -o ! -e $(LIBDIR)/CDK/libipc.so -o ! -e $(LIBDIR)/CDK/libcl.so ]; then \
-	    echo "Could not find STK libraries. Giving up."; \
+	    echo "Unable to find STK library files at $(LIBDIR). Giving up."; \
 	    exit 1; \
-          fi; \
+	  fi; \
 	  if [ ! -d /usr/include/CDK ]; then \
-	    echo "Could not find STK development files. Giving up."; \
+	    echo "Unable to find STK header files at /usr/include/CDK. Giving up."; \
 	    exit 1; \
-          fi; \
+	  fi; \
 	fi
 
-XROOT_LOCATION ?= /opt/xrootd
+XROOT_LIB_LOCATION ?= /opt/xrootd/lib
+XROOT_LOCATION ?= $(dir $(XROOT_LIB_LOCATION))
 checkXROOT:
-	@if [ ! -r ${XROOT_LOCATION}/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
-	  echo "Could not find XROOT header files at ${XROOT_LOCATION}. Giving up."; \
+	@if [ ! -r $(XROOT_LOCATION)/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
+	  echo "Unable to find XROOT header files at $(XROOT_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -e $(XROOT_LIB_LOCATION)/libXrdPosix.so ]; then \
+	  echo "Unable to find XROOT library files at $(XROOT_LIB_LOCATION). Giving up."; \
 	  exit 1; \
 	fi
 
 MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
 MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))
 checkMEMCACHED:
-	@if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so -o ! -e $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
-          echo "Could not find memcached dev installation at ${MEMCACHED_LOCATION}. Giving up."; \
-          exit 1; \
-        fi
+	@if [ ! -r $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
+	  echo "Unable to find memcached header files at $(MEMCACHED_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so ]; then \
+	  echo "Unable to find memcached library files at $(MEMCACHED_LIB_LOCATION). Giving up."; \
+	  exit 1; \
+	fi
 
 XFS_LOCATION ?= /usr
 checkXFS:
 	@if [ ! -e $(XFS_LOCATION)/include/xfs/xfs.h ]; then \
-          echo "Could not find xfs devel installation at ${XFS_LOCATION}. Giving up."; \
-          exit 1; \
-        fi
+	  echo "Unable to find xfs header files at $(XFS_LOCATION). Giving up."; \
+	  exit 1; \
+	fi
 
 checkVERSION:
-	@if [ -z "${MAJOR_CASTOR_VERSION}" -o -z "${MINOR_CASTOR_VERSION}" ]; then \
+	@if [ -z "$(MAJOR_CASTOR_VERSION)" -o -z "$(MINOR_CASTOR_VERSION)" ]; then \
 	  echo "Please define MAJOR/MINOR_CASTOR_VERSION before installing."; \
 	  exit 1; \
 	fi
 
 /******************************************************************************
  * The following code deals with automatic prerequisites, that is with        *
- * automatic generation of the list of header files that a given source file  * 
+ * automatic generation of the list of header files that a given source file  *
  * depends on and with automatic validation that these files did not change   *
  * when one checks whether to recompile the given source file.                *
  * The ideas behind this code are taken from the GNU make manual (see chapter *

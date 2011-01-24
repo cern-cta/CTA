@@ -24,9 +24,9 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
-CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=RepackConfigFile -I $(ORACLE_HOME)/rdbms/public
+CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=RepackConfigFile $(ORACLE_CPPFLAGS)
 SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
-SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,$(CASTOR_ROOT)/shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
+SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,$(CASTOR_ROOT)/shlib -L$(ORACLE_LIBDIR) -locci -lclntsh
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

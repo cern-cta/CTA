@@ -1,4 +1,5 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2009/02/27 13:00:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2009/02/27 13:00:52 $ CERN IT-PDP/DM 
+Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -6,8 +7,8 @@ COMM
 
 COMM		Make CASTOR tests for "ns" directory
 
-CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public
-AddLdFlags(-L$(ORACLE_HOME)/lib -locci -lclntsh)                                                                                       
+CPPFLAGS += $(ORACLE_CPPFLAGS)
+AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh)                                                                                       
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)

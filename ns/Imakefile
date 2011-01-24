@@ -19,7 +19,7 @@ CPPFLAGS += -DCNS_HOST=NsHost -DSCNS_HOST=SNsHost \
             -DCNSHOSTPFX=NsHostPfx -DSCNSHOSTPFX=SNsHostPfx \
             -DLCGDM_MAPFILE=\"IdMapFile\" \
             -DNSLOGFILE=NsLogFile -DNSCONFIG=NsConfigFile \
-	    -I$(ORACLE_HOME)/precomp/public
+	    $(ORACLE_CPPFLAGS)
 
 NSD_OBJS	=	Cns_main.o \
 			Cns_acl.o \
@@ -225,7 +225,7 @@ DependsOnLibrary(dlf,castordlf)
 
 PROC(Cns_oracle_ifce)
 MakeDir(LogPath,0755)
-NSORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
+NSORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
 
 NormalProgramTarget(nsd,$(NSD_OBJS),,$(NSORALIBS) $(NSLIBCSEC),750)
 ADMMANPAGE(nsd)
