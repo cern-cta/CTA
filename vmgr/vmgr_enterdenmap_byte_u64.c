@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
+/*      vmgr_enterdenmap_byte_u64 - enter a new quadruplet model/media_letter/density/capacity */
 
 #include <errno.h>
 #include <sys/types.h>

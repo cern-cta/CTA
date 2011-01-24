@@ -2,20 +2,20 @@
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2003/11/17 06:46:30 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE_BYTE_U64 3 "$Date: 2003/11/17 06:46:30 $" CASTOR "vmgr Library Functions"
 .SH NAME
-vmgr_querytape \- query the CASTOR Volume Manager about a tape
+vmgr_querytape_byte_u64 \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "int vmgr_querytape (const char *" vid ,
+.BI "int vmgr_querytape_byte_u64 (const char *" vid ,
 .BI "int " side ,
-.BI "struct vmgr_tape_info *" tape_info ,
+.BI "struct vmgr_tape_info_byte_u64 *" tape_info ,
 .BI "char *" dgn )
 .SH DESCRIPTION
-.B vmgr_querytape
+.B vmgr_querytape_byte_u64
 queries the CASTOR Volume Manager about a tape.
 .TP
 .I vid

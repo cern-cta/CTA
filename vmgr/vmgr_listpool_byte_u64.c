@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_listpool - list tape pool entries */
+/*      vmgr_listpool_byte_u64 - list tape pool entries */
 
 #include <errno.h>
 #include <stdlib.h>

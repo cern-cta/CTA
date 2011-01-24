@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_listtape - list all existing tapes */
+/*      vmgr_listtape_byte_u64 - list all existing tapes */
 
 #include <errno.h>
 #include <stdlib.h>

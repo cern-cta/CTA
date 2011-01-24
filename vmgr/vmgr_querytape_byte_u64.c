@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_querytape - query about a tape volume */
+/*      vmgr_querytape_byte_u64 - query about a tape volume */
 
 #include <errno.h>
 #include <sys/types.h>
