@@ -4,19 +4,19 @@
 .\"
 .TH VMGR_ENTERDENMAP 3 "$Date: 2003/10/29 07:48:58 $" CASTOR "vmgr Library Functions"
 .SH NAME
-vmgr_enterdenmap \- enter a new quadruplet model/media_letter/density/capacity
+vmgr_enterdenmap_byte_u64 \- enter a new quadruplet model/media_letter/density/capacity
 in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "int vmgr_enterdenmap (const char *" model ,
+.BI "int vmgr_enterdenmap_byte_u64 (const char *" model ,
 .BI "char *" media_letter ,
 .BI "char *" density ,
-.BI "int " native_capacity )
+.BI "us_signed64 " native_capacity_byte_u64 )
 .SH DESCRIPTION
-.B vmgr_enterdenmap
+.B vmgr_enterdenmap_byte_u64
 enters a new quadruplet model/media_letter/density/capacity in the CASTOR Volume
 Manager.
 .TP
@@ -50,7 +50,7 @@ or
 .B 20GC
 for STK 9840 cassettes.
 .TP
-.I native_capacity
+.I native_capacity_byte_u64
 in Mbytes.
 For a multi-sided media like DVD, the native capacity corresponds to one side.
 .LP
@@ -80,7 +80,9 @@ the length of
 .I density
 exceeds
 .BR CA_MAXDENLEN ,
-or native_capacity <= 0.
+or
+.I native_capacity_byte_u64
+<= 0.
 .TP
 .B ENOSPC
 The volume manager database is full.
