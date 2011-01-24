@@ -682,7 +682,7 @@ BEGIN
          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
            AND D.filesystem = varLastButOneFSUsed
            AND STTC.parent = inStreamId
-           AND T.status = tconst.TAPECOPY_WAITSTREAM
+           AND T.status = tconst.TAPECOPY_WAITINSTREAMS
            AND STTC.child = T.id
            AND T.castorfile = D.castorfile
            -- Do not select a tapecopy for which a sibling TC is or will be on 
@@ -753,7 +753,7 @@ BEGIN
          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
            AND D.filesystem = f.fileSystemId
            AND StT.parent = inStreamId
-           AND T.status = tconst.TAPECOPY_WAITSTREAM
+           AND T.status = tconst.TAPECOPY_WAITINSTREAMS
            AND StT.child = T.id
            AND T.castorfile = D.castorfile
            AND C.id = D.castorfile
@@ -857,8 +857,8 @@ BEGIN
           WHERE T.castorfile = D.castorfile
           AND ST.child = T.id
           AND ST.parent = inStreamId
-          AND decode(T.status, 2, T.status, NULL) = tconst.TAPECOPY_WAITSTREAM
-          -- 2 = tconst.TAPECOPY_WAITSTREAM. Has to be kept as a hardcoded number in order to use a function-based index.
+          AND decode(T.status, 2, T.status, NULL) = tconst.TAPECOPY_WAITINSTREAMS
+          -- 2 = tconst.TAPECOPY_WAITINSTREAMS. Has to be kept as a hardcoded number in order to use a function-based index.
           -- Do not select a tapecopy for which a sibling TC is or will be on 
           -- on this tape.
           AND varVID NOT IN (
@@ -907,7 +907,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = inStreamId
-            AND T.status = tconst.TAPECOPY_WAITSTREAM
+            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -961,7 +961,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = inStreamId
-            AND T.status = tconst.TAPECOPY_WAITSTREAM
+            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -1058,7 +1058,7 @@ BEGIN
        -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
          AND D.filesystem = f.fileSystemId
          AND StT.parent = inStreamId
-         AND T.status = tconst.TAPECOPY_WAITSTREAM
+         AND T.status = tconst.TAPECOPY_WAITINSTREAMS
          AND StT.child = T.id
          AND T.castorfile = D.castorfile
          AND C.id = D.castorfile

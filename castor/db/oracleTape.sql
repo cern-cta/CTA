@@ -219,7 +219,7 @@ BEGIN
      AND DiskCopy.castorfile = TapeCopy.castorfile
      AND Stream2TapeCopy.child = TapeCopy.id
      AND Stream2TapeCopy.parent = streamId
-     AND TapeCopy.status = tconst.TAPECOPY_WAITSTREAM
+     AND TapeCopy.status = tconst.TAPECOPY_WAITINSTREAMS
      AND ROWNUM < 2; 
   res := 1;
 EXCEPTION
@@ -301,7 +301,7 @@ BEGIN
          -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
            AND D.filesystem = lastButOneFSUsed
            AND ST.parent = streamId
-           AND T.status = tconst.TAPECOPY_WAITSTREAM
+           AND T.status = tconst.TAPECOPY_WAITINSTREAMS
            AND ST.child = T.id
            AND T.castorfile = D.castorfile
            AND ROWNUM < 2 FOR UPDATE OF t.id NOWAIT;
@@ -348,7 +348,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITSTREAM
+            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -451,8 +451,8 @@ BEGIN
          WHERE T.castorfile = D.castorfile
            AND ST.child = T.id
            AND ST.parent = streamId
-           AND decode(T.status, 2, T.status, NULL) = tconst.TAPECOPY_WAITSTREAM
-           -- 2 = tconst.TAPECOPY_WAITSTREAM. Has to be kept as a hardcoded number in order to use a function-based index.
+           AND decode(T.status, 2, T.status, NULL) = tconst.TAPECOPY_WAITINSTREAMS
+           -- 2 = tconst.TAPECOPY_WAITINSTREAMS. Has to be kept as a hardcoded number in order to use a function-based index.
            AND ROWNUM < 2 FOR UPDATE OF T.id NOWAIT;   
         SELECT C.fileId, C.nsHost, C.fileSize, C.lastUpdateTime
           INTO fileId, nsHost, fileSize, lastUpdateTime
@@ -487,7 +487,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITSTREAM
+            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -533,7 +533,7 @@ BEGIN
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
-            AND T.status = tconst.TAPECOPY_WAITSTREAM
+            AND T.status = tconst.TAPECOPY_WAITINSTREAMS
             AND StT.child = T.id
             AND T.castorfile = D.castorfile
             AND C.id = D.castorfile
@@ -631,7 +631,7 @@ BEGIN
        -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
          AND D.filesystem = f.fileSystemId
          AND StT.parent = streamId
-         AND T.status = tconst.TAPECOPY_WAITSTREAM
+         AND T.status = tconst.TAPECOPY_WAITINSTREAMS
          AND StT.child = T.id
          AND T.castorfile = D.castorfile
          AND C.id = D.castorfile
@@ -1555,11 +1555,11 @@ BEGIN
         -- we have at least a stream for that tapepool
         SELECT id INTO unused
           FROM TapeCopy
-         WHERE status IN (tconst.TAPECOPY_WAITSTREAM, tconst.TAPECOPY_WAITPOLICY) AND id = tapeCopyIds(i) FOR UPDATE;
+         WHERE status IN (tconst.TAPECOPY_WAITINSTREAMS, tconst.TAPECOPY_WAITPOLICY) AND id = tapeCopyIds(i) FOR UPDATE;
         -- let's attach it to the different streams
         FOR streamId IN (SELECT id FROM Stream
                           WHERE Stream.tapepool = tapePoolId ) LOOP
-          UPDATE TapeCopy SET status = tconst.TAPECOPY_WAITSTREAM
+          UPDATE TapeCopy SET status = tconst.TAPECOPY_WAITINSTREAMS
            WHERE status = tconst.TAPECOPY_WAITPOLICY AND id = tapeCopyIds(i);
           DECLARE CONSTRAINT_VIOLATED EXCEPTION;
           PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED, -1);
@@ -1610,14 +1610,14 @@ BEGIN
          BEGIN     
            SELECT /*+ index(tapecopy, PK_TAPECOPY_ID)*/ id INTO unused
              FROM TapeCopy
-            WHERE Status in (tconst.TAPECOPY_WAITSTREAM, tconst.TAPECOPY_WAITPOLICY) AND id = tapeCopyIds(i) FOR UPDATE;
+            WHERE Status in (tconst.TAPECOPY_WAITINSTREAMS, tconst.TAPECOPY_WAITPOLICY) AND id = tapeCopyIds(i) FOR UPDATE;
            DECLARE CONSTRAINT_VIOLATED EXCEPTION;
            PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED, -1);
            BEGIN
              INSERT INTO stream2tapecopy (parent ,child)
              VALUES (streamId, tapeCopyIds(i));
              UPDATE /*+ index(tapecopy, PK_TAPECOPY_ID)*/ TapeCopy
-                SET Status = tconst.TAPECOPY_WAITSTREAM WHERE status = tconst.TAPECOPY_WAITPOLICY AND id = tapeCopyIds(i); 
+                SET Status = tconst.TAPECOPY_WAITINSTREAMS WHERE status = tconst.TAPECOPY_WAITPOLICY AND id = tapeCopyIds(i); 
            EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
              -- if the stream does not exist anymore
              -- it might also be that the tapecopy does not exist anymore
