@@ -1553,7 +1553,8 @@ int vmgr_update_side_entry_byte_u64(struct vmgr_dbfd *dbfd,
 	EXEC SQL UPDATE vmgr_tape_side SET
 		POOLNAME = :side_entry->poolname,
 		STATUS = :side_entry->status,
-		ESTIMATED_FREE_SPACE = estimated_free_space_byte_str,
+		ESTIMATED_FREE_SPACE =
+			TO_NUMBER(:estimated_free_space_byte_str),
 		NBFILES = :side_entry->nbfiles
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
