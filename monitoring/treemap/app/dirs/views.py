@@ -395,9 +395,9 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             pos = rediraddr.rfind('/{')
             if pos != -1: rediraddr = rediraddr[:pos+1]   
                         
-            newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
+            newurlpart = annurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid, depth = depth)
             rediraddr = rediraddr + newurlpart
-            defurl = UrlDefault(newurlpart) #new url with the new values
+            annurl = UrlAnnex(newurlpart) #new url with the new values
             
             return redirect(to = rediraddr, args = {'request':request,'options':  annurl.getParameter('options'), 'theid':annurl.getParameter('theid'), 'presetid': annurl.getParameter('presetid'), 'depth':annurl.getParameter('depth'), 'rootmodel':annurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
     except Exception, e:
@@ -711,7 +711,7 @@ def getDefaultMetricsLinking():
 def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
     try:
         #Directory you want to show its content
-        root = globals()[rootmodel].__dict__['findObjectByIdReplacementSuffix'](globals()[rootmodel], urlrest, statusfilename)
+        root = globals()[rootmodel].__dict__['findObjectByIdReplacementSuffix'](createObject(getModelsModuleName(rootmodel), rootmodel), urlrest, statusfilename)
     except ObjectDoesNotExist:
         raise Http404
         return render_to_response("Error") 

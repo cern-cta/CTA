@@ -4,12 +4,13 @@ expressons to define URL's for django framework
 '''
 
 from app import dirs
+from app.dirs.models import *
 from app.presets.options.OptionsReader import OptionsReader
 from app.tools.Inspections import getAvailableModels
 from django.conf.urls.defaults import *
+from django.http import Http404
 import app.presets.Presets
 import re
-from app.dirs.models import *
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin

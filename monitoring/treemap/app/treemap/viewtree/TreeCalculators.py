@@ -38,7 +38,7 @@ class SquaredTreemapCalculator(object):
         assert(calc_properties is None or isinstance(calc_properties, ViewTreeCalculationProps)), "calc_properties wrong"
         self.calc_properties = calc_properties
         
-    def calculate(self, optimizefortxt = False):
+    def calculate(self, optimizefortxt = False, sorted = True):
         
         if self.basic_properties is None:
             self.basic_properties = BasicViewTreeProps()
@@ -78,13 +78,13 @@ class SquaredTreemapCalculator(object):
         height = height - 2*self.spacesize-self.headersize
         
         if self.spacesize > self.minspacesize: self.spacesize = self.spacesize - 1
-        self.calculateRecursion(x, y, width ,height , viewtree, self.spacesize, self.minspacesize, self.headersize, optimizefortxt)
+        self.calculateRecursion(x, y, width ,height , viewtree, self.spacesize, self.minspacesize, self.headersize, optimizefortxt, sorted)
         
         return viewtree
         
     #line: The items are ordered graphically in lines of equally tall squares
     #it is like a line of text but with rectangles instead of letters
-    def calculateRecursion(self, startx, starty, width ,height, viewtree, spacesize, minspacesize, headersize, optimizefortxt):
+    def calculateRecursion(self, startx, starty, width ,height, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted):
 
         #calculate the area in square pixels
         pixels = float(height * width)
@@ -101,7 +101,10 @@ class SquaredTreemapCalculator(object):
             return
         
         #children at the current position, ordered from the biggest to smallest, the algorithm works only if children[i] <= children[i+1]
-        children = self.otree.getSortedChildren()
+        if sorted:
+            children = self.otree.getSortedChildren()
+        else:
+            children = self.otree.getChildren()
         if len(children) <= 0: return
         
         #collect all nodes that can be displayed
@@ -123,6 +126,8 @@ class SquaredTreemapCalculator(object):
         
         #variable needed in the for loop. It stores if the previous value already exceeded linelen if slicing was vertically
         includeoverflowold = False
+        #sqwidthold to decect big differences between values 
+        sqwidthold = 0;
         
         for child in children:
             
@@ -142,9 +147,13 @@ class SquaredTreemapCalculator(object):
             includeoverflow = (direction == VERTICAL) and ((linesum + sqwidth) > linelen)
             includetrigger = (includeoverflowold == False) and (includeoverflow == True) and optimizefortxt
             
+            #optimize by detecting big size differences if the incoming values are sorted
+            bigdifftrigger = sqwidthold/sqwidth > 1.5
+            if sorted == False: bigdifftrigger = False
+            
             #if collecting items for current line is completed, because the next addition would go over the border
             #add all items to TreeView except of the current overflow one
-            if (((linesum + sqwidth) > linelen) and not includetrigger):
+            if (((linesum + sqwidth) > linelen) and not includetrigger) or bigdifftrigger:
                 #save the coordinates where the line starts
                 xbeginning = startx
                 ybeginning = starty
@@ -243,6 +252,8 @@ class SquaredTreemapCalculator(object):
                 
             #update includeoverflowold for the next iteration
             includeoverflowold = includeoverflow
+            #save the square width to have value comparision for the next
+            sqwidthold = sqwidth
         
         #cleanup code: In case of unprocessed items in line_collection
         if line_collection:
@@ -313,9 +324,9 @@ class SquaredTreemapCalculator(object):
             #see if it is big enough to have a header and do recursion
             hsize = totalviewnodes[i].getProperty('headersize')
             if hsize <= 0.0:
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, headersize, optimizefortxt)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted)
             else:
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + hsize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - hsize, viewtree, spacesize, minspacesize, hsize, optimizefortxt)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + hsize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - hsize, viewtree, spacesize, minspacesize, hsize, optimizefortxt, sorted)
                 
             self.otree.traverseBack()
             viewtree.traverseBack()
