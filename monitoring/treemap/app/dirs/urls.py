@@ -115,7 +115,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             theid = self.paramdict['theid'];
-            globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
+            globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -214,7 +214,7 @@ class UrlAnnex(UrlReaderInterface):
         
         try:  
             theid = self.paramdict['theid'];
-            globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
+            globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             
@@ -249,7 +249,7 @@ class UrlAnnex(UrlReaderInterface):
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
                 try:
-                    globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
+                    globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
                 except:
                     theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
                     
