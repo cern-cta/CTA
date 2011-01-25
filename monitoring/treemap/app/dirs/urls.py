@@ -9,6 +9,7 @@ from app.tools.Inspections import getAvailableModels
 from django.conf.urls.defaults import *
 import app.presets.Presets
 import re
+from app.dirs.models import *
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -39,48 +40,83 @@ urlpatterns = patterns('',
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)$', 'dirs.views.redirectOldLink'),
 )
 
-class UrlDefault(object):
+class UrlReaderInterface(object):
+    def getParameter(self, optionname):
+        raise Exception("getParameter not implemented")
+    
+    def getParameterNames(self):
+        raise Exception("getParameterNames not implemented")
+    
+    def getRank(self, optionname):
+        raise Exception("getRank not implemented")
+    
+    def match(self):
+        raise Exception("match not implemented")
+    
+    def getCorrectedUrlString(self, presetid):
+        raise Exception("getCorrectedUrlString not implemented")
+    
+    #buildUrl has variable parameters, therefore only as comment here:       
+    #def buildUrl(self, someparameters):
+        #raise Exception("buildUrl not implemented")
+
+
+class UrlDefault(UrlReaderInterface):
     
     def __init__(self, urlstring = ''):
-        self.optdict = {}
+        self.paramdict = {}
         self.expression =  r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)'
         self.urlstring = urlstring
-        self.optdict = re.match(self.expression, self.urlstring).groupdict() 
+        searchresults = re.match(self.expression, self.urlstring)
+        if(searchresults is not None):
+            self.paramdict = searchresults.groupdict() 
+        else:
+            self.paramdict = {}
         self.rank = 2
     
-    def getOption(self, optionname):
-        return self.optdict[optionname]    
+    def getParameter(self, optionname):
+        return self.paramdict[optionname]
+    
+    def getParameterNames(self):
+        return self.paramdict.keys()
     
     def getRank(self, optionname):
         return self.rank
     
     def match(self):
-        if len(self.optdict) == 0:
+        if len(self.paramdict) == 0:
             return False
         else:
             return True
     
+    def getOptionsString(self):
+        pass
+    
+    def getIdReplacementString(self):
+        pass
+    
     def getCorrectedUrlString(self, presetid):    
         try:  
-            presetid = self.optdict['presetid'];
+            presetid = self.paramdict['presetid'];
         except KeyError:
             presetid = "0"
-            self.optdict['rootmodel'] = 'Dirs'
+            self.paramdict['rootmodel'] = 'Dirs'
             
         try:  
-            options = self.optdict['options'];
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions() + "}"
+            options = self.paramdict['options'];
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
         except KeyError:
             options = ''
             
         try:  
-            rootmodel = self.optdict['rootmodel'];
+            rootmodel = self.paramdict['rootmodel'];
         except KeyError:
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             
         try:  
-            theid = self.optdict['theid'];
-        except KeyError:
+            theid = self.paramdict['theid'];
+            globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
+        except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
         correctedoptions = []
@@ -93,15 +129,121 @@ class UrlDefault(object):
         
         return ''.join([bla for bla in correctedoptions])      
     
-    def OptionsToUrl(self, presetid, options, rootmodel, theid):
+    def buildUrl(self, presetid, options, rootmodel, theid):
         #check presetid
         if app.presets.Presets.getPresetByStaticId(int(presetid)) == None:
             presetid = "0"
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions() + "}"
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions() + "}"
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            if not(rootmodel in getAvailableModels()):
+                rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
+                theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+            else:
+                try:
+                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ), theid)
+                except Exception, e:
+                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+        
+        correctedoptions = []
+        correctedoptions.append(options)
+        correctedoptions.append(str(presetid))
+        correctedoptions.append("_")
+        correctedoptions.append(rootmodel)
+        correctedoptions.append("_")
+        correctedoptions.append(theid)
+        
+        return ''.join([bla for bla in correctedoptions]) 
+    
+class UrlAnnex(UrlReaderInterface):
+    
+    def __init__(self, urlstring = ''):
+        self.paramdict = {} #({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)'
+        self.expression =  r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<rootmodel>\w+)_(?P<depth>\d+)_(?P<theid>.*)'
+        self.urlstring = urlstring
+        searchresults = re.match(self.expression, self.urlstring)
+        if(searchresults is not None):
+            self.paramdict = searchresults.groupdict() 
+        else:
+            self.paramdict = {}
+        self.rank = 1
+        self.maxdepth = 32
+        #enforce depth between 0 and 32 which should be enough
+        try:
+            if(self.paramdict['depth'] > self.maxdepth):
+                self.paramdict['depth'] = self.maxdepth
+            if(self.paramdict['depth'] < 0):
+                self.paramdict['depth'] = 0
+        except KeyError:
+            pass
+    
+    def getParameter(self, optionname):
+        return self.paramdict[optionname]  
+    
+    def getParameterNames(self):
+        return self.paramdict.keys()
+    
+    def getRank(self, optionname):
+        return self.rank
+    
+    def match(self):
+        if len(self.paramdict) == 0:
+            return False
+        else:
+            return True
+    
+    def getCorrectedUrlString(self, presetid):    
+        try:  
+            presetid = self.paramdict['presetid'];
+        except KeyError:
+            presetid = "0"
+            self.paramdict['rootmodel'] = 'Dirs'
+            
+        try:  
+            options = self.paramdict['options'];
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+        except KeyError:
+            options = ''
+            
+        try:  
+            rootmodel = self.paramdict['rootmodel'];
+        except KeyError:
+            rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
+        
+        try:  
+            theid = self.paramdict['theid'];
+            globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
+        except:
+            theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+            
+        try:  
+            depth = self.paramdict['depth'];
+        except KeyError:
+            depth = 0
+            
+        correctedoptions = []
+        correctedoptions.append(options)
+        correctedoptions.append(str(presetid))
+        correctedoptions.append("_group_")
+        correctedoptions.append(rootmodel)
+        correctedoptions.append("_")
+        correctedoptions.append(str(int(depth)))
+        correctedoptions.append("_")
+        correctedoptions.append(theid)
+        
+        return ''.join([bla for bla in correctedoptions])      
+    
+    def buildUrl(self, presetid, options, rootmodel, depth, theid):
+        #check presetid
+        if app.presets.Presets.getPresetByStaticId(int(presetid)) == None:
+            presetid = "0"
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
+            theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+        else:
+            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
             if not(rootmodel in getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
@@ -110,12 +252,17 @@ class UrlDefault(object):
                     globals()[rootmodel].findObjectByIdReplacementSuffix(theid)
                 except:
                     theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                    
+        if depth > self.maxdepth: depth = self.maxdepth
+        if depth < 0: depth = 0
         
         correctedoptions = []
         correctedoptions.append(options)
         correctedoptions.append(str(presetid))
-        correctedoptions.append("_")
+        correctedoptions.append("_group_")
         correctedoptions.append(rootmodel)
+        correctedoptions.append("_")
+        correctedoptions.append(str(int(depth)))
         correctedoptions.append("_")
         correctedoptions.append(theid)
         

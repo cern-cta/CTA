@@ -38,6 +38,7 @@ import datetime
 import re
 import app.presets.Presets
 import time
+from app.dirs.urls import UrlDefault, UrlAnnex
 
 
 
@@ -131,7 +132,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
     tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
 
-    tree = tc.calculate()
+    tree = tc.calculate(optr.getOption('optitext'))
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
@@ -186,6 +187,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     presetid = int(presetid)
     if options is None: options = ''
     
+    #must fit to UrlAnnex?
     prefix = theid[:(len(rootmodel)+1)]
     if(prefix == rootmodel + "_"):
         urlrest = theid[(len(rootmodel)+1):]
@@ -205,9 +207,9 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
     #for some reason mod_python can't import Presets correctly and outputs useless error messages
     thepreset = app.presets.Presets.getPresetByStaticId(presetid)
-    cookielr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    presetlr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
         
-    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = cookielr, options = optr.getCorrectedOptions(presetid))
+    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = presetlr, options = optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
     value = cache.get(cache_key)
     #if already in cache
@@ -232,7 +234,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
     for i in range(2):
-        lr.appendRuleObject(cookielr.getRuleObject(i))
+        lr.appendRuleObject(presetlr.getRuleObject(i))
     try:
         globals()[rootmodel].start
         globals()[rootmodel].stop
@@ -284,7 +286,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
         
         lr = LevelRules()        
         for i in range(nbdefinedlevels):
-            lr.appendRuleObject(cookielr.getRuleObject(i))  
+            lr.appendRuleObject(presetlr.getRuleObject(i))  
         
         tb = TreeBuilder(lr)
         otree = tb.generateObjectTree(rootobject = anx, statusfilename = statusfilename) 
@@ -293,7 +295,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
         
         lr = LevelRules()
         for i in range(nbdefinedlevels):
-            lr.appendRuleObject(cookielr.getRuleObject(i))  
+            lr.appendRuleObject(presetlr.getRuleObject(i))  
             
         tb = TreeBuilder(lr)    
         otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)     
@@ -305,7 +307,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
     tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
 
-    tree = tc.calculate()
+    tree = tc.calculate(optr.getOption('optitext'))
         
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
 
@@ -351,27 +353,13 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     return response
 
 def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
-    if options is None: options = ''
-    optrd = OptionsReader(options, presetid)
-    
-    #look for the patterns 
-    patterns = app.dirs.urls.urlpatterns
-    groupv = r'.*?.groupView$'
-    normalv = r'.*?.treeView$'
-    treeviewexpr = r''
-    groupviewexpr = r''
-    for pattern in patterns:
-        regex = str(pattern.regex.pattern)
-        if(re.match(groupv, pattern._callback_str)):
-            groupviewexpr = pattern.regex.pattern
-        if(re.match(normalv, pattern._callback_str)):
-            treeviewexpr = pattern.regex.pattern
+    defurl = UrlDefault('{' + options + '}' + urlending)
+    annurl = UrlAnnex('{' + options + '}' + urlending)
     
     try:
-        if re.match(treeviewexpr, urlending):
-            match = re.match(treeviewexpr, urlending)
-            theid = match.group('theid')
-            model = match.group('rootmodel')
+        if defurl.match():
+            theid = defurl.getParameter('theid')
+            model = defurl.getParameter('rootmodel')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
                 theid = idsuffix
@@ -383,16 +371,18 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             rediraddr = rediraddr[:pos]
             pos = rediraddr.rfind('/{')
             if pos != -1: rediraddr = rediraddr[:pos+1]
-            rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
+            
+            newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
+            rediraddr = rediraddr + newurlpart
+            defurl = UrlDefault(newurlpart) #new url with the new values
             # = (statusfilename, already)
             request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
                 
-            return redirect(to = rediraddr, args = {'request':request, 'options':  optrd.getCorrectedOptions(presetid), 'presetid':presetid, 'theid':theid, 'rootmodel': model, 'refresh_cache': refreshcache})
-        elif re.match(groupviewexpr, urlending):
-            match = re.match(treeviewexpr, urlending)
-            theid = match.group('theid')
-            depth = match.group('depth')
-            model = match.group('rootmodel')
+            return redirect(to = rediraddr, args = {'request':request, 'options':  defurl.getParameter('options'), 'presetid':defurl.getParameter('presetid'), 'theid': defurl.getParameter('theid'), 'rootmodel': defurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
+        elif annurl.match():
+            theid = annurl.getParameter('theid')
+            depth = annurl.getParameter('depth')
+            model = annurl.getParameter('rootmodel')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
                 theid = idsuffix
@@ -403,11 +393,14 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             if pos == -1: raise Exception('invalid path in the response object')          
             rediraddr = rediraddr[:pos]
             pos = rediraddr.rfind('/{')
-            if pos != -1: rediraddr = rediraddr[:pos+1]
-            rediraddr = rediraddr + '{' + optrd.getCorrectedOptions(presetid) + '}' + str(presetid) + "_" + model  + "_" + theid
+            if pos != -1: rediraddr = rediraddr[:pos+1]   
+                        
+            newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
+            rediraddr = rediraddr + newurlpart
+            defurl = UrlDefault(newurlpart) #new url with the new values
             
-            return redirect(to = rediraddr, args = {'request':request,'options':  optrd.getCorrectedOptions(presetid), 'theid':theid, 'presetid': str(presetid), 'depth':depth, 'rootmodel':model, 'refresh_cache': refreshcache})
-    except:
+            return redirect(to = rediraddr, args = {'request':request,'options':  annurl.getParameter('options'), 'theid':annurl.getParameter('theid'), 'presetid': annurl.getParameter('presetid'), 'depth':annurl.getParameter('depth'), 'rootmodel':annurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
+    except Exception, e:
         return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
     
     return Http404
@@ -517,6 +510,7 @@ def setStatusFileInCookie(request, statusfilename):
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, nblevels, presetid, options = ''):
     print "preparing response"
     optionsstring = '{'+ options +'}'
+    #must fit to UrlDefault!
     rootsuffix = optionsstring + str(presetid) + "_" + rootidreplacement
     
     apacheserver = settings.PUBLIC_APACHE_URL
@@ -526,6 +520,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
     print "PARENTID ", parentid
+    #must fit to UrlDefault!
     parentidstr = optionsstring + str(presetid) + "_" + vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
     
     nodes = vtree.getAllNodes()
@@ -541,6 +536,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
             hsize = node.getProperty('height')
         y2 = int(round(node.getProperty('y') + hsize,0))
         
+        #must fit to UrlDefault!
         linksuffix = optionsstring + str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
         info = node.getProperty('htmltooltiptext')
         thehash = node.getProperty('treenode').getObject().__hash__()
@@ -607,7 +603,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parents.reverse()
     navlinkparts = []
     for pr in parents:  
-        nvtext = pr.getNaviName()     
+        nvtext = pr.getNaviName()
+        #must fit to UrlDefault!     
         navlinkparts.append( (nvtext, str(pr), optionsstring + str(presetid) + "_" + pr.getIdReplacement()) )
     
     generationtime = datetime.datetime.now() - time

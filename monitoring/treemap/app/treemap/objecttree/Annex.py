@@ -48,7 +48,7 @@ class Annex(models.Model, ModelInterface):
         else:
             raise Exception("unexpected error")
             
-            
+        #must fit with UrlAnnex!    
         self.__dict__['id'] = "group_" + classname + "_" + self.depth.__str__() + "_"  + ppk.__str__()
     
     #DUAL is Oracle's fake Table

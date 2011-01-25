@@ -124,7 +124,7 @@ class DirToolTipDimension(ViewNodeDimensionBase):
         bytesize = long(modelinstance.totalsize)
         
         itemnameparts = splitText(modelinstance.fullname.__str__(), 50, 39)
-        attrnname = tnode.getProperty('treenode').getAttrName()
+        attrname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
@@ -139,7 +139,7 @@ class DirToolTipDimension(ViewNodeDimensionBase):
         nbsubtreefiles = modelinstance.nbfiles.__str__()
         nbsubtreedirs = modelinstance.nbsubdirs.__str__()
         
-        return render_to_string('tooltipdimensions/dirtooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+        return render_to_string('tooltipdimensions/dirtooltip.html', {'itemnameparts': itemnameparts, 'attrname':attrname, 'attrvalue':attrvalue, \
                                                 'attrprocvalue':attrprocvalue, 'sizestring':sizestring, 'percentagestring':percentagestring, \
                                                 'nbfiles':nbfiles, 'nbdirs':nbdirs, 'nbsubtreefiles':nbsubtreefiles, 'nbsubtreedirs':nbsubtreedirs}, \
                                 context_instance=None)
@@ -166,7 +166,7 @@ class FileToolTipDimension(ViewNodeDimensionBase):
         
         itemnameparts = splitText(modelinstance.name.__str__(), 50, 39)
         dirnameparts = splitText(dirname, 50, 39)
-        attrnname = tnode.getProperty('treenode').getAttrName()
+        attrname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
@@ -176,7 +176,7 @@ class FileToolTipDimension(ViewNodeDimensionBase):
         else:
             percentagestring = "%.2f"%(size/psize*100.0)
 
-        return render_to_string('tooltipdimensions/filetooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+        return render_to_string('tooltipdimensions/filetooltip.html', {'itemnameparts': itemnameparts, 'attrname':attrname, 'attrvalue':attrvalue, \
                                                 'attrprocvalue':attrprocvalue, 'sizestring':sizestring, 'percentagestring':percentagestring, \
                                                 'dirnameparts': dirnameparts}, \
                                 context_instance=None)
@@ -242,7 +242,7 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
         nbreq = modelinstance.requestscount
         
         itemnameparts = splitText(modelinstance.filename, 50, 39)
-        attrnname = tnode.getProperty('treenode').getAttrName()
+        attrname = tnode.getProperty('treenode').getAttrName()
         attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
         attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
         percentagestring = ''
@@ -253,7 +253,7 @@ class RequestsToolTipDimension(ViewNodeDimensionBase):
         
         nbrequests = str(nbreq)
         
-        return render_to_string('tooltipdimensions/requesttooltip.html', {'itemnameparts': itemnameparts, 'attrnname':attrnname, 'attrvalue':attrvalue, \
+        return render_to_string('tooltipdimensions/requesttooltip.html', {'itemnameparts': itemnameparts, 'attrname':attrname, 'attrvalue':attrvalue, \
                                                 'attrprocvalue':attrprocvalue, 'percentagestring':percentagestring, 'nbrequests':nbrequests}, \
                                 context_instance=None)
     

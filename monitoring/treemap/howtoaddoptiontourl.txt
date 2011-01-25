@@ -9,15 +9,14 @@ Options inside of the URL are supposed to influence the behavior of treeView and
 	
 	You can write your own Option classes. From outside, they must behave the same as the existing ones.
     
-2. Use OptionsReader in views.py
-	You can access the options in views.py like that:
+2. Use OptionsReader in views.py like that:
 	
 		from sites.dirs.OptionsReader import OptionsReader
 		
 		def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
 			optr = OptionsReader(options, presetid)
 			myoption = optr.getOption('myoption')
-			#do something with myoption
+			#do something with the extracted option value
 		
 	The options string may contain errors because the user can potentially manipulate the url. 
 	Also, by switching from one view to another some options may not be valid any more and they shouldn't be continued. 

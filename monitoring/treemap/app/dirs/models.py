@@ -780,7 +780,7 @@ class Requestspublic(models.Model, ModelInterface):
         try:
             self.filename
         except:
-            raise Exception("No attribute filename in current object")
+            raise Exception("No attribute filename")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
