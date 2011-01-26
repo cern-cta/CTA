@@ -105,6 +105,22 @@ class RawColumnDimension(ViewNodeDimensionBase):
         ret = self.translation.translate(modelinstance, self.attrname)
         return ret
     
+class FileExtensionDimension(ViewNodeDimensionBase):
+    '''
+    classdocs
+    '''
+    def __init__(self, attrname, translation = FileExtensionTranslator()): #translation.translate (db object)
+        ViewNodeDimensionBase.__init__(self)
+        self.translation = translation
+        self.attrname = attrname
+
+        
+    def getValue(self, tnode):
+        assert(tnode is not None and isinstance(tnode, ViewNode))
+        modelinstance = tnode.getProperty('treenode').getObject()
+        ret = self.translation.translate(modelinstance, self.attrname)/float(self.translation.max)
+        return ret
+    
 class DirToolTipDimension(ViewNodeDimensionBase):
     '''
     classdocs

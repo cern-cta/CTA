@@ -362,7 +362,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             model = defurl.getParameter('rootmodel')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
-                theid = idsuffix
+                #theid = idsuffix
             
             #generate the new link to redirect
             rediraddr = request.path
@@ -385,7 +385,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             model = annurl.getParameter('rootmodel')
             if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
                 model = newmodel
-                theid = idsuffix
+                #theid = idsuffix
                 
             #generate the new link to redirect
             rediraddr = request.path
@@ -434,6 +434,8 @@ def preset(request, options,  urlending):
         optr = OptionsReader(options, preset.staticid)    
         validoptions = preset.optionsset
         thetime = None
+        
+        extractedid = UrlDefault().searchReplacementId(urlending)
         
         for option in validoptions:
             try:
@@ -500,7 +502,7 @@ def preset(request, options,  urlending):
         raise Http404
     
     options = optr.getCorrectedOptions(preset.staticid)
-    return redir(request, options, urlending, app.presets.Presets.getPreset(presetname).cachingenabled, app.presets.Presets.getPreset(presetname).staticid, app.presets.Presets.getPreset(presetname).rootmodel, app.presets.Presets.getPreset(presetname).rootidreplacement, statusfilename)
+    return redir(request, options, urlending, app.presets.Presets.getPreset(presetname).cachingenabled, app.presets.Presets.getPreset(presetname).staticid, app.presets.Presets.getPreset(presetname).rootmodel, extractedid, statusfilename)
 
 def setStatusFileInCookie(request, statusfilename):
     request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
@@ -683,28 +685,35 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
     mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
+    mlinker.addPropertyLink('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
+    mlinker.addPropertyLink('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
     
     mlinker.addPropertyLink('CnsFileMetadata', 'headertextisbold', ConstantDimension(False))
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
     mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
 
     return mlinker
 

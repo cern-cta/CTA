@@ -57,6 +57,9 @@ class UrlReaderInterface(object):
     def getCorrectedUrlString(self, presetid):
         raise Exception("getCorrectedUrlString not implemented")
     
+    def searchReplacementId(self, string):
+        raise Exception("searchReplacementId not implemented")
+    
     #buildUrl has variable parameters, therefore only as comment here:       
     #def buildUrl(self, someparameters):
         #raise Exception("buildUrl not implemented")
@@ -74,7 +77,7 @@ class UrlDefault(UrlReaderInterface):
         else:
             self.paramdict = {}
         self.rank = 2
-    
+        
     def getParameter(self, optionname):
         return self.paramdict[optionname]
     
@@ -116,7 +119,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             theid = self.paramdict['theid'];
-            globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
+            globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -144,7 +147,7 @@ class UrlDefault(UrlReaderInterface):
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
                 try:
-                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ), theid)
+                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
                 except Exception, e:
                     theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -157,6 +160,15 @@ class UrlDefault(UrlReaderInterface):
         correctedoptions.append(theid)
         
         return ''.join([bla for bla in correctedoptions]) 
+    
+    def searchReplacementId(self, string):
+        idexpression = r'({(?P<options>.*)}){0,1}(?P<presetid>\d+){0,1}_{0,1}(?P<rootmodel>\w+){0,1}_{0,1}(?P<theid>.*)'
+        searchresults = re.match(idexpression, string)
+        paramdict = searchresults.groupdict()
+        try:
+            return str(paramdict['theid'])
+        except KeyError:
+            return ''
     
 class UrlAnnex(UrlReaderInterface):
     
@@ -215,7 +227,7 @@ class UrlAnnex(UrlReaderInterface):
         
         try:  
             theid = self.paramdict['theid'];
-            globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
+            globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             
@@ -250,7 +262,7 @@ class UrlAnnex(UrlReaderInterface):
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
                 try:
-                    globals()[rootmodel].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel ))
+                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
                 except:
                     theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
                     
@@ -269,7 +281,14 @@ class UrlAnnex(UrlReaderInterface):
         
         return ''.join([bla for bla in correctedoptions]) 
     
-        
+    def searchReplacementId(self, string):
+        idexpression = r'({(?P<options>.*)}){0,1}(?P<presetid>\d+){0,1}(_group_){0,1}(?P<rootmodel>\w+){0,1}_{0,1}(?P<depth>\d+){0,1}_{0,1}(?P<theid>.*)'
+        searchresults = re.match(idexpression, string)
+        paramdict = searchresults.groupdict()
+        try:
+            return str(paramdict['theid'])
+        except KeyError:
+            return ''
     
 
         

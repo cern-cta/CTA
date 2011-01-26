@@ -30,8 +30,7 @@ def findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, modelname):
     if (modelobject.treeprops['start'] != modelobject.start) or (modelobject.treeprops['stop'] != modelobject.stop):
         generateRequestsTree(modelobject.start , modelobject.stop, modelname, statusfilename)
         modelobject.treeprops['start'] = modelobject.start
-        modelobject.treeprops['stop'] = modelobject.stop
-        
+        modelobject.treeprops['stop'] = modelobject.stop   
     found = traverseToRequestInTree(path, modelname).getCurrentObject()
     return found
 
@@ -74,9 +73,13 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
         thefilename = ''
         therequestcount = 1
             
-        while (pos >=0):
+        while True:
             #todo: split and traverse
-            filename = name[:pos]
+            if(pos >= 0):
+                filename = name[:pos]
+            else:
+                pos = len(name)
+                filename = name[:pos]
             #entry = copy.copy(requestdata)
             
             thefilename = filename
@@ -114,6 +117,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
                     tree.traverseInto(entrytoadd)
             
             oldpos = pos + 1
+            if pos == len(name): break
             pos = findSplittingPos(name, pos + 1)
             
     model_class = globals()[reqmodel]
@@ -142,7 +146,6 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             
         status = ((float(i+1)/float(nbsteps)))
         generateStatusFile(statusfilename, status)
-    
     print "time: ", datetime.datetime.now() - timemeasurement
     if tree.getRoot() is None:
         raise NoDataAvailableError("Server didn't returned any Request records")
