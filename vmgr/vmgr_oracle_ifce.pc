@@ -472,12 +472,14 @@ int vmgr_get_pool_entry_byte_u64(struct vmgr_dbfd *dbfd,
 	char tot_free_space_byte_str[21];
 	EXEC SQL DECLARE pool_cursor CURSOR FOR
 		SELECT
-		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY), TO_CHAR(TOT_FREE_SPACE)
+		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY),
+		 TO_CHAR(TOT_FREE_SPACE)
 		FROM vmgr_tape_pool
 		WHERE name = :pool_name;
 	EXEC SQL DECLARE pool_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY), TO_CHAR(TOT_FREE_SPACE)
+		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY),
+		 TO_CHAR(TOT_FREE_SPACE)
 		FROM vmgr_tape_pool
 		WHERE name = :pool_name
 		FOR UPDATE;

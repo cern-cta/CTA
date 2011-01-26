@@ -107,18 +107,8 @@ vmgr_listpool_byte_u64(int flags, vmgr_list *listp)
 			unmarshall_STRING (rbp, lp->name);
 			unmarshall_LONG (rbp, lp->uid);
 			unmarshall_LONG (rbp, lp->gid);
-			{
-			  u_signed64 capacity_kibibyte_u64 = 0;
-			  unmarshall_HYPER (rbp, capacity_kibibyte_u64);
-			  lp->capacity_byte_u64 = capacity_kibibyte_u64 *
-			    ONE_KB;
-			}
-			{
-			  u_signed64 tot_free_space_kibibyte_u64 = 0;
-			  unmarshall_HYPER (rbp, tot_free_space_kibibyte_u64);
-			  lp->tot_free_space_byte_u64 =
-			    tot_free_space_kibibyte_u64 * ONE_KB;
-			}
+			unmarshall_HYPER (rbp, lp->capacity_byte_u64);
+			unmarshall_HYPER (rbp, lp->tot_free_space_byte_u64);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);
