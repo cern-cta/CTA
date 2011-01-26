@@ -1,0 +1,299 @@
+#!/bin/perl -w
+
+use strict;
+use DBI;
+use POSIX;
+
+sub runCmdAs {
+  my ($userName, $cmd) = (shift, shift);
+
+  my $now            = "";
+  my $status         = 0;
+  my $pid            = 0;
+  my $cmdOutputFile;
+  my $cmdOutputStr   = "";
+
+  $now = `date '+\%a \%b \%H:\%M:\%S'`;
+  chomp($now);
+  print("$now : \"$cmd\"\n");
+  open($cmdOutputFile, "runuser $userName -c \"$cmd\" |")
+    or die "Failed to run \"$cmd\": $!\n";
+
+  while(<$cmdOutputFile>) {
+    $cmdOutputStr = $cmdOutputStr . $_;
+  }
+
+  close($cmdOutputFile);
+
+  return $cmdOutputStr;
+}
+
+# Returns the database connection string stored in /etc/castor/VMGRCONFIG
+sub getVmgrDbConnectionString {
+  my $dbConnectionString = `cat /etc/castor/VMGRCONFIG`;
+  chomp($dbConnectionString);
+  return($dbConnectionString);
+}
+
+sub testRunCmdAsOutput {
+  my ($userName, $cmd, $expectedOutput) = (shift, shift, shift);
+
+  my $actualOutput = "";
+  my $now          = "";
+
+  $now = `date '+\%a \%b \%H:\%M:\%S'`;
+  chomp($now);
+  $actualOutput = &runCmdAs($userName, $cmd);
+  chomp($actualOutput);
+  die "$now : \"$cmd\" failed: Unexpected output:" .
+      " expected=\"$expectedOutput\"" .
+      " actual=\"$actualOutput\"\n"
+    unless $actualOutput eq $expectedOutput;
+  print("$actualOutput\n");
+}
+
+# Returns true if the daemon with specfied name is running else false.
+#
+# @param  daemonName The name of the daemon.
+# @return            True if the daemon is runn ing, else false.
+sub daemonIsRunning {
+  my $daemonName = $_[0];
+
+  my $psResult = `ps -e | grep $daemonName`;
+  chomp($psResult);
+
+  return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+}
+
+my $nonRootUserName = 'murrayc3';
+my $nsDir           = '/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722';
+my %tapes = (
+  I02023 => {
+    mo => "3592",
+    ml => "J",
+    li => "IBMLIB1B",
+    d  => "1000GC",
+    l  => "aul",
+    po => "stager_dev04"
+  },
+  I10486 => {
+    mo => "3592",
+    ml => "J",
+    li => "IBMLIB3B",
+    d  => "1000GC",
+    l  => "aul",
+    po => "stager_dev04"
+  },
+  I12035 => {
+    mo => "3592",
+    ml => "J",
+    li => "IBMLIB3B",
+    d  => "1000GC",
+    l  => "aul",
+    po => "stager_dev04"
+  },
+  I12038 => {
+    mo => "3592",
+    ml => "J",
+    li => "IBMLIB3B",
+    d  => "1000GC",
+    l  => "aul",
+    po => "stager_dev04"
+  },
+  I12438 => {
+    mo => "3592",
+    ml => "J",
+    li => "IBMLIB3B",
+    d  => "1000GC",
+    l  => "aul",
+    po => "stager_dev04"
+  }
+);
+my $castor_src         = "";
+my $originalDbSchema   = "";
+my $originalDropSchema = "";
+my $vid                = '';
+my $status             = 0;
+my $uid                = POSIX::getuid;
+my $gid                = POSIX::getgid;
+my $cmdResultStr       = "";
+my $i                  = 0;
+
+# Print error message and abort if the user is not root
+die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
+
+# Abort if the environment variable CASTOR_SRC is not set
+die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
+
+$castor_src = $ENV{'CASTOR_SRC'};
+print("Using CASTOR_SRC=$castor_src\n");
+
+$originalDbSchema   = "$castor_src/vmgr/vmgr_oracle_create.sql";
+$originalDropSchema = "$castor_src/castor/db/drop_oracle_schema.sql";
+
+die "ABORT: $originalDbSchema does not exist\n"
+  if ! -e $originalDbSchema;
+
+die "ABORT: $originalDropSchema does not exist\n"
+  if ! -e $originalDropSchema;
+
+my $dbConnectionString = &getVmgrDbConnectionString();
+my $dbUser = "UNKNOWN";
+
+if($dbConnectionString =~ m/^([^\/]+)/) {
+  $dbUser = $1;
+} else {
+  die("ABORT: Failed to extract database username from connection string\n");
+}
+print("Database username = $dbUser\n");
+
+die("ABORT: Database user $dbUser is not vmgr_dev04\n")
+  if($dbUser ne "vmgr_dev04");
+
+if(&daemonIsRunning("vmgrd")) {
+  &runCmdAs("root", "/etc/init.d/vmgrd stop");
+}
+
+my $tmpDropSchema = &runCmdAs("root", "mktemp");
+print("tmpDropSchema=$tmpDropSchema\n");
+chomp($tmpDropSchema);
+`echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpDropSchema`;
+`echo "CONNECT $dbConnectionString" >> $tmpDropSchema`;
+`echo >> $tmpDropSchema`;
+`cat $originalDropSchema >> $tmpDropSchema`;
+`echo >> $tmpDropSchema`;
+`echo "EXIT;" >> $tmpDropSchema`;
+
+print("Dropping database-schema\n");
+&runCmdAs("root", "'sqlplus' /NOLOG \@$tmpDropSchema");
+&runCmdAs("root", "rm $tmpDropSchema");
+
+my $tmpCreateSchema = &runCmdAs("root", "mktemp");
+chomp($tmpCreateSchema);
+print("tmpCreateSchema=$tmpCreateSchema\n");
+`echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpCreateSchema`;
+`echo "CONNECT $dbConnectionString" >> $tmpCreateSchema`;
+`echo >> $tmpCreateSchema`;
+`cat $originalDbSchema >> $tmpCreateSchema`;
+`echo >> $tmpCreateSchema`;
+`echo "EXIT;" >> $tmpCreateSchema`;
+
+print("Creating database-schema\n");
+&runCmdAs("root", "'sqlplus' /NOLOG \@$tmpCreateSchema");
+&runCmdAs("root", "rm $tmpCreateSchema");
+
+&runCmdAs("root", "/etc/init.d/vmgrd start");
+
+# Give the vmgrd a chance to get up and running
+sleep(1);
+
+&runCmdAs("root", "vmgrentermodel --mo 3592 --ml J --mc 250");
+&testRunCmdAsOutput("root", "vmgrlistmodel", "3592   J  250");
+
+&runCmdAs("root", "vmgrenterdenmap -d 1000GC --ml J --mo 3592 --nc 1T");
+&testRunCmdAsOutput("root", "vmgrlistdenmap", "3592   J  1000GC      1.00Ti");
+
+&runCmdAs("root", "vmgrenterlibrary --name IBMLIB1B --capacity 6600");
+&testRunCmdAsOutput("root", "vmgrlistlibrary",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+&runCmdAs("root", "vmgrenterlibrary --name IBMLIB3B --capacity 6600");
+&testRunCmdAsOutput("root", "vmgrlistlibrary",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
+  "IBMLIB3B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+&runCmdAs("root", "vmgrenterdgnmap -g 359B1B --mo 3592 --library IBMLIB1B");
+&testRunCmdAsOutput("root", "vmgrlistdgnmap", "359B1B 3592   IBMLIB1B");
+
+&runCmdAs("root", "vmgrenterdgnmap -g 359B3B --mo 3592 --library IBMLIB3B");
+&testRunCmdAsOutput("root", "vmgrlistdgnmap",
+  "359B1B 3592   IBMLIB1B\n" .
+  "359B3B 3592   IBMLIB3B");
+
+&runCmdAs("root", "vmgrenterpool --group st --name stager_dev04 --user stage");
+&testRunCmdAsOutput("root", "vmgrlistpool",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+
+my $expectedOutput = "";
+$i = 1;
+for $vid (sort keys %tapes) {
+  &runCmdAs("root",
+    "vmgrentertape -V $vid" .
+    " --mo $tapes{$vid}{mo}" .
+    " --ml $tapes{$vid}{ml}" .
+    " --li $tapes{$vid}{li}" .
+    " -d   $tapes{$vid}{ d}" .
+    " -l   $tapes{$vid}{ l}" .
+    " --po $tapes{$vid}{po}");
+
+  if($expectedOutput ne "") {
+    $expectedOutput = $expectedOutput . "\n";
+  }
+  $expectedOutput = $expectedOutput .
+    "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
+  &testRunCmdAsOutput("root", "vmgrlisttape", $expectedOutput);
+  &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)");
+  &testRunCmdAsOutput("root", "vmgrlistpool",
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)");
+
+  $i = $i + 1;
+}
+exit(0);
+
+$i = 1;
+for $vid (sort keys %tapes) {
+
+  if($i == 1) {
+    &runCmdAs("root", "vmgrmodifytape -V $vid --st ''");
+  } else {
+    &runCmdAs("root", "vmgrmodifytape -V $vid --st DISABLED");
+  }
+
+  $i = $i + 1;
+} 
+
+exit(0);
+
+# Create a seed file for migrations
+my $tmpSeedFilename = `runuser murrayc3 -c mktemp`;
+chomp($tmpSeedFilename);
+print("tmpSeedFilename=$tmpSeedFilename\n");
+print("dd if=/dev/urandom of=$tmpSeedFilename bs=1M count=100\n");
+$status = system("runuser murrayc3 -c \"dd if=/dev/urandom of=$tmpSeedFilename bs=10M count=10\"");
+die "dd failed: status=$status" unless $status == 0;
+
+print("nsrm -rf $nsDir\n");
+$status = system("runuser murrayc3 -c \"nsrm -rf $nsDir\"");
+die "nsrm -rf $nsDir failed: status=$status" unless $status == 0;
+print("nsmkdir $nsDir\n");
+$status = system("runuser murrayc3 -c \"nsmkdir $nsDir\"");
+die "nsmkdir -rf $nsDir failed: status=$status" unless $status == 0;
+
+my $nsFilename       = "";
+my $tmpLocalFilename = "";
+for($i=1; $i<=1; $i++) {
+  # Create the name-server filename
+  $nsFilename = "$nsDir/test_100M_$i";
+  print("nsFilename=$nsFilename\n");
+
+  # Create a local temporary file from the temporary seed-file
+  $tmpLocalFilename = `runuser murrayc3 -c mktemp`;
+  chomp($tmpLocalFilename);
+  print("tmpLocalFilename=$tmpLocalFilename\n");
+  `runuser murrayc3 -c \"echo $nsFilename >> $tmpLocalFilename\"`;
+  `runuser murrayc3 -c \"cat $tmpSeedFilename >> $tmpLocalFilename\"`;
+
+  # Copy the temporary local file to castor
+  print("rfcp $tmpLocalFilename $nsFilename\n");
+  $status =
+    system("runuser murrayc3 -c \"rfcp $tmpLocalFilename $nsFilename\"");
+  die "rfcp failed: status=$status" unless $status == 0;
+
+  # Delete the temporary local file
+  `runuser murrayc3 -c \"rm $tmpLocalFilename\"`;
+}
+
+# Delete the seed file
+print("rm $tmpSeedFilename\n");
+`runuser murrayc3 -c \"rm $tmpSeedFilename\"`;
