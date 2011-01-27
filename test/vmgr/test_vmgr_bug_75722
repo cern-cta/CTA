@@ -65,6 +65,11 @@ sub daemonIsRunning {
   return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
 }
 
+
+###############################################################################
+# MAIN PROGRAM STARTS HERE
+###############################################################################
+
 my $nonRootUserName = 'murrayc3';
 my $nsDir           = '/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722';
 my %tapes = (
@@ -112,14 +117,17 @@ my %tapes = (
 my $castor_src         = "";
 my $originalDbSchema   = "";
 my $originalDropSchema = "";
-my $vid                = '';
+my $vid                = "";
+my $tapePool           = "";
+my $tapeStatus         = "";
+my $freeSpaceStr       = "";
 my $status             = 0;
 my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
 my $i                  = 0;
 
-# Print error message and abort if the user is not root
+# Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
 
 # Abort if the environment variable CASTOR_SRC is not set
@@ -128,6 +136,65 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 $castor_src = $ENV{'CASTOR_SRC'};
 print("Using CASTOR_SRC=$castor_src\n");
 
+# Abort if the test tapes are and are not in the tape_dev tape-pool and not
+# DISABLED in the production vmgr
+for $vid (sort keys %tapes) {
+  $cmdResultStr = &runCmdAs("root",
+    "ssh $nonRootUserName\@lxadm vmgrlisttape -V $vid");
+  chomp($cmdResultStr);
+  print("cmdResultStr=$cmdResultStr\n");
+  $tapePool   = "UNKNOWN";
+  $tapeStatus = "UNKNOWN";
+  if($cmdResultStr =~
+    m/$vid +$vid +\w+ +\w+ +$tapes{$vid}{l} +(\w+) +[^ ]+ +\w+ +(\w+)$/) {
+    $tapePool   = $1;
+    $tapeStatus = $2;
+  }
+  print("tapePool   = $tapePool\n");
+  print("tapeStatus = $tapeStatus\n");
+  die "$vid is not in tape_dev in production" unless $tapePool eq "tape_dev";
+  die "$vid is not DISABLED in production" unless $tapeStatus eq "DISABLED";
+}
+
+# Abort if the test tapes have production files on them
+for $vid (sort keys %tapes) {
+  $cmdResultStr = &runCmdAs("root",
+    "2>&1 ssh $nonRootUserName\@lxadm nslisttape -V $vid");
+  chomp($cmdResultStr);
+  print("cmdResultStr=\"$cmdResultStr\"\n");
+  die "$vid contains production files"
+    unless $cmdResultStr eq "$vid: No such volume or no files found";
+}
+
+# Abort if the new vmgr clients do not work correctly with the old production
+# vmgr
+for $vid (sort keys %tapes) {
+  $cmdResultStr = &runCmdAs($nonRootUserName,
+    "VMGR_HOST=castorvmgr vmgrlisttape -V $vid");
+  print("cmdResultStr=\"$cmdResultStr\"\n");
+  $tapePool     = "UNKNOWN";
+  $tapeStatus   = "UNKNOWN";
+  $freeSpaceStr = "UNKNOWN";
+  if($cmdResultStr =~
+    m/$vid +$vid +\w+ +\w+ +$tapes{$vid}{l} +(\w+) +([^ ]+) +\w+ +(\w+)$/) {
+    $tapePool     = $1;
+    $freeSpaceStr = $2;
+    $tapeStatus   = $3;
+  }
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect tape-pool: expected=\"tape_dev\", actual=\"$tapePool\""
+    unless $tapePool eq "tape_dev";
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect free-space: expected=\"1.00TiB\", actual=\"$freeSpaceStr\""
+    unless $freeSpaceStr eq "1.00TiB";
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\""
+    unless $tapeStatus eq "DISABLED";
+}
+exit(0);
+
+# Determine the location of the database scripts to drop the vmgr and recreate
+# the vmgr database
 $originalDbSchema   = "$castor_src/vmgr/vmgr_oracle_create.sql";
 $originalDropSchema = "$castor_src/castor/db/drop_oracle_schema.sql";
 
@@ -214,6 +281,7 @@ sleep(1);
 &testRunCmdAsOutput("root", "vmgrlistpool",
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
+# Enter the test tapes into the test vmgr
 my $expectedOutput = "";
 $i = 1;
 for $vid (sort keys %tapes) {
@@ -233,9 +301,11 @@ for $vid (sort keys %tapes) {
     "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
   &testRunCmdAsOutput("root", "vmgrlisttape", $expectedOutput);
   &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
-"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)");
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
+    );
   &testRunCmdAsOutput("root", "vmgrlistpool",
-"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)");
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
+    );
 
   $i = $i + 1;
 }
