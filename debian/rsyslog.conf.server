@@ -41,6 +41,9 @@ local3.*;local3.!=debug;local2.info        -/var/log/dlf/syslog.input
 # any further processing. This avoids duplicate logging!
 & ~
 
+# Discard any other messages not from localhost
+if $fromhost-ip != 127.0.0.1 then ~
+
 # Standard rsyslog configuration
 
 # The default output file format, syslog style format
