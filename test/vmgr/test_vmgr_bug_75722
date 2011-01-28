@@ -70,8 +70,9 @@ sub daemonIsRunning {
 # MAIN PROGRAM STARTS HERE
 ###############################################################################
 
-my $nonRootUserName = 'murrayc3';
-my $nsDir           = '/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722';
+my $testVmgrHost    = "lxcastordev04";
+my $nonRootUserName = "murrayc3";
+my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
 my %tapes = (
   I02023 => {
     mo => "3592",
@@ -126,6 +127,7 @@ my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
 my $i                  = 0;
+my @vids;
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -136,8 +138,10 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 $castor_src = $ENV{'CASTOR_SRC'};
 print("Using CASTOR_SRC=$castor_src\n");
 
-# Abort if the test tapes are and are not in the tape_dev tape-pool and not
-# DISABLED in the production vmgr
+# Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
+# the production vmgr
+print("\n");
+print("CHECKING TEST TAPES ARE IN TAPE_DEV AND DISABLED IN PRODUCTION\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs("root",
     "ssh $nonRootUserName\@lxadm vmgrlisttape -V $vid");
@@ -157,6 +161,8 @@ for $vid (sort keys %tapes) {
 }
 
 # Abort if the test tapes have production files on them
+print("\n");
+print("CHECKING TEST_TAPES CONTAIN NO PRODUCTION FILES\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs("root",
     "2>&1 ssh $nonRootUserName\@lxadm nslisttape -V $vid");
@@ -166,11 +172,27 @@ for $vid (sort keys %tapes) {
     unless $cmdResultStr eq "$vid: No such volume or no files found";
 }
 
-# Abort if the new vmgr clients do not work correctly with the old production
-# vmgr
+# Abort if the new vmgr clients do not get refused by the old production vmgr
+print("\n");
+print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
+@vids = sort keys %tapes;
+&testRunCmdAsOutput("root",
+  "2>&1 VMGR_HOST=lxcastorsrv102 vmgrenterdenmap" .
+  " -d 9999GC --ml J --mo 3592 --nc 1T",
+  "VMG03 - illegal function 40\nvmgrenterdenmap 3592: Internal error");
+&testRunCmdAsOutput("root",  "2>&1 VMGR_HOST=lxcastorsrv102 vmgrlistdenmap",
+  "VMG03 - illegal function 41\n" .
+  "send2vmgr: VMG02 - send error : Internal error");
+&testRunCmdAsOutput("root",
+  "2>&1 VMGR_HOST=lxcastorsrv102 vmgrlisttape -V $vids[0]",
+  "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
+
+# Abort if the production clients do not work correctly with the new vmgr
+print("\n");
+print("CHECKING PRODUCTION CLIENTS WORK WITH NEW VMGR\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs($nonRootUserName,
-    "VMGR_HOST=castorvmgr vmgrlisttape -V $vid");
+    "ssh $nonRootUserName\@lxadm VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
   print("cmdResultStr=\"$cmdResultStr\"\n");
   $tapePool     = "UNKNOWN";
   $tapeStatus   = "UNKNOWN";
@@ -191,7 +213,6 @@ for $vid (sort keys %tapes) {
     " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\""
     unless $tapeStatus eq "DISABLED";
 }
-exit(0);
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -245,7 +266,8 @@ print("tmpCreateSchema=$tmpCreateSchema\n");
 `echo >> $tmpCreateSchema`;
 `echo "EXIT;" >> $tmpCreateSchema`;
 
-print("Creating database-schema\n");
+print("\n");
+print("CREATING DATABASE-SCHEMA\n");
 &runCmdAs("root", "'sqlplus' /NOLOG \@$tmpCreateSchema");
 &runCmdAs("root", "rm $tmpCreateSchema");
 
@@ -254,6 +276,8 @@ print("Creating database-schema\n");
 # Give the vmgrd a chance to get up and running
 sleep(1);
 
+print("\n");
+print("ENTERING TAPE META-DATA INTO VMGR\n");
 &runCmdAs("root", "vmgrentermodel --mo 3592 --ml J --mc 250");
 &testRunCmdAsOutput("root", "vmgrlistmodel", "3592   J  250");
 
@@ -309,7 +333,6 @@ for $vid (sort keys %tapes) {
 
   $i = $i + 1;
 }
-exit(0);
 
 $i = 1;
 for $vid (sort keys %tapes) {
