@@ -63,7 +63,7 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtc
 <= In rtcopy/TapeErrorHandler.c: checkMigrationRetry expects a TAPECOPY_SELECTED. Goes in error otherwise. (RT)
 
 - TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
-=> In OraStageSvc.cpp: castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall: Created (for recall). (dead code?)
+=> In OraStageSvc.cpp: castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall: Created (for recall). (Stager) (RT) (TG)
 => In OracleTapeGateway: tg_setRecRetryResult: Status set to TAPECOPY_TOBERECALLED (from id list on input) (TG)
 
 Note: no peek as the recalls are segment driven (see segment lifecycle).
@@ -166,154 +166,154 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtc
 ====================== S E G M E N T =====================================================================================
 
 - SEGMENT_UNPROCESSED CONSTANT PLS_INTEGER := 0;
-<= In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ]
-<= In oracleTape.sql: anySegmentsForTape: sets tape status to tconst.TAPE_WAITMOUNT if any UNPROCESSED segment lives on it.
+<= In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ] Via Cstager_ITapeSvc_segmentsForTape only. (RT)
+<= In oracleTape.sql: anySegmentsForTape: sets tape status to tconst.TAPE_WAITMOUNT if any UNPROCESSED segment lives on it. Via Cstager_ITapeSvc_anySegmentsForTape only (RT)
 => In oracleTape.sql: rtcpclientdCleanUp: ressurects all SELECTED segments to UNPROCESSED (also kicks the corresponding tapes to WAITPOLICY (RT)
-<= In oracleTape.sql: inputForRecallPolicy (dead code, wrapper in rechancler, but not called): returns summaries of segments in SEGMENT_UNPROCESSED state for tapes.
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy (used by rechandler, wrapper exists, is called) very similar to inputForRecallPolicy
-<=> In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!))
-<=> In oracleTapeGateway.sql: tg_endTapeSession: some "lost" segments resurected into UNPROCESSED. Then immediately peeked to give a kick to the tape.
-<= In oracleTapeGateway.sql: tg_getFileToRecall: finds a segment to recall from a given tape and sets it to SELECCTED
-=> In oracleTapeGateway.sql: tg_setRecRetryResult: resets the segments from a given tapecopy to UNPROCESSED from tapecopy list.
-=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_restoreSelectedSegments: used to reset failed segments at the end of a tape session (see comment at the beginning of the function).
-=> In rtcopy/TapeErrorHandler.c: doRecallRetry: sets a segments to retried and clones it into UNPROCESSED.
+<= In oracleTape.sql: inputForRecallPolicy (dead code, wrapper in rechancler, but not called): returns summaries of segments in SEGMENT_UNPROCESSED state for tapes. (dead code?)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy (used by rechandler, wrapper exists, is called) very similar to inputForRecallPolicy (RT) (TG)
+<=> In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!)) (RT) TG) (To review for TG! Dangerous? Usefull?)
+<=> In oracleTapeGateway.sql: tg_endTapeSession: some "lost" segments resurected into UNPROCESSED. Then immediately peeked to give a kick to the tape. (TG)
+<= In oracleTapeGateway.sql: tg_getFileToRecall: finds a segment to recall from a given tape and sets it to SELECCTED (TG)
+=> In oracleTapeGateway.sql: tg_setRecRetryResult: resets the segments from a given tapecopy to UNPROCESSED from tapecopy list. (TG)
+=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_restoreSelectedSegments: used to reset failed segments at the end of a tape session (see comment at the beginning of the function). (RT)
+=> In rtcopy/TapeErrorHandler.c: doRecallRetry: sets a segments to retried and clones it into UNPROCESSED. (RT)
 
-- SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5;
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcFileRecalled: some segments set to SEGMENT_FILECOPIED
-<= In rtcopy/TapeErrorHandler.c: checkRecallRetry used in some (quite intricate) error handling algorithm.
+- SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5; (Not covered in TapeGateway)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcFileRecalled: some segments set to SEGMENT_FILECOPIED (RT)
+<= In rtcopy/TapeErrorHandler.c: checkRecallRetry used in some (quite intricate) error handling algorithm. (RT)
   
 - SEGMENT_FAILED      CONSTANT PLS_INTEGER := 6;
-<= In oracleTape.sql: failedSegments lists all FAILED segments
-=> In oracleTapeGateway.sql: tg_endTapeSession: sets the segments to failed for all the tapecopies passed as a list to the procedure.
-=> In oracleTapeGateway.sql: tg_failFileTransfer: sets a segment as failed by tape/fseq id (so just one).
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcMigrFailed: "Catalogue update after failed migration"
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcRecallFailed: "Catalogue update after failed recall"
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_putFailed will move segments from SEGMENT_FAILED to SEGMENT_RETRIED
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments counts the SEGMENT_FAILED for the tape being processed (one tape, passed as an argument)
+<= In oracleTape.sql: failedSegments lists all FAILED segments in via Cstager_ITapeSvc_failedSegments (RT)
+=> In oracleTapeGateway.sql: tg_endTapeSession: sets the segments to failed for all the tapecopies passed as a list to the procedure. (TG)
+=> In oracleTapeGateway.sql: tg_failFileTransfer: sets a segment as failed by tape/fseq id (so just one). (TG)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcMigrFailed: "Catalogue update after failed migration" (RT)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcRecallFailed: "Catalogue update after failed recall" (RT)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_putFailed will move segments from SEGMENT_FAILED to SEGMENT_RETRIED (RT)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments counts the SEGMENT_FAILED for the tape being processed (one tape, passed as an argument) (RT)
 
 - SEGMENT_SELECTED    CONSTANT PLS_INTEGER := 7;
-=> In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ]
-<= In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!))
-<= In oracleTapeGateway.sql: tg_endTapeSession: resurrect lost segments from UNPROCESSED to SELECTED. ( fishy... )
-=> In oracleTapeGateway.sql: tg_getFileToRecall: set to tconst.SEGMENT_SELECTED from tconst.SEGMENT_UNPROCESSED  for the selected tapecopy of a recall.
-<= In rtcopy/rtcpcltdCatalogueInterface.c: tcpcld_restoreSelectedSegments: restores SELECTED segments to UNPROCESSED (from an input list).
+=> In oracleTape.sql: segmentsForTape: bulk collects all segments in SEGMENT_UNPROCESSED for a given tape, sets tape to tconst.TAPE_MOUNTED and segs to tconst.SEGMENT_SELECTED [ suspition of high inefficiency as a cursor's result gets copied in memory ]  Via Cstager_ITapeSvc_segmentsForTape only. (RT)
+<= In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!)) (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTapeGateway.sql: tg_endTapeSession: resurrect lost segments from UNPROCESSED to SELECTED. ( fishy... ) (TG)
+=> In oracleTapeGateway.sql: tg_getFileToRecall: set to tconst.SEGMENT_SELECTED from tconst.SEGMENT_UNPROCESSED  for the selected tapecopy of a recall. (TG)
+<= In rtcopy/rtcpcltdCatalogueInterface.c: tcpcld_restoreSelectedSegments: restores SELECTED segments to UNPROCESSED (from an input list). (RT)
 
-- SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8;
-<= In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_updcFileRecalled: complext logic with if not status != SEGMENT_RETRIED. Boils down to a peek (in conjunction with SEGMENT_FILECOPIED)
-=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_putFailed: Flag failed segment retried so that it won't be selected for retry (from SEGMENT_FAILED)
-=> In rtcopy/TapeErrorHandler.c: doRecallRetry sets status of the segment to RETRIED
-d=> In rtcopy/TapeErrorHandler.c: oMigrationRetry  sets status of the segment to RETRIED
+- SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8; (Not covered in TapeGateway)
+<= In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_updcFileRecalled: complext logic with if not status != SEGMENT_RETRIED. Boils down to a peek (in conjunction with SEGMENT_FILECOPIED) (RT)
+=> In rtcopy/rtcpcltdCatalogueInterface.c: rtcpcld_putFailed: Flag failed segment retried so that it won't be selected for retry (from SEGMENT_FAILED) (RT)
+=> In rtcopy/TapeErrorHandler.c: doRecallRetry sets status of the segment to RETRIED (RT)
+d=> In rtcopy/TapeErrorHandler.c: oMigrationRetry  sets status of the segment to RETRIED (RT)
 
 ====================== T A P E =====================================================================================
 
 - TAPE_UNUSED     CONSTANT PLS_INTEGER := 0;
-=> In castor/db/newora/OraCommonSvc.cpp: castor::db::ora::OraCommonSvc::selectTape: Creates a tape in TAPE_UNUSED if none exist in the DB for a given VID/side/mode. Called by next function:
-<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy).
-=> In oracleTape.sql: deleteOrStopStream detach a tape from the stream, sets is to UNUSED
+=> In castor/db/newora/OraCommonSvc.cpp: castor::db::ora::OraCommonSvc::selectTape: Creates a tape in TAPE_UNUSED if none exist in the DB for a given VID/side/mode. Called by createTapeCopySegmentsForRecall and Cstager_ITapeSvc_selectTape (RT) (TG)
+<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+=> In oracleTape.sql: deleteOrStopStream detach a tape from the stream, sets is to UNUSED  Called by resetstream via Cstager_ITapeSvc_resetStream (RT) and stopchosenstreams  (Mighunter) (TG) (RT)
 => In oracleTape.sql: rtcpclientdCleanUp resets stream's tapes to TAPE_UNUSED (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp moves tapes from status tconst.TAPE_UNUSED, tconst.TAPE_FAILED, tconst.TAPE_UNKNOWN to tconst.TAPE_WAITPOLICY when unprocessed segments are attached. (RT)
-=> In oracleTape.sql: removeAllForRepack: updates a tape and related ones (holding copies of the same castorfile) to TAPE_UNUSED
-=> In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED
-<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED
-<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED
-=> In oracleTapeGateway.sql: tg_endTapeSession: sets the tape to TAPE_UNUSED
-<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY
-=> In oracleTapeGateway.sql: tg_deleteTapeRequest: sets the tape to TAPE_UNUSED
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-=> In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus.
-<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING
+=> In oracleTape.sql: removeAllForRepack: updates a tape and related ones (holding copies of the same castorfile) to TAPE_UNUSED (dead code?)
+=> In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) TG) (To review for TG! Dangerous? Usefull?)
+=> In oracleTapeGateway.sql: tg_endTapeSession: sets the tape to TAPE_UNUSED (TG)
+<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+=> In oracleTapeGateway.sql: tg_deleteTapeRequest: sets the tape to TAPE_UNUSED (TG)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+=> In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus. (RT)
+<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING (RT)
 
 - TAPE_PENDING    CONSTANT PLS_INTEGER := 1;
-<= In castor/db/ora/OraTapeSvc.cpp: tapesToDo find all tapes pending through a hardcoded SQL statement. Not a procedure call.
+<= In castor/db/ora/OraTapeSvc.cpp: tapesToDo find all tapes pending through a hardcoded SQL statement. Not a procedure call. Via Cstager_ITapeSvc_tapesToDo (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp: Resurrects read tapes from tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED to WAIT_POLICY (RT)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: Find tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with unprocessed segments
-=> In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY
-=> In oracleTape.sql: resurrectSingleTapeForRecall: same behaviour in non-batched mode.
-<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED
-=> In oracleTape.sql: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED
-=> In oracleTapeGateway.sql: tg_getTapeWithoutDriveReq: finds a read tape in status TAPE_PENDING
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo puts the tape to pending in some error cases.
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments resets the status to TAPE_PENDING if there was a failed segment.
-=> In rtcopy/TapeErrorHandler.c:  doRecallRetry update the Tape status to TAPE_PENDING unless the tape is already active (TAPE_WAITDRIVE, TAPE_WAITMOUNT, TAPE_MOUNTED)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: Find tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with unprocessed segments (RT) (TG)
+=> In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY (Rechandler) (RT) (TG)
+=> In oracleTape.sql: resurrectSingleTapeForRecall: same behaviour in non-batched mode. Used in createTapeCopySegmentsForRecall (Stager) (RT) (TG)
+<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) TG) (To review for TG! Dangerous? Usefull?)
+=> In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) TG) (To review for TG! Dangerous? Usefull?)
+=> In oracleTapeGateway.sql: tg_getTapeWithoutDriveReq: finds a read tape in status TAPE_PENDING (TG)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo puts the tape to pending in some error cases. (RT)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments resets the status to TAPE_PENDING if there was a failed segment. (RT)
+=> In rtcopy/TapeErrorHandler.c:  doRecallRetry update the Tape status to TAPE_PENDING unless the tape is already active (TAPE_WAITDRIVE, TAPE_WAITMOUNT, TAPE_MOUNTED) (RT)
 
 - TAPE_WAITDRIVE  CONSTANT PLS_INTEGER := 2;
-=> In castor/db/ora/OraStagerSvc.cpp: castor::db::ora::OraTapeSvc::tapesToDo Sets status ot tapes to WAITDRIVE, based on an hardcoded SQL statement.
+=> In castor/db/ora/OraStagerSvc.cpp: castor::db::ora::OraTapeSvc::tapesToDo Sets status ot tapes to WAITDRIVE, based on an hardcoded SQL statement.  Via Cstager_ITapeSvc_tapesToDo (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp resets stream's tapes to TAPE_UNUSED (from WAITDRIVE, amont others). (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp: Resurrects read tapes from tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED to WAIT_POLICY (RT)
-<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts READ tapes in states tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED) (called by rechandler)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler)
-<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED
-=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: Move tape to TAPE_WAITDRIVE by tapeRequest Id in case of a read.
-=> In oracleTapeGateway.sql: tg_attachTapesToStreams: Unconditionnally moves a write tape for the VID to TAPE_WAITDRIVE, or creates one if needed.
-<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them.
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo puts the tape from WAITDRIVE to pending or FAILED in some error cases.
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo: set the tape status to reflect the status of the stream
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. 
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus.
-<= In rtcopy/rtcpclientd.c: rtcpcld_main: Moves a tape from WAITDRIVE to FAILED in case the worker fails to start.
+<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts READ tapes in states tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED) (called by rechandler) (RT) (TG)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED  (RT) TG) (To review for TG! Dangerous? Usefull?)
+=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: Move tape to TAPE_WAITDRIVE by tapeRequest Id in case of a read. (TG)
+=> In oracleTapeGateway.sql: tg_attachTapesToStreams: Unconditionnally moves a write tape for the VID to TAPE_WAITDRIVE, or creates one if needed. (TG)
+<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo puts the tape from WAITDRIVE to pending or FAILED in some error cases. (RT)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo: set the tape status to reflect the status of the stream (RT)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus. (RT)
+<= In rtcopy/rtcpclientd.c: rtcpcld_main: Moves a tape from WAITDRIVE to FAILED in case the worker fails to start. (RT)
 
 - TAPE_WAITMOUNT  CONSTANT PLS_INTEGER := 3;
-=> In oracleTape.sql: anySegmentsForTape: moves the tape passed as parameter to tconst.TAPE_WAITMOUNT if it has any unprocessed segment.
+=> In oracleTape.sql: anySegmentsForTape: moves the tape passed as parameter to tconst.TAPE_WAITMOUNT if it has any unprocessed segment. Via Cstager_ITapeSvc_anySegmentsForTape only (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp resets stream's tapes to TAPE_UNUSED (from WAITDRIVE, WAITMOUNT, MOUNTED). (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp: Resurrects read tapes from tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED to WAIT_POLICY (RT)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED
-<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED
-<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them.
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. 
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus.
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED.  (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus. (RT)
 
 - TAPE_MOUNTED    CONSTANT PLS_INTEGER := 4;
-=> In oracleTape.sql: segmentsForTape: Sets the tape (passed as parameter) as mounted when it has unprocessed segments.
+=> In oracleTape.sql: segmentsForTape: Sets the tape (passed as parameter) as mounted when it has unprocessed segments.   Via Cstager_ITapeSvc_segmentsForTape only. (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp resets stream's tapes to TAPE_UNUSED (from WAITDRIVE, WAITMOUNT, MOUNTED). (RT)
 <= In oracleTape.sql: rtcpclientdCleanUp: Resurrects read tapes from tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED to WAIT_POLICY (RT)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED
-<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them.
-=> In oracleTapeGateway.sql: tg_startTapeSession: Sets the tape as mounted from vdqm request id for both read and write.
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. 
-<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus.
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+=> In oracleTapeGateway.sql: tg_startTapeSession: Sets the tape as mounted from vdqm request id for both read and write. (TG)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED.  (RT)
+<= In rtcopy/rtcpcldcommon.c: rtcpcld_workerFinished, moves from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED to TAPE_UNUSED in a extremely inefficient way via 3 calls to rtcpcld_updateTapeStatus. (RT)
 
 - TAPE_FINISHED   CONSTANT PLS_INTEGER := 5; (Seemingly dead state)
-<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy).
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING
+<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING (RT)
 
 - TAPE_FAILED     CONSTANT PLS_INTEGER := 6;
-<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy).
+<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
 <= In oracleTape.sql: rtcpclientdCleanUp moves tapes from status tconst.TAPE_UNUSED, tconst.TAPE_FAILED, tconst.TAPE_UNKNOWN to tconst.TAPE_WAITPOLICY when unprocessed segments are attached. (RT)
-<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED
-<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED
-<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo: Moves to failed if tape is not OK (checking the VMGR error messages in tapeStatus
-(<=) In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updateTapeStatus: sets the tape's status to any but gives a special treatement to error processing in a swiss army knife fashion.
-=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments: sets status to TAPE_FAILED depending on the number of segments it decided to retry.
-=> In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. 
-=>  In rtcopy/rtcpclientd.c: rtcpcld_main: Moves tape from WAITDRIVE to FAILED in case of a failure starting the migrator.
-<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING
+<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) TG) (To review for TG! Dangerous? Usefull?)
+<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_getTapesToDo: Moves to failed if tape is not OK (checking the VMGR error messages in tapeStatus (RT)
+(<=) In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updateTapeStatus: sets the tape's status to any but gives a special treatement to error processing in a swiss army knife fashion. (RT)
+=> In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_restoreSelectedSegments: sets status to TAPE_FAILED depending on the number of segments it decided to retry. (RT)
+=> In rtcopy/rtcpcldcommon.c: rtcpcld_setVIDFailedStatus: moves tape (passed as parameter) to FAILED from TAPE_WAITDRIVE, WAITMOUNT, MOUNTED. (RT)
+=>  In rtcopy/rtcpclientd.c: rtcpcld_main: Moves tape from WAITDRIVE to FAILED in case of a failure starting the migrator. (RT) 
+<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING (RT)
 
 - TAPE_UNKNOWN    CONSTANT PLS_INTEGER := 7; (Seemingly dead state)
-<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy).
+<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
 <= In oracleTape.sql: rtcpclientdCleanUp moves tapes from status tconst.TAPE_UNUSED, tconst.TAPE_FAILED, tconst.TAPE_UNKNOWN to tconst.TAPE_WAITPOLICY when unprocessed segments are attached. (RT)
-<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED
-<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING
+<= In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_returnStream: move the tape (passed as parameter) from TAPE_WAITDRIVE TAPE_WAITMOUNT TAPE_MOUNTED TAPE_FINISHED TAPE_UNKNOWN to TAPE_UNUSED (RT)
+<= In rtcopy/TapeErrorHandler.c: doRecallRetry: moves tape from TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to TAPE_PENDING (RT)
 
 - TAPE_WAITPOLICY CONSTANT PLS_INTEGER := 8;
-=> In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy).
+=> In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
 => In oracleTape.sql: rtcpclientdCleanUp: Resurrects read tapes from tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED to WAIT_POLICY (RT)
-<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler)
-<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler)
-<= In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY
-=> In oracleTapeGateway.sql: tg_endTapeSession: reset the tape to TAPE_WAITPOLICY if not all segments could be processed.
-=> In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY
-<= In tape/rechandler/RecHandlerThread.cpp: castor::tape::rechandler::RecHandlerThread::run: Processed tapes from list, filtering in the ones in TAPE_WAITPOLICY. Successfull ones will go through oraSvc->resurrectTapes. (i.e. => PENDING)
+<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+<= In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY (Rechandler) (RT) (TG)
+=> In oracleTapeGateway.sql: tg_endTapeSession: reset the tape to TAPE_WAITPOLICY if not all segments could be processed. (TG)
+=> In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+<= In tape/rechandler/RecHandlerThread.cpp: castor::tape::rechandler::RecHandlerThread::run: Processed tapes from list, filtering in the ones in TAPE_WAITPOLICY. Successfull ones will go through oraSvc->resurrectTapes. (i.e. => PENDING) (Rechandler) (RT) (TG)
 
 - TAPE_ATTACHEDTOSTREAM CONSTANT PLS_INTEGER := 9; (No obvious way out of this state, but could be achieved by linked object (STREAM lifecycle, most likely)
-=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: changes the state of the tape to TAPE_ATTACHEDTOSTREAM as the stream moves to tconst.STREAM_WAITDRIVE
+=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: changes the state of the tape to TAPE_ATTACHEDTOSTREAM as the stream moves to tconst.STREAM_WAITDRIVE (TG)
 
 
 
