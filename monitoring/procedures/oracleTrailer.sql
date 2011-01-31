@@ -556,7 +556,8 @@ BEGIN
      stddevProcessingTime, medianProcessingTime)
     -- Gather data
     SELECT now - 5/1440 timestamp, interval, results.fac_name daemon,
-           type.value type, nvl(svcClass.value, 'all') svcClass,
+           replace(type.value, 'REQUESTTYPE_', '') type,
+           nvl(svcClass.value, 'all') svcClass,
            (count(*) / interval) requests,
            min(elapsed)        minProcessingTime,
            max(elapsed)        maxProcessingTime,
@@ -586,7 +587,7 @@ BEGIN
            AND   params.name = 'ElapsedTime')
            -- srmbed
             OR  (messages.facility = 14 -- srmbed
-           AND   messages.msg_no = 9    -- Processing complete
+           AND   messages.msg_no = 20   -- TURL available
            AND   params.name = 'ElapsedTime'))
            -- Resolve facility name
            AND messages.facility = facilities.fac_no

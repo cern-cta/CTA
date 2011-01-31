@@ -10,6 +10,7 @@ That translates a filename to a number
 '''
 
 import string
+import random
 
 class AttributeTranslatorInterface(object):
     def __init__(self):
@@ -21,7 +22,7 @@ class AttributeTranslatorInterface(object):
 #untested
 class FileExtensionTranslator(AttributeTranslatorInterface):
 
-    def __init__(self, min = 0, max = 23):
+    def __init__(self, min = 0, max = 29):
         AttributeTranslatorInterface.__init__(self)
         if max < min: max, min = min, max
         self.max = max
@@ -32,17 +33,18 @@ class FileExtensionTranslator(AttributeTranslatorInterface):
     def translate(self, modelinstance, attrname):
         try:
             ext = self.findExtension(modelinstance.__dict__[attrname])
+            if(ext == ''): return int(random.random()*(self.max-self.min))
         except KeyError:
             raise Exception("attribute doesn't exist")
         
         if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
             raise Exception("string or unicode expected")
-        
-        return int(self.calcExtHash(ext)%(self.max-self.min))+self.min
+        ret = int(self.calcExtHash(ext)%(self.max-self.min))+self.min
+        return ret
 
     def findExtension(self, text):
         dot = string.rfind(text, '.')
-        if dot < 0 or len(text)>16: 
+        if dot < 0 or (len(text)-dot)>16: 
             return ''
         else:
             return text[dot+1:]

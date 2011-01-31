@@ -28,10 +28,11 @@ def findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, modelname):
         
 #        don't generate the tree again if it's already generated with the right parameters
     if (modelobject.treeprops['start'] != modelobject.start) or (modelobject.treeprops['stop'] != modelobject.stop):
+        #print "start profiling..."
+        #profile.runctx("generateRequestsTree(modelobject.start , modelobject.stop, modelname, statusfilename)", globals(), {'modelobject':modelobject, 'modelname':modelname, 'statusfilename':statusfilename})
         generateRequestsTree(modelobject.start , modelobject.stop, modelname, statusfilename)
         modelobject.treeprops['start'] = modelobject.start
-        modelobject.treeprops['stop'] = modelobject.stop
-        
+        modelobject.treeprops['stop'] = modelobject.stop   
     found = traverseToRequestInTree(path, modelname).getCurrentObject()
     return found
 
@@ -51,7 +52,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
 
             return pos
             
-        name = requestdata.filename
+        name = str(requestdata.filename)
         pos = findSplittingPos(name)
             
         assert (pos >=0)
@@ -70,32 +71,28 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             tree.traverseToRoot()
             oldpos = 0
             pos = findSplittingPos(name)
-            
-        thefilename = ''
-        therequestcount = 1
-            
-        while (pos >=0):
+         
+        while True:
             #todo: split and traverse
-            filename = name[:pos]
-            #entry = copy.copy(requestdata)
+            if(pos >= 0):
+                filename = name[:pos]
+            else:
+                pos = len(name)
+                filename = name[:pos]
+
+            filenamehash = hash(filename)
             
-            thefilename = filename
-            therequestcount = 1
-            
+            #look if child is in tree, if yes then traverse into it
             childintree = False
             for child in tree.getChildren():
-                chnp = child.filename
-                enp = thefilename
-                chnplen = len(chnp)
-                enplen = len(enp)
-                a = 1
-                b = 2
-                if chnplen > 1 and enplen > 1:
-                    a = chnp[chnplen-2]
-                    b = enp[enplen-2]
-                # a and b for speeding up
-                if a == b:
-                    if chnp == enp:
+                try:
+                    child.cachedfhash
+                except AttributeError:
+                    child.cachedfhash = hash(child.filename)
+                     
+                if child.cachedfhash == filenamehash:
+                    addRequestToTree.cost = addRequestToTree.cost + 1
+                    if (child.filename == filename):
                         child.requestscount = child.requestscount + 1
                         childintree = True
                         tree.traverseInto(child)
@@ -104,18 +101,20 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             if not childintree:
                 #for root: if this is the current parent
                 parent = tree.getCurrentObject()
-                if thefilename == parent.filename:
+                if filename == parent.filename:
                     parent.requestscount = parent.requestscount + 1
                 else:
                     entrytoadd = copy.copy(requestdata)
-                    entrytoadd.filename = thefilename
-                    entrytoadd.requestscount = therequestcount
+                    entrytoadd.filename = filename
+                    entrytoadd.requestscount = 1
                     tree.addChild(entrytoadd)
                     tree.traverseInto(entrytoadd)
             
             oldpos = pos + 1
+            if pos == len(name): break
             pos = findSplittingPos(name, pos + 1)
-            
+    
+    addRequestToTree.cost = 0        
     model_class = globals()[reqmodel]
     model_class.generatedtree = BasicTree()        
     tree = model_class.generatedtree
@@ -139,15 +138,19 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
     
         for dataset in requestarray:
             addRequestToTree(tree, dataset)
-            
+        
+        print "cost: ", addRequestToTree.cost    
         status = ((float(i+1)/float(nbsteps)))
         generateStatusFile(statusfilename, status)
-    
+        
     print "time: ", datetime.datetime.now() - timemeasurement
     if tree.getRoot() is None:
         raise NoDataAvailableError("Server didn't returned any Request records")
     print tree.getRoot().requestscount
     print ''
+    
+def mergeTrees(fromtree, totree):
+    pass
     
 def traverseToRequestInTree(name, reqmodel):
 

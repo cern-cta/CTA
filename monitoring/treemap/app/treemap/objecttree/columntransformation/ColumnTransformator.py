@@ -13,7 +13,7 @@ import datetime
 #import math
 from app.tools.ObjectCreator import createObject
 from app.treemap.objecttree.columntransformation.TransFunctions import *
-from app.tools.Inspections import *
+import app.tools
 
 #USAGE EXAMPLE:
 #from app.dirs.models import Dirs
@@ -33,9 +33,9 @@ class ColumnTransformator(dict):
     fnprefix = 'transform_'
     
     def __init__(self, className):
-        self.moduleName = getModelsModuleName(className)
+        self.moduleName = app.tools.Inspections.getModelsModuleName(className)
         self.className = className
-        self.ci = ModelAttributeFinder(self.className)
+        self.ci = app.tools.Inspections.ModelAttributeFinder(self.className)
         self.columns = self.ci.getColumns()
         self.metricattributenames = self.ci.getMetricAttributeNames()
         self.generateDefaultFunctions()

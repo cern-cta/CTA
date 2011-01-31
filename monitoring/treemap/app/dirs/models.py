@@ -372,7 +372,7 @@ class Requestsatlas(models.Model, ModelInterface):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsatlas')
     
     def getChildren(self):
@@ -474,7 +474,7 @@ class Requestscms(models.Model, ModelInterface):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestscms')
     
     def getChildren(self):
@@ -577,7 +577,7 @@ class Requestsalice(models.Model, ModelInterface):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsalice')
     
     def getChildren(self):
@@ -680,7 +680,7 @@ class Requestslhcb(models.Model, ModelInterface):
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestslhcb')
     
     def getChildren(self):
@@ -780,11 +780,11 @@ class Requestspublic(models.Model, ModelInterface):
         try:
             self.filename
         except:
-            raise Exception("No attribute filename in current object")
+            raise Exception("No attribute filename")
         return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
+    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
         return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestspublic')
     
     def getChildren(self):

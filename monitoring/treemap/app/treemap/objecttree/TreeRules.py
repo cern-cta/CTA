@@ -15,6 +15,7 @@ import inspect
 import sys
 import warnings
 from app.dirs.models import *
+import app.tools
 
 class ChildRules(object):
     '''
@@ -33,9 +34,9 @@ class ChildRules(object):
         self.ppnames = {}
     
     def createOrUpdate(self, classname, methodname, parentmethodname, attrname, fparam = None, postprocessornm = 'DafaultPostProcessor'):
-        countmethodname = getCountMethodFor(classname, methodname)
+        countmethodname = app.tools.Inspections.getCountMethodFor(classname, methodname)
 
-        modulename = getModelsModuleName(classname)
+        modulename = app.tools.Inspections.getModelsModuleName(classname)
         if self.ruleDataCorrect(modulename, classname, methodname, countmethodname, parentmethodname, attrname, postprocessornm) and countmethodname is not None:
             index = classname
             self.methods[index] = methodname
@@ -48,7 +49,7 @@ class ChildRules(object):
             raise Warning('Rule for ' + classname + ' could not be added. Methodname is ' + methodname)
         
     def setPostProcessorName(self, classname, ppname):
-        if ppname in getPostProcessorNames() and classname in self.getUsedClassNames():
+        if ppname in app.tools.Inspections.getPostProcessorNames() and classname in self.getUsedClassNames():
             self.ppnames[classname] = ppname
         
         
@@ -121,13 +122,13 @@ class ChildRules(object):
         if not found: return False
         
         #check attrname
-        cf = ModelAttributeFinder(classname)
+        cf = app.tools.Inspections.ModelAttributeFinder(classname)
         if attrname not in cf.getColumnAndAtrributeNames():
             return False
         
         #check postprocessornm
         if postprocessornm is not None:
-            if postprocessornm not in getPostProcessorNames(): return False
+            if postprocessornm not in app.tools.Inspections.getPostProcessorNames(): return False
         
         return True
         
@@ -135,7 +136,7 @@ class ChildRules(object):
         
         for classname, methodname in self.methods.items():
             #check modulename and  classname
-            modulename = getModelsModuleName(classname)
+            modulename = app.tools.Inspections.getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except Exception:
@@ -154,7 +155,7 @@ class ChildRules(object):
             
         for classname, countmethodname in self.countmethods.items():
             #check modulename and  classname
-            modulename = getModelsModuleName(classname)
+            modulename = app.tools.Inspections.getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except Exception:
@@ -173,7 +174,7 @@ class ChildRules(object):
         
         for classname, parentmethodname in self.parentmethods.items():
             #check modulename and  classname
-            modulename = getModelsModuleName(classname)
+            modulename = app.tools.Inspections.getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except Exception:
@@ -188,14 +189,14 @@ class ChildRules(object):
         
         for classname, attrname in self.attrnames.items():
             #check modulename and  classname
-            modulename = getModelsModuleName(classname)
+            modulename = app.tools.Inspections.getModelsModuleName(classname)
             try:
                 instance = createObject(modulename, classname)
             except Exception:
                 return False 
         
             #check attrname
-            cf = ModelAttributeFinder(classname)
+            cf = app.tools.Inspections.ModelAttributeFinder(classname)
             if attrname not in cf.getColumnAndAtrributeNames():
                 return False
             

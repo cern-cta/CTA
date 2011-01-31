@@ -1,29 +1,32 @@
-1. You need to scan the db to generate the models
+1. If the data is coming from a db, you need to scan the db to generate the model
 Enter the required data for db access into settings.py. 
-You need a read-wrie access. If you connect to a read-only account, django is not able to find the tables.
-The standard way django scans for existing tables won't work.
+You need a read-write access to scan the db. If you connect to a read-only account, django is not able to find the tables.
 
-DATABASE_NAME = 'rwnetworkalias'		 
-DATABASE_USER = 'rwusername'          
-DATABASE_PASSWORD = 'rwpassword' 
+DATABASE_NAME = 'rw_networkalias'		 
+DATABASE_USER = 'rw_username'          
+DATABASE_PASSWORD = 'rw_password' 
 
 Now, open a terminal and go to the directory where you have your manage.py
-You can generate your model into a file:
+Now you can generate models for all available tables by typing something like that:
 
 python manage.py inspectdb > ./dirs/yourfile.txt
 
-If you use a readonly account to the same data, you might want to restore settings in settings.py
+For using that models, a readonly account is sufficient. 
+You don't want to modify the monitoring data, you only want to read it.
+Therefore I advice to have a readonly connection if it is for other purposes than scanning. Just change your settings.py again:
 
-DATABASE_NAME = 'ronetworkalias'	
-DATABASE_USER = 'rousername'             
-DATABASE_PASSWORD = 'ropassword' 
+DATABASE_NAME = 'r_onetworkalias'	
+DATABASE_USER = 'r_ousername'             
+DATABASE_PASSWORD = 'r_opassword' 
 
 By default, django generates models for all the tables. Open yourfile.py, choose the model(class) you need and copy&paste it to your models.py
+On readonly accounts, you will need a SYNONYM because the table is not accessible directly. 
+Here is an example how to create a synonym in your readonly account:
 
-You will probably need a SYNONYM for the table you generated the model for. Here is an example how to create a synonym in your database:
 CREATE SYNONYM "CASTOR_NS_RO"."REQUESTS" FOR "MON_C2ATLAS"."REQUESTS"; You probably will need a permission from db admin to create synonyms.
 
-If the table is not in the same database you will need to create a database link:
+If the table is not in the same database you will need to create a database link before:
+
 CREATE DATABASE LINK
     c2cstdev
 CONNECT TO
@@ -35,11 +38,13 @@ using
 
 Then you can access the table like this: 
 
-SELECT * FROM requests@c2cstdev;
+SELECT * FROM requestsalice@c2cstdev;
 
-Now you can create the SYNONYM:
-CREATE SYNONYM "CASTOR_NS_RO"."REQUESTSATLAS" FOR "MON_C2ATLAS"."REQUESTS";
+But instead of accessing like this, create a SYNONYM, because django can't handle the @ and . notation:
+CREATE SYNONYM "CASTOR_NS_RO"."REQUESTSALICE" FOR "REQUESTSALICE"@"C2CSTDEV.CERN.CH";
 
+Now you (and django) can do selects selects the table were local:
+SELECT * FROM REQUESTSALICE;
 
 2. You need to verify if the generated data is correct. Example:
 
@@ -67,107 +72,124 @@ models.FloatField(null=True, blank=True)
 
 Django can't recognize Floats and takes DecimalField by default, but DecimalField will always return 0 on a float.
 
-3. Define which fields are not metrics. These usually are id's or strings:
-RequestsAtlas.nonmetrics = ['subreqid', 'reqid', 'nsfileid', 'type', 'svcclass', 'username', 'state']
+Also, your model has to fit the ModelInterface. Therefore inherit from it by changing from class Requests(models.Model) to:
 
-4. Define the getUserFriendlyName method. 
+Requests(models.Model, ModelInterface)
+
+3. Implement the interface
+3.1 Define the getUserFriendlyName method. 
 This method has to return a string which will represent the Object in the web interface:
 
 def getUserFriendlyName(self): return "Amount of Requests"
 
-5. Define getIdReplacement method.
-This method defines how to find the same object from the database. 
-It has to be a string which describes how to find the object independently from any memory address or process id.  
-Usually it is enough to define the id as {modelname}_{id}. 
-In the code below there is an additional trick to have the best performance on joining strings together.
-What matters is [self.__class__.__name__, "_", self.pk.__str__()]
+3.2 Define getIdReplacement method.
+This method defines the alternative primary key which is used to identify an object via URL 
+For example, instead of using a Directory id 
+
+http://pcitdmssd/treemaps/{smalltobig=false, flatview=false, time=09.12.2010_11:30:58, span=120}24_Requestslhcb_2
+
+you might want to use the Directory name as id replacement to have editable links like this:
+
+http://pcitdmssd/treemaps/{smalltobig=false, flatview=false, time=09.12.2010_11:30:58, span=120}24_Requestslhcb_/castor
 
 def getIdReplacement(self):
-   return ''.join([bla for bla in [self.__class__.__name__, "_", self.pk.__str__()]])
+    try:
+        self.filename
+    except:
+        raise Exception("No attribute filename")
+    return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
    
-The output of this method is used by the views to find that object again. 
-The object will be taken as root for generating the ObjectTree for the treemap.
-If the view has to find the object by reading that string from the url, you need to add something like:
+In urls.py you can define how to extract that string from the URL (in example below it is called "theid")
     
     (r'(?P<rootmodel>\w+)_(?P<theid>\d+)/$', 'dirs.views.treeView')
    
-Into the url.py. It is a regular expression. In that way django can read the model and the id from the url again.
-?P<rootmodel> stands for the modelname and ?P<theid> stands for the id.
+That is a regular expression.
+?P<rootmodel> stands for the modelname and ?P<theid> stands for the id which getIdReplacement() returns.
 Regular expressions in python are explained in greater detail here:
 http://csil-web.cs.surrey.sfu.ca/cmpt170spring2010/wiki/RegularExpressions/
 
-5.1 extend findObjectByIdReplacementSuffix
+3.2 define findObjectByIdReplacementSuffix
+After we defined how to address an object via string in URL, we need to define how to find that object from that string again.
+This method must also define a default object to return if an empty id replacement string is passed. 
+If there is no default object, the best idea I can think of is to choose a random existing one.
 
-6. Define __unicode__ and __str__
+def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
+    dirname = None
+    if urlrest.rfind('/') == (len(urlrest)-1): 
+        dirname = urlrest[:len(urlrest)-1]
+    else:
+        dirname = urlrest
+    if dirname == '': dirname = '/castor'#if empty choose a root Directory that makes sense
+    found = getDirByName(dirname)
+    return found
+    
+Note that "getDirByName" is a model specific function that is not included in the interface.
+To keep overview what is extra and what is not such specific functions are collected in the ModelSpecificFunctions module. 
+For example Directories have their specific functions in DirsFunctions.py. 
+If you open that files you will see the impementation of getDirByName there.
+
+3.3 Define __unicode__ and __str__
 
 Usually __unicode__ calls the __str__ method and converts it to unicode
     def __unicode__(self):
         return unicode(self.__str__())
         
-The string method should return a string that will be shown in the headers of the graphical rectangles if there is no metrics linking for 'headertext' specified
+The string method should return an "emergency default string" that will be shown in the headers of the treemap rectangles in case there is no other "headertext" available.  
     def __str__(self):
         return "\""+self.namepart+"\": " + self.requestscount.__str__()
         
-7. Define __init__ and __hash__
+3.4 Define __init__ and __hash__
 
 You only need to define __init__ if you have attributes in the model objects which are not from the database.
-__init__ MUST begin like that:
+__init__ MUST call the Model base, therefore it MUST begin like that:
 
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)
+        #rest of the code
         
-Now you can define the attributes that are not from the db inside of __init__:
+Now you can define additional attributes inside of __init__. This is how non-db values work:
 
+    def __init__(self, *args, **kwargs):
+        models.Model.__init__(self, *args, **kwargs)
         self.namepart = None
         self.requestscount = None
         
-If you are such attributes which are not from the database you will need __hash__ with high probability.
+If you have such attributes which are not from the database you will need __hash__ with high probability.
 __hash__ is used by the networkx library to determine neighbours in the graph (a tree is a graph)
-Most probably you will want to be able to distinguish between object which have the same id but different non-db attributes.
-By default Django defines __hash__ by using the primary key:
+Most probably you will want to be able to distinguish between object which have the same db atrributes but different non-db attributes.
+But Django can't know better than to define __hash__ by using the primary key, which would be independend from non-db values:
 
     def __hash__(self):
         return hash(self._get_pk_val())
-        
-That means, if two objects represent the same data set from the db but have different non-db attributes (here: namepart and requestscount),
-the hash will be the same despite of different non-db attribute values. 
-If you want to have the hash value different, involve the extra attributes into the calculation:
+         
+If you want to distiguish between objects with different "namepart" value, then redefine it like this:
 
     def __hash__(self):
         return hash(self._get_pk_val().__str__() + self.namepart)
 
-	or
+If you want to distiguish between objects with different "namepart" and/or "requestscount" value, then redefine it like this:
 
     def __hash__(self):
         return hash(self._get_pk_val().__str__() + self.namepart + self.requestcount__str__())
-        
-    Depending on how model objects are wished to be considered different.
     
-8. Defining children method(s)
+3.5 Defining children method(s)
 
 This is the most important and central part of implementing a new model.
-A children method defines how to get Children objects. The method asks an object for its children.
+The children method allows to ask an object for its children, which is a central part that enables to build a data tree.
 This method is used to build the object tree, and the object tree is needed to generate the treemap.
-You can have more than only one children method. 
+You can have more than only one children method, depending which type of children you want to get.
+That Method can also return a mix of objects of different classes.
 For example if you have a Directory structure, you might be interested in Files, Subdirectories or both, 
-which are inside of that directory (and therefore children). If you want all 3 options you need to define 3 Methods:
+which are inside of that directory (and therefore children). If you want all 3 options you can define 3 different Methods:
 getFiles, getDirectories and getFilesAndDirectories. 
 
-How will TreeBuilder know that these are the children Methods?
-You have to define them in model's class object below the class definition.
-If your model is named 'Dirs' that would look like that:
-
-Dirs.getFiles.__dict__['methodtype'] = 'children'
-Dirs.getDirectories.__dict__['methodtype'] = 'children'
-Dirs.getFilesAndDirectories.__dict__['methodtype'] = 'children'
-
-In general:
-{model}.{method}.__dict__['methodtype'] = 'children'
+How will TreeBuilder know which are the children Methods?
+You have to define them in childrenMethodsPairs (see next section)
 
 How to implement a children method?
 The children method has to return a list objects which contains all the children. 
 If there is no children the list has to be empty. 
-How do you implement your children method depends on if you have some 
+How do you implement your children method depends on where the data comes from and what do you want to have as result.
 
 If you work with pure db values you just make a query using django framework:
 
@@ -177,11 +199,11 @@ If you work with pure db values you just make a query using django framework:
         (...)
         return children
     
-    A more complex query:
+    A more complex example of a query to get all Files:
      
     children = CnsFileMetadata.objects.filter(parent_fileid=id).extra(where=['bitand(filemode, 16384) = 0'])
         
-If the query is too complex for the framework, you can execute a query directly:
+If the query is too complex to be nicely supported and translated into a select by the framework, you can execute a query directly:
 
 	from django.db import connection
 
@@ -192,23 +214,25 @@ If the query is too complex for the framework, you can execute a query directly:
     except:
         print "exception!"
         
-If the model objects contain some non-db attributes or even no db values at all the implementation is really dependend on what you need.
-For example you may implement a method that generates the data tree first (You can use the BasicTree class for that) and call the methods from that tree:
+If the model objects contain some non-db attributes or even no db values at all, the implementation is really dependend on what you need.
+For example you may implement an extra function in ModelSpecificFunctions that generates the data tree first, because it doesn't exist by default in the data.
+You can use the BasicTree class and redirect the method to that tree:
 
     def getChildren(self):
+    	#traverseToRequestInTree generates the tree and traverses to the position identified by self.namepart
         tree = traverseToRequestInTree(self.namepart)
         return tree.getChildren()
         
-9. Define count method(s)
+3.6 Define count method(s)
 
 These methods are very important for performance.
-For each children method you need to define a count method. The count method is important for performance.
+For each children method you need to define a count method.
 It is used to predict if it makes sense to read more children with acceptable performance. So the worst thing you can do is:
 
     def countDirectories(self):
     	return len(self.getDirectories())
     	
-You have to find a fast query or other way to count the children before really reading all of them. 
+Usually you can find a faster query or other mechanism to predict the amount of children before actually reading all of them. 
 If the count method is slow, the whole system is slow. So instead of doing the worst thing above you may do something like this:
 
     def countDirs(self):
@@ -220,10 +244,12 @@ If the count method is slow, the whole system is slow. So instead of doing the w
 	    except:
 	    	...
 
-Take your time to find the fastest way to count the children. If you don't, the generation of the object Tree will be very slow.
+Take your time to find the fastest way to count the children in advance. If you don't, the generation of the object Tree will be very slow.
 For all these examples it is also recommended to cache the children, so you could say here (in case that children are in cache):
 
 	return len(self.cached_children)
+	
+3.6 Define childrenMethodsPairs
 	
 10. parent method
 11. metrics linking

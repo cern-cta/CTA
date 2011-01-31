@@ -35,6 +35,7 @@ def getStatusFileFullPath(statusfilename):
     return settings.LOCAL_APACHE_DICT + settings.REL_STATUS_DICT + "/"+ statusfilename
 
 def generateStatusFile(statusfilename, status):
+    if statusfilename == '': return
     try:
         filecontent = render_to_string('status.html', {'status':"%f"%status})
         
