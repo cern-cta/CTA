@@ -72,6 +72,7 @@ sub daemonIsRunning {
 
 my $testVmgrHost    = "lxcastordev04";
 my $nonRootUserName = "murrayc3";
+my $productionHost  = "lxadm";
 my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
 my %tapes = (
   I02023 => {
@@ -127,6 +128,7 @@ my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
 my $i                  = 0;
+my $vmgrquerytapePath  = "";
 my @vids;
 
 # Abort if the user is not root
@@ -138,13 +140,22 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 $castor_src = $ENV{'CASTOR_SRC'};
 print("Using CASTOR_SRC=$castor_src\n");
 
+# Abort if the vmgrquerytape binary does not exist
+$vmgrquerytapePath = "$castor_src/test/vmgr/vmgrquerytape";
+die("ABORT: $vmgrquerytapePath does not exist\n")
+  unless -e $vmgrquerytapePath;
+die("ABORT: $vmgrquerytapePath is not a plain file\n")
+  unless -f $vmgrquerytapePath;
+die("ABORT: $vmgrquerytapePath is not executable\n")
+  unless -x $vmgrquerytapePath;
+
 # Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
 # the production vmgr
 print("\n");
 print("CHECKING TEST TAPES ARE IN TAPE_DEV AND DISABLED IN PRODUCTION\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs("root",
-    "ssh $nonRootUserName\@lxadm vmgrlisttape -V $vid");
+    "ssh $nonRootUserName\@$productionHost vmgrlisttape -V $vid");
   chomp($cmdResultStr);
   print("cmdResultStr=$cmdResultStr\n");
   $tapePool   = "UNKNOWN";
@@ -165,7 +176,7 @@ print("\n");
 print("CHECKING TEST_TAPES CONTAIN NO PRODUCTION FILES\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs("root",
-    "2>&1 ssh $nonRootUserName\@lxadm nslisttape -V $vid");
+    "2>&1 ssh $nonRootUserName\@$productionHost nslisttape -V $vid");
   chomp($cmdResultStr);
   print("cmdResultStr=\"$cmdResultStr\"\n");
   die "$vid contains production files"
@@ -186,13 +197,17 @@ print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
 &testRunCmdAsOutput("root",
   "2>&1 VMGR_HOST=lxcastorsrv102 vmgrlisttape -V $vids[0]",
   "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
+&testRunCmdAsOutput("root",
+  "2>&1 VMGR_HOST=lxcastorsrv102 $vmgrquerytapePath $vids[0]",
+  "VMG03 - illegal function 39\n" .
+  "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
 
 # Abort if the production clients do not work correctly with the new vmgr
 print("\n");
 print("CHECKING PRODUCTION CLIENTS WORK WITH NEW VMGR\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs($nonRootUserName,
-    "ssh $nonRootUserName\@lxadm VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
+    "ssh $nonRootUserName\@$productionHost VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
   print("cmdResultStr=\"$cmdResultStr\"\n");
   $tapePool     = "UNKNOWN";
   $tapeStatus   = "UNKNOWN";
