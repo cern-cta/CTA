@@ -64,11 +64,11 @@ vmgr_listdenmap_byte_u64(int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC3);
+		marshall_LONG (sbp, VMGR_MAGIC2);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
-			marshall_LONG (sbp, VMGR_LISTDENMAP);
+			marshall_LONG (sbp, VMGR_LISTDENMAP_BYTE_U64);
 		}
 		q = sbp;        /* save pointer. The next field will be updated */
 		msglen = 3 * LONGSIZE;

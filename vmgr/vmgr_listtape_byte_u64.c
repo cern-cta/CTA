@@ -73,11 +73,11 @@ vmgr_listtape_byte_u64(char *vid, char *pool_name, int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC3);
+		marshall_LONG (sbp, VMGR_MAGIC2);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
-			marshall_LONG (sbp, VMGR_LISTTAPE);
+			marshall_LONG (sbp, VMGR_LISTTAPE_BYTE_U64);
 		}
 		q = sbp;        /* save pointer. The next field will be updated */
 		msglen = 3 * LONGSIZE;

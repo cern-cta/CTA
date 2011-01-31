@@ -49,8 +49,8 @@ int vmgr_enterdenmap_byte_u64(const char *model, char *media_letter,
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC3);
-	marshall_LONG (sbp, VMGR_ENTDENMAP);
+	marshall_LONG (sbp, VMGR_MAGIC2);
+	marshall_LONG (sbp, VMGR_ENTDENMAP_BYTE_U64);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);

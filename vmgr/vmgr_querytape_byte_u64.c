@@ -44,8 +44,8 @@ int vmgr_querytape_byte_u64(const char *vid, int side,
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC3);
-	marshall_LONG (sbp, VMGR_QRYTAPE);
+	marshall_LONG (sbp, VMGR_MAGIC2);
+	marshall_LONG (sbp, VMGR_QRYTAPE_BYTE_U64);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);

@@ -20,7 +20,6 @@
 #include "osdep.h"
 #define VMGR_MAGIC	0x766D6701
 #define VMGR_MAGIC2	0x766D6702
-#define VMGR_MAGIC3	0x766D6703
 #define VMGR_LISTTIMEOUT 300	/* timeout while waiting for the next list sub-req */
 #define VMGR_TIMEOUT	5	/* netread timeout while receiving a request */
 #define	MAXRETRY 5
@@ -72,6 +71,13 @@
 #define VMGR_QRYWEIGHT       36
 #define VMGR_LISTWEIGHT      37
 #define VMGR_DELTAPEAFTERCHK 38
+
+/* Identifiers for messages that support data-sizes in bytes represented */
+/* using 64-bit unsigned-integers                                        */
+#define VMGR_QRYTAPE_BYTE_U64    39
+#define VMGR_ENTDENMAP_BYTE_U64  40
+#define VMGR_LISTDENMAP_BYTE_U64 41
+#define VMGR_LISTTAPE_BYTE_U64   42
 
 			/* volume manager reply types */
 
