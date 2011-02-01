@@ -116,20 +116,21 @@ my %tapes = (
     po => "stager_dev04"
   }
 );
-my $castor_src         = "";
-my $originalDbSchema   = "";
-my $originalDropSchema = "";
-my $vid                = "";
-my $tapePool           = "";
-my $tapeStatus         = "";
-my $freeSpaceStr       = "";
-my $status             = 0;
-my $uid                = POSIX::getuid;
-my $gid                = POSIX::getgid;
-my $cmdResultStr       = "";
-my $i                  = 0;
-my $vmgrquerytapePath  = "";
-my @vids;
+my $castor_src                     = "";
+my $originalDbSchema               = "";
+my $originalDropSchema             = "";
+my $vid                            = "";
+my $tapePool                       = "";
+my $tapeStatus                     = "";
+my $freeSpaceStr                   = "";
+my $status                         = 0;
+my $uid                            = POSIX::getuid;
+my $gid                            = POSIX::getgid;
+my $cmdResultStr                   = "";
+my $i                              = 0;
+my $vmgrquerytapePath              = "";
+my $vmgrquerytapePath_trunk_r21843 = "";
+my @vids                           = sort keys %tapes;
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -148,6 +149,16 @@ die("ABORT: $vmgrquerytapePath is not a plain file\n")
   unless -f $vmgrquerytapePath;
 die("ABORT: $vmgrquerytapePath is not executable\n")
   unless -x $vmgrquerytapePath;
+
+# Abort if the vmgrquerytape_trunk_r21843 binary does not exist
+$vmgrquerytapePath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843";
+die("ABORT: $vmgrquerytapePath_trunk_r21843 does not exist\n")
+  unless -e $vmgrquerytapePath_trunk_r21843;
+die("ABORT: $vmgrquerytapePath_trunk_r21843 is not a plain file\n")
+  unless -f $vmgrquerytapePath_trunk_r21843;
+die("ABORT: $vmgrquerytapePath_trunk_r21843 is not executable\n")
+  unless -x $vmgrquerytapePath_trunk_r21843;
 
 # Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
 # the production vmgr
@@ -186,7 +197,6 @@ for $vid (sort keys %tapes) {
 # Abort if the new vmgr clients do not get refused by the old production vmgr
 print("\n");
 print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
-@vids = sort keys %tapes;
 &testRunCmdAsOutput("root",
   "2>&1 VMGR_HOST=lxcastorsrv102 vmgrenterdenmap" .
   " -d 9999GC --ml J --mo 3592 --nc 1T",
@@ -201,33 +211,6 @@ print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
   "2>&1 VMGR_HOST=lxcastorsrv102 $vmgrquerytapePath $vids[0]",
   "VMG03 - illegal function 39\n" .
   "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
-
-# Abort if the production clients do not work correctly with the new vmgr
-print("\n");
-print("CHECKING PRODUCTION CLIENTS WORK WITH NEW VMGR\n");
-for $vid (sort keys %tapes) {
-  $cmdResultStr = &runCmdAs($nonRootUserName,
-    "ssh $nonRootUserName\@$productionHost VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
-  print("cmdResultStr=\"$cmdResultStr\"\n");
-  $tapePool     = "UNKNOWN";
-  $tapeStatus   = "UNKNOWN";
-  $freeSpaceStr = "UNKNOWN";
-  if($cmdResultStr =~
-    m/$vid +$vid +\w+ +\w+ +$tapes{$vid}{l} +(\w+) +([^ ]+) +\w+ +(\w+)$/) {
-    $tapePool     = $1;
-    $freeSpaceStr = $2;
-    $tapeStatus   = $3;
-  }
-  die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect tape-pool: expected=\"tape_dev\", actual=\"$tapePool\""
-    unless $tapePool eq "tape_dev";
-  die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect free-space: expected=\"1.00TiB\", actual=\"$freeSpaceStr\""
-    unless $freeSpaceStr eq "1.00TiB";
-  die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\""
-    unless $tapeStatus eq "DISABLED";
-}
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -350,7 +333,7 @@ for $vid (sort keys %tapes) {
 }
 
 $i = 1;
-for $vid (sort keys %tapes) {
+for $vid (@vids) {
 
   if($i == 1) {
     &runCmdAs("root", "vmgrmodifytape -V $vid --st ''");
@@ -360,6 +343,41 @@ for $vid (sort keys %tapes) {
 
   $i = $i + 1;
 } 
+
+# Abort if the old vmgr_checktape function does not work with the new vmgr
+print("\n");
+print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
+&testRunCmdAsOutput("root",
+  "2>&1 $vmgrquerytapePath_trunk_r21843 $vids[0]",
+  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"tapes{$vids[0]}{dgn}\"");
+
+# Abort if the production clients do not work correctly with the new vmgr
+print("\n");
+print("CHECKING PRODUCTION CLIENTS WORK WITH NEW VMGR\n");
+for $vid (sort keys %tapes) {
+  $cmdResultStr = &runCmdAs($nonRootUserName,
+    "ssh $nonRootUserName\@$productionHost VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
+  print("cmdResultStr=\"$cmdResultStr\"\n");
+  $tapePool     = "UNKNOWN";
+  $tapeStatus   = "UNKNOWN";
+  $freeSpaceStr = "UNKNOWN";
+  if($cmdResultStr =~
+    m/$vid +$vid +\w+ +\w+ +$tapes{$vid}{l} +(\w+) +([^ ]+) +\w+ +(\w+)$/) {
+    $tapePool     = $1;
+    $freeSpaceStr = $2;
+    $tapeStatus   = $3;
+  }
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect tape-pool: expected=\"tape_dev\", actual=\"$tapePool\""
+    unless $tapePool eq "tape_dev";
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect free-space: expected=\"1.00TiB\", actual=\"$freeSpaceStr\""
+    unless $freeSpaceStr eq "1.00TiB";
+  die "vmgrlisttape -V $vid failed with production vmgr:" .
+    " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\""
+    unless $tapeStatus eq "DISABLED";
+}
+
 
 exit(0);
 

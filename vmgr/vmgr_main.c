@@ -319,7 +319,10 @@ int proclistreq(int magic,
     case VMGR_LISTDENMAP:
       printf("proclistreq VMGR_LISTDENMAP message NOT IMPLEMENTED"
         ": clienthost=%s\n", clienthost);
-      exit(-1); /* TO BE DONE */
+      c = SEINTERNAL;
+      sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
+      sendrep (thip->s, VMGR_RC, c);
+      break;
     case VMGR_LISTDENMAP_BYTE_U64:
       if ((c = vmgr_srv_listdenmap_byte_u64 (magic, req_data, clienthost, thip,
         endlist)))
@@ -344,7 +347,10 @@ int proclistreq(int magic,
     case VMGR_LISTTAPE:
       printf("proclistreq VMGR_LISTTAPE message NOT IMPLEMENTED"
         ": clienthost=%s\n", clienthost);
-      exit(-1); // TO BE DONE
+      c = SEINTERNAL;
+      sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
+      sendrep (thip->s, VMGR_RC, c);
+      break;
     case VMGR_LISTTAPE_BYTE_U64:
       if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data, clienthost, thip,
         &tape, endlist)))
@@ -420,8 +426,10 @@ void procreq(const int magic, const int req_type, char *const req_data,
   case VMGR_QRYTAPE:
     printf("proclistreq VMGR_QRYTAPE message NOT IMPLEMENTED"
       ": clienthost=%s\n", clienthost);
-sleep(120);
-    exit(-1); /* TO BE DONE */
+    c = SEINTERNAL;
+    sendrep (thip->s, MSG_ERR, "VMGR_QRYTAPE not implemented\n");
+    sendrep (thip->s, VMGR_RC, c);
+    break;
   case VMGR_QRYTAPE_BYTE_U64:
     c = vmgr_srv_querytape_byte_u64 (magic, req_data, clienthost, thip);
     break;
@@ -461,7 +469,9 @@ sleep(120);
   case VMGR_ENTDENMAP:
     printf("proclistreq VMGR_ENTDENMAP message NOT IMPLEMENTED"
       ": clienthost=%s\n", clienthost);
-    exit(-1); /* TO BE IMPLEMENTED */
+    c = SEINTERNAL;
+    sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
+    sendrep (thip->s, VMGR_RC, c);
     break;
   case VMGR_ENTDENMAP_BYTE_U64:
     c = vmgr_srv_enterdenmap_byte_u64 (magic, req_data, clienthost, thip);

@@ -1,6 +1,8 @@
 ROOT_DIR=../..
 INCLUDE_DIR=$(ROOT_DIR)/h
 
+all: vmgrquerytape vmgrquerytape_trunk_r21843
+
 vmgrquerytape: \
   vmgrquerytape.o\
   vmgr_querytape_byte_u64.o \
@@ -14,10 +16,29 @@ vmgrquerytape: \
   serror.o
 	gcc -g -o $@ $^
 
+vmgrquerytape_trunk_r21843: \
+  vmgrquerytape_trunk_r21843.o\
+  vmgr_querytape_trunk_r21843.o \
+  vmgr_apiinit.o \
+  Cglobals.o \
+  send2vmgr.o \
+  getconfent.o \
+  Cnetdb.o \
+  vmgr_errmsg.o \
+  socket.o \
+  serror.o
+	gcc -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
+vmgrquerytape_trunk_r21843.o: vmgrquerytape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
+
 vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
+
+vmgr_querytape_trunk_r21843.o: vmgr_querytape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
 vmgr_apiinit.o: $(ROOT_DIR)/vmgr/vmgr_apiinit.c
