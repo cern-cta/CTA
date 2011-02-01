@@ -424,11 +424,7 @@ void procreq(const int magic, const int req_type, char *const req_data,
     c = vmgr_srv_modifytape (req_data, clienthost, thip);
     break;
   case VMGR_QRYTAPE:
-    printf("proclistreq VMGR_QRYTAPE message NOT IMPLEMENTED"
-      ": clienthost=%s\n", clienthost);
-    c = SEINTERNAL;
-    sendrep (thip->s, MSG_ERR, "VMGR_QRYTAPE not implemented\n");
-    sendrep (thip->s, VMGR_RC, c);
+    c = vmgr_srv_querytape (magic, req_data, clienthost, thip);
     break;
   case VMGR_QRYTAPE_BYTE_U64:
     c = vmgr_srv_querytape_byte_u64 (magic, req_data, clienthost, thip);

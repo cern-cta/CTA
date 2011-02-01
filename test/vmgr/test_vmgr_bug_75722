@@ -76,44 +76,49 @@ my $productionHost  = "lxadm";
 my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
 my %tapes = (
   I02023 => {
-    mo => "3592",
-    ml => "J",
-    li => "IBMLIB1B",
-    d  => "1000GC",
-    l  => "aul",
-    po => "stager_dev04"
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB1B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04",
+    dgn => "359B1B"
   },
   I10486 => {
-    mo => "3592",
-    ml => "J",
-    li => "IBMLIB3B",
-    d  => "1000GC",
-    l  => "aul",
-    po => "stager_dev04"
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB3B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04",
+    dgn => "359B3B"
   },
   I12035 => {
-    mo => "3592",
-    ml => "J",
-    li => "IBMLIB3B",
-    d  => "1000GC",
-    l  => "aul",
-    po => "stager_dev04"
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB3B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04",
+    dgn => "359B3B"
   },
   I12038 => {
-    mo => "3592",
-    ml => "J",
-    li => "IBMLIB3B",
-    d  => "1000GC",
-    l  => "aul",
-    po => "stager_dev04"
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB3B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04",
+    dgn => "359B3B"
   },
   I12438 => {
-    mo => "3592",
-    ml => "J",
-    li => "IBMLIB3B",
-    d  => "1000GC",
-    l  => "aul",
-    po => "stager_dev04"
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB3B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04",
+    dgn => "359B3B"
   }
 );
 my $castor_src                     = "";
@@ -349,7 +354,16 @@ print("\n");
 print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $vmgrquerytapePath_trunk_r21843 $vids[0]",
-  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"tapes{$vids[0]}{dgn}\"");
+  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+
+# Abort if the new vmgr_checktape function does not work with the new vmgr
+print("\n");
+print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
+&testRunCmdAsOutput("root",
+  "2>&1 $vmgrquerytapePath $vids[0]",
+  "vmgr_querytape_byte_u64 succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+
+exit(0);
 
 # Abort if the production clients do not work correctly with the new vmgr
 print("\n");

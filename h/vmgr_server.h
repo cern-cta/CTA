@@ -152,6 +152,7 @@ EXTERN_C int vmgr_srv_modifytape (char *, char *, struct vmgr_srv_thread_info *)
 EXTERN_C int vmgr_srv_querypool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_querylibrary (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_querymodel (int, char *, char *, struct vmgr_srv_thread_info *);
+EXTERN_C int vmgr_srv_querytape (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_querytape_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_reclaim (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_settag (char *, char *, struct vmgr_srv_thread_info *);

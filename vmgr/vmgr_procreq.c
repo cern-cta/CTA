@@ -2072,6 +2072,106 @@ int vmgr_srv_querymodel(int magic,
 
 /*  vmgr_srv_querytape - query about a tape volume */
 
+int vmgr_srv_querytape(const int magic,
+                       char *const req_data,
+                       const char *const clienthost,
+                       struct vmgr_srv_thread_info *const thip)
+{
+  struct vmgr_tape_dgnmap dgnmap_entry;
+  char func[19];
+  gid_t gid = 0;
+  char logbuf[CA_MAXVIDLEN+11];
+  char *rbp = NULL;
+  char repbuf[177];
+  char *sbp = NULL;
+  int side = 0;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
+  uid_t uid = 0;
+  char vid[CA_MAXVIDLEN+1];
+
+  strncpy (func, "vmgr_srv_querytape", 19);
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+
+  RESETID(uid, gid);
+
+  vmgrlogit (func, VMG92, "querytape", uid, gid, clienthost);
+  if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
+    RETURN (EINVAL);
+  if (magic >= VMGR_MAGIC2) {
+    unmarshall_WORD (rbp, side);
+  } else
+    side = 0;
+  sprintf (logbuf, "querytape %s %d", vid, side);
+  vmgr_logreq (func, logbuf);
+
+  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
+    RETURN (serrno);
+
+  /* get side specific info */
+
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry,
+      0, NULL))
+    RETURN (serrno);
+
+  /* get dgn */
+
+  if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
+      &dgnmap_entry, 0, NULL))
+    RETURN (serrno);
+
+  sbp = repbuf;
+  marshall_STRING (sbp, tape.vsn);
+  if (magic >= VMGR_MAGIC2) {
+    marshall_STRING (sbp, tape.library);
+  }
+  marshall_STRING (sbp, dgnmap_entry.dgn);
+  marshall_STRING (sbp, tape.density);
+  marshall_STRING (sbp, tape.lbltype);
+  marshall_STRING (sbp, tape.model);
+  marshall_STRING (sbp, tape.media_letter);
+  marshall_STRING (sbp, tape.manufacturer);
+  marshall_STRING (sbp, tape.sn);
+  if (magic >= VMGR_MAGIC2) {
+    marshall_WORD (sbp, tape.nbsides);
+    marshall_TIME_T (sbp, tape.etime);
+    marshall_WORD (sbp, side_entry.side);
+  }
+  marshall_STRING (sbp, side_entry.poolname);
+  {
+    /* Give the estimated free-space in kibibytes a ceiling of the */
+    /* largest posible positive 32-bit signed integer which is     */
+    /* 2^32-1 = 2147483647                                         */
+    int estimated_free_space_kibibyte_int = 0;
+    if(side_entry.estimated_free_space_byte_u64 / ONE_KB > 2147483647) {
+      estimated_free_space_kibibyte_int = 2147483647;
+    } else {
+      estimated_free_space_kibibyte_int =
+        side_entry.estimated_free_space_byte_u64 / ONE_KB;
+    }
+    marshall_LONG (sbp, estimated_free_space_kibibyte_int);
+  }
+  marshall_LONG (sbp, side_entry.nbfiles);
+  marshall_LONG (sbp, tape.rcount);
+  marshall_LONG (sbp, tape.wcount);
+  if (magic >= VMGR_MAGIC2) {
+    marshall_STRING (sbp, tape.rhost);
+    marshall_STRING (sbp, tape.whost);
+    marshall_LONG (sbp, tape.rjid);
+    marshall_LONG (sbp, tape.wjid);
+  }
+  marshall_TIME_T (sbp, tape.rtime);
+  marshall_TIME_T (sbp, tape.wtime);
+  marshall_LONG (sbp, side_entry.status);
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  RETURN (0);
+}
+
+/*  vmgr_srv_querytape - query about a tape volume */
+
 int vmgr_srv_querytape_byte_u64(const int magic, char *const req_data,
   const char *const clienthost, struct vmgr_srv_thread_info *const thip)
 {
