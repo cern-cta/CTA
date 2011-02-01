@@ -121,21 +121,22 @@ my %tapes = (
     dgn => "359B3B"
   }
 );
-my $castor_src                     = "";
-my $originalDbSchema               = "";
-my $originalDropSchema             = "";
-my $vid                            = "";
-my $tapePool                       = "";
-my $tapeStatus                     = "";
-my $freeSpaceStr                   = "";
-my $status                         = 0;
-my $uid                            = POSIX::getuid;
-my $gid                            = POSIX::getgid;
-my $cmdResultStr                   = "";
-my $i                              = 0;
-my $vmgrquerytapePath              = "";
-my $vmgrquerytapePath_trunk_r21843 = "";
-my @vids                           = sort keys %tapes;
+my $castor_src                       = "";
+my $originalDbSchema                 = "";
+my $originalDropSchema               = "";
+my $vid                              = "";
+my $tapePool                         = "";
+my $tapeStatus                       = "";
+my $freeSpaceStr                     = "";
+my $status                           = 0;
+my $uid                              = POSIX::getuid;
+my $gid                              = POSIX::getgid;
+my $cmdResultStr                     = "";
+my $i                                = 0;
+my $vmgrquerytapePath                = "";
+my $vmgrquerytapePath_trunk_r21843   = "";
+my $vmgrenterdenmapPath_trunk_r21843 = "";
+my @vids                             = sort keys %tapes;
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -164,6 +165,46 @@ die("ABORT: $vmgrquerytapePath_trunk_r21843 is not a plain file\n")
   unless -f $vmgrquerytapePath_trunk_r21843;
 die("ABORT: $vmgrquerytapePath_trunk_r21843 is not executable\n")
   unless -x $vmgrquerytapePath_trunk_r21843;
+
+# Abort if the vmgrenterdenmap_trunk_r21843 binary does not exist
+$vmgrenterdenmapPath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843";
+die("ABORT: $vmgrenterdenmapPath_trunk_r21843 does not exist\n")
+  unless -e $vmgrenterdenmapPath_trunk_r21843;
+die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not a plain file\n")
+  unless -f $vmgrenterdenmapPath_trunk_r21843;
+die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not executable\n")
+  unless -x $vmgrenterdenmapPath_trunk_r21843;
+
+# Determine the location of the database scripts to drop the vmgr and recreate
+# the vmgr database
+$originalDbSchema   = "$castor_src/vmgr/vmgr_oracle_create.sql";
+$originalDropSchema = "$castor_src/castor/db/drop_oracle_schema.sql";
+
+die "ABORT: $originalDbSchema does not exist\n"
+  if ! -e $originalDbSchema;
+
+die "ABORT: $originalDropSchema does not exist\n"
+  if ! -e $originalDropSchema;
+
+my $dbConnectionString = &getVmgrDbConnectionString();
+my $dbUser   = "UNKNOWN";
+my $dbPasswd = "UNKNOWN";
+my $dbTNS    = "UNKNOWN";
+
+if($dbConnectionString =~ m/^([^\/]+)\/([^\@]+)\@(.*)$/) {
+  $dbUser   = $1;
+  $dbPasswd = $2;
+  $dbTNS    = $3;
+} else {
+  die("ABORT: Failed to extract database username from connection string\n");
+}
+
+die "Abort: Failed to tnsping database with TNS=$dbTNS\n"
+  unless system("tnsping $dbTNS") == 0;
+
+die("ABORT: Database user $dbUser is not vmgr_dev04\n")
+  if($dbUser ne "vmgr_dev04");
 
 # Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
 # the production vmgr
@@ -217,30 +258,6 @@ print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
   "VMG03 - illegal function 39\n" .
   "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
 
-# Determine the location of the database scripts to drop the vmgr and recreate
-# the vmgr database
-$originalDbSchema   = "$castor_src/vmgr/vmgr_oracle_create.sql";
-$originalDropSchema = "$castor_src/castor/db/drop_oracle_schema.sql";
-
-die "ABORT: $originalDbSchema does not exist\n"
-  if ! -e $originalDbSchema;
-
-die "ABORT: $originalDropSchema does not exist\n"
-  if ! -e $originalDropSchema;
-
-my $dbConnectionString = &getVmgrDbConnectionString();
-my $dbUser = "UNKNOWN";
-
-if($dbConnectionString =~ m/^([^\/]+)/) {
-  $dbUser = $1;
-} else {
-  die("ABORT: Failed to extract database username from connection string\n");
-}
-print("Database username = $dbUser\n");
-
-die("ABORT: Database user $dbUser is not vmgr_dev04\n")
-  if($dbUser ne "vmgr_dev04");
-
 if(&daemonIsRunning("vmgrd")) {
   &runCmdAs("root", "/etc/init.d/vmgrd stop");
 }
@@ -274,7 +291,12 @@ print("CREATING DATABASE-SCHEMA\n");
 &runCmdAs("root", "'sqlplus' /NOLOG \@$tmpCreateSchema");
 &runCmdAs("root", "rm $tmpCreateSchema");
 
+print("\n");
+print("STARTING THE VMGR\n");
 &runCmdAs("root", "/etc/init.d/vmgrd start");
+
+# Abort if the vmgr is not running
+die "Abort: vmgrd is not runnung\n" unless daemonIsRunning("vmgrd");
 
 # Give the vmgrd a chance to get up and running
 sleep(1);
@@ -355,6 +377,14 @@ print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $vmgrquerytapePath_trunk_r21843 $vids[0]",
   "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+
+# Abort if the old vmgr_enterdenmap function does not work with the new vmgr
+print("\n");
+print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
+&testRunCmdAsOutput("root",
+  "2>&1 $vmgrenterdenmapPath_trunk_r21843 -d 9999GC --ml J --mo 3592 --nc 10T", "");
+&testRunCmdAsOutput("root",
+  "2>&1 vmgrlistdenmap | grep 9999GC", "3592   J  9999GC     10.00Ti");
 
 # Abort if the new vmgr_checktape function does not work with the new vmgr
 print("\n");
