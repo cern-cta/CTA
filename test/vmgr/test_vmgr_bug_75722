@@ -433,35 +433,46 @@ print("CHECKING OLD VMGR_LISTTAPE FUNCTION WORKS WITH NEW VMGR\n");
   "I12038   I12038 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
   "I12438   I12438 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED");
 
-exit(0);
-
 # Abort if the production clients do not work correctly with the new vmgr
 print("\n");
 print("CHECKING PRODUCTION CLIENTS WORK WITH NEW VMGR\n");
 for $vid (sort keys %tapes) {
-  $cmdResultStr = &runCmdAs($nonRootUserName,
+  $cmdResultStr = &runCmdAs("root",
     "ssh $nonRootUserName\@$productionHost VMGR_HOST=$testVmgrHost vmgrlisttape -V $vid");
+  chomp($cmdResultStr);
   print("cmdResultStr=\"$cmdResultStr\"\n");
   $tapePool     = "UNKNOWN";
-  $tapeStatus   = "UNKNOWN";
   $freeSpaceStr = "UNKNOWN";
-  if($cmdResultStr =~
-    m/$vid +$vid +\w+ +\w+ +$tapes{$vid}{l} +(\w+) +([^ ]+) +\w+ +(\w+)$/) {
+  $tapeStatus   = "UNKNOWN";
+  #if($cmdResultStr =~ m/$vid +$vid +$tapes{$vid}{li} +$tapes{$vid}{d} +$tapes{$vid}{l} +(\w+) +(\w+) +(\w+) $/) {
+  if($cmdResultStr =~ m/$vid +$vid +$tapes{$vid}{li} +$tapes{$vid}{d} +$tapes{$vid}{l} +(\w+) +([^ ]+) +\d+ (.*)$/) {
     $tapePool     = $1;
     $freeSpaceStr = $2;
     $tapeStatus   = $3;
+    $tapeStatus   =~ s/ //g;
+  } else {
+    die "vmgrlisttape -V $vid failed with production vmgr:" .
+      " Failed to match output\n";
   }
+  print("tapePool     = \"$tapePool\"\n");
+  print("freeSpaceStr = \"$freeSpaceStr\"\n");
+  print("tapeStatus   = \"$tapeStatus\"\n");
   die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect tape-pool: expected=\"tape_dev\", actual=\"$tapePool\""
-    unless $tapePool eq "tape_dev";
+    " Incorrect tape-pool: expected=\"tape_dev\", actual=\"$tapePool\"\n"
+    unless $tapePool eq $tapes{$vid}{po};
   die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect free-space: expected=\"1.00TiB\", actual=\"$freeSpaceStr\""
-    unless $freeSpaceStr eq "1.00TiB";
-  die "vmgrlisttape -V $vid failed with production vmgr:" .
-    " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\""
-    unless $tapeStatus eq "DISABLED";
+    " Incorrect free-space: expected=\"1.00TiB\", actual=\"$freeSpaceStr\"\n"
+    unless $freeSpaceStr eq "1024.00GiB";
+  if($vid eq $vids[0]) {
+    die "vmgrlisttape -V $vid failed with production vmgr:" .
+      " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\"\n"
+      unless $tapeStatus eq "";
+  } else {
+    die "vmgrlisttape -V $vid failed with production vmgr:" .
+      " Incorrect status: expected=\"DISABLED\", actual=\"$tapeStatus\"\n"
+      unless $tapeStatus eq "DISABLED";
+  }
 }
-
 
 exit(0);
 
