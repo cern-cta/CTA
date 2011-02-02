@@ -9,8 +9,7 @@ An option can be excluded from the corrected string by setting includeasstring[o
 
 import re
 import datetime
-import app
-
+import app.presets.Presets
 class OptionsReader(object):
     '''
     classdocs

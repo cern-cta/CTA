@@ -11,7 +11,7 @@ from django.db import connection, transaction, models
 from app.tools.Inspections import *
 import inspect
 from app.dirs.ModelInterface import ModelInterface
-
+import app.dirs.urls
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
 class Annex(models.Model, ModelInterface):
@@ -36,20 +36,27 @@ class Annex(models.Model, ModelInterface):
         #how many exclusions were done before, used to have process independend annex id
         self.depth = depth
         
-        #hack to fake id's to django
-        classname = self.parent.__class__.__name__
+        def searchClassName(pr):
+            try:
+                cname = pr.getClassName()
+            except:
+                cname = pr.__class__.__name__
+            return cname
+            
         if parent == None:
             ppk = -1 #no parent
+            classname = 'Annex'
         elif not isinstance(parent, Annex):
             ppk = self.parent.getIdReplacement()
+            classname = searchClassName(self.parent)
         elif isinstance(parent, Annex): #parent is Annex
             ppk = self.parent.getAnnexParent().getIdReplacement()
-            classname = self.parent.getAnnexParent().__class__.__name__
+            classname = searchClassName(self.parent.getAnnexParent())
         else:
             raise Exception("unexpected error")
             
-        #must fit with UrlAnnex!    
-        self.__dict__['id'] = "group_" + classname + "_" + self.depth.__str__() + "_"  + ppk.__str__()
+        self.__dict__['id'] = app.dirs.urls.UrlAnnex().buildAnnexId(classname, self.depth, ppk.__str__())
+#        self.__dict__['id'] = "group_" + classname + "_" + self.depth.__str__() + "_"  + ppk.__str__()
     
     #DUAL is Oracle's fake Table
     class Meta:
@@ -162,5 +169,6 @@ class Annex(models.Model, ModelInterface):
         
     def metricAttributes(self):
         return []
-
-        
+    
+    def getClassName(self):
+        return self.__class__.__name__

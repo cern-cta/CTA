@@ -4,13 +4,15 @@ expressons to define URL's for django framework
 '''
 
 from app import dirs
-from app.dirs.models import *
-from app.presets.options.OptionsReader import OptionsReader
-from app.tools.Inspections import getAvailableModels
+import app.dirs.models
+import app.presets.options
+from app.tools.Inspections import getAvailableModels, getModelsModuleName
 from django.conf.urls.defaults import *
 from django.http import Http404
-import app.presets.Presets
+import app.presets
+import app.presets.options
 import re
+from app.tools.ObjectCreator import createObject
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -108,7 +110,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             options = self.paramdict['options'];
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
         except KeyError:
             options = ''
             
@@ -119,7 +121,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             theid = self.paramdict['theid'];
-            globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -136,20 +138,24 @@ class UrlDefault(UrlReaderInterface):
     def buildUrl(self, presetid, options, rootmodel, theid):
         #check presetid
         if app.presets.Presets.getPresetByStaticId(int(presetid)) == None:
-            presetid = "0"
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            presetid = '0'
+            options = ''.join([bla for bla in ["{", app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)), "}"]])
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            options = ''.join([bla for bla in ["{" , app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)), "}"]])
             if not(rootmodel in getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
-                try:
-                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
-                except Exception, e:
-                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                pass #the following lines are too expensive
+#                try:
+#                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+#                except Exception, e:
+#                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                    
+        if len(options) == 2:
+            if options == '{}': options = ''
         
         correctedoptions = []
         correctedoptions.append(options)
@@ -216,7 +222,7 @@ class UrlAnnex(UrlReaderInterface):
             
         try:  
             options = self.paramdict['options'];
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
         except KeyError:
             options = ''
             
@@ -227,7 +233,7 @@ class UrlAnnex(UrlReaderInterface):
         
         try:  
             theid = self.paramdict['theid'];
-            globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             
@@ -252,27 +258,52 @@ class UrlAnnex(UrlReaderInterface):
         #check presetid
         if app.presets.Presets.getPresetByStaticId(int(presetid)) == None:
             presetid = "0"
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
-            options = "{" + OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
+            options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
             if not(rootmodel in getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
                 try:
-                    globals()[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
                 except:
                     theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
                     
         if depth > self.maxdepth: depth = self.maxdepth
         if depth < 0: depth = 0
         
+        if options == '{}': options = ''
+        
         correctedoptions = []
         correctedoptions.append(options)
         correctedoptions.append(str(presetid))
         correctedoptions.append("_group_")
+        correctedoptions.append(rootmodel)
+        correctedoptions.append("_")
+        correctedoptions.append(str(int(depth)))
+        correctedoptions.append("_")
+        correctedoptions.append(theid)
+        
+        return ''.join([bla for bla in correctedoptions]) 
+    
+    def buildAnnexId(self, rootmodel, depth, theid):
+        if not(rootmodel in getAvailableModels()) and rootmodel !=  'Annex':
+            raise Exception("model "+ rootmodel + " could not be found!")
+        
+        if depth < 0: depth = 0
+        
+        #findObjectByIdReplacementSuffix
+        try:
+            if rootmodel != 'Annex':#to not to fail during id creation if annex constructor gets called without parameters
+                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+        except:
+            raise Exception("replacementid "+ theid + " could not be found!")
+        
+        correctedoptions = []
+        correctedoptions.append("group_")
         correctedoptions.append(rootmodel)
         correctedoptions.append("_")
         correctedoptions.append(str(int(depth)))

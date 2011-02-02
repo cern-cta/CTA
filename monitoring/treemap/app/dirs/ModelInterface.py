@@ -16,9 +16,13 @@ class ModelInterface(object):
     def getUserFriendlyName(self):
         raise Exception("getUserFriendlyName not implemented!")
     
-    #defines how to find an object, no matter in what process or physical address
+    #defines how to find an object
     def getIdReplacement(self):
         raise Exception("getIdReplacement not implemented!")
+    
+    #returns the Object type
+    def getClassName(self):
+        raise Exception("getClassName not implemented!")
     
     #finds the closest proper root Object in the tree if the requested one doesn't exist
     #has to raise NoDataAvailableError if not found

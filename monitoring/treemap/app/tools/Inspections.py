@@ -87,8 +87,7 @@ def getAvailableModels():
             cls = classes[classname]
             if isinstance(cls, ModelBase):
                 modelname = cls._base_manager.model._meta.object_name
-                availablemodels.append(modelname)
-                
+                availablemodels.append(modelname)           
     return availablemodels
 
 def getCountMethodFor(themodel, childrenmethodname):

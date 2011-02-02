@@ -36,9 +36,9 @@ from app.treemap.objecttree.TreeRules import LevelRules
 from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import re
-import app.presets.Presets
+import app.presets
 import time
-from app.dirs.urls import UrlDefault, UrlAnnex
+import app.dirs.urls
 
 
 
@@ -65,8 +65,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     optr = OptionsReader(options, presetid)
 
-    #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
-    #for some reason mod_python can't import Presets correctly and outputs useless error messages
+    #whenever you see a full path like app.presets.Presets, it is a way to solve a circular dependecy 
     thepreset = app.presets.Presets.getPresetByStaticId(presetid)
     lr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
     
@@ -114,7 +113,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     try:
         root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
-        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
+        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
         
         start = datetime.datetime.now()
         print 'start generating object tree for ' + root.__str__()
@@ -169,8 +168,12 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     #------------------------------------------------------------
     start = datetime.datetime.now()
+    
+#    profile.runctx("response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight, filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))", globals(), {'request' : request, 'tree' : tree, 'imagewidth' : imagewidth, 'imageheight' : imageheight, 'filenm' : filenm, 'lr' : lr, 'cache_key' : cache_key, 'cache_expire' : cache_expire, 'time' : time, 'root' : root, 'nbdefinedlevels' : nbdefinedlevels, 'presetid' : presetid, 'optr' : optr})
+    
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(),\
+    rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
@@ -187,11 +190,6 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     presetid = int(presetid)
     if options is None: options = ''
     
-    #must fit to UrlAnnex?
-    prefix = theid[:(len(rootmodel)+1)]
-    if(prefix == rootmodel + "_"):
-        urlrest = theid[(len(rootmodel)+1):]
-    
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
     
@@ -204,8 +202,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     optr = OptionsReader(options, presetid)
     
-    #an import of getPresetByStaticId from Presets won't work! you have to give an full path here!
-    #for some reason mod_python can't import Presets correctly and outputs useless error messages
+    #whenever you see a full path like app.presets.Presets, it is a way to solve a circular dependecy 
     thepreset = app.presets.Presets.getPresetByStaticId(presetid)
     presetlr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
         
@@ -253,8 +250,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
         statusfilename = ''
     
     try:
-        root = getRootObjectForTreemap(rootmodel, urlrest, statusfilename)
-        filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+        root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
+        filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
         
         start = datetime.datetime.now()
         print 'start generating first object tree ' + root.__str__()
@@ -343,7 +340,9 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
+    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time,\
+    rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid,\
+    options = optr.getCorrectedOptions(presetid))
     
     del tree
     del otree
@@ -353,8 +352,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     return response
 
 def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
-    defurl = UrlDefault('{' + options + '}' + urlending)
-    annurl = UrlAnnex('{' + options + '}' + urlending)
+    defurl = app.dirs.urls.UrlDefault('{' + options + '}' + urlending)
+    annurl = app.dirs.urls.UrlAnnex('{' + options + '}' + urlending)
     
     try:
         if defurl.match():
@@ -374,7 +373,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             
             newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
             rediraddr = rediraddr + newurlpart
-            defurl = UrlDefault(newurlpart) #new url with the new values
+            defurl = app.dirs.urls.UrlDefault(newurlpart) #new url with the new values
             # = (statusfilename, already)
             request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
                 
@@ -397,7 +396,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
                         
             newurlpart = annurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid, depth = depth)
             rediraddr = rediraddr + newurlpart
-            annurl = UrlAnnex(newurlpart) #new url with the new values
+            annurl = app.dirs.urls.UrlAnnex(newurlpart) #new url with the new values
             
             return redirect(to = rediraddr, args = {'request':request,'options':  annurl.getParameter('options'), 'theid':annurl.getParameter('theid'), 'presetid': annurl.getParameter('presetid'), 'depth':annurl.getParameter('depth'), 'rootmodel':annurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
     except Exception, e:
@@ -435,7 +434,7 @@ def preset(request, options,  urlending):
         validoptions = preset.optionsset
         thetime = None
         
-        extractedid = UrlDefault().searchReplacementId(urlending)
+        extractedid = app.dirs.urls.UrlDefault().searchReplacementId(urlending)
         
         for option in validoptions:
             try:
@@ -509,11 +508,11 @@ def setStatusFileInCookie(request, statusfilename):
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, nblevels, presetid, options = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = ''):
     print "preparing response"
     optionsstring = '{'+ options +'}'
     #must fit to UrlDefault!
-    rootsuffix = optionsstring + str(presetid) + "_" + rootidreplacement
+    rootsuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, rootmodel, rootidreplacement)
     
     apacheserver = settings.PUBLIC_APACHE_URL
 #    serverdict = settings.LOCAL_APACHE_DICT
@@ -523,7 +522,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
     print "PARENTID ", parentid
     #must fit to UrlDefault!
-    parentidstr = optionsstring + str(presetid) + "_" + vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement()
+    parentidstr = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, vtree.getRoot().getProperty('treenode').getNakedParent().getClassName(), vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement())
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -539,7 +538,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         y2 = int(round(node.getProperty('y') + hsize,0))
         
         #must fit to UrlDefault!
-        linksuffix = optionsstring + str(presetid) + "_" + node.getProperty('treenode').getObject().getIdReplacement()
+        linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
         info = node.getProperty('htmltooltiptext')
         thehash = node.getProperty('treenode').getObject().__hash__()
         
@@ -604,10 +603,11 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     parents.reverse()
     navlinkparts = []
+    urlending = ''
     for pr in parents:  
         nvtext = pr.getNaviName()
-        #must fit to UrlDefault!     
-        navlinkparts.append( (nvtext, str(pr), optionsstring + str(presetid) + "_" + pr.getIdReplacement()) )
+        urlending = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, pr.getClassName(), pr.getIdReplacement())   
+        navlinkparts.append( (nvtext, str(pr), urlending) )
     
     generationtime = datetime.datetime.now() - time
     

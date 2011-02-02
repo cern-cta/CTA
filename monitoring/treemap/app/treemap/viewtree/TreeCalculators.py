@@ -78,8 +78,11 @@ class SquaredTreemapCalculator(object):
         height = height - 2*self.spacesize-self.headersize
         
         if self.spacesize > self.minspacesize: self.spacesize = self.spacesize - 1
+        self.calculateRecursion.__dict__['notextcount'] = 0
+        
         self.calculateRecursion(x, y, width ,height , viewtree, self.spacesize, self.minspacesize, self.headersize, optimizefortxt, sorted)
         
+        print "notextcount: ", self.calculateRecursion.__dict__['notextcount']
         return viewtree
         
     #line: The items are ordered graphically in lines of equally tall squares
@@ -179,7 +182,7 @@ class SquaredTreemapCalculator(object):
                     
                     #store the calculated values
                     vn = ViewNode()
-                    if 2.0 * headersize > (chheight-2.0):
+                    if 2*headersize > (chheight-2.0):
                         vn.setProperty('headersize', 0.0)
                     else:
                         vn.setProperty('headersize', headersize)
@@ -324,6 +327,7 @@ class SquaredTreemapCalculator(object):
             #see if it is big enough to have a header and do recursion
             hsize = totalviewnodes[i].getProperty('headersize')
             if hsize <= 0.0:
+                self.calculateRecursion.__dict__['notextcount'] = self.calculateRecursion.__dict__['notextcount'] + 1
                 self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted)
             else:
                 self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + hsize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - hsize, viewtree, spacesize, minspacesize, hsize, optimizefortxt, sorted)

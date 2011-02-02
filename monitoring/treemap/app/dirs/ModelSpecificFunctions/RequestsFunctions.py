@@ -13,6 +13,7 @@ from app.treemap.BasicTree import BasicTree
 import copy
 import datetime
 import math
+import app.dirs.models
 #!!!app.dirs.models is imported at the end of the file!!!
 
 #an empty urlrest must be accepted and it should define the very root of the tree
@@ -24,7 +25,7 @@ def findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, modelname):
     else:
         path = urlrest
         
-    modelobject = globals()[modelname];
+    modelobject = app.dirs.models.__dict__[modelname];
         
 #        don't generate the tree again if it's already generated with the right parameters
     if (modelobject.treeprops['start'] != modelobject.start) or (modelobject.treeprops['stop'] != modelobject.stop):
@@ -115,7 +116,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
             pos = findSplittingPos(name, pos + 1)
     
     addRequestToTree.cost = 0        
-    model_class = globals()[reqmodel]
+    model_class = app.dirs.models.__dict__[reqmodel]
     model_class.generatedtree = BasicTree()        
     tree = model_class.generatedtree
     
@@ -154,7 +155,7 @@ def mergeTrees(fromtree, totree):
     
 def traverseToRequestInTree(name, reqmodel):
 
-    model_class = globals()[reqmodel]     
+    model_class = app.dirs.models.__dict__[reqmodel]   
     tree = model_class.generatedtree
 
     assert ((name.find('/') >=0) or name == '')
@@ -192,6 +193,3 @@ def traverseToRequestInTree(name, reqmodel):
         
     #raise NoDataAvailableError(name + ": No such record in the tree")
     return tree #if directory doesn't exist any more, return on the last successful traversal
-
-#this import has to be here because of circular dependency with app.dirs.models!
-from app.dirs.models import *
