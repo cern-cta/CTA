@@ -1,11 +1,13 @@
 ROOT_DIR=../..
 INCLUDE_DIR=$(ROOT_DIR)/h
-
-all: \
+EXECUTABLES= \
   vmgrquerytape \
   vmgrquerytape_trunk_r21843 \
   vmgrenterdenmap_trunk_r21843 \
-  vmgrlistdenmap_trunk_r21843
+  vmgrlistdenmap_trunk_r21843 \
+  vmgrlisttape_trunk_r21843
+
+all: $(EXECUTABLES)
 
 vmgrquerytape: \
   vmgrquerytape.o\
@@ -63,6 +65,21 @@ vmgrlistdenmap_trunk_r21843: \
   u64subr.o
 	gcc -g -o $@ $^
 
+vmgrlisttape_trunk_r21843: \
+  vmgrlisttape_trunk_r21843.o\
+  vmgr_listtape_trunk_r21843.o \
+  vmgr_apiinit.o \
+  Cglobals.o \
+  send2vmgr.o \
+  getconfent.o \
+  Cnetdb.o \
+  vmgr_errmsg.o \
+  socket.o \
+  serror.o \
+  Cgetopt.o \
+  u64subr.o
+	gcc -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
@@ -75,6 +92,9 @@ vmgrenterdenmap_trunk_r21843.o: vmgrenterdenmap_trunk_r21843.c
 vmgrlistdenmap_trunk_r21843.o: vmgrlistdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
+vmgrlisttape_trunk_r21843.o: vmgrlisttape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
+
 vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
@@ -85,6 +105,9 @@ vmgr_enterdenmap_trunk_r21843.o: vmgr_enterdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
 vmgr_listdenmap_trunk_r21843.o: vmgr_listdenmap_trunk_r21843.c
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) -I $(ROOT_DIR)/test/vmgr $^
+
+vmgr_listtape_trunk_r21843.o: vmgr_listtape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) -I $(ROOT_DIR)/test/vmgr $^
 
 vmgr_apiinit.o: $(ROOT_DIR)/vmgr/vmgr_apiinit.c
@@ -118,4 +141,4 @@ u64subr.o: $(ROOT_DIR)/common/u64subr.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
 clean:
-	rm -f vmgrquerytape vmgrquerytape_trunk_r21843 vmgrenterdenmap_trunk_r21843 vmgrlistdenmap_trunk_r21843 *.o
+	rm -f *.o $(EXECUTABLES)

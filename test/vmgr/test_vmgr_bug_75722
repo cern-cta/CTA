@@ -137,6 +137,7 @@ my $vmgrquerytapePath                = "";
 my $vmgrquerytapePath_trunk_r21843   = "";
 my $vmgrenterdenmapPath_trunk_r21843 = "";
 my $vmgrlistdenmapPath_trunk_r21843  = "";
+my $vmgrlisttapePath_trunk_r21843    = "";
 my @vids                             = sort keys %tapes;
 
 # Abort if the user is not root
@@ -186,6 +187,16 @@ die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not a plain file\n")
   unless -f $vmgrlistdenmapPath_trunk_r21843;
 die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not executable\n")
   unless -x $vmgrlistdenmapPath_trunk_r21843;
+
+# Abort if the vmgrlisttape_trunk_r21843 binary does not exist
+$vmgrlisttapePath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843";
+die("ABORT: $vmgrlisttapePath_trunk_r21843 does not exist\n")
+  unless -e $vmgrlisttapePath_trunk_r21843;
+die("ABORT: $vmgrlisttapePath_trunk_r21843 is not a plain file\n")
+  unless -f $vmgrlisttapePath_trunk_r21843;
+die("ABORT: $vmgrlisttapePath_trunk_r21843 is not executable\n")
+  unless -x $vmgrlisttapePath_trunk_r21843;
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -410,6 +421,17 @@ print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
   "2>&1 $vmgrlistdenmapPath_trunk_r21843",
   "3592   J  10GC       10.00Gi\n" .
   "3592   J  1000GC      1.00Ti");
+
+# Abort if the old vmgr_listtape function does not work with the new vmgr
+print("\n");
+print("CHECKING OLD VMGR_LISTTAPE FUNCTION WORKS WITH NEW VMGR\n");
+&testRunCmdAsOutput("root",
+  "2>&1 $vmgrlisttapePath_trunk_r21843",
+  "I02023   I02023 IBMLIB1B 1000GC   aul stager_dev04       1.00TiB 00000000 \n" .
+  "I10486   I10486 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
+  "I12035   I12035 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
+  "I12038   I12038 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
+  "I12438   I12438 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED");
 
 exit(0);
 
