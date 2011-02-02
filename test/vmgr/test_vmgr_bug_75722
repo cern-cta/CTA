@@ -136,6 +136,7 @@ my $i                                = 0;
 my $vmgrquerytapePath                = "";
 my $vmgrquerytapePath_trunk_r21843   = "";
 my $vmgrenterdenmapPath_trunk_r21843 = "";
+my $vmgrlistdenmapPath_trunk_r21843  = "";
 my @vids                             = sort keys %tapes;
 
 # Abort if the user is not root
@@ -175,6 +176,16 @@ die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not a plain file\n")
   unless -f $vmgrenterdenmapPath_trunk_r21843;
 die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not executable\n")
   unless -x $vmgrenterdenmapPath_trunk_r21843;
+
+# Abort if the vmgrlistdenmap_trunk_r21843 binary does not exist
+$vmgrlistdenmapPath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843";
+die("ABORT: $vmgrlistdenmapPath_trunk_r21843 does not exist\n")
+  unless -e $vmgrlistdenmapPath_trunk_r21843;
+die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not a plain file\n")
+  unless -f $vmgrlistdenmapPath_trunk_r21843;
+die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not executable\n")
+  unless -x $vmgrlistdenmapPath_trunk_r21843;
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -391,6 +402,14 @@ print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $vmgrquerytapePath $vids[0]",
   "vmgr_querytape_byte_u64 succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+
+# Abort if the old vmgr_listdenmap function does not work with the new vmgr
+print("\n");
+print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
+&testRunCmdAsOutput("root",
+  "2>&1 $vmgrlistdenmapPath_trunk_r21843",
+  "3592   J  10GC       10.00Gi\n" .
+  "3592   J  1000GC      1.00Ti");
 
 exit(0);
 
