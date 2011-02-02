@@ -317,11 +317,9 @@ int proclistreq(int magic,
   while (1) {
     switch (req_type) {
     case VMGR_LISTDENMAP:
-      printf("proclistreq VMGR_LISTDENMAP message NOT IMPLEMENTED"
-        ": clienthost=%s\n", clienthost);
-      c = SEINTERNAL;
-      sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
-      sendrep (thip->s, VMGR_RC, c);
+      if ((c = vmgr_srv_listdenmap (magic, req_data, clienthost, thip,
+        endlist)))
+        return (c);
       break;
     case VMGR_LISTDENMAP_BYTE_U64:
       if ((c = vmgr_srv_listdenmap_byte_u64 (magic, req_data, clienthost, thip,

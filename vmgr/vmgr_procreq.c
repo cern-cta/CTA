@@ -1144,6 +1144,78 @@ int vmgr_srv_gettape(int magic,
 
 /*      vmgr_srv_listdenmap - list triplets model/media_letter/density */
 
+int vmgr_srv_listdenmap(const int magic, char *const req_data,
+  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
+  const int endlist) {
+  int bol = 0;  /* beginning of list flag */
+  int c = 0;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
+  int eol = 0;  /* end of list flag */
+  char func[20];
+  gid_t gid = 0;
+  int listentsz = 0;  /* size of client machine vmgr_tape_denmap structure */
+  int maxnbentries = 0;  /* maximum number of entries/call */
+  int nbentries = 0;
+  char outbuf[LISTBUFSZ+4];
+  char *p = NULL;
+  char *rbp = NULL;
+  char *sbp = NULL;
+  uid_t uid = 0;
+
+  strncpy (func, "vmgr_srv_listdenmap", 20);
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+
+  RESETID(uid, gid);
+
+  vmgrlogit (func, VMG92, "listdenmap", uid, gid, clienthost);
+  unmarshall_WORD (rbp, listentsz);
+  unmarshall_WORD (rbp, bol);
+
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
+  sbp = outbuf;
+  marshall_WORD (sbp, nbentries);    /* will be updated */
+
+  while (nbentries < maxnbentries &&
+      (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol, &denmap_entry,
+    endlist)) == 0) {
+    marshall_STRING (sbp, denmap_entry.md_model);
+    marshall_STRING (sbp, denmap_entry.md_media_letter);
+    marshall_STRING (sbp, denmap_entry.md_density);
+    if (magic >= VMGR_MAGIC2) {
+      int native_capacity_mebibyte_int = 0;
+
+      /* Give the native capacity in mebibytes a ceiling of the  */
+      /* largest posible positive 32-bit signed integer which is */
+      /* 2^32-1 = 2147483647                                     */
+      if(denmap_entry.native_capacity_byte_u64 / ONE_MB > 2147483647) {
+        native_capacity_mebibyte_int = 2147483647;
+      } else {
+        native_capacity_mebibyte_int = denmap_entry.native_capacity_byte_u64 /
+          ONE_MB;
+      }
+      marshall_LONG (sbp, native_capacity_mebibyte_int);
+    }
+    nbentries++;
+    bol = 0;
+  }
+  if (c < 0)
+    RETURN (serrno);
+  if (c == 1)
+    eol = 1;
+
+  marshall_WORD (sbp, eol);
+  p = outbuf;
+  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
+  RETURN (0);
+}
+
+/*      vmgr_srv_listdenmap - list triplets model/media_letter/density */
+
 int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
   const char *const clienthost, struct vmgr_srv_thread_info *const thip,
   const int endlist)

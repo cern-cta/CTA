@@ -140,6 +140,7 @@ EXTERN_C int vmgr_srv_enterpool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_entertape (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_gettag (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_gettape (int, char *, char *, struct vmgr_srv_thread_info *);
+EXTERN_C int vmgr_srv_listdenmap (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, const int);
 EXTERN_C int vmgr_srv_listdenmap_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, const int);
 EXTERN_C int vmgr_srv_listdgnmap (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
 EXTERN_C int vmgr_srv_listlibrary (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
