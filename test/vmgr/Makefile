@@ -51,7 +51,7 @@ vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
 vmgrquerytape_trunk_r21843.o: vmgrquerytape_trunk_r21843.c
-	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) -I $(ROOT_DIR)/test/vmgr $^
 
 vmgrenterdenmap_trunk_r21843.o: vmgrenterdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
@@ -60,7 +60,7 @@ vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
 
 vmgr_querytape_trunk_r21843.o: vmgr_querytape_trunk_r21843.c
-	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^
+	gcc -c -g -o $@ -I $(INCLUDE_DIR) -I $(ROOT_DIR)/test/vmgr $^
 
 vmgr_enterdenmap_trunk_r21843.o: vmgr_enterdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(INCLUDE_DIR) $^

@@ -473,6 +473,68 @@ int vmgr_srv_deltag(char *req_data,
 
 /*  vmgr_srv_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
+int vmgr_srv_enterdenmap(const int magic, char *const req_data,
+  const char *const clienthost, struct vmgr_srv_thread_info *const thip) {
+  int native_capacity_mebibyte_int = 0;
+  struct vmgr_tape_denmap_byte_u64 denmap_entry;
+  char func[21];
+  gid_t gid = 0;
+  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+CA_MAXDENLEN+15];
+  struct vmgr_tape_media model_entry;
+  char *rbp = NULL;
+  uid_t uid = 0;
+
+  strncpy (func, "vmgr_srv_enterdenmap", 21);
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+
+  RESETID(uid, gid);
+
+  vmgrlogit (func, VMG92, "enterdenmap", uid, gid, clienthost);
+  memset ((char *) &denmap_entry, 0, sizeof(denmap_entry));
+  if (unmarshall_STRINGN (rbp, denmap_entry.md_model, CA_MAXMODELLEN+1) < 0)
+    RETURN (EINVAL);
+  if (unmarshall_STRINGN (rbp, denmap_entry.md_media_letter, CA_MAXMLLEN+1) < 0)
+    RETURN (EINVAL);
+  if (unmarshall_STRINGN (rbp, denmap_entry.md_density, CA_MAXDENLEN+1) < 0)
+    RETURN (EINVAL);
+  if (magic < VMGR_MAGIC2)
+    RETURN (EINVAL);
+  unmarshall_LONG (rbp, native_capacity_mebibyte_int);
+  denmap_entry.native_capacity_byte_u64 =
+    (u_signed64)native_capacity_mebibyte_int * ONE_MB;
+  sprintf (logbuf, "enterdenmap %s %s %s", denmap_entry.md_model,
+      denmap_entry.md_media_letter, denmap_entry.md_density);
+  vmgr_logreq (func, logbuf);
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* check if model exists */
+
+  if (vmgr_get_model_entry (&thip->dbfd, denmap_entry.md_model,
+      &model_entry, 0, NULL))
+    RETURN (serrno);
+  if (*denmap_entry.md_media_letter &&
+      strcmp (denmap_entry.md_media_letter, " ") &&
+      strcmp (denmap_entry.md_media_letter, model_entry.m_media_letter))
+    RETURN (EINVAL);
+  strcpy (denmap_entry.md_media_letter, model_entry.m_media_letter);
+  if (native_capacity_mebibyte_int <= 0)
+    RETURN (EINVAL);
+
+  /* start transaction */
+
+  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+
+  if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
+    RETURN (serrno);
+  RETURN (0);
+}
+
+/*  vmgr_srv_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
+
 int vmgr_srv_enterdenmap_byte_u64(const int magic, char *const req_data,
   const char *const clienthost, struct vmgr_srv_thread_info *const thip)
 {
@@ -2107,7 +2169,7 @@ int vmgr_srv_querytape(const int magic,
   sprintf (logbuf, "querytape %s %d", vid, side);
   vmgr_logreq (func, logbuf);
 
-  memset((void *) &tape, 0, sizeof(struct vmgr_tape_info));
+  memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 

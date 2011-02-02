@@ -463,11 +463,7 @@ void procreq(const int magic, const int req_type, char *const req_data,
     c = vmgr_srv_deletedenmap (req_data, clienthost, thip);
     break;
   case VMGR_ENTDENMAP:
-    printf("proclistreq VMGR_ENTDENMAP message NOT IMPLEMENTED"
-      ": clienthost=%s\n", clienthost);
-    c = SEINTERNAL;
-    sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
-    sendrep (thip->s, VMGR_RC, c);
+    c = vmgr_srv_enterdenmap (magic, req_data, clienthost, thip);
     break;
   case VMGR_ENTDENMAP_BYTE_U64:
     c = vmgr_srv_enterdenmap_byte_u64 (magic, req_data, clienthost, thip);

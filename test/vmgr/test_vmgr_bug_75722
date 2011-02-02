@@ -55,14 +55,14 @@ sub testRunCmdAsOutput {
 # Returns true if the daemon with specfied name is running else false.
 #
 # @param  daemonName The name of the daemon.
-# @return            True if the daemon is runn ing, else false.
+# @return            True if the daemon is running, else false.
 sub daemonIsRunning {
   my $daemonName = $_[0];
 
-  my $psResult = `ps -e | grep $daemonName`;
+  my $psResult = `ps -e | grep $daemonName | awk '{print \$NF;}'`;
   chomp($psResult);
 
-  return($psResult =~ m/^\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+  return($psResult eq $daemonName);
 }
 
 
@@ -295,8 +295,7 @@ print("\n");
 print("STARTING THE VMGR\n");
 &runCmdAs("root", "/etc/init.d/vmgrd start");
 
-# Abort if the vmgr is not running
-die "Abort: vmgrd is not runnung\n" unless daemonIsRunning("vmgrd");
+die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
 
 # Give the vmgrd a chance to get up and running
 sleep(1);
@@ -382,9 +381,9 @@ print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 print("\n");
 print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrenterdenmapPath_trunk_r21843 -d 9999GC --ml J --mo 3592 --nc 10T", "");
+  "2>&1 $vmgrenterdenmapPath_trunk_r21843 -d 10GC --ml J --mo 3592 --nc 10G", "");
 &testRunCmdAsOutput("root",
-  "2>&1 vmgrlistdenmap | grep 9999GC", "3592   J  9999GC     10.00Ti");
+  "2>&1 vmgrlistdenmap | grep 10GC", "3592   J  10GC       10.00Gi");
 
 # Abort if the new vmgr_checktape function does not work with the new vmgr
 print("\n");

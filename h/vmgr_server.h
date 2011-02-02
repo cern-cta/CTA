@@ -131,6 +131,7 @@ EXTERN_C int vmgr_srv_deletemodel (char *, char *, struct vmgr_srv_thread_info *
 EXTERN_C int vmgr_srv_deletepool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_deletetape (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_deltag (char *, char *, struct vmgr_srv_thread_info *);
+EXTERN_C int vmgr_srv_enterdenmap (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_enterdenmap_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_enterdgnmap (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_enterlibrary (char *, char *, struct vmgr_srv_thread_info *);

@@ -13,6 +13,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include "vmgr_tape_info_trunk_r21843.h"
 
 int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
 {

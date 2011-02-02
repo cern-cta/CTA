@@ -15,6 +15,7 @@
 #include "u64subr.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
+#include "vmgr_tape_info_trunk_r21843.h"
 
 int main(int argc, char **argv) {
   int        rc   = 0;
