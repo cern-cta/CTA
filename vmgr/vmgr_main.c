@@ -343,11 +343,9 @@ int proclistreq(int magic,
         return (c);
       break;
     case VMGR_LISTTAPE:
-      printf("proclistreq VMGR_LISTTAPE message NOT IMPLEMENTED"
-        ": clienthost=%s\n", clienthost);
-      c = SEINTERNAL;
-      sendrep (thip->s, MSG_ERR, "VMGR_ENTDENMAP not implemented\n");
-      sendrep (thip->s, VMGR_RC, c);
+      if ((c = vmgr_srv_listtape (magic, req_data, clienthost, thip, &tape,
+        endlist)))
+        return (c);
       break;
     case VMGR_LISTTAPE_BYTE_U64:
       if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data, clienthost, thip,

@@ -1510,6 +1510,121 @@ int vmgr_srv_listpool(char *const req_data,
 
 /*      vmgr_srv_listtape - list tape volume entries */
 
+int vmgr_srv_listtape(const int magic, char *const req_data,
+  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
+  struct vmgr_tape_info_byte_u64 *const tape, const int endlist) {
+  int bol = 0;  /* beginning of list flag */
+  int c = 0;
+  struct vmgr_tape_dgnmap dgnmap_entry;
+  int eol = 0;  /* end of list flag */
+  char func[18];
+  gid_t gid = 0;
+  int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
+  /* maxnbentries = maximum number of entries/call                            */
+  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_side_byte_u64);
+  int nbentries = 0;
+  char outbuf[LISTBUFSZ+4];
+  char *p = NULL;
+  char pool_name[CA_MAXPOOLNAMELEN+1];
+  struct vmgr_tape_side_byte_u64 side_entry;
+  char *rbp = NULL;
+  char *sbp = NULL;
+  uid_t uid = 0;
+  char vid[CA_MAXVIDLEN+1];
+
+  strncpy (func, "vmgr_srv_listtape", 18);
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+
+  RESETID(uid, gid);
+
+  vmgrlogit (func, VMG92, "listtape", uid, gid, clienthost);
+  unmarshall_WORD (rbp, listentsz);
+  if (magic >= VMGR_MAGIC2) {
+    if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN + 1) < 0)
+      RETURN (EINVAL);
+  } else
+    vid[0] = '\0';
+  if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN + 1) < 0)
+    RETURN (EINVAL);
+  unmarshall_WORD (rbp, bol);
+
+  sbp = outbuf;
+  marshall_WORD (sbp, nbentries);    /* will be updated */
+
+  while (nbentries < maxnbentries &&
+    (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
+    &side_entry, endlist)) == 0) {
+    if (bol || strcmp (tape->vid, side_entry.vid))
+      if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid,
+          tape, 0, NULL))
+        RETURN (serrno);
+    marshall_STRING (sbp, tape->vid);
+    marshall_STRING (sbp, tape->vsn);
+    if (magic < VMGR_MAGIC2) {
+      if (vmgr_get_dgnmap_entry (&thip->dbfd, tape->model,
+          tape->library, &dgnmap_entry, 0, NULL))
+        RETURN (serrno);
+      marshall_STRING (sbp, dgnmap_entry.dgn);
+    } else
+      marshall_STRING (sbp, tape->library);
+    marshall_STRING (sbp, tape->density);
+    if (magic < VMGR_MAGIC2)
+      tape->lbltype[2] = '\0';
+    marshall_STRING (sbp, tape->lbltype);
+    marshall_STRING (sbp, tape->model);
+    marshall_STRING (sbp, tape->media_letter);
+    marshall_STRING (sbp, tape->manufacturer);
+    marshall_STRING (sbp, tape->sn);
+    if (magic >= VMGR_MAGIC2) {
+      marshall_WORD (sbp, tape->nbsides);
+      marshall_TIME_T (sbp, tape->etime);
+      marshall_WORD (sbp, side_entry.side);
+    }
+    marshall_STRING (sbp, side_entry.poolname);
+    {
+      /* Give the estimated free-space in kibibytes a ceiling of the */
+      /* largest posible positive 32-bit signed integer which is     */
+      /* 2^32-1 = 2147483647                                         */
+      int estimated_free_space_kibibyte_int = 0;
+      if(side_entry.estimated_free_space_byte_u64 / ONE_KB > 2147483647) {
+        estimated_free_space_kibibyte_int = 2147483647;
+      } else {
+        estimated_free_space_kibibyte_int =
+          side_entry.estimated_free_space_byte_u64 / ONE_KB;
+      }
+      marshall_LONG (sbp, estimated_free_space_kibibyte_int);
+    }
+    marshall_LONG (sbp, side_entry.nbfiles);
+    marshall_LONG (sbp, tape->rcount);
+    marshall_LONG (sbp, tape->wcount);
+    if (magic >= VMGR_MAGIC2) {
+      marshall_STRING (sbp, tape->rhost);
+      marshall_STRING (sbp, tape->whost);
+      marshall_LONG (sbp, tape->rjid);
+      marshall_LONG (sbp, tape->wjid);
+    }
+    marshall_TIME_T (sbp, tape->rtime);
+    marshall_TIME_T (sbp, tape->wtime);
+    marshall_LONG (sbp, side_entry.status);
+    nbentries++;
+    bol = 0;
+  }
+  if (c < 0)
+    RETURN (serrno);
+  if (c == 1)
+    eol = 1;
+
+  marshall_WORD (sbp, eol);
+  p = outbuf;
+  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
+  RETURN (0);
+}
+
+/*      vmgr_srv_listtape - list tape volume entries */
+
 int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
   const char *const clienthost, struct vmgr_srv_thread_info *const thip,
   struct vmgr_tape_info_byte_u64 *const tape, const int endlist)

@@ -146,6 +146,7 @@ EXTERN_C int vmgr_srv_listdgnmap (char *const, char *const, struct vmgr_srv_thre
 EXTERN_C int vmgr_srv_listlibrary (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
 EXTERN_C int vmgr_srv_listmodel (const int, char *const, char *const, struct vmgr_srv_thread_info *const, const int);
 EXTERN_C int vmgr_srv_listpool (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listtape (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, struct vmgr_tape_info_byte_u64 *const, const int);
 EXTERN_C int vmgr_srv_listtape_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, struct vmgr_tape_info_byte_u64 *const, const int);
 EXTERN_C int vmgr_srv_modifylibrary (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_modifymodel (int, char *, char *, struct vmgr_srv_thread_info *);
