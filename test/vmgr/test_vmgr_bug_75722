@@ -167,27 +167,35 @@ my %tapes = (
     dgn => "359B3B"
   }
 );
-my $castor_src                       = "";
-my $originalDbSchema                 = "";
-my $originalDropSchema               = "";
-my $vid                              = "";
-my $tapePool                         = "";
-my $tapeStatus                       = "";
-my $freeSpaceStr                     = "";
-my $status                           = 0;
-my $uid                              = POSIX::getuid;
-my $gid                              = POSIX::getgid;
-my $cmdResultStr                     = "";
-my $i                                = 0;
-my $vmgrquerytapePath                = "";
-my $vmgrquerytapePath_trunk_r21843   = "";
-my $vmgrenterdenmapPath_trunk_r21843 = "";
-my $vmgrlistdenmapPath_trunk_r21843  = "";
-my $vmgrlisttapePath_trunk_r21843    = "";
-my $vmgrentermodelPath_trunk_r21843  = "";
-my $vmgrlistmodelPath_trunk_r21843   = "";
-my @vids                             = sort keys %tapes;
-my $expectedOutput                   = "";
+my $castor_src                         = "";
+my $originalDbSchema                   = "";
+my $originalDropSchema                 = "";
+my $vid                                = "";
+my $tapePool                           = "";
+my $tapeStatus                         = "";
+my $freeSpaceStr                       = "";
+my $status                             = 0;
+my $uid                                = POSIX::getuid;
+my $gid                                = POSIX::getgid;
+my $cmdResultStr                       = "";
+my $i                                  = 0;
+my $vmgrquerytape_path                 = "";
+my $vmgrquerytape_trunk_r21843_path    = "";
+my $vmgrenterdenmap_trunk_r21843_path  = "";
+my $vmgrlistdenmap_trunk_r21843_path   = "";
+my $vmgrlisttape_trunk_r21843_path     = "";
+my $vmgrentermodel_trunk_r21843_path   = "";
+my $vmgrlistmodel_trunk_r21843_path    = "";
+my $vmgrenterlibrary_trunk_r21843_path = "";
+my $vmgrlistlibrary_trunk_r21843_path  = "";
+my $vmgrenterdgnmap_trunk_r21843_path  = "";
+my $vmgrlistdgnmap_trunk_r21843_path   = "";
+my $vmgrenterpool_trunk_r21843_path    = "";
+my $vmgrlistpool_trunk_r21843_path     = "";
+my $vmgrentertape_trunk_r21843_path    = "";
+my $vmgrmodifytape_trunk_r21843_path   = "";
+my @vids                               = sort keys %tapes;
+my $expectedOutput                     = "";
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -198,32 +206,64 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 $castor_src = $ENV{'CASTOR_SRC'};
 print("Using CASTOR_SRC=$castor_src\n");
 
-$vmgrquerytapePath = "$castor_src/test/vmgr/vmgrquerytape";
-&dieIfNoExecutable($vmgrquerytapePath);
+$vmgrquerytape_path = "$castor_src/test/vmgr/vmgrquerytape";
+&dieIfNoExecutable($vmgrquerytape_path);
 
-$vmgrquerytapePath_trunk_r21843 =
+$vmgrquerytape_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843";
-&dieIfNoExecutable($vmgrquerytapePath_trunk_r21843);
+&dieIfNoExecutable($vmgrquerytape_trunk_r21843_path);
 
-$vmgrenterdenmapPath_trunk_r21843 =
+$vmgrenterdenmap_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843";
-&dieIfNoExecutable($vmgrenterdenmapPath_trunk_r21843);
+&dieIfNoExecutable($vmgrenterdenmap_trunk_r21843_path);
 
-$vmgrlistdenmapPath_trunk_r21843 =
+$vmgrlistdenmap_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843";
-&dieIfNoExecutable($vmgrlistdenmapPath_trunk_r21843);
+&dieIfNoExecutable($vmgrlistdenmap_trunk_r21843_path);
 
-$vmgrlisttapePath_trunk_r21843 =
+$vmgrlisttape_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843";
-&dieIfNoExecutable($vmgrlisttapePath_trunk_r21843);
+&dieIfNoExecutable($vmgrlisttape_trunk_r21843_path);
 
-$vmgrentermodelPath_trunk_r21843 =
+$vmgrentermodel_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843";
-&dieIfNoExecutable($vmgrentermodelPath_trunk_r21843);
+&dieIfNoExecutable($vmgrentermodel_trunk_r21843_path);
 
-$vmgrlistmodelPath_trunk_r21843 =
+$vmgrlistmodel_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlistmodel_trunk_r21843";
-&dieIfNoExecutable($vmgrlistmodelPath_trunk_r21843);
+&dieIfNoExecutable($vmgrlistmodel_trunk_r21843_path);
+
+$vmgrenterlibrary_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrenterlibrary_trunk_r21843";
+&dieIfNoExecutable($vmgrenterlibrary_trunk_r21843_path);
+
+$vmgrlistlibrary_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrlistlibrary_trunk_r21843";
+&dieIfNoExecutable($vmgrlistlibrary_trunk_r21843_path);
+
+$vmgrenterdgnmap_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrenterdgnmap_trunk_r21843";
+&dieIfNoExecutable($vmgrenterdgnmap_trunk_r21843_path);
+
+$vmgrlistdgnmap_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrlistdgnmap_trunk_r21843";
+&dieIfNoExecutable($vmgrlistdgnmap_trunk_r21843_path);
+
+$vmgrenterpool_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrenterpool_trunk_r21843";
+&dieIfNoExecutable($vmgrenterpool_trunk_r21843_path);
+
+$vmgrlistpool_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrlistpool_trunk_r21843";
+&dieIfNoExecutable($vmgrlistpool_trunk_r21843_path);
+
+$vmgrentertape_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrentertape_trunk_r21843";
+&dieIfNoExecutable($vmgrentertape_trunk_r21843_path);
+
+$vmgrmodifytape_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843";
+&dieIfNoExecutable($vmgrmodifytape_trunk_r21843_path);
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -303,7 +343,7 @@ print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
   "2>&1 VMGR_HOST=lxcastorsrv102 vmgrlisttape -V $vids[0]",
   "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
 &testRunCmdAsOutput("root",
-  "2>&1 VMGR_HOST=lxcastorsrv102 $vmgrquerytapePath $vids[0]",
+  "2>&1 VMGR_HOST=lxcastorsrv102 $vmgrquerytape_path $vids[0]",
   "VMG03 - illegal function 39\n" .
   "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
 
@@ -339,6 +379,9 @@ print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 &runCmdAs("root", "vmgrenterlibrary --name IBMLIB1B --capacity 6600");
 &testRunCmdAsOutput("root", "vmgrlistlibrary",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root", "vmgrlistlibrary --name IBMLIB1B",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
 &runCmdAs("root", "vmgrenterlibrary --name IBMLIB3B --capacity 6600");
 &testRunCmdAsOutput("root", "vmgrlistlibrary",
@@ -355,6 +398,9 @@ print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
 &runCmdAs("root", "vmgrenterpool --group st --name stager_dev04 --user stage");
 &testRunCmdAsOutput("root", "vmgrlistpool",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+# vmgrlistpool uses a different protocol with the -P option than without
+&testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
 # Enter the test tapes into the test vmgr
@@ -377,11 +423,11 @@ for $vid (sort keys %tapes) {
     "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
   &testRunCmdAsOutput("root", "vmgrlisttape", $expectedOutput);
 
-  # vmgrlistpool has uses a different protocol with the -P option than without
-  &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
+  &testRunCmdAsOutput("root", "vmgrlistpool",
 "stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
     );
-  &testRunCmdAsOutput("root", "vmgrlistpool",
+  # vmgrlistpool has uses a different protocol with the -P option than without
+  &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
     );
 
@@ -426,39 +472,48 @@ sleep(1); # Give the vmgrd a chance to get up and running
 
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
-&runCmdAs("root", "$vmgrentermodelPath_trunk_r21843 --mo 3592 --ml J --mc 250");
-&testRunCmdAsOutput("root", "$vmgrlistmodelPath_trunk_r21843", "3592   J  250");
+&runCmdAs("root",
+  "$vmgrentermodel_trunk_r21843_path --mo 3592 --ml J --mc 250");
+&testRunCmdAsOutput("root",
+  "$vmgrlistmodel_trunk_r21843_path", "3592   J  250");
 
 &runCmdAs("root",
-  "vmgrenterdenmap_trunk_r21843 -d 1000GC --ml J --mo 3592 --nc 1T");
-&testRunCmdAsOutput("root", "vmgrlistdenmap_trunk_r21843",
+  "$vmgrenterdenmap_trunk_r21843_path -d 1000GC --ml J --mo 3592 --nc 1T");
+&testRunCmdAsOutput("root", "$vmgrlistdenmap_trunk_r21843_path",
   "3592   J  1000GC      1.00Ti");
 
 &runCmdAs("root",
-  "vmgrenterlibrary_trunk_r21843 --name IBMLIB1B --capacity 6600");
-&testRunCmdAsOutput("root", "vmgrlistlibrary_trunk_r21843",
+  "$vmgrenterlibrary_trunk_r21843_path --name IBMLIB1B --capacity 6600");
+&testRunCmdAsOutput("root", "$vmgrlistlibrary_trunk_r21843_path",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root",
+  "$vmgrlistlibrary_trunk_r21843_path --name IBMLIB1B",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
 &runCmdAs("root",
-  "vmgrenterlibrary_trunk_r21843 --name IBMLIB3B --capacity 6600");
-&testRunCmdAsOutput("root", "vmgrlistlibrary_trunk_r21843",
+  "$vmgrenterlibrary_trunk_r21843_path --name IBMLIB3B --capacity 6600");
+&testRunCmdAsOutput("root", "$vmgrlistlibrary_trunk_r21843_path",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
   "IBMLIB3B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
 &runCmdAs("root",
-  "vmgrenterdgnmap_trunk_r21843 -g 359B1B --mo 3592 --library IBMLIB1B");
-&testRunCmdAsOutput("root", "vmgrlistdgnmap_trunk_r21843",
+  "$vmgrenterdgnmap_trunk_r21843_path -g 359B1B --mo 3592 --library IBMLIB1B");
+&testRunCmdAsOutput("root", "$vmgrlistdgnmap_trunk_r21843_path",
   "359B1B 3592   IBMLIB1B");
 
 &runCmdAs("root",
-  "vmgrenterdgnmap_trunk_r21843 -g 359B3B --mo 3592 --library IBMLIB3B");
-&testRunCmdAsOutput("root", "vmgrlistdgnmap_trunk_r21843",
+  "$vmgrenterdgnmap_trunk_r21843_path -g 359B3B --mo 3592 --library IBMLIB3B");
+&testRunCmdAsOutput("root", "$vmgrlistdgnmap_trunk_r21843_path",
   "359B1B 3592   IBMLIB1B\n" .
   "359B3B 3592   IBMLIB3B");
 
 &runCmdAs("root",
-  "vmgrenterpool_trunk_r21843 --group st --name stager_dev04 --user stage");
-&testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843",
+"$vmgrenterpool_trunk_r21843_path --group st --name stager_dev04 --user stage");
+&testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+# vmgrlistpool uses a different protocol with the -P option than without
+&testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
 # Enter the test tapes into the test vmgr
@@ -466,7 +521,7 @@ $expectedOutput = "";
 $i = 1;
 for $vid (sort keys %tapes) {
   &runCmdAs("root",
-    "vmgrentertape_trunk_r21843 -V $vid" .
+    "$vmgrentertape_trunk_r21843_path -V $vid" .
     " --mo $tapes{$vid}{mo}" .
     " --ml $tapes{$vid}{ml}" .
     " --li $tapes{$vid}{li}" .
@@ -479,13 +534,14 @@ for $vid (sort keys %tapes) {
   }
   $expectedOutput = $expectedOutput .
     "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
-  &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843", $expectedOutput);
+  &testRunCmdAsOutput("root", "$vmgrlisttape_trunk_r21843_path",
+    $expectedOutput);
 
-  # vmgrlistpool has uses a different protocol with the -P option than without
-  &testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843 -P stager_dev04",
+  &testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path",
 "stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
     );
-  &testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843",
+  # vmgrlistpool has uses a different protocol with the -P option than without
+  &testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
     );
 
@@ -496,12 +552,13 @@ $i = 1;
 for $vid (@vids) {
 
   if($i == 1) {
-    &runCmdAs("root", "vmgrmodifytape_trunk_r21843 -V $vid --st ''");
-    &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843 -V $vid",
+    &runCmdAs("root", "$vmgrmodifytape_trunk_r21843_path -V $vid --st ''");
+    &testRunCmdAsOutput("root", "$vmgrlisttape_trunk_r21843_path -V $vid",
       "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ");
   } else {
-    &runCmdAs("root", "vmgrmodifytape_trunk_r21843 -V $vid --st DISABLED");
-    &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843 -V $vid",
+    &runCmdAs("root",
+      "$vmgrmodifytape_trunk_r21843_path -V $vid --st DISABLED");
+    &testRunCmdAsOutput("root", "$vmgrlisttape_trunk_r21843_path -V $vid",
       "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 DISABLED");
   }
 
@@ -512,14 +569,14 @@ for $vid (@vids) {
 print("\n");
 print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrquerytapePath_trunk_r21843 $vids[0]",
+  "2>&1 $vmgrquerytape_trunk_r21843_path $vids[0]",
   "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
 
 # Abort if the old vmgr_enterdenmap function does not work with the new vmgr
 print("\n");
 print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrenterdenmapPath_trunk_r21843 -d 10GC --ml J --mo 3592 --nc 10G", "");
+  "2>&1 $vmgrenterdenmap_trunk_r21843_path -d 10GC --ml J --mo 3592 --nc 10G", "");
 &testRunCmdAsOutput("root",
   "2>&1 vmgrlistdenmap | grep 10GC", "3592   J  10GC       10.00Gi");
 
@@ -527,14 +584,14 @@ print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 print("\n");
 print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrquerytapePath $vids[0]",
+  "2>&1 $vmgrquerytape_path $vids[0]",
   "vmgr_querytape_byte_u64 succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
 
 # Abort if the old vmgr_listdenmap function does not work with the new vmgr
 print("\n");
 print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrlistdenmapPath_trunk_r21843",
+  "2>&1 $vmgrlistdenmap_trunk_r21843_path",
   "3592   J  10GC       10.00Gi\n" .
   "3592   J  1000GC   1024.00Gi");
 
@@ -542,7 +599,7 @@ print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 print("\n");
 print("CHECKING OLD VMGR_LISTTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
-  "2>&1 $vmgrlisttapePath_trunk_r21843",
+  "2>&1 $vmgrlisttape_trunk_r21843_path",
   "I02023   I02023 IBMLIB1B 1000GC   aul stager_dev04    1024.00GiB 00000000 \n" .
   "I10486   I10486 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED\n" .
   "I12035   I12035 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED\n" .
