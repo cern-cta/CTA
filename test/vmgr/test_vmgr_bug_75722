@@ -420,18 +420,18 @@ print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $vmgrlistdenmapPath_trunk_r21843",
   "3592   J  10GC       10.00Gi\n" .
-  "3592   J  1000GC      1.00Ti");
+  "3592   J  1000GC   1024.00Gi");
 
 # Abort if the old vmgr_listtape function does not work with the new vmgr
 print("\n");
 print("CHECKING OLD VMGR_LISTTAPE FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $vmgrlisttapePath_trunk_r21843",
-  "I02023   I02023 IBMLIB1B 1000GC   aul stager_dev04       1.00TiB 00000000 \n" .
-  "I10486   I10486 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
-  "I12035   I12035 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
-  "I12038   I12038 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED\n" .
-  "I12438   I12438 IBMLIB3B 1000GC   aul stager_dev04       1.00TiB 00000000 DISABLED");
+  "I02023   I02023 IBMLIB1B 1000GC   aul stager_dev04    1024.00GiB 00000000 \n" .
+  "I10486   I10486 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED\n" .
+  "I12035   I12035 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED\n" .
+  "I12038   I12038 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED\n" .
+  "I12438   I12438 IBMLIB3B 1000GC   aul stager_dev04    1024.00GiB 00000000 DISABLED");
 
 # Abort if the production clients do not work correctly with the new vmgr
 print("\n");
