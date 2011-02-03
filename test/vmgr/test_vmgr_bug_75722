@@ -183,7 +183,6 @@ my $vmgrquerytape_path                 = "";
 my $vmgrquerytape_trunk_r21843_path    = "";
 my $vmgrenterdenmap_trunk_r21843_path  = "";
 my $vmgrlistdenmap_trunk_r21843_path   = "";
-my $vmgrlisttape_trunk_r21843_path     = "";
 my $vmgrentermodel_trunk_r21843_path   = "";
 my $vmgrlistmodel_trunk_r21843_path    = "";
 my $vmgrenterlibrary_trunk_r21843_path = "";
@@ -192,7 +191,9 @@ my $vmgrenterdgnmap_trunk_r21843_path  = "";
 my $vmgrlistdgnmap_trunk_r21843_path   = "";
 my $vmgrenterpool_trunk_r21843_path    = "";
 my $vmgrlistpool_trunk_r21843_path     = "";
+my $vmgrmodifypool_trunk_r21843_path   = "";
 my $vmgrentertape_trunk_r21843_path    = "";
+my $vmgrlisttape_trunk_r21843_path     = "";
 my $vmgrmodifytape_trunk_r21843_path   = "";
 my @vids                               = sort keys %tapes;
 my $expectedOutput                     = "";
@@ -220,10 +221,6 @@ $vmgrenterdenmap_trunk_r21843_path =
 $vmgrlistdenmap_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843";
 &dieIfNoExecutable($vmgrlistdenmap_trunk_r21843_path);
-
-$vmgrlisttape_trunk_r21843_path =
-  "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843";
-&dieIfNoExecutable($vmgrlisttape_trunk_r21843_path);
 
 $vmgrentermodel_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843";
@@ -257,9 +254,17 @@ $vmgrlistpool_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlistpool_trunk_r21843";
 &dieIfNoExecutable($vmgrlistpool_trunk_r21843_path);
 
+$vmgrmodifypool_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrmodifypool_trunk_r21843";
+&dieIfNoExecutable($vmgrmodifypool_trunk_r21843_path);
+
 $vmgrentertape_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrentertape_trunk_r21843";
 &dieIfNoExecutable($vmgrentertape_trunk_r21843_path);
+
+$vmgrlisttape_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843";
+&dieIfNoExecutable($vmgrlisttape_trunk_r21843_path);
 
 $vmgrmodifytape_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843";
@@ -403,6 +408,15 @@ print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
+&runCmdAs("root",
+  "vmgrmodifypool --name stager_dev04 --user root --group root");
+&testRunCmdAsOutput("root", "vmgrlistpool",
+"stager_dev04    -        -      CAPACITY         0B FREE         0B (  0.0%)");
+
+&runCmdAs("root", "vmgrmodifypool --name stager_dev04 --user stage --group st");
+&testRunCmdAsOutput("root", "vmgrlistpool",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+
 # Enter the test tapes into the test vmgr
 $expectedOutput = "";
 $i = 1;
@@ -514,6 +528,16 @@ print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 # vmgrlistpool uses a different protocol with the -P option than without
 &testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path -P stager_dev04",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+
+&runCmdAs("root",
+  "$vmgrmodifypool_trunk_r21843_path --name stager_dev04 --user root --group root");
+&testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path",
+"stager_dev04    -        -      CAPACITY         0B FREE         0B (  0.0%)");
+
+&runCmdAs("root",
+  "$vmgrmodifypool_trunk_r21843_path --name stager_dev04 --user stage --group st");
+&testRunCmdAsOutput("root", "$vmgrlistpool_trunk_r21843_path",
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
 # Enter the test tapes into the test vmgr
