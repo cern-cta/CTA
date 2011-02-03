@@ -10,14 +10,14 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "Cnetdb.h"
-#include "marshall.h"
-#include "net.h"
-#include "serrno.h"
-#include "vmgr.h"
-#include "vmgr_api.h"
+#include "Cnetdb_trunk_r21843.h"
+#include "marshall_trunk_r21843.h"
+#include "net_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
+#include "vmgr_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
 #ifdef VMGRCSEC
-#include "Csec_api.h"
+#include "Csec_api_trunk_r21843.h"
 #endif
 
 /* send2vmgr - send a request to the volume manager and wait for the reply */

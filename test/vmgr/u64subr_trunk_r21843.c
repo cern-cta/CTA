@@ -6,8 +6,8 @@
 #include <stdio.h>       /* For sprintf */
 #include <string.h>      /* For memset */
 #include <ctype.h>       /* For isspace and al. */
-#include <osdep.h>
-#include "u64subr.h"
+#include "osdep_trunk_r21843.h"
+#include "u64subr_trunk_r21843.h"
 
 /* i64tostr - convert a signed 64 bits integer to a string
  *	buf must be long enough to contain the result

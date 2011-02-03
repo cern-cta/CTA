@@ -11,11 +11,10 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "serrno.h"
-#include "u64subr.h"
-#include "vmgr.h"
-#include "vmgr_api.h"
-#include "vmgr_tape_info_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
+#include "u64subr_trunk_r21843.h"
+#include "vmgr_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
 
 extern	char	*optarg;
 extern	int	optind;

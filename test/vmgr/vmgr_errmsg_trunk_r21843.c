@@ -8,8 +8,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include "vmgr.h"
-#include "vmgr_api.h"
+#include "vmgr_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
 
 /*	vmgr_seterrbuf - set receiving buffer for error messages */
 

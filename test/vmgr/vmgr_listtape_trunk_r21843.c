@@ -10,11 +10,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "serrno.h"
-#include "vmgr_api.h"
-#include "vmgr.h"
-#include "vmgr_tape_info_trunk_r21843.h"
+#include "marshall_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
+#include "vmgr_trunk_r21843.h"
 
 struct vmgr_tape_info *
 vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)

@@ -9,11 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "vmgr_api.h"
-#include "vmgr.h"
-#include "serrno.h"
-#include "vmgr_tape_info_trunk_r21843.h"
+#include "marshall_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
+#include "vmgr_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
 
 int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
 {

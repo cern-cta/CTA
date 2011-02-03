@@ -15,8 +15,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include <Cglobals.h>
-#include <Cnetdb.h>
+#include <Cglobals_trunk_r21843.h>
+#include <Cnetdb_trunk_r21843.h>
 
 struct hostent *Cgethostbyname(name)
 const char *name;

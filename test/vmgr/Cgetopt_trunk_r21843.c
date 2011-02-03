@@ -41,9 +41,9 @@
 /* ============= */
 /* Local headers */
 /* ============= */
-#include <Cglobals.h>
-#include <Cgetopt.h>        /* Our decls, especially TSD's */
-#include <Castor_limits.h>  /* For CA_MAXLINELEN */
+#include "Cglobals_trunk_r21843.h"
+#include "Cgetopt_trunk_r21843.h"        /* Our decls, especially TSD's */
+#include "Castor_limits_trunk_r21843.h"  /* For CA_MAXLINELEN */
 
 /* =================== */
 /* Internal prototypes */

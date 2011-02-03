@@ -8,9 +8,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include "Cglobals.h"
-#include "vmgr_api.h"
-#include "serrno.h"
+#include "Cglobals_trunk_r21843.h"
+#include "vmgr_api_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
 static int vmgr_api_key = -1;
 
 int vmgr_apiinit(struct vmgr_api_thread_info **thip)

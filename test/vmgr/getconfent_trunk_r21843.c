@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cglobals.h"
-#include "serrno.h"
-#include "getconfent.h"
-#include "Csnprintf.h"
-#include "Castor_limits.h"
+#include "Cglobals_trunk_r21843.h"
+#include "serrno_trunk_r21843.h"
+#include "getconfent_trunk_r21843.h"
+#include "Csnprintf_trunk_r21843.h"
+#include "Castor_limits_trunk_r21843.h"
 
 #ifndef PATH_CONFIG
 #define PATH_CONFIG "/etc/castor/castor.conf"

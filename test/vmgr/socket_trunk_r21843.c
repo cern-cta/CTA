@@ -35,8 +35,8 @@ static int timeout_set=0;
 #include <errno.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <net.h>                        /* networking specifics         */
-#include <serrno.h>                     /* special errors               */
+#include "net_trunk_r21843.h"                        /* networking specifics         */
+#include "serrno_trunk_r21843.h"                     /* special errors               */
 
 #ifdef READTIMEOUT
 static jmp_buf alarmbuf;

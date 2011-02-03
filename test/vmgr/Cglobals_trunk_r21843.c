@@ -25,7 +25,7 @@
  */
 
 #include <stdlib.h>
-#include <Cglobals.h>
+#include "Cglobals_trunk_r21843.h"
 
 /*
  * Define a structure to maintain global data in a single-threaded

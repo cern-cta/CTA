@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
+/*      vmgr_entermodel - enter a new model of cartridge */
 
 #include <errno.h>
 #include <sys/types.h>
@@ -15,10 +15,10 @@
 #include "serrno_trunk_r21843.h"
 #include <string.h>
 
-int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
+int vmgr_entermodel(const char *model, char *media_letter, int media_cost)
 {
 	int c;
-	char func[17];
+	char func[16];
 	gid_t gid;
 	int msglen;
 	char *q;
@@ -27,20 +27,19 @@ int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int n
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strncpy (func, "vmgr_enterdenmap", 17);
+        strncpy (func, "vmgr_entermodel", 16);
         if (vmgr_apiinit (&thip))
                 return (-1);
         uid = geteuid();
         gid = getegid();
 
-	if (! model || ! density) {
+	if (! model) {
 		serrno = EFAULT;
 		return (-1);
 	}
 
 	if (strlen (model) > CA_MAXMODELLEN ||
-	    (media_letter && strlen (media_letter) > CA_MAXMLLEN) ||
-	    strlen (density) > CA_MAXDENLEN) {
+	    (media_letter && strlen (media_letter) > CA_MAXMLLEN)) {
 		serrno = EINVAL;
 		return (-1);
 	}
@@ -49,7 +48,7 @@ int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int n
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, VMGR_MAGIC2);
-	marshall_LONG (sbp, VMGR_ENTDENMAP);
+	marshall_LONG (sbp, VMGR_ENTMODEL);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
@@ -64,8 +63,7 @@ int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int n
 	} else {
 		marshall_STRING (sbp, " ");
 	}
-	marshall_STRING (sbp, density);
-	marshall_LONG (sbp, native_capacity);
+	marshall_LONG (sbp, media_cost);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

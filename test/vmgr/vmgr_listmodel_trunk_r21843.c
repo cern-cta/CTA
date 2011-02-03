@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_listdenmap - list quadruplets model/media_letter/density/capacity */
+/*      vmgr_listmodel - list cartridge model entries */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -15,15 +15,15 @@
 #include "vmgr_api_trunk_r21843.h"
 #include "vmgr_trunk_r21843.h"
 
-struct vmgr_tape_denmap *
-vmgr_listdenmap(int flags, vmgr_list *listp)
+struct vmgr_tape_media *
+vmgr_listmodel(int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
-	char func[16];
+	char func[15];
 	gid_t gid;
-	int listentsz = sizeof(struct vmgr_tape_denmap);
-	struct vmgr_tape_denmap *lp;
+	int listentsz = sizeof(struct vmgr_tape_media);
+	struct vmgr_tape_media *lp;
 	int msglen;
 	int nbentries;
 	char *q;
@@ -34,7 +34,7 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 	struct vmgr_api_thread_info *thip;
 	uid_t uid;
 
-        strncpy (func, "vmgr_listdenmap", 16);
+        strncpy (func, "vmgr_listmodel", 15);
         if (vmgr_apiinit (&thip))
                 return (NULL);
         uid = geteuid();
@@ -68,7 +68,7 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
-			marshall_LONG (sbp, VMGR_LISTDENMAP);
+			marshall_LONG (sbp, VMGR_LISTMODEL);
 		}
 		q = sbp;        /* save pointer. The next field will be updated */
 		msglen = 3 * LONGSIZE;
@@ -99,20 +99,19 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 		if (nbentries == 0)
 			return (NULL);		/* end of list */
 
-		/* unmarshall reply into vmgr_tape_denmap structures */
+		/* unmarshall reply into vmgr_tape_media structures */
 
 		listp->nbentries = nbentries;
-		lp = (struct vmgr_tape_denmap *) listp->buf;
+		lp = (struct vmgr_tape_media *) listp->buf;
 		while (nbentries--) {
-			unmarshall_STRING (rbp, lp->md_model);
-			unmarshall_STRING (rbp, lp->md_media_letter);
-			unmarshall_STRING (rbp, lp->md_density);
-			unmarshall_LONG (rbp, lp->native_capacity);
+			unmarshall_STRING (rbp, lp->m_model);
+			unmarshall_STRING (rbp, lp->m_media_letter);
+			unmarshall_LONG (rbp, lp->media_cost);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);
 	}
-	lp = ((struct vmgr_tape_denmap *) listp->buf) + listp->index;
+	lp = ((struct vmgr_tape_media *) listp->buf) + listp->index;
 	listp->index++;
 	if (listp->index >= listp->nbentries) {	/* must refill next time */
 		listp->index = 0;

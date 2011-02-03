@@ -8,16 +8,16 @@
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */
 
-#include <serrno.h>     /* special error numbers and codes              */
-#include <log.h>        /* logger functions                             */
-#include <Cglobals.h>
+#include "serrno_trunk_r21843.h"     /* special error numbers and codes              */
+#include "log_trunk_r21843.h"        /* logger functions                             */
+#include "Cglobals_trunk_r21843.h"
 #include <string.h>
 
 #if !defined(linux) && !defined(__APPLE__) 
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
 
-#include <net.h>                /*     networking specifics             */
+#include "net_trunk_r21843.h"                /*     networking specifics             */
 
 char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",

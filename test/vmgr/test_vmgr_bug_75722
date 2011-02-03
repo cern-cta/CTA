@@ -65,6 +65,52 @@ sub daemonIsRunning {
   return($psResult eq $daemonName);
 }
 
+sub dropVmgrDatabaseSchema {
+  my ($dbConnectionString, $originalDropSchema) = (shift, shift);
+
+  my $tmpDropSchema = &runCmdAs("root", "mktemp");
+  print("tmpDropSchema=$tmpDropSchema\n");
+  chomp($tmpDropSchema);
+  `echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpDropSchema`;
+  `echo "CONNECT $dbConnectionString" >> $tmpDropSchema`;
+  `echo >> $tmpDropSchema`;
+  `cat $originalDropSchema >> $tmpDropSchema`;
+  `echo >> $tmpDropSchema`;
+  `echo "EXIT;" >> $tmpDropSchema`;
+
+  &runCmdAs("root", "'sqlplus' /NOLOG \@$tmpDropSchema");
+  &runCmdAs("root", "rm $tmpDropSchema");
+}
+
+sub createVmgrDatabaseSchema {
+  my ($dbConnectionString, $originalDbSchema) = (shift, shift);
+
+  my $tmpCreateSchema = &runCmdAs("root", "mktemp");
+  chomp($tmpCreateSchema);
+  print("tmpCreateSchema=$tmpCreateSchema\n");
+  `echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpCreateSchema`;
+  `echo "CONNECT $dbConnectionString" >> $tmpCreateSchema`;
+  `echo >> $tmpCreateSchema`;
+  `cat $originalDbSchema >> $tmpCreateSchema`;
+  `echo >> $tmpCreateSchema`;
+  `echo "EXIT;" >> $tmpCreateSchema`;
+
+  &runCmdAs("root", "'sqlplus' /NOLOG \@$tmpCreateSchema");
+  &runCmdAs("root", "rm $tmpCreateSchema");
+}
+
+sub dieIfNoExecutable {
+  my $executablePath = (shift);
+
+  print ("Testing \"$executablePath\" exists and is executable\n");
+
+  die("ABORT: $executablePath does not exist\n")
+    unless -e $executablePath;
+  die("ABORT: $executablePath is not a plain file\n")
+    unless -f $executablePath;
+  die("ABORT: $executablePath is not executable\n")
+    unless -x $executablePath;
+}
 
 ###############################################################################
 # MAIN PROGRAM STARTS HERE
@@ -138,7 +184,10 @@ my $vmgrquerytapePath_trunk_r21843   = "";
 my $vmgrenterdenmapPath_trunk_r21843 = "";
 my $vmgrlistdenmapPath_trunk_r21843  = "";
 my $vmgrlisttapePath_trunk_r21843    = "";
+my $vmgrentermodelPath_trunk_r21843  = "";
+my $vmgrlistmodelPath_trunk_r21843   = "";
 my @vids                             = sort keys %tapes;
+my $expectedOutput                   = "";
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -149,54 +198,32 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 $castor_src = $ENV{'CASTOR_SRC'};
 print("Using CASTOR_SRC=$castor_src\n");
 
-# Abort if the vmgrquerytape binary does not exist
 $vmgrquerytapePath = "$castor_src/test/vmgr/vmgrquerytape";
-die("ABORT: $vmgrquerytapePath does not exist\n")
-  unless -e $vmgrquerytapePath;
-die("ABORT: $vmgrquerytapePath is not a plain file\n")
-  unless -f $vmgrquerytapePath;
-die("ABORT: $vmgrquerytapePath is not executable\n")
-  unless -x $vmgrquerytapePath;
+&dieIfNoExecutable($vmgrquerytapePath);
 
-# Abort if the vmgrquerytape_trunk_r21843 binary does not exist
 $vmgrquerytapePath_trunk_r21843 =
   "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843";
-die("ABORT: $vmgrquerytapePath_trunk_r21843 does not exist\n")
-  unless -e $vmgrquerytapePath_trunk_r21843;
-die("ABORT: $vmgrquerytapePath_trunk_r21843 is not a plain file\n")
-  unless -f $vmgrquerytapePath_trunk_r21843;
-die("ABORT: $vmgrquerytapePath_trunk_r21843 is not executable\n")
-  unless -x $vmgrquerytapePath_trunk_r21843;
+&dieIfNoExecutable($vmgrquerytapePath_trunk_r21843);
 
-# Abort if the vmgrenterdenmap_trunk_r21843 binary does not exist
 $vmgrenterdenmapPath_trunk_r21843 =
   "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843";
-die("ABORT: $vmgrenterdenmapPath_trunk_r21843 does not exist\n")
-  unless -e $vmgrenterdenmapPath_trunk_r21843;
-die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not a plain file\n")
-  unless -f $vmgrenterdenmapPath_trunk_r21843;
-die("ABORT: $vmgrenterdenmapPath_trunk_r21843 is not executable\n")
-  unless -x $vmgrenterdenmapPath_trunk_r21843;
+&dieIfNoExecutable($vmgrenterdenmapPath_trunk_r21843);
 
-# Abort if the vmgrlistdenmap_trunk_r21843 binary does not exist
 $vmgrlistdenmapPath_trunk_r21843 =
   "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843";
-die("ABORT: $vmgrlistdenmapPath_trunk_r21843 does not exist\n")
-  unless -e $vmgrlistdenmapPath_trunk_r21843;
-die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not a plain file\n")
-  unless -f $vmgrlistdenmapPath_trunk_r21843;
-die("ABORT: $vmgrlistdenmapPath_trunk_r21843 is not executable\n")
-  unless -x $vmgrlistdenmapPath_trunk_r21843;
+&dieIfNoExecutable($vmgrlistdenmapPath_trunk_r21843);
 
-# Abort if the vmgrlisttape_trunk_r21843 binary does not exist
 $vmgrlisttapePath_trunk_r21843 =
   "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843";
-die("ABORT: $vmgrlisttapePath_trunk_r21843 does not exist\n")
-  unless -e $vmgrlisttapePath_trunk_r21843;
-die("ABORT: $vmgrlisttapePath_trunk_r21843 is not a plain file\n")
-  unless -f $vmgrlisttapePath_trunk_r21843;
-die("ABORT: $vmgrlisttapePath_trunk_r21843 is not executable\n")
-  unless -x $vmgrlisttapePath_trunk_r21843;
+&dieIfNoExecutable($vmgrlisttapePath_trunk_r21843);
+
+$vmgrentermodelPath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843";
+&dieIfNoExecutable($vmgrentermodelPath_trunk_r21843);
+
+$vmgrlistmodelPath_trunk_r21843 =
+  "$castor_src/test/vmgr/vmgrlistmodel_trunk_r21843";
+&dieIfNoExecutable($vmgrlistmodelPath_trunk_r21843);
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database
@@ -281,49 +308,28 @@ print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
   "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
 
 if(&daemonIsRunning("vmgrd")) {
+  print("\n");
+  print("STOPPING THE VMGR\n");
   &runCmdAs("root", "/etc/init.d/vmgrd stop");
 }
 
-my $tmpDropSchema = &runCmdAs("root", "mktemp");
-print("tmpDropSchema=$tmpDropSchema\n");
-chomp($tmpDropSchema);
-`echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpDropSchema`;
-`echo "CONNECT $dbConnectionString" >> $tmpDropSchema`;
-`echo >> $tmpDropSchema`;
-`cat $originalDropSchema >> $tmpDropSchema`;
-`echo >> $tmpDropSchema`;
-`echo "EXIT;" >> $tmpDropSchema`;
-
-print("Dropping database-schema\n");
-&runCmdAs("root", "'sqlplus' /NOLOG \@$tmpDropSchema");
-&runCmdAs("root", "rm $tmpDropSchema");
-
-my $tmpCreateSchema = &runCmdAs("root", "mktemp");
-chomp($tmpCreateSchema);
-print("tmpCreateSchema=$tmpCreateSchema\n");
-`echo "WHENEVER SQLERROR EXIT FAILURE;" >> $tmpCreateSchema`;
-`echo "CONNECT $dbConnectionString" >> $tmpCreateSchema`;
-`echo >> $tmpCreateSchema`;
-`cat $originalDbSchema >> $tmpCreateSchema`;
-`echo >> $tmpCreateSchema`;
-`echo "EXIT;" >> $tmpCreateSchema`;
+print("\n");
+print("DROPPING DATABASE SCHEMA\n");
+&dropVmgrDatabaseSchema($dbConnectionString, $originalDropSchema);
 
 print("\n");
-print("CREATING DATABASE-SCHEMA\n");
-&runCmdAs("root", "'sqlplus' /NOLOG \@$tmpCreateSchema");
-&runCmdAs("root", "rm $tmpCreateSchema");
+print("CREATING DATABASE SCHEMA\n");
+&createVmgrDatabaseSchema($dbConnectionString, $originalDbSchema);
 
 print("\n");
 print("STARTING THE VMGR\n");
 &runCmdAs("root", "/etc/init.d/vmgrd start");
-
 die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
-
-# Give the vmgrd a chance to get up and running
-sleep(1);
+sleep(1); # Give the vmgrd a chance to get up and running
 
 print("\n");
-print("ENTERING TAPE META-DATA INTO VMGR\n");
+print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
+
 &runCmdAs("root", "vmgrentermodel --mo 3592 --ml J --mc 250");
 &testRunCmdAsOutput("root", "vmgrlistmodel", "3592   J  250");
 
@@ -352,7 +358,7 @@ print("ENTERING TAPE META-DATA INTO VMGR\n");
 "stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
 
 # Enter the test tapes into the test vmgr
-my $expectedOutput = "";
+$expectedOutput = "";
 $i = 1;
 for $vid (sort keys %tapes) {
   &runCmdAs("root",
@@ -370,6 +376,8 @@ for $vid (sort keys %tapes) {
   $expectedOutput = $expectedOutput .
     "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
   &testRunCmdAsOutput("root", "vmgrlisttape", $expectedOutput);
+
+  # vmgrlistpool has uses a different protocol with the -P option than without
   &testRunCmdAsOutput("root", "vmgrlistpool -P stager_dev04",
 "stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
     );
@@ -385,8 +393,116 @@ for $vid (@vids) {
 
   if($i == 1) {
     &runCmdAs("root", "vmgrmodifytape -V $vid --st ''");
+    &testRunCmdAsOutput("root", "vmgrlisttape -V $vid",
+      "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ");
   } else {
     &runCmdAs("root", "vmgrmodifytape -V $vid --st DISABLED");
+    &testRunCmdAsOutput("root", "vmgrlisttape -V $vid",
+      "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 DISABLED");
+  }
+
+  $i = $i + 1;
+} 
+
+if(&daemonIsRunning("vmgrd")) {
+  print("\n");
+  print("STOPPING THE VMGR\n");
+  &runCmdAs("root", "/etc/init.d/vmgrd stop");
+}
+
+print("\n");
+print("DROPPING DATABASE SCHEMA\n");
+&dropVmgrDatabaseSchema($dbConnectionString, $originalDropSchema);
+
+print("\n");
+print("CREATING DATABASE SCHEMA\n");
+&createVmgrDatabaseSchema($dbConnectionString, $originalDbSchema);
+
+print("\n");
+print("STARTING THE VMGR\n");
+&runCmdAs("root", "/etc/init.d/vmgrd start");
+die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
+sleep(1); # Give the vmgrd a chance to get up and running
+
+print("\n");
+print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
+&runCmdAs("root", "$vmgrentermodelPath_trunk_r21843 --mo 3592 --ml J --mc 250");
+&testRunCmdAsOutput("root", "$vmgrlistmodelPath_trunk_r21843", "3592   J  250");
+
+&runCmdAs("root",
+  "vmgrenterdenmap_trunk_r21843 -d 1000GC --ml J --mo 3592 --nc 1T");
+&testRunCmdAsOutput("root", "vmgrlistdenmap_trunk_r21843",
+  "3592   J  1000GC      1.00Ti");
+
+&runCmdAs("root",
+  "vmgrenterlibrary_trunk_r21843 --name IBMLIB1B --capacity 6600");
+&testRunCmdAsOutput("root", "vmgrlistlibrary_trunk_r21843",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+&runCmdAs("root",
+  "vmgrenterlibrary_trunk_r21843 --name IBMLIB3B --capacity 6600");
+&testRunCmdAsOutput("root", "vmgrlistlibrary_trunk_r21843",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
+  "IBMLIB3B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+&runCmdAs("root",
+  "vmgrenterdgnmap_trunk_r21843 -g 359B1B --mo 3592 --library IBMLIB1B");
+&testRunCmdAsOutput("root", "vmgrlistdgnmap_trunk_r21843",
+  "359B1B 3592   IBMLIB1B");
+
+&runCmdAs("root",
+  "vmgrenterdgnmap_trunk_r21843 -g 359B3B --mo 3592 --library IBMLIB3B");
+&testRunCmdAsOutput("root", "vmgrlistdgnmap_trunk_r21843",
+  "359B1B 3592   IBMLIB1B\n" .
+  "359B3B 3592   IBMLIB3B");
+
+&runCmdAs("root",
+  "vmgrenterpool_trunk_r21843 --group st --name stager_dev04 --user stage");
+&testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843",
+"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+
+# Enter the test tapes into the test vmgr
+$expectedOutput = "";
+$i = 1;
+for $vid (sort keys %tapes) {
+  &runCmdAs("root",
+    "vmgrentertape_trunk_r21843 -V $vid" .
+    " --mo $tapes{$vid}{mo}" .
+    " --ml $tapes{$vid}{ml}" .
+    " --li $tapes{$vid}{li}" .
+    " -d   $tapes{$vid}{ d}" .
+    " -l   $tapes{$vid}{ l}" .
+    " --po $tapes{$vid}{po}");
+
+  if($expectedOutput ne "") {
+    $expectedOutput = $expectedOutput . "\n";
+  }
+  $expectedOutput = $expectedOutput .
+    "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
+  &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843", $expectedOutput);
+
+  # vmgrlistpool has uses a different protocol with the -P option than without
+  &testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843 -P stager_dev04",
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
+    );
+  &testRunCmdAsOutput("root", "vmgrlistpool_trunk_r21843",
+"stager_dev04    stage    st     CAPACITY    $i.00TiB FREE    $i.00TiB (100.0%)"
+    );
+
+  $i = $i + 1;
+}
+
+$i = 1;
+for $vid (@vids) {
+
+  if($i == 1) {
+    &runCmdAs("root", "vmgrmodifytape_trunk_r21843 -V $vid --st ''");
+    &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843 -V $vid",
+      "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ");
+  } else {
+    &runCmdAs("root", "vmgrmodifytape_trunk_r21843 -V $vid --st DISABLED");
+    &testRunCmdAsOutput("root", "vmgrlisttape_trunk_r21843 -V $vid",
+      "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 DISABLED");
   }
 
   $i = $i + 1;
