@@ -1,0 +1,216 @@
+1:Lifecycles notes
+2:================
+3:
+4:Creation and transistions of tapecopies, status by status (hopefully not missing any due to hardcoded state values).
+5:
+6:=> poke
+7:<= peek
+8:VV Validation
+9:
+11:(TG): Used in tape gateway context
+12:
+13:=============== T A P E C O P Y ====================================================================
+14:
+15:-   TAPECOPY_CREATED      CONSTANT PLS_INTEGER := 0;
+16:=> In orastager.sql: internalPutDoneFunc creates it, only references castorfile. (RT) (TG)
+18:=> In oracleTapeGateway.sql: tg_setFileRecalled, ditto. (TG)
+21:<= In oracleTape.sql: inputForMigrationPolicy find them (in bulk) and moves them to TAPECOPY_WAITPOLICY with immediate commit. (RT) (TG) (Mighunter)
+22:
+23:- TAPECOPY_TOBEMIGRATED CONSTANT PLS_INTEGER := 1;
+25:=> In oracleTape.sql: migHunterCleanUp moves all tapecopies from svcClass to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITPOLICY (RT) (TG) (Mighunter)
+26:<= In oracleTape.sql: inputForMigrationPolicy find them (in bulk) and moves them to TAPECOPY_WAITPOLICY with immediate commit. (RT) (TG) (Mighunter)
+28:=> In oracleTape.sql: attachTCGateway resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITINSTREAMS or TAPECOPY_WAITPOLICY in case of problem attaching to streams. Algo looks better. (TG) (Mighunter)
+29:=> In oracleTape.sql: resurrectCandidates resets status to TAPECOPY_TOBEMIGRATED from TAPECOPY_WAITPOLICY from a list. (RT) (TG) (Mighunter)
+30:=> In oracleTapeGateway.sql: tg_endTapeSession failed tape copies are resurrected to TAPECOPY_TOBEMIGRATED if found with no error ("lost"). (TG)
+31:=> In oracleTapeGateway.sql: tg_setMigRetryResult. Status set to TAPECOPY_TOBEMIGRATED (straightforward case) (TG)
+32:=> In oracleTapeGateway.sql: tg_deleteStream. Status reset to TAPECOPY_TOBEMIGRATED for copies orphaned by a stream deletion. (TG)
+35:
+36:- TAPECOPY_WAITINSTREAMS   CONSTANT PLS_INTEGER := 2;
+42:=> In oracleTape.sql: attachTCGateway sets status to TAPECOPY_WAITINSTREAMS in a similar fashion. (TG) (Mighunter)
+43:<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy selects a tapecopy for migration and returns the id. (TG)
+44:<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy similar behaviour. (TG)
+45:<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy similar behaviour. (TG)
+48:
+49:- TAPECOPY_SELECTED     CONSTANT PLS_INTEGER := 3;
+50:<= In oracleJob.sql: firstByteWrittenProc used as a check before overwriting a file. (select count (*)). (Stager) (TG) (RT)
+51:<= In oracleStager.sql: recreateCastorFile used as a check before recreating a castorfile. (select count (*)). (Stager) (TG) (RT)
+52:<= In oracleStager.sql: stageRelease used as a check before recreating a castorfile. (select count (*)). (Stager) (RT) (TG)
+53:VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtcpclientd to avoid breaking it) (TG)
+58:<= In oracleTapeGateway.sql: tg_endTapeSession failed tape copies are resurrected to TAPECOPY_TOBEMIGRATED if found with no error ("lost"). TAPECOPY_SELECTED is used as a marker at this point only. (TG)
+59:<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy (x2) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+60:<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy (x3) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+61:<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy (x1) used with TAPECOPY_STAGED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+62:=> In oracleTapeGateway.sql: tg_getFileToMigrate sets the status when a TC is selected and detached from streams. (TG)
+64:
+65:- TAPECOPY_TOBERECALLED CONSTANT PLS_INTEGER := 4;
+66:=> In OraStageSvc.cpp: castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall: Created (for recall). (Stager) (RT) (TG)
+67:=> In OracleTapeGateway: tg_setRecRetryResult: Status set to TAPECOPY_TOBERECALLED (from id list on input) (TG)
+68:
+69:Note: no peek as the recalls are segment driven (see segment lifecycle).
+70:
+71:- TAPECOPY_STAGED       CONSTANT PLS_INTEGER := 5;
+72:VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtcpclientd to avoid breaking it) (TG)
+73:<= In oracleTapeGateway.sql: tg_defaultMigrSelPolicy (x2) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+74:<= In oracleTapeGateway.sql: tg_drainDiskMigrSelPolicy (x3) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+75:<= In oracleTapeGateway.sql: tg_repackMigrSelPolicy (x1) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
+76:=> and <= In oracleTapeGateway.sql: TG_SetFileMigrated: After migration, tapecopy is marked as TAPECOPY_STAGED. When all TCs are STAGED for a given castorfile, they get destroyed. (TG)
+79:
+80:- TAPECOPY_FAILED       CONSTANT PLS_INTEGER := 6;
+81:VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtcpclientd to avoid breaking it) (TG)
+82:=> In oracleTape.sql: invalidateTapeCopies set the status of tapecopies (in bulk, from input list) when they are in TAPECOPY_WAITPOLICY. (Mighunter) (TG) (RT)
+83:<= In oracleTapeGateway.sql: tg_getFileToMigrate used to rule out tapecopies in conflict check (TG)
+84:=> In oracleTapeGateway.sql: tg_setMigRetryResult set the status of retry policy, in bulk (TG)
+87:
+88:- TAPECOPY_WAITPOLICY   CONSTANT PLS_INTEGER := 7;
+89:<= In oracleTape.sql: migHunterCleanUp clean up tapecopies, WAITPOLICY reset into TOBEMIGRATED (RT) (TG) (Mighunter)
+90:=> In oracleTape.sql: inputForMigrationPolicy bulk set to WAITPOLICY from tconst.TAPECOPY_CREATED, tconst.TAPECOPY_TOBEMIGRATED (batches of 10000) (RT) (TG) (Mighunter)
+92:<=> In oracleTape.sql: attachTCGateway similar to attachTCRtcp (TG) (Mighunter)
+93:
+94:- TAPECOPY_REC_RETRY    CONSTANT PLS_INTEGER := 8;
+95:=> In oracleTapeGateway: tg_endTapeSession. Set in case of error (from list of ids) (TG)
+96:=> In oracleTapeGateway: tg_failFileTransfer Set TC status in case of a recall (TG)
+97:<= In oracleTapeGateway: tg_getFailedRecalls: bulk selection of failed recall tapecopies. (batches of 1000) (TG)
+98:(<=) In oracleTapeGateway: tg_getFileToMigrate, explicitely left out. (TG)
+99:
+100:  TAPECOPY_MIG_RETRY    CONSTANT PLS_INTEGER := 9;
+101:VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtcpclientd to avoid breaking it) (TG)
+102:=> In oracleTapeGateway.sql: tg_endTapeSession. Set in case of error (from list of ids) (TG)
+103:=> In oracleTapeGateway.sql: tg_failFileTransfer Set TC status in case of a migration (TG)
+104:<= In oracleTapeGateway.sql: tg_getFailedMigrations: bulk selection of failed recall tapecopies. (batches of 1000) (TG)
+105:(<=) In oracleTapeGateway.sql: tg_getFileToMigrate, explicitely left out. (TG)
+106:
+107:====================== S T R E A M =====================================================================================
+108:
+109:- STREAM_PENDING    CONSTANT PLS_INTEGER := 0;
+112:=> In oracleTape.sql: startChosenStreams: status set, from list. (Mighunter) (RT) (TG)
+113:<= In oracleTapeGateway.sql: tg_getStreamsWithoutTapes bulk collects of id and other info (cursor) (TG)
+115:
+116:- STREAM_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
+118:=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: status set indirectly from tape request id. (TG)
+119:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: bull collection of streams in tconst.STREAM_WAITDRIVE, tconst.STREAM_WAITMOUNT, tconst.STREAM_RUNNING (TG)
+120:
+121:- STREAM_WAITMOUNT  CONSTANT PLS_INTEGER := 2;
+126:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs lists tapes (reads and write) by VDQM ping time and reports on the list. Just locks the streams. (TG)
+127:
+128:- STREAM_RUNNING    CONSTANT PLS_INTEGER := 3;
+132:<= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) return a count of the running streams as part of imput for policy.
+133:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs lists tapes (reads and write) by VDQM ping time and reports on the list. Just locks the streams. (TG)
+134:=> In oracleTapeGateway.sql: sets the status of stream to RUNNING (and tape to MOUNTED) (TG)
+135:<= In oraMigHunterSvc.cpp: s_tapePoolsForStreamPolicyStatementString (hardcoded SQL statement for castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy) looking for running streams of a given service class. (Mighunter) (TG) (RT)
+136: 
+137:- STREAM_WAITSPACE  CONSTANT PLS_INTEGER := 4; [ Transition TO this state seems to be missing in tapegateway ]
+138:<= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class
+139:<= In oracleTape.sql: streamsForStreamPolicy finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class  (Mighunter) (TG) (RT)
+141:  
+142:- STREAM_CREATED    CONSTANT PLS_INTEGER := 5;
+144:=> In oracleTape.sql: migHunterCleanUp: reset to STREAM_CREATED from tconst.STREAM_WAITPOLICY (RT) (TG) (Mighunter)
+145:<= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class
+146:<= In oracleTape.sql: streamsForStreamPolicy finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class  (Mighunter) (TG) (RT)
+147:=> In oracleTape.sql: createOrUpdateStream: Actual creation.  (Mighunter) (TG) (RT)
+148:
+149:- STREAM_STOPPED    CONSTANT PLS_INTEGER := 6;
+150:=> In oracleTape.sql: deleteOrStopStream stops the stream if deletion  fails. A bit brutal (exception driven). Called by resetstream via Cstager_ITapeSvc_resetStream (RT) and stopchosenstreams  (Mighunter) (TG) (RT)
+152:<= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class
+153:<= In oracleTape.sql: streamsForStreamPolicy finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class  (Mighunter) (TG) (RT)
+154:
+155:- STREAM_WAITPOLICY CONSTANT PLS_INTEGER := 7;
+157:<= In oracleTape.sql: migHunterCleanUp: reset to STREAM_CREATED from tconst.STREAM_WAITPOLICY (RT) (TG) (Mighunter)
+158:=> In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)): set selected stream to STREAM_WAITPOLICY
+159:=> In oracleTape.sql: streamsForStreamPolicy: finds stream IN (tconst.STREAM_WAITSPACE, tconst.STREAM_CREATED, tconst.STREAM_STOPPED) for a service class and sets them to STREAM_WAITPOLICY  (Mighunter) (TG) (RT)
+160:<= In oracleTape.sql: startChosenStreams: moves chosen streams (by policy) to tconst.STREAM_PENDING. (RT) (TG) (Mighunter)
+161:
+162:- STREAM_TO_BE_SENT_TO_VDQM CONSTANT PLS_INTEGER := 8;
+163:=> In oracleTapeGateway.sql: tg_attachTapesToStreams: status set to STREAM_TO_BE_SENT_TO_VDQM when tapes get attached to it. (TG)
+164:<= In oracleTapeGateway.sql: tg_getTapeWithoutDriveReq: find one stream in STREAM_TO_BE_SENT_TO_VDQM. (TG)
+165:
+166:====================== S E G M E N T =====================================================================================
+167:
+168:- SEGMENT_UNPROCESSED CONSTANT PLS_INTEGER := 0;
+172:<= In oracleTape.sql: inputForRecallPolicy (dead code, wrapper in rechancler, but not called): returns summaries of segments in SEGMENT_UNPROCESSED state for tapes. (dead code?)
+173:<= In oracleTape.sql: tapesAndMountsForRecallPolicy (used by rechandler, wrapper exists, is called) very similar to inputForRecallPolicy (RT) (TG)
+174:<=> In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!)) (RT) (TG) (To review for TG! Dangerous? Usefull?)
+175:<=> In oracleTapeGateway.sql: tg_endTapeSession: some "lost" segments resurected into UNPROCESSED. Then immediately peeked to give a kick to the tape. (TG)
+176:<= In oracleTapeGateway.sql: tg_getFileToRecall: finds a segment to recall from a given tape and sets it to SELECCTED (TG)
+177:=> In oracleTapeGateway.sql: tg_setRecRetryResult: resets the segments from a given tapecopy to UNPROCESSED from tapecopy list. (TG)
+180:
+181:- SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5; (Not covered in TapeGateway)
+184:  
+185:- SEGMENT_FAILED      CONSTANT PLS_INTEGER := 6;
+187:=> In oracleTapeGateway.sql: tg_endTapeSession: sets the segments to failed for all the tapecopies passed as a list to the procedure. (TG)
+188:=> In oracleTapeGateway.sql: tg_failFileTransfer: sets a segment as failed by tape/fseq id (so just one). (TG)
+193:
+194:- SEGMENT_SELECTED    CONSTANT PLS_INTEGER := 7;
+196:<= In oracleTape.sql: restartStuckRecalls: resets segments and tapes based on various criterias. (This is called continuously by a scheduled job (every 60 seconds!)) (RT) (TG) (To review for TG! Dangerous? Usefull?)
+197:<= In oracleTapeGateway.sql: tg_endTapeSession: resurrect lost segments from SELECTED to UNPROCESSED. ( fishy... ) (TG)
+198:=> In oracleTapeGateway.sql: tg_getFileToRecall: set to tconst.SEGMENT_SELECTED from tconst.SEGMENT_UNPROCESSED  for the selected tapecopy of a recall. (TG)
+200:
+201:- SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8; (Not covered in TapeGateway)
+206:
+207:====================== T A P E =====================================================================================
+208:
+209:- TAPE_UNUSED     CONSTANT PLS_INTEGER := 0;
+210:=> In castor/db/newora/OraCommonSvc.cpp: castor::db::ora::OraCommonSvc::selectTape: Creates a tape in TAPE_UNUSED if none exist in the DB for a given VID/side/mode. Called by createTapeCopySegmentsForRecall and Cstager_ITapeSvc_selectTape (RT) (TG)
+211:<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+212:=> In oracleTape.sql: deleteOrStopStream detach a tape from the stream, sets is to UNUSED  Called by resetstream via Cstager_ITapeSvc_resetStream (RT) and stopchosenstreams  (Mighunter) (TG) (RT)
+215:=> In oracleTape.sql: removeAllForRepack: updates a tape and related ones (holding copies of the same castorfile) to TAPE_UNUSED (dead code?)
+216:=> In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+217:<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+218:<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+219:=> In oracleTapeGateway.sql: tg_endTapeSession: sets the tape to TAPE_UNUSED (TG)
+220:<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+221:=> In oracleTapeGateway.sql: tg_deleteTapeRequest: sets the tape to TAPE_UNUSED (TG)
+225:
+226:- TAPE_PENDING    CONSTANT PLS_INTEGER := 1;
+229:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+230:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: Find tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with unprocessed segments (RT) (TG)
+231:=> In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY (Rechandler) (RT) (TG)
+232:=> In oracleTape.sql: resurrectSingleTapeForRecall: same behaviour in non-batched mode. Used in createTapeCopySegmentsForRecall (Stager) (RT) (TG)
+233:<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+234:=> In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+235:<= In oracleTapeGateway.sql: tg_getTapeWithoutDriveReq: finds a read tape in status TAPE_PENDING (TG)
+240:
+241:- TAPE_WAITDRIVE  CONSTANT PLS_INTEGER := 2;
+245:<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+246:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts READ tapes in states tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED) (called by rechandler) (RT) (TG)
+247:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+248:<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED  (RT) (TG) (To review for TG! Dangerous? Usefull?)
+249:=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: Move tape to TAPE_WAITDRIVE by tapeRequest Id in case of a read. (TG)
+250:=> In oracleTapeGateway.sql: tg_attachTapesToStreams: Unconditionnally moves a write tape for the VID to TAPE_WAITDRIVE, or creates one if needed. (TG)
+251:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+258:
+259:- TAPE_WAITMOUNT  CONSTANT PLS_INTEGER := 3;
+263:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+264:<= In oracleTape.sql: restartStuckRecalls: move tapes without segments to recall from tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT to tconst.TAPE_UNUSED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+265:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+269:
+270:- TAPE_MOUNTED    CONSTANT PLS_INTEGER := 4;
+274:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: counts read tapes in status tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED (RT) (TG)
+275:<= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs: finds all read tapes in mode tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED and returns them. (TG)
+276:=> In oracleTapeGateway.sql: tg_startTapeSession: Sets the tape as mounted from vdqm request id for both read and write. (TG)
+280:
+281:- TAPE_FINISHED   CONSTANT PLS_INTEGER := 5; (Seemingly dead state)
+282:<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+285:
+286:- TAPE_FAILED     CONSTANT PLS_INTEGER := 6;
+287:<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+289:<= In oracleTape.sql: restartStuckRecalls: resets segments to unprocessed if they live on a tape in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+290:<= In oracleTape.sql: restartStuckRecalls: moves tapes to tconst.TAPE_PENDING if they have segments pending and are in tconst.TAPE_UNUSED, tconst.TAPE_FAILED (RT) (TG) (To review for TG! Dangerous? Usefull?)
+291:<= In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+298:
+299:- TAPE_UNKNOWN    CONSTANT PLS_INTEGER := 7; (Seemingly dead state)
+300:<= In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+304:
+305:- TAPE_WAITPOLICY CONSTANT PLS_INTEGER := 8;
+306:=> In castor/db/ora/OraStagerSvc.cpp: createTapeCopySegmentsForRecall: moves found tape frop TAPE_UNUSED TAPE_FINISHED TAPE_FAILED TAPE_UNKNOWN to  TAPE_WAITPOLICY (and calls resurrectSingleTapeForRecall in case there is no policy). (Stager) (RT) (TG)
+308:<= In oracleTape.sql: inputForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+309:<= In oracleTape.sql: tapesAndMountsForRecallPolicy: find tapes in tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY with SEGMENT_UNPROCESSED (called by rechandler) (RT) (TG)
+310:<= In oracleTape.sql: resurrectTapes Sets a list of tapes to PENDING (creating a tapegateway request Id when needed) from WAITPOLICY (Rechandler) (RT) (TG)
+311:=> In oracleTapeGateway.sql: tg_endTapeSession: reset the tape to TAPE_WAITPOLICY if not all segments could be processed. (TG)
+312:=> In oracleTapeGateway.sql: tg_setRecRetryResult: sets tapes from tconst.TAPE_UNUSED, tconst.TAPE_FAILED to tconst.TAPE_WAITPOLICY (TG)
+313:<= In tape/rechandler/RecHandlerThread.cpp: castor::tape::rechandler::RecHandlerThread::run: Processed tapes from list, filtering in the ones in TAPE_WAITPOLICY. Successfull ones will go through oraSvc->resurrectTapes. (i.e. => PENDING) (Rechandler) (RT) (TG)
+314:
+315:- TAPE_ATTACHEDTOSTREAM CONSTANT PLS_INTEGER := 9; (No obvious way out of this state, but could be achieved by linked object (STREAM lifecycle, most likely)
+316:=> In oracleTapeGateway.sql: tg_attachDriveReqToTape: changes the state of the tape to TAPE_ATTACHEDTOSTREAM as the stream moves to tconst.STREAM_WAITDRIVE (TG)
+317:
+318:
+319:
