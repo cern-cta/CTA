@@ -13,6 +13,7 @@ EXECUTABLES= \
   vmgrlistmodel_trunk_r21843 \
   vmgrenterlibrary_trunk_r21843 \
   vmgrlistlibrary_trunk_r21843 \
+  vmgrmodifylibrary_trunk_r21843 \
   vmgrenterdgnmap_trunk_r21843 \
   vmgrlistdgnmap_trunk_r21843 \
   vmgrenterpool_trunk_r21843 \
@@ -184,6 +185,21 @@ vmgrlistlibrary_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
 
+vmgrmodifylibrary_trunk_r21843: \
+  vmgrmodifylibrary_trunk_r21843.o \
+  vmgr_modifylibrary_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
 vmgrenterdgnmap_trunk_r21843: \
   vmgrenterdgnmap_trunk_r21843.o \
   vmgr_enterdgnmap_trunk_r21843.o \
@@ -293,6 +309,9 @@ vmgrenterlibrary_trunk_r21843.o: vmgrenterlibrary_trunk_r21843.c
 vmgrlistlibrary_trunk_r21843.o: vmgrlistlibrary_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
+vmgrmodifylibrary_trunk_r21843.o: vmgrmodifylibrary_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
 vmgrenterdgnmap_trunk_r21843.o: vmgrenterdgnmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
@@ -345,6 +364,9 @@ vmgr_listlibrary_trunk_r21843.o: vmgr_listlibrary_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_querylibrary_trunk_r21843.o: vmgr_querylibrary_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_modifylibrary_trunk_r21843.o: vmgr_modifylibrary_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_enterpool_trunk_r21843.o: vmgr_enterpool_trunk_r21843.c

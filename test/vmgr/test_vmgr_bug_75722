@@ -167,36 +167,37 @@ my %tapes = (
     dgn => "359B3B"
   }
 );
-my $castor_src                         = "";
-my $originalDbSchema                   = "";
-my $originalDropSchema                 = "";
-my $vid                                = "";
-my $tapePool                           = "";
-my $tapeStatus                         = "";
-my $freeSpaceStr                       = "";
-my $status                             = 0;
-my $uid                                = POSIX::getuid;
-my $gid                                = POSIX::getgid;
-my $cmdResultStr                       = "";
-my $i                                  = 0;
-my $vmgrquerytape_path                 = "";
-my $vmgrquerytape_trunk_r21843_path    = "";
-my $vmgrenterdenmap_trunk_r21843_path  = "";
-my $vmgrlistdenmap_trunk_r21843_path   = "";
-my $vmgrentermodel_trunk_r21843_path   = "";
-my $vmgrlistmodel_trunk_r21843_path    = "";
-my $vmgrenterlibrary_trunk_r21843_path = "";
-my $vmgrlistlibrary_trunk_r21843_path  = "";
-my $vmgrenterdgnmap_trunk_r21843_path  = "";
-my $vmgrlistdgnmap_trunk_r21843_path   = "";
-my $vmgrenterpool_trunk_r21843_path    = "";
-my $vmgrlistpool_trunk_r21843_path     = "";
-my $vmgrmodifypool_trunk_r21843_path   = "";
-my $vmgrentertape_trunk_r21843_path    = "";
-my $vmgrlisttape_trunk_r21843_path     = "";
-my $vmgrmodifytape_trunk_r21843_path   = "";
-my @vids                               = sort keys %tapes;
-my $expectedOutput                     = "";
+my $castor_src                          = "";
+my $originalDbSchema                    = "";
+my $originalDropSchema                  = "";
+my $vid                                 = "";
+my $tapePool                            = "";
+my $tapeStatus                          = "";
+my $freeSpaceStr                        = "";
+my $status                              = 0;
+my $uid                                 = POSIX::getuid;
+my $gid                                 = POSIX::getgid;
+my $cmdResultStr                        = "";
+my $i                                   = 0;
+my $vmgrquerytape_path                  = "";
+my $vmgrquerytape_trunk_r21843_path     = "";
+my $vmgrenterdenmap_trunk_r21843_path   = "";
+my $vmgrlistdenmap_trunk_r21843_path    = "";
+my $vmgrentermodel_trunk_r21843_path    = "";
+my $vmgrlistmodel_trunk_r21843_path     = "";
+my $vmgrenterlibrary_trunk_r21843_path  = "";
+my $vmgrlistlibrary_trunk_r21843_path   = "";
+my $vmgrmodifylibrary_trunk_r21843_path = "";
+my $vmgrenterdgnmap_trunk_r21843_path   = "";
+my $vmgrlistdgnmap_trunk_r21843_path    = "";
+my $vmgrenterpool_trunk_r21843_path     = "";
+my $vmgrlistpool_trunk_r21843_path      = "";
+my $vmgrmodifypool_trunk_r21843_path    = "";
+my $vmgrentertape_trunk_r21843_path     = "";
+my $vmgrlisttape_trunk_r21843_path      = "";
+my $vmgrmodifytape_trunk_r21843_path    = "";
+my @vids                                = sort keys %tapes;
+my $expectedOutput                      = "";
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -237,6 +238,10 @@ $vmgrenterlibrary_trunk_r21843_path =
 $vmgrlistlibrary_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrlistlibrary_trunk_r21843";
 &dieIfNoExecutable($vmgrlistlibrary_trunk_r21843_path);
+
+$vmgrmodifylibrary_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrmodifylibrary_trunk_r21843";
+&dieIfNoExecutable($vmgrmodifylibrary_trunk_r21843_path);
 
 $vmgrenterdgnmap_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrenterdgnmap_trunk_r21843";
@@ -388,6 +393,24 @@ print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 &testRunCmdAsOutput("root", "vmgrlistlibrary --name IBMLIB1B",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
+&runCmdAs("root",
+  "vmgrmodifylibrary --name IBMLIB1B --capacity 1234 --status OFFLINE");
+&testRunCmdAsOutput("root", "vmgrlistlibrary",
+  "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root",
+  "vmgrlistlibrary --name IBMLIB1B",
+  "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
+
+&runCmdAs("root",
+  "vmgrmodifylibrary --name IBMLIB1B --capacity 6600 --status ONLINE");
+&testRunCmdAsOutput("root", "vmgrlistlibrary",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root",
+  "vmgrlistlibrary --name IBMLIB1B",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
 &runCmdAs("root", "vmgrenterlibrary --name IBMLIB3B --capacity 6600");
 &testRunCmdAsOutput("root", "vmgrlistlibrary",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
@@ -494,10 +517,28 @@ print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 &runCmdAs("root",
   "$vmgrenterdenmap_trunk_r21843_path -d 1000GC --ml J --mo 3592 --nc 1T");
 &testRunCmdAsOutput("root", "$vmgrlistdenmap_trunk_r21843_path",
-  "3592   J  1000GC      1.00Ti");
+  "3592   J  1000GC   1024.00Gi");
 
 &runCmdAs("root",
   "$vmgrenterlibrary_trunk_r21843_path --name IBMLIB1B --capacity 6600");
+&testRunCmdAsOutput("root", "$vmgrlistlibrary_trunk_r21843_path",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root",
+  "$vmgrlistlibrary_trunk_r21843_path --name IBMLIB1B",
+  "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+&runCmdAs("root",
+  "$vmgrmodifylibrary_trunk_r21843_path --name IBMLIB1B --capacity 1234 --status OFFLINE");
+&testRunCmdAsOutput("root", "$vmgrlistlibrary_trunk_r21843_path",
+  "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
+# vmgrlistlibrary uses a different protocol with the --name option than without
+&testRunCmdAsOutput("root",
+  "$vmgrlistlibrary_trunk_r21843_path --name IBMLIB1B",
+  "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
+
+&runCmdAs("root",
+  "$vmgrmodifylibrary_trunk_r21843_path --name IBMLIB1B --capacity 6600 --status ONLINE");
 &testRunCmdAsOutput("root", "$vmgrlistlibrary_trunk_r21843_path",
   "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 # vmgrlistlibrary uses a different protocol with the --name option than without
@@ -557,7 +598,7 @@ for $vid (sort keys %tapes) {
     $expectedOutput = $expectedOutput . "\n";
   }
   $expectedOutput = $expectedOutput .
-    "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}       1.00TiB 00000000 ";
+    "$vid   $vid $tapes{$vid}{li} $tapes{$vid}{ d}   $tapes{$vid}{ l} $tapes{$vid}{po}    1024.00GiB 00000000 ";
   &testRunCmdAsOutput("root", "$vmgrlisttape_trunk_r21843_path",
     $expectedOutput);
 
