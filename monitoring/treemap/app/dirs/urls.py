@@ -148,7 +148,7 @@ class UrlDefault(UrlReaderInterface):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
-                pass #the following lines are too expensive
+                pass #the following lines are too expensive because this method here gets called frequently
 #                try:
 #                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
 #                except Exception, e:

@@ -38,7 +38,7 @@ class SquaredTreemapCalculator(object):
         assert(calc_properties is None or isinstance(calc_properties, ViewTreeCalculationProps)), "calc_properties wrong"
         self.calc_properties = calc_properties
         
-    def calculate(self, optimizefortxt = False, sorted = True):
+    def calculate(self, optimizefortxt = False, sorted = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
         
         if self.basic_properties is None:
             self.basic_properties = BasicViewTreeProps()
@@ -78,16 +78,20 @@ class SquaredTreemapCalculator(object):
         height = height - 2*self.spacesize-self.headersize
         
         if self.spacesize > self.minspacesize: self.spacesize = self.spacesize - 1
-        self.calculateRecursion.__dict__['notextcount'] = 0
         
-        self.calculateRecursion(x, y, width ,height , viewtree, self.spacesize, self.minspacesize, self.headersize, optimizefortxt, sorted)
+        self.calculateRecursion.__dict__['notextcount'] = 0
+        self.calculateRecursion.__dict__["ratiocount"] = 0
+        self.calculateRecursion.__dict__["ratiosum"] = 0.0
+        
+        self.calculateRecursion(x, y, width ,height , viewtree, self.spacesize, self.minspacesize, self.headersize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
         
         print "notextcount: ", self.calculateRecursion.__dict__['notextcount']
+        if self.calculateRecursion.__dict__["ratiocount"] > 0: print "AVERAGE RATIO: ", self.calculateRecursion.__dict__["ratiosum"]/self.calculateRecursion.__dict__["ratiocount"]
         return viewtree
         
     #line: The items are ordered graphically in lines of equally tall squares
     #it is like a line of text but with rectangles instead of letters
-    def calculateRecursion(self, startx, starty, width ,height, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted):
+    def calculateRecursion(self, startx, starty, width ,height, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision):
 
         #calculate the area in square pixels
         pixels = float(height * width)
@@ -117,7 +121,11 @@ class SquaredTreemapCalculator(object):
         linesum = 0.0 #accumulate line length sum of the rectangles until you go over parents rectangle border
         areasum = 0.0 #sum of the rectangle areas for one line
         percentagesum = 0.0 #needed to calculate how many percent of the parent area are 100% of the line area
-        line_collection = [] #Nodes collected for current line
+        
+#        class L(list): pass #removing read only properties from built-in type list to extend dynamically with attributes 
+#        line_collection = L() #Nodes collected for current line
+#        line_collection.sum = 0 #sum of raw values
+        line_collection = []
         
         VERTICAL, HORIZONTAL = range(2)
         if width > height:
@@ -132,6 +140,8 @@ class SquaredTreemapCalculator(object):
         #sqwidthold to decect big differences between values 
         sqwidthold = 0;
         
+        avgratio = 0.0
+        
         for child in children:
             
             percentage = child.evaluate() # evaluation must be percentage of the parent area
@@ -142,21 +152,38 @@ class SquaredTreemapCalculator(object):
             area = percentage*pixels #needed area for that child in square pixels
             sqwidth = math.sqrt(area) #in best case you wish to have a square, so calculate the dimension of the ideal square
             
-            #if slicing of the stripe is vertical, don't add the overflow value to the next line_collection, but to the current one
-            #in that way there will be higher probability for width > height, which enables to display more horizontal text
-            #vertical text is considered less user friendly and is therefore not implemented
-            #includetrigger can be true only once per strip because of the "includeoverflowold = includeoverflow" below:
-            #in the iteration after includetrigger is true, both variables will be true and therefore includetrigger will be false
-            includeoverflow = (direction == VERTICAL) and ((linesum + sqwidth) > linelen)
-            includetrigger = (includeoverflowold == False) and (includeoverflow == True) and optimizefortxt
-            
-            #optimize by detecting big size differences if the incoming values are sorted
-            bigdifftrigger = sqwidthold/sqwidth > 1.5
-            if sorted == False: bigdifftrigger = False
-            
+            if squareoverflowdecision:
+                #if slicing of the stripe is vertical, don't add the overflow value to the next line_collection, but to the current one
+                #in that way there will be higher probability for width > height, which enables to display more horizontal text
+                #vertical text is considered less user friendly and is therefore not implemented
+                #includetrigger can be true only once per strip because of the "includeoverflowold = includeoverflow" below:
+                #in the iteration after includetrigger is true, both variables will be true and therefore includetrigger will be false
+                includeoverflow = (direction == VERTICAL) and ((linesum + sqwidth) > linelen)
+                includetrigger = (includeoverflowold == False) and (includeoverflow == True) and optimizefortxt
+                
+                #optimize by detecting big size differences if the incoming values are sorted
+                bigdifftrigger = sqwidthold/sqwidth > 1.5
+                if sorted == False: bigdifftrigger = False 
+                stopdecision = (((linesum + sqwidth) > linelen) and not includetrigger) or bigdifftrigger
+            else:
+                
+                avgratioahead = self.calcAvgRatio(line_collection, percentagesum, pixels, linelen, child)
+                
+                if avgratio >= 1.0 or avgratioahead >= 1.0:
+                    stopdecision = True
+                    if (math.fabs(1-avgratio)>math.fabs(1-avgratioahead)):
+                        stopdecision = False
+                    elif (avgratio <= 1.0 and avgratioahead >= 1.0) and optimizefortxt and direction == VERTICAL:
+                        stopdecision = False
+                        
+                else:
+                    stopdecision = False
+                
+                includeoverflow = False
+                
             #if collecting items for current line is completed, because the next addition would go over the border
             #add all items to TreeView except of the current overflow one
-            if (((linesum + sqwidth) > linelen) and not includetrigger) or bigdifftrigger:
+            if stopdecision:
                 #save the coordinates where the line starts
                 xbeginning = startx
                 ybeginning = starty
@@ -179,6 +206,9 @@ class SquaredTreemapCalculator(object):
                     else:
                         chheight = child_width
                         chwidth = line_height
+                           
+                    self.calculateRecursion.__dict__["ratiocount"] = self.calculateRecursion.__dict__["ratiocount"] + 1
+                    self.calculateRecursion.__dict__["ratiosum"] = self.calculateRecursion.__dict__["ratiosum"] + (chheight/chwidth)
                     
                     #store the calculated values
                     vn = ViewNode()
@@ -244,6 +274,7 @@ class SquaredTreemapCalculator(object):
                 percentagesum = percentage
                 line_collection = [] #clear the children list for new line
                 line_collection.append(child) #add the remaining child
+                avgratio = self.calcAvgRatio(line_collection, percentagesum, pixels, linelen)
                 
                 nblines = nblines + 1 #counts the number of lines 
                 
@@ -252,6 +283,7 @@ class SquaredTreemapCalculator(object):
                 areasum = areasum + area
                 percentagesum = percentagesum + percentage
                 line_collection.append(child)
+                avgratio = avgratioahead
                 
             #update includeoverflowold for the next iteration
             includeoverflowold = includeoverflow
@@ -328,9 +360,46 @@ class SquaredTreemapCalculator(object):
             hsize = totalviewnodes[i].getProperty('headersize')
             if hsize <= 0.0:
                 self.calculateRecursion.__dict__['notextcount'] = self.calculateRecursion.__dict__['notextcount'] + 1
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, headersize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
             else:
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + hsize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - hsize, viewtree, spacesize, minspacesize, hsize, optimizefortxt, sorted)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + hsize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - hsize, viewtree, spacesize, minspacesize, hsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
                 
             self.otree.traverseBack()
             viewtree.traverseBack()
+        
+    def calcAvgRatio(self, line_collection, thesum, pixels, linelen, child = None):
+        if(child == None):
+            avgsum = 0.0
+            h = thesum*pixels/linelen
+            if h != 0:
+                width = 0.0
+                for item in line_collection:
+                    width = (item.evaluate()*pixels)/h
+                    if width == 0.0: continue
+                    avgsum = avgsum + h/width
+            
+            if len(line_collection) > 0:
+                currentratio = avgsum/len(line_collection)
+            else:
+                currentratio = 0
+            return currentratio
+        else:
+            avgsum = 0.0
+            h = (thesum+child.evaluate())*pixels/linelen
+            if h != 0:
+                width = 0.0
+                for item in line_collection:
+                    width = (item.evaluate()*pixels)/h
+                    if width == 0.0: continue
+                    avgsum = avgsum + h/width
+                
+                width = (child.evaluate()*pixels)/h
+                if width != 0.0:
+                    avgsum = avgsum + h/width
+                
+            return avgsum/(len(line_collection)+1)
+
+    
+    
+    
+    
