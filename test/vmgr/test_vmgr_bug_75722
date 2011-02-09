@@ -196,6 +196,14 @@ my $vmgrmodifypool_trunk_r21843_path    = "";
 my $vmgrentertape_trunk_r21843_path     = "";
 my $vmgrlisttape_trunk_r21843_path      = "";
 my $vmgrmodifytape_trunk_r21843_path    = "";
+my $vmgrsettag_trunk_r21843_path        = "";
+my $vmgrgettag_trunk_r21843_path        = "";
+my $vmgrdeletedenmap_trunk_r21843_path  = "";
+my $vmgrdeletedgnmap_trunk_r21843_path  = "";
+my $vmgrdeletelibrary_trunk_r21843_path = "";
+my $vmgrdeletemodel_trunk_r21843_path   = "";
+my $vmgrdeletepool_trunk_r21843_path    = "";
+my $vmgrdeletetape_trunk_r21843_path    = "";
 my @vids                                = sort keys %tapes;
 my $expectedOutput                      = "";
 
@@ -274,6 +282,38 @@ $vmgrlisttape_trunk_r21843_path =
 $vmgrmodifytape_trunk_r21843_path =
   "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843";
 &dieIfNoExecutable($vmgrmodifytape_trunk_r21843_path);
+
+$vmgrsettag_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrsettag_trunk_r21843";
+&dieIfNoExecutable($vmgrsettag_trunk_r21843_path);
+
+$vmgrgettag_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrgettag_trunk_r21843";
+&dieIfNoExecutable($vmgrgettag_trunk_r21843_path);
+
+$vmgrdeletedenmap_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletedenmap_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletedenmap_trunk_r21843_path);
+
+$vmgrdeletedgnmap_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletedgnmap_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletedgnmap_trunk_r21843_path);
+
+$vmgrdeletelibrary_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletelibrary_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletelibrary_trunk_r21843_path);
+
+$vmgrdeletemodel_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletemodel_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletemodel_trunk_r21843_path);
+
+$vmgrdeletepool_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletepool_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletepool_trunk_r21843_path);
+
+$vmgrdeletetape_trunk_r21843_path =
+  "$castor_src/test/vmgr/vmgrdeletetape_trunk_r21843";
+&dieIfNoExecutable($vmgrdeletetape_trunk_r21843_path);
 
 # Determine the location of the database scripts to drop the vmgr and recreate
 # the vmgr database

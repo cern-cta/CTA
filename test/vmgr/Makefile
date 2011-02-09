@@ -18,7 +18,15 @@ EXECUTABLES= \
   vmgrlistdgnmap_trunk_r21843 \
   vmgrenterpool_trunk_r21843 \
   vmgrlistpool_trunk_r21843 \
-  vmgrmodifypool_trunk_r21843
+  vmgrmodifypool_trunk_r21843 \
+  vmgrsettag_trunk_r21843 \
+  vmgrgettag_trunk_r21843 \
+  vmgrdeletedenmap_trunk_r21843 \
+  vmgrdeletedgnmap_trunk_r21843 \
+  vmgrdeletelibrary_trunk_r21843 \
+  vmgrdeletemodel_trunk_r21843 \
+  vmgrdeletepool_trunk_r21843 \
+  vmgrdeletetape_trunk_r21843
 
 all: $(EXECUTABLES)
 
@@ -276,6 +284,135 @@ vmgrmodifypool_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
 
+vmgrsettag_trunk_r21843: \
+  vmgrsettag_trunk_r21843.o \
+  vmgr_settag_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrgettag_trunk_r21843: \
+  vmgrgettag_trunk_r21843.o \
+  vmgr_gettag_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletedenmap_trunk_r21843: \
+  vmgrdeletedenmap_trunk_r21843.o \
+  vmgr_deletedenmap_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletedgnmap_trunk_r21843: \
+  vmgrdeletedgnmap_trunk_r21843.o \
+  vmgr_deletedgnmap_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletelibrary_trunk_r21843: \
+  vmgrdeletelibrary_trunk_r21843.o \
+  vmgr_deletelibrary_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletemodel_trunk_r21843: \
+  vmgrdeletemodel_trunk_r21843.o \
+  vmgr_deletemodel_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletepool_trunk_r21843: \
+  vmgrdeletepool_trunk_r21843.o \
+  vmgr_deletepool_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
+vmgrdeletetape_trunk_r21843: \
+  vmgrdeletetape_trunk_r21843.o \
+  vmgr_deletetape_trunk_r21843.o \
+  vmgr_querytape_trunk_r21843.o \
+  Cns_listtape_trunk_r21843.o \
+  Cns_apiinit_trunk_r21843.o \
+  Cns_auth_trunk_r21843.o \
+  send2nsd_trunk_r21843.o \
+  marshall_trunk_r21843.o \
+  Cns_errmsg_trunk_r21843.o \
+  socket_timeout_trunk_r21843.o \
+  Csnprintf_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
@@ -325,6 +462,30 @@ vmgrlistpool_trunk_r21843.o: vmgrlistpool_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgrmodifypool_trunk_r21843.o: vmgrmodifypool_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrsettag_trunk_r21843.o: vmgrsettag_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrgettag_trunk_r21843.o: vmgrgettag_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletedenmap_trunk_r21843.o: vmgrdeletedenmap_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletedgnmap_trunk_r21843.o: vmgrdeletedgnmap_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletelibrary_trunk_r21843.o: vmgrdeletelibrary_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletemodel_trunk_r21843.o: vmgrdeletemodel_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletepool_trunk_r21843.o: vmgrdeletepool_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeletetape_trunk_r21843.o: vmgrdeletetape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c
@@ -381,10 +542,58 @@ vmgr_querypool_trunk_r21843.o: vmgr_querypool_trunk_r21843.c
 vmgr_modifypool_trunk_r21843.o: vmgr_modifypool_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
+vmgr_settag_trunk_r21843.o: vmgr_settag_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_gettag_trunk_r21843.o: vmgr_gettag_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletedenmap_trunk_r21843.o: vmgr_deletedenmap_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletedgnmap_trunk_r21843.o: vmgr_deletedgnmap_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletelibrary_trunk_r21843.o: vmgr_deletelibrary_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletemodel_trunk_r21843.o: vmgr_deletemodel_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletepool_trunk_r21843.o: vmgr_deletepool_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgr_deletetape_trunk_r21843.o: vmgr_deletetape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_listtape_trunk_r21843.o: Cns_listtape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_apiinit_trunk_r21843.o: Cns_apiinit_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_auth_trunk_r21843.o: Cns_auth_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+send2nsd_trunk_r21843.o: send2nsd_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
 vmgr_apiinit_trunk_r21843.o: vmgr_apiinit_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_apiinit.o: $(ROOT_DIR)/vmgr/vmgr_apiinit.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
+marshall_trunk_r21843.o: marshall_trunk_r21843.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
+Cns_errmsg_trunk_r21843.o: Cns_errmsg_trunk_r21843.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
+socket_timeout_trunk_r21843.o: socket_timeout_trunk_r21843.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
+Csnprintf_trunk_r21843.o: Csnprintf_trunk_r21843.c
 	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
 Cglobals.o: $(ROOT_DIR)/common/Cglobals.c

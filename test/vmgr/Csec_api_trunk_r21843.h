@@ -2,7 +2,7 @@
 #define _CSEC_API_H
 
 #include <sys/types.h>
-#include <Csec_common.h>
+#include <Csec_common_trunk_r21843.h>
 
 /* Init and cleanup */
 int  Csec_client_initContext (Csec_context_t *,
