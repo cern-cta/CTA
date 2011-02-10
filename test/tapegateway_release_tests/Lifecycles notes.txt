@@ -131,7 +131,7 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtc
 => In oracleTape.sql: repackMigrSelPolicy same. (RT)
 <= In oracleTape.sql: inputForStreamPolicy (dead code: not called (it seems)) return a count of the running streams as part of imput for policy.
 <= In oracleTapeGateway.sql: tg_getTapesWithDriveReqs lists tapes (reads and write) by VDQM ping time and reports on the list. Just locks the streams. (TG)
-=> In oracleTapeGateway.sql: sets the status of stream to RUNNING (and tape to MOUNTED) (TG)
+=> In oracleTapeGateway.sql: tg_startTapeSession: sets the status of stream to RUNNING (and tape to MOUNTED) (TG)
 <= In oraMigHunterSvc.cpp: s_tapePoolsForStreamPolicyStatementString (hardcoded SQL statement for castor::tape::mighunter::ora::OraMigHunterSvc::tapePoolsForStreamPolicy) looking for running streams of a given service class. (Mighunter) (TG) (RT)
  
 - STREAM_WAITSPACE  CONSTANT PLS_INTEGER := 4; [ Transition TO this state seems to be missing in tapegateway ]
