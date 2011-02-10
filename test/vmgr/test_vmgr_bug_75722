@@ -126,6 +126,16 @@ sub enterMetadata {
     "$clients->{vmgrlistmodel}{$version}", "3592   J  250");
 
   &runCmdAs("root",
+    "$clients->{vmgrdeletemodel}{$version} --mo 3592");
+  &testRunCmdAsOutput("root",
+    "$clients->{vmgrlistmodel}{$version}", "");
+
+  &runCmdAs("root",
+    "$clients->{vmgrentermodel}{$version} --mo 3592 --ml J --mc 250");
+  &testRunCmdAsOutput("root",
+    "$clients->{vmgrlistmodel}{$version}", "3592   J  250");
+
+  &runCmdAs("root",
     "$clients->{vmgrenterdenmap}{$version}" .
     " -d 1000GC --ml J --mo 3592 --nc 1T");
   if($version eq "newVer") {
