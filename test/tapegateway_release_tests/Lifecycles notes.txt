@@ -75,7 +75,7 @@ VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtc
 <= In oracleTapeGateway.sql: tg_repackMigrSelPolicy (x1) used with TAPECOPY_SELECTED as a marked for sibling with a decided destination (multi-tapecopies on different tapes) (TG)
 => and <= In oracleTapeGateway.sql: TG_SetFileMigrated: After migration, tapecopy is marked as TAPECOPY_STAGED. When all TCs are STAGED for a given castorfile, they get destroyed. (TG)
 (=>) In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcFileMigrated: a local copy is set to TAPECOPY_STAGED, but not pushed to DB with updaterep. So looks like a local poke, used to make a local search work. (RT)
-(<=) In rtcopy/rtcpcldCatalogueInterface.c: a tapecopy is expected to be in TAPECOPY_STAGED in a check loop. could be the previous one or a geniune one from the DB... (RT)
+(<=) In rtcopy/rtcpcldCatalogueInterface.c: rtcpcld_updcFileMigrated: a tapecopy is expected to be in TAPECOPY_STAGED in a check loop. could be the previous one or a geniune one from the DB... (RT)
 
 - TAPECOPY_FAILED       CONSTANT PLS_INTEGER := 6;
 VV In oracleTape.sql: TR_TapeCopy_VID used to check transitions. (Neutral in rtcpclientd to avoid breaking it) (TG)
