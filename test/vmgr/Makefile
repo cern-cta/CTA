@@ -26,7 +26,8 @@ EXECUTABLES= \
   vmgrdeletelibrary_trunk_r21843 \
   vmgrdeletemodel_trunk_r21843 \
   vmgrdeletepool_trunk_r21843 \
-  vmgrdeletetape_trunk_r21843
+  vmgrdeletetape_trunk_r21843 \
+  vmgrdeltag_trunk_r21843
 
 all: $(EXECUTABLES)
 
@@ -413,6 +414,21 @@ vmgrdeletetape_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
 
+vmgrdeltag_trunk_r21843: \
+  vmgrdeltag_trunk_r21843.o \
+  vmgr_deltag_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
@@ -486,6 +502,9 @@ vmgrdeletepool_trunk_r21843.o: vmgrdeletepool_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgrdeletetape_trunk_r21843.o: vmgrdeletetape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrdeltag_trunk_r21843.o: vmgrdeltag_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c

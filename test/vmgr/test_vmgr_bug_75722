@@ -298,7 +298,6 @@ sub enterMetadata {
   $vid = $vids[0];
   &runCmdAs("root",
     "$clients->{vmgrmodifytape}{$version} -V $vid --st ''");
-
   if($version eq "newVer") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
@@ -311,6 +310,22 @@ sub enterMetadata {
   &testRunCmdAsOutput("root",
     "$clients->{vmgrlisttape}{$version} -V $vid",
     $expectedOutput);
+
+  # Set the tag text of the second tape
+  $vid = $vids[1];
+  &runCmdAs("root",
+    "$clients->{vmgrsettag}{$version} --tag 'The tag text' -V $vid");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrgettag}{$version} -V $vid",
+    "The tag text");
+
+  # Delete the tag text of the second tape
+  $vid = $vids[1];
+  &runCmdAs("root",
+    "$clients->{vmgrdeltag}{$version} -V $vid");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrgettag}{$version} -V $vid",
+    "I10486: No such file or directory");
 }
 
 ###############################################################################
@@ -424,6 +439,9 @@ my %clients = (
   vmgrgettag => {
     oldVer => "$castor_src/test/vmgr/vmgrgettag_trunk_r21843",
     newVer => "/usr/bin/vmgrgettag"},
+  vmgrdeltag => {
+    oldVer => "$castor_src/test/vmgr/vmgrdeltag_trunk_r21843",
+    newVer => "/usr/bin/vmgrdeltag"},
   vmgrdeletedenmap => {
     oldVer => "$castor_src/test/vmgr/vmgrdeletedenmap_trunk_r21843",
     newVer => "/usr/bin/vmgrdeletedenmap"},
