@@ -26,7 +26,7 @@ getconfent, getconfent_r \- Get configuration entry
 .br
 .BI "			char ***" result ,
 .br
-.BI "			int **" count );
+.BI "			int *" count );
 .PP
 .BI "char * getconfent_fromfile ("
 .br
@@ -50,7 +50,7 @@ getconfent, getconfent_r \- Get configuration entry
 .br
 .BI "			char ***" result ,
 .br
-.BI "			int **" count );
+.BI "			int *" count );
 .PP
 
 .fi
