@@ -180,6 +180,28 @@ sub enterMetadata {
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
   &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrdeletelibrary}{$version} --name IBMLIB1B", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}", "");
+  # vmgrlistlibrary uses a different protocol with the --name option than
+  # without
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
+    "vmgrlistlibrary IBMLIB1B: No such library");
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterlibrary}{$version}" .
+    " --name IBMLIB1B --capacity 6600", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}",
+    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+  # vmgrlistlibrary uses a different protocol with the --name option than
+  # without
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
+    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+
+  &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifylibrary}{$version}" .
     " --name IBMLIB1B --capacity 1234 --status OFFLINE", "");
   &testRunCmdAsOutput("root",
