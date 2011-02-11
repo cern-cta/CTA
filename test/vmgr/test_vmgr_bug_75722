@@ -199,6 +199,15 @@ sub deleteTapes {
   }
 
   for $vid (@vids) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletetape}{$clientVer} -V $vid",
+      "vmgrdeletetape succesfully deleted tape:\n" .
+      "$vid $tapes->{$vid}{li} $tapes->{$vid}{ d} $tapes->{$vid}{ l}" .
+      " $tapes->{$vid}{mo} $tapes->{$vid}{ml} $tapes->{$vid}{po}");
+
+    shift(@expectedListTapeOutputArray);
+    $i = $i - 1;
+
     $expectedListTapeOutputString = "";
     for (@expectedListTapeOutputArray) {
       if($expectedListTapeOutputString ne "") {
@@ -211,11 +220,12 @@ sub deleteTapes {
       "2>&1 $clients->{vmgrlisttape}{$clientVer}",
       $expectedListTapeOutputString);
 
-    &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrdeletetape}{$clientVer} -V $vid",
-      "");
-    
-    if($i == 1 and $clientVer eq "oldVer") {
+    if($i == 0) {
+      &testRunCmdAsOutput("root",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "stager_dev04    stage    st     CAPACITY         0B" .
+        " FREE         0B (  0.0%)");
+    } elsif($i == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
@@ -226,22 +236,6 @@ sub deleteTapes {
         "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
         " FREE    $i.00TiB (100.0%)");
     }
-
-    # vmgrlistpool uses a different protocol with the -P option than without
-    if($i == 1 and $clientVer eq "oldVer") {
-      &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-        "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
-        " FREE 1024.00GiB (100.0%)");
-    } else {
-      &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-        "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
-        " FREE    $i.00TiB (100.0%)");
-    }
-
-    shift(@expectedListTapeOutputArray);
-    $i = $i - 1;
   }
 }
 
@@ -461,13 +455,16 @@ sub enterMetadata {
     "         0B FREE         0B (  0.0%)");
 
   print("\n");
-  print("ENTERING TAPES\n");
+  print("ENTERING TAPES FOR THE FIRST TIME\n");
   &enterTapes($clients, $tapes, $clientVer);
 
   print("\n");
   print("DELETING TAPES\n");
   &deleteTapes($clients, $tapes, $clientVer);
-exit(0);
+
+  print("\n");
+  print("ENTERING TAPES FOR THE SECOND TIME\n");
+  &enterTapes($clients, $tapes, $clientVer);
 
   # Disable all tapes
   for $vid (sort keys %$tapes) {
