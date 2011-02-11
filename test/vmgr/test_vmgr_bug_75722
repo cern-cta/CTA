@@ -272,6 +272,28 @@ sub enterMetadata {
     "         0B FREE         0B (  0.0%)");
 
   &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrdeletepool}{$version} --name stager_dev04", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version}", "");
+  # vmgrlistpool uses a different protocol with the -P option than without
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version} -P stager_dev04",
+    "vmgrlistpool stager_dev04: No such pool");
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterpool}{$version}" .
+    " --group st --name stager_dev04 --user stage", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version}",
+    "stager_dev04    stage    st     CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
+  # vmgrlistpool uses a different protocol with the -P option than without
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version} -P stager_dev04",
+    "stager_dev04    stage    st     CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
+
+  &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifypool}{$version}" .
     " --name stager_dev04 --user root --group root", "");
   &testRunCmdAsOutput("root",
