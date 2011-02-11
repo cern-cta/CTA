@@ -24,7 +24,7 @@ environment variable.
 .SH OPTIONS
 .TP
 .B -n,\ \-\-name=CKSUMNAME
-Name of the checksum to be stored in the name server.
+Name of the checksum to be stored in the name server. Note that currently, only adler32 is supported.
 .TP
 .B -k,\ \-\-checksum=CKSUM
 Value of the checksum to be stored in the name server.
