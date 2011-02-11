@@ -1,3 +1,6 @@
+#define CSEC_Mechlist KRB5Mech GSIMech ID
+CSEC_MECHLIST=CSEC_Mechlist
+
 ROOT_DIR=../..
 NEW_INCLUDE_DIR=$(ROOT_DIR)/h
 TEST_INCLUDE_DIR=$(ROOT_DIR)/test/vmgr
@@ -402,6 +405,15 @@ vmgrdeletetape_trunk_r21843: \
   Cns_errmsg_trunk_r21843.o \
   socket_timeout_trunk_r21843.o \
   Csnprintf_trunk_r21843.o \
+  Csec_api_trunk_r21843.o \
+  Cmutex_trunk_r21843.o \
+  Csec_common_trunk_r21843.o \
+  Csec_protocol_policy_trunk_r21843.o \
+  Csec_errmsg_trunk_r21843.o \
+  Csec_api_loader_trunk_r21843.o \
+  Cdomainname_trunk_r21843.o \
+  Csec_apiinit_trunk_r21843.o \
+  Cpwd_trunk_r21843.o \
   vmgr_apiinit_trunk_r21843.o \
   Cglobals_trunk_r21843.o \
   send2vmgr_trunk_r21843.o \
@@ -412,7 +424,7 @@ vmgrdeletetape_trunk_r21843: \
   serror_trunk_r21843.o \
   Cgetopt_trunk_r21843.o \
   u64subr_trunk_r21843.o
-	gcc -g -o $@ $^
+	gcc -ldl -g -o $@ $^
 
 vmgrdeltag_trunk_r21843: \
   vmgrdeltag_trunk_r21843.o \
@@ -595,6 +607,33 @@ Cns_auth_trunk_r21843.o: Cns_auth_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 send2nsd_trunk_r21843.o: send2nsd_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Csec_api_trunk_r21843.o: Csec_api_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cmutex_trunk_r21843.o: Cmutex_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Csec_common_trunk_r21843.o: Csec_common_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Csec_protocol_policy_trunk_r21843.o: Csec_protocol_policy_trunk_r21843.c
+	gcc -c -g -o $@ -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I $(TEST_INCLUDE_DIR) $^
+
+Csec_errmsg_trunk_r21843.o: Csec_errmsg_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Csec_api_loader_trunk_r21843.o: Csec_api_loader_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cdomainname_trunk_r21843.o: Cdomainname_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Csec_apiinit_trunk_r21843.o: Csec_apiinit_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cpwd_trunk_r21843.o: Cpwd_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_apiinit_trunk_r21843.o: vmgr_apiinit_trunk_r21843.c

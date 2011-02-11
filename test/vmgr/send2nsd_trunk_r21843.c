@@ -195,7 +195,6 @@ int send2nsdx(int *socketp,
         }
         (void) netclose (s);
       } else {
-/*
         if (securityOpt) {
           Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
           if (Csec_client_establishContext (&ctx, s) == 0)
@@ -227,16 +226,13 @@ int send2nsdx(int *socketp,
         } else {
           break;
         }
-*/
       }
       sleep (retryint);
       retrycnt++;
     }
 
-/*
     if (securityOpt)
       Csec_clearContext (&ctx);
-*/
     if (socketp)
       *socketp = s;
   }
