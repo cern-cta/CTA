@@ -240,6 +240,17 @@ sub enterMetadata {
     "2>&1 $clients->{vmgrlistdgnmap}{$version}", "359B1B 3592   IBMLIB1B");
 
   &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrdeletedgnmap}{$version} --li IBMLIB1B --mo 3592", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistdgnmap}{$version}", "");
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterdgnmap}{$version}" .
+    " -g 359B1B --mo 3592 --library IBMLIB1B", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistdgnmap}{$version}", "359B1B 3592   IBMLIB1B");
+
+  &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrenterdgnmap}{$version}" .
     " -g 359B3B --mo 3592 --library IBMLIB3B", "");
   &testRunCmdAsOutput("root",
