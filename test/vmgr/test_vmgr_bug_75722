@@ -120,149 +120,179 @@ sub enterMetadata {
   my $i              = 0;
   my $vid            = "";
 
-  &runCmdAs("root",
-    "$clients->{vmgrentermodel}{$version} --mo 3592 --ml J --mc 250");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistmodel}{$version}", "3592   J  250");
-
-  &runCmdAs("root",
-    "$clients->{vmgrdeletemodel}{$version} --mo 3592");
+    "2>&1 $clients->{vmgrentermodel}{$version} --mo 3592 --ml J --mc 250", "");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistmodel}{$version}", "");
+    "2>&1 $clients->{vmgrlistmodel}{$version}", "3592   J  250");
 
-  &runCmdAs("root",
-    "$clients->{vmgrentermodel}{$version} --mo 3592 --ml J --mc 250");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistmodel}{$version}", "3592   J  250");
+    "2>&1 $clients->{vmgrdeletemodel}{$version} --mo 3592", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistmodel}{$version}", "");
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterdenmap}{$version}" .
-    " -d 1000GC --ml J --mo 3592 --nc 1T");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrentermodel}{$version} --mo 3592 --ml J --mc 250", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistmodel}{$version}", "3592   J  250");
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterdenmap}{$version}" .
+    " -d 1000GC --ml J --mo 3592 --nc 1T", "");
   if($version eq "newVer") {
     &testRunCmdAsOutput("root",
-      "$clients->{vmgrlistdenmap}{$version}", "3592   J  1000GC      1.00Ti");
+      "2>&1 $clients->{vmgrlistdenmap}{$version}",
+      "3592   J  1000GC      1.00Ti");
   } else {
     &testRunCmdAsOutput("root",
-      "$clients->{vmgrlistdenmap}{$version}", "3592   J  1000GC   1024.00Gi");
+      "2>&1 $clients->{vmgrlistdenmap}{$version}",
+    "3592   J  1000GC   1024.00Gi");
   }
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterlibrary}{$version} --name IBMLIB1B --capacity 6600");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version}",
+    "2>&1 $clients->{vmgrdeletedenmap}{$version} -d 1000GC --mo 3592 --ml J",
+    "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistdenmap}{$version}", "");
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterdenmap}{$version}" .
+    " -d 1000GC --ml J --mo 3592 --nc 1T", "");
+  if($version eq "newVer") {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdenmap}{$version}",
+      "3592   J  1000GC      1.00Ti");
+  } else {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdenmap}{$version}",
+      "3592   J  1000GC   1024.00Gi");
+  }
+
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrenterlibrary}{$version}" .
+    " --name IBMLIB1B --capacity 6600", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}",
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
   # vmgrlistlibrary uses a different protocol with the --name option than
   # without
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
+    "2>&1 $clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
-  &runCmdAs("root",
-    "$clients->{vmgrmodifylibrary}{$version}" .
-    " --name IBMLIB1B --capacity 1234 --status OFFLINE");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version}",
+    "2>&1 $clients->{vmgrmodifylibrary}{$version}" .
+    " --name IBMLIB1B --capacity 1234 --status OFFLINE", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}",
     "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
   # vmgrlistlibrary uses a different protocol with the --name option than
   # without
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
+    "2>&1 $clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
     "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
 
-  &runCmdAs("root",
-    "$clients->{vmgrmodifylibrary}{$version}" .
-    " --name IBMLIB1B --capacity 6600 --status ONLINE");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version}",
+    "2>&1 $clients->{vmgrmodifylibrary}{$version}" .
+    " --name IBMLIB1B --capacity 6600 --status ONLINE", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}",
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
   # vmgrlistlibrary uses a different protocol with the --name option than
   # without
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
+    "2>&1 $clients->{vmgrlistlibrary}{$version} --name IBMLIB1B",
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterlibrary}{$version} --name IBMLIB3B --capacity 6600");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistlibrary}{$version}",
+    "2>&1 $clients->{vmgrenterlibrary}{$version}" .
+    " --name IBMLIB3B --capacity 6600", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistlibrary}{$version}",
     "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
     "IBMLIB3B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterdgnmap}{$version}" .
-    " -g 359B1B --mo 3592 --library IBMLIB1B");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistdgnmap}{$version}", "359B1B 3592   IBMLIB1B");
+    "2>&1 $clients->{vmgrenterdgnmap}{$version}" .
+    " -g 359B1B --mo 3592 --library IBMLIB1B", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistdgnmap}{$version}", "359B1B 3592   IBMLIB1B");
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterdgnmap}{$version}" .
-    " -g 359B3B --mo 3592 --library IBMLIB3B");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistdgnmap}{$version}",
+    "2>&1 $clients->{vmgrenterdgnmap}{$version}" .
+    " -g 359B3B --mo 3592 --library IBMLIB3B", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistdgnmap}{$version}",
     "359B1B 3592   IBMLIB1B\n" .
     "359B3B 3592   IBMLIB3B");
 
-  &runCmdAs("root",
-    "$clients->{vmgrenterpool}{$version}" .
-    " --group st --name stager_dev04 --user stage");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistpool}{$version}",
-"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+    "2>&1 $clients->{vmgrenterpool}{$version}" .
+    " --group st --name stager_dev04 --user stage", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version}",
+    "stager_dev04    stage    st     CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
   # vmgrlistpool uses a different protocol with the -P option than without
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistpool}{$version} -P stager_dev04",
-"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+    "2>&1 $clients->{vmgrlistpool}{$version} -P stager_dev04",
+    "stager_dev04    stage    st     CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
 
-  &runCmdAs("root",
-    "$clients->{vmgrmodifypool}{$version}" .
-    " --name stager_dev04 --user root --group root");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistpool}{$version}",
-"stager_dev04    -        -      CAPACITY         0B FREE         0B (  0.0%)");
+    "2>&1 $clients->{vmgrmodifypool}{$version}" .
+    " --name stager_dev04 --user root --group root", "");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$version}",
+    "stager_dev04    -        -      CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
 
-  &runCmdAs("root",
-    "$clients->{vmgrmodifypool}{$version}" .
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrmodifypool}{$version}" .
     " --name stager_dev04 --user stage --group st");
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlistpool}{$version}",
-"stager_dev04    stage    st     CAPACITY         0B FREE         0B (  0.0%)");
+    "2>&1 $clients->{vmgrlistpool}{$version}",
+    "stager_dev04    stage    st     CAPACITY" .
+    "         0B FREE         0B (  0.0%)");
 
   # Enter the test tapes into the test vmgr
   $expectedOutput = "";
   $i = 1;
   for $vid (sort keys %$tapes) {
-    &runCmdAs("root",
-      "$clients->{vmgrentertape}{$version}" .
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrentertape}{$version}" .
       " -V $vid" .
       " --mo $tapes->{$vid}{mo}" .
       " --ml $tapes->{$vid}{ml}" .
       " --li $tapes->{$vid}{li}" .
       " -d   $tapes->{$vid}{ d}" .
       " -l   $tapes->{$vid}{ l}" .
-      " --po $tapes->{$vid}{po}");
+      " --po $tapes->{$vid}{po}",
+      "");
 
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
     if($version eq "newVer") {
       $expectedOutput = $expectedOutput .
-        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}   $tapes->{$vid}{ l} $tapes->{$vid}{po}       1.00TiB 00000000 ";
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       1.00TiB 00000000 ";
     } else {
       $expectedOutput = $expectedOutput .
-        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
     }
 
     &testRunCmdAsOutput("root",
-      "$clients->{vmgrlisttape}{$version}", $expectedOutput);
+      "2>&1 $clients->{vmgrlisttape}{$version}", $expectedOutput);
 
     if($i == 1 and $version eq "oldVer") {
       &testRunCmdAsOutput("root",
-        "$clients->{vmgrlistpool}{$version}",
+        "2>&1 $clients->{vmgrlistpool}{$version}",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
-        "$clients->{vmgrlistpool}{$version}",
+        "2>&1 $clients->{vmgrlistpool}{$version}",
         "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
         " FREE    $i.00TiB (100.0%)");
     }
@@ -270,12 +300,12 @@ sub enterMetadata {
     # vmgrlistpool has uses a different protocol with the -P option than without
     if($i == 1 and $version eq "oldVer") {
       &testRunCmdAsOutput("root",
-        "$clients->{vmgrlistpool}{$version} -P stager_dev04",
+        "2>&1 $clients->{vmgrlistpool}{$version} -P stager_dev04",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
-        "$clients->{vmgrlistpool}{$version} -P stager_dev04",
+        "2>&1 $clients->{vmgrlistpool}{$version} -P stager_dev04",
         "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
         " FREE    $i.00TiB (100.0%)");
     }
@@ -285,8 +315,8 @@ sub enterMetadata {
 
   # Disable all tapes
   for $vid (sort keys %$tapes) {
-    &runCmdAs("root",
-      "$clients->{vmgrmodifytape}{$version} -V $vid --st DISABLED");
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrmodifytape}{$version} -V $vid --st DISABLED", "");
 
     if($version eq "newVer") {
       $expectedOutput =
@@ -300,14 +330,14 @@ sub enterMetadata {
         " 00000000 DISABLED";
     }
     &testRunCmdAsOutput("root",
-      "$clients->{vmgrlisttape}{$version} -V $vid",
+      "2>&1 $clients->{vmgrlisttape}{$version} -V $vid",
       $expectedOutput);
   }
 
   # Enable the first tape
   $vid = $vids[0];
-  &runCmdAs("root",
-    "$clients->{vmgrmodifytape}{$version} -V $vid --st ''");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrmodifytape}{$version} -V $vid --st ''", "");
   if($version eq "newVer") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
@@ -318,21 +348,21 @@ sub enterMetadata {
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
   }
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrlisttape}{$version} -V $vid",
+    "2>&1 $clients->{vmgrlisttape}{$version} -V $vid",
     $expectedOutput);
 
   # Set the tag text of the second tape
   $vid = $vids[1];
-  &runCmdAs("root",
-    "$clients->{vmgrsettag}{$version} --tag 'The tag text' -V $vid");
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrsettag}{$version} --tag 'The tag text' -V $vid", "");
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrgettag}{$version} -V $vid",
     "The tag text");
 
   # Delete the tag text of the second tape
   $vid = $vids[1];
-  &runCmdAs("root",
-    "$clients->{vmgrdeltag}{$version} -V $vid");
+  &testRunCmdAsOutput("root",
+    "$clients->{vmgrdeltag}{$version} -V $vid", "");
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrgettag}{$version} -V $vid",
     "I10486: No such file or directory");
