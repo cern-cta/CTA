@@ -29,6 +29,8 @@ from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
+from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
+import app.dirs.ModelSpecificFunctions.RequestsFunctions
 #!!!app.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
 #if it is in the beginning of the file you will get a KeyError in RequestsFunctions, globals()[modelname]
 
@@ -191,7 +193,10 @@ class Dirs(models.Model, ModelInterface):
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.fullname.__str__()]])
+        return self.fullname.__str__()
+    
+    def getClassName(self):
+        return self.__class__.__name__
     
     def getNaviName(self):
         return self.name  
@@ -270,7 +275,10 @@ class CnsFileMetadata(models.Model, ModelInterface):
     
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
-        return ''.join([bla for bla in [self.__class__.__name__, "_", str(self.parent_fileid.fullname), "/" ,self.name.__str__()]])
+        return ''.join([bla for bla in [str(self.parent_fileid.fullname), "/" ,self.name.__str__()]])
+    
+    def getClassName(self):
+        return self.__class__.__name__
     
     #an empty urlrest must be accepted and it should define the very root of the tree
     #in case there is no default root you have to pick a random valid object
@@ -366,25 +374,27 @@ class Requestsatlas(models.Model, ModelInterface):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.filename
+            return self.filename
         except:
             raise Exception("No attribute filename in current object")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getClassName(self):
+        return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsatlas')
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsatlas')
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -468,25 +478,27 @@ class Requestscms(models.Model, ModelInterface):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.filename
+            return self.filename
         except:
             raise Exception("No attribute filename in current object")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+        
+    def getClassName(self):
+        return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestscms')
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestscms')
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -571,25 +583,27 @@ class Requestsalice(models.Model, ModelInterface):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.filename
+            return self.filename
         except:
             raise Exception("No attribute filename in current object")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+        
+    def getClassName(self):
+        return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsalice')
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsalice')
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -674,25 +688,27 @@ class Requestslhcb(models.Model, ModelInterface):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.filename
+            return self.filename
         except:
             raise Exception("No attribute filename in current object")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getClassName(self):
+        return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestslhcb')
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestslhcb')
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -778,25 +794,27 @@ class Requestspublic(models.Model, ModelInterface):
     #defines how to find an object, no matter in what process or physical address
     def getIdReplacement(self):
         try:
-            self.filename
+            return self.filename
         except:
             raise Exception("No attribute filename")
-        return ''.join([bla for bla in [self.__class__.__name__, "_", self.filename]])
+    
+    def getClassName(self):
+        return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
     def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestspublic')
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestspublic')
     
     def getChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.getChildren()
     
     def countChildren(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         return tree.countChildren()
     
     def getParent(self):
-        tree = traverseToRequestInTree(self.filename, self.__class__.__name__)
+        tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
         try:
             tree.traverseBack()
         except:
@@ -836,11 +854,6 @@ Requestspublic.treeprops = {'start': None, 'stop': None}
 #parameters defining how to generate the next tree
 Requestspublic.start = datetime.datetime.now()-datetime.timedelta(minutes=120) #time relative to now
 Requestspublic.stop = datetime.datetime.now() #time relative to now
-
-#this import has to be here because of circular dependency with app.dirs.ModelSpecificFunctions.RequestsFunctions
-#Warning!!! If you use eclipse the menu Source->Organize Imports will move these entries to the top of the file, which is wrong!
-from app.dirs.ModelSpecificFunctions.RequestsFunctions import generateRequestsTree, traverseToRequestInTree, findRequestObjectByIdReplacementSuffix
-from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
     
 #class Ydirs(models.Model):
 #    fileid = models.DecimalField(unique=True, max_digits=127, decimal_places=0)

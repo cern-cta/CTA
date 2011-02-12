@@ -28,7 +28,7 @@ the full CASTOR pathname.
 .LP
 When changing the class of a directory, the effective user ID of the process
 must match the owner of the directory or
-the caller must have ADMIN privileges in the Cupv database.
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 When changing the class of a file, ADMIN privileges are required.
 .SH RETURN VALUE
@@ -40,7 +40,7 @@ is set appropriately.
 .TP 1.3i
 .B EPERM
 The effective user ID does not match the owner of the directory and 
-the caller does not have ADMIN privileges in the Cupv database.
+the caller does not have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 The named directory does not exist or is a null pathname.

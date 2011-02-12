@@ -58,6 +58,10 @@ class SquaredTreemapDrawer(object):
         self.ctx.set_font_options(fo)
         
     def drawTreemap(self, filename):
+        self.printText.__dict__['brokentextcount'] = 0
+        self.printText.__dict__['brokentextletters'] = 0
+        self.printText.__dict__['fulltextcount'] = 0
+        self.printText.__dict__['fulltextletters'] = 0
 
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
@@ -68,6 +72,11 @@ class SquaredTreemapDrawer(object):
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
+        
+        print "brokentextcount ", self.printText.__dict__['brokentextcount']
+        print "fulltextcount ", self.printText.__dict__['fulltextcount']
+        print "brokentextletters ", self.printText.__dict__['brokentextletters']
+        print "fulltextletters ", self.printText.__dict__['fulltextletters']
         
     def drawRecursion(self):
         children = self.vtree.getChildren()
@@ -237,6 +246,15 @@ class SquaredTreemapDrawer(object):
         self.ctx.show_text(text)
         self.ctx.scale(1.0/scalex, 1.0/scaley)
 #        self.surface.write_to_png ("test1233.png") # Output to PNG
+        if len(text) == 0:
+            print "another notext"
+        
+        if text [-2:] == '..':
+            self.printText.__dict__['brokentextcount'] = self.printText.__dict__['brokentextcount'] + 1
+            self.printText.__dict__['brokentextletters'] = self.printText.__dict__['brokentextletters'] + len(text) - 2
+        else:
+            self.printText.__dict__['fulltextcount'] = self.printText.__dict__['fulltextcount'] + 1
+            self.printText.__dict__['fulltextletters'] = self.printText.__dict__['fulltextletters'] + len(text)
 
         
     def rotateFuzzyValue(self, value, step):

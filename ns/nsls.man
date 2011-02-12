@@ -49,7 +49,7 @@ list file segments migrated to tape.
 use last access time instead of last modification.
 .TP
 .BR --checksum
-prints the checksum (and its type) for each file/segment.
+prints the checksum (and its type) for each file/segment. Note that the only supported type for the moment is adler32.
 .TP
 .B --class
 print the file class in front of each entry.

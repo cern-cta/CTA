@@ -61,7 +61,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
-Build-Depends: curl-devel, e2fsprogs-devel
+Build-Depends: curl-devel, python
+Build-Depends-Conditional:
+%if 0%{?fedora} >= 12 || 0%{?rhel} >=6
+BuildRequires: libuuid-devel
+%else
+BuildRequires: e2fsprogs-devel
+%endif
 XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages, castor-tape-client
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)

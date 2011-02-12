@@ -185,6 +185,21 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
         echo "BuildRequires: ${buildrequires}" >> CASTOR.spec
     fi
     #
+    ## Get Conditional BuildRequires
+    #
+    buildrequirescond=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      $this =~ /Build-Depends-Conditional:(.+%endif)/sg;
+      $this = $1;
+      print "$this\n";' $package`
+    if [ -n "${buildrequirescond}" ]; then
+        echo "${buildrequirescond}" >> CASTOR.spec
+    fi
+    #
     ## Get Provides
     #
     provides=`cat debian/control | perl -e '
@@ -250,7 +265,9 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
       $this =~ s/\n/ \- /sg;
       $this =~ s/  */ /sg;
       print "$this\n";' $package >> CASTOR.spec
+    #
     ## Get file list
+    #
     echo "%files -n $actualPackage" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
     ## deal with manpages
