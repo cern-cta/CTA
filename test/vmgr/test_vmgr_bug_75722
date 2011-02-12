@@ -112,10 +112,87 @@ sub dieIfNoExecutable {
     unless -x $executablePath;
 }
 
-sub enterTapes {
-  my ($clients, $tapes, $clientVer) = (shift, shift, shift);
+sub enterDenMaps {
+  my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
 
-  my $i              = 1;
+  my $density        = "";
+  my $expectedOutput = "";
+
+  for $density (sort keys %$denMaps) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrenterdenmap}{$clientVer}" .
+      " -d $density --ml $denMaps->{$density}{ml}" .
+      " --mo $denMaps->{$density}{mo} --nc $denMaps->{$density}{tb}T",
+      "");
+
+    if($expectedOutput ne "") {
+      $expectedOutput = $expectedOutput . "\n";
+    }
+
+    if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+      $expectedOutput = $expectedOutput .
+        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "  $density   1024.00Gi";
+    } else {
+      $expectedOutput = $expectedOutput .
+        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "  $density      $denMaps->{$density}{tb}.00Ti";
+    }
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
+      $expectedOutput);
+  }
+}
+
+sub deleteDenMaps {
+  my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
+
+  my @expectedOutputArray;
+  my $expectedOutputString = "";
+  my @densities            = sort keys %$denMaps;
+  my $density              = "";
+
+  for $density (@densities) {
+    if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+      push(@expectedOutputArray,
+        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "  $density   1024.00Gi");
+    } else {
+      push(@expectedOutputArray,
+        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "  $density      $denMaps->{$density}{tb}.00Ti");
+    }
+  }
+
+  for $density (@densities) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletedenmap}{$clientVer} -d $density" .
+      " --mo $denMaps->{$density}{mo} --ml $denMaps->{$density}{ml}",
+      "");
+
+    shift(@expectedOutputArray);
+
+    $expectedOutputString = "";
+    for (@expectedOutputArray) {
+      if($expectedOutputString ne "") {
+        $expectedOutputString = $expectedOutputString . "\n";
+      }
+      $expectedOutputString = $expectedOutputString . $_;
+    }
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
+      $expectedOutputString);
+  }
+}
+
+sub enterTapes {
+  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
+
+  my $tapeDensity    = "";
+  my $tapeTb         = 0;
+  my $totalTb        = 0;
   my $vid            = "";
   my $expectedOutput = "";
 
@@ -131,23 +208,33 @@ sub enterTapes {
       " --po $tapes->{$vid}{po}",
       "");
 
+    $tapeDensity = $tapes->{$vid}{d};
+    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $totalTb     = $totalTb + $tapeTb;
+
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
-    if($clientVer eq "newVer") {
-      $expectedOutput = $expectedOutput .
-        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
-        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       1.00TiB 00000000 ";
-    } else {
+    if($tapeTb == 1 and $clientVer eq "oldVer") {
       $expectedOutput = $expectedOutput .
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
+    } elsif ($tapeTb > 2 and $clientVer eq "oldVer") {
+      $expectedOutput = $expectedOutput .
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       2.00TiB 00000000 ";
+    } else {
+      $expectedOutput = $expectedOutput .
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       $tapeTb.00TiB 00000000 ";
     }
 
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlisttape}{$clientVer}", $expectedOutput);
 
-    if($i == 1 and $clientVer eq "oldVer") {
+    if($totalTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
@@ -155,12 +242,12 @@ sub enterTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
-        " FREE    $i.00TiB (100.0%)");
+        "stager_dev04    stage    st     CAPACITY    $totalTb.00TiB" .
+        " FREE    $totalTb.00TiB (100.0%)");
     }
 
     # vmgrlistpool uses a different protocol with the -P option than without
-    if($i == 1 and $clientVer eq "oldVer") {
+    if($totalTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
@@ -168,36 +255,48 @@ sub enterTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-        "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
-        " FREE    $i.00TiB (100.0%)");
+        "stager_dev04    stage    st     CAPACITY    $totalTb.00TiB" .
+        " FREE    $totalTb.00TiB (100.0%)");
     }
-
-    $i = $i + 1;
   }
 }
 
 sub deleteTapes {
-  my ($clients, $tapes, $clientVer) = (shift, shift, shift);
+  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
 
-  my @vids    = sort keys %$tapes;
-  my $nbTapes = @vids;
-  my $i       = $nbTapes;
-  my $vid     = "";
+  my @vids        = sort keys %$tapes;
+  my $nbTapes     = @vids;
+  my $vid         = "";
+  my $totalTb     = 0;
+  my $tapeDensity = "";
+  my $tapeTb      = 0;
+  my $remainingTb = 0;
   my @expectedListTapeOutputArray;
   my $expectedListTapeOutputString = "";
 
   for $vid (@vids) {
-    if($clientVer eq "newVer") {
-      push(@expectedListTapeOutputArray, 
-        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
-        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       1.00TiB 00000000 ");
-    } else {
+    $tapeDensity = $tapes->{$vid}{d};
+    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $totalTb     = $totalTb + $tapeTb;
+
+    if($tapeTb == 1 and $clientVer eq "oldVer") {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ");
+    } elsif($tapeTb == 5 and $clientVer eq "oldVer") {
+      push(@expectedListTapeOutputArray, 
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       2.00TiB 00000000 ");
+    } else {
+      push(@expectedListTapeOutputArray, 
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       $tapeTb.00TiB 00000000 ");
     }
   }
 
+  $remainingTb = $totalTb;
   for $vid (@vids) {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrdeletetape}{$clientVer} -V $vid",
@@ -206,7 +305,9 @@ sub deleteTapes {
       " $tapes->{$vid}{mo} $tapes->{$vid}{ml} $tapes->{$vid}{po}");
 
     shift(@expectedListTapeOutputArray);
-    $i = $i - 1;
+    $tapeDensity = $tapes->{$vid}{d};
+    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $remainingTb = $remainingTb - $tapeTb;
 
     $expectedListTapeOutputString = "";
     for (@expectedListTapeOutputArray) {
@@ -220,12 +321,12 @@ sub deleteTapes {
       "2>&1 $clients->{vmgrlisttape}{$clientVer}",
       $expectedListTapeOutputString);
 
-    if($i == 0) {
+    if($remainingTb == 0) {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
         "stager_dev04    stage    st     CAPACITY         0B" .
         " FREE         0B (  0.0%)");
-    } elsif($i == 1 and $clientVer eq "oldVer") {
+    } elsif($remainingTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
         "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
@@ -233,14 +334,14 @@ sub deleteTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "stager_dev04    stage    st     CAPACITY    $i.00TiB" .
-        " FREE    $i.00TiB (100.0%)");
+        "stager_dev04    stage    st     CAPACITY    $remainingTb.00TiB" .
+        " FREE    $remainingTb.00TiB (100.0%)");
     }
   }
 }
 
 sub enterMetadata {
-  my ($clients, $tapes, $clientVer) = (shift, shift, shift);
+  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
 
   my @vids           = sort keys %$tapes;
   my $expectedOutput = "";
@@ -268,37 +369,17 @@ sub enterMetadata {
     "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
     "3592   J  250");
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterdenmap}{$clientVer}" .
-    " -d 1000GC --ml J --mo 3592 --nc 1T", "");
-  if($clientVer eq "newVer") {
-    &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
-      "3592   J  1000GC      1.00Ti");
-  } else {
-    &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
-    "3592   J  1000GC   1024.00Gi");
-  }
+  print("\n");
+  print("ENTERING DENMAPS FOR THE FIRST TIME\n");
+  &enterDenMaps($clients, $denMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrdeletedenmap}{$clientVer} -d 1000GC --mo 3592 --ml J",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistdenmap}{$clientVer}", "");
+  print("\n");
+  print("DELETING DENMAPS\n");
+  &deleteDenMaps($clients, $denMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterdenmap}{$clientVer}" .
-    " -d 1000GC --ml J --mo 3592 --nc 1T", "");
-  if($clientVer eq "newVer") {
-    &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
-      "3592   J  1000GC      1.00Ti");
-  } else {
-    &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
-      "3592   J  1000GC   1024.00Gi");
-  }
+  print("\n");
+  print("ENTERING DENMAPS FOR THE SECOND TIME\n");
+  &enterDenMaps($clients, $denMaps, $clientVer);
 
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrenterlibrary}{$clientVer}" .
@@ -456,15 +537,15 @@ sub enterMetadata {
 
   print("\n");
   print("ENTERING TAPES FOR THE FIRST TIME\n");
-  &enterTapes($clients, $tapes, $clientVer);
+  &enterTapes($clients, $denMaps, $tapes, $clientVer);
 
   print("\n");
   print("DELETING TAPES\n");
-  &deleteTapes($clients, $tapes, $clientVer);
+  &deleteTapes($clients, $denMaps, $tapes, $clientVer);
 
   print("\n");
   print("ENTERING TAPES FOR THE SECOND TIME\n");
-  &enterTapes($clients, $tapes, $clientVer);
+  &enterTapes($clients, $denMaps, $tapes, $clientVer);
 
   # Disable all tapes
   for $vid (sort keys %$tapes) {
@@ -529,6 +610,18 @@ my $testVmgrHost    = "lxcastordev04";
 my $nonRootUserName = "murrayc3";
 my $productionHost  = "lxadm";
 my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
+my %denMaps = (
+  "1000GC" => {
+    ml => "J",
+    mo => "3592",
+    tb => 1
+  },
+  "5000GC" => {
+    ml => "J",
+    mo => "3592",
+    tb => 5
+  }
+);
 my %tapes = (
   I02023 => {
     mo  => "3592",
@@ -552,7 +645,7 @@ my %tapes = (
     mo  => "3592",
     ml  => "J",
     li  => "IBMLIB3B",
-    d   => "1000GC",
+    d   => "5000GC",
     l   => "aul",
     po  => "stager_dev04",
     dgn => "359B3B"
@@ -787,7 +880,7 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 
-&enterMetadata(\%clients, \%tapes, "oldVer");
+&enterMetadata(\%clients, \%denMaps, \%tapes, "oldVer");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
@@ -812,7 +905,7 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
-&enterMetadata(\%clients, \%tapes, "newVer");
+&enterMetadata(\%clients, \%denMaps, \%tapes, "newVer");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");
@@ -845,7 +938,8 @@ print("CHECKING OLD VMGR_LISTDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 &testRunCmdAsOutput("root",
   "2>&1 $clients{vmgrlistdenmap}{oldVer}",
   "3592   J  10GC       10.00Gi\n" .
-  "3592   J  1000GC   1024.00Gi");
+  "3592   J  1000GC   1024.00Gi\n" .
+  "3592   J  5000GC      5.00Ti");
 
 # Abort if the old vmgr_listtape function does not work with the new vmgr
 print("\n");
