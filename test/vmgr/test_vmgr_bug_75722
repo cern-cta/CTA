@@ -1,7 +1,9 @@
 #!/bin/perl -w
 
 use strict;
+
 use DBI;
+use File::stat;
 use POSIX;
 
 sub runCmdAs {
@@ -249,12 +251,12 @@ sub enterTapes {
     # vmgrlistpool uses a different protocol with the -P option than without
     if($totalTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY    $totalTb.00TiB" .
         " FREE    $totalTb.00TiB (100.0%)");
     }
@@ -324,17 +326,17 @@ sub deleteTapes {
     if($remainingTb == 0) {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "stager_dev04    stage    st     CAPACITY         0B" .
+        "$tapes->{$vid}{po}    stage    st     CAPACITY         0B" .
         " FREE         0B (  0.0%)");
     } elsif($remainingTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "stager_dev04    stage    st     CAPACITY 1024.00GiB" .
+        "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "stager_dev04    stage    st     CAPACITY    $remainingTb.00TiB" .
+        "$tapes->{$vid}{po}    stage    st     CAPACITY    $remainingTb.00TiB" .
         " FREE    $remainingTb.00TiB (100.0%)");
     }
   }
@@ -623,6 +625,33 @@ sub enterMetadata {
     "I10486: No such file or directory");
 }
 
+sub embedMsgAsCStrIntoFile {
+  my ($msg, $fileName) = (shift, shift);
+
+  my $fileInfo;
+  my $nbCharsInMsg  = length($msg);
+  my $fileSizeBytes = 0;
+  my $fileHandle;
+
+  $fileInfo = stat($fileName) or die "Failed to stat $fileName: $!";
+  $fileSizeBytes = $fileInfo->size;
+
+  print("\"$msg\" contains $nbCharsInMsg characters\n");
+
+  die "ABORT: Failed to embed message as a C-string in file:" .
+    " C-string would be larger than file:".
+    " msg=\"$msg\", fileName=\"$fileName\", nbCharsInMsg=$nbCharsInMsg," .
+    " fileSizeBytes=$fileSizeBytes\n"
+    if($fileSizeBytes < ($nbCharsInMsg + 1));
+
+  open($fileHandle, "+< $fileName") or die "Failed top open $fileName: $!";
+
+  print $fileHandle $msg;
+  print $fileHandle "\0";
+
+  close($fileHandle) or die "Failed to close $fileName: $!";
+}
+
 ###############################################################################
 # MAIN PROGRAM STARTS HERE
 ###############################################################################
@@ -631,6 +660,16 @@ my $testVmgrHost    = "lxcastordev04";
 my $nonRootUserName = "murrayc3";
 my $productionHost  = "lxadm";
 my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
+my %models = (
+  "3592" => {
+    ml => "J",
+    mc => "250"
+  },
+  T10000 => {
+    ml => "T",
+    mc => "200"
+  }
+);
 my %denMaps = (
   "1000GC" => {
     ml => "J",
@@ -641,6 +680,20 @@ my %denMaps = (
     ml => "J",
     mo => "3592",
     tb => 5
+  }
+);
+my %dgnMaps = (
+  "359B1B" => {
+    mo      => "3592",
+    library => "IBMLIB1B"
+  },
+  "359B3B" => {
+    mo      => "3592",
+    library => "IBMLIB3B"
+  },
+  "T10C6B" => {
+    mo      => "T10000",
+    library => "SL8600_C"
   }
 );
 my %tapes = (
@@ -825,6 +878,11 @@ die "Abort: Failed to tnsping database with TNS=$dbTNS\n"
 die("ABORT: Database user $dbUser is not vmgr_dev04\n")
   if($dbUser ne "vmgr_dev04");
 
+print("\n");
+print("DELETING TEST DIRECTORY IN DEVELOPMENT NAME-SERVER: $nsDir\n");
+$status = system("runuser $nonRootUserName -c \"nsrm -rf $nsDir\"");
+die "nsrm -rf $nsDir failed: status=$status" unless $status == 0;
+
 # Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
 # the production vmgr
 print("\n");
@@ -953,47 +1011,54 @@ print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
   "vmgr_querytape_byte_u64 succeeded:" .
   " vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
 
+# Abort if tapes contain files referenced by the development name-server
+for $vid (@vids) {
+  $cmdResultStr = &runCmdAs("root", "2>&1 nslisttape -V $vid");
+  chomp($cmdResultStr);
+  die "ABORT: Found entries in development name-server for $vid"
+    unless $cmdResultStr eq "$vid: No such volume or no files found";
+}
+
 exit(0);
 
-# Create a seed file for migrations
-my $tmpSeedFilename = `runuser murrayc3 -c mktemp`;
+print("\n");
+print("CREATING SEED FILE FOR MIGRATIONS\n");
+my $tmpSeedFilename = &runCmdAs($nonRootUserName, "mktemp");
 chomp($tmpSeedFilename);
 print("tmpSeedFilename=$tmpSeedFilename\n");
 print("dd if=/dev/urandom of=$tmpSeedFilename bs=1M count=100\n");
-$status = system("runuser murrayc3 -c \"dd if=/dev/urandom of=$tmpSeedFilename bs=10M count=10\"");
+$status = system("runuser $nonRootUserName -c \"dd if=/dev/urandom of=$tmpSeedFilename bs=10M count=10\"");
 die "dd failed: status=$status" unless $status == 0;
 
-print("nsrm -rf $nsDir\n");
-$status = system("runuser murrayc3 -c \"nsrm -rf $nsDir\"");
-die "nsrm -rf $nsDir failed: status=$status" unless $status == 0;
-print("nsmkdir $nsDir\n");
-$status = system("runuser murrayc3 -c \"nsmkdir $nsDir\"");
+print("\n");
+print("CREATING TEST DIRECTORY IN DEVELOPMENT NAME-SERVER: $nsDir\n");
+$status = system("runuser $nonRootUserName -c \"nsmkdir $nsDir\"");
 die "nsmkdir -rf $nsDir failed: status=$status" unless $status == 0;
 
 my $nsFilename       = "";
 my $tmpLocalFilename = "";
-for($i=1; $i<=1; $i++) {
+for($i=1; $i<=1024; $i++) {
   # Create the name-server filename
   $nsFilename = "$nsDir/test_100M_$i";
   print("nsFilename=$nsFilename\n");
 
   # Create a local temporary file from the temporary seed-file
-  $tmpLocalFilename = `runuser murrayc3 -c mktemp`;
+  $tmpLocalFilename = &runCmdAs($nonRootUserName, "mktemp");
   chomp($tmpLocalFilename);
   print("tmpLocalFilename=$tmpLocalFilename\n");
-  `runuser murrayc3 -c \"echo $nsFilename >> $tmpLocalFilename\"`;
-  `runuser murrayc3 -c \"cat $tmpSeedFilename >> $tmpLocalFilename\"`;
+  `runuser $nonRootUserName -c \"cat $tmpSeedFilename >> $tmpLocalFilename\"`;
+  &embedMsgAsCStrIntoFile($nsFilename, $tmpLocalFilename);
 
   # Copy the temporary local file to castor
   print("rfcp $tmpLocalFilename $nsFilename\n");
-  $status =
-    system("runuser murrayc3 -c \"rfcp $tmpLocalFilename $nsFilename\"");
+  $status = system("runuser $nonRootUserName" .
+    " -c \"rfcp $tmpLocalFilename $nsFilename\"");
   die "rfcp failed: status=$status" unless $status == 0;
 
   # Delete the temporary local file
-  `runuser murrayc3 -c \"rm $tmpLocalFilename\"`;
+  `runuser $nonRootUserName -c \"rm $tmpLocalFilename\"`;
 }
 
 # Delete the seed file
 print("rm $tmpSeedFilename\n");
-`runuser murrayc3 -c \"rm $tmpSeedFilename\"`;
+`runuser $nonRootUserName -c \"rm $tmpSeedFilename\"`;
