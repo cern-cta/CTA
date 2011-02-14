@@ -1,4 +1,3 @@
-#define CSEC_Mechlist KRB5Mech GSIMech ID
 CSEC_MECHLIST=CSEC_Mechlist
 
 ROOT_DIR=../..
@@ -30,7 +29,8 @@ EXECUTABLES= \
   vmgrdeletemodel_trunk_r21843 \
   vmgrdeletepool_trunk_r21843 \
   vmgrdeletetape_trunk_r21843 \
-  vmgrdeltag_trunk_r21843
+  vmgrdeltag_trunk_r21843 \
+  reclaim_trunk_r21843
 
 all: $(EXECUTABLES)
 
@@ -441,6 +441,42 @@ vmgrdeltag_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
 
+reclaim_trunk_r21843: \
+  reclaim_trunk_r21843.o \
+  vmgr_reclaim_trunk_r21843.o \
+  vmgr_querytape_trunk_r21843.o \
+  Cns_getpath_trunk_r21843.o \
+  Cns_listtape_trunk_r21843.o \
+  Cns_unlink_trunk_r21843.o \
+  Cns_apiinit_trunk_r21843.o \
+  Cns_auth_trunk_r21843.o \
+  Cns_selectsrvr_trunk_r21843.o \
+  send2nsd_trunk_r21843.o \
+  marshall_trunk_r21843.o \
+  Cns_errmsg_trunk_r21843.o \
+  socket_timeout_trunk_r21843.o \
+  Csnprintf_trunk_r21843.o \
+  Csec_api_trunk_r21843.o \
+  Cmutex_trunk_r21843.o \
+  Csec_common_trunk_r21843.o \
+  Csec_protocol_policy_trunk_r21843.o \
+  Csec_errmsg_trunk_r21843.o \
+  Csec_api_loader_trunk_r21843.o \
+  Cdomainname_trunk_r21843.o \
+  Csec_apiinit_trunk_r21843.o \
+  Cpwd_trunk_r21843.o \
+  vmgr_apiinit_trunk_r21843.o \
+  Cglobals_trunk_r21843.o \
+  send2vmgr_trunk_r21843.o \
+  getconfent_trunk_r21843.o \
+  Cnetdb_trunk_r21843.o \
+  vmgr_errmsg_trunk_r21843.o \
+  socket_trunk_r21843.o \
+  serror_trunk_r21843.o \
+  Cgetopt_trunk_r21843.o \
+  u64subr_trunk_r21843.o
+	gcc -ldl -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
@@ -597,7 +633,16 @@ vmgr_deletepool_trunk_r21843.o: vmgr_deletepool_trunk_r21843.c
 vmgr_deletetape_trunk_r21843.o: vmgr_deletetape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
+vmgr_reclaim_trunk_r21843.o: vmgr_reclaim_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
 Cns_listtape_trunk_r21843.o: Cns_listtape_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_getpath_trunk_r21843.o: Cns_getpath_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_unlink_trunk_r21843.o: Cns_unlink_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 Cns_apiinit_trunk_r21843.o: Cns_apiinit_trunk_r21843.c
@@ -605,6 +650,9 @@ Cns_apiinit_trunk_r21843.o: Cns_apiinit_trunk_r21843.c
 
 Cns_auth_trunk_r21843.o: Cns_auth_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+Cns_selectsrvr_trunk_r21843.o: Cns_selectsrvr_trunk_r21843.c
+	gcc -c -g -o $@ -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -I $(TEST_INCLUDE_DIR) $^
 
 send2nsd_trunk_r21843.o: send2nsd_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
