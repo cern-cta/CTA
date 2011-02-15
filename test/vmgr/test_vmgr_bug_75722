@@ -114,10 +114,119 @@ sub dieIfNoExecutable {
     unless -x $executablePath;
 }
 
+sub rPadColumn {
+  my ($columnLen, $value) = (shift, shift);
+
+  my $valueLen   = 0;
+  my $paddingLen = 0;
+  my $padding    = "";
+  my $i          = 0;
+
+  $valueLen = length($value);
+  if($columnLen > $valueLen) {
+    $paddingLen = $columnLen - $valueLen;
+  } else {
+    $paddingLen = 0;
+  }
+
+  for($i=1; $i<=$paddingLen; $i++) {
+    $padding = $padding . " ";
+  }
+
+  return "$value$padding";
+}
+
+sub lPadColumn {
+  my ($columnLen, $value) = (shift, shift);
+
+  my $valueLen   = 0;
+  my $paddingLen = 0;
+  my $padding    = "";
+  my $i          = 0;
+
+  $valueLen = length($value);
+  if($columnLen > $valueLen) {
+    $paddingLen = $columnLen - $valueLen;
+  } else {
+    $paddingLen = 0;
+  }
+
+  for($i=1; $i<=$paddingLen; $i++) {
+    $padding = $padding . " ";
+  }
+
+  return "$padding$value";
+}
+
+sub enterModels {
+  my ($clients, $models, $clientVer) = (shift, shift, shift);
+
+  my $model          = "";
+  my $paddedModel    = "";
+  my $expectedOutput = "";
+  my $i              = 0;
+
+  for $model (sort keys %$models) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrentermodel}{$clientVer}" .
+      " --mo $model --ml $models->{$model}{ml} --mc $models->{$model}{mc}",
+      "");
+
+    if($expectedOutput ne "") {
+      $expectedOutput = $expectedOutput . "\n";
+    }
+
+    $paddedModel = &rPadColumn(6, $model);
+    $expectedOutput = $expectedOutput .
+      "$paddedModel $models->{$model}{ml}  $models->{$model}{mc}";
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
+      $expectedOutput);
+  }
+}
+
+sub deleteModels {
+  my ($clients, $models, $clientVer) = (shift, shift, shift);
+
+  my $model                = "";
+  my $paddedModel          = "";
+  my @expectedOutputArray;
+  my $expectedOutputString = "";
+  my $i                    = 0;
+
+  for $model (sort keys %$models) {
+    $paddedModel = &rPadColumn(6, $model);
+    push(@expectedOutputArray,
+      "$paddedModel $models->{$model}{ml}  $models->{$model}{mc}");
+  }
+
+  for $model (sort keys %$models) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletemodel}{$clientVer} --mo $model",
+      "");
+ 
+    shift(@expectedOutputArray);
+
+    $expectedOutputString = "";
+    for (@expectedOutputArray) {
+      if($expectedOutputString ne "") {
+        $expectedOutputString = $expectedOutputString . "\n";
+      }
+      $expectedOutputString = $expectedOutputString . $_;
+    }
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
+      $expectedOutputString);
+  }
+}
+
 sub enterDenMaps {
   my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
 
   my $density        = "";
+  my $paddedModel    = "";
   my $expectedOutput = "";
 
   for $density (sort keys %$denMaps) {
@@ -131,13 +240,13 @@ sub enterDenMaps {
       $expectedOutput = $expectedOutput . "\n";
     }
 
+    $paddedModel = &rPadColumn(6, $denMaps->{$density}{mo});
     if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
       $expectedOutput = $expectedOutput .
-        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
-        "  $density   1024.00Gi";
+        "$paddedModel $denMaps->{$density}{ml}  $density   1024.00Gi";
     } else {
       $expectedOutput = $expectedOutput .
-        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "$paddedModel $denMaps->{$density}{ml}" .
         "  $density      $denMaps->{$density}{tb}.00Ti";
     }
 
@@ -151,18 +260,20 @@ sub deleteDenMaps {
   my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
 
   my @expectedOutputArray;
+  my $paddedModel          = "";
   my $expectedOutputString = "";
   my @densities            = sort keys %$denMaps;
   my $density              = "";
 
   for $density (@densities) {
+    $paddedModel = &rPadColumn(6, $denMaps->{$density}{mo});
     if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
       push(@expectedOutputArray,
-        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "$paddedModel $denMaps->{$density}{ml}" .
         "  $density   1024.00Gi");
     } else {
       push(@expectedOutputArray,
-        "$denMaps->{$density}{mo}   $denMaps->{$density}{ml}" .
+        "$paddedModel $denMaps->{$density}{ml}" .
         "  $density      $denMaps->{$density}{tb}.00Ti");
     }
   }
@@ -189,12 +300,170 @@ sub deleteDenMaps {
   }
 }
 
+sub enterDgnMaps {
+  my ($clients, $dgnMaps, $clientVer) = (shift, shift, shift);
+
+  my $dgn            = "";
+  my $paddedModel    = "";
+  my $expectedOutput = "";
+
+  for $dgn (sort keys %$dgnMaps) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrenterdgnmap}{$clientVer}" .
+      " -g $dgn --mo $dgnMaps->{$dgn}{mo} --library $dgnMaps->{$dgn}{library}",
+      "");
+
+    if($expectedOutput ne "") {
+      $expectedOutput = $expectedOutput . "\n";
+    }
+
+    $paddedModel = &rPadColumn(6, $dgnMaps->{$dgn}{mo});
+    $expectedOutput = $expectedOutput .
+      "$dgn $paddedModel $dgnMaps->{$dgn}{library}";
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
+      $expectedOutput);
+  }
+}
+
+sub deleteDgnMaps {
+  my ($clients, $dgnMaps, $clientVer) = (shift, shift, shift);
+
+  my @expectedOutputArray;
+  my $paddedModel          = "";
+  my $expectedOutputString = "";
+  my $dgn                  = "";
+
+  for $dgn (sort keys %$dgnMaps) {
+    $paddedModel = &rPadColumn(6, $dgnMaps->{$dgn}{mo});
+    push(@expectedOutputArray,
+      "$dgn $paddedModel $dgnMaps->{$dgn}{library}");
+  }
+
+  for $dgn (sort keys %$dgnMaps) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletedgnmap}{$clientVer}" .
+      " --li $dgnMaps->{$dgn}{library} --mo $dgnMaps->{$dgn}{mo}",
+      "");
+
+    shift(@expectedOutputArray);
+
+    $expectedOutputString = "";
+    for (@expectedOutputArray) {
+      if($expectedOutputString ne "") {
+        $expectedOutputString = $expectedOutputString . "\n";
+      }
+      $expectedOutputString = $expectedOutputString . $_;
+    }
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
+      $expectedOutputString);
+  }
+}
+
+sub enterLibraries {
+  my ($clients, $libraries, $clientVer) = (shift, shift, shift);
+
+  my $library                   = "";
+  my $expectedSingleEntryOutput = "";
+  my $expectedListOutput        = "";
+
+  for $library (sort keys %$libraries) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrenterlibrary}{$clientVer}" .
+      " --name $library --capacity $libraries->{$library}{capacity}", "");
+
+    $expectedSingleEntryOutput =
+      "$library CAPACITY $libraries->{$library}{capacity}" .
+      " FREE 6600 (100.0%) ONLINE";
+
+    if($expectedListOutput ne "") {
+      $expectedListOutput = $expectedListOutput . "\n";
+    }
+
+    $expectedListOutput = $expectedListOutput . $expectedSingleEntryOutput;
+
+    # Need to test vmgrlistlibrary with and without the --name option as a
+    # different part of the client/vmgrd protocol is used in the two cases
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name $library",
+      $expectedSingleEntryOutput);
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
+      $expectedListOutput);
+  }
+}
+
+sub deleteLibraries {
+  my ($clients, $libraries, $clientVer) = (shift, shift, shift);
+
+  my @expectedOutputArray;
+  my $expectedOutputString = "";
+  my $library              = "";
+
+  for $library (sort keys %$libraries) {
+    push(@expectedOutputArray,
+      "$library CAPACITY $libraries->{$library}{capacity}" .
+      " FREE 6600 (100.0%) ONLINE");
+  }
+
+  for $library (sort keys %$libraries) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletelibrary}{$clientVer} --name $library", "");
+
+    shift(@expectedOutputArray);
+
+    $expectedOutputString = "";
+    for (@expectedOutputArray) {
+      if($expectedOutputString ne "") {
+        $expectedOutputString = $expectedOutputString . "\n";
+      }
+      $expectedOutputString = $expectedOutputString . $_;
+    }
+
+    # Need to test vmgrlistlibrary with and without the --name option as a
+    # different part of the client/vmgrd protocol is used in the two cases
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
+      $expectedOutputString);
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name $library",
+      "vmgrlistlibrary $library: No such library");
+  }
+}
+
+sub setStatusOfLibraries {
+  my ($clients, $libraries, $status, $clientVer) =
+     (shift   ,      shift,   shift,      shift);
+
+  my $library = "";
+
+  for $library (sort keys %$libraries) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrmodifylibrary}{$clientVer}" .
+      " --name $library --capacity $libraries->{$library}{capacity}" .
+      " --status $status", "");
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name $library",
+      "$library CAPACITY $libraries->{$library}{capacity} FREE" .
+      " $libraries->{$library}{capacity} (100.0%) $status");
+  }
+}
+
 sub enterTapes {
   my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
 
   my $tapeDensity    = "";
   my $tapeTb         = 0;
   my $totalTb        = 0;
+  my $paddedTotal    = "";
   my $vid            = "";
   my $expectedOutput = "";
 
@@ -213,6 +482,7 @@ sub enterTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMaps->{$tapeDensity}{tb};
     $totalTb     = $totalTb + $tapeTb;
+    $paddedTotal = &lPadColumn(10, "$totalTb.00TiB");
 
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
@@ -244,8 +514,8 @@ sub enterTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "$tapes->{$vid}{po}    stage    st     CAPACITY    $totalTb.00TiB" .
-        " FREE    $totalTb.00TiB (100.0%)");
+        "$tapes->{$vid}{po}    stage    st     CAPACITY $paddedTotal" .
+        " FREE $paddedTotal (100.0%)");
     }
 
     # vmgrlistpool uses a different protocol with the -P option than without
@@ -257,8 +527,8 @@ sub enterTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $tapes->{$vid}{po}",
-        "$tapes->{$vid}{po}    stage    st     CAPACITY    $totalTb.00TiB" .
-        " FREE    $totalTb.00TiB (100.0%)");
+        "$tapes->{$vid}{po}    stage    st     CAPACITY $paddedTotal" .
+        " FREE $paddedTotal (100.0%)");
     }
   }
 }
@@ -270,6 +540,7 @@ sub deleteTapes {
   my $nbTapes     = @vids;
   my $vid         = "";
   my $totalTb     = 0;
+  my $paddedTotal = "";
   my $tapeDensity = "";
   my $tapeTb      = 0;
   my $remainingTb = 0;
@@ -285,7 +556,7 @@ sub deleteTapes {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ");
-    } elsif($tapeTb == 5 and $clientVer eq "oldVer") {
+    } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -310,6 +581,7 @@ sub deleteTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMaps->{$tapeDensity}{tb};
     $remainingTb = $remainingTb - $tapeTb;
+    $paddedTotal = &lPadColumn(10, "$remainingTb.00TiB");
 
     $expectedListTapeOutputString = "";
     for (@expectedListTapeOutputArray) {
@@ -322,6 +594,10 @@ sub deleteTapes {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlisttape}{$clientVer}",
       $expectedListTapeOutputString);
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlisttape}{$clientVer} -V $vid",
+      "vmgrlisttape: No such tape");
 
     if($remainingTb == 0) {
       &testRunCmdAsOutput("root",
@@ -336,8 +612,8 @@ sub deleteTapes {
     } else {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-        "$tapes->{$vid}{po}    stage    st     CAPACITY    $remainingTb.00TiB" .
-        " FREE    $remainingTb.00TiB (100.0%)");
+        "$tapes->{$vid}{po}    stage    st     CAPACITY $paddedTotal" .
+        " FREE $paddedTotal (100.0%)");
     }
   }
 }
@@ -380,34 +656,61 @@ sub disableTapes {
   }
 }
 
+sub modelAndLibrary2Dgn {
+  my ($dgnMaps, $model, $library) = (shift, shift, shift);
+
+  my $dgn = "";
+
+  for $dgn (keys %$dgnMaps) {
+    if($dgnMaps->{$dgn}{mo} eq $model and
+      $dgnMaps->{$dgn}{library} eq $library) {
+      return $dgn;
+    }
+  }
+
+  die "Failed to find DGN for model=\"$model\" and library=\"$library\"\n";
+}
+
 sub enterMetadata {
-  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
+  my ($clients, $libraries, $models, $denMaps, $dgnMaps, $tapes, $clientVer) =
+     (   shift,      shift,   shift,    shift,    shift,  shift,      shift);
 
   my @vids           = sort keys %$tapes;
   my $expectedOutput = "";
   my $i              = 0;
   my $vid            = "";
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrentermodel}{$clientVer} --mo 3592 --ml J --mc 250",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
-    "3592   J  250");
+  print("\n");
+  print("ENTERING LIBRARIES FOR THE FIRST TIME\n");
+  &enterLibraries($clients, $libraries, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrdeletemodel}{$clientVer} --mo 3592",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
-    "");
+  print("\n");
+  print("DELETING LIBRARIES\n");
+  &deleteLibraries($clients, $libraries, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrentermodel}{$clientVer} --mo 3592 --ml J --mc 250",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistmodel}{$clientVer}",
-    "3592   J  250");
+  print("\n");
+  print("ENTERING LIBRARIES FOR THE SECOND TIME\n");
+  &enterLibraries($clients, $libraries, $clientVer);
+
+  print("\n");
+  print("PUTTING ALL LIBRARIES OFFLINE\n");
+  &setStatusOfLibraries($clients, $libraries, "OFFLINE", $clientVer);
+
+  print("\n");
+  print("PUTTING ALL LIBRARIES ONLINE\n");
+  &setStatusOfLibraries($clients, $libraries, "ONLINE", $clientVer);
+
+  print("\n");
+  print("ENTERING MODELS FOR THE FIRST TIME\n");
+  &enterModels($clients, $models, $clientVer);
+
+  print("\n");
+  print("DELETING MODELS\n");
+  &deleteModels($clients, $models, $clientVer);
+
+  print("\n");
+  print("ENTERING MODELS FOR THE SECOND TIME\n");
+  &enterModels($clients, $models, $clientVer);
 
   print("\n");
   print("ENTERING DENMAPS FOR THE FIRST TIME\n");
@@ -421,103 +724,17 @@ sub enterMetadata {
   print("ENTERING DENMAPS FOR THE SECOND TIME\n");
   &enterDenMaps($clients, $denMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterlibrary}{$clientVer}" .
-    " --name IBMLIB1B --capacity 6600", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-  # vmgrlistlibrary uses a different protocol with the --name option than
-  # without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name IBMLIB1B",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
+  print("\n");
+  print("ENTERING DGNMAPS FOR THE FIRST TIME\n");
+  &enterDgnMaps($clients, $dgnMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrdeletelibrary}{$clientVer} --name IBMLIB1B", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}", "");
-  # vmgrlistlibrary uses a different protocol with the --name option than
-  # without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name IBMLIB1B",
-    "vmgrlistlibrary IBMLIB1B: No such library");
+  print("\n");
+  print("DELETING DGNMAPS\n");
+  &deleteDgnMaps($clients, $dgnMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterlibrary}{$clientVer}" .
-    " --name IBMLIB1B --capacity 6600", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-  # vmgrlistlibrary uses a different protocol with the --name option than
-  # without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name IBMLIB1B",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrmodifylibrary}{$clientVer}" .
-    " --name IBMLIB1B --capacity 1234 --status OFFLINE", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
-    "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
-  # vmgrlistlibrary uses a different protocol with the --name option than
-  # without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name IBMLIB1B",
-    "IBMLIB1B CAPACITY 1234 FREE 1234 (100.0%) OFFLINE");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrmodifylibrary}{$clientVer}" .
-    " --name IBMLIB1B --capacity 6600 --status ONLINE", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-  # vmgrlistlibrary uses a different protocol with the --name option than
-  # without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer} --name IBMLIB1B",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterlibrary}{$clientVer}" .
-    " --name IBMLIB3B --capacity 6600", "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistlibrary}{$clientVer}",
-    "IBMLIB1B CAPACITY 6600 FREE 6600 (100.0%) ONLINE\n" .
-    "IBMLIB3B CAPACITY 6600 FREE 6600 (100.0%) ONLINE");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterdgnmap}{$clientVer}" .
-    " -g 359B1B --mo 3592 --library IBMLIB1B",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
-    "359B1B 3592   IBMLIB1B");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrdeletedgnmap}{$clientVer} --li IBMLIB1B --mo 3592",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
-    "");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterdgnmap}{$clientVer}" .
-    " -g 359B1B --mo 3592 --library IBMLIB1B",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
-    "359B1B 3592   IBMLIB1B");
-
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterdgnmap}{$clientVer}" .
-    " -g 359B3B --mo 3592 --library IBMLIB3B",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
-    "359B1B 3592   IBMLIB1B\n" .
-    "359B3B 3592   IBMLIB3B");
+  print("\n");
+  print("ENTERING DGNMAPS FOR THE SECOND TIME\n");
+  &enterDgnMaps($clients, $dgnMaps, $clientVer);
 
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrenterpool}{$clientVer}" .
@@ -660,6 +877,17 @@ my $testVmgrHost    = "lxcastordev04";
 my $nonRootUserName = "murrayc3";
 my $productionHost  = "lxadm";
 my $nsDir           = "/castor/cern.ch/dev/m/murrayc3/vmgr_bug_75722";
+my %libraries = (
+  IBMLIB1B => {
+    capacity => 6600
+  },
+  IBMLIB3B => {
+    capacity => 6600
+  },
+  SL8600_C => {
+    capacity => 6600
+  }
+);
 my %models = (
   "3592" => {
     ml => "J",
@@ -676,9 +904,14 @@ my %denMaps = (
     mo => "3592",
     tb => 1
   },
-  "5000GC" => {
+  "3000GC" => {
     ml => "J",
     mo => "3592",
+    tb => 3
+  },
+  "5000GC" => {
+    ml => "T",
+    mo => "T10000",
     tb => 5
   }
 );
@@ -697,14 +930,21 @@ my %dgnMaps = (
   }
 );
 my %tapes = (
+  TTC009 => {
+    mo  => "T10000",
+    ml  => "T",
+    li  => "SL8600_C",
+    d   => "5000GC",
+    l   => "aul",
+    po  => "stager_dev04"
+  },
   I02023 => {
     mo  => "3592",
     ml  => "J",
     li  => "IBMLIB1B",
     d   => "1000GC",
     l   => "aul",
-    po  => "stager_dev04",
-    dgn => "359B1B"
+    po  => "stager_dev04"
   },
   I10486 => {
     mo  => "3592",
@@ -712,17 +952,15 @@ my %tapes = (
     li  => "IBMLIB3B",
     d   => "1000GC",
     l   => "aul",
-    po  => "stager_dev04",
-    dgn => "359B3B"
+    po  => "stager_dev04"
   },
   I12035 => {
     mo  => "3592",
     ml  => "J",
     li  => "IBMLIB3B",
-    d   => "5000GC",
+    d   => "3000GC",
     l   => "aul",
-    po  => "stager_dev04",
-    dgn => "359B3B"
+    po  => "stager_dev04"
   },
   I12038 => {
     mo  => "3592",
@@ -730,8 +968,7 @@ my %tapes = (
     li  => "IBMLIB3B",
     d   => "1000GC",
     l   => "aul",
-    po  => "stager_dev04",
-    dgn => "359B3B"
+    po  => "stager_dev04"
   },
   I12438 => {
     mo  => "3592",
@@ -739,8 +976,7 @@ my %tapes = (
     li  => "IBMLIB3B",
     d   => "1000GC",
     l   => "aul",
-    po  => "stager_dev04",
-    dgn => "359B3B"
+    po  => "stager_dev04"
   }
 );
 my $castor_src = $ENV{'CASTOR_SRC'};
@@ -833,6 +1069,7 @@ my $status             = 0;
 my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
+my $dgn                = "";
 my $i                  = 0;
 
 # Abort if the user is not root
@@ -886,12 +1123,18 @@ die "nsrm -rf $nsDir failed: status=$status" unless $status == 0;
 # Abort if the test tapes are not in the tape_dev tape-pool and not DISABLED in
 # the production vmgr
 print("\n");
-print("CHECKING TEST TAPES ARE IN TAPE_DEV AND DISABLED IN PRODUCTION\n");
+print("CHECKING TEST TAPES ARE EITHER NOT IN PRODUCTION OR\n");
+print("ARE IN TAPE_DEV AND DISABLED IN PRODUCTION\n");
 for $vid (sort keys %tapes) {
   $cmdResultStr = &runCmdAs("root",
-    "ssh $nonRootUserName\@$productionHost vmgrlisttape -V $vid");
+    "2>&1 ssh $nonRootUserName\@$productionHost vmgrlisttape -V $vid");
   chomp($cmdResultStr);
   print("cmdResultStr=$cmdResultStr\n");
+
+  if($cmdResultStr eq "vmgrlisttape: No such tape") {
+    next;
+  }
+
   $tapePool   = "UNKNOWN";
   $tapeStatus = "UNKNOWN";
   if($cmdResultStr =~
@@ -959,7 +1202,8 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 
-&enterMetadata(\%clients, \%denMaps, \%tapes, "oldVer");
+&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%tapes,
+  "oldVer");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
@@ -984,14 +1228,17 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
-&enterMetadata(\%clients, \%denMaps, \%tapes, "newVer");
+&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%tapes,
+  "newVer");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");
 print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
+$dgn = &modelAndLibrary2Dgn(\%dgnMaps, $tapes{$vids[0]}{mo},
+  $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
   "2>&1 $clients{vmgrquerytape}{oldVer} $vids[0]",
-  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$dgn\"");
 
 # Abort if the old vmgr_enterdenmap function does not work with the new vmgr
 print("\n");
@@ -1006,10 +1253,12 @@ print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 # Abort if the new vmgr_checktape function does not work with the new vmgr
 print("\n");
 print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
+$dgn = &modelAndLibrary2Dgn(\%dgnMaps, $tapes{$vids[0]}{mo},
+  $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
   "2>&1 $clients{vmgrquerytape}{newVer} $vids[0]",
   "vmgr_querytape_byte_u64 succeeded:" .
-  " vid=\"$vids[0]\" dgn=\"$tapes{$vids[0]}{dgn}\"");
+  " vid=\"$vids[0]\" dgn=\"$dgn\"");
 
 # Abort if tapes contain files referenced by the development name-server
 for $vid (@vids) {
@@ -1018,8 +1267,6 @@ for $vid (@vids) {
   die "ABORT: Found entries in development name-server for $vid"
     unless $cmdResultStr eq "$vid: No such volume or no files found";
 }
-
-exit(0);
 
 print("\n");
 print("CREATING SEED FILE FOR MIGRATIONS\n");
