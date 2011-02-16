@@ -60,12 +60,11 @@ UPDATE vmgr_tape_pool
            FROM vmgr_tape_side
           WHERE vmgr_tape_side.poolName = vmgr_tape_pool.name
             AND vmgr_tape_side.status in (0 /* FREE */, 4 /* BUSY */));
-COMMIT;
 
 /* Convert all kibibyte values in the database to byte values */
 UPDATE vmgr_tape_denmap
    SET native_capacity = native_capacity * 1024;
-UPDATE vmgr_tapepool
+UPDATE vmgr_tape_pool
    SET capacity = capacity * 1024;
 UPDATE vmgr_tape_pool
    SET tot_free_space = tot_free_space * 1024;
