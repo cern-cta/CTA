@@ -150,7 +150,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 	tapesToRetry.push_back(*tapeRequest);
 	if ((*tapeRequest).accessMode() == 1 ){
 	  castor::stager::Tape tapeToReset;
-	  tapeToReset.setTpmode(TPMODE_WRITE);
+	  tapeToReset.setTpmode(castor::stager::TPMODE_WRITE);
 	  tapeToReset.setVid(*vid);
 	  tapesToReset.push_back(tapeToReset);
 	}

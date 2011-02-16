@@ -1274,7 +1274,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	      
 	      // UPDATE VMGR
 
-	      if (tape.tpmode() == TPMODE_WRITE) { // just for write case
+	      if (tape.tpmode() == castor::stager::TPMODE_WRITE) { // just for write case
 	
 		gettimeofday(&tvStart, NULL);
      
@@ -1411,7 +1411,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      
 	    // UPDATE VMGR
 	    
-	    if (tape.tpmode() == TPMODE_WRITE) { // just for write case
+	    if (tape.tpmode() == castor::stager::TPMODE_WRITE) { // just for write case
 	      VmgrTapeGatewayHelper vmgrHelper;
 	
 
