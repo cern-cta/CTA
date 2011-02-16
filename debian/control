@@ -63,7 +63,8 @@ Package: castor-lib
 Architecture: any
 Build-Depends: curl-devel, python
 Build-Depends-Conditional:
-%if 0%{?fedora} >= 12 || 0%{?rhel} >=6
+# For uuid/uuid.h
+%if 0%{?rhel} >= 6
 BuildRequires: libuuid-devel
 %else
 BuildRequires: e2fsprogs-devel
