@@ -58,7 +58,8 @@ UPDATE vmgr_tape_pool
    SET vmgr_tape_pool.tot_free_space = (
          SELECT NVL(SUM(vmgr_tape_side.estimated_free_space), 0)
            FROM vmgr_tape_side
-          WHERE vmgr_tape_side.poolName = vmgr_tape_pool.name);
+          WHERE vmgr_tape_side.poolName = vmgr_tape_pool.name
+            AND vmgr_tape_side.status in (0 /* FREE */, 4 /* BUSY */));
 COMMIT;
 
 /* Convert all kibibyte values in the database to byte values */
