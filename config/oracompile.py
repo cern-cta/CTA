@@ -47,7 +47,8 @@ def usage():
     print "    --procinc            Return the include= arguments for Pro*C"
     print "    --libdir             Return the location of ORACLE libraries"
     print "    --bindir             Return the directory with Pro*C is found"
-    print "    --version=ORAVERSION The required oracle version\n"
+    print "    --version=ORAVERSION The required oracle version"
+    print "    --quiet              Suppress all warnings\n"
     print "Report bugs to <castor-support@cern.ch>"
 
 #------------------------------------------------------------------------------
@@ -165,7 +166,7 @@ def prefixCompilerOption(string, compilerOption):
 try:
     opts, args = getopt.getopt(sys.argv[1:], "h",
                                ["help", "with-precomp", "home", "cppflags",
-                                "procinc", "libdir", "bindir"])
+                                "procinc", "libdir", "bindir", "quiet"])
 except getopt.GetoptError:
     usage()
     sys.exit(2)
@@ -173,6 +174,13 @@ except getopt.GetoptError:
 # Defaults.
 withPreCompiler = False
 oracleVersion   = DEFAULT_ORACLE_VERSION
+quietMode       = False
+
+# Determine if we are in quiet mode.
+envOptions = os.getenv('ORACOMPILE_OPTIONS')
+if envOptions:
+    if "--quiet" in envOptions:
+        quietMode = True
 
 # Check to see what ORACLE version the user requires and whether the ORACLE
 # installation must contain a valid ORACLE pre compiler (Pro*C).
@@ -196,10 +204,13 @@ for opt, arg in opts:
         rtnValue.append(oraEnv['libdir'])
     if opt == "--bindir":
         rtnValue.append(oraEnv['bindir'])
+    if opt == "--quiet":
+        quietMode = True
 
 # Check that we have a valid installation.
 if oraEnv['home'] == "" or (withPreCompiler and oraEnv['procinc'] == ""):
-    print >> sys.stderr, "Unable to find a valid ORACLE installation"
+    if not quietMode:
+        print >> sys.stderr, "Unable to find a valid ORACLE installation"
     sys.exit(1)
 
 print ' '.join(rtnValue)
