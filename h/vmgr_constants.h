@@ -63,7 +63,36 @@
 #define	SYERR 	  2	/* system error */
 #define	CONFERR	  4	/* configuration error */
 
-#define VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE \
+#define VMGR_LISTTAPE_ENTRY_SIZE            \
+(                                           \
+  /* vid          */ CA_MAXVIDLEN+1       + \
+  /* vsn          */ CA_MAXVSNLEN+1       + \
+  /* dgn          */ CA_MAXDGNLEN+1       + \
+  /* library      */ CA_MAXTAPELIBLEN+1   + \
+  /* density      */ CA_MAXDENLEN+1       + \
+  /* lbltype      */ CA_MAXLBLTYPLEN+1    + \
+  /* model        */ CA_MAXMODELLEN+1     + \
+  /* media_letter */ CA_MAXMLLEN+1        + \
+  /* manufacturer */ CA_MAXMANUFLEN+1     + \
+  /* sn           */ CA_MAXSNLEN+1        + \
+  /* nbsides      */ WORDSIZE             + \
+  /* etime        */ TIME_TSIZE           + \
+  /* side         */ WORDSIZE             + \
+  /* poolname     */ CA_MAXPOOLNAMELEN+1  + \
+  /* free_space   */ LONGSIZE             + \
+  /* nbfiles      */ LONGSIZE             + \
+  /* rcount       */ LONGSIZE             + \
+  /* wcount       */ LONGSIZE             + \
+  /* rhost        */ CA_MAXSHORTHOSTLEN+1 + \
+  /* whost        */ CA_MAXSHORTHOSTLEN+1 + \
+  /* rjid         */ LONGSIZE             + \
+  /* wjid         */ LONGSIZE             + \
+  /* rtime        */ TIME_TSIZE           + \
+  /* wtime        */ TIME_TSIZE           + \
+  /* status       */ LONGSIZE               \
+)
+
+#define VMGR_LISTTAPE_BYTE_U64_ENTRY_SIZE   \
 (                                           \
   /* vid          */ CA_MAXVIDLEN+1       + \
   /* vsn          */ CA_MAXVSNLEN+1       + \

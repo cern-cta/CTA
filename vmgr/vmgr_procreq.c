@@ -1522,7 +1522,7 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
   int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
-  char outbuf[LISTBUFSZ+4];
+  char outbuf[LISTBUFSZ+4]; /* nbentries(2 bytes) + eol(2 bytes) = 4 bytes */
   char *p = NULL;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   struct vmgr_tape_side_byte_u64 side_entry;
@@ -1549,8 +1549,8 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  if(VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE > listentsz) {
-    maxnbentries = LISTBUFSZ / VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE;
+  if(VMGR_LISTTAPE_ENTRY_SIZE > listentsz) {
+    maxnbentries = LISTBUFSZ / VMGR_LISTTAPE_ENTRY_SIZE;
   } else {
     maxnbentries = LISTBUFSZ / listentsz;
   }
@@ -1642,7 +1642,7 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
   int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
-  char outbuf[LISTBUFSZ+4];
+  char outbuf[LISTBUFSZ+4]; /* nbentries(2 bytes) + eol(2 bytes) = 4 bytes */
   char *p = NULL;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   struct vmgr_tape_side_byte_u64 side_entry;
@@ -1670,8 +1670,8 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  if(VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE > listentsz) {
-    maxnbentries = LISTBUFSZ / VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE;
+  if(VMGR_LISTTAPE_BYTE_U64_ENTRY_SIZE > listentsz) {
+    maxnbentries = LISTBUFSZ / VMGR_LISTTAPE_BYTE_U64_ENTRY_SIZE;
   } else {
     maxnbentries = LISTBUFSZ / listentsz;
   }
