@@ -1520,8 +1520,7 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
   char func[18];
   gid_t gid = 0;
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
-  /* maxnbentries = maximum number of entries/call                            */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_side_byte_u64);
+  int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p = NULL;
@@ -1549,6 +1548,12 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
   if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
+
+  if(VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE > listentsz) {
+    maxnbentries = LISTBUFSZ / VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE;
+  } else {
+    maxnbentries = LISTBUFSZ / listentsz;
+  }
 
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
@@ -1635,7 +1640,7 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
   char func[18];
   gid_t gid = 0;
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_side_byte_u64);  /* maximum number of entries/call */
+  int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p = NULL;
@@ -1664,6 +1669,12 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
   if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
+
+  if(VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE > listentsz) {
+    maxnbentries = LISTBUFSZ / VMGR_MAX_MARSHALLED_TAPE_ENTRY_SIZE;
+  } else {
+    maxnbentries = LISTBUFSZ / listentsz;
+  }
 
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
