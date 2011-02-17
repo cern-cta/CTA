@@ -965,6 +965,125 @@ sub embedMsgAsCStrIntoFile {
   close($fileHandle) or die "Failed to close $fileName: $!";
 }
 
+sub addDummyModels {
+  my ($models, $nbDummies) = (shift, shift);
+
+  my $i     = 0;
+  my $model = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $model = "M00$i";
+    } elsif($i < 100) {
+      $model = "M0$i";
+    } else {
+      $model = "M$i";
+    }
+
+    $models->{$model} = {
+      ml => "D",
+      mc => "250"
+    };
+  }
+}
+
+sub addDummyDenMaplets {
+  my ($denMaps, $nbDummies) = (shift, shift);
+
+  my $i       = 0;
+  my $density = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $density = "DEN00$i";
+    } elsif($i < 100) {
+      $density = "DEN0$i";
+    } else {
+      $density = "DEN$i";
+    }
+
+    $denMaps->{$density} = {
+      ml => "T",
+      mo => "T10000",
+      tb => 5
+    };
+  }
+}
+
+sub addDummyDgnMaplets {
+  my ($dgnMaps, $nbDummies) = (shift, shift);
+
+  my $i     = 0;
+  my $dgn   = "";
+  my $model = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $dgn = "DGN00$i";
+      $model = "M00$i";
+    } elsif($i < 100) {
+      $dgn = "DGN0$i";
+      $model = "M0$i";
+    } else {
+      $dgn = "DGN$i";
+      $model = "M$i";
+    }
+
+    $dgnMaps->{$dgn} = {
+      mo      => $model,
+      library => "IBMLIB1B"
+    };
+  }
+}
+
+sub addDummyPools {
+  my ($pools, $nbDummies) = (shift, shift);
+
+  my $i    = 0;
+  my $pool = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $pool = "DUMMYPOOL00$i";
+    } elsif($i < 100) {
+      $pool = "DUMMYPOOL0$i";
+    } else {
+      $pool = "DUMMYPOOL$i";
+    }
+
+    $pools->{$pool} = {
+      user  => "stage",
+      group => "st"
+    };
+  }
+}
+
+sub addDummyTapes {
+  my ($tapes, $nbDummies) = (shift, shift);
+
+  my $i   = 0;
+  my $vid = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $vid = "DUD00$i";
+    } elsif($i < 100) {
+      $vid = "DUD0$i";
+    } else {
+      $vid = "DUD$i";
+    }
+
+    $tapes->{$vid} = {
+      mo  => "3592",
+      ml  => "J",
+      li  => "IBMLIB3B",
+      d   => "1000GC",
+      l   => "aul",
+      po  => "stager_dev04"
+    };
+  }
+}
+
 ###############################################################################
 # MAIN PROGRAM STARTS HERE
 ###############################################################################
@@ -1175,7 +1294,6 @@ my $status             = 0;
 my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
-my $density            = "";
 my $dgn                = "";
 my $i                  = 0;
 
@@ -1192,8 +1310,8 @@ for $client (sort keys %clients) {
   &dieIfNoExecutable($clients{$client}{newVer});
 }
 
-# Determine the location of the database scripts to drop the vmgr and recreate
-# the vmgr database
+# Determine the location of the database scripts to drop and recreate the vmgr
+# database
 $originalDbSchema   = "$castor_src/vmgr/vmgr_oracle_create.sql";
 $originalDropSchema = "$castor_src/castor/db/drop_oracle_schema.sql";
 
@@ -1268,42 +1386,24 @@ for $vid (sort keys %tapes) {
 }
 
 print("\n");
-print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
-for($i=0; $i<200; $i++) {
-  if($i < 10) {
-    $density = "DEN00$i";
-  } elsif($i < 100) {
-    $density = "DEN0$i";
-  } else {
-    $density = "DEN$i";
-  }
-
-  $denMaps{$density} =
-    {
-      ml => "T",
-      mo => "T10000",
-      tb => 5
-    };
-}
+print("ADDING 300 DUMMY MODELS TO TEST DATA-STRUCTURES\n");
+&addDummyModels(\%models, 300);
 
 print("\n");
-print("ADDING 100 NON-EXISTANT TAPES TO TEST DATA-STRUCTURES\n");
-for($i=0; $i<100; $i++) {
-  if($i < 10) {
-    $vid = "DUMT0$i";
-  } else {
-    $vid = "DUMT$i";
-  }
+print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
+&addDummyDenMaplets(\%denMaps, 200);
 
-  $tapes{$vid} = {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB3B",
-    d   => "1000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  };
-}
+print("\n");
+print("ADDING 200 DUMMY DGNMAPS TO TEST DATA-STRUCTURES\n");
+&addDummyDgnMaplets(\%dgnMaps, 200);
+
+print("\n");
+print("ADDING 200 DUMMY POOLS TO TEST DATA-STRUCTURES\n");
+&addDummyPools(\%pools, 200);
+
+print("\n");
+print("ADDING 100 DUMMY TAPES TO TEST DATA-STRUCTURES\n");
+&addDummyTapes(\%tapes, 100);
 
 # Abort if the new vmgr clients do not get refused by the old production vmgr
 print("\n");
