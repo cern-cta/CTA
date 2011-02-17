@@ -1093,6 +1093,23 @@ my $cmdResultStr       = "";
 my $dgn                = "";
 my $i                  = 0;
 
+for($i=0; $i<100; $i++) {
+  if($i < 10) {
+    $vid = "STEV0$i";
+  } else {
+    $vid = "STEV$i";
+  }
+
+  $tapes{$vid} = {
+    mo  => "3592",
+    ml  => "J",
+    li  => "IBMLIB3B",
+    d   => "1000GC",
+    l   => "aul",
+    po  => "stager_dev04"
+  };
+}
+
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
 
@@ -1288,6 +1305,8 @@ for $vid (@vids) {
   die "ABORT: Found entries in development name-server for $vid"
     unless $cmdResultStr eq "$vid: No such volume or no files found";
 }
+
+exit(0);
 
 print("\n");
 print("CREATING SEED FILE FOR MIGRATIONS\n");
