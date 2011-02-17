@@ -262,15 +262,13 @@ class UrlAnnex(UrlReaderInterface):
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
+            #check rootmodel
             options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
             if not(rootmodel in app.tools.Inspections.getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
-                theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                theid = self.searchReplacementId(theid)
             else:
-                try:
-                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
-                except:
-                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                theid = self.searchReplacementId(theid)
                     
         if depth > self.maxdepth: depth = self.maxdepth
         if depth < 0: depth = 0

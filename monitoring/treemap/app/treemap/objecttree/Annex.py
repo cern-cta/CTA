@@ -143,11 +143,11 @@ class Annex(models.Model, ModelInterface):
     
     def getDbParent(self):
         if self.parent == None:
-            ppk = -1
+            ppk = None
         elif not isinstance(self.parent, Annex):
-            ppk = self.parent.pk
+            ppk = self.parent
         elif isinstance(self.parent, Annex): #parent is Annex
-            ppk = self.parent.getDbParent().pk
+            ppk = self.parent.getDbParent()
         else:
             raise Exception("unexpected error")
         return ppk

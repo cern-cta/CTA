@@ -346,7 +346,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time,\
     rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid,\
-    options = optr.getCorrectedOptions(presetid))
+    options = optr.getCorrectedOptions(presetid), depth = depth+1)
     
     del tree
     del otree
@@ -512,7 +512,7 @@ def setStatusFileInCookie(request, statusfilename):
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = '', depth = 0):
     print "preparing response"
     optionsstring = '{'+ options +'}'
     #must fit to UrlDefault!
@@ -542,7 +542,11 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         y2 = int(round(node.getProperty('y') + hsize,0))
         
         #must fit to UrlDefault!
-        linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+        if(node.getProperty('treenode').getObject().getClassName() == 'Annex'):
+            linksuffix = app.dirs.urls.UrlAnnex().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getDbParent().getClassName(), depth ,node.getProperty('treenode').getObject().getIdReplacement())
+        else:
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+        
         info = node.getProperty('htmltooltiptext')
         thehash = node.getProperty('treenode').getObject().__hash__()
         

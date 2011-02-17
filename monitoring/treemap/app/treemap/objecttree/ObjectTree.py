@@ -211,7 +211,7 @@ class ObjectTree(object):
         #find Annex
         anxnode = None
         for item in firstlevelitems:
-            if item.getObject().__class__.__name__ == 'Annex':
+            if item.getObject().getClassName() == 'Annex':
                 anxnode = item
                 break
         
