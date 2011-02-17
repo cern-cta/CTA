@@ -1226,8 +1226,9 @@ int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
   int eol = 0;  /* end of list flag */
   char func[20];
   gid_t gid = 0;
-  int listentsz = 0;  /* size of client machine vmgr_tape_denmap structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_denmap_byte_u64);  /* maximum number of entries/call */
+  /* listentsz = size of client machine vmgr_tape_denmap_byte_u64 structure */
+  int listentsz = 0;
+  int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p = NULL;
@@ -1250,6 +1251,9 @@ int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1289,7 +1293,7 @@ int vmgr_srv_listdgnmap(char *const req_data,
   char func[20];
   gid_t gid = 0;
   int listentsz = 0;  /* size of client machine vmgr_tape_dgnmap structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_dgnmap);  /* maximum number of entries/call */
+  int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p = NULL;
@@ -1308,6 +1312,9 @@ int vmgr_srv_listdgnmap(char *const req_data,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1339,20 +1346,20 @@ int vmgr_srv_listlibrary(char *const req_data,
                          struct vmgr_srv_thread_info *const thip,
                          const int endlist)
 {
-  int bol;  /* beginning of list flag */
-  int c;
+  int bol = 0;  /* beginning of list flag */
+  int c = 0;
   int eol = 0;  /* end of list flag */
   char func[21];
-  gid_t gid;
+  gid_t gid = 0;
   struct vmgr_tape_library library_entry;
-  int listentsz;  /* size of client machine vmgr_tape_library structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_library);  /* maximum number of entries/call */
+  int listentsz = 0;  /* size of client machine vmgr_tape_library structure */
+  int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
-  char *p;
-  char *rbp;
-  char *sbp;
-  uid_t uid;
+  char *p = NULL;
+  char *rbp = NULL;
+  char *sbp = NULL;
+  uid_t uid = 0;
 
   strncpy (func, "vmgr_srv_listlibrary", 21);
   rbp = req_data;
@@ -1365,6 +1372,9 @@ int vmgr_srv_listlibrary(char *const req_data,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1398,20 +1408,20 @@ int vmgr_srv_listmodel(const int magic,
                        struct vmgr_srv_thread_info *const thip,
                        const int endlist)
 {
-  int bol;  /* beginning of list flag */
-  int c;
+  int bol = 0;  /* beginning of list flag */
+  int c = 0;
   struct vmgr_tape_media cartridge;
   int eol = 0;  /* end of list flag */
   char func[19];
-  gid_t gid;
-  int listentsz;  /* size of client machine vmgr_tape_media structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_media);  /* maximum number of entries/call */
+  gid_t gid = 0;
+  int listentsz = 0;  /* size of client machine vmgr_tape_media structure */
+  int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
-  char *p;
-  char *rbp;
-  char *sbp;
-  uid_t uid;
+  char *p = NULL;
+  char *rbp = NULL;
+  char *sbp = NULL;
+  uid_t uid = 0;
 
   strncpy (func, "vmgr_srv_listmodel", 19);
   rbp = req_data;
@@ -1424,6 +1434,9 @@ int vmgr_srv_listmodel(const int magic,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1461,8 +1474,8 @@ int vmgr_srv_listpool(char *const req_data,
   int eol = 0;  /* end of list flag */
   char func[18];
   gid_t gid = 0;
-  int listentsz;  /* size of client machine vmgr_tape_pool structure */
-  const int maxnbentries = LISTBUFSZ / sizeof(struct vmgr_tape_pool_byte_u64);  /* maximum number of entries/call */
+  int listentsz = 0;  /* size of client machine vmgr_tape_pool structure */
+  int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
   char *p = NULL;
@@ -1482,6 +1495,9 @@ int vmgr_srv_listpool(char *const req_data,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  /* return as many entries as possible to the client */
+
+  maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1549,12 +1565,10 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  if(VMGR_LISTTAPE_ENTRY_SIZE > listentsz) {
-    maxnbentries = LISTBUFSZ / VMGR_LISTTAPE_ENTRY_SIZE;
-  } else {
-    maxnbentries = LISTBUFSZ / listentsz;
-  }
+  /* return as many entries as possible to the client */
 
+  maxnbentries = LISTBUFSZ / ((MARSHALLED_TAPE_ENTRYSZ > listentsz) ?
+    MARSHALLED_TAPE_ENTRYSZ : listentsz);
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
@@ -1670,12 +1684,10 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  if(VMGR_LISTTAPE_BYTE_U64_ENTRY_SIZE > listentsz) {
-    maxnbentries = LISTBUFSZ / VMGR_LISTTAPE_BYTE_U64_ENTRY_SIZE;
-  } else {
-    maxnbentries = LISTBUFSZ / listentsz;
-  }
+  /* return as many entries as possible to the client */
 
+  maxnbentries = LISTBUFSZ / ((MARSHALLED_TAPE_BYTE_U64_ENTRYSZ > listentsz) ?
+      MARSHALLED_TAPE_BYTE_U64_ENTRYSZ : listentsz);
   sbp = outbuf;
   marshall_WORD (sbp, nbentries);    /* will be updated */
 
