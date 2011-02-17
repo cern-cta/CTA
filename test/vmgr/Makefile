@@ -30,7 +30,8 @@ EXECUTABLES= \
   vmgrdeletepool_trunk_r21843 \
   vmgrdeletetape_trunk_r21843 \
   vmgrdeltag_trunk_r21843 \
-  reclaim_trunk_r21843
+  reclaim_trunk_r21843 \
+  printlistpackingfactors
 
 all: $(EXECUTABLES)
 
@@ -477,6 +478,10 @@ reclaim_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -ldl -g -o $@ $^
 
+printlistpackingfactors: \
+  printlistpackingfactors.o
+	gcc -ldl -g -o $@ $^
+
 vmgrquerytape.o: vmgrquerytape.c
 	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
@@ -553,6 +558,9 @@ vmgrdeletetape_trunk_r21843.o: vmgrdeletetape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgrdeltag_trunk_r21843.o: vmgrdeltag_trunk_r21843.c
+	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+printlistpackingfactors.o: printlistpackingfactors.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgr_querytape_byte_u64.o: $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.c
