@@ -467,7 +467,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9005');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9007');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -7033,7 +7033,7 @@ BEGIN
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastButOneFSUsed
-           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING),
+           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
            AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING);
         -- we are within the time range, so we try to reuse the filesystem
         SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
@@ -7071,8 +7071,8 @@ BEGIN
         AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
         AND DiskPool2SvcClass.parent = FileSystem.diskPool
         AND FileSystem.diskServer = DiskServer.id
-        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING),
-        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING);
+        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
       ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
                DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
                -- then order by rate as defined by the function
@@ -7149,14 +7149,14 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
                                                    castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                    nsHost OUT NOCOPY VARCHAR2, fileSize OUT INTEGER,
                                                    tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
-  fileSystemId INTEGER := 0;
-  diskServerId NUMBER;
-  fsDiskServer NUMBER;
-  lastFSChange NUMBER;
-  lastFSUsed NUMBER;
-  lastButOneFSUsed NUMBER;
-  findNewFS NUMBER := 1;
-  nbMigrators NUMBER := 0;
+  varFSId INTEGER := 0;
+  varDSId NUMBER;
+  varFsDiskServer NUMBER; /* XXX TODO FIXME This variable is used uninitialized at the end of the function. Was already the case in revision 21389 */
+  varLastFSChange NUMBER;
+  varLastFSUsed NUMBER;
+  varLastButOneFSUsed NUMBER;
+  varFindNewFS NUMBER := 1;
+  varNbMigrators NUMBER := 0;
   unused NUMBER;
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
@@ -7164,20 +7164,20 @@ BEGIN
   tapeCopyId := 0;
   -- First try to see whether we should reuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
-    INTO lastFSChange, lastFSUsed, lastButOneFSUsed
+    INTO varLastFSChange, varLastFSUsed, varLastButOneFSUsed
     FROM Stream WHERE id = streamId;
-  IF getTime() < lastFSChange + 1800 THEN
-    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = lastFSUsed)
-      INTO nbMigrators FROM DUAL;
+  IF getTime() < varLastFSChange + 1800 THEN
+    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = varLastFSUsed)
+      INTO varNbMigrators FROM DUAL;
     -- only go if we are the only migrator on the box
-    IF nbMigrators = 1 THEN
+    IF varNbMigrators = 1 THEN
       BEGIN
         -- check states of the diskserver and filesystem and get mountpoint and diskserver name
         SELECT diskserver.id, name, mountPoint, FileSystem.id
-          INTO diskServerId, diskServerName, mountPoint, fileSystemId
+          INTO varDSId, diskServerName, mountPoint, varFSId
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.id = lastFSUsed
+           AND FileSystem.id = varLastFSUsed
            AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
            AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING);
         -- we are within the time range, so we try to reuse the filesystem
@@ -7190,7 +7190,7 @@ BEGIN
                   FROM DiskCopy DK
                  WHERE decode(DK.status, 10, DK.status, NULL) = dconst.DISKCOPY_CANBEMIGR
                  -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
-                   AND DK.filesystem = lastFSUsed) D, TapeCopy T, Stream2TapeCopy ST
+                   AND DK.filesystem = varLastFSUsed) D, TapeCopy T, Stream2TapeCopy ST
          WHERE T.castorfile = D.castorfile
            AND ST.child = T.id
            AND ST.parent = streamId
@@ -7202,14 +7202,14 @@ BEGIN
           FROM castorfile C
          WHERE castorfileId = C.id;
         -- we found one, no need to go for new filesystem
-        findNewFS := 0;
+        varFindNewFS := 0;
       EXCEPTION WHEN NO_DATA_FOUND OR LockError THEN
         -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
         NULL;
       END;
     END IF;
   END IF;
-  IF findNewFS = 1 THEN
+  IF varFindNewFS = 1 THEN
     -- We try first to reuse the diskserver of the lastFSUsed, even if we change filesystem
     FOR f IN (
       SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
@@ -7217,14 +7217,14 @@ BEGIN
        WHERE FileSystem.diskServer = DiskServer.id
          AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
          AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-         AND DiskServer.id = lastButOneFSUsed) LOOP
+         AND DiskServer.id = varLastButOneFSUsed) LOOP
        BEGIN
          -- lock the complete diskServer as we will update all filesystems
          SELECT id INTO unused FROM DiskServer
           WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
          SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
-           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           INTO varDSId, diskServerName, mountPoint, varFSId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
           WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
@@ -7236,8 +7236,8 @@ BEGIN
             AND C.id = D.castorfile
             AND ROWNUM < 2;
          -- found something on this filesystem, no need to go on
-         diskServerId := f.DiskServerId;
-         fileSystemId := f.fileSystemId;
+         varDSId := f.DiskServerId;
+         varFSId := f.fileSystemId;
          EXIT;
        EXCEPTION WHEN NO_DATA_FOUND OR lockError THEN
          -- either the filesystem is already locked or we found nothing,
@@ -7270,7 +7270,7 @@ BEGIN
          SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
          SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
-           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           INTO varDSId, diskServerName, mountPoint, varFSId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
           WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
@@ -7282,8 +7282,8 @@ BEGIN
             AND C.id = D.castorfile
             AND ROWNUM < 2;
          -- found something on this filesystem, no need to go on
-         diskServerId := f.DiskServerId;
-         fileSystemId := f.fileSystemId;
+         varDSId := f.DiskServerId;
+         varFSId := f.fileSystemId;
          EXIT;
        EXCEPTION WHEN NO_DATA_FOUND OR lockError THEN
          -- either the filesystem is already locked or we found nothing,
@@ -7305,11 +7305,11 @@ BEGIN
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = tconst.TAPECOPY_SELECTED
    WHERE id = tapeCopyId;
-  IF findNewFS = 1 THEN
+  IF varFindNewFS = 1 THEN
     UPDATE Stream
-       SET status = tconst.STREAM_RUNNING
-           lastFileSystemUsed = fileSystemId,
-           lastButOneFileSystemUsed = lastFileSystemUsed,
+       SET status = tconst.STREAM_RUNNING,
+           lastFileSystemUsed = varFSId,
+           lastButOneFileSystemUsed = varLastFSUsed,
            lastFileSystemChange = getTime()
      WHERE id = streamId AND status IN (tconst.STREAM_WAITMOUNT, tconst.STREAM_RUNNING);
   ELSE
@@ -7323,7 +7323,7 @@ BEGIN
    WHERE child = tapeCopyId;
 
   -- Update Filesystem state
-  updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
+  updateFSMigratorOpened(varFsDiskServer, varFSId, 0); /* XXX TODO FIXME This variable is used uninitialized at the end of the function. Was already the case in revision 21389 */
 END;
 /
 
@@ -7334,12 +7334,8 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                 tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
-  fileSystemId INTEGER := 0;
-  diskServerId NUMBER;
-  lastFSChange NUMBER;
-  lastFSUsed NUMBER;
-  lastButOneFSUsed NUMBER;
-  nbMigrators NUMBER := 0;
+  varFSId INTEGER := 0;
+  varDSId NUMBER;
   unused NUMBER;
 BEGIN
   tapeCopyId := 0;
@@ -7368,7 +7364,7 @@ BEGIN
       SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
       SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
              f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
-        INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+        INTO varDSId, diskServerName, mountPoint, varFSId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
         FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
        WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
        -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
@@ -7380,8 +7376,8 @@ BEGIN
          AND C.id = D.castorfile
          AND ROWNUM < 2;
       -- found something on this filesystem, no need to go on
-      diskServerId := f.DiskServerId;
-      fileSystemId := f.fileSystemId;
+      varDSId := f.DiskServerId;
+      varFSId := f.fileSystemId;
       EXIT;
     EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
       -- either the filesystem is already locked or we found nothing,
@@ -7403,8 +7399,8 @@ BEGIN
   UPDATE TapeCopy SET status = tconst.TAPECOPY_SELECTED
    WHERE id = tapeCopyId;
   UPDATE Stream
-     SET status = tconst.STREAM_RUNNING
-         lastFileSystemUsed = fileSystemId,
+     SET status = tconst.STREAM_RUNNING,
+         lastFileSystemUsed = varFSId,
          lastButOneFileSystemUsed = lastFileSystemUsed,
          lastFileSystemChange = getTime()
    WHERE id = streamId AND status IN (tconst.STREAM_WAITMOUNT, tconst.STREAM_RUNNING);
@@ -7413,7 +7409,7 @@ BEGIN
    WHERE child = tapeCopyId;
 
   -- Update Filesystem state
-  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
+  updateFSMigratorOpened(varDSId, varFSId, 0);
 END;
 /
 
@@ -7525,7 +7521,7 @@ CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
 BEGIN
   SELECT castorFile INTO cfId FROM TapeCopy
    WHERE id = tapecopyId;
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_DISKCOPY_FAILED
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
    WHERE castorFile = cfId
      AND status = dconst.DISKCOPY_WAITTAPERECALL;
   -- Drop tape copies. Ideally, we should keep some track that
@@ -7561,7 +7557,7 @@ BEGIN
          AND Stream2TapeCopy.child = TapeCopy.id
          AND TapeCopy.castorFile = DiskCopy.CastorFile
          AND DiskCopy.fileSystem = FileSystem.id
-         AND FileSystem.status IN IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+         AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
          AND DiskServer.id = FileSystem.DiskServer
          AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
          AND ROWNUM < 2;
@@ -8138,7 +8134,7 @@ BEGIN
        WHERE Stream.id IN (
                SELECT /*+ CARDINALITY(stridTable 5) */ *
                  FROM TABLE(varStreamIds) streamIdTable)
-                  AND Stream.status = tconst.STREAM_WAITPOLICY;
+                  AND Stream.status = tconst.STREAM_WAITPOLICY
        GROUP BY Stream.tapepool, Stream.id
       UNION ALL /* Append streams with no tape-copies attached */
       SELECT Stream.id,
@@ -8150,7 +8146,7 @@ BEGIN
        WHERE Stream.id IN (
                SELECT /*+ CARDINALITY(streamIdTable 5) */ *
                  FROM TABLE(varStreamIds) streamIdTable)
-         AND Stream.status = tconst.STREAM_WAITPOLICY;
+         AND Stream.status = tconst.STREAM_WAITPOLICY
          AND NOT EXISTS (
                SELECT 'x'
                  FROM Stream2TapeCopy ST
@@ -9074,7 +9070,7 @@ BEGIN
        SET T.lastvdqmpingtime = gettime(),
            T.starttime        = gettime(),
            T.vdqmvolreqid     = inVdqmId,
-           T.Status           = tconst.TAPE_WAITDRIVE
+           T.Status           = tconst.TAPE_WAITDRIVE,
            T.dgn              = inDgn,
            T.label            = inLabel,
            T.density          = inDensity
@@ -9111,7 +9107,7 @@ BEGIN
           'Wrong type of tape found for stream:'||varStreamId||' tape:'||
           varTp.Id||' TpMode:'||varTp.TpMode);
       END IF;
-      varTp.Status          := tconst.TAPE_ATTACHEDTOSTREAM
+      varTp.Status          := tconst.TAPE_ATTACHEDTOSTREAM;
       varTp.dgn             := inDgn;
       varTp.label           := inLabel;
       varTp.density         := inDensity;
@@ -9162,7 +9158,7 @@ BEGIN
        SET T.Stream = inStrIds(i),
            T.Status = tconst.TAPE_WAITDRIVE,
            T.lastFseq = inStartfseqs(i)
-     WHERE T.tpmode= tconst.TP_MODE_WRITE
+     WHERE T.tpmode= tconst.TPMODE_WRITE
        AND T.vid=inTapeVids(i)
     RETURNING T.Id INTO varTapeId;
     -- If there was indeed no tape, just create it.
@@ -9174,13 +9170,13 @@ BEGIN
         SELECT ids_seq.nextval INTO varTape.id FROM DUAL;
         varTape.vid       := inTapeVids(i);
         varTape.side      := 0;
-        varTape.tpMode    := tconst.TP_MODE_WRITE;
+        varTape.tpMode    := tconst.TPMODE_WRITE;
         varTape.errMsgTxt := NULL;
         varTape.errorCode := 0;
         varTape.severity  := 0;
         varTape.vwaddress := NULL;
         varTape.stream    := inStrIds(i);
-        varTape.status    := tconst.TAPE_WAITDRIVE
+        varTape.status    := tconst.TAPE_WAITDRIVE;
         varTape.lastFseq  := inStartfseqs(i);
         INSERT INTO Tape T
         VALUES varTape RETURNING T.id into varTapeId;
@@ -9192,7 +9188,7 @@ BEGIN
         UPDATE Tape T
            SET T.Stream = inStrIds(i),
                T.Status = tconst.TAPE_WAITDRIVE
-         WHERE T.tpmode = tconst.TP_MODE_WRITE
+         WHERE T.tpmode = tconst.TPMODE_WRITE
            AND T.vid = inTapeVids(i)
         RETURNING T.id INTO varTapeId;
       END;
@@ -9753,7 +9749,7 @@ BEGIN
            INTO varDiskServerId, outDiskServerName, outMountPoint, varFileSystemId, outPath, outDCI, 
                 outCastorFileId, outNsFileId, outNsHost, outFileSize, outTapeCopyId, outLastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(DK.status, 10, DK.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = inStreamId
@@ -10251,7 +10247,7 @@ BEGIN
      SELECT SRR.repackvid INTO outRepackVid
        FROM SubRequest sR, StageRepackRequest SRR
       WHERE SRR.id = SR.request
-        AND sR.status = dconat.SUBREQUEST_REPACK
+        AND sR.status = dconst.SUBREQUEST_REPACK
         AND sR.castorFile = varCfId
         AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
