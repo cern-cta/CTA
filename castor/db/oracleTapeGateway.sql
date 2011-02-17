@@ -224,7 +224,7 @@ BEGIN
        SET T.lastvdqmpingtime = gettime(),
            T.starttime        = gettime(),
            T.vdqmvolreqid     = inVdqmId,
-           T.Status           = tconst.TAPE_WAITDRIVE
+           T.Status           = tconst.TAPE_WAITDRIVE,
            T.dgn              = inDgn,
            T.label            = inLabel,
            T.density          = inDensity
@@ -261,7 +261,7 @@ BEGIN
           'Wrong type of tape found for stream:'||varStreamId||' tape:'||
           varTp.Id||' TpMode:'||varTp.TpMode);
       END IF;
-      varTp.Status          := tconst.TAPE_ATTACHEDTOSTREAM
+      varTp.Status          := tconst.TAPE_ATTACHEDTOSTREAM;
       varTp.dgn             := inDgn;
       varTp.label           := inLabel;
       varTp.density         := inDensity;
@@ -312,7 +312,7 @@ BEGIN
        SET T.Stream = inStrIds(i),
            T.Status = tconst.TAPE_WAITDRIVE,
            T.lastFseq = inStartfseqs(i)
-     WHERE T.tpmode= tconst.TP_MODE_WRITE
+     WHERE T.tpmode= tconst.TPMODE_WRITE
        AND T.vid=inTapeVids(i)
     RETURNING T.Id INTO varTapeId;
     -- If there was indeed no tape, just create it.
@@ -324,13 +324,13 @@ BEGIN
         SELECT ids_seq.nextval INTO varTape.id FROM DUAL;
         varTape.vid       := inTapeVids(i);
         varTape.side      := 0;
-        varTape.tpMode    := tconst.TP_MODE_WRITE;
+        varTape.tpMode    := tconst.TPMODE_WRITE;
         varTape.errMsgTxt := NULL;
         varTape.errorCode := 0;
         varTape.severity  := 0;
         varTape.vwaddress := NULL;
         varTape.stream    := inStrIds(i);
-        varTape.status    := tconst.TAPE_WAITDRIVE
+        varTape.status    := tconst.TAPE_WAITDRIVE;
         varTape.lastFseq  := inStartfseqs(i);
         INSERT INTO Tape T
         VALUES varTape RETURNING T.id into varTapeId;
@@ -342,7 +342,7 @@ BEGIN
         UPDATE Tape T
            SET T.Stream = inStrIds(i),
                T.Status = tconst.TAPE_WAITDRIVE
-         WHERE T.tpmode = tconst.TP_MODE_WRITE
+         WHERE T.tpmode = tconst.TPMODE_WRITE
            AND T.vid = inTapeVids(i)
         RETURNING T.id INTO varTapeId;
       END;
@@ -903,7 +903,7 @@ BEGIN
            INTO varDiskServerId, outDiskServerName, outMountPoint, varFileSystemId, outPath, outDCI, 
                 outCastorFileId, outNsFileId, outNsHost, outFileSize, outTapeCopyId, outLastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(DK.status, 10, DK.status, NULL) = dconst.DISKCOPY_CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = dconst.DISKCOPY_CANBEMIGR
           -- 10 = dconst.DISKCOPY_CANBEMIGR. Has to be kept as a hardcoded number in order to use a function-based index.
             AND D.filesystem = f.fileSystemId
             AND StT.parent = inStreamId
@@ -1401,7 +1401,7 @@ BEGIN
      SELECT SRR.repackvid INTO outRepackVid
        FROM SubRequest sR, StageRepackRequest SRR
       WHERE SRR.id = SR.request
-        AND sR.status = dconat.SUBREQUEST_REPACK
+        AND sR.status = dconst.SUBREQUEST_REPACK
         AND sR.castorFile = varCfId
         AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
