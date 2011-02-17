@@ -307,7 +307,7 @@ sub deleteDenMaps {
     }
 
     &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
+      "2>&1 $clients->{vmgrlistdenmap}{$clientVer} | sort -k 3",
       $expectedOutputString);
   }
 }
@@ -1179,27 +1179,6 @@ my $density            = "";
 my $dgn                = "";
 my $i                  = 0;
 
-#print("\n");
-#print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
-#for($i=0; $i<200; $i++) {
-#  if($i < 10) {
-#    $density = "DEN00$i";
-#  } elsif($i < 100) {
-#    $density = "DEN0$i";
-#  } else {
-#    $density = "DEN$i";
-#  }
-#
-#  print("density=$density\n");
-#
-#  $denMaps{$density} =
-#    {
-#      ml => "T",
-#      mo => "T10000",
-#      tb => 5
-#    };
-#}
-
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
 
@@ -1286,6 +1265,25 @@ for $vid (sort keys %tapes) {
   print("cmdResultStr=\"$cmdResultStr\"\n");
   die "$vid contains production files"
     unless $cmdResultStr eq "$vid: No such volume or no files found";
+}
+
+print("\n");
+print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
+for($i=0; $i<200; $i++) {
+  if($i < 10) {
+    $density = "DEN00$i";
+  } elsif($i < 100) {
+    $density = "DEN0$i";
+  } else {
+    $density = "DEN$i";
+  }
+
+  $denMaps{$density} =
+    {
+      ml => "T",
+      mo => "T10000",
+      tb => 5
+    };
 }
 
 print("\n");
