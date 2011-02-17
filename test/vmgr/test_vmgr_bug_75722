@@ -1,5 +1,17 @@
 #!/bin/perl -w
 
+# Output taken from printlistpackingfactors which prints the number items
+# that must be exceeded in each of the vmgr list types in order to better test
+# the underlying vmgr-list TCP/IP protocols
+#
+# denmap_maxnbentries  = 123
+# dgnmap_maxnbentries  = 172
+# library_maxnbentries = 165
+# model_maxnbentries   = 247
+# pool_maxnbentries    = 99
+# tape32_maxnbentries  = 22
+# tape64_maxnbentries  = 21
+
 use strict;
 
 use DBI;
@@ -251,7 +263,7 @@ sub enterDenMaps {
     }
 
     &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlistdenmap}{$clientVer}",
+      "2>&1 $clients->{vmgrlistdenmap}{$clientVer} | sort -k 3",
       $expectedOutput);
   }
 }
@@ -360,6 +372,80 @@ sub deleteDgnMaps {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
       $expectedOutputString);
+  }
+}
+
+sub enterPools {
+  my ($clients, $pools, $clientVer) = (shift, shift, shift);
+
+  my $pool                      = "";
+  my $expectedSingleEntryOutput = "";
+  my $expectedListOutput        = "";
+
+  for $pool (sort keys %$pools) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrenterpool}{$clientVer}" .
+      " --user $pools->{$pool}{user} --group $pools->{$pool}{group}" .
+      " --name $pool",
+      "");
+
+    $expectedSingleEntryOutput =
+      "$pool    $pools->{$pool}{user}    $pools->{$pool}{group}     CAPACITY" .
+      "         0B FREE         0B (  0.0%)";
+
+    if($expectedListOutput ne "") {
+      $expectedListOutput = $expectedListOutput . "\n";
+    }
+
+    $expectedListOutput = $expectedListOutput . $expectedSingleEntryOutput;
+
+    &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+    $expectedListOutput);
+    # vmgrlistpool uses a different protocol with the -P option than without
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $pool",
+      $expectedSingleEntryOutput);
+  }
+}
+
+sub deletePools {
+  my ($clients, $pools, $clientVer) = (shift, shift, shift);
+
+  my @expectedOutputArray;
+  my $expectedOutputString = "";
+  my $pool                 = "";
+
+  for $pool (sort keys %$pools) {
+    push(@expectedOutputArray,
+      "$pool    $pools->{$pool}{user}    $pools->{$pool}{group}     CAPACITY" .
+      "         0B FREE         0B (  0.0%)");
+  }
+
+  for $pool (sort keys %$pools) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrdeletepool}{$clientVer} --name $pool", "");
+
+    shift(@expectedOutputArray);
+
+    $expectedOutputString = "";
+    for (@expectedOutputArray) {
+      if($expectedOutputString ne "") {
+        $expectedOutputString = $expectedOutputString . "\n";
+      }
+      $expectedOutputString = $expectedOutputString . $_;
+    }
+
+    # Need to test vmgrlistpool with and without the -P option as a
+    # different part of the client/vmgrd protocol is used in the two cases
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+      $expectedOutputString);
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $pool",
+      "vmgrlistpool $pool: No such pool");
   }
 }
 
@@ -504,16 +590,16 @@ sub enterTapes {
     }
 
     &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlisttape}{$clientVer}", $expectedOutput);
+      "2>&1 $clients->{vmgrlisttape}{$clientVer} | sort", $expectedOutput);
 
     if($totalTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY $paddedTotal" .
         " FREE $paddedTotal (100.0%)");
     }
@@ -592,7 +678,7 @@ sub deleteTapes {
     }
 
     &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrlisttape}{$clientVer}",
+      "2>&1 $clients->{vmgrlisttape}{$clientVer} | sort",
       $expectedListTapeOutputString);
 
     &testRunCmdAsOutput("root",
@@ -601,17 +687,17 @@ sub deleteTapes {
 
     if($remainingTb == 0) {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY         0B" .
         " FREE         0B (  0.0%)");
     } elsif($remainingTb == 1 and $clientVer eq "oldVer") {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
         " FREE 1024.00GiB (100.0%)");
     } else {
       &testRunCmdAsOutput("root",
-        "2>&1 $clients->{vmgrlistpool}{$clientVer}",
+        "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY $paddedTotal" .
         " FREE $paddedTotal (100.0%)");
     }
@@ -704,14 +790,22 @@ sub enableTape {
 }
 
 sub enterMetadata {
-  my ($clients, $libraries, $models, $denMaps, $dgnMaps, $tapes, $clientVer) =
-     (   shift,      shift,   shift,    shift,    shift,  shift,      shift);
+  my $clients   = $_[0];
+  my $libraries = $_[1];
+  my $models    = $_[2];
+  my $denMaps   = $_[3];
+  my $dgnMaps   = $_[4];
+  my $pools     = $_[5];
+  my $tapes     = $_[6];
+  my $clientVer = $_[7];
 
   my @vids           = sort keys %$tapes;
   my $nbTapes        = @vids;
   my $expectedOutput = "";
   my $i              = 0;
   my $vid            = "";
+  my @poolNames      = sort keys %$pools;
+  my $pool           = "";
 
   print("\n");
   print("ENTERING LIBRARIES FOR THE FIRST TIME\n");
@@ -769,60 +863,39 @@ sub enterMetadata {
   print("ENTERING DGNMAPS FOR THE SECOND TIME\n");
   &enterDgnMaps($clients, $dgnMaps, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterpool}{$clientVer}" .
-    " --group st --name stager_dev04 --user stage",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-    "stager_dev04    stage    st     CAPACITY" .
-    "         0B FREE         0B (  0.0%)");
-  # vmgrlistpool uses a different protocol with the -P option than without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-    "stager_dev04    stage    st     CAPACITY" .
-    "         0B FREE         0B (  0.0%)");
+  print("\n");
+  print("ENTERING POOLS FOR THE FIRST TIME\n");
+  &enterPools($clients, $pools, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrdeletepool}{$clientVer} --name stager_dev04",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-    "");
-  # vmgrlistpool uses a different protocol with the -P option than without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-    "vmgrlistpool stager_dev04: No such pool");
+  print("\n");
+  print("DELETING POOLS\n");
+  &deletePools($clients, $pools, $clientVer);
 
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrenterpool}{$clientVer}" .
-    " --group st --name stager_dev04 --user stage",
-    "");
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-    "stager_dev04    stage    st     CAPACITY" .
-    "         0B FREE         0B (  0.0%)");
-  # vmgrlistpool uses a different protocol with the -P option than without
-  &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer} -P stager_dev04",
-    "stager_dev04    stage    st     CAPACITY" .
-    "         0B FREE         0B (  0.0%)");
+  print("\n");
+  print("ENTERING POOLS FOR THE SECOND TIME\n");
+  &enterPools($clients, $pools, $clientVer);
 
+  print("\n");
+  print("MODIFYING FIRST POOL\n");
+  $pool = $poolNames[0];
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifypool}{$clientVer}" .
-    " --name stager_dev04 --user root --group root",
+    " --name $pool --user root --group root",
     "");
   &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-    "stager_dev04    -        -      CAPACITY" .
+    "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $pool",
+    "$pool    -        -      CAPACITY" .
     "         0B FREE         0B (  0.0%)");
 
+  print("\n");
+  print("REVERTING FIRST POOL\n");
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifypool}{$clientVer}" .
-    " --name stager_dev04 --user stage --group st");
+    " --user $pools->{$pool}{user} --group $pools->{$pool}{group}" .
+    " --name $pool");
   &testRunCmdAsOutput("root",
-    "2>&1 $clients->{vmgrlistpool}{$clientVer}",
-    "stager_dev04    stage    st     CAPACITY" .
+    "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $pool",
+    "$pool    $pools->{$pool}{user}    $pools->{$pool}{group}     CAPACITY" .
     "         0B FREE         0B (  0.0%)");
 
   print("\n");
@@ -846,6 +919,8 @@ sub enterMetadata {
   $vid = $vids[$nbTapes - 1];
   &enableTape($clients, $denMaps, $tapes, $vid, $clientVer);
 
+  print("\n");
+  print("TESING SETTAG, GETTAG AND DELTAG\n");
   # Set the tag text of the second tape
   $vid = $vids[1];
   &testRunCmdAsOutput("root",
@@ -860,7 +935,7 @@ sub enterMetadata {
     "$clients->{vmgrdeltag}{$clientVer} -V $vid", "");
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrgettag}{$clientVer} -V $vid",
-    "I10486: No such file or directory");
+    "$vid: No such file or directory");
 }
 
 sub embedMsgAsCStrIntoFile {
@@ -948,6 +1023,16 @@ my %dgnMaps = (
   "T10C6B" => {
     mo      => "T10000",
     library => "SL8600_C"
+  }
+);
+my %pools = (
+  stager_dev03 => {
+    user  => "stage",
+    group => "st"
+  },
+  stager_dev04 => {
+    user  => "stage",
+    group => "st"
   }
 );
 my %tapes = (
@@ -1090,8 +1175,30 @@ my $status             = 0;
 my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
+my $density            = "";
 my $dgn                = "";
 my $i                  = 0;
+
+#print("\n");
+#print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
+#for($i=0; $i<200; $i++) {
+#  if($i < 10) {
+#    $density = "DEN00$i";
+#  } elsif($i < 100) {
+#    $density = "DEN0$i";
+#  } else {
+#    $density = "DEN$i";
+#  }
+#
+#  print("density=$density\n");
+#
+#  $denMaps{$density} =
+#    {
+#      ml => "T",
+#      mo => "T10000",
+#      tb => 5
+#    };
+#}
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -1182,12 +1289,12 @@ for $vid (sort keys %tapes) {
 }
 
 print("\n");
-print("ADDING 100 NON-EXISTANT TAPES WITH VIDS OF THE FORM STEVxx\n");
+print("ADDING 100 NON-EXISTANT TAPES TO TEST DATA-STRUCTURES\n");
 for($i=0; $i<100; $i++) {
   if($i < 10) {
-    $vid = "STEV0$i";
+    $vid = "DUMT0$i";
   } else {
-    $vid = "STEV$i";
+    $vid = "DUMT$i";
   }
 
   $tapes{$vid} = {
@@ -1242,8 +1349,8 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 
-&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%tapes,
-  "oldVer");
+&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%pools,
+  \%tapes, "oldVer");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
@@ -1268,8 +1375,8 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
-&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%tapes,
-  "newVer");
+&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%pools,
+  \%tapes, "newVer");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");
