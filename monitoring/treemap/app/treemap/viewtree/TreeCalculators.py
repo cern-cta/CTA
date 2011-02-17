@@ -141,6 +141,10 @@ class SquaredTreemapCalculator(object):
         sqwidthold = 0;
         
         avgratio = 0.0
+        avgratioahead = 0.0
+        includeoverflow = False
+        max_value_in_strip = 0.0
+        min_value_in_strip = 1.0
         
         for child in children:
             
@@ -153,6 +157,8 @@ class SquaredTreemapCalculator(object):
             sqwidth = math.sqrt(area) #in best case you wish to have a square, so calculate the dimension of the ideal square
             
             if squareoverflowdecision:
+                if child.evaluate() > max_value_in_strip: max_value_in_strip = child.evaluate()
+                if child.evaluate() < min_value_in_strip: min_value_in_strip = child.evaluate()
                 #if slicing of the stripe is vertical, don't add the overflow value to the next line_collection, but to the current one
                 #in that way there will be higher probability for width > height, which enables to display more horizontal text
                 #vertical text is considered less user friendly and is therefore not implemented
@@ -162,24 +168,38 @@ class SquaredTreemapCalculator(object):
                 includetrigger = (includeoverflowold == False) and (includeoverflow == True) and optimizefortxt
                 
                 #optimize by detecting big size differences if the incoming values are sorted
-                bigdifftrigger = sqwidthold/sqwidth > 1.5
-                if sorted == False: bigdifftrigger = False 
+                #bigdifftrigger = sqwidthold/sqwidth > 1.5
+                #if sorted == False: bigdifftrigger = False 
+                bigdifftrigger = False
+                if min_value_in_strip > 0: bigdifftrigger = math.sqrt(max_value_in_strip)/math.sqrt(min_value_in_strip) > 12.0
+                
                 stopdecision = (((linesum + sqwidth) > linelen) and not includetrigger) or bigdifftrigger
             else:
+                if child.evaluate() > max_value_in_strip: max_value_in_strip = child.evaluate()
+                if child.evaluate() < min_value_in_strip: min_value_in_strip = child.evaluate()
+                bigdifftrigger = False
+                if min_value_in_strip > 0: bigdifftrigger = math.sqrt(max_value_in_strip)/math.sqrt(min_value_in_strip) > 12.0
                 
                 avgratioahead = self.calcAvgRatio(line_collection, percentagesum, pixels, linelen, child)
                 
                 if avgratio >= 1.0 or avgratioahead >= 1.0:
                     stopdecision = True
-                    if (math.fabs(1-avgratio)>math.fabs(1-avgratioahead)):
-                        stopdecision = False
-                    elif (avgratio <= 1.0 and avgratioahead >= 1.0) and optimizefortxt and direction == VERTICAL:
-                        stopdecision = False
+                    
+                    if not optimizefortxt:
+                        if (math.fabs(1-avgratio)>math.fabs(1-avgratioahead)):#if next average ratio better
+                            stopdecision = False
+                    else:
+                        if (math.fabs(1-avgratio)>math.fabs(1-avgratioahead)):#if next average ratio better
+                            stopdecision = False
+                            
+                        if (avgratio <= 1.0 and avgratioahead >= 1.0) and (direction == VERTICAL) and not bigdifftrigger:#if text optimazation on, vertical and passing 1.0
+                            stopdecision = False
+                        
+                        if (avgratio <= 1.0 and avgratioahead >= 1.0) and (direction == HORIZONTAL):#if text optimazation on, horizontal and passing 1.0
+                            stopdecision = True
                         
                 else:
                     stopdecision = False
-                
-                includeoverflow = False
                 
             #if collecting items for current line is completed, because the next addition would go over the border
             #add all items to TreeView except of the current overflow one
@@ -275,6 +295,8 @@ class SquaredTreemapCalculator(object):
                 line_collection = [] #clear the children list for new line
                 line_collection.append(child) #add the remaining child
                 avgratio = self.calcAvgRatio(line_collection, percentagesum, pixels, linelen)
+                max_value_in_strip = child.evaluate()
+                min_value_in_strip = max_value_in_strip
                 
                 nblines = nblines + 1 #counts the number of lines 
                 

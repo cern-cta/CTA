@@ -47,6 +47,10 @@ radiallight {'brightness': b, 'hue':h, 'opacity': o } - defines brightness, hue 
 @author: kblaszcz
 '''
 
+generation_props = {
+                    
+}
+
 class PropertiesBase(object):
     '''
     classdocs

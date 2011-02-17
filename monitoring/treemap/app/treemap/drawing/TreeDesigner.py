@@ -174,6 +174,9 @@ class SquaredTreemapDesigner(object):
          
         try:   
             h = self.metricslinkage.getLinkedValue('radiallight.hue', vnode)
+            if(h is None):
+                fillc = vnode.getProperty('fillcolor')
+                h,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
         except:
             h = random.random()
             

@@ -22,7 +22,7 @@ from app.presets.options.OptionsReader import OptionsReader
 from app.presets.options.SpinnerOption import SpinnerOption
 from app.dirs.models import *
 from app.tools.GarbageDeleters import deleteOldImageFiles, deleteOldStatusFiles
-from app.tools.Inspections import *
+from app.tools.Inspections import getAvailableModels, getDefaultNumberOfLevels
 from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -39,6 +39,7 @@ import re
 import app.presets
 import time
 import app.dirs.urls
+import app.algorithmstudy.Analysis
 
 
 
@@ -49,7 +50,10 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False): 
+    
+#    app.algorithmstudy.Analysis.doMeasurements()
+     
     cleanGarbageFilesRandomly(60*60*24*5, 10)
     print options
     time = datetime.datetime.now()

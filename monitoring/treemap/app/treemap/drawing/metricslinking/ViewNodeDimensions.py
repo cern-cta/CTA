@@ -118,7 +118,10 @@ class FileExtensionDimension(ViewNodeDimensionBase):
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
         modelinstance = tnode.getProperty('treenode').getObject()
-        ret = self.translation.translate(modelinstance, self.attrname)/float(self.translation.max)
+        try:
+            ret = self.translation.translate(modelinstance, self.attrname)/float(self.translation.max)
+        except:
+            return None
         return ret
     
 class DirToolTipDimension(ViewNodeDimensionBase):

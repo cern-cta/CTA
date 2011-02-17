@@ -19,7 +19,6 @@ class AttributeTranslatorInterface(object):
     def translate(self, modelinstance, attrname):
         raise Exception("implementation of translate() not found")
 
-#untested
 class FileExtensionTranslator(AttributeTranslatorInterface):
 
     def __init__(self, min = 0, max = 29):
@@ -33,7 +32,7 @@ class FileExtensionTranslator(AttributeTranslatorInterface):
     def translate(self, modelinstance, attrname):
         try:
             ext = self.findExtension(modelinstance.__dict__[attrname])
-            if(ext == ''): return int(random.random()*(self.max-self.min))
+            if(ext == ''): return None
         except KeyError:
             raise Exception("attribute doesn't exist")
         
@@ -56,6 +55,33 @@ class FileExtensionTranslator(AttributeTranslatorInterface):
             significant = ((c&23)|((c&16)>>1))&15
             hash = hash + significant << (idx*4)
         return hash
+    
+class isFileTranslator(AttributeTranslatorInterface):
+
+    def __init__(self, min = 0, max = 29):
+        AttributeTranslatorInterface.__init__(self)
+        if max < min: max, min = min, max
+        self.max = max
+        self.min = min
+
+    def translate(self, modelinstance, attrname):
+        try:
+            ext = self.findExtension(modelinstance.__dict__[attrname])
+            if(ext == ''): 
+                return 0.0 
+        except KeyError:
+            raise Exception("attribute doesn't exist")
+        
+        if not ((type(ext).__name__ == 'str') or (type(ext).__name__ == 'unicode')):
+            raise Exception("string or unicode expected")
+        return 1.0
+
+    def findExtension(self, text):
+        dot = string.rfind(text, '.')
+        if dot < 0 or (len(text)-dot)>16: 
+            return ''
+        else:
+            return text[dot+1:]
 
     
 class SaturatedLinearTranslator(AttributeTranslatorInterface):
