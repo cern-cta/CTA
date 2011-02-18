@@ -1397,6 +1397,12 @@ my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
 my $dgn                = "";
+my $nbDummyLibraries   = 1000; # Was 200
+my $nbDummyModels      = 1000; # Was 300
+my $nbDummyDenMaplets  = 1000; # Was 200
+my $nbDummyDgnMaplets  = 1000; # Was 200
+my $nbDummyPools       = 1000; # Was 200
+my $nbDummyTapes       = 1000; # Was 100
 my $i                  = 0;
 
 # Abort if the user is not root
@@ -1488,28 +1494,29 @@ for $vid (sort keys %tapes) {
 }
 
 print("\n");
-print("ADDING 200 DUMMY LIBRARIES TO TEST DATA-STRUCTURES\n");
-&addDummyLibraries(\%libraries, 200);
+print("ADDING $nbDummyLibraries DUMMY LIBRARIES TO TEST DATA-STRUCTURES\n");
+&addDummyLibraries(\%libraries, $nbDummyLibraries);
 
 print("\n");
-print("ADDING 300 DUMMY MODELS TO TEST DATA-STRUCTURES\n");
-&addDummyModels(\%models, 300);
+print("ADDING $nbDummyModels DUMMY MODELS TO TEST DATA-STRUCTURES\n");
+&addDummyModels(\%models, $nbDummyModels);
 
 print("\n");
-print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
-&addDummyDenMaplets(\%denMap, 200);
+print("ADDING $nbDummyDenMaplets DUMMY DENSITY MAPLETS TO TESTi" .
+  " DATA-STRUCTURES\n");
+&addDummyDenMaplets(\%denMap, $nbDummyDenMaplets);
 
 print("\n");
-print("ADDING 200 DUMMY DGNMAPS TO TEST DATA-STRUCTURES\n");
-&addDummyDgnMaplets(\%dgnMap, 200);
+print("ADDING $nbDummyDgnMaplets DUMMY DGN MAPLETS TO TEST DATA-STRUCTURES\n");
+&addDummyDgnMaplets(\%dgnMap, $nbDummyDgnMaplets);
 
 print("\n");
-print("ADDING 200 DUMMY POOLS TO TEST DATA-STRUCTURES\n");
-&addDummyPools(\%pools, 200);
+print("ADDING $nbDummyPools DUMMY POOLS TO TEST DATA-STRUCTURES\n");
+&addDummyPools(\%pools, $nbDummyPools);
 
 print("\n");
-print("ADDING 100 DUMMY TAPES TO TEST DATA-STRUCTURES\n");
-&addDummyTapes(\%tapes, 100);
+print("ADDING $nbDummyTapes DUMMY TAPES TO TEST DATA-STRUCTURES\n");
+&addDummyTapes(\%tapes, $nbDummyTapes);
 
 # Abort if the new vmgr clients do not get refused by the old production vmgr
 print("\n");
