@@ -3,7 +3,6 @@ from app.dirs.models import *
 from app.dirs.views import getRootObjectForTreemap, getDefaultMetricsLinking
 from app.errors import NoDataAvailableError
 from app.presets.options.OptionsReader import OptionsReader
-from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from app.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from app.treemap.objecttree.Annex import Annex
@@ -18,21 +17,21 @@ import os
 def doMeasurements():
     try:
         measurements = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0}
-        #generateTreemap('time=15.02.2011_15:26:26, span=1400, optitext=false',23,'Requestscms', '/castor', measurements)
+        generateTreemap('optitext=false',1,'Dirs', '/castor', measurements)
         
         measurementswithoptitext = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0}
-        generateTreemap('time=15.02.2011_15:26:26, span=1400, optitext=true',23,'Requestscms', '/castor', measurementswithoptitext)
+        generateTreemap('optitext=true',1,'Dirs', '/castor', measurementswithoptitext)
         
-#        print "WITHOUT: ", measurements
-#        print "avg ratio: ", float(measurements['ratio'])/float(measurements['treemapcount'])
-#        print "avg nb without text: ", float(measurements['notextcount'])/float(measurements['treemapcount'])
-#        print "avg nb with broken text: ", float(measurements['brokentextcount'])/float(measurements['treemapcount'])
-#        print "avg nb with full text: ", float(measurements['fulltextcount'])/float(measurements['treemapcount'])
-#        print "avg total nb letters full text: ", float(measurements['fulltextletters'])/float(measurements['treemapcount'])
-#        print "avg total nb letters broken text: ", float(measurements['brokentextletters'])/float(measurements['treemapcount'])
-#        print "nb letters per one full text: ", (float(measurements['fulltextletters'])/float(measurements['fulltextcount']))
-#        print "nb letters per one broken text: ", (float(measurements['brokentextletters'])/float(measurements['brokentextcount']))
-#        print "total number letters per treemap: ", float(measurements['brokentextletters'] + measurements['fulltextletters'])/float(measurements['treemapcount'])
+        print "WITHOUT: ", measurements
+        print "avg ratio: ", float(measurements['ratio'])/float(measurements['treemapcount'])
+        print "avg nb without text: ", float(measurements['notextcount'])/float(measurements['treemapcount'])
+        print "avg nb with broken text: ", float(measurements['brokentextcount'])/float(measurements['treemapcount'])
+        print "avg nb with full text: ", float(measurements['fulltextcount'])/float(measurements['treemapcount'])
+        print "avg total nb letters full text: ", float(measurements['fulltextletters'])/float(measurements['treemapcount'])
+        print "avg total nb letters broken text: ", float(measurements['brokentextletters'])/float(measurements['treemapcount'])
+        print "nb letters per one full text: ", (float(measurements['fulltextletters'])/float(measurements['fulltextcount']))
+        print "nb letters per one broken text: ", (float(measurements['brokentextletters'])/float(measurements['brokentextcount']))
+        print "total number letters per treemap: ", float(measurements['brokentextletters'] + measurements['fulltextletters'])/float(measurements['treemapcount'])
         
         print "WITH: ", measurementswithoptitext
         print "avg ratio: ", float(measurementswithoptitext['ratio'])/float(measurementswithoptitext['treemapcount'])
@@ -47,10 +46,9 @@ def doMeasurements():
         
     except NoDataAvailableError:
         print "No data"
-    
-    print measurements
 
-def generateTreemap(options, presetid, rootmodel, theid, measurements):  
+def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0):  
+    if count == 1000: return
     print measurements
     print options
     time = datetime.datetime.now()
@@ -158,6 +156,6 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements):
     for child in children:
         if not isinstance( child.getProperty('treenode').getObject(), Annex):
             if child.getProperty('treenode').getObject().countChildren() > 0:
-                generateTreemap(options, presetid, child.getProperty('treenode').getObject().getClassName(), child.getProperty('treenode').getObject().getIdReplacement(), measurements)
+                generateTreemap(options, presetid, child.getProperty('treenode').getObject().getClassName(), child.getProperty('treenode').getObject().getIdReplacement(), measurements, count+1)
             
     del tree

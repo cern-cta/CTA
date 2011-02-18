@@ -175,7 +175,9 @@ class Dirs(models.Model, ModelInterface):
             f = list(f)
         
         return d+f
-
+    
+    def countChildren(self):
+        return self.getFilesAndDirectories()
     
     def getFilesOf(self, id):
         prnt = Dirs.objects.get(pk=id)
@@ -258,7 +260,6 @@ class CnsFileMetadata(models.Model, ModelInterface):
         return models.Model.__hash__(self)
     
     def countChildren(self):
-        print "countChildren for files"
         return 0
     
     def getChildren(self):

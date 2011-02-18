@@ -47,8 +47,18 @@ radiallight {'brightness': b, 'hue':h, 'opacity': o } - defines brightness, hue 
 @author: kblaszcz
 '''
 
-generation_props = {
-                    
+treemap_props = {
+'pxwidth': 800, #width
+'pxheight': 600, #height
+'objecttree': None,
+'viewtree': None,    
+'captionsize': 12.0,#headersize
+'spacesize': 3.0,
+'minspacesize': 1.0,
+'inbordersize': 0.0,
+'captionfontsize': 12.0, #headerfontsize
+'radiallightbrightness': 0.4,
+'captiontextisbold': True #headertextisbold
 }
 
 class PropertiesBase(object):

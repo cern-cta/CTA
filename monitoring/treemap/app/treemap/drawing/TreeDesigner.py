@@ -169,13 +169,13 @@ class SquaredTreemapDesigner(object):
     def setRadialLight(self, vnode):
         try:
             fillc = vnode.getProperty('fillcolor')
-            sensitivityfactor = 8.0
+            sensitivityfactor = 7.0
             human_eye_sensitivity = ((0.299*fillc['r'] + 0.114 * fillc['b'] + 0.587 * fillc['g'])/3) * sensitivityfactor
         except:
             human_eye_sensitivity = 1.0
         
         try:
-            b = self.metricslinkage.getLinkedValue('radiallight.brightness', vnode)
+            b = self.metricslinkage.getLinkedValue('radiallight.brightness', vnode)* human_eye_sensitivity
         except:
             b = human_eye_sensitivity*self.radiallightbrightness
          
@@ -184,6 +184,14 @@ class SquaredTreemapDesigner(object):
             if(h is None):
                 fillc = vnode.getProperty('fillcolor')
                 h,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
+            else:
+                fillc = vnode.getProperty('fillcolor')
+                ch,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
+                if(math.fabs(ch-h)) < 0.1: h=1.0-h
+                red,green,blue = hsvToRgb(h,s,v)
+                b = b/human_eye_sensitivity #remove old sensitivity
+                human_eye_sensitivity = ((0.299*red + 0.114 * blue + 0.587 * green)/3) * sensitivityfactor
+                b = b*self.radiallightbrightness #calculate with the new sensitivity
         except:
             h = random.random()
             
