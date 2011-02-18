@@ -2267,10 +2267,21 @@ BEGIN
     -- try to find an existing file and lock it
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-    -- update lastAccessTime
+    -- update lastAccessTime and lastKnownFileName.
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
+    -- check and fix files that would already use our new name, as they
+    -- have obviously changed name in the meantime. We do not know their new
+    -- name so we use their castorfile id
+    -- Note that this takes a lock on another row of the CastorFile table and
+    -- thus can create a dead lock in theory. In practice, this will happen very
+    -- rarely and on top, a dead lock would need that the same two files are
+    -- concurrently cross renamed. It is so unlikely to happen that this
+    -- problem has not been handled
+    UPDATE /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ CastorFile
+       SET lastKnownFileName = TO_CHAR(id)
+     WHERE id <> rid AND lastKnownFileName = normalizePath(fn);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,

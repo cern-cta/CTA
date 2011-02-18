@@ -156,6 +156,11 @@ BEGIN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   -- Get older castorFiles with the same name and drop their lastKnownFileName
+  -- Note that this takes a lock on another row of the CastorFile table and
+  -- thus can create a dead lock in theory. In practice, this will happen very
+  -- rarely and on top, a dead lock would need that the same two files are
+  -- concurrently cross renamed. It is so unlikely to happen that this
+  -- problem has not been handled
   UPDATE /*+ INDEX (CastorFile) */ CastorFile
      SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
