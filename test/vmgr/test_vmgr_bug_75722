@@ -235,31 +235,31 @@ sub deleteModels {
 }
 
 sub enterDenMaps {
-  my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
+  my ($clients, $denMap, $clientVer) = (shift, shift, shift);
 
   my $density        = "";
   my $paddedModel    = "";
   my $expectedOutput = "";
 
-  for $density (sort keys %$denMaps) {
+  for $density (sort keys %$denMap) {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrenterdenmap}{$clientVer}" .
-      " -d $density --ml $denMaps->{$density}{ml}" .
-      " --mo $denMaps->{$density}{mo} --nc $denMaps->{$density}{tb}T",
+      " -d $density --ml $denMap->{$density}{ml}" .
+      " --mo $denMap->{$density}{mo} --nc $denMap->{$density}{tb}T",
       "");
 
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
 
-    $paddedModel = &rPadColumn(6, $denMaps->{$density}{mo});
-    if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+    $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
+    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldVer") {
       $expectedOutput = $expectedOutput .
-        "$paddedModel $denMaps->{$density}{ml}  $density   1024.00Gi";
+        "$paddedModel $denMap->{$density}{ml}  $density   1024.00Gi";
     } else {
       $expectedOutput = $expectedOutput .
-        "$paddedModel $denMaps->{$density}{ml}" .
-        "  $density      $denMaps->{$density}{tb}.00Ti";
+        "$paddedModel $denMap->{$density}{ml}" .
+        "  $density      $denMap->{$density}{tb}.00Ti";
     }
 
     &testRunCmdAsOutput("root",
@@ -269,31 +269,31 @@ sub enterDenMaps {
 }
 
 sub deleteDenMaps {
-  my ($clients, $denMaps, $clientVer) = (shift, shift, shift);
+  my ($clients, $denMap, $clientVer) = (shift, shift, shift);
 
   my @expectedOutputArray;
   my $paddedModel          = "";
   my $expectedOutputString = "";
-  my @densities            = sort keys %$denMaps;
+  my @densities            = sort keys %$denMap;
   my $density              = "";
 
   for $density (@densities) {
-    $paddedModel = &rPadColumn(6, $denMaps->{$density}{mo});
-    if($denMaps->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+    $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
+    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldVer") {
       push(@expectedOutputArray,
-        "$paddedModel $denMaps->{$density}{ml}" .
+        "$paddedModel $denMap->{$density}{ml}" .
         "  $density   1024.00Gi");
     } else {
       push(@expectedOutputArray,
-        "$paddedModel $denMaps->{$density}{ml}" .
-        "  $density      $denMaps->{$density}{tb}.00Ti");
+        "$paddedModel $denMap->{$density}{ml}" .
+        "  $density      $denMap->{$density}{tb}.00Ti");
     }
   }
 
   for $density (@densities) {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrdeletedenmap}{$clientVer} -d $density" .
-      " --mo $denMaps->{$density}{mo} --ml $denMaps->{$density}{ml}",
+      " --mo $denMap->{$density}{mo} --ml $denMap->{$density}{ml}",
       "");
 
     shift(@expectedOutputArray);
@@ -313,25 +313,25 @@ sub deleteDenMaps {
 }
 
 sub enterDgnMaps {
-  my ($clients, $dgnMaps, $clientVer) = (shift, shift, shift);
+  my ($clients, $dgnMap, $clientVer) = (shift, shift, shift);
 
   my $dgn            = "";
   my $paddedModel    = "";
   my $expectedOutput = "";
 
-  for $dgn (sort keys %$dgnMaps) {
+  for $dgn (sort keys %$dgnMap) {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrenterdgnmap}{$clientVer}" .
-      " -g $dgn --mo $dgnMaps->{$dgn}{mo} --library $dgnMaps->{$dgn}{library}",
+      " -g $dgn --mo $dgnMap->{$dgn}{mo} --library $dgnMap->{$dgn}{library}",
       "");
 
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
 
-    $paddedModel = &rPadColumn(6, $dgnMaps->{$dgn}{mo});
+    $paddedModel = &rPadColumn(6, $dgnMap->{$dgn}{mo});
     $expectedOutput = $expectedOutput .
-      "$dgn $paddedModel $dgnMaps->{$dgn}{library}";
+      "$dgn $paddedModel $dgnMap->{$dgn}{library}";
 
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlistdgnmap}{$clientVer}",
@@ -340,23 +340,23 @@ sub enterDgnMaps {
 }
 
 sub deleteDgnMaps {
-  my ($clients, $dgnMaps, $clientVer) = (shift, shift, shift);
+  my ($clients, $dgnMap, $clientVer) = (shift, shift, shift);
 
   my @expectedOutputArray;
   my $paddedModel          = "";
   my $expectedOutputString = "";
   my $dgn                  = "";
 
-  for $dgn (sort keys %$dgnMaps) {
-    $paddedModel = &rPadColumn(6, $dgnMaps->{$dgn}{mo});
+  for $dgn (sort keys %$dgnMap) {
+    $paddedModel = &rPadColumn(6, $dgnMap->{$dgn}{mo});
     push(@expectedOutputArray,
-      "$dgn $paddedModel $dgnMaps->{$dgn}{library}");
+      "$dgn $paddedModel $dgnMap->{$dgn}{library}");
   }
 
-  for $dgn (sort keys %$dgnMaps) {
+  for $dgn (sort keys %$dgnMap) {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrdeletedgnmap}{$clientVer}" .
-      " --li $dgnMaps->{$dgn}{library} --mo $dgnMaps->{$dgn}{mo}",
+      " --li $dgnMap->{$dgn}{library} --mo $dgnMap->{$dgn}{mo}",
       "");
 
     shift(@expectedOutputArray);
@@ -544,7 +544,7 @@ sub setStatusOfLibraries {
 }
 
 sub enterTapes {
-  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
+  my ($clients, $denMap, $tapes, $clientVer) = (shift, shift, shift, shift);
 
   my $tapeDensity    = "";
   my $tapeTb         = 0;
@@ -566,7 +566,7 @@ sub enterTapes {
       "");
 
     $tapeDensity = $tapes->{$vid}{d};
-    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $tapeTb      = $denMap->{$tapeDensity}{tb};
     $totalTb     = $totalTb + $tapeTb;
     $paddedTotal = &lPadColumn(10, "$totalTb.00TiB");
 
@@ -620,7 +620,7 @@ sub enterTapes {
 }
 
 sub deleteTapes {
-  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
+  my ($clients, $denMap, $tapes, $clientVer) = (shift, shift, shift, shift);
 
   my @vids        = sort keys %$tapes;
   my $nbTapes     = @vids;
@@ -635,7 +635,7 @@ sub deleteTapes {
 
   for $vid (@vids) {
     $tapeDensity = $tapes->{$vid}{d};
-    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $tapeTb      = $denMap->{$tapeDensity}{tb};
     $totalTb     = $totalTb + $tapeTb;
 
     if($tapeTb == 1 and $clientVer eq "oldVer") {
@@ -665,7 +665,7 @@ sub deleteTapes {
 
     shift(@expectedListTapeOutputArray);
     $tapeDensity = $tapes->{$vid}{d};
-    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $tapeTb      = $denMap->{$tapeDensity}{tb};
     $remainingTb = $remainingTb - $tapeTb;
     $paddedTotal = &lPadColumn(10, "$remainingTb.00TiB");
 
@@ -705,7 +705,7 @@ sub deleteTapes {
 }
 
 sub disableTapes {
-  my ($clients, $denMaps, $tapes, $clientVer) = (shift, shift, shift, shift);
+  my ($clients, $denMap, $tapes, $clientVer) = (shift, shift, shift, shift);
 
   my @vids           = sort keys %$tapes;
   my $vid            = "";
@@ -718,7 +718,7 @@ sub disableTapes {
       "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st DISABLED", "");
 
     $tapeDensity = $tapes->{$vid}{d};
-    $tapeTb      = $denMaps->{$tapeDensity}{tb};
+    $tapeTb      = $denMap->{$tapeDensity}{tb};
 
     if($tapeTb == 1 and $clientVer eq "oldVer") {
       $expectedOutput =
@@ -743,13 +743,13 @@ sub disableTapes {
 }
 
 sub modelAndLibrary2Dgn {
-  my ($dgnMaps, $model, $library) = (shift, shift, shift);
+  my ($dgnMap, $model, $library) = (shift, shift, shift);
 
   my $dgn = "";
 
-  for $dgn (keys %$dgnMaps) {
-    if($dgnMaps->{$dgn}{mo} eq $model and
-      $dgnMaps->{$dgn}{library} eq $library) {
+  for $dgn (keys %$dgnMap) {
+    if($dgnMap->{$dgn}{mo} eq $model and
+      $dgnMap->{$dgn}{library} eq $library) {
       return $dgn;
     }
   }
@@ -758,11 +758,11 @@ sub modelAndLibrary2Dgn {
 }
 
 sub enableTape {
-  my ($clients, $denMaps, $tapes,  $vid, $clientVer) =
+  my ($clients, $denMap, $tapes,  $vid, $clientVer) =
      (   shift,    shift,  shift, shift,      shift);
 
   my $tapeDensity    = $tapes->{$vid}{d};
-  my $tapeTb         = $denMaps->{$tapeDensity}{tb};
+  my $tapeTb         = $denMap->{$tapeDensity}{tb};
   my $expectedOutput = "";
 
   &testRunCmdAsOutput("root",
@@ -793,8 +793,8 @@ sub enterMetadata {
   my $clients   = $_[0];
   my $libraries = $_[1];
   my $models    = $_[2];
-  my $denMaps   = $_[3];
-  my $dgnMaps   = $_[4];
+  my $denMap   = $_[3];
+  my $dgnMap   = $_[4];
   my $pools     = $_[5];
   my $tapes     = $_[6];
   my $clientVer = $_[7];
@@ -841,27 +841,27 @@ sub enterMetadata {
 
   print("\n");
   print("ENTERING DENMAPS FOR THE FIRST TIME\n");
-  &enterDenMaps($clients, $denMaps, $clientVer);
+  &enterDenMaps($clients, $denMap, $clientVer);
 
   print("\n");
   print("DELETING DENMAPS\n");
-  &deleteDenMaps($clients, $denMaps, $clientVer);
+  &deleteDenMaps($clients, $denMap, $clientVer);
 
   print("\n");
   print("ENTERING DENMAPS FOR THE SECOND TIME\n");
-  &enterDenMaps($clients, $denMaps, $clientVer);
+  &enterDenMaps($clients, $denMap, $clientVer);
 
   print("\n");
   print("ENTERING DGNMAPS FOR THE FIRST TIME\n");
-  &enterDgnMaps($clients, $dgnMaps, $clientVer);
+  &enterDgnMaps($clients, $dgnMap, $clientVer);
 
   print("\n");
   print("DELETING DGNMAPS\n");
-  &deleteDgnMaps($clients, $dgnMaps, $clientVer);
+  &deleteDgnMaps($clients, $dgnMap, $clientVer);
 
   print("\n");
   print("ENTERING DGNMAPS FOR THE SECOND TIME\n");
-  &enterDgnMaps($clients, $dgnMaps, $clientVer);
+  &enterDgnMaps($clients, $dgnMap, $clientVer);
 
   print("\n");
   print("ENTERING POOLS FOR THE FIRST TIME\n");
@@ -900,24 +900,24 @@ sub enterMetadata {
 
   print("\n");
   print("ENTERING TAPES FOR THE FIRST TIME\n");
-  &enterTapes($clients, $denMaps, $tapes, $clientVer);
+  &enterTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
   print("DELETING TAPES\n");
-  &deleteTapes($clients, $denMaps, $tapes, $clientVer);
+  &deleteTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
   print("ENTERING TAPES FOR THE SECOND TIME\n");
-  &enterTapes($clients, $denMaps, $tapes, $clientVer);
+  &enterTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
   print("DISABLING TAPES\n");
-  &disableTapes($clients, $denMaps, $tapes, $clientVer);
+  &disableTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
   print("ENABLING LAST TAPE\n");
   $vid = $vids[$nbTapes - 1];
-  &enableTape($clients, $denMaps, $tapes, $vid, $clientVer);
+  &enableTape($clients, $denMap, $tapes, $vid, $clientVer);
 
   print("\n");
   print("TESING SETTAG, GETTAG AND DELTAG\n");
@@ -965,6 +965,27 @@ sub embedMsgAsCStrIntoFile {
   close($fileHandle) or die "Failed to close $fileName: $!";
 }
 
+sub addDummyLibraries {
+  my ($libraries, $nbDummies) = (shift, shift);
+
+  my $i       = 0;
+  my $library = "";
+
+  for($i=0; $i<$nbDummies; $i++) {
+    if($i < 10) {
+      $library = "LIBRA00$i";
+    } elsif($i < 100) {
+      $library = "LIBRA0$i";
+    } else {
+      $library = "LIBRA$i";
+    }
+
+    $libraries->{$library} = {
+      capacity => 6600
+    };
+  }
+}
+
 sub addDummyModels {
   my ($models, $nbDummies) = (shift, shift);
 
@@ -988,7 +1009,7 @@ sub addDummyModels {
 }
 
 sub addDummyDenMaplets {
-  my ($denMaps, $nbDummies) = (shift, shift);
+  my ($denMap, $nbDummies) = (shift, shift);
 
   my $i       = 0;
   my $density = "";
@@ -1002,7 +1023,7 @@ sub addDummyDenMaplets {
       $density = "DEN$i";
     }
 
-    $denMaps->{$density} = {
+    $denMap->{$density} = {
       ml => "T",
       mo => "T10000",
       tb => 5
@@ -1011,7 +1032,7 @@ sub addDummyDenMaplets {
 }
 
 sub addDummyDgnMaplets {
-  my ($dgnMaps, $nbDummies) = (shift, shift);
+  my ($dgnMap, $nbDummies) = (shift, shift);
 
   my $i     = 0;
   my $dgn   = "";
@@ -1029,7 +1050,7 @@ sub addDummyDgnMaplets {
       $model = "M$i";
     }
 
-    $dgnMaps->{$dgn} = {
+    $dgnMap->{$dgn} = {
       mo      => $model,
       library => "IBMLIB1B"
     };
@@ -1066,11 +1087,11 @@ sub addDummyTapes {
 
   for($i=0; $i<$nbDummies; $i++) {
     if($i < 10) {
-      $vid = "DUD00$i";
+      $vid = "TAP00$i";
     } elsif($i < 100) {
-      $vid = "DUD0$i";
+      $vid = "TAP0$i";
     } else {
-      $vid = "DUD$i";
+      $vid = "TAP$i";
     }
 
     $tapes->{$vid} = {
@@ -1113,7 +1134,7 @@ my %models = (
     mc => "200"
   }
 );
-my %denMaps = (
+my %denMap = (
   "1000GC" => {
     ml => "J",
     mo => "3592",
@@ -1130,7 +1151,7 @@ my %denMaps = (
     tb => 5
   }
 );
-my %dgnMaps = (
+my %dgnMap = (
   "359B1B" => {
     mo      => "3592",
     library => "IBMLIB1B"
@@ -1386,16 +1407,20 @@ for $vid (sort keys %tapes) {
 }
 
 print("\n");
+print("ADDING 200 DUMMY LIBRARIES TO TEST DATA-STRUCTURES\n");
+&addDummyLibraries(\%libraries, 200);
+
+print("\n");
 print("ADDING 300 DUMMY MODELS TO TEST DATA-STRUCTURES\n");
 &addDummyModels(\%models, 300);
 
 print("\n");
 print("ADDING 200 DUMMY DENMAPS TO TEST DATA-STRUCTURES\n");
-&addDummyDenMaplets(\%denMaps, 200);
+&addDummyDenMaplets(\%denMap, 200);
 
 print("\n");
 print("ADDING 200 DUMMY DGNMAPS TO TEST DATA-STRUCTURES\n");
-&addDummyDgnMaplets(\%dgnMaps, 200);
+&addDummyDgnMaplets(\%dgnMap, 200);
 
 print("\n");
 print("ADDING 200 DUMMY POOLS TO TEST DATA-STRUCTURES\n");
@@ -1447,7 +1472,7 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 
-&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%pools,
+&enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
   \%tapes, "oldVer");
 
 if(&daemonIsRunning("vmgrd")) {
@@ -1473,13 +1498,13 @@ sleep(1); # Give the vmgrd a chance to get up and running
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
-&enterMetadata(\%clients, \%libraries, \%models, \%denMaps, \%dgnMaps, \%pools,
+&enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
   \%tapes, "newVer");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");
 print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
-$dgn = &modelAndLibrary2Dgn(\%dgnMaps, $tapes{$vids[0]}{mo},
+$dgn = &modelAndLibrary2Dgn(\%dgnMap, $tapes{$vids[0]}{mo},
   $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
   "2>&1 $clients{vmgrquerytape}{oldVer} $vids[0]",
@@ -1498,7 +1523,7 @@ print("CHECKING OLD VMGR_ENTERDENMAP FUNCTION WORKS WITH NEW VMGR\n");
 # Abort if the new vmgr_checktape function does not work with the new vmgr
 print("\n");
 print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
-$dgn = &modelAndLibrary2Dgn(\%dgnMaps, $tapes{$vids[0]}{mo},
+$dgn = &modelAndLibrary2Dgn(\%dgnMap, $tapes{$vids[0]}{mo},
   $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
   "2>&1 $clients{vmgrquerytape}{newVer} $vids[0]",
