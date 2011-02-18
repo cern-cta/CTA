@@ -704,8 +704,9 @@ sub deleteTapes {
   }
 }
 
-sub disableTapes {
-  my ($clients, $denMap, $tapes, $clientVer) = (shift, shift, shift, shift);
+sub setStatusOfTapes {
+  my ($clients, $denMap, $tapes, $status, $clientVer) =
+     (   shift,   shift,   shift,  shift,      shift);
 
   my @vids           = sort keys %$tapes;
   my $vid            = "";
@@ -715,7 +716,8 @@ sub disableTapes {
 
   for $vid (@vids) {
     &testRunCmdAsOutput("root",
-      "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st DISABLED", "");
+      "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st $status",
+      "");
 
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMap->{$tapeDensity}{tb};
@@ -724,22 +726,37 @@ sub disableTapes {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
-        " 00000000 DISABLED";
+        " 00000000 $status";
     } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
-        " 00000000 DISABLED";
+        " 00000000 $status";
     } else {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       $tapeTb.00TiB" .
-        " 00000000 DISABLED";
+        " 00000000 $status";
     }
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlisttape}{$clientVer} -V $vid",
       $expectedOutput);
   }
+}
+
+sub modelAndLibrary2Dgn {
+  my ($dgnMap, $model, $library) = (shift, shift, shift);
+
+  my $dgn = "";
+
+  for $dgn (keys %$dgnMap) {
+    if($dgnMap->{$dgn}{mo} eq $model and
+      $dgnMap->{$dgn}{library} eq $library) {
+      return $dgn;
+    }
+  }
+
+  die "Failed to find DGN for model=\"$model\" and library=\"$library\"\n";
 }
 
 sub modelAndLibrary2Dgn {
@@ -911,8 +928,12 @@ sub enterMetadata {
   &enterTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
+  print("TESTING RECLAIM\n");
+  &testReclaimOnFreeTapes($clients, $denMap, $tapes, $clientVer);
+
+  print("\n");
   print("DISABLING TAPES\n");
-  &disableTapes($clients, $denMap, $tapes, $clientVer);
+  &setStatusOfTapes($clients, $denMap, $tapes, "DISABLED", $clientVer);
 
   print("\n");
   print("ENABLING LAST TAPE\n");
@@ -932,7 +953,7 @@ sub enterMetadata {
   # Delete the tag text of the second tape
   $vid = $vids[1];
   &testRunCmdAsOutput("root",
-    "$clients->{vmgrdeltag}{$clientVer} -V $vid", "");
+    "2>&1 $clients->{vmgrdeltag}{$clientVer} -V $vid", "");
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrgettag}{$clientVer} -V $vid",
     "$vid: No such file or directory");
@@ -1102,6 +1123,63 @@ sub addDummyTapes {
       l   => "aul",
       po  => "stager_dev04"
     };
+  }
+}
+
+sub testReclaimOnFreeTapes {
+  my ($clients, $denMap, $tapes, $clientVer) = (shift, shift, shift, shift);
+
+  my @vids           = sort keys %$tapes;
+  my $vid            = "";
+  my $tapeDensity    = "";
+  my $tapeTb         = 0;
+  my $expectedOutput = "";
+
+  # Try to reclaim a non-existing tape
+  $vid = "NOTAPE";
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{reclaim}{$clientVer} -V $vid",
+    "reclaim $vid: No such volume");
+
+  # Try to reclaim all of the tapes in the vmgr which should not be possible as
+  # none should be full and all should be FREE
+  for $vid (@vids) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{reclaim}{$clientVer} -V $vid",
+      "Volume $vid has status FREE");
+  }
+
+  &setStatusOfTapes($clients, $denMap, $tapes, "FULL", $clientVer);
+
+  # Reclaim all of the tapes in the vmgr which should not be possible as
+  # none should be full and all should be DISABLED
+  for $vid (@vids) {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{reclaim}{$clientVer} -V $vid",
+      "");
+
+    $tapeDensity = $tapes->{$vid}{d};
+    $tapeTb      = $denMap->{$tapeDensity}{tb};
+
+    if($tapeTb == 1 and $clientVer eq "oldVer") {
+      $expectedOutput =
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
+    } elsif ($tapeTb > 2 and $clientVer eq "oldVer") {
+      $expectedOutput =
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       2.00TiB 00000000 ";
+    } else {
+      $expectedOutput =
+        "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+        "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
+        "       $tapeTb.00TiB 00000000 ";
+    }
+
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrlisttape}{$clientVer} -V $vid",
+      $expectedOutput);
   }
 }
 
@@ -1301,7 +1379,10 @@ my %clients = (
     newVer => "/usr/bin/vmgrdeletepool"},
   vmgrdeletetape => {
     oldVer => "$castor_src/test/vmgr/vmgrdeletetape_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletetape"}
+    newVer => "/usr/bin/vmgrdeletetape"},
+  reclaim => {
+    oldVer => "$castor_src/test/vmgr/reclaim_trunk_r21843",
+    newVer => "/usr/bin/reclaim"}
 );
 my $client             = "";
 my @vids               = sort keys %tapes;
