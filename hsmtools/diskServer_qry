@@ -95,8 +95,12 @@ try:
       stcur.execute(stCheckSQL, diskServerName=diskServerName)
       if stcur.fetchone():
         print 'No files found on ' + diskServerName
+        rc = 0
       else:
         print 'Unknown diskserver ' + diskServerName + '. Did you provide a fully qualified name ?'
+        rc = 1
+      castor_tools.disconnectDB(stconn)
+      sys.exit(rc)
     else:
       # print header
       head = ''
