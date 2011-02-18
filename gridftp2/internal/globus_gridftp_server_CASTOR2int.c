@@ -497,10 +497,10 @@ globus_l_gfs_file_net_read_cb(
 		    /* check whether first chunk is missing */
 		    if (checksum_array[0]->offset != 0) {
 		      /* first chunk is missing. Consider it full of 0s */
+		      offset = checksum_array[0]->offset;
 		      file_checksum = adler32_combine_(adler32_0chunks(offset),
 						       checksum_array[0]->csumvalue,
 						       checksum_array[0]->size);
-		      offset = checksum_array[0]->offset;
 		    } else {
 		      file_checksum = checksum_array[0]->csumvalue;
 		    }
