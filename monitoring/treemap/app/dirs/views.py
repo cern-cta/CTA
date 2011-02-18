@@ -40,6 +40,7 @@ import app.presets
 import time
 import app.dirs.urls
 import app.algorithmstudy.Analysis
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 
 
@@ -53,7 +54,10 @@ def redirectHome(request, *args, **kwargs):
 def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False): 
     
 #    app.algorithmstudy.Analysis.doMeasurements()
-     
+    
+    treemap_props_cp = copy.copy(treemap_props)
+#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
+    
     cleanGarbageFilesRandomly(60*60*24*5, 10)
     print options
     time = datetime.datetime.now()
@@ -131,9 +135,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
-        
-    props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
-    tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
+         
+    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -145,14 +148,14 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     start = datetime.datetime.now()
     print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
 #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print "drawing something"
-    drawer = SquaredTreemapDrawer(tree)
+    drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
     
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
@@ -193,6 +196,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     depth = int(depth)
     presetid = int(presetid)
     if options is None: options = ''
+    treemap_props_cp = copy.copy(treemap_props)
+#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
@@ -304,9 +309,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
      
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
-        
-    props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
-    tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
+         
+    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
         
@@ -319,13 +323,13 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     start = datetime.datetime.now()
     print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print "drawing something"
-    drawer = SquaredTreemapDrawer(tree)
+    drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
 
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath

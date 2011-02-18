@@ -20,43 +20,31 @@ nbchildren - number of children the node has (for potential use)
 from app.treemap.viewtree.ViewTree import ViewTree
 import math
 from app.treemap.viewtree.ViewNode import ViewNode
-from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 class SquaredTreemapCalculator(object):
     '''
     classdocs
     '''
-    def __init__(self, otree, basic_properties = None, calc_properties = None):
+    def __init__(self, otree, treemap_props):
         '''
         Constructor
         '''
         self.otree = otree
+        self.treemap_props = treemap_props
+        self.spacesize = self.treemap_props['spacesize']
+        self.minspacesize = self.treemap_props['minspacesize']
+        self.headersize = self.treemap_props['captionsize']
         
-        assert(basic_properties is None or isinstance(basic_properties, BasicViewTreeProps)), "basic_properties wrong"
-        self.basic_properties = basic_properties
-        
-        assert(calc_properties is None or isinstance(calc_properties, ViewTreeCalculationProps)), "calc_properties wrong"
-        self.calc_properties = calc_properties
+        self.treemap_props['objecttree'] = self.otree
         
     def calculate(self, optimizefortxt = False, sorted = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
-        
-        if self.basic_properties is None:
-            self.basic_properties = BasicViewTreeProps()
-        if self.calc_properties is None:
-            self.calc_properties = ViewTreeCalculationProps(basic_properties = self.basic_properties)
-            
-        self.spacesize = self.calc_properties.getProperty('spacesize')
-        self.minspacesize = self.calc_properties.getProperty('minspacesize')
-        self.headersize = self.calc_properties.getProperty('headersize')
-
-        width = self.basic_properties.getProperty('width')
-        height = self.basic_properties.getProperty('height')
+        width = self.treemap_props['pxwidth']
+        height = self.treemap_props['pxheight']
         self.otree.traveseToRoot()
         root = self.otree.getCurrentObject()
-        
-        viewtree = ViewTree(basic_properties = self.basic_properties, calc_properties = self.calc_properties)
-        self.basic_properties.setProperty('viewtree',viewtree)
-        self.calc_properties.setProperty('objecttree',self.otree)
+        viewtree = ViewTree(treemap_props = self.treemap_props)
+        self.treemap_props['viewtree'] = viewtree
         
         vnode = ViewNode()
         vnode.setProperty('treenode', root)

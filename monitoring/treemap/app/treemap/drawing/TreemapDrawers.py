@@ -9,7 +9,7 @@ The resulting output is written into a png file.
 import cairo
 import math
 from app.tools.ColorFunctions import *
-from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 from app.treemap.viewtree.ViewTree import ViewTree
 
 class SquaredTreemapDrawer(object):
@@ -17,28 +17,15 @@ class SquaredTreemapDrawer(object):
     classdocs
     '''
 
-    def __init__(self, vtree, basic_properties = None, design_properties = None):
+    def __init__(self, vtree, treemap_props):
         '''
         Constructor
         '''
-        assert (design_properties is None or isinstance(design_properties, ViewTreeDesignProps))
-        assert(basic_properties is None or isinstance(basic_properties, BasicViewTreeProps)), "basic_properties wrong"
         assert (isinstance(vtree, ViewTree)) 
-        
-        saved_basic_properties = vtree.getBasicProperties()
-        
-        if saved_basic_properties is None and basic_properties is None:
-            vtree.setBasicProperties(BasicViewTreeProps(tree = self.tree))
-        elif basic_properties is not None:
-            vtree.setBasicProperties(basic_properties)
-        #...otherwise basic_properties are already set
-        
         self.vtree = vtree
         
-        self.basic_properties = vtree.getBasicProperties()
-        assert (self.basic_properties is not None)
-        self.mapwidth = self.basic_properties.getProperty('width')
-        self.mapheight = self.basic_properties.getProperty('height')
+        self.mapwidth = treemap_props['pxwidth']
+        self.mapheight = treemap_props['pxheight']
     
         self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.mapwidth, self.mapheight)
         self.ctx = cairo.Context (self.surface)

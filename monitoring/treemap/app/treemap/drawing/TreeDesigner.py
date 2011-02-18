@@ -14,8 +14,7 @@ If a property is not available, there is a hardcoded default value
 @author: kblaszcz
 '''
 from app.tools.ColorFunctions import *
-from app.treemap.defaultproperties.TreeMapProperties import \
-    BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 from app.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
 from app.treemap.viewtree.ViewTree import ViewTree
 import cairo
@@ -27,32 +26,20 @@ class SquaredTreemapDesigner(object):
     classdocs
     '''
 
-    def __init__(self, vtree, design_properties = None, metricslinkage = None):
+    def __init__(self, vtree, treemap_props, metricslinkage = None):
         '''
         Constructor
         '''
-        assert (design_properties is None or isinstance(design_properties, ViewTreeDesignProps)) 
         assert (metricslinkage is not None or isinstance(metricslinkage, MetricsLinker))
         
         assert (isinstance(vtree, ViewTree)) 
         self.vtree = vtree
-        
-        self.design_properties = vtree.getDesignProperties()
-        
-        if self.design_properties is None and design_properties is None:
-            vtree.setDesignProperties(ViewTreeDesignProps(calc_properties = vtree.getCalcProperties(), tree = self.vtree))
-        elif design_properties is not None:
-            vtree.setDesignProperties(design_properties)
-        #...otherwise design_properties are already set
-        
-        #update value
-        self.design_properties = vtree.getDesignProperties()
         self.metricslinkage = metricslinkage
         
-        self.inbordersize = self.design_properties.getProperty('inbordersize')
-        self.headerfontsize = self.design_properties.getProperty('headerfontsize')
-        self.radiallightbrightness = self.design_properties.getProperty('radiallightbrightness')
-        self.headertextisbold = self.design_properties.getProperty('headertextisbold')
+        self.inbordersize = treemap_props['inbordersize']
+        self.headerfontsize = treemap_props['captionfontsize']
+        self.radiallightbrightness = treemap_props['radiallightbrightness']
+        self.headertextisbold = treemap_props['captiontextisbold']
 
     def designTreemap(self):
         inbordersize = self.inbordersize

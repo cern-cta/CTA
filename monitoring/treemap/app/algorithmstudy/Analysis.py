@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 import app.presets.Presets
 import datetime
 import os
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 def doMeasurements():
     try:
@@ -48,6 +49,8 @@ def doMeasurements():
         print "No data"
 
 def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0):  
+    treemap_props_cp = copy.copy(treemap_props)
+#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     if count == 1000: return
     print measurements
     print options
@@ -104,9 +107,8 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     otree = tb.generateObjectTree(rootobject = root, statusfilename = 'bla') 
     
     print 'start calculating rectangle sizes'
-        
-    props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
-    tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
+         
+    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
     
@@ -118,11 +120,11 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
    
         mlinker = getDefaultMetricsLinking() 
         start = datetime.datetime.now()
-        designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+        designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
     #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
         designer.designTreemap()
         start = datetime.datetime.now()
-        drawer = SquaredTreemapDrawer(tree)
+        drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
         
         fullfilepath= serverdict + treemapdir + "/" + filenm
         print fullfilepath
