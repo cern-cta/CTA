@@ -51,9 +51,11 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False): 
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False): 
     
 #    app.algorithmstudy.Analysis.doMeasurements()
+    if doprofile:
+        profile.runctx("treeView(request = request, options = options, presetid = presetid, rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache, doprofile = False)", globals(), {'request' : request, 'presetid' : presetid, 'options': options, 'rootmodel':rootmodel, 'theid':theid, 'refresh_cache': refresh_cache})
     
     treemap_props_cp = copy.copy(treemap_props)
 #    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
