@@ -1397,12 +1397,12 @@ my $uid                = POSIX::getuid;
 my $gid                = POSIX::getgid;
 my $cmdResultStr       = "";
 my $dgn                = "";
-my $nbDummyLibraries   = 1000; # Was 200
-my $nbDummyModels      = 1000; # Was 300
-my $nbDummyDenMaplets  = 1000; # Was 200
-my $nbDummyDgnMaplets  = 1000; # Was 200
-my $nbDummyPools       = 1000; # Was 200
-my $nbDummyTapes       = 1000; # Was 100
+my $nbDummyLibraries   = 200;
+my $nbDummyModels      = 300;
+my $nbDummyDenMaplets  = 200;
+my $nbDummyDgnMaplets  = 200;
+my $nbDummyPools       = 200;
+my $nbDummyTapes       = 100;
 my $i                  = 0;
 
 # Abort if the user is not root
