@@ -2,8 +2,8 @@
 Created on Jul 7, 2010
 Sets design and web interface related properties for each node:
 
-headertext - text string to show in the rectangle header
-headertextisbold - defines if the header text should be bold
+captiontext - text string to show in the rectangle caption
+captiontextisbold - defines if the caption text should be bold
 htmltooltiptext - defines the tooltip text for that node
 fillcolor - color the rectangle should be filled with
 level - level inside of the data tree (root is 0, ascending)
@@ -37,9 +37,9 @@ class SquaredTreemapDesigner(object):
         self.metricslinkage = metricslinkage
         
         self.inbordersize = treemap_props['inbordersize']
-        self.headerfontsize = treemap_props['captionfontsize']
+        self.captionfontsize = treemap_props['captionfontsize']
         self.radiallightbrightness = treemap_props['radiallightbrightness']
-        self.headertextisbold = treemap_props['captiontextisbold']
+        self.captiontextisbold = treemap_props['captiontextisbold']
 
     def designTreemap(self):
         inbordersize = self.inbordersize
@@ -48,13 +48,13 @@ class SquaredTreemapDesigner(object):
         root = self.vtree.getCurrentObject()
         
         self.setInBorderSize(root)
-        self.setHeaderFontSize(root)
+        self.setCaptionFontSize(root)
         self.setFillColor(root)
         self.setStrokeColor(root)
         self.setRadialLight(root)
-        self.setHeaderText(root)
+        self.setCaptionText(root)
         self.setToolTipInfoText(root)
-        self.setHeaderTextIsbold(root)
+        self.setCaptionTextIsbold(root)
         
         self.designRecursion(0+1)
             
@@ -64,13 +64,13 @@ class SquaredTreemapDesigner(object):
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
            
             self.setInBorderSize(child)
-            self.setHeaderFontSize(child)
+            self.setCaptionFontSize(child)
             self.setFillColor(child)
             self.setStrokeColor(child)          
             self.setRadialLight(child)
-            self.setHeaderText(child)
+            self.setCaptionText(child)
             self.setToolTipInfoText(child)
-            self.setHeaderTextIsbold(child)
+            self.setCaptionTextIsbold(child)
             
             self.vtree.traverseInto(child)
             self.designRecursion(level + 1)
@@ -96,17 +96,17 @@ class SquaredTreemapDesigner(object):
         if number == 4:
             return 0.08235, 0.6901, 0.6901, 1.0
         
-    def setHeaderText(self, vnode):
+    def setCaptionText(self, vnode):
         try:
-            vnode.setProperty('headertext', self.metricslinkage.getLinkedValue('headertext', vnode))
+            vnode.setProperty('captiontext', self.metricslinkage.getLinkedValue('captiontext', vnode))
         except Exception, e:
-            vnode.setProperty('headertext', vnode.getProperty('treenode').getObject().__str__())
+            vnode.setProperty('captiontext', vnode.getProperty('treenode').getObject().__str__())
             
-    def setHeaderTextIsbold(self, vnode):
+    def setCaptionTextIsbold(self, vnode):
         try:
-            vnode.setProperty('headertextisbold', self.metricslinkage.getLinkedValue('headertextisbold', vnode))
+            vnode.setProperty('captiontextisbold', self.metricslinkage.getLinkedValue('captiontextisbold', vnode))
         except Exception, e:
-            vnode.setProperty('headertextisbold', self.headertextisbold)
+            vnode.setProperty('captiontextisbold', self.captiontextisbold)
             
     def setToolTipInfoText(self, vnode):
         try:
@@ -147,11 +147,11 @@ class SquaredTreemapDesigner(object):
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-    def setHeaderFontSize(self,vnode):
+    def setCaptionFontSize(self,vnode):
         try:
-            vnode.setProperty('headerfontsize', self.metricslinkage.getLinkedValue('headerfontsize', vnode))
+            vnode.setProperty('captionfontsize', self.metricslinkage.getLinkedValue('captionfontsize', vnode))
         except:
-            vnode.setProperty('headerfontsize', self.headerfontsize)
+            vnode.setProperty('captionfontsize', self.captionfontsize)
             
     def setRadialLight(self, vnode):
         try:

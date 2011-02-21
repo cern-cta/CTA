@@ -58,8 +58,9 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     presetid = int(presetid)
     if options is None: options = ''
     
-    imagewidth = 800.0
-    imageheight = 800.0
+    imagewidth = treemap_props_cp['pxwidth']
+    treemap_props_cp['pxheight'] = treemap_props_cp['pxwidth']
+    imageheight = treemap_props_cp['pxheight']
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT 
