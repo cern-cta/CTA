@@ -7,7 +7,6 @@ holds ViewNodes in a tree structure, provides methods to access that tree
 '''
 import networkx as nx
 import warnings
-from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
 from  networkx import NetworkXError
 
 class ViewTree(object):
@@ -18,22 +17,10 @@ class ViewTree(object):
     '''
 
 
-    def __init__(self, basic_properties = None, calc_properties = None, design_properties = None):
-        assert (basic_properties is None or isinstance(basic_properties, BasicViewTreeProps))
-        assert (calc_properties is None or isinstance(calc_properties, ViewTreeCalculationProps))
-        assert (design_properties is None or isinstance(design_properties, ViewTreeDesignProps))
+    def __init__(self, treemap_props):
         
-        if basic_properties is None:
-            self.basic_properties = BasicViewTreeProps()
-            self.width = self.basic_properties.getProperty('width')
-            self.height = self.basic_properties.getProperty('height')
-        else:
-            self.basic_properties = basic_properties
-            self.width = basic_properties.getProperty('width')
-            self.height = basic_properties.getProperty('height')
-            
-        self.calc_properties = calc_properties
-        self.design_properties = design_properties
+        self.width = treemap_props['pxwidth']
+        self.height = treemap_props['pxheight']
             
         self.root = None
         
@@ -47,34 +34,6 @@ class ViewTree(object):
         self.children_cached= False
         
         self.nodes_per_level = []
-
-    def getBasicProperties(self):
-        return self.basic_properties
-
-
-    def setBasicProperties(self, value):
-        assert (value is not None or isinstance(value, BasicViewTreeProps)) ,"value cannot be None or not BasicViewTreeProps"
-        self.basic_properties = value
-        self.width = self.basic_properties.getProperty('width')
-        self.height = self.basic_properties.getProperty('height')
-        
-        
-    def getCalcProperties(self):
-        return self.calc_properties
-
-
-    def setCalcProperties(self, value):
-        assert (value is not None or isinstance(value, ViewTreeCalculationProps)) ,"value cannot be None or not ViewTreeCalculationProps"
-        self.calc_properties = value
-        
-    def getDesignProperties(self):
-        return self.design_properties
-
-
-    def setDesignProperties(self, value):
-        assert (value is not None or isinstance(value, ViewTreeDesignProps)) ,"value cannot be None or not ViewTreeDesignProps"
-        self.design_properties = value
-
 
     def setRoot(self, theobject):
         self.graph.clear()

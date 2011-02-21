@@ -90,6 +90,29 @@ def getAvailableModels():
                 availablemodels.append(modelname)           
     return availablemodels
 
+def getAvailableModelsWithAnnex():
+    modulename = None
+    availablemodels = []
+    if settings.MODELS_LOCATION in settings.INSTALLED_APPS:
+        modulename = settings.MODELS_LOCATION + '.models'
+        if not modulename in sys.modules.keys():
+            try:
+                module = __import__( modulename )
+            except ImportError, e:
+                raise Exception( 'Unable to load module: ' + module )
+        else:
+            module = sys.modules[modulename]
+            
+        classes = dict(inspect.getmembers( module, inspect.isclass ))
+        
+        for classname in classes:
+            cls = classes[classname]
+            if isinstance(cls, ModelBase):
+                modelname = cls._base_manager.model._meta.object_name
+                availablemodels.append(modelname)    
+    availablemodels.append('Annex') 
+    return availablemodels
+
 def getCountMethodFor(themodel, childrenmethodname):
     modulename = getModelsModuleName(themodel)
     instance = createObject(modulename, themodel)  

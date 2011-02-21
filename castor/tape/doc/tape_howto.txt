@@ -4053,3 +4053,25 @@ In template prod/cluster/castordev/customization/headnode/dev03.tpl, add:
 "/software/packages" = pkg_add("neon", "0.27.2-1", ELFMS_ARCH, "multi"); 
 
 (neon is a dependancy).
+
+How to make a tape-server point at a different vdqm and vmgr
+============================================================
+
+ssh user@lxadm
+cdbop
+<cdbop@cdbserv.cern.ch: ~> get -f profiles/profile_tpsrv001
+[INFO] 'profiles/profile_tpsrv001.tpl': received
+<cdbop@cdbserv.cern.ch: ~> !vi profiles/profile_tpsrv001.tpl
+
+Add the following lines:
+
+  #
+  # use development server of Steven Murray to provide VMGR and VDQM2
+  #
+  "/software/components/castorconf/VDQM/HOST" = "lxcastordev04";
+  "/software/components/castorconf/VMGR/HOST" = "lxcastordev04";
+  "/software/components/castorconf/ADMIN/HOSTS" = self + " lxcastordev04 localhost";
+
+<cdbop@cdbserv.cern.ch: ~> up profiles/profile_tpsrv001.tpl
+[INFO] '/profiles/profile_tpsrv001': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~> commit

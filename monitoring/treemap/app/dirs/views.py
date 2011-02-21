@@ -22,7 +22,7 @@ from app.presets.options.OptionsReader import OptionsReader
 from app.presets.options.SpinnerOption import SpinnerOption
 from app.dirs.models import *
 from app.tools.GarbageDeleters import deleteOldImageFiles, deleteOldStatusFiles
-from app.tools.Inspections import *
+from app.tools.Inspections import getAvailableModels, getDefaultNumberOfLevels
 from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -39,6 +39,8 @@ import re
 import app.presets
 import time
 import app.dirs.urls
+import app.algorithmstudy.Analysis
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 
 
@@ -49,15 +51,22 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False):  
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False): 
+    
+#    app.algorithmstudy.Analysis.doMeasurements()
+    
+    treemap_props_cp = copy.copy(treemap_props)
+#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
+    
     cleanGarbageFilesRandomly(60*60*24*5, 10)
     print options
     time = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''
     
-    imagewidth = 800.0
-    imageheight = 600.0
+    imagewidth = treemap_props_cp['pxwidth']
+    imageheight = treemap_props_cp['pxheight']
+    
     nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
@@ -127,9 +136,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
-        
-    props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
-    tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
+         
+    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -141,14 +149,14 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     start = datetime.datetime.now()
     print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
 #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print "drawing something"
-    drawer = SquaredTreemapDrawer(tree)
+    drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
     
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
@@ -189,12 +197,15 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     depth = int(depth)
     presetid = int(presetid)
     if options is None: options = ''
+    treemap_props_cp = copy.copy(treemap_props)
+#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     
     if rootmodel in getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
     
-    imagewidth = 800.0
-    imageheight = 600.0
+    imagewidth = treemap_props_cp['pxwidth']
+    imageheight = treemap_props_cp['pxheight']
+    
     nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
@@ -300,9 +311,8 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
      
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
-        
-    props = BasicViewTreeProps(width = imagewidth, height = imageheight)    
-    tc = SquaredTreemapCalculator(otree = otree, basic_properties = props)
+         
+    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
         
@@ -315,13 +325,13 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     start = datetime.datetime.now()
     print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, metricslinkage = mlinker)
+    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print "drawing something"
-    drawer = SquaredTreemapDrawer(tree)
+    drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
 
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
@@ -342,7 +352,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
     filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time,\
     rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid,\
-    options = optr.getCorrectedOptions(presetid))
+    options = optr.getCorrectedOptions(presetid), depth = depth+1)
     
     del tree
     del otree
@@ -508,7 +518,7 @@ def setStatusFileInCookie(request, statusfilename):
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = ''):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = '', depth = 0):
     print "preparing response"
     optionsstring = '{'+ options +'}'
     #must fit to UrlDefault!
@@ -532,13 +542,17 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         x1 = int(round(node.getProperty('x'),0))
         y1 = int(round(node.getProperty('y'),0))
         x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))  
-        hsize = node.getProperty('headersize')
+        csize = node.getProperty('captionsize')
         if((not(vtree.nodeHasChildren(node)))):
-            hsize = node.getProperty('height')
-        y2 = int(round(node.getProperty('y') + hsize,0))
+            csize = node.getProperty('height')
+        y2 = int(round(node.getProperty('y') + csize,0))
         
         #must fit to UrlDefault!
-        linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+        if(node.getProperty('treenode').getObject().getClassName() == 'Annex'):
+            linksuffix = app.dirs.urls.UrlAnnex().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getDbParent().getClassName(), depth ,node.getProperty('treenode').getObject().getIdReplacement())
+        else:
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+        
         info = node.getProperty('htmltooltiptext')
         thehash = node.getProperty('treenode').getObject().__hash__()
         
@@ -681,38 +695,38 @@ def getDefaultMetricsLinking():
     mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'headertext', RawColumnDimension('name', DirNameTranslator('/')))
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertext', RawColumnDimension('name'))
+    mlinker.addPropertyLink('Dirs', 'captiontext', RawColumnDimension('name', DirNameTranslator('/')))
+    mlinker.addPropertyLink('CnsFileMetadata', 'captiontext', RawColumnDimension('name'))
     mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
     mlinker.addPropertyLink('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
     mlinker.addPropertyLink('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
     
-    mlinker.addPropertyLink('CnsFileMetadata', 'headertextisbold', ConstantDimension(False))
+    mlinker.addPropertyLink('CnsFileMetadata', 'captiontextisbold', ConstantDimension(False))
     
     mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestsatlas', 'captiontext', RawColumnDimension('filename', TopDirNameTranslator()))
     mlinker.addPropertyLink('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestscms', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestscms', 'captiontext', RawColumnDimension('filename', TopDirNameTranslator()))
     mlinker.addPropertyLink('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsalice', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestsalice', 'captiontext', RawColumnDimension('filename', TopDirNameTranslator()))
     mlinker.addPropertyLink('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestslhcb', 'captiontext', RawColumnDimension('filename', TopDirNameTranslator()))
     mlinker.addPropertyLink('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
     mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
     mlinker.addPropertyLink('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestspublic', 'headertext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mlinker.addPropertyLink('Requestspublic', 'captiontext', RawColumnDimension('filename', TopDirNameTranslator()))
     mlinker.addPropertyLink('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
 
     return mlinker

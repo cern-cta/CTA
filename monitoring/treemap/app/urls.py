@@ -1,10 +1,7 @@
 from django.conf.urls.defaults import *
 from app import dirs
-
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
-
+from django.conf import settings 
+    
 urlpatterns = patterns('',
     # Example:
     # (r'^app/', include('app.foo.urls')),
@@ -18,3 +15,11 @@ urlpatterns = patterns('',
      (r'^treemaps/$', 'dirs.views.redirectHome'),
      (r'^treemaps/', include('app.dirs.urls')),
 )
+
+#Register all INSTALLED_APPS when the urls are originally loaded
+#avoids strange hardly reproducible mod_python errors???
+#for a in settings.INSTALLED_APPS:
+#    try:
+#        __import__(a)
+#    except ImportError:
+#        pass 

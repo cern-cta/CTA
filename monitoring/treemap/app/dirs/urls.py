@@ -6,7 +6,7 @@ expressons to define URL's for django framework
 from app import dirs
 import app.dirs.models
 import app.presets.options
-from app.tools.Inspections import getAvailableModels, getModelsModuleName
+import app.tools.Inspections
 from django.conf.urls.defaults import *
 from django.http import Http404
 import app.presets
@@ -121,7 +121,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             theid = self.paramdict['theid'];
-            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -144,7 +144,7 @@ class UrlDefault(UrlReaderInterface):
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
             options = ''.join([bla for bla in ["{" , app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)), "}"]])
-            if not(rootmodel in getAvailableModels()):
+            if not(rootmodel in app.tools.Inspections.getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
                 theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             else:
@@ -233,7 +233,7 @@ class UrlAnnex(UrlReaderInterface):
         
         try:  
             theid = self.paramdict['theid'];
-            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
             
@@ -262,15 +262,13 @@ class UrlAnnex(UrlReaderInterface):
             rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         else:
+            #check rootmodel
             options = "{" + app.presets.options.OptionsReader.OptionsReader(options, presetid).getCorrectedOptions(int(presetid)) + "}"
-            if not(rootmodel in getAvailableModels()):
+            if not(rootmodel in app.tools.Inspections.getAvailableModels()):
                 rootmodel = app.presets.Presets.getPresetByStaticId(int(presetid)).rootmodel
-                theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                theid = self.searchReplacementId(theid)
             else:
-                try:
-                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
-                except:
-                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
+                theid = self.searchReplacementId(theid)
                     
         if depth > self.maxdepth: depth = self.maxdepth
         if depth < 0: depth = 0
@@ -290,7 +288,7 @@ class UrlAnnex(UrlReaderInterface):
         return ''.join([bla for bla in correctedoptions]) 
     
     def buildAnnexId(self, rootmodel, depth, theid):
-        if not(rootmodel in getAvailableModels()) and rootmodel !=  'Annex':
+        if not(rootmodel in app.tools.Inspections.getAvailableModels()) and rootmodel !=  'Annex':
             raise Exception("model "+ rootmodel + " could not be found!")
         
         if depth < 0: depth = 0
@@ -298,7 +296,7 @@ class UrlAnnex(UrlReaderInterface):
         #findObjectByIdReplacementSuffix
         try:
             if rootmodel != 'Annex':#to not to fail during id creation if annex constructor gets called without parameters
-                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             raise Exception("replacementid "+ theid + " could not be found!")
         

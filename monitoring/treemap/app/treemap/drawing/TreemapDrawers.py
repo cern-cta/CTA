@@ -9,7 +9,7 @@ The resulting output is written into a png file.
 import cairo
 import math
 from app.tools.ColorFunctions import *
-from app.treemap.defaultproperties.TreeMapProperties import BasicViewTreeProps, ViewTreeCalculationProps, ViewTreeDesignProps
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 from app.treemap.viewtree.ViewTree import ViewTree
 
 class SquaredTreemapDrawer(object):
@@ -17,28 +17,15 @@ class SquaredTreemapDrawer(object):
     classdocs
     '''
 
-    def __init__(self, vtree, basic_properties = None, design_properties = None):
+    def __init__(self, vtree, treemap_props):
         '''
         Constructor
         '''
-        assert (design_properties is None or isinstance(design_properties, ViewTreeDesignProps))
-        assert(basic_properties is None or isinstance(basic_properties, BasicViewTreeProps)), "basic_properties wrong"
         assert (isinstance(vtree, ViewTree)) 
-        
-        saved_basic_properties = vtree.getBasicProperties()
-        
-        if saved_basic_properties is None and basic_properties is None:
-            vtree.setBasicProperties(BasicViewTreeProps(tree = self.tree))
-        elif basic_properties is not None:
-            vtree.setBasicProperties(basic_properties)
-        #...otherwise basic_properties are already set
-        
         self.vtree = vtree
         
-        self.basic_properties = vtree.getBasicProperties()
-        assert (self.basic_properties is not None)
-        self.mapwidth = self.basic_properties.getProperty('width')
-        self.mapheight = self.basic_properties.getProperty('height')
+        self.mapwidth = treemap_props['pxwidth']
+        self.mapheight = treemap_props['pxheight']
     
         self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.mapwidth, self.mapheight)
         self.ctx = cairo.Context (self.surface)
@@ -67,7 +54,7 @@ class SquaredTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('headerfontsize'), root.getProperty('headertextisbold'))
+        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
         
         self.drawRecursion()
         
@@ -86,9 +73,9 @@ class SquaredTreemapDrawer(object):
             
             self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), inbordersize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
             
-            if child.getProperty('headersize') > 0.0:
-                txt = child.getProperty('headertext')
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('headerfontsize'), child.getProperty('headertextisbold'))
+            if child.getProperty('captionsize') > 0.0:
+                txt = child.getProperty('captiontext')
+                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
                 
             self.vtree.traverseInto(child)
             self.drawRecursion()

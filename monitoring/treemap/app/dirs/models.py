@@ -18,14 +18,11 @@ from app.tools.Inspections import *
 from app.tools.StatusTools import generateStatusFile
 from app.treemap.BasicTree import BasicTree
 from app.treemap.defaultproperties.TreeMapProperties import *
-from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from app.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
 from app.treemap.objecttree.ObjectTree import ObjectTree
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
 from app.treemap.objecttree.TreeRules import LevelRules
 from app.treemap.objecttree.Wrapper import Wrapper
 from app.treemap.objecttree.columntransformation import *
-from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import copy
 import datetime
 import profile
@@ -175,7 +172,9 @@ class Dirs(models.Model, ModelInterface):
             f = list(f)
         
         return d+f
-
+    
+    def countChildren(self):
+        return self.getFilesAndDirectories()
     
     def getFilesOf(self, id):
         prnt = Dirs.objects.get(pk=id)
@@ -258,7 +257,6 @@ class CnsFileMetadata(models.Model, ModelInterface):
         return models.Model.__hash__(self)
     
     def countChildren(self):
-        print "countChildren for files"
         return 0
     
     def getChildren(self):
