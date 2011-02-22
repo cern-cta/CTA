@@ -2134,8 +2134,8 @@ sub stopAndSwitchToTapeGatewayd ( $ )
             die "Failed to stop a daemon. Call an exorcist.";
         }
     }    
-    /*$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
-    $dbh->commit();*/
+    #$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
+    #$dbh->commit();
     # Migrate to tapegateway by script.
     my $dbUser   = &getOrastagerconfigParam("user");
     my $dbPasswd = &getOrastagerconfigParam("passwd");
@@ -2144,7 +2144,7 @@ sub stopAndSwitchToTapeGatewayd ( $ )
     my $dbDir               = $environment{dbDir};
     my $switch_to_tapegateway = $environment{switchoverToTapeGateway};
     
-    my $switch_to_tapegateway_full_path = $checkout_location.$dbDir.$switch_to_rtcpclientd;
+    my $switch_to_tapegateway_full_path = $checkout_location.$dbDir.$switch_to_tapegateway;
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $switch_to_tapegateway_full_path,
                            "Switching to Tape gateway");
@@ -2161,8 +2161,8 @@ sub stopAndSwitchToRtcpclientd ( $ )
             die "Failed to stop a daemon. Call an exorcist.";
         }
     }
-    /*$dbh->do("UPDATE castorconfig SET value='rtcpclientd' WHERE class='tape' AND key='interfaceDaemon'");
-    $dbh->commit();*/
+    #$dbh->do("UPDATE castorconfig SET value='rtcpclientd' WHERE class='tape' AND key='interfaceDaemon'");
+    #$dbh->commit();
     # Migrate to rtcpclientd by script.
     my $dbUser   = &getOrastagerconfigParam("user");
     my $dbPasswd = &getOrastagerconfigParam("passwd");

@@ -80,10 +80,14 @@ DELETE FROM Stream2TapeCopy;
 
   -- Deal with Recalls
   -- Segments
+BEGIN
   UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
     WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
   UPDATE Segment SET status = TCONST.SEGMENT_FAILED
     WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in tape gateway.
+END;
+/
+
 
 -- Tapes
 -- From TAPE_UNSED, Leave as is.
@@ -97,24 +101,28 @@ DELETE FROM Stream2TapeCopy;
 -- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
 
 -- Write tapes can be dumped
-DELETE FROM Tape T WHERE T.tpMode = TCONST.TPMODE_WRITE;
+BEGIN
+  DELETE FROM Tape T WHERE T.tpMode = TCONST.TPMODE_WRITE;
 -- Undeferenced read tapes can be dumped.
   -- Resurrect the tapes running for recall
   UPDATE Tape SET status = TCONST.TAPE_PENDING
     WHERE tpmode = TCONST.TPMODE_READ AND 
           status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
           TCONST.TAPE_MOUNTED); 
-  UPDATE Tape A SET status = TCONST.TAPE_WAITPOLICY
-    WHERE status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
+  UPDATE Tape T SET T.status = TCONST.TAPE_WAITPOLICY
+    WHERE T.status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
     TCONST.TAPE_UNKNOWN) AND EXISTS
-    ( SELECT id FROM Segment 
-      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id);
+    ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
    -- Other tapes are not relevant
    DELETE FROM Tape T
     WHERE T.tpMode = TCONST.TPMODE_READ AND (
        T. Status NOT IN (TCONST.TAPE_WAITPOLICY) OR
-       NOT EXISTS ( SELECT id FROM Segment 
-      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id));
+       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id));
+END;
+/
+
 
 DECLARE
   idsList "numList";

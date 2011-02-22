@@ -66,7 +66,7 @@ BEGIN
   -- 1) Ressurect tapecopies for migration
   UPDATE TapeCopy tc SET tc.status = TCONST.TAPECOPY_TOBEMIGRATED 
     WHERE tc.status IN (TCONST.TAPECOPY_WAITPOLICY, TCONST.TAPECOPY_WAITINSTREAMS,
-                        TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIGRETRY)
+                        TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
                         -- STAGED and FAILED can stay the same, other states are for recalls.
   -- 2) Clean up the streams and tapes for writing
   DELETE FROM Stream;
@@ -87,17 +87,17 @@ BEGIN
     WHERE tpmode = TCONST.TPMODE_READ AND 
           status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
           TCONST.TAPE_MOUNTED); 
-  UPDATE Tape A SET status = TCONST.TAPE_WAITPOLICY
-    WHERE status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
+  UPDATE Tape T SET T.status = TCONST.TAPE_WAITPOLICY
+    WHERE T.status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
     TCONST.TAPE_UNKNOWN) AND EXISTS
-    ( SELECT id FROM Segment 
-      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id);
+    ( SELECT Seg.id FROM Segment Seg 
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
    -- Other tapes are not relevant
    DELETE FROM Tape T
     WHERE T.tpMode = TCONST.TPMODE_READ AND (
        T. Status NOT IN (TCONST.TAPE_WAITPOLICY) OR
-       NOT EXISTS ( SELECT id FROM Segment 
-      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id));
+       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id));
 
   -- Start the restartStuckRecallsJob
   DBMS_SCHEDULER.CREATE_JOB(
