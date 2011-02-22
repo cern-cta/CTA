@@ -25,6 +25,10 @@
 /* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE
 BEGIN
+  -- If we've encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = 'schemaTag'
