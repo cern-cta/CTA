@@ -957,159 +957,132 @@ END;
 /* PL/SQL method implementing createPartition */
 CREATE OR REPLACE PROCEDURE createPartitions
 AS
-  username VARCHAR2(2048);
-  partitionMax NUMBER;
-  tableSpaceName VARCHAR2(2048);
-  highValue DATE;
-  cnt NUMBER;
+  username         VARCHAR2(30) := SYS_CONTEXT('USERENV', 'CURRENT_USER');
+  tableSpaceName   VARCHAR2(30);
+  tableSpaceStatus VARCHAR2(9);
+  partitionName    VARCHAR2(30);
+  oldest           DATE;
+  nbMonths         NUMBER;
 BEGIN
-  -- Set the nls_date_format
-  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
-
-  -- Extract the name of the current user running the PL/SQL procedure. This
-  -- name will be used within the tablespace names.
-  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
-    INTO username
-    FROM dual;
-
   -- Loop over all partitioned tables
-  FOR a IN (SELECT DISTINCT(table_name)
-              FROM user_tab_partitions
+  FOR a IN (SELECT table_name FROM user_tables
+             WHERE partitioned = 'YES'
              ORDER BY table_name)
   LOOP
-    -- Determine the high value on which to split the MAX_VALUE partition of
-    -- all tables
-    SELECT max(substr(partition_name, 3, 10))
-      INTO partitionMax
+    -- Get the oldest partition date associated to the table.
+    SELECT to_date(min(substr(partition_name, 3)), 'YYYYMM') INTO oldest
       FROM user_tab_partitions
-     WHERE partition_name <> 'MAX_VALUE'
-       AND table_name = a.table_name;
+     WHERE table_name = a.table_name
+       AND partition_name != 'MAX_VALUE';
+    SELECT months_between(SYSDATE, oldest) INTO nbMonths
+      FROM dual;
 
-    partitionMax := TO_NUMBER(
-      TO_CHAR(TRUNC(TO_DATE(partitionMax, 'YYYYMMDD') + 1), 'YYYYMMDD'));
-
-    -- If this is the first execution there will be no high value, so set it to
-    -- today
-    IF partitionMax IS NULL THEN
-      partitionMax := TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'));
-    END IF;
-
-    -- Create partition
-    FOR b IN (SELECT TO_DATE(partitionMax, 'YYYYMMDD') + rownum - 1 value
+    -- Generate a list of the first day of every month for the next 2 months.
+    FOR b IN (SELECT ADD_MONTHS(TRUNC(SYSDATE, 'MON'), rownum - 1) value
                 FROM all_objects
-               WHERE rownum <=
-                     TO_DATE(TO_CHAR(SYSDATE + 7, 'YYYYMMDD'), 'YYYYMMDD') -
-                     TO_DATE(partitionMax, 'YYYYMMDD') + 1)
+               WHERE rownum < nbMonths + 2)
     LOOP
       -- To improve data management each daily partition has its own tablespace
       -- http://www.oracle.com/technology/oramag/oracle/06-sep/o56partition.html
-
+    
       -- Check if a new tablespace is required before creating the partition
-      tableSpaceName := 'MON_'||TO_CHAR(b.value, 'YYYYMMDD')||'_'||username;
-      SELECT count(*) INTO cnt
-        FROM user_tablespaces
-       WHERE tablespace_name = tableSpaceName;
+      tableSpaceName := 'MON_'||TO_CHAR(b.value, 'YYYYMM')||'_'||username;
+      BEGIN
+        SELECT tablespace_name, status INTO tableSpaceName, tableSpaceStatus
+          FROM user_tablespaces
+         WHERE tablespace_name = tableSpaceName;
 
-      IF cnt = 0 THEN
+        -- If the tablespace is read only, alter its status to read write for
+        -- upcoming operations.
+        IF tableSpaceStatus = 'READ ONLY' THEN
+          EXECUTE IMMEDIATE 'ALTER TABLESPACE '||tableSpaceName||' READ WRITE';
+        END IF;      
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- The tablespace doesn't exist so lets create it!
         EXECUTE IMMEDIATE 'CREATE TABLESPACE '||tableSpaceName||'
                            DATAFILE SIZE 100M
                            AUTOEXTEND ON NEXT 200M
                            MAXSIZE 30G
                            EXTENT MANAGEMENT LOCAL
                            SEGMENT SPACE MANAGEMENT AUTO';
-      END IF;
+      END;
 
-      -- If the tablespace is read only, alter its status to read write for this
-      -- operation.
-      FOR d IN (SELECT tablespace_name FROM user_tablespaces
-                 WHERE tablespace_name = tableSpaceName
-                   AND status = 'READ ONLY')
-      LOOP
-        EXECUTE IMMEDIATE 'ALTER TABLESPACE '||d.tablespace_name||' READ WRITE';
-      END LOOP;
-
-      highValue := TRUNC(b.value + 1);
-      EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
-                         SPLIT PARTITION MAX_VALUE
-                         AT    ('''||TO_CHAR(highValue, 'DD-MON-YYYY')||''')
-                         INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                                TABLESPACE '||tableSpaceName||',
-                                PARTITION MAX_VALUE)
-                         UPDATE INDEXES';
-
-      -- Move indexes to the correct tablespace
-      FOR c IN (SELECT index_name
-                  FROM user_indexes
-                 WHERE table_name = a.table_name
-                   AND partitioned = 'YES')
-      LOOP
-        EXECUTE IMMEDIATE 'ALTER INDEX '||c.index_name||'
-                           REBUILD PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                           TABLESPACE '||tableSpaceName;
-      END LOOP;
+      -- Create the partition for the current table if need.
+      BEGIN
+        SELECT partition_name INTO partitionName
+          FROM user_tab_partitions
+         WHERE table_name = a.table_name
+           AND partition_name = 'P_'||TO_CHAR(b.value, 'YYYYMM');
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- The partition doesn't exist so lets create it!
+        EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
+                           SPLIT PARTITION MAX_VALUE
+                           AT    ('''||TO_CHAR(b.value + 1, 'DD-MON-YYYY')||''')
+                           INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMM')||'
+                                  TABLESPACE '||tableSpaceName||',
+                                  PARTITION MAX_VALUE)
+                           UPDATE INDEXES';
+      END;
     END LOOP;
+  END LOOP;
+
+  -- Rebuild any partitioned indexes which are in an UNUSABLE state. This
+  -- happens sometimes are partitioning.
+  FOR a IN (SELECT index_name, partition_name, tablespace_name
+              FROM user_ind_partitions
+             WHERE status != 'USABLE')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLE '||a.index_name||'
+                       REBUILD PARTITION '||a.partition_name||'
+                       TABLESPACE '||a.tablespace_name;
   END LOOP;
 END;
 /
 
 
 /* PL/SQL method implementing dropPartitions */
-CREATE OR REPLACE PROCEDURE dropPartitions (expiry IN NUMBER)
+CREATE OR REPLACE PROCEDURE dropPartitions
 AS
-  username VARCHAR2(2048);
+  username   VARCHAR2(30) := SYS_CONTEXT('USERENV', 'CURRENT_USER');
   expiryTime NUMBER;
 BEGIN
-  -- Set the nls_date_format
-  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
-
-  -- Extract the name of the current user running the PL/SQL procedure. This
-  -- name will be used within the tablespace names.
-  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
-    INTO username
-    FROM dual;
-
-  -- Extract configurable expiry time
-  expiryTime := expiry;
-  IF expiryTime = -1 THEN
-    SELECT expiry INTO expiryTime
-      FROM ConfigSchema;
-  END IF;
-
-  -- Drop partitions across all tables
-  FOR a IN (SELECT *
+  -- Get the retention period for the data.
+  SELECT expiry INTO expiryTime FROM ConfigSchema;
+  
+  -- Drop partitions across all tables.
+  FOR a IN (SELECT table_name, partition_name
               FROM user_tab_partitions
-             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD'))
+             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiryTime, 'YYYYMM'))
                AND partition_name <> 'MAX_VALUE'
              ORDER BY partition_name DESC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
                        DROP PARTITION '||a.partition_name;
   END LOOP;
-
-  -- Drop tablespaces
+  -- Drop tablespaces.
   FOR a IN (SELECT tablespace_name
               FROM user_tablespaces
              WHERE status <> 'OFFLINE'
                AND tablespace_name LIKE 'MON_%_'||username
-               AND tablespace_name < 'MON_'||TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD')||'_'||username
+               AND tablespace_name < 'MON_'||TO_CHAR(SYSDATE - expiryTime, 'YYYYMM')||'_'||username
              ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||a.tablespace_name||'
                        INCLUDING CONTENTS AND DATAFILES';
   END LOOP;
-
-  -- Set the status of tablespaces older then 2 days to read only.
+  -- Set the status of tablespaces which no longer should receive updates
+  -- to read only.
   FOR a IN (SELECT tablespace_name
               FROM user_tablespaces
              WHERE status <> 'OFFLINE'
                AND status <> 'READ ONLY'
                AND tablespace_name LIKE 'MON_%_'||username
-               AND tablespace_name < 'MON_'||TO_CHAR(SYSDATE - 2, 'YYYYMMDD')||'_'||username
+               AND tablespace_name < 'MON_'||TO_CHAR(SYSDATE - 1, 'YYYYMM')||'_'||username
              ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' READ ONLY';
-  END LOOP;
+  END LOOP;  
 END;
 /
 
@@ -1138,7 +1111,7 @@ BEGIN
       JOB_NAME        => 'dropPartitionsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN
-                            dropPartitions(-1);
+                            dropPartitions();
                             FOR a IN (SELECT table_name FROM user_tables
                                        WHERE table_name LIKE ''ERR_%'')
                             LOOP
