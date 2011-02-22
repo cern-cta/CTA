@@ -58,8 +58,8 @@ COMMIT;
 -- From TAPECOPY_MIG_RETRY, move back to TO BE MIGRATED.
 
 -- Streams do not need to be kept. The mighunter will recreate them all.
-DELETE FROM STREAM;
 DELETE FROM Stream2TapeCopy;
+DELETE FROM STREAM;
 
 -- From STREAM_PENDING, Leave as is
 -- From STREAM_WAITDRIVE, Set to pending

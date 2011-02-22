@@ -69,8 +69,8 @@ BEGIN
                         TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
                         -- STAGED and FAILED can stay the same, other states are for recalls.
   -- 2) Clean up the streams and tapes for writing
-  DELETE FROM Stream;
   DELETE FROM Stream2Tapecopy;
+  DELETE FROM Stream;
   DELETE FROM Tape T WHERE T.TPMode = TCONST.TPMODE_WRITE;
   COMMIT;
   

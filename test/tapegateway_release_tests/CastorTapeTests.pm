@@ -2144,7 +2144,7 @@ sub stopAndSwitchToTapeGatewayd ( $ )
     my $dbDir               = $environment{dbDir};
     my $switch_to_tapegateway = $environment{switchoverToTapeGateway};
     
-    my $switch_to_tapegateway_full_path = $checkout_location.$dbDir.$switch_to_tapegateway;
+    my $switch_to_tapegateway_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_tapegateway;
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $switch_to_tapegateway_full_path,
                            "Switching to Tape gateway");
@@ -2171,7 +2171,7 @@ sub stopAndSwitchToRtcpclientd ( $ )
     my $dbDir               = $environment{dbDir};
     my $switch_to_rtcpclientd = $environment{switchoverToRtcpClientd};
     
-    my $switch_to_rtcpclientd_full_path = $checkout_location.$dbDir.$switch_to_rtcpclientd;
+    my $switch_to_rtcpclientd_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_rtcpclientd;
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $switch_to_rtcpclientd_full_path,
                            "Switching to RtcpClientd");
