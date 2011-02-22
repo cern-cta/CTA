@@ -52,7 +52,7 @@ select tapecopy.id, tapecopy.status, castorfile.lastknownfilename, svcclass.name
   left outer join tape on tape.id = segment.tape
   where (segment.id is not null) and rownum <= 10
    and not ( -- Negative logic: disregard everything that is allowed. Disregard all migration related states as well.
-    (tapecopy.status == tapecopy_created        
+    (tapecopy.status == tapecopy_created
    );
   
 -- This join is migration oriented tapecopy ( => segment ) => stream2tapecopy => stream ( => tapepool ) => tape.tpmode = write (or NULL).

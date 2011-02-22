@@ -122,7 +122,9 @@ sub main ()
     preparePreTransitionBacklog ( $seed_index, $file_number, 1);
      
     # Switch to tape gateway
+    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::stopAndSwitchToTapeGatewayd ( $dbh );
+    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched to tapegatewayd ============================\n";

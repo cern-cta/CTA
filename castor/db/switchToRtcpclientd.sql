@@ -44,11 +44,6 @@ UPDATE CastorConfig
     key   = 'interfaceDaemon';
 COMMIT;
 
--- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
--- specific to the tape gateway and have no place in an rtcpclientd schema
-DROP TRIGGER tr_Tape_Pending;
-DROP TRIGGER tr_Stream_Pending;
-
 -- The major reset procedure
 -- Tape copies go back to to be migrated and we restart from basically scratch for most of the states.
 -- From TAPECOPY_CREATED, leave.
@@ -62,7 +57,10 @@ DROP TRIGGER tr_Stream_Pending;
 -- From TAPECOPY_REC_RETRY, move to TAPECOPY_TOBERECALLED, segment is left as is.
 -- From TAPECOPY_MIG_RETRY, move back to TO BE MIGRATED.
 
--- Streams 
+-- Streams do not need to be kept. The mighunter will recreate them all.
+DELETE FROM STREAM;
+DELETE FROM Stream2TapeCopy;
+
 -- From STREAM_PENDING, Leave as is
 -- From STREAM_WAITDRIVE, Set to pending
 -- From STREMA_WAITMOUNT, set to pending
@@ -72,6 +70,20 @@ DROP TRIGGER tr_Stream_Pending;
 -- From STREAM_STOPPED, Leave as is.
 -- From STREAM_WAITPOLICY, Leave as is.
 -- From STREAM_TOBESENTTOVDQM, we have a busy tape attached and they have to be free.
+
+-- Segments (the gateway is not going to use)
+-- From SEGMENT_UNPROCESSED, Leave as is.
+-- From SEGMENT_FILECOPIED, (apparently unused)
+-- From SEGMENT_FAILED, Reset to unprocessed.
+-- From SEGMENT_SELECTED, Move to unprocessed
+-- From SEGMENT_RETRIED, Delete segment from the database.
+
+  -- Deal with Recalls
+  -- Segments
+  UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
+    WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
+  UPDATE Segment SET status = TCONST.SEGMENT_FAILED
+    WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in tape gateway.
 
 -- Tapes
 -- From TAPE_UNSED, Leave as is.
@@ -84,12 +96,25 @@ DROP TRIGGER tr_Stream_Pending;
 -- From TAPE_UNKNOWN, Leave as is. (Assuming it is an end state).
 -- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
 
--- Segments (the gateway is not going to use)
--- From SEGMENT_UNPROCESSED, Leave as is.
--- From SEGMENT_FILECOPIED, (apparently unused)
--- From SEGMENT_FAILED, Reset to unprocessed.
--- From SEGMENT_SELECTED, Move to unprocessed
--- From SEGMENT_RETRIED, Delete segment from the database.
+-- Write tapes can be dumped
+DELETE FROM Tape T WHERE T.tpMode = TCONST.TPMODE_WRITE;
+-- Undeferenced read tapes can be dumped.
+  -- Resurrect the tapes running for recall
+  UPDATE Tape SET status = TCONST.TAPE_PENDING
+    WHERE tpmode = TCONST.TPMODE_READ AND 
+          status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
+          TCONST.TAPE_MOUNTED); 
+  UPDATE Tape A SET status = TCONST.TAPE_WAITPOLICY
+    WHERE status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
+    TCONST.TAPE_UNKNOWN) AND EXISTS
+    ( SELECT id FROM Segment 
+      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id);
+   -- Other tapes are not relevant
+   DELETE FROM Tape T
+    WHERE T.tpMode = TCONST.TPMODE_READ AND (
+       T. Status NOT IN (TCONST.TAPE_WAITPOLICY) OR
+       NOT EXISTS ( SELECT id FROM Segment 
+      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id));
 
 DECLARE
   idsList "numList";

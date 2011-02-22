@@ -176,7 +176,8 @@ sub read_config ( $ )
                           'local_logprocessord');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'castor_single_subdirectory',
-                          'castor_dual_subdirectory' );
+                          'castor_dual_subdirectory', 'switchoverToTapeGateway',
+                          'switchoverToRtcpClientd');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -2133,8 +2134,20 @@ sub stopAndSwitchToTapeGatewayd ( $ )
             die "Failed to stop a daemon. Call an exorcist.";
         }
     }    
-    $dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
-    $dbh->commit();
+    /*$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
+    $dbh->commit();*/
+    # Migrate to tapegateway by script.
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $checkout_location   = $environment{checkout_location};
+    my $dbDir               = $environment{dbDir};
+    my $switch_to_tapegateway = $environment{switchoverToTapeGateway};
+    
+    my $switch_to_tapegateway_full_path = $checkout_location.$dbDir.$switch_to_rtcpclientd;
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $switch_to_tapegateway_full_path,
+                           "Switching to Tape gateway");
 }
 
 # Switch from rtcpclientd (in DB, stops demons before, massages the DB as required)
@@ -2148,9 +2161,20 @@ sub stopAndSwitchToRtcpclientd ( $ )
             die "Failed to stop a daemon. Call an exorcist.";
         }
     }
+    /*$dbh->do("UPDATE castorconfig SET value='rtcpclientd' WHERE class='tape' AND key='interfaceDaemon'");
+    $dbh->commit();*/
+    # Migrate to rtcpclientd by script.
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $checkout_location   = $environment{checkout_location};
+    my $dbDir               = $environment{dbDir};
+    my $switch_to_rtcpclientd = $environment{switchoverToRtcpClientd};
     
-    $dbh->do("UPDATE castorconfig SET value='rtcpclientd' WHERE class='tape' AND key='interfaceDaemon'");
-    $dbh->commit();
+    my $switch_to_rtcpclientd_full_path = $checkout_location.$dbDir.$switch_to_rtcpclientd;
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $switch_to_rtcpclientd_full_path,
+                           "Switching to RtcpClientd");
 }
 
 
