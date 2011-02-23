@@ -101,6 +101,7 @@ const std::string castor::db::cnv::DbTapeAccessSpecificationCnv::s_deleteTypeSta
 castor::db::cnv::DbTapeAccessSpecificationCnv::DbTapeAccessSpecificationCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
+  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -123,6 +124,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
+    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -132,6 +134,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
+  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -281,9 +284,9 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_insertStatement) {
-      m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+    if (0 == m_bulkInsertStatement) {
+      m_bulkInsertStatement = createStatement(s_insertStatementString);
+      m_bulkInsertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -305,7 +308,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
       accessModeBuffer[i] = objs[i]->accessMode();
       accessModeBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (1, accessModeBuffer, castor::db::DBTYPE_INT, sizeof(accessModeBuffer[0]), accessModeBufLens);
     // build the buffers for density
     unsigned int densityMaxLen = 0;
@@ -329,7 +332,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
       strncpy(densityBuffer+(i*densityMaxLen), objs[i]->density().c_str(), densityMaxLen);
       densityBufLens[i] = objs[i]->density().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (2, densityBuffer, castor::db::DBTYPE_STRING, densityMaxLen, densityBufLens);
     // build the buffers for tapeModel
     unsigned int tapeModelMaxLen = 0;
@@ -353,7 +356,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
       strncpy(tapeModelBuffer+(i*tapeModelMaxLen), objs[i]->tapeModel().c_str(), tapeModelMaxLen);
       tapeModelBufLens[i] = objs[i]->tapeModel().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (3, tapeModelBuffer, castor::db::DBTYPE_STRING, tapeModelMaxLen, tapeModelBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -368,9 +371,9 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (4, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_insertStatement->execute(nb);
+    m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

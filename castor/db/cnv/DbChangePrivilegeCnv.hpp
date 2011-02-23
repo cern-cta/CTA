@@ -286,6 +286,9 @@ namespace castor {
         /// SQL statement object for request insertion
         castor::db::IDbStatement *m_insertStatement;
 
+        /// SQL statement object for request bulk insertion
+        castor::db::IDbStatement *m_bulkInsertStatement;
+
         /// SQL statement for request deletion
         static const std::string s_deleteStatementString;
 

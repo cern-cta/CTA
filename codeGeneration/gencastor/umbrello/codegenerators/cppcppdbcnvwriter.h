@@ -74,7 +74,8 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes the check statements part of the (bulk)createRep method
   void writeCreateRepCheckStatements(QTextStream &stream,
                                      MemberList &members,
-                                     AssocList &assocs);
+                                     AssocList &assocs,
+                                     bool bulk);
 
   /// writes the check statements part of the (bulk)createObj method
   void writeCreateObjCheckStatements(QString name);

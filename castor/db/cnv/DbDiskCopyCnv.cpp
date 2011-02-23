@@ -137,6 +137,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_updateCastorFileStatementStr
 castor::db::cnv::DbDiskCopyCnv::DbDiskCopyCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
+  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -166,6 +167,7 @@ void castor::db::cnv::DbDiskCopyCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
+    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -182,6 +184,7 @@ void castor::db::cnv::DbDiskCopyCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
+  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -616,9 +619,9 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_insertStatement) {
-      m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
+    if (0 == m_bulkInsertStatement) {
+      m_bulkInsertStatement = createStatement(s_insertStatementString);
+      m_bulkInsertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -645,7 +648,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       strncpy(pathBuffer+(i*pathMaxLen), objs[i]->path().c_str(), pathMaxLen);
       pathBufLens[i] = objs[i]->path().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (1, pathBuffer, castor::db::DBTYPE_STRING, pathMaxLen, pathBufLens);
     // build the buffers for gcWeight
     double* gcWeightBuffer = (double*) malloc(nb * sizeof(double));
@@ -664,7 +667,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       gcWeightBuffer[i] = objs[i]->gcWeight();
       gcWeightBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (2, gcWeightBuffer, castor::db::DBTYPE_DOUBLE, sizeof(gcWeightBuffer[0]), gcWeightBufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
@@ -683,7 +686,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       creationTimeBuffer[i] = time(0);
       creationTimeBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (3, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
     // build the buffers for owneruid
     int* owneruidBuffer = (int*) malloc(nb * sizeof(int));
@@ -702,7 +705,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       owneruidBuffer[i] = objs[i]->owneruid();
       owneruidBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (4, owneruidBuffer, castor::db::DBTYPE_INT, sizeof(owneruidBuffer[0]), owneruidBufLens);
     // build the buffers for ownergid
     int* ownergidBuffer = (int*) malloc(nb * sizeof(int));
@@ -721,7 +724,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       ownergidBuffer[i] = objs[i]->ownergid();
       ownergidBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (5, ownergidBuffer, castor::db::DBTYPE_INT, sizeof(ownergidBuffer[0]), ownergidBufLens);
     // build the buffers for fileSystem
     double* fileSystemBuffer = (double*) malloc(nb * sizeof(double));
@@ -740,7 +743,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       fileSystemBuffer[i] = (type == OBJ_FileSystem && objs[i]->fileSystem() != 0) ? objs[i]->fileSystem()->id() : 0;
       fileSystemBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (6, fileSystemBuffer, castor::db::DBTYPE_UINT64, sizeof(fileSystemBuffer[0]), fileSystemBufLens);
     // build the buffers for castorFile
     double* castorFileBuffer = (double*) malloc(nb * sizeof(double));
@@ -759,7 +762,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       castorFileBuffer[i] = (type == OBJ_CastorFile && objs[i]->castorFile() != 0) ? objs[i]->castorFile()->id() : 0;
       castorFileBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (7, castorFileBuffer, castor::db::DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
@@ -778,7 +781,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       statusBuffer[i] = objs[i]->status();
       statusBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (8, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -793,9 +796,9 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (9, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_insertStatement->execute(nb);
+    m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

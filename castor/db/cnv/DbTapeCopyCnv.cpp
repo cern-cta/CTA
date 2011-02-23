@@ -142,6 +142,7 @@ const std::string castor::db::cnv::DbTapeCopyCnv::s_updateCastorFileStatementStr
 castor::db::cnv::DbTapeCopyCnv::DbTapeCopyCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
+  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -172,6 +173,7 @@ void castor::db::cnv::DbTapeCopyCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
+    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -189,6 +191,7 @@ void castor::db::cnv::DbTapeCopyCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
+  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -648,9 +651,9 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_insertStatement) {
-      m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+    if (0 == m_bulkInsertStatement) {
+      m_bulkInsertStatement = createStatement(s_insertStatementString);
+      m_bulkInsertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -672,7 +675,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       copyNbBuffer[i] = objs[i]->copyNb();
       copyNbBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (1, copyNbBuffer, castor::db::DBTYPE_INT, sizeof(copyNbBuffer[0]), copyNbBufLens);
     // build the buffers for errorCode
     int* errorCodeBuffer = (int*) malloc(nb * sizeof(int));
@@ -691,7 +694,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       errorCodeBuffer[i] = objs[i]->errorCode();
       errorCodeBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (2, errorCodeBuffer, castor::db::DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
     // build the buffers for nbRetry
     int* nbRetryBuffer = (int*) malloc(nb * sizeof(int));
@@ -710,7 +713,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       nbRetryBuffer[i] = objs[i]->nbRetry();
       nbRetryBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (3, nbRetryBuffer, castor::db::DBTYPE_INT, sizeof(nbRetryBuffer[0]), nbRetryBufLens);
     // build the buffers for missingCopies
     int* missingCopiesBuffer = (int*) malloc(nb * sizeof(int));
@@ -729,7 +732,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       missingCopiesBuffer[i] = objs[i]->missingCopies();
       missingCopiesBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (4, missingCopiesBuffer, castor::db::DBTYPE_INT, sizeof(missingCopiesBuffer[0]), missingCopiesBufLens);
     // build the buffers for castorFile
     double* castorFileBuffer = (double*) malloc(nb * sizeof(double));
@@ -748,7 +751,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       castorFileBuffer[i] = (type == OBJ_CastorFile && objs[i]->castorFile() != 0) ? objs[i]->castorFile()->id() : 0;
       castorFileBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (5, castorFileBuffer, castor::db::DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
@@ -767,7 +770,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       statusBuffer[i] = objs[i]->status();
       statusBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (6, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -782,9 +785,9 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (7, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_insertStatement->execute(nb);
+    m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
