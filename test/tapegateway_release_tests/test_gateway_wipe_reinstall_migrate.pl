@@ -32,6 +32,7 @@ use strict;
 use POSIX;
 use DBI;
 use DBD::Oracle qw(:ora_types);
+use BSD::Resource;
 use CastorTapeTests;
 
 sub goodDaySingleAndDualCopyTest ( $$$ );
@@ -57,6 +58,13 @@ main();
 # Main: check for leftovers in DB, print out, return exit code accordingly
 sub main ()
 {
+    # Set ulimit to infinite
+    setrlimit (RLIMIT_CORE, RLIM_INFINITY, RLIM_INFINITY);
+    # Check we are running in ulimit -c unlimited
+    my ($rlsoft, $rlhard) = getrlimit(RLIMIT_CORE);
+    if ( $rlsoft != -1 ) {
+        die "Failed to set to ulimit to unlimited";
+    }
     # Initialize: setup the environment
     print "t=".CastorTapeTests::elapsed_time()."s. ";
     print `date`;
