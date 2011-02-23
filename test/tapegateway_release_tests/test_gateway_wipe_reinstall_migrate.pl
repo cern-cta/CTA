@@ -37,6 +37,7 @@ use CastorTapeTests;
 sub goodDaySingleAndDualCopyTest ( $$$ );
 sub badDayTests ( $$$ );
 sub preparePreTransitionBacklog ( $$$ );
+sub checkTapes ( );
 sub managePostTransitionBacklog ( $ );
 sub main ();
 
@@ -111,6 +112,7 @@ sub main ()
     $dbh=CastorTapeTests::open_db();
     CastorTapeTests::migrateToNewTapeGatewaySchema ();
     CastorTapeTests::stopAndSwitchToRtcpclientd ( $dbh );
+    checkTapes();
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched to new schema with rtcpclientd =============\n";
@@ -137,7 +139,9 @@ sub main ()
     preparePreTransitionBacklog ($seed_index, $file_number, 0);
 
     # Switch back to tape gateway.
+    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::stopAndSwitchToRtcpclientd ( $dbh );
+    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Switched back to rtcpclientd  ========================\n";
@@ -262,11 +266,9 @@ sub preparePreTransitionBacklog ( $$$ )
     goodDayFileCreation ( $seed_index, $file_number, $do_dual_tapecopy );
 }
 
-# Follow up on the files injected in the system after the configuration switchover.
-sub managePostTransitionBacklog ( $ )
+# Check that the tapes in the cmgr are not busy. Reset them if needed.
+sub checkTapes ( )
 {
-    my $dbh = shift;
-
     # Check that the tapes from the tape pool have been left in a proper state.
     my $tapepool = CastorTapeTests::get_environment('tapepool');
     my $tp_status = `vmgrlisttape -P $tapepool`;
@@ -280,6 +282,14 @@ sub managePostTransitionBacklog ( $ )
 	    }
 	}
     }
+}
+
+# Follow up on the files injected in the system after the configuration switchover.
+sub managePostTransitionBacklog ( $ )
+{
+    my $dbh = shift;
+
+    checkTapes();
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');    
     CastorTapeTests::poll_moving_entries ( $dbh, $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
