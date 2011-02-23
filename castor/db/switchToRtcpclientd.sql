@@ -57,6 +57,17 @@ COMMIT;
 -- From TAPECOPY_REC_RETRY, move to TAPECOPY_TOBERECALLED, segment is left as is.
 -- From TAPECOPY_MIG_RETRY, move back to TO BE MIGRATED.
 
+BEGIN
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy tc SET tc.status = TCONST.TAPECOPY_TOBEMIGRATED 
+    WHERE tc.status IN (TCONST.TAPECOPY_WAITPOLICY, TCONST.TAPECOPY_WAITINSTREAMS,
+                        TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
+                        -- STAGED and FAILED can stay the same, other states are for recalls.
+  COMMIT;
+END;
+/
+
 -- Streams do not need to be kept. The mighunter will recreate them all.
 DELETE FROM Stream2TapeCopy;
 DELETE FROM STREAM;
