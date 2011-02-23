@@ -64,7 +64,8 @@ DECLARE
 BEGIN
   -- Deal with Migrations
   -- 1) Ressurect tapecopies for migration
-  UPDATE TapeCopy tc SET tc.status = TCONST.TAPECOPY_TOBEMIGRATED 
+  UPDATE TapeCopy tc SET tc.status = TCONST.TAPECOPY_TOBEMIGRATED,
+                         tc.VID = NULL  
     WHERE tc.status IN (TCONST.TAPECOPY_WAITPOLICY, TCONST.TAPECOPY_WAITINSTREAMS,
                         TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
                         -- STAGED and FAILED can stay the same, other states are for recalls.
