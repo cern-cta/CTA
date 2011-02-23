@@ -759,21 +759,6 @@ sub modelAndLibrary2Dgn {
   die "Failed to find DGN for model=\"$model\" and library=\"$library\"\n";
 }
 
-sub modelAndLibrary2Dgn {
-  my ($dgnMap, $model, $library) = (shift, shift, shift);
-
-  my $dgn = "";
-
-  for $dgn (keys %$dgnMap) {
-    if($dgnMap->{$dgn}{mo} eq $model and
-      $dgnMap->{$dgn}{library} eq $library) {
-      return $dgn;
-    }
-  }
-
-  die "Failed to find DGN for model=\"$model\" and library=\"$library\"\n";
-}
-
 sub enableTape {
   my ($clients, $denMap, $tapes,  $vid, $clientVer) =
      (   shift,    shift,  shift, shift,      shift);
@@ -1519,23 +1504,23 @@ print("ADDING $nbDummyTapes DUMMY TAPES TO TEST DATA-STRUCTURES\n");
 &addDummyTapes(\%tapes, $nbDummyTapes);
 
 # Abort if the new vmgr clients do not get refused by the old production vmgr
-print("\n");
-print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
-&testRunCmdAsOutput("root",
-  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrenterdenmap}{newVer}" .
-  " -d 9999GC --ml J --mo 3592 --nc 1T",
-  "VMG03 - illegal function 40\nvmgrenterdenmap 3592: Internal error");
-&testRunCmdAsOutput("root",
-  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlistdenmap}{newVer}",
-  "VMG03 - illegal function 41\n" .
-  "send2vmgr: VMG02 - send error : Internal error");
-&testRunCmdAsOutput("root",
-  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlisttape}{newVer} -V $vids[0]",
-  "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
-&testRunCmdAsOutput("root",
-  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrquerytape}{newVer} $vids[0]",
-  "VMG03 - illegal function 39\n" .
-  "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
+#print("\n");
+#print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
+#&testRunCmdAsOutput("root",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrenterdenmap}{newVer}" .
+#  " -d 9999GC --ml J --mo 3592 --nc 1T",
+#  "VMG03 - illegal function 40\nvmgrenterdenmap 3592: Internal error");
+#&testRunCmdAsOutput("root",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlistdenmap}{newVer}",
+#  "VMG03 - illegal function 41\n" .
+#  "send2vmgr: VMG02 - send error : Internal error");
+#&testRunCmdAsOutput("root",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlisttape}{newVer} -V $vids[0]",
+#  "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
+#&testRunCmdAsOutput("root",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrquerytape}{newVer} $vids[0]",
+#  "VMG03 - illegal function 39\n" .
+#  "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
