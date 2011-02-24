@@ -1238,56 +1238,7 @@ my %pools = (
     group => "st"
   }
 );
-my %tapes = (
-  TTC009 => {
-    mo  => "T10000",
-    ml  => "T",
-    li  => "SL8600_C",
-    d   => "5000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  },
-  I02023 => {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB1B",
-    d   => "1000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  },
-  I10486 => {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB3B",
-    d   => "1000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  },
-  I12035 => {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB3B",
-    d   => "3000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  },
-  I12038 => {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB3B",
-    d   => "1000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  },
-  I12438 => {
-    mo  => "3592",
-    ml  => "J",
-    li  => "IBMLIB3B",
-    d   => "1000GC",
-    l   => "aul",
-    po  => "stager_dev04"
-  }
-);
+my %tapes;
 my $castor_src = $ENV{'CASTOR_SRC'};
 my %clients = (
   vmgrquerytape => {
@@ -1389,6 +1340,12 @@ my $nbDummyDgnMaplets  = 200;
 my $nbDummyPools       = 200;
 my $nbDummyTapes       = 100;
 my $i                  = 0;
+my $pid                = 0;
+
+for $dgn (keys %dgnMap) {
+  print("model   = $dgnMap{$dgn}{mo}\n");
+  print("library = $dgnMap{$dgn}{library}\n");
+}
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
@@ -1503,25 +1460,6 @@ print("\n");
 print("ADDING $nbDummyTapes DUMMY TAPES TO TEST DATA-STRUCTURES\n");
 &addDummyTapes(\%tapes, $nbDummyTapes);
 
-# Abort if the new vmgr clients do not get refused by the old production vmgr
-#print("\n");
-#print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
-#&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrenterdenmap}{newVer}" .
-#  " -d 9999GC --ml J --mo 3592 --nc 1T",
-#  "VMG03 - illegal function 40\nvmgrenterdenmap 3592: Internal error");
-#&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlistdenmap}{newVer}",
-#  "VMG03 - illegal function 41\n" .
-#  "send2vmgr: VMG02 - send error : Internal error");
-#&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlisttape}{newVer} -V $vids[0]",
-#  "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
-#&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrquerytape}{newVer} $vids[0]",
-#  "VMG03 - illegal function 39\n" .
-#  "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
-
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
   print("STOPPING THE VMGR\n");
@@ -1537,10 +1475,13 @@ print("CREATING DATABASE SCHEMA\n");
 &createVmgrDatabaseSchema($dbConnectionString, $originalDbSchema);
 
 print("\n");
-print("STARTING THE VMGR\n");
-&runCmdAs("root", "/etc/init.d/vmgrd start");
-die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
-sleep(1); # Give the vmgrd a chance to get up and running
+print("STARTING THE VMGR USING VALGRIND\n");
+$pid = fork;
+if($pid == 0) {
+  exec("valgrind", "--log-file=/root/valgrind_vmgrd_old_clients.log", "/usr/bin/vmgrd",
+    "-f");
+}
+sleep(10); # Give the vmgrd a chance to get up and running
 
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
@@ -1548,12 +1489,6 @@ print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 &enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
   \%tapes, "oldVer");
 
-if(&daemonIsRunning("vmgrd")) {
-  print("\n");
-  print("STOPPING THE VMGR\n");
-  &runCmdAs("root", "/etc/init.d/vmgrd stop");
-}
-
 print("\n");
 print("DROPPING DATABASE SCHEMA\n");
 &dropVmgrDatabaseSchema($dbConnectionString, $originalDropSchema);
@@ -1563,10 +1498,18 @@ print("CREATING DATABASE SCHEMA\n");
 &createVmgrDatabaseSchema($dbConnectionString, $originalDbSchema);
 
 print("\n");
-print("STARTING THE VMGR\n");
-&runCmdAs("root", "/etc/init.d/vmgrd start");
-die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
-sleep(1); # Give the vmgrd a chance to get up and running
+print("KILLING VALGRIND WITH PID $pid\n");
+`kill $pid`;
+sleep(5); # Give valgrind time to write its report
+
+print("\n");
+print("STARTING THE VMGR USING VALGRIND\n");
+$pid = fork;
+if($pid == 0) {
+  exec("valgrind", "--log-file=/root/valgrind_vmgrd_new_clients.log", "/usr/bin/vmgrd",
+    "-f");
+}
+sleep(10); # Give the vmgrd a chance to get up and running
 
 print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
@@ -1611,6 +1554,11 @@ for $vid (@vids) {
   die "ABORT: Found entries in development name-server for $vid"
     unless $cmdResultStr eq "$vid: No such volume or no files found";
 }
+
+print("\n");
+print("KILLING VALGRIND WITH PID $pid\n");
+`kill $pid`;
+sleep(5); # Give valgrind time to write its report
 
 exit(0);
 
