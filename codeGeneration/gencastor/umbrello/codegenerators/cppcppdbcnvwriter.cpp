@@ -176,7 +176,7 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
 }
 
 //=============================================================================
-// writeConstants
+// ordonnateMembersInAssoc
 //=============================================================================
 void CppCppDbCnvWriter::ordonnateMembersInAssoc(Assoc* as,
                                                 Member** firstMember,
@@ -205,25 +205,28 @@ void CppCppDbCnvWriter::ordonnateMembersInAssoc(Assoc* as,
 }
 
 //=============================================================================
-// writeConstants
+// writeInsertStmtConstants
 //=============================================================================
-void CppCppDbCnvWriter::writeConstants() {
-  writeWideHeaderComment("Static constants initialization",
-                         getIndent(),
-                         *m_stream);
+void CppCppDbCnvWriter::writeInsertStmtConstants(MemberList& members,
+                                                 AssocList& assocs,
+                                                 bool bulk) {
   *m_stream << getIndent()
-            << "/// SQL statement for request insertion"
+            << "/// SQL statement for request "
+            << (bulk ? "bulk insertion" : "insertion")
             << endl << getIndent()
             << "const std::string "
             << m_classInfo->fullPackageName
             << "Db" << m_classInfo->className
-            << "Cnv::s_insertStatementString =" << endl
-            << getIndent()
-            << "\"INSERT INTO " << m_classInfo->className
+            << (bulk ? "Cnv::s_bulkInsert" : "Cnv::s_insert")
+            << "StatementString =" << endl << getIndent()
+            << "\"INSERT"
+  // The following comment is to overcome a limitation in Oracle whereby we can't use
+  // the same statement string and object for both bulk and non-bulk operations with OCCI.
+  // See also bug #78533 in savannah.
+            << (bulk ? " /* bulk */ " : " ")
+            << "INTO " << m_classInfo->className
             << " (";
   bool first = true;
-  // create a list of members
-  MemberList members = createMembersList();
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
@@ -233,8 +236,6 @@ void CppCppDbCnvWriter::writeConstants() {
     *m_stream << mem->name;
     first = false;
   }
-  // create a list of associations
-  AssocList assocs = createAssocsList();
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
@@ -281,8 +282,25 @@ void CppCppDbCnvWriter::writeConstants() {
     }
   }
   *m_stream << ") RETURNING id INTO :" << n
-            << "\";" << endl << endl << getIndent()
-            << "/// SQL statement for request deletion"
+            << "\";" << endl << endl;
+}
+            
+//=============================================================================
+// writeConstants
+//=============================================================================
+void CppCppDbCnvWriter::writeConstants() {
+  writeWideHeaderComment("Static constants initialization",
+                         getIndent(),
+                         *m_stream);
+  // create a list of members
+  MemberList members = createMembersList();
+  // create a list of associations
+  AssocList assocs = createAssocsList();
+  // INSERT statements
+  writeInsertStmtConstants(members, assocs, false);
+  writeInsertStmtConstants(members, assocs, true);
+  // DELETE statement
+  *m_stream << getIndent() << "/// SQL statement for request deletion"
             << endl << getIndent()
             << "const std::string "
             << m_classInfo->fullPackageName
@@ -292,6 +310,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << "\"DELETE FROM " << m_classInfo->className
             << " WHERE id = :1\";" << endl << endl
             << getIndent()
+  // SELECT statements
             << "/// SQL statement for request selection"
             << endl << getIndent()
             << "const std::string "
@@ -301,7 +320,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << getIndent()
             << "\"SELECT ";
   // Go through the members
-  n = 0;
+  int n = 0;
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
@@ -439,6 +458,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << " END;\";"
             << endl << endl
             << getIndent()
+  // UPDATE statement
             << "/// SQL statement for request update"
             << endl << getIndent()
             << "const std::string "
@@ -449,7 +469,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << "\"UPDATE " << m_classInfo->className
             << " SET ";
   n = 0;
-  first = true;
+  bool first = true;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
@@ -476,6 +496,7 @@ void CppCppDbCnvWriter::writeConstants() {
   }
   *m_stream << " WHERE id = :" << n+1
             << "\";" << endl << endl << getIndent()
+  // Id2Type related statements
             << "/// SQL statement for type storage"
             << endl << getIndent()
             << "const std::string "
@@ -484,11 +505,11 @@ void CppCppDbCnvWriter::writeConstants() {
             << "Cnv::s_storeTypeStatementString =" << endl
             << getIndent()
             << "\"INSERT /* "
-    // Do not remove this comment unless the BigId problem (sr #106879) is solved
-    // This is a workaround that consists in dissociating the different SQLs inserting
-    // into Id2Type by adding a different comment into them.
-    // Note that the problem has been solved by ORACLE but came back at the very
-    // end of 2009. So this was readded after it had been removed.
+  // Do not remove this comment unless the BigId problem (sr #106879) is solved
+  // This is a workaround that consists in dissociating the different SQLs inserting
+  // into Id2Type by adding a different comment into them.
+  // Note that the problem has been solved by ORACLE but came back at the very
+  // end of 2009. So this was readded after it had been removed.
             << m_classInfo->className
             << " class */ INTO Id2Type (id, type) VALUES (:1, :2)\";"
             << endl << endl << getIndent()
@@ -2194,7 +2215,9 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
   }
   stream << getIndent()
          << (bulk ? "m_bulkInsert" : "m_insert")
-         << "Statement = createStatement(s_insertStatementString);"
+         << "Statement = createStatement(s_"
+         << (bulk ? "bulkInsert" : "insert")
+         << "StatementString);"
          << endl << getIndent()
          << (bulk ? "m_bulkInsert" : "m_insert")
          << "Statement->registerOutParam(" << n

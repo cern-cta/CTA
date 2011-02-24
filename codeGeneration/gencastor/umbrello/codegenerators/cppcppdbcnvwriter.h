@@ -36,6 +36,7 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
  private:
 
   /// writes static constants initialization
+  void writeInsertStmtConstants(MemberList& members, AssocList& assocs, bool bulk);
   void writeConstants();
 
   /// writes SQL statements for creation/deletion of the databases
