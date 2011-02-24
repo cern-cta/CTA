@@ -108,7 +108,6 @@ const std::string castor::db::cnv::DbQueryParameterCnv::s_updateQryRequestStatem
 castor::db::cnv::DbQueryParameterCnv::DbQueryParameterCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
-  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -132,7 +131,6 @@ void castor::db::cnv::DbQueryParameterCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
-    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -143,7 +141,6 @@ void castor::db::cnv::DbQueryParameterCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
-  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -355,9 +352,9 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_bulkInsertStatement) {
-      m_bulkInsertStatement = createStatement(s_insertStatementString);
-      m_bulkInsertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -384,7 +381,7 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
       strncpy(valueBuffer+(i*valueMaxLen), objs[i]->value().c_str(), valueMaxLen);
       valueBufLens[i] = objs[i]->value().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (1, valueBuffer, castor::db::DBTYPE_STRING, valueMaxLen, valueBufLens);
     // build the buffers for query
     double* queryBuffer = (double*) malloc(nb * sizeof(double));
@@ -403,7 +400,7 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
       queryBuffer[i] = (type == OBJ_QryRequest && objs[i]->query() != 0) ? objs[i]->query()->id() : 0;
       queryBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (2, queryBuffer, castor::db::DBTYPE_UINT64, sizeof(queryBuffer[0]), queryBufLens);
     // build the buffers for queryType
     int* queryTypeBuffer = (int*) malloc(nb * sizeof(int));
@@ -422,7 +419,7 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
       queryTypeBuffer[i] = objs[i]->queryType();
       queryTypeBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (3, queryTypeBuffer, castor::db::DBTYPE_INT, sizeof(queryTypeBuffer[0]), queryTypeBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -437,9 +434,9 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (4, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_bulkInsertStatement->execute(nb);
+    m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

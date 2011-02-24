@@ -127,7 +127,6 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_remoteUpdateRepackSe
 castor::db::cnv::DbRepackSubRequestCnv::DbRepackSubRequestCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
-  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -155,7 +154,6 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
-    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -170,7 +168,6 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
-  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -534,9 +531,9 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_bulkInsertStatement) {
-      m_bulkInsertStatement = createStatement(s_insertStatementString);
-      m_bulkInsertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -563,7 +560,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       strncpy(vidBuffer+(i*vidMaxLen), objs[i]->vid().c_str(), vidMaxLen);
       vidBufLens[i] = objs[i]->vid().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (1, vidBuffer, castor::db::DBTYPE_STRING, vidMaxLen, vidBufLens);
     // build the buffers for xsize
     double* xsizeBuffer = (double*) malloc(nb * sizeof(double));
@@ -582,7 +579,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       xsizeBuffer[i] = objs[i]->xsize();
       xsizeBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (2, xsizeBuffer, castor::db::DBTYPE_UINT64, sizeof(xsizeBuffer[0]), xsizeBufLens);
     // build the buffers for filesMigrating
     int* filesMigratingBuffer = (int*) malloc(nb * sizeof(int));
@@ -601,7 +598,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesMigratingBuffer[i] = objs[i]->filesMigrating();
       filesMigratingBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (3, filesMigratingBuffer, castor::db::DBTYPE_INT, sizeof(filesMigratingBuffer[0]), filesMigratingBufLens);
     // build the buffers for filesStaging
     int* filesStagingBuffer = (int*) malloc(nb * sizeof(int));
@@ -620,7 +617,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesStagingBuffer[i] = objs[i]->filesStaging();
       filesStagingBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (4, filesStagingBuffer, castor::db::DBTYPE_INT, sizeof(filesStagingBuffer[0]), filesStagingBufLens);
     // build the buffers for files
     int* filesBuffer = (int*) malloc(nb * sizeof(int));
@@ -639,7 +636,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesBuffer[i] = objs[i]->files();
       filesBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (5, filesBuffer, castor::db::DBTYPE_INT, sizeof(filesBuffer[0]), filesBufLens);
     // build the buffers for filesFailed
     int* filesFailedBuffer = (int*) malloc(nb * sizeof(int));
@@ -658,7 +655,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesFailedBuffer[i] = objs[i]->filesFailed();
       filesFailedBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (6, filesFailedBuffer, castor::db::DBTYPE_INT, sizeof(filesFailedBuffer[0]), filesFailedBufLens);
     // build the buffers for cuuid
     unsigned int cuuidMaxLen = 0;
@@ -682,7 +679,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       strncpy(cuuidBuffer+(i*cuuidMaxLen), objs[i]->cuuid().c_str(), cuuidMaxLen);
       cuuidBufLens[i] = objs[i]->cuuid().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (7, cuuidBuffer, castor::db::DBTYPE_STRING, cuuidMaxLen, cuuidBufLens);
     // build the buffers for submitTime
     double* submitTimeBuffer = (double*) malloc(nb * sizeof(double));
@@ -701,7 +698,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       submitTimeBuffer[i] = objs[i]->submitTime();
       submitTimeBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (8, submitTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(submitTimeBuffer[0]), submitTimeBufLens);
     // build the buffers for filesStaged
     int* filesStagedBuffer = (int*) malloc(nb * sizeof(int));
@@ -720,7 +717,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesStagedBuffer[i] = objs[i]->filesStaged();
       filesStagedBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (9, filesStagedBuffer, castor::db::DBTYPE_INT, sizeof(filesStagedBuffer[0]), filesStagedBufLens);
     // build the buffers for filesFailedSubmit
     int* filesFailedSubmitBuffer = (int*) malloc(nb * sizeof(int));
@@ -739,7 +736,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       filesFailedSubmitBuffer[i] = objs[i]->filesFailedSubmit();
       filesFailedSubmitBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (10, filesFailedSubmitBuffer, castor::db::DBTYPE_INT, sizeof(filesFailedSubmitBuffer[0]), filesFailedSubmitBufLens);
     // build the buffers for retryNb
     double* retryNbBuffer = (double*) malloc(nb * sizeof(double));
@@ -758,7 +755,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       retryNbBuffer[i] = objs[i]->retryNb();
       retryNbBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (11, retryNbBuffer, castor::db::DBTYPE_UINT64, sizeof(retryNbBuffer[0]), retryNbBufLens);
     // build the buffers for repackrequest
     double* repackrequestBuffer = (double*) malloc(nb * sizeof(double));
@@ -777,7 +774,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       repackrequestBuffer[i] = (type == OBJ_RepackRequest && objs[i]->repackrequest() != 0) ? objs[i]->repackrequest()->id() : 0;
       repackrequestBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (12, repackrequestBuffer, castor::db::DBTYPE_UINT64, sizeof(repackrequestBuffer[0]), repackrequestBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
@@ -796,7 +793,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       statusBuffer[i] = objs[i]->status();
       statusBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (13, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -811,9 +808,9 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (14, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_bulkInsertStatement->execute(nb);
+    m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

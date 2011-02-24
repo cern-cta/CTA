@@ -101,7 +101,6 @@ const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_deleteTypeStatementSt
 castor::db::cnv::DbDeviceGroupNameCnv::DbDeviceGroupNameCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
-  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -124,7 +123,6 @@ void castor::db::cnv::DbDeviceGroupNameCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
-    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -134,7 +132,6 @@ void castor::db::cnv::DbDeviceGroupNameCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
-  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -282,9 +279,9 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_bulkInsertStatement) {
-      m_bulkInsertStatement = createStatement(s_insertStatementString);
-      m_bulkInsertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -311,7 +308,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress*,
       strncpy(dgNameBuffer+(i*dgNameMaxLen), objs[i]->dgName().c_str(), dgNameMaxLen);
       dgNameBufLens[i] = objs[i]->dgName().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (1, dgNameBuffer, castor::db::DBTYPE_STRING, dgNameMaxLen, dgNameBufLens);
     // build the buffers for libraryName
     unsigned int libraryNameMaxLen = 0;
@@ -335,7 +332,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress*,
       strncpy(libraryNameBuffer+(i*libraryNameMaxLen), objs[i]->libraryName().c_str(), libraryNameMaxLen);
       libraryNameBufLens[i] = objs[i]->libraryName().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (2, libraryNameBuffer, castor::db::DBTYPE_STRING, libraryNameMaxLen, libraryNameBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -350,9 +347,9 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (3, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_bulkInsertStatement->execute(nb);
+    m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

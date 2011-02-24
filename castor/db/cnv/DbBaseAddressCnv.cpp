@@ -100,7 +100,6 @@ const std::string castor::db::cnv::DbBaseAddressCnv::s_deleteTypeStatementString
 castor::db::cnv::DbBaseAddressCnv::DbBaseAddressCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
-  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -123,7 +122,6 @@ void castor::db::cnv::DbBaseAddressCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
-    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -133,7 +131,6 @@ void castor::db::cnv::DbBaseAddressCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
-  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -285,9 +282,9 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_bulkInsertStatement) {
-      m_bulkInsertStatement = createStatement(s_insertStatementString);
-      m_bulkInsertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -309,7 +306,7 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
       objTypeBuffer[i] = objs[i]->objType();
       objTypeBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (1, objTypeBuffer, castor::db::DBTYPE_INT, sizeof(objTypeBuffer[0]), objTypeBufLens);
     // build the buffers for cnvSvcName
     unsigned int cnvSvcNameMaxLen = 0;
@@ -333,7 +330,7 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
       strncpy(cnvSvcNameBuffer+(i*cnvSvcNameMaxLen), objs[i]->cnvSvcName().c_str(), cnvSvcNameMaxLen);
       cnvSvcNameBufLens[i] = objs[i]->cnvSvcName().length()+1; // + 1 for the trailing \0
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (2, cnvSvcNameBuffer, castor::db::DBTYPE_STRING, cnvSvcNameMaxLen, cnvSvcNameBufLens);
     // build the buffers for cnvSvcType
     int* cnvSvcTypeBuffer = (int*) malloc(nb * sizeof(int));
@@ -352,7 +349,7 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
       cnvSvcTypeBuffer[i] = objs[i]->cnvSvcType();
       cnvSvcTypeBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (3, cnvSvcTypeBuffer, castor::db::DBTYPE_INT, sizeof(cnvSvcTypeBuffer[0]), cnvSvcTypeBufLens);
     // build the buffers for target
     double* targetBuffer = (double*) malloc(nb * sizeof(double));
@@ -371,7 +368,7 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
       targetBuffer[i] = objs[i]->target();
       targetBufLens[i] = sizeof(double);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (4, targetBuffer, castor::db::DBTYPE_UINT64, sizeof(targetBuffer[0]), targetBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -386,9 +383,9 @@ void castor::db::cnv::DbBaseAddressCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (5, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_bulkInsertStatement->execute(nb);
+    m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

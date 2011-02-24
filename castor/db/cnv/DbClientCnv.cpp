@@ -101,7 +101,6 @@ const std::string castor::db::cnv::DbClientCnv::s_deleteTypeStatementString =
 castor::db::cnv::DbClientCnv::DbClientCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
-  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
@@ -124,7 +123,6 @@ void castor::db::cnv::DbClientCnv::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
-    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
@@ -134,7 +132,6 @@ void castor::db::cnv::DbClientCnv::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
-  m_bulkInsertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_bulkSelectStatement = 0;
@@ -286,9 +283,9 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_bulkInsertStatement) {
-      m_bulkInsertStatement = createStatement(s_insertStatementString);
-      m_bulkInsertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -310,7 +307,7 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
       ipAddressBuffer[i] = objs[i]->ipAddress();
       ipAddressBufLens[i] = sizeof(long);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (1, ipAddressBuffer, castor::db::DBTYPE_INT, sizeof(ipAddressBuffer[0]), ipAddressBufLens);
     // build the buffers for port
     short* portBuffer = (short*) malloc(nb * sizeof(short));
@@ -329,7 +326,7 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
       portBuffer[i] = objs[i]->port();
       portBufLens[i] = sizeof(short);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (2, portBuffer, castor::db::DBTYPE_INT, sizeof(portBuffer[0]), portBufLens);
     // build the buffers for version
     int* versionBuffer = (int*) malloc(nb * sizeof(int));
@@ -348,7 +345,7 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
       versionBuffer[i] = objs[i]->version();
       versionBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (3, versionBuffer, castor::db::DBTYPE_INT, sizeof(versionBuffer[0]), versionBufLens);
     // build the buffers for secure
     int* secureBuffer = (int*) malloc(nb * sizeof(int));
@@ -367,7 +364,7 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
       secureBuffer[i] = objs[i]->secure();
       secureBufLens[i] = sizeof(int);
     }
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (4, secureBuffer, castor::db::DBTYPE_INT, sizeof(secureBuffer[0]), secureBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -382,9 +379,9 @@ void castor::db::cnv::DbClientCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_bulkInsertStatement->setDataBuffer
+    m_insertStatement->setDataBuffer
       (5, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_bulkInsertStatement->execute(nb);
+    m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }

@@ -36,7 +36,6 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
  private:
 
   /// writes static constants initialization
-  void writeInsertStmtConstants(MemberList& members, AssocList& assocs, bool bulk);
   void writeConstants();
 
   /// writes SQL statements for creation/deletion of the databases
@@ -75,8 +74,7 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes the check statements part of the (bulk)createRep method
   void writeCreateRepCheckStatements(QTextStream &stream,
                                      MemberList &members,
-                                     AssocList &assocs,
-                                     bool bulk);
+                                     AssocList &assocs);
 
   /// writes the check statements part of the (bulk)createObj method
   void writeCreateObjCheckStatements(QString name);

@@ -287,6 +287,9 @@ namespace castor {
         /// SQL statement object for request insertion
         castor::db::IDbStatement *m_insertStatement;
 
+        /// SQL statement for request bulk insertion
+        static const std::string s_bulkInsertStatementString;
+
         /// SQL statement object for request bulk insertion
         castor::db::IDbStatement *m_bulkInsertStatement;
 
