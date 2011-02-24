@@ -121,7 +121,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_1');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -160,7 +160,7 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_10_1';
 
 
 /**

@@ -1350,8 +1350,9 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
     }
     // Check Tape status
     if (0 == errmsg) {
-      struct vmgr_tape_info vmgrTapeInfo;
-      if (-1 == vmgr_querytape(nsSegments[i].vid, nsSegments[i].side, &vmgrTapeInfo, 0)) {
+      struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+      if (-1 == vmgr_querytape_byte_u64(nsSegments[i].vid, nsSegments[i].side,
+        &vmgrTapeInfo, 0)) {
         // "Error while contacting VMGR"
         tmpInvalidCopies.insert(nsSegments[i].copyno);
         errmsg = 21;

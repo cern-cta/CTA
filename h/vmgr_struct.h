@@ -17,7 +17,7 @@
 
                         /* structures common to volume manager client and server */
 
-struct vmgr_tape_info {
+struct vmgr_tape_info_byte_u64 {
 	char		vid[CA_MAXVIDLEN+1];
 	char		vsn[CA_MAXVSNLEN+1];
 	char		library[CA_MAXTAPELIBLEN+1];
@@ -40,7 +40,7 @@ struct vmgr_tape_info {
 	int		side;
 	char		poolname[CA_MAXPOOLNAMELEN+1];
 	short		status;		/* TAPE_FULL, DISABLED, EXPORTED */
-	int		estimated_free_space;	/* in kbytes */
+	u_signed64	estimated_free_space_byte_u64;
 	int		nbfiles;
 };
 
@@ -57,11 +57,11 @@ struct vmgr_tape_media {
 	int		media_cost;
 };
  
-struct vmgr_tape_denmap {
+struct vmgr_tape_denmap_byte_u64 {
 	char		md_model[CA_MAXMODELLEN+1];
 	char		md_media_letter[CA_MAXMLLEN+1];
 	char		md_density[CA_MAXDENLEN+1];
-	int		native_capacity;	/* in kbytes */
+	u_signed64	native_capacity_byte_u64;
 };
 
 struct vmgr_tape_dgnmap {
@@ -76,11 +76,11 @@ struct vmgr_tape_dgn {
 	int		deltaweight;
 };
 
-struct vmgr_tape_pool {
+struct vmgr_tape_pool_byte_u64 {
 	char		name[CA_MAXPOOLNAMELEN+1];
 	uid_t		uid;
 	gid_t		gid;
-	u_signed64	capacity;
-	u_signed64	tot_free_space;
+	u_signed64	capacity_byte_u64;
+	u_signed64	tot_free_space_byte_u64;
 };
 #endif

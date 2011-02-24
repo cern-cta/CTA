@@ -22,11 +22,11 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
 	char func[16];
 	gid_t pool_gid;
 	uid_t pool_uid;
-	struct vmgr_tape_info tape_info;
+	struct vmgr_tape_info_byte_u64 tape_info;
 	char vmgrdgn[CA_MAXDGNLEN+1];
 
 	strncpy (func, "vmgrcheck", 16);
-	while (vmgr_querytape (vid, 0, &tape_info, vmgrdgn) < 0) {
+	while (vmgr_querytape_byte_u64 (vid, 0, &tape_info, vmgrdgn) < 0) {
 		if (serrno == ENOENT) {
 			return (ETVUNKN);
 		}

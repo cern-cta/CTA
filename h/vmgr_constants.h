@@ -64,4 +64,33 @@
 #define	USERR	  1	/* user error */
 #define	SYERR 	  2	/* system error */
 #define	CONFERR	  4	/* configuration error */
+
+#define MARSHALLED_TAPE_BYTE_U64_ENTRYSZ    \
+(                                           \
+  /* vid          */ CA_MAXVIDLEN+1       + \
+  /* vsn          */ CA_MAXVSNLEN+1       + \
+  /* library      */ CA_MAXTAPELIBLEN+1   + \
+  /* density      */ CA_MAXDENLEN+1       + \
+  /* lbltype      */ CA_MAXLBLTYPLEN+1    + \
+  /* model        */ CA_MAXMODELLEN+1     + \
+  /* media_letter */ CA_MAXMLLEN+1        + \
+  /* manufacturer */ CA_MAXMANUFLEN+1     + \
+  /* sn           */ CA_MAXSNLEN+1        + \
+  /* nbsides      */ WORDSIZE             + \
+  /* etime        */ TIME_TSIZE           + \
+  /* side         */ WORDSIZE             + \
+  /* poolname     */ CA_MAXPOOLNAMELEN+1  + \
+  /* free_space   */ HYPERSIZE            + \
+  /* nbfiles      */ LONGSIZE             + \
+  /* rcount       */ LONGSIZE             + \
+  /* wcount       */ LONGSIZE             + \
+  /* rhost        */ CA_MAXSHORTHOSTLEN+1 + \
+  /* whost        */ CA_MAXSHORTHOSTLEN+1 + \
+  /* rjid         */ LONGSIZE             + \
+  /* wjid         */ LONGSIZE             + \
+  /* rtime        */ TIME_TSIZE           + \
+  /* wtime        */ TIME_TSIZE           + \
+  /* status       */ LONGSIZE               \
+)
+
 #endif

@@ -181,7 +181,7 @@ protected:
   /**
    * Tape information retrieved from the VMGR about the tape to be used.
    */
-  vmgr_tape_info m_vmgrTapeInfo;
+  vmgr_tape_info_byte_u64 m_vmgrTapeInfo;
 
   /**
    * The DGN of the tape to be used.

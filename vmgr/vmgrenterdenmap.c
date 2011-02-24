@@ -16,7 +16,7 @@
 int main(int argc,
          char **argv)
 {
-	int c;
+	int c = 0;
 	int errflg = 0;
 	static struct Coptions longopts[] = {
 		{"media_letter", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
@@ -30,7 +30,7 @@ int main(int argc,
 	char *density = NULL;
 	char *media_letter = NULL;
 	char *model = NULL;
-	int native_capacity = 0;
+	u_signed64 native_capacity_byte_u64 = 0;
 
 	Copterr = 1;
 	Coptind = 1;
@@ -46,7 +46,7 @@ int main(int argc,
 			model = Coptarg;
                         break;
 		case OPT_NATIVE_CAPACITY:
-			native_capacity = strutou64 (Coptarg) / ONE_MB;
+			native_capacity_byte_u64 = strutou64 (Coptarg);
 			break;
                 case '?':
                         errflg++;
@@ -56,7 +56,7 @@ int main(int argc,
                 }
         }
         if (Coptind < argc || model == NULL || density == NULL ||
-	    native_capacity <= 0) {
+	    native_capacity_byte_u64 == 0) {
                 errflg++;
         }
         if (errflg) {
@@ -66,7 +66,8 @@ int main(int argc,
                 exit (USERR);
         }
  
-	if (vmgr_enterdenmap (model, media_letter, density, native_capacity) < 0) {
+	if (vmgr_enterdenmap_byte_u64 (model, media_letter, density,
+	  native_capacity_byte_u64) < 0) {
 		fprintf (stderr, "vmgrenterdenmap %s: %s\n", model, sstrerror(serrno));
 		exit (USERR);
 	}

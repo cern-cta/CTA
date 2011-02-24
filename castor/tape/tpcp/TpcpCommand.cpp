@@ -464,7 +464,8 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo << std::endl;
+    os << "vmgr_tape_info_byte_u64 from the VMGR = " <<
+      m_vmgrTapeInfo << std::endl;
 
     os << "DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
   }
@@ -737,7 +738,8 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
   throw (castor::exception::Exception) {
 
   serrno=0;
-  const int rc = vmgr_querytape(vid, side, &m_vmgrTapeInfo, m_dgn);
+  const int rc = vmgr_querytape_byte_u64(vid, side, &m_vmgrTapeInfo,
+    m_dgn);
   const int savedSerrno = serrno;
 
   if(rc != 0) {
