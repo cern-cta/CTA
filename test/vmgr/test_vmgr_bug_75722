@@ -856,16 +856,51 @@ sub enableTape {
     $expectedOutput);
 }
 
+sub setTapeStatus {
+  my ($clients, $denMap, $tapes,   $vid, $tapeStatus, $clientVer) =
+     (   shift,    shift,  shift, shift,       shift,      shift);
+
+  my $tapeDensity    = $tapes->{$vid}{d};
+  my $tapeTb         = $denMap->{$tapeDensity}{tb};
+  my $expectedOutput = "";
+
+  if($tapeStatus eq "") {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st ''",
+      "");
+  } else {
+    &testRunCmdAsOutput("root",
+      "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st $tapeStatus",
+      "");
+  }
+
+  if($tapeTb == 1 and $clientVer eq "oldVer") {
+    $expectedOutput =
+      "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+      "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
+      " 00000000 $tapeStatus";
+  } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
+    $expectedOutput =
+      "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+      "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
+      " 00000000 $tapeStatus";
+  } else {
+    $expectedOutput =
+      "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
+      "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       $tapeTb.00TiB" .
+      " 00000000 $tapeStatus";
+  }
+  &testRunCmdAsOutput("root",
+    "2>&1 $clients->{vmgrlisttape}{$clientVer} -V $vid",
+    $expectedOutput);
+}
+
 sub getPoolCapacityAndFreeStrings {
   my ($clients, $pools, $pool, $clientVer) = (shift, shift, shift, shift);
 
   my $cmdResult = "";
   my $user      = $pools->{$pool}{user};
   my $group     = $pools->{$pool}{group};
-
-print("pool=$pool\n");
-print("user=$user\n");
-print("group=$group\n");
 
   $cmdResult = runCmdAs("root", "2>&1 vmgrlistpool -P $pool");
   chomp($cmdResult);
@@ -1148,9 +1183,23 @@ sub enterMetadata {
   &enterTapes($clients, $denMap, $tapes, $clientVer);
 
   print("\n");
+  print("DISABLING FIRST TWO TAPES READY FOR TAPE MOVE TEST\n");
+  $vid = $vids[0];
+  &setTapeStatus($clients, $denMap, $tapes, $vid, "DISABLED", $clientVer);
+  $vid = $vids[1];
+  &setTapeStatus($clients, $denMap, $tapes, $vid, "DISABLED", $clientVer);
+
+  print("\n");
   print("TESTING TAPE MOVE\n");
   &testTapeMove($clients, $pools, $tapes, $poolNames[0], $poolNames[1],
-   $clientVer);
+    $clientVer);
+
+  print("\n");
+  print("RE-ENABLING FIRST TWO TAPES AFTER TAPE MOVE TEST\n");
+  $vid = $vids[0];
+  &setTapeStatus($clients, $denMap, $tapes, $vid, "", $clientVer);
+  $vid = $vids[1];
+  &setTapeStatus($clients, $denMap, $tapes, $vid, "", $clientVer);
 
   print("\n");
   print("TESTING RECLAIM\n");
@@ -1163,7 +1212,7 @@ sub enterMetadata {
   print("\n");
   print("ENABLING LAST TAPE\n");
   $vid = $vids[$nbTapes - 1];
-  &enableTape($clients, $denMap, $tapes, $vid, $clientVer);
+  &setTapeStatus($clients, $denMap, $tapes, $vid, "", $clientVer);
 
   print("\n");
   print("TESING SETTAG, GETTAG AND DELTAG\n");
@@ -1634,17 +1683,13 @@ my $nbDummyDenMaplets  = 200;
 my $nbDummyDgnMaplets  = 200;
 my $nbDummyPools       = 200;
 my $nbDummyTapes       = 100;
+#my $nbDummyLibraries   = 5;
+#my $nbDummyModels      = 5;
+#my $nbDummyDenMaplets  = 5;
+#my $nbDummyDgnMaplets  = 5;
+#my $nbDummyPools       = 5;
+#my $nbDummyTapes       = 5;
 my $i                  = 0;
-
-#&addDummyLibraries(\%libraries, $nbDummyLibraries);
-#&addDummyModels(\%models, $nbDummyModels);
-#&addDummyDenMaplets(\%denMap, $nbDummyDenMaplets);
-#&addDummyDgnMaplets(\%dgnMap, $nbDummyDgnMaplets);
-#&addDummyPools(\%pools, $nbDummyPools);
-#&addDummyTapes(\%tapes, $nbDummyTapes);
-#&testTapeMove(\%clients, \%pools, \%tapes, "DUMMYPOOL000", "DUMMYPOOL001",
-#  "oldVer");
-#exit(0);
 
 # Abort if the user is not root
 die("ABORT: This script must be ran as root\n") if ($uid != 0 || $gid !=0);
