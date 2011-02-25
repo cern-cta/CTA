@@ -38,7 +38,7 @@ castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, casto
   m_arrayBuf(0),
   m_arrayBufLens(0),
   m_arrayPos(0),
-  m_arraySize(NULL)
+  m_arraySize(0)
 {
   m_statement->setAutoCommit(false);
 }
@@ -56,11 +56,13 @@ castor::db::ora::OraStatement::~OraStatement() {
       free(m_arrayBufLens);
     m_arrayBufLens = 0;
     m_arrayPos = 0;
+    if (m_arraySize) 
+      free(m_arraySize);
+    m_arraySize = 0;
     // Close statement
     m_cnvSvc->closeStatement(this);
   }
   catch(oracle::occi::SQLException ignored) {}
-  if (NULL != m_arraySize) delete m_arraySize;
 }
 
 //------------------------------------------------------------------------------
@@ -176,9 +178,9 @@ void castor::db::ora::OraStatement::setDataBufferArray
 (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
   throw(castor::exception::SQLError) {
   try {
-    if (NULL == m_arraySize) {
+    if (0 == m_arraySize) {
       m_arraySize = (ub4*) malloc(sizeof(ub4));
-      if (NULL == m_arraySize) {
+      if (0 == m_arraySize) {
         castor::exception::OutOfMemory e;
         throw e;
       }

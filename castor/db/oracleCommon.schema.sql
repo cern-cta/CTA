@@ -144,7 +144,7 @@ ALTER TABLE Stream2TapeCopy
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
-CREATE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
+CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
 CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
@@ -274,6 +274,10 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
+
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CF_LastKnownFileName UNIQUE (LastKnownFileName);
+
+ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CF_LastKnownFileName NOT NULL);
 
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool

@@ -34,7 +34,6 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
-#include "castor/stager/TapeTpModeCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -46,7 +45,7 @@
 castor::stager::Tape::Tape() throw() :
   m_vid(""),
   m_side(0),
-  m_tpmode(TPMODE_READ),
+  m_tpmode(0),
   m_errMsgTxt(""),
   m_errorCode(0),
   m_severity(0),

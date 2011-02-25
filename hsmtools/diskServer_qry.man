@@ -23,7 +23,9 @@ diskServerName
 .SH DESCRIPTION
 .B diskServer_qry 
 Lists the files on a given DiskServer and give their internal
-status.
+status (fileid, diskCopyId, Status, physical file name and last known filename).
+Note that the last known file name may be a number when not known that will actually
+be the castorFile id.
 
 .TP 20
 .B \-h,\ \-\-help
@@ -36,11 +38,11 @@ Prints the castor fileId and HSM name of each file
 Prints the diskCopyId of each file
 .LP
 .B diskServerName
-is the name of the disk server to be queried
+is the name of the disk server to be queried. It needs to be fully qualified.
 
 
 .SH EXAMPLES
-.BI #\ diskServer_qry\ lxfsrk605
+.BI #\ diskServer_qry\ lxfsrk605.cern.ch
 .fi
 Status               Physical FileName
 .fi
@@ -51,9 +53,9 @@ DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/21/61270821@lxs5010.529
 DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718
 .ft
 
-.BI #\ diskServer_qry\ -id\ lxfsrk605
+.BI #\ diskServer_qry\ -id\ lxfsrk605.cern.ch
 .fi
-FileId     DiskCopyId   Status               Physical FileName                                  HSM FileName
+FileId     DiskCopyId   Status               Physical FileName                                  Last known FileName
 .fi
 61263405   450          DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
 .fi
@@ -61,6 +63,10 @@ FileId     DiskCopyId   Status               Physical FileName                  
 .fi
 61312846   718          DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
 .ft
+
+.BI #\ diskServer_qry\ -id\ lxfsrk605
+.fi
+Unknown diskserver lxfsrk605. Did you provide a fully qualified name ?
 .fi
 .SH NOTES
 This command connects directly to the stager database through

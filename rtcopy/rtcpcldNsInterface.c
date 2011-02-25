@@ -536,7 +536,7 @@ int rtcpcld_updateNsSegmentAttributes(tape_list_t *tape,
         rc = 0;
       } else if ( save_serrno == ENSFILECHG ) {
         /*
-         * We ignore ENSFILECHG. This means that the file had alrady be
+         * We ignore ENSFILECHG. This means that the file had already been
          * overwritten by the user before it was migrated.
          */
         (void)dlf_write(

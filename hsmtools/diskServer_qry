@@ -1,6 +1,6 @@
-#!/usr/bin/perl -w
+#!/usr/bin/python
 #/******************************************************************************
-# *                     diskServer_qry
+# *                      diskServer_qry
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,101 +18,112 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.4 $ $Release$ $Date: 2006/10/12 13:12:26 $ $Author: sponcec3 $
+# * @(#)$RCSfile: migrateNewCopy,v $ $Revision: 1.1 $ $Release$ $Date: 2009/06/17 15:07:40 $ $Author: sponcec3 $
 # *
 # * queries the stager for the files residing on a given diskServer
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
-use strict;
-use diagnostics;
-use lib "/usr/lib/perl/CASTOR";
-use castor_tools;
+
+import sys
+import getopt
+import castor_tools
 
 # usage function
-sub usage {
-  printf("Usage : %s [-h|--help] [-i|--fileId] [-d|--diskCopyId] diskServerName\n", $0);
-}
+def usage(exitCode):
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-i|--fileId] [-d|--diskCopyId] diskServerName'
+  sys.exit(exitCode)
 
 # first parse the options
-my $help;
-my $giveFileId = 0;
-my $giveDCId = 0;
-if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
-                                   'i|fileId' => \$giveFileId,
-                                   'd|diskCopyId' => \$giveDCId)) {
-  usage();
-  exit(1);
-}
+printFileId = False
+printDiskCopyId = False
+try:
+  options, args = getopt.getopt(sys.argv[1:], 'hid', ['help', 'fileId', 'diskCopyId'])
+except Exception, e:
+  print e
+  usage(1)
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-i' or f == '--fileId':
+    printFileId = True
+  elif f == '-d' or f == '--diskCopyId':
+    printDiskCopyId = True
+  else:
+    print "unknown option : " + f
+    usage(1)
 
-if ($help) {
-  usage();
-  exit(0);
-}
+# If no arg, complain and display usage
+if len(args) == 0:
+    print "missing argument"
+    usage(1)
+# If too many arguments, complain and display usage
+if len(args) > 1:
+    print "too many arguments"
+    usage(1)
+# otherwise, the argument is the diskserver name
+diskServerName = args[0]
 
-# Check the arguments
-if ($#ARGV != 0) {
-  print("Error : wrong number of arguments\n");
-  usage();
-  exit;
-}
+# connect to the stager and execute the query
+try:
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    stcur.arraysize = 50
+    if printFileId:
+      stCheckSQL = '''
+        SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+              FileSystem.mountPoint||DC.path, DC.status,
+              DC.id, CastorFile.fileId, CastorFile.lastKnownFileName
+         FROM FileSystem, DiskServer, DiskCopy DC, CastorFile
+        WHERE FileSystem.diskServer = DiskServer.id
+          AND DC.fileSystem = FileSystem.id
+          AND DC.castorFile = Castorfile.id
+          AND DiskServer.name = :diskServerName'''
+    else:
+      stCheckSQL = '''
+        SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+              FileSystem.mountPoint||DC.path, DC.status, DC.id
+         FROM FileSystem, DiskServer, DiskCopy DC
+        WHERE FileSystem.diskServer = DiskServer.id
+          AND DC.fileSystem = FileSystem.id
+          AND DiskServer.name = :diskServerName'''
+    stcur.execute(stCheckSQL, diskServerName=diskServerName)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+      # check whether diskServer really exists
+      stCheckSQL = 'SELECT id FROM DiskServer WHERE DiskServer.name = :diskServerName'
+      stcur.execute(stCheckSQL, diskServerName=diskServerName)
+      if stcur.fetchone():
+        print 'No files found on ' + diskServerName
+        rc = 0
+      else:
+        print 'Unknown diskserver ' + diskServerName + '. Did you provide a fully qualified name ?'
+        rc = 1
+      castor_tools.disconnectDB(stconn)
+      sys.exit(rc)
+    else:
+      # print header
+      head = ''
+      if printFileId: head = head + "%-10s " % "FileId"
+      if printDiskCopyId: head = head + "%-12s " % "DiskCopyId"
+      head = head + "%-20s %-50s " % ("Status", "Physical FileName")
+      if printFileId: head = head + "Last known FileName"
+      print head
+      # print rows
+      for row in rows:
+        line = ''
+        if printFileId: line = line + "%-10d " % row[3]
+        if printDiskCopyId: line = line + "%-12d " % row[2]
+        if row[1] <= len(castor_tools.DiskCopyStatus):
+          statusStr = castor_tools.DiskCopyStatus[row[1]]
+        else:
+          statusStr = "Unknown status : " + str(row[1])
+        line = line + "%-20s %-50s " % (statusStr, row[0])
+        if printFileId:
+          line = line + row[4]
+        print line
+    castor_tools.disconnectDB(stconn)
+except Exception, e:
+    print e
+    sys.exit(1)
 
-#connect to the database and execute the query
-my @castor_conf = castor_conf_getOraStagerSvc();
-my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
-my $dbquery;
-if ($giveFileId) {
-  $dbquery .= <<EOF;
-SELECT /*+ index(DC I_DiskCopy_FileSystem) */
-       FileSystem.mountPoint||DC.path, DC.status,
-       DC.id, CastorFile.fileId, CastorFile.lastKnownFileName
-  FROM FileSystem, DiskServer, DiskCopy DC, CastorFile
- WHERE FileSystem.diskServer = DiskServer.id
-   AND DC.fileSystem = FileSystem.id
-   AND DC.castorFile = Castorfile.id
-   AND DiskServer.name = '$ARGV[0]'
-EOF
-} else {
-  $dbquery .= <<EOF;
-SELECT /*+ index(DC I_DiskCopy_FileSystem) */
-       FileSystem.mountPoint||DC.path, DC.status, DC.id
-  FROM FileSystem, DiskServer, DiskCopy DC
- WHERE FileSystem.diskServer = DiskServer.id
-   AND DC.fileSystem = FileSystem.id
-   AND DiskServer.name = '$ARGV[0]'
-EOF
-}
-
-my $sth = $dbh->prepare("$dbquery");
-$sth->execute;
-
-# display Header
-if ($giveFileId) { printf("%-10s ", "FileId"); }
-if ($giveDCId) { printf("%-12s ", "DiskCopyId"); }
-printf("%-20s %-50s ", "Status", "Physical FileName");
-if ($giveFileId) { printf("%s", "HSM FileName"); }
-printf("\n");
-
-# display results
-my @row;
-my $statusStr = "";
-while (@row = $sth->fetchrow_array) {
-  if ($giveFileId) { printf("%-10lld ", $row[3]); }
-  if ($giveDCId) { printf("%-12lld ", $row[2]); }
-  if ($row[1] <= $#DiskCopyStatus) {
-    $statusStr = $DiskCopyStatus[$row[1]];
-  } else {
-    $statusStr = "Unknown status : " . $row[1];
-  }
-  printf("%-20s %-50s ", $statusStr, $row[0]);
-  if ($giveFileId) {
-    if (defined($row[4])) {
-      printf("%s", $row[4]);
-    }
-  }
-  printf("\n");
-}
-
-# Close DB connection
-$sth->finish;
-$dbh->disconnect;

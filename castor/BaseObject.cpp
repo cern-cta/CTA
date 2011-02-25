@@ -114,6 +114,10 @@ void castor::BaseObject::getTLS(pthread_key_t &key, void **&tls)
   tls = (void**)pthread_getspecific(key);
   if (NULL == tls) {
     // the thread specific data does not exist yet, let's create it
+    // XXX For the time being we don't free up this memory when a thread dies,
+    // XXX and valgrind identifies this as a definitive leak. However it's
+    // XXX 8 bytes per thread destruction, so at most 16 bytes a minute
+    // XXX on DynamicThreadPool's.
     tls = (void**)calloc(1,sizeof(void*));
     int rc = pthread_setspecific(key, (void*)tls);
     if (rc != 0) {

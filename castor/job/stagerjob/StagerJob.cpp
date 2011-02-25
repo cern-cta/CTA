@@ -54,6 +54,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/RequestCanceled.hpp"
 
 // Static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
@@ -397,8 +398,11 @@ void process(castor::job::stagerjob::PluginContext &context,
        castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
     // Prefork hook for the different movers
     plugin->preForkHook(*args, context);
+  } catch (castor::exception::RequestCanceled& e) {
+    // if we got a request cancelled exception, we are done, as the request has been
+    // canceled in the meantime. Logging will be done at the upper level
   } catch (castor::exception::Exception& e) {
-    // If we got an exception before the fork, we need to cleanup
+    // If we got any other exception before the fork, we need to cleanup
     // before letting the exception go further
     try {
       // Distinguish get from puts

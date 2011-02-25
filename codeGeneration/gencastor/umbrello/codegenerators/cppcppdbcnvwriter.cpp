@@ -176,7 +176,7 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
 }
 
 //=============================================================================
-// writeConstants
+// ordonnateMembersInAssoc
 //=============================================================================
 void CppCppDbCnvWriter::ordonnateMembersInAssoc(Assoc* as,
                                                 Member** firstMember,

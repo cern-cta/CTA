@@ -117,7 +117,9 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
          castor::dlf::Param("Type", "StartRequest")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_WARNING, STAGER_JOBSVC_NOSREQ,
                               fileId, nsHost, 2, params);
-      return;
+      castor::exception::NoEntry e;
+      e.getMessage() << "Could not find subrequest associated to Request";
+      throw e;
     }
     subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
     if (0 == subreq) {
@@ -127,7 +129,9 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT,
                               fileId, nsHost, 1, params);
       delete obj;
-      return;
+      castor::exception::NoEntry e;
+      e.getMessage() << "Expected SubRequest in Request but found another type";
+      throw e;
     }
     string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
     // Create diskserver and filesystem in memory

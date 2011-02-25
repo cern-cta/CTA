@@ -1355,7 +1355,10 @@ int main() {
   Cuuid_create(
                &childUuid
                );
-  (void)rtcpcld_initLogging(tapeErrorHunterFacilityName);
+  if(rtcpcld_initLogging(tapeErrorHunterFacilityName)) {
+    fprintf(stderr, "Failed to initialise DFL: %s\n", sstrerror(errno));
+    return(1);
+  }
 
   (void)Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer));
 

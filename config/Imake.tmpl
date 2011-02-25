@@ -37,12 +37,17 @@ CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
 CPPFLAGS += -DBIN=\"InstallBinDir\" -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile -DNFSROOT=NfsRoot
 LDFLAGS += -pthread
 
-PERLLIBDIR = /usr/lib/perl/CASTOR
+PERL_LIBDIR = /usr/lib/perl/CASTOR
 
-PYTHONLIBS = $(shell python ${CASTOR_ROOT}/config/pycompile.py --libs)
-PYTHONINC = $(shell python ${CASTOR_ROOT}/config/pycompile.py --inc)
-PYTHONCFLAGS = $(shell python ${CASTOR_ROOT}/config/pycompile.py --cflags)
-PYTHONLIBDIR = $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
+PYTHON_LIBS := $(shell python $(CASTOR_ROOT)/config/pycompile.py --libs)
+PYTHON_INC := $(shell python $(CASTOR_ROOT)/config/pycompile.py --inc)
+PYTHON_LIBDIR := $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
+
+ORACLE_HOME := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --home)
+ORACLE_BIN := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --bindir)
+ORACLE_LIBDIR := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --libdir) 
+ORACLE_CPPFLAGS := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --cppflags)
+ORACLE_PROCINC := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --procinc)
 
 ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib

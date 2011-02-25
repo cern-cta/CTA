@@ -55,8 +55,19 @@ COMMIT;
 /**************************/
 
 -- Create index for bug #71565
-DROP INDEX I_seg_metadata_vid_fid_segsize;
-CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize, compression);
+-- Because of the 2.1.10-0-1 hotfix script, we test whether to do it or not
+DECLARE
+  unused VARCHAR2(30);
+BEGIN
+  SELECT index_name INTO unused
+    FROM user_indexes
+   WHERE index_name = 'I_SEG_METADATA_TAPESUM';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXECUTE IMMEDIATE 'CREATE INDEX I_seg_metadata_tapesum
+                     ON Cns_seg_metadata (vid, s_fileid, segsize, compression)';
+  EXECUTE IMMEDIATE 'DROP INDEX I_seg_metadata_vid_fid_segsize';
+END;
+/
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

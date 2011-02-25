@@ -73,6 +73,8 @@
 #define D700G	0x1B
 #define D800G   0x1C
 #define D1000G	0x1D
+#define D1500G	0x1F
+#define D5000G	0x21
 #define IDRC	0x100
 #define	D38KC	(D38000 | IDRC)
 #define	D38KDC	(D38KD | IDRC)
@@ -96,6 +98,8 @@
 #define D700GC	(D700G | IDRC)
 #define D800GC  (D800G | IDRC)
 #define D1000GC	(D1000G | IDRC)
+#define D1500GC	(D1500G | IDRC)
+#define D5000GC	(D5000G | IDRC)
 
 #ifdef NOTRACE
 #define ENTRY(x) \

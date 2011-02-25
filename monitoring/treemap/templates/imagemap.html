@@ -18,6 +18,7 @@
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/datefield.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/spinner.css"/>
 <link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/now.css"/>
+<link rel="stylesheet" type="text/css" href="{{apacheserver}}/css/enterbtn.css"/>
 
 <script type="text/javascript" src="{{apacheserver}}/js/browseridentification.js"></script>
 <script type="text/javascript" src="{{apacheserver}}/js/ajax.js"></script>
@@ -92,7 +93,7 @@ function deactivateProgressBar()
 		;
 	}
 		
-	document.getElementById('progressbarcontainer').style.display ='none';
+	document.getElementById('progressbarcontainer').style.display ="none";
 
 }
 
@@ -165,7 +166,7 @@ function showStatus()
 	
 	if(isOpera()) //no progressbar for Opera, for some reason Opera doesn't trigger the timer, but doesn't report any errors at the same time :(
 	{
-		document.getElementById('id_progressBar').style.display ='none';
+		document.getElementById('id_progressBar').style.display ="none";
 		document.getElementById('id_progressanim').style.left ='0px';
 		document.getElementById('id_progressanim').style.top ='0px';
 		return;
@@ -173,7 +174,10 @@ function showStatus()
 	else
 	{
 		//no gif needed
-		document.getElementById("id_progressanim").style.display ='none';
+		if (!isIE())
+			{document.getElementById("id_progressanim").style.display ="none";}
+		else //ie doesn't support style.display
+			{document.getElementById("id_progressanim").style.visibility = "hidden";}
 	}
 	
 	this.timerid = setInterval ( function(){writeStatusToDiv();}, 1000 );
@@ -278,11 +282,11 @@ document.write(browsertext);
 		<!--  make the menu visible if JavaScript is activated -->
 		<!-- The dropdown menus are hold in a table to have them ordered right -->
 			<table id = "thesubtable" name = "optionsmenu" style="display:none;" cellspacing="0"  cellpadding="0">
-				<form action="{{djangoresponseurl}}/treemaps/{{rootsuffix}}/pprreesseett/" method="post">
+				<form id="presetform" action="{{djangoresponseurl}}/treemaps/{{rootsuffix}}/pprreesseett/" method="post">
 					<tr>
 							<td style="vertical-align:top" class="lightgreytext">Presets:</td> 
 							
-							<td style="vertical-align:top"><select class="presetdropdown" name="preset" id="id_preset">
+							<td style="vertical-align:top"><select onchange="submit(); showStatus();" class="presetdropdown" name="preset" id="id_preset">
 								{% for presetname in presetnames %}
 									<option {% spaceless %}
 									{% for key, value in presetdefault.items %}
@@ -307,7 +311,7 @@ document.write(browsertext);
 						<td style="vertical-align:top" >
 							<br>
 							<input type="hidden" name="statusfilename" value="{{statusfilename}}"/>
-							<input style="display:inline;" id="id_blackredbutton" class="blackredbutton" type="submit" value="Apply" onmouseup = "linkClicked();"/>
+							<!--<input style="display:inline;" id="id_blackredbutton" class="blackredbutton" type="submit" value="Apply" onmouseup = "linkClicked();"/>-->
 							<div id="statuscontainer" style='visibility:hidden; position:absolute; z-index:100; top:-50px; left:100px; background-color:#1F1F1F; overflow:hidden'>
 								<iframe id='statusframe' scrolling=no height = '60' width = '250' frameborder='0'></iframe>
 							</div>
@@ -340,7 +344,7 @@ document.write(browsertext);
         	{% endfor %}
         	</ul>  
 	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
-	   <br><br> <div style="font-size: 14px" >The displayed data is not live data (snapshot from 08.04.2010).<br>Exceptions are Requests from CERN experiments.</div>
+	   <br><br> <div style="font-size: 14px" >The displayed data is not live data (snapshot from 09.12.2010).<br>Exceptions are Requests from CERN experiments.</div>
 	</td>	
 		<noscript>
 			<div style="color:#7F1F1F" align = "center">

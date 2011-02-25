@@ -79,6 +79,7 @@ extern int (*rtcpc_ClientCallback) (
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
 extern int checkFile;
+extern int global_cFLockOnMigrated;
 static char *tapePoolName = NULL;
 static int diskFseq = 0;
 static int filesCopied = 0;
@@ -743,9 +744,10 @@ int main(int argc,
   /*
    * Initialise DLF for our facility
    */
-  (void)rtcpcld_initLogging(
-                            migratorFacility
-                            );
+  if(rtcpcld_initLogging(migratorFacility)) {
+    fprintf(stderr, "Failed to initialise DFL: %s\n", sstrerror(errno));
+    return(1);
+  }
 
   if ( getconfent("migrator","CHECKFILE",0) != NULL ) checkFile = 1;
   cmdline[0] = '\0';
@@ -765,6 +767,55 @@ int main(int argc,
                   DLF_MSG_PARAM_STR,
                   cmdline
                   );
+
+  /*
+   * Determine the value of the migrator CFLOCKONMIGRATED parameter and store
+   * the result in global_cFLockOnMigrated.
+   *
+   * Note that the default value of 1 (YES) has already been set when
+   * global_cFLockOnMigrated was defined in rtcopy/rtcpcldCatalogueInterface.c.
+   */
+  {
+    const char *const entryValue = getconfent("migrator","CFLOCKONMIGRATED",0);
+
+    /* If we found an entry */
+    if(entryValue != NULL) {
+      /* Log an error message and exist if the entry does not have a valid */
+      /* value of either YES or NO                                         */
+      if(strcmp(entryValue,"YES") != 0 && strcmp(entryValue,"NO") != 0) {
+        (void)dlf_write(
+          (inChild == 0 ? mainUuid : childUuid),
+          RTCPCLD_LOG_MSG(RTCPCLD_MSG_MIGRATOR_CFLOCKONMIGRATED_INVALID),
+          (struct Cns_fileid *)NULL,
+          RTCPCLD_NB_PARAMS+1,
+          "VALUE",
+          DLF_MSG_PARAM_STR,
+          entryValue,
+          RTCPCLD_LOG_WHERE
+        );
+        dlf_shutdown();
+        return(1);
+      }
+
+      /* Store the value in global_cFLockOnMigrated */
+      if(strcmp(entryValue,"YES") == 0) {
+        global_cFLockOnMigrated = 1;
+      } else {
+        global_cFLockOnMigrated = 0;
+      }
+    }
+  }
+
+  /* Log the value of CFLOCKONMIGRATED that will be used */
+  (void)dlf_write(
+    (inChild == 0 ? mainUuid : childUuid),
+    RTCPCLD_LOG_MSG(RTCPCLD_MSG_MIGRATOR_CFLOCKONMIGRATED),
+    (struct Cns_fileid *)NULL,
+    1,
+    "VALUE",
+    DLF_MSG_PARAM_STR,
+    (global_cFLockOnMigrated ? "YES" : "NO")
+  );
 
   /*
    * Create our tape list

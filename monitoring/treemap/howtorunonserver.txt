@@ -20,9 +20,6 @@
 *The Oracle cx libraries doesn't work well with scientific linux by default, you will have to type as root
 	/usr/sbin/setenforce 0
 
-*Start memcache to enable caching by typing
-	memcached -u kblaszcz -m 2 -vv
-
 *Copy the content of html directory to /var/www
 	set rw rights to /var/www/html/images/treemaps
 
@@ -45,7 +42,7 @@
 	
 	TEMPLATE_DIRS = 
 	(
-    	'/var/www/html/OverView/templates'
+    	'/var/www/html/TreeMap2/templates'
 	)
 	
 	DJANGORESPONSE_URL = "http://pcitdmssd"
@@ -54,3 +51,6 @@
 	
 *Start the server by typing 
 	/etc/rc.d/init.d/httpd start
+	
+*Start memcache to enable caching by typing
+	memcached -u kblaszcz -m 2 -vv

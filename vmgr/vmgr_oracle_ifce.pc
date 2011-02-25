@@ -706,72 +706,60 @@ int vmgr_get_side_by_size(struct vmgr_dbfd *dbfd,
 	char rowid_value[19];
 	struct sqlca sqlca;
 
+/* Try to find the five tapes with the least amount of free space that have */
+/* enough space to satisfy the specified request size, then pick one of     */
+/* those tapes at random.                                                   */
 EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
   SELECT ROWID, vid, side, poolname, status, estimated_free_space, nbfiles
   FROM vmgr_tape_side
   WHERE
     vmgr_tape_side.vid = (
       SELECT vid
-      FROM (
-
-        SELECT vmgr_tape_side.vid
-        FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
-        WHERE
-          vmgr_tape_side.vid = vmgr_tape_info.vid
-          AND vmgr_tape_info.library = vmgr_tape_library.name
-          AND vmgr_tape_library.status = 0
-          AND vmgr_tape_side.poolname = :poolname
-          AND vmgr_tape_side.status = 0
-          AND vmgr_tape_side.estimated_free_space = (
-
-            SELECT min(vmgr_tape_side.estimated_free_space)
-            FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
-            WHERE
-              vmgr_tape_side.vid = vmgr_tape_info.vid
-              AND vmgr_tape_info.library = vmgr_tape_library.name
-              AND vmgr_tape_library.status = 0
-              AND vmgr_tape_side.poolname = :poolname
-              AND vmgr_tape_side.status = 0 
-              AND vmgr_tape_side.estimated_free_space >= :reqsize)
-
-        ORDER BY DBMS_RANDOM.VALUE)
-
-      WHERE ROWNUM < 2)
-
+        FROM (
+          SELECT vid
+            FROM (
+              SELECT vid
+              FROM (
+                SELECT vmgr_tape_side.vid
+                FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
+                WHERE
+                   vmgr_tape_side.vid = vmgr_tape_info.vid
+                   AND vmgr_tape_info.library = vmgr_tape_library.name
+                   AND vmgr_tape_library.status = 0
+                   AND vmgr_tape_side.poolname = :poolname
+                   AND vmgr_tape_side.status = 0
+                   AND vmgr_tape_side.estimated_free_space >= :reqsize
+                ORDER BY vmgr_tape_side.estimated_free_space asc)
+              WHERE rownum <= 5)
+            ORDER BY DBMS_RANDOM.VALUE)
+        WHERE ROWNUM < 2)
   FOR UPDATE;
 
+/* Try to find the five tapes with the most amount of free space and then */
+/* choose one of them at random                                           */
 EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
   SELECT ROWID, vid, side, poolname, status, estimated_free_space, nbfiles
   FROM vmgr_tape_side
   WHERE
     vmgr_tape_side.vid = (
-
       SELECT vid
-      FROM (
-
-        SELECT vmgr_tape_side.vid
-        FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
-        WHERE
-          vmgr_tape_side.vid = vmgr_tape_info.vid
-          AND vmgr_tape_info.library = vmgr_tape_library.name
-          AND vmgr_tape_library.status = 0
-          AND vmgr_tape_side.poolname = :poolname
-          AND vmgr_tape_side.status = 0
-          AND vmgr_tape_side.estimated_free_space = (
-
-            SELECT max(vmgr_tape_side.estimated_free_space)
-            FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
-            WHERE
-              vmgr_tape_side.vid = vmgr_tape_info.vid
-              AND vmgr_tape_info.library = vmgr_tape_library.name
-              AND vmgr_tape_library.status = 0
-              AND vmgr_tape_side.poolname = :poolname
-              AND vmgr_tape_side.status = 0)
-
-        ORDER BY DBMS_RANDOM.VALUE)
-
-      WHERE ROWNUM < 2)
-
+        FROM (
+          SELECT vid
+            FROM (
+              SELECT vid
+              FROM (
+                SELECT vmgr_tape_side.vid
+                FROM vmgr_tape_side, vmgr_tape_info, vmgr_tape_library
+                WHERE
+                   vmgr_tape_side.vid = vmgr_tape_info.vid
+                   AND vmgr_tape_info.library = vmgr_tape_library.name
+                   AND vmgr_tape_library.status = 0
+                   AND vmgr_tape_side.poolname = :poolname
+                   AND vmgr_tape_side.status = 0
+                ORDER BY vmgr_tape_side.estimated_free_space desc)
+              WHERE rownum <= 5)
+            ORDER BY DBMS_RANDOM.VALUE)
+        WHERE ROWNUM < 2)
   FOR UPDATE;
 
 	strncpy (func, "vmgr_get_tape_by_size", 22);
@@ -785,6 +773,7 @@ EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 	 :side_entry->vid, :side_entry->side, :side_entry->poolname,
 	 :side_entry->status, :side_entry->estimated_free_space,
 	 :side_entry->nbfiles;
+	/* If no data was found */
 	if (sqlca.sqlcode == 1403) {
 		EXEC SQL OPEN tape_maxsize_cursor4upd;
 		if (sqlca.sqlcode) {

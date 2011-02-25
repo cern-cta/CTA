@@ -328,11 +328,17 @@ int Cns_srv_chclass(char *req_data,
 
   /* check if the user is authorized to chclass this entry */
 
-  if (uid != fmd_entry.uid &&
-      Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-    RETURN (EPERM);
-  if (((fmd_entry.filemode & S_IFDIR) == 0) &&
-      (0 != Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))) {
+  if (fmd_entry.filemode & S_IFDIR) {
+    /* must be the owner, GRP_ADMIN or ADMIN for directory chclass */
+    if ((uid != fmd_entry.uid) &&
+        Cupv_check (uid, gid, clienthost, localhost, P_GRP_ADMIN) &&
+        Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+      RETURN (EPERM);
+  } else if (fmd_entry.filemode & S_IFREG) {
+    /* must be an ADMIN for file chclass */
+    if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+      RETURN (ENOTDIR);
+  } else {
     RETURN (ENOTDIR);
   }
 

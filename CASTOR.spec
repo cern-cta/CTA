@@ -37,16 +37,18 @@ MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
 MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
-./configure
-(cd h; ln -s . shift)
 %if 0%{?clientonly:1} > 0
 %define compiling_client 1
+# Suppress oracompile.py warnings in clientonly mode
+export ORACOMPILE_OPTIONS="--quiet"
 %endif
+./configure
 %if %compiling_client
+(cd h; ln -s . shift)
 echo "Only compiling client part"
-make -j $((`grep processor /proc/cpuinfo | wc -l`*2)) client
+%{__make} -s %{_smp_mflags} client
 %else
-make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
+%{__make} -s %{_smp_mflags}
 %endif
 
 %install
@@ -55,15 +57,15 @@ MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
 MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
-rm -rf ${RPM_BUILD_ROOT}
+%{__rm} -rf ${RPM_BUILD_ROOT}
 %if %compiling_client
-make installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+%{__make} installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %else
-make install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+%{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %endif
 
 %clean
-rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/%{name}-%{version}
+%{__rm} -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 # The following will be filled dynamically with the rule: make rpm, or make tar

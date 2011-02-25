@@ -24,7 +24,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9007');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9010');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -106,7 +106,7 @@ INSERT INTO RepackConfig
 
 /* repack cleanup cronjob */
 
-create or replace PROCEDURE repackCleanup AS
+CREATE OR REPLACE PROCEDURE repackCleanup AS
   t INTEGER;
   srIds "numList";
   segIds "numList";
@@ -115,31 +115,39 @@ BEGIN
   -- First perform some cleanup of old stuff:
   -- for each, read relevant timeout from configuration table
   SELECT TO_NUMBER(value) INTO t FROM RepackConfig
-   WHERE class = 'Repack' AND key = 'CleaningTimeout' AND ROWNUM < 2;
+   WHERE class = 'Repack'
+     AND key = 'CleaningTimeout'
+     AND ROWNUM < 2;
   SELECT id BULK COLLECT INTO srIds
-    FROM RepackSubrequest WHERE status=8 AND submittime < gettime() + t*3600;
-    
-  -- delete segments
-  FOR i IN srIds.FIRST .. srIds.LAST LOOP
-   DELETE FROM RepackSegment WHERE RepackSubrequest = srIds(i)
-     RETURNING id BULK COLLECT INTO segIds;
-   FORALL j IN segIds.FIRST .. segIds.LAST 
-     DELETE FROM Id2Type WHERE id = segIds(j);
-  END LOOP;
-  COMMIT;
+    FROM RepackSubrequest
+   WHERE status = 8
+     AND submittime < gettime() + t * 3600;
+
+  IF srIds.COUNT > 0 THEN
+    -- Delete segments
+    FOR i IN srIds.FIRST .. srIds.LAST LOOP
+      DELETE FROM RepackSegment WHERE RepackSubrequest = srIds(i)
+        RETURNING id BULK COLLECT INTO segIds;
+      FORALL j IN segIds.FIRST .. segIds.LAST 
+        DELETE FROM Id2Type WHERE id = segIds(j);
+    END LOOP;
+    COMMIT;
+  END IF;
   
-  -- delete subrequests
+  -- Delete subrequests
   FORALL i IN srIds.FIRST .. srIds.LAST 
-   DELETE FROM RepackSubrequest WHERE id = srIds(i);
+    DELETE FROM RepackSubrequest WHERE id = srIds(i);
   FORALL i IN srIds.FIRST .. srIds.LAST  
-   DELETE FROM id2type WHERE id = srIds(i);
-  -- delete requests without any other subrequest
+    DELETE FROM id2type WHERE id = srIds(i);
+
+  -- Delete requests without any other subrequest
   DELETE FROM RepackRequest A WHERE NOT EXISTS 
     (SELECT 'x' FROM RepackSubRequest WHERE A.id = repackrequest)
     RETURNING A.id BULK COLLECT INTO rIds;
   FORALL i IN rIds.FIRST .. rIds.LAST
     DELETE FROM Id2Type WHERE id = rIds(i);
   COMMIT;
+
   -- Loop over all tables which support row movement and recover space from
   -- the object and all dependant objects. We deliberately ignore tables
   -- with function based indexes here as the 'shrink space' option is not

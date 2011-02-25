@@ -718,9 +718,10 @@ int main(int argc,
   /*
    * Initialise DLF for our facility
    */
-  (void)rtcpcld_initLogging(
-                            recallerFacility
-                            );
+  if(rtcpcld_initLogging(recallerFacility)) {
+    fprintf(stderr, "Failed to initialise DFL: %s\n", sstrerror(errno));
+    return(1);
+  }
   if ( getconfent("recaller","CHECKFILE",0) != NULL ) checkFile = 1;
   cmdline[0] = '\0';
   c=0;

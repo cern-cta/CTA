@@ -38,9 +38,9 @@
       }
          </script>
 {{userfriendlyname}}<br>
-<input style="display:inline-block; margin:0px; padding:0; vertical-align:bottom;" onblur="if(isNaN(parseInt(this.form.{{name}}.value))) this.form.{{name}}.value={{defaultvalue}}; if(parseInt(this.form.{{name}}.value)>{{max}}) this.form.{{name}}.value={{max}}; if(parseInt(this.form.{{name}}.value)<{{min}}) this.form.{{name}}.value={{min}}" 
+<input style = 'vertical-align:bottom;' onclick = "submit(); showStatus();" class="enterbtn" type="button" value="&#8629" id="id_sapply{{name}}"/><input style="display:inline-block; margin:0px; padding:0; vertical-align:bottom;" onblur="if(isNaN(parseInt(this.form.{{name}}.value))) this.form.{{name}}.value={{defaultvalue}}; if(parseInt(this.form.{{name}}.value)>{{max}}) this.form.{{name}}.value={{max}}; if(parseInt(this.form.{{name}}.value)<{{min}}) this.form.{{name}}.value={{min}}" 
 onmouseover="Init{{name}}spinner()" type="text" id="id_{{name}}" name="{{name}}" value="{{defaultvalue}}" class="spinner" 
-onmousewheel="MouseScroll{{name}}(event);"/><table style="display:inline-block; margin:0px;" cellpadding="0" cellspacing="0" border="0">
+onmousewheel="MouseScroll{{name}}(event);"/><table style="display:inline-block; vertical-align:bottom; margin:0px;" cellpadding="0" cellspacing="0" border="0">
 	<tr>
 		<td><input class="spinnerarrow" type="button" value=" /\ " onclick="if(parseInt(this.form.{{name}}.value)<{{max}})this.form.{{name}}.value++;"></td>
 	</tr>

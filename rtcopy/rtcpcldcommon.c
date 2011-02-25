@@ -131,16 +131,25 @@ void rtcpcld_extlog(
 
 int rtcpcld_initLogging(char *facilityName)
 {
-  int rc, i;
+  int          rc = 0;
+  unsigned int i  = 0;
 
   rc = dlf_init(facilityName,-1);
-
-  i = -1;
-  while ( *rtcpcldMessages[++i].messageTxt != '\0' ) {
-    (void)dlf_regtext(rtcpcldMessages[i].msgNo,
-		      rtcpcldMessages[i].messageTxt);
+  if(rc != 0) {
+    return rc;
   }
+
+  while ( rtcpcldMessages[i].messageTxt != NULL ) {
+    rc = dlf_regtext(i, rtcpcldMessages[i].messageTxt);
+    if(rc != 0) {
+      return rc;
+    }
+
+    i++;
+  }
+
   rtcp_log = rtcpcld_extlog;
+
   return(0);
 }
 

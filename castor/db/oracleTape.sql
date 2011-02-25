@@ -2063,7 +2063,7 @@ END tapegatewaydIsRunning;
 /
 
 
-CREATE PROCEDURE lockCastorFileById(
+CREATE OR REPLACE PROCEDURE lockCastorFileById(
 /**
  * Locks the row in the castor-file table with the specified database ID.
  *

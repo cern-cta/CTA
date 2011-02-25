@@ -467,7 +467,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9007');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9010');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -627,7 +627,7 @@ ALTER TABLE Stream2TapeCopy
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
-CREATE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
+CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
 CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
@@ -757,6 +757,10 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
+
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CF_LastKnownFileName UNIQUE (LastKnownFileName);
+
+ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CF_LastKnownFileName NOT NULL);
 
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
@@ -2194,6 +2198,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
+    /* This line is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     addPrivilege(p);
   END;
 
@@ -2205,6 +2213,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
+    /* This line is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    IF p.reqType = 103 THEN p.reqType := 195; END IF; -- DiskPoolQuery fix
     removePrivilege(p);
   END;
 
@@ -2212,7 +2224,13 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur) AS
+    ireqTypeFixed NUMBER;
   BEGIN
+    /* ireqTypeFixed is a deprecated work around the issue of having changed the magic number of
+     * DiskPoolQuery status from 103 to 195. It should be dropped as soon as all clients
+     * are 2.1.10-1 or newer */
+    ireqTypeFixed := ireqType;
+    IF ireqTypeFixed = 103 THEN ireqTypeFixed := 195; END IF; -- DiskPoolQuery fix
     OPEN plist FOR
       SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 1
@@ -2220,7 +2238,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
        WHERE (WhiteList.svcClass = svcClassName OR WhiteList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
          AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
-         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0)
+         AND (WhiteList.reqType = ireqTypeFixed OR WhiteList.reqType IS NULL OR ireqTypeFixed = 0)
     UNION
       SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 0
@@ -2228,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
        WHERE (BlackList.svcClass = svcClassName OR BlackList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)
          AND (BlackList.egid = iegid OR BlackList.egid IS NULL OR iegid = -1)
-         AND (BlackList.reqType = ireqType OR BlackList.reqType IS NULL OR ireqType = 0);
+         AND (BlackList.reqType = ireqTypeFixed OR BlackList.reqType IS NULL OR ireqTypeFixed = 0);
   END;
 
 END castorBW;
@@ -2766,7 +2784,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
       UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
        WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
                                                  dconst.DISKCOPY_WAITFS,
@@ -2877,7 +2895,10 @@ CREATE OR REPLACE PROCEDURE processBulkAbort(abortReqId IN INTEGER, rIpAddress O
   fileIds "numList";
   nsHosts strListTable;
   ids "numList";
+  nsHostName VARCHAR2(2048);
 BEGIN
+  -- get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', '');
   -- get request and client informations and drop them from the DB
   DELETE FROM StageAbortRequest WHERE id = abortReqId
     RETURNING reqId, parentUuid, client INTO rReqUuid, abortedReqUuid, clientId;
@@ -2885,8 +2906,10 @@ BEGIN
   DELETE FROM Client WHERE id = clientId
     RETURNING ipAddress, port INTO rIpAddress, rport;
   DELETE FROM Id2Type WHERE id = clientId;
-  -- list fileids to process and drop them from the DB
-  SELECT fileid, nsHost, id BULK COLLECT INTO fileIds, nsHosts, ids
+  -- list fileids to process and drop them from the DB; override the
+  -- nsHost in case it is defined in the configuration
+  SELECT fileid, decode(nsHostName, '', nsHost, nsHostName), id
+    BULK COLLECT INTO fileIds, nsHosts, ids
     FROM NsFileId WHERE request = abortReqId;
   FORALL i IN ids.FIRST .. ids.LAST DELETE FROM NsFileId WHERE id = ids(i);
   FORALL i IN ids.FIRST .. ids.LAST DELETE FROM Id2Type WHERE id = ids(i);
@@ -4498,10 +4521,21 @@ BEGIN
     -- try to find an existing file and lock it
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-    -- update lastAccessTime
+    -- update lastAccessTime and lastKnownFileName.
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
+    -- check and fix files that would already use our new name, as they
+    -- have obviously changed name in the meantime. We do not know their new
+    -- name so we use their castorfile id
+    -- Note that this takes a lock on another row of the CastorFile table and
+    -- thus can create a dead lock in theory. In practice, this will happen very
+    -- rarely and on top, a dead lock would need that the same two files are
+    -- concurrently cross renamed. It is so unlikely to happen that this
+    -- problem has not been handled
+    UPDATE /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ CastorFile
+       SET lastKnownFileName = TO_CHAR(id)
+     WHERE id <> rid AND lastKnownFileName = normalizePath(fn);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
@@ -5269,6 +5303,11 @@ BEGIN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   -- Get older castorFiles with the same name and drop their lastKnownFileName
+  -- Note that this takes a lock on another row of the CastorFile table and
+  -- thus can create a dead lock in theory. In practice, this will happen very
+  -- rarely and on top, a dead lock would need that the same two files are
+  -- concurrently cross renamed. It is so unlikely to happen that this
+  -- problem has not been handled
   UPDATE /*+ INDEX (CastorFile) */ CastorFile
      SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
@@ -8806,7 +8845,7 @@ END tapegatewaydIsRunning;
 /
 
 
-CREATE PROCEDURE lockCastorFileById(
+CREATE OR REPLACE PROCEDURE lockCastorFileById(
 /**
  * Locks the row in the castor-file table with the specified database ID.
  *

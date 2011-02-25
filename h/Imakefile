@@ -3,7 +3,6 @@ COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
- 
 COMM 		Makefile for CASTOR includes             GENERIC
 
 TOPINCLUDE=InstallIncludeDir
@@ -117,6 +116,54 @@ ClientInstallNonExecFile(ypgetacctent.h,$(DESTDIRCASTOR),644)
 ClientInstallNonExecFile(stager_api.h,$(DESTDIRCASTOR),644)
 ClientInstallNonExecFile(stager_client_api.h,$(DESTDIRCASTOR),644)
 
+BUILDHEADERSDIRH=$(TOPINCLUDE)/castor/h
+
+# Required by xrootd-xcastor2fs and castor-srmv2
+InstallNonExecFile(Castor_limits.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cns_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cns_constants.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cns_struct.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cthread_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cthread_flags.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cuuid.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(dlf_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(net.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(osdep.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(serrno.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(socket_timeout.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_client_api_common.hpp,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_client_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_errmsg.h,$(BUILDHEADERSDIRH),644)
+
+# Required by castor-srmv2
+InstallNonExecFile(Cgetopt.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cglobals.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cgrp.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cnetdb.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(common.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cpool_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Cpwd.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Ctape_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(Ctape_constants.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(getacctent.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(getacct.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(getconfent.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(log.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(patchlevel.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(rfio_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(rfio_constants.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(rfio_errno.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_mapper.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(stager_uuid.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(trace.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(u64subr.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(vmgr_api.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(vmgr_constants.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(vmgr_struct.h,$(BUILDHEADERSDIRH),644)
+InstallNonExecFile(ypgetacctent.h,$(BUILDHEADERSDIRH),644)
+
 CLIENTFILEMANPAGE(Castor_limits)
 CLIENTLIBMANPAGE(serrno)
 CLIENTLIBMANPAGE(sacct)
+
