@@ -1,0 +1,115 @@
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.12 $ $Date: 2003/11/17 06:46:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_QUERYTAPE 3 "$Date: 2003/11/17 06:46:30 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_querytape \- query the CASTOR Volume Manager about a tape
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_querytape (const char *" vid ,
+.BI "int " side ,
+.BI "struct vmgr_tape_info *" tape_info ,
+.BI "char *" dgn )
+.SH DESCRIPTION
+.B vmgr_querytape
+queries the CASTOR Volume Manager about a tape.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I dgn
+points at a buffer to receive the device group name corresponding to
+the tape.
+The buffer must be at least CA_MAXDGNLEN+1 characters long.
+.TP
+.I etime
+indicates the time the volume was entered in the Volume Manager.
+.TP
+.I free_space
+in kbytes.
+.TP
+.I nbfiles
+number of files written on the tape.
+.TP
+.I rcount
+number of times the volume has been mounted for read.
+.TP
+.I wcount
+number of times the volume has been mounted for write.
+.TP
+.I rhost
+indicates the last tape server where the tape was mounted for read.
+.TP
+.I whost
+indicates the last tape server where the tape was mounted for write.
+.TP
+.I rjid
+is the job id of the last read request.
+.TP
+.I wjid
+is the job id of the last write request.
+.TP
+.I rtime
+indicates the last time the volume was mounted for read.
+.TP
+.I wtime
+indicates the last time the volume was mounted for write.
+.TP
+.I status
+will be returned as a combination of
+.BR ARCHIVED ,
+.BR DISABLED ,
+.BR EXPORTED ,
+.BR TAPE_BUSY ,
+.BR TAPE_FULL
+and
+.BR TAPE_RDONLY .
+.LP
+Only
+.I vid
+or
+.I tape_info
+are mandatory. When a pointer to a field is NULL, the field value is not returned.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist.
+.TP
+.B EFAULT
+.I vid
+or
+.I tape_info
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_entertape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
