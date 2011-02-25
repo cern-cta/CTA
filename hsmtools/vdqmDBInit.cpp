@@ -127,17 +127,15 @@ void handleRequest(castor::IObject* fr, castor::Services* svcs)
 void initDB(castor::Services* svcs, castor::vdqm::IVdqmSvc* iVdqmService)
   throw (castor::exception::Exception) {
 
-  bool dgnUpdate, tasUpdate;
-  int flags;
+  bool dgnUpdate = false;
+  bool tasUpdate = false;
+  int flags = 0;
   vmgr_list list;
-  struct vmgr_tape_denmap *denmap;
-  struct vmgr_tape_dgnmap *dgnmap;
+  struct vmgr_tape_denmap_byte_u64 *denmap = NULL;
+  struct vmgr_tape_dgnmap *dgnmap = NULL;
 
-  castor::vdqm::DeviceGroupName* dgName;
-  castor::vdqm::TapeAccessSpecification* tapeAccessSpec;
-
-  dgnUpdate = false;
-  tasUpdate = false;
+  castor::vdqm::DeviceGroupName* dgName = NULL;
+  castor::vdqm::TapeAccessSpecification* tapeAccessSpec = NULL;
 
   /**
    * First we try to update the DeviceGroupName table
@@ -183,7 +181,7 @@ void initDB(castor::Services* svcs, castor::vdqm::IVdqmSvc* iVdqmService)
             << std::endl;
 
   flags = VMGR_LIST_BEGIN;
-  while ((denmap = vmgr_listdenmap (flags, &list)) != NULL) {
+  while ((denmap = vmgr_listdenmap_byte_u64 (flags, &list)) != NULL) {
 
     tapeAccessSpec =
       iVdqmService->selectTapeAccessSpecification(WRITE_DISABLE, denmap->md_density, denmap->md_model);
@@ -220,7 +218,7 @@ void initDB(castor::Services* svcs, castor::vdqm::IVdqmSvc* iVdqmService)
 
     flags = VMGR_LIST_CONTINUE;
   }
-  (void) vmgr_listdenmap (VMGR_LIST_END, &list);
+  (void) vmgr_listdenmap_byte_u64 (VMGR_LIST_END, &list);
 
   if ( !tasUpdate ) {
     std::cout << "The entries in the TapeAccessSpecification table are already up to date!"

@@ -252,8 +252,9 @@ u_signed64 hexstrutou64(const char *str)
 	return (u64);
 }
 
-/* u64tostru - convert an unsigned 64 bits integer to a string with unit using powers
- * of 1024
+/* u64tostru- gives the string representation with powers of 2 units of the
+ * specified data-size, where the specified data-size is in bytes and is
+ * represented by an unsigned 64-bit integer
  *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
@@ -271,19 +272,19 @@ char *u64tostru(u_signed64 u64,
 	char unit;
 
 	t64 = u64;
-	if (u64 > ONE_PB) {
+	if (u64 >= ONE_PB) {
 		fnum = (double) t64 / (double) ONE_PB;
 		unit = 'P';
-	} else if (u64 > ONE_TB) {
+	} else if (u64 >= ONE_TB) {
 		fnum = (double) t64 / (double) ONE_TB;
 		unit = 'T';
-	} else if (u64 > ONE_GB) {
+	} else if (u64 >= ONE_GB) {
 		fnum = (double) t64 / (double) ONE_GB;
 		unit = 'G';
-	} else if (u64 > ONE_MB) {
+	} else if (u64 >= ONE_MB) {
 		fnum = (double) t64 / (double) ONE_MB;
 		unit = 'M';
-	} else if (u64 > ONE_KB) {
+	} else if (u64 >= ONE_KB) {
 		fnum = (double) t64 / (double) ONE_KB;
 		unit = 'K';
 	} else {
@@ -308,9 +309,10 @@ char *u64tostru(u_signed64 u64,
 	return (buf);
 }
 
-/* u64tostru - convert an unsigned 64 bits integer to a string with unit using powers 
- * of 1000
-*	buf must be long enough to contain the result
+/* u64tostri- gives the string representation with powers of 10 units
+ * (SI units) of the specified data-size, where the specified data-size is in
+ * bytes and is represented by an unsigned 64-bit integer
+ *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
@@ -327,21 +329,21 @@ char *u64tostrsi(u_signed64 u64,
 	char unit;
 
 	t64 = u64;
-	if (u64 > 1000000000000000LL) {
+	if (u64 >= 1000000000000000LL) {
 		fnum = (double) t64 / (double) 1000000000000000LL;
 		unit = 'P';
-	} else if (u64 > 1000000000000LL) {
+	} else if (u64 >= 1000000000000LL) {
 		fnum = (double) t64 / (double) 1000000000000LL;
 		unit = 'T';
-	} else if (u64 > 1000000000) {
+	} else if (u64 >= 1000000000) {
 		fnum = (double) t64 / (double) 1000000000;
 		unit = 'G';
-	} else if (u64 > 1000000) {
+	} else if (u64 >= 1000000) {
 		fnum = (double) t64 / (double) 1000000;
 		unit = 'M';
-	} else if (u64 > 1000) {
+	} else if (u64 >= 1000) {
 		fnum = (double) t64 / (double) 1000;
-		unit = 'k';
+		unit = 'K';
 	} else {
 		inum = (int) u64;
 		unit = ' ';

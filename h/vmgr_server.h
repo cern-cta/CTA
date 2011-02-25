@@ -61,12 +61,12 @@ struct vmgr_srv_thread_info {
 #endif
 };
 
-struct vmgr_tape_side {
+struct vmgr_tape_side_byte_u64 {
 	char		vid[CA_MAXVIDLEN+1];
 	int		side;
 	char		poolname[CA_MAXPOOLNAMELEN+1];
 	short		status;		/* TAPE_FULL, DISABLED, EXPORTED */
-	int		estimated_free_space;	/* in kbytes */
+	u_signed64	estimated_free_space_byte_u64;
 	int		nbfiles;
 };
 
@@ -80,6 +80,7 @@ struct vmgr_tape_tag {
 EXTERN_C int vmgrlogit (char *, char *, ...);
 EXTERN_C int sendrep (int, int, ...);
 
+EXTERN_C int vmgr_init_dbpkg();
 EXTERN_C int vmgr_abort_tr (struct vmgr_dbfd *);
 EXTERN_C int vmgr_closedb (struct vmgr_dbfd *);
 EXTERN_C int vmgr_delete_denmap_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *);
@@ -91,37 +92,37 @@ EXTERN_C int vmgr_delete_side_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_delete_tag_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_delete_tape_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_end_tr (struct vmgr_dbfd *);
-EXTERN_C int vmgr_get_denmap_entry (struct vmgr_dbfd *, char *, char *, char *, struct vmgr_tape_denmap *, int, vmgr_dbrec_addr *);
+EXTERN_C int vmgr_get_denmap_entry_byte_u64 (struct vmgr_dbfd *, char *, char *, char *, struct vmgr_tape_denmap_byte_u64 *, int, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_get_dgnmap_entry (struct vmgr_dbfd *, char *, char *, struct vmgr_tape_dgnmap *, int, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_get_library_entry (struct vmgr_dbfd *, char *, struct vmgr_tape_library *, int, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_get_model_entry (struct vmgr_dbfd *, char *, struct vmgr_tape_media *, int, vmgr_dbrec_addr *);
-EXTERN_C int vmgr_get_pool_entry (struct vmgr_dbfd *, char *, struct vmgr_tape_pool *, int, vmgr_dbrec_addr *);
-EXTERN_C int vmgr_get_side_by_fullid (struct vmgr_dbfd *, char *, int, struct vmgr_tape_side *, int, vmgr_dbrec_addr *);
-EXTERN_C int vmgr_get_side_by_size (struct vmgr_dbfd *, char *, u_signed64, struct vmgr_tape_side *, int, vmgr_dbrec_addr *);
+EXTERN_C int vmgr_get_pool_entry_byte_u64 (struct vmgr_dbfd *, char *, struct vmgr_tape_pool_byte_u64 *, int, vmgr_dbrec_addr *);
+EXTERN_C int vmgr_get_side_by_fullid_byte_u64 (struct vmgr_dbfd *, char *, int, struct vmgr_tape_side_byte_u64 *, int, vmgr_dbrec_addr *);
+EXTERN_C int vmgr_get_side_by_size_byte_u64 (struct vmgr_dbfd *, char *, u_signed64, struct vmgr_tape_side_byte_u64 *, int, vmgr_dbrec_addr *);
 EXTERN_C int vmgr_get_tag_by_vid (struct vmgr_dbfd *, char *, struct vmgr_tape_tag *, int, vmgr_dbrec_addr *);
-EXTERN_C int vmgr_get_tape_by_vid (struct vmgr_dbfd *, char *, struct vmgr_tape_info *, int, vmgr_dbrec_addr *);
-EXTERN_C int vmgr_insert_denmap_entry (struct vmgr_dbfd *, struct vmgr_tape_denmap *);
+EXTERN_C int vmgr_get_tape_by_vid_byte_u64 (struct vmgr_dbfd *, char *, struct vmgr_tape_info_byte_u64 *, int, vmgr_dbrec_addr *);
+EXTERN_C int vmgr_insert_denmap_entry_byte_u64 (struct vmgr_dbfd *, struct vmgr_tape_denmap_byte_u64 *);
 EXTERN_C int vmgr_insert_dgnmap_entry (struct vmgr_dbfd *, struct vmgr_tape_dgnmap *);
 EXTERN_C int vmgr_insert_library_entry (struct vmgr_dbfd *, struct vmgr_tape_library *);
 EXTERN_C int vmgr_insert_model_entry (struct vmgr_dbfd *, struct vmgr_tape_media *);
-EXTERN_C int vmgr_insert_pool_entry (struct vmgr_dbfd *, struct vmgr_tape_pool *);
-EXTERN_C int vmgr_insert_side_entry (struct vmgr_dbfd *, struct vmgr_tape_side *);
+EXTERN_C int vmgr_insert_pool_entry_byte_u64 (struct vmgr_dbfd *, struct vmgr_tape_pool_byte_u64 *);
+EXTERN_C int vmgr_insert_side_entry_byte_u64 (struct vmgr_dbfd *, struct vmgr_tape_side_byte_u64 *);
 EXTERN_C int vmgr_insert_tag_entry (struct vmgr_dbfd *, struct vmgr_tape_tag *);
-EXTERN_C int vmgr_insert_tape_entry (struct vmgr_dbfd *, struct vmgr_tape_info *);
-EXTERN_C int vmgr_list_denmap_entry (struct vmgr_dbfd *, int, struct vmgr_tape_denmap *, int, DBLISTPTR *);
-EXTERN_C int vmgr_list_dgnmap_entry (struct vmgr_dbfd *, int, struct vmgr_tape_dgnmap *, int, DBLISTPTR *);
-EXTERN_C int vmgr_list_library_entry (struct vmgr_dbfd *, int, struct vmgr_tape_library *, int, DBLISTPTR *);
-EXTERN_C int vmgr_list_model_entry (struct vmgr_dbfd *, int, struct vmgr_tape_media *, int, DBLISTPTR *);
-EXTERN_C int vmgr_list_pool_entry (struct vmgr_dbfd *, int, struct vmgr_tape_pool *, int, DBLISTPTR *);
-EXTERN_C int vmgr_list_side_entry (struct vmgr_dbfd *, int, char *, char *, struct vmgr_tape_side *, int, DBLISTPTR *);
+EXTERN_C int vmgr_insert_tape_entry_byte_u64 (struct vmgr_dbfd *, struct vmgr_tape_info_byte_u64 *);
+EXTERN_C int vmgr_list_denmap_entry_byte_u64 (struct vmgr_dbfd *, int, struct vmgr_tape_denmap_byte_u64 *, int);
+EXTERN_C int vmgr_list_dgnmap_entry (struct vmgr_dbfd *, int, struct vmgr_tape_dgnmap *, int);
+EXTERN_C int vmgr_list_library_entry (struct vmgr_dbfd *, int, struct vmgr_tape_library *, int);
+EXTERN_C int vmgr_list_model_entry (struct vmgr_dbfd *, int, struct vmgr_tape_media *, int);
+EXTERN_C int vmgr_list_pool_entry_byte_u64 (struct vmgr_dbfd *, int, struct vmgr_tape_pool_byte_u64 *, int);
+EXTERN_C int vmgr_list_side_entry_byte_u64 (struct vmgr_dbfd *, int, char *, char *, struct vmgr_tape_side_byte_u64 *, int);
 EXTERN_C int vmgr_opendb (struct vmgr_dbfd *);
 EXTERN_C int vmgr_start_tr (int, struct vmgr_dbfd *);
 EXTERN_C int vmgr_update_library_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_library *);
 EXTERN_C int vmgr_update_model_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_media *);
-EXTERN_C int vmgr_update_pool_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_pool *);
-EXTERN_C int vmgr_update_side_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_side *);
+EXTERN_C int vmgr_update_pool_entry_byte_u64 (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_pool_byte_u64 *);
+EXTERN_C int vmgr_update_side_entry_byte_u64 (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_side_byte_u64 *);
 EXTERN_C int vmgr_update_tag_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_tag *);
-EXTERN_C int vmgr_update_tape_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_info *);
+EXTERN_C int vmgr_update_tape_entry_byte_u64 (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_info_byte_u64 *);
 
 EXTERN_C int vmgr_srv_deletedenmap (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_deletedgnmap (char *, char *, struct vmgr_srv_thread_info *);
@@ -130,7 +131,8 @@ EXTERN_C int vmgr_srv_deletemodel (char *, char *, struct vmgr_srv_thread_info *
 EXTERN_C int vmgr_srv_deletepool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_deletetape (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_deltag (char *, char *, struct vmgr_srv_thread_info *);
-EXTERN_C int vmgr_srv_enterdenmap (int, char *, char *, struct vmgr_srv_thread_info *);
+EXTERN_C int vmgr_srv_enterdenmap (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
+EXTERN_C int vmgr_srv_enterdenmap_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_enterdgnmap (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_enterlibrary (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_entermodel (int, char *, char *, struct vmgr_srv_thread_info *);
@@ -138,12 +140,14 @@ EXTERN_C int vmgr_srv_enterpool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_entertape (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_gettag (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_gettape (int, char *, char *, struct vmgr_srv_thread_info *);
-EXTERN_C int vmgr_srv_listdenmap (int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *);
-EXTERN_C int vmgr_srv_listdgnmap (char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *);
-EXTERN_C int vmgr_srv_listlibrary (char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *);
-EXTERN_C int vmgr_srv_listmodel (int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *);
-EXTERN_C int vmgr_srv_listpool (char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *);
-EXTERN_C int vmgr_srv_listtape (int, char *, char *, struct vmgr_srv_thread_info *, struct vmgr_tape_info *, int, DBLISTPTR *);
+EXTERN_C int vmgr_srv_listdenmap (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listdenmap_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listdgnmap (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listlibrary (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listmodel (const int, char *const, char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listpool (char *const, char *const, struct vmgr_srv_thread_info *const, const int);
+EXTERN_C int vmgr_srv_listtape (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, struct vmgr_tape_info_byte_u64 *const, const int);
+EXTERN_C int vmgr_srv_listtape_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const, struct vmgr_tape_info_byte_u64 *const, const int);
 EXTERN_C int vmgr_srv_modifylibrary (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_modifymodel (int, char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_modifypool (char *, char *, struct vmgr_srv_thread_info *);
@@ -151,7 +155,8 @@ EXTERN_C int vmgr_srv_modifytape (char *, char *, struct vmgr_srv_thread_info *)
 EXTERN_C int vmgr_srv_querypool (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_querylibrary (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_querymodel (int, char *, char *, struct vmgr_srv_thread_info *);
-EXTERN_C int vmgr_srv_querytape (int, char *, char *, struct vmgr_srv_thread_info *);
+EXTERN_C int vmgr_srv_querytape (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
+EXTERN_C int vmgr_srv_querytape_byte_u64 (const int, char *const, const char *const, struct vmgr_srv_thread_info *const);
 EXTERN_C int vmgr_srv_reclaim (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_settag (char *, char *, struct vmgr_srv_thread_info *);
 EXTERN_C int vmgr_srv_shutdown (int, char *, char *, struct vmgr_srv_thread_info *);

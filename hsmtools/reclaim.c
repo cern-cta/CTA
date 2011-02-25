@@ -20,18 +20,18 @@ extern  int  optind;
 int main(int argc,
          char **argv)
 {
-  int c;
+  int c = 0;
   char *Cns_hosts = NULL;
-  FILE *df;
-  struct Cns_direntape *dtp;
+  FILE *df = NULL;
+  struct Cns_direntape *dtp = NULL;
   int errflg = 0;
-  int flags;
+  int flags = 0;
   char *host = NULL;
   Cns_list list;
-  char *p;
+  char *p = NULL;
   char p_stat[9];
   char path[CA_MAXPATHLEN+1];
-  struct vmgr_tape_info tape_info;
+  struct vmgr_tape_info_byte_u64 tape_info;
   FILE *tmpfile();
   char *vid = NULL;
 
@@ -60,7 +60,7 @@ int main(int argc,
 
   /* check if the volume is FULL */
 
-  if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
+  if (vmgr_querytape_byte_u64 (vid, 0, &tape_info, NULL) < 0) {
     fprintf (stderr, "reclaim %s: %s\n", vid,
         (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
     exit (USERR);

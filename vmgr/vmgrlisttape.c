@@ -19,7 +19,7 @@
 extern	char	*optarg;
 extern	int	optind;
 
-void listentry(struct vmgr_tape_info *lp,
+void listentry(struct vmgr_tape_info_byte_u64 *lp,
                int xflag,
                int sflag)
 {
@@ -27,9 +27,7 @@ void listentry(struct vmgr_tape_info *lp,
 	char p_stat = '\0';
 	struct tm *tm;
 	char tmpbuf[80];
-	u_signed64 u64;
 
-	u64 = ((u_signed64) lp->estimated_free_space) * 1024;
 	if (lp->nbsides > 1)
 		printf ("%-*s/%d ", sflag ? 0 : 6, lp->vid, lp->side);
 	else if (sflag)
@@ -44,10 +42,13 @@ void listentry(struct vmgr_tape_info *lp,
 			lp->vsn, lp->library, lp->density, lp->lbltype);		
 	if (! xflag) {
 		if (sflag)
-			printf ("%s %s ", lp->poolname, u64tostr (u64, tmpbuf, 0));
+			printf ("%s %s ", lp->poolname,
+			  u64tostr (lp->estimated_free_space_byte_u64,
+			  tmpbuf, 0));
 		else
 			printf ("%-15s %-8sB ", lp->poolname, 
-				u64tostru (u64, tmpbuf, 9));
+			  u64tostru (lp->estimated_free_space_byte_u64,
+			  tmpbuf, 9));
 		ltime = (lp->wtime < lp->rtime) ? lp->rtime : lp->wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
@@ -71,14 +72,14 @@ void listentry(struct vmgr_tape_info *lp,
 			printf ("00000000 ");
 		if (sflag) 
 			printf ("%s %d %d %d %s %s %d %d ", 
-				u64tostr (u64, tmpbuf, 0) , lp->nbfiles, 
-				lp->rcount, lp->wcount, lp->rhost, lp->whost, 
-				lp->rjid, lp->wjid);
+			  u64tostr (lp->estimated_free_space_byte_u64,
+			  tmpbuf, 0) , lp->nbfiles, lp->rcount, lp->wcount,
+			  lp->rhost, lp->whost, lp->rjid, lp->wjid);
 		else
 			printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ", 
-				u64tostru (u64, tmpbuf, 9), lp->nbfiles, 
-				lp->rcount, lp->wcount, lp->rhost, lp->whost, 
-				lp->rjid, lp->wjid);
+			  u64tostru (lp->estimated_free_space_byte_u64,
+			  tmpbuf, 9), lp->nbfiles, lp->rcount, lp->wcount,
+			  lp->rhost, lp->whost, lp->rjid, lp->wjid);
 		if (lp->rtime) {
 			tm = localtime (&lp->rtime);
 			printf ("%04d%02d%02d ",
@@ -126,7 +127,7 @@ int main(int argc,
 	int errflg = 0;
 	int flags;
 	vmgr_list list;
-	struct vmgr_tape_info *lp;
+	struct vmgr_tape_info_byte_u64 *lp;
 	char pool_name[CA_MAXPOOLNAMELEN+1];
 	char vid[CA_MAXVIDLEN+1];
 	int xflag = 0;
@@ -176,7 +177,8 @@ int main(int argc,
  
 	flags = VMGR_LIST_BEGIN;
 	serrno = 0;
-	while ((lp = vmgr_listtape (vid, pool_name, flags, &list)) != NULL) {
+	while ((lp = vmgr_listtape_byte_u64 (vid, pool_name, flags, &list))
+ 		!= NULL) {
 		listentry (lp, xflag, sflag);
 		flags = VMGR_LIST_CONTINUE;
 	}
@@ -184,6 +186,7 @@ int main(int argc,
 		fprintf (stderr, "vmgrlisttape: %s\n",
 			 (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
 	else
-		(void) vmgr_listtape (vid, pool_name, VMGR_LIST_END, &list);
+		(void) vmgr_listtape_byte_u64 (vid, pool_name, VMGR_LIST_END,
+			&list);
 	exit (0);
 }

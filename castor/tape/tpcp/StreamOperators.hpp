@@ -73,6 +73,7 @@ std::ostream &operator<<(std::ostream &os,
 /**
  * ostream << operator for vmgr_tape_info structure 
  */
-std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value);
+std::ostream &operator<<(std::ostream &os,
+  const vmgr_tape_info_byte_u64 &value);
 
 #endif // CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP

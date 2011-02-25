@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
 
   /* Query the VMGR about the tape in order to determine the number of tape */
   /* files on the tape                                                      */
-  struct vmgr_tape_info tape_info;
-  if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
+  struct vmgr_tape_info_byte_u64 tape_info;
+  if (vmgr_querytape_byte_u64 (vid, 0, &tape_info, NULL) < 0) {
           fprintf (stderr, "%s %s: %s\n", argv[0], vid,
               (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
           exit (USERR);

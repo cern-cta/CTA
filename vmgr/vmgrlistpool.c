@@ -81,7 +81,7 @@ int main(int argc,
 	int sflag = 0;
 	int flags;
 	vmgr_list list;
-	struct vmgr_tape_pool *lp;
+	struct vmgr_tape_pool_byte_u64 *lp = NULL;
 	gid_t pool_gid = 0;
 	char *pool_name = NULL;
 	uid_t pool_uid = 0;
@@ -120,12 +120,13 @@ int main(int argc,
 		listentry (pool_name, pool_uid, pool_gid, capacity, tot_free_space, sflag);
 	} else {
 		flags = VMGR_LIST_BEGIN;
-		while ((lp = vmgr_listpool (flags, &list)) != NULL) {
-			listentry (lp->name, lp->uid, lp->gid, lp->capacity,
-				   lp->tot_free_space, sflag);
+		while ((lp = vmgr_listpool_byte_u64 (flags, &list)) != NULL) {
+			listentry (lp->name, lp->uid, lp->gid,
+			lp->capacity_byte_u64, lp->tot_free_space_byte_u64,
+			sflag);
 			flags = VMGR_LIST_CONTINUE;
 		}
-		(void) vmgr_listpool (VMGR_LIST_END, &list);
+		(void) vmgr_listpool_byte_u64 (VMGR_LIST_END, &list);
 	}
 	exit (0);
 }

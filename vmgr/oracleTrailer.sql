@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_10_1';
 
 
 /**

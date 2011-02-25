@@ -414,10 +414,11 @@ int tapeStatus(tape_list_t *tape,
                u_signed64 *freeSpace,
                int *status)
 {
-  int rc, save_serrno;
-  struct vmgr_tape_info vmgrTapeInfo;
+  int rc = 0;
+  int save_serrno = 0;
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
   char *vmgrErrMsg = NULL, *statusStr = NULL;
-  rtcpTapeRequest_t *tapereq;
+  rtcpTapeRequest_t *tapereq = NULL;
 
   if ( tape == NULL ) {
     serrno = EINVAL;
@@ -430,12 +431,13 @@ int tapeStatus(tape_list_t *tape,
   for (;;) {
     if ( vmgrErrMsg != NULL ) *vmgrErrMsg = '\0';
     serrno = 0;
-    rc = vmgr_querytape(tapereq->vid,tapereq->side,&vmgrTapeInfo,tapereq->dgn);
+    rc = vmgr_querytape_byte_u64(tapereq->vid, tapereq->side, &vmgrTapeInfo,
+      tapereq->dgn);
     save_serrno = serrno;
     statusStr = rtcpcld_tapeStatusStr(vmgrTapeInfo.status);
     if ( status != NULL ) *status = vmgrTapeInfo.status;
     if ( freeSpace != NULL ) {
-      *freeSpace = 1024*((u_signed64)vmgrTapeInfo.estimated_free_space);
+      *freeSpace = vmgrTapeInfo.estimated_free_space_byte_u64;
     }
     if ( rc == 0 ) {
       if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
@@ -820,9 +822,9 @@ int rtcpcld_getTapePoolName(tape_list_t *tape,
                             char **tapePoolName)
 {
   vmgr_list list;
-  struct vmgr_tape_info *lp;
+  struct vmgr_tape_info_byte_u64 *lp = NULL;
   char pool_name[CA_MAXPOOLNAMELEN+1];
-  int flags;
+  int flags = 0;
   
   if ( (tape == NULL) || (*(tape->tapereq.vid) == '\0') ) {
     serrno = EINVAL;
@@ -831,14 +833,16 @@ int rtcpcld_getTapePoolName(tape_list_t *tape,
 
   pool_name[0] = '\0';
   flags = VMGR_LIST_BEGIN;
-  while ((lp = vmgr_listtape(tape->tapereq.vid,pool_name,flags,&list)) != NULL) {
+  while ((lp = vmgr_listtape_byte_u64(tape->tapereq.vid, pool_name, flags,
+    &list)) != NULL) {
     if ( strcmp(tape->tapereq.vid,lp->vid) == 0 ) {
       if ( tapePoolName != NULL ) *tapePoolName = strdup(lp->poolname);
       break;
     }
     flags = VMGR_LIST_CONTINUE;
   }
-  (void) vmgr_listtape (tape->tapereq.vid, pool_name, VMGR_LIST_END, &list);
+  (void) vmgr_listtape_byte_u64 (tape->tapereq.vid, pool_name, VMGR_LIST_END,
+    &list);
   return(0);
 }
 

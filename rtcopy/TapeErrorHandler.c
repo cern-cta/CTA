@@ -407,20 +407,16 @@ static int doRecallRetry(struct Cstager_Segment_t *segment,
 
 static int validNsSegment(struct Cns_segattrs *nsSegment)
 {
-  struct vmgr_tape_info vmgrTapeInfo;
-  int rc;
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+  int rc = 0;
 
   if ( (nsSegment == NULL) || (*nsSegment->vid == '\0') ||
        (nsSegment->s_status != '-') ) {
     return(0);
   }
 
-  rc = vmgr_querytape(
-                      nsSegment->vid,
-                      nsSegment->side,
-                      &vmgrTapeInfo,
-                      0
-                      );
+  rc = vmgr_querytape_byte_u64(nsSegment->vid, nsSegment->side, &vmgrTapeInfo,
+    0);
   if ( rc == -1 ) return(0);
   if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
        ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||

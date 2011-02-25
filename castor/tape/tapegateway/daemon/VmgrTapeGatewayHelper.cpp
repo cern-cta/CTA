@@ -171,8 +171,8 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape) 
   throw (castor::exception::Exception){
 
-  struct vmgr_tape_info vmgrTapeInfo;
-  memset( &vmgrTapeInfo, 0, sizeof(struct vmgr_tape_info));
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+  memset( &vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
   
   int save_serrno=0;
 
@@ -191,7 +191,8 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape((char*)tape.vid().c_str(),tape.side(),&vmgrTapeInfo,dgnBuffer); 
+    const int rc = vmgr_querytape_byte_u64((char*)tape.vid().c_str(),
+      tape.side(), &vmgrTapeInfo, dgnBuffer); 
     save_serrno = serrno;
 
     // check the status
@@ -241,8 +242,8 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
 
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(const castor::stager::Tape& tape, int& tapeStatus) throw (castor::exception::Exception) {
 
-  struct vmgr_tape_info vmgrTapeInfo;
-  memset(&vmgrTapeInfo,0,sizeof(vmgr_tape_info));
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+  memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
   int save_serrno = 0;
 
   if ( tape.vid().empty()) {
@@ -258,9 +259,9 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(const
   int side=tape.side();
   char dgnBuffer[8];
 
-  while(1){
-    serrno=0;
-    int rc = vmgr_querytape(vid,side,&vmgrTapeInfo,dgnBuffer);
+  while(1) {
+    serrno = 0;
+    const int rc = vmgr_querytape_byte_u64(vid, side, &vmgrTapeInfo, dgnBuffer);
     save_serrno = serrno;
   
     if ( rc == 0 ) {
@@ -341,14 +342,15 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(const ca
 
   // get information from vmgr
 
-  struct vmgr_tape_info vmgrTapeInfo;
-  memset(&vmgrTapeInfo,0,sizeof(vmgr_tape_info));
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+  memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
 
   char dgnBuffer[8];
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape((char*)vid.c_str(),side,&vmgrTapeInfo,dgnBuffer);
+    const int rc = vmgr_querytape_byte_u64((char*)vid.c_str(), side,
+      &vmgrTapeInfo, dgnBuffer);
     save_serrno = serrno;
 
     if ( rc == 0 ) {

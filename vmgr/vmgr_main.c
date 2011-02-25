@@ -21,6 +21,7 @@
 #include "Cnetdb.h"
 #include "Cpool_api.h"
 #include "Cupv_api.h"
+#include "getconfent.h"
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
@@ -32,14 +33,13 @@
 #endif
 
 /* prototypes */
-int vmgr_init_dbpkg();
+static void *procconnection(void *);
 
 int being_shutdown = 0;
 char vmgrconfigfile[CA_MAXPATHLEN+1];
 char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
-int maxfds;
 struct vmgr_srv_thread_info *vmgr_srv_thread_info;
 
 void vmgr_signal_handler(int sig)
@@ -56,26 +56,25 @@ void vmgr_signal_handler(int sig)
 
 int vmgr_main(struct main_args *main_args)
 {
-  int c;
+  int c = 0;
   struct vmgr_dbfd dbfd;
-  void *doit(void *);
-  char *dp;
+  char *dp = NULL;
   char domainname[CA_MAXHOSTNAMELEN+1];
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
-  char *getconfent();
-  int i;
-  int ipool;
+  int i = 0;
+  int ipool = 0;
   int nbthreads = VMGR_NBTHREADS;
   int on = 1;	/* for REUSEADDR */
-  char *p;
-  const char *buf;
-  fd_set readfd, readmask;
-  int rqfd;
-  int s;
+  char *p = NULL;
+  const char *buf = NULL;
+  int rqfd = 0;
+  int s = 0;
   struct sockaddr_in sin;
-  struct servent *sp;
-  int thread_index;
+  struct servent *sp = NULL;
+  int thread_index = 0;
+  int remainInForeground = 0;
+  fd_set readfd;
   struct timeval timeval;
 
   jid = getpid();
@@ -83,8 +82,11 @@ int vmgr_main(struct main_args *main_args)
   vmgrconfigfile[0] = '\0';
 
   /* process command line options if any */
-  while ((c = getopt (main_args->argc, main_args->argv, "c:t:")) != EOF) {
+  while ((c = getopt (main_args->argc, main_args->argv, "fc:t:")) != EOF) {
     switch (c) {
+    case 'f':
+      remainInForeground = 1;
+      break;
     case 'c':
       strncpy (vmgrconfigfile, optarg, sizeof(vmgrconfigfile));
       vmgrconfigfile[sizeof(vmgrconfigfile) - 1] = '\0';
@@ -100,7 +102,14 @@ int vmgr_main(struct main_args *main_args)
     }
   }
 
-  vmgrlogit (func, "started (%d.%d.%d-%d)\n", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
+  if (!remainInForeground) {
+    if (Cinitdaemon ("vmgrd", NULL) < 0) {
+      exit (SYERR);
+    }
+  }
+
+  vmgrlogit (func, "started (%d.%d.%d-%d)\n", MAJORVERSION, MINORVERSION,
+    MAJORRELEASE, MINORRELEASE);
 
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (strchr (localhost, '.') == NULL) {
@@ -146,8 +155,6 @@ int vmgr_main(struct main_args *main_args)
     (vmgr_srv_thread_info + i)->dbfd.connected = 0;
   }
 
-  FD_ZERO (&readmask);
-  FD_ZERO (&readfd);
   signal (SIGPIPE,SIG_IGN);
   signal (SIGXFSZ,SIG_IGN);
   signal (SIGTERM,vmgr_signal_handler);
@@ -187,8 +194,6 @@ int vmgr_main(struct main_args *main_args)
   }
   listen (s, 5) ;
 
-  FD_SET (s, &readmask);
-
   /* main loop */
 
   while (1) {
@@ -205,31 +210,29 @@ int vmgr_main(struct main_args *main_args)
       if (nb_active_threads == 0)
         return (0);
     }
-    if (FD_ISSET (s, &readfd)) {
-      FD_CLR (s, &readfd);
+
+    FD_ZERO (&readfd);
+    FD_SET (s, &readfd);
+    timeval.tv_sec = CHECKI;
+    timeval.tv_usec = 0;
+    if (select (s+1, &readfd, NULL, NULL, &timeval) > 0) {
       rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
-        vmgrlogit (func, VMG02, "Cpool_next_index",
-                   sstrerror(serrno));
+        vmgrlogit (func, VMG02, "Cpool_next_index", sstrerror(serrno));
         if (serrno == SEWOULDBLOCK) {
           sendrep (rqfd, VMGR_RC, serrno);
           continue;
-        } else
+        } else {
           return (SYERR);
+        }
       }
       (vmgr_srv_thread_info + thread_index)->s = rqfd;
-      if (Cpool_assign (ipool, &doit,
-                        vmgr_srv_thread_info + thread_index, 1) < 0) {
+      if (Cpool_assign (ipool, &procconnection,
+        vmgr_srv_thread_info + thread_index, 1) < 0) {
         (vmgr_srv_thread_info + thread_index)->s = -1;
         vmgrlogit (func, VMG02, "Cpool_assign", sstrerror(serrno));
         return (SYERR);
       }
-    }
-    memcpy (&readfd, &readmask, sizeof(readmask));
-    timeval.tv_sec = CHECKI;
-    timeval.tv_usec = 0;
-    if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
-      FD_ZERO (&readfd);
     }
   }
 }
@@ -239,8 +242,6 @@ int main(int argc,
 {
   struct main_args main_args;
 
-  if ((maxfds = Cinitdaemon ("vmgrd", NULL)) < 0)
-    exit (SYERR);
   main_args.argc = argc;
   main_args.argv = argv;
   exit (vmgr_main (&main_args));
@@ -305,64 +306,70 @@ int proclistreq(int magic,
                 char *clienthost,
                 struct vmgr_srv_thread_info *thip)
 {
-  int c;
-  DBLISTPTR dblistptr;
+  int c = 0;
   int endlist = 0;
   int new_req_type = -1;
   int rc = 0;
-  fd_set readfd, readmask;
-  struct vmgr_tape_info tape;
-  struct timeval timeval;
-
-  memset (&dblistptr, 0, sizeof(DBLISTPTR));
+  struct vmgr_tape_info_byte_u64 tape;
 
   /* wait for list requests and process them */
 
-  FD_ZERO (&readmask);
-  FD_SET (thip->s, &readmask);
   while (1) {
     switch (req_type) {
     case VMGR_LISTDENMAP:
-      if ((c = vmgr_srv_listdenmap (magic, req_data,
-                                    clienthost, thip, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listdenmap (magic, req_data, clienthost, thip,
+        endlist)))
+        return (c);
+      break;
+    case VMGR_LISTDENMAP_BYTE_U64:
+      if ((c = vmgr_srv_listdenmap_byte_u64 (magic, req_data, clienthost, thip,
+        endlist)))
         return (c);
       break;
     case VMGR_LISTDGNMAP:
-      if ((c = vmgr_srv_listdgnmap (req_data,
-                                    clienthost, thip, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listdgnmap (req_data, clienthost, thip, endlist)))
         return (c);
       break;
     case VMGR_LISTLIBRARY:
-      if ((c = vmgr_srv_listlibrary (req_data,
-                                     clienthost, thip, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listlibrary (req_data, clienthost, thip, endlist)))
         return (c);
       break;
     case VMGR_LISTMODEL:
-      if ((c = vmgr_srv_listmodel (magic, req_data,
-                                   clienthost, thip, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listmodel (magic, req_data, clienthost, thip, endlist)))
         return (c);
       break;
     case VMGR_LISTPOOL:
-      if ((c = vmgr_srv_listpool (req_data,
-                                  clienthost, thip, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listpool (req_data, clienthost, thip, endlist)))
         return (c);
       break;
     case VMGR_LISTTAPE:
-      if ((c = vmgr_srv_listtape (magic, req_data,
-                                  clienthost, thip, &tape, endlist, &dblistptr)))
+      if ((c = vmgr_srv_listtape (magic, req_data, clienthost, thip, &tape,
+        endlist)))
+        return (c);
+      break;
+    case VMGR_LISTTAPE_BYTE_U64:
+      if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data, clienthost, thip,
+        &tape, endlist)))
         return (c);
       break;
     }
     if (endlist) break;
     sendrep (thip->s, VMGR_IRC, 0);
-    memcpy (&readfd, &readmask, sizeof(readmask));
-    timeval.tv_sec = VMGR_LISTTIMEOUT;
-    timeval.tv_usec = 0;
-    if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
-      endlist = 1;
-      continue;
+    {
+      fd_set readfd;
+      struct timeval timeval;
+
+      FD_ZERO (&readfd);
+      FD_SET (thip->s, &readfd);
+      timeval.tv_sec = VMGR_LISTTIMEOUT;
+      timeval.tv_usec = 0;
+      if(select(thip->s+1, &readfd, NULL, NULL, &timeval) <= 0) {
+        endlist = 1;
+        continue;
+      }
     }
-    if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost)) != 0) {
+    if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost))
+      != 0) {
       endlist = 1;
       continue;
     }
@@ -372,13 +379,9 @@ int proclistreq(int magic,
   return (rc);
 }
 
-void procreq(int magic,
-             int req_type,
-             char *req_data,
-             char *clienthost,
-             struct vmgr_srv_thread_info *thip)
-{
-  int c;
+void procreq(const int magic, const int req_type, char *const req_data,
+  char *const clienthost, struct vmgr_srv_thread_info *thip) {
+  int c = 0;
 
   /* connect to the database if not done yet */
 
@@ -419,6 +422,9 @@ void procreq(int magic,
   case VMGR_QRYTAPE:
     c = vmgr_srv_querytape (magic, req_data, clienthost, thip);
     break;
+  case VMGR_QRYTAPE_BYTE_U64:
+    c = vmgr_srv_querytape_byte_u64 (magic, req_data, clienthost, thip);
+    break;
   case VMGR_UPDTAPE:
     c = vmgr_srv_updatetape (magic, req_data, clienthost, thip);
     break;
@@ -455,12 +461,17 @@ void procreq(int magic,
   case VMGR_ENTDENMAP:
     c = vmgr_srv_enterdenmap (magic, req_data, clienthost, thip);
     break;
+  case VMGR_ENTDENMAP_BYTE_U64:
+    c = vmgr_srv_enterdenmap_byte_u64 (magic, req_data, clienthost, thip);
+    break;
   case VMGR_LISTDENMAP:
+  case VMGR_LISTDENMAP_BYTE_U64:
   case VMGR_LISTDGNMAP:
   case VMGR_LISTLIBRARY:
   case VMGR_LISTMODEL:
   case VMGR_LISTPOOL:
   case VMGR_LISTTAPE:
+  case VMGR_LISTTAPE_BYTE_U64:
     c = proclistreq (magic, req_type, req_data, clienthost, thip);
     break;
   case VMGR_RECLAIM:
@@ -503,10 +514,7 @@ void procreq(int magic,
   sendrep (thip->s, VMGR_RC, c);
 }
 
-void *
-doit(arg)
-     void *arg;
-{
+void *procconnection(void *const arg) {
   int c;
   char *clienthost;
   int magic;

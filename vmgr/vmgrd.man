@@ -8,6 +8,8 @@ vmgrd \- start the volume manager
 .SH SYNOPSIS
 .B vmgrd
 [
+.BI -f
+] [
 .BI -c " config_file"
 ] [
 .BI -t " nbthreads"
@@ -109,6 +111,9 @@ the requestor (hostname, uid, gid) and one message VMG98 giving the command
 itself.
 The completion code of the command is also logged.
 .SH OPTIONS
+.TP
+.BI -f
+Remain in the foreground
 .TP
 .BI -c " config_file"
 Specifies a different path for the VMGR configuration file.

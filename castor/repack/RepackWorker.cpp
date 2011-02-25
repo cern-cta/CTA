@@ -500,7 +500,7 @@ void RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (c
 	char *pool_name;
 	int flags;
 	vmgr_list list;
-	struct vmgr_tape_info *lp;
+	struct vmgr_tape_info_byte_u64 *lp = NULL;
 	std::vector<RepackSubRequest*>::iterator tape;
 
 	//check if exists 
@@ -508,7 +508,7 @@ void RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (c
 	pool_name = (char*)rreq->pool().c_str();
 			
 	serrno=0;
-	if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
+	if (vmgr_querypool(pool_name, NULL, NULL, NULL, NULL) < 0) {
 	  castor::exception::Exception e(serrno);
 	  throw e;
 	}
@@ -517,7 +517,8 @@ void RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (c
 	flags = VMGR_LIST_BEGIN;
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 0, 0);
 			
-	while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
+	while ((lp = vmgr_listtape_byte_u64 (NULL, pool_name, flags, &list)) !=
+          NULL) {
 	  flags = VMGR_LIST_CONTINUE;
 	  RepackSubRequest* tmp = new RepackSubRequest();
 	  tmp->setVid(lp->vid);
@@ -526,7 +527,7 @@ void RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (c
   
 	}
 			
-	vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
+	vmgr_listtape_byte_u64 (NULL, pool_name, VMGR_LIST_END, &list);
 }
 
 
@@ -538,10 +539,10 @@ void RepackWorker::checkTapeVmgrStatus(std::string tapename) throw (castor::exce
 {
 
   /* check if the volume exists and get its status */
-  struct vmgr_tape_info tape_info;
+  struct vmgr_tape_info_byte_u64 tape_info;
   char *vid = (char*)tapename.c_str();
   serrno=0;
-  if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
+  if (vmgr_querytape_byte_u64 (vid, 0, &tape_info, NULL) < 0) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("VID", vid),
        castor::dlf::Param("ErrorText", sstrerror(serrno))};

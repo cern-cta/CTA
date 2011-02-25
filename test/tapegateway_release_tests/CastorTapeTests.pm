@@ -386,7 +386,7 @@ sub check_invalid ( $ )
 {
     my $file_name = shift;
     my $stager_qry=`su $environment{username} -c \"stager_qry -M $file_name\"`;
-    return $stager_qry=~ /INVALID/;
+    return ( $stager_qry=~ /INVALID/ || $stager_qry=~ /^$/);
 }
 
 # Returns true if the file is recalled
@@ -412,6 +412,13 @@ sub remove_castorfile( $$ )
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
     print "t=".elapsed_time()."s. Removed castorfile for file: $name\n";
+}
+
+sub remove_second_segment ( $$ )
+{
+    my ($dbh, $name) = (shift, shift);
+    `su $environment{username} -c \"nsdelsegment --copyno=2 $name\"`;
+    print "t=".elapsed_time()."s. Removed from ns second segment for file: $name\n";
 }
 
 sub remove_diskcopy( $$ )
@@ -685,6 +692,9 @@ sub error_injector ( $$$ )
              $remote_files[$index]->{breaking_done} = 1;
         } elsif ($file{breaking_type} =~ /^wrong segment/) {
              corrupt_segment($dbh, $file{name});
+             $remote_files[$index]->{breaking_done} = 1;
+        } elsif ($file{breaking_type} =~ /^missing second tape segment in ns/) {
+             remove_second_segment($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         # System-wide breakings (triggered during the lifecycle if the file)
         } elsif ($file{breaking_type} =~ /^broken diskserver/) {

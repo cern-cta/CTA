@@ -72,6 +72,13 @@
 #define VMGR_LISTWEIGHT      37
 #define VMGR_DELTAPEAFTERCHK 38
 
+/* Identifiers for messages that support data-sizes in bytes represented */
+/* using 64-bit unsigned-integers                                        */
+#define VMGR_QRYTAPE_BYTE_U64    39
+#define VMGR_ENTDENMAP_BYTE_U64  40
+#define VMGR_LISTDENMAP_BYTE_U64 41
+#define VMGR_LISTTAPE_BYTE_U64   42
+
 			/* volume manager reply types */
 
 #define	MSG_ERR		1

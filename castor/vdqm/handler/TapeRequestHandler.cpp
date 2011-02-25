@@ -90,10 +90,11 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   const vdqmHdr_t &header, vdqmVolReq_t &msg, const Cuuid_t &cuuid)
   throw (castor::exception::Exception) {
   
-  struct vmgr_tape_info tape_info; // used to get information about the tape
+  // Used to get information about the tape
+  struct vmgr_tape_info_byte_u64 tape_info;
   
   int rc = 0;
-  char *p;
+  char *p = NULL;
 
 
   //The parameters of the old vdqm VolReq Request
@@ -150,13 +151,13 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   std::auto_ptr<TapeServer> reqTapeServer(
     ptr_IVdqmService->selectOrCreateTapeServer(msg.server, false));
   
-  memset(&tape_info,'\0',sizeof(vmgr_tape_info));
+  memset(&tape_info,'\0',sizeof(tape_info));
   
   // "Try to get information about the tape from the VMGR daemon" message
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,VDQM_GET_TAPE_INFO_FROM_VMGR);     
   // Create a connection to vmgr daemon, to obtain more information about the
   // tape, like its density and its tapeModel.
-  rc = vmgr_querytape(tape->vid().c_str(), 0, &tape_info, msg.dgn);    
+  rc = vmgr_querytape_byte_u64(tape->vid().c_str(), 0, &tape_info, msg.dgn);    
   if ( rc == -1) {
     castor::exception::Exception ex(EVQDGNINVL);
     ex.getMessage() << "Errors, while using to vmgr_querytape: "
