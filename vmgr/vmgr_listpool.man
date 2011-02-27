@@ -15,20 +15,6 @@ vmgr_listpool \- list all existing tape pool entries in the CASTOR Volume Manage
 .SH DESCRIPTION
 .B vmgr_listpool
 lists all existing tape pool entries in the CASTOR Volume Manager.
-.P
-Please note that users of the vmgr client API are encouraged to use the
-.B vmgr_listpool_byte_u64
-function instead of
-.B vmgr_listpool.
-Both functions define capacity and free space to be in bytes and represented by
-a 64-bit unsigned integer.  The former however returns a
-.B struct
-.B vmgr_tape_pool_byte_u64
-that has more explicitly named structure members concerning size units and
-integer type. The
-.B vmgr_listpool_byte_u64
-function has been introduced to help represent all CASTOR sizes in the same
-way.
 .TP
 .I flags
 may be one of the following constants:
