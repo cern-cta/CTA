@@ -19,6 +19,16 @@ in the CASTOR Volume Manager
 .B vmgr_enterdenmap
 enters a new quadruplet model/media_letter/density/capacity in the CASTOR Volume
 Manager.
+.P
+Please note that users of the vmgr client API are encouraged to use the
+.B vmgr_enterdenmap_byte_u64
+function instead of
+.B vmgr_enterdenmap.
+The former defines native capacity to be in bytes and represented by a 64-bit
+unsigned integer.  The
+.B vmgr_enterdenmap_byte_u64
+function has been introduced to help represent all CASTOR sizes in the same
+way.
 .TP
 .I model
 is the model of cartridge.

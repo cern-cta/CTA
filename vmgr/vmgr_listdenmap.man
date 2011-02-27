@@ -17,9 +17,19 @@ in the CASTOR Volume Manager
 .B vmgr_listdenmap
 lists all existing quadruplets model/media_letter/density/capacity in the CASTOR
 Volume Manager.
+.P
+Please note that users of the vmgr client API are encouraged to use the
+.B vmgr_listdenmap_byte_u64
+function instead of
+.B vmgr_listdenmap.
+The former defines native capacity to be in bytes and represented by a 64-bit
+unsigned integer.  The
+.B vmgr_listdenmap_byte_u64
+function has been introduced to help represent all CASTOR sizes in the same
+way.
 .TP
 .I flags
-may be one of the following constant:
+may be one of the following constants:
 .RS
 .TP
 .B VMGR_LIST_BEGIN

@@ -201,7 +201,6 @@ debian/castor/usr/share/man/man3/vmgr_listdgnmap.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listlibrary.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listmodel.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listpool.3castor.gz
-debian/castor/usr/share/man/man3/vmgr_listpool_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listtape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listtape_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_modifylibrary.3castor.gz

@@ -17,6 +17,16 @@ vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 .SH DESCRIPTION
 .B vmgr_listtape
 lists all existing tape entries in the CASTOR Volume Manager.
+.P
+Please note that users of the vmgr client API are encouraged to use the
+.B vmgr_listpool_byte_u64
+function instead of
+.B vmgr_listpool.
+The former defines free space to be in bytes and represented by a 64-bit
+unsigned integer.  The
+.B vmgr_listpool_byte_u64
+function has been introduced to help represent all CASTOR sizes in the same
+way.
 .TP
 .I vid
 if not NULL, restricts the list to the media having this volume visual identifier.
@@ -25,7 +35,7 @@ if not NULL, restricts the list to the media having this volume visual identifie
 if not NULL, restricts the list to the tapes belonging to this pool.
 .TP
 .I flags
-may be one of the following constant:
+may be one of the following constants:
 .RS
 .TP
 .B VMGR_LIST_BEGIN
