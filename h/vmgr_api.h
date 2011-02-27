@@ -66,7 +66,6 @@ EXTERN_C struct vmgr_tape_dgnmap *vmgr_listdgnmap (int, vmgr_list *);
 EXTERN_C struct vmgr_tape_library *vmgr_listlibrary (int, vmgr_list *);
 EXTERN_C struct vmgr_tape_media *vmgr_listmodel (int, vmgr_list *);
 EXTERN_C struct vmgr_tape_pool *vmgr_listpool (int, vmgr_list *);
-EXTERN_C struct vmgr_tape_pool_byte_u64 *vmgr_listpool_byte_u64 (int, vmgr_list *);
 EXTERN_C struct vmgr_tape_info *vmgr_listtape (char *, char *, int, vmgr_list *);
 EXTERN_C struct vmgr_tape_info_byte_u64 *vmgr_listtape_byte_u64 (char *, char *, int, vmgr_list *);
 EXTERN_C int vmgr_modifylibrary (const char *, int, int);
