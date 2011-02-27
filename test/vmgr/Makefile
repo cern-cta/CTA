@@ -7,6 +7,7 @@ EXECUTABLES= \
   vmgrquerytape \
   vmgrquerytape_trunk_r21843 \
   vmgrenterdenmap_trunk_r21843 \
+  vmgrenterdenmap_trunk_r21990 \
   vmgrlistdenmap_trunk_r21843 \
   vmgrentertape_trunk_r21843 \
   vmgrlisttape_trunk_r21843 \
@@ -75,6 +76,10 @@ vmgrenterdenmap_trunk_r21843: \
   Cgetopt_trunk_r21843.o \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
+
+vmgrenterdenmap_trunk_r21990: \
+  vmgrenterdenmap_trunk_r21990.o
+	gcc -g -o $@ ../../vmgr/libcastorvmgr.so.2.1 $^
 
 vmgrlistdenmap_trunk_r21843: \
   vmgrlistdenmap_trunk_r21843.o \
@@ -490,6 +495,9 @@ vmgrquerytape_trunk_r21843.o: vmgrquerytape_trunk_r21843.c
 
 vmgrenterdenmap_trunk_r21843.o: vmgrenterdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrenterdenmap_trunk_r21990.o: vmgrenterdenmap_trunk_r21990.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
 vmgrlistdenmap_trunk_r21843.o: vmgrlistdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^

@@ -318,7 +318,7 @@ sub enterDenMaps {
     }
 
     $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
-    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldProtocol") {
       $expectedOutput = $expectedOutput .
         "$paddedModel $denMap->{$density}{ml}  $density   1024.00Gi";
     } else {
@@ -344,7 +344,7 @@ sub deleteDenMaps {
 
   for $density (@densities) {
     $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
-    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldVer") {
+    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldProtocol") {
       push(@expectedOutputArray,
         "$paddedModel $denMap->{$density}{ml}" .
         "  $density   1024.00Gi");
@@ -638,11 +638,11 @@ sub enterTapes {
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
-    if($tapeTb == 1 and $clientVer eq "oldVer") {
+    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
       $expectedOutput = $expectedOutput .
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
-    } elsif ($tapeTb > 2 and $clientVer eq "oldVer") {
+    } elsif ($tapeTb > 2 and $clientVer eq "oldProtocol") {
       $expectedOutput = $expectedOutput .
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -657,7 +657,7 @@ sub enterTapes {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlisttape}{$clientVer} | sort", $expectedOutput);
 
-    if($totalTb == 1 and $clientVer eq "oldVer") {
+    if($totalTb == 1 and $clientVer eq "oldProtocol") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -670,7 +670,7 @@ sub enterTapes {
     }
 
     # vmgrlistpool uses a different protocol with the -P option than without
-    if($totalTb == 1 and $clientVer eq "oldVer") {
+    if($totalTb == 1 and $clientVer eq "oldProtocol") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -703,11 +703,11 @@ sub deleteTapes {
     $tapeTb      = $denMap->{$tapeDensity}{tb};
     $totalTb     = $totalTb + $tapeTb;
 
-    if($tapeTb == 1 and $clientVer eq "oldVer") {
+    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ");
-    } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
+    } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -755,7 +755,7 @@ sub deleteTapes {
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY         0B" .
         " FREE         0B (  0.0%)");
-    } elsif($remainingTb == 1 and $clientVer eq "oldVer") {
+    } elsif($remainingTb == 1 and $clientVer eq "oldProtocol") {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -787,12 +787,12 @@ sub setStatusOfTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMap->{$tapeDensity}{tb};
 
-    if($tapeTb == 1 and $clientVer eq "oldVer") {
+    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
         " 00000000 $status";
-    } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
+    } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -835,12 +835,12 @@ sub enableTape {
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st ''", "");
 
-  if($tapeTb == 1 and $clientVer eq "oldVer") {
+  if($tapeTb == 1 and $clientVer eq "oldProtocol") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
       " 00000000 ";
-  } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
+  } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -874,12 +874,12 @@ sub setTapeStatus {
       "");
   }
 
-  if($tapeTb == 1 and $clientVer eq "oldVer") {
+  if($tapeTb == 1 and $clientVer eq "oldProtocol") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
       " 00000000 $tapeStatus";
-  } elsif($tapeTb > 2 and $clientVer eq "oldVer") {
+  } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -1435,11 +1435,11 @@ sub testReclaimOnFreeTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMap->{$tapeDensity}{tb};
 
-    if($tapeTb == 1 and $clientVer eq "oldVer") {
+    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
-    } elsif ($tapeTb > 2 and $clientVer eq "oldVer") {
+    } elsif ($tapeTb > 2 and $clientVer eq "oldProtocol") {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -1586,83 +1586,109 @@ my %tapes;
 my $castor_src = $ENV{'CASTOR_SRC'};
 my %clients = (
   vmgrquerytape => {
-    oldVer => "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843",
-    newVer => "$castor_src/test/vmgr/vmgrquerytape"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843",
+    newProtocol => "$castor_src/test/vmgr/vmgrquerytape",
+    legacyApiSu => "$castor_src/test/vmgr/vmgrquerytape"}, # TBD
   vmgrenterdenmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrenterdenmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrenterdenmap",
+    legacyApiSu => "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21990"},
   vmgrlistdenmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrlistdenmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlistdenmap",
+    legacyApiSu => "/usr/bin/vmgrlistdenmap"}, # TBD
   vmgrentermodel => {
-    oldVer => "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843",
-    newVer => "/usr/bin/vmgrentermodel"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrentermodel",
+    legacyApiSu => "/usr/bin/vmgrentermodel"}, # Not applicable - use latest
   vmgrlistmodel => {
-    oldVer => "$castor_src/test/vmgr/vmgrlistmodel_trunk_r21843",
-    newVer => "/usr/bin/vmgrlistmodel"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlistmodel_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlistmodel",
+    legacyApiSu => "/usr/bin/vmgrlistmodel"}, # Not applicable - use latest
   vmgrenterlibrary => {
-    oldVer => "$castor_src/test/vmgr/vmgrenterlibrary_trunk_r21843",
-    newVer => "/usr/bin/vmgrenterlibrary"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrenterlibrary_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrenterlibrary",
+    legacyApiSu => "/usr/bin/vmgrenterlibrary"}, # Not applicable - use latest
   vmgrlistlibrary => {
-    oldVer => "$castor_src/test/vmgr/vmgrlistlibrary_trunk_r21843",
-    newVer => "/usr/bin/vmgrlistlibrary"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlistlibrary_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlistlibrary",
+    legacyApiSu => "/usr/bin/vmgrlistlibrary"}, # Not applicable - use latest
   vmgrmodifylibrary => {
-    oldVer => "$castor_src/test/vmgr/vmgrmodifylibrary_trunk_r21843",
-    newVer => "/usr/bin/vmgrmodifylibrary"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrmodifylibrary_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrmodifylibrary",
+    legacyApiSu => "/usr/bin/vmgrmodifylibrary"}, # Not applicable - use latest
   vmgrenterdgnmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrenterdgnmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrenterdgnmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrenterdgnmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrenterdgnmap",
+    legacyApiSu => "/usr/bin/vmgrenterdgnmap"}, # Not applicable - use latest
   vmgrlistdgnmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrlistdgnmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrlistdgnmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlistdgnmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlistdgnmap",
+    legacyApiSu => "/usr/bin/vmgrlistdgnmap"}, # Not applicable - use latest
   vmgrenterpool => {
-    oldVer => "$castor_src/test/vmgr/vmgrenterpool_trunk_r21843",
-    newVer => "/usr/bin/vmgrenterpool"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrenterpool_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrenterpool",
+    legacyApiSu => "/usr/bin/vmgrenterpool"}, # Not applicable - use latest
   vmgrlistpool => {
-    oldVer => "$castor_src/test/vmgr/vmgrlistpool_trunk_r21843",
-    newVer => "/usr/bin/vmgrlistpool"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlistpool_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlistpool",
+    legacyApiSu => "/usr/bin/vmgrlistpool"}, # TBD
   vmgrmodifypool => {
-    oldVer => "$castor_src/test/vmgr/vmgrmodifypool_trunk_r21843",
-    newVer => "/usr/bin/vmgrmodifypool"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrmodifypool_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrmodifypool",
+    legacyApiSu => "/usr/bin/vmgrmodifypool"}, # Not applicable - use latest
   vmgrentertape => {
-    oldVer => "$castor_src/test/vmgr/vmgrentertape_trunk_r21843",
-    newVer => "/usr/bin/vmgrentertape"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrentertape_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrentertape",
+    legacyApiSu => "/usr/bin/vmgrentertape"}, # Not applicable - use latest
   vmgrlisttape => {
-    oldVer => "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843",
-    newVer => "/usr/bin/vmgrlisttape"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrlisttape",
+    legacyApiSu => "/usr/bin/vmgrlisttape"}, # TBD
   vmgrmodifytape => {
-    oldVer => "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843",
-    newVer => "/usr/bin/vmgrmodifytape"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrmodifytape",
+    legacyApiSu => "/usr/bin/vmgrmodifytape"}, # Not applicable - use latest
   vmgrsettag => {
-    oldVer => "$castor_src/test/vmgr/vmgrsettag_trunk_r21843",
-    newVer => "/usr/bin/vmgrsettag"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrsettag_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrsettag",
+    legacyApiSu => "/usr/bin/vmgrsettag"}, # Not applicable - use latest
   vmgrgettag => {
-    oldVer => "$castor_src/test/vmgr/vmgrgettag_trunk_r21843",
-    newVer => "/usr/bin/vmgrgettag"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrgettag_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrgettag",
+    legacyApiSu => "/usr/bin/vmgrgettag"}, # Not applicable - use latest
   vmgrdeltag => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeltag_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeltag"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeltag_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeltag",
+    legacyApiSu => "/usr/bin/vmgrdeltag"}, # Not applicable - use latest
   vmgrdeletedenmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletedenmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletedenmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletedenmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletedenmap",
+    legacyApiSu => "/usr/bin/vmgrdeletedenmap"}, # Not applicable - use latest
   vmgrdeletedgnmap => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletedgnmap_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletedgnmap"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletedgnmap_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletedgnmap",
+    legacyApiSu => "/usr/bin/vmgrdeletedgnmap"}, # Not applicable - use latest
   vmgrdeletelibrary => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletelibrary_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletelibrary"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletelibrary_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletelibrary",
+    legacyApiSu => "/usr/bin/vmgrdeletelibrary"}, # Not applicable - use latest
   vmgrdeletemodel => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletemodel_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletemodel"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletemodel_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletemodel",
+    legacyApiSu => "/usr/bin/vmgrdeletemodel"}, # Not applicable - use latest
   vmgrdeletepool => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletepool_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletepool"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletepool_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletepool",
+    legacyApiSu => "/usr/bin/vmgrdeletepool"}, # Not applicable - use latest
   vmgrdeletetape => {
-    oldVer => "$castor_src/test/vmgr/vmgrdeletetape_trunk_r21843",
-    newVer => "/usr/bin/vmgrdeletetape"},
+    oldProtocol => "$castor_src/test/vmgr/vmgrdeletetape_trunk_r21843",
+    newProtocol => "/usr/bin/vmgrdeletetape",
+    legacyApiSu => "/usr/bin/vmgrdeletetape"}, # Not applicable - use latest
   reclaim => {
-    oldVer => "$castor_src/test/vmgr/reclaim_trunk_r21843",
-    newVer => "/usr/bin/reclaim"}
+    oldProtocol => "$castor_src/test/vmgr/reclaim_trunk_r21843",
+    newProtocol => "/usr/bin/reclaim",
+    legacyApiSu => "/usr/bin/reclaim"} # Not applicable - use latest
 );
 my $client             = "";
 my @vids;
@@ -1700,8 +1726,9 @@ die("ABORT: CASTOR_SRC not defined\n") if(! defined($ENV{'CASTOR_SRC'}));
 print("Using CASTOR_SRC=$castor_src\n");
 
 for $client (sort keys %clients) {
-  &dieIfNoExecutable($clients{$client}{oldVer});
-  &dieIfNoExecutable($clients{$client}{newVer});
+  &dieIfNoExecutable($clients{$client}{oldProtocol});
+  &dieIfNoExecutable($clients{$client}{newProtocol});
+  &dieIfNoExecutable($clients{$client}{legacyApiSu});
 }
 
 # Determine the location of the database scripts to drop and recreate the vmgr
@@ -1808,20 +1835,46 @@ print("ADDING $nbDummyTapes DUMMY TAPES TO TEST DATA-STRUCTURES\n");
 #print("\n");
 #print("CHECKING OLD VMGR REFUSES NEW CLIENTS\n");
 #&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrenterdenmap}{newVer}" .
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrenterdenmap}{newProtocol}" .
 #  " -d 9999GC --ml J --mo 3592 --nc 1T",
 #  "VMG03 - illegal function 40\nvmgrenterdenmap 3592: Internal error");
 #&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlistdenmap}{newVer}",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlistdenmap}{newProtocol}",
 #  "VMG03 - illegal function 41\n" .
 #  "send2vmgr: VMG02 - send error : Internal error");
 #&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlisttape}{newVer} -V $vids[0]",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrlisttape}{newProtocol} -V $vids[0]",
 #  "VMG03 - illegal function 42\nvmgrlisttape: Internal error");
 #&testRunCmdAsOutput("root",
-#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrquerytape}{newVer} $vids[0]",
+#  "2>&1 VMGR_HOST=lxcastorsrv102 $clients{vmgrquerytape}{newProtocol} $vids[0]",
 #  "VMG03 - illegal function 39\n" .
 #  "vmgr_querytape_byte_u64 failed: vid=\"$vids[0]\": Internal error");
+
+if(&daemonIsRunning("vmgrd")) {
+  print("\n");
+  print("STOPPING THE VMGR\n");
+  &runCmdAs("root", "/etc/init.d/vmgrd stop");
+}
+
+print("\n");
+print("DROPPING DATABASE SCHEMA\n");
+&dropVmgrDatabaseSchema($dbConnectionString, $originalDropSchema);
+
+print("\n");
+print("CREATING DATABASE SCHEMA\n");
+&createVmgrDatabaseSchema($dbConnectionString, $originalDbSchema);
+
+print("\n");
+print("STARTING THE VMGR\n");
+&runCmdAs("root", "/etc/init.d/vmgrd start");
+die "Abort: vmgrd is not running\n" unless daemonIsRunning("vmgrd");
+sleep(1); # Give the vmgrd a chance to get up and running
+
+print("\n");
+print("ENTERING META-DATA INTO VMGR USING CLIENTS USING LEGACY API SUPPORT\n");
+
+&enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
+  \%tapes, "legacyApiSu");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
@@ -1847,7 +1900,7 @@ print("\n");
 print("ENTERING META-DATA INTO VMGR USING OLD CLIENTS\n");
 
 &enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
-  \%tapes, "oldVer");
+  \%tapes, "oldProtocol");
 
 if(&daemonIsRunning("vmgrd")) {
   print("\n");
@@ -1873,7 +1926,7 @@ print("\n");
 print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
 &enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
-  \%tapes, "newVer");
+  \%tapes, "newProtocol");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");
@@ -1882,7 +1935,7 @@ print("CHECKING OLD VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 $dgn = &modelAndLibrary2Dgn(\%dgnMap, $tapes{$vids[0]}{mo},
   $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
-  "2>&1 $clients{vmgrquerytape}{oldVer} $vids[0]",
+  "2>&1 $clients{vmgrquerytape}{oldProtocol} $vids[0]",
   "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$dgn\"");
 
 # Abort if the new vmgr_checktape function does not work with the new vmgr
@@ -1891,7 +1944,7 @@ print("CHECKING NEW VMGR_CHECKTAPE FUNCTION WORKS WITH NEW VMGR\n");
 $dgn = &modelAndLibrary2Dgn(\%dgnMap, $tapes{$vids[0]}{mo},
   $tapes{$vids[0]}{li});
 &testRunCmdAsOutput("root",
-  "2>&1 $clients{vmgrquerytape}{newVer} $vids[0]",
+  "2>&1 $clients{vmgrquerytape}{newProtocol} $vids[0]",
   "vmgr_querytape_byte_u64 succeeded: vid=\"$vids[0]\" dgn=\"$dgn\"");
 
 # ONLY COMMENT OUT THIS exit STATEMENT IF YOU REALLY, REALLY KNOW WHAT YOU ARE
