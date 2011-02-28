@@ -253,6 +253,9 @@ ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
   INITIALLY DEFERRED DEFERRABLE;
 
+ALTER TABLE DiskCopy
+  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
+
 /* CastorFile constraints */
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
   FOREIGN KEY (svcClass) REFERENCES SvcClass (id)

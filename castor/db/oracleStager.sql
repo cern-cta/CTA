@@ -2601,14 +2601,14 @@ BEGIN
        WHERE id = srIds(i) OR parent = srIds(i);
     END LOOP;
   END IF;
-  -- Set selected DiskCopies to either INVALID or FAILED;
-  -- WAITDISK2DISKCOPY's have a dedicated handling (see bug #63348)
+  -- Set selected DiskCopies to either INVALID or FAILED. We deliberately
+  -- ignore WAITDISK2DISKCOPY's (see bug #78826)
   FOR i IN dcsToRm.FIRST .. dcsToRm.LAST LOOP
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(i);
-    IF dcStatus = 1 THEN  -- WAITDISK2DISKCOPY
-      disk2DiskCopyFailed(dcsToRm(i), 0);
+    IF dcStatus = 1 THEN
+      NULL;  -- Do nothing
     ELSE
       UPDATE DiskCopy
          -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
