@@ -5,11 +5,6 @@ $MaxMessageSize 4096
 $ModLoad immark    # provides --MARK-- message capability
 $ModLoad imuxsock  # provides support for local system logging (e.g. via logger command)
 $ModLoad imklog    # kernel logging (formerly provided by rklogd)
-$ModLoad imtcp     # provides TCP syslog reception
-
-# Remote server
-$InputTCPMaxSessions 1000
-$InputTCPServerRun 514              # start tcp server on port 514
 
 # Global options
 $DynaFileCacheSize 100              # the maximum number of dynamically generated
@@ -17,32 +12,31 @@ $DynaFileCacheSize 100              # the maximum number of dynamically generate
 $umask 0000
 $FileCreateMode 0644                # world readable log files
 
-# Main message queue configuration (http://www.rsyslog.com/doc-queues.html)
-$MainMsgQueueType LinkedList        # dynamic allocation of memory for messages
-$MainMsgQueueSize 70000             # increase the maximum size of the main message
-                                    # queue to handle traffic bursts
-
-# Begin discarding informational and debug messages if the main message queue has
-# more than 48000 messages
-$MainMsgQueueDiscardMark 48000
-$MainMsgQueueDiscardSeverity 6
-
 # Templates
-$template DynaFile, "/var/log/castor/%programname%.log"
+$template DynaFile,"/var/log/castor/%programname%.log"
+
+# Remote logging configuration
+$WorkDirectory /var/spool/rsyslog   # where to place spool files
+$ActionQueueType LinkedList         # dynamic allocation of memory for messages
+$ActionQueueFileName forward1       # unique name prefix for spool files
+$ActionQueueSaveOnShutdown on       # save messages to disk on shutdown
+$ActionQueueMaxDiskSpace 1g         # 1gb space limit (use as much as possible)
+
+# Enable high-precision timestamps when forwarding messages
+$ActionForwardDefaultTemplate RSYSLOG_ForwardFormat
 
 # Logging configuration for CASTOR
-if $fromhost-ip == '127.0.0.1' and \
-   $syslogfacility-text == 'local3' then   -?DynaFile
-
-# Logprocessor input file
-local3.*;local3.!=debug;local2.info        -/var/log/dlf/syslog.input
+local3.*                                    -?DynaFile
+local3.*;local3.!=debug;local2.info         @@headnode1.domain.com:514
+$ActionExecOnlyWhenPreviousIsSuspended on
+& @@headnode2.domain.com:514
+& @@headnode3.domain.com:514
+& /var/spool/rsyslog/buffer.log
+$ActionExecOnlyWhenPreviousIsSuspended off
 
 # If the message has been processed by one of the filters above stop
 # any further processing. This avoids duplicate logging!
 & ~
-
-# Discard any other messages not from localhost
-if $fromhost-ip != '127.0.0.1' then ~
 
 # Standard rsyslog configuration
 
@@ -50,7 +44,7 @@ if $fromhost-ip != '127.0.0.1' then ~
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
 
 # Required by openssh-server (SLC4 machines)
-$AddUnixListenSocket /var/empty/sshd/dev/log
+#$AddUnixListenSocket /var/empty/sshd/dev/log
 
 # The default file creation mode
 $FileCreateMode 0600
@@ -68,6 +62,7 @@ authpriv.*                                              /var/log/secure
 
 # Log all the mail messages in one place.
 mail.*                                                  -/var/log/maillog
+
 
 # Log cron stuff
 cron.*                                                  /var/log/cron
