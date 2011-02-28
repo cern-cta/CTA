@@ -6,11 +6,14 @@ TEST_INCLUDE_DIR=$(ROOT_DIR)/test/vmgr
 EXECUTABLES= \
   vmgrquerytape \
   vmgrquerytape_trunk_r21843 \
+  vmgrquerytape_legacy_api_support \
   vmgrenterdenmap_trunk_r21843 \
   vmgrenterdenmap_trunk_r21990 \
   vmgrlistdenmap_trunk_r21843 \
+  vmgrlistdenmap_trunk_r21990 \
   vmgrentertape_trunk_r21843 \
   vmgrlisttape_trunk_r21843 \
+  vmgrlisttape_trunk_r21990 \
   vmgrmodifytape_trunk_r21843 \
   vmgrentermodel_trunk_r21843 \
   vmgrlistmodel_trunk_r21843 \
@@ -62,6 +65,10 @@ vmgrquerytape_trunk_r21843: \
   serror_trunk_r21843.o
 	gcc -g -o $@ $^
 
+vmgrquerytape_legacy_api_support: \
+  vmgrquerytape_legacy_api_support.o
+	gcc -g -o $@ ../../vmgr/libcastorvmgr.so.2.1 $^
+
 vmgrenterdenmap_trunk_r21843: \
   vmgrenterdenmap_trunk_r21843.o \
   vmgr_enterdenmap_trunk_r21843.o \
@@ -96,6 +103,10 @@ vmgrlistdenmap_trunk_r21843: \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
 
+vmgrlistdenmap_trunk_r21990: \
+  vmgrlistdenmap_trunk_r21990.o
+	gcc -g -o $@ ../../vmgr/libcastorvmgr.so.2.1 $^
+
 vmgrentertape_trunk_r21843: \
   vmgrentertape_trunk_r21843.o \
   vmgr_entertape_trunk_r21843.o \
@@ -125,6 +136,10 @@ vmgrlisttape_trunk_r21843: \
   Cgetopt_trunk_r21843.o \
   u64subr_trunk_r21843.o
 	gcc -g -o $@ $^
+
+vmgrlisttape_trunk_r21990: \
+  vmgrlisttape_trunk_r21990.o
+	gcc -g -o $@ ../../vmgr/libcastorvmgr.so.2.1 $^
 
 vmgrmodifytape_trunk_r21843: \
   vmgrmodifytape_trunk_r21843.o \
@@ -493,6 +508,9 @@ vmgrquerytape.o: vmgrquerytape.c
 vmgrquerytape_trunk_r21843.o: vmgrquerytape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
+vmgrquerytape_legacy_api_support.o: vmgrquerytape_legacy_api_support.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
 vmgrenterdenmap_trunk_r21843.o: vmgrenterdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
@@ -502,11 +520,17 @@ vmgrenterdenmap_trunk_r21990.o: vmgrenterdenmap_trunk_r21990.c
 vmgrlistdenmap_trunk_r21843.o: vmgrlistdenmap_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
+vmgrlistdenmap_trunk_r21990.o: vmgrlistdenmap_trunk_r21990.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
+
 vmgrentertape_trunk_r21843.o: vmgrentertape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
 
 vmgrlisttape_trunk_r21843.o: vmgrlisttape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^
+
+vmgrlisttape_trunk_r21990.o: vmgrlisttape_trunk_r21990.c
+	gcc -c -g -o $@ -I $(NEW_INCLUDE_DIR) $^
 
 vmgrmodifytape_trunk_r21843.o: vmgrmodifytape_trunk_r21843.c
 	gcc -c -g -o $@ -I $(TEST_INCLUDE_DIR) $^

@@ -318,7 +318,8 @@ sub enterDenMaps {
     }
 
     $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
-    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldProtocol") {
+    if($denMap->{$density}{tb} == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput = $expectedOutput .
         "$paddedModel $denMap->{$density}{ml}  $density   1024.00Gi";
     } else {
@@ -344,7 +345,8 @@ sub deleteDenMaps {
 
   for $density (@densities) {
     $paddedModel = &rPadColumn(6, $denMap->{$density}{mo});
-    if($denMap->{$density}{tb} == 1 and $clientVer eq "oldProtocol") {
+    if($denMap->{$density}{tb} == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       push(@expectedOutputArray,
         "$paddedModel $denMap->{$density}{ml}" .
         "  $density   1024.00Gi");
@@ -638,11 +640,13 @@ sub enterTapes {
     if($expectedOutput ne "") {
       $expectedOutput = $expectedOutput . "\n";
     }
-    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+    if($tapeTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput = $expectedOutput .
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
-    } elsif ($tapeTb > 2 and $clientVer eq "oldProtocol") {
+    } elsif ($tapeTb > 2 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput = $expectedOutput .
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -657,7 +661,8 @@ sub enterTapes {
     &testRunCmdAsOutput("root",
       "2>&1 $clients->{vmgrlisttape}{$clientVer} | sort", $expectedOutput);
 
-    if($totalTb == 1 and $clientVer eq "oldProtocol") {
+    if($totalTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -670,7 +675,8 @@ sub enterTapes {
     }
 
     # vmgrlistpool uses a different protocol with the -P option than without
-    if($totalTb == 1 and $clientVer eq "oldProtocol") {
+    if($totalTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} -P $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -703,11 +709,13 @@ sub deleteTapes {
     $tapeTb      = $denMap->{$tapeDensity}{tb};
     $totalTb     = $totalTb + $tapeTb;
 
-    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+    if($tapeTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ");
-    } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
+    } elsif($tapeTb > 2 and
+     ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       push(@expectedListTapeOutputArray, 
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -755,7 +763,8 @@ sub deleteTapes {
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY         0B" .
         " FREE         0B (  0.0%)");
-    } elsif($remainingTb == 1 and $clientVer eq "oldProtocol") {
+    } elsif($remainingTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       &testRunCmdAsOutput("root",
         "2>&1 $clients->{vmgrlistpool}{$clientVer} | grep $tapes->{$vid}{po}",
         "$tapes->{$vid}{po}    stage    st     CAPACITY 1024.00GiB" .
@@ -787,12 +796,14 @@ sub setStatusOfTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMap->{$tapeDensity}{tb};
 
-    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+    if($tapeTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
         " 00000000 $status";
-    } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
+    } elsif($tapeTb > 2 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -835,12 +846,14 @@ sub enableTape {
   &testRunCmdAsOutput("root",
     "2>&1 $clients->{vmgrmodifytape}{$clientVer} -V $vid --st ''", "");
 
-  if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+  if($tapeTb == 1 and
+    ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
       " 00000000 ";
-  } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
+  } elsif($tapeTb > 2 and
+    ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -874,12 +887,14 @@ sub setTapeStatus {
       "");
   }
 
-  if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+  if($tapeTb == 1 and
+    ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB" .
       " 00000000 $tapeStatus";
-  } elsif($tapeTb > 2 and $clientVer eq "oldProtocol") {
+  } elsif($tapeTb > 2 and
+    ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
     $expectedOutput =
       "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
       "   $tapes->{$vid}{ l} $tapes->{$vid}{po}       2.00TiB" .
@@ -1065,8 +1080,8 @@ sub enterMetadata {
   my $clients   = $_[0];
   my $libraries = $_[1];
   my $models    = $_[2];
-  my $denMap   = $_[3];
-  my $dgnMap   = $_[4];
+  my $denMap    = $_[3];
+  my $dgnMap    = $_[4];
   my $pools     = $_[5];
   my $tapes     = $_[6];
   my $clientVer = $_[7];
@@ -1435,11 +1450,13 @@ sub testReclaimOnFreeTapes {
     $tapeDensity = $tapes->{$vid}{d};
     $tapeTb      = $denMap->{$tapeDensity}{tb};
 
-    if($tapeTb == 1 and $clientVer eq "oldProtocol") {
+    if($tapeTb == 1 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}    1024.00GiB 00000000 ";
-    } elsif ($tapeTb > 2 and $clientVer eq "oldProtocol") {
+    } elsif ($tapeTb > 2 and
+      ($clientVer eq "oldProtocol" or $clientVer eq "legacyApiSu")) {
       $expectedOutput =
         "$vid   $vid $tapes->{$vid}{li} $tapes->{$vid}{ d}" .
         "   $tapes->{$vid}{ l} $tapes->{$vid}{po}" .
@@ -1588,7 +1605,7 @@ my %clients = (
   vmgrquerytape => {
     oldProtocol => "$castor_src/test/vmgr/vmgrquerytape_trunk_r21843",
     newProtocol => "$castor_src/test/vmgr/vmgrquerytape",
-    legacyApiSu => "$castor_src/test/vmgr/vmgrquerytape"}, # TBD
+    legacyApiSu => "$castor_src/test/vmgr/vmgrquerytape_legacy_api_support"},
   vmgrenterdenmap => {
     oldProtocol => "$castor_src/test/vmgr/vmgrenterdenmap_trunk_r21843",
     newProtocol => "/usr/bin/vmgrenterdenmap",
@@ -1596,7 +1613,7 @@ my %clients = (
   vmgrlistdenmap => {
     oldProtocol => "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21843",
     newProtocol => "/usr/bin/vmgrlistdenmap",
-    legacyApiSu => "/usr/bin/vmgrlistdenmap"}, # TBD
+    legacyApiSu => "$castor_src/test/vmgr/vmgrlistdenmap_trunk_r21990"},
   vmgrentermodel => {
     oldProtocol => "$castor_src/test/vmgr/vmgrentermodel_trunk_r21843",
     newProtocol => "/usr/bin/vmgrentermodel",
@@ -1632,7 +1649,7 @@ my %clients = (
   vmgrlistpool => {
     oldProtocol => "$castor_src/test/vmgr/vmgrlistpool_trunk_r21843",
     newProtocol => "/usr/bin/vmgrlistpool",
-    legacyApiSu => "/usr/bin/vmgrlistpool"}, # TBD
+    legacyApiSu => "/usr/bin/vmgrlistpool"}, # Not applicable - use latest
   vmgrmodifypool => {
     oldProtocol => "$castor_src/test/vmgr/vmgrmodifypool_trunk_r21843",
     newProtocol => "/usr/bin/vmgrmodifypool",
@@ -1644,7 +1661,7 @@ my %clients = (
   vmgrlisttape => {
     oldProtocol => "$castor_src/test/vmgr/vmgrlisttape_trunk_r21843",
     newProtocol => "/usr/bin/vmgrlisttape",
-    legacyApiSu => "/usr/bin/vmgrlisttape"}, # TBD
+    legacyApiSu => "$castor_src/test/vmgr/vmgrlisttape_trunk_r21990"},
   vmgrmodifytape => {
     oldProtocol => "$castor_src/test/vmgr/vmgrmodifytape_trunk_r21843",
     newProtocol => "/usr/bin/vmgrmodifytape",
@@ -1927,6 +1944,17 @@ print("ENTERING META-DATA INTO VMGR USING NEW CLIENTS\n");
 
 &enterMetadata(\%clients, \%libraries, \%models, \%denMap, \%dgnMap, \%pools,
   \%tapes, "newProtocol");
+
+# Abort if the old vmgr_checktape function does not work with the new vmgr
+print("\n");
+print("CHECKING LEGACY API SUPPORT FOR VMGR_CHECKTAPE FUNCTION WORKS WITH" .
+  " NEW VMGR\n");
+@vids = sort keys %tapes;
+$dgn = &modelAndLibrary2Dgn(\%dgnMap, $tapes{$vids[0]}{mo},
+  $tapes{$vids[0]}{li});
+&testRunCmdAsOutput("root",
+  "2>&1 $clients{vmgrquerytape}{legacyApiSu} $vids[0]",
+  "vmgr_querytape succeeded: vid=\"$vids[0]\" dgn=\"$dgn\"");
 
 # Abort if the old vmgr_checktape function does not work with the new vmgr
 print("\n");

@@ -19,12 +19,27 @@ vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 lists all existing tape entries in the CASTOR Volume Manager.
 .P
 Please note that users of the vmgr client API are encouraged to use the
-.B vmgr_listpool_byte_u64
+.B vmgr_listtape_byte_u64
 function instead of
-.B vmgr_listpool.
-The former defines free space to be in bytes and represented by a 64-bit
-unsigned integer.  The
-.B vmgr_listpool_byte_u64
+.B vmgr_listtape.
+The former supports tape sizes up to 16 Exibytes whereas the latter only
+supports tape sizes up to 2 Teribytes.
+If the
+.B vmgr_listtape
+function attempts to list a tape with more than 2 Teribytes of free space,
+then the function will store a value of exactly 2 Teribytes into the
+.I estimated_free_space
+member of the structure pointed to by the function's return value.
+The
+.B vmgr_listtape_byte_u64
+function defines free space to be in bytes and represented by a 64-bit unsigned
+integer.
+The
+.B vmgr_listtape
+defines free space to be in kibibytes and represented by a
+signed 32-bit integer.
+The
+.B vmgr_listtape_byte_u64
 function has been introduced to help represent all CASTOR sizes in the same
 way.
 .TP
