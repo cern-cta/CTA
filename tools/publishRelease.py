@@ -287,9 +287,7 @@ def main(argv):
         # If the old or new version matches the tag we are operating on then
         # we have found either an upgrade or downgrade script which should
         # be copied to the dbupgrades directory.
-        old_version = tokens[1].replace(".", "_").replace("-", "_")
-        new_version = tokens[3].replace(".", "_").replace("-", "_")
-        if old_version == tag[1:] or new_version == tag[1:]:
+        if tokens[1] == tag[1:] or tokens[3] == tag[1:]:
             files['Upgrade Scripts'][1].append(filepath)
 
     # Collect all the creation scripts.
