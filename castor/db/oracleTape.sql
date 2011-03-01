@@ -1664,7 +1664,7 @@ BEGIN
          SET S.status = tconst.STREAM_PENDING
        WHERE S.status = tconst.STREAM_WAITPOLICY
          AND S.id = streamIds(i);
-  ENd IF;
+  END IF;
   COMMIT;
 END;
 /
@@ -1816,12 +1816,11 @@ BEGIN
          AND T.id = tapeIds(i);
     END LOOP; 
   ELSE
-    FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+    FORALL i IN tapeIds.FIRST .. tapeIds.LAST
       UPDATE Tape SET status = tconst.TAPE_PENDING WHERE status = tconst.TAPE_WAITPOLICY AND id = tapeIds(i);
-    END LOOP;
   END IF;
   COMMIT;
-END;
+END;	
 /
 
 /* Single tape version of resurrect tapes used by stager when finding no policy 

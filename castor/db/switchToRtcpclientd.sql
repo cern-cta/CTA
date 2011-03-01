@@ -96,7 +96,7 @@ BEGIN
   UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
     WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
   UPDATE Segment SET status = TCONST.SEGMENT_FAILED
-    WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in tape gateway.
+    WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in rtcpclientd.
 END;
 /
 
@@ -112,26 +112,32 @@ END;
 -- From TAPE_UNKNOWN, Leave as is. (Assuming it is an end state).
 -- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
 
--- Write tapes can be dumped
+-- Write tape mounts can be dumped
 BEGIN
   DELETE FROM Tape T WHERE T.tpMode = TCONST.TPMODE_WRITE;
--- Undeferenced read tapes can be dumped.
+  -- Unreferenced read tape mounts can be dumped. (at the end)
+  
   -- Resurrect the tapes running for recall
   UPDATE Tape SET status = TCONST.TAPE_PENDING
     WHERE tpmode = TCONST.TPMODE_READ AND 
           status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
-          TCONST.TAPE_MOUNTED); 
-  UPDATE Tape T SET T.status = TCONST.TAPE_WAITPOLICY
-    WHERE T.status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
-    TCONST.TAPE_UNKNOWN) AND EXISTS
+          TCONST.TAPE_MOUNTED);
+  -- Resurrect tapes with UNPROCESSED segments (preserving WAITPOLICY state)
+  UPDATE Tape T SET T.status = TCONST.TAPE_PENDING
+    WHERE T.status NOT IN (TCONST.TAPE_WAITPOLICY, TCONST.TAPE_PENDING) AND EXISTS
     ( SELECT Seg.id FROM Segment Seg
       WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
-   -- Other tapes are not relevant
+   -- Other tapes taht are not referenced by any segment are dropped
    DELETE FROM Tape T
     WHERE T.tpMode = TCONST.TPMODE_READ AND (
-       T. Status NOT IN (TCONST.TAPE_WAITPOLICY) OR
        NOT EXISTS ( SELECT Seg.id FROM Segment Seg
-      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id));
+      WHERE Seg.tape = T.id));
+   -- We keep the tapes referenced by failed segments and move them to UNUSED. Those are the ones without
+   -- unprocessed segments
+   UPDATE Tape T SET T.status = TCONST.TAPE_UNUSED
+    WHERE NOT EXISTS
+    ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
 END;
 /
 
