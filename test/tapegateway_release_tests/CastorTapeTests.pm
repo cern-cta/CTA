@@ -1262,7 +1262,7 @@ sub daemonIsRunning ( $ )
   my $psResult = `ps -e | grep $daemonName`;
   chomp($psResult);
 
-  return($psResult =~ m/^\s*\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/);
+  return($psResult =~ m/^\s*\d+\s+\?\s+\d\d:\d\d:\d\d\s+$daemonName$/ || $psResult =~ m/^\s*\d+\s+\?\s+\d\d:\d\d:\d\d\s+valgrind.*$daemonName$/);
 }
 
 
@@ -1282,6 +1282,8 @@ sub killDaemonWithTimeout ( $$ )
   my $timeOutSecs = $_[1];
 
   `/sbin/service $processName stop`;
+  # In case we are running valgrind, let's not use gloves.
+  `ps auxf | grep $processName | grep valgrind | grep -v grep | grep -v tail |  cut -c 10-15 | xargs kill 2> /dev/null`;
 
   if (daemonIsRunning($processName)) {
       sleep (1);
@@ -1331,7 +1333,9 @@ sub startDaemons ()
 	 'rhd'         => './castor/rh/rhd',
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
 	 'rtcpclientd' => './rtcopy/rtcpclientd',
-	 'stagerd'     => './castor/stager/daemon/stagerd',
+#         'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --trace-children=yes ./castor/stager/daemon/stagerd',
+#	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --leak-check=full --track-origins=yes --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
+         'stagerd'     => './castor/stager/daemon/stagerd',
 	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
          'expertd'     => './expert/expertd',
          'logprocessord' => './logprocessor/logprocessord'
@@ -1362,7 +1366,8 @@ sub startSingleDaemon ( $ )
 	 'rhd'         => './castor/rh/rhd',
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
 	 'rtcpclientd' => './rtcopy/rtcpclientd',
-	 'stagerd'     => './castor/stager/daemon/stagerd',
+	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
+#'./castor/stager/daemon/stagerd',
 	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
          'expertd'     => './expert/expertd',
          'logprocessord' => './logprocessor/logprocessord'

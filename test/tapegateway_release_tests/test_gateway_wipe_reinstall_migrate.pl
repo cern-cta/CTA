@@ -224,7 +224,7 @@ sub badDayFileCreation ( $$$$ )
                        "missing tapepool on rfcp",
                        "missing segment on rfcp",
                        "missing tape on rfcp",
-                       "missing ns entry on rfcp",
+                       #"missing ns entry on rfcp",
                        #"wrong checksum on rfcp",
                        #"wrong size on rfcp",
                        "wrong segment on rfcp",
