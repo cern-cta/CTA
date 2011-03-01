@@ -28,8 +28,25 @@
     Before upgrading to a 2.1.10-1 instance of CASTOR2 please make sure to read
     the upgrade instructions fully before proceeding.
 
+    The instructions for upgrading the vdqmd and vmgrd daemons are as follows.
+    Please note that these instructions assume that both the vdqm and vmgr
+    daemons being upgraded are of version 2.1.10-0.  Please upgrade to this
+    version if you have not already done so before proceeding with these
+    instructions.
 
-
+    1. Move the status of all tape drives to DOWN.
+    2. Note the database login details of the vmgr database used by the vmgrd
+       daemon.  More specifically look at the contents of the
+       /etc/castor/ORAVDQMCONFIG file on one of the machines hosting a vmgrd
+       daemon.
+    3. Shutdown all of the vmgrd daemons.
+    4. Shutdown all of the the vdqmd daemons.
+    5. Connect to the vmgr database and run the the following upgrade script:
+       vmgr_2.1.10-0_to_2.1.10-1.sql
+    6. Upgrade the CASTOR rpms of the vdqm and vmgr hosts to version 2.1.10-1
+    7. Start the vdqmd daemons.
+    8. Start the vmgrd daemons.
+    9. Bring all the tape drives back up.
 
 ------------
 - 2.1.10-0 -
