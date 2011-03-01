@@ -220,7 +220,7 @@ BEGIN
     INTO fileSize, cfId
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
-     AND SubRequest.id = srId FOR UPDATE;
+     AND SubRequest.id = srId FOR UPDATE OF CastorFile;
   -- Check to see if the proposed diskserver and filesystem selected by the
   -- scheduler to run the job is in the correct service class.
   BEGIN
