@@ -1,5 +1,5 @@
 /******************************************************************************
- *              mon_2.1.10-0_to_2.1.10-1.sql
+ *              mon_2.1.10-0_to_2.1.10-2.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.9-10 MON database to v2.1.10-0
+ * This script upgrades a CASTOR v2.1.10-0 MON database to v2.1.10-2
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -27,8 +27,8 @@ WHENEVER SQLERROR EXIT FAILURE
 BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_10_1'
-     AND release = '2_1_10_1'
+   WHERE schemaVersion = '2_1_9_7'
+     AND release = '2_1_10_2'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -48,7 +48,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_10_1', '2_1_10_1', 'NON TRANSPARENT');
+VALUES ('2_1_9_7', '2_1_10_2', 'NON TRANSPARENT');
 COMMIT;
 
 /* Schema changes go here */
@@ -635,5 +635,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
- WHERE release = '2_1_10_1';
+ WHERE release = '2_1_10_2';
 COMMIT;
