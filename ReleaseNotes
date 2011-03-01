@@ -1,4 +1,37 @@
 ------------
+- 2.1.10-1 -
+------------
+
+  Please Note: This release is dedicated to tape and as such only includes
+               tape related software and client side tools.
+
+  Bug Fixes
+  ---------
+
+  CASTOR repack2
+  --------------
+  - #78347: RepackCleanup procedure returns "ORA-06502: PL/SQL: numeric or
+            value error"
+
+  CASTOR tape
+  -----------
+  - #75722: RFE: The VMGR should support tape capacities greater than 2TB
+  - #75868: RFE: VMGR should randomize when choosing a migration tape for a
+            specific tape pool and library 
+  - #75990: RFE: support for new densities in taped 
+  - #76440: Typos in repack man pages
+
+
+  Upgrade Instructions from 2.1.10-1
+  ----------------------------------
+
+    Before upgrading to a 2.1.10-1 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+
+
+
+------------
 - 2.1.10-0 -
 ------------
 
@@ -98,7 +131,7 @@
 
 
   Upgrade Instructions from 2.1.9-10
-  ---------------------------------
+  ----------------------------------
 
     Before upgrading to a 2.1.10-0 instance of CASTOR2 please make sure to read
     the upgrade instructions fully before proceeding.
