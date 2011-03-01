@@ -332,7 +332,7 @@ def main(argv):
 
     # Publish the temporary directory to its final location.
     print "[STEP 8/9] - Publishing temporary directory:"
-    print "[STEP 8/9] -   ", releasedir
+    print "[STEP 8/9] -  ", releasedir
 
     shutil.rmtree(os.path.join(tmpdir, "extracted"));
     shutil.copytree(tmpdir, releasedir)
