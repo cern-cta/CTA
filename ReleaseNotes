@@ -37,7 +37,7 @@
     1. Move the status of all tape drives to DOWN.
     2. Note the database login details of the vmgr database used by the vmgrd
        daemon.  More specifically look at the contents of the
-       /etc/castor/ORAVDQMCONFIG file on one of the machines hosting a vmgrd
+       /etc/castor/VMGRCONFIG file on one of the machines hosting a vmgrd
        daemon.
     3. Shutdown all of the vmgrd daemons.
     4. Shutdown all of the the vdqmd daemons.
