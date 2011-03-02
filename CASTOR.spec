@@ -6,7 +6,6 @@
 
 # Partial compilations
 #---------------------
-
 %{expand:%define compiling_nostk  %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define compiling_client %(if [ -z $CASTOR_CLIENT ]; then echo 0; else echo 1; fi)}
 
