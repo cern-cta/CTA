@@ -195,6 +195,21 @@ def main(argv):
     print "[STEP 3/9] - Decompressing:", zipfile
     runCommand([ "/usr/bin/unzip", zipfile, "-d", tmpdir ])
 
+    # Delete any file from the extracted artifacts which is not an RPM or
+    # is not to be distributed.
+    for name in os.listdir(tmpdir):
+        dirpath = os.path.join(tmpdir, name)
+        if not os.path.isdir(dirpath):
+            continue
+        for name in os.listdir(dirpath):
+            filepath = os.path.join(dirpath, name)
+            if not os.path.isfile(filepath):
+                continue
+            if not name.endswith(".rpm"):
+                os.unlink(filepath)
+            if name.startswith("castor-build-headers"):
+                os.unlink(filepath)
+
     # List the contents of the directory after decompression. This in theory
     # should just be the dist-version-arch directories!
     os.unlink(zipfile)
