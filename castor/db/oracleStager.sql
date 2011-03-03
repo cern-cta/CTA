@@ -2281,7 +2281,7 @@ BEGIN
     SELECT id, fileSize, lastKnownFileName
       INTO rid, rfs, previousLastKnownFileName
       FROM CastorFile
-     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
+     WHERE fileId = fid AND nsHost = nsHostName;
     -- In case its filename has changed, take care that the new name is
     -- not already the lastKnownFileName of another file, that was also
     -- renamed but for which the lastKnownFileName has not been updated
@@ -2316,7 +2316,7 @@ BEGIN
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-  -- the ciolated constraint indicates that the file was created by another client
+  -- the violated constraint indicates that the file was created by another client
   -- while we were trying to create it ourselves. We can thus use the newly created file
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
