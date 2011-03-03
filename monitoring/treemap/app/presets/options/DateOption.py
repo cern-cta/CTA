@@ -48,6 +48,7 @@ class DateOption(OptionInterface):
         return thetime #(datetime.datetime.now()-thetime).seconds
     
     def valueToString(self, thetime):
+        if  not (isinstance(thetime, datetime.datetime)): value = self.getStdVal()
         correctedoptions = []
         
         correctedoptions.append('%02d' % (thetime.day) )

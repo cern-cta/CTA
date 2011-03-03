@@ -12,6 +12,30 @@ from app.tools.Inspections import *
 import inspect
 from app.dirs.ModelInterface import ModelInterface
 import app.dirs.urls
+import app.tools.Inspections
+
+def buildAnnexId(rootmodel, depth, theid):
+        if not(rootmodel in app.tools.Inspections.getAvailableModels()) and rootmodel !=  'Annex':
+            raise Exception("model "+ rootmodel + " could not be found!")
+        
+        if depth < 0: depth = 0
+        
+        #findObjectByIdReplacementSuffix
+        try:
+            if rootmodel != 'Annex':#to not to fail during id creation if annex constructor gets called without parameters
+                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
+        except:
+            raise Exception("replacementid "+ theid + " could not be found!")
+        
+        correctedoptions = []
+        correctedoptions.append("group_")
+        correctedoptions.append(rootmodel)
+        correctedoptions.append("_")
+        correctedoptions.append(str(int(depth)))
+        correctedoptions.append("_")
+        correctedoptions.append(theid)
+        
+        return ''.join([bla for bla in correctedoptions]) 
 
 #this class summarizes a group of itmes. It has the same kind of methods as the classes that map real db data
 class Annex(models.Model, ModelInterface):
@@ -55,7 +79,7 @@ class Annex(models.Model, ModelInterface):
         else:
             raise Exception("unexpected error")
             
-        self.__dict__['id'] = app.dirs.urls.UrlAnnex().buildAnnexId(classname, self.depth, ppk.__str__())
+        self.__dict__['id'] = ppk.__str__()
 #        self.__dict__['id'] = "group_" + classname + "_" + self.depth.__str__() + "_"  + ppk.__str__()
     
     #DUAL is Oracle's fake Table

@@ -51,152 +51,9 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
-def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False): 
-    
-#    app.algorithmstudy.Analysis.doMeasurements()
-    if doprofile:
-        profile.runctx("treeView(request = request, options = options, presetid = presetid, rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache, doprofile = False)", globals(), {'request' : request, 'presetid' : presetid, 'options': options, 'rootmodel':rootmodel, 'theid':theid, 'refresh_cache': refresh_cache})
-    
-    treemap_props_cp = copy.copy(treemap_props)
-#    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
-    
-    cleanGarbageFilesRandomly(60*60*24*5, 10)
-    print options
-    time = datetime.datetime.now()
-    presetid = int(presetid)
-    if options is None: options = ''
-    
-    imagewidth = treemap_props_cp['pxwidth']
-    imageheight = treemap_props_cp['pxheight']
-    
-    nbdefinedlevels = getDefaultNumberOfLevels()
-
-    serverdict = settings.LOCAL_APACHE_DICT
-    treemapdir = settings.REL_TREEMAP_DICT 
-    
-    optr = OptionsReader(options, presetid)
-
-    #whenever you see a full path like app.presets.Presets, it is a way to solve a circular dependecy 
-    thepreset = app.presets.Presets.getPresetByStaticId(presetid)
-    lr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
-    
-    avmodels = lr.getRuleObject(0).getUsedClassNames()
-
-    if rootmodel not in avmodels:
-        avmodels.remove('Annex')
-        if len(avmodels) == 0: raise Exception("no sufficient rules for level 0") 
-        theid = ''
-        rootmodel = avmodels[0]
-        return treeView(request = request,rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache)
-        
-    if rootmodel in getModelsNotToCache(): refresh_cache = True
-    statusfilename = getStatusFileNameFromCookie(request)
-    generateStatusFile(statusfilename, 0)
-    
-    cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = rootmodel, lr = lr, options =  optr.getCorrectedOptions(presetid))
-    cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
-    value = cache.get(cache_key)
-
-    #if already in cache
-    cache_hit = False
-    if (value is not None): cache_hit = True
-    
-    #do not cache if no time and span is defined
-    notime = False
-    try:
-        optr.includeasstring['time']
-    except KeyError:
-        notime = True
-        
-    if (notime and not optr.getOption('span')): cache_hit = False
-    
-    if cache_hit and not refresh_cache:
-        deleteStatusFile(statusfilename)
-        return HttpResponse(value)
-    
-    try:
-        globals()[rootmodel].start
-        globals()[rootmodel].stop
-        globals()[rootmodel].start = optr.getOption('time')-datetime.timedelta(minutes = optr.getOption('span'))
-        globals()[rootmodel].stop = optr.getOption('time')
-    except AttributeError:
-        pass
-    
-    try:
-        root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
-        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + lr.getUniqueLevelRulesId() + ".png"  
-        
-        start = datetime.datetime.now()
-        print 'start generating object tree for ' + root.__str__()
-        tb = TreeBuilder(lr)
-        
-        otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename) 
-        print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    except NoDataAvailableError:
-        deleteStatusFile(statusfilename)
-        return HttpResponse(render_to_string('nodata.html', {'apacheserver': settings.PUBLIC_APACHE_URL} , context_instance=None))
-    
-    start = datetime.datetime.now()
-    print 'start calculating rectangle sizes'
-         
-    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
-
-    tree = tc.calculate(optr.getOption('optitext'))
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    
-    start = datetime.datetime.now()
-    print "linking metrics to graphical properties"
-    mlinker = getDefaultMetricsLinking()
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    
-    start = datetime.datetime.now()
-    print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
-#    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
-    designer.designTreemap()
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    
-    start = datetime.datetime.now()
-    print "drawing something"
-    drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
-    
-    fullfilepath= serverdict + treemapdir + "/" + filenm
-    print fullfilepath
-
-    #wait maximum 6 seconds for the file being unlocked, ignore the lock otherwise
-    sleepcounter = 0
-    sleeptime = datetime.datetime.now()
-    while os.path.exists(fullfilepath + '.lock') and sleepcounter < 6:
-        while (datetime.datetime.now() - sleeptime).seconds < 1:
-            pass
-        sleepcounter = sleepcounter + 1
-
-    fileobject = open(fullfilepath + '.lock', 'w+b')
-    drawer.drawTreemap(fullfilepath)
-    os.remove(fullfilepath + '.lock')
-    
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    #------------------------------------------------------------
-    start = datetime.datetime.now()
-    
-#    profile.runctx("response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight, filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))", globals(), {'request' : request, 'tree' : tree, 'imagewidth' : imagewidth, 'imageheight' : imageheight, 'filenm' : filenm, 'lr' : lr, 'cache_key' : cache_key, 'cache_expire' : cache_expire, 'time' : time, 'root' : root, 'nbdefinedlevels' : nbdefinedlevels, 'presetid' : presetid, 'optr' : optr})
-    
-    response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time, rootidreplacement = root.getIdReplacement(),\
-    rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid, options = optr.getCorrectedOptions(presetid))
-    
-    del tree
-    del otree
-    deleteStatusFile(statusfilename)
-        
-    print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
-    
-    return response
-
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache = False):    
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False):    
     time = datetime.datetime.now()
-    depth = int(depth)
     presetid = int(presetid)
     if options is None: options = ''
     treemap_props_cp = copy.copy(treemap_props)
@@ -214,6 +71,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     treemapdir = settings.REL_TREEMAP_DICT
     
     optr = OptionsReader(options, presetid)
+    depth = int(optr.getOption('annexzoom'))
     
     #whenever you see a full path like app.presets.Presets, it is a way to solve a circular dependecy 
     thepreset = app.presets.Presets.getPresetByStaticId(presetid)
@@ -264,7 +122,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     
     try:
         root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
-        filenm = "Annex" + hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
         
         start = datetime.datetime.now()
         print 'start generating first object tree ' + root.__str__()
@@ -281,7 +139,7 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
     anxnode = otree.getRootAnnex()
     
     #if there is an Annex then display it, otherwise you can just display the directory without it
-    if anxnode is not None:
+    if anxnode is not None and depth > 0:
         anx = anxnode.getObject()
         for i in range(depth):
             print 'start generating object subtree ' + anx.__str__()
@@ -365,7 +223,6 @@ def groupView(request, options, presetid, rootmodel, depth, theid, refresh_cache
 
 def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
     defurl = app.dirs.urls.UrlDefault('{' + options + '}' + urlending)
-    annurl = app.dirs.urls.UrlAnnex('{' + options + '}' + urlending)
     
     try:
         if defurl.match():
@@ -390,27 +247,6 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
             request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
                 
             return redirect(to = rediraddr, args = {'request':request, 'options':  defurl.getParameter('options'), 'presetid':defurl.getParameter('presetid'), 'theid': defurl.getParameter('theid'), 'rootmodel': defurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
-        elif annurl.match():
-            theid = annurl.getParameter('theid')
-            depth = annurl.getParameter('depth')
-            model = annurl.getParameter('rootmodel')
-            if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
-                model = newmodel
-                #theid = idsuffix
-                
-            #generate the new link to redirect
-            rediraddr = request.path
-            pos = rediraddr.rfind(options) - 1
-            if pos == -1: raise Exception('invalid path in the response object')          
-            rediraddr = rediraddr[:pos]
-            pos = rediraddr.rfind('/{')
-            if pos != -1: rediraddr = rediraddr[:pos+1]   
-                        
-            newurlpart = annurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid, depth = depth)
-            rediraddr = rediraddr + newurlpart
-            annurl = app.dirs.urls.UrlAnnex(newurlpart) #new url with the new values
-            
-            return redirect(to = rediraddr, args = {'request':request,'options':  annurl.getParameter('options'), 'theid':annurl.getParameter('theid'), 'presetid': annurl.getParameter('presetid'), 'depth':annurl.getParameter('depth'), 'rootmodel':annurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
     except Exception, e:
         return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
     
@@ -551,7 +387,12 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         
         #must fit to UrlDefault!
         if(node.getProperty('treenode').getObject().getClassName() == 'Annex'):
-            linksuffix = app.dirs.urls.UrlAnnex().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getDbParent().getClassName(), depth ,node.getProperty('treenode').getObject().getIdReplacement())
+            optr = OptionsReader(options, presetid) 
+            optr.extendOptions("annexzoom",presetid)
+            optr.setOption('annexzoom',presetid, node.getProperty('treenode').getObject().getDepth() + 1)
+            zoomoptionsstring = "{" + optr.getCorrectedOptions(presetid) + "}"
+            
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getAnnexParent().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
         else:
             linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
         

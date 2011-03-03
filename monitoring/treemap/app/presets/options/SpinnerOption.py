@@ -52,6 +52,7 @@ class SpinnerOption(OptionInterface):
         return value
     
     def valueToString(self, value):
+        if  not (value.__class__.__name__ in ['int', 'float']): value = self.getStdVal()
         if(value > self.max): value = self.max
         return ('%d' % (value))
     
