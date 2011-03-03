@@ -2246,6 +2246,18 @@ BEGIN
 END;
 /
 
+/* This procedure resets the lastKnownFileName the CastorFile that has a given name
+   inside an autonomous transaction. This should be called before creating/renaming any
+   CastorFile so that lastKnownFileName stays unique */
+CREATE OR REPLACE PROCEDURE dropReusedLastKnowFileName(fileName IN VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  UPDATE /*+ INDEX (I_CastorFile_lastKnownFileName) */ CastorFile
+     SET lastKnownFileName = TO_CHAR(id)
+   WHERE lastKnownFileName = normalizePath(fileName);
+  COMMIT;
+END;
+/
 
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
@@ -2260,29 +2272,42 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   nsHostName VARCHAR2(2048);
+  previousLastKnownFileName VARCHAR2(2048);
 BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   BEGIN
-    -- try to find an existing file and lock it
-    SELECT id, fileSize INTO rid, rfs FROM CastorFile
+    -- try to find an existing file
+    SELECT id, fileSize, lastKnownFileName
+      INTO rid, rfs, previousLastKnownFileName
+      FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-    -- update lastAccessTime and lastKnownFileName.
+    -- In case its filename has changed, take care that the new name is
+    -- not already the lastKnownFileName of another file, that was also
+    -- renamed but for which the lastKnownFileName has not been updated
+    -- We actually reset the lastKnownFileName of such a file if needed
+    -- Note that this procedure will run in an autonomous transaction so that
+    -- no dead lock can result from taking a second lock within this transaction
+    IF fn != previousLastKnownFileName THEN
+      dropReusedLastKnowFileName(fn);
+    END IF;
+    -- take a lock on the file. Note that the file may have disappeared in the
+    -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
+    -- exception) before we update.
+    SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    -- The file is still there, so update lastAccessTime and lastKnownFileName.
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
-    -- check and fix files that would already use our new name, as they
-    -- have obviously changed name in the meantime. We do not know their new
-    -- name so we use their castorfile id
-    -- Note that this takes a lock on another row of the CastorFile table and
-    -- thus can create a dead lock in theory. In practice, this will happen very
-    -- rarely and on top, a dead lock would need that the same two files are
-    -- concurrently cross renamed. It is so unlikely to happen that this
-    -- problem has not been handled
-    UPDATE /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ CastorFile
-       SET lastKnownFileName = TO_CHAR(id)
-     WHERE id <> rid AND lastKnownFileName = normalizePath(fn);
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not find the file, let's create a new one
+    -- take care that the name of the new file is not already the lastKnownFileName
+    -- of another file, that was renamed but for which the lastKnownFileName has
+    -- not been updated
+    -- We actually reset the lastKnownFileName of such a file if needed
+    -- Note that this procedure will run in an autonomous transaction so that
+    -- no dead lock can result from taking a second lock within this transaction
+    dropReusedLastKnowFileName(fn);
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
@@ -2291,7 +2316,8 @@ BEGIN
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-  -- retry the select since a creation was done in between
+  -- the ciolated constraint indicates that the file was created by another client
+  -- while we were trying to create it ourselves. We can thus use the newly created file
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
 END;

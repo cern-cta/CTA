@@ -139,6 +139,7 @@ BEGIN
   END IF;
   -- Check to see if the proposed diskserver and filesystem selected by the
   -- scheduler to run the job is in the correct service class.
+  -- XXX deprecated to be removed when LSF is dropped
   BEGIN
     SELECT FileSystem.id INTO fsId
       FROM DiskServer, FileSystem, DiskPool2SvcClass
@@ -155,21 +156,6 @@ BEGIN
   IF prevFsId > 0 AND prevFsId <> fsId THEN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
-  -- Get older castorFiles with the same name and drop their lastKnownFileName
-  -- Note that this takes a lock on another row of the CastorFile table and
-  -- thus can create a dead lock in theory. In practice, this will happen very
-  -- rarely and on top, a dead lock would need that the same two files are
-  -- concurrently cross renamed. It is so unlikely to happen that this
-  -- problem has not been handled
-  UPDATE /*+ INDEX (CastorFile) */ CastorFile
-     SET lastKnownFileName = TO_CHAR(id)
-   WHERE id IN (
-    SELECT /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ cfOld.id 
-      FROM CastorFile cfOld, CastorFile cfNew, SubRequest
-     WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
-       AND cfOld.fileid <> cfNew.fileid
-       AND cfNew.id = SubRequest.castorFile
-       AND SubRequest.id = srId);
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
   UPDATE SubRequest 
