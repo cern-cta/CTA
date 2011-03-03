@@ -68,7 +68,54 @@ BEGIN
 END;
 /
 
-TODOTODO Convert error nunmber of TC into a collection of RETRIED segments.
+-- Convert all the tapecopies error counts and error codes for tapecopies with a
+-- non-zero error count into a collection of RETRIED segments all with the same
+-- code. (one segment per retry).
+DECLARE
+  varSegmentType  INTEGER;
+BEGIN
+  -- Get the segment's type tragic number
+  SELECT O2T.Type INTO varSegmentType 
+    FROM Type2Obj O2T
+   WHERE O2T.Object = 'Segment';
+  -- Find all tape copies with a non NULL and non-zero error count.
+  FOR varTc IN (
+    SELECT TC.id Id FROM TapeCopy TC
+     WHERE TC.nbretry IS NOT NULL
+       AND TC.nbretry > 0
+  ) LOOP
+    DECLARE
+      varNbretry   INTEGER;
+      varErrorCode INTEGER;
+    BEGIN
+      -- For each tapecopy found, get NbRetry and ErrorCode
+      SELECT TC.nbretry, TC.errorCode
+        INTO varNbretry, varErrorCode
+        FROM TapeCopy TC WHERE TC.id=varTc.Id;
+      -- Create nbRetried RETRIED segments for this tapecopy. We cannot do better than having them identical.
+      FOR i IN 0..(varNbretry - 1) LOOP
+        DECLARE
+          varSegID  INTEGER;
+        BEGIN
+          -- Determine the ID for the segment
+          SELECT ids_seq.nextval INTO varSegId FROM DUAL;
+          -- Create the segment.
+          INSERT INTO Segment (Id,          ErrorCode, Copy,
+                                  Status,                 ErrMsgTxt) 
+          VALUES              (varSegId, varErrorCode, varTc.Id, 
+                                  TConst.SEGMENT_RETRIED, 'Converted error segment from tape gateway');
+          INSERT INTO Id2Type (Id,       Type)
+          VALUES              (varSegId, varSegmentType);
+        END;
+      END LOOP;
+      UPDATE TapeCopy TC
+         SET TC.ErrorCode = NULL,
+             TC.NbRetry = NULL
+       WHERE TC.Id = varTc.Id;
+    END;
+  END LOOP;
+END;
+/
 
 -- Streams do not need to be kept. The mighunter will recreate them all.
 DELETE FROM Stream2TapeCopy;

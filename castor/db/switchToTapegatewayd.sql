@@ -69,7 +69,47 @@ BEGIN
 END;
 /
 
-TODOTODO Convert failed and retied segments into a summary of retry count, error code for the latest one.
+-- Convert the retry segments for the tapecopies into a summary in the tapecopy:
+-- count them => nbRetry
+-- get the errorCode of the latest => errorCode
+-- Then drop the segments.
+BEGIN
+  -- Iterate on the tapecopies with FAILED or RETRIED segments
+  FOR varTc IN (
+    SELECT UNIQUE Seg.Copy Id FROM Segment Seg
+     WHERE Seg.Status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED)
+  ) LOOP
+    DECLARE
+      varErrorCode INTEGER;
+      varNbRetry   INTEGER;
+    BEGIN
+      -- Get the Error code of the latest segment for this tape copy.
+      SELECT Seg.ErrorCode INTO varErrorCode FROM Segment Seg
+       WHERE Seg.Id = (SELECT MAX(S2.Id) FROM Segment S2
+                        WHERE S2.copy = varTc.Id
+                          AND S2.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED));
+      -- Get the number of FAILED or RETRIED segments;
+      SELECT COUNT (*) INTO varNbRetry
+        FROM Segment Seg
+       WHERE Seg.copy = varTc.Id
+         AND Seg.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED);
+      -- Update the tapecopy
+      UPDATE Tapecopy TC
+         SET TC.errorCode = varErrorCode,
+             TC.nbRetry   = varNbRetry
+       WHERE TC.Id = varTc.Id;
+       -- Drop the Id2Type entries and the segments.
+       DELETE FROM Id2Type I2T
+        WHERE I2T.Id IN (SELECT Seg.id FROM Segment Seg
+                          WHERE Seg.copy = varTc.Id
+                            AND Seg.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED));
+       DELETE FROM Segment Seg
+        WHERE Seg.copy = varTc.Id
+          AND Seg.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED);
+    END;
+  END LOOP;
+END;
+/
 
 -- Streams do not need to be kept. The mighunter will recreate them all.
 DELETE FROM Stream2TapeCopy;
