@@ -65,9 +65,10 @@ BEGIN
     WHERE tc.status IN (TCONST.TAPECOPY_WAITPOLICY, TCONST.TAPECOPY_WAITINSTREAMS,
                         TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
                         -- STAGED and FAILED can stay the same, other states are for recalls.
-  COMMIT;
 END;
 /
+
+TODOTODO Convert error nunmber of TC into a collection of RETRIED segments.
 
 -- Streams do not need to be kept. The mighunter will recreate them all.
 DELETE FROM Stream2TapeCopy;
@@ -95,11 +96,8 @@ DELETE FROM STREAM;
 BEGIN
   UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
     WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
-  UPDATE Segment SET status = TCONST.SEGMENT_FAILED
-    WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in rtcpclientd.
 END;
 /
-
 
 -- Tapes
 -- From TAPE_UNSED, Leave as is.
@@ -112,12 +110,17 @@ END;
 -- From TAPE_UNKNOWN, Leave as is. (Assuming it is an end state).
 -- From TAPE_WAITPOLICY, Leave as is. (For the rechandler to take).
 
--- Write tape mounts can be dumped
 BEGIN
+  -- Write tape mounts can be removed.
   DELETE FROM Tape T WHERE T.tpMode = TCONST.TPMODE_WRITE;
   -- Unreferenced read tape mounts can be dumped. (at the end)
   
-  -- Resurrect the tapes running for recall
+   -- Read tape mounts that are not referenced by any segment are dropped
+   DELETE FROM Tape T
+    WHERE T.tpMode = TCONST.TPMODE_READ AND (
+       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.tape = T.id));  -- Resurrect the tapes running for recall
+  -- Reset active read tape mounts to pending (re-do)
   UPDATE Tape SET status = TCONST.TAPE_PENDING
     WHERE tpmode = TCONST.TPMODE_READ AND 
           status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
@@ -127,12 +130,7 @@ BEGIN
     WHERE T.status NOT IN (TCONST.TAPE_WAITPOLICY, TCONST.TAPE_PENDING) AND EXISTS
     ( SELECT Seg.id FROM Segment Seg
       WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
-   -- Other tapes taht are not referenced by any segment are dropped
-   DELETE FROM Tape T
-    WHERE T.tpMode = TCONST.TPMODE_READ AND (
-       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
-      WHERE Seg.tape = T.id));
-   -- We keep the tapes referenced by failed segments and move them to UNUSED. Those are the ones without
+   -- We keep the tapes referenced by failed segments and move them to UNUSED. Those are the ones WITHOUT
    -- unprocessed segments
    UPDATE Tape T SET T.status = TCONST.TAPE_UNUSED
     WHERE NOT EXISTS
@@ -141,21 +139,22 @@ BEGIN
 END;
 /
 
+-- Reset all tape gateway columns to NULL
+UPDATE TapeCopy SET
+   fSeq                 = NULL,
+   tapeGatewayRequestId = NULL,
+   vid                  = NULL,
+   fileTransactionId    = NULL;
+UPDATE Tape SET
+   startTime            = NULL,
+   lastVdqmPingTime     = NULL,
+   vdqmVolReqId         = NULL,
+   lastFseq             = NULL,
+   tapeGatewayRequestId = NULL;
+UPDATE Stream SET
+   vdqmVolReqId         = NULL,
+   tapeGatewayRequestId = NULL;
 
-DECLARE
-  idsList "numList";
-BEGIN
-  DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;
-
-  FORALL i IN idsList.FIRST ..  idsList.LAST
-    DELETE FROM id2type WHERE  id= idsList(i);
-
-  DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;
-
-  FORALL i IN idsList.FIRST ..  idsList.LAST
-    DELETE FROM id2type WHERE  id= idsList(i);
-END;
-/
 
 -- The database is now compatible with the rtcpclientd daemon
 UPDATE CastorConfig
@@ -164,3 +163,20 @@ UPDATE CastorConfig
     class = 'tape' AND
     key   = 'interfaceDaemon';
 COMMIT;
+
+BEGIN
+  -- Start the restartStuckRecallsJob
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
+END;
+/
+
+COMMIT;
+

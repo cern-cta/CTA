@@ -45,7 +45,7 @@ UPDATE CastorConfig
     key   = 'interfaceDaemon';
 COMMIT;
 
--- Failures fron this point on will require some manual intervention.
+-- Failures from this point on will require some manual intervention.
 
 BEGIN
   -- Remove the restartStuckRecallsJob as this job will not exist in the
@@ -58,61 +58,62 @@ BEGIN
 END;
 /
 
-
-DECLARE
-  tpIds "numList";
 BEGIN
   -- Deal with Migrations
   -- 1) Ressurect tapecopies for migration
   UPDATE TapeCopy tc SET tc.status = TCONST.TAPECOPY_TOBEMIGRATED,
-                         tc.VID = NULL  
+                         tc.VID = NULL
     WHERE tc.status IN (TCONST.TAPECOPY_WAITPOLICY, TCONST.TAPECOPY_WAITINSTREAMS,
                         TCONST.TAPECOPY_SELECTED, TCONST.TAPECOPY_MIG_RETRY);
                         -- STAGED and FAILED can stay the same, other states are for recalls.
-  -- 2) Clean up the streams and tapes for writing
-  DELETE FROM Stream2Tapecopy;
-  DELETE FROM Stream;
-  DELETE FROM Tape T WHERE T.TPMode = TCONST.TPMODE_WRITE;
-  COMMIT;
-  
-  -- Deal with Recalls
-  -- Segments
-  UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
-    WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
-  UPDATE Segment SET status = TCONST.SEGMENT_FAILED
-    WHERE status IN (TCONST.SEGMENT_RETRIED); -- RETRIED is not used in tape gateway.
-    
-  -- Tapes
-  -- Resurrect the tapes running for recall
-  UPDATE Tape SET status = TCONST.TAPE_PENDING
-    WHERE tpmode = TCONST.TPMODE_READ AND 
-          status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
-          TCONST.TAPE_MOUNTED); 
-  UPDATE Tape T SET T.status = TCONST.TAPE_WAITPOLICY
-    WHERE T.status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
-    TCONST.TAPE_UNKNOWN) AND EXISTS
-    ( SELECT Seg.id FROM Segment Seg 
-      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
-   -- Other tapes are not relevant
-   DELETE FROM Tape T
-    WHERE T.tpMode = TCONST.TPMODE_READ AND (
-       T. Status NOT IN (TCONST.TAPE_WAITPOLICY) OR
-       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
-      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id));
-
-  -- Start the restartStuckRecallsJob
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
 
+TODOTODO Convert failed and retied segments into a summary of retry count, error code for the latest one.
+
+-- Streams do not need to be kept. The mighunter will recreate them all.
+DELETE FROM Stream2TapeCopy;
+DELETE FROM STREAM;
+
+  -- Deal with Recalls
+  -- Segments
+BEGIN
+  UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
+    WHERE status IN (TCONST.SEGMENT_SELECTED); -- Resurrect selected segments
+END;
+/
+
+BEGIN
+  -- Write tape mounts can be removed.
+  DELETE FROM Tape T WHERE T.TPMode = TCONST.TPMODE_WRITE;
+  
+   -- Read tape mounts that are not referenced by any segment are dropped
+   DELETE FROM Tape T
+    WHERE T.tpMode = TCONST.TPMODE_READ AND (
+       NOT EXISTS ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.tape = T.id));  -- Resurrect the tapes running for recall
+  -- Reset active read tape mounts to pending (re-do)
+  UPDATE Tape SET status = TCONST.TAPE_PENDING
+    WHERE tpmode = TCONST.TPMODE_READ AND 
+          status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
+          TCONST.TAPE_MOUNTED);
+  -- Resurrect tapes with UNPROCESSED segments (preserving WAITPOLICY state)
+  UPDATE Tape T SET T.status = TCONST.TAPE_PENDING
+    WHERE T.status NOT IN (TCONST.TAPE_WAITPOLICY, TCONST.TAPE_PENDING) AND EXISTS
+    ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
+   -- We keep the tapes referenced by failed segments and move them to UNUSED. Those are the ones WITHOUT
+   -- unprocessed segments
+   UPDATE Tape T SET T.status = TCONST.TAPE_UNUSED
+    WHERE NOT EXISTS
+    ( SELECT Seg.id FROM Segment Seg
+      WHERE Seg.status = TCONST.SEGMENT_UNPROCESSED AND Seg.tape = T.id);
+   -- Pending tapes need a tapegatewayrequest id
+   UPDATE Tape T SET T.TapeGatewayRequestId = ids_seq.nextval;
+END;
+/
+
+---------------------------------------------------------------------------------------------------------
 -- The database is now compatible with the tapegatewayd daemon
 UPDATE CastorConfig
   SET value = 'tapegatewayd'
