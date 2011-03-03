@@ -13,8 +13,9 @@ The newest version doesn't seem to work so well.
 from django.template.loader import render_to_string
 import datetime
 import re
+from app.presets.options.OptionInterface import OptionInterface
 
-class DateOption(object):
+class DateOption(OptionInterface):
 
     def __init__(self, userfriendlyname, name, template, stdval = 0):
         self.name = name

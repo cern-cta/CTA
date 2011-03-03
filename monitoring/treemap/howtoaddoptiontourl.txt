@@ -7,7 +7,8 @@ Options inside of the URL are supposed to influence the behavior of treeView and
 	optionsset = [DateOption('start', 'start', 120), DateOption('stop', 'stop', 0), BooleanOption('Lowest values', 'smalltobig', False), BooleanOption('Flat view', 'flatview', False)]
 	presetdict["Requests CMS from last 120 minutes"] = Preset(lr, False, 'Requestscms', '/castor', 23, optionsset)
 	
-	You can write your own Option classes. From outside, they must behave the same as the existing ones.
+	You can write your own Option classes. They must implement OptionInterface
+	
     
 2. Use OptionsReader in views.py like that:
 	

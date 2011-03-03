@@ -54,7 +54,8 @@ class SquaredTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
+        if treemap_props['caption']:
+            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
         
         self.drawRecursion()
         
@@ -83,6 +84,13 @@ class SquaredTreemapDrawer(object):
         
         
     def drawRect(self, x, y, subwidth, subheight, bordersize, level, fillcolor, strokecolor, radiallight):
+#        x=round(x,0)
+#        y=round(y,0)
+#        subwidth=round(subwidth,0)
+#        subheight=round(subheight,0)
+#        
+#        if subwidth == 0: return
+        
         pix_x = 1.0/self.mapwidth
         pix_y = 1.0/self.mapheight
         
