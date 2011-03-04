@@ -11,10 +11,6 @@ is used to register a message text for the initialized facility. All messages
 logged by the DLF interface excluding free text parameters must be
 pre-registered.
 
-The registered message text and number will also be logged to syslog using
-the LOCAL2/LOG_INFO facility and priority. These messages must be forwarded
-to the central DLF server so that they can be registered in the DLF database.
-
 The
 .I msgno
 argument is the unique message number used to reference the message text.
