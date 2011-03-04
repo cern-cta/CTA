@@ -31,8 +31,8 @@ BEGIN
   ROLLBACK;
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_9_3'
-     AND release = '2_1_10_1'
+   WHERE schemaVersion = '2_1_10_0'
+     AND release = '2_1_10_0'
      AND state != 'COMPLETE';
   COMMIT;
 END;
