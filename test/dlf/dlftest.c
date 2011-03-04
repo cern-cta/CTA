@@ -75,7 +75,7 @@ void genstring(char *str, int len) {
  * Worker
  */
 
-void worker(void *arg) {
+void worker(void) {
 
   /* variables */
   time_t   now        = time(NULL);
@@ -229,7 +229,7 @@ int main (int argc, char **argv) {
       printf("  -h               display this help and exit\n");
       printf("  -t <int>         number of producer threads to create\n");
       printf("  -r <int>         number of messages per second\n");
-      printf("  -x               extensive test designed to crash the api and server\n");
+      printf("  -x               extensive test designed to crash the api\n");
       printf("  -n               number of messages to generate before exiting\n");
       printf("  -f <name>        name of the facility, default DLFTest\n");
       printf("  -D               fork the process into the background\n");
@@ -300,7 +300,7 @@ int main (int argc, char **argv) {
   if (daemonise == 1) {
     rv = fork();
     if (rv < 0) {
-      fprintf(stderr, "dlfserver: failed to fork() : %s\n", strerror(errno));
+      fprintf(stderr, "dlftest: failed to fork() : %s\n", strerror(errno));
       return 1;
     } else if (rv > 0) {
       return 0;
