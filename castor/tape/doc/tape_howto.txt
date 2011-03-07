@@ -4070,7 +4070,7 @@ Add the following lines:
   #
   "/software/components/castorconf/VDQM/HOST" = "lxcastordev04";
   "/software/components/castorconf/VMGR/HOST" = "lxcastordev04";
-  "/software/components/castorconf/ADMIN/HOSTS" = self + " lxcastordev04 localhost";
+  "/software/components/castorconf/ADMIN/HOSTS" = "lxcastordev04 localhost";
 
 <cdbop@cdbserv.cern.ch: ~> up profiles/profile_tpsrv001.tpl
 [INFO] '/profiles/profile_tpsrv001': scheduled to be updated
