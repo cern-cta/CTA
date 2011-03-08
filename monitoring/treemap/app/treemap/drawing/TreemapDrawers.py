@@ -78,7 +78,7 @@ class SquaredTreemapDrawer(object):
                 txt = child.getProperty('captiontext')
                 self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
                 
-            self.vtree.traverseInto(child)
+            self.vtree.traverseIntoChild(child)
             self.drawRecursion()
             self.vtree.traverseBack()
         

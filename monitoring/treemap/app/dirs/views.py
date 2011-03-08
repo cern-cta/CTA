@@ -103,6 +103,8 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
     for i in range(2):
         lr.appendRuleObject(presetlr.getRuleObject(i))
+    treemap_props_cp['levelrules'] = lr
+    
     try:
         globals()[rootmodel].start
         globals()[rootmodel].stop
@@ -126,7 +128,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         
         start = datetime.datetime.now()
         print 'start generating first object tree ' + root.__str__()
-        tb = TreeBuilder(lr)
+        tb = TreeBuilder(treemap_props_cp)
     
         otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)    
         print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
@@ -148,15 +150,19 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
             newanxnode = otree.getRootAnnex()
             
             if newanxnode is not None: 
-                anx = anx.getCopyWithIncDepth(newexcluded = newanxnode.getObject().getExcludedNodes(), evaluation = newanxnode.getEvalValue())    
+                anx = anx.getCopyWithIncDepth(newexcluded = newanxnode.getObject().getExcludedNodes(), evaluation = newanxnode.getObject().getCorrectedEvalValue())    
             else:
-                raise Http404 
+                optr.setOption('annexzoom', presetid, 0);
+                options = optr.getCorrectedOptions(presetid)
+                newurlpart = app.dirs.urls.UrlDefault().buildUrl(presetid = presetid, options = options, rootmodel = rootmodel, theid = theid)
+                return redirect(to = settings.DJANGORESPONSE_URL + '/treemaps/' + newurlpart)
         
         lr = LevelRules()        
         for i in range(nbdefinedlevels):
-            lr.appendRuleObject(presetlr.getRuleObject(i))  
+            lr.appendRuleObject(presetlr.getRuleObject(i)) 
+        treemap_props_cp['levelrules']=lr
         
-        tb = TreeBuilder(lr)
+        tb = TreeBuilder(treemap_props_cp)
         otree = tb.generateObjectTree(rootobject = anx, statusfilename = statusfilename) 
             
     else: #no Annex display needed
@@ -164,15 +170,16 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         lr = LevelRules()
         for i in range(nbdefinedlevels):
             lr.appendRuleObject(presetlr.getRuleObject(i))  
-            
-        tb = TreeBuilder(lr)    
+        treemap_props_cp['levelrules']=lr 
+           
+        tb = TreeBuilder(treemap_props_cp)    
         otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)     
         
      
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
          
-    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
+    tc = SquaredTreemapCalculator(treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
         
@@ -210,7 +217,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = lr, cache_key = cache_key, cache_expire = cache_expire, time = time,\
+    filenm = filenm, lrules = treemap_props_cp['levelrules'], cache_key = cache_key, cache_expire = cache_expire, time = time,\
     rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid,\
     options = optr.getCorrectedOptions(presetid), depth = depth+1)
     

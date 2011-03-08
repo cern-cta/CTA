@@ -33,19 +33,20 @@ from app.treemap.viewtree.ViewTree import ViewTree
 
 treemap_props = {
 'pxwidth': 800.0, #width
-'pxheight': 600.0, #height
-'objecttree': None, #will be set when available (SquaredTreemapCalculator)
-'viewtree': None, #will be set when available (SquaredTreemapCalculator)   
-'captionsize': 12.0,#captionsize
-'spacesize': 4.0,
+'pxheight': 600.0, #height  
+'captionsize': 12.0,
+'spacesize': 2.0,
 'spacesizedecrease': 0.5,
 'minspacesize': 2.0,
 'inbordersize': 0.0,
-'captionfontsize': 12.0, #captionfontsize
+'captionfontsize': 12.0, 
 'radiallightbrightness': 0.4,
-'captiontextisbold': True, #captiontextisbold
+'captiontextisbold': True, 
 'caption': True,
-'padding': True
+'padding': True,
+'objecttree': None, #will be set when available (by TreeBuilder)
+'viewtree': None, #will be set when available (by SquaredTreemapCalculator) 
+'levelrules': None,#will be set when available (by the view)
 }
 
 def checkAndPartiallyCorrectTreemapProps(props):

@@ -62,7 +62,6 @@ class SquaredTreemapDesigner(object):
         children = self.vtree.getChildren()
         
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
-           
             self.setInBorderSize(child)
             self.setCaptionFontSize(child)
             self.setFillColor(child)
@@ -72,7 +71,7 @@ class SquaredTreemapDesigner(object):
             self.setToolTipInfoText(child)
             self.setCaptionTextIsbold(child)
             
-            self.vtree.traverseInto(child)
+            self.vtree.traverseIntoChild(child)
             self.designRecursion(level + 1)
             self.vtree.traverseBack()
             

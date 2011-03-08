@@ -25,26 +25,23 @@ class TreeBuilder(object):
     '''
 
 
-    def __init__(self, levelrules):
+    def __init__(self, treemap_props):
         '''
         Constructor
         '''
-        self.rules = levelrules
-        
+        self.rules = treemap_props['levelrules']
+        self.treemap_props = treemap_props
         #imagine it would be possible to divide the root area in equally big squares
-        #max_tree_leafes defines how many rectangles there are maximum allowed to divide that area
-        self.max_tree_leafes = 1500
+        #max_items_total defines how many rectangles there are maximum allowed to divide that area into
+        self.max_nodes = 1500
         
-        #smallest accepted percentage of the area
-        #if the node evaluates below that value the child will be considered as not worth going deeper
-        self.lowest_area_factor = 1.0/self.max_tree_leafes
+        #smallest accepted factor of the root area
+        #if the node evaluates below that value will not be nested deeper
+        self.min_rootarea_fraction = 1.0/self.max_nodes
         
-        #if the number of subitems is bigger than max_items_to_read_initial * the current area_factor
-        #the child will be considered as not worth going deeper
-        self.max_items_to_read_initial = 500
-        
-        #to avoid recursions over thousands of child items
-        self.max_items_for_recursion = 80
+        #if the number of subitems is bigger than progressive_children_limit_initial * rootarea_fraction
+        #the recursion stops before requesting that items. It doesn't apply to root, only to it's children.
+        self.progressive_children_limit_initial = 500
         
     def generateObjectTree(self, rootobject, statusfilename):
         tree = ObjectTree()
@@ -70,17 +67,18 @@ class TreeBuilder(object):
         
         self.addChildrenRecursion(tree, level, tree.getRoot(), 1.0, rootisannex, statusfilename, None)
         
+        self.treemap_props['objecttree'] = tree
         return tree
     
 #    count = 0
     chcount = 0
     
-    def addChildrenRecursion(self, tree, level, parent, area_factor, rootisannex, statusfilename, nbrootchildren):
+    def addChildrenRecursion(self, tree, level, parent, rootarea_fraction, rootisannex, statusfilename, nbrootchildren):
         max = float('inf')*(-1)
         min = float('inf')
 #        metainfo = {}
 
-        if area_factor < self.lowest_area_factor: return
+        if rootarea_fraction < self.min_rootarea_fraction: return
         if not self.rules.indexIsValid(level + 1): return
         
         enableannex = True
@@ -101,7 +99,7 @@ class TreeBuilder(object):
         nbchildren = nested_object.__class__.__dict__[countmethodname](nested_object)
         if nbrootchildren is None: nbrootchildren= tree.getRoot().getObject().__class__.__dict__[countmethodname](tree.getRoot().getObject())
 
-        if nbchildren <= 0 or (nbchildren > (self.max_items_to_read_initial * area_factor) and level > 0):
+        if nbchildren <= 0 or (nbchildren > (self.progressive_children_limit_initial * rootarea_fraction) and level > 0):
             return
         
         methodname = self.rules.getMethodNameFor(level, classname)
@@ -120,11 +118,11 @@ class TreeBuilder(object):
             #-self.chcount is guaranteed smaller or equal than max_items and because of the head with text, it is always smalller
             #-therefore float(self.chcount)/float(max_items) will heavily underestimate and is therefore multiplied by a value
             
-            #self.max_tree_leafes doesn't apply to root
-            if(nbrootchildren > self.max_tree_leafes):
-                max_items = self.max_tree_leafes + nbrootchildren #adding nbchildren because root will always be read
+            #self.max_nodes doesn't apply to root
+            if(nbrootchildren > self.max_nodes):
+                max_items = self.max_nodes + nbrootchildren #adding nbchildren because root will always be read
             else:
-                max_items = self.max_tree_leafes
+                max_items = self.max_nodes
                 
             status = ((float(self.chcount)/float(max_items))*3.0) 
             generateStatusFile(statusfilename, status)
@@ -196,7 +194,7 @@ class TreeBuilder(object):
                 thechild.setSiblingsSum(evalsum)
             
             for child in treenodechildren:
-                if (child.evaluate()*area_factor) >= self.lowest_area_factor:
+                if (child.evaluate()*rootarea_fraction) >= self.min_rootarea_fraction:
                     tree.addTreeNodeChild(child)
                 else:
                     annexevalsum = annexevalsum + child.getEvalValue()
@@ -215,12 +213,10 @@ class TreeBuilder(object):
                 for thechild in childnodes:
                     thechild.setSiblingsSum(evalsum)
             
-            #do the recursion if not too many children
-            if len(childnodes) < self.max_items_for_recursion:
-                for thechild in childnodes:
-                    tree.traverseInto(thechild)
-                    self.addChildrenRecursion(tree, level + 1, thechild, area_factor * thechild.evaluate(), False, statusfilename, nbrootchildren)
-                    tree.traverseBack()
+            for thechild in childnodes:
+                tree.traverseIntoChild(thechild)
+                self.addChildrenRecursion(tree, level + 1, thechild, rootarea_fraction * thechild.evaluate(), False, statusfilename, nbrootchildren)
+                tree.traverseBack()
             
             #[:] to copy the content 
             #childnodes is a direct reference to the tree content, which we don't want to have in Annex
@@ -228,22 +224,22 @@ class TreeBuilder(object):
             childnodes = tree.getChildren()[:]
             
             #add the annex object representing the rest of the children
-            if(annexevalsum > 0):
+            #if(annexevalsum > 0): <-- commented out: always add annex
                 
-                annexdepth = 0
-                if(rootisannex):
-                    annexdepth = tree.getRoot().getObject().getDepth() + 1
-                    
-                #create Annex as TreeNode
-                annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
-                annexchild.evaluation = annexevalsum
-                chclassname = annexchild.__class__.__name__
-                chattrname = self.rules.getAttrNameFor(level, chclassname)
-                chparam = self.rules.getParamFor(level, chclassname)
-                parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
+            annexdepth = 0
+            if(rootisannex):
+                annexdepth = tree.getRoot().getObject().getDepth() + 1
                 
-                annexnode = tree.addChild(annexchild, chattrname, parentmethodname, chparam)
-                annexnode.setSiblingsSum(evalsum)
+            #create Annex as TreeNode
+            annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
+            annexchild.setEvaluations(annexevalsum)
+            chclassname = annexchild.getClassName()
+            chattrname = self.rules.getAttrNameFor(level, chclassname)
+            chparam = self.rules.getParamFor(level, chclassname)
+            parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
+            
+            annexnode = tree.addChild(annexchild, chattrname, parentmethodname, chparam)
+            annexnode.setSiblingsSum(evalsum)
 #                annexnode.metainfo = metainfo
                              
 def print_tabs(n):

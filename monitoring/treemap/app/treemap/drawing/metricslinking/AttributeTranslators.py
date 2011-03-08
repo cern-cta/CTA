@@ -43,6 +43,8 @@ class FileExtensionTranslator(AttributeTranslatorInterface):
 
     def findExtension(self, text):
         dot = string.rfind(text, '.')
+        slash = string.rfind(text, '/')
+        if dot < slash: return '' #otherwise /castor/cern.ch/user would return an extension ch/user
         if dot < 0 or (len(text)-dot)>16: 
             return ''
         else:

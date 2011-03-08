@@ -57,6 +57,8 @@ class Annex(models.Model, ModelInterface):
         self.children_cache = []
         self.valid_cache = False
         
+        self.corrected_evaluation = self.evaluation
+        
         #how many exclusions were done before, used to have process independend annex id
         self.depth = depth
         
@@ -161,6 +163,22 @@ class Annex(models.Model, ModelInterface):
                 del self.children_cache
                 self.children_cache = newcache
                 self.valid_cache = True
+                
+    def activateNode(self, activ):
+        if (activ in self.excludednodes):
+            self.excludednodes.remove(activ)
+            self.children_cache.append(activ)
+            self.corrected_evaluation = self.corrected_evaluation  + activ.getEvalValue()
+            return
+        #if object isn't anywhere, not in excluded and not in children_cache
+        if not (activ in self.children_cache):
+            self.children_cache.append(activ)
+            self.corrected_evaluation = self.corrected_evaluation  + activ.getEvalValue()
+            return
+            
+    def getCorrectedEvalValue(self):
+        return self.corrected_evaluation
+
     
     def getExcludedNodes(self):
         return self.excludednodes
@@ -196,3 +214,10 @@ class Annex(models.Model, ModelInterface):
     
     def getClassName(self):
         return self.__class__.__name__
+    
+    def setEvaluations(self, value):
+        self.evaluation = value;
+        self.corrected_evaluation = self.evaluation
+
+    def setCorrectedEvaluation(self, value):
+        self.corrected_evaluation = value
