@@ -348,7 +348,8 @@ int Cns_srv_chclass(char *req_data,
 
     /* if the file has segments make sure the new fileclass allows them! */
 
-    if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count, '-'))
+    if (Cns_get_smd_enabled_copy_count_by_pfid
+        (&thip->dbfd, fmd_entry.fileid, &count))
       RETURN (serrno);
     if (count && (new_class_entry.nbcopies == 0))
       RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
