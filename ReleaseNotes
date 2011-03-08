@@ -28,9 +28,18 @@
     Before upgrading to a 2.1.10-1 instance of CASTOR2 please make sure to read
     the upgrade instructions fully before proceeding.
 
-    VMGR & VDQM
-    -----------
+    VMGR & VDQM plus notice for tape-servers and adminstration machines
+    -------------------------------------------------------------------
 
+    Please note the VMGR daemon must be upgraded before any of its clients are
+    upgraded.  The new VMGR clients of this release cannot talk to the old VMGR
+    daemon.  The VMGR clients include the new VMGR command-line clients, the
+    rtcpd daemon and the mounttape helper process of the taped daemon.  This
+    means tape-servers and administration machines must not be upgraded to
+    version 2.1.10-0 of CASTOR until the VMGR has been upgraded.
+
+    Please note the new VMGR daemon is compatible with old clients.
+    
     The upgrade of the VMGR database to 2.1.10-1 cannot be performed online
     while the system is running. As a result the tape subsystem must be stopped.
     The expected downtime is less than 10 minutes.
@@ -51,7 +60,6 @@
        5. Start the vmgr and vdqm daemons stopped in step 2.
 
        6. Bring all the tape drives back up.
-
 
     Repack
     ------
