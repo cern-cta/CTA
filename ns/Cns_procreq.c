@@ -348,7 +348,7 @@ int Cns_srv_chclass(char *req_data,
 
     /* if the file has segments make sure the new fileclass allows them! */
 
-    if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count))
+    if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, fmd_entry.fileid, &count, '-'))
       RETURN (serrno);
     if (count && (new_class_entry.nbcopies == 0))
       RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
@@ -3339,10 +3339,12 @@ int Cns_srv_updateseg_status(char *req_data,
   Cns_dbrec_addr rec_addrs;
   gid_t gid;
   int copyno;
+  int count;
   int fsec;
   int fseq;
   int side;
   struct Cns_file_metadata filentry;
+  struct Cns_class_metadata class_entry;
   struct Cns_seg_metadata old_smd_entry;
   u_signed64 fileid;
   uid_t uid;
@@ -3415,6 +3417,17 @@ int Cns_srv_updateseg_status(char *req_data,
   if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &old_smd_entry))
     RETURN (serrno);
 
+  /* verify that we don't have too many enabled segments for this file  */
+
+  if (Cns_get_class_by_id
+      (&thip->dbfd, filentry.fileclass, &class_entry, 0, NULL))
+    RETURN (serrno);
+  if (Cns_get_smd_enabled_copy_count_by_pfid
+      (&thip->dbfd, filentry.fileid, &count))
+    RETURN (serrno);
+  if (count > class_entry.nbcopies)
+    RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
+                                
   RETURN (0);
 }
 
@@ -4877,9 +4890,10 @@ int Cns_srv_setsegattrs(int magic,
     fsec++;
   }
 
-  /* verify that we don't have too many segments for this file */
+  /* verify that we don't have too many enabled segments for this file */
 
-  if (Cns_get_smd_copy_count_by_pfid (&thip->dbfd, smd_entry.s_fileid, &count))
+  if (Cns_get_smd_enabled_copy_count_by_pfid
+      (&thip->dbfd, smd_entry.s_fileid, &count))
     RETURN (serrno);
   if (count > class_entry.nbcopies)
     RETURN (ENSTOOMANYSEGS)

@@ -214,7 +214,7 @@ EXTERN_C int Cns_get_smd_by_copyno (struct Cns_dbfd *, int, u_signed64, int,stru
 EXTERN_C int Cns_get_smd_by_fullid (struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_smd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_smd_by_vid (struct Cns_dbfd *, int, char *, int, struct Cns_seg_metadata *, int, DBLISTPTR *);
-EXTERN_C int Cns_get_smd_copy_count_by_pfid (struct Cns_dbfd *, u_signed64, int *);
+EXTERN_C int Cns_get_smd_enabled_copy_count_by_pfid (struct Cns_dbfd *, u_signed64, int *);
 EXTERN_C int Cns_get_tapesum_by_vid (struct Cns_dbfd *, char *, u_signed64 *, u_signed64 *, u_signed64 *, u_signed64 *);
 EXTERN_C int Cns_get_tppool_by_cid (struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_umd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *);

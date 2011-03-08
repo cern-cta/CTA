@@ -47,7 +47,7 @@ Remove the checksum value. Cannot be used in conjunction with --name and --check
 Enable the tape segment
 .TP
 .B -d,\ \-\-disable
-Disable the tape segment
+Disable the tape segment. Note: This option sets the status of the segment to 'D' which really means logically deleted. This effectively means that the segment cannot be accessed for any operation and as such is considered disabled.
 .TP
 .B -x,\ \-\-segsize=SEGSIZE
 The size of the segment in bytes

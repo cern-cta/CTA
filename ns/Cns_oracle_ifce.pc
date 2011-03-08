@@ -1119,17 +1119,18 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
   }
 }
 
-int Cns_get_smd_copy_count_by_pfid(struct Cns_dbfd *dbfd,
-                                   u_signed64 fileid,
-                                   int *count)
+int Cns_get_smd_enabled_copy_count_by_pfid(struct Cns_dbfd *dbfd,
+                                           u_signed64 fileid,
+                                           int *count)
 {
-  char func[31];
+  char func[39];
   struct sqlca sqlca;
 
-  strncpy (func, "Cns_get_smd_copy_count_by_pfid", 31);
+  strncpy (func, "Cns_get_smd_enabled_copy_count_by_pfid", 39);
   EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
     FROM Cns_seg_metadata
-    WHERE s_fileid = :fileid;
+    WHERE s_fileid = :fileid
+    AND s_status = '-';
   switch (sqlca.sqlcode) {
   case 0:
     return(0);
