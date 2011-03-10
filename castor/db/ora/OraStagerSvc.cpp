@@ -231,7 +231,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
   m_deletePriorityStatement(0),
-  m_getConfigOptionStatement(0) {
+  m_getConfigOptionStatement(0),
+  m_resurrectSingleTapeForRecallStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -287,6 +288,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
     if (m_getConfigOptionStatement) deleteStatement(m_getConfigOptionStatement);
+    if (m_resurrectSingleTapeForRecallStatement) deleteStatement(m_resurrectSingleTapeForRecallStatement);
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -314,6 +316,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
   m_getConfigOptionStatement = 0;
+  m_resurrectSingleTapeForRecallStatement = 0;
 }
 
 //------------------------------------------------------------------------------
