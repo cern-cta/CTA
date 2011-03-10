@@ -521,12 +521,6 @@ namespace castor {
         /// SQL statement object for function processBulkRequest
         oracle::occi::Statement *m_processBulkRequestStatement;
 
-        /// SQL statement for function oldSubRequestToDo
-        static const std::string s_oldSubRequestToDoStatementString;
-
-        /// SQL statement object for function oldSubRequestToDo
-        oracle::occi::Statement *m_oldSubRequestToDoStatement;
-
         /// SQL statement for function subRequestFailedToDo
         static const std::string s_subRequestFailedToDoStatementString;
 
