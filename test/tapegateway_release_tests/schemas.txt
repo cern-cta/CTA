@@ -1,0 +1,169 @@
+SQL> describe tapecopy
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ COPYNB                                             NUMBER
+ MISSINGCOPIES                                      NUMBER
+ ID                                        NOT NULL NUMBER(38)
+ CASTORFILE                                         NUMBER(38)
+ STATUS                                             NUMBER(38)
+ NBRETRY                                            NUMBER
+ ERRORCODE                                          NUMBER
+
+SQL> describe castorfile
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ FILEID                                             NUMBER(38)
+ NSHOST                                             VARCHAR2(2048)
+ FILESIZE                                           NUMBER(38)
+ CREATIONTIME                                       NUMBER(38)
+ LASTACCESSTIME                                     NUMBER(38)
+ LASTKNOWNFILENAME                                  VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
+ SVCCLASS                                           NUMBER(38)
+ FILECLASS                                          NUMBER(38)
+ LASTUPDATETIME                                     NUMBER(38)
+
+ SQL> describe SVCCLASS
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NBDRIVES                                           NUMBER
+ NAME                                      NOT NULL VARCHAR2(2048)
+ DEFAULTFILESIZE                                    NUMBER(38)
+ MAXREPLICANB                                       NUMBER
+ MIGRATORPOLICY                                     VARCHAR2(2048)
+ RECALLERPOLICY                                     VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
+ STREAMPOLICY                                       VARCHAR2(2048)
+ FORCEDFILECLASS                           NOT NULL NUMBER
+ GCPOLICY                                           VARCHAR2(2048)
+ REPLICATEONCLOSE                                   NUMBER
+ DISK1BEHAVIOR                                      NUMBER
+ FAILJOBSWHENNOSPACE                                NUMBER
+
+SQL> describe FILECLASS
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NAME                                               VARCHAR2(2048)
+ NBCOPIES                                           NUMBER
+ ID                                        NOT NULL NUMBER(38)
+
+SQL> describe segment
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ FSEQ                                               NUMBER
+ OFFSET                                             NUMBER(38)
+ BYTES_IN                                           NUMBER(38)
+ BYTES_OUT                                          NUMBER(38)
+ HOST_BYTES                                         NUMBER(38)
+ SEGMCKSUMALGORITHM                                 VARCHAR2(2048)
+ SEGMCKSUM                                          NUMBER
+ ERRMSGTXT                                          VARCHAR2(2048)
+ ERRORCODE                                          NUMBER
+ SEVERITY                                           NUMBER
+ BLOCKID0                                           NUMBER(38)
+ BLOCKID1                                           NUMBER(38)
+ BLOCKID2                                           NUMBER(38)
+ BLOCKID3                                           NUMBER(38)
+ ID                                        NOT NULL NUMBER(38)
+ TAPE                                               NUMBER(38)
+ COPY                                               NUMBER(38)
+ STATUS                                             NUMBER(38)
+ CREATIONTIME                                       NUMBER
+ PRIORITY                                           NUMBER(38)
+
+SQL> describe tape
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ VID                                                VARCHAR2(2048)
+ SIDE                                               NUMBER
+ TPMODE                                             NUMBER
+ ERRMSGTXT                                          VARCHAR2(2048)
+ ERRORCODE                                          NUMBER
+ SEVERITY                                           NUMBER
+ VWADDRESS                                          VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
+ STREAM                                             NUMBER(38)
+ STATUS                                             NUMBER(38)
+ DGN                                                VARCHAR2(2048)
+ LABEL                                              VARCHAR2(2048)
+ DENSITY                                            VARCHAR2(2048)
+ DEVTYPE                                            VARCHAR2(2048)
+
+ SQL> describe stream
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ INITIALSIZETOTRANSFER                              NUMBER(38)
+ ID                                        NOT NULL NUMBER(38)
+ TAPE                                               NUMBER(38)
+ TAPEPOOL                                           NUMBER(38)
+ STATUS                                             NUMBER(38)
+ LASTFILESYSTEMCHANGE                               NUMBER(38)
+ LASTFILESYSTEMUSED                                 NUMBER(38)
+ LASTBUTONEFILESYSTEMUSED                           NUMBER(38)
+
+SQL> describe tapepool
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NAME                                               VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
+ MIGRSELECTPOLICY                                   VARCHAR2(2048)
+ 
+SQL> describe diskcopy
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ ID                                        NOT NULL NUMBER(38)
+ CASTORFILE                                         NUMBER(38)
+ FILESYSTEM                                         NUMBER(38)
+ STATUS                                             NUMBER(38)
+ CREATIONTIME                                       NUMBER(38)
+ PATH                                               VARCHAR2(2048)
+ GCWEIGHT                                           NUMBER
+ LASTACCESSTIME                                     NUMBER(38)
+ DISKCOPYSIZE                                       NUMBER(38)
+ NBCOPYACCESSES                                     NUMBER
+ OWNERUID                                           NUMBER(38)
+ OWNERGID                                           NUMBER(38)
+ GCTYPE                                             NUMBER(38)
+
+SQL> describe filesystem
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ FREE                                               NUMBER(38)
+ MOUNTPOINT                                NOT NULL VARCHAR2(2048)
+ MINFREESPACE                                       NUMBER
+ MAXFREESPACE                                       NUMBER
+ TOTALSIZE                                          NUMBER(38)
+ ID                                        NOT NULL NUMBER(38)
+ DISKPOOL                                           NUMBER(38)
+ DISKSERVER                                NOT NULL NUMBER(38)
+ STATUS                                    NOT NULL NUMBER(38)
+ MINALLOWEDFREESPACE                                NUMBER
+ READRATE                                           NUMBER(38)
+ WRITERATE                                          NUMBER(38)
+ NBREADSTREAMS                                      NUMBER
+ NBWRITESTREAMS                                     NUMBER
+ NBREADWRITESTREAMS                                 NUMBER
+ ADMINSTATUS                                        NUMBER(38)
+ NBMIGRATORSTREAMS                                  NUMBER
+ NBRECALLERSTREAMS                                  NUMBER
+
+SQL> describe diskserver
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NAME                                      NOT NULL VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
+ STATUS                                    NOT NULL NUMBER(38)
+ ADMINSTATUS                                        NUMBER(38)
+ READRATE                                           NUMBER(38)
+ WRITERATE                                          NUMBER(38)
+ NBREADSTREAMS                                      NUMBER
+ NBWRITESTREAMS                                     NUMBER
+ NBREADWRITESTREAMS                                 NUMBER
+ NBMIGRATORSTREAMS                                  NUMBER
+ NBRECALLERSTREAMS                                  NUMBER
+
+SQL> describe diskpool
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NAME                                               VARCHAR2(2048)
+ ID                                        NOT NULL NUMBER(38)
