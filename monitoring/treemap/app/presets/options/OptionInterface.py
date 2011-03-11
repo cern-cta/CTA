@@ -7,7 +7,7 @@ Created on Feb 23, 2011
 #take example from existing classes like BooleanOption to implement!
 class OptionInterface(object):
 
-    def __init__(self, userfriendlyname, name, template, stdval = 0):
+    def __init__(self, userfriendlyname, name, template, stdval = 0, visible = True):
         pass
     
     #returns how to parse the entire option, ie variablename = date format

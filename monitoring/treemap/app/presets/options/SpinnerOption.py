@@ -12,7 +12,7 @@ import re
 
 class SpinnerOption(OptionInterface):
 
-    def __init__(self, userfriendlyname, name, template, stdval = 0, min = 0, max = float('inf'), step = 1, unit = ''):
+    def __init__(self, userfriendlyname, name, template, stdval = 0, min = 0, max = float('inf'), step = 1, unit = '', visible = True):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<value>\d+)'
@@ -27,6 +27,7 @@ class SpinnerOption(OptionInterface):
         assert(stdval >= min)
         self.step = step
         self.unit = unit
+        self.visible = visible
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -70,6 +71,7 @@ class SpinnerOption(OptionInterface):
         return self.stdval
    
     def toHtml(self, options):
+        if not self.visible: return ''
         try:
             defaultvalue = self.optionsToValue(options)
         except:

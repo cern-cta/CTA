@@ -229,16 +229,11 @@ class ObjectTree(object):
         
         return anxnode
     
-    def displayCurrentInAnnex(self, treemap_props):
+    def displayCurrentAlsoInAnnex(self, treemap_props):
         item = self.node_inscope
         self.traverseBack()
         parent = self.node_inscope
-        
-        anxnode = None
-        for sibling in self.children_inscope:
-            if sibling.getObject().getClassName() == 'Annex':
-                anxnode = sibling
-                break
+        anxnode = self.getCurrentAnnexChild()
         
         #if Annex container is missing, create one
         if (anxnode is None):
@@ -262,6 +257,37 @@ class ObjectTree(object):
             anxnode.getObject().activateNode(item)
         
         self.traverseIntoChild(item)
+    
+    def getCurrentAnnexChild(self): 
+        self.updateChildren()
+        anxnode = None
+        for child in self.children_inscope:
+            if child.getObject().getClassName() == 'Annex':
+                anxnode = child
+                break
+            
+        return anxnode
+        
+#    def setAnnexChildToConvenientSize(self, treemap_props):
+#        item = self.node_inscope
+#        self.traverseBack()
+#        anxnode = self.getCurrentAnnexChild()
+#            
+#        if (anxnode is None):
+#            return
+#        
+#        newsiblingssum = anxnode.getSiblingsSum()
+#        anxsize = anxnode.getEvalValue()
+#        newsize = anxnode.getSiblingsSum()/len(self.children_inscope)
+#        newsiblingssum = newsiblingssum + newsize - anxsize
+#        
+#        for sibling in self.children_inscope:
+#            sibling.setSiblingsSum(newsiblingssum)
+#            
+#        self.traverseIntoChild(item)
+
+            
+            
         
 
         

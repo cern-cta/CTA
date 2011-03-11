@@ -53,7 +53,7 @@ def redirectHome(request, *args, **kwargs):
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
 def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False):    
-    time = datetime.datetime.now()
+    thetime = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''
     treemap_props_cp = copy.copy(treemap_props)
@@ -217,7 +217,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     #------------------------------------------------------------
     start = datetime.datetime.now()
     response = respond (request = request, vtree = tree, tooltipfontsize = 12, imagewidth = imagewidth, imageheight = imageheight,\
-    filenm = filenm, lrules = treemap_props_cp['levelrules'], cache_key = cache_key, cache_expire = cache_expire, time = time,\
+    filenm = filenm, lrules = treemap_props_cp['levelrules'], cache_key = cache_key, cache_expire = cache_expire, thetime = thetime,\
     rootidreplacement = root.getIdReplacement(), rootmodel = root.getClassName(), nblevels = nbdefinedlevels, presetid = presetid,\
     options = optr.getCorrectedOptions(presetid), depth = depth+1)
     
@@ -363,7 +363,7 @@ def setStatusFileInCookie(request, statusfilename):
     generateStatusFile(statusfilename, 0)
     return HttpResponse('done', mimetype='text/plain')
 
-def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, time, rootidreplacement, rootmodel, nblevels, presetid, options = '', depth = 0):
+def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, thetime, rootidreplacement, rootmodel, nblevels, presetid, options = '', depth = 0):
     print "preparing response"
     optionsstring = '{'+ options +'}'
     #must fit to UrlDefault!
@@ -377,7 +377,13 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
     print "PARENTID ", parentid
     #must fit to UrlDefault!
-    parentidstr = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, vtree.getRoot().getProperty('treenode').getNakedParent().getClassName(), vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement())
+    parentoptionsstring = optionsstring
+    parentor = OptionsReader(parentoptionsstring, presetid) 
+    pzoom = parentor.getOption('annexzoom')
+    if pzoom > 0:
+        parentor.setOption('annexzoom',presetid, pzoom - 1)
+        parentoptionsstring = parentor.getCorrectedOptions(presetid)
+    parentidstr = app.dirs.urls.UrlDefault().buildUrl(presetid, parentoptionsstring, vtree.getRoot().getProperty('treenode').getNakedParent().getClassName(), vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement())
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -473,7 +479,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         urlending = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, pr.getClassName(), pr.getIdReplacement())   
         navlinkparts.append( (nvtext, str(pr), urlending) )
     
-    generationtime = datetime.datetime.now() - time
+    generationtime = datetime.datetime.now() - thetime
     
     presetnames = app.presets.Presets.getPresetNames()
     presetnames.sort();
@@ -496,7 +502,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
      'relstatuspath': relstatuspath, 'apacheserver': apacheserver, 'djangoresponseurl': settings.DJANGORESPONSE_URL} , context_instance=None)
     
     #mapparams, tooltipshift
-    totaltime = datetime.datetime.now() - time
+    totaltime = datetime.datetime.now() - thetime
 #    response = response + '<!-- <p> <blockquote> Execution and render time: ' + totaltime.__str__() + ' </blockquote> </p> -->'
     print "total time: ", totaltime
     

@@ -13,7 +13,6 @@ width - rectangle width
 height - rectangle height
 x - rectangle x pos in the image
 y - rectangle y pos in the image
-nbchildren - number of children the node has (for potential use)
 
 @author: kblaszcz
 '''
@@ -73,8 +72,11 @@ class SquaredTreemapCalculator(object):
         vnode.setProperty('width', width)
         vnode.setProperty('height', height)
         vnode.setProperty('level', self.otree.getCurrentObject().getDepth())
-        vnode.setProperty('nbchildren', self.otree.countChildren())
-        
+        if self.otree.getCurrentAnnexChild() is None:
+            vnode.setProperty('hasannex', False)
+        else:
+            vnode.setProperty('hasannex', True)
+            
         viewtree.setRoot(vnode)
         viewtree.traverseIntoChild(vnode)
         
@@ -103,11 +105,27 @@ class SquaredTreemapCalculator(object):
 #        print "level ", self.otree.getLevel()
         pixels = float(height * width)
         tnode = self.otree.getCurrentObject()
-
+        
+        #if item too tiny, display it in Annex again
         if width <= 1.0 or height <= 1.0: #return
             if not(isinstance(tnode.getObject(), Annex)):
-                self.otree.displayCurrentInAnnex(self.treemap_props)
-            return
+                self.otree.displayCurrentAlsoInAnnex(self.treemap_props)
+                return
+            else:
+                return
+#                
+#                self.otree.setAnnexChildToConvenientSize(self.treemap_props)
+#                self.otree.traverseBack()
+#                viewtree.traverseBack()
+#                viewtree.deleteChildren()
+#                parentvnode = viewtree.getCurrentObject();
+#                
+#                self.calculateRecursion(parentvnode.getProperty('x'), parentvnode.getProperty('y'), parentvnode.getProperty('width') ,parentvnode.getProperty('height'), viewtree, parentvnode.getProperty('spacesize'), minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+#                
+#                self.otree.traverseIntoChild(oitem)
+#                viewtree.traverseIntoChild(vitem)
+#                
+#                return
         
         #exclude everyhing that would be smaller than 1 pixel
         if pixels < (1.0+spacesize)*(1.0+spacesize): return
@@ -259,8 +277,11 @@ class SquaredTreemapCalculator(object):
                     vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                     currently_inscope = self.otree.getCurrentObject()
-                    self.otree.traverseIntoChild(child)
-                    vn.setProperty('nbchildren', self.otree.countChildren())
+                    self.otree.traverseIntoChild(ch)
+                    if self.otree.getCurrentAnnexChild() is None:
+                        vn.setProperty('hasannex', False)
+                    else:
+                        vn.setProperty('hasannex', True)
                     self.otree.traverseBack()
                     
                     totalchildnodes.append(ch)
@@ -364,8 +385,12 @@ class SquaredTreemapCalculator(object):
                 vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                 
                 currently_inscope = self.otree.getCurrentObject()
-                self.otree.traverseIntoChild(child)
-                vn.setProperty('nbchildren', self.otree.countChildren())
+                self.otree.traverseIntoChild(ch)
+                if self.otree.getCurrentAnnexChild() is None:
+                    vn.setProperty('hasannex', False)
+                else:
+                    vn.setProperty('hasannex', True)
+                    
                 self.otree.traverseBack()
                     
                 totalchildnodes.append(ch)

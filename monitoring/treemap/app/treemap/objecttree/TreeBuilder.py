@@ -198,10 +198,6 @@ class TreeBuilder(object):
                     tree.addTreeNodeChild(child)
                 else:
                     annexevalsum = annexevalsum + child.getEvalValue()
-                    
-#            if annexevalsum == evalsum:
-#                tree.deleteChildren()
-#                return
             
             childnodes = tree.getChildren()
 #            annexchildnodes = tree.getChildren()[:]
@@ -224,23 +220,22 @@ class TreeBuilder(object):
             childnodes = tree.getChildren()[:]
             
             #add the annex object representing the rest of the children
-            #if(annexevalsum > 0): <-- commented out: always add annex
+            if(annexevalsum > 0):
+                annexdepth = 0
+                if(rootisannex):
+                    annexdepth = tree.getRoot().getObject().getDepth() + 1
+                    
+                #create Annex as TreeNode
+                annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
+                annexchild.setEvaluations(annexevalsum)
+                chclassname = annexchild.getClassName()
+                chattrname = self.rules.getAttrNameFor(level, chclassname)
+                chparam = self.rules.getParamFor(level, chclassname)
+                parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
                 
-            annexdepth = 0
-            if(rootisannex):
-                annexdepth = tree.getRoot().getObject().getDepth() + 1
-                
-            #create Annex as TreeNode
-            annexchild = Annex(self.rules, level, nested_object, childnodes, annexdepth)
-            annexchild.setEvaluations(annexevalsum)
-            chclassname = annexchild.getClassName()
-            chattrname = self.rules.getAttrNameFor(level, chclassname)
-            chparam = self.rules.getParamFor(level, chclassname)
-            parentmethodname =  self.rules.getParentMethodNameFor(level, chclassname)
-            
-            annexnode = tree.addChild(annexchild, chattrname, parentmethodname, chparam)
-            annexnode.setSiblingsSum(evalsum)
-#                annexnode.metainfo = metainfo
+                annexnode = tree.addChild(annexchild, chattrname, parentmethodname, chparam)
+                annexnode.setSiblingsSum(evalsum)
+    #                annexnode.metainfo = metainfo
                              
 def print_tabs(n):
     for i in range(n):

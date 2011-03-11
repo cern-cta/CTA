@@ -17,7 +17,7 @@ from app.presets.options.OptionInterface import OptionInterface
 
 class DateOption(OptionInterface):
 
-    def __init__(self, userfriendlyname, name, template, stdval = 0):
+    def __init__(self, userfriendlyname, name, template, stdval = 0, visible = True):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})'
@@ -25,6 +25,7 @@ class DateOption(OptionInterface):
         self.fullexpression = r'.*?' + self.name+"="+self.valueexpr + r'.*?'
         self.stdseconddiff = stdval;
         self.template = template
+        self.visible = visible
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -79,6 +80,7 @@ class DateOption(OptionInterface):
         return datetime.datetime.now() - datetime.timedelta(minutes = self.stdseconddiff)
    
     def toHtml(self, options):
+        if not self.visible: return ''
         try:
             defaultdate = self.optionsToValue(options)
         except:

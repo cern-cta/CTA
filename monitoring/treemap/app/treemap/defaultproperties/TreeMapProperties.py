@@ -14,7 +14,6 @@ width - rectangle width
 height - rectangle height
 x - rectangle x pos in the image
 y - rectangle y pos in the image
-nbchildren - number of children the node has (for potential use)
 
 set by TreeDesigner:
 captiontext - text string to show in the rectangle caption

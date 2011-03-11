@@ -46,7 +46,7 @@ def getPreset(presetname):
         return Preset(lr, True, 'Dirs', '/castor', 0, optionsset)#0 must be default
   
 def getDefaultOptionSet():
-    return [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), BooleanOption('More caption', 'optitext', 'options/booleanoption.html', False), SpinnerOption('Annex zoom', 'annexzoom', 'options/spinneroption.html', 0,0, 120,1,'iterations')]  
+    return [BooleanOption('Lowest values', 'smalltobig', 'options/booleanoption.html', False), BooleanOption('Flat view', 'flatview', 'options/booleanoption.html', False), BooleanOption('More caption', 'optitext', 'options/booleanoption.html', False), SpinnerOption('Annex zoom', 'annexzoom', 'options/spinneroption.html', 0,0, 120,1,'iterations', False)]  
     
 def getPresetByStaticId(staticid):
     if staticid == 0:
