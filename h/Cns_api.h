@@ -15,11 +15,6 @@
 #define _CNS_API_H
 #include <utime.h>
 #include "Cns_constants.h"
-#if defined(NSTYPE_LFC)
-#include "lfc_api.h"
-#elif defined(NSTYPE_DPNS)
-#include "dpns_api.h"
-#endif
 #include "Cns_struct.h"
 #include "osdep.h"
 

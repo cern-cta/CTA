@@ -112,19 +112,19 @@
 #define CNS_STARTSESS        	59
 #define CNS_ENDSESS        	60
 #define CNS_DU	        	61
-#define CNS_GETGRPID        	62
-#define CNS_GETGRPNAM        	63
-#define CNS_GETIDMAP          	64
-#define CNS_GETUSRID        	65
-#define CNS_GETUSRNAM        	66
-#define CNS_MODGRPMAP        	67
-#define CNS_MODUSRMAP        	68
-#define CNS_RMGRPMAP	        69
-#define CNS_RMUSRMAP	        70
+#define CNS_GETGRPID        	62 /* removed */
+#define CNS_GETGRPNAM        	63 /* removed */
+#define CNS_GETIDMAP          	64 /* removed */
+#define CNS_GETUSRID        	65 /* removed */
+#define CNS_GETUSRNAM        	66 /* removed */
+#define CNS_MODGRPMAP        	67 /* removed */
+#define CNS_MODUSRMAP        	68 /* removed */
+#define CNS_RMGRPMAP	        69 /* removed */
+#define CNS_RMUSRMAP	        70 /* removed */
 #define CNS_GETLINKS	        71
 #define CNS_GETREPLICA	        72
-#define CNS_ENTGRPMAP	        73
-#define CNS_ENTUSRMAP	        74
+#define CNS_ENTGRPMAP	        73 /* removed */
+#define CNS_ENTUSRMAP	        74 /* removed */
 #define CNS_REPLACETAPECOPY     75
 #define CNS_LASTFSEQ            76
 #define CNS_BULKEXIST           77

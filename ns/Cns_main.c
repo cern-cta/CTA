@@ -38,7 +38,6 @@ int Cns_init_dbpkg();
 int being_shutdown = 0;
 char func[16];
 int jid;
-char lcgdmmapfile[CA_MAXPATHLEN+1];
 char localdomain[CA_MAXHOSTNAMELEN+1];
 char localhost[CA_MAXHOSTNAMELEN+1];
 char logfile[CA_MAXPATHLEN+1];
@@ -92,7 +91,7 @@ int Cns_main(struct main_args *main_args)
 
   /* process command line options if any */
 
-  while ((c = getopt (main_args->argc, main_args->argv, "c:l:m:rt:s")) != EOF) {
+  while ((c = getopt (main_args->argc, main_args->argv, "c:l:rt:s")) != EOF) {
     switch (c) {
     case 'c':
       strncpy (nsconfigfile, optarg, sizeof(nsconfigfile));
@@ -101,10 +100,6 @@ int Cns_main(struct main_args *main_args)
     case 'l':
       strncpy (logfile, optarg, sizeof(logfile));
       logfile[sizeof(logfile) - 1] = '\0';
-      break;
-    case 'm':
-      strncpy (lcgdmmapfile, optarg, sizeof(lcgdmmapfile));
-      lcgdmmapfile[sizeof(lcgdmmapfile) - 1] = '\0';
       break;
     case 'r':
       rdonly++;
@@ -475,10 +470,6 @@ int procreq(int magic,
             struct Cns_srv_thread_info *thip)
 {
   int c;
-#ifdef USE_VOMS
-  char **fqan = NULL;
-  int nbfqans = 0;
-#endif
 
   /* connect to the database if not done yet */
 
@@ -499,20 +490,6 @@ int procreq(int magic,
     }
   }
 
-#ifdef VIRTUAL_ID
-  if (thip->Csec_uid == -1) {
-#ifdef USE_VOMS
-    fqan = Csec_server_get_client_fqans (&thip->sec_ctx, &nbfqans);
-    if (nbfqans > 1) nbfqans = 1;
-#endif
-    if ((c = getidmap (&thip->dbfd, thip->Csec_auth_id, nbfqans, fqan,
-                       &thip->Csec_uid, &thip->Csec_gid))) {
-      sendrep (thip->s, MSG_ERR, "Could not get virtual id: %s !\n",
-               sstrerror (c));
-      return (SENOMAPFND);
-    }
-  }
-#endif
   switch (req_type) {
   case CNS_ACCESS:
     c = Cns_srv_access (req_data, clienthost, thip);
@@ -685,41 +662,8 @@ int procreq(int magic,
   case CNS_DU:
     c = Cns_srv_du (req_data, clienthost, thip);
     break;
-  case CNS_GETGRPID:
-    c = Cns_srv_getgrpbynam (req_data, clienthost, thip);
-    break;
-  case CNS_GETGRPNAM:
-    c = Cns_srv_getgrpbygid (req_data, clienthost, thip);
-    break;
-  case CNS_GETIDMAP:
-    c = Cns_srv_getidmap (req_data, clienthost, thip);
-    break;
-  case CNS_GETUSRID:
-    c = Cns_srv_getusrbynam (req_data, clienthost, thip);
-    break;
-  case CNS_GETUSRNAM:
-    c = Cns_srv_getusrbyuid (req_data, clienthost, thip);
-    break;
-  case CNS_MODGRPMAP:
-    c = Cns_srv_modgrpmap (req_data, clienthost, thip);
-    break;
-  case CNS_MODUSRMAP:
-    c = Cns_srv_modusrmap (req_data, clienthost, thip);
-    break;
-  case CNS_RMGRPMAP:
-    c = Cns_srv_rmgrpmap (req_data, clienthost, thip);
-    break;
-  case CNS_RMUSRMAP:
-    c = Cns_srv_rmusrmap (req_data, clienthost, thip);
-    break;
   case CNS_GETLINKS:
     c = Cns_srv_getlinks (req_data, clienthost, thip);
-    break;
-  case CNS_ENTGRPMAP:
-    c = Cns_srv_entergrpmap (req_data, clienthost, thip);
-    break;
-  case CNS_ENTUSRMAP:
-    c = Cns_srv_enterusrmap (req_data, clienthost, thip);
     break;
   case CNS_PING:
     c = Cns_srv_ping(req_data, clienthost, thip);
@@ -939,8 +883,6 @@ int proctransreq(int magic,
         req_type != CNS_GETPATH && req_type != CNS_LSTAT &&
         req_type != CNS_READLINK && req_type != CNS_STAT &&
         req_type != CNS_STATCS && req_type != CNS_STATG &&
-        req_type != CNS_GETGRPID && req_type != CNS_GETGRPNAM &&
-        req_type != CNS_GETUSRID && req_type != CNS_GETUSRNAM &&
         req_type != CNS_LASTFSEQ && req_type != CNS_PING &&
         req_type != CNS_BULKEXIST && req_type != CNS_TAPESUM) break;
     sendrep (thip->s, CNS_IRC, rc);

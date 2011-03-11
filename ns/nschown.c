@@ -89,19 +89,12 @@ int main(int argc, char **argv)
       errflg++;
     }
   } else {
-#ifdef VIRTUAL_ID
-    if (strcmp (p, "root") == 0)
-      newuid = 0;
-    else if (Cns_getusrbynam (p, &newuid) < 0)
-#else
-      if ((pwd = getpwnam (p)))
-        newuid = pwd->pw_uid;
-      else
-#endif
-	{
-	  fprintf (stderr, "invalid user: %s\n", p);
-	  errflg++;
-	}
+    if ((pwd = getpwnam (p))) {
+      newuid = pwd->pw_uid;
+    } else {
+      fprintf (stderr, "invalid user: %s\n", p);
+      errflg++;
+    }
   }
   if ((p = strtok (NULL, ":."))) {
     if (isdigit (*p)) {
@@ -111,19 +104,12 @@ int main(int argc, char **argv)
         errflg++;
       }
     } else {
-#ifdef VIRTUAL_ID
-      if (strcmp (p, "root") == 0)
-        newgid = 0;
-      else if (Cns_getgrpbynam (p, &newgid) < 0)
-#else
-        if ((gr = getgrnam (p)))
-          newgid = gr->gr_gid;
-        else
-#endif
-	  {
-	    fprintf (stderr, "invalid group: %s\n", p);
-	    errflg++;
-	  }
+      if ((gr = getgrnam (p))) {
+        newgid = gr->gr_gid;
+      } else {
+        fprintf (stderr, "invalid group: %s\n", p);
+        errflg++;
+      }
     }
   } else
     newgid = -1;

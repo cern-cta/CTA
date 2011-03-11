@@ -286,20 +286,12 @@ int cvt_group(char *p)
       return (-1);
     }
   } else {
-#ifdef VIRTUAL_ID
-    if (strcmp (p, "root") == 0)
-      gid = 0;
-    else if (Cns_getgrpbynam (p, &gid) < 0)
-#else
-      if ((gr = getgrnam (p)))
-        gid = gr->gr_gid;
-      else
-#endif
-      {
-
-        fprintf (stderr, "invalid group: %s\n", p);
-        return (-1);
-      }
+    if ((gr = getgrnam (p))) {
+      gid = gr->gr_gid;
+    } else {
+      fprintf (stderr, "invalid group: %s\n", p);
+      return (-1);
+    }
   }
   return (gid);
 }
@@ -358,20 +350,12 @@ int cvt_user(char *p)
       return (-1);
     }
   } else {
-#ifdef VIRTUAL_ID
-    if (strcmp (p, "root") == 0)
-      uid = 0;
-    else if (Cns_getusrbynam (p, &uid) < 0)
-#else
-      if ((pwd = getpwnam (p)))
-        uid = pwd->pw_uid;
-      else
-#endif
-      {
-
-        fprintf (stderr, "invalid user: %s\n", p);
-        return (-1);
-      }
+    if ((pwd = getpwnam (p))) {
+      uid = pwd->pw_uid;
+    } else {
+      fprintf (stderr, "invalid user: %s\n", p);
+      return (-1);
+    }
   }
   return (uid);
 }

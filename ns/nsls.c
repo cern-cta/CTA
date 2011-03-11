@@ -440,18 +440,13 @@ decode_group(gid_t gid)
   static char sav_gidstr[256];
 
   if (gid != sav_gid) {
-#ifdef VIRTUAL_ID
-    if (gid == 0)
-      return ("root");
-    sav_gid = gid;
-#else
     sav_gid = gid;
     if ((gr = getgrgid (sav_gid))) {
       strncpy (sav_gidstr, gr->gr_name, sizeof(sav_gidstr) - 1);
       sav_gidstr[sizeof(sav_gidstr) - 1] = '\0';
-    } else
-#endif
+    } else {
       sprintf (sav_gidstr, "%d", sav_gid);
+    }
   }
   return (sav_gidstr);
 }
@@ -464,17 +459,12 @@ decode_user(uid_t uid)
   static char sav_uidstr[256];
 
   if (uid != sav_uid) {
-#ifdef VIRTUAL_ID
-    if (uid == 0)
-      return ("root");
     sav_uid = uid;
-#else
-    sav_uid = uid;
-    if ((pw = getpwuid (sav_uid)))
+    if ((pw = getpwuid (sav_uid))) {
       strcpy (sav_uidstr, pw->pw_name);
-    else
-#endif
+    } else {
       sprintf (sav_uidstr, "%d", sav_uid);
+    }
   }
   return (sav_uidstr);
 }
