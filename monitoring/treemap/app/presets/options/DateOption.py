@@ -13,10 +13,11 @@ The newest version doesn't seem to work so well.
 from django.template.loader import render_to_string
 import datetime
 import re
+from app.presets.options.OptionInterface import OptionInterface
 
-class DateOption(object):
+class DateOption(OptionInterface):
 
-    def __init__(self, userfriendlyname, name, template, stdval = 0):
+    def __init__(self, userfriendlyname, name, template, stdval = 0, visible = True):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<day>[0-9]{2}).(?P<month>[0-9]{2}).(?P<year>[0-9]{4})_(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})'
@@ -24,6 +25,7 @@ class DateOption(object):
         self.fullexpression = r'.*?' + self.name+"="+self.valueexpr + r'.*?'
         self.stdseconddiff = stdval;
         self.template = template
+        self.visible = visible
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -47,6 +49,7 @@ class DateOption(object):
         return thetime #(datetime.datetime.now()-thetime).seconds
     
     def valueToString(self, thetime):
+        if  not (isinstance(thetime, datetime.datetime)): value = self.getStdVal()
         correctedoptions = []
         
         correctedoptions.append('%02d' % (thetime.day) )
@@ -77,6 +80,7 @@ class DateOption(object):
         return datetime.datetime.now() - datetime.timedelta(minutes = self.stdseconddiff)
    
     def toHtml(self, options):
+        if not self.visible: return ''
         try:
             defaultdate = self.optionsToValue(options)
         except:

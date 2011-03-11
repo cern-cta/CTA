@@ -163,16 +163,6 @@ struct Cns_user_metadata {
         char               comments[CA_MAXCOMMENTLEN+1];        /* user comments */
 };
 
-struct Cns_groupinfo {
-        gid_t              gid;
-        char               groupname[256];
-};
-
-struct Cns_userinfo {
-        uid_t              userid;
-        char               username[256];
-};
-
                         /* name server function prototypes */
 
 EXTERN_C int sendrep (int, int, ...);
@@ -192,12 +182,10 @@ EXTERN_C int Cns_closedb (struct Cns_dbfd *);
 EXTERN_C int Cns_count_long_ops (struct Cns_dbfd *, int *, int);
 EXTERN_C int Cns_delete_class_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_delete_fmd_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
-EXTERN_C int Cns_delete_group_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_delete_lnk_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_delete_smd_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_delete_tppool_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_delete_umd_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
-EXTERN_C int Cns_delete_user_entry (struct Cns_dbfd *, Cns_dbrec_addr *);
 EXTERN_C int Cns_end_tr (struct Cns_dbfd *);
 EXTERN_C int Cns_get_class_by_id (struct Cns_dbfd *, int, struct Cns_class_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_class_by_name (struct Cns_dbfd *, char *, struct Cns_class_metadata *, int, Cns_dbrec_addr *);
@@ -205,8 +193,6 @@ EXTERN_C int Cns_get_fmd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_fi
 EXTERN_C int Cns_get_fmd_by_fullid (struct Cns_dbfd *, u_signed64, char *, struct Cns_file_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_fmd_by_guid (struct Cns_dbfd *, char *, struct Cns_file_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_fmd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns_file_metadata *, int, int, DBLISTPTR *);
-EXTERN_C int Cns_get_grpinfo_by_gid (struct Cns_dbfd *, gid_t, struct Cns_groupinfo *, int, Cns_dbrec_addr *);
-EXTERN_C int Cns_get_grpinfo_by_name (struct Cns_dbfd *, char *, struct Cns_groupinfo *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_last_smd_by_vid (struct Cns_dbfd *, char *, int, struct Cns_seg_metadata *);
 EXTERN_C int Cns_get_lnk_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_symlinks *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_max_copyno (struct Cns_dbfd *, u_signed64, int *);
@@ -214,21 +200,17 @@ EXTERN_C int Cns_get_smd_by_copyno (struct Cns_dbfd *, int, u_signed64, int,stru
 EXTERN_C int Cns_get_smd_by_fullid (struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_smd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_smd_by_vid (struct Cns_dbfd *, int, char *, int, struct Cns_seg_metadata *, int, DBLISTPTR *);
-EXTERN_C int Cns_get_smd_copy_count_by_pfid (struct Cns_dbfd *, u_signed64, int *);
+EXTERN_C int Cns_get_smd_enabled_copy_count_by_pfid (struct Cns_dbfd *, u_signed64, int *);
 EXTERN_C int Cns_get_tapesum_by_vid (struct Cns_dbfd *, char *, u_signed64 *, u_signed64 *, u_signed64 *, u_signed64 *);
 EXTERN_C int Cns_get_tppool_by_cid (struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *);
 EXTERN_C int Cns_get_umd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *);
-EXTERN_C int Cns_get_usrinfo_by_name (struct Cns_dbfd *, char *, struct Cns_userinfo *, int, Cns_dbrec_addr *);
-EXTERN_C int Cns_get_usrinfo_by_uid (struct Cns_dbfd *, uid_t, struct Cns_userinfo *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_getpath_by_fileid (struct Cns_dbfd *, u_signed64, char **);
 EXTERN_C int Cns_insert_class_entry (struct Cns_dbfd *, struct Cns_class_metadata *);
 EXTERN_C int Cns_insert_fmd_entry (struct Cns_dbfd *, struct Cns_file_metadata *);
-EXTERN_C int Cns_insert_group_entry (struct Cns_dbfd *, struct Cns_groupinfo *);
 EXTERN_C int Cns_insert_lnk_entry (struct Cns_dbfd *, struct Cns_symlinks *);
 EXTERN_C int Cns_insert_smd_entry (struct Cns_dbfd *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_insert_tppool_entry (struct Cns_dbfd *, struct Cns_tp_pool *);
 EXTERN_C int Cns_insert_umd_entry (struct Cns_dbfd *, struct Cns_user_metadata *);
-EXTERN_C int Cns_insert_user_entry (struct Cns_dbfd *, struct Cns_userinfo *);
 EXTERN_C int Cns_list_class_entry (struct Cns_dbfd *, int, struct Cns_class_metadata *, int, DBLISTPTR *);
 EXTERN_C int Cns_list_lnk_entry (struct Cns_dbfd *, int, char *, struct Cns_symlinks *, int, DBLISTPTR *);
 EXTERN_C int Cns_opendb (struct Cns_dbfd *);
@@ -239,10 +221,8 @@ EXTERN_C int Cns_unique_id (struct Cns_dbfd *, u_signed64 *);
 EXTERN_C int Cns_unique_uid (struct Cns_dbfd *, unsigned int *);
 EXTERN_C int Cns_update_class_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_class_metadata *);
 EXTERN_C int Cns_update_fmd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_metadata *);
-EXTERN_C int Cns_update_group_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_groupinfo *);
 EXTERN_C int Cns_update_smd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_update_umd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *);
-EXTERN_C int Cns_update_user_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_userinfo *);
 
 EXTERN_C int Cns_srv_aborttrans (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_access (char *, const char *, struct Cns_srv_thread_info *);
@@ -262,25 +242,17 @@ EXTERN_C int Cns_srv_du (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_endsess (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_endtrans (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_enterclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_entergrpmap (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_enterusrmap (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getacl (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getcomment (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getgrpbygid (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getgrpbynam (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getidmap (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getlinks (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getpath (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_getsegattrs (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getusrbynam (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getusrbyuid (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_lastfseq (int, char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_lchown (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_lstat (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_mkdir (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_modgrpmap (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_modifyclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_modusrmap (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_opendir (int, char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_ping (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_queryclass (char *, const char *, struct Cns_srv_thread_info *);
@@ -289,8 +261,6 @@ EXTERN_C int Cns_srv_rename (char *, const char *, struct Cns_srv_thread_info *)
 EXTERN_C int Cns_srv_replaceseg (int, char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_replacetapecopy (int, char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_rmdir (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_rmgrpmap (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_rmusrmap (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_setacl (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_setatime (char *, const char *, struct Cns_srv_thread_info *);
 EXTERN_C int Cns_srv_setcomment (char *, const char *, struct Cns_srv_thread_info *);

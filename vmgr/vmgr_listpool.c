@@ -3,7 +3,7 @@
  * All rights reserved
  */
  
-/*      vmgr_listpool_byte_u64 - list tape pool entries */
+/*      vmgr_listpool - list tape pool entries */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -15,15 +15,15 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 
-struct vmgr_tape_pool_byte_u64 *
-vmgr_listpool_byte_u64(int flags, vmgr_list *listp)
+struct vmgr_tape_pool *
+vmgr_listpool(int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
 	char func[14];
 	gid_t gid;
-	int listentsz = sizeof(struct vmgr_tape_pool_byte_u64);
-	struct vmgr_tape_pool_byte_u64 *lp = NULL;
+	int listentsz = sizeof(struct vmgr_tape_pool);
+	struct vmgr_tape_pool *lp;
 	int msglen;
 	int nbentries;
 	char *q;
@@ -102,18 +102,18 @@ vmgr_listpool_byte_u64(int flags, vmgr_list *listp)
 		/* unmarshall reply into vmgr_tape_pool structures */
 
 		listp->nbentries = nbentries;
-		lp = (struct vmgr_tape_pool_byte_u64 *) listp->buf;
+		lp = (struct vmgr_tape_pool *) listp->buf;
 		while (nbentries--) {
 			unmarshall_STRING (rbp, lp->name);
 			unmarshall_LONG (rbp, lp->uid);
 			unmarshall_LONG (rbp, lp->gid);
-			unmarshall_HYPER (rbp, lp->capacity_byte_u64);
-			unmarshall_HYPER (rbp, lp->tot_free_space_byte_u64);
+			unmarshall_HYPER (rbp, lp->capacity);
+			unmarshall_HYPER (rbp, lp->tot_free_space);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);
 	}
-	lp = ((struct vmgr_tape_pool_byte_u64 *) listp->buf) + listp->index;
+	lp = ((struct vmgr_tape_pool *) listp->buf) + listp->index;
 	listp->index++;
 	if (listp->index >= listp->nbentries) {	/* must refill next time */
 		listp->index = 0;

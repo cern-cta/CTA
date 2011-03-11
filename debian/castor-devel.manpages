@@ -186,6 +186,7 @@ debian/castor/usr/share/man/man3/vmgr_deletemodel.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_deletepool.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_deletetape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_deltag.3castor.gz
+debian/castor/usr/share/man/man3/vmgr_enterdenmap.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_enterdenmap_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_enterdgnmap.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_enterlibrary.3castor.gz
@@ -194,11 +195,13 @@ debian/castor/usr/share/man/man3/vmgr_enterpool.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_entertape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_gettag.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_gettape.3castor.gz
+debian/castor/usr/share/man/man3/vmgr_listdenmap.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listdenmap_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listdgnmap.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listlibrary.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listmodel.3castor.gz
-debian/castor/usr/share/man/man3/vmgr_listpool_byte_u64.3castor.gz
+debian/castor/usr/share/man/man3/vmgr_listpool.3castor.gz
+debian/castor/usr/share/man/man3/vmgr_listtape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_listtape_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_modifylibrary.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_modifymodel.3castor.gz
@@ -207,6 +210,7 @@ debian/castor/usr/share/man/man3/vmgr_modifytape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_querylibrary.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_querymodel.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_querypool.3castor.gz
+debian/castor/usr/share/man/man3/vmgr_querytape.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_querytape_byte_u64.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_reclaim.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_seterrbuf.3castor.gz

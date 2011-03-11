@@ -1027,7 +1027,7 @@ BEGIN
   END LOOP;
 
   -- Rebuild any partitioned indexes which are in an UNUSABLE state. This
-  -- happens sometimes are partitioning.
+  -- happens sometimes after partitioning.
   FOR a IN (SELECT index_name, partition_name, tablespace_name
               FROM user_ind_partitions
              WHERE status != 'USABLE')

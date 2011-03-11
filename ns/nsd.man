@@ -12,8 +12,6 @@ nsd \- start the name server
 ] [
 .BI -l " log_file"
 ] [
-.BI -m " map_file"
-] [
 .B -r
 ] [
 .BI -t " nbthreads"
@@ -126,9 +124,6 @@ Specifies a different path for the Name Server configuration file.
 .TP
 .BI -l " log_file"
 Specifies a different path for the Name Server log file.
-.TP
-.BI -m " map_file"
-Specifies a different path for the Name Server mapping file.
 .TP
 .B -r
 Read-only mode. Only query operations are allowed.

@@ -66,6 +66,10 @@ or
 .I newsegattrs
 are NULL pointers.
 .TP
+.B ENSTOOMANYSEGS
+Too many copies on tape. An attempt was made to enable a copy of a file on tape
+which would result in too many enabled copies be available.
+.TP
 .B EISDIR
 The file is not a regular file.
 .TP

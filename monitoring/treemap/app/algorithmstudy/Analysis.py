@@ -17,11 +17,12 @@ from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 def doMeasurements():
     try:
-        measurements = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0}
-        generateTreemap('optitext=false',1,'Dirs', '/castor', measurements)
+        measurements = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0, 'minratio':float("infinity"), 'maxratio':float("-infinity") }
+        #generateTreemap('optitext=false',1,'Dirs', '/castor', measurements)
+        generateTreemap('time=15.02.2011_15:26:26, span=1400, optitext=false',23,'Requestscms', '/castor', measurements)
         
-        measurementswithoptitext = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0}
-        generateTreemap('optitext=true',1,'Dirs', '/castor', measurementswithoptitext)
+#        measurementswithoptitext = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0}
+#        generateTreemap('optitext=true',1,'Dirs', '/castor', measurementswithoptitext)
         
         print "WITHOUT: ", measurements
         print "avg ratio: ", float(measurements['ratio'])/float(measurements['treemapcount'])
@@ -33,17 +34,19 @@ def doMeasurements():
         print "nb letters per one full text: ", (float(measurements['fulltextletters'])/float(measurements['fulltextcount']))
         print "nb letters per one broken text: ", (float(measurements['brokentextletters'])/float(measurements['brokentextcount']))
         print "total number letters per treemap: ", float(measurements['brokentextletters'] + measurements['fulltextletters'])/float(measurements['treemapcount'])
+        print "min ratio: ", measurements['minratio']
+        print "max ratio: ", measurements['maxratio']
         
-        print "WITH: ", measurementswithoptitext
-        print "avg ratio: ", float(measurementswithoptitext['ratio'])/float(measurementswithoptitext['treemapcount'])
-        print "avg nb without text: ", float(measurementswithoptitext['notextcount'])/float(measurementswithoptitext['treemapcount'])
-        print "avg nb with broken text: ", float(measurementswithoptitext['brokentextcount'])/float(measurementswithoptitext['treemapcount'])
-        print "avg nb with full text: ", float(measurementswithoptitext['fulltextcount'])/float(measurementswithoptitext['treemapcount'])
-        print "avg total nb letters full text: ", float(measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['treemapcount'])
-        print "avg total nb letters broken text: ", float(measurementswithoptitext['brokentextletters'])/float(measurementswithoptitext['treemapcount'])
-        print "nb letters per one full text: ", (float(measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['fulltextcount']))
-        print "nb letters per one broken text: ", (float(measurementswithoptitext['brokentextletters'])/float(measurementswithoptitext['brokentextcount']))
-        print "total number letters per treemap: ", float(measurementswithoptitext['brokentextletters'] + measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['treemapcount'])
+#        print "WITH: ", measurementswithoptitext
+#        print "avg ratio: ", float(measurementswithoptitext['ratio'])/float(measurementswithoptitext['treemapcount'])
+#        print "avg nb without text: ", float(measurementswithoptitext['notextcount'])/float(measurementswithoptitext['treemapcount'])
+#        print "avg nb with broken text: ", float(measurementswithoptitext['brokentextcount'])/float(measurementswithoptitext['treemapcount'])
+#        print "avg nb with full text: ", float(measurementswithoptitext['fulltextcount'])/float(measurementswithoptitext['treemapcount'])
+#        print "avg total nb letters full text: ", float(measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['treemapcount'])
+#        print "avg total nb letters broken text: ", float(measurementswithoptitext['brokentextletters'])/float(measurementswithoptitext['treemapcount'])
+#        print "nb letters per one full text: ", (float(measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['fulltextcount']))
+#        print "nb letters per one broken text: ", (float(measurementswithoptitext['brokentextletters'])/float(measurementswithoptitext['brokentextcount']))
+#        print "total number letters per treemap: ", float(measurementswithoptitext['brokentextletters'] + measurementswithoptitext['fulltextletters'])/float(measurementswithoptitext['treemapcount'])
         
     except NoDataAvailableError:
         print "No data"
@@ -58,10 +61,14 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     presetid = int(presetid)
     if options is None: options = ''
     
-    imagewidth = treemap_props_cp['pxwidth']
-    treemap_props_cp['pxheight'] = treemap_props_cp['pxwidth']
-    imageheight = treemap_props_cp['pxheight']
+#    imagewidth = treemap_props_cp['pxwidth']
+#    treemap_props_cp['pxheight'] = treemap_props_cp['pxwidth']
+#    imageheight = treemap_props_cp['pxheight']
+    
+    treemap_props_cp['pxwidth'] = 800.0
+    treemap_props_cp['pxheight'] = 800.0
 
+    
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT 
     
@@ -115,8 +122,14 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     
     if collectcondition and (tc.calculateRecursion.__dict__['ratiocount'] != 0):
         measurements['notextcount'] = measurements['notextcount'] + tc.calculateRecursion.__dict__['notextcount']
-
-        measurements['ratio'] = measurements['ratio'] + tc.calculateRecursion.__dict__['ratiosum']/tc.calculateRecursion.__dict__['ratiocount']
+        theratio = tc.calculateRecursion.__dict__['ratiosum']/tc.calculateRecursion.__dict__['ratiocount']
+        
+        if theratio > measurements['maxratio']:
+            measurements['maxratio'] = theratio
+        if theratio < measurements['minratio']:
+            measurements ['minratio'] = theratio
+            
+        measurements['ratio'] = measurements['ratio'] + theratio
         measurements['ratiocount'] = measurements['ratiocount'] + 1
    
         mlinker = getDefaultMetricsLinking() 

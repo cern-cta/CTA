@@ -1,7 +1,6 @@
 # Arguments for the nsd
 #   -c <path>      configuration file
 #   -l <logfile>
-#   -m <mapfile>
 #   -r
 #   -t <nbthreads
 #   -s

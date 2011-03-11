@@ -266,6 +266,9 @@ ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
   INITIALLY DEFERRED DEFERRABLE;
 
+ALTER TABLE DiskCopy
+  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
+
 /* CastorFile constraints */
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
   FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
@@ -275,9 +278,9 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
 
-ALTER TABLE CastorFile ADD CONSTRAINT UN_CF_LastKnownFileName UNIQUE (LastKnownFileName);
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
 
-ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CF_LastKnownFileName NOT NULL);
+ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool

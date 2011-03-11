@@ -5,13 +5,14 @@ It includes regular expressions which define how to include that option into the
 and it renders html code to represent a integer number as a javascript spinner (input field with two arrows to increase or decrease the value)
 @author: kblaszcz
 '''
+from app.presets.options.OptionInterface import OptionInterface
 from django.template.loader import render_to_string
 import datetime
 import re
 
-class SpinnerOption(object):
+class SpinnerOption(OptionInterface):
 
-    def __init__(self, userfriendlyname, name, template, stdval = 0, min = 0, max = float('inf'), step = 1, unit = ''):
+    def __init__(self, userfriendlyname, name, template, stdval = 0, min = 0, max = float('inf'), step = 1, unit = '', visible = True):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<value>\d+)'
@@ -26,6 +27,7 @@ class SpinnerOption(object):
         assert(stdval >= min)
         self.step = step
         self.unit = unit
+        self.visible = visible
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -51,6 +53,7 @@ class SpinnerOption(object):
         return value
     
     def valueToString(self, value):
+        if  not (value.__class__.__name__ in ['int', 'float']): value = self.getStdVal()
         if(value > self.max): value = self.max
         return ('%d' % (value))
     
@@ -68,6 +71,7 @@ class SpinnerOption(object):
         return self.stdval
    
     def toHtml(self, options):
+        if not self.visible: return ''
         try:
             defaultvalue = self.optionsToValue(options)
         except:

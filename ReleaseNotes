@@ -1,4 +1,85 @@
 ------------
+- 2.1.10-1 -
+------------
+
+  Please Note: This release is dedicated to tape and as such only includes
+               tape related software and client side tools.
+
+  Bug Fixes
+  ---------
+
+  CASTOR repack2
+  --------------
+  - #78347: RepackCleanup procedure returns "ORA-06502: PL/SQL: numeric or
+            value error"
+
+  CASTOR tape
+  -----------
+  - #75722: RFE: The VMGR should support tape capacities greater than 2TB
+  - #75868: RFE: VMGR should randomize when choosing a migration tape for a
+            specific tape pool and library 
+  - #75990: RFE: support for new densities in taped 
+  - #76440: Typos in repack man pages
+
+
+  Upgrade Instructions from 2.1.10-1
+  ----------------------------------
+
+    Before upgrading to a 2.1.10-1 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    VMGR & VDQM plus notice for tape-servers and adminstration machines
+    -------------------------------------------------------------------
+
+    Please note the VMGR daemon must be upgraded before any of its clients are
+    upgraded.  The new VMGR clients of this release cannot talk to the old VMGR
+    daemon.  The VMGR clients include the new VMGR command-line clients, the
+    rtcpd daemon and the mounttape helper process of the taped daemon.  This
+    means tape-servers and administration machines must not be upgraded to
+    version 2.1.10-0 of CASTOR until the VMGR has been upgraded.
+
+    Please note the new VMGR daemon is compatible with old clients.
+    
+    The upgrade of the VMGR database to 2.1.10-1 cannot be performed online
+    while the system is running. As a result the tape subsystem must be stopped.
+    The expected downtime is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Move the status of all tape drives to DOWN.
+
+       2. Stop *all* vmgr and vdqm daemons.
+
+       3. Upgrade the VMGR database using the vmgr_2.1.10-0_to_2.1.10-01.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.10-*/2.1.10-1/dbupgrades
+
+       4. Upgrade the vmgr and vdqm software to use the 2.1.10-1 RPMS.
+
+       5. Start the vmgr and vdqm daemons stopped in step 2.
+
+       6. Bring all the tape drives back up.
+
+    Repack
+    ------
+
+    The upgrade of the REPACK databases to 2.1.10-1 can be performed online
+    while the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.10-*/2.1.10-1/dbupgrades
+
+       2. Update the appropriate software to use the 2.1.10-1 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+------------
 - 2.1.10-0 -
 ------------
 
@@ -98,7 +179,7 @@
 
 
   Upgrade Instructions from 2.1.9-10
-  ---------------------------------
+  ----------------------------------
 
     Before upgrading to a 2.1.10-0 instance of CASTOR2 please make sure to read
     the upgrade instructions fully before proceeding.

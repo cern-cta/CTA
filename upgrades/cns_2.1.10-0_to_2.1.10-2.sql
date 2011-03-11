@@ -1,5 +1,5 @@
 /******************************************************************************
- *              vmgr_2.1.10-1_to_2.1.10-0.sql
+ *                 cns_2.1.10-0_to_2.1.10-2.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.10-0 VMGR database to v2.1.10-0
+ * This script upgrades a CASTOR v2.1.10-0 CNS database to v2.1.10-2
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -39,38 +39,35 @@ DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE schemaName = 'VMGR'
-     AND release LIKE '2_1_10_1%';
+   WHERE schemaName = 'CNS'
+     AND release LIKE '2_1_10_0%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
-  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the VMGR before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CNS before this one.');
 END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_10_0', '2_1_10_0', 'NON TRANSPARENT');
+VALUES ('2_1_9_3', '2_1_10_2', 'TRANSPARENT');
 COMMIT;
 
-/* Synchronise the tot_free_space column of the vmgr_tape_pool table with */
-/* the estimated_free_space column of the vmgr_tape_side table as these   */
-/* columns drift out of sync over time                                    */
-UPDATE vmgr_tape_pool
-   SET vmgr_tape_pool.tot_free_space = (
-         SELECT NVL(SUM(vmgr_tape_side.estimated_free_space), 0)
-           FROM vmgr_tape_side
-          WHERE vmgr_tape_side.poolName = vmgr_tape_pool.name
-            AND vmgr_tape_side.status in (0 /* FREE */, 4 /* BUSY */));
+/* Schema changes go here */
+/**************************/
 
-/* Convert all byte values in the database to kibibyte values */
-UPDATE vmgr_tape_denmap
-   SET native_capacity = native_capacity / 1024;
-UPDATE vmgr_tape_pool
-   SET capacity = capacity / 1024;
-UPDATE vmgr_tape_pool
-   SET tot_free_space = tot_free_space / 1024;
-UPDATE vmgr_tape_side
-   SET estimated_free_space = estimated_free_space / 1024;
-COMMIT;
+-- Create index for bug #71565
+-- Because of the 2.1.10-0-1 hotfix script, we test whether to do it or not
+DECLARE
+  unused VARCHAR2(30);
+BEGIN
+  SELECT index_name INTO unused
+    FROM user_indexes
+   WHERE index_name = 'I_SEG_METADATA_TAPESUM';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXECUTE IMMEDIATE 'CREATE INDEX I_seg_metadata_tapesum
+                     ON Cns_seg_metadata (vid, s_fileid, segsize, compression)';
+  EXECUTE IMMEDIATE 'DROP INDEX I_seg_metadata_vid_fid_segsize';
+END;
+/
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
@@ -94,5 +91,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
- WHERE release = '2_1_10_0';
+ WHERE release = '2_1_10_2';
 COMMIT;

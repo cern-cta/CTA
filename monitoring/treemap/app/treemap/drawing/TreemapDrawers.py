@@ -6,11 +6,13 @@ The resulting output is written into a png file.
 
 @author: kblaszcz
 '''
-import cairo
-import math
 from app.tools.ColorFunctions import *
 from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 from app.treemap.viewtree.ViewTree import ViewTree
+import cairo
+import math
+import rsvg
+import settings
 
 class SquaredTreemapDrawer(object):
     '''
@@ -54,8 +56,16 @@ class SquaredTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize'), root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
-        
+        if treemap_props['caption']:
+            clipwidth = 0.0
+            if (root.getProperty('width') >= root.getProperty('captionsize')) and root.getProperty('hasannex'):
+                clipx = root.getProperty('x') + root.getProperty('width') - root.getProperty('captionsize')
+                clipy = root.getProperty('y')
+                clipwidth = root.getProperty('captionsize')
+                clipheight = root.getProperty('captionsize')
+                self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg',clipx, clipy, clipwidth, clipheight)
+            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize') - clipwidth, root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
+            
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
@@ -72,17 +82,34 @@ class SquaredTreemapDrawer(object):
             inbordersize = child.getProperty('inbordersize')
             
             self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), inbordersize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
-            
+                    
             if child.getProperty('captionsize') > 0.0:
                 txt = child.getProperty('captiontext')
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
+                clipwidth = 0.0
+                if (child.getProperty('width') >= child.getProperty('captionsize')) and child.getProperty('hasannex'):
+                    clipx = child.getProperty('x') + child.getProperty('width') - child.getProperty('captionsize')
+                    clipy = child.getProperty('y')
+                    clipwidth = child.getProperty('captionsize')
+                    clipheight = child.getProperty('captionsize')
+                    self.printSVG('/home/kblaszcz/Desktop/paperclip.svg',clipx, clipy, clipwidth, clipheight)
+                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize - clipwidth, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
                 
-            self.vtree.traverseInto(child)
+            
+            self.vtree.traverseIntoChild(child)
             self.drawRecursion()
             self.vtree.traverseBack()
         
         
     def drawRect(self, x, y, subwidth, subheight, bordersize, level, fillcolor, strokecolor, radiallight):
+#        x=round(x,0)
+#        y=round(y,0)
+#        subwidth=round(subwidth,0)
+#        subheight=round(subheight,0)
+#        
+#        if subwidth == 0: return
+
+        if subwidth <= 1.0 or subheight <= 1.0: return
+        
         pix_x = 1.0/self.mapwidth
         pix_y = 1.0/self.mapheight
         
@@ -140,17 +167,12 @@ class SquaredTreemapDrawer(object):
         
         radial.add_color_stop_rgba(0.0, r, g, b, a)
         radial.add_color_stop_rgba(0.5, r, g, b, 0.0)
-#        
-#        mx = radial.get_matrix()
-#        if maxsize == width:
-#            mx.scale(1,ratio )
-#            mx.translate(x0, y0*ratio)
-#        elif maxsize == height:
-#            mx.scale(1.0/ratio,1)
-#            mx.translate(x0/ratio, y0)
-#
-#        radial.set_matrix(mx)
-#        
+#        self.ctx.set_source_surface(image.,0.0,0.0)
+#        image.render_cairo(self.ctx)
+
+#        s1.write_to_png("/home/kblaszcz/Desktop/atest.png")
+#        self.ctx.set_source_surface(s1)     
+
         self.ctx.rectangle (x0,y0,width,height) # Rectangle(x0, y0, x1, y1)
         self.ctx.set_source (radial)
         self.ctx.fill ()
@@ -181,6 +203,33 @@ class SquaredTreemapDrawer(object):
 
         self.ctx.set_source_rgba(r,g,b,a) 
         self.ctx.stroke ()
+        
+    def printSVG(self, svgfilename = '', x = 0.0, y=0.0, width=0.0, height=0.0):
+        x = float(x)
+        y = float(y)
+        width = float(width)
+        height = float(height)
+        if svgfilename == '': return
+        self.ctx.save()#backup transformation matrix, scale and translate will change it
+        self.ctx.scale (1.0/self.mapwidth, 1.0/self.mapheight)
+        
+        image = rsvg.Handle(svgfilename)
+        imgwidth, imgheight = image.get_dimension_data()[:2]
+        imgwidth = float(imgwidth)
+        imgheight = float(imgheight)
+        assert(imgwidth>0 and imgheight>0)
+        if (width == 0 and height == 0):
+            scalex = 1.0
+            scaley = 1.0
+        else:
+            scalex = width/imgwidth
+            scaley = height/imgheight
+        self.ctx.scale(scalex, scaley)
+        self.ctx.translate(x/scalex,y/scaley)
+        
+        image.render_cairo(self.ctx)
+        #restore transformation matrix
+        self.ctx.restore()
         
     def printText(self, text, x, y, max_text_width, max_text_height, isbold): #text, x, y, subwidth, subheight, bordersize, level):
         pix_x = 1.0/self.mapwidth

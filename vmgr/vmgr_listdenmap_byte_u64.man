@@ -19,7 +19,7 @@ lists all existing quadruplets model/media_letter/density/capacity in the CASTOR
 Volume Manager.
 .TP
 .I flags
-may be one of the following constant:
+may be one of the following constants:
 .RS
 .TP
 .B VMGR_LIST_BEGIN

@@ -32,16 +32,25 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %setup -q
 
 %build
+# rpmbuild --define="compilenostk 1" ...
+%if 0%{?compilenostk:1} > 0
+%define compiling_nostk 1
+export CASTOR_NOSTK=%compiling_nostk
+%endif
+
+# rpmbuild --define "clientonly 1" ...
+%if 0%{?clientonly:1} > 0
+%define compiling_client 1
+export CASTOR_CLIENT=%compiling_client
+# Suppress oracompile.py warnings in clientonly mode
+export ORACOMPILE_OPTIONS="--quiet"
+%endif
+
 # define castor version (modified by maketar.sh to put the exact version)
 MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
 MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
-%if 0%{?clientonly:1} > 0
-%define compiling_client 1
-# Suppress oracompile.py warnings in clientonly mode
-export ORACOMPILE_OPTIONS="--quiet"
-%endif
 ./configure
 %if %compiling_client
 (cd h; ln -s . shift)

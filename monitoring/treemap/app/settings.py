@@ -129,6 +129,9 @@ REL_STATUS_DICT = "/statusfiles"
 #Where to find icons
 REL_ICON_DICT = "/images/icons"
 
+#Where to find svgs
+REL_SVG_DICT = "/images/svg"
+
 #Where to find graphics for the progress bar
 REL_PBARIMG_DICT = "/images/progressbar"
 

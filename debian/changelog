@@ -1,64 +1,20 @@
-castor (2.1.10-9011) unstable; urgency=low
+castor (2.1.11-0) unstable; urgency=low
 
-  *  2.1.10 development release - tapgateway release branch
+  * First 2.1.11 production release
 
- -- Eric Cano, 25 Feb 2011
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 02 May 2011 08:00:00 +0100
 
-castor (2.1.10-9010) unstable; urgency=low
+castor (2.1.10-2) unstable; urgency=low
 
-  *  2.1.10 development release - tapgateway release branch
+  * Third 2.1.10 production release
 
- -- Eric Cano, 24 Feb 2011
-
-castor (2.1.10-1) unstable; urgency=low
-
-  * Second 2.1.10 production release
-
- -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 07 Feb 2011 08:00:00 +0100
-
-castor (2.1.10-9007) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
-castor (2.1.10-9006) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
-castor (2.1.10-9005) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
- -- Steven Murray, 14 Dec 2010
-
-castor (2.1.10-9004) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
- -- Steven Murray, 14 Dec 2010
-
-castor (2.1.10-9003) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
- -- Eric Cano, 07 Dec 2010
-
- castor (2.1.10-9002) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
- -- Eric Cano, 24 Nov 2010
-
- castor (2.1.10-9001) unstable; urgency=low
-
-  *  2.1.10 development release - tapgateway release branch
-
- -- Eric Cano, 24 Nov 2010
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 02 May 2011 08:00:00 +0100
 
 castor (2.1.10-1) unstable; urgency=low
 
   * Second 2.1.10 production release
 
- -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 07 Feb 2011 08:00:00 +0100
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 03 Mar 2011 08:00:00 +0100
 
 castor (2.1.10-0) unstable; urgency=low
 

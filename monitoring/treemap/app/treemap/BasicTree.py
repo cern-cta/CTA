@@ -85,7 +85,7 @@ class BasicTree(object):
         return self.node_inscope
         
 
-    def traverseInto(self, child):
+    def traverseIntoChild(self, child):
         if not self.graph.has_node(child) and self.graph.has_edge(self.node_inscope, child):
             raise Exception( 'No child like ' + child.__str__() + ' found')
         if self.root == None:

@@ -96,7 +96,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
                     if (child.filename == filename):
                         child.requestscount = child.requestscount + 1
                         childintree = True
-                        tree.traverseInto(child)
+                        tree.traverseIntoChild(child)
                         break
             
             if not childintree:
@@ -109,7 +109,7 @@ def generateRequestsTree(start, stop, reqmodel, statusfilename):
                     entrytoadd.filename = filename
                     entrytoadd.requestscount = 1
                     tree.addChild(entrytoadd)
-                    tree.traverseInto(entrytoadd)
+                    tree.traverseIntoChild(entrytoadd)
             
             oldpos = pos + 1
             if pos == len(name): break
@@ -177,10 +177,10 @@ def traverseToRequestInTree(name, reqmodel):
         
         for child in tree.getChildren():
             if child.filename == name:
-                tree.traverseInto(child)
+                tree.traverseIntoChild(child)
                 return tree
             if child.filename == filename:
-                tree.traverseInto(child)
+                tree.traverseIntoChild(child)
                 break
             
         pos = name.find('/', pos + 1)

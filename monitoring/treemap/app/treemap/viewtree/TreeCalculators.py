@@ -13,34 +13,47 @@ width - rectangle width
 height - rectangle height
 x - rectangle x pos in the image
 y - rectangle y pos in the image
-nbchildren - number of children the node has (for potential use)
 
 @author: kblaszcz
 '''
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props
+from app.treemap.objecttree.Annex import Annex
+from app.treemap.objecttree.ObjectTree import ObjectTree
+from app.treemap.viewtree.ViewNode import ViewNode
 from app.treemap.viewtree.ViewTree import ViewTree
 import math
-from app.treemap.viewtree.ViewNode import ViewNode
-from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 
 class SquaredTreemapCalculator(object):
     '''
     classdocs
     '''
-    def __init__(self, otree, treemap_props):
+    def __init__(self, treemap_props):
         '''
         Constructor
         '''
-        self.otree = otree
         self.treemap_props = treemap_props
         self.spacesize = self.treemap_props['spacesize']
         self.minspacesize = self.treemap_props['minspacesize']
         self.captionsize = self.treemap_props['captionsize']
-        
-        self.treemap_props['objecttree'] = self.otree
+        if not treemap_props['padding']:
+            self.spacesize = 0.0
+            
+        try:
+            if not (isinstance(self.treemap_props['objecttree'], ObjectTree)): raise Exception("Object is not of type ObjectTree")
+        except:
+            raise Exception("treemap_props['objecttree'] doesn't exist or is None. You might use TreeBuilder. TreeBuilder creates the tree and updates your treemap_props ")
+        self.otree = self.treemap_props['objecttree']
         
     def calculate(self, optimizefortxt = False, sorted = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
         width = self.treemap_props['pxwidth']
         height = self.treemap_props['pxheight']
+        
+        try:
+            if not (isinstance(self.treemap_props['objecttree'], ObjectTree)): raise Exception("Object is not of type ObjectTree")
+        except:
+            raise Exception("treemap_props['objecttree'] doesn't exist or is None. You might use TreeBuilder. TreeBuilder creates the tree and updates your treemap_props ")
+        self.otree = self.treemap_props['objecttree']
+        
         self.otree.traveseToRoot()
         root = self.otree.getCurrentObject()
         viewtree = ViewTree(treemap_props = self.treemap_props)
@@ -48,24 +61,31 @@ class SquaredTreemapCalculator(object):
         
         vnode = ViewNode()
         vnode.setProperty('treenode', root)
-        vnode.setProperty('captionsize', self.captionsize)
+        if treemap_props['caption']:
+            vnode.setProperty('captionsize', self.captionsize)
+        else:
+            vnode.setProperty('captionsize', 0.0)
+            
         vnode.setProperty('spacesize', self.spacesize)
-        vnode.setProperty('x', 0)
-        vnode.setProperty('y', 0)
+        vnode.setProperty('x', 0.0)
+        vnode.setProperty('y', 0.0)
         vnode.setProperty('width', width)
         vnode.setProperty('height', height)
         vnode.setProperty('level', self.otree.getCurrentObject().getDepth())
-        vnode.setProperty('nbchildren', self.otree.countChildren())
-        
+        if self.otree.getCurrentAnnexChild() is None:
+            vnode.setProperty('hasannex', False)
+        else:
+            vnode.setProperty('hasannex', True)
+            
         viewtree.setRoot(vnode)
-        viewtree.traverseInto(vnode)
+        viewtree.traverseIntoChild(vnode)
         
-        x = self.spacesize
-        y = self.spacesize + self.captionsize
-        width = width - 2*self.spacesize
-        height = height - 2*self.spacesize-self.captionsize
-        
-        if self.spacesize > self.minspacesize: self.spacesize = self.spacesize - 1
+        x = self.spacesize/2.0
+        y = self.spacesize/2.0
+        if treemap_props['caption']: y = y + self.captionsize
+        width = width - self.spacesize
+        height = height - self.spacesize
+        if treemap_props['caption']: height = height - self.captionsize
         
         self.calculateRecursion.__dict__['notextcount'] = 0
         self.calculateRecursion.__dict__["ratiocount"] = 0
@@ -82,7 +102,30 @@ class SquaredTreemapCalculator(object):
     def calculateRecursion(self, startx, starty, width ,height, viewtree, spacesize, minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision):
 
         #calculate the area in square pixels
+#        print "level ", self.otree.getLevel()
         pixels = float(height * width)
+        tnode = self.otree.getCurrentObject()
+        
+        #if item too tiny, display it in Annex again
+        if width <= 1.0 or height <= 1.0: #return
+            if not(isinstance(tnode.getObject(), Annex)):
+                self.otree.displayCurrentAlsoInAnnex(self.treemap_props)
+                return
+            else:
+                return
+#                
+#                self.otree.setAnnexChildToConvenientSize(self.treemap_props)
+#                self.otree.traverseBack()
+#                viewtree.traverseBack()
+#                viewtree.deleteChildren()
+#                parentvnode = viewtree.getCurrentObject();
+#                
+#                self.calculateRecursion(parentvnode.getProperty('x'), parentvnode.getProperty('y'), parentvnode.getProperty('width') ,parentvnode.getProperty('height'), viewtree, parentvnode.getProperty('spacesize'), minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+#                
+#                self.otree.traverseIntoChild(oitem)
+#                viewtree.traverseIntoChild(vitem)
+#                
+#                return
         
         #exclude everyhing that would be smaller than 1 pixel
         if pixels < (1.0+spacesize)*(1.0+spacesize): return
@@ -90,10 +133,11 @@ class SquaredTreemapCalculator(object):
         startyold = starty
         nblines = 0 #counts how many lines are completed before the cleanup code starts
         
-        #go deeper only if parent had a caption
-        parentcsize = viewtree.getCurrentObject().getProperty('captionsize')
-        if parentcsize <= 0.0:
-            return
+        #go deeper only if parent had a caption (in case caption activated)
+        if treemap_props['caption']:
+            parentcsize = viewtree.getCurrentObject().getProperty('captionsize')
+            if parentcsize <= 0.0:
+                return
         
         #children at the current position, ordered from the biggest to smallest, the algorithm works only if children[i] <= children[i+1]
         if sorted:
@@ -200,16 +244,12 @@ class SquaredTreemapCalculator(object):
                 ybeginning = starty
                 #they all together have to be squeezed to same height and parent's size
                 line_height = areasum/linelen 
-                x,y,chheight,chwidth = 0.0, 0.0, 0.0, 0.0
+                chheight,chwidth = 0.0, 0.0
          
                 for ch in line_collection: #calculate the witdth of each child
                     percentage_of_line = ch.evaluate()/percentagesum #normalize percantage values relative to line
                     child_area = percentage_of_line * areasum #area in square pixels which the child will take in that line
                     child_width = child_area/line_height #height and area are known, now you can calculate width of the child
-                    
-                    #calculate final values
-                    x = startx + spacesize
-                    y = starty + spacesize
                     
                     if(direction == HORIZONTAL):
                         chwidth = child_width 
@@ -223,23 +263,26 @@ class SquaredTreemapCalculator(object):
                     
                     #store the calculated values
                     vn = ViewNode()
-                    if 2*captionsize > (chheight-2.0):
+                    if (2*captionsize > (chheight-2.0)) or not treemap_props['caption']:
                         vn.setProperty('captionsize', 0.0)
                     else:
                         vn.setProperty('captionsize', captionsize)
                         
                     vn.setProperty('treenode', ch)
                     vn.setProperty('spacesize', spacesize)
-                    vn.setProperty('x', x)
-                    vn.setProperty('y', y)
-                    vn.setProperty('width', chwidth - 2.0 * spacesize)
-                    vn.setProperty('height', chheight - 2.0 * spacesize)
+                    vn.setProperty('x', startx + spacesize/2.0)
+                    vn.setProperty('y', starty + spacesize/2.0)
+                    vn.setProperty('width', chwidth - spacesize)
+                    vn.setProperty('height', chheight - spacesize)
                     vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                     
                     currently_inscope = self.otree.getCurrentObject()
-                    self.otree.traverseInto(child)
-                    vn.setProperty('nbchildren', self.otree.countChildren())
-                    self.otree.traverseInto(currently_inscope)
+                    self.otree.traverseIntoChild(ch)
+                    if self.otree.getCurrentAnnexChild() is None:
+                        vn.setProperty('hasannex', False)
+                    else:
+                        vn.setProperty('hasannex', True)
+                    self.otree.traverseBack()
                     
                     totalchildnodes.append(ch)
                     totalviewnodes.append(vn)
@@ -310,16 +353,11 @@ class SquaredTreemapCalculator(object):
             ybeginning = starty
             
             line_height = areasum/linelen
-            x,y = 0.0, 0.0
             
             for ch in line_collection:
                 percentage_of_line = ch.evaluate()/percentagesum
                 child_area = percentage_of_line * areasum
                 child_width = child_area/line_height
-                
-                #calculate final values
-                x = startx+spacesize
-                y = starty+spacesize
                 
                 if(direction == HORIZONTAL):
                     chwidth = child_width
@@ -328,28 +366,32 @@ class SquaredTreemapCalculator(object):
                     chheight = child_width
                     chwidth = line_height
                 
-                if (((chwidth-2.0*spacesize) <= 0) or ((chheight-2.0*spacesize) <= 0)):
+                if (((chwidth-spacesize) <= 0) or ((chheight-spacesize) <= 0)):
+                    #self.treemap_props['objecttree'].displayInAnnex(child)
                     continue
-                    
                 #store the calculated values
                 vn = ViewNode()
-                if 2.0 * captionsize > (chheight-2.0):
+                if (2.0 * captionsize > (chheight-2.0)) or not treemap_props['caption']:
                     vn.setProperty('captionsize', 0.0)
                 else:
                     vn.setProperty('captionsize', captionsize)
                     
                 vn.setProperty('treenode', ch)
                 vn.setProperty('spacesize', spacesize)
-                vn.setProperty('x', x)
-                vn.setProperty('y', y)
-                vn.setProperty('width', chwidth-2.0*spacesize)
-                vn.setProperty('height', chheight-2.0*spacesize)
+                vn.setProperty('x', startx+spacesize/2.0)
+                vn.setProperty('y', starty+spacesize/2.0)
+                vn.setProperty('width', chwidth-spacesize)
+                vn.setProperty('height', chheight-spacesize)
                 vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
                 
                 currently_inscope = self.otree.getCurrentObject()
-                self.otree.traverseInto(child)
-                vn.setProperty('nbchildren', self.otree.countChildren())
-                self.otree.traverseInto(currently_inscope)
+                self.otree.traverseIntoChild(ch)
+                if self.otree.getCurrentAnnexChild() is None:
+                    vn.setProperty('hasannex', False)
+                else:
+                    vn.setProperty('hasannex', True)
+                    
+                self.otree.traverseBack()
                     
                 totalchildnodes.append(ch)
                 totalviewnodes.append(vn)
@@ -362,20 +404,23 @@ class SquaredTreemapCalculator(object):
                     starty = starty + child_width
             
         #now that parent is ready, do recursion
-        
-        if spacesize > minspacesize: spacesize = spacesize - 1
+        if treemap_props['padding']:
+            if spacesize > minspacesize: spacesize = spacesize - self.treemap_props['spacesizedecrease']
         
         for i in range(len(totalchildnodes)):
-            self.otree.traverseInto(totalchildnodes[i])
-            viewtree.traverseInto(totalviewnodes[i])
+            #chnname = str(totalchildnodes[i].getObject())
+            #print chnname
+            self.otree.traverseIntoChild(totalchildnodes[i])
+            viewtree.traverseIntoChild(totalviewnodes[i])
             
             #see if it is big enough to have a caption and do recursion
+            #(startx, starty, width ,height, viewtree, spacesize, minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
             csize = totalviewnodes[i].getProperty('captionsize')
             if csize <= 0.0:
                 self.calculateRecursion.__dict__['notextcount'] = self.calculateRecursion.__dict__['notextcount'] + 1
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y')+1, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2, viewtree, spacesize, minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x')+spacesize/2.0, totalviewnodes[i].getProperty('y')+spacesize/2.0, totalviewnodes[i].getProperty('width')-spacesize ,totalviewnodes[i].getProperty('height')-spacesize, viewtree, spacesize, minspacesize, captionsize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
             else:
-                self.calculateRecursion(totalviewnodes[i].getProperty('x') + 1, totalviewnodes[i].getProperty('y') + 1 + csize, totalviewnodes[i].getProperty('width')-2 ,totalviewnodes[i].getProperty('height')-2 - csize, viewtree, spacesize, minspacesize, csize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].getProperty('x')+spacesize/2.0, totalviewnodes[i].getProperty('y') + csize + spacesize/2.0, totalviewnodes[i].getProperty('width')-spacesize ,totalviewnodes[i].getProperty('height') - csize-spacesize, viewtree, spacesize, minspacesize, csize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
                 
             self.otree.traverseBack()
             viewtree.traverseBack()

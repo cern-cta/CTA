@@ -5,6 +5,7 @@ The class embeds model instances in TreeNodes and holds them in a tree structure
 
 @author: kblaszcz
 '''
+from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.TreeNode import TreeNode
 import networkx as nx
 import warnings
@@ -149,7 +150,7 @@ class ObjectTree(object):
         return self.node_inscope
         
 
-    def traverseInto(self, child):
+    def traverseIntoChild(self, child):
         if not self.graph.has_node(child) and self.graph.has_edge(self.node_inscope, child):
             raise Exception( 'No child like ' + child.__str__() + ' found')
         if self.root == None:
@@ -204,7 +205,12 @@ class ObjectTree(object):
         return self.depth_inscope
     
     def getRootAnnex(self):
-        currinscope = self.node_inscope
+        node_inscope_backup = self.node_inscope
+        children_sorted_backup = self.children_sorted
+        children_cached_backup = self.children_cached
+        depth_inscope_backup = self.depth_inscope
+        traversal_path_backup = self.traversal_path
+        
         self.traveseToRoot()
         firstlevelitems =self.getChildren()
 
@@ -215,10 +221,73 @@ class ObjectTree(object):
                 anxnode = item
                 break
         
-        self.traverseInto(currinscope)
+        self.node_inscope = node_inscope_backup
+        self.children_sorted = children_sorted_backup 
+        self.children_cached = children_cached_backup 
+        self.depth_inscope = depth_inscope_backup 
+        self.traversal_path = traversal_path_backup 
         
         return anxnode
+    
+    def displayCurrentAlsoInAnnex(self, treemap_props):
+        item = self.node_inscope
+        self.traverseBack()
+        parent = self.node_inscope
+        anxnode = self.getCurrentAnnexChild()
         
+        #if Annex container is missing, create one
+        if (anxnode is None):
+            excludednodes = []
+            for sibling in self.children_inscope:
+                excludednodes.append(sibling.getObject())
+                
+            newannex = Annex(treemap_props['levelrules'], self.depth_inscope, parent.getObject(), excludednodes, 0)
+            newannex.evaluation = 0.0
+            newannex.setCorrectedEvaluation(item.getEvalValue())
+            newannex.activateNode(item)
+            item.setSiblingsSum(item.getEvalValue())
+            
+            chclassname = newannex.getClassName()
+            chattrname = treemap_props['levelrules'].getAttrNameFor(self.depth_inscope, chclassname)
+            chparam = treemap_props['levelrules'].getParamFor(self.depth_inscope, chclassname)
+            parentmethodname =  treemap_props['levelrules'].getParentMethodNameFor(self.depth_inscope, chclassname)
+            self.addChild(newannex, chattrname, parentmethodname, chparam)
+            
+        else:
+            anxnode.getObject().activateNode(item)
+        
+        self.traverseIntoChild(item)
+    
+    def getCurrentAnnexChild(self): 
+        self.updateChildren()
+        anxnode = None
+        for child in self.children_inscope:
+            if child.getObject().getClassName() == 'Annex':
+                anxnode = child
+                break
+            
+        return anxnode
+        
+#    def setAnnexChildToConvenientSize(self, treemap_props):
+#        item = self.node_inscope
+#        self.traverseBack()
+#        anxnode = self.getCurrentAnnexChild()
+#            
+#        if (anxnode is None):
+#            return
+#        
+#        newsiblingssum = anxnode.getSiblingsSum()
+#        anxsize = anxnode.getEvalValue()
+#        newsize = anxnode.getSiblingsSum()/len(self.children_inscope)
+#        newsiblingssum = newsiblingssum + newsize - anxsize
+#        
+#        for sibling in self.children_inscope:
+#            sibling.setSiblingsSum(newsiblingssum)
+#            
+#        self.traverseIntoChild(item)
+
+            
+            
         
 
         

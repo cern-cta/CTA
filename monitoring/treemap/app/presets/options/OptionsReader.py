@@ -35,6 +35,22 @@ class OptionsReader(object):
         except:
             return self.getStandardValue(optionname)
         
+    def setOption(self, optionname, presetid, value):
+        assert(isinstance(optionname, str))
+        
+        optset = app.presets.Presets.getPresetByStaticId(presetid).optionsset
+        for urlopt in optset:
+            try:
+                if urlopt.getName() == optionname:
+                    thevalue = urlopt.stringToValue(urlopt.valueToString(value))
+                    if (thevalue != value): raise Warning("setOption couldn't set " + optionname + " to " + value + ": using " + thevalue + " instead")
+                    self.optdict[optionname] = thevalue
+                    self.includeasstring[urlopt.getName()] = True
+                    return
+            except:
+                pass
+        raise Exception("No option "+ optionname+ " for presetid " + presetid+ " found!")
+        
     def extendOptions(self, extension, presetid):
         assert(isinstance(extension, str))
         self.options = self.options + extension;

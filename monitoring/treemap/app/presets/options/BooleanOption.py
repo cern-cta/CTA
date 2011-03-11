@@ -7,11 +7,12 @@ and it renders html code to represent a boolean value as a check box
 '''
 from django.template.loader import render_to_string
 import re
+from app.presets.options.OptionInterface import OptionInterface
 
 
-class BooleanOption(object):
+class BooleanOption(OptionInterface):
 
-    def __init__(self, userfriendlyname, name, template, stdval):
+    def __init__(self, userfriendlyname, name, template, stdval, visible = True):
         self.name = name
         self.userfriendlyname = userfriendlyname
         self.valueexpr =  r'(?P<boolean>true|false)'
@@ -19,6 +20,7 @@ class BooleanOption(object):
         self.fullexpression = r'.*?' + self.name+"="+self.valueexpr + r'.*?'
         self.stdval = stdval
         self.template = template
+        self.visible = visible
         
     def getFullExpression(self):
         return self.fullexpression 
@@ -65,6 +67,7 @@ class BooleanOption(object):
         return self.stdval
     
     def toHtml(self, options):
+        if not self.visible: return ''
         try:
             checked = self.optionsToValue(options)
         except:

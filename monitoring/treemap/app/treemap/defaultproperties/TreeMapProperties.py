@@ -14,7 +14,6 @@ width - rectangle width
 height - rectangle height
 x - rectangle x pos in the image
 y - rectangle y pos in the image
-nbchildren - number of children the node has (for potential use)
 
 set by TreeDesigner:
 captiontext - text string to show in the rectangle caption
@@ -33,16 +32,20 @@ from app.treemap.viewtree.ViewTree import ViewTree
 
 treemap_props = {
 'pxwidth': 800.0, #width
-'pxheight': 600.0, #height
-'objecttree': None, #will be set when available (SquaredTreemapCalculator)
-'viewtree': None, #will be set when available (SquaredTreemapCalculator)   
-'captionsize': 12.0,#captionsize
-'spacesize': 3.0,
-'minspacesize': 1.0,
+'pxheight': 600.0, #height  
+'captionsize': 12.0,
+'spacesize': 2.0,
+'spacesizedecrease': 0.5,
+'minspacesize': 2.0,
 'inbordersize': 0.0,
-'captionfontsize': 12.0, #captionfontsize
+'captionfontsize': 12.0, 
 'radiallightbrightness': 0.4,
-'captiontextisbold': True #captiontextisbold
+'captiontextisbold': True, 
+'caption': True,
+'padding': True,
+'objecttree': None, #will be set when available (by TreeBuilder)
+'viewtree': None, #will be set when available (by SquaredTreemapCalculator) 
+'levelrules': None,#will be set when available (by the view)
 }
 
 def checkAndPartiallyCorrectTreemapProps(props):
@@ -59,16 +62,16 @@ def checkAndPartiallyCorrectTreemapProps(props):
     if captionsize > height:
         props['captionsize'] = height * 0.02
         
-    if spacesize > min(width, height) * 0.25:
-        props['spacesize'] = 4.0
+    if spacesize > min(width, height) * 0.5:
+        props['spacesize'] = 0.0
         
     if minspacesize <= spacesize and minspacesize >= 0.0:
         props['minspacesize'] = minspacesize
         
     assert(isinstance(props['objecttree'], ObjectTree) or isinstance(props['objecttree'], None))
         
-    if inbordersize > min(width, height) * 0.1:
-        props['inbordersize'] = 1.0
+    if inbordersize > min(width, height) * 0.5:
+        props['inbordersize'] = 0.0
 
         
     if captionfontsize > captionsize - inbordersize:

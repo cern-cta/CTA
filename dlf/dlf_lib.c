@@ -26,6 +26,7 @@
 #include "dlf_lib.h"
 #include "dlf_api.h"
 #include <string.h>
+#include <pthread.h>
 #ifdef __APPLE__
 #include <mach/mach.h>
 #endif
@@ -35,6 +36,21 @@ static char *messages[DLF_MAX_MSGTEXTS];
 static int  initialized = 0;
 static int  maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
 static int  logmask     = 0xff;
+
+static pthread_key_t  reg_key;
+static pthread_once_t reg_key_once = PTHREAD_ONCE_INIT;
+
+
+/*---------------------------------------------------------------------------
+ * _tls_reg_key_alloc & _tls_req_data_free
+ *---------------------------------------------------------------------------*/
+void _tls_req_data_free(void *data) {
+  free(data);
+}
+
+static void _tls_reg_key_alloc() {
+  pthread_key_create(&reg_key, &_tls_req_data_free);
+}
 
 
 /*---------------------------------------------------------------------------
@@ -183,6 +199,9 @@ int dlf_init(const char *ident, int maskpri) {
     maxmsglen = size;
   }
 
+  /* Create the thread-specific data key */
+  pthread_once(&reg_key_once, _tls_reg_key_alloc);
+
   /* Open syslog */
   openlog(ident, LOG_PID, LOG_LOCAL3);
   initialized = 1;
@@ -214,9 +233,12 @@ int dlf_shutdown(void) {
   /* Close syslog */
   closelog();
 
+  /* Delete the thread-specific data key */
+  pthread_key_delete(reg_key_once);
+
   /* Reset the defaults */
-  initialized = 0;
   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
+  initialized = 0;
 
   return (0);
 }
@@ -257,9 +279,6 @@ int dlf_regtext(unsigned int msgno, const char *message) {
     return (-1);
   }
 
-  /* Record the message using the INFO priority and the LOCAL2 facility */
-  syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, message);
-
   return (0);
 }
 
@@ -268,11 +287,11 @@ int dlf_regtext(unsigned int msgno, const char *message) {
  * dlf_write
  *---------------------------------------------------------------------------*/
 int dlf_write(Cuuid_t reqid,
-                       unsigned int priority,
-                       unsigned int msgno,
-                       struct Cns_fileid *ns,
-                       int numparams,
-                       ...) {
+              unsigned int priority,
+              unsigned int msgno,
+              struct Cns_fileid *ns,
+              int numparams,
+              ...) {
 
   /* Variables */
   dlf_write_param_t *params = NULL;
@@ -376,11 +395,11 @@ int dlf_write(Cuuid_t reqid,
  * dlf_writep
  *---------------------------------------------------------------------------*/
 int dlf_writep(Cuuid_t reqid,
-                        unsigned int priority,
-                        unsigned int msgno,
-                        struct Cns_fileid *ns,
-                        unsigned int numparams,
-                        dlf_write_param_t params[]) {
+               unsigned int priority,
+               unsigned int msgno,
+               struct Cns_fileid *ns,
+               unsigned int numparams,
+               dlf_write_param_t params[]) {
 
   /* Variables */
   char   uuidstr[CUUID_STRING_LEN + 1];
@@ -536,6 +555,29 @@ int dlf_writep(Cuuid_t reqid,
       buffer[maxmsglen - 1] = '\n';
       break;
     }
+  }
+
+  /* If this is the first time the current thread has processed a message of type
+   * msgno then record a registration message. (See #77741)
+   */
+  unsigned int *registered = pthread_getspecific(reg_key);
+  if (registered == NULL) {
+    unsigned int *tls = (unsigned int *)
+      calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
+    if (tls == NULL) {
+      return (-1);
+    }
+    pthread_setspecific(reg_key, (void *)tls);
+    registered = pthread_getspecific(reg_key);
+  }
+
+  /* Sanity check: This should never happen! */
+  if (registered == NULL) {
+    return (-1);
+  }
+  if (registered[msgno] == 0) {
+    syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, messages[msgno]);
+    registered[msgno] = 1;
   }
 
   /* Terminate the string */
