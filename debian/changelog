@@ -1,3 +1,9 @@
+castor (2.1.11-0) unstable; urgency=low
+
+  * First 2.1.11 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 02 May 2011 08:00:00 +0100
+
 castor (2.1.10-2) unstable; urgency=low
 
   * Third 2.1.10 production release
