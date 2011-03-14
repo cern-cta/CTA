@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.7 $ $Date: 2009/05/18 13:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

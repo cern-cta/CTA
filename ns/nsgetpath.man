@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.4 $ $Date: 2009/06/19 09:28:58 $ CERN IT/DM
 .\" Copyright (C) 2003 by CERN/IT/DM
 .\" All rights reserved
 .\"
