@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-/*
- * @(#)$RCSfile: Cns_struct.h,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:32:41 $ CERN IT-ADC/CA Jean-Philippe Baud
- */
-
 #ifndef _CNS_STRUCT_H
 #define _CNS_STRUCT_H
 

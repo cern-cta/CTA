@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-/*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.26 $ $Date: 2009/07/09 12:43:40 $ CERN IT-PDP/DM Jean-Philippe Baud
- */
-
 #ifndef _CNS_API_H
 #define _CNS_API_H
 #include <utime.h>
