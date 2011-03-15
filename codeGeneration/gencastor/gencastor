@@ -8,8 +8,6 @@
 # @(#)$RCSfile: gencastor,v $ $Revision: 1.20 $ $Release$ $Date: 2009/06/30 10:45:58 $ $Author: itglp $
 # 
 
-set original_path=`pwd`
-
 if ("$1" == "-h" || "$1" == "") then
   echo "Usage :"
   echo "  $0 [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
@@ -70,7 +68,7 @@ foreach f (`find . -type f`)
   else
     if (-f ${WORKDIR}/${f}_clone) then
       #echo Merging clone before upgrading $f
-      ${original_path}/`dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
+      `dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
       mv ${TMPDIR}/${f}_merge ${TMPDIR}/${f}
     endif
     set d = `diff -q ${WORKDIR}/${f} ${TMPDIR}/${f}`
