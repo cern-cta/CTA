@@ -200,14 +200,14 @@ class Dirs(models.Model, ModelInterface):
     def getNaviName(self):
         return self.name  
 
-    #an empty urlrest must be accepted and it should define the very root of the tree
+    #an empty rid must be accepted and it should define the very root of the tree
     #in case there is no default root you have to pick a random valid object
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
         dirname = None
-        if urlrest.rfind('/') == (len(urlrest)-1): 
-            dirname = urlrest[:len(urlrest)-1]
+        if rid.rfind('/') == (len(rid)-1): 
+            dirname = rid[:len(rid)-1]
         else:
-            dirname = urlrest
+            dirname = rid
         if dirname == '': dirname = '/castor'#if empty choose a root Directory that makes sense
         found = getDirByName(dirname)#Dirs.objects.get(fullname=dirname)
         return found
@@ -278,14 +278,14 @@ class CnsFileMetadata(models.Model, ModelInterface):
     def getClassName(self):
         return self.__class__.__name__
     
-    #an empty urlrest must be accepted and it should define the very root of the tree
+    #an empty rid must be accepted and it should define the very root of the tree
     #in case there is no default root you have to pick a random valid object
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
         fullpath = None
-        if urlrest.rfind('/') == (len(urlrest)-1): 
-            fullpath = urlrest[:len(urlrest)-1]
+        if rid.rfind('/') == (len(rid)-1): 
+            fullpath = rid[:len(rid)-1]
         else:
-            fullpath = urlrest
+            fullpath = rid
         
         pos = fullpath.rfind('/')
         if pos == -1:
@@ -380,8 +380,8 @@ class Requestsatlas(models.Model, ModelInterface):
         return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsatlas')
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacement(rid, statusfilename, 'Requestsatlas')
     
     def getChildren(self):
         tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
@@ -484,8 +484,8 @@ class Requestscms(models.Model, ModelInterface):
         return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestscms')
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacement(rid, statusfilename, 'Requestscms')
     
     def getChildren(self):
         tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
@@ -589,8 +589,8 @@ class Requestsalice(models.Model, ModelInterface):
         return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestsalice')
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacement(rid, statusfilename, 'Requestsalice')
     
     def getChildren(self):
         tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
@@ -694,8 +694,8 @@ class Requestslhcb(models.Model, ModelInterface):
         return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestslhcb')
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacement(rid, statusfilename, 'Requestslhcb')
     
     def getChildren(self):
         tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)
@@ -800,8 +800,8 @@ class Requestspublic(models.Model, ModelInterface):
         return self.__class__.__name__
     
     #finds the closest Object in the tree if the requested one doesn't exist
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename = None):
-        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, 'Requestspublic')
+    def findObjectByIdReplacementId(self, rid, statusfilename = None):
+        return app.dirs.ModelSpecificFunctions.RequestsFunctions.findRequestObjectByIdReplacement(rid, statusfilename, 'Requestspublic')
     
     def getChildren(self):
         tree = app.dirs.ModelSpecificFunctions.RequestsFunctions.traverseToRequestInTree(self.filename, self.__class__.__name__)

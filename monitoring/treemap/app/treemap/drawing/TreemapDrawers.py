@@ -57,13 +57,14 @@ class SquaredTreemapDrawer(object):
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
         if treemap_props['caption']:
-            clipwidth = 0.0
+            clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
             if (root.getProperty('width') >= root.getProperty('captionsize')) and root.getProperty('hasannex'):
                 clipx = root.getProperty('x') + root.getProperty('width') - root.getProperty('captionsize')
                 clipy = root.getProperty('y')
                 clipwidth = root.getProperty('captionsize')
                 clipheight = root.getProperty('captionsize')
                 self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg',clipx, clipy, clipwidth, clipheight)
+            root.setProperty('clipcoords', {'x':clipx,'y':clipy,'width':clipwidth,'height':clipheight})
             self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize') - clipwidth, root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
             
         self.drawRecursion()
@@ -86,12 +87,14 @@ class SquaredTreemapDrawer(object):
             if child.getProperty('captionsize') > 0.0:
                 txt = child.getProperty('captiontext')
                 clipwidth = 0.0
+                clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
                 if (child.getProperty('width') >= child.getProperty('captionsize')) and child.getProperty('hasannex'):
                     clipx = child.getProperty('x') + child.getProperty('width') - child.getProperty('captionsize')
                     clipy = child.getProperty('y')
                     clipwidth = child.getProperty('captionsize')
                     clipheight = child.getProperty('captionsize')
-                    self.printSVG('/home/kblaszcz/Desktop/paperclip.svg',clipx, clipy, clipwidth, clipheight)
+                    self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg' ,clipx, clipy, clipwidth, clipheight)
+                child.setProperty('clipcoords', {'x':clipx,'y':clipy,'width':clipwidth,'height':clipheight})
                 self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize - clipwidth, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
                 
             
