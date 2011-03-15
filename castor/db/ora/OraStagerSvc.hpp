@@ -465,15 +465,6 @@ namespace castor {
                                             std::string confKey,
                                             std::string defaultValue)
           throw (castor::exception::Exception);
-        
-        /**
-         * Changes the status of the corresponding tape to PENDING directly,
-         * bypassing the recall policy (if none defined)
-         * @param tape.id in the DB.
-         * @exception in case of an error
-         */
-        virtual void resurrectSingleTapeForRecall( u_signed64 tapeId)
-          throw (castor::exception::Exception);
 
       private:
 
@@ -652,13 +643,6 @@ namespace castor {
 
         /// SQL statement object for function getConfigOption
         oracle::occi::Statement *m_getConfigOptionStatement;
-
-        /// SQL statement for function resurrectSingleTapeForRecall
-        static const std::string s_resurrectSingleTapeForRecallStatementString;
-
-        /// SQL statement object for function resurrectSingleTapeForRecall
-        oracle::occi::Statement *m_resurrectSingleTapeForRecallStatement;
-
       }; // end of class OraStagerSvc
 
     } // end of namespace ora

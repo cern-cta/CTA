@@ -199,10 +199,6 @@ const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString
 const std::string castor::db::ora::OraStagerSvc::s_getConfigOptionStatementString =
   "SELECT getConfigOption(:1, :2, :3) FROM Dual";
 
-/// SQL statement for resurrectSingleTapeForRecall
-const std::string castor::db::ora::OraStagerSvc::s_resurrectSingleTapeForRecallStatementString =
-  "BEGIN resurrectSingleTapeForRecall(:1); END;";
-
 //------------------------------------------------------------------------------
 // OraStagerSvc
 //------------------------------------------------------------------------------
@@ -231,8 +227,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
   m_deletePriorityStatement(0),
-  m_getConfigOptionStatement(0),
-  m_resurrectSingleTapeForRecallStatement(0) {
+  m_getConfigOptionStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -288,7 +283,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
     if (m_getConfigOptionStatement) deleteStatement(m_getConfigOptionStatement);
-    if (m_resurrectSingleTapeForRecallStatement) deleteStatement(m_resurrectSingleTapeForRecallStatement);
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -316,7 +310,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
   m_getConfigOptionStatement = 0;
-  m_resurrectSingleTapeForRecallStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1581,12 +1574,11 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       case castor::stager::TAPE_FINISHED:
       case castor::stager::TAPE_FAILED:
       case castor::stager::TAPE_UNKNOWN:
-        tp->setStatus(castor::stager::TAPE_WAITPOLICY);
+        if (recallerPolicyStr.empty())
+          tp->setStatus(castor::stager::TAPE_PENDING);
+        else
+          tp->setStatus(castor::stager::TAPE_WAITPOLICY);
         cnvSvc()->updateRep(&ad, tp, false);
-        if (recallerPolicyStr.empty()) {
-          /* If there is not policy, just be the rechandler and say go! */
-          resurrectSingleTapeForRecall(tp->id());
-        }
         break;
       default:
         break;
@@ -1845,31 +1837,6 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
     ex.getMessage()
       << "Error caught in getConfigOption(): confClass = "
       << confClass << ", confKey = " << confKey
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// resurrectSingleTapeForRecall
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::resurrectSingleTapeForRecall(u_signed64 tapeId)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_resurrectSingleTapeForRecallStatement) {
-      m_resurrectSingleTapeForRecallStatement =
-        createStatement(s_resurrectSingleTapeForRecallStatementString);
-    }
-    // Execute the statement
-    m_resurrectSingleTapeForRecallStatement->setInt(1, tapeId);
-    m_resurrectSingleTapeForRecallStatement->executeQuery();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in resurrectSingleTapeForRecall(): tapeId = "
-      << tapeId
       << std::endl << e.what();
     throw ex;
   }

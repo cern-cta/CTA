@@ -1558,6 +1558,7 @@ PROCEDURE tg_getTapeWithoutDriveReq(
   outTapeSide OUT INTEGER,
   outTapeVid  OUT NOCOPY VARCHAR2) AS
   varStreamId     NUMBER;
+  varTapeId       NUMBER;
 BEGIN
   -- Initially looked for tapegateway request in state TO_BE_SENT_TO_VDQM
   -- Find a tapegateway request id for which there is a tape read in
@@ -1588,13 +1589,23 @@ BEGIN
       'Stream='||varStreamId);
   END;
   BEGIN -- The read casse
-    SELECT T.TapeGatewayRequestId,     0,      T.side,      T.vid
-      INTO outReqId, outTapeMode, outTapeSide, outTapeVid
+    SELECT T.TapeGatewayRequestId,     0,      T.side,      T.vid,      T.id
+      INTO outReqId,         outTapeMode, outTapeSide, outTapeVid, varTapeId
       FROM Tape T
      WHERE T.tpMode = tconst.TPMODE_READ
        AND T.status = tconst.TAPE_PENDING
        AND ROWNUM < 2
        FOR UPDATE SKIP LOCKED;
+     -- Potential lazy/late definition of the request id
+     -- We might be confronted to a not defined request id if the tape was created
+     -- by the stager straight into pending state in the absence of a recall policy
+     -- otherwise, the tape will go through resurrect tape (rec handler) and all
+     -- will be fine.
+     -- If we get here, we found a tape so the request id must be defined when leaving.
+     IF (outReqId IS NULL OR outReqId = 0) THEN
+       SELECT ids_seq.nextval INTO outReqId FROM DUAL;
+       UPDATE Tape T SET T.TapeGatewayRequestId = outReqId WHERE T.id = varTapeId;
+     END IF; 
   EXCEPTION WHEN NO_DATA_FOUND THEN
     outReqId := 0;
   END;
@@ -1869,7 +1880,7 @@ BEGIN
     BEGIN
       FOR i IN 1..varMissingCopies LOOP
         INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
-        VALUES (ids_seq.nextval, 0, varCfId, 0, 0, 0)  -- TAPECOPY_CREATED
+        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0)
         RETURNING id INTO newTcId;
         INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
       END LOOP;

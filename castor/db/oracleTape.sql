@@ -1823,32 +1823,6 @@ BEGIN
 END;	
 /
 
-/* Single tape version of resurrect tapes used by stager when finding no policy 
-  (mighunter or rechandler will then not be involved)*/
-create or replace
-PROCEDURE resurrectSingleTapeForRecall (
-  tapeId  IN NUMBER
-)
-AS
-BEGIN
-   /* Single tape version of resurrect tapes used by stager when finding no policy 
-     (mighunter or rechandler will then not be involved)*/
-  IF (TapegatewaydIsRunning) THEN
-    UPDATE Tape T
-       SET T.TapegatewayRequestId = ids_seq.nextval,
-           T.status = tconst.TAPE_PENDING
-     WHERE T.id = tapeId 
-       AND T.tpMode = tconst.TPMODE_READ;
-  ELSE
-    UPDATE Tape T
-       SET T.status = tconst.TAPE_PENDING
-     WHERE T.id = tapeId 
-       AND T.tpMode = tconst.TPMODE_READ;
-  END IF;
-  COMMIT;
-END;
-/
-
 /* clean the db for repack, it is used as workaround because of repack abort limitation */
 CREATE OR REPLACE PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
   reqId NUMBER;
