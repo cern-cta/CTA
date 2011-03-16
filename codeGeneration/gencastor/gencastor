@@ -1,4 +1,4 @@
-#!/usr/bin/tcsh
+#!/bin/tcsh
 #
 # A wrapper script for gencastor.bin, to put files in the proper places and avoid to overwrite not modified ones.
 # It also manages the generated SQL scripts.
