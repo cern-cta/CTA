@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-/*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.30 $ $Date: 2009/06/30 15:04:59 $ CERN IT-PDP/DM Jean-Philippe Baud
- */
-
 #ifndef _CNS_SERVER_H
 #define _CNS_SERVER_H
 #include "Cns_struct.h"

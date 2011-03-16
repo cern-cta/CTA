@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-/*
- * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.6 $ $Date: 2008/11/03 10:34:07 $ CERN IT-PDP/DM Jean-Philippe Baud
- */
-
 #ifndef _CNS_CONSTANTS_H
 #define _CNS_CONSTANTS_H
 #include "Castor_limits.h"

@@ -16,14 +16,14 @@ import math
 import app.dirs.models
 #!!!app.dirs.models is imported at the end of the file!!!
 
-#an empty urlrest must be accepted and it should define the very root of the tree
+#an empty rid must be accepted and it should define the very root of the tree
 #in case there is no default root you have to pick a random valid object
-def findRequestObjectByIdReplacementSuffix(urlrest, statusfilename, modelname):
+def findRequestObjectByIdReplacement(rid, statusfilename, modelname):
     path = None
-    if urlrest.rfind('/') == (len(urlrest)-1): 
-        path = urlrest[:len(urlrest)-1] #can be empty which will lead to root
+    if rid.rfind('/') == (len(rid)-1): 
+        path = rid[:len(rid)-1] #can be empty which will lead to root
     else:
-        path = urlrest
+        path = rid
         
     modelobject = app.dirs.models.__dict__[modelname];
         

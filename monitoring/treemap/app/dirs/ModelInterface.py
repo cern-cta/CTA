@@ -26,8 +26,8 @@ class ModelInterface(object):
     
     #finds the closest proper root Object in the tree if the requested one doesn't exist
     #has to raise NoDataAvailableError if not found
-    def findObjectByIdReplacementSuffix(self, urlrest, statusfilename):
-        raise Exception("findObjectByIdReplacementSuffix not implemented!")
+    def findObjectByIdReplacementId(self, rid, statusfilename):
+        raise Exception("findObjectByIdReplacementId not implemented!")
 
     def getNaviName(self):
         raise Exception("getNaviName not implemented!")

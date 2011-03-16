@@ -1,5 +1,5 @@
 {{userfriendlyname}} <br>
-<input onclick = "submit(); showStatus();" class="enterbtn" type="button" value="&#8629" id="id_dapply{{name}}"/><input class="datefield" type="text" name="{{name}}" value="{{defaultdate}}" id="id_{{name}}" /><input onclick = "insertNowTo{{name}}();" class="now" type="button" value="now" id="id_now{{name}}"/>
+<input onclick = "insertNowTo{{name}}();" class="now" type="button" value="now" id="id_now{{name}}"/><input class="datefield" type="text" name="{{name}}" value="{{defaultdate}}" id="id_{{name}}" /><input onclick = "submit(); showStatus();" class="enterbtn" type="button" value="&#8629" id="id_dapply{{name}}"/>
 <script type="text/javascript">
 Calendar.setup({
 inputField     :    "id_{{name}}",   // id of the input field

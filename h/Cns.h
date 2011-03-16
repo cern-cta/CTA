@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-/*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.20 $ $Date: 2009/06/30 15:04:59 $ CERN IT-PDP/DM Jean-Philippe Baud
- */
-
 #ifndef _CNS_H
 #define _CNS_H
 

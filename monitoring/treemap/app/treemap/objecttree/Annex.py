@@ -20,10 +20,10 @@ def buildAnnexId(rootmodel, depth, theid):
         
         if depth < 0: depth = 0
         
-        #findObjectByIdReplacementSuffix
+        #findObjectByIdReplacementId
         try:
             if rootmodel != 'Annex':#to not to fail during id creation if annex constructor gets called without parameters
-                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
+                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementId(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             raise Exception("replacementid "+ theid + " could not be found!")
         

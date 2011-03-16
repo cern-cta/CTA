@@ -25,7 +25,7 @@ LINKFLAGS= --mode=link --tag=CXX g++ -pthread
 LINKDEPS= -lkdeprint -lkio -lxslt
 MACROS=-g -O0 -Wnon-virtual-dtor -Wno-long-long -Wundef -ansi -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -Wcast-align -Wconversion -Wchar-subscripts -Wall -W -Wpointer-arith -Wwrite-strings -DNDEBUG -DNO_DEBUG -Wformat-security -Wmissing-format-attribute -fno-exceptions -fno-check-new -fno-common -DQT_CLEAN_NAMESPACE -DQT_NO_ASCII_CAST -DQT_NO_STL -DQT_NO_COMPAT -DQT_NO_TRANSLATION
 
-VERSION=2.1.10
+VERSION=2.1.11
 
 .PHONY : all install clean
 

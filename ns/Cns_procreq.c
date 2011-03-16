@@ -29,8 +29,6 @@
 /* forware declarations */
 int sendrep(int rpfd, int rep_type, ...);
 int nslogit(char *func, char *msg, ...);
-int Cns_update_unique_gid(struct Cns_dbfd *dbfd, unsigned int unique_id);
-int Cns_update_unique_uid(struct Cns_dbfd *dbfd, unsigned int unique_id);
 
 extern int being_shutdown;
 extern char localhost[CA_MAXHOSTNAMELEN+1];

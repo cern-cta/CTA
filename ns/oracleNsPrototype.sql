@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleNsPrototype.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/08/14 16:47:39 $ $Author: itglp $
- *
  * This script contains prototyped code for SQL-based NS functions.
  * For the time being, a partial implementation of the stat functionality is provided.
  *

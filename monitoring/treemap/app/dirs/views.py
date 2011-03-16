@@ -587,10 +587,10 @@ def getDefaultMetricsLinking():
 
     return mlinker
 
-def getRootObjectForTreemap(rootmodel, urlrest, statusfilename):
+def getRootObjectForTreemap(rootmodel, rid, statusfilename):
     try:
         #Directory you want to show its content
-        root = globals()[rootmodel].__dict__['findObjectByIdReplacementSuffix'](createObject(getModelsModuleName(rootmodel), rootmodel), urlrest, statusfilename)
+        root = globals()[rootmodel].__dict__['findObjectByIdReplacementId'](createObject(getModelsModuleName(rootmodel), rootmodel), rid, statusfilename)
     except ObjectDoesNotExist:
         raise Http404
         return render_to_response("Error") 

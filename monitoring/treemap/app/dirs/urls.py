@@ -121,7 +121,7 @@ class UrlDefault(UrlReaderInterface):
             
         try:  
             theid = self.paramdict['theid'];
-            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
+            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementId(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
         except:
             theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
         
@@ -150,7 +150,7 @@ class UrlDefault(UrlReaderInterface):
             else:
                 pass #the following lines are too expensive because this method here gets called frequently
 #                try:
-#                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
+#                    app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementId(createObject(getModelsModuleName(rootmodel), rootmodel), theid, '')
 #                except Exception, e:
 #                    theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
                     
@@ -233,7 +233,7 @@ class UrlDefault(UrlReaderInterface):
 #        
 #        try:  
 #            theid = self.paramdict['theid'];
-#            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
+#            app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementId(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
 #        except:
 #            theid = app.presets.Presets.getPresetByStaticId(int(presetid)).rootidreplacement
 #            
@@ -293,10 +293,10 @@ class UrlDefault(UrlReaderInterface):
 #        
 #        if depth < 0: depth = 0
 #        
-#        #findObjectByIdReplacementSuffix
+#        #findObjectByIdReplacementId
 #        try:
 #            if rootmodel != 'Annex':#to not to fail during id creation if annex constructor gets called without parameters
-#                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementSuffix(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
+#                app.dirs.models.__dict__[str(rootmodel)].findObjectByIdReplacementId(createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), theid, '')
 #        except:
 #            raise Exception("replacementid "+ theid + " could not be found!")
 #        

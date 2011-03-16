@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.5 $ $Date: 2009/07/23 12:22:04 $ CERN IT/DM
 .\" Copyright (C) 2004 by CERN/IT/D
 .\" All rights reserved
 .\"
