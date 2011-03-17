@@ -33,3 +33,8 @@ CLIENTEXEMANPAGE(stager_addprivilege)
 CLIENTEXEMANPAGE(stager_removeprivilege)
 CLIENTEXEMANPAGE(stager_listprivileges)
 EXEMANPAGE(stager_abort)
+
+# Required by castor-srmv2
+BUILDHEADERSDIRCLIENT=$(TOPINCLUDE)/castor/client/src/stager
+
+InstallNonExecFile(stager_client_api_query.hpp,$(BUILDHEADERSDIRCLIENT),644)

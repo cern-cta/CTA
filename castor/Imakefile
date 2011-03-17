@@ -446,6 +446,8 @@ InstallNonExecFile(metrics/Counter.hpp,$(BUILDHEADERSDIRHPP)/metrics,644)
 InstallNonExecFile(metrics/Histogram.hpp,$(BUILDHEADERSDIRHPP)/metrics,644)
 InstallNonExecFile(metrics/MetricsCollector.hpp,$(BUILDHEADERSDIRHPP)/metrics,644)
 
+InstallNonExecFile(query/DiskPoolQueryType.hpp,$(BUILDHEADERSDIRHPP)/query,644)
+
 InstallNonExecFile(rh/FileQryResponse.hpp,$(BUILDHEADERSDIRHPP)/rh,644)
 
 InstallNonExecFile(server/BaseDaemon.hpp,$(BUILDHEADERSDIRHPP)/server,644)
