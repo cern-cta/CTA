@@ -52,6 +52,7 @@ namespace castor {
   namespace io {
     // Forward declaration
     class ServerSocket;
+    class AuthServerSocket;
   }
 
   namespace stager {
@@ -103,9 +104,9 @@ namespace castor {
        * fits into a signed int, as the poll api requests.
        * @param transferTimeout The amount of time in seconds that the
        * client will allow to transfer data between the recipient and itself.
-       * By default 120 seconds.
+       * By default infinity
        */
-      BaseClient(int acceptTimeout = 43200, int transferTimeout = 120)
+      BaseClient(int acceptTimeout = 43200, int transferTimeout = -1)
         throw();
 
       /**
@@ -124,7 +125,7 @@ namespace castor {
        * @param rh the IResponseHandler interface to use
        * for callbacks
        * @return The CASTOR request ID
-       * @exception Exception when something goes wrong
+       * @exception Exception when something goed wrong
        */
       std::string sendRequest(castor::stager::Request* req,
                               castor::client::IResponseHandler* rh)

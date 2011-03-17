@@ -121,7 +121,7 @@ void castor::io::AbstractTCPSocket::sendBuffer(const unsigned int magic,
   if (netwrite_timeout(m_socket,
 		       (char*)(&magic),
 		       sizeof(unsigned int),
-		       1) != sizeof(unsigned int) ||
+		       m_timeout) != sizeof(unsigned int) ||
       netwrite_timeout(m_socket,
 		       (char*)(&n),
 		       sizeof(unsigned int),
@@ -163,13 +163,12 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       m_maxNetDataSize = MAX_NETDATA_SIZE;
     }
   }
-  // First read the header. At this step, we allow a short timeout
-  // to be more immune to security scans or similar attacks.
+  // First read the header
   unsigned int header[2];
   int ret = netread_timeout(m_socket,
 			    (char*)&header,
 			    2 * sizeof(unsigned int),
-			    1);
+			    m_timeout);
   if (ret != 2 * sizeof(unsigned int)) {
     if (0 == ret) {
       castor::exception::Exception ex(serrno);
