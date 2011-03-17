@@ -121,7 +121,7 @@ void castor::io::AbstractTCPSocket::sendBuffer(const unsigned int magic,
   if (netwrite_timeout(m_socket,
 		       (char*)(&magic),
 		       sizeof(unsigned int),
-		       m_timeout) != sizeof(unsigned int) ||
+		       1) != sizeof(unsigned int) ||
       netwrite_timeout(m_socket,
 		       (char*)(&n),
 		       sizeof(unsigned int),
@@ -149,13 +149,13 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       long bytes = strtol(value, 0, 10);
       // Check that the string converted to an integer is valid
       if (((bytes == 0) && (errno == ERANGE)) || (bytes > INT_MAX)) {
-	castor::exception::Exception ex(EINVAL);
-	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, " << strerror(ERANGE);
-	throw ex;
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, " << strerror(ERANGE);
+        throw ex;
       } else if (bytes < MAX_NETDATA_SIZE) {
-	castor::exception::Exception ex(EINVAL);
-	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, value too small";
-	throw ex;
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, value too small";
+        throw ex;
       }
       m_maxNetDataSize = (int)bytes;
     } else {
@@ -163,12 +163,13 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       m_maxNetDataSize = MAX_NETDATA_SIZE;
     }
   }
-  // First read the header
+  // First read the header. At this step, we allow a short timeout
+  // to be more immune to security scans or similar attacks.
   unsigned int header[2];
   int ret = netread_timeout(m_socket,
 			    (char*)&header,
 			    2 * sizeof(unsigned int),
-			    m_timeout);
+			    1);
   if (ret != 2 * sizeof(unsigned int)) {
     if (0 == ret) {
       castor::exception::Exception ex(serrno);

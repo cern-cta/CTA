@@ -36,7 +36,6 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/AuthClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/io/AuthServerSocket.hpp"
 #include "castor/Constants.hpp"
 #include "castor/System.hpp"
 #include "castor/IClient.hpp"
@@ -695,7 +694,7 @@ void castor::client::BaseClient::pollAnswersFromStager
 
         // Accept the incoming connection
         castor::io::ServerSocket* socket = m_callbackSocket->accept();
-        socket->setTimeout(900);
+        socket->setTimeout(m_transferTimeout);
 
         // Log the ip address of the incoming connection
         unsigned short port;
