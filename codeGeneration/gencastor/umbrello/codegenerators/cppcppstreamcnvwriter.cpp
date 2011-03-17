@@ -115,9 +115,9 @@ void CppCppStreamCnvWriter::writeCreateRepContent(QTextStream &stream, bool &add
        0 != mem;
        mem = members.next()) {
     // don't take into account members we don't want to stream
-    if (mem->stereotype == "DoNotStream") continue;
-    // don't take into account members that only appear in the DB world
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    // or that only appear in the DB world
+    if (mem->stereotype == DONOTSTREAM
+        || mem->stereotype == SQLONLY) continue;
     // Otherwise, stream the member;
     stream << getIndent() << "ad->stream()";
     if (mem->typeName.find('[') > 0) {
@@ -147,10 +147,10 @@ void CppCppStreamCnvWriter::writeCreateRepContent(QTextStream &stream, bool &add
        0 != as;
        as = assocs.next()) {
     // don't take into account associations that only appear in the DB world
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
-        as->remotePart.stereotype != "enumerationNoStream") {
+        as->remoteStereotype != DONOTSTREAM) {
       stream << getIndent() << "ad->stream() << obj->"
              << as->remotePart.name << "();" << endl;
     }
@@ -187,9 +187,9 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
        0 != mem;
        mem = members.next()) {
     // don't take into account members we don't want to stream
-    if (mem->stereotype == "DoNotStream") continue;
-    // don't take into account members that only appear in the DB world
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    // or that only appear in the DB world
+    if (mem->stereotype == DONOTSTREAM
+        || mem->stereotype == SQLONLY) continue;
     // Otherwise, unstream the member;
     *m_stream << getIndent()
               << fixTypeName(mem->typeName,
@@ -239,10 +239,10 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
        0 != as;
        as = assocs.next()) {
     // don't take into account associations that only appear in the DB world
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
-        as->remotePart.stereotype != "enumerationNoStream") {
+        as->remoteStereotype != DONOTSTREAM) {
       *m_stream << getIndent() << "int "
                 << as->remotePart.name << ";" << endl
                 << getIndent() << "ad->stream() >> "
@@ -253,7 +253,7 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
                                        getNamespace(as->remotePart.typeName),
                                        m_classInfo->packageName)
                 << ")" << as->remotePart.name << ");" << endl;
-    }
+        }
   }
   // Return result
   *m_stream << getIndent() << "return object;" << endl;
@@ -324,7 +324,7 @@ void CppCppStreamCnvWriter::writeMarshal() {
       // don't consider enums
       if (isEnum(as->remotePart.typeName)) continue;
       // don't take into account associations that only appear in the DB world
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->remoteStereotype == SQLONLY) continue;
       // One to one association
       fixTypeName(as->remotePart.typeName,
                   getNamespace(as->remotePart.typeName),
@@ -428,7 +428,7 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
          as->type.multiRemote == MULT_N) &&
         as->remotePart.name != "") {
       // don't take into account associations that only appear in the DB world
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->remoteStereotype == SQLONLY) continue;
       // Get the precise object
       *m_stream << getIndent() << "// Fill object with associations"
                 << endl << getIndent() << m_originalPackage

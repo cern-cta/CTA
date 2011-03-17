@@ -260,7 +260,6 @@ void UMLDoc::closeDocument() {
         m_bLoading = m_bLoading_old;
         // Remove all objects from the predefined folders.
         // @fixme With advanced code generation enabled, this crashes.
-        UMLObject *obj;
         for (int i = 0; i < Uml::N_MODELTYPES; i++)
             m_root[i]->removeAllObjects();
         // Restore the datatype folder, it has been deleted above.

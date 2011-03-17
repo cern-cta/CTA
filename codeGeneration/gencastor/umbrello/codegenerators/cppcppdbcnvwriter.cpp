@@ -228,7 +228,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (!first) *m_stream << ", ";
     *m_stream << mem->name;
     first = false;
@@ -239,7 +239,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       // One to One associations
@@ -254,7 +254,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (!first) *m_stream << ",";
     first = false;
     if (mem->name == "id") {
@@ -271,7 +271,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       if (!first) *m_stream << ",";
@@ -305,7 +305,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (n > 0) *m_stream << ", ";
     *m_stream << mem->name;
     n++;
@@ -314,7 +314,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       if (n > 0) *m_stream << ", ";
@@ -333,60 +333,34 @@ void CppCppDbCnvWriter::writeConstants() {
             << "Cnv::s_bulkSelectStatementString =" << endl
             << getIndent()
             << "\"DECLARE \\" << endl;
-  // We need to decide whether we can use the "%ROWTYPE" shortcut
-  bool useRowtype = true;
+  // We don't use ROWTYPE here and we explicitly provide the list of columns
+  // so to support the case of extra pure PL/SQL columns not used by the framework
+  *m_stream << getIndent()
+            << "   TYPE RecordType IS RECORD (";
+  n = 0;
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) {
-      useRowtype = false;
-      break;
-    }
+    if (mem->stereotype == SQLONLY) continue;
+    if (n > 0) *m_stream << ", ";
+    *m_stream << mem->name << " " << getOraSQLType(mem->typeName);
+    n++;
   }
-  if (useRowtype) {
-    for (Assoc* as = assocs.first();
-         0 != as;
-         as = assocs.next()) {
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) {
-        useRowtype = false;
-        break;
-      }
-    }
-  }
-  if (useRowtype) {
-    *m_stream << getIndent()
-              << "   TYPE CurType IS REF CURSOR RETURN "
-              << m_classInfo->className << "%ROWTYPE; \\"
-              << endl;
-  } else {
-    // no ROWTYPE for us since we ignore some fields...
-    *m_stream << getIndent()
-              << "   TYPE RecordType IS RECORD (";
-    n = 0;
-    for (Member* mem = members.first();
-         0 != mem;
-         mem = members.next()) {
-      if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+  // Go through the associations
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (as->remoteStereotype == SQLONLY) continue;
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       if (n > 0) *m_stream << ", ";
-      *m_stream << mem->name << " " << getOraSQLType(mem->typeName);
+      *m_stream << as->remotePart.name << " INTEGER";
       n++;
     }
-    // Go through the associations
-    for (Assoc* as = assocs.first();
-         0 != as;
-         as = assocs.next()) {
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
-      if (as->type.multiRemote == MULT_ONE &&
-          as->remotePart.name != "") {
-        if (n > 0) *m_stream << ", ";
-        *m_stream << as->remotePart.name << " INTEGER";
-        n++;
-      }
-    }
-    *m_stream << "); \\" << endl << getIndent()
-              << "   TYPE CurType IS REF CURSOR RETURN RecordType; \\"
-              << endl;
   }
+  *m_stream << "); \\" << endl << getIndent()
+            << "   TYPE CurType IS REF CURSOR RETURN RecordType; \\"
+            << endl;
   *m_stream << getIndent()
             << "   PROCEDURE bulkSelect(ids IN castor.\\\"cnumList\\\", \\"
             << endl << getIndent()
@@ -404,7 +378,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (n > 0) *m_stream << ", ";
     *m_stream << mem->name;
     n++;
@@ -413,7 +387,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       if (n > 0) *m_stream << ", ";
@@ -454,7 +428,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (mem->name == "id" ||
         mem->name == "creationTime" ||
         mem->name == "lastAccessTime" ||
@@ -467,7 +441,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) {
       if (n > 0) *m_stream << ", ";
       n++;
@@ -521,7 +495,7 @@ void CppCppDbCnvWriter::writeConstants() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -842,7 +816,7 @@ void CppCppDbCnvWriter::writeConstructors() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -945,7 +919,7 @@ void CppCppDbCnvWriter::writeReset() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -1039,7 +1013,7 @@ void CppCppDbCnvWriter::writeReset() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -1136,7 +1110,7 @@ void CppCppDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->remoteStereotype == SQLONLY) continue;
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
@@ -1198,7 +1172,7 @@ void CppCppDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->remoteStereotype == SQLONLY) continue;
       if (as->type.multiRemote == MULT_ONE) {
         writeBasicMult1FillRep(as);
       } else if  (as->type.multiRemote == MULT_N) {
@@ -1252,7 +1226,7 @@ void CppCppDbCnvWriter::writeFillObj() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->remoteStereotype == SQLONLY) continue;
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
@@ -1296,13 +1270,13 @@ void CppCppDbCnvWriter::writeFillObj() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     n++;
   }
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE) {
@@ -2169,7 +2143,7 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (mem->name != "id" &&
         mem->name != "nbAccesses" &&
         mem->name != "lastAccessTime") {
@@ -2179,7 +2153,7 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       n++;
@@ -2242,7 +2216,7 @@ void CppCppDbCnvWriter::writeCreateRepContent(QTextStream &stream, bool &address
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (mem->name != "id" &&
         mem->name != "nbCopyAccesses" &&
         mem->name != "creationTime" &&
@@ -2262,7 +2236,7 @@ void CppCppDbCnvWriter::writeCreateRepContent(QTextStream &stream, bool &address
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeSingleSetIntoStatement(stream, "insert", as->remotePart, n, true);
       n++;
@@ -2517,7 +2491,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     // declare buffers, one for the data, one for the lengths
     if (mem->name != "id" &&
         mem->name != "nbAccesses" &&
@@ -2533,7 +2507,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeCreateBufferForSelect(stream, typeUsed, as->remotePart.name,
                                  "int", n, "m_insertStatement", true);
@@ -2708,7 +2682,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent(QTextStream &stream,
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     if (mem->name == "id") {
       idMem = mem;
       continue;
@@ -2731,7 +2705,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent(QTextStream &stream,
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeSingleSetIntoStatement(stream, "update", as->remotePart, n, true);
       n++;
@@ -2825,7 +2799,7 @@ void CppCppDbCnvWriter::writeDeleteRepContent(QTextStream &stream,
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (!isEnum(as->remotePart.typeName) &&
         as->type.kind == COMPOS_PARENT) {
       fixTypeName(as->remotePart.typeName,
@@ -2994,7 +2968,7 @@ void CppCppDbCnvWriter::writeBulkCreateObjCreateObject(MemberList& members,
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
@@ -3002,7 +2976,7 @@ void CppCppDbCnvWriter::writeBulkCreateObjCreateObject(MemberList& members,
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       bool isenum = isEnum(as->remotePart.typeName);
@@ -3212,7 +3186,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (mem->stereotype == SQLONLY) continue;
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
@@ -3222,7 +3196,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       // Enums are a simple case
@@ -3512,7 +3486,7 @@ void CppCppDbCnvWriter::printSQLError(QTextStream &stream,
     for (Member* mem = members.first();
          0 != mem;
          mem = members.next()) {
-      if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+      if (mem->stereotype == SQLONLY) continue;
       stream << endl << getIndent()
              << "                << \"  "
              << mem->name << " : \" << obj->"
@@ -3524,7 +3498,7 @@ void CppCppDbCnvWriter::printSQLError(QTextStream &stream,
          as = assocs.next()) {
       if (as->type.multiRemote == MULT_ONE &&
           as->remotePart.name != "") {
-        if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+        if (as->remoteStereotype == SQLONLY) continue;
         stream << endl << getIndent()
                << "                << \"  "
                << as->remotePart.name << " : \" << ";

@@ -248,7 +248,7 @@ void CHClassWriter::writeAttributeMethods(QPtrList <UMLAttribute>& attribs,
       at=attribs.next()) {
     QString methodBaseName = at->getName();
     methodBaseName.stripWhiteSpace();
-    if (m_ignoreButForDB.find(methodBaseName) == m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       writeSingleAttributeAccessorMethods(at->getTypeName(),
                                           methodBaseName,
                                           at->getDoc(),
@@ -273,7 +273,7 @@ void CHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::B).isEmpty()) {
           QString name = a->getObject(Uml::B)->getName();
-          if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+          if (a->getRoleDoc(Uml::B) != SQLONLY) {
             if (!isEnum(name)) name.append("*");
             writeAssociationRoleMethod
               (name,
@@ -289,7 +289,7 @@ void CHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::A).isEmpty()) {
           QString name = a->getObject(Uml::A)->getName();
-          if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+          if (a->getRoleDoc(Uml::A) != SQLONLY) {
             if (!isEnum(name)) name.append("*");
             writeAssociationRoleMethod
               (name,

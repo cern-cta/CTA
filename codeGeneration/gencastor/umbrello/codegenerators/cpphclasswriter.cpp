@@ -364,7 +364,7 @@ void CppHClassWriter::writeAttributeDecls(Uml::Visibility visibility,
     bool isFirstAttrib = true;
     QString documentation;
     for(UMLAttribute *at=list->first(); at; at=list->next()) {
-      if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+      if (at->getStereotype() != SQLONLY) {
         documentation = at->getDoc();
         isFirstAttrib = false;
         QString varName = "m_" + at->getName();
@@ -395,7 +395,7 @@ void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> association
     for(UMLAssociation *a = associations.first();
         0 != a;
         a = associations.next()) {
-      if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) != m_ignoreButForDB.end()) continue;
+      if (a->getRoleDoc(Uml::B) == SQLONLY) continue;
       // it may seem counter intuitive, but you want to insert the role of the
       // *other* class into *this* class.
       if (a->getUMLRole(Uml::A)->getObject()->getID() == id && a->getRoleName(Uml::B) != "")
@@ -494,7 +494,7 @@ void CppHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associat
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::B).isEmpty()) {
           QString fieldClassName = a->getObject(Uml::B)->getName();
-          if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+          if (a->getRoleDoc(Uml::B) != SQLONLY) {
             if (writePointerVar && !isEnum(fieldClassName))
               fieldClassName.append("*");
             writeAssociationRoleMethod(fieldClassName,
@@ -511,7 +511,7 @@ void CppHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associat
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::A).isEmpty()) {
           QString fieldClassName = a->getObject(Uml::A)->getName();
-          if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+          if (a->getRoleDoc(Uml::A) != SQLONLY) {
             if (writePointerVar && !isEnum(fieldClassName))
               fieldClassName.append("*");
             writeAssociationRoleMethod(fieldClassName,
@@ -574,7 +574,7 @@ void CppHClassWriter::writeAttributeMethods(QPtrList <UMLAttribute> *attribs,
     QString varName = getAttributeVariableName(at);
     QString methodBaseName = at->getName();
     methodBaseName.stripWhiteSpace();
-    if (m_ignoreButForDB.find(methodBaseName) == m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       writeSingleAttributeAccessorMethods(at->getTypeName(),
                                           getNamespace(at->getTypeName()),
                                           varName,
