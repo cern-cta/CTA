@@ -67,7 +67,8 @@ const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_selectStatem
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN Disk2DiskCopyDoneRequest%ROWTYPE; \
+   TYPE RecordType IS RECORD (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), replicaFileSize INTEGER, id INTEGER, svcClass INTEGER, client INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

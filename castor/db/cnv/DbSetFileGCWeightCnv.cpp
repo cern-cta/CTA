@@ -70,7 +70,8 @@ const std::string castor::db::cnv::DbSetFileGCWeightCnv::s_selectStatementString
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbSetFileGCWeightCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN SetFileGCWeight%ROWTYPE; \
+   TYPE RecordType IS RECORD (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER, svcClass INTEGER, client INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

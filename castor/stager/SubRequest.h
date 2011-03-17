@@ -367,11 +367,13 @@ int Cstager_SubRequest_setRequest(struct Cstager_SubRequest_t* instance, struct 
 
 /**
  * Get the value of getNextStatus
+ * DoNotStream
  */
 int Cstager_SubRequest_getNextStatus(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestGetNextStatusCodes_t* var);
 
 /**
  * Set the value of getNextStatus
+ * DoNotStream
  */
 int Cstager_SubRequest_setGetNextStatus(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestGetNextStatusCodes_t new_var);
 

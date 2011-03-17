@@ -71,7 +71,8 @@ const std::string castor::db::cnv::DbStagePutDoneRequestCnv::s_selectStatementSt
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbStagePutDoneRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN StagePutDoneRequest%ROWTYPE; \
+   TYPE RecordType IS RECORD (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER, svcClass INTEGER, client INTEGER, parent INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

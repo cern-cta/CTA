@@ -64,7 +64,8 @@ const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_selectStatementString
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN DeviceGroupName%ROWTYPE; \
+   TYPE RecordType IS RECORD (dgName VARCHAR2(2048), libraryName VARCHAR2(2048), id INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

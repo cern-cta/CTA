@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 // TapeStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::TapeStatusCodesStrings[9] = {
+const char* castor::stager::TapeStatusCodesStrings[10] = {
   "TAPE_UNUSED",
   "TAPE_PENDING",
   "TAPE_WAITDRIVE",
@@ -37,6 +37,7 @@ const char* castor::stager::TapeStatusCodesStrings[9] = {
   "TAPE_FINISHED",
   "TAPE_FAILED",
   "TAPE_UNKNOWN",
-  "TAPE_WAITPOLICY"
+  "TAPE_WAITPOLICY",
+  "TAPE_ATTACHEDTOSTREAM"
 };
 

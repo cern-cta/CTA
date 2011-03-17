@@ -520,6 +520,7 @@ namespace castor {
 
       /**
        * Get the value of m_getNextStatus
+       * DoNotStream
        * @return the value of m_getNextStatus
        */
       SubRequestGetNextStatusCodes getNextStatus() const {
@@ -528,6 +529,7 @@ namespace castor {
 
       /**
        * Set the value of m_getNextStatus
+       * DoNotStream
        * @param new_var the new value of m_getNextStatus
        */
       void setGetNextStatus(SubRequestGetNextStatusCodes new_var) {
@@ -600,6 +602,7 @@ namespace castor {
 
       FileRequest* m_request;
 
+      /// DoNotStream
       SubRequestGetNextStatusCodes m_getNextStatus;
 
     }; /* end of class SubRequest */

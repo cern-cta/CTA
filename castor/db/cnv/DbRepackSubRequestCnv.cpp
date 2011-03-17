@@ -70,7 +70,8 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectStatementStrin
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN RepackSubRequest%ROWTYPE; \
+   TYPE RecordType IS RECORD (vid VARCHAR2(2048), xsize INTEGER, filesMigrating NUMBER, filesStaging NUMBER, files NUMBER, filesFailed NUMBER, cuuid VARCHAR2(2048), submitTime INTEGER, filesStaged NUMBER, filesFailedSubmit NUMBER, retryNb INTEGER, id INTEGER, repackrequest INTEGER, status INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
