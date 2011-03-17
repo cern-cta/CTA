@@ -20,8 +20,6 @@ WHENEVER SQLERROR EXIT FAILURE;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/08/18 09:40:13  Author: waldron 
- *
  * This script creates a new Castor Name Server schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -38,10 +36,6 @@ CREATE TABLE Cns_user_metadata (u_fileid NUMBER, comments VARCHAR2(255));
 CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER);
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
-
-CREATE TABLE Cns_groupinfo (gid NUMBER(10), groupname VARCHAR2(255));
-
-CREATE TABLE Cns_userinfo (userid NUMBER(10), username VARCHAR2(255));
 
 CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1 CACHE 20;
 
@@ -63,12 +57,6 @@ ALTER TABLE Cns_seg_metadata
 
 ALTER TABLE Cns_symlinks
   ADD CONSTRAINT pk_l_fileid PRIMARY KEY (fileid);
-
-ALTER TABLE Cns_groupinfo
-  ADD CONSTRAINT map_groupname UNIQUE (groupname);
-
-ALTER TABLE Cns_userinfo
-  ADD CONSTRAINT map_username UNIQUE (username);
 
 ALTER TABLE Cns_user_metadata
   ADD CONSTRAINT fk_u_fileid FOREIGN KEY (u_fileid)
@@ -125,7 +113,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9011');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_9001');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -157,8 +145,6 @@ AS
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/08/18 09:40:13  Author: waldron 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/

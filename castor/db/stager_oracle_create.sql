@@ -467,7 +467,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_9011');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_9001');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -749,6 +749,9 @@ ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
   INITIALLY DEFERRED DEFERRABLE;
 
+ALTER TABLE DiskCopy
+  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
+
 /* CastorFile constraints */
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
   FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
@@ -758,9 +761,9 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
 
-ALTER TABLE CastorFile ADD CONSTRAINT UN_CF_LastKnownFileName UNIQUE (LastKnownFileName);
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
 
-ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CF_LastKnownFileName NOT NULL);
+ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
@@ -1654,8 +1657,7 @@ END;
 
 /* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
    the recall with be FAILED */
-create or replace
-PROCEDURE cancelRecallForTape (inVid IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE cancelRecallForTape (vid IN VARCHAR2) AS
 BEGIN
   FOR a IN (SELECT DISTINCT(DiskCopy.id), DiskCopy.castorfile
               FROM Segment, Tape, TapeCopy, DiskCopy
@@ -1663,7 +1665,7 @@ BEGIN
                AND Segment.copy = TapeCopy.id
                AND DiskCopy.castorfile = TapeCopy.castorfile
                AND DiskCopy.status = 2  -- WAITTAPERECALL
-               AND Tape.vid = inVid
+               AND Tape.vid = vid
              ORDER BY DiskCopy.id ASC)
   LOOP
     cancelRecall(a.castorfile, a.id, 7);
@@ -4500,6 +4502,18 @@ BEGIN
 END;
 /
 
+/* This procedure resets the lastKnownFileName the CastorFile that has a given name
+   inside an autonomous transaction. This should be called before creating/renaming any
+   CastorFile so that lastKnownFileName stays unique */
+CREATE OR REPLACE PROCEDURE dropReusedLastKnowFileName(fileName IN VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  UPDATE /*+ INDEX (I_CastorFile_lastKnownFileName) */ CastorFile
+     SET lastKnownFileName = TO_CHAR(id)
+   WHERE lastKnownFileName = normalizePath(fileName);
+  COMMIT;
+END;
+/
 
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
@@ -4514,29 +4528,42 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   nsHostName VARCHAR2(2048);
+  previousLastKnownFileName VARCHAR2(2048);
 BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   BEGIN
-    -- try to find an existing file and lock it
-    SELECT id, fileSize INTO rid, rfs FROM CastorFile
-     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-    -- update lastAccessTime and lastKnownFileName.
+    -- try to find an existing file
+    SELECT id, fileSize, lastKnownFileName
+      INTO rid, rfs, previousLastKnownFileName
+      FROM CastorFile
+     WHERE fileId = fid AND nsHost = nsHostName;
+    -- In case its filename has changed, take care that the new name is
+    -- not already the lastKnownFileName of another file, that was also
+    -- renamed but for which the lastKnownFileName has not been updated
+    -- We actually reset the lastKnownFileName of such a file if needed
+    -- Note that this procedure will run in an autonomous transaction so that
+    -- no dead lock can result from taking a second lock within this transaction
+    IF fn != previousLastKnownFileName THEN
+      dropReusedLastKnowFileName(fn);
+    END IF;
+    -- take a lock on the file. Note that the file may have disappeared in the
+    -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
+    -- exception) before we update.
+    SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    -- The file is still there, so update lastAccessTime and lastKnownFileName.
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
-    -- check and fix files that would already use our new name, as they
-    -- have obviously changed name in the meantime. We do not know their new
-    -- name so we use their castorfile id
-    -- Note that this takes a lock on another row of the CastorFile table and
-    -- thus can create a dead lock in theory. In practice, this will happen very
-    -- rarely and on top, a dead lock would need that the same two files are
-    -- concurrently cross renamed. It is so unlikely to happen that this
-    -- problem has not been handled
-    UPDATE /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ CastorFile
-       SET lastKnownFileName = TO_CHAR(id)
-     WHERE id <> rid AND lastKnownFileName = normalizePath(fn);
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not find the file, let's create a new one
+    -- take care that the name of the new file is not already the lastKnownFileName
+    -- of another file, that was renamed but for which the lastKnownFileName has
+    -- not been updated
+    -- We actually reset the lastKnownFileName of such a file if needed
+    -- Note that this procedure will run in an autonomous transaction so that
+    -- no dead lock can result from taking a second lock within this transaction
+    dropReusedLastKnowFileName(fn);
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
@@ -4545,7 +4572,8 @@ BEGIN
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-  -- retry the select since a creation was done in between
+  -- the violated constraint indicates that the file was created by another client
+  -- while we were trying to create it ourselves. We can thus use the newly created file
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
 END;
@@ -4855,14 +4883,14 @@ BEGIN
        WHERE id = srIds(i) OR parent = srIds(i);
     END LOOP;
   END IF;
-  -- Set selected DiskCopies to either INVALID or FAILED;
-  -- WAITDISK2DISKCOPY's have a dedicated handling (see bug #63348)
+  -- Set selected DiskCopies to either INVALID or FAILED. We deliberately
+  -- ignore WAITDISK2DISKCOPY's (see bug #78826)
   FOR i IN dcsToRm.FIRST .. dcsToRm.LAST LOOP
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(i);
-    IF dcStatus = 1 THEN  -- WAITDISK2DISKCOPY
-      disk2DiskCopyFailed(dcsToRm(i), 0);
+    IF dcStatus = 1 THEN
+      NULL;  -- Do nothing
     ELSE
       UPDATE DiskCopy
          -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
@@ -5286,6 +5314,7 @@ BEGIN
   END IF;
   -- Check to see if the proposed diskserver and filesystem selected by the
   -- scheduler to run the job is in the correct service class.
+  -- XXX deprecated to be removed when LSF is dropped
   BEGIN
     SELECT FileSystem.id INTO fsId
       FROM DiskServer, FileSystem, DiskPool2SvcClass
@@ -5302,21 +5331,6 @@ BEGIN
   IF prevFsId > 0 AND prevFsId <> fsId THEN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
-  -- Get older castorFiles with the same name and drop their lastKnownFileName
-  -- Note that this takes a lock on another row of the CastorFile table and
-  -- thus can create a dead lock in theory. In practice, this will happen very
-  -- rarely and on top, a dead lock would need that the same two files are
-  -- concurrently cross renamed. It is so unlikely to happen that this
-  -- problem has not been handled
-  UPDATE /*+ INDEX (CastorFile) */ CastorFile
-     SET lastKnownFileName = TO_CHAR(id)
-   WHERE id IN (
-    SELECT /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ cfOld.id 
-      FROM CastorFile cfOld, CastorFile cfNew, SubRequest
-     WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
-       AND cfOld.fileid <> cfNew.fileid
-       AND cfNew.id = SubRequest.castorFile
-       AND SubRequest.id = srId);
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
   UPDATE SubRequest 
@@ -5367,7 +5381,7 @@ BEGIN
     INTO fileSize, cfId
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
-     AND SubRequest.id = srId FOR UPDATE;
+     AND SubRequest.id = srId FOR UPDATE OF CastorFile;
   -- Check to see if the proposed diskserver and filesystem selected by the
   -- scheduler to run the job is in the correct service class.
   BEGIN
@@ -6658,7 +6672,7 @@ BEGIN
              DiskPool2SvcClass d2s, SvcClass sc
        WHERE sc.name = svcClassName
          AND sc.id = d2s.child
-         AND checkPermission(sc.name, reqEuid, reqEgid, 103) = 0
+         AND checkPermission(sc.name, reqEuid, reqEgid, 195) = 0
          AND d2s.parent = dp.id
          AND dp.id = fs.diskPool
          AND ds.id = fs.diskServer
@@ -6681,7 +6695,7 @@ BEGIN
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
     SELECT CASE count(*)
-           WHEN sum(checkPermission(sc.name, reqEuid, reqEgid, 103)) THEN -1
+           WHEN sum(checkPermission(sc.name, reqEuid, reqEgid, 195)) THEN -1
            ELSE count(*) END
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc
@@ -8446,7 +8460,7 @@ BEGIN
          SET S.status = tconst.STREAM_PENDING
        WHERE S.status = tconst.STREAM_WAITPOLICY
          AND S.id = streamIds(i);
-  ENd IF;
+  END IF;
   COMMIT;
 END;
 /
@@ -8598,38 +8612,11 @@ BEGIN
          AND T.id = tapeIds(i);
     END LOOP; 
   ELSE
-    FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+    FORALL i IN tapeIds.FIRST .. tapeIds.LAST
       UPDATE Tape SET status = tconst.TAPE_PENDING WHERE status = tconst.TAPE_WAITPOLICY AND id = tapeIds(i);
-    END LOOP;
   END IF;
   COMMIT;
-END;
-/
-
-/* Single tape version of resurrect tapes used by stager when finding no policy 
-  (mighunter or rechandler will then not be involved)*/
-create or replace
-PROCEDURE resurrectSingleTapeForRecall (
-  tapeId  IN NUMBER
-)
-AS
-BEGIN
-   /* Single tape version of resurrect tapes used by stager when finding no policy 
-     (mighunter or rechandler will then not be involved)*/
-  IF (TapegatewaydIsRunning) THEN
-    UPDATE Tape T
-       SET T.TapegatewayRequestId = ids_seq.nextval,
-           T.status = tconst.TAPE_PENDING
-     WHERE T.id = tapeId 
-       AND T.tpMode = tconst.TPMODE_READ;
-  ELSE
-    UPDATE Tape T
-       SET T.status = tconst.TAPE_PENDING
-     WHERE T.id = tapeId 
-       AND T.tpMode = tconst.TPMODE_READ;
-  END IF;
-  COMMIT;
-END;
+END;	
 /
 
 /* clean the db for repack, it is used as workaround because of repack abort limitation */
@@ -10429,6 +10416,7 @@ PROCEDURE tg_getTapeWithoutDriveReq(
   outTapeSide OUT INTEGER,
   outTapeVid  OUT NOCOPY VARCHAR2) AS
   varStreamId     NUMBER;
+  varTapeId       NUMBER;
 BEGIN
   -- Initially looked for tapegateway request in state TO_BE_SENT_TO_VDQM
   -- Find a tapegateway request id for which there is a tape read in
@@ -10459,13 +10447,23 @@ BEGIN
       'Stream='||varStreamId);
   END;
   BEGIN -- The read casse
-    SELECT T.TapeGatewayRequestId,     0,      T.side,      T.vid
-      INTO outReqId, outTapeMode, outTapeSide, outTapeVid
+    SELECT T.TapeGatewayRequestId,     0,      T.side,      T.vid,      T.id
+      INTO outReqId,         outTapeMode, outTapeSide, outTapeVid, varTapeId
       FROM Tape T
      WHERE T.tpMode = tconst.TPMODE_READ
        AND T.status = tconst.TAPE_PENDING
        AND ROWNUM < 2
        FOR UPDATE SKIP LOCKED;
+     -- Potential lazy/late definition of the request id
+     -- We might be confronted to a not defined request id if the tape was created
+     -- by the stager straight into pending state in the absence of a recall policy
+     -- otherwise, the tape will go through resurrect tape (rec handler) and all
+     -- will be fine.
+     -- If we get here, we found a tape so the request id must be defined when leaving.
+     IF (outReqId IS NULL OR outReqId = 0) THEN
+       SELECT ids_seq.nextval INTO outReqId FROM DUAL;
+       UPDATE Tape T SET T.TapeGatewayRequestId = outReqId WHERE T.id = varTapeId;
+     END IF; 
   EXCEPTION WHEN NO_DATA_FOUND THEN
     outReqId := 0;
   END;
@@ -10740,7 +10738,7 @@ BEGIN
     BEGIN
       FOR i IN 1..varMissingCopies LOOP
         INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
-        VALUES (ids_seq.nextval, 0, varCfId, 0, 0, 0)  -- TAPECOPY_CREATED
+        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0)
         RETURNING id INTO newTcId;
         INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
       END LOOP;

@@ -14,6 +14,7 @@ fi
 #
 ## Build the package
 #
+echo Castor version maj/min: ${MAJOR_CASTOR_VERSION} ${MINOR_CASTOR_VERSION}
 a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
 b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
