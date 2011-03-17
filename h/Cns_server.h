@@ -9,7 +9,9 @@
 
 #ifndef _CNS_SERVER_H
 #define _CNS_SERVER_H
+
 #include "Cns_struct.h"
+#include "Cuuid.h"
 #include "Csec_api.h"
 
                         /* name server constants and macros */
@@ -18,54 +20,23 @@
 #define CNS_MAXNBTHREADS 100  /* maximum number of threads */
 #define CNS_NBTHREADS    20
 
-#define LOWER(s) \
-  { \
-  char * q; \
-  for (q = s; *q; q++) \
-    if (*q >= 'A' && *q <= 'Z') *q = *q + ('a' - 'A'); \
+#define RETURN(x)                                                       \
+  {                                                                     \
+    if (thip->dbfd.tr_started) {                                        \
+      if (x) {                                                          \
+        (void) Cns_abort_tr (&thip->dbfd);                              \
+      } else if (! thip->dbfd.tr_mode) {                                \
+        (void) Cns_end_tr (&thip->dbfd);                                \
+      }                                                                 \
+    }                                                                   \
+    nslogreq(reqinfo, func, x);                                         \
+    return ((x));                                                       \
   }
-#define RETURN(x) \
-  { \
-  struct timeval end; \
-  if (thip->dbfd.tr_started) { \
-    if (x) { \
-      (void) Cns_abort_tr (&thip->dbfd); \
-    } else if (! thip->dbfd.tr_mode) { \
-      (void) Cns_end_tr (&thip->dbfd); \
-    } \
-  } \
-  gettimeofday(&end, NULL); \
-  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
-                 (((((double)end.tv_sec * 1000) + \
-                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
-  return ((x)); \
-  }
-#define RETURNQ(x) \
-  { \
-  struct timeval end; \
-  gettimeofday(&end, NULL); \
-  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
-                 (((((double)end.tv_sec * 1000) + \
-                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
-  return ((x)); \
-  }
-#define END_TRANSACTION \
-  { \
-  struct timeval end; \
-  if (thip->dbfd.tr_started) { \
-    (void) Cns_end_tr (&thip->dbfd); \
-  } \
-  gettimeofday(&end, NULL); \
-  nslogit (func, "returns 0 - elapsed: %.3f\n", \
-                 (((((double)end.tv_sec * 1000) + \
-                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
-  }
-#define START_TRANSACTION \
-  { \
-  struct timeval start; \
-  gettimeofday(&start, NULL); \
-  (void) Cns_start_tr (thip->s, &thip->dbfd); \
-  thip->starttime = ((double)start.tv_sec * 1000) + ((double)start.tv_usec / 1000); \
+
+#define RETURNQ(x)                                                      \
+  {                                                                     \
+    nslogreq(reqinfo, func, x);                                         \
+    return ((x));                                                       \
   }
 
                         /* name server tables and structures */
@@ -116,9 +87,20 @@ struct Cns_file_metadata {
         char               acl[CA_MAXACLENTRIES*13];
 };
 
+struct Cns_srv_request_info {
+        uid_t              uid;
+        gid_t              gid;
+        char               *username;
+        char               *clienthost;
+        char               reqid[CUUID_STRING_LEN + 1];
+        char               logbuf[LOGBUFSZ];
+        u_signed64         starttime;
+        u_signed64         fileid;
+};
+
 struct Cns_srv_thread_info {
         int                s;                  /* socket for communication with client */
-        struct Cns_dbfd dbfd;
+        struct             Cns_dbfd dbfd;
         char               errbuf[PRTBUFSZ];
         Csec_context_t     sec_ctx;
         uid_t              Csec_uid;
@@ -126,7 +108,7 @@ struct Cns_srv_thread_info {
         char               *Csec_mech;
         char               *Csec_auth_id;
         int                secure;             /* flag to indicate whether security is enabled */
-        u_signed64         starttime;
+        struct             Cns_srv_request_info reqinfo;
 };
 
 struct Cns_seg_metadata {
@@ -156,13 +138,17 @@ struct Cns_tp_pool {
 
 struct Cns_user_metadata {
         u_signed64         u_fileid;
-        char               comments[CA_MAXCOMMENTLEN+1];        /* user comments */
+        char               comments[CA_MAXCOMMENTLEN+1];
 };
 
                         /* name server function prototypes */
 
 EXTERN_C int sendrep (int, int, ...);
-EXTERN_C int nslogit (char *, char *, ...);
+
+EXTERN_C int openlog (const char *, const char *);
+EXTERN_C int closelog (void);
+EXTERN_C int nslogit (const char *, ...);
+EXTERN_C int nslogreq (struct Cns_srv_request_info *, const char *, const int);
 
 EXTERN_C int Cns_abort_tr (struct Cns_dbfd *);
 EXTERN_C int Cns_acl_chmod (struct Cns_file_metadata *);
@@ -220,68 +206,68 @@ EXTERN_C int Cns_update_fmd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct C
 EXTERN_C int Cns_update_smd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_update_umd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *);
 
-EXTERN_C int Cns_srv_aborttrans (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_access (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_accessr (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_bulkexist (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_chclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_chdir (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_chmod (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_chown (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_creat (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_delcomment (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_delete (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_deleteclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_delsegbycopyno (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_dropsegs (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_du (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_endsess (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_endtrans (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_enterclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getacl (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getcomment (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getidmap (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getlinks (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getpath (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_getsegattrs (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_lastfseq (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_lchown (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_lstat (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_mkdir (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_modifyclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_opendir (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_ping (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_queryclass (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_readlink (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_rename (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_replaceseg (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_replacetapecopy (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_rmdir (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setacl (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setatime (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setcomment (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setfsize (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setfsizecs (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setfsizeg (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_setsegattrs (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_shutdown (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_stat (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_statcs (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_statg (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_symlink (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_tapesum (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_undelete (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_unlink (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_unlinkbyvid (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_updatefile_checksum (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_updateseg_checksum (int, char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_updateseg_status (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_utime (char *, const char *, struct Cns_srv_thread_info *);
+EXTERN_C int Cns_srv_aborttrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_access (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_accessr (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_bulkexist (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_chclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_chdir (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_chmod (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_chown (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_creat (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_delcomment (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_delete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_deleteclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_delsegbycopyno (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_dropsegs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_du (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_endsess (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_endtrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_enterclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getacl (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getcomment (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getidmap (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getlinks (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getpath (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_getsegattrs (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_lastfseq (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_lchown (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_lstat (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_mkdir (int,char *,  struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_modifyclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_opendir (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_ping (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_queryclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_readlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_rename (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_replaceseg (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_replacetapecopy (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_rmdir (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setacl (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setatime (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setcomment (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setfsize (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setfsizecs (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setfsizeg (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_setsegattrs (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_shutdown (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_stat (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_statcs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_statg (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_symlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_tapesum (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_undelete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_unlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_unlinkbyvid (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_updatefile_checksum (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_updateseg_checksum (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_updateseg_status (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_utime (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 
-EXTERN_C int Cns_srv_listclass (char *, const char *, struct Cns_srv_thread_info *, struct Cns_class_metadata *, int, DBLISTPTR *);
-EXTERN_C int Cns_srv_listlinks (char *, const char *, struct Cns_srv_thread_info *, struct Cns_symlinks *, int, DBLISTPTR *);
-EXTERN_C int Cns_srv_listtape (int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, int, DBLISTPTR *);
-EXTERN_C int Cns_srv_readdir (int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, DBLISTPTR *, DBLISTPTR *, int *);
-EXTERN_C int Cns_srv_startsess (char *, const char *, struct Cns_srv_thread_info *);
-EXTERN_C int Cns_srv_starttrans (int, char *, const char *, struct Cns_srv_thread_info *);
+EXTERN_C int Cns_srv_listclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *, struct Cns_class_metadata *, int, DBLISTPTR *);
+EXTERN_C int Cns_srv_listlinks (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *, struct Cns_symlinks *, int, DBLISTPTR *);
+EXTERN_C int Cns_srv_listtape (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, int, DBLISTPTR *);
+EXTERN_C int Cns_srv_readdir (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, DBLISTPTR *, DBLISTPTR *, int *);
+EXTERN_C int Cns_srv_startsess (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_starttrans (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 #endif

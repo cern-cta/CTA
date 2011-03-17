@@ -26,9 +26,9 @@ int Cns_init_dbpkg()
 
 static void
 Cns_oracle_error(char *func,
-                             char *sql_method,
-                             struct Cns_dbfd *dbfd,
-                             struct sqlca *sqlca)
+                 char *sql_method,
+                 struct Cns_dbfd *dbfd,
+                 struct sqlca *sqlca)
 {
   char   err_msg[512];
   size_t err_size = sizeof(err_msg);
@@ -39,7 +39,9 @@ Cns_oracle_error(char *func,
     err_msg[err_len - 1] = '\0';
   }
 
-  nslogit (func, "%s error: %.*s\n", sql_method, err_len, err_msg);
+  nslogit("MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
+          "Function=\"%s\" Error=\"%.*s\"",
+          sql_method, func, err_len, err_msg);
 
   /* Connection to the database was lost ? */
   if (sqlca->sqlcode == -2396  || sqlca->sqlcode == -3113  ||
@@ -1873,7 +1875,9 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
   serrno = 0;
   if ((fp = fopen(nsconfigfile, "r")) == NULL) {
-    nslogit(func, NS023, nsconfigfile);
+    nslogit("MSG=\"Error: Failed to open NSCONFIG\" Path=\"%s\" "
+            "Function=\"%s\" Error=\"%s\"",
+            nsconfigfile, func, strerror(errno));
     return (-1);
   }
   while (fgets(buf, sizeof(buf), fp)) {
@@ -1899,7 +1903,8 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
       (db_pwd[0]  == '\0') ||
       (db_srv[0]  == '\0') ||
       (db_name[0] == '\0')) {
-    nslogit(func, NS009, nsconfigfile, "incorrect");
+    nslogit("MSG=\"Error: Failed to extract database connect string\" "
+            "Path=\"%s\" Function=\"%s\"", nsconfigfile, func);
     return (-1);
   }
 
@@ -1909,7 +1914,8 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   } else {
     sprintf(db_connect, "%s/%s", db_user, db_pwd);
   }
-  nslogit(func, "attempting to connect to database\n");
+  nslogit("MSG=\"Attempting to connect to database\" "
+          "ConnectionDetails=\"%s/*******@%s\"", db_user, db_srv);
 
   EXEC SQL CONNECT :db_connect;
   if (sqlca.sqlcode == 0) {
@@ -1930,12 +1936,12 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
                FROM CastorVersion;
   }
   switch (sqlca.sqlcode) {
-    case 0:
-      nslogit (func, "schema version: %s\n", dbversion);
-      return 0;
-    default:
-      Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
-      return -1;
+  case 0:
+    nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"", dbversion);
+    return 0;
+  default:
+    Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
+    return -1;
   }
 
   return 0;
