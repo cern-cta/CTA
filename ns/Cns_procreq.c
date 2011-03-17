@@ -136,8 +136,8 @@ int Cns_srv_aborttrans(char *req_data,
 {
   char *func = "aborttrans";
   char *rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   (void) Cns_abort_tr (&thip->dbfd);
   RETURN (0);
@@ -160,8 +160,8 @@ int Cns_srv_access(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -218,8 +218,8 @@ int Cns_srv_chclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -334,8 +334,8 @@ int Cns_srv_chdir(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -383,8 +383,8 @@ int Cns_srv_chmod(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -458,8 +458,8 @@ int Cns_srv_chown(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -623,8 +623,8 @@ int Cns_srv_creat(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, mask);
   unmarshall_HYPER (rbp, cwd);
@@ -755,8 +755,8 @@ int Cns_srv_delcomment(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -822,8 +822,8 @@ int Cns_srv_delete(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -913,8 +913,8 @@ int Cns_srv_deleteclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
@@ -978,8 +978,8 @@ int Cns_srv_delsegbycopyno(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -1140,8 +1140,8 @@ int Cns_srv_du(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -1192,8 +1192,8 @@ int Cns_srv_endsess(char *req_data,
 {
   char *func = "endsess";
   char *rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   RETURN (0);
 }
@@ -1206,8 +1206,8 @@ int Cns_srv_endtrans(char *req_data,
 {
   char *func = "endtrans";
   char *rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   (void) Cns_end_tr (&thip->dbfd);
   RETURN (0);
@@ -1228,8 +1228,8 @@ int Cns_srv_enterclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   memset ((char *) &class_entry, 0, sizeof(class_entry));
   unmarshall_LONG (rbp, class_entry.classid);
@@ -1298,8 +1298,8 @@ int Cns_srv_getacl(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -1369,8 +1369,8 @@ int Cns_srv_getcomment(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -1432,8 +1432,8 @@ int Cns_srv_getlinks(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -1525,8 +1525,8 @@ int Cns_srv_getpath(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cur_fileid);
 
@@ -1572,8 +1572,8 @@ int Cns_srv_getsegattrs(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -1671,8 +1671,8 @@ int Cns_srv_lchown(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -1793,8 +1793,8 @@ int Cns_srv_listclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
@@ -1899,8 +1899,8 @@ int Cns_srv_listlinks(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_HYPER (rbp, cwd);
@@ -2013,8 +2013,8 @@ int Cns_srv_lastfseq(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
     RETURN (EINVAL);
@@ -2066,8 +2066,8 @@ int Cns_srv_bulkexist(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_LONG(rbp, nbFileIds);
 
@@ -2134,8 +2134,8 @@ int Cns_srv_tapesum(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
     RETURN (EINVAL);
@@ -2188,8 +2188,8 @@ int Cns_srv_listtape(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, direntsz);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
@@ -2261,8 +2261,8 @@ int Cns_srv_lstat(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -2337,8 +2337,8 @@ int Cns_srv_mkdir(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, mask);
   unmarshall_HYPER (rbp, cwd);
@@ -2452,8 +2452,8 @@ int Cns_srv_modifyclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
@@ -2597,8 +2597,8 @@ int Cns_srv_opendir(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -2662,8 +2662,8 @@ int Cns_srv_ping(char *req_data,
   char repbuf[REPBUFSZ];
   char *sbp;
   char *rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   sprintf (info, "%d.%d.%d-%d", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
   sbp = repbuf;
@@ -2694,8 +2694,8 @@ int Cns_srv_queryclass(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
@@ -2786,8 +2786,8 @@ int Cns_srv_readdir(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (endlist)
     func = "closedir";
@@ -2956,8 +2956,8 @@ int Cns_srv_readlink(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -3025,8 +3025,8 @@ int Cns_srv_rename(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, oldpath, CA_MAXPATHLEN+1))
@@ -3213,8 +3213,8 @@ int Cns_srv_updateseg_status(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, fileid);
   if (fileid > 0)
@@ -3313,8 +3313,8 @@ int Cns_srv_updateseg_checksum(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, fileid);
   if (fileid > 0)
@@ -3448,8 +3448,8 @@ int Cns_srv_replaceseg(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, fileid);
   if (fileid > 0)
@@ -3611,8 +3611,8 @@ int Cns_srv_replacetapecopy(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, fileid);
   if (fileid > 0)
@@ -3825,8 +3825,8 @@ int Cns_srv_rmdir(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -3912,8 +3912,8 @@ int Cns_srv_setacl(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -4039,8 +4039,8 @@ int Cns_srv_setatime(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4121,8 +4121,8 @@ int Cns_srv_setcomment(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -4203,8 +4203,8 @@ int Cns_srv_setfsize(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4319,8 +4319,8 @@ int Cns_srv_setfsizecs(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4452,8 +4452,8 @@ int Cns_srv_setfsizeg(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
     RETURN (EINVAL);
@@ -4565,8 +4565,8 @@ int Cns_srv_setsegattrs(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4772,8 +4772,8 @@ int Cns_srv_dropsegs(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4841,8 +4841,8 @@ int Cns_srv_startsess(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
     RETURN (EINVAL);
@@ -4865,8 +4865,8 @@ int Cns_srv_starttrans(int magic,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
@@ -4899,8 +4899,8 @@ int Cns_srv_stat(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -4971,8 +4971,8 @@ int Cns_srv_statcs(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
@@ -5045,8 +5045,8 @@ int Cns_srv_statg(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -5124,8 +5124,8 @@ int Cns_srv_symlink(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, target, CA_MAXPATHLEN+1))
@@ -5217,8 +5217,8 @@ int Cns_srv_undelete(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -5313,8 +5313,8 @@ int Cns_srv_unlink(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -5417,8 +5417,8 @@ int Cns_srv_unlinkbyvid(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
     RETURN (SENAMETOOLONG);
@@ -5542,8 +5542,8 @@ int Cns_srv_utime(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
@@ -5628,8 +5628,8 @@ int Cns_srv_updatefile_checksum(char *req_data,
 
   /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, thip->reqinfo.uid);
-  unmarshall_LONG (rbp, thip->reqinfo.gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
