@@ -66,7 +66,8 @@ const std::string castor::db::cnv::DbRepackSegmentCnv::s_selectStatementString =
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN RepackSegment%ROWTYPE; \
+   TYPE RecordType IS RECORD (fileid INTEGER, segsize INTEGER, compression NUMBER, filesec NUMBER, copyno NUMBER, blockid INTEGER, fileseq INTEGER, errorCode NUMBER, errorMessage VARCHAR2(2048), id INTEGER, repacksubrequest INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

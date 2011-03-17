@@ -99,11 +99,6 @@ void castor::io::StreamTapeCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->label();
   ad->stream() << obj->density();
   ad->stream() << obj->devtype();
-  ad->stream() << obj->startTime();
-  ad->stream() << obj->lastVdqmPingTime();
-  ad->stream() << obj->vdqmVolReqId();
-  ad->stream() << obj->lastFseq();
-  ad->stream() << obj->tapeGatewayRequestId();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -151,21 +146,6 @@ castor::IObject* castor::io::StreamTapeCnv::createObj(castor::IAddress* address)
   std::string devtype;
   ad->stream() >> devtype;
   object->setDevtype(devtype);
-  int startTime;
-  ad->stream() >> startTime;
-  object->setStartTime(startTime);
-  int lastVdqmPingTime;
-  ad->stream() >> lastVdqmPingTime;
-  object->setLastVdqmPingTime(lastVdqmPingTime);
-  int vdqmVolReqId;
-  ad->stream() >> vdqmVolReqId;
-  object->setVdqmVolReqId(vdqmVolReqId);
-  int lastFseq;
-  ad->stream() >> lastFseq;
-  object->setLastFseq(lastFseq);
-  int tapeGatewayRequestId;
-  ad->stream() >> tapeGatewayRequestId;
-  object->setTapeGatewayRequestId(tapeGatewayRequestId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -289,86 +289,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_startTime
-       * @return the value of m_startTime
-       */
-      int startTime() const {
-        return m_startTime;
-      }
-
-      /**
-       * Set the value of m_startTime
-       * @param new_var the new value of m_startTime
-       */
-      void setStartTime(int new_var) {
-        m_startTime = new_var;
-      }
-
-      /**
-       * Get the value of m_lastVdqmPingTime
-       * @return the value of m_lastVdqmPingTime
-       */
-      int lastVdqmPingTime() const {
-        return m_lastVdqmPingTime;
-      }
-
-      /**
-       * Set the value of m_lastVdqmPingTime
-       * @param new_var the new value of m_lastVdqmPingTime
-       */
-      void setLastVdqmPingTime(int new_var) {
-        m_lastVdqmPingTime = new_var;
-      }
-
-      /**
-       * Get the value of m_vdqmVolReqId
-       * @return the value of m_vdqmVolReqId
-       */
-      int vdqmVolReqId() const {
-        return m_vdqmVolReqId;
-      }
-
-      /**
-       * Set the value of m_vdqmVolReqId
-       * @param new_var the new value of m_vdqmVolReqId
-       */
-      void setVdqmVolReqId(int new_var) {
-        m_vdqmVolReqId = new_var;
-      }
-
-      /**
-       * Get the value of m_lastFseq
-       * @return the value of m_lastFseq
-       */
-      int lastFseq() const {
-        return m_lastFseq;
-      }
-
-      /**
-       * Set the value of m_lastFseq
-       * @param new_var the new value of m_lastFseq
-       */
-      void setLastFseq(int new_var) {
-        m_lastFseq = new_var;
-      }
-
-      /**
-       * Get the value of m_tapeGatewayRequestId
-       * @return the value of m_tapeGatewayRequestId
-       */
-      int tapeGatewayRequestId() const {
-        return m_tapeGatewayRequestId;
-      }
-
-      /**
-       * Set the value of m_tapeGatewayRequestId
-       * @param new_var the new value of m_tapeGatewayRequestId
-       */
-      void setTapeGatewayRequestId(int new_var) {
-        m_tapeGatewayRequestId = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -475,16 +395,6 @@ namespace castor {
       std::string m_density;
 
       std::string m_devtype;
-
-      int m_startTime;
-
-      int m_lastVdqmPingTime;
-
-      int m_vdqmVolReqId;
-
-      int m_lastFseq;
-
-      int m_tapeGatewayRequestId;
 
       /// The id of this object
       u_signed64 m_id;

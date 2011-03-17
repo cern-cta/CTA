@@ -17,7 +17,6 @@
 int sendrep(int rpfd, int rep_type, ...)
 {
   va_list args;
-  char func[16];
   char *msg;
   int n;
   char prtbuf[PRTBUFSZ];
@@ -26,7 +25,6 @@ int sendrep(int rpfd, int rep_type, ...)
   char repbuf[REPBUFSZ+12];
   int repsize;
 
-  strncpy (func, "sendrep", 16);
   rbp = repbuf;
   marshall_LONG (rbp, CNS_MAGIC);
   va_start (args, rep_type);
@@ -37,7 +35,6 @@ int sendrep(int rpfd, int rep_type, ...)
     vsprintf (prtbuf, msg, args);
     marshall_LONG (rbp, strlen (prtbuf) + 1);
     marshall_STRING (rbp, prtbuf);
-    nslogit (func, "%s", prtbuf);
     break;
   case MSG_DATA:
   case MSG_LINKS:
@@ -56,7 +53,9 @@ int sendrep(int rpfd, int rep_type, ...)
   va_end (args);
   repsize = rbp - repbuf;
   if (netwrite (rpfd, repbuf, repsize) != repsize) {
-    nslogit (func, NS002, "send", neterror());
+    nslogit("MSG=\"Error: Unable to send response\" Function=\"sendrep\" "
+            "Error=\"%s\" File=\"%s\" Line=%d",
+            neterror(), __FILE__, __LINE__);
     if (rep_type == CNS_RC)
       netclose (rpfd);
     return (-1);

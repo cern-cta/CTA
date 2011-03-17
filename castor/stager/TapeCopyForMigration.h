@@ -135,46 +135,6 @@ int Cstager_TapeCopyForMigration_missingCopies(struct Cstager_TapeCopyForMigrati
 int Cstager_TapeCopyForMigration_setMissingCopies(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
 
 /**
- * Get the value of fseq
- */
-int Cstager_TapeCopyForMigration_fseq(struct Cstager_TapeCopyForMigration_t* instance, int* var);
-
-/**
- * Set the value of fseq
- */
-int Cstager_TapeCopyForMigration_setFseq(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
-
-/**
- * Get the value of tapeGatewayRequestId
- */
-int Cstager_TapeCopyForMigration_tapeGatewayRequestId(struct Cstager_TapeCopyForMigration_t* instance, int* var);
-
-/**
- * Set the value of tapeGatewayRequestId
- */
-int Cstager_TapeCopyForMigration_setTapeGatewayRequestId(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
-
-/**
- * Get the value of vid
- */
-int Cstager_TapeCopyForMigration_vid(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
-
-/**
- * Set the value of vid
- */
-int Cstager_TapeCopyForMigration_setVid(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
-
-/**
- * Get the value of fileTransactionId
- */
-int Cstager_TapeCopyForMigration_fileTransactionId(struct Cstager_TapeCopyForMigration_t* instance, int* var);
-
-/**
- * Set the value of fileTransactionId
- */
-int Cstager_TapeCopyForMigration_setFileTransactionId(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

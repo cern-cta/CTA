@@ -135,46 +135,6 @@ int Cstager_TapeCopy_missingCopies(struct Cstager_TapeCopy_t* instance, int* var
 int Cstager_TapeCopy_setMissingCopies(struct Cstager_TapeCopy_t* instance, int new_var);
 
 /**
- * Get the value of fseq
- */
-int Cstager_TapeCopy_fseq(struct Cstager_TapeCopy_t* instance, int* var);
-
-/**
- * Set the value of fseq
- */
-int Cstager_TapeCopy_setFseq(struct Cstager_TapeCopy_t* instance, int new_var);
-
-/**
- * Get the value of tapeGatewayRequestId
- */
-int Cstager_TapeCopy_tapeGatewayRequestId(struct Cstager_TapeCopy_t* instance, int* var);
-
-/**
- * Set the value of tapeGatewayRequestId
- */
-int Cstager_TapeCopy_setTapeGatewayRequestId(struct Cstager_TapeCopy_t* instance, int new_var);
-
-/**
- * Get the value of vid
- */
-int Cstager_TapeCopy_vid(struct Cstager_TapeCopy_t* instance, const char** var);
-
-/**
- * Set the value of vid
- */
-int Cstager_TapeCopy_setVid(struct Cstager_TapeCopy_t* instance, const char* new_var);
-
-/**
- * Get the value of fileTransactionId
- */
-int Cstager_TapeCopy_fileTransactionId(struct Cstager_TapeCopy_t* instance, int* var);
-
-/**
- * Set the value of fileTransactionId
- */
-int Cstager_TapeCopy_setFileTransactionId(struct Cstager_TapeCopy_t* instance, int new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

@@ -115,38 +115,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Stream_vdqmVolReqId
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_vdqmVolReqId(castor::stager::Stream* instance, int* var) {
-    *var = instance->vdqmVolReqId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Stream_setVdqmVolReqId
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_setVdqmVolReqId(castor::stager::Stream* instance, int new_var) {
-    instance->setVdqmVolReqId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Stream_tapeGatewayRequestId
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_tapeGatewayRequestId(castor::stager::Stream* instance, int* var) {
-    *var = instance->tapeGatewayRequestId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Stream_setTapeGatewayRequestId
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_setTapeGatewayRequestId(castor::stager::Stream* instance, int new_var) {
-    instance->setTapeGatewayRequestId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Stream_id
   //----------------------------------------------------------------------------
   int Cstager_Stream_id(castor::stager::Stream* instance, u_signed64* var) {

@@ -64,7 +64,8 @@ const std::string castor::db::cnv::DbVolumePriorityCnv::s_selectStatementString 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN VolumePriority%ROWTYPE; \
+   TYPE RecordType IS RECORD (priority NUMBER, clientUID NUMBER, clientGID NUMBER, clientHost VARCHAR2(2048), vid VARCHAR2(2048), tpMode NUMBER, lifespanType NUMBER, creationTime INTEGER, modificationTime INTEGER, id INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

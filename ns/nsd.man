@@ -16,6 +16,8 @@ nsd \- start the name server
 .BI -t " nbthreads"
 ] [
 .B -s
+] [
+.B -n " nshostname"
 ]
 .SH DESCRIPTION
 .LP
@@ -132,24 +134,16 @@ Specifies the number of threads. Default is 20.
 .TP
 .B -s
 Enables strong authentication mode.
+.TP
+.BI -n " nshostname"
+Specifies the value of the NSHOSTNAME attribute used in Name Server log files.
+By default the value is castorns.
 .SH FILES
 .TP 1.5i
 .B /etc/NSCONFIG
 configuration file
 .TP
 .B /var/log/castor/nsd.log
-.SH EXAMPLES
-.TP
-Here is a small log:
-.nf
-09/13 14:36:35  6089 Cns_serv: started
-09/13 14:36:36  6089 Cns_serv: creating /
-09/13 14:37:02  6089 Cns_srv_mkdir: NS092 - mkdir request by 0,0 from castor5.cern.ch
-09/13 14:37:02  6089 Cns_srv_mkdir: NS098 - mkdir /castor 777 22
-09/13 14:37:02  6089 Cns_srv_mkdir: returns 0
-09/13 14:37:18  6089 Cns_srv_stat: NS092 - stat request by 0,0 from castor5.cern.ch
-09/13 14:37:18  6089 Cns_srv_stat: NS098 - stat /castor
-09/13 14:37:18  6089 Cns_srv_stat: returns 0
 .fi
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

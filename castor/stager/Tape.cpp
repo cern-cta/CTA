@@ -50,11 +50,6 @@ castor::stager::Tape::Tape() throw() :
   m_label(""),
   m_density(""),
   m_devtype(""),
-  m_startTime(0),
-  m_lastVdqmPingTime(0),
-  m_vdqmVolReqId(0),
-  m_lastFseq(0),
-  m_tapeGatewayRequestId(0),
   m_id(0),
   m_stream(0),
   m_status(TapeStatusCodes(0)) {
@@ -98,11 +93,6 @@ void castor::stager::Tape::print(std::ostream& stream,
   stream << indent << "label : " << m_label << std::endl;
   stream << indent << "density : " << m_density << std::endl;
   stream << indent << "devtype : " << m_devtype << std::endl;
-  stream << indent << "startTime : " << m_startTime << std::endl;
-  stream << indent << "lastVdqmPingTime : " << m_lastVdqmPingTime << std::endl;
-  stream << indent << "vdqmVolReqId : " << m_vdqmVolReqId << std::endl;
-  stream << indent << "lastFseq : " << m_lastFseq << std::endl;
-  stream << indent << "tapeGatewayRequestId : " << m_tapeGatewayRequestId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Stream : " << std::endl;

@@ -72,7 +72,8 @@ const std::string castor::db::cnv::DbTapeRequestCnv::s_selectStatementString =
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbTapeRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN TapeRequest%ROWTYPE; \
+   TYPE RecordType IS RECORD (priority NUMBER, modificationTime INTEGER, creationTime INTEGER, errorCode NUMBER, errorMessage VARCHAR2(2048), remoteCopyType VARCHAR2(2048), id INTEGER, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, status INTEGER, client INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

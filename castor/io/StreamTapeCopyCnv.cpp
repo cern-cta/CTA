@@ -41,7 +41,6 @@
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "osdep.h"
-#include <string>
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -93,10 +92,6 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errorCode();
   ad->stream() << obj->nbRetry();
   ad->stream() << obj->missingCopies();
-  ad->stream() << obj->fseq();
-  ad->stream() << obj->tapeGatewayRequestId();
-  ad->stream() << obj->vid();
-  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -123,18 +118,6 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   int missingCopies;
   ad->stream() >> missingCopies;
   object->setMissingCopies(missingCopies);
-  int fseq;
-  ad->stream() >> fseq;
-  object->setFseq(fseq);
-  int tapeGatewayRequestId;
-  ad->stream() >> tapeGatewayRequestId;
-  object->setTapeGatewayRequestId(tapeGatewayRequestId);
-  std::string vid;
-  ad->stream() >> vid;
-  object->setVid(vid);
-  int fileTransactionId;
-  ad->stream() >> fileTransactionId;
-  object->setFileTransactionId(fileTransactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

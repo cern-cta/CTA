@@ -66,7 +66,8 @@ const std::string castor::db::cnv::DbGCFileCnv::s_selectStatementString =
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbGCFileCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN GCFile%ROWTYPE; \
+   TYPE RecordType IS RECORD (diskCopyId INTEGER, id INTEGER, request INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \

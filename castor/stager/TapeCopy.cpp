@@ -44,10 +44,6 @@ castor::stager::TapeCopy::TapeCopy() throw() :
   m_errorCode(0),
   m_nbRetry(0),
   m_missingCopies(0),
-  m_fseq(0),
-  m_tapeGatewayRequestId(0),
-  m_vid(""),
-  m_fileTransactionId(0),
   m_id(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
@@ -88,10 +84,6 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "nbRetry : " << m_nbRetry << std::endl;
   stream << indent << "missingCopies : " << m_missingCopies << std::endl;
-  stream << indent << "fseq : " << m_fseq << std::endl;
-  stream << indent << "tapeGatewayRequestId : " << m_tapeGatewayRequestId << std::endl;
-  stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "fileTransactionId : " << m_fileTransactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

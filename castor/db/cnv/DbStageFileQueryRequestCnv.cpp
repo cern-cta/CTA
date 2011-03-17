@@ -70,7 +70,8 @@ const std::string castor::db::cnv::DbStageFileQueryRequestCnv::s_selectStatement
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbStageFileQueryRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE CurType IS REF CURSOR RETURN StageFileQueryRequest%ROWTYPE; \
+   TYPE RecordType IS RECORD (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER, svcClass INTEGER, client INTEGER); \
+   TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
