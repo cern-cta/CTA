@@ -583,15 +583,14 @@ int Cns_delete_file_metadata(struct Cns_srv_thread_info *thip,
             "ParentFileId=%llu Guid=\"%s\" Name=\"%s\" FileMode=%d Nlink=%d "
             "OwnerUid=%d OwnerGid=%d FileSize=%d Atime=%lld Mtime=%lld "
             "Ctime=%lld FileClass=%d Status=\"%c\" ChecksumType=\"%s\" "
-            "ChecksumValue=\"%s\" RawACL=\"%s\"",
+            "ChecksumValue=\"%s\"",
             thip->reqinfo.reqid, nshostname, fmd_entry->fileid,
             fmd_entry->parent_fileid, fmd_entry->guid, fmd_entry->name,
             fmd_entry->filemode, fmd_entry->nlink, fmd_entry->uid,
             fmd_entry->gid, fmd_entry->filesize,
             (long long int)fmd_entry->atime, (long long int) fmd_entry->mtime,
             (long long int)fmd_entry->ctime, fmd_entry->fileclass,
-            fmd_entry->status, fmd_entry->csumtype, fmd_entry->csumvalue,
-            fmd_entry->acl);
+            fmd_entry->status, fmd_entry->csumtype, fmd_entry->csumvalue);
   }  
   if (Cns_delete_fmd_entry (&thip->dbfd, rec_addr))
     return (serrno);
