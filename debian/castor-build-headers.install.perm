@@ -47,6 +47,7 @@
 %attr(0644,root,root) usr/include/castor/castor/metrics/Histogram.hpp
 %attr(0644,root,root) usr/include/castor/castor/metrics/MetricsCollector.hpp
 %attr(0644,root,root) usr/include/castor/castor/ObjectSet.hpp
+%attr(0644,root,root) usr/include/castor/castor/query/DiskPoolQueryType.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/Client.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/FileQryResponse.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/FileResponse.hpp
@@ -90,6 +91,7 @@
 %attr(0644,root,root) usr/include/castor/castor/SvcFactory.hpp
 %attr(0644,root,root) usr/include/castor/castor/System.hpp
 %attr(0644,root,root) usr/include/castor/castor/VectorAddress.hpp
+%attr(0644,root,root) usr/include/castor/client/src/stager/stager_client_api_query.hpp
 %attr(0644,root,root) usr/include/castor/h/Castor_limits.h
 %attr(0644,root,root) usr/include/castor/h/Cgetopt.h
 %attr(0644,root,root) usr/include/castor/h/Cglobals.h

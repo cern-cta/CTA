@@ -149,13 +149,13 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       long bytes = strtol(value, 0, 10);
       // Check that the string converted to an integer is valid
       if (((bytes == 0) && (errno == ERANGE)) || (bytes > INT_MAX)) {
-	castor::exception::Exception ex(EINVAL);
-	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, " << strerror(ERANGE);
-	throw ex;
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, " << strerror(ERANGE);
+        throw ex;
       } else if (bytes < MAX_NETDATA_SIZE) {
-	castor::exception::Exception ex(EINVAL);
-	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, value too small";
-	throw ex;
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, value too small";
+        throw ex;
       }
       m_maxNetDataSize = (int)bytes;
     } else {

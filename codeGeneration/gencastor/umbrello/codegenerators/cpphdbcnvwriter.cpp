@@ -75,7 +75,7 @@ void CppHDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (m_ignoreButForDB.find(as->remotePart.name) == m_ignoreButForDB.end()) {
+      if (as->remoteStereotype != SQLONLY) {
         if (as->type.multiRemote == MULT_ONE ||
             as->type.multiRemote == MULT_N) {
           writeBasicFillRep(as);
@@ -125,7 +125,7 @@ void CppHDbCnvWriter::writeFillObj() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (m_ignoreButForDB.find(as->remotePart.name) == m_ignoreButForDB.end()) {
+      if (as->remoteStereotype != SQLONLY) {
         if (as->type.multiRemote == MULT_ONE ||
             as->type.multiRemote == MULT_N) {
           writeBasicFillObj(as);
@@ -328,7 +328,7 @@ void CppHDbCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {

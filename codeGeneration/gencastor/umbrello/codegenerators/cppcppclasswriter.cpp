@@ -111,7 +111,7 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
   for(UMLAttribute *at = m_classInfo->atpub.first();
       0 != at;
       at = m_classInfo->atpub.next()) {
-    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       writeInitInConstructor(QString("m_") + at->getName(),
                              at->getTypeName(), first);
     }
@@ -119,7 +119,7 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
   for(UMLAttribute *at = m_classInfo->atprot.first();
       0 != at;
       at = m_classInfo->atprot.next()) {
-    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       writeInitInConstructor(QString("m_") + at->getName(),
                              at->getTypeName(), first);
     }
@@ -127,7 +127,7 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
   for(UMLAttribute *at = m_classInfo->atpriv.first();
       0 != at;
       at = m_classInfo->atpriv.next()) {
-    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       writeInitInConstructor(QString("m_") + at->getName(),
                              at->getTypeName(), first);
     }
@@ -252,7 +252,7 @@ void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
       m_classInfo->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
       if (parseMulti(a->getMulti(Uml::B)) == MULT_ONE) {
-        if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+        if (a->getRoleDoc(Uml::B) != SQLONLY) {
           QString className = a->getObject(Uml::B)->getName();
           if (!isEnum(className)) className.append("*");
           writeInitInConstructor (QString("m_") + a->getRoleName(Uml::B),
@@ -264,7 +264,7 @@ void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
   } else {
     if (a->getRoleName(Uml::A) != "") {
       if (parseMulti(a->getMulti(Uml::A)) == MULT_ONE) {
-        if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+        if (a->getRoleDoc(Uml::A) != SQLONLY) {
           QString className = a->getObject(Uml::A)->getName();
           if (!isEnum(className)) className.append("*");
           writeInitInConstructor (QString("m_") + a->getRoleName(Uml::A),
@@ -365,7 +365,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
   if (m_classInfo->id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       m_classInfo->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
-      if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+      if (a->getRoleDoc(Uml::B) != SQLONLY) {
         UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
         if (0 == cl || !isEnum(cl)) {
           fixTypeName(a->getObject(Uml::B)->getName(),
@@ -380,7 +380,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
-      if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+      if (a->getRoleDoc(Uml::A) != SQLONLY) {
         UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
         if (0 == cl || !isEnum(cl)) {
           fixTypeName(a->getObject(Uml::A)->getName(),
@@ -506,7 +506,7 @@ void CppCppClassWriter::writeFullPrint(CppBaseWriter* obj,
   for(UMLAttribute *at = members->first();
       0 != at;
       at = members->next()) {
-    if (obj->m_ignoreButForDB.find(at->getName()) == obj->m_ignoreButForDB.end()) {
+    if (at->getStereotype() != SQLONLY) {
       if (at->getName() == "content") {
         // This probably means we deal with a castor type
         // Then try to get the dedicated
@@ -550,7 +550,7 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
   if (obj->classInfo()->id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       obj->classInfo()->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
-      if (obj->m_ignoreButForDB.find(a->getRoleName(Uml::B)) == obj->m_ignoreButForDB.end()) {
+      if (a->getRoleDoc(Uml::B) != SQLONLY) {
         Multiplicity multiB = obj->parseMulti(a->getMulti(Uml::B));
         switch (multiB) {
         case MULT_ONE:
@@ -587,7 +587,7 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
-      if (obj->m_ignoreButForDB.find(a->getRoleName(Uml::A)) == obj->m_ignoreButForDB.end()) {
+      if (a->getRoleDoc(Uml::A) != SQLONLY) {
         Multiplicity multiA = obj->parseMulti(a->getMulti(Uml::A));
         switch (multiA) {
         case MULT_ONE:

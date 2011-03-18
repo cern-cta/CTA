@@ -15,6 +15,10 @@
 #include "../umlnamespace.h"
 #include "../operation.h"
 
+// Predefined stereotypes
+static const QString DONOTSTREAM = "DoNotStream";
+static const QString SQLONLY = "SqlOnly";
+
 /**
  * Base cpp writer.
  * Implements functionnalities for including files,
@@ -333,9 +337,11 @@ class CppBaseWriter : public CppCastorWriter {
   struct Assoc {
     AssocType type;
     Member remotePart;
+    QString remoteStereotype;
     Member localPart;
-    Assoc(AssocType t, Member rp, Member lp) :
-      type(t), remotePart(rp), localPart(lp){}
+    QString localStereotype;
+    Assoc(AssocType t, Member rp, QString rst, Member lp, QString lst) :
+      type(t), remotePart(rp), remoteStereotype(rst), localPart(lp), localStereotype(lst) {}
   };
 
   /**

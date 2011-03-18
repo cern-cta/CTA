@@ -794,6 +794,8 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
   Assoc* as;
   if (ci.id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       ci.allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
+    // here we hijack the UMLAssociation.documentation (roledoc) field as the stereotype
+    // of the association, which is later checked against predefined stereotypes.
     as = new Assoc(AssocType(parseMulti(a->getMulti(Uml::B)),
                              parseMulti(a->getMulti(Uml::A)),
                              parseAssocKind(a->getAssocType(), true)),
@@ -801,10 +803,12 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                           a->getObject(Uml::B)->getName(),
                           a->getObject(Uml::B)->getAbstract(),
                           a->getObject(Uml::B)->getStereotype()),
+                   a->getRoleDoc(Uml::B),
                    Member(a->getRoleName(Uml::A),
                           a->getObject(Uml::A)->getName(),
                           a->getObject(Uml::A)->getAbstract(),
-                          a->getObject(Uml::A)->getStereotype()));
+                          a->getObject(Uml::A)->getStereotype()),
+                   a->getRoleDoc(Uml::A));
   } else {
     as = new Assoc(AssocType(parseMulti(a->getMulti(Uml::A)),
                              parseMulti(a->getMulti(Uml::B)),
@@ -813,10 +817,12 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                           a->getObject(Uml::A)->getName(),
                           a->getObject(Uml::A)->getAbstract(),
                           a->getObject(Uml::A)->getStereotype()),
+                   a->getRoleDoc(Uml::A),
                    Member(a->getRoleName(Uml::B),
                           a->getObject(Uml::B)->getName(),
                           a->getObject(Uml::B)->getAbstract(),
-                          a->getObject(Uml::B)->getStereotype()));
+                          a->getObject(Uml::B)->getStereotype()),
+                   a->getRoleDoc(Uml::A));
   }
   list.append(as);
 }
