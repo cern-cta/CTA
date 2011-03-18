@@ -501,13 +501,13 @@ PROCEDURE tg_failFileTransfer(
   varTpId NUMBER;              -- Tape Id
   varTcId NUMBER;              -- TapeCopy Id
 BEGIN
-  -- Prepare to return everything to its oroginal state in case of problem.
+  -- Prepare to return everything to its original state in case of problem.
   SAVEPOINT MainFailFileSession;
   
   -- Find related Read tape or stream from VDQM Id
   tg_findFromVDQMReqId(inTransId, varTpId, varStrId);
   
-  -- Lock related castorfile -- TODO: This should be a procedrelized access to
+  -- Lock related castorfile -- TODO: This should be a procedure-based access to
   -- the disk system.
   SELECT CF.id INTO varUnused 
     FROM CastorFile CF
@@ -515,7 +515,7 @@ BEGIN
      AND CF.nsHost = inNsHost 
     FOR UPDATE;
   
-  -- Case dependant part
+  -- Case dependent part
   IF (varTpId IS NOT NULL) THEN
     -- We handle a read case
     -- fail the segment on that tape
@@ -541,7 +541,8 @@ BEGIN
     -- TapegatewayRequest + having a matching Fseq.
     UPDATE TapeCopy TC
        SET TC.status    = tconst.TAPECOPY_MIG_RETRY,
-           TC.errorcode = inErrorCode 
+           TC.errorcode = inErrorCode,
+           TC.vid       = NULL
      WHERE TC.TapegatewayRequestId = varTgrId
        AND TC.fSeq = inFseq; 
   ELSE

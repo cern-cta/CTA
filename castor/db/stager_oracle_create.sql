@@ -196,7 +196,7 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INTEGER, lastFileSystemChange INTEGER, vdqmVolReqId NUMBER, tapeGatewayRequestId NUMBER, id INTEGER CONSTRAINT PK_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystem INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Stream (initialSizeToTransfer INTEGER, lastFileSystemChange INTEGER, vdqmVolReqId NUMBER, tapeGatewayRequestId NUMBER, id INTEGER CONSTRAINT PK_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
@@ -467,7 +467,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_9002');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_9003');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -9359,13 +9359,13 @@ PROCEDURE tg_failFileTransfer(
   varTpId NUMBER;              -- Tape Id
   varTcId NUMBER;              -- TapeCopy Id
 BEGIN
-  -- Prepare to return everything to its oroginal state in case of problem.
+  -- Prepare to return everything to its original state in case of problem.
   SAVEPOINT MainFailFileSession;
   
   -- Find related Read tape or stream from VDQM Id
   tg_findFromVDQMReqId(inTransId, varTpId, varStrId);
   
-  -- Lock related castorfile -- TODO: This should be a procedrelized access to
+  -- Lock related castorfile -- TODO: This should be a procedure-based access to
   -- the disk system.
   SELECT CF.id INTO varUnused 
     FROM CastorFile CF
@@ -9373,7 +9373,7 @@ BEGIN
      AND CF.nsHost = inNsHost 
     FOR UPDATE;
   
-  -- Case dependant part
+  -- Case dependent part
   IF (varTpId IS NOT NULL) THEN
     -- We handle a read case
     -- fail the segment on that tape
@@ -9399,7 +9399,8 @@ BEGIN
     -- TapegatewayRequest + having a matching Fseq.
     UPDATE TapeCopy TC
        SET TC.status    = tconst.TAPECOPY_MIG_RETRY,
-           TC.errorcode = inErrorCode 
+           TC.errorcode = inErrorCode,
+           TC.vid       = NULL
      WHERE TC.TapegatewayRequestId = varTgrId
        AND TC.fSeq = inFseq; 
   ELSE
