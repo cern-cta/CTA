@@ -551,11 +551,58 @@ int Cns_srv_chown(char *req_data,
   RETURN (0);
 }
 
-/* Cns_internal_deletesegs - internal method deleting segments associated to a file */
+/* Cns_delete_segment_metadata - drop segment metadata entry logging all attributes */
 
-int Cns_internal_deletesegs(struct Cns_srv_thread_info *thip,
-                            struct Cns_file_metadata *filentry,
-                            int copyno)
+int Cns_delete_segment_metadata(struct Cns_srv_thread_info *thip,
+                                struct Cns_seg_metadata *smd_entry,
+                                Cns_dbrec_addr *rec_addr)
+{
+  nslogit("MSG=\"Unlinking segment\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+          "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
+          "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
+          "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
+          thip->reqinfo.reqid, nshostname, smd_entry->s_fileid,
+          smd_entry->copyno, smd_entry->fsec, smd_entry->segsize,
+          smd_entry->compression, smd_entry->s_status, smd_entry->vid,
+          smd_entry->side, smd_entry->fseq, smd_entry->blockid[0],
+          smd_entry->blockid[1], smd_entry->blockid[2], smd_entry->blockid[3],
+          smd_entry->checksum_name, smd_entry->checksum);
+  if (Cns_delete_smd_entry (&thip->dbfd, rec_addr))
+    return (serrno);
+  return (0);
+}
+
+/* Cns_delete_file_metadata - drop file metadata entry logging all attributes */
+
+int Cns_delete_file_metadata(struct Cns_srv_thread_info *thip,
+                             struct Cns_file_metadata *fmd_entry,
+                             Cns_dbrec_addr *rec_addr)
+{
+  if (fmd_entry->filemode & S_IFREG) {
+    nslogit("MSG=\"Unlinking file\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+            "ParentFileId=%llu Guid=\"%s\" Name=\"%s\" FileMode=%d Nlink=%d "
+            "OwnerUid=%d OwnerGid=%d FileSize=%d Atime=%lld Mtime=%lld "
+            "Ctime=%lld FileClass=%d Status=\"%c\" ChecksumType=\"%s\" "
+            "ChecksumValue=\"%s\" RawACL=\"%s\"",
+            thip->reqinfo.reqid, nshostname, fmd_entry->fileid,
+            fmd_entry->parent_fileid, fmd_entry->guid, fmd_entry->name,
+            fmd_entry->filemode, fmd_entry->nlink, fmd_entry->uid,
+            fmd_entry->gid, fmd_entry->filesize,
+            (long long int)fmd_entry->atime, (long long int) fmd_entry->mtime,
+            (long long int)fmd_entry->ctime, fmd_entry->fileclass,
+            fmd_entry->status, fmd_entry->csumtype, fmd_entry->csumvalue,
+            fmd_entry->acl);
+  }  
+  if (Cns_delete_fmd_entry (&thip->dbfd, rec_addr))
+    return (serrno);
+  return (0);
+}
+
+/* Cns_delete_segs - delete the segments associated to a file */
+
+int Cns_delete_segs(struct Cns_srv_thread_info *thip,
+                    struct Cns_file_metadata *filentry,
+                    int copyno)
 {
   struct Cns_seg_metadata smd_entry;
   Cns_dbrec_addr rec_addrs;
@@ -564,7 +611,9 @@ int Cns_internal_deletesegs(struct Cns_srv_thread_info *thip,
   int       bof = 1;
   int       c;
 
-  /* Loop over the segments for the file */
+  /* Loop over the segments for the file, filtering by copy number if
+   * applicable.
+   */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
                                    &smd_entry, 1, &rec_addrs, 0,
                                    &dblistptr)) == 0) {
@@ -573,18 +622,7 @@ int Cns_internal_deletesegs(struct Cns_srv_thread_info *thip,
       continue;
     }
     found++;
-    nslogit("MSG=\"Unlinking segment\" REQID=%s NSHOSTNAME=\"%s\" "
-            "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu "
-            "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
-            "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
-            "ChecksumValue=\"%lx\"",
-            thip->reqinfo.reqid, nshostname, smd_entry.s_fileid,
-            smd_entry.copyno, smd_entry.fsec, smd_entry.segsize,
-            smd_entry.compression, smd_entry.s_status, smd_entry.vid,
-            smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
-            smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
-            smd_entry.checksum_name, smd_entry.checksum);
-    if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
+    if (Cns_delete_segment_metadata (thip, &smd_entry, &rec_addrs))
       return (serrno);
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
@@ -676,7 +714,7 @@ int Cns_srv_creat(int magic,
       RETURN (EACCES);
 
     /* Delete file segments if any */
-    if (Cns_internal_deletesegs(thip, &filentry, 0) != 0)
+    if (Cns_delete_segs(thip, &filentry, 0) != 0)
       if (serrno != SEENTRYNFND)
         RETURN (serrno);
 
@@ -1036,7 +1074,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
     RETURN (SEINTERNAL);
 
   /* Delete file segments */
-  if (Cns_internal_deletesegs(thip, &fmd_entry, copyno) != 0)
+  if (Cns_delete_segs(thip, &fmd_entry, copyno) != 0)
     RETURN (serrno);
 
   /* Count the number of file segments left */
@@ -3130,7 +3168,7 @@ int Cns_srv_rename(char *req_data,
   if (new_exists) { /* Must remove it */
 
     /* Delete file segments if any */
-    if (Cns_internal_deletesegs(thip, &new_fmd_entry, 0) != 0)
+    if (Cns_delete_segs(thip, &new_fmd_entry, 0) != 0)
       if (serrno != SEENTRYNFND)
         RETURN (serrno);
 
@@ -3151,7 +3189,7 @@ int Cns_srv_rename(char *req_data,
     } else if (serrno != ENOENT)
       RETURN (serrno);
 
-    if (Cns_delete_fmd_entry (&thip->dbfd, &new_rec_addr))
+    if (Cns_delete_file_metadata (thip, &old_fmd_entry, &new_rec_addr))
       RETURN (serrno);
   }
 
@@ -3349,7 +3387,7 @@ int Cns_srv_updateseg_checksum(int magic,
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3366,7 +3404,7 @@ int Cns_srv_updateseg_checksum(int magic,
   if (!(old_smd_entry.checksum_name == NULL
         || old_smd_entry.checksum_name[0] == '\0')) {
     nslogit("MSG=\"Missing checksum information, segment metadata cannot be "
-            "updated\" REQID=%s NSHOSTNAME=\"%s\" NSFILEID=%llu ",
+            "updated\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu ",
             reqinfo->reqid, nshostname, old_smd_entry.s_fileid);
     RETURN(EPERM);
   }
@@ -3399,13 +3437,13 @@ int Cns_srv_updateseg_checksum(int magic,
      */
     if (!checksum_ok && smd_entry.checksum != 0) {
       nslogit("MSG=\"No checksum value defined for checksum type, setting "
-              "checksum to 0\" REQID=%s NSHOSTNAME=\"%s\" NSFILEID=%llu",
+              "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
               reqinfo->reqid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
 
-  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3502,7 +3540,7 @@ int Cns_srv_replaceseg(int magic,
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3554,13 +3592,13 @@ int Cns_srv_replaceseg(int magic,
      */
     if (!checksum_ok && smd_entry.checksum != 0) {
       nslogit("MSG=\"No checksum value defined for checksum type, setting "
-              "checksum to 0\" REQID=%s NSHOSTNAME=\"%s\" NSFILEID=%llu",
+              "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
               reqinfo->reqid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
 
-  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3680,7 +3718,7 @@ int Cns_srv_replacetapecopy(int magic,
   }
 
   if ( copyno == -1 ){
-    nslogit("MSG=\"Cannot find old copyno\" REQID=%s NSHOSTNAME=\"%s\" "
+    nslogit("MSG=\"Cannot find old copyno\" REQID=%s NSHOSTNAME=%s "
             "NSFILEID=%llu",
             reqinfo->reqid, nshostname, filentry.fileid, nshostname);
     RETURN (ENSNOSEG);
@@ -3702,7 +3740,7 @@ int Cns_srv_replacetapecopy(int magic,
 
     /* SHOULD NEVER HAPPEN !*/
     if (nboldsegs > CA_MAXSEGS ){
-      nslogit("MSG=\"Too many segments for file\" REQID=%s NSHOSTNAME=\"%s\" "
+      nslogit("MSG=\"Too many segments for file\" REQID=%s NSHOSTNAME=%s "
               "NSFILEID=%llu",
               reqinfo->reqid, nshostname, filentry.fileid);
       RETURN (EINVAL);
@@ -3715,7 +3753,7 @@ int Cns_srv_replacetapecopy(int magic,
 
   if ( !nboldsegs ) {
     nslogit("MSG=\"Cannot find old segment for copyno\" REQID=%s "
-            "NSHOSTNAME=\"%s\" NSFILEID=%llu CopyNo=%d",
+            "NSHOSTNAME=%s NSFILEID=%llu CopyNo=%d",
             reqinfo->reqid, nshostname, filentry.fileid, copyno);
     RETURN (ENSNOSEG);
   }
@@ -3766,7 +3804,7 @@ int Cns_srv_replacetapecopy(int magic,
        */
       if (!checksum_ok && new_smd_entry[i].checksum != 0) {
         nslogit("MSG=\"No checksum value defined for checksum type, setting "
-                "checksum to 0\" REQID=%s NSHOSTNAME=\"%s\" NSFILEID=%llu",
+                "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
                 reqinfo->reqid, nshostname, filentry.fileid);
         new_smd_entry[i].checksum = 0;
       }
@@ -3782,7 +3820,7 @@ int Cns_srv_replacetapecopy(int magic,
 
   /* Insert new segs */
   for (i = 0; i < nbseg; i++){
-    nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+    nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
             "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu "
             "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
             "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -4408,7 +4446,7 @@ int Cns_srv_setfsizecs(int magic,
     /* We have predefined checksums then should check them with new ones */
     if (strcmp(filentry.csumvalue,csumvalue)!=0) {
       nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
-              "NSHOSTNAME=\"%s\" NSFILEID=%llu NewChecksum=\"0x%s\" "
+              "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
               "ExpectedChecksum=\"0x%s\"",
               reqinfo->reqid, nshostname, filentry.fileid, csumvalue,
               filentry.csumvalue);
@@ -4672,7 +4710,7 @@ int Cns_srv_setsegattrs(int magic,
       }
       smd_entry.copyno = copyno;
     }
-    nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=\"%s\" "
+    nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
             "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu "
             "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
             "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -4707,7 +4745,7 @@ int Cns_srv_setsegattrs(int magic,
         sprintf(tmpbuf3, "%lx", smd_entry.checksum);
         if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
           nslogit("MSG=\"Checksum mismatch between file and segment\" REQID=%s "
-                  "NSHOSTNAME=\"%s\" NSFILEID=%llu FileChecksum=\"0x%s\" "
+                  "NSHOSTNAME=%s NSFILEID=%llu FileChecksum=\"0x%s\" "
                   "SegmentChecksum=\"0x%s\"",
                   reqinfo->reqid, nshostname, filentry.fileid,
                   smd_entry.checksum);
@@ -4822,7 +4860,7 @@ int Cns_srv_dropsegs(char *req_data,
     RETURN (SEINTERNAL);
 
   /* Delete file segments */
-  if (Cns_internal_deletesegs(thip, &fmd_entry, 0) != 0)
+  if (Cns_delete_segs(thip, &fmd_entry, 0) != 0)
     if (serrno != SEENTRYNFND)
       RETURN (serrno);
 
@@ -5366,7 +5404,7 @@ int Cns_srv_unlink(char *req_data,
   } else {
 
     /* Delete file segments if any */
-    if (Cns_internal_deletesegs(thip, &filentry, 0) != 0)
+    if (Cns_delete_segs(thip, &filentry, 0) != 0)
       if (serrno != SEENTRYNFND)
         RETURN (serrno);
 
@@ -5380,7 +5418,7 @@ int Cns_srv_unlink(char *req_data,
   }
 
   /* Delete file entry */
-  if (Cns_delete_fmd_entry (&thip->dbfd, &rec_addr))
+  if (Cns_delete_file_metadata (thip, &filentry, &rec_addr))
     RETURN (serrno);
 
   /* Update parent directory entry */
@@ -5475,7 +5513,7 @@ int Cns_srv_unlinkbyvid(char *req_data,
       RETURNQ (serrno);
 
     /* Delete file segments if any */
-    if (Cns_internal_deletesegs(thip, &fmd_entry, 0) != 0) {
+    if (Cns_delete_segs(thip, &fmd_entry, 0) != 0) {
       if (serrno != SEENTRYNFND)
         RETURNQ (serrno);
     }
@@ -5489,7 +5527,7 @@ int Cns_srv_unlinkbyvid(char *req_data,
       RETURNQ (serrno);
 
     /* Delete file entry */
-    if (Cns_delete_fmd_entry (&thip->dbfd, &rec_addr))
+    if (Cns_delete_file_metadata (thip, &fmd_entry, &rec_addr))
       RETURNQ (serrno);
 
     /* Update parent directory entry */
@@ -5501,8 +5539,6 @@ int Cns_srv_unlinkbyvid(char *req_data,
 
     /* End transaction */
     (void) Cns_end_tr (&thip->dbfd);
-    nslogit("MSG=\"Unlinking file\" REQID=%s Path=\"%s\"",
-            reqinfo->reqid, path);
     count++;
 
     /* Once we reach the deletion of 1000 files return control back to the
@@ -5560,8 +5596,12 @@ int Cns_srv_utime(char *req_data,
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\" Atime=%lld Mtime=%lld",
-           cwdpath, path, (long long int)actime, (long long int)modtime);
+  if (user_specified_time) {
+    sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\" Atime=%lld Mtime=%lld",
+             cwdpath, path, (long long int)actime, (long long int)modtime);
+  } else {
+    sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
+  }
 
   /* Start transaction */
   (void) Cns_start_tr (thip->s, &thip->dbfd);
