@@ -49,7 +49,7 @@
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include  "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
-
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -75,7 +75,8 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
-
+  // Create the scopes auto-rollback for exceptions
+  ScopedTransaction scpTrans(oraSvc);
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
 
@@ -83,6 +84,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
   std::list<RetryPolicyElement> tcList;
 
   try {
+    // Following SQL takes locks
     oraSvc->getFailedRecalls(tcList);
   }  catch (castor::exception::Exception& e){
 
@@ -152,7 +154,11 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
   gettimeofday(&tvStart, NULL); 
   // update the db
   try {
+    // Function is a genuine wrapper with no hidden hooks
+    // SQL commit in the end.
     oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail);
+    // Last possible SQL call before. We're fine from here.
+    scpTrans.release();
 
     gettimeofday(&tvEnd, NULL);
     procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);

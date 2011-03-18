@@ -58,7 +58,7 @@ namespace ora         {
     OraTapeGatewaySvc(const std::string name); 
     virtual ~OraTapeGatewaySvc() throw();
     virtual inline unsigned int id() const;
-    static unsigned int ID();
+    static const unsigned int ID();
     void reset() throw ();
     
   public:
@@ -206,6 +206,14 @@ namespace ora         {
 
     // To delete taperequest 
     virtual void deleteTapeRequest(const u_signed64& tapeRequestId)
+      throw (castor::exception::Exception);
+
+    // To directly commit 
+    virtual void commit()
+      throw (castor::exception::Exception);
+
+    // To direcly rollback
+    virtual void rollback()
       throw (castor::exception::Exception);
 
   private:

@@ -53,8 +53,6 @@ namespace castor {
 
 	void  checkFileSize(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception);
 	      
-	void  checkFileToMigrate(castor::tape::tapegateway::FileToMigrate& file, std::string vid) throw (castor::exception::Exception);
-      
 	void  getBlockIdToRecall(tape::tapegateway::FileToRecall& file, std::string vid) throw (castor::exception::Exception);
 
       };

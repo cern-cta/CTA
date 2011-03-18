@@ -58,7 +58,6 @@
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/ora/OraTapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -66,6 +65,11 @@
 //------------------------------------------------------------------------------
 static castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>* s_factoryOraTapeGatewaySvc =
   new castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>();
+
+#if __GNUC__ >= 2
+#define USE(var) void use_##var (void) {var = var;}
+USE (s_factoryOraTapeGatewaySvc);
+#endif
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -92,12 +96,12 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_restartLo
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToMigrateStatementString="BEGIN tg_getFileToMigrate(:1,:2,:3,:4);END;";
   
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString="BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedMigrationsStatementString="BEGIN tg_getFailedMigrations(:1);END;";
  
@@ -113,7 +117,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTape
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString="BEGIN tg_endTapeSession(:1,:2);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInfo(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInfo(:1,:2,:3,:4);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failFileTransferStatementString="BEGIN tg_failFileTransfer(:1,:2,:3,:4,:5);END;";
 
@@ -178,7 +182,7 @@ unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::id() const {
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::ID() {
+const unsigned int castor::tape::tapegateway::ora::OraTapeGatewaySvc::ID() {
   return castor::SVC_ORATAPEGATEWAYSVC;
 }
 
@@ -618,10 +622,9 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs(s
       item.setStartTime((u_signed64)rs->getDouble(3));
       item.setLastVdqmPingTime((u_signed64)rs->getDouble(4));
       item.setVdqmVolReqId((u_signed64)rs->getDouble(5));
-      item.setStatus((TapeRequestStateCode)rs->getInt(6));
       requests.push_back(item);
 
-      std::string vid(rs->getString(7));
+      std::string vid(rs->getString(6));
       vids.push_back(vid);
 
     }
@@ -794,77 +797,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	file.setFileTransactionId((u_signed64)rs->getDouble(10));
 	file.setMountTransactionId(req.mountTransactionId());
 	file.setPositionCommandCode(TPPOSIT_FSEQ);
-
-	try {
-	  NsTapeGatewayHelper nsHelper;
-	  nsHelper.checkFileToMigrate(file,vid);
-	} catch (castor::exception::Exception& e) {
-
-	  struct Cns_fileid castorFileId;
-	  memset(&castorFileId,'\0',sizeof(castorFileId));
-	  strncpy(
-		  castorFileId.server,
-		  file.nshost().c_str(),
-		  sizeof(castorFileId.server)-1
-		  );
-	  castorFileId.fileid = file.fileid();
-	  
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("TPVID", vid.c_str())
-	    };
-	  
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
-	  
-
-	  try {
-
-	    
-	    FileErrorReport failure;
-	    failure.setMountTransactionId(file.mountTransactionId()); 
-	    failure.setFileid(file.fileid());
-	    failure.setNshost(file.nshost());
-	    failure.setFseq(file.fseq());
-	    failure.setErrorCode(e.code());
-	    invalidateFile(failure);
-
-	  } catch (castor::exception::Exception& ex){
-
-	    // just log the error
-	    castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(ex.code())),
-	     castor::dlf::Param("errorMessage",ex.getMessage().str()),
-	     castor::dlf::Param("TPVID", vid)
-	    };
-    
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_DB_ERROR , 3, params, &castorFileId);
-       
-	    
-	  }  
-
-	  m_getFileToMigrateStatement->closeResultSet(rs);
-	  continue; // get another tapecopy
-
-	}
-	
-	// we have a valid candidate we send a report to RmMaster stream started
-	try{
-	  
-	  RmMasterTapeGatewayHelper rmMasterHelper;
-	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_WRITE,true);
-	  
-	} catch (castor::exception::Exception& e){
-	  
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-	}
-
       }
       	
       m_getFileToMigrateStatement->closeResultSet(rs);
@@ -893,65 +825,19 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
   
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const castor::tape::tapegateway::FileMigratedNotification& resp)
   throw (castor::exception::Exception){
-  std::string diskserver;
-  std::string mountpoint;
-
-
   try {
     // Check whether the statements are ok
-
     if (0 == m_setFileMigratedStatement) {
       m_setFileMigratedStatement =
         createStatement(s_setFileMigratedStatementString);
-      m_setFileMigratedStatement->registerOutParam
-        (6, oracle::occi::OCCICURSOR);
     }
-
-    m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // transaction id
-    m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
-    m_setFileMigratedStatement->setString(3,resp.nshost());
-    m_setFileMigratedStatement->setInt(4,resp.fseq()); 
-    m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId()); 
-    
+    m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransId
+    m_setFileMigratedStatement->setDouble(2,(double)resp.fileid()); // inFileId
+    m_setFileMigratedStatement->setString(3,resp.nshost()); // inNsHost
+    m_setFileMigratedStatement->setInt(4,resp.fseq()); // inFseq
+    m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId());  // inFileTransaction
     m_setFileMigratedStatement->executeUpdate();
-
-    oracle::occi::ResultSet *rs =
-      m_setFileMigratedStatement->getCursor(6);
-
-    // Run through the cursor 
-
-    oracle::occi::ResultSet::Status status = rs->next();
-    // just one
-
-    if (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      diskserver = rs->getString(1);
-      mountpoint = rs->getString(2);
-
-    
-      // send report to RmMaster stream ended
-  
-      try{
-
-	RmMasterTapeGatewayHelper rmMasterHelper;
-	rmMasterHelper.sendStreamReport(diskserver, mountpoint, castor::monitoring::STREAMDIRECTION_WRITE,false);
-  
-      } catch (castor::exception::Exception& e){
-
-	castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-      }
-    }
-    
-    m_setFileMigratedStatement->closeResultSet(rs);
-
   } catch (oracle::occi::SQLException e) {
-   
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -959,8 +845,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
       << std::endl << e.what();
     throw ex;
   }
- 
-  
 }
 
 //----------------------------------------------------------------------------
@@ -969,7 +853,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
    
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const castor::tape::tapegateway::FileToRecallRequest& req, castor::tape::tapegateway::FileToRecall& file) throw (castor::exception::Exception)
 {
-    
+    // XXX For code review time, this function leaks statement resources and has a possible cursor leak
+  // on server
 
   try {
 
@@ -1101,24 +986,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	  continue; // Let's get another candidate, this one was not valid
 
 	}
-   
-	// here we have a valid candidate and we send a report to RmMaster stream started    
-	  
-	try{
-
-	  RmMasterTapeGatewayHelper rmMasterHelper;
-	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,true);
-	
-	} catch (castor::exception::Exception& e){
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-	}
-	
+	// here we have a valid candidate
       }
      
       m_getFileToRecallStatement->closeResultSet(rs);
@@ -1147,62 +1015,21 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 //----------------------------------------------------------------------------
    
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
- std::string diskserver;
- std::string mountpoint;
-
   try {
     // Check whether the statements are ok
 
     if (0 == m_setFileRecalledStatement) {
       m_setFileRecalledStatement =
         createStatement(s_setFileRecalledStatementString);
-      m_setFileRecalledStatement->registerOutParam
-	(6, oracle::occi::OCCICURSOR); 
     }
 
-    m_setFileRecalledStatement->setDouble(1,(double)resp.mountTransactionId());
-    m_setFileRecalledStatement->setDouble(2,(double)resp.fileid());
-    m_setFileRecalledStatement->setString(3,resp.nshost());
-    m_setFileRecalledStatement->setInt(4,resp.fseq());
-    m_setFileRecalledStatement->setDouble(5,(double)resp.fileTransactionId());
+    m_setFileRecalledStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransID
+    m_setFileRecalledStatement->setDouble(2,(double)resp.fileid()); // inFileId
+    m_setFileRecalledStatement->setString(3,resp.nshost()); // inNsHost
+    m_setFileRecalledStatement->setInt(4,resp.fseq()); // inFseq
+    m_setFileRecalledStatement->setDouble(5,(double)resp.fileTransactionId()); // inFileTransaction
 
     m_setFileRecalledStatement->executeUpdate();
-    
-    
-    
-    oracle::occi::ResultSet *rs =
-      m_setFileRecalledStatement->getCursor(6);
-
-    // Run through the cursor 
-
-    // just one
-
-    if (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-
-      diskserver = rs->getString(1);
-      mountpoint = rs->getString(2);
-
-    // send report to RmMaster stream ended
-      
-      try {
-      
-	RmMasterTapeGatewayHelper  rmMasterHelper;
-	rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,false);
-	
-      } catch (castor::exception::Exception& e){
-	castor::dlf::Param params[] =
-	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("diskserver",diskserver),
-	     castor::dlf::Param("mountpoint",mountpoint)
-	    };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
-      }
-    }
-
-    
-    m_setFileRecalledStatement->closeResultSet(rs);
-
   } catch (oracle::occi::SQLException e) {
 
     handleException(e);
@@ -1224,7 +1051,22 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)
 {
-    
+  int TapecopyIdIndex  = -1;
+  int ErrorCodeIndex   = -1;
+  int NbRetryIndex     = -1;
+
+  const std::string TapecopyIdColumnTitle("ID");
+  const std::string ErrorCodeColumnTitle("ERRORCODE");
+  const std::string NbRetryColumnTitle("NBRETRY");
+
+  const int TapecopyIdColumnType (oracle::occi::OCCI_SQLT_NUM);
+  const int ErrorCodeColumnType (oracle::occi::OCCI_SQLT_NUM);
+  const int NbRetryColumnType (oracle::occi::OCCI_SQLT_NUM);
+
+  std::vector<oracle::occi::MetaData> ResStruct;
+  std::string ColName;
+  int ColType;  
+
   try {
     // Check whether the statements are ok
     if (0 == m_getFailedMigrationsStatement) {
@@ -1233,31 +1075,53 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
       m_getFailedMigrationsStatement->registerOutParam
         (1, oracle::occi::OCCICURSOR);
     }
-
     // execute the statement and see whether we found something
- 
     unsigned int nb = m_getFailedMigrationsStatement->executeUpdate();
-
     if (0 == nb) {
       cnvSvc()->commit(); 
       return;
     }
-
-
     oracle::occi::ResultSet *rs =
       m_getFailedMigrationsStatement->getCursor(1);
 
-    // Run through the cursor 
-
-   
-    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::tape::tapegateway::RetryPolicyElement item;
-      item.tapeCopyId=(u_signed64)rs->getDouble(2);
-      item.errorCode=rs->getInt(5);
-      item.nbRetry=rs->getInt(6);
-      candidates.push_back(item);
+    // Find the indexes for the column we're interested in (the cursor returns
+    // TAPECOPY%ROWTYPE) so this code can survive schema changes.
+    {
+      // Get the description of the structure
+      ResStruct = rs->getColumnListMetaData();
+      // Loop on all the members of the structure, find columns matching name and type
+      // of needed data.
+      for (unsigned int i=0; i < ResStruct.size(); i++) {
+        ColName = (ResStruct[i].getString(oracle::occi::MetaData::ATTR_NAME));
+        ColType = (ResStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE));
+        if (ColName == TapecopyIdColumnTitle && ColType == TapecopyIdColumnType) {
+          TapecopyIdIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
+        } else if (ColName == ErrorCodeColumnTitle && ColType == ErrorCodeColumnType) {
+          ErrorCodeIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
+        } else if (ColName == NbRetryColumnTitle && ColType == NbRetryColumnType) {
+          NbRetryIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
+        }
+      }
+    }
+    // ... and check everything was there
+    if ((-1 == TapecopyIdIndex) || (-1 == ErrorCodeIndex) || (-1 == NbRetryIndex)) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to find indexes for needed fields "<<
+          "in castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations"
+          << std::endl
+          << "TcIdx=" << TapecopyIdIndex << " EcIdx=" << ErrorCodeIndex
+          << " NbrIdx=" << NbRetryIndex << std::endl;
+      throw ex;
     }
 
+    // Run through the cursor
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::tape::tapegateway::RetryPolicyElement item;
+      item.tapeCopyId=(u_signed64)rs->getDouble(TapecopyIdIndex);
+      item.errorCode=rs->getInt(ErrorCodeIndex);
+      item.nbRetry=rs->getInt(NbRetryIndex);
+      candidates.push_back(item);
+    }
     m_getFailedMigrationsStatement->closeResultSet(rs);
 
   } catch (oracle::occi::SQLException e) {
@@ -1268,8 +1132,6 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
       << std::endl << e.what();
     throw ex;
   }
-
-
 }
 
 
@@ -1756,20 +1618,18 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(const Fil
       m_getSegmentInfoStatement =
         createStatement(s_getSegmentInfoStatementString);
       m_getSegmentInfoStatement->registerOutParam
-	(5, oracle::occi::OCCISTRING, 2048 ); 
+	(3, oracle::occi::OCCISTRING, 2048 ); 
       m_getSegmentInfoStatement->registerOutParam
-	(6, oracle::occi::OCCIINT); 
+	(4, oracle::occi::OCCIINT); 
     }
 
     m_getSegmentInfoStatement->setDouble(1,(double)fileRecalled.mountTransactionId()); 
-    m_getSegmentInfoStatement->setDouble(2,(double)fileRecalled.fileid());
-    m_getSegmentInfoStatement->setString(3,fileRecalled.nshost());
-    m_getSegmentInfoStatement->setInt(4,fileRecalled.fseq());
+    m_getSegmentInfoStatement->setInt(2,fileRecalled.fseq());
     
     m_getSegmentInfoStatement->executeUpdate();
 
-    vid= m_getSegmentInfoStatement->getString(5);
-    copyNb=m_getSegmentInfoStatement->getInt(6);
+    vid= m_getSegmentInfoStatement->getString(3);
+    copyNb=m_getSegmentInfoStatement->getInt(4);
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1792,7 +1652,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(const Fil
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(const castor::tape::tapegateway::EndNotificationErrorReport& failure) throw (castor::exception::Exception){
   try {
     // Check whether the statements are ok
-
+    // FIXME: breaks the usual convention.
     if (0 == m_endTapeSessionStatement) {
       m_endTapeSessionStatement =
         createStatement(s_endTapeSessionStatementString);
@@ -2036,3 +1896,24 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteTapeRequest(const 
 
 
 }
+
+//----------------------------------------------------------------------------
+// commit
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commit()
+  throw (castor::exception::Exception)
+{
+  DbBaseObj::commit();
+}
+
+//----------------------------------------------------------------------------
+// rollback
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::rollback()
+  throw (castor::exception::Exception)
+{
+  DbBaseObj::rollback();
+}
+

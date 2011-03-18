@@ -68,7 +68,6 @@ our @export   = qw(
                    deleteAllStreamsTapeCopiesAndCastorFiles 
                    executeSQLPlusScript 
                    executeSQLPlusScriptNoError 
-                   migrateToNewTapeGatewaySchema 
                    stopAndSwitchToTapeGatewayd 
                    stopAndSwitchToRtcpclientd 
                    getLdLibraryPathFromSrcPath
@@ -2107,36 +2106,6 @@ sub reinstall_stager_db()
     `modifySvcClass --Name default --NbDrives 1`;
     `modifySvcClass --Name dev     --NbDrives 2`;
 }
-
-
-# Migrate the stager's db to the new tapegateway schema. This includes a switch to the tapegatewayd (in DB)
-# stops but does not start the demons
-sub migrateToNewTapeGatewaySchema ()
-{
-    # Stop the mighunter, rechandler, tapegateway, rtcpclientd
-    for my $i ('mighunterd', 'rechandlerd', 'tapegatewayd', 'rtcpclientd') {
-        if (killDaemonWithTimeout ($i, 5)) {
-            die "Failed to stop a daemon. Call an exorcist.";
-        }
-    }
-    my $full_test_dir=$environment{checkout_location}.'/'.
-        $environment{tstDir}.'/';
-    for my $i ('switchToTapegatewayd-no-triggers.sql') {
-        my $dbUser   = getOrastagerconfigParam("user");
-        my $dbPasswd = getOrastagerconfigParam("passwd");
-        my $dbName   = getOrastagerconfigParam("dbName");
-        if ($i =~ /tgsubrequest/) {
-            executeSQLPlusScriptNoError ( $dbUser, $dbPasswd, $dbName,
-                               $full_test_dir.$i,
-                               "Executing $i");
-        } else {
-            executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName,
-                                   $full_test_dir.$i,
-                                   "Executing $i");
-        }
-    }
-}
-
 
 # Switch to tapegatewayd (in DB, stop demons before, massages the DB as required)
 sub stopAndSwitchToTapeGatewayd ( $ )

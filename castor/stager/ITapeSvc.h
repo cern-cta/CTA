@@ -303,28 +303,6 @@ int Cstager_ITapeSvc_selectTape(struct Cstager_ITapeSvc_t* tpSvc,
 const char* Cstager_ITapeSvc_errorMsg(struct Cstager_ITapeSvc_t* tpSvc);
 
 /**
- * Retrieves the TapeCopies from the database that have
- * status TAPECOPY_CREATED or TAPECOPY_TOBEMIGRATED and
- * have a castorFile linked to the right SvcClass.
- * Changes their status to TAPECOPY_WAITINSTREAMS.
- * Caller is in charge of the deletion of the allocated
- * memory.
- * @param tpSvc the ITapeSvc used
- * @param svcClass the SvcClass we select on
- * @param tapeCopyArray output array of pointers to tapeCopy objects
- * @param nbItems output number of items returned in the tapeCopyArray
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_ITapeSvc_errorMsg
- */
-int Cstager_ITapeSvc_selectTapeCopiesForMigration
-(struct Cstager_ITapeSvc_t* tpSvc,
- struct Cstager_SvcClass_t* svcClass,
- struct Cstager_TapeCopy_t*** tapeCopyArray,
- int *nbItems);
-
-/**
  * resets a stream by either deleting it or setting
  * its status to STREAM_PENDING depending on whether
  * there are TapeCopies in status WAITINSTREAMS status.

@@ -263,6 +263,12 @@ namespace tapegateway {
 
 	virtual void deleteTapeRequest(const u_signed64& tapeRequestId)throw (castor::exception::Exception)=0;
 
+    /* Bypass access the the underlying DB accessor allowing safe handling from the caller */
+    virtual void commit() = 0;
+
+    /* Bypass access the the underlying DB accessor allowing safe handling from the caller */
+    virtual void rollback() = 0;
+
 
 
       }; // end of class ITapeGatewaySvc

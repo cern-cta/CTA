@@ -118,8 +118,6 @@ sub main ()
         
     # Migrate to the new system, with tape gateway, still running rtcpclientd
     $dbh=CastorTapeTests::open_db();
-    CastorTapeTests::migrateToNewTapeGatewaySchema ();
-    CastorTapeTests::stopAndSwitchToRtcpclientd ( $dbh );
     checkTapes();
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";

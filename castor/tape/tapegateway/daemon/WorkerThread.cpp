@@ -57,12 +57,15 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/stager/TapeTpModeCodes.hpp"
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 
 #include "castor/tape/utils/utils.hpp"
+
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -242,6 +245,10 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
 
+  // Auto-rollback mechanism to cover all execution path (commented out as it is
+  // not needed here.
+  // ScopedTransaction scpTranns(&oraSvc);
+
   // I received a start worker request
   Volume* response=new Volume();
 
@@ -265,7 +272,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
     try {
     
       // GET FROM DB
-
+      // The wrapper function has no hidden effect
+      // The SQL commits in all cases.
       oraSvc.startTapeSession(startRequest,*response); 
     
     } catch (castor::exception::Exception& e){
@@ -335,7 +343,10 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
 
-    // I received a FileRecalledResponse
+  // Initialize auto-rollback in case of error
+  ScopedTransaction scpTrans(&oraSvc);
+
+  // I received a FileRecalledResponse
   NotificationAcknowledge* response = new NotificationAcknowledge();
   try {
 
@@ -402,8 +413,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
     gettimeofday(&tvStart, NULL);
 
     try {
+      // No lock, no update. SQL is read-only.
       oraSvc.getSegmentInfo(fileRecalled,vid,copyNb);
-
     } catch (castor::exception::Exception& e){
       castor::dlf::Param params[] = { 
 	castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
@@ -477,8 +488,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setFseq(fileRecalled.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.failFileTransfer(failure); 
-	
+	// Updates, does not commit. Fine SQL. >-)
+	oraSvc.failFileTransfer(failure);
       } catch (castor::exception::Exception& e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
@@ -490,7 +501,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	  };
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_RECALL_CANNOT_UPDATE_DB, params, &castorFileId);
       }
-      
+      // The failFileTransfer did not commit. Doing it now.
+      scpTrans.commit();
       return response;
     }
       
@@ -534,6 +546,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setFseq(fileRecalled.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
+	// Updates, does not commit. Fine SQL.
 	oraSvc.failFileTransfer(failure);
       } catch (castor::exception::Exception& e) {
 	// db failure to mark the recall as failed
@@ -547,14 +560,17 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_RECALL_CANNOT_UPDATE_DB, params, &castorFileId);
 	  
       }
+      // The failFileTransfer did not commit. Doing it now.
+      scpTrans.commit();
       return response;
-
     }
 
     gettimeofday(&tvStart, NULL);
 
     try {
       // UPDATE DB
+      // Here the SQL does the commit in the end. Rollback with be without effet
+      // No need for a release.
       oraSvc.setFileRecalled(fileRecalled);
       
       gettimeofday(&tvEnd, NULL);
@@ -594,7 +610,10 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       failure.setErrorCode(e.code());
       failure.setErrorMessage(e.getMessage().str());
       try {
-	oraSvc.failFileTransfer(failure);
+        // The SQL fails to commit and is the last possible call in the function.
+        oraSvc.failFileTransfer(failure);
+        // Commit
+        scpTrans.commit();
       } catch (castor::exception::Exception& e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
@@ -627,28 +646,29 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 }
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate(  castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
-  
-  // I received a FileMigratedResponse
 
-  
+  // Setup the scoped rollback mechanism for proper exceptions handling
+  ScopedTransaction scpTrans(&oraSvc);
+
+  // I received a FileMigratedResponse
   VmgrTapeGatewayHelper vmgrHelper;
   NsTapeGatewayHelper nsHelper;
   NotificationAcknowledge* response= new NotificationAcknowledge();
-  
+
   try{
 
     FileMigratedNotification& fileMigrated = dynamic_cast<FileMigratedNotification&>(obj);
-   
+
     struct Cns_fileid castorFileId;
     memset(&castorFileId,'\0',sizeof(castorFileId));
     strncpy(
-	    castorFileId.server,
-	    fileMigrated.nshost().c_str(),
-	    sizeof(castorFileId.server)-1
-	    );
+        castorFileId.server,
+        fileMigrated.nshost().c_str(),
+        sizeof(castorFileId.server)-1
+    );
     castorFileId.fileid = fileMigrated.fileid();
 
-    char blockid[5]={fileMigrated.blockId0() , fileMigrated.blockId1() , fileMigrated.blockId2() , fileMigrated.blockId3(), '\0' };
+    const std::string blockid = utils::tapeBlockIdToString(fileMigrated.blockId0(), fileMigrated.blockId1() ,fileMigrated.blockId2() ,fileMigrated.blockId3());
 
     char checksumHex[19];
     checksumHex[0] = '0';
@@ -658,17 +678,17 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 
       utils::toHex((uint64_t)fileMigrated.checksum(), &checksumHex[2], 17);
     } catch (castor::exception::Exception& e) {
-       castor::dlf::Param paramsError[] =
-	 {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	  castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	  castor::dlf::Param("fseq",fileMigrated.fseq()),
-	  castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	 };	 
-       
+      castor::dlf::Param paramsError[] =
+      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fseq",fileMigrated.fseq()),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, paramsError, &castorFileId);
-    
+
       if (response) delete response;
       EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(EINVAL);
@@ -678,23 +698,23 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       return errorReport;
 
     }
-      
+
     castor::dlf::Param paramsComplete[] =
-      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-       castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-       castor::dlf::Param("fseq",fileMigrated.fseq()),
-       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
-       castor::dlf::Param("checksum",checksumHex),
-       castor::dlf::Param("fileSize",fileMigrated.fileSize()),
-       castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
-       castor::dlf::Param("blockid", blockid),
-       castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId())
-      };
+    {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+        castor::dlf::Param("fseq",fileMigrated.fseq()),
+        castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+        castor::dlf::Param("checksum",checksumHex),
+        castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+        castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+        castor::dlf::Param("blockid", blockid),
+        castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId())
+    };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NOTIFIED, paramsComplete, &castorFileId);
-   
+
     response->setMountTransactionId(fileMigrated.mountTransactionId());
     response->setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
-   
+
     // CHECK DB
 
     timeval tvStart,tvEnd;
@@ -705,299 +725,309 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     std::string vid;
     u_signed64 lastModificationTime;
     try {
+      // This SQL procedure does not do any lock/updates.
       oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,repackVid);
     } catch (castor::exception::Exception& e){
-      
+
       castor::dlf::Param params[] =
-	{castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	 castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	 castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	 castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
+      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_FILE_NOT_FOUND, params, &castorFileId);
       return response;
-      
+
     }
 
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-    
-  
+
+
     castor::dlf::Param paramsDb[] =
-      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-       castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-       castor::dlf::Param("fseq",fileMigrated.fseq()),
-       castor::dlf::Param("blockid", blockid),
-       castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-       castor::dlf::Param("TPVID",vid),
-       castor::dlf::Param("copyNb",copyNumber),
-       castor::dlf::Param("lastModificationTime",lastModificationTime),
-       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-      };
+    {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+        castor::dlf::Param("fseq",fileMigrated.fseq()),
+        castor::dlf::Param("blockid", blockid),
+        castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+        castor::dlf::Param("TPVID",vid),
+        castor::dlf::Param("copyNb",copyNumber),
+        castor::dlf::Param("lastModificationTime",lastModificationTime),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_MIGRATION_GET_DB_INFO, paramsDb, &castorFileId);
-      
+
     // UPDATE VMGR
 
     try {
-      
+
       gettimeofday(&tvStart, NULL);
-      
+
       vmgrHelper.updateTapeInVmgr(fileMigrated, vid);
 
       gettimeofday(&tvEnd, NULL);
       procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
 
-       castor::dlf::Param paramsVmgr[] =
+      castor::dlf::Param paramsVmgr[] =
       {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-       castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-       castor::dlf::Param("fseq",fileMigrated.fseq()),
-       castor::dlf::Param("blockid", blockid),
-       castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-       castor::dlf::Param("TPVID",vid),
-       castor::dlf::Param("copyNb",copyNumber),
-       castor::dlf::Param("lastModificationTime",lastModificationTime),
-       castor::dlf::Param("fileSize",fileMigrated.fileSize()),
-       castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
-       castor::dlf::Param("blockid", blockid),
-       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fseq",fileMigrated.fseq()),
+          castor::dlf::Param("blockid", blockid),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("TPVID",vid),
+          castor::dlf::Param("copyNb",copyNumber),
+          castor::dlf::Param("lastModificationTime",lastModificationTime),
+          castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+          castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+          castor::dlf::Param("blockid", blockid),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
-      
+
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_VMGR_UPDATE, paramsVmgr, &castorFileId);
-      
- 
 
     } catch (castor::exception::Exception& e){
-    
+
       castor::dlf::Param params[] =
-	{
-	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	  castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	  castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
+      {
+          castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_MIGRATION_VMGR_FAILURE, params, &castorFileId);
-	  
+
       try {
 
-	FileErrorReport failure;
-	failure.setMountTransactionId(fileMigrated.mountTransactionId());
-	failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
-	failure.setFileid(fileMigrated.fileid());
-	failure.setNshost(fileMigrated.nshost());
-	failure.setFseq(fileMigrated.fseq());
-	failure.setErrorCode(e.code());
-	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.failFileTransfer(failure);
+        FileErrorReport failure;
+        failure.setMountTransactionId(fileMigrated.mountTransactionId());
+        failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
+        failure.setFileid(fileMigrated.fileid());
+        failure.setNshost(fileMigrated.nshost());
+        failure.setFseq(fileMigrated.fseq());
+        failure.setErrorCode(e.code());
+        failure.setErrorMessage(e.getMessage().str());
+        // The underlying SQL does NOT commit
+        oraSvc.failFileTransfer(failure);
       } catch (castor::exception::Exception& e) {
-      castor::dlf::Param params[] =
-	{
-	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	  castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	  castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
-      
+        castor::dlf::Param params[] =
+        {
+            castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+            castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
+
       }
-    
-      return response; 
+      // As the previous call did modify things, better committing before returning.
+      scpTrans.commit();
+      return response;
     }
 
-    
+
 
     //UPDATE NAMESERVER  
     try {
-	  
+
       if (repackVid.empty()) {
-	gettimeofday(&tvStart, NULL);
-      
-	// update the name server (standard migration)
+        gettimeofday(&tvStart, NULL);
 
-	nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime);
+        // update the name server (standard migration)
 
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+        nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime);
 
-	castor::dlf::Param paramsNs[] =
-	  {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	   castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	   castor::dlf::Param("fseq",fileMigrated.fseq()),
-	   castor::dlf::Param("blockid", blockid),
-	   castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	   castor::dlf::Param("TPVID",vid),
-	   castor::dlf::Param("copyNb",copyNumber),
-	   castor::dlf::Param("lastModificationTime",lastModificationTime),
-	   castor::dlf::Param("fileSize",fileMigrated.fileSize()),
-	   castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
-	   castor::dlf::Param("blockid", blockid),
-	   castor::dlf::Param("checksum name",fileMigrated.checksumName()),
-	   castor::dlf::Param("checksum",checksumHex),
-	   castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	  };
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-	      
-	// update the name server (standard migration)
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NS_UPDATE, paramsNs,&castorFileId);
+        castor::dlf::Param paramsNs[] =
+        {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("fseq",fileMigrated.fseq()),
+            castor::dlf::Param("blockid", blockid),
+            castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+            castor::dlf::Param("TPVID",vid),
+            castor::dlf::Param("copyNb",copyNumber),
+            castor::dlf::Param("lastModificationTime",lastModificationTime),
+            castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+            castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+            castor::dlf::Param("blockid", blockid),
+            castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+            castor::dlf::Param("checksum",checksumHex),
+            castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+
+
+        // update the name server (standard migration)
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NS_UPDATE, paramsNs,&castorFileId);
 
       } else {
-	
 
-	// update the name server (repacked file)
 
-	gettimeofday(&tvStart, NULL);
-	
-	nsHelper.updateRepackedFile( fileMigrated, repackVid, copyNumber, vid, lastModificationTime);
-	
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+        // update the name server (repacked file)
 
-	castor::dlf::Param paramsRepack[] =
-	  {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	   castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	   castor::dlf::Param("fseq",fileMigrated.fseq()),
-	   castor::dlf::Param("blockid", blockid),
-	   castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	   castor::dlf::Param("TPVID",vid),
-	   castor::dlf::Param("copyNb",copyNumber),
-	   castor::dlf::Param("lastModificationTime",lastModificationTime),
-	   castor::dlf::Param("fileSize",fileMigrated.fileSize()),
-	   castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
-	   castor::dlf::Param("blockid", blockid),
-	   castor::dlf::Param("checksum name",fileMigrated.checksumName()),
-	   castor::dlf::Param("checksum",checksumHex),
-	   castor::dlf::Param("repack vid",repackVid),
-	   castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	  };
-         
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REPACK_NS_UPDATE, paramsRepack,&castorFileId);
+        gettimeofday(&tvStart, NULL);
+
+        nsHelper.updateRepackedFile( fileMigrated, repackVid, copyNumber, vid, lastModificationTime);
+
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+        castor::dlf::Param paramsRepack[] =
+        {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("fseq",fileMigrated.fseq()),
+            castor::dlf::Param("blockid", blockid),
+            castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+            castor::dlf::Param("TPVID",vid),
+            castor::dlf::Param("copyNb",copyNumber),
+            castor::dlf::Param("lastModificationTime",lastModificationTime),
+            castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+            castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+            castor::dlf::Param("blockid", blockid),
+            castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+            castor::dlf::Param("checksum",checksumHex),
+            castor::dlf::Param("repack vid",repackVid),
+            castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REPACK_NS_UPDATE, paramsRepack,&castorFileId);
 
       }
-	    
+
     } catch (castor::exception::Exception& e) {
       castor::dlf::Param params[] =
-	{
-	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	  castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	  castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
+      {
+          castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_MIGRATION_NS_FAILURE, params,&castorFileId);
 
       try {
 
-	FileErrorReport failure;
-	failure.setMountTransactionId(fileMigrated.mountTransactionId());
-	failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
-	failure.setFileid(fileMigrated.fileid());
-	failure.setNshost(fileMigrated.nshost());
-	failure.setFseq(fileMigrated.fseq());
-	failure.setErrorCode(e.code());
-	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.failFileTransfer(failure);
+        FileErrorReport failure;
+        failure.setMountTransactionId(fileMigrated.mountTransactionId());
+        failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
+        failure.setFileid(fileMigrated.fileid());
+        failure.setNshost(fileMigrated.nshost());
+        failure.setFseq(fileMigrated.fseq());
+        failure.setErrorCode(e.code());
+        failure.setErrorMessage(e.getMessage().str());
+        // The underlying SQL does NOT commit
+        oraSvc.failFileTransfer(failure);
       } catch(castor::exception::Exception& e) {
-	castor::dlf::Param params[] =
-	  {
-	    castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	    castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	    castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	    castor::dlf::Param("errorCode",sstrerror(e.code())),
-	    castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
-	
-      }
+        castor::dlf::Param params[] =
+        {
+            castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+            castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
 
+      }
+      // As the previous call did modify things, better committing before returning.
+      scpTrans.commit();
       return response;
-    
+
     }         
-    
+
     // UPDATE DB
     gettimeofday(&tvStart, NULL);
-    
+
     try {
-	  
+      // The underlying SQL DOES commit.
       oraSvc.setFileMigrated(fileMigrated);
 
     }catch (castor::exception::Exception& e) {
-	  
-      
+
+
       castor::dlf::Param params[] =
       {
-	castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	castor::dlf::Param("errorCode",sstrerror(e.code())),
-	castor::dlf::Param("errorMessage",e.getMessage().str())
+          castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params, &castorFileId);
 
       try {
 
-	FileErrorReport failure;
-	failure.setMountTransactionId(fileMigrated.mountTransactionId());
-	failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
-	failure.setFileid(fileMigrated.fileid());
-	failure.setNshost(fileMigrated.nshost());
-	failure.setFseq(fileMigrated.fseq());
-	failure.setErrorCode(e.code());
-	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.failFileTransfer(failure);
+        FileErrorReport failure;
+        failure.setMountTransactionId(fileMigrated.mountTransactionId());
+        failure.setAggregatorTransactionId(fileMigrated.aggregatorTransactionId());
+        failure.setFileid(fileMigrated.fileid());
+        failure.setNshost(fileMigrated.nshost());
+        failure.setFseq(fileMigrated.fseq());
+        failure.setErrorCode(e.code());
+        failure.setErrorMessage(e.getMessage().str());
+        // The underlying SQL does NOT commit.
+        oraSvc.failFileTransfer(failure);
+        // There will be no subsequent call to the DB so better comminting here
+        scpTrans.commit();
       } catch(castor::exception::Exception& e) {
-	castor::dlf::Param params[] =
-	  {
-	    castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	    castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	    castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	    castor::dlf::Param("errorCode",sstrerror(e.code())),
-	    castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params, &castorFileId);
+        castor::dlf::Param params[] =
+        {
+            castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+            castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params, &castorFileId);
 
       }
-    
+
     }
 
     gettimeofday(&tvEnd, NULL);
     procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-    
+
     castor::dlf::Param paramsDbUpdate[] =
-      {
-	castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
-	castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
-	castor::dlf::Param("fseq",fileMigrated.fseq()),
-	castor::dlf::Param("blockid", blockid),
-	castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
-	castor::dlf::Param("TPVID",vid),
-	castor::dlf::Param("copyNb",copyNumber),
-	castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-      };
+    {
+        castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+        castor::dlf::Param("fseq",fileMigrated.fseq()),
+        castor::dlf::Param("blockid", blockid),
+        castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+        castor::dlf::Param("TPVID",vid),
+        castor::dlf::Param("copyNb",copyNumber),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_DB_UPDATE, paramsDbUpdate,&castorFileId);
 
 
   } catch (std::bad_cast &ex) {
-    
+
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_INVALID_CAST, 0, NULL);
-    
+
     if (response) delete response;
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
-    
-  }
 
+  }
+  // Commit for added safety as the SQL is not to be trusted. (maybe a dupe, though)
+  scpTrans.commit();
   return response;
-    
+
 }
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(castor::IObject& obj,castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
+
+  // Create the scoped transaction object that will rollback in case of problem.
+  ScopedTransaction scpTrans(&oraSvc);
 
   // I received FileToRecallRequest
   FileToRecall* response= new FileToRecall();
@@ -1016,7 +1046,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
 
     try {
       // CALL THE DB
-      
+      // The undelying SQL takes locks, updates but does not commit in SQL.
+      // Wrapper function does (not as usual).
       oraSvc.getFileToRecall(fileToRecall,*response);
 
     } catch (castor::exception::Exception& e) {
@@ -1053,7 +1084,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
   
-    char blockid[5]={response->blockId0() , response->blockId1() , response->blockId2() , response->blockId3() , '\0'};
+    const std::string blockid = utils::tapeBlockIdToString(response->blockId0() , response->blockId1() , response->blockId2() , response->blockId3());
     
     struct Cns_fileid castorFileId;
     memset(&castorFileId,'\0',sizeof(castorFileId));
@@ -1086,15 +1117,20 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     if (response) delete response;
     return errorReport;
   }
+
+  // Commit should be handled, just release.
+  scpTrans.release();
   return response;
 }
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc) throw(){
-       
+
+  // Setup the auto rollback in case of exception or error.
+  ScopedTransaction scpTrans (&oraSvc);
+
   // I received FileToMigrateRequest
   // I get a file from the db
   // send a new file
-
   FileToMigrate* response=new FileToMigrate();
   
   try {
@@ -1113,8 +1149,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
     try {
    
-      // CALL THE DB
-
+      // CALL THE DB. This SQL is self contained (commit included)
+      // We keep the auto out of scoped rollback as a safety cleanup mechanism
       oraSvc.getFileToMigrate(fileToMigrate,*response);
 
     } catch (castor::exception::Exception& e) {
@@ -1189,12 +1225,15 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc ) throw(){
-  	// I received an EndTransferRequest, I send back an EndTransferResponse
 
-	NotificationAcknowledge* response=new NotificationAcknowledge();
+  // Rollback mechanism.
+  ScopedTransaction scpTrans(&oraSvc);
 
-	try {
-	  EndNotification& endRequest = dynamic_cast<EndNotification&>(obj);
+  // I received an EndTransferRequest, I send back an EndTransferResponse
+  NotificationAcknowledge* response=new NotificationAcknowledge();
+
+    try {
+      EndNotification& endRequest = dynamic_cast<EndNotification&>(obj);
 	
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
@@ -1215,6 +1254,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	    // ACCESS DB to get tape to release
 	    
 	    castor::stager::Tape tape;
+	    // Strghtforward wrapper, read-only sql.
 	    oraSvc.getTapeToRelease(endRequest.mountTransactionId(),tape); 
 
 	    gettimeofday(&tvEnd, NULL);
@@ -1234,7 +1274,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	      
 	      // UPDATE VMGR
 
-	      if (tape.tpmode() == 1) { // just for write
+	      if (tape.tpmode() == castor::stager::TPMODE_WRITE) { // just for write case
 	
 		gettimeofday(&tvStart, NULL);
      
@@ -1271,7 +1311,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	    
 
 	    gettimeofday(&tvStart, NULL);
-	    
+	    // Wrapper function is straightforward. No trap.
+	    // SQL commits in the end but could fail in many selects.
+	    // Rollback required for this one.
 	    oraSvc.endTapeSession(endRequest);
 
 	    gettimeofday(&tvEnd, NULL);
@@ -1313,14 +1355,19 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	  return errorReport;
 	  
 	}
+	// No release of the scpTrans as all is supposed to be self-contained.
+	// Leving the rollback as a safety mechanism (SQL does not catch all exceptions)
+	// TODO review SQL.
 	return  response;
 }
 
 
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc ) throw(){
-  	// I received an EndNotificationErrorReport 
+  // Auto-rollback mechanism for exceptions
+  // ScopedTransaction scpTrans(&oraSvc); Not needed.
 
+  // I received an EndNotificationErrorReport
 	NotificationAcknowledge* response= new NotificationAcknowledge();
 
 	try {
@@ -1346,6 +1393,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	    // ACCESS DB to get tape to release
 
 	    castor::stager::Tape tape;
+	    // Safe, read only SQL
 	    oraSvc.getTapeToRelease(endRequest.mountTransactionId(),tape);
 	    
 	    gettimeofday(&tvEnd, NULL);
@@ -1363,7 +1411,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      
 	    // UPDATE VMGR
 	    
-	    if (tape.tpmode() == 1) { // just for write
+	    if (tape.tpmode() == castor::stager::TPMODE_WRITE) { // just for write case
 	      VmgrTapeGatewayHelper vmgrHelper;
 	
 
@@ -1443,7 +1491,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 
 	    // ACCESS db now we fail it 
 	    gettimeofday(&tvStart, NULL);
-
+	    // Direct wrapper, commiting SQL
 	    oraSvc.failTapeSession(endRequest); 
 
 	    gettimeofday(&tvEnd, NULL);

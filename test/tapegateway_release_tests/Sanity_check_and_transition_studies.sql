@@ -37,10 +37,11 @@ select gcType, count(*) from diskcopy where gcType not in ( 0, 1, 2, 3, 4 ) grou
 -- As tapecopy can be orphaned from diskcopy from both lack of diskcopy and lack of castorfile. We take the latter as a killer. Ophaned diskcopies can be tackled in another sequence.
 
 -- This join is recall oriented tapecopy => segment => tape.tpmode = read.
-select tapecopy.id tc_id, tapecopy.status tc_stat, castorfile.lastknownfilename cf_name, svcclass.name svcclass, fileclass.name fileclass, d1.id dc_id, d1.status dc_status, 
+select tapecopy.id tc_id, tapecopy.status tc_stat, castorfile.id cf_id, castorfile.lastknownfilename cf_name, castorfile.fileid, svcclass.name svcclass, fileclass.name fileclass, d1.id dc_id, d1.status dc_status, 
+       d1.path dp_path, 
        d2.id dc2_id, d2.status dc2_status, 
        filesystem.mountpoint fs_mountpoint, diskserver.name ds_name, diskpool.name diskpool,
-       segment.id seg_id, segment.status seg_stat, tape.id tp_id, tape.status tp_stat, tape.tpmode tp_mode
+       segment.id seg_id, segment.status seg_stat, tape.id tp_id, tape.status tp_stat, tape.tpmode tp_mode, tape.vid tp_vid
   from tapecopy
   left outer join castorfile on castorfile.id = tapecopy.castorfile
   left outer join svcclass on castorfile.svcclass = svcclass.id
@@ -59,9 +60,9 @@ select tapecopy.id tc_id, tapecopy.status tc_stat, castorfile.lastknownfilename 
     -- tapecopy TOBERECALLED (4) => castorfile is valid, diskcopy is NULL
     -- stream2tapecopy.child IS NULL, stream IS NULL, tapepool IS NULL (as a consequence), tape depends on the state of the stream
     -- segment is NOT NULL and 
-     (tapecopy.status = 2 AND castorfile.id IS NOT NULL AND d1.id IS NOT NULL and d1.status = 10 and fileclass.id IS NOT NULL
-        AND svcclass.id IS NOT NULL AND (segment.id IS NULL OR Segment.status = 8) and filesystem.id IS NOT NULL and diskserver.id is not NULL 
-        and diskpool.id IS NOT NULL AND Stream.id IS NOT NULL AND Stream.status IN (5,0,7,6,4) AND tapepool.id IS NOT NULL and tape.id IS NULL) OR
+     (tapecopy.status = 4 AND castorfile.id IS NOT NULL AND d1.id IS NULL
+        AND svcclass.id IS NOT NULL AND (segment.id IS NOT NULL OR Segment.status IN (100)) and filesystem.id IS NOT NULL and diskserver.id is not NULL 
+        and diskpool.id IS NOT NULL AND tape.id IS NULL)
   );
   
 -- This join is migration oriented tapecopy ( => segment ) => stream2tapecopy => stream ( => tapepool ) => tape.tpmode = write (or NULL).

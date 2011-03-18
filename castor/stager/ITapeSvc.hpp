@@ -228,22 +228,6 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Retrieves the TapeCopies from the database that have
-       * status TAPECOPY_CREATED or TAPECOPY_TOBEMIGRATED and
-       * have a castorFile linked to the right SvcClass.
-       * Changes their status to TAPECOPY_WAITINSTREAMS.
-       * Caller is in charge of the deletion of the allocated
-       * memory.
-       * @param svcClass the SvcClass we select on
-       * @return a vector of matching TapeCopies
-       * @exception Exception in case of error
-       */
-      virtual std::vector<castor::stager::TapeCopy*>
-      selectTapeCopiesForMigration
-      (castor::stager::SvcClass *svcClass)
-        throw (castor::exception::Exception) = 0;
-
-      /**
        * resets a stream by either deleting it or setting
        * its status to STREAM_PENDING depending on whether
        * there are TapeCopies in status WAITINSTREAMS status.

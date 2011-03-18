@@ -465,7 +465,7 @@ namespace castor {
                                             std::string confKey,
                                             std::string defaultValue)
           throw (castor::exception::Exception);
-        
+
       private:
 
         /**
@@ -511,12 +511,6 @@ namespace castor {
 
         /// SQL statement object for function processBulkRequest
         oracle::occi::Statement *m_processBulkRequestStatement;
-
-        /// SQL statement for function oldSubRequestToDo
-        static const std::string s_oldSubRequestToDoStatementString;
-
-        /// SQL statement object for function oldSubRequestToDo
-        oracle::occi::Statement *m_oldSubRequestToDoStatement;
 
         /// SQL statement for function subRequestFailedToDo
         static const std::string s_subRequestFailedToDoStatementString;
@@ -649,7 +643,6 @@ namespace castor {
 
         /// SQL statement object for function getConfigOption
         oracle::occi::Statement *m_getConfigOptionStatement;
-
       }; // end of class OraStagerSvc
 
     } // end of namespace ora
