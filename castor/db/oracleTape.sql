@@ -98,8 +98,7 @@ END castorTape;
 /
 
 /* Trigger ensuring validity of VID in state transitions */
-create or replace
-TRIGGER TR_TapeCopy_VID
+CREATE OR REPLACE TRIGGER TR_TapeCopy_VID
 BEFORE INSERT OR UPDATE OF Status ON TapeCopy
 FOR EACH ROW
 BEGIN
@@ -141,8 +140,7 @@ END;
 
 
 /* Workaround for framework */
-create or replace
-TRIGGER TR_TapeCopy_fileTransactionId
+CREATE OR REPLACE TRIGGER TR_TapeCopy_fileTransactionId
 BEFORE INSERT OR UPDATE OF fileTransactionId ON TapeCopy
 FOR EACH ROW
 BEGIN
@@ -154,8 +152,7 @@ END;
 /
 
 /* Workaround for framework */
-create or replace
-TRIGGER TR_Tape_TapeGatewayRequestId
+CREATE OR REPLACE TRIGGER TR_Tape_TapeGatewayRequestId
 BEFORE INSERT OR UPDATE OF tapeGatewayRequestId ON Tape
 FOR EACH ROW
 BEGIN
@@ -1647,8 +1644,7 @@ END;
 /
 
 /* start choosen stream */
-create or replace
-PROCEDURE startChosenStreams
+CREATE OR REPLACE PROCEDURE startChosenStreams
   (streamIds IN castor."cnumList") AS
 BEGIN
   IF (TapegatewaydIsRunning) THEN
@@ -1798,8 +1794,7 @@ END tapesAndMountsForRecallPolicy;
 /
 
 /* resurrect tapes */
-create or replace
-PROCEDURE resurrectTapes
+CREATE OR REPLACE PROCEDURE resurrectTapes
 (tapeIds IN castor."cnumList")
 AS
 BEGIN
