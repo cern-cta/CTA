@@ -1,5 +1,7 @@
 # Arguments for the vmgrd
-#   -c <path>      configuration file
+#   -f              remain in the foreground
+#   -c <path>       configuration file
+#   -l <logfile>    the path to the volume manager log file
 #   -t <nbthreads
 #
 # Options to pass to the vmgr daemon

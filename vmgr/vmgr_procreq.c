@@ -2,7 +2,7 @@
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -12,7 +12,10 @@
 #include <sys/types.h>
 #include <string.h>
 #include <netinet/in.h>
+
+#include "Cgrp.h"
 #include "Cthread_api.h"
+#include "Cpwd.h"
 #include "Cupv_api.h"
 #include "marshall.h"
 #include "serrno.h"
@@ -22,108 +25,62 @@
 
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 
-#define RESETID(UID,GID) resetid(&UID, &GID, thip);
- 
-void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
+void get_client_actual_id (struct vmgr_srv_thread_info *thip)
+{
+  struct passwd *pw;
+
 #ifdef VMGRCSEC
   if (thip->Csec_service_type < 0) {
-    *u = thip->Csec_uid;
-    *g = thip->Csec_gid;
+    thip->reqinfo.uid = thip->Csec_uid;
+    thip->reqinfo.gid = thip->Csec_gid;
   }
-#else
-  (void)u;
-  (void)g;
-  (void)thip;
 #endif
-}
-
-/*  vmgr_logreq - log a request */
-
-/*  Split the message into lines so they don't exceed LOGBUFSZ-1 characters
- *  A backslash is appended to a line to be continued
- *  A continuation line is prefixed by '+ '
- */
-void
-vmgr_logreq(char *func,
-	    char *logbuf)
-{
-  int n1, n2;
-  char *p;
-  char savechrs1[2];
-  char savechrs2[2];
-
-  n1 = LOGBUFSZ - strlen (func) - 36;
-  n2 = strlen (logbuf);
-  p = logbuf;
-  while (n2 > n1) {
-    savechrs1[0] = *(p + n1);
-    savechrs1[1] = *(p + n1 + 1);
-    *(p + n1) = '\\';
-    *(p + n1 + 1) = '\0';
-    vmgrlogit (func, VMG98, p);
-    if (p != logbuf) {
-      *p = savechrs2[0];
-      *(p + 1) = savechrs2[1];
-    }
-    p += n1 - 2;
-    savechrs2[0] = *p;
-    savechrs2[1] = *(p + 1);
-    *p = '+';
-    *(p + 1) = ' ';
-    *(p + 2) = savechrs1[0];
-    *(p + 3) = savechrs1[1];
-    n2 -= n1;
-  }
-  vmgrlogit (func, VMG98, p);
-  if (p != logbuf) {
-    *p = savechrs2[0];
-    *(p + 1) = savechrs2[1];
+  if ((pw = Cgetpwuid(thip->reqinfo.uid)) == NULL) {
+    thip->reqinfo.username = "UNKNOWN";
+  } else {
+    thip->reqinfo.username = pw->pw_name;
   }
 }
 
 /*  vmgr_srv_deletedenmap - delete a triplet model/media_letter/density */
 
 int vmgr_srv_deletedenmap(char *req_data,
-                          char *clienthost,
-                          struct vmgr_srv_thread_info *thip)
+                          struct vmgr_srv_thread_info *thip,
+                          struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
   char density[CA_MAXDENLEN+1];
-  char func[22];
-  gid_t gid;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+CA_MAXDENLEN+16];
+  char *func = "deletedenmap";
   char media_letter[CA_MAXMLLEN+1];
   char model[CA_MAXMODELLEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_deletedenmap", 22);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deletedenmap", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, media_letter, CA_MAXMLLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, density, CA_MAXDENLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletedenmap %s %s %s", model, media_letter, density);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLeter=\"%s\" Density=\"%s\"",
+           model, media_letter, density);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, model, media_letter,
-    density, &denmap_entry, 1, &rec_addr))
+				      density, &denmap_entry, 1, &rec_addr))
     RETURN (serrno);
   if (vmgr_delete_denmap_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
@@ -133,43 +90,38 @@ int vmgr_srv_deletedenmap(char *req_data,
 /*  vmgr_srv_deletedgnmap - delete a triplet dgn/model/library */
 
 int vmgr_srv_deletedgnmap(char *req_data,
-                          char *clienthost,
-                          struct vmgr_srv_thread_info *thip)
+                          struct vmgr_srv_thread_info *thip,
+                          struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_dgnmap dgnmap_entry;
-  char func[22];
-  gid_t gid;
+  char *func = "deletedgnmap";
   char library[CA_MAXTAPELIBLEN+1];
-  char logbuf[CA_MAXMODELLEN+CA_MAXTAPELIBLEN+15];
   char model[CA_MAXMODELLEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_deletedgnmap", 22);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-  
-  vmgrlogit (func, VMG92, "deletedgnmap", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, library, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletedgnmap %s %s", model, library);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" Library=\"%s\"", model, library);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_dgnmap_entry (&thip->dbfd, model, library, &dgnmap_entry,
-      1, &rec_addr))
+			     1, &rec_addr))
     RETURN (serrno);
   if (vmgr_delete_dgnmap_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
@@ -179,40 +131,35 @@ int vmgr_srv_deletedgnmap(char *req_data,
 /*  vmgr_srv_deletelibrary - delete a tape library definition */
 
 int vmgr_srv_deletelibrary(char *req_data,
-                           char *clienthost,
-                           struct vmgr_srv_thread_info *thip)
+                           struct vmgr_srv_thread_info *thip,
+                           struct vmgr_srv_request_info *reqinfo)
 {
-  char func[21];
-  gid_t gid;
+  char *func = "deletelibrary";
   char library[CA_MAXTAPELIBLEN+1];
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXTAPELIBLEN+15];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_deletelibrary", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deletelibrary", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, library, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletelibrary %s", library);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Library=\"%s\"", library);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_library_entry (&thip->dbfd, library,
-      &library_entry, 1, &rec_addr))
+			      &library_entry, 1, &rec_addr))
     RETURN (serrno);
   if (library_entry.capacity != library_entry.nb_free_slots) {
     sendrep (thip->s, MSG_ERR, "Cannot remove a library which has tapes associated to it\n");
@@ -226,39 +173,35 @@ int vmgr_srv_deletelibrary(char *req_data,
 /*  vmgr_srv_deletemodel - delete a cartridge model */
 
 int vmgr_srv_deletemodel(char *req_data,
-                         char *clienthost,
-                         struct vmgr_srv_thread_info *thip)
+                         struct vmgr_srv_thread_info *thip,
+                         struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_media cartridge;
-  char func[21];
-  gid_t gid;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+14];
+  char *func = "deletemodel";
   char media_letter[CA_MAXMLLEN+1];
   char model[CA_MAXMODELLEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_deletemodel", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deletemodel", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, media_letter, CA_MAXMLLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletemodel %s %s", model, media_letter);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLetter=\"%s\"",
+           model, media_letter);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_model_entry (&thip->dbfd, model, &cartridge, 1, &rec_addr))
@@ -274,40 +217,35 @@ int vmgr_srv_deletemodel(char *req_data,
 /*  vmgr_srv_deletepool - delete a tape pool definition */
 
 int vmgr_srv_deletepool(char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
-  char func[20];
-  gid_t gid;
-  char logbuf[CA_MAXPOOLNAMELEN+12];
+  char *func = "deletepool";
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_deletepool", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deletepool", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletepool %s", pool_name);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "PoolName=\"%s\"", pool_name);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
-      1, &rec_addr))
+				    1, &rec_addr))
     RETURN (serrno);
   if (pool_entry.capacity_byte_u64)
     RETURN (EEXIST);
@@ -318,17 +256,14 @@ int vmgr_srv_deletepool(char *req_data,
 
 /*  vmgr_srv_deletetape - delete a tape volume */
 
-int vmgr_srv_deletetape(
-  char *req_data,
-  char *clienthost,
-  struct vmgr_srv_thread_info *thip)
+int vmgr_srv_deletetape(char *req_data,
+			struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
-  char func[20];
-  gid_t gid;
+  char *func = "deletetape";
   int i;
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXVIDLEN+12];
   struct vmgr_tape_pool_byte_u64 pool_entry;
   vmgr_dbrec_addr pool_rec_addr;
   char *rbp;
@@ -339,56 +274,52 @@ int vmgr_srv_deletetape(
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_deletetape", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deletetape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deletetape %s", vid);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s", vid);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
 
-  /* delete associated tag if present */
-
+  /* Delete associated tag if present */
   if (vmgr_get_tag_by_vid (&thip->dbfd, vid, &tag_entry, 1, &rec_addrt) == 0) {
     if (vmgr_delete_tag_entry (&thip->dbfd, &rec_addrt))
       RETURN (serrno);
-    } else if (serrno != ENOENT)
-      RETURN (serrno);
-
-  /* get native capacity */
-
-  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
-    tape.media_letter, tape.density, &denmap_entry, 0, NULL))
+  } else if (serrno != ENOENT)
     RETURN (serrno);
 
-  /* delete all sides */
+  /* Get native capacity */
+  if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
+				      tape.media_letter, tape.density,
+				      &denmap_entry, 0, NULL))
+    RETURN (serrno);
 
+  /* Delete all sides */
   for (i = 0; i < tape.nbsides; i++) {
     if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
-        1, &rec_addrs))
+					  1, &rec_addrs))
       RETURN (serrno);
     if (side_entry.nbfiles)
       RETURN (EEXIST);
     if (i == 0 && vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
-        side_entry.poolname, &pool_entry, 1, &pool_rec_addr))
+						side_entry.poolname,
+						&pool_entry, 1, &pool_rec_addr))
       RETURN (serrno);
     pool_entry.capacity_byte_u64 -= denmap_entry.native_capacity_byte_u64;
     if (side_entry.status == 0)
@@ -400,13 +331,13 @@ int vmgr_srv_deletetape(
   if (vmgr_delete_tape_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
   if (vmgr_get_library_entry (&thip->dbfd, tape.library, &library_entry,
-      1, &rec_addrl))
+			      1, &rec_addrl))
     RETURN (serrno);
   library_entry.nb_free_slots++;
   if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl, &library_entry))
     RETURN (serrno);
   if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &pool_rec_addr,
-    &pool_entry))
+				       &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -414,54 +345,46 @@ int vmgr_srv_deletetape(
 /*  vmgr_srv_deltag - delete a tag associated with a tape volume */
 
 int vmgr_srv_deltag(char *req_data,
-                    char *clienthost,
-                    struct vmgr_srv_thread_info *thip)
+                    struct vmgr_srv_thread_info *thip,
+                    struct vmgr_srv_request_info *reqinfo)
 {
-  char func[16];
-  gid_t gid;
-  char logbuf[CA_MAXVIDLEN+8];
+  char *func = "deltag";
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_deltag", 16);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "deltag", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "deltag %s", vid);
-  vmgr_logreq (func, logbuf);
 
-  /* get pool name */
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s", vid);
 
+  /* Get pool name */
   if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, 0, &side_entry,
-      0, NULL))
+					0, NULL))
     RETURN (serrno);
 
-  /* get pool entry */
-
+  /* Get pool entry */
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
-    &pool_entry, 0, NULL))
+				    &pool_entry, 0, NULL))
     RETURN (serrno);
 
-  /* check if the user is authorized to delete the tag on this volume */
-
-  if (((pool_entry.uid && pool_entry.uid != uid) ||
-      (pool_entry.gid && pool_entry.gid != gid)) &&
-      Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR))
+  /* Check if the user is authorized to delete the tag on this volume */
+  if (((pool_entry.uid && pool_entry.uid != reqinfo->uid) ||
+       (pool_entry.gid && pool_entry.gid != reqinfo->gid)) &&
+      Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_TAPE_OPERATOR))
     RETURN (EACCES);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_get_tag_by_vid (&thip->dbfd, vid, &tag_entry, 1, &rec_addr))
@@ -473,25 +396,22 @@ int vmgr_srv_deltag(char *req_data,
 
 /*  vmgr_srv_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
-int vmgr_srv_enterdenmap(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip) {
+int vmgr_srv_enterdenmap(const int magic,
+			 char *const req_data,
+			 struct vmgr_srv_thread_info *const thip,
+                         struct vmgr_srv_request_info *reqinfo) {
   int native_capacity_mebibyte_int = 0;
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
-  char func[21];
-  gid_t gid = 0;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+CA_MAXDENLEN+15];
+  char *func = "enterdenmap";
   struct vmgr_tape_media model_entry;
   char *rbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_enterdenmap", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "enterdenmap", uid, gid, clienthost);
   memset ((char *) &denmap_entry, 0, sizeof(denmap_entry));
   if (unmarshall_STRINGN (rbp, denmap_entry.md_model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
@@ -504,17 +424,20 @@ int vmgr_srv_enterdenmap(const int magic, char *const req_data,
   unmarshall_LONG (rbp, native_capacity_mebibyte_int);
   denmap_entry.native_capacity_byte_u64 =
     (u_signed64)native_capacity_mebibyte_int * ONE_MB;
-  sprintf (logbuf, "enterdenmap %s %s %s", denmap_entry.md_model,
-      denmap_entry.md_media_letter, denmap_entry.md_density);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "Model=\"%s\" MediaLetter=\"%s\" Density=\"%s\" NativeCapacity=%llu",
+           denmap_entry.md_model, denmap_entry.md_media_letter,
+           denmap_entry.md_density, denmap_entry.native_capacity_byte_u64);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* check if model exists */
-
+  /* Check if model exists */
   if (vmgr_get_model_entry (&thip->dbfd, denmap_entry.md_model,
-      &model_entry, 0, NULL))
+			    &model_entry, 0, NULL))
     RETURN (serrno);
   if (*denmap_entry.md_media_letter &&
       strcmp (denmap_entry.md_media_letter, " ") &&
@@ -524,8 +447,7 @@ int vmgr_srv_enterdenmap(const int magic, char *const req_data,
   if (native_capacity_mebibyte_int <= 0)
     RETURN (EINVAL);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
@@ -535,29 +457,26 @@ int vmgr_srv_enterdenmap(const int magic, char *const req_data,
 
 /*  vmgr_srv_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
-int vmgr_srv_enterdenmap_byte_u64(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip)
+int vmgr_srv_enterdenmap_byte_u64(const int magic,
+				  char *const req_data,
+				  struct vmgr_srv_thread_info *const thip,
+                                  struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
-  char func[21];
-  gid_t gid = 0;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+CA_MAXDENLEN+15];
+  char *func = "enterdenmap";
   struct vmgr_tape_media model_entry;
   char *rbp = NULL;
-  uid_t uid = 0;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   /* Only VMGR_MAGIC2 is supported */
   if (magic != VMGR_MAGIC2)
     RETURN (EINVAL);
 
-  strncpy (func, "vmgr_srv_enterdenmap", 21);
-  rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "enterdenmap", uid, gid, clienthost);
   memset ((char *) &denmap_entry, 0, sizeof(denmap_entry));
   if (unmarshall_STRINGN (rbp, denmap_entry.md_model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
@@ -566,17 +485,19 @@ int vmgr_srv_enterdenmap_byte_u64(const int magic, char *const req_data,
   if (unmarshall_STRINGN (rbp, denmap_entry.md_density, CA_MAXDENLEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_HYPER (rbp, denmap_entry.native_capacity_byte_u64);
-  sprintf (logbuf, "enterdenmap %s %s %s", denmap_entry.md_model,
-      denmap_entry.md_media_letter, denmap_entry.md_density);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLetter=\"%s\" Density=\"%s\"",
+           denmap_entry.md_model, denmap_entry.md_media_letter,
+           denmap_entry.md_density);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* check if model exists */
-
+  /* Check if model exists */
   if (vmgr_get_model_entry (&thip->dbfd, denmap_entry.md_model,
-      &model_entry, 0, NULL))
+			    &model_entry, 0, NULL))
     RETURN (serrno);
   if (*denmap_entry.md_media_letter &&
       strcmp (denmap_entry.md_media_letter, " ") &&
@@ -586,9 +507,7 @@ int vmgr_srv_enterdenmap_byte_u64(const int magic, char *const req_data,
   if (denmap_entry.native_capacity_byte_u64 <= 0)
     RETURN (EINVAL);
 
-
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
@@ -599,26 +518,21 @@ int vmgr_srv_enterdenmap_byte_u64(const int magic, char *const req_data,
 /*  vmgr_srv_enterdgnmap - enter a new triplet dgn/model/library */
 
 int vmgr_srv_enterdgnmap(char *req_data,
-                         char *clienthost,
-                         struct vmgr_srv_thread_info *thip)
+                         struct vmgr_srv_thread_info *thip,
+                         struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_dgnmap dgnmap_entry;
-  char func[21];
-  gid_t gid;
+  char *func = "enterdgnmap";
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXDGNLEN+CA_MAXMODELLEN+CA_MAXTAPELIBLEN+15];
   struct vmgr_tape_media model_entry;
   char *rbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_enterdgnmap", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "enterdgnmap", uid, gid, clienthost);
   memset ((char *) &dgnmap_entry, 0, sizeof(dgnmap_entry));
   if (unmarshall_STRINGN (rbp, dgnmap_entry.dgn, CA_MAXDGNLEN+1) < 0)
     RETURN (EINVAL);
@@ -626,27 +540,26 @@ int vmgr_srv_enterdgnmap(char *req_data,
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, dgnmap_entry.library, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "enterdgnmap %s %s %s", dgnmap_entry.dgn,
-      dgnmap_entry.model, dgnmap_entry.library);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "DGN=\"%s\" Model=\"%s\" Library=\"%s\"",
+           dgnmap_entry.dgn, dgnmap_entry.model, dgnmap_entry.library);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* check if model exists */
-
+  /* Check if model exists */
   if (vmgr_get_model_entry (&thip->dbfd, dgnmap_entry.model, &model_entry,
-      0, NULL))
+			    0, NULL))
     RETURN (serrno);
 
-  /* check if library exists */
-
+  /* Check if library exists */
   if (vmgr_get_library_entry (&thip->dbfd, dgnmap_entry.library,
-      &library_entry, 0, NULL))
+			      &library_entry, 0, NULL))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_dgnmap_entry (&thip->dbfd, &dgnmap_entry))
@@ -657,41 +570,38 @@ int vmgr_srv_enterdgnmap(char *req_data,
 /*  vmgr_srv_enterlibrary - enter a new tape library definition */
 
 int vmgr_srv_enterlibrary(char *req_data,
-                          char *clienthost,
-                          struct vmgr_srv_thread_info *thip)
+                          struct vmgr_srv_thread_info *thip,
+                          struct vmgr_srv_request_info *reqinfo)
 {
-  char func[22];
-  gid_t gid;
+  char *func = "enterlibrary";
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXTAPELIBLEN+25];
   char *rbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_enterlibrary", 22);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "enterlibrary", uid, gid, clienthost);
   memset ((char *) &library_entry, 0, sizeof(library_entry));
   if (unmarshall_STRINGN (rbp, library_entry.name, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, library_entry.capacity);
   unmarshall_LONG (rbp, library_entry.status);
-  sprintf (logbuf, "enterlibrary %s %d", library_entry.name, library_entry.capacity);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Library=\"%s\" Capacity=%d Status=%d",
+           library_entry.name, library_entry.capacity, library_entry.status);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
   if (library_entry.capacity <= 0)
     RETURN (EINVAL);
   library_entry.nb_free_slots = library_entry.capacity;
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_library_entry (&thip->dbfd, &library_entry))
@@ -703,25 +613,20 @@ int vmgr_srv_enterlibrary(char *req_data,
 
 int vmgr_srv_entermodel(int magic,
                         char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_media cartridge;
-  char func[20];
-  gid_t gid;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+13];
+  char *func = "entermodel";
   int native_capacity;
   char *rbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_entermodel", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "entermodel", uid, gid, clienthost);
   memset ((char *) &cartridge, 0, sizeof(cartridge));
   if (unmarshall_STRINGN (rbp, cartridge.m_model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
@@ -730,14 +635,16 @@ int vmgr_srv_entermodel(int magic,
   if (magic < VMGR_MAGIC2)
     unmarshall_LONG (rbp, native_capacity);  /* ignore */
   unmarshall_LONG (rbp, cartridge.media_cost);
-  sprintf (logbuf, "entermodel %s %s", cartridge.m_model, cartridge.m_media_letter);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLetter=\"%s\" MediaCost=%d",
+           cartridge.m_model, cartridge.m_media_letter, cartridge.media_cost);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_model_entry (&thip->dbfd, &cartridge))
@@ -748,38 +655,34 @@ int vmgr_srv_entermodel(int magic,
 /*  vmgr_srv_enterpool - define a new tape pool */
 
 int vmgr_srv_enterpool(char *req_data,
-                       char *clienthost,
-                       struct vmgr_srv_thread_info *thip)
+                       struct vmgr_srv_thread_info *thip,
+                       struct vmgr_srv_request_info *reqinfo)
 {
-  char func[19];
-  gid_t gid;
-  char logbuf[CA_MAXPOOLNAMELEN+33];
+  char *func = "enterpool";
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_enterpool", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "enterpool", uid, gid, clienthost);
   memset ((char *) &pool_entry, 0, sizeof(pool_entry));
   if (unmarshall_STRINGN (rbp, pool_entry.name, CA_MAXPOOLNAMELEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, pool_entry.uid);
   unmarshall_LONG (rbp, pool_entry.gid);
-  sprintf (logbuf, "enterpool %s %d %d", pool_entry.name, pool_entry.uid,
-      pool_entry.gid);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "PoolName=\"%s\" PoolUid=%d PoolGid=%d",
+           pool_entry.name, pool_entry.uid, pool_entry.gid);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
   if (vmgr_insert_pool_entry_byte_u64 (&thip->dbfd, &pool_entry))
@@ -790,33 +693,27 @@ int vmgr_srv_enterpool(char *req_data,
 /*  vmgr_srv_entertape - enter a new tape volume */
 
 int vmgr_srv_entertape(char *req_data,
-                       char *clienthost,
-                       struct vmgr_srv_thread_info *thip)
+                       struct vmgr_srv_thread_info *thip,
+                       struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_media cartridge;
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
   struct vmgr_tape_dgnmap dgnmap_entry;
-  char func[19];
-  gid_t gid;
+  char *func = "entertape";
   int i;
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXVIDLEN+CA_MAXPOOLNAMELEN+23];
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   vmgr_dbrec_addr rec_addrl;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_entertape", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "entertape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   memset ((char *) &tape, 0, sizeof(tape));
   memset ((char *) &side_entry, 0, sizeof(side_entry));
@@ -842,11 +739,13 @@ int vmgr_srv_entertape(char *req_data,
   if (unmarshall_STRINGN (rbp, side_entry.poolname, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, side_entry.status);
-  sprintf (logbuf, "entertape %s %s %d", tape.vid, side_entry.poolname,
-      side_entry.status);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s PoolName=\"%s\" SideStatus=%d",
+           tape.vid, side_entry.poolname, side_entry.status);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_TAPE_OPERATOR))
     RETURN (serrno);
 
   if (! *tape.vsn)
@@ -862,23 +761,20 @@ int vmgr_srv_entertape(char *req_data,
   if (! *side_entry.poolname)
     strcpy (side_entry.poolname, "default");
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* check if pool exists and lock entry */
-
+  /* Check if pool exists and lock entry */
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
-    &pool_entry, 1, &rec_addr)) {
+				    &pool_entry, 1, &rec_addr)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR, "No such pool\n");
       RETURN (EINVAL);
-    } else 
+    } else
       RETURN (serrno);
   }
 
-  /* check if model exists */
-
+  /* Check if model exists */
   memset((void *) &cartridge, 0, sizeof(struct vmgr_tape_media));
   if (vmgr_get_model_entry (&thip->dbfd, tape.model, &cartridge, 0, NULL)) {
     if (serrno == ENOENT) {
@@ -893,11 +789,10 @@ int vmgr_srv_entertape(char *req_data,
     RETURN (EINVAL);
   strcpy (tape.media_letter, cartridge.m_media_letter);
 
-  /* check if library exists */
-
+  /* Check if library exists */
   memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
   if (vmgr_get_library_entry (&thip->dbfd, tape.library, &library_entry,
-      1, &rec_addrl)) {
+			      1, &rec_addrl)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR, "No such library\n");
       RETURN (EINVAL);
@@ -905,28 +800,27 @@ int vmgr_srv_entertape(char *req_data,
       RETURN (serrno);
   }
 
-  /* check if the combination library/model exists */
-
+  /* Check if the combination library/model exists */
   if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
-      &dgnmap_entry, 0, NULL)) {
+			     &dgnmap_entry, 0, NULL)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR,
-          "Combination library/model does not exist\n");
+	       "Combination library/model does not exist\n");
       RETURN (EINVAL);
     } else
       RETURN (serrno);
   }
 
-  /* check if density is valid for this model and get native capacity */
-
+  /* Check if density is valid for this model and get native capacity */
   memset((void *) &denmap_entry, 0, sizeof(denmap_entry));
   if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
-      tape.media_letter, tape.density, &denmap_entry, 0, NULL)) {
+                                      tape.media_letter, tape.density,
+                                      &denmap_entry, 0, NULL)) {
     if (serrno == ENOENT) {
       sendrep (thip->s, MSG_ERR,
-          "Unsupported density for this model\n");
+	       "Unsupported density for this model\n");
       RETURN (EINVAL);
-    } else 
+    } else
       RETURN (serrno);
   }
   side_entry.estimated_free_space_byte_u64 =
@@ -954,7 +848,7 @@ int vmgr_srv_entertape(char *req_data,
     RETURN (serrno);
 
   if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &rec_addr,
-    &pool_entry))
+				       &pool_entry))
     RETURN (serrno);
   RETURN (0);
 }
@@ -962,36 +856,31 @@ int vmgr_srv_entertape(char *req_data,
 /*  vmgr_srv_gettag - get the tag associated with a tape volume */
 
 int vmgr_srv_gettag(char *req_data,
-                    char *clienthost,
-                    struct vmgr_srv_thread_info *thip)
+                    struct vmgr_srv_thread_info *thip,
+                    struct vmgr_srv_request_info *reqinfo)
 {
-  char func[16];
-  gid_t gid;
-  char logbuf[CA_MAXVIDLEN+8];
+  char *func = "gettag";
   struct vmgr_tape_tag tag_entry;
   char *rbp;
   char repbuf[CA_MAXTAGLEN+1];
   char *sbp;
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_gettag", 16);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "gettag", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "gettag %s", vid);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s", vid);
 
   if (vmgr_get_tag_by_vid (&thip->dbfd, vid, &tag_entry, 0, NULL))
     RETURN (serrno);
-        sbp = repbuf;
-        marshall_STRING (sbp, tag_entry.text);
+  sbp = repbuf;
+  marshall_STRING (sbp, tag_entry.text);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURN (0);
 }
@@ -1000,16 +889,14 @@ int vmgr_srv_gettag(char *req_data,
 
 int vmgr_srv_gettape(int magic,
                      char *req_data,
-                     char *clienthost,
-                     struct vmgr_srv_thread_info *thip)
+                     struct vmgr_srv_thread_info *thip,
+                     struct vmgr_srv_request_info *reqinfo)
 {
-  char Condition[512];
+  char condition[512];
   struct vmgr_tape_dgnmap dgnmap_entry;
   int fseq;
-  char func[17];
-  gid_t gid;
+  char *func = "gettape";
   int i;
-  char logbuf[CA_MAXPOOLNAMELEN+30];
   static int onealloc;
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char poolname[CA_MAXPOOLNAMELEN+1];
@@ -1020,52 +907,48 @@ int vmgr_srv_gettape(int magic,
   char *sbp;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_side_byte_u64 side_entry1;
-  u_signed64 Size;
+  u_signed64 size;
   struct vmgr_tape_info_byte_u64 tape;
-  char tmpbuf[21];
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_gettape", 17);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "gettape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, poolname, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
-  unmarshall_HYPER (rbp, Size);
-  if (unmarshall_STRINGN (rbp, Condition, 512) < 0)
+  unmarshall_HYPER (rbp, size);
+  if (unmarshall_STRINGN (rbp, condition, 512) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "gettape %s %s", poolname, u64tostr(Size, tmpbuf, 0));
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "PoolName=\"%s\" RequestedSize=%llu",
+           poolname, size);
 
   if (! *poolname)
     strcpy (poolname, "default");
-  else {  /* check if pool exists and permissions are ok */
+  else {  /* Check if pool exists and permissions are ok */
     if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, poolname, &pool_entry,
-        0, NULL))
+				      0, NULL))
       RETURN (serrno);
-    if (((pool_entry.uid > 0 && uid != pool_entry.uid) ||
-        (pool_entry.gid > 0 && gid != pool_entry.gid)) &&
-        Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    if (((pool_entry.uid > 0 && reqinfo->uid != pool_entry.uid) ||
+	 (pool_entry.gid > 0 && reqinfo->gid != pool_entry.gid)) &&
+        Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                    P_ADMIN))
       RETURN (EACCES);
   }
-  if (Size <= 0)
+  if (size <= 0)
     RETURN (EINVAL);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
   if (Cthread_mutex_lock (&onealloc))
     RETURN (serrno);
 
-  /* get and lock entry */
-
+  /* Get and lock entry */
   memset ((void *) &side_entry, 0, sizeof(side_entry));
-  if (vmgr_get_side_by_size_byte_u64 (&thip->dbfd, poolname, Size, &side_entry,
-    1, &rec_addr)) {
+  if (vmgr_get_side_by_size_byte_u64 (&thip->dbfd, poolname, size, &side_entry,
+				      1, &rec_addr)) {
     if (serrno == ENOENT)
       serrno = ENOSPC;
     save_serrno = serrno;
@@ -1073,8 +956,7 @@ int vmgr_srv_gettape(int magic,
     RETURN (save_serrno);
   }
 
-  /* update entry */
-
+  /* Update entry */
   side_entry.status = TAPE_BUSY;
 
   if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr, &side_entry)) {
@@ -1083,23 +965,22 @@ int vmgr_srv_gettape(int magic,
     RETURN (save_serrno);
   }
 
-  /* get base entry */
-
+  /* Get base entry */
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid, &tape, 0,
-    NULL)) {
+				     NULL)) {
     save_serrno = serrno;
     (void) Cthread_mutex_unlock (&onealloc);
     RETURN (save_serrno);
   }
 
-  /* if the media offer several sides, mark all sides busy
-     if they are not FULL */
-
+  /* If the media offers several sides, mark all sides busy if they are not
+   * FULL
+   */
   for (i = 0; i < tape.nbsides; i++) {
     if (i == side_entry.side) continue;
     if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, side_entry.vid, i,
-        &side_entry1, 1, &rec_addr)) {
+					  &side_entry1, 1, &rec_addr)) {
       save_serrno = serrno;
       (void) Cthread_mutex_unlock (&onealloc);
       RETURN (save_serrno);
@@ -1107,24 +988,28 @@ int vmgr_srv_gettape(int magic,
     if (side_entry1.status == 0)
       side_entry1.status = TAPE_BUSY;
     if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr,
-        &side_entry1)) {
+					 &side_entry1)) {
       save_serrno = serrno;
       (void) Cthread_mutex_unlock (&onealloc);
       RETURN (save_serrno);
     }
   }
 
-  /* get dgn */
-
+  /* Get dgn */
   if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
-      &dgnmap_entry, 0, NULL)) {
+			     &dgnmap_entry, 0, NULL)) {
     save_serrno = serrno;
     (void) Cthread_mutex_unlock (&onealloc);
     RETURN (save_serrno);
   }
 
   fseq = side_entry.nbfiles + 1;
-  vmgrlogit(func, "%s %d %d\n", tape.vid, side_entry.side, fseq);
+
+  /* Ammend log message */
+  sprintf (reqinfo->logbuf,
+           "PoolName=\"%s\" RequestedSize=%llu TPVID=%s Side=%d Fseq=%d",
+           poolname, size, tape.vid, side_entry.side, fseq);
+
   sbp = repbuf;
   marshall_STRING (sbp, tape.vid);
   marshall_STRING (sbp, tape.vsn);
@@ -1144,15 +1029,16 @@ int vmgr_srv_gettape(int magic,
 
 /*      vmgr_srv_listdenmap - list triplets model/media_letter/density */
 
-int vmgr_srv_listdenmap(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
-  const int endlist) {
+int vmgr_srv_listdenmap(const int magic,
+			char *const req_data,
+			struct vmgr_srv_thread_info *const thip,
+                        struct vmgr_srv_request_info *reqinfo,
+			const int endlist) {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
   int eol = 0;  /* end of list flag */
-  char func[20];
-  gid_t gid = 0;
+  char *func = "listdenmap";
   int listentsz = 0;  /* size of client machine vmgr_tape_denmap structure */
   int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
@@ -1160,28 +1046,23 @@ int vmgr_srv_listdenmap(const int magic, char *const req_data,
   char *p = NULL;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_listdenmap", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listdenmap", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-      (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol, &denmap_entry,
-    endlist)) == 0) {
+	 (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol, &denmap_entry,
+					       endlist)) == 0) {
     marshall_STRING (sbp, denmap_entry.md_model);
     marshall_STRING (sbp, denmap_entry.md_media_letter);
     marshall_STRING (sbp, denmap_entry.md_density);
@@ -1209,23 +1090,24 @@ int vmgr_srv_listdenmap(const int magic, char *const req_data,
 
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  marshall_WORD (p, nbentries);    /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
   RETURN (0);
 }
 
 /*      vmgr_srv_listdenmap - list triplets model/media_letter/density */
 
-int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
-  const int endlist)
+int vmgr_srv_listdenmap_byte_u64(const int magic,
+				 char *const req_data,
+				 struct vmgr_srv_thread_info *const thip,
+                                 struct vmgr_srv_request_info *reqinfo,
+				 const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
   int eol = 0;  /* end of list flag */
-  char func[20];
-  gid_t gid = 0;
+  char *func = "listdenmap";
   /* listentsz = size of client machine vmgr_tape_denmap_byte_u64 structure */
   int listentsz = 0;
   int maxnbentries = 0;  /* maximum number of entries/call */
@@ -1234,32 +1116,28 @@ int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
   char *p = NULL;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   /* Only VMGR_MAGIC2 is supported */
   if (magic != VMGR_MAGIC2)
     RETURN (EINVAL);
 
-  strncpy (func, "vmgr_srv_listdenmap", 20);
-  rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listdenmap", uid, gid, clienthost);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-      (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol,
-    &denmap_entry, endlist)) == 0) {
+	 (c = vmgr_list_denmap_entry_byte_u64 (&thip->dbfd, bol,
+					       &denmap_entry, endlist)) == 0) {
     marshall_STRING (sbp, denmap_entry.md_model);
     marshall_STRING (sbp, denmap_entry.md_media_letter);
     marshall_STRING (sbp, denmap_entry.md_density);
@@ -1282,16 +1160,15 @@ int vmgr_srv_listdenmap_byte_u64(const int magic, char *const req_data,
 /*      vmgr_srv_listdgnmap - list triplets model/media_letter/density */
 
 int vmgr_srv_listdgnmap(char *const req_data,
-                        char *const clienthost,
                         struct vmgr_srv_thread_info *const thip,
+                        struct vmgr_srv_request_info *reqinfo,
                         const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   struct vmgr_tape_dgnmap dgnmap_entry;
   int eol = 0;  /* end of list flag */
-  char func[20];
-  gid_t gid = 0;
+  char *func = "listdgnmap";
   int listentsz = 0;  /* size of client machine vmgr_tape_dgnmap structure */
   int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
@@ -1299,28 +1176,23 @@ int vmgr_srv_listdgnmap(char *const req_data,
   char *p = NULL;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_listdgnmap", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listdgnmap", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_dgnmap_entry (&thip->dbfd, bol, &dgnmap_entry, endlist))
-    == 0) {
+	 (c = vmgr_list_dgnmap_entry (&thip->dbfd, bol, &dgnmap_entry,
+                                      endlist)) == 0) {
     marshall_STRING (sbp, dgnmap_entry.dgn);
     marshall_STRING (sbp, dgnmap_entry.model);
     marshall_STRING (sbp, dgnmap_entry.library);
@@ -1334,7 +1206,7 @@ int vmgr_srv_listdgnmap(char *const req_data,
 
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  marshall_WORD (p, nbentries);    /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
   RETURN (0);
 }
@@ -1342,15 +1214,14 @@ int vmgr_srv_listdgnmap(char *const req_data,
 /*      vmgr_srv_listlibrary - list tape library entries */
 
 int vmgr_srv_listlibrary(char *const req_data,
-                         char *const clienthost,
                          struct vmgr_srv_thread_info *const thip,
+                         struct vmgr_srv_request_info *reqinfo,
                          const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   int eol = 0;  /* end of list flag */
-  char func[21];
-  gid_t gid = 0;
+  char *func = "listlibrary";
   struct vmgr_tape_library library_entry;
   int listentsz = 0;  /* size of client machine vmgr_tape_library structure */
   int maxnbentries = 0;  /* maximum number of entries/call */
@@ -1359,28 +1230,23 @@ int vmgr_srv_listlibrary(char *const req_data,
   char *p = NULL;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_listlibrary", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listlibrary", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_library_entry (&thip->dbfd, bol, &library_entry, endlist))
-    == 0) {
+	 (c = vmgr_list_library_entry (&thip->dbfd, bol, &library_entry,
+                                       endlist)) == 0) {
     marshall_STRING (sbp, library_entry.name);
     marshall_LONG (sbp, library_entry.capacity);
     marshall_LONG (sbp, library_entry.nb_free_slots);
@@ -1404,16 +1270,15 @@ int vmgr_srv_listlibrary(char *const req_data,
 
 int vmgr_srv_listmodel(const int magic,
                        char *const req_data,
-                       char *const clienthost,
                        struct vmgr_srv_thread_info *const thip,
+                       struct vmgr_srv_request_info *reqinfo,
                        const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   struct vmgr_tape_media cartridge;
   int eol = 0;  /* end of list flag */
-  char func[19];
-  gid_t gid = 0;
+  char *func = "listmodel";
   int listentsz = 0;  /* size of client machine vmgr_tape_media structure */
   int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
@@ -1421,31 +1286,27 @@ int vmgr_srv_listmodel(const int magic,
   char *p = NULL;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_listmodel", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listmodel", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_model_entry (&thip->dbfd, bol, &cartridge, endlist)) == 0) {
+	 (c = vmgr_list_model_entry (&thip->dbfd, bol, &cartridge,
+                                     endlist)) == 0) {
     marshall_STRING (sbp, cartridge.m_model);
     marshall_STRING (sbp, cartridge.m_media_letter);
     if (magic < VMGR_MAGIC2)
-      marshall_LONG (sbp, 0);  /* dummy */
+      marshall_LONG (sbp, 0);  /* Dummy */
     marshall_LONG (sbp, cartridge.media_cost);
     nbentries++;
     bol = 0;
@@ -1457,7 +1318,7 @@ int vmgr_srv_listmodel(const int magic,
 
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  marshall_WORD (p, nbentries);    /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
   RETURN (0);
 }
@@ -1465,15 +1326,14 @@ int vmgr_srv_listmodel(const int magic,
 /*      vmgr_srv_listpool - list tape pool entries */
 
 int vmgr_srv_listpool(char *const req_data,
-                      char *const clienthost,
                       struct vmgr_srv_thread_info *const thip,
+                      struct vmgr_srv_request_info *reqinfo,
                       const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   int eol = 0;  /* end of list flag */
-  char func[18];
-  gid_t gid = 0;
+  char *func = "listpool";
   int listentsz = 0;  /* size of client machine vmgr_tape_pool structure */
   int maxnbentries = 0;  /* maximum number of entries/call */
   int nbentries = 0;
@@ -1482,28 +1342,23 @@ int vmgr_srv_listpool(char *const req_data,
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
 
-  strncpy (func, "vmgr_srv_listpool", 18);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listpool", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / listentsz;
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_pool_entry_byte_u64 (&thip->dbfd, bol, &pool_entry, endlist))
-    == 0) {
+	 (c = vmgr_list_pool_entry_byte_u64 (&thip->dbfd, bol, &pool_entry,
+                                             endlist)) == 0) {
     marshall_STRING (sbp, pool_entry.name);
     marshall_LONG (sbp, pool_entry.uid);
     marshall_LONG (sbp, pool_entry.gid);
@@ -1519,22 +1374,24 @@ int vmgr_srv_listpool(char *const req_data,
 
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  marshall_WORD (p, nbentries);    /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
   RETURN (0);
 }
 
 /*      vmgr_srv_listtape - list tape volume entries */
 
-int vmgr_srv_listtape(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
-  struct vmgr_tape_info_byte_u64 *const tape, const int endlist) {
+int vmgr_srv_listtape(const int magic,
+		      char *const req_data,
+		      struct vmgr_srv_thread_info *const thip,
+                      struct vmgr_srv_request_info *reqinfo,
+		      struct vmgr_tape_info_byte_u64 *const tape,
+		      const int endlist) {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   struct vmgr_tape_dgnmap dgnmap_entry;
   int eol = 0;  /* end of list flag */
-  char func[18];
-  gid_t gid = 0;
+  char *func = "listtape";
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
   int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
@@ -1544,17 +1401,13 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
   struct vmgr_tape_side_byte_u64 side_entry;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_listtape", 18);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listtape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   if (magic >= VMGR_MAGIC2) {
     if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN + 1) < 0)
@@ -1565,25 +1418,24 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / ((MARSHALLED_TAPE_ENTRYSZ > listentsz) ?
-    MARSHALLED_TAPE_ENTRYSZ : listentsz);
+			      MARSHALLED_TAPE_ENTRYSZ : listentsz);
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
-    &side_entry, endlist)) == 0) {
+	 (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
+					     &side_entry, endlist)) == 0) {
     if (bol || strcmp (tape->vid, side_entry.vid))
       if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid,
-          tape, 0, NULL))
+					 tape, 0, NULL))
         RETURN (serrno);
     marshall_STRING (sbp, tape->vid);
     marshall_STRING (sbp, tape->vsn);
     if (magic < VMGR_MAGIC2) {
       if (vmgr_get_dgnmap_entry (&thip->dbfd, tape->model,
-          tape->library, &dgnmap_entry, 0, NULL))
+				 tape->library, &dgnmap_entry, 0, NULL))
         RETURN (serrno);
       marshall_STRING (sbp, dgnmap_entry.dgn);
     } else
@@ -1644,15 +1496,17 @@ int vmgr_srv_listtape(const int magic, char *const req_data,
 
 /*      vmgr_srv_listtape - list tape volume entries */
 
-int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip,
-  struct vmgr_tape_info_byte_u64 *const tape, const int endlist)
+int vmgr_srv_listtape_byte_u64(const int magic,
+			       char *const req_data,
+			       struct vmgr_srv_thread_info *const thip,
+                               struct vmgr_srv_request_info *reqinfo,
+			       struct vmgr_tape_info_byte_u64 *const tape,
+			       const int endlist)
 {
   int bol = 0;  /* beginning of list flag */
   int c = 0;
   int eol = 0;  /* end of list flag */
-  char func[18];
-  gid_t gid = 0;
+  char *func = "listtape";
   int listentsz = 0;  /* size of client machine vmgr_tape_info structure */
   int maxnbentries = 0; /* maximum number of entries per output buffer */
   int nbentries = 0;
@@ -1662,21 +1516,18 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
   struct vmgr_tape_side_byte_u64 side_entry;
   char *rbp = NULL;
   char *sbp = NULL;
-  uid_t uid = 0;
   char vid[CA_MAXVIDLEN+1];
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   /* Only VMGR_MAGIC2 is supported */
   if (magic != VMGR_MAGIC2)
     RETURN (EINVAL);
 
-  strncpy (func, "vmgr_srv_listtape", 18);
-  rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "listtape", uid, gid, clienthost);
   unmarshall_WORD (rbp, listentsz);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN + 1) < 0)
     RETURN (EINVAL);
@@ -1684,19 +1535,18 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
 
-  /* return as many entries as possible to the client */
-
+  /* Return as many entries as possible to the client */
   maxnbentries = LISTBUFSZ / ((MARSHALLED_TAPE_BYTE_U64_ENTRYSZ > listentsz) ?
-      MARSHALLED_TAPE_BYTE_U64_ENTRYSZ : listentsz);
+			      MARSHALLED_TAPE_BYTE_U64_ENTRYSZ : listentsz);
   sbp = outbuf;
-  marshall_WORD (sbp, nbentries);    /* will be updated */
+  marshall_WORD (sbp, nbentries);    /* Will be updated */
 
   while (nbentries < maxnbentries &&
-    (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
-    &side_entry, endlist)) == 0) {
+	 (c = vmgr_list_side_entry_byte_u64 (&thip->dbfd, bol, vid, pool_name,
+					     &side_entry, endlist)) == 0) {
     if (bol || strcmp (tape->vid, side_entry.vid))
       if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, side_entry.vid,
-          tape, 0, NULL))
+					 tape, 0, NULL))
         RETURN (serrno);
     marshall_STRING (sbp, tape->vid);
     marshall_STRING (sbp, tape->vsn);
@@ -1732,7 +1582,7 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
 
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);    /* update nbentries in reply */
+  marshall_WORD (p, nbentries);    /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
   RETURN (0);
 }
@@ -1740,51 +1590,45 @@ int vmgr_srv_listtape_byte_u64(const int magic, char *const req_data,
 /*  vmgr_srv_modifylibrary - modify an existing tape library */
 
 int vmgr_srv_modifylibrary(char *req_data,
-                           char *clienthost,
-                           struct vmgr_srv_thread_info *thip)
+                           struct vmgr_srv_thread_info *thip,
+                           struct vmgr_srv_request_info *reqinfo)
 {
   int capacity;
-  char func[23];
-  gid_t gid;
+  char *func = "modifylibrary";
   char library[CA_MAXTAPELIBLEN+1];
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXTAPELIBLEN+16];
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   int status;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_modifylibrary", 23);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "modifylibrary", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, library, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, capacity);
   unmarshall_LONG (rbp, status);
-  sprintf (logbuf, "modifylibrary %s %d", library, capacity);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Library=\"%s\" Capacity=%d Status=%d",
+           library, capacity, status);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entry */
-
+  /* Get and lock entry */
   memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
   if (vmgr_get_library_entry (&thip->dbfd, library, &library_entry,
-      1, &rec_addr))
+			      1, &rec_addr))
     RETURN (serrno);
 
-  /* update entry */
-
+  /* Update entry */
   if (capacity > 0) {
     library_entry.nb_free_slots += capacity - library_entry.capacity;
     library_entry.capacity = capacity;
@@ -1801,29 +1645,23 @@ int vmgr_srv_modifylibrary(char *req_data,
 
 int vmgr_srv_modifymodel(int magic,
                          char *req_data,
-                         char *clienthost,
-                         struct vmgr_srv_thread_info *thip)
+                         struct vmgr_srv_thread_info *thip,
+                         struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_media cartridge;
-  char func[21];
-  gid_t gid;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+14];
+  char *func = "modifymodel";
   int media_cost;
   char media_letter[CA_MAXMLLEN+1];
   char model[CA_MAXMODELLEN+1];
   int native_capacity;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_modifymodel", 21);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "modifymodel", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, media_letter, CA_MAXMLLEN+1) < 0)
@@ -1831,18 +1669,19 @@ int vmgr_srv_modifymodel(int magic,
   if (magic < VMGR_MAGIC2)
     unmarshall_LONG (rbp, native_capacity);  /* ignore */
   unmarshall_LONG (rbp, media_cost);
-  sprintf (logbuf, "modifymodel %s %s", model, media_letter);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLetter=\"%s\" MediaCost=%d",
+           model, media_letter, media_cost);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entry */
-
+  /* Get and lock entry */
   memset((void *) &cartridge, 0, sizeof(struct vmgr_tape_media));
   if (vmgr_get_model_entry (&thip->dbfd, model, &cartridge, 1, &rec_addr))
     RETURN (serrno);
@@ -1850,8 +1689,7 @@ int vmgr_srv_modifymodel(int magic,
       strcmp (media_letter, cartridge.m_media_letter))
     RETURN (EINVAL);
 
-  /* update entry */
-
+  /* Update entry */
   if (media_cost)
     cartridge.media_cost = media_cost;
 
@@ -1863,51 +1701,45 @@ int vmgr_srv_modifymodel(int magic,
 /*  vmgr_srv_modifypool - modify an existing tape pool definition */
 
 int vmgr_srv_modifypool(char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
-  char func[20];
-  gid_t gid;
-  char logbuf[CA_MAXPOOLNAMELEN+34];
+  char *func = "modifypool";
   struct vmgr_tape_pool_byte_u64 pool_entry;
   gid_t pool_group;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   uid_t pool_user;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_modifypool", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "modifypool", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, pool_user);
   unmarshall_LONG (rbp, pool_group);
-  sprintf (logbuf, "modifypool %s %d %d", pool_name, pool_user, pool_group);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "PoolName=\"%s\" PoolUid=%d PoolGid=%d",
+           pool_name, pool_user, pool_group);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entry */
-
+  /* Get and lock entry */
   memset((void *) &pool_entry, 0, sizeof(pool_entry));
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
-      1, &rec_addr))
+				    1, &rec_addr))
     RETURN (serrno);
 
-  /* update entry */
-
+  /* Update entry */
   if (pool_user != (uid_t)-1)
     pool_entry.uid = pool_user;
   if (pool_group != (gid_t)-1)
@@ -1921,8 +1753,8 @@ int vmgr_srv_modifypool(char *req_data,
 /*  vmgr_srv_modifytape - modify an existing tape volume */
 
 int vmgr_srv_modifytape(char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
   int capacity_changed = 0;
   int i;
@@ -1932,8 +1764,7 @@ int vmgr_srv_modifytape(char *req_data,
   char density[CA_MAXDENLEN+1];
   char lbltype[CA_MAXLBLTYPLEN+1];
   char library[CA_MAXTAPELIBLEN+1];
-  char func[20];
-  char logbuf[CA_MAXVIDLEN+CA_MAXPOOLNAMELEN+24];
+  char *func = "modifytape";
   char manufacturer[CA_MAXMANUFLEN+1];
   char *rbp;
   char sn[CA_MAXSNLEN+1];
@@ -1950,22 +1781,17 @@ int vmgr_srv_modifytape(char *req_data,
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_info_byte_u64 tape;
 
-  gid_t gid;
   vmgr_dbrec_addr newpool_rec_addr;
   vmgr_dbrec_addr oldpool_rec_addr;
   vmgr_dbrec_addr rec_addr;
   vmgr_dbrec_addr rec_addrl;
   vmgr_dbrec_addr rec_addrs;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_modifytape", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "modifytape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN + 1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, vsn, CA_MAXVSNLEN + 1) < 0)
@@ -1983,10 +1809,13 @@ int vmgr_srv_modifytape(char *req_data,
   if (unmarshall_STRINGN (rbp, poolname, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_LONG (rbp, status);
-  sprintf (logbuf, "modifytape %s %s %d", vid, poolname, status);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s PoolName=\"%s\" Status=%d",
+           vid, poolname, status);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_TAPE_OPERATOR))
     RETURN (serrno);
 
   if (*lbltype) {
@@ -1997,12 +1826,10 @@ int vmgr_srv_modifytape(char *req_data,
       RETURN (EINVAL);
   }
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock tape entry */
-
+  /* Get and lock tape entry */
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
@@ -2012,12 +1839,11 @@ int vmgr_srv_modifytape(char *req_data,
     need_update++;
   }
 
-  /* check if library exists and update the number of free slots */
-
+  /* Check if library exists and update the number of free slots */
   if (*library && strcmp (library, tape.library)) {
     memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
     if (vmgr_get_library_entry (&thip->dbfd, library, &library_entry,
-        1, &rec_addrl)) {
+				1, &rec_addrl)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR, "No such library\n");
         RETURN (EINVAL);
@@ -2025,13 +1851,12 @@ int vmgr_srv_modifytape(char *req_data,
         RETURN (serrno);
     }
 
-    /* check if the combination library/model exists */
-
+    /* Check if the combination library/model exists */
     if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, library,
-        &dgnmap_entry, 0, NULL)) {
+			       &dgnmap_entry, 0, NULL)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR,
-            "Combination library/model does not exist\n");
+		 "Combination library/model does not exist\n");
         RETURN (EINVAL);
       } else
         RETURN (serrno);
@@ -2039,37 +1864,37 @@ int vmgr_srv_modifytape(char *req_data,
 
     library_entry.nb_free_slots--;
     if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl,
-        &library_entry))
+				   &library_entry))
       RETURN (serrno);
 
     memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
     if (vmgr_get_library_entry (&thip->dbfd, tape.library, &library_entry,
-        1, &rec_addrl))
+				1, &rec_addrl))
       RETURN (serrno);
     library_entry.nb_free_slots++;
     if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl,
-        &library_entry))
+				   &library_entry))
       RETURN (serrno);
     strcpy (tape.library, library);
     need_update++;
   }
 
-  /* get current tape capacity */
-
+  /* Get current tape capacity */
   if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
-      tape.media_letter, tape.density, &olddenmap_entry, 0, NULL))
+				      tape.media_letter, tape.density,
+				      &olddenmap_entry, 0, NULL))
     RETURN (serrno);
 
-  /* check if density is valid for this model */
-
+  /* Check if density is valid for this model */
   int density_changed = 0;
   if (*density && strcmp (density, tape.density)) {
     memset((void *) &denmap_entry, 0, sizeof(denmap_entry));
     if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
-        tape.media_letter, density, &denmap_entry, 0, NULL)) {
+					tape.media_letter, density,
+					&denmap_entry, 0, NULL)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR,
-            "Unsupported density for this model\n");
+		 "Unsupported density for this model\n");
         RETURN (EINVAL);
       } else
         RETURN (serrno);
@@ -2077,7 +1902,7 @@ int vmgr_srv_modifytape(char *req_data,
     strcpy (tape.density, density);
     density_changed = 1;
     if (denmap_entry.native_capacity_byte_u64 !=
-      olddenmap_entry.native_capacity_byte_u64)
+	olddenmap_entry.native_capacity_byte_u64)
       capacity_changed = 1;
     need_update++;
   } else
@@ -2105,10 +1930,9 @@ int vmgr_srv_modifytape(char *req_data,
   for (i = 0; i < tape.nbsides; i++) {
     need_update = 0;
 
-    /* get and lock side */
-
+    /* Get and lock side */
     if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
-        1, &rec_addrs))
+					  1, &rec_addrs))
       RETURN (serrno);
 
     /* Return EEXIST error if the user request a density or lable type */
@@ -2118,45 +1942,44 @@ int vmgr_srv_modifytape(char *req_data,
       RETURN (EEXIST);
 
     if (*poolname == 0 ||
-        strcmp (poolname, side_entry.poolname) == 0) { /* same pool */
+        strcmp (poolname, side_entry.poolname) == 0) { /* Same pool */
       if (((side_entry.status & ~TAPE_BUSY) == 0 &&
-          (status & ~TAPE_BUSY) > 0) ||
+	   (status & ~TAPE_BUSY) > 0) ||
           ((side_entry.status & ~TAPE_BUSY) > 0 &&
-          (status & ~TAPE_BUSY) == 0) ||
+	   (status & ~TAPE_BUSY) == 0) ||
           capacity_changed) {
-        if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
-            side_entry.poolname, &oldpool_entry, 1,
-            &oldpool_rec_addr))
+        if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
+					  &oldpool_entry, 1, &oldpool_rec_addr))
           RETURN (serrno);
         if (capacity_changed) {
           oldpool_entry.capacity_byte_u64 +=
-              denmap_entry.native_capacity_byte_u64 -
-              olddenmap_entry.native_capacity_byte_u64;
+	    denmap_entry.native_capacity_byte_u64 -
+	    olddenmap_entry.native_capacity_byte_u64;
           if (side_entry.status == 0)
             oldpool_entry.tot_free_space_byte_u64 -=
-                side_entry.estimated_free_space_byte_u64;
+	      side_entry.estimated_free_space_byte_u64;
           side_entry.estimated_free_space_byte_u64 =
-              denmap_entry.native_capacity_byte_u64;
+	    denmap_entry.native_capacity_byte_u64;
           need_update++;
           if (status == 0 ||
               (status < 0 && side_entry.status == 0))
             oldpool_entry.tot_free_space_byte_u64 +=
-                side_entry.estimated_free_space_byte_u64;
-        } else {  /* status changed */
+	      side_entry.estimated_free_space_byte_u64;
+        } else {  /* Status changed */
           if (status & ~TAPE_BUSY)
             oldpool_entry.tot_free_space_byte_u64 -=
-                side_entry.estimated_free_space_byte_u64;
+	      side_entry.estimated_free_space_byte_u64;
           else
             oldpool_entry.tot_free_space_byte_u64 +=
-                side_entry.estimated_free_space_byte_u64;
+	      side_entry.estimated_free_space_byte_u64;
         }
-        if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
-            &oldpool_rec_addr, &oldpool_entry))
+        if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd, &oldpool_rec_addr,
+					     &oldpool_entry))
           RETURN (serrno);
       }
-    } else {  /* move to another pool */
+    } else {  /* Move to another pool */
       if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
-          &oldpool_entry, 1, &oldpool_rec_addr))
+					&oldpool_entry, 1, &oldpool_rec_addr))
         RETURN (serrno);
       oldpool_entry.capacity_byte_u64 -=
         olddenmap_entry.native_capacity_byte_u64;
@@ -2164,7 +1987,7 @@ int vmgr_srv_modifytape(char *req_data,
         oldpool_entry.tot_free_space_byte_u64 -=
           side_entry.estimated_free_space_byte_u64;
       if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
-          &oldpool_rec_addr, &oldpool_entry))
+					   &oldpool_rec_addr, &oldpool_entry))
         RETURN (serrno);
       if (capacity_changed) {
         side_entry.estimated_free_space_byte_u64 =
@@ -2172,7 +1995,7 @@ int vmgr_srv_modifytape(char *req_data,
         need_update++;
       }
       if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, poolname,
-          &newpool_entry, 1, &newpool_rec_addr)) {
+					&newpool_entry, 1, &newpool_rec_addr)) {
         if (serrno == ENOENT) {
           sendrep (thip->s, MSG_ERR, "No such pool\n");
           RETURN (EINVAL);
@@ -2184,25 +2007,22 @@ int vmgr_srv_modifytape(char *req_data,
         newpool_entry.tot_free_space_byte_u64 +=
           side_entry.estimated_free_space_byte_u64;
       if (vmgr_update_pool_entry_byte_u64 (&thip->dbfd,
-          &newpool_rec_addr, &newpool_entry))
+					   &newpool_rec_addr, &newpool_entry))
         RETURN (serrno);
       strcpy (side_entry.poolname, poolname);
       need_update++;
     }
     if (status >= 0) {
-      /*      if (status & TAPE_FULL)     // Commented out by V.Motyakov (14.03.2006) 
-        side_entry.estimated_free_space = 0; // Tape can be FULL but having free space
-        else */
-        if (side_entry.estimated_free_space_byte_u64 == 0) {
-          status |= TAPE_FULL;
-        }
+      if (side_entry.estimated_free_space_byte_u64 == 0) {
+	status |= TAPE_FULL;
+      }
       side_entry.status = status;
       need_update++;
     }
 
     if (need_update)
       if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addrs,
-        &side_entry))
+					   &side_entry))
         RETURN (serrno);
   }
   RETURN (0);
@@ -2211,35 +2031,30 @@ int vmgr_srv_modifytape(char *req_data,
 /*  vmgr_srv_querypool - query about a tape pool */
 
 int vmgr_srv_querypool(char *req_data,
-                       char *clienthost,
-                       struct vmgr_srv_thread_info *thip)
+                       struct vmgr_srv_thread_info *thip,
+                       struct vmgr_srv_request_info *reqinfo)
 {
-  char func[19];
-  gid_t gid;
-  char logbuf[CA_MAXPOOLNAMELEN+11];
+  char *func = "querypool";
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char pool_name[CA_MAXPOOLNAMELEN+1];
   char *rbp;
   char repbuf[24];
   char *sbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_querypool", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "querypool", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, pool_name, CA_MAXPOOLNAMELEN + 1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "querypool %s", pool_name);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "PoolName=\"%s\"", pool_name);
 
   memset((void *) &pool_entry, 0, sizeof(pool_entry));
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
-      0, NULL))
+				    0, NULL))
     RETURN (serrno);
 
   sbp = repbuf;
@@ -2254,35 +2069,30 @@ int vmgr_srv_querypool(char *req_data,
 /*  vmgr_srv_querylibrary - query about a tape library */
 
 int vmgr_srv_querylibrary(char *req_data,
-                          char *clienthost,
-                          struct vmgr_srv_thread_info *thip)
+                          struct vmgr_srv_thread_info *thip,
+                          struct vmgr_srv_request_info *reqinfo)
 {
-  char func[22];
-  gid_t gid;
+  char *func = "querylibrary";
   char library[CA_MAXTAPELIBLEN+1];
   struct vmgr_tape_library library_entry;
-  char logbuf[CA_MAXTAPELIBLEN+14];
   char *rbp;
   char repbuf[12];
   char *sbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_querylibrary", 22);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "querylibrary", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, library, CA_MAXTAPELIBLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "querylibrary %s", library);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Library=\"%s\"", library);
 
   memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
   if (vmgr_get_library_entry (&thip->dbfd, library, &library_entry,
-      0, NULL))
+			      0, NULL))
     RETURN (serrno);
 
   sbp = repbuf;
@@ -2297,34 +2107,30 @@ int vmgr_srv_querylibrary(char *req_data,
 
 int vmgr_srv_querymodel(int magic,
                         char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_media cartridge;
-  char func[20];
-  gid_t gid;
-  char logbuf[CA_MAXMODELLEN+CA_MAXMLLEN+13];
+  char *func = "querymodel";
   char media_letter[CA_MAXMLLEN+1];
   char model[CA_MAXMODELLEN+1];
   char *rbp;
   char repbuf[11];
   char *sbp;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_querymodel", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "querymodel", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, model, CA_MAXMODELLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, media_letter, CA_MAXMLLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "querymodel %s %s", model, media_letter);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "Model=\"%s\" MediaLetter=\"%s\"",
+           model, media_letter);
 
   memset((void *) &cartridge, 0, sizeof(struct vmgr_tape_media));
   if (vmgr_get_model_entry (&thip->dbfd, model, &cartridge, 0, NULL))
@@ -2336,7 +2142,7 @@ int vmgr_srv_querymodel(int magic,
   sbp = repbuf;
   marshall_STRING (sbp, cartridge.m_media_letter);
   if (magic < VMGR_MAGIC2)
-    marshall_LONG (sbp, 0);  /* dummy */
+    marshall_LONG (sbp, 0);  /* Dummy */
   marshall_LONG (sbp, cartridge.media_cost);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURN (0);
@@ -2346,53 +2152,46 @@ int vmgr_srv_querymodel(int magic,
 
 int vmgr_srv_querytape(const int magic,
                        char *const req_data,
-                       const char *const clienthost,
-                       struct vmgr_srv_thread_info *const thip)
+                       struct vmgr_srv_thread_info *const thip,
+                       struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_dgnmap dgnmap_entry;
-  char func[19];
-  gid_t gid = 0;
-  char logbuf[CA_MAXVIDLEN+11];
+  char *func = "querytape";
   char *rbp = NULL;
   char repbuf[177];
   char *sbp = NULL;
   int side = 0;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid = 0;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_querytape", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "querytape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
   if (magic >= VMGR_MAGIC2) {
     unmarshall_WORD (rbp, side);
   } else
     side = 0;
-  sprintf (logbuf, "querytape %s %d", vid, side);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s Side=%d", vid, side);
 
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 
-  /* get side specific info */
-
+  /* Get side specific info */
   if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry,
-      0, NULL))
+					0, NULL))
     RETURN (serrno);
 
-  /* get dgn */
-
+  /* Get dgn */
   if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
-      &dgnmap_entry, 0, NULL))
+			     &dgnmap_entry, 0, NULL))
     RETURN (serrno);
 
   sbp = repbuf;
@@ -2444,54 +2243,50 @@ int vmgr_srv_querytape(const int magic,
 
 /*  vmgr_srv_querytape - query about a tape volume */
 
-int vmgr_srv_querytape_byte_u64(const int magic, char *const req_data,
-  const char *const clienthost, struct vmgr_srv_thread_info *const thip)
+int vmgr_srv_querytape_byte_u64(const int magic,
+				char *const req_data,
+				struct vmgr_srv_thread_info *const thip,
+                                struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_dgnmap dgnmap_entry;
-  char func[19];
-  gid_t gid = 0;
-  char logbuf[CA_MAXVIDLEN+11];
+  char *func = "querytape";
   char *rbp = NULL;
   char repbuf[177];
   char *sbp = NULL;
   int side = 0;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid = 0;
   char vid[CA_MAXVIDLEN+1];
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   /* Only VMGR_MAGIC2 is supported */
   if (magic != VMGR_MAGIC2)
     RETURN (EINVAL);
 
-  strncpy (func, "vmgr_srv_querytape", 19);
-  rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "querytape", uid, gid, clienthost);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, side);
-  sprintf (logbuf, "querytape %s %d", vid, side);
-  vmgr_logreq (func, logbuf);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s Side=%d", vid, side);
 
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 
-  /* get side specific info */
-
+  /* Get side specific info */
   if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry,
-      0, NULL))
+					0, NULL))
     RETURN (serrno);
 
-  /* get dgn */
-
+  /* Get dgn */
   if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
-      &dgnmap_entry, 0, NULL))
+			     &dgnmap_entry, 0, NULL))
     RETURN (serrno);
 
   sbp = repbuf;
@@ -2526,63 +2321,58 @@ int vmgr_srv_querytape_byte_u64(const int magic, char *const req_data,
 /*  vmgr_srv_reclaim - reset tape volume content information */
 
 int vmgr_srv_reclaim(char *req_data,
-                     char *clienthost,
-                     struct vmgr_srv_thread_info *thip)
+                     struct vmgr_srv_thread_info *thip,
+                     struct vmgr_srv_request_info *reqinfo)
 {
   struct vmgr_tape_denmap_byte_u64 denmap_entry;
-  char func[17];
-  gid_t gid;
+  char *func = "reclaim";
   int i;
-  char logbuf[CA_MAXVIDLEN+9];
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addrp;
   vmgr_dbrec_addr rec_addrs;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_reclaim", 17);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "reclaim", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "reclaim %s", vid);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s", vid);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_ADMIN))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entries */
-
+  /* Get and lock entries */
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
     RETURN (serrno);
 
   memset ((char *) &denmap_entry, 0, sizeof(denmap_entry));
   if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, tape.model,
-    tape.media_letter, tape.density, &denmap_entry, 0, NULL))
+				      tape.media_letter, tape.density,
+				      &denmap_entry, 0, NULL))
     RETURN (serrno);
 
-  /* update entries */
-
+  /* Update entries */
   memset((void *) &pool_entry, 0, sizeof(pool_entry));
   for (i = 0; i < tape.nbsides; i++) {
     if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i, &side_entry,
-        1, &rec_addrs))
+					  1, &rec_addrs))
       RETURN (serrno);
     if (i == 0 && vmgr_get_pool_entry_byte_u64 (&thip->dbfd,
-        side_entry.poolname, &pool_entry, 1, &rec_addrp))
+						side_entry.poolname,
+						&pool_entry, 1, &rec_addrp))
       RETURN (serrno);
 
     side_entry.estimated_free_space_byte_u64 =
@@ -2603,66 +2393,58 @@ int vmgr_srv_reclaim(char *req_data,
 /*  vmgr_srv_settag - add/replace a tag associated with a tape volume */
 
 int vmgr_srv_settag(char *req_data,
-                    char *clienthost,
-                    struct vmgr_srv_thread_info *thip)
+                    struct vmgr_srv_thread_info *thip,
+                    struct vmgr_srv_request_info *reqinfo)
 {
-  char func[16];
-  gid_t gid;
-  char logbuf[CA_MAXVIDLEN+8];
+  char *func = "settag";
   struct vmgr_tape_tag old_tag_entry;
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   struct vmgr_tape_side_byte_u64 side_entry;
   struct vmgr_tape_tag tag_entry;
-  uid_t uid;
 
-  strncpy (func, "vmgr_srv_settag", 16);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "settag", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   memset ((char *) &tag_entry, 0, sizeof(tag_entry));
   if (unmarshall_STRINGN (rbp, tag_entry.vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, tag_entry.text, CA_MAXTAGLEN+1) < 0)
     RETURN (EINVAL);
-  sprintf (logbuf, "settag %s", tag_entry.vid);
-  vmgr_logreq (func, logbuf);
 
-  /* get pool name */
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s Text=\"%s\"",
+           tag_entry.vid, tag_entry.text);
 
+  /* Get pool name */
   if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, tag_entry.vid, 0,
-    &side_entry, 0, NULL))
+					&side_entry, 0, NULL))
     RETURN (serrno);
 
-  /* get pool entry */
-
+  /* Get pool entry */
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
-    &pool_entry, 0, NULL))
+				    &pool_entry, 0, NULL))
     RETURN (serrno);
 
-  /* check if the user is authorized to add/replace the tag on this volume */
-
-  if (((pool_entry.uid && pool_entry.uid != uid) ||
-      (pool_entry.gid && pool_entry.gid != gid)) &&
-      Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR))
+  /* Check if the user is authorized to add/replace the tag on this volume */
+  if (((pool_entry.uid && pool_entry.uid != reqinfo->uid) ||
+       (pool_entry.gid && pool_entry.gid != reqinfo->gid)) &&
+      Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_TAPE_OPERATOR))
     RETURN (EACCES);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* add the tag entry or replace the tag text if the entry exists */
-
+  /* Add the tag entry or replace the tag text if the entry exists */
   if (vmgr_insert_tag_entry (&thip->dbfd, &tag_entry)) {
     if (serrno != EEXIST ||
         vmgr_get_tag_by_vid (&thip->dbfd, tag_entry.vid,
-      &old_tag_entry, 1, &rec_addr) ||
+			     &old_tag_entry, 1, &rec_addr) ||
         vmgr_update_tag_entry (&thip->dbfd, &rec_addr, &tag_entry))
       RETURN (serrno);
   }
@@ -2673,30 +2455,24 @@ int vmgr_srv_settag(char *req_data,
 
 int vmgr_srv_tpmounted(int magic,
                        char *req_data,
-                       char *clienthost,
-                       struct vmgr_srv_thread_info *thip)
+                       struct vmgr_srv_thread_info *thip,
+                       struct vmgr_srv_request_info *reqinfo)
 {
-  char func[19];
-  gid_t gid;
+  char *func = "tpmounted";
   char hostname[CA_MAXHOSTNAMELEN+1];
   int jid;
-  char logbuf[CA_MAXVIDLEN+13];
   int mode;
   char *p;
   char *rbp;
   vmgr_dbrec_addr rec_addr;
   struct vmgr_tape_info_byte_u64 tape;
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_tpmounted", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "tpmounted", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, mode);
@@ -2704,25 +2480,24 @@ int vmgr_srv_tpmounted(int magic,
     unmarshall_LONG (rbp, jid);
   } else
     jid = 0;
-  sprintf (logbuf, "tpmounted %s %d", vid, mode);
-  vmgr_logreq (func, logbuf);
 
-  if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM))
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s Mode=%d", vid, mode);
+
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost, localhost,
+                  P_TAPE_SYSTEM))
     RETURN (serrno);
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entry */
-
+  /* Get and lock entry */
   memset((void *) &tape, 0, sizeof(tape));
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
 
-  /* update entry */
-
-  strcpy (hostname, clienthost);
+  /* Update entry */
+  strcpy (hostname, reqinfo->clienthost);
   if ((p = strchr (hostname, '.'))) *p = '\0';
   *(hostname + CA_MAXSHORTHOSTLEN) = '\0';
   if (mode) {
@@ -2746,17 +2521,15 @@ int vmgr_srv_tpmounted(int magic,
 
 int vmgr_srv_updatetape(int magic,
                         char *req_data,
-                        char *clienthost,
-                        struct vmgr_srv_thread_info *thip)
+                        struct vmgr_srv_thread_info *thip,
+                        struct vmgr_srv_request_info *reqinfo)
 {
   u_signed64 BytesWritten = 0;
   int CompressionFactor;
-  char func[20];
+  char *func = "updatetape";
   int FilesWritten = 0;
   int Flags = 0;
-  gid_t gid;
   int i;
-  char logbuf[CA_MAXVIDLEN+52];
   u_signed64 normalized_data_written_byte_u64 = 0;
   struct vmgr_tape_pool_byte_u64 pool_entry;
   char *rbp;
@@ -2767,17 +2540,13 @@ int vmgr_srv_updatetape(int magic,
   struct vmgr_tape_side_byte_u64 side_entry1;
   struct vmgr_tape_info_byte_u64 tape;
   char tmpbuf[21];
-  uid_t uid;
   char vid[CA_MAXVIDLEN+1];
 
-  strncpy (func, "vmgr_srv_updatetape", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  vmgrlogit (func, VMG92, "updatetape", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
     RETURN (EINVAL);
   if (magic >= VMGR_MAGIC2) {
@@ -2788,28 +2557,29 @@ int vmgr_srv_updatetape(int magic,
   unmarshall_WORD (rbp, CompressionFactor);
   unmarshall_WORD (rbp, FilesWritten);
   unmarshall_WORD (rbp, Flags);
-  sprintf (logbuf, "updatetape %s %d %s %d %d %d",
-    vid, side,
-    u64tostr(BytesWritten, tmpbuf, 0),
-    (int) CompressionFactor,
-    (int) FilesWritten,
-    (int) Flags);
-  vmgr_logreq (func, logbuf);
 
-  /* start transaction */
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "TPVID=%s Side=%d BytesWritten=%s CompressionFactor=%d "
+           "FilesWritten=%d Flags=%d",
+	   vid, side,
+	   u64tostr(BytesWritten, tmpbuf, 0),
+	   (int) CompressionFactor,
+	   (int) FilesWritten,
+	   (int) Flags);
 
+  /* Start transaction */
   (void) vmgr_start_tr (thip->s, &thip->dbfd);
 
-  /* get and lock entries */
-
+  /* Get and lock entries */
   memset((void *) &side_entry, 0, sizeof(side_entry));
   if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry, 1,
-      &rec_addr))
+					&rec_addr))
     RETURN (serrno);
 
   memset((void *) &pool_entry, 0, sizeof(pool_entry));
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
-    &pool_entry, 1, &rec_addrp))
+				    &pool_entry, 1, &rec_addrp))
     RETURN (serrno);
 
   /* Calculate the normalised amount of data written taking into account */
@@ -2826,7 +2596,7 @@ int vmgr_srv_updatetape(int magic,
 
   /* Apply a ceiling of the estimated amount of free space */
   if(normalized_data_written_byte_u64 >
-    side_entry.estimated_free_space_byte_u64) {
+     side_entry.estimated_free_space_byte_u64) {
     normalized_data_written_byte_u64 = side_entry.estimated_free_space_byte_u64;
   }
 
@@ -2850,7 +2620,7 @@ int vmgr_srv_updatetape(int magic,
     for (i = 0; i < tape.nbsides; i++) {
       if (i == side_entry.side) continue;
       if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, i,
-          &side_entry1, 1, &rec_addr))
+					    &side_entry1, 1, &rec_addr))
         RETURN (serrno);
       if ((side_entry1.status & TAPE_BUSY) == 0 && Flags == 0)
         continue;
@@ -2858,7 +2628,7 @@ int vmgr_srv_updatetape(int magic,
       if (Flags & EXPORTED)
         side_entry1.status |= EXPORTED;
       if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr,
-          &side_entry1))
+					   &side_entry1))
         RETURN (serrno);
     }
   }

@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include "Cinit.h"
 #include "Cdomainname.h"
 #include "Cnetdb.h"
@@ -28,6 +29,7 @@
 #include "vmgr.h"
 #include "vmgr_server.h"
 #include "patchlevel.h"
+
 #ifdef VMGRCSEC
 #include "Csec_api.h"
 #endif
@@ -37,25 +39,23 @@ static void *procconnection(void *);
 
 int being_shutdown = 0;
 char vmgrconfigfile[CA_MAXPATHLEN+1];
-char func[16];
-int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 struct vmgr_srv_thread_info *vmgr_srv_thread_info;
 
 void vmgr_signal_handler(int sig)
 {
-  strncpy (func, "vmgr_serv", 16);
   if (sig == SIGINT) {
-    vmgrlogit(func, "Caught SIGINT, immediate stop\n");
+    vmgrlogit("MSG=\"Caught SIGINT, immediate stop\"");
     exit(0);
   } else if (sig == SIGTERM) {
-    vmgrlogit (func, "Caught SIGTERM, shutting down\n");
+    vmgrlogit("MSG=\"Caught SIGTERM, shutting down\"");
     being_shutdown = 1;
   }
 }
 
 int vmgr_main(struct main_args *main_args)
 {
+  char logfile[CA_MAXPATHLEN + 1];
   int c = 0;
   struct vmgr_dbfd dbfd;
   char *dp = NULL;
@@ -65,7 +65,7 @@ int vmgr_main(struct main_args *main_args)
   int i = 0;
   int ipool = 0;
   int nbthreads = VMGR_NBTHREADS;
-  int on = 1;	/* for REUSEADDR */
+  int on = 1;        /* for REUSEADDR */
   char *p = NULL;
   const char *buf = NULL;
   int rqfd = 0;
@@ -73,55 +73,66 @@ int vmgr_main(struct main_args *main_args)
   struct sockaddr_in sin;
   struct servent *sp = NULL;
   int thread_index = 0;
-  int remainInForeground = 0;
+  int daemonize = 1;
   fd_set readfd;
   struct timeval timeval;
 
-  jid = getpid();
-  strncpy (func, "vmgr_serv", 16);
   vmgrconfigfile[0] = '\0';
+  strcpy(logfile, VMGRLOGFILE);
 
   /* process command line options if any */
-  while ((c = getopt (main_args->argc, main_args->argv, "fc:t:")) != EOF) {
+  while ((c = getopt (main_args->argc, main_args->argv, "fc:l:t:")) != EOF) {
     switch (c) {
     case 'f':
-      remainInForeground = 1;
+      daemonize = 0;
       break;
     case 'c':
       strncpy (vmgrconfigfile, optarg, sizeof(vmgrconfigfile));
       vmgrconfigfile[sizeof(vmgrconfigfile) - 1] = '\0';
       break;
+    case 'l':
+      strncpy (logfile, optarg, sizeof(logfile));
+      logfile[sizeof(logfile) - 1] = '\0';
+      break;
     case 't':
       if ((nbthreads = strtol (optarg, &dp, 10)) < 0 ||
           nbthreads >= VMGR_MAXNBTHREADS || *dp != '\0') {
-        vmgrlogit (func, "Invalid number of threads: %s\n",
-                   optarg);
+        fprintf(stderr, "Invalid number of threads: %s\n", optarg);
         exit (USERR);
       }
       break;
     }
   }
 
-  if (!remainInForeground) {
+  if (daemonize) {
     if (Cinitdaemon ("vmgrd", NULL) < 0) {
       exit (SYERR);
     }
+  } else {
+    for (i = 3; i < getdtablesize(); i++)
+      close (i);
   }
 
-  vmgrlogit (func, "started (%d.%d.%d-%d)\n", MAJORVERSION, MINORVERSION,
-    MAJORRELEASE, MINORRELEASE);
+  /* Open the logging interface */
+  openlog("vmgrd", logfile);
+
+  vmgrlogit("MSG=\"Volume Manager Daemon Started\" "
+            "Version=\"%d.%d.%d-%d\"",
+            MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (strchr (localhost, '.') == NULL) {
     if (Cdomainname (domainname, sizeof(domainname)) < 0) {
-      vmgrlogit (func, "Unable to get domainname\n");
+      vmgrlogit("MSG=\"Error: Unable to get domainname\" Function=\"Cdomainname\" "
+                "Error=\"%s\" File=\"%s\" Line=%d",
+                sstrerror(serrno), __FILE__, __LINE__);
       exit (SYERR);
     }
     strcat (localhost, ".");
     strcat (localhost, domainname);
   }
 
-  /* set the location of the volume manager login file */
+  /* Set the location of the volume manager login file */
   if (!*vmgrconfigfile) {
     if (strncmp (VMGRCONFIG, "%SystemRoot%\\", 13) == 0 &&
         (p = getenv ("SystemRoot")) &&
@@ -138,15 +149,18 @@ int vmgr_main(struct main_args *main_args)
     return (SYERR);
   (void) vmgr_closedb (&dbfd);
 
-  /* create a pool of threads */
-
+  /* Create a pool of threads */
   if ((ipool = Cpool_create (nbthreads, NULL)) < 0) {
-    vmgrlogit (func, VMG02, "Cpool_create", sstrerror(serrno));
+    vmgrlogit("MSG=\"Error: Unable to create thread pool\" "
+              "Function=\"Cpool_create\" Error=\"%s\" File=\"%s\" Line=%d",
+              sstrerror(serrno), __FILE__, __LINE__);
     return (SYERR);
   }
   if ((vmgr_srv_thread_info =
        calloc (nbthreads, sizeof(struct vmgr_srv_thread_info))) == NULL) {
-    vmgrlogit (func, VMG02, "calloc", strerror(errno));
+    vmgrlogit("MSG=\"Error: Failed to allocate memory\" "
+              "Function=\"calloc\" Error=\"%s\" File=\"%s\" Line=%d",
+              strerror(errno), __FILE__, __LINE__);
     return (SYERR);
   }
   for (i = 0; i < nbthreads; i++) {
@@ -160,10 +174,11 @@ int vmgr_main(struct main_args *main_args)
   signal (SIGTERM,vmgr_signal_handler);
   signal (SIGINT,vmgr_signal_handler);
 
-  /* open request socket */
-
+  /* Open request socket */
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    vmgrlogit (func, VMG02, "socket", neterror());
+    vmgrlogit("MSG=\"Error: Failed to create listening socket\" "
+              "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
+              neterror(), __FILE__, __LINE__);
     return (CONFERR);
   }
   memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -186,16 +201,21 @@ int vmgr_main(struct main_args *main_args)
   }
 #endif
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
-  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-    vmgrlogit (func, VMG02, "setsockopt", neterror());
+  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
+    vmgrlogit("MSG=\"Error: Failed to set socket option\" "
+              "Function=\"setsockopt\" Option=\"SO_REUSEADDR\" Error=\"%s\" "
+              "File=\"%s\" Line=%d",
+              neterror(), __FILE__, __LINE__);
+  }
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-    vmgrlogit (func, VMG02, "bind", neterror());
+    vmgrlogit("MSG=\"Error: Failed to bind listening socket\" "
+              "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
+              neterror(), __FILE__, __LINE__);
     return (CONFERR);
   }
   listen (s, 5) ;
 
-  /* main loop */
-
+  /* Main loop */
   while (1) {
     if (being_shutdown) {
       int nb_active_threads = 0;
@@ -218,7 +238,10 @@ int vmgr_main(struct main_args *main_args)
     if (select (s+1, &readfd, NULL, NULL, &timeval) > 0) {
       rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
-        vmgrlogit (func, VMG02, "Cpool_next_index", sstrerror(serrno));
+        vmgrlogit("MSG=\"Error: Failed to determine next available thread "
+                  "to process request\" Function=\"Cpool_next_index\" "
+                  "Error=\"%s\" File=\"%s\" Line=%d",
+                  sstrerror(serrno), __FILE__, __LINE__);
         if (serrno == SEWOULDBLOCK) {
           sendrep (rqfd, VMGR_RC, serrno);
           continue;
@@ -228,9 +251,11 @@ int vmgr_main(struct main_args *main_args)
       }
       (vmgr_srv_thread_info + thread_index)->s = rqfd;
       if (Cpool_assign (ipool, &procconnection,
-        vmgr_srv_thread_info + thread_index, 1) < 0) {
+                        vmgr_srv_thread_info + thread_index, 1) < 0) {
         (vmgr_srv_thread_info + thread_index)->s = -1;
-        vmgrlogit (func, VMG02, "Cpool_assign", sstrerror(serrno));
+        vmgrlogit("MSG=\"Error: Failed to assign request to thread\" "
+                  "Function=\"Cpool_assign\" Error=\"%s\" File=\"%s\" Line=%d",
+                  sstrerror(serrno), __FILE__, __LINE__);
         return (SYERR);
       }
     }
@@ -247,23 +272,28 @@ int main(int argc,
   exit (vmgr_main (&main_args));
 }
 
-int getreq(int s,
+int getreq(struct vmgr_srv_thread_info *thip,
            int *magic,
            int *req_type,
-           char *req_data,
-           char **clienthost)
+           char *req_data)
 {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
   struct hostent *hp;
+  struct timeval tv;
   int l;
   int msglen;
   int n;
   char *rbp;
   char req_hdr[3*LONGSIZE];
 
+  /* Record the start time of this request */
+  gettimeofday(&tv, NULL);
+  thip->reqinfo.starttime =
+    ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);
+
   serrno = 0;
-  l = netread_timeout (s, req_hdr, sizeof(req_hdr), VMGR_TIMEOUT);
+  l = netread_timeout (thip->s, req_hdr, sizeof(req_hdr), VMGR_TIMEOUT);
   if (l == sizeof(req_hdr)) {
     rbp = req_hdr;
     unmarshall_LONG (rbp, n);
@@ -272,30 +302,39 @@ int getreq(int s,
     *req_type = n;
     unmarshall_LONG (rbp, msglen);
     if (msglen > REQBUFSZ) {
-      vmgrlogit (func, VMG46, REQBUFSZ);
+      vmgrlogit("MSG=\"Error: Request too large\" MaxSize=%d "
+                "File=\"%s\" Line=%d", REQBUFSZ, __FILE__, __LINE__);
       return (-1);
     }
     l = msglen - sizeof(req_hdr);
-    n = netread_timeout (s, req_data, l, VMGR_TIMEOUT);
+    n = netread_timeout (thip->s, req_data, l, VMGR_TIMEOUT);
     if (being_shutdown) {
       return (EVMGRNACT);
     }
-    if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
-      vmgrlogit (func, VMG02, "getpeername", neterror());
+    if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
+      vmgrlogit("MSG=\"Error: Failed to getpeername\" "
+                "Function=\"getpeername\" Error=\"%s\" File=\"%s\" Line=%d",
+                neterror(), __FILE__, __LINE__);
       return (SEINTERNAL);
     }
     hp = Cgethostbyaddr ((char *)(&from.sin_addr),
                          sizeof(struct in_addr), from.sin_family);
-    if (hp == NULL)
-      *clienthost = inet_ntoa (from.sin_addr);
-    else
-      *clienthost = hp->h_name ;
+    if (hp == NULL) {
+      thip->reqinfo.clienthost = inet_ntoa (from.sin_addr);
+    } else {
+      thip->reqinfo.clienthost = hp->h_name;
+    }
     return (0);
   } else {
-    if (l > 0)
-      vmgrlogit (func, VMG04, l);
-    else if (l < 0)
-      vmgrlogit (func, VMG02, "netread", neterror());
+    if (l > 0) {
+      vmgrlogit("MSG=\"Error: Netread failure\" Function=\"netread\" "
+                "Error=\"1\" File=\"%s\" Line=%d",
+                __FILE__, __LINE__);
+    } else if (l < 0) {
+      vmgrlogit("MSG=\"Error: Failed to netread\" Function=\"netread\" "
+                "Error=\"%s\" File=\"%s\" Line=%d",
+                neterror(), __FILE__, __LINE__);
+    }
     return (SEINTERNAL);
   }
 }
@@ -303,7 +342,6 @@ int getreq(int s,
 int proclistreq(int magic,
                 int req_type,
                 char *req_data,
-                char *clienthost,
                 struct vmgr_srv_thread_info *thip)
 {
   int c = 0;
@@ -312,44 +350,44 @@ int proclistreq(int magic,
   int rc = 0;
   struct vmgr_tape_info_byte_u64 tape;
 
-  /* wait for list requests and process them */
-
+  /* Wait for list requests and process them */
   while (1) {
     switch (req_type) {
     case VMGR_LISTDENMAP:
-      if ((c = vmgr_srv_listdenmap (magic, req_data, clienthost, thip,
-        endlist)))
+      if ((c = vmgr_srv_listdenmap (magic, req_data, thip, &thip->reqinfo,
+                                    endlist)))
         return (c);
       break;
     case VMGR_LISTDENMAP_BYTE_U64:
-      if ((c = vmgr_srv_listdenmap_byte_u64 (magic, req_data, clienthost, thip,
-        endlist)))
+      if ((c = vmgr_srv_listdenmap_byte_u64 (magic, req_data, thip,
+                                             &thip->reqinfo, endlist)))
         return (c);
       break;
     case VMGR_LISTDGNMAP:
-      if ((c = vmgr_srv_listdgnmap (req_data, clienthost, thip, endlist)))
+      if ((c = vmgr_srv_listdgnmap (req_data, thip, &thip->reqinfo, endlist)))
         return (c);
       break;
     case VMGR_LISTLIBRARY:
-      if ((c = vmgr_srv_listlibrary (req_data, clienthost, thip, endlist)))
+      if ((c = vmgr_srv_listlibrary (req_data, thip, &thip->reqinfo, endlist)))
         return (c);
       break;
     case VMGR_LISTMODEL:
-      if ((c = vmgr_srv_listmodel (magic, req_data, clienthost, thip, endlist)))
+      if ((c = vmgr_srv_listmodel (magic, req_data, thip, &thip->reqinfo,
+                                   endlist)))
         return (c);
       break;
     case VMGR_LISTPOOL:
-      if ((c = vmgr_srv_listpool (req_data, clienthost, thip, endlist)))
+      if ((c = vmgr_srv_listpool (req_data, thip, &thip->reqinfo, endlist)))
         return (c);
       break;
     case VMGR_LISTTAPE:
-      if ((c = vmgr_srv_listtape (magic, req_data, clienthost, thip, &tape,
-        endlist)))
+      if ((c = vmgr_srv_listtape (magic, req_data, thip, &thip->reqinfo, &tape,
+                                  endlist)))
         return (c);
       break;
     case VMGR_LISTTAPE_BYTE_U64:
-      if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data, clienthost, thip,
-        &tape, endlist)))
+      if ((c = vmgr_srv_listtape_byte_u64 (magic, req_data, thip,
+                                           &thip->reqinfo, &tape, endlist)))
         return (c);
       break;
     }
@@ -368,8 +406,7 @@ int proclistreq(int magic,
         continue;
       }
     }
-    if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost))
-      != 0) {
+    if ((rc = getreq (thip, &magic, &new_req_type, req_data)) != 0) {
       endlist = 1;
       continue;
     }
@@ -379,12 +416,14 @@ int proclistreq(int magic,
   return (rc);
 }
 
-void procreq(const int magic, const int req_type, char *const req_data,
-  char *const clienthost, struct vmgr_srv_thread_info *thip) {
+void procreq(const int magic,
+             const int req_type,
+             char *const req_data,
+             struct vmgr_srv_thread_info *thip)
+{
   int c = 0;
 
-  /* connect to the database if not done yet */
-
+  /* Connect to the database if not done yet */
   if (! (&thip->dbfd)->connected ) {
     if (Cupv_seterrbuf (thip->errbuf, PRTBUFSZ)) {
       c = SEINTERNAL;
@@ -396,73 +435,74 @@ void procreq(const int magic, const int req_type, char *const req_data,
     if (!being_shutdown) {
       if (vmgr_opendb (&thip->dbfd) < 0) {
         c = serrno;
-        sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
+        sendrep (thip->s, MSG_ERR, "Database open error: %d\n", c);
         sendrep (thip->s, VMGR_RC, c);
         return;
       }
-      vmgrlogit (func, "database connection established\n");
+      vmgrlogit("MSG=\"Database connection established\"");
     }
   }
 
   switch (req_type) {
   case VMGR_DELTAPE:
-    sendrep (thip->s, MSG_ERR, VMG02, "vmgrdeletetape", 
-     "VMGR is not compatible with this version of VMGRDELTAPE: please use a version equal to or greater than v2.1.9-4");
-     c = SEINTERNAL;
+    sendrep (thip->s, MSG_ERR, VMG02, "vmgrdeletetape",
+             "VMGR is not compatible with this version of VMGRDELTAPE: please "
+             "use a version equal to or greater than v2.1.9-4");
+    c = SEINTERNAL;
     break;
   case VMGR_ENTTAPE:
-    c = vmgr_srv_entertape (req_data, clienthost, thip);
+    c = vmgr_srv_entertape (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_GETTAPE:
-    c = vmgr_srv_gettape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_gettape (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_MODTAPE:
-    c = vmgr_srv_modifytape (req_data, clienthost, thip);
+    c = vmgr_srv_modifytape (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_QRYTAPE:
-    c = vmgr_srv_querytape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_querytape (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_QRYTAPE_BYTE_U64:
-    c = vmgr_srv_querytape_byte_u64 (magic, req_data, clienthost, thip);
+    c = vmgr_srv_querytape_byte_u64 (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_UPDTAPE:
-    c = vmgr_srv_updatetape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_updatetape (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELMODEL:
-    c = vmgr_srv_deletemodel (req_data, clienthost, thip);
+    c = vmgr_srv_deletemodel (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTMODEL:
-    c = vmgr_srv_entermodel (magic, req_data, clienthost, thip);
+    c = vmgr_srv_entermodel (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_MODMODEL:
-    c = vmgr_srv_modifymodel (magic, req_data, clienthost, thip);
+    c = vmgr_srv_modifymodel (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_QRYMODEL:
-    c = vmgr_srv_querymodel (magic, req_data, clienthost, thip);
+    c = vmgr_srv_querymodel (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELPOOL:
-    c = vmgr_srv_deletepool (req_data, clienthost, thip);
+    c = vmgr_srv_deletepool (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTPOOL:
-    c = vmgr_srv_enterpool (req_data, clienthost, thip);
+    c = vmgr_srv_enterpool (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_MODPOOL:
-    c = vmgr_srv_modifypool (req_data, clienthost, thip);
+    c = vmgr_srv_modifypool (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_QRYPOOL:
-    c = vmgr_srv_querypool (req_data, clienthost, thip);
+    c = vmgr_srv_querypool (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_TPMOUNTED:
-    c = vmgr_srv_tpmounted (magic, req_data, clienthost, thip);
+    c = vmgr_srv_tpmounted (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELDENMAP:
-    c = vmgr_srv_deletedenmap (req_data, clienthost, thip);
+    c = vmgr_srv_deletedenmap (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTDENMAP:
-    c = vmgr_srv_enterdenmap (magic, req_data, clienthost, thip);
+    c = vmgr_srv_enterdenmap (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTDENMAP_BYTE_U64:
-    c = vmgr_srv_enterdenmap_byte_u64 (magic, req_data, clienthost, thip);
+    c = vmgr_srv_enterdenmap_byte_u64 (magic, req_data, thip, &thip->reqinfo);
     break;
   case VMGR_LISTDENMAP:
   case VMGR_LISTDENMAP_BYTE_U64:
@@ -472,40 +512,40 @@ void procreq(const int magic, const int req_type, char *const req_data,
   case VMGR_LISTPOOL:
   case VMGR_LISTTAPE:
   case VMGR_LISTTAPE_BYTE_U64:
-    c = proclistreq (magic, req_type, req_data, clienthost, thip);
+    c = proclistreq (magic, req_type, req_data, thip);
     break;
   case VMGR_RECLAIM:
-    c = vmgr_srv_reclaim (req_data, clienthost, thip);
+    c = vmgr_srv_reclaim (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELLIBRARY:
-    c = vmgr_srv_deletelibrary (req_data, clienthost, thip);
+    c = vmgr_srv_deletelibrary (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTLIBRARY:
-    c = vmgr_srv_enterlibrary (req_data, clienthost, thip);
+    c = vmgr_srv_enterlibrary (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_MODLIBRARY:
-    c = vmgr_srv_modifylibrary (req_data, clienthost, thip);
+    c = vmgr_srv_modifylibrary (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_QRYLIBRARY:
-    c = vmgr_srv_querylibrary (req_data, clienthost, thip);
+    c = vmgr_srv_querylibrary (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELDGNMAP:
-    c = vmgr_srv_deletedgnmap (req_data, clienthost, thip);
+    c = vmgr_srv_deletedgnmap (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_ENTDGNMAP:
-    c = vmgr_srv_enterdgnmap (req_data, clienthost, thip);
+    c = vmgr_srv_enterdgnmap (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELTAG:
-    c = vmgr_srv_deltag (req_data, clienthost, thip);
+    c = vmgr_srv_deltag (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_GETTAG:
-    c = vmgr_srv_gettag (req_data, clienthost, thip);
+    c = vmgr_srv_gettag (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_SETTAG:
-    c = vmgr_srv_settag (req_data, clienthost, thip);
+    c = vmgr_srv_settag (req_data, thip, &thip->reqinfo);
     break;
   case VMGR_DELTAPEAFTERCHK:
-    c = vmgr_srv_deletetape (req_data, clienthost, thip);
+    c = vmgr_srv_deletetape (req_data, thip, &thip->reqinfo);
     break;
   default:
     sendrep (thip->s, MSG_ERR, VMG03, req_type);
@@ -516,35 +556,38 @@ void procreq(const int magic, const int req_type, char *const req_data,
 
 void *procconnection(void *const arg) {
   int c;
-  char *clienthost;
   int magic;
   char req_data[REQBUFSZ-3*LONGSIZE];
   int req_type = 0;
   struct vmgr_srv_thread_info *thip = (struct vmgr_srv_thread_info *) arg;
+
 #ifdef VMGRCSEC
   char *username;
   Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
   if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-    vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
+    vmgrlogit("MSG=\"Error: Could not establish security context\" "
+              "Error=\"%s\"", Csec_getErrorMessage());
     netclose (thip->s);
     thip->s = -1;
     return (NULL);
   }
   /* Connection could be done from another castor service */
   if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
-    vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
+    vmgrlogit("MSG=\"CSEC: Client is castor service\" Type=%d", c)
+      thip->Csec_service_type = c;
     thip->Csec_service_type = c;
   }
   else {
-    if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
-      vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
-                username,
-                thip->Csec_uid,
-                thip->Csec_gid);
+    if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username,
+                                         &(thip->Csec_uid),
+                                         &(thip->Csec_gid)) == 0) {
+      vmgrlogit("MSG=\"Mapping to local user successful\" CsecUid=%d "
+                "CsecGid=%d Username=\"%s\"",
+                thip->Csec_uid, thip->Csec->gid, username);
       thip->Csec_service_type = -1;
     }
     else {
-      vmgrlogit(func, "CSEC: Can't get client username\n");
+      vmgrlogit("MSG=\"Error: Could not map to local user\n");
       netclose (thip->s);
       thip->s = -1;
       return (NULL);
@@ -553,12 +596,27 @@ void *procconnection(void *const arg) {
 
 #endif
 
-  if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
-    procreq (magic, req_type, req_data, clienthost, thip);
-  else if (c > 0)
+  /* Initialize the request info structure. */
+  thip->reqinfo.uid        = 0;
+  thip->reqinfo.gid        = 0;
+  thip->reqinfo.username   = NULL;
+  thip->reqinfo.clienthost = NULL;
+  thip->reqinfo.logbuf[0]  = '\0';
+
+  if ((c = getreq (thip, &magic, &req_type, req_data)) == 0) {
+
+    /* Generate a unique request id to identify this new request. */
+    Cuuid_t cuuid = nullCuuid;
+    Cuuid_create(&cuuid);
+    thip->reqinfo.reqid[CUUID_STRING_LEN] = 0;
+    Cuuid2string(thip->reqinfo.reqid, CUUID_STRING_LEN + 1, &cuuid);
+
+    procreq (magic, req_type, req_data, thip);
+  } else if (c > 0) {
     sendrep (thip->s, VMGR_RC, c);
-  else
+  } else {
     netclose (thip->s);
+  }
   thip->s = -1;
   return (NULL);
 }
