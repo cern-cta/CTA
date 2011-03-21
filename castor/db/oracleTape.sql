@@ -1758,15 +1758,13 @@ AS
 -- @param outRecallMounts      List of recall-mounts which are either pending,
 --                             waiting for a drive or waiting for the
 --                             rechandler-policy.
--- @param outNbMountsForRecall The total number of recall-mounts which are
---                             either passed by the rechandler-policy,
---                             waiting for a drive, waiting to be mounted or
---                             are already mounted.
+-- @param outNbMountsForRecall The number of tapes currently mounted for recall
+--                             for this stager.
 BEGIN
   SELECT count(distinct Tape.vid )
     INTO outNbMountsForRecall
     FROM Tape
-   WHERE Tape.status IN (tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITMOUNT, tconst.TAPE_MOUNTED)
+   WHERE Tape.status = tconst.TAPE_MOUNTED
      AND TPMODE = tconst.TPMODE_READ;
 
     OPEN outRecallMounts
