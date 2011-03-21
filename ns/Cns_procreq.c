@@ -50,7 +50,7 @@ void get_cwd_path (struct Cns_srv_thread_info *thip,
   }
 }
 
-int get_client_actual_id (struct Cns_srv_thread_info *thip)
+void get_client_actual_id (struct Cns_srv_thread_info *thip)
 {
   struct passwd *pw;
 
@@ -68,7 +68,6 @@ int get_client_actual_id (struct Cns_srv_thread_info *thip)
       thip->reqinfo.username = pw->pw_name;
     }
   }
-  return (0);
 }
 
 int marshall_DIRX (char **sbpp,
