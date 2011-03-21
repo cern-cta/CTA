@@ -15,8 +15,8 @@
 #include "serrno.h"
 #include "u64subr.h"
 
-static int schemaversion = 0;
 static sql_context ctx[CNS_MAXNBTHREADS];
+static const char *const CNSSCHEMAVERSION = "2_1_9_3";
 
 int Cns_init_dbpkg()
 {
@@ -35,7 +35,7 @@ Cns_oracle_error(char *func,
   size_t err_len;
 
   sqlglmt(ctx[dbfd->idx], (unsigned char*)err_msg, &err_size, &err_len);
-  if (err_msg[err_len - 1]  == '\n') {
+  if (err_msg[err_len - 1] == '\n') {
     err_msg[err_len - 1] = '\0';
   }
 
@@ -50,7 +50,7 @@ Cns_oracle_error(char *func,
       sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 ||
       sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  ||
       sqlca->sqlcode == -12571 || 
-      (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
+       (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
       sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
     if (dbfd->connected == 1) {
       Cns_closedb (dbfd);
@@ -352,13 +352,13 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
                           int lock,
                           Cns_dbrec_addr *rec_addr)
 {
-  short ac_ind;	/* indicator variable for acl column */
-  short ct_ind;	/* indicator variable for csumtype column */
-  short cv_ind;	/* indicator variable for csumvalue column */
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
   char fileid_str[21];
   char filesize_str[21];
   char func[22];
-  short guid_ind;	/* indicator variable for guid column */
+  short guid_ind;        /* indicator variable for guid column */
   char parent_fileid_str[21];
   char rowid_value[19];
   short fileclass_indicator;
@@ -454,13 +454,13 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
                           int lock,
                           Cns_dbrec_addr *rec_addr)
 {
-  short ac_ind;	/* indicator variable for acl column */
-  short ct_ind;	/* indicator variable for csumtype column */
-  short cv_ind;	/* indicator variable for csumvalue column */
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
   char fileid_str[21];
   char filesize_str[21];
   char func[22];
-  short guid_ind;	/* indicator variable for guid column */
+  short guid_ind;        /* indicator variable for guid column */
   char parent_fileid_str[21];
   char rowid_value[19];
   short fileclass_indicator;
@@ -532,7 +532,8 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     fmd_entry->parent_fileid = parent_fileid;
     fmd_entry->filesize = strtou64 (filesize_str);
     // Deal with NULL value for the fileclass
-    if (-1 == fileclass_indicator) fmd_entry->fileclass = 0;
+    if (-1 == fileclass_indicator)
+      fmd_entry->fileclass = 0;
     if (guid_ind == -1)
       *fmd_entry->guid = '\0';
     if (ac_ind == -1)
@@ -557,13 +558,13 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
                         int lock,
                         Cns_dbrec_addr *rec_addr)
 {
-  short ac_ind;	/* indicator variable for acl column */
-  short ct_ind;	/* indicator variable for csumtype column */
-  short cv_ind;	/* indicator variable for csumvalue column */
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
   char fileid_str[21];
   char filesize_str[21];
   char func[20];
-  short guid_ind;	/* indicator variable for guid column */
+  short guid_ind;        /* indicator variable for guid column */
   char parent_fileid_str[21];
   short fileclass_indicator;
   char rowid_value[19];
@@ -632,7 +633,8 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     fmd_entry->parent_fileid = strtou64 (parent_fileid_str);
     fmd_entry->filesize = strtou64 (filesize_str);
     // Deal with NULL value for the fileclass
-    if (-1 == fileclass_indicator) fmd_entry->fileclass = 0;
+    if (-1 == fileclass_indicator)
+      fmd_entry->fileclass = 0;
     if (guid_ind == -1)
       *fmd_entry->guid = '\0';
     if (ac_ind == -1)
@@ -659,13 +661,13 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
                         int endlist,
                         DBLISTPTR *dblistptr)
 {
-  short ac_ind;	/* indicator variable for acl column */
-  short ct_ind;	/* indicator variable for csumtype column */
-  short cv_ind;	/* indicator variable for csumvalue column */
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
   char fileid_str[21];
   char filesize_str[21];
   char func[20];
-  short guid_ind;	/* indicator variable for guid column */
+  short guid_ind;      /* indicator variable for guid column */
   char parent_fileid_str[21];
   short fileclass_indicator;
   struct sqlca sqlca;
@@ -1166,7 +1168,7 @@ int Cns_get_last_smd_by_vid(struct Cns_dbfd *dbfd,
                 SELECT MAX(FSEQ) FROM Cns_seg_metadata
                 WHERE vid = :vid
                 AND side = :side
-		);
+               );
 
   strncpy (func, "Cns_get_last_smd_by_vid", 24);
   EXEC SQL OPEN last_smd_vid_cursor;
@@ -1277,11 +1279,11 @@ int Cns_check_files_exist(struct Cns_dbfd *dbfd,
 }
 
 int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
-			   char *vid,
-			   u_signed64 *count,
-			   u_signed64 *size,
-			   u_signed64 *maxfileid,
-			   u_signed64 *avgcompression)
+                           char *vid,
+                           u_signed64 *count,
+                           u_signed64 *size,
+                           u_signed64 *maxfileid,
+                           u_signed64 *avgcompression)
      
 {
   char func[23];
@@ -1572,7 +1574,8 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
   short fileclass_indicator = 0;
 
   // handle the case of NULL fileclasses
-  if (0 == fmd_entry->fileclass) fileclass_indicator = -1;
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
   strncpy (func, "Cns_insert_fmd_entry", 21);
   (void) u64tostr (fmd_entry->fileid, fileid_str, -1);
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
@@ -1668,9 +1671,9 @@ int Cns_insert_smd_entry(struct Cns_dbfd *dbfd,
     unsigned int fileId;
     EXEC SQL DECLARE check_segment CURSOR FOR
       SELECT S_FILEID FROM Cns_seg_metadata
-      WHERE S_FILEID=TO_NUMBER(:fileid_str)
-      AND COPYNO=:smd_entry->copyno
-      AND FSEC=:smd_entry->fsec;
+      WHERE S_FILEID = TO_NUMBER(:fileid_str)
+      AND COPYNO     = :smd_entry->copyno
+      AND FSEC       = :smd_entry->fsec;
     EXEC SQL OPEN check_segment;
     if (sqlca.sqlcode) {
       Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
@@ -1865,9 +1868,9 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   char db_pwd[CA_MAXLINELEN+1];
   char db_srv[CA_MAXLINELEN+1];
   char db_name[CA_MAXLINELEN+1];
-  char dbversion[21] = "";
   char *p;
   FILE *fp;
+  char schema_version[21] = "";
 
   strncpy (func, "Cns_opendb", 16);
   EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
@@ -1926,19 +1929,22 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
     return -1;
   }
 
-  /* check how we should respond to the database schema version */
-  EXEC SQL SELECT schemaVersion, TO_NUMBER(regexp_replace(schemaVersion, '_'))
-             INTO :dbversion, :schemaversion
-             FROM cns_version;
-  if (sqlca.sqlcode == -942) {  /* ORA-00942: table or view does not exist */
-    EXEC SQL SELECT schemaVersion, TO_NUMBER(regexp_replace(schemaVersion, '_'))
-               INTO :dbversion, schemaversion
-               FROM CastorVersion;
-  }
+  /* determine the schema version */
+  EXEC SQL SELECT schemaVersion INTO :schema_version
+             FROM CastorVersion;
   switch (sqlca.sqlcode) {
-  case 0:
-    nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"", dbversion);
+  case 0: {
+    if (strcmp(schema_version, CNSSCHEMAVERSION) != 0) {
+      Cns_closedb (dbfd);
+      nslogit("MSG=\"Error: Incorrect schema version detected, "
+              "disconnecting\" SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
+              schema_version, CNSSCHEMAVERSION);
+      return -1;
+    }
+    nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
+            schema_version);
     return 0;
+  }   
   default:
     Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
     return -1;
@@ -1982,19 +1988,19 @@ int Cns_update_class_entry(struct Cns_dbfd *dbfd,
   strncpy (func, "Cns_update_class_entry", 23);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL UPDATE Cns_class_metadata SET
-    NAME	= :class_entry->name,
-    OWNER_UID = :class_entry->uid,
-    GID	= :class_entry->gid,
-    MIN_FILESIZE= :class_entry->min_filesize,
-    MAX_FILESIZE= :class_entry->max_filesize,
-    FLAGS	= :class_entry->flags,
-    MAXDRIVES = :class_entry->maxdrives,
-    MAX_SEGSIZE= :class_entry->max_segsize,
-    MIGR_TIME_INTERVAL= :class_entry->migr_time_interval,
-    MINTIME_BEFOREMIGR= :class_entry->mintime_beforemigr,
-    NBCOPIES= :class_entry->nbcopies,
-    RETENP_ON_DISK= :class_entry->retenp_on_disk
-    WHERE ROWID = :rowid_value;
+    NAME               = :class_entry->name,
+    OWNER_UID          = :class_entry->uid,
+    GID                = :class_entry->gid,
+    MIN_FILESIZE       = :class_entry->min_filesize,
+    MAX_FILESIZE       = :class_entry->max_filesize,
+    FLAGS              = :class_entry->flags,
+    MAXDRIVES          = :class_entry->maxdrives,
+    MAX_SEGSIZE        = :class_entry->max_segsize,
+    MIGR_TIME_INTERVAL = :class_entry->migr_time_interval,
+    MINTIME_BEFOREMIGR = :class_entry->mintime_beforemigr,
+    NBCOPIES           = :class_entry->nbcopies,
+    RETENP_ON_DISK     = :class_entry->retenp_on_disk
+    WHERE ROWID        = :rowid_value;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
     return (-1);
@@ -2014,30 +2020,30 @@ int Cns_update_fmd_entry(struct Cns_dbfd *dbfd,
   short fileclass_indicator = 0;
 
   // handle the case of NULL fileclasses
-  if ((0 == fmd_entry->fileclass) && (schemaversion >= 2190))
+  if (0 == fmd_entry->fileclass)
     fileclass_indicator = -1;
   strncpy (func, "Cns_update_fmd_entry", 21);
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
   (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
   EXEC SQL UPDATE Cns_file_metadata SET
-    PARENT_FILEID= TO_NUMBER(:parent_fileid_str),
-    GUID	= :fmd_entry->guid,
-    NAME	= :fmd_entry->name,
-    FILEMODE= :fmd_entry->filemode,
-    NLINK	= :fmd_entry->nlink,
-    OWNER_UID = :fmd_entry->uid,
-    GID	= :fmd_entry->gid,
-    FILESIZE= TO_NUMBER(:filesize_str),
-    ATIME	= :fmd_entry->atime,
-    MTIME	= :fmd_entry->mtime,
-    CTIME	= :fmd_entry->ctime,
-    FILECLASS= :fmd_entry->fileclass INDICATOR :fileclass_indicator,
-    STATUS	= :fmd_entry->status,
-    CSUMTYPE= :fmd_entry->csumtype,
-    CSUMVALUE= :fmd_entry->csumvalue,
-    ACL	= :fmd_entry->acl
-    WHERE ROWID = :rowid_value;
+    PARENT_FILEID = TO_NUMBER(:parent_fileid_str),
+    GUID          = :fmd_entry->guid,
+    NAME          = :fmd_entry->name,
+    FILEMODE      = :fmd_entry->filemode,
+    NLINK         = :fmd_entry->nlink,
+    OWNER_UID     = :fmd_entry->uid,
+    GID           = :fmd_entry->gid,
+    FILESIZE      = TO_NUMBER(:filesize_str),
+    ATIME         = :fmd_entry->atime,
+    MTIME         = :fmd_entry->mtime,
+    CTIME         = :fmd_entry->ctime,
+    FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+    STATUS        = :fmd_entry->status,
+    CSUMTYPE      = :fmd_entry->csumtype,
+    CSUMVALUE     = :fmd_entry->csumvalue,
+    ACL           = :fmd_entry->acl
+    WHERE ROWID   = :rowid_value;
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -2064,16 +2070,16 @@ int Cns_update_smd_entry(struct Cns_dbfd *dbfd,
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (smd_entry->segsize, segsize_str, -1);
   EXEC SQL UPDATE Cns_seg_metadata SET
-    SEGSIZE	= TO_NUMBER(:segsize_str),
-    COMPRESSION = :smd_entry->compression,
-    S_STATUS= :smd_entry->s_status,
-    VID	= :smd_entry->vid,
-    SIDE	= :smd_entry->side,
-    FSEQ	= :smd_entry->fseq,
-    BLOCKID	= :smd_entry->blockid,
-    CHECKSUM_NAME	= :smd_entry->checksum_name,
-    CHECKSUM	= :smd_entry->checksum
-    WHERE ROWID = :rowid_value;
+    SEGSIZE       = TO_NUMBER(:segsize_str),
+    COMPRESSION   = :smd_entry->compression,
+    S_STATUS      = :smd_entry->s_status,
+    VID           = :smd_entry->vid,
+    SIDE          = :smd_entry->side,
+    FSEQ          = :smd_entry->fseq,
+    BLOCKID       = :smd_entry->blockid,
+    CHECKSUM_NAME = :smd_entry->checksum_name,
+    CHECKSUM      = :smd_entry->checksum
+    WHERE ROWID   = :rowid_value;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
     return (-1);
