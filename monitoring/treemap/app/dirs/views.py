@@ -391,11 +391,16 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     for (idx, node) in enumerate(nodes):
         x1 = int(round(node.getProperty('x'),0))
-        y1 = int(round(node.getProperty('y'),0))
-        x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))  
-        csize = node.getProperty('labelsize')
+        y1 = int(round(node.getProperty('y'),0)) 
+        x2 = 0.0
+        csize = 0.0
         if((not(vtree.nodeHasChildren(node)))):
             csize = node.getProperty('height')
+            x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))
+        else:
+            csize = node.getProperty('labelheight')
+            x2 = int(round(node.getProperty('x') + node.getProperty('labelwidth'),0))
+            
         y2 = int(round(node.getProperty('y') + csize,0))
         
         #must fit to UrlDefault!

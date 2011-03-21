@@ -57,14 +57,10 @@ class SquarifiedTreemapDrawer(object):
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('strokesize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
         if treemap_props['label']:
-            clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
-            if (root.getProperty('width') >= root.getProperty('labelsize')) and root.getProperty('hasannex'):
-                clipx = root.getProperty('x') + root.getProperty('width') - root.getProperty('labelsize')
-                clipy = root.getProperty('y')
-                clipwidth = root.getProperty('labelsize')
-                clipheight = root.getProperty('labelsize')
-                self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg',clipx, clipy, clipwidth, clipheight)
-            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('strokesize'), root.getProperty('y') + root.getProperty('strokesize'), root.getProperty('width')-2* root.getProperty('strokesize') - clipwidth, root.getProperty('labelfontsize'), root.getProperty('labeltextisbold'))
+            iconx, icony, iconwidth, iconheight = root.getProperty('iconcoords')['x'],root.getProperty('iconcoords')['y'],root.getProperty('iconcoords')['width'], root.getProperty('iconcoords')['height']
+            iconfile = root.getProperty('iconfile')
+            self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
+            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('strokesize'), root.getProperty('y') + root.getProperty('strokesize'), root.getProperty('width')-2* root.getProperty('strokesize') - iconwidth, root.getProperty('labelfontsize'), root.getProperty('labeltextisbold'))
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
@@ -82,18 +78,12 @@ class SquarifiedTreemapDrawer(object):
             
             self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), strokesize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
                     
-            if child.getProperty('labelsize') > 0.0:
+            if child.getProperty('labelheight') > 0.0:
                 txt = child.getProperty('labeltext')
-                clipwidth = 0.0
-                clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
-                if (child.getProperty('width') >= child.getProperty('labelsize')) and child.getProperty('hasannex'):
-                    clipx = child.getProperty('x') + child.getProperty('width') - child.getProperty('labelsize')
-                    clipy = child.getProperty('y')
-                    clipwidth = child.getProperty('labelsize')
-                    clipheight = child.getProperty('labelsize')
-                    self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg' ,clipx, clipy, clipwidth, clipheight)
-                child.setProperty('clipcoords', {'x':clipx,'y':clipy,'width':clipwidth,'height':clipheight})
-                self.printText(txt, child.getProperty('x') + strokesize, child.getProperty('y') + strokesize, child.getProperty('width')-2*strokesize - clipwidth, child.getProperty('labelfontsize'), child.getProperty('labeltextisbold'))
+                iconx, icony, iconwidth, iconheight = child.getProperty('iconcoords')['x'],child.getProperty('iconcoords')['y'],child.getProperty('iconcoords')['width'],child.getProperty('iconcoords')['height']
+                iconfile = child.getProperty('iconfile')
+                self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
+                self.printText(txt, child.getProperty('x') + strokesize, child.getProperty('y') + strokesize, child.getProperty('width')-2*strokesize - iconwidth, child.getProperty('labelfontsize'), child.getProperty('labeltextisbold'))
                 
             
             self.vtree.traverseIntoChild(child)
@@ -206,6 +196,7 @@ class SquarifiedTreemapDrawer(object):
         self.ctx.stroke ()
         
     def printSVG(self, svgfilename = '', x = 0.0, y=0.0, width=0.0, height=0.0):
+        if width == 0.0 or height == 0.0: return
         x = float(x)
         y = float(y)
         width = float(width)

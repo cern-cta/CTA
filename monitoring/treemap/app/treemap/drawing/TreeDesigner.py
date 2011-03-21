@@ -42,6 +42,7 @@ class SquaredTreemapDesigner(object):
         self.labeltextisbold = treemap_props['labeltextisbold']
         self.strokesizedecrease = treemap_props['strokesizedecrease']
         self.minstrokesize = treemap_props['minstrokesize']
+        self.icons = treemap_props['icons']
 
     def designTreemap(self):
         strokesize = self.strokesize
@@ -57,6 +58,8 @@ class SquaredTreemapDesigner(object):
         self.setLabelText(root)
         self.setToolTipInfoText(root)
         self.setLabelTextIsbold(root)
+        self.setIcon(root)
+        self.setIconFile(root)
         
         self.designRecursion(0+1)
             
@@ -72,6 +75,8 @@ class SquaredTreemapDesigner(object):
             self.setLabelText(child)
             self.setToolTipInfoText(child)
             self.setLabelTextIsbold(child)
+            self.setIcon(child)
+            self.setIconFile(child)
             
             self.vtree.traverseIntoChild(child)
             self.designRecursion(level + 1)
@@ -102,6 +107,42 @@ class SquaredTreemapDesigner(object):
             vnode.setProperty('labeltext', self.metricslinkage.getLinkedValue('labeltext', vnode))
         except Exception, e:
             vnode.setProperty('labeltext', vnode.getProperty('treenode').getObject().__str__())
+            
+    def setIcon(self, vnode):
+        icon = False
+        try:
+            icon = self.metricslinkage.getLinkedValue('icon', vnode)
+            vnode.setProperty('icon', icon)
+                
+        except Exception, e:
+            icon = vnode.getProperty('hasannex')
+            vnode.setProperty('icon', icon)
+            
+        if icon:
+            iconx = vnode.getProperty('x') + vnode.getProperty('labelwidth') - vnode.getProperty('labelheight')
+            icony = vnode.getProperty('y')
+            iconwidth = vnode.getProperty('labelheight')
+            iconheight = vnode.getProperty('labelheight')
+            labelwidth = vnode.getProperty('labelwidth')-iconwidth
+            
+            if labelwidth > 0.0:
+                vnode.setProperty('iconcoords', {'x':iconx,'y':icony,'width':iconwidth,'height':iconheight})
+                vnode.setProperty('labelwidth', labelwidth)
+            else:
+                vnode.setProperty('iconcoords', {'x':0,'y':0,'width':0,'height':0})
+                vnode.setProperty('icon', False)
+        else:
+            vnode.setProperty('iconcoords', {'x':0,'y':0,'width':0,'height':0})
+            
+    def setIconFile(self, vnode):
+        iconfile = False
+        try:
+            iconfile = self.metricslinkage.getLinkedValue('iconfile', vnode)
+            vnode.setProperty('iconfile', iconfile)
+                
+        except Exception, e:
+            iconfile = treemap_props["defaulticonfile"]
+            vnode.setProperty('iconfile', iconfile)
             
     def setLabelTextIsbold(self, vnode):
         try:
