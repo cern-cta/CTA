@@ -1,4 +1,5 @@
 # Arguments for the nsd
+#   -f              remain in the foreground
 #   -c <path>       configuration file
 #   -l <logfile>    the path to the name server log file
 #   -r              start in read-only mode

@@ -39,7 +39,6 @@ int procdirreq(int magic, int req_type, char *req_data, struct Cns_srv_thread_in
 int Cns_init_dbpkg();
 
 int being_shutdown = 0;
-char func[16];
 char localdomain[CA_MAXHOSTNAMELEN+1];
 char localhost[CA_MAXHOSTNAMELEN+1];
 char nshostname[CA_MAXHOSTNAMELEN+1];
@@ -50,7 +49,6 @@ struct Cns_srv_thread_info *Cns_srv_thread_info;
 
 void Cns_signal_handler(int sig)
 {
-  strncpy (func, "Cns_serv", 16);
   if (sig == SIGINT) {
     nslogit("MSG=\"Caught SIGINT, immediate stop\"");
     exit(0);
@@ -78,6 +76,7 @@ int Cns_main(struct main_args *main_args)
   int on = 1; /* For REUSEADDR */
   char *p;
   const char *buf;
+  int daemonize = 1;
   fd_set readfd, readmask;
   int rqfd;
   int security = 0; /* Flag set to 1 when security is enable */
@@ -87,14 +86,16 @@ int Cns_main(struct main_args *main_args)
   int thread_index;
   struct timeval timeval;
 
-  strncpy (func, "Cns_serv", 16);
   nsconfigfile[0] = '\0';
   strcpy (logfile, NSLOGFILE);
   strcpy (nshostname, "castorns");
 
   /* Process command line options if any */
-  while ((c = getopt (main_args->argc, main_args->argv, "c:l:rt:sn:")) != EOF) {
+  while ((c = getopt (main_args->argc, main_args->argv, "fc:l:rt:sn:")) != EOF) {
     switch (c) {
+    case 'f':
+      daemonize = 0;
+      break;
     case 'c':
       strncpy (nsconfigfile, optarg, sizeof(nsconfigfile));
       nsconfigfile[sizeof(nsconfigfile) - 1] = '\0';
@@ -121,6 +122,15 @@ int Cns_main(struct main_args *main_args)
       logfile[sizeof(nshostname) - 1] = '\0';
       break;
     }
+  }
+
+  if (daemonize) {
+    if ((maxfds = Cinitdaemon ("nsd", NULL)) < 0)
+      exit (SYERR);
+  } else {
+    maxfds = getdtablesize();
+    for (i = 3; i < maxfds; i++)
+      close (i);
   }
 
   /* Open the logging interface */
@@ -329,8 +339,6 @@ int main(int argc,
 {
   struct main_args main_args;
 
-  if ((maxfds = Cinitdaemon ("nsd", NULL)) < 0)
-    exit (SYERR);
   main_args.argc = argc;
   main_args.argv = argv;
   exit (Cns_main (&main_args));
@@ -351,7 +359,7 @@ int getreq(struct Cns_srv_thread_info *thip,
   char *rbp;
   char req_hdr[3*LONGSIZE];
 
-  /* Record the start time of the request. */
+  /* Record the start time of the request */
   gettimeofday(&tv, NULL);
   thip->reqinfo.starttime =
     ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);

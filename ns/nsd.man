@@ -7,6 +7,8 @@ nsd \- start the name server
 .SH SYNOPSIS
 .B nsd
 [
+.BI -f
+] [
 .BI -c " config_file"
 ] [
 .BI -l " log_file"
@@ -111,14 +113,10 @@ username/password@server/dbname
 .sp
 where 'username' and 'password' are the credentials to login to the database
 instance identified by 'server'. If 'dbname' is not specified, "cns_db" is used.
-.LP
-In the log each entry has a timestamp.
-All entries corresponding to one request have the same request id.
-For each user command there is one message NS092 giving information about
-the requestor (hostname, uid, gid) and one message NS098 giving the command
-itself.
-The completion code of the command is also logged.
 .SH OPTIONS
+.TP
+.BI -f
+Remain in the foreground.
 .TP
 .BI -c " config_file"
 Specifies a different path for the Name Server configuration file.
