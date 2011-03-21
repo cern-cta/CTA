@@ -21,32 +21,32 @@ extern	int	optind;
 int main(int argc,
          char **argv)
 {
-	int c;
-	int errflg = 0;
-	char *vid = NULL;
+  int c;
+  int errflg = 0;
+  char *vid = NULL;
 
-	while ((c = getopt (argc, argv, "V:")) != EOF) {
-		switch (c) {
-		case 'V':
-			vid = optarg;
-			break;
-		case '?':
-			errflg++;
-			break;
-		default:
-			break;
-		}
-	}
-	if (optind < argc || vid == NULL) {
-		fprintf (stderr,
-		    "usage: %s -V vid\n", argv[0]);
-		exit (USERR);
-	}
-	if (vmgr_deltag (vid)) {
-		fprintf (stderr, "%s: %s\n", vid, sstrerror(serrno));
-		errflg++;
-	}
-	if (errflg)
-		exit (USERR);
-	exit (0);
+  while ((c = getopt (argc, argv, "V:")) != EOF) {
+    switch (c) {
+    case 'V':
+      vid = optarg;
+      break;
+    case '?':
+      errflg++;
+      break;
+    default:
+      break;
+    }
+  }
+  if (optind < argc || vid == NULL) {
+    fprintf (stderr,
+             "usage: %s -V vid\n", argv[0]);
+    exit (USERR);
+  }
+  if (vmgr_deltag (vid)) {
+    fprintf (stderr, "%s: %s\n", vid, sstrerror(serrno));
+    errflg++;
+  }
+  if (errflg)
+    exit (USERR);
+  exit (0);
 }

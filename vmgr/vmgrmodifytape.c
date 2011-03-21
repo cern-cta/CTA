@@ -59,13 +59,13 @@ int main(int argc,
         if ((status = strtol (Coptarg, &dp, 10)) < 0 ||
             *dp != '\0') {
           fprintf (stderr,
-              "invalid status %s\n", Coptarg);
+                   "invalid status %s\n", Coptarg);
           errflg++;
         }
       } else {
         if (strlen (Coptarg) >= sizeof (statusa)) {
           fprintf (stderr,
-              "invalid status %s\n", Coptarg);
+                   "invalid status %s\n", Coptarg);
           errflg++;
           break;
         }
@@ -89,7 +89,7 @@ int main(int argc,
             status |= ARCHIVED;
           else {
             fprintf (stderr,
-                "invalid status %s\n", Coptarg);
+                     "invalid status %s\n", Coptarg);
             errflg++;
             break;
           } // else
@@ -120,7 +120,7 @@ int main(int argc,
     } // switch (c)
   } // while ((c = Cgetopt_
   if (Coptind < argc) {
-     errflg++;
+    errflg++;
   }
   if (vid == NULL) {
     fprintf (stderr, "no vid\n");
@@ -128,24 +128,24 @@ int main(int argc,
   }
 
   if (errflg) {
-     fprintf (stderr, "usage: %s %s%s%s", argv[0],
-        "[-d density] [-l lbltype] [-P pool_name] -V vid [-v vsn]\n",
-        "[--library library] [--ma manufacturer] [--pool pool_name]\n",
-        "[--sn serial_number] [--st status]\n");
-     exit (USERR);
-   }
- 
+    fprintf (stderr, "usage: %s %s%s%s", argv[0],
+             "[-d density] [-l lbltype] [-P pool_name] -V vid [-v vsn]\n",
+             "[--library library] [--ma manufacturer] [--pool pool_name]\n",
+             "[--sn serial_number] [--st status]\n");
+    exit (USERR);
+  }
+
   if (vmgr_modifytape (vid, vsn, library, density, lbltype,
-      manufacturer, sn, pool_name, status) < 0) {
+                       manufacturer, sn, pool_name, status) < 0) {
     if(serrno == EEXIST){
       fprintf (stderr, "vmgrmodifytape %s:"
-       " There are physical files on the tape."
-       " Please reclaim the tape before modifying the density or the label.\n",
-       vid);
+               " There are physical files on the tape."
+               " Please reclaim the tape before modifying the density or the label.\n",
+               vid);
     }
     else {
       fprintf (stderr, "vmgrmodifytape %s: %s\n", vid,
-       (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
+               (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
     }
     exit (USERR);
   }

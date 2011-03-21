@@ -2,7 +2,7 @@
  * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 /*      vmgr_modifytape - modify an existing tape volume */
 
 #include <errno.h>
@@ -28,7 +28,7 @@ int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, ch
 
   strncpy (func, "vmgr_modifytape", 16);
   if (vmgr_apiinit (&thip))
-          return (-1);
+    return (-1);
   uid = geteuid();
   gid = getegid();
 
@@ -36,7 +36,7 @@ int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, ch
     serrno = EFAULT;
     return (-1);
   }
- 
+
   /* Build request header */
 
   sbp = sendbuf;
@@ -47,7 +47,7 @@ int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, ch
   marshall_LONG (sbp, msglen);
 
   /* Build request body */
- 
+
   marshall_LONG (sbp, uid);
   marshall_LONG (sbp, gid);
   marshall_STRING (sbp, vid);
@@ -87,12 +87,12 @@ int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, ch
     marshall_STRING (sbp, "");
   }
   marshall_LONG (sbp, status);
- 
+
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen);  /* update length field */
 
   while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
-      serrno == EVMGRNACT)
+         serrno == EVMGRNACT)
     sleep (RETRYI);
   return (c);
 }

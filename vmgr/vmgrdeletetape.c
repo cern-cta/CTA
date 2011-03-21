@@ -32,7 +32,7 @@ extern	int	optind;
  * @return                0 on success and -1 on failure.
  */
 int countNsFilesOnTape(char *vid, unsigned int *nbActiveFiles,
-  unsigned *nbLDeleteFiles, char *errorBuf, const size_t errorBufLen) {
+                       unsigned *nbLDeleteFiles, char *errorBuf, const size_t errorBufLen) {
 
   struct Cns_direntape *dtp;
   Cns_list list;
@@ -40,12 +40,12 @@ int countNsFilesOnTape(char *vid, unsigned int *nbActiveFiles,
 
   flags = CNS_LIST_BEGIN;
   while ((dtp = Cns_listtape (NULL, vid, flags, &list, 0)) != NULL) {
-          flags = CNS_LIST_CONTINUE;
-          if (dtp->s_status == 'D') {
-            (*nbLDeleteFiles)++;
-          } else {
-            (*nbActiveFiles)++;
-          }
+    flags = CNS_LIST_CONTINUE;
+    if (dtp->s_status == 'D') {
+      (*nbLDeleteFiles)++;
+    } else {
+      (*nbActiveFiles)++;
+    }
   }
   if (serrno > 0 && serrno != ENOENT) {
     if (errorBufLen >= strlen( sstrerror(serrno))){
@@ -114,16 +114,16 @@ int main(int argc, char **argv) {
 
   /* Set the number of consistency errors to zero */
   int consistencyError = 0, 
-      nbTapeFiles = 0, 
-      nbNsFiles = 0;
+    nbTapeFiles = 0, 
+    nbNsFiles = 0;
 
   /* Query the VMGR about the tape in order to determine the number of tape */
   /* files on the tape                                                      */
   struct vmgr_tape_info_byte_u64 tape_info;
   if (vmgr_querytape_byte_u64 (vid, 0, &tape_info, NULL) < 0) {
-          fprintf (stderr, "%s %s: %s\n", argv[0], vid,
-              (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
-          exit (USERR);
+    fprintf (stderr, "%s %s: %s\n", argv[0], vid,
+             (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
+    exit (USERR);
   }
   nbTapeFiles = tape_info.nbfiles;
 
@@ -144,18 +144,18 @@ int main(int argc, char **argv) {
   char errorBuf[STRERRORBUFLEN];
   int rc = countNsFilesOnTape(vid, &nbActiveFiles, &nbDisableFiles, errorBuf, STRERRORBUFLEN);
   if (rc==0){
-     nbNsFiles = nbDisableFiles + nbActiveFiles;
+    nbNsFiles = nbDisableFiles + nbActiveFiles;
     
     if(nbActiveFiles > 0){
       fprintf(stderr,  
-        "%s Error: %s contains active CASTOR files. nbFiles: %d\n", 
-        argv[0], vid, nbActiveFiles);
+              "%s Error: %s contains active CASTOR files. nbFiles: %d\n", 
+              argv[0], vid, nbActiveFiles);
       consistencyError++;
     }
     if(nbDisableFiles > 0){
       fprintf(stderr, 
-        "%s Error: %s contains logically deleted CASTOR files. nbFiles: %d\n", 
-        argv[0], vid, nbDisableFiles);
+              "%s Error: %s contains logically deleted CASTOR files. nbFiles: %d\n", 
+              argv[0], vid, nbDisableFiles);
       consistencyError++;
     }
   } else {
@@ -190,13 +190,13 @@ int main(int argc, char **argv) {
     }
   } else {
     printf("vmgrdeletetape succesfully deleted tape:\n%s %s %s %s %s %s %s\n",
-            tape_info.vid,
-            tape_info.library,
-            tape_info.density,
-            tape_info.lbltype,
-            tape_info.model,
-            tape_info.media_letter,
-            tape_info.poolname);
+           tape_info.vid,
+           tape_info.library,
+           tape_info.density,
+           tape_info.lbltype,
+           tape_info.model,
+           tape_info.media_letter,
+           tape_info.poolname);
   }
 
   return(0); /* Success */

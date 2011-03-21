@@ -15,49 +15,49 @@
 int main(int argc,
          char **argv)
 {
-	int c;
-	char *dgn = NULL;
-	int errflg = 0;
-	char *library_name = NULL;
-	static struct Coptions longopts[] = {
-		{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
-		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
-		{0, 0, 0, 0}
-	};
-	char *model = NULL;
+  int c;
+  char *dgn = NULL;
+  int errflg = 0;
+  char *library_name = NULL;
+  static struct Coptions longopts[] = {
+    {"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
+    {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
+    {0, 0, 0, 0}
+  };
+  char *model = NULL;
 
-	Copterr = 1;
-	Coptind = 1;
-        while ((c = Cgetopt_long (argc, argv, "g:", longopts, NULL)) != EOF) {
-                switch (c) {
-                case 'g':
-			dgn = Coptarg;
-                        break;
-                case OPT_LIBRARY_NAME:
-			library_name = Coptarg;
-                        break;
-                case OPT_MODEL:
-			model = Coptarg;
-                        break;
-                case '?':
-                        errflg++;
-                        break;
-                default:
-                        break;
-                }
-        }
-        if (Coptind < argc || dgn == NULL || model == NULL || library_name == NULL) {
-                errflg++;
-        }
-        if (errflg) {
-                fprintf (stderr, "usage: %s %s", argv[0],
-		    "-g dgn --library library_name --mo model\n");
-                exit (USERR);
-        }
- 
-	if (vmgr_enterdgnmap (dgn, model, library_name) < 0) {
-		fprintf (stderr, "vmgrenterdgnmap %s: %s\n", dgn, sstrerror(serrno));
-		exit (USERR);
-	}
-	exit (0);
+  Copterr = 1;
+  Coptind = 1;
+  while ((c = Cgetopt_long (argc, argv, "g:", longopts, NULL)) != EOF) {
+    switch (c) {
+    case 'g':
+      dgn = Coptarg;
+      break;
+    case OPT_LIBRARY_NAME:
+      library_name = Coptarg;
+      break;
+    case OPT_MODEL:
+      model = Coptarg;
+      break;
+    case '?':
+      errflg++;
+      break;
+    default:
+      break;
+    }
+  }
+  if (Coptind < argc || dgn == NULL || model == NULL || library_name == NULL) {
+    errflg++;
+  }
+  if (errflg) {
+    fprintf (stderr, "usage: %s %s", argv[0],
+             "-g dgn --library library_name --mo model\n");
+    exit (USERR);
+  }
+
+  if (vmgr_enterdgnmap (dgn, model, library_name) < 0) {
+    fprintf (stderr, "vmgrenterdgnmap %s: %s\n", dgn, sstrerror(serrno));
+    exit (USERR);
+  }
+  exit (0);
 }

@@ -18,24 +18,24 @@
 int main(int argc,
          char **argv)
 {
-	int errflg = 0;
-	int flags;
-	vmgr_list list;
-	struct vmgr_tape_dgnmap *lp;
+  int errflg = 0;
+  int flags;
+  vmgr_list list;
+  struct vmgr_tape_dgnmap *lp;
 
-        if (argc > 1) {
-                errflg++;
-        }
-        if (errflg) {
-                fprintf (stderr, "usage: %s\n", argv[0]);
-                exit (USERR);
-        }
- 
-	flags = VMGR_LIST_BEGIN;
-	while ((lp = vmgr_listdgnmap (flags, &list)) != NULL) {
-		printf ("%-6s %-6s %s\n", lp->dgn, lp->model, lp->library);
-		flags = VMGR_LIST_CONTINUE;
-	}
-	(void) vmgr_listdgnmap (VMGR_LIST_END, &list);
-	exit (0);
+  if (argc > 1) {
+    errflg++;
+  }
+  if (errflg) {
+    fprintf (stderr, "usage: %s\n", argv[0]);
+    exit (USERR);
+  }
+
+  flags = VMGR_LIST_BEGIN;
+  while ((lp = vmgr_listdgnmap (flags, &list)) != NULL) {
+    printf ("%-6s %-6s %s\n", lp->dgn, lp->model, lp->library);
+    flags = VMGR_LIST_CONTINUE;
+  }
+  (void) vmgr_listdgnmap (VMGR_LIST_END, &list);
+  exit (0);
 }
