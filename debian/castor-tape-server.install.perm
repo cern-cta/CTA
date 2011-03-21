@@ -6,7 +6,5 @@
 %attr(0750,root,root) usr/bin/mounttape
 %attr(0750,root,root) usr/bin/posovl
 %attr(0750,root,root) usr/bin/rlstape
-%attr(6755,root,root) usr/bin/smc
 %attr(0750,root,root) usr/bin/taped
-%attr(0755,root,root) usr/bin/tpdump
 %attr(0755,root,root) usr/bin/tplabel
