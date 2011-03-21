@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: Cupvlist.man,v $ $Revision: 1.3 $ $Date: 2002/10/16 08:05:23 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 

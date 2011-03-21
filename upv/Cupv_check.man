@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: Cupv_check.man,v $ $Revision: 1.5 $ $Date: 2009/07/23 12:22:06 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
