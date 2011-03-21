@@ -3,6 +3,7 @@
  * All rights reserved
  */
 
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -12,91 +13,50 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <unistd.h>
+
+#include "Cgrp.h"
+#include "Cpwd.h"
 #include "Cthread_api.h"
+#include "Cupv.h"
+#include "Cupv_server.h"
 #include "marshall.h"
 #include "serrno.h"
 #include "u64subr.h"
 
-#include "Cupv.h"
-#include "Cupv_server.h"
-
-#define RESETID(UID,GID) resetid(&UID, &GID, thip);
-
-void resetid(uid_t *u, gid_t *g, struct Cupv_srv_thread_info *thip) {
-#ifdef UPVCSEC
-  if (thip->Csec_service_type < 0) {
-    *u = thip->Csec_uid;
-    *g = thip->Csec_gid;
-  }
-#else
-  (void)u;
-  (void)g;
-  (void)thip;
-#endif
-}
-
-/*	Cupv_logreq - log a request */
-
-/*	Split the message into lines so they don't exceed LOGBUFSZ-1 characters
- *	A backslash is appended to a line to be continued
- *	A continuation line is prefixed by '+ '
- */
-void
-Cupv_logreq(char *func,
-	    char *logbuf)
+void get_client_actual_id (struct Cupv_srv_thread_info *thip)
 {
-  int n1, n2;
-  char *p;
-  char savechrs1[2];
-  char savechrs2[2];
+  struct passwd *pw;
 
-  n1 = LOGBUFSZ - strlen (func) - 36;
-  n2 = strlen (logbuf);
-  p = logbuf;
-  while (n2 > n1) {
-    savechrs1[0] = *(p + n1);
-    savechrs1[1] = *(p + n1 + 1);
-    *(p + n1) = '\\';
-    *(p + n1 + 1) = '\0';
-    Cupvlogit (func, CUP98, p);
-    if (p != logbuf) {
-      *p = savechrs2[0];
-      *(p + 1) = savechrs2[1];
-    }
-    p += n1 - 2;
-    savechrs2[0] = *p;
-    savechrs2[1] = *(p + 1);
-    *p = '+';
-    *(p + 1) = ' ';
-    *(p + 2) = savechrs1[0];
-    *(p + 3) = savechrs1[1];
-    n2 -= n1;
+#ifdef CUPVCSEC
+  if (thip->Csec_service_type < 0) {
+    thip->reqinfo.uid = thip->Csec_uid;
+    thip->reqinfo.gid = thip->Csec_gid;
   }
-  Cupvlogit (func, CUP98, p);
-  if (p != logbuf) {
-    *p = savechrs2[0];
-    *(p + 1) = savechrs2[1];
+#endif
+  if ((pw = Cgetpwuid(thip->reqinfo.uid)) == NULL) {
+    thip->reqinfo.username = "UNKNOWN";
+  } else {
+    thip->reqinfo.username = pw->pw_name;
   }
 }
 
 /* Checks that a user has a right to place admin request for UPV */
-int check_server_perm(int uid, int gid, char *clienthost, struct Cupv_srv_thread_info *thip) {
-
+int check_server_perm(struct Cupv_srv_thread_info *thip)
+{
   struct Cupv_userpriv requested;
-  char func[20];
 
   memset((void *)&requested, 0, sizeof(requested));
-  strncpy(func, "Perm_Check", 20);
 
-  requested.privcat =  P_UPV_ADMIN;
-  requested.uid = uid;
-  requested.gid = gid;
+  requested.privcat = P_UPV_ADMIN;
+  requested.uid = thip->reqinfo.uid;
+  requested.gid = thip->reqinfo.gid;
 
-  Cupvlogit(func , "Checking that %d,%d from %s has right %d\n", uid, gid,
-	    clienthost, requested.privcat);
+  cupvlogit("MSG=\"Checking for UPV_ADMIN privilege\" REQID=%s Uid=%d Gid=%d "
+            "FromHost=\"%s\"",
+            thip->reqinfo.reqid, thip->reqinfo.uid, thip->reqinfo.gid,
+            thip->reqinfo.clienthost);
 
-  strcpy(requested.srchost, clienthost);
-
+  strcpy(requested.srchost, thip->reqinfo.clienthost);
   if (gethostname(requested.tgthost, CA_MAXHOSTNAMELEN) == -1) {
     return(-1);
   }
@@ -104,90 +64,74 @@ int check_server_perm(int uid, int gid, char *clienthost, struct Cupv_srv_thread
   return (Cupv_util_check(&requested, thip));
 }
 
-/*	Cupv_srv_delete - Deletes a privilege entry */
+/*        Cupv_srv_delete - Deletes a privilege entry */
 
 int Cupv_srv_delete(char *req_data,
-                    char *clienthost,
-                    struct Cupv_srv_thread_info *thip)
+                    struct Cupv_srv_thread_info *thip,
+                    struct Cupv_srv_request_info *reqinfo)
 {
-
-  char func[20];
-  uid_t uid;
-  gid_t gid;
+  char *func = "delete";
   struct Cupv_userpriv priv;
   char *rbp;
   Cupv_dbrec_addr rec_addr;
 
-  strncpy (func, "Cupv_srv_delete", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  Cupvlogit (func, CUP92, "delete", uid, gid, clienthost);
-
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_LONG (rbp, priv.uid);
   unmarshall_LONG (rbp, priv.gid);
-
   if (unmarshall_STRINGN (rbp, priv.srchost, CA_MAXREGEXPLEN) < 0)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, priv.tgthost, CA_MAXREGEXPLEN) < 0)
     RETURN (EINVAL);
 
-  if (check_server_perm(uid, gid, clienthost, thip) != 0) {
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "PrivUid=%d PrivGid=%d SourceHost=\"%s\" TargetHost=\"%s\"",
+           priv.uid, priv.gid, priv.srchost, priv.tgthost);
+
+  /* Check that the user is authorized to delete CUPV entries */
+  if (check_server_perm(thip) != 0) {
     RETURN (EPERM);
   }
 
-  Cupvlogit(func, "Parameters: <%d> <%d> <%s> <%s>\n", priv.uid, priv.gid,
-	    priv.srchost, priv.tgthost);
-
   /* Adding the ^ and $ if needed */
-  if (Cupv_check_regexp_syntax(priv.srchost) != 0 || Cupv_check_regexp_syntax(priv.tgthost) != 0) {
+  if (Cupv_check_regexp_syntax(priv.srchost, reqinfo) != 0 ||
+      Cupv_check_regexp_syntax(priv.tgthost, reqinfo) != 0) {
     RETURN(EINVAL);
   }
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) Cupv_start_tr (thip->s, &thip->dbfd);
 
-  if(Cupv_get_privilege_entry(&thip->dbfd,
-			      &priv,
-			      1,
-			      &rec_addr)) {
+  if(Cupv_get_privilege_entry(&thip->dbfd, &priv, 1, &rec_addr)) {
     RETURN(serrno);
   }
 
-  if (Cupv_delete_privilege_entry(&thip->dbfd,
-				  &rec_addr)) {
+  if (Cupv_delete_privilege_entry(&thip->dbfd, &rec_addr)) {
     RETURN (serrno);
   }
 
   RETURN (0);
 }
 
-/*	Cupv_srv_add - enter a new privilege entry */
+/*        Cupv_srv_add - enter a new privilege entry */
 
 int Cupv_srv_add(char *req_data,
-                 char *clienthost,
-                 struct Cupv_srv_thread_info *thip)
+                 struct Cupv_srv_thread_info *thip,
+                 struct Cupv_srv_request_info *reqinfo)
 {
-
-  char func[20];
-  uid_t uid;
-  gid_t gid;
+  char *func = "add";
   char *rbp;
   struct Cupv_userpriv priv;
 
-  strncpy (func, "Cupv_srv_add", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  Cupvlogit (func, CUP92, "add", uid, gid, clienthost);
-
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_LONG (rbp, priv.uid);
   unmarshall_LONG (rbp, priv.gid);
 
@@ -197,44 +141,45 @@ int Cupv_srv_add(char *req_data,
     RETURN (EINVAL);
   unmarshall_LONG (rbp, priv.privcat);
 
-  if (check_server_perm(uid, gid, clienthost, thip) != 0) {
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "PrivUid=%d PrivGid=%d SourceHost=\"%s\" TargetHost=\"%s\" "
+           "Privilege=%d",
+           priv.uid, priv.gid, priv.srchost, priv.tgthost, priv.privcat);
+
+  /* Check that the user is authorized to add CUPV entries */
+  if (check_server_perm(thip) != 0) {
     RETURN (EPERM);
   }
 
-  Cupvlogit(func, "Parameters: <%d> <%d> <%s> <%s>\n", priv.uid, priv.gid,
-	    priv.srchost, priv.tgthost);
-
   /* Adding the ^ and $ if needed */
-  if (Cupv_check_regexp_syntax(priv.srchost) != 0 || Cupv_check_regexp_syntax(priv.tgthost) != 0) {
+  if (Cupv_check_regexp_syntax(priv.srchost, reqinfo) != 0 ||
+      Cupv_check_regexp_syntax(priv.tgthost, reqinfo) != 0) {
     RETURN(EINVAL);
   }
 
   /* Checking the regular expressions */
-  if ( Cupv_check_regexp(priv.srchost) != 0 ||  Cupv_check_regexp(priv.tgthost) != 0  ) {
+  if (Cupv_check_regexp(priv.srchost) != 0 ||
+      Cupv_check_regexp(priv.tgthost) != 0) {
     RETURN (EINVAL);
   }
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) Cupv_start_tr (thip->s, &thip->dbfd);
 
-  if (Cupv_insert_privilege_entry(&thip->dbfd,
-				  &priv)) {
+  if (Cupv_insert_privilege_entry(&thip->dbfd, &priv)) {
     RETURN (serrno);
   }
   RETURN (0);
 }
 
-/*	Cupv_srv_add - enter a new privilege entry */
+/*        Cupv_srv_add - enter a new privilege entry */
 
 int Cupv_srv_modify(char *req_data,
-                    char *clienthost,
-                    struct Cupv_srv_thread_info *thip)
+                    struct Cupv_srv_thread_info *thip,
+                    struct Cupv_srv_request_info *reqinfo)
 {
-
-  char func[20];
-  uid_t uid;
-  gid_t gid;
+  char *func = "modify";
   struct Cupv_userpriv priv;
   struct Cupv_userpriv newpriv;
   char *rbp;
@@ -244,15 +189,11 @@ int Cupv_srv_modify(char *req_data,
   newpriv.uid = newpriv.gid = newpriv.privcat = -1;
   newpriv.srchost[0] = newpriv.tgthost[0] = 0;
 
-  strncpy (func, "Cupv_srv_modify", 20);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  Cupvlogit (func, CUP92, "modify", uid, gid, clienthost);
-
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_LONG (rbp, priv.uid);
   unmarshall_LONG (rbp, priv.gid);
 
@@ -265,13 +206,17 @@ int Cupv_srv_modify(char *req_data,
   unmarshall_STRINGN (rbp, newpriv.tgthost, CA_MAXREGEXPLEN);
   unmarshall_LONG (rbp, newpriv.privcat);
 
-  if (check_server_perm(uid, gid, clienthost, thip) != 0) {
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "PrivUid=%d PrivGid=%d SourceHost=\"%s\" TargetHost=\"%s\" "
+           "NewPrivilege=%d NewSourceHost=\"%s\" NewTargetHost=\"%s\"",
+           priv.uid, priv.gid, priv.srchost, priv.tgthost, newpriv.privcat,
+           newpriv.srchost, newpriv.tgthost);
+
+  /* Check that the user is authorized to modify CUPV entries */
+  if (check_server_perm(thip) != 0) {
     RETURN (EPERM);
   }
-
-  Cupvlogit(func, "Parameters: <%d> <%d> <%s> <%s> <%d> <%s> <%s>\n",
-	    priv.uid, priv.gid, priv.srchost, priv.tgthost,
-	    newpriv.privcat, newpriv.srchost, newpriv.tgthost);
 
   /* BEWARE
      At this point, are filled:
@@ -286,12 +231,12 @@ int Cupv_srv_modify(char *req_data,
      An error is sent if this is not the case */
 
   /* Adding the ^ and $ if needed */
-  if (Cupv_check_regexp_syntax(priv.srchost) != 0 || Cupv_check_regexp_syntax(priv.tgthost) != 0) {
+  if (Cupv_check_regexp_syntax(priv.srchost, reqinfo) != 0 ||
+      Cupv_check_regexp_syntax(priv.tgthost, reqinfo) != 0) {
     RETURN(EINVAL);
   }
 
-  /* start transaction */
-
+  /* Start transaction */
   (void) Cupv_start_tr (thip->s, &thip->dbfd);
 
   if (Cupv_get_privilege_entry (&thip->dbfd, &priv, 1, &rec_addr)) {
@@ -299,7 +244,6 @@ int Cupv_srv_modify(char *req_data,
   }
 
   /* Filling up newpriv with the right values for update... */
-
   newpriv.uid = priv.uid;
   newpriv.gid = priv.gid;
 
@@ -312,15 +256,16 @@ int Cupv_srv_modify(char *req_data,
   }
 
   /* Adding the ^ and $ if needed */
-  if (Cupv_check_regexp_syntax(newpriv.srchost) != 0 || Cupv_check_regexp_syntax(newpriv.tgthost) != 0) {
+  if (Cupv_check_regexp_syntax(newpriv.srchost, reqinfo) != 0 ||
+      Cupv_check_regexp_syntax(newpriv.tgthost, reqinfo) != 0) {
     RETURN(EINVAL);
   }
 
   /* Checking the regular expressions */
-  if ( Cupv_check_regexp(newpriv.srchost) != 0 ||  Cupv_check_regexp(newpriv.tgthost) != 0  ) {
+  if (Cupv_check_regexp(newpriv.srchost) != 0 ||
+      Cupv_check_regexp(newpriv.tgthost) != 0) {
     RETURN (EINVAL);
   }
-
 
   if (newpriv.privcat < 0) {
     newpriv.privcat = priv.privcat;
@@ -336,19 +281,18 @@ int Cupv_srv_modify(char *req_data,
 /*      Cupv_srv_list - list privileges */
 
 int Cupv_srv_list(char *req_data,
-                  char *clienthost,
                   struct Cupv_srv_thread_info *thip,
+                  struct Cupv_srv_request_info *reqinfo,
                   int endlist,
                   DBLISTPTR *dblistptr)
 {
-  int bol;	/* beginning of list flag */
+  int bol;        /* beginning of list flag */
   int c;
   struct Cupv_userpriv priv_entry;
   struct Cupv_userpriv filter;
 
   int eol = 0;
-  char func[19];
-  gid_t gid;
+  char *func = "list";
   int listentsz;
   int maxnbentries;
   int nbentries = 0;
@@ -356,16 +300,12 @@ int Cupv_srv_list(char *req_data,
   char *p;
   char *rbp;
   char *sbp;
-  uid_t uid;
 
-  strncpy (func, "Cupv_srv_list", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  Cupvlogit (func, CUP92, "list", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
@@ -380,16 +320,14 @@ int Cupv_srv_list(char *req_data,
   unmarshall_LONG(rbp, filter.privcat);
 
   /* Adding the ^ and $ if needed */
-  if (Cupv_check_regexp_syntax(filter.srchost) != 0 || Cupv_check_regexp_syntax(filter.tgthost) != 0) {
+  if (Cupv_check_regexp_syntax(filter.srchost, reqinfo) != 0 ||
+      Cupv_check_regexp_syntax(filter.tgthost, reqinfo) != 0) {
     RETURN(EINVAL);
   }
 
-  /*    Cupvlogit(func, "Filter: <%d><%d><%s><%s><%d>\n", filter.uid, filter.gid, filter.srchost, */
-  /*  	    filter.tgthost, filter.privcat); */
-
   while (nbentries < maxnbentries &&
-	 (c = Cupv_list_privilege_entry (&thip->dbfd, bol, &priv_entry, &filter,
-					 endlist, dblistptr)) == 0) {
+         (c = Cupv_list_privilege_entry (&thip->dbfd, bol, &priv_entry, &filter,
+                                         endlist, dblistptr)) == 0) {
 
     marshall_LONG (sbp, priv_entry.uid);
     marshall_LONG (sbp, priv_entry.gid);
@@ -405,7 +343,7 @@ int Cupv_srv_list(char *req_data,
     eol = 1;
   marshall_WORD (sbp, eol);
   p = outbuf;
-  marshall_WORD (p, nbentries);		/* update nbentries in reply */
+  marshall_WORD (p, nbentries);  /* Update nbentries in reply */
 
   if (sendrep(thip->s, MSG_DATA, sbp - outbuf, outbuf) < 0) {
     RETURN (serrno);
@@ -416,57 +354,56 @@ int Cupv_srv_list(char *req_data,
 /*      Cupv_srv_check - Check privileges */
 
 int Cupv_srv_check(char *req_data,
-                   char *clienthost,
-                   struct Cupv_srv_thread_info *thip)
+                   struct Cupv_srv_thread_info *thip,
+                   struct Cupv_srv_request_info *reqinfo)
 {
   int c;
   struct Cupv_userpriv requested;
-  char func[19];
-  uid_t uid;
-  gid_t gid;
+  char *func = "check";
   char *rbp;
 
-  strncpy (func, "Cupv_srv_check", 19);
+  /* Unmarshall message body */
   rbp = req_data;
-  unmarshall_LONG (rbp, uid);
-  unmarshall_LONG (rbp, gid);
-
-  RESETID(uid, gid);
-
-  Cupvlogit (func, CUP92, "check", uid, gid, clienthost);
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
 
   /* Storing the values to check against the db */
   unmarshall_LONG(rbp, requested.uid);
   unmarshall_LONG(rbp, requested.gid);
 
-  /* Setting the gid to 0 if uid to 0 */
-  /* To avoid problems with SUN machines */
+  /* Setting the gid to 0 if uid to 0, this avoids problems with SUN machines */
   if (requested.uid == 0) {
-    Cupvlogit (func, "Setting GID to 0\n");
     requested.gid = 0;
   }
-
   unmarshall_STRINGN(rbp, requested.srchost, CA_MAXREGEXPLEN);
   unmarshall_STRINGN(rbp, requested.tgthost, CA_MAXREGEXPLEN);
   unmarshall_LONG(rbp, requested.privcat);
 
-  Cupvlogit(func, "<%d><%d><%s><%s><%d>\n", requested.uid, requested.gid, requested.srchost,
-	    requested.tgthost, requested.privcat);
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "PrivUid=%d PrivGid=%d SourceHost=\"%s\" TargetHost=\"%s\" "
+           "Pivilege=%d",
+           requested.uid, requested.gid, requested.srchost, requested.tgthost,
+           requested.privcat);
 
   /* Case SRC not specified, replace with clienthost */
   if (requested.srchost[0] == 0) {
-    strcpy(requested.srchost, clienthost);
-    Cupvlogit(func, "srchost = clienthost = %s\n", clienthost);
+    strcpy(requested.srchost, reqinfo->clienthost);
+    cupvlogit("MSG=\"Source Host not specified, using client host\" REQID=%s "
+              "ClientHost=\"%s\"",
+              reqinfo->reqid, reqinfo->clienthost);
   }
 
   /* Case TGT not specified, replace with clienthost */
   if (requested.tgthost[0] == 0) {
-    strcpy(requested.tgthost, clienthost);
-    Cupvlogit(func, "tgthost = clienthost = %s\n", clienthost);
+    strcpy(requested.tgthost, reqinfo->clienthost);
+    cupvlogit("MSG=\"Target Host not specified, using client host\" REQID=%s "
+              "ClientHost=\"%s\"",
+              reqinfo->reqid, reqinfo->clienthost);
   }
 
   c = Cupv_util_check(&requested, thip);
-
   if (c < 0) {
     RETURN (serrno);
   } else if (c == 0) {

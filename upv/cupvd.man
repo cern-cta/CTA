@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: cupvd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
@@ -8,7 +7,11 @@ cupvd \- start the user privilege validation daemon
 .SH SYNOPSIS
 .B cupvd
 [
+.BI -f
+] [
 .BI -c " config_file"
+] [
+.BI -l " log_file"
 ] [
 .BI -t " nbthreads"
 ]
@@ -97,8 +100,17 @@ where 'username' and 'password' are the credentials to login to the database
 instance identified by 'server'.
 .SH OPTIONS
 .TP
+.BI -f
+Remain in the foreground
+.TP
 .BI -c " config_file"
 Specifies a different path for the CUPV configuration file.
+.TP
+.BI -l " log_file"
+Specifies a different path for the CUPV log file.
+.TP
+.BI -l " log_file"
+Specifies a different path for the CUPV log file.
 .TP
 .BI -t " nbthreads"
 Specifies the number of threads. Default is 6.

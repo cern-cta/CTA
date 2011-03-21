@@ -16,6 +16,7 @@
 #include "Cupv_server.h"
 
 static sql_context ctx[CUPV_MAXNBTHREADS];
+static const char *const CUPVSCHEMAVERSION = "2_1_9_3";
 
 int Cupv_init_dbpkg()
 {
@@ -25,20 +26,22 @@ int Cupv_init_dbpkg()
 
 static void
 Cupv_oracle_error(char *func,
-                              char *sql_method,
-                              struct Cupv_dbfd *dbfd,
-                              struct sqlca *sqlca)
+                  char *sql_method,
+                  struct Cupv_dbfd *dbfd,
+                  struct sqlca *sqlca)
 {
   char   err_msg[512];
   size_t err_size = sizeof(err_msg);
   size_t err_len;
   
   sqlglmt(ctx[dbfd->idx], (unsigned char*)err_msg, &err_size, &err_len);
-  if (err_msg[err_len - 1]  == '\n') {
+  if (err_msg[err_len - 1] == '\n') {
     err_msg[err_len - 1] = '\0';
   }
   
-  Cupvlogit (func, "%s error: %.*s\n", sql_method, err_len, err_msg);
+  cupvlogit("MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
+            "Function=\"%s\" Error=\"%.*s\"",
+            sql_method, func, err_len, err_msg);
   
   /* Connection to the database was lost ? */
   if (sqlca->sqlcode == -2396  || sqlca->sqlcode == -3113  ||
@@ -46,7 +49,8 @@ Cupv_oracle_error(char *func,
       sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  || 
       sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 || 
       sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
-      sqlca->sqlcode == -12571 || (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) || 
+      sqlca->sqlcode == -12571 ||
+       (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) || 
       sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
     if (dbfd->connected == 1) {
       Cupv_closedb (dbfd);
@@ -77,14 +81,17 @@ int Cupv_opendb(struct Cupv_dbfd *dbfd)
   char db_name[CA_MAXLINELEN+1];
   char *p;
   FILE *fp;
-  
+  char schema_version[21] = "";
+
   strncpy (func, "Cupv_opendb", 16);
   EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
   
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
   serrno = 0;
   if ((fp = fopen(cupvconfigfile, "r")) == NULL) {
-    Cupvlogit(func, CUP23, cupvconfigfile);
+    cupvlogit("MSG=\"Error: Failed to open CUPVCONFIG\" Path=\"%s\" "
+              "Function=\"%s\" Error=\"%s\"",
+              cupvconfigfile, func, strerror(errno));
     return (-1);
   }
   while (fgets(buf, sizeof(buf), fp)) {
@@ -102,7 +109,7 @@ int Cupv_opendb(struct Cupv_dbfd *dbfd)
     if ((p = strtok(NULL, "\n")) != NULL)
       strcpy (db_name, p);
     else
-      strcpy(db_name, "Cns_db");
+      strcpy(db_name, "Cupv_db");
   }
   fclose(fp);
 
@@ -110,7 +117,8 @@ int Cupv_opendb(struct Cupv_dbfd *dbfd)
       (db_pwd[0]  == '\0') ||
       (db_srv[0]  == '\0') ||
       (db_name[0] == '\0')) {
-    Cupvlogit(func, CUP09, cupvconfigfile, "incorrect");
+    cupvlogit("MSG=\"Error: Failed to extract database connect string\" "
+              "Path=\"%s\" Function=\"%s\"", cupvconfigfile, func);
     return (-1);
   }
 
@@ -120,13 +128,35 @@ int Cupv_opendb(struct Cupv_dbfd *dbfd)
   } else {
     sprintf(db_connect, "%s/%s", db_user, db_pwd);
   }
-  Cupvlogit(func, "attempting to connect to database\n");
+  cupvlogit("MSG=\"Attempting to connect to database\" "
+            "ConnectionDetails=\"%s/*******@%s\"", db_user, db_srv);
 
   EXEC SQL CONNECT :db_connect;
   if (sqlca.sqlcode == 0) {
     dbfd->connected = 1;
   } else {
     Cupv_closedb (dbfd);
+    Cupv_oracle_error (func, "CONNECT", dbfd, &sqlca);
+    return -1;
+  }
+
+  /* determine the schema version */
+  EXEC SQL SELECT schemaVersion INTO :schema_version
+             FROM CastorVersion;
+  switch (sqlca.sqlcode) {
+  case 0: {
+    if (strcmp(schema_version, CUPVSCHEMAVERSION) != 0) {
+      Cupv_closedb (dbfd);
+      cupvlogit("MSG=\"Error: Incorrect schema version detected, "
+                "disconnecting\" SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
+                schema_version, CUPVSCHEMAVERSION);
+      return -1;
+    }
+    cupvlogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
+              schema_version);
+    return 0;
+  }
+  default:
     Cupv_oracle_error (func, "CONNECT", dbfd, &sqlca);
     return -1;
   }
@@ -317,7 +347,6 @@ int Cupv_update_privilege_entry(struct Cupv_dbfd *dbfd,
   
   /* Checing that there is a SET clause with at least one param */
   if (nbfieldupdated == 0) {
-    Cupvlogit (func, "At least ONE field should be updated\n");
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -326,7 +355,8 @@ int Cupv_update_privilege_entry(struct Cupv_dbfd *dbfd,
   p += sprintf(p,"     WHERE ROWID = '%s' ", rowid_value);
   *p = '\0';
 
-  Cupvlogit(func, "%s\n", sqlstatement);
+  cupvlogit("MSG=\"Update Privilege SQL statement\" Statement=\"%s\"",
+            sqlstatement);
   
   EXEC SQL EXECUTE IMMEDIATE :sqlstatement;
   
@@ -361,9 +391,6 @@ int Cupv_list_privilege_entry(struct Cupv_dbfd *dbfd,
   int lensrc = 0, lentgt = 0;
 
   strncpy(func, "list_priv", 22);
-
-  /*    Cupvlogit(func,"FILTER: <%d> <%d> <%s> <%s> <%d>\n", filter->uid, filter->gid, */
-  /*  	    filter->srchost, filter->tgthost, filter->privcat); */
 
   lensrc = strlen(filter->srchost);
   lentgt = strlen(filter->tgthost);

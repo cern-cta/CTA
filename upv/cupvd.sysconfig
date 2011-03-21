@@ -1,6 +1,8 @@
 # Arguments for the cupvd
-#   -c <path>      configuration file
-#   -t <nbthreads
+#   -f              remain in the foreground
+#   -c <path>       configuration file
+#   -l <logfile>    the path to the user privilege validator log file
+#   -t <nbthreads>  the number of server threads
 #
 # Options to pass to the cupv daemon
 #CUPVD_OPTIONS=
