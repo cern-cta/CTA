@@ -10,13 +10,6 @@ import warnings
 from  networkx import NetworkXError
 
 class ViewTree(object):
-    '''
-    you insert your model instances, but you receive TreeNode Objects!
-    create and traverse the Object tree
-    use traveseToRoot() to restore the traversal position
-    '''
-
-
     def __init__(self, treemap_props):
         
         self.width = treemap_props['pxwidth']

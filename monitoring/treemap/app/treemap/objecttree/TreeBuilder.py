@@ -33,7 +33,7 @@ class TreeBuilder(object):
         self.treemap_props = treemap_props
         #imagine it would be possible to divide the root area in equally big squares
         #max_items_total defines how many rectangles there are maximum allowed to divide that area into
-        self.max_nodes = 1500
+        self.max_nodes = treemap_props['granularity']
         
         #smallest accepted factor of the root area
         #if the node evaluates below that value will not be nested deeper
@@ -41,7 +41,7 @@ class TreeBuilder(object):
         
         #if the number of subitems is bigger than progressive_children_limit_initial * rootarea_fraction
         #the recursion stops before requesting that items. It doesn't apply to root, only to it's children.
-        self.progressive_children_limit_initial = 500
+        self.progressive_children_limit_initial = treemap_props['maxchildrenworthy']
         
     def generateObjectTree(self, rootobject, statusfilename):
         tree = ObjectTree()

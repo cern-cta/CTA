@@ -14,7 +14,7 @@ import math
 import rsvg
 import settings
 
-class SquaredTreemapDrawer(object):
+class SquarifiedTreemapDrawer(object):
     '''
     classdocs
     '''
@@ -55,18 +55,16 @@ class SquaredTreemapDrawer(object):
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
         
-        self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('inbordersize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        if treemap_props['caption']:
+        self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('strokesize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
+        if treemap_props['label']:
             clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
-            if (root.getProperty('width') >= root.getProperty('captionsize')) and root.getProperty('hasannex'):
-                clipx = root.getProperty('x') + root.getProperty('width') - root.getProperty('captionsize')
+            if (root.getProperty('width') >= root.getProperty('labelsize')) and root.getProperty('hasannex'):
+                clipx = root.getProperty('x') + root.getProperty('width') - root.getProperty('labelsize')
                 clipy = root.getProperty('y')
-                clipwidth = root.getProperty('captionsize')
-                clipheight = root.getProperty('captionsize')
+                clipwidth = root.getProperty('labelsize')
+                clipheight = root.getProperty('labelsize')
                 self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg',clipx, clipy, clipwidth, clipheight)
-            root.setProperty('clipcoords', {'x':clipx,'y':clipy,'width':clipwidth,'height':clipheight})
-            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('inbordersize') - clipwidth, root.getProperty('y') + root.getProperty('inbordersize'), root.getProperty('width')-2* root.getProperty('inbordersize'), root.getProperty('captionfontsize'), root.getProperty('captiontextisbold'))
-            
+            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('strokesize'), root.getProperty('y') + root.getProperty('strokesize'), root.getProperty('width')-2* root.getProperty('strokesize') - clipwidth, root.getProperty('labelfontsize'), root.getProperty('labeltextisbold'))
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
@@ -80,22 +78,22 @@ class SquaredTreemapDrawer(object):
         children = self.vtree.getChildren()
         
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
-            inbordersize = child.getProperty('inbordersize')
+            strokesize = child.getProperty('strokesize')
             
-            self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), inbordersize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
+            self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), strokesize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
                     
-            if child.getProperty('captionsize') > 0.0:
-                txt = child.getProperty('captiontext')
+            if child.getProperty('labelsize') > 0.0:
+                txt = child.getProperty('labeltext')
                 clipwidth = 0.0
                 clipx, clipy, clipwidth, clipheight = 0.0, 0.0, 0.0, 0.0
-                if (child.getProperty('width') >= child.getProperty('captionsize')) and child.getProperty('hasannex'):
-                    clipx = child.getProperty('x') + child.getProperty('width') - child.getProperty('captionsize')
+                if (child.getProperty('width') >= child.getProperty('labelsize')) and child.getProperty('hasannex'):
+                    clipx = child.getProperty('x') + child.getProperty('width') - child.getProperty('labelsize')
                     clipy = child.getProperty('y')
-                    clipwidth = child.getProperty('captionsize')
-                    clipheight = child.getProperty('captionsize')
+                    clipwidth = child.getProperty('labelsize')
+                    clipheight = child.getProperty('labelsize')
                     self.printSVG(settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg' ,clipx, clipy, clipwidth, clipheight)
                 child.setProperty('clipcoords', {'x':clipx,'y':clipy,'width':clipwidth,'height':clipheight})
-                self.printText(txt, child.getProperty('x') + inbordersize, child.getProperty('y') + inbordersize, child.getProperty('width')-2*inbordersize - clipwidth, child.getProperty('captionfontsize'), child.getProperty('captiontextisbold'))
+                self.printText(txt, child.getProperty('x') + strokesize, child.getProperty('y') + strokesize, child.getProperty('width')-2*strokesize - clipwidth, child.getProperty('labelfontsize'), child.getProperty('labeltextisbold'))
                 
             
             self.vtree.traverseIntoChild(child)

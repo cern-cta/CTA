@@ -35,9 +35,9 @@ class ColumnTransformator(dict):
     def __init__(self, className):
         self.moduleName = app.tools.Inspections.getModelsModuleName(className)
         self.className = className
-        self.ci = app.tools.Inspections.ModelAttributeFinder(self.className)
-        self.columns = self.ci.getColumns()
-        self.metricattributenames = self.ci.getMetricAttributeNames()
+        self.af = app.tools.Inspections.ModelAttributeFinder(self.className)
+        self.columns = self.af.getColumns()
+        self.metricattributenames = self.af.getMetricAttributeNames()
         self.generateDefaultFunctions()
         
         if not self.moduleName in sys.modules.keys():
@@ -77,10 +77,10 @@ class ColumnTransformator(dict):
         return self.moduleName
     
     def getColumnAndAtrributeNames(self):
-        return self.ci.getColumnAndAtrributeNames()
+        return self.af.getColumnAndAtrributeNames()
     
     def getModelAttributeFinder(self):
-        return self.ci
+        return self.af
     
     def getFnprefix(self):
         return self.fnprefix

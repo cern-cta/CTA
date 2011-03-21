@@ -2,8 +2,8 @@
 Created on Jul 7, 2010
 Sets design and web interface related properties for each node:
 
-captiontext - text string to show in the rectangle caption
-captiontextisbold - defines if the caption text should be bold
+labeltext - text string to show in the rectangle label
+labeltextisbold - defines if the label text should be bold
 htmltooltiptext - defines the tooltip text for that node
 fillcolor - color the rectangle should be filled with
 level - level inside of the data tree (root is 0, ascending)
@@ -36,25 +36,27 @@ class SquaredTreemapDesigner(object):
         self.vtree = vtree
         self.metricslinkage = metricslinkage
         
-        self.inbordersize = treemap_props['inbordersize']
-        self.captionfontsize = treemap_props['captionfontsize']
+        self.strokesize = treemap_props['strokesize']
+        self.labelfontsize = treemap_props['labelfontsize']
         self.radiallightbrightness = treemap_props['radiallightbrightness']
-        self.captiontextisbold = treemap_props['captiontextisbold']
+        self.labeltextisbold = treemap_props['labeltextisbold']
+        self.strokesizedecrease = treemap_props['strokesizedecrease']
+        self.minstrokesize = treemap_props['minstrokesize']
 
     def designTreemap(self):
-        inbordersize = self.inbordersize
+        strokesize = self.strokesize
         
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
         
-        self.setInBorderSize(root)
-        self.setCaptionFontSize(root)
+        self.setStrokeSize(root)
+        self.setLabelFontSize(root)
         self.setFillColor(root)
         self.setStrokeColor(root)
         self.setRadialLight(root)
-        self.setCaptionText(root)
+        self.setLabelText(root)
         self.setToolTipInfoText(root)
-        self.setCaptionTextIsbold(root)
+        self.setLabelTextIsbold(root)
         
         self.designRecursion(0+1)
             
@@ -62,14 +64,14 @@ class SquaredTreemapDesigner(object):
         children = self.vtree.getChildren()
         
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
-            self.setInBorderSize(child)
-            self.setCaptionFontSize(child)
+            self.setStrokeSize(child)
+            self.setLabelFontSize(child)
             self.setFillColor(child)
             self.setStrokeColor(child)          
             self.setRadialLight(child)
-            self.setCaptionText(child)
+            self.setLabelText(child)
             self.setToolTipInfoText(child)
-            self.setCaptionTextIsbold(child)
+            self.setLabelTextIsbold(child)
             
             self.vtree.traverseIntoChild(child)
             self.designRecursion(level + 1)
@@ -95,17 +97,17 @@ class SquaredTreemapDesigner(object):
         if number == 4:
             return 0.08235, 0.6901, 0.6901, 1.0
         
-    def setCaptionText(self, vnode):
+    def setLabelText(self, vnode):
         try:
-            vnode.setProperty('captiontext', self.metricslinkage.getLinkedValue('captiontext', vnode))
+            vnode.setProperty('labeltext', self.metricslinkage.getLinkedValue('labeltext', vnode))
         except Exception, e:
-            vnode.setProperty('captiontext', vnode.getProperty('treenode').getObject().__str__())
+            vnode.setProperty('labeltext', vnode.getProperty('treenode').getObject().__str__())
             
-    def setCaptionTextIsbold(self, vnode):
+    def setLabelTextIsbold(self, vnode):
         try:
-            vnode.setProperty('captiontextisbold', self.metricslinkage.getLinkedValue('captiontextisbold', vnode))
+            vnode.setProperty('labeltextisbold', self.metricslinkage.getLinkedValue('labeltextisbold', vnode))
         except Exception, e:
-            vnode.setProperty('captiontextisbold', self.captiontextisbold)
+            vnode.setProperty('labeltextisbold', self.labeltextisbold)
             
     def setToolTipInfoText(self, vnode):
         try:
@@ -135,22 +137,24 @@ class SquaredTreemapDesigner(object):
 #        r,g,b = addValueToRgb(r,g,b,-0.3)
         vnode.setProperty('strokecolor', {'r':r, 'g':g, 'b':b, 'a':a} )
         
-    def setInBorderSize(self,vnode):
+    def setStrokeSize(self,vnode):
         try:
-            vnode.setProperty('inbordersize', self.metricslinkage.getLinkedValue('inbordersize', vnode))
+            strokesize = self.metricslinkage.getLinkedValue('strokesize', vnode)
+            if strokesize < self.minstrokesize: strokesize = self.minstrokesize
+            vnode.setProperty('strokesize', strokesize)
         except:
             try:
-                inbsize = self.inbordersize - vnode.getProperty('level')
-                if inbsize < 0: inbsize = 0
-                vnode.setProperty('inbordersize', inbsize)
+                strokesize = self.strokesize - vnode.getProperty('level') * self.strokesizedecrease
+                if strokesize < self.minstrokesize: strokesize = self.minstrokesize
+                vnode.setProperty('strokesize', strokesize)
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-    def setCaptionFontSize(self,vnode):
+    def setLabelFontSize(self,vnode):
         try:
-            vnode.setProperty('captionfontsize', self.metricslinkage.getLinkedValue('captionfontsize', vnode))
+            vnode.setProperty('labelfontsize', self.metricslinkage.getLinkedValue('labelfontsize', vnode))
         except:
-            vnode.setProperty('captionfontsize', self.captionfontsize)
+            vnode.setProperty('labelfontsize', self.labelfontsize)
             
     def setRadialLight(self, vnode):
         try:

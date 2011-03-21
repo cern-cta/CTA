@@ -4,7 +4,7 @@ from app.dirs.views import getRootObjectForTreemap, getDefaultMetricsLinking
 from app.errors import NoDataAvailableError
 from app.presets.options.OptionsReader import OptionsReader
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from app.treemap.drawing.TreemapDrawers import SquaredTreemapDrawer
+from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
 from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
@@ -138,7 +138,7 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
         designer.designTreemap()
         start = datetime.datetime.now()
-        drawer = SquaredTreemapDrawer(tree, treemap_props_cp)
+        drawer = SquarifiedTreemapDrawer(tree, treemap_props_cp)
         
         fullfilepath= serverdict + treemapdir + "/" + filenm
         print fullfilepath
