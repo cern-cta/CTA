@@ -148,10 +148,5 @@
 #define NS000 "NS000 - name server not available on %s\n"
 #define NS002 "NS002 - %s error : %s\n"
 #define NS003 "NS003 - illegal function %d\n"
-#define NS004 "NS004 - error getting request, netread = %d\n"
 #define NS009 "NS009 - fatal configuration error: %s %s\n"
-#define NS023 "NS023 - %s is not accessible\n"
-#define NS046 "NS046 - request too large (max. %d)\n"
-#define NS092 "NS092 - %s request by %s (%d,%d) from %s\n"
-#define NS098 "NS098 - %s\n"
 #endif
