@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/06 13:18:27 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -153,7 +152,7 @@ BEGIN
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
       RAISE_APPLICATION_ERROR(-20504, 'The ' || vid_tape_var || ' tape' ||
-        ' cannot be moved, because it does not exist in the VMGR database.'); 
+        ' cannot be moved, because it does not exist in the VMGR database.');
   END;
 
   BEGIN
@@ -255,9 +254,9 @@ END VMGR_UPDATE_POOL_OWNER;
 
 /*
  * Create and populate the table VMGR_TAPE_STATUS_CODE.
- * 
+ *
  * The first BEGIN-END block check if the table already exist, an if not
- * it create the table. The second BEGIN-END block populate the table 
+ * it create the table. The second BEGIN-END block populate the table
  * with the vmgr status number (from 0 to 63) and the corresponding
  * string value generated following this bit set convencion:
  * 	  DISABLED =  1  (000001)

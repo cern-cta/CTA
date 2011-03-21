@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: vmgrgettag.man,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:26 $ CERN IT-GD/CT Jean-Philippe Baud
 .\" Copyright (C) 2003 by CERN/IT/GD/CT
 .\" All rights reserved
 .\"
