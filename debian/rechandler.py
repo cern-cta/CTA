@@ -18,11 +18,11 @@
 # @param ageOfOldestSegment The age in seconds of the oldest segment waiting to
 #                           be recalled during the mount.
 # @param priority           The priority of the tape to be mounted.
-# @param nbMountsForRecall  The total number of recall-mounts which are either
-#                           passed by the rechandler-policy, waiting for a
-#                           drive, waiting to be mounted or are already mounted.
-# @return boolean           Indicating recall or not the tape.
-
+# @param nbMountsForRecall  The number of tapes currently mounted for recall
+#                           for this stager.
+# @return boolean           This function should return 1 if the tape with the
+#                           specified vid should be mounted for recall,
+#                           otherwise this function should return 0.
 def globalRecallPolicy(vid, numSegments, totalBytes, ageOfOldestSegment, priority, nbMountsForRecall):
       return 1
 
