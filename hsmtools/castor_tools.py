@@ -331,13 +331,16 @@ def getFileClass(fileClassName):
 
 class CastorConf(dict):
     '''This class allows easy manipulation of the castor config file from python.
-    It caches the content of the file for fast access and reloads it regularly (except
-    if the delay is < 0) or when requested (refresh method)'''
+    It caches the content of the file for fast access and refreshes it regularly.
+    Refreshing can also be forced via the refresh method.
+    By default, the refresh delay is 30s, 0 means it will always (not recommended)
+    and to a negative number prevents any refresh'''
 
-    def __init__(self, reloadDelay=30, fileName='/etc/castor/castor.conf'):
+    def __init__(self, refreshDelay=30, fileName='/etc/castor/castor.conf'):
         '''constructor'''
         self.fileName = fileName
-        self.reloadDealy = reloadDelay
+        self.refreshDelay = refreshDelay
+        self.lastRefresh = 0
         # read the config file right now
         self.refresh()
 
@@ -365,7 +368,7 @@ class CastorConf(dict):
         '''returns the value of a configuration item casted into the given type.
         also handles casting errors and a default value if nothing is found'''
         # check whether we need to refresh our data first
-        if self.reloadDelay >= 0 and time.time() > self.lastRefresh + self.reloadDely:
+        if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
             self.refresh()
         # now deal with the config item
         try:

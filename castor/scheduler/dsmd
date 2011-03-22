@@ -86,11 +86,6 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.NBJOBSCALLED)
     return (configuration.getValue('DiskManager', 'NbSlots', None, int), jobQueue.nbJobs(), runningJobs.nbJobs())
 
-  def exposed_badmin(self):
-    '''Called when the diskserver should be reconfigured, e.g. on a badmin call'''
-    dlf.writedebug(msgs.BADMINCALLED)
-    configuration.refresh()
-
   def exposed_bjobs(self):
     '''Called when bjobs monitoring is needed.
     Lists all jobs running or pending on this host'''

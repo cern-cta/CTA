@@ -66,13 +66,21 @@ if len(args) != 0:
   usage(1)
 
 class DiskServerListCache:
-  '''cache for the list of diskservers, organized by service class.'''
+  '''cache for the list of diskservers.
+  Automatically refreshes the list regularly, by default every 5mn.
+  Set the refresh delay to 0 to always refresh (not recommended) and
+  to a negative number to never refresh'''
 
-  # class variable
-  _diskServerList = None
+  def __init__(self, refreshDelay=300):
+    '''constructor'''
+    self._diskServerList = None
+    self.refreshDelay = refreshDelay
+    self.lastRefresh = 0
+    # build the cache right now
+    self.refresh()
 
-  def _rebuild(self):
-    '''rebuild the cache of diskservers/diskpools'''
+  def refresh(self):
+    '''refreshes the cache of diskservers/diskpools'''
     # query the stager database
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
@@ -83,7 +91,7 @@ class DiskServerListCache:
                           AND FileSystem.diskPool = DiskPool.id'''
     stcur.execute(stDiskServers)
     rows = stcur.fetchall()
-      # build up the list
+    # build up the list of new ones
     self._diskServerList = {}
     self._diskServerSet = set()
     for diskserver, diskPool in rows:
@@ -95,18 +103,19 @@ class DiskServerListCache:
   def getlist(self):
     '''returns the list of diskservers from the cache, clustered by diskpool.
     Builds this list form the DB if needed'''
-    if self._diskServerList == None: self._rebuild()
+    # check whether we need to refresh our data first
+    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
+      self.refresh()
+    # return the list
     return self._diskServerList
 
   def getset(self):
     '''returns the set of diskservers from the cache, or builds it from the DB if needed'''
-    if self._diskServerSet == None: self._rebuild()
+    # check whether we need to refresh our data first
+    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
+      self.refresh()
+    # return the set
     return self._diskServerSet
-
-  def clear(self):
-    '''clears the cache'''
-    self._diskServerList = None
-    self._diskServerSet = None
 
 class SchedulerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
@@ -152,14 +161,6 @@ class SchedulerService(rpyc.Service):
     hostslist = reduce(lambda x,y:x+y, [diskserver.items() for diskserver in hosts.values()])
     # return a tuple of (diskserver, value1, value2, ...)
     return tuple(tuple([host[0]]+list(host[1])) for host in hostslist)
-
-  def exposed_badmin(self, diskPool=None):
-    '''badmin reconfigures the scheduling facility'''
-    dlf.writedebug(msgs.BADMINCALLED, diskpool=diskPool)
-    # reset all known diskservers
-    self.dispatch('badmin', diskPool)
-    # and reset list of known diskServers
-    diskServerList.clear()
 
   def exposed_bjobs(self, diskPool=None):
     '''bqueues lists the number of running and pending jobs per queue'''
