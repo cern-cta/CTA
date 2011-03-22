@@ -926,14 +926,22 @@ BEGIN
     IF (c = 0) THEN
       RETURN 1;
     END IF;
-    SELECT sum(xsize) INTO reservedSpace
-      FROM SubRequest, StagePutRequest
-     WHERE SubRequest.request = StagePutRequest.id
-       AND SubRequest.status = 6  -- READY
-       AND StagePutRequest.svcClass = svcClassId;
-    IF availSpace < reservedSpace THEN
-      RETURN 1;
-    END IF;
+    -- This is deprecated and should go when the jobmanager and LSF are dropped
+    DECLARE
+      noLSF VARCHAR2(2048);
+    BEGIN
+      noLSF := getConfigOption('RmMaster', 'NoLSFMode', 'no');
+      IF LOWER(noLSF) != 'yes' THEN
+        SELECT sum(xsize) INTO reservedSpace
+          FROM SubRequest, StagePutRequest
+         WHERE SubRequest.request = StagePutRequest.id
+           AND SubRequest.status = 6  -- READY
+           AND StagePutRequest.svcClass = svcClassId;
+        IF availSpace < reservedSpace THEN
+          RETURN 1;
+        END IF;
+      END IF;
+    END;
   END IF;
   RETURN 0;
 END;
