@@ -1105,6 +1105,7 @@ BEGIN
      WHERE subReqId = subReqIds(i)
        AND status = dconst.SUBREQUEST_BEINGSCHED;
 END;
+/
 
 /* PL/SQL method implementing jobToSchedule
  * This is deprecated and should go when the jobmanager and LSF are dropped.
