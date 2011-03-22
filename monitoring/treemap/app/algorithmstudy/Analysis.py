@@ -1,6 +1,6 @@
 from app import settings
 from app.dirs.models import *
-from app.dirs.views import getRootObjectForTreemap, getDefaultMetricsLinking
+from app.dirs.views import getRootObjectForTreemap, getDefaultDimensionMapping
 from app.errors import NoDataAvailableError
 from app.presets.options.OptionsReader import OptionsReader
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -132,9 +132,9 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
         measurements['ratio'] = measurements['ratio'] + theratio
         measurements['ratiocount'] = measurements['ratiocount'] + 1
    
-        mlinker = getDefaultMetricsLinking() 
+        dimmapping = getDefaultDimensionMapping() 
         start = datetime.datetime.now()
-        designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
+        designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, mapping = dimmapping)
     #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
         designer.designTreemap()
         start = datetime.datetime.now()

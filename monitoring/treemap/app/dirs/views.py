@@ -27,9 +27,9 @@ from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
-from app.treemap.drawing.metricslinking.AttributeTranslators import *
-from app.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
-from app.treemap.drawing.metricslinking.ViewNodeDimensions import *
+from app.treemap.drawing.dimensionmapping.AttributeTranslators import *
+from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import DimensionVisPropMapping
+from app.treemap.drawing.dimensionmapping.ViewNodeDimensions import *
 from app.treemap.objecttree.Postprocessors import *
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
 from app.treemap.objecttree.TreeRules import LevelRules
@@ -186,13 +186,13 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
 
     start = datetime.datetime.now()
-    print "linking metrics to graphical properties"
-    mlinker = getDefaultMetricsLinking()
+    print "mapping metrics to graphical properties"
+    dimmapping = getDefaultDimensionMapping()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
     start = datetime.datetime.now()
     print "designing tree"
-    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, metricslinkage = mlinker)
+    designer = SquaredTreemapDesigner( vtree = tree, treemap_props = treemap_props_cp, mapping = dimmapping)
     designer.designTreemap()
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     
@@ -545,52 +545,52 @@ def getDefaultModel():
 def getDefaultPresets():
     return{'flat': False, 'presetname': "Default (Directory structure)", 'smalltobig': False}
     
-def getDefaultMetricsLinking():
-    mlinker = MetricsLinker()
-    mlinker.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
-    mlinker.addPropertyLink('Annex', 'strokesize', ConstantDimension(2))
-    mlinker.addPropertyLink('Annex', 'htmltooltiptext',AnnexToolTipDimension())
-    mlinker.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
-    mlinker.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
+def getDefaultDimensionMapping():
+    mapping = DimensionVisPropMapping()
+    mapping.addPropertyLink('Annex', 'strokecolor', ConstantDimension(-1))
+    mapping.addPropertyLink('Annex', 'strokesize', ConstantDimension(2))
+    mapping.addPropertyLink('Annex', 'htmltooltiptext',AnnexToolTipDimension())
+    mapping.addPropertyLink('Annex', 'fillcolor', ConstantDimension(-2))
+    mapping.addPropertyLink('Annex', 'radiallight.opacity', ConstantDimension(0.0))
     
-    mlinker.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Dirs', 'labeltext', RawColumnDimension('name', DirNameTranslator('/')))
-    mlinker.addPropertyLink('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
-    mlinker.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
-    mlinker.addPropertyLink('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
-    mlinker.addPropertyLink('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
+    mapping.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
+    mapping.addPropertyLink('CnsFileMetadata', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Dirs', 'labeltext', RawColumnDimension('name', AddPrefixTranslator('/')))
+    mapping.addPropertyLink('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
+    mapping.addPropertyLink('Dirs', 'htmltooltiptext', DirToolTipDimension())
+    mapping.addPropertyLink('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
+    mapping.addPropertyLink('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
+    mapping.addPropertyLink('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
     
-    mlinker.addPropertyLink('CnsFileMetadata', 'labeltextisbold', ConstantDimension(False))
+    mapping.addPropertyLink('CnsFileMetadata', 'labeltextisbold', ConstantDimension(False))
     
-    mlinker.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsatlas', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mlinker.addPropertyLink('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    mapping.addPropertyLink('Requestsatlas', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.addPropertyLink('Requestsatlas', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.addPropertyLink('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
-    mlinker.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestscms', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mlinker.addPropertyLink('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    mapping.addPropertyLink('Requestscms', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.addPropertyLink('Requestscms', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.addPropertyLink('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
-    mlinker.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestsalice', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mlinker.addPropertyLink('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    mapping.addPropertyLink('Requestsalice', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.addPropertyLink('Requestsalice', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.addPropertyLink('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
-    mlinker.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestslhcb', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mlinker.addPropertyLink('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    mapping.addPropertyLink('Requestslhcb', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.addPropertyLink('Requestslhcb', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.addPropertyLink('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
     
-    mlinker.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
-    mlinker.addPropertyLink('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
-    mlinker.addPropertyLink('Requestspublic', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mlinker.addPropertyLink('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    mapping.addPropertyLink('Requestspublic', 'fillcolor', LevelDimension())
+    mapping.addPropertyLink('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.addPropertyLink('Requestspublic', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.addPropertyLink('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
 
-    return mlinker
+    return mapping
 
 def getRootObjectForTreemap(rootmodel, rid, statusfilename):
     try:
