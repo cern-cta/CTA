@@ -1367,11 +1367,17 @@ PROCEDURE tg_getRepackVidAndFileInfo(
 BEGIN
   outRepackVid:=NULL;
    -- ignore the repack state
-  SELECT CF.lastupdatetime, CF.id, CF.fileSize 
-    INTO outLastTime, varCfId, varFileSize
-    FROM CastorFile CF
-   WHERE CF.fileid = inFileId 
-     AND CF.nshost = inNsHost;
+  BEGIN
+    SELECT CF.lastupdatetime, CF.id, CF.fileSize 
+      INTO outLastTime, varCfId, varFileSize
+      FROM CastorFile CF
+     WHERE CF.fileid = inFileId 
+       AND CF.nshost = inNsHost;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR (-20119,
+         'Castorfile not found for File ID='||inFileId||' and nshost = '||
+           inNsHost||' in tg_getRepackVidAndFileInfo.');
+  END;
   IF varFileSize <> inBytesTransfered THEN
   -- fail the file
     tg_failFileTransfer(inTransId,inFileId, inNsHost, inFseq,  1613); -- wrongfilesize
@@ -1384,16 +1390,27 @@ BEGIN
   
   tg_RequestIdFromVDQMReqId(inTransId, varTgrId);
   IF (varTgrId IS NOT NULL) THEN
-    SELECT TC.copyNb INTO outcopynb 
-      FROM TapeCopy TC
-     WHERE TC.TapeGatewayRequestId = varTgrId
-       AND TC.castorfile = varCfId
-       AND TC.fseq= inFseq;
-    
-    SELECT T.vid INTO outVID 
-      FROM Tape T, Stream S
-     WHERE T.id = S.tape
-       AND S.TapeGatewayRequestId = varTgrId;
+    BEGIN
+      SELECT TC.copyNb INTO outcopynb 
+        FROM TapeCopy TC
+       WHERE TC.TapeGatewayRequestId = varTgrId
+         AND TC.castorfile = varCfId
+         AND TC.fseq= inFseq;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR (-20119,
+         'Tapecopy not found for castorfile='||varCFId||'(File ID='||inFileId||' and nshost = '||
+           inNsHost||') and fSeq='||inFseq||' in tg_getRepackVidAndFileInfo.');
+    END;
+    BEGIN
+      SELECT T.vid INTO outVID 
+        FROM Tape T, Stream S
+       WHERE T.id = S.tape
+         AND S.TapeGatewayRequestId = varTgrId;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR (-20119,
+           'Tape not found for tapeGatewayRequestId='||varTgrId||'(File ID='||inFileId||' and nshost = '||
+             inNsHost||' and castorfile='||varCFId||'and fSeq='||inFseq||') in tg_getRepackVidAndFileInfo.');
+    END;
   END IF;
   
   BEGIN 

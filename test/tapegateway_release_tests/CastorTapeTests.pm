@@ -47,6 +47,7 @@ our @export   = qw(
                    read_config
                    check_environment
                    get_environment
+                   set_environment
                    register_remote_file
                    make_seed 
                    make_localfile 
@@ -161,7 +162,7 @@ sub read_config ( $ )
     my $local_host = `hostname -s`;
     chomp $local_host;
     $environment{hostname} = $local_host;
-    my @per_host_vars = ( 'username', 'checkout_location', 'file_size', 'file_number', 'castor_directory',
+    my @per_host_vars = ( 'username', 'file_size', 'file_number', 'castor_directory',
                           'migration_timeout', 'poll_interval', 'tapepool', 'svcclass', 
 			  'local_jobmanagerd',
 			  'local_mighunterd',
@@ -219,6 +220,17 @@ sub get_environment ( $ )
         return $environment{$vname}
     } else {
         die "Variable $vname not found in environment";
+    }
+}
+
+# Set enviroment variable (mainly for client application)
+sub set_environment ( $$ )
+{
+    my ( $vname, $value ) = (shift, shift);
+    if ( defined $vname && defined $value) {
+        $environment{$vname} = $value;
+    } else {
+        die "Variable name $vname or value $value undefined";
     }
 }
 

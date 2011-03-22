@@ -33,6 +33,8 @@ use POSIX;
 use DBI;
 use DBD::Oracle qw(:ora_types);
 use BSD::Resource;
+use Cwd 'abs_path';
+use File::Basename;
 use CastorTapeTests;
 
 sub goodDaySingleAndDualCopyTest ( $$$ );
@@ -41,6 +43,7 @@ sub preparePreTransitionBacklog ( $$$ );
 sub checkTapes ( );
 sub managePostTransitionBacklog ( $ );
 sub main ();
+sub set_checkout_location ();
 
 # Make sure at least Ctrl-C triggers a cleanup
 sub sigint()
@@ -70,6 +73,7 @@ sub main ()
     print `date`;
     my $conffile = './tapetests-lxcastordev.conf';
     CastorTapeTests::read_config($conffile);
+    set_checkout_location();
     CastorTapeTests::check_environment ();
     my $file_size = CastorTapeTests::get_environment('file_size');
     my $file_number = CastorTapeTests::get_environment('file_number');
@@ -300,6 +304,15 @@ sub managePostTransitionBacklog ( $ )
     my $poll = CastorTapeTests::get_environment('poll_interval');
     my $timeout = CastorTapeTests::get_environment('migration_timeout');    
     CastorTapeTests::poll_moving_entries ( $dbh, $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
+}
+
+# Find the checkout location based on the location of this script. Eliminates needs for keeping the location in config files
+sub set_checkout_location ()
+{
+    # The checkout directory is 2 directories up from the location of the test script.
+    my $checkout_dir = abs_path(Cwd::cwd()."/".dirname($0)."/../..");
+    print "Setting checkout location to $checkout_dir\n";
+    CastorTapeTests::set_environment("checkout_location", $checkout_dir); 
 }
 
 
