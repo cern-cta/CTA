@@ -37,13 +37,14 @@ import castor_tools, connectionpool, dispatcher, serverqueue
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground] [-n|--nbworkers <nb worker threads>]'
   sys.exit(exitCode)
 
 # first parse the options
 daemonize = True
+nbWorkers = 5
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground'])
+  options, args = getopt.getopt(sys.argv[1:], 'hvfn:', ['help', 'foreground', 'nbworkers'])
 except Exception, e:
   print e
   usage(1)
@@ -52,6 +53,8 @@ for f, v in options:
     usage(0)
   elif f == '-f' or f == '--foreground':
     daemonize = False
+  elif f == '-n' or f == '--nbworkers':
+    nbWorkers = int(v)
   else:
     print "unknown option : " + f
     usage(1)
@@ -200,6 +203,7 @@ def handler(signum, frame):
     log('SIGINT received. Exiting')
   else:
     log('Unexpected signal %d received. Exiting') % signum
+  dispatch.stop()
   sys.exit(1)
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
@@ -228,7 +232,7 @@ try:
   initQueues()
   # launch a processing thread that will regularly check if we need to schedule new jobs
   # and dispatch them on the relevant diskservers
-  dispatch = dispatcher.Dispatcher(connections, queuingJobs)
+  dispatch = dispatcher.Dispatcher(connections, queuingJobs, configuration, nbWorkers)
   dispatch.setName('Dispatcher')
   dispatch.setDaemon(True)
   dispatch.start()

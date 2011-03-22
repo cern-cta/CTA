@@ -947,37 +947,51 @@ END;
 /
 
 CREATE OR REPLACE
-PROCEDURE jobFailed2(in_subReqId IN VARCHAR2, errno IN NUMBER, errmsg IN VARCHAR2)
+PROCEDURE jobFailed2(subReqId IN castor."strList", errno IN castor."cnumList", errmsg IN castor."strList")
 AS
   srId  NUMBER;
   dcId  NUMBER;
   rType NUMBER;
 BEGIN
-  -- Get the necessary information needed about the request.
-  SELECT SubRequest.id, SubRequest.diskCopy, Id2Type.type
-    INTO srId, dcId, rType
-    FROM SubRequest, Id2Type
-   WHERE SubRequest.subReqId = in_subReqId
-     AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-     AND SubRequest.request = Id2Type.id;
-   -- Update the reason for termination.
-   UPDATE SubRequest 
-      SET errorCode = decode(errno, 0, errorCode, errno),
-          errorMessage = decode(errmsg, NULL, errorMessage, errmsg)
-    WHERE id = srId;
-   -- Call the relevant cleanup procedure for the job, procedures that
-   -- would have been called if the job failed on the remote execution host.
-   IF rType = 40 THEN      -- StagePutRequest
-     putFailedProc(srId);
-   ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
-     disk2DiskCopyFailed(dcId, 0);
-   ELSE                    -- StageGetRequest or StageUpdateRequest
-     getUpdateFailedProc(srId);
-   END IF;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  NULL;  -- The SubRequest may have be removed, nothing to be done.
+  FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
+    BEGIN
+      -- Get the necessary information needed about the request.
+      SELECT SubRequest.id, SubRequest.diskCopy, Id2Type.type
+        INTO srId, dcId, rType
+        FROM SubRequest, Id2Type
+       WHERE SubRequest.subReqId = subReqId(i)
+         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
+         AND SubRequest.request = Id2Type.id;
+       -- Update the reason for termination.
+       UPDATE SubRequest 
+          SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
+              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
+        WHERE id = srId;
+       -- Call the relevant cleanup procedure for the job, procedures that
+       -- would have been called if the job failed on the remote execution host.
+       IF rType = 40 THEN      -- StagePutRequest
+         putFailedProc(srId);
+       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+         disk2DiskCopyFailed(dcId, 0);
+       ELSE                    -- StageGetRequest or StageUpdateRequest
+         getUpdateFailedProc(srId);
+       END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;  -- The SubRequest may have be removed, nothing to be done.
+    END;
+  END LOOP;
 END;
 /
+
+CREATE OR REPLACE
+PROCEDURE jobScheduled(subReqIds IN castor."strList") AS
+BEGIN
+  FORALL i IN subReqIds.FIRST .. subReqIds.LAST
+    UPDATE SubRequest 
+       SET status = dconst.SUBREQUEST_READY
+     WHERE subReqId = subReqIds(i)
+       AND status = dconst.SUBREQUEST_BEINGSCHED;
+END;
 
 /* PL/SQL method implementing jobToSchedule */
 CREATE OR REPLACE
@@ -1138,7 +1152,7 @@ PROCEDURE jobToSchedule2(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest
  PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     ORDER BY SR.creationTime ASC;
+     ORDER BY status ASC, SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   srIntId NUMBER;
@@ -1182,7 +1196,7 @@ BEGIN
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
       UPDATE SubRequest
-         SET status = dconst.SUBREQUEST_READY,
+         SET status = dconst.SUBREQUEST_BEINGSCHED,
              lastModificationTime = getTime()
        WHERE id = srIntId
       RETURNING id, subReqId, protocol, xsize, requestedFileSystems
@@ -1202,41 +1216,38 @@ BEGIN
   -- Extract the rest of the information required to submit a job into the
   -- scheduler through the job manager.
   SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
-         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username,
+         Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
          Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
          Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-         (SELECT type
-            FROM Id2type
-           WHERE id = Client.id) clientType, Client.secure, Request.creationTime,
+         129 clientType, Client.secure, Request.creationTime,
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
          reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
          reqDefaultFileSize
-    FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
+    FROM SubRequest, CastorFile, SvcClass, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
+                 NULL destDiskCopy, NULL sourceSvcClass, 40 type
             FROM StagePutRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
+                 NULL destDiskCopy, NULL sourceSvcClass, 35 type
             FROM StageGetRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
+                 NULL destDiskCopy, NULL sourceSvcClass, 44 type
             FROM StageUpdateRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
-                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
+                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass), 133 type
             FROM StageDiskCopyReplicaRequest) Request
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
      AND Request.svcClass = SvcClass.id
-     AND Id2type.id = SubRequest.request
      AND Request.id = SubRequest.request
      AND Request.client = Client.id;
 
@@ -1276,3 +1287,4 @@ BEGIN
 
 END;
 /
+

@@ -131,10 +131,11 @@ class LocalQueue(Queue.Queue):
       # loop over all pending jobids
       for i in range(len(self._pendingD2dDest)):
         jobid, timeOfNextTry = self._pendingD2dDest[i]
-        # otherwise put the jobid back into the priority queue
-        syslog.syslog("Retrying job " + jobid)
-        self._priorityQueue.put(jobid)
-        toBeDeleted.append(jobid)
+        if timeOfNextTry < currentTime:
+          # put the jobid back into the priority queue in it's time to retry the job
+          syslog.syslog("Retrying job " + jobid)
+          self._priorityQueue.put(jobid)
+          toBeDeleted.append(jobid)
       # cleanup list of pending jobids
       self._pendingD2dDest = [(jobid, nextTry) for jobid, nextTry in self._pendingD2dDest if jobid not in toBeDeleted]
     finally:

@@ -171,7 +171,7 @@ class ActivityControl(threading.Thread):
         else:
           time.sleep(.05)
       except Exception, e:
-        log(syslog.LOG_ERR, "Caught exception in ActivityControl thread : " + str(e))
+        log(syslog.LOG_ERR, "Caught exception in ActivityControl thread (" + str(e.__class__) + ') : ' + str(e))
         time.sleep(1)          
 
   def stop(self):
@@ -197,7 +197,7 @@ class JobCompletionControl(threading.Thread):
         jobQueue.pollD2dDest()
         # do not loop too fast
       except Exception, e:
-        log(syslog.LOG_ERR, "Caught exception in JobCompletionControl thread : " + str(e))
+        log(syslog.LOG_ERR, "Caught exception in JobCompletionControl thread (" + str(e.__class__) + ") : " + str(e))
       time.sleep(1)
 
   def stop(self):

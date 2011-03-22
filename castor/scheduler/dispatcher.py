@@ -33,53 +33,168 @@ import cx_Oracle
 import syslog
 import socket
 import castor_tools
+import Queue
 
 log = syslog.syslog
 
-class Dispatcher(threading.Thread):
-  '''scheduling thread, responsible for connecting to the stager databse and scheduling jobs'''
+class Worker(threading.Thread):
+  '''Worker thread, responsible for scheduling effectively the jobs on the diskservers'''
 
-  def __init__(self, connections, queuingJobs):
-    '''constructor of this thread. Arguments are the connection pool and the job queue to use'''
+  def __init__(self, workqueue):
+    '''constructor'''
     threading.Thread.__init__(self)
+    # the queue to work with
+    self.workqueue = workqueue
+    # whether to continue running
     self.running = True
-    self.connections = connections
-    self.queuingJobs = queuingJobs
-    self.hostname = socket.gethostname()
+    # start the thread
+    self.daemon = True
+    self.start()
+
+  def stop(self):
+    '''Stops the thread processing'''
+    self.running = False
+  
+  def run(self):
+    '''main method to the threads. Only get work from the queue and do it'''
+    while self.running:
+      try:
+        func, args = self.workqueue.get()
+        func(*args)
+      except Exception, e:
+        log(syslog.LOG_ERR, 'Exception caught in Worker thread (' + str(e.__class__) + ') : ' + str(e))
+
+class DBUpdater(threading.Thread):
+  '''Worker thread, responsible for updating DB asynchronously and in bulk after the job scheduling'''
+
+  def __init__(self, workqueue):
+    '''constructor'''
+    threading.Thread.__init__(self)
+    # whether we are connected to the stager DB
     self.stagerConnection = None
+    # the queue to work with
+    self.workqueue = workqueue
+    # whether to continue running
+    self.running = True
+    # start the thread
+    self.daemon = True
+    self.start()
+
+  def stop(self):
+    '''Stops the thread processing'''
+    self.running = False
 
   def dbConnection(self):
     '''returns a connection to the stager DB.
     The connection is cached and reconnections are handled'''
     if self.stagerConnection == None:
-        self.stagerConnection = castor_tools.connectToStager()
+      self.stagerConnection = castor_tools.connectToStager()
+      self.stagerConnection.autocommit = True
     return self.stagerConnection
 
-  def failJob(self, jobid, errno, errmsg):
-    '''fails a given job in the database'''
-    log('Failing job ' + jobid)
-    try:
-        stcur = self.dbConnection().cursor()
-        stcur.execute("BEGIN jobFailed2(:1, :2, :3); END;", (jobid, errno, errmsg))
-    except Exception, e:
-        log(syslog.LOG_ERR, 'Exception caught while failing job ' + jobid + ' : ' + str(e))
+
+  def run(self):
+    '''main method to the threads. Only get work from the queue and do it'''
+    while self.running:
+      # get something from the queue and then empty the queue and list all the updates to be done in one bulk
+      successes = []
+      failures = []
+      # check whether there is something to do
+      try:
+        # we go out every second in case the thread has ended in the meantime
+        jobid, errcode, errmsg = self.workqueue.get(True, 1)
+        if errcode != None:
+          failures.append((jobid, errcode, errmsg))
+        else:
+          successes.append(jobid)
+      except Queue.Empty:
+        continue
+      # empty the queue so that we go only once to the DB
+      try:
+        while True:
+          jobid, errcode, errmsg = self.workqueue.get(False)
+          if errcode != None:
+            failures.append((jobid, errcode, errmsg))
+          else:
+            successes.append(jobid)
+      except Queue.Empty:
+        # we are over, the queue is empty
+        pass
+      # Now call the DB for failures
+      if failures:
+        failures = zip(*failures)
+        log('Failing jobs ' + ', '.join(failures[0]))
+        try:
+          stcur = self.dbConnection().cursor()
+          stcur.execute("BEGIN jobFailed2(:1, :2, :3); END;", failures)
+        except Exception, e:
+          log(syslog.LOG_ERR, 'Exception caught while failing jobs ' + ', '.join(failures[0]) + ' (' + str(e.__class__) + ') : ' + str(e))
+      # And call the DB for successes
+      if successes:
+        log('Marking jobs scheduled : ' + ', '.join(successes))
+        try:
+          stcur = self.dbConnection().cursor()
+          stcur.execute("BEGIN jobScheduled(:jobids); END;", [successes])
+        except Exception, e:
+          log(syslog.LOG_ERR, 'Exception caught while marking jobs ' + ', '.join(successes) + ' as scheduled (' + str(e.__class__) + ') : ' + str(e))
+
+
+class Dispatcher(threading.Thread):
+  '''scheduling thread, responsible for connecting to the stager database and scheduling jobs'''
+
+  def __init__(self, connections, queuingJobs, configuration, nbWorkers=5):
+    '''constructor of this thread. Arguments are the connection pool and the job queue to use'''
+    threading.Thread.__init__(self)
+    # whether we should continue running
+    self.running = True
+    # a pool of connections to the diskservers
+    self.connections = connections
+    # the list of queueing jobs
+    self.queuingJobs = queuingJobs
+    # the configuration to use
+    self.config = configuration
+    # our own name
+    self.hostname = socket.gethostname()
+    # whether we are connected to the stager DB
+    self.stagerConnection = None
+    # a queue of work to be done by the workers
+    self.workToDispatch = Queue.Queue()
+    # a queue of updates to be done in the DB
+    self.updateDBQueue = Queue.Queue()
+    # a thread pool of Schedulers
+    self.workers = []
+    for i in range(nbWorkers):
+      t = Worker(self.workToDispatch)
+      t.setName('Worker')
+      self.workers.append(t)
+    # a DBUpdater thread
+    self.dbthread = DBUpdater(self.updateDBQueue)
+    self.dbthread.setName('DBUpdater')
+
+  def dbConnection(self):
+    '''returns a connection to the stager DB.
+    The connection is cached and reconnections are handled'''
+    if self.stagerConnection == None:
+      self.stagerConnection = castor_tools.connectToStager()
+      self.stagerConnection.autocommit = True
+    return self.stagerConnection
 
   def scheduleD2d(self, reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
                   reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs):
     '''Schedules a disk to disk copy on the source and destinations and handle issues '''
     # prepare command line
     basecmd = ["/usr/bin/d2dtransfer",
-               "-r", str(reqId.getvalue()),
-               "-s", str(srSubReqId.getvalue()),
-               "-F", str(int(cfFileId.getvalue())),
-               "-H", str(cfNsHost.getvalue()),
-               "-D", str(int(reqDestDiskCopy.getvalue())),
-               "-X", str(int(reqSourceDiskCopy.getvalue())),
-               "-S", str(reqSvcClass.getvalue()),
-               "-t", str(int(reqCreationTime.getvalue()))]
+               "-r", str(reqId),
+               "-s", str(srSubReqId),
+               "-F", str(int(cfFileId)),
+               "-H", str(cfNsHost),
+               "-D", str(int(reqDestDiskCopy)),
+               "-X", str(int(reqSourceDiskCopy)),
+               "-S", str(reqSvcClass),
+               "-t", str(int(reqCreationTime))]
     # first schedule a job on the source node
-    schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.getvalue().split('|')]
-    jobid = srSubReqId.getvalue()
+    schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
+    jobid = srSubReqId
     log(jobid + '(d2d source) : ' + str(schedSourceCandidates[0]))
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
@@ -93,12 +208,12 @@ class Dispatcher(threading.Thread):
       # log that we've failed
       log(syslog.LOG_ERR, "Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
       # we coudl not schedule the source so fail the job in the DB
-      self.failJob(jobid, 1721, "Unable to schedule on source host")  # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobId, 1721, "Unable to schedule on source host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
       return
     # now schedule on all potential destinations
-    schedDestCandidates = [candidate.split(':') for candidate in srRfs.getvalue().split('|')]
+    schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     log(jobid + '(d2d destinations) : ' + str(schedDestCandidates))
     # build the list of hosts and jobs to launch
     jobList = []
@@ -119,46 +234,48 @@ class Dispatcher(threading.Thread):
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
       # we could not schedule anywhere for destination.... so fail the job in the DB
-      self.failJob(jobid, 1721, "Unable to schedule on any destination host")  # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobid, 1721, "Unable to schedule on any destination host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
-   
+    else:
+      self.updateDBQueue.put((jobid, None, None))
+
 
   def scheduleJob(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
                   srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
                   reqEuid, reqEgid, clientSecure, reqSvcClass, reqCreationTime):
     '''Schedules a disk to disk copy and handle issues '''
     # extract list of candidates where to schedule and log
-    schedCandidates = [candidate.split(':') for candidate in srRfs.getvalue().split('|')]
-    jobid = srSubReqId.getvalue()
+    schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
+    jobid = srSubReqId
     log(jobid + ' : ' + str(schedCandidates))
     # build a list of jobs to schedule for each machine
     arrivaltime =  time.time()
     jobList = []
     for diskserver, mountpoint in schedCandidates:
-      ipAddress = int(clientIp.getvalue())
+      ipAddress = int(clientIp)
       cmd = ("/usr/bin/stagerjob",
-             "-r", str(reqId.getvalue()),
-             "-s", str(srSubReqId.getvalue()),
-             "-F", str(int(cfFileId.getvalue())),
-             "-H", str(cfNsHost.getvalue()),
-             "-p", str(srProtocol.getvalue()),
-             "-i", str(srId.getvalue()),
-             "-T", str(int(reqType.getvalue())),
-             "-m", str(srOpenFlags.getvalue()),
+             "-r", str(reqId),
+             "-s", str(srSubReqId),
+             "-F", str(int(cfFileId)),
+             "-H", str(cfNsHost),
+             "-p", str(srProtocol),
+             "-i", str(srId),
+             "-T", str(int(reqType)),
+             "-m", str(srOpenFlags),
              # The client's identification as a string. This consists of the
              # client's object type, IP address and port
-             "-C", str(int(clientType.getvalue())) + ":" + \
+             "-C", str(int(clientType)) + ":" + \
                str((ipAddress & 0xFF000000) >> 24) + "." + \
                str((ipAddress & 0x00FF0000) >> 16) + "." + \
                str((ipAddress & 0x0000FF00) >> 8)  + "." + \
                str((ipAddress & 0x000000FF)) + ":" + \
-               str(int(clientPort.getvalue())),
-             "-u", str(int(reqEuid.getvalue())),
-             "-g", str(int(reqEgid.getvalue())),
-             "-X", str(int(clientSecure.getvalue())),
-             "-S", str(reqSvcClass.getvalue()),
-             "-t", str(int(reqCreationTime.getvalue())),
+               str(int(clientPort)),
+             "-u", str(int(reqEuid)),
+             "-g", str(int(reqEgid)),
+             "-X", str(int(clientSecure)),
+             "-S", str(reqSvcClass),
+             "-t", str(int(reqCreationTime)),
              "-R", diskserver+':'+mountpoint)
       jobList.append((diskserver, cmd))
     # put jobs in the queue of pending jobs
@@ -175,10 +292,11 @@ class Dispatcher(threading.Thread):
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
       # we could not schedule anywhere.... so fail the job in the DB
-      self.failJob(jobid, 1721, "Unable to schedule job") # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobid, 1721, "Unable to schedule job")) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
-
+    else:
+      self.updateDBQueue.put((jobid, None, None))
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -233,22 +351,38 @@ class Dispatcher(threading.Thread):
                 # but in both cases, errors are handled internally and no exception
                 # others than the ones implying the end of the processing
                 if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-                  self.scheduleD2d(reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
-                                   reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs)
+                  self.workToDispatch.put((self.scheduleD2d,
+                                           (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
+                                            cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
+                                            reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
+                                            reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
                 else:
-                  self.scheduleJob(srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost, srProtocol,
-                                   srId, reqType, srOpenFlags, clientType, clientPort, reqEuid, reqEgid,
-                                   clientSecure, reqSvcClass, reqCreationTime)
-                # commit the change of status to the stage DB
-                self.dbConnection().commit()
+                  self.workToDispatch.put((self.scheduleJob,
+                                           (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
+                                            srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
+                                            srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
+                                            srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
+                                            reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
+                                            reqSvcClass.getvalue(), reqCreationTime.getvalue())))
         except Exception, e:
           # log error
-          log(syslog.LOG_ERR, 'Caught exception in Dispatcher thread : ' + str(e))
+          log(syslog.LOG_ERR, 'Caught exception in Dispatcher thread (' + str(e.__class__) + ') : ' + str(e))
           # then sleep a bit to not loop to fast on the error
           time.sleep(1)
     finally:
       # try to clean up what we can
-      try :
+      for t in self.workers:
+        try:
+          t.stop()
+          t.join()
+        except Exception:
+          pass
+      try:
+        self.dbthread.stop()
+        self.dbthread.join()
+      except Exception:
+        pass
+      try:
         stcur = self.dbConnection().cursor()
         stcur.execute("BEGIN DBMS_ALERT.REMOVE('jobsReadyToSchedule'); END;");
       except Exception:
