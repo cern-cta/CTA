@@ -128,10 +128,6 @@ class RunningJobsSet:
         # log that we've failed
         log(syslog.LOG_ERR, "Informing " + scheduler + " that d2d transfer of " + jobid + " is over failed with error " + str(e))
 
-  def d2dstart(self, jobid, scheduler, job, jobtype, arrivalTime):
-    '''called when a disk to disk copy starts and we are the source of it'''
-    self.add(jobid, scheduler, job, None, None, jobtype, arrivalTime)
-
   def d2dend(self, jobid):
     '''called when a disk to disk copy ends and we are the source of it'''
     self._lock.acquire()
@@ -153,3 +149,7 @@ class RunningJobsSet:
         user = 'stage'
       res.append((jobid, scheduler, user, 'RUN', jobtype, arrivalTime, runTime))
     return res
+
+  def listRunningD2dSources(self):
+    '''lists running d2dsource jobs'''
+    return [(jobid, job, arrivalTime) for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs if jobtype == 'd2dsource']

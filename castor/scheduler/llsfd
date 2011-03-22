@@ -163,7 +163,12 @@ class SchedulerService(rpyc.Service):
   def exposed_getQueuingJobs(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of jobs'''
     log(syslog.LOG_DEBUG, 'getQueuingJobs called for ' + diskserver)
-    return tuple(queuingJobs.list(diskserver))
+    return tuple(queuingJobs.listQueuingJobs(diskserver))
+
+  def exposed_getRunningD2dSourceJobs(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the list of running d2dsource jobs'''
+    log(syslog.LOG_DEBUG, 'getRunningD2dSourceJobs called for ' + diskserver)
+    return tuple(queuingJobs.listRunningD2dSources(diskserver))
 
   def exposed_d2dend(self, jobid):
     '''called when a d2d is over. Responsible for informing the source of the d2d'''
@@ -176,6 +181,10 @@ def initQueues():
   for diskPool in dslist:
     for ds in dslist[diskPool]:
       try:
+        # first list the running d2dsource jobs
+        for jobid, job, arrivaltime in connections.getConnection(ds).getRunningD2dSource(socket.gethostname()):
+          queuingJobs.putRunningD2dSource(ds, jobid, job, arrivaltime)
+        # then list queuing jobs
         for jobid, job, jobtype, arrivaltime in connections.getConnection(ds).getQueuingJobs(socket.gethostname()):
           queuingJobs.put(ds, jobid, job, arrivaltime, jobtype)
       except Exception, e:

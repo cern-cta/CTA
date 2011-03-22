@@ -91,7 +91,7 @@ class Dispatcher(threading.Thread):
       self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2dsource')
     except Exception, e:
       # log that we've failed
-      log(LOG_ERR, "Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
+      log(syslog.LOG_ERR, "Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
       # we coudl not schedule the source so fail the job in the DB
       self.failJob(jobid, 1721, "Unable to schedule on source host")  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
@@ -115,7 +115,7 @@ class Dispatcher(threading.Thread):
         scheduleSucceeded = True
       except Exception, e:
         # log that we've failed
-        log(LOG_ERR, "Scheduling d2d on " + diskserver + " (destination) failed with error " + str(e))
+        log(syslog.LOG_ERR, "Scheduling d2d on " + diskserver + " (destination) failed with error " + str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
       # we could not schedule anywhere for destination.... so fail the job in the DB
@@ -171,7 +171,7 @@ class Dispatcher(threading.Thread):
         scheduleSucceeded = True
       except Exception, e:
         # log that we've failed
-        log(LOG_ERR, "Scheduling on " + diskserver + " failed with error " + str(e))
+        log(syslog.LOG_ERR, "Scheduling on " + diskserver + " failed with error " + str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
       # we could not schedule anywhere.... so fail the job in the DB
@@ -183,68 +183,69 @@ class Dispatcher(threading.Thread):
   def run(self):
     '''main method, containing the infinite loop'''
     try:
-      try:
-        # setup an oracle connection and register our interest for 'jobsReadyToSchedule' alerts
-        stcur = self.dbConnection().cursor()
-        stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsReadyToSchedule'); END;");
-        # prepare a cursor for database polling
-        stcur = self.dbConnection().cursor()
-        stcur.arraysize = 50
-        srId = stcur.var(cx_Oracle.NUMBER)
-        srSubReqId = stcur.var(cx_Oracle.STRING)
-        srProtocol = stcur.var(cx_Oracle.STRING)
-        srXsize = stcur.var(cx_Oracle.NUMBER)
-        srRfs = stcur.var(cx_Oracle.STRING)
-        reqId = stcur.var(cx_Oracle.STRING)
-        cfFileId = stcur.var(cx_Oracle.NUMBER)
-        cfNsHost = stcur.var(cx_Oracle.STRING)
-        reqSvcClass = stcur.var(cx_Oracle.STRING)
-        reqType = stcur.var(cx_Oracle.NUMBER)
-        reqEuid = stcur.var(cx_Oracle.NUMBER)
-        reqEgid = stcur.var(cx_Oracle.NUMBER)
-        reqUsername = stcur.var(cx_Oracle.STRING)
-        srOpenFlags = stcur.var(cx_Oracle.STRING)
-        clientIp = stcur.var(cx_Oracle.NUMBER)
-        clientPort = stcur.var(cx_Oracle.NUMBER)
-        clientVersion = stcur.var(cx_Oracle.NUMBER)
-        clientType = stcur.var(cx_Oracle.NUMBER)
-        reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
-        reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
-        clientSecure = stcur.var(cx_Oracle.NUMBER)
-        reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
-        reqCreationTime = stcur.var(cx_Oracle.NUMBER)
-        reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
-        sourceRfs = stcur.var(cx_Oracle.STRING) # castor.DiskServerList_Cur
-        stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
-        # infinite loop over the polling of the DB
-        while self.running:
-          # see whether there is something to do
-          # not that this will hang until something comes or the internal timeout is reached
-          stcur.execute(stJobToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
-                                          cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
-                                          srOpenFlags, clientIp, clientPort, clientVersion, clientType,
-                                          reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
-                                          reqCreationTime, reqDefaultFileSize, sourceRfs));
-          # in case of timeout, we may have nothing to do
-          if srId.getvalue() != None:
-            log(syslog.LOG_DEBUG, 'jobToSchedule returned srId ' + str(int(srId.getvalue())))
-            # standard jobs and disk to disk copies are not handled the same way
-            # but in both cases, errors are handled internally and no exception
-            # others than the ones implying the end of the processing
-            if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-              self.scheduleD2d(reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
-                               reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs)
-            else:
-              self.scheduleJob(srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost, srProtocol,
-                               srId, reqType, srOpenFlags, clientType, clientPort, reqEuid, reqEgid,
-                               clientSecure, reqSvcClass, reqCreationTime)
-            # commit the change of status to the stage DB
-            self.dbConnection().commit()
-      except Exception, e:
-        if self.running:
-          # if we are running, log and exit
-          log(syslog.LOG_ALERT, 'Dispatcher thread exiting due to following exception : ' + str(e))
-          sys.exit(1)
+      while self.running:
+        try:
+          # setup an oracle connection and register our interest for 'jobsReadyToSchedule' alerts
+          stcur = self.dbConnection().cursor()
+          stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsReadyToSchedule'); END;");
+          # prepare a cursor for database polling
+          stcur = self.dbConnection().cursor()
+          stcur.arraysize = 50
+          srId = stcur.var(cx_Oracle.NUMBER)
+          srSubReqId = stcur.var(cx_Oracle.STRING)
+          srProtocol = stcur.var(cx_Oracle.STRING)
+          srXsize = stcur.var(cx_Oracle.NUMBER)
+          srRfs = stcur.var(cx_Oracle.STRING)
+          reqId = stcur.var(cx_Oracle.STRING)
+          cfFileId = stcur.var(cx_Oracle.NUMBER)
+          cfNsHost = stcur.var(cx_Oracle.STRING)
+          reqSvcClass = stcur.var(cx_Oracle.STRING)
+          reqType = stcur.var(cx_Oracle.NUMBER)
+          reqEuid = stcur.var(cx_Oracle.NUMBER)
+          reqEgid = stcur.var(cx_Oracle.NUMBER)
+          reqUsername = stcur.var(cx_Oracle.STRING)
+          srOpenFlags = stcur.var(cx_Oracle.STRING)
+          clientIp = stcur.var(cx_Oracle.NUMBER)
+          clientPort = stcur.var(cx_Oracle.NUMBER)
+          clientVersion = stcur.var(cx_Oracle.NUMBER)
+          clientType = stcur.var(cx_Oracle.NUMBER)
+          reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
+          reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
+          clientSecure = stcur.var(cx_Oracle.NUMBER)
+          reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
+          reqCreationTime = stcur.var(cx_Oracle.NUMBER)
+          reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
+          sourceRfs = stcur.var(cx_Oracle.STRING) # castor.DiskServerList_Cur
+          stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
+          # infinite loop over the polling of the DB
+          while self.running:
+              # see whether there is something to do
+              # not that this will hang until something comes or the internal timeout is reached
+              stcur.execute(stJobToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
+                                              cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
+                                              srOpenFlags, clientIp, clientPort, clientVersion, clientType,
+                                              reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
+                                              reqCreationTime, reqDefaultFileSize, sourceRfs));
+              # in case of timeout, we may have nothing to do
+              if srId.getvalue() != None:
+                log(syslog.LOG_DEBUG, 'jobToSchedule returned srId ' + str(int(srId.getvalue())))
+                # standard jobs and disk to disk copies are not handled the same way
+                # but in both cases, errors are handled internally and no exception
+                # others than the ones implying the end of the processing
+                if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
+                  self.scheduleD2d(reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
+                                   reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs)
+                else:
+                  self.scheduleJob(srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost, srProtocol,
+                                   srId, reqType, srOpenFlags, clientType, clientPort, reqEuid, reqEgid,
+                                   clientSecure, reqSvcClass, reqCreationTime)
+                # commit the change of status to the stage DB
+                self.dbConnection().commit()
+        except Exception, e:
+          # log error
+          log(syslog.LOG_ERR, 'Caught exception in Dispatcher thread : ' + str(e))
+          # then sleep a bit to not loop to fast on the error
+          time.sleep(1)
     finally:
       # try to clean up what we can
       try :

@@ -1178,7 +1178,7 @@ BEGIN
          AND ((status = dconst.SUBREQUEST_READYFORSCHED)
           OR  (status = dconst.SUBREQUEST_BEINGSCHED
          AND lastModificationTime < getTime() - 1800))
-         FOR UPDATE NO WAIT;
+         FOR UPDATE NOWAIT;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
       UPDATE SubRequest
@@ -1249,40 +1249,29 @@ BEGIN
 
   -- Select random filesystems to use if none is already requested
   IF LENGTH(srRfs) IS NULL THEN
-    DECLARE
-      nbMachines NUMBER := 0;
-      machinesUsed "numList" := "numList"(-1,-1,-1,-1,-1);
-      unused INTEGER := 0;
-    BEGIN
-      FOR line IN (SELECT DiskServer.name || ':' || FileSystem.mountPoint AS candidate, DiskServer.id
-                     FROM DiskServer, FileSystem, DiskPool2SvcClass
-                    WHERE FileSystem.diskServer = DiskServer.id
-                      AND FileSystem.diskPool = DiskPool2SvcClass.parent
-                      AND DiskPool2SvcClass.child = SvcClassId
-                      AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-                      AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-                      AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
-                      -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
-                      AND DiskServer.id NOT IN
-                            (SELECT diskserver FROM DiskCopy, FileSystem
-                              WHERE DiskCopy.castorFile = cfId
-                                AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY,
-                                                        dconst.DISKCOPY_CANBEMIGR)
-                                AND FileSystem.id = DiskCopy.fileSystem)
-                    ORDER BY DBMS_Random.value) LOOP
-        BEGIN
-          -- Check whether the machine selected is already listed
-          -- we want to select different machines, not different filesystems on the same machine
-          SELECT 0 INTO unused FROM DUAL WHERE line.id IN (SELECT * FROM TABLE(machinesUsed));
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          IF LENGTH(srRfs) IS NOT NULL THEN srRfs := srRfs || '|'; END IF;
-          srRfs := srRfs || line.candidate;
-          nbMachines := nbMachines + 1;
-          machinesUsed(nbMachines) := line.id;
-          IF nbMachines = 5 THEN EXIT; END IF;
-        END;
-      END LOOP;
-    END;
+    FOR line IN
+      (SELECT candidate FROM
+         (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
+                   OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
+            FROM DiskServer, FileSystem, DiskPool2SvcClass
+           WHERE FileSystem.diskServer = DiskServer.id
+             AND FileSystem.diskPool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = SvcClassId
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
+             -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
+             AND DiskServer.id NOT IN
+               (SELECT diskserver FROM DiskCopy, FileSystem
+                 WHERE DiskCopy.castorFile = cfId
+                   AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY,
+                                           dconst.DISKCOPY_CANBEMIGR)
+                   AND FileSystem.id = DiskCopy.fileSystem)
+           ORDER BY DBMS_Random.value)
+        WHERE ROWNUM <= 5) LOOP
+      IF LENGTH(srRfs) IS NOT NULL THEN srRfs := srRfs || '|'; END IF;
+      srRfs := srRfs || line.candidate;
+    END LOOP;
   END IF;
 
 END;

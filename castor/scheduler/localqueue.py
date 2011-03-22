@@ -26,6 +26,7 @@
 # *****************************************************************************/
 
 import pwd
+import time
 import Queue
 import threading
 import syslog
@@ -34,24 +35,28 @@ class LocalQueue(Queue.Queue):
   '''Class managing a queue of pending jobs.
   There are actually 2 queues, a dictionnary and a set involved :
     - the main queue is the object itself and holds all jobs that were not considered so far.
-    - _pendingD2dDest is a set of disk2disk destinations jobs that have been considered but could not
-      be started because the source was not ready. They will stay in this set until the source
-      becomes ready
+    - _pendingD2dDest is a list of disk2disk destinations jobs that have been considered but could not
+      be started because the source was not ready. They will be retried regularly until the source
+      becomes ready. They are stored together with the next time when to retry. The interval between
+      retries is equal to half the time gone since the arrival of the job, with a maximum
+      configured in castor.conf (DiskManager/MaxRetryInterval).
     - _priorityQueue is a queue of jobs to be started as soon as possible. These jobs are the disk2disk
       destination jobs that have been pending on the resdiness of the source and can now be started
     - finally, all jobs handled are indexed in a dictionnary called _queueingJobs handling detailed
       information
   '''
 
-  def __init__(self):
+  def __init__(self, config):
     '''constructor'''
     Queue.Queue.__init__(self)
+    # configuration
+    self.config = config
     # dictionnary of jobs
     self._queuingJobs = {}
     # a global lock for the dictionnary
     self._lock = threading.Lock()
     # set of pending disk2disk destinations
-    self._pendingD2dDest = set()
+    self._pendingD2dDest = []
     # set of jobs to start with highest priority
     self._priorityQueue = Queue.Queue()
 
@@ -93,54 +98,45 @@ class LocalQueue(Queue.Queue):
           continue
       self._lock.acquire()
       try:
-        try:
-          # remove it from the list of pending jobs
-          scheduler, job, jobtype, arrivalTime = self._queuingJobs[jobid]
-          del self._queuingJobs[jobid]
-          found = True
-        except KeyError:
-          # this job has already been canceled. Go to next one
-          pass
+        # remove it from the list of pending jobs
+        scheduler, job, jobtype, arrivalTime = self._queuingJobs[jobid]
+        del self._queuingJobs[jobid]
+        found = True
       finally:
         self._lock.release()
     # return
     return scheduler, jobid, job, jobtype, arrivalTime
 
-  def cancel(self, jobid):
-    '''cancels a given queuing job so that it will never be started'''
-    self._lock.acquire()
-    try:
-      # only remove it from the _queuingJobs dictionnary as we cannot
-      # remove it from the queue. When it will get picked from the
-      # queue, it will be ignored
-      try:
-        del self._queuingJobs[jobid]
-      except KeyError:
-        # already gone ? Fine with us
-        pass
-    finally:
-      self._lock.release()
-
-  def d2dSourceReady(self, jobid):
-    '''Called when a disk 2 disk copy source informs us that it's ready
-    we can thus unblock the corresponding job'''
-    self._lock.acquire()
-    try:
-      # if nothing is pending for this source, keep a note that the source started in runningSourcesWithoutDest
-      if jobid in self._pendingD2dDest:
-        self._pendingD2dDest.remove(jobid)
-        # else push job to priority queue
-        self._priorityQueue.put(jobid)
-    finally:
-      self._lock.release()
-
   def d2dDestReady(self, scheduler, jobid, job, arrivaltime, jobtype):
     '''called when a d2ddest job could not start as the source is not ready'''
     self._lock.acquire()
     try:
-      # we put the job on a pending list
+      # compute next time when we should try to start thsi job
+      currentTime = time.time()
+      timeToNextTry = (currentTime-arrivaltime)/2
+      if timeToNextTry > self.config['DiskManager']['MaxRetryInterval']:
+        timeToNextTry = self.config['DiskManager']['MaxRetryInterval']
+      # and put the job into the list of pending ones
       self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
-      self._pendingD2dDest.add(jobid)
+      self._pendingD2dDest.append((jobid, currentTime + timeToNextTry))
+    finally:
+      self._lock.release()
+
+  def pollD2dDest(self):
+    '''Checks which d2d destinations jobs waiting for sources should be retried'''
+    self._lock.acquire()
+    currentTime = time.time()
+    toBeDeleted = []
+    try:
+      # loop over all pending jobids
+      for i in range(len(self._pendingD2dDest)):
+        jobid, timeOfNextTry = self._pendingD2dDest[i]
+        # otherwise put the jobid back into the priority queue
+        syslog.syslog("Retrying job " + jobid)
+        self._priorityQueue.put(jobid)
+        toBeDeleted.append(jobid)
+      # cleanup list of pending jobids
+      self._pendingD2dDest = [(jobid, nextTry) for jobid, nextTry in self._pendingD2dDest if jobid not in toBeDeleted]
     finally:
       self._lock.release()
 
@@ -150,10 +146,6 @@ class LocalQueue(Queue.Queue):
 
   def bjobs(self):
     '''lists pending jobs in suitable format for bjobs'''
-    syslog.syslog("Content of _pendingD2dDest")
-    for lll in self._pendingD2dDest:
-      syslog.syslog(lll)
-    syslog.syslog("End of content of _pendingD2dDest")      
     res = []
     for job in self._queuingJobs.items():
       scheduler, rawjob, jobtype, arrivalTime = job[1]
@@ -167,6 +159,6 @@ class LocalQueue(Queue.Queue):
       res.append((job[0], scheduler, user, 'PEND', jobtype, arrivalTime, None))
     return res
 
-  def list(self):
+  def listQueuingJobs(self):
     '''lists pending jobs'''
     return [tuple([job[0]])+job[1][1:4] for job in self._queuingJobs.items()]

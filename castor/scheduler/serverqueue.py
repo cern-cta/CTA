@@ -99,23 +99,13 @@ class ServerQueue(dict):
         self._d2dsourcerunning[jobid] = diskserver
       finally:
         self._lock.release()
-      # inform all destination machines that the source is ready
-      for machine in self._jobsLocations[jobid]:
-        if machine != diskserver:
-          log(syslog.LOG_DEBUG, 'Calling d2dSourceReady on ' + machine + ' for jobid ' + jobid)
-          try:
-            self.connections.d2dSourceReady(machine, jobid)
-          except Exception, e:
-            # log that we've failed
-            log(LOG_ERR, "Informing " + diskserver + " that source of " + jobid + " is ready failed with error " + str(e))
     else:
       self._lock.acquire()
       try:
-        # check whether we are in a race condition where the job has already been
-        # started somewhere else but the calling diskserver does not yet know about it.
+        # check whether the job has already been started somewhere else
         if jobid not in self._jobsLocations:
           # in such a case, let the diskserver know by raising an exception
-          log(syslog.LOG_DEBUG, "Race condition detected : this job has already started : " + jobid)
+          log(syslog.LOG_DEBUG, diskserver + " : job " + jobid + " had already started. Cancel start.")
           raise ValueError
         # if a destination job wants to start, check whether the source is ready
         if jobtype == 'd2ddest' and not self[diskserver][jobid][3]:
@@ -130,15 +120,6 @@ class ServerQueue(dict):
         for machine in machines: del self[machine][jobid]
       finally:
         self._lock.release()
-      # inform all other machines that this job has been handled
-      for machine in machines:
-        if machine != diskserver:
-          log(syslog.LOG_DEBUG, 'informing ' + machine + ' for ' + jobid)
-          try:
-            self.connections.jobAlreadyStarted(machine, jobid)
-          except Exception, e:
-            # log that we've failed
-            log(LOG_ERR, "Informing " + diskserver + " that job " + jobid + " has already started with error " + str(e))
 
   def d2dend(self, jobid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
@@ -159,10 +140,31 @@ class ServerQueue(dict):
       self.connections.d2dend(diskserver, jobid)
     except Exception, e:
       # log that we've failed
-      log(LOG_ERR, "Informing " + diskserver + " that d2d copy of " + jobid + " is over failed with error " + str(e))
+      log(syslog.LOG_ERR, "Informing " + diskserver + " that d2d copy of " + jobid + " is over failed with error " + str(e))
 
-  def list(self, diskserver):
+  def putRunningD2dSource(self, diskserver, jobid, job, arrivaltime):
+    '''Adds a new d2dsource job to the list of runnign ones'''
+    self._lock.acquire()
+    try:
+      # add job to the list of running d2dsource jobs on the diskserver
+      if diskserver not in self: self[diskserver] = {}
+      self[diskserver][jobid] = [job, arrivaltime, 'd2dsource', 'True']
+      self._d2dsourcerunning[jobid] = diskserver
+    finally:
+      self._lock.release()
+
+  def listQueuingJobs(self, diskserver):
+    '''This is called by the scheduler when rebuilding the list of queuing jobs for a given diskserver'''
     if diskserver in self:
-      return [tuple([job[0]]+job[1][0:3]) for job in self[diskserver].items()]
+      res = [tuple([jobid]+job[0:3]) for jobid, job in self[diskserver].items() if jobid not in self._d2dsourcerunning]
+      return res
     else:
       return []
+
+  def listRunningD2dSources(self, diskserver):
+    '''This is called by the scheduler when rebuilding the list of running d2dsource jobs for a given diskserver'''
+    res = []
+    for jobid in [jobid for jobid in self._d2dsourcerunning if self._d2dsourcerunning[jobid] == diskserver]:
+      job, arrivaltime, jobtype, ready = self[diskserver][jobid]
+      res.append((jobid, job, arrivaltime))
+    return res
