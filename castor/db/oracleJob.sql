@@ -311,7 +311,7 @@ BEGIN
       FROM SubRequest, StageDiskCopyReplicaRequest
      WHERE SubRequest.diskcopy = dcId
        AND SubRequest.request = StageDiskCopyReplicaRequest.id
-       AND SubRequest.status = 6; -- READY
+       AND SubRequest.status = dconst.SUBREQUEST_READY;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20111, 'Replication request canceled while queuing in scheduler. Giving up.');
   END;
@@ -1073,5 +1073,180 @@ BEGIN
          AND DiskCopy.id != reqSourceDiskCopy
          AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
   END IF;
+
+END;
+/
+
+CREATE OR REPLACE TRIGGER tr_SubRequest_informScheduler AFTER UPDATE OF status ON SubRequest
+FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
+BEGIN 
+  DBMS_ALERT.SIGNAL('jobsReadyToSchedule', ''); 
+END;
+/
+
+/* PL/SQL method implementing jobToSchedule */
+CREATE OR REPLACE
+PROCEDURE jobToSchedule2(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
+                        srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
+                        srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
+                        cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
+                        reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
+                        reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
+                        reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
+                        clientIp OUT INTEGER,          clientPort OUT INTEGER,
+                        clientVersion OUT INTEGER,     clientType OUT INTEGER,
+                        reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
+                        clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
+                        reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
+                        sourceRfs OUT VARCHAR2) AS
+  cfId NUMBER;
+  -- Cursor to select the next candidate for submission to the scheduler orderd
+  -- by creation time.
+  CURSOR c IS
+    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+      FROM SubRequest
+ PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
+     ORDER BY SR.creationTime ASC;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  srIntId NUMBER;
+  svcClassId NUMBER;
+  unusedMessage VARCHAR2(2048);
+  unusedStatus INTEGER;
+BEGIN
+  -- Loop on all candidates for submission into LSF
+  OPEN c;
+  LOOP
+    -- Retrieve the next candidate
+    FETCH c INTO srIntId;
+    WHILE c%NOTFOUND LOOP
+      CLOSE c;
+      OPEN c;
+      FETCH c INTO srIntId;
+      IF c%NOTFOUND THEN
+        -- There are no candidates available. Wait for next alert concerning something
+        -- to schedule or at least 5s before we retry.
+        -- We do not wait forever in order to ensure that we will still try from time to
+        -- time to dig out candidates that timed out in status BEINGSCHED
+        DBMS_ALERT.WAITONE('jobsReadyToSchedule', unusedMessage, unusedStatus, 5); 
+      END IF;
+    END LOOP; 
+    BEGIN
+      -- Try to lock the current candidate, verify that the status is valid. A
+      -- valid subrequest is either in READYFORSCHED or has been stuck in
+      -- BEINGSCHED for more than 1800 seconds (30 mins)
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
+        FROM SubRequest PARTITION (P_STATUS_13_14) SR
+       WHERE id = srIntId
+         AND ((status = dconst.SUBREQUEST_READYFORSCHED)
+          OR  (status = dconst.SUBREQUEST_BEINGSCHED
+         AND lastModificationTime < getTime() - 1800))
+         FOR UPDATE;
+      -- We have successfully acquired the lock, so we update the subrequest
+      -- status and modification time
+      UPDATE SubRequest
+         SET status = dconst.SUBREQUEST_READY,
+             lastModificationTime = getTime()
+       WHERE id = srIntId
+      RETURNING id, subReqId, protocol, xsize, requestedFileSystems
+        INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
+      EXIT;
+    EXCEPTION
+      -- Try again, either we failed to accquire the lock on the subrequest or
+      -- the subrequest being processed is not the correct state 
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+      WHEN SrLocked THEN
+        NULL;
+    END;
+  END LOOP;
+  CLOSE c;
+
+  -- Extract the rest of the information required to submit a job into the
+  -- scheduler through the job manager.
+  SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
+         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username,
+         Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
+         Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
+         (SELECT type
+            FROM Id2type
+           WHERE id = Client.id) clientType, Client.secure, Request.creationTime,
+         decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
+    INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
+         reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
+         clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
+         reqDefaultFileSize
+    FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
+         (SELECT id, username, euid, egid, reqid, client, creationTime,
+                 'w' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
+            FROM StagePutRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, creationTime,
+                 'r' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
+            FROM StageGetRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, creationTime,
+                 'o' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
+            FROM StageUpdateRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, creationTime,
+                 'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
+                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
+            FROM StageDiskCopyReplicaRequest) Request
+   WHERE SubRequest.id = srId
+     AND SubRequest.castorFile = CastorFile.id
+     AND Request.svcClass = SvcClass.id
+     AND Id2type.id = SubRequest.request
+     AND Request.id = SubRequest.request
+     AND Request.client = Client.id;
+
+  -- In case of disk2disk copies, requested filesystems are concerning the sources
+  -- destinations are free
+  IF reqType = 133 THEN  -- StageDiskCopyReplicaRequest
+    sourceRfs := srRfs;
+    srRfs := NULL;
+  END IF;
+
+  -- Select random filesystems to use if none is already requested
+  IF LENGTH(srRfs) IS NULL THEN
+    DECLARE
+      nbMachines NUMBER := 0;
+      machinesUsed "numList" := "numList"(-1,-1,-1,-1,-1);
+      unused INTEGER := 0;
+    BEGIN
+      FOR line IN (SELECT DiskServer.name || ':' || FileSystem.mountPoint AS candidate, DiskServer.id
+                     FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskCopy
+                    WHERE FileSystem.diskServer = DiskServer.id
+                      AND FileSystem.diskPool = DiskPool2SvcClass.parent
+                      AND DiskPool2SvcClass.child = SvcClassId
+                      AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                      AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+                      AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
+                      -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
+                      AND FileSystem.id NOT IN
+                            (SELECT diskserver FROM DiskCopy, FileSystem
+                              WHERE DiskCopy.castorFile = cfId
+                                AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY,
+                                                        dconst.DISKCOPY_CANBEMIGR)
+                                AND FileSystem.id = DiskCopy.fileSystem)
+                    ORDER BY DBMS_Random.value) LOOP
+        BEGIN
+          -- Check whether the machine selected is already listed
+          -- we want to select different machines, not different filesystems on the same machine
+          SELECT 0 INTO unused FROM DUAL WHERE line.id IN (SELECT * FROM TABLE(machinesUsed));
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          IF LENGTH(srRfs) IS NOT NULL THEN srRfs := srRfs || '|'; END IF;
+          srRfs := srRfs || line.candidate;
+          nbMachines := nbMachines + 1;
+          machinesUsed(nbMachines) := line.id;
+          IF nbMachines = 5 THEN EXIT; END IF;
+        END;
+      END LOOP;
+    END;
+  END IF;
+
 END;
 /
