@@ -24,12 +24,171 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os, sys, time, syslog
+import os, sys, time, dlf
 
 def checkValueFound(name, value, instance, configFile):
     if len(value) == 0:
         raise ValueError, "No " + name + " found for " + instance + " in " + configFile
 
+#-------------------------------------------------------------------------------
+# importOracle
+#-------------------------------------------------------------------------------
+def importOracle():
+    global cx_Oracle
+    try:
+        import cx_Oracle
+    except Exception:
+        raise Exception, '''Fatal: could not load module cx_Oracle.
+Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides and that
+your ORACLE environment is setup properly.'''
+
+# DLF initialization
+DLF_BASE_CASTORTOOLSLIB = 1000
+
+msgs = enum('CREATEDORACONN', 'DROPPEDORACONN', 'INVALIDOPT', 
+            base=DLF_BASE_CASTORTOOLSLIB)
+dlf.addmessages({msgs.CREATEDORACONN : 'Created new Oracle connection',
+                 msgs.DROPPEDORACONN : 'Oracle connection dropped',
+                 msgs.INVALIDOPT : 'Invalid option in castor.conf'})
+
+#-------------------------------------------------------------------------------
+# DBConnection
+#-------------------------------------------------------------------------------
+class DBConnection:
+    '''This class wraps an Oracle database connection with the ability to automatically reconnect when 
+    the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
+    
+    # class-level constant defining the database schemaVersion expected by the code
+    SCHEMAVERSION = "2_1_10_0"
+    
+    def __init__(self, connString):
+        '''Constructor'''
+        importOracle()
+        self.connString = connString
+        self._autocommit = False
+        self.initConnection()
+        # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
+        self.errorCodesForReconnect = [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012, 1003, 12571, 1033, 1089, 12537]
+    
+    def initConnection(self):
+        '''Instantiates an Oracle connection and checks the schema version defined in the db against the code one.
+        Raises ValueError in case of mismatch, cx_Oracle.OperationalError for any other Oracle issue.'''
+        self.connection = cx_Oracle.Connection(self.connString)
+        self.connection.autocommit = self._autocommit
+        cur = self.connection.cursor()
+        cur.execute("SELECT schemaVersion FROM CastorVersion")
+        dbVer = cur.fetchone()
+        cur.close()
+        if dbVer == None:
+            raise ValueError, 'No CastorVersion table found in the database'
+        if dbVer[0] <> DBConnection.SCHEMAVERSION:
+            raise ValueError, 'Version mismatch between the database and the software : "'
+            + dbVer + '" versus "' + DBConnection.SCHEMAVERSION + '"'
+        dlf.write(msgs.CREATEDORACONN, 'Created new Oracle connection')
+    
+    # autocommit property
+    def set_autocommit(self, value):
+        self._autocommit = value
+        self.connection.autocommit = value
+    
+    def get_autocommit(self):
+        return self._autocommit
+        
+    self.autocommit = property(get_autocommit, set_autocommit)
+    
+    def cursor(self):
+        '''Returns a wrapper around cx_Oracle.cursor'''
+        return DBCursor(self)
+    
+    def __getattr__(self, name):
+        '''Implements a facade pattern: any method of the underlying connection is exposed by this class,
+        but disconnections are handled automatically'''
+        def facade(*args):
+            try:
+                if hasattr(self.connection, name):
+                    return getattr(self.connection, name)(*args)
+                else:
+                    return lambda: NotImplemented()
+            except cx_Oracle.OperationalError, e:
+                # we got an Oracle error, let's see if we have to reconnect
+                if (e.args.code in self.errorCodesForReconnect) or (e.args.code >= 25401 and e.args.code <= 25409):
+                    # yes, try again
+                    self.connection.close()
+                    self.initConnection()
+                    return getattr(self.connection, name)(*args)
+                else:
+                    # no, something else has happened, the caller will sort it out
+                    raise
+        return facade
+
+#-------------------------------------------------------------------------------
+# DBCursor
+#-------------------------------------------------------------------------------
+class DBCursor:
+    '''This class wraps a cx_Oracle.cursor object with the ability to automatically reconnect when 
+    the underlying db connection drops. See DBConnection'''
+     
+    def __init__(self, dbConnection)
+        self.dbConnection = dbConnection
+        self.cursor = dbConnection.connection.cursor()
+        self._arraysize = 50    # default value in cx_Oracle.cursor
+        self.retriableCalls = ['execute', 'callproc']   # only those two methods are retried for dropped connections
+        
+    # arraysize property
+    def set_arraysize(self, value):
+        self._arraysize = value
+        self.cursor.arraysize = value
+    
+    def get_arraysize(self):
+        return self._arraysize
+        
+    self.arraysize = property(get_arraysize, set_arraysize)
+    
+    def __getattr__(self, name):
+        '''Implements a facade pattern: any method of the underlying cursor is exposed by this class,
+        and in case of retriable calls, as defined in self.retriableCalls, disconnections are handled automatically'''
+        
+        if name not in self.retriableCalls or not hasattr(self.cursor, name):
+            return getattr(self.cursor, name)
+
+        def facade(*args):
+            try:
+                return getattr(self.cursor, name)(*args)
+            except cx_Oracle.OperationalError, e:
+                # we got an Oracle error, let's see if we have to reconnect
+                if (e.args.code in self.errorCodesForReconnect) or (e.args.code >= 25401 and e.args.code <= 25409):
+                    # yes, try again: we are either in execute or in callproc, hence the cursor
+                    # has no state and it is fine to get a new one and reexecute the same method
+                    # (fetch operations wouldn't work with this pattern so they're NOT retriable
+                    self.dbConnection.connection.close()
+                    self.dbConnection.initConnection()
+                    self.cursor = self.dbConnection.connection.cursor()
+                    self.cursor.arraysize = self._arraysize
+                    return getattr(self.cursor, name)(*args)
+                else:
+                    # no, something else has happened, the caller will sort it out
+                    raise
+
+        return facade
+
+
+#-------------------------------------------------------------------------------
+# connectToDB
+#-------------------------------------------------------------------------------
+def connectToDB(user, passwd, dbname):
+    return DBConnection(user + '/' + passwd + '@' + dbname)
+
+#-------------------------------------------------------------------------------
+# disconnectDB
+#-------------------------------------------------------------------------------
+def disconnectDB(connection):
+    connection.close()
+    dlf.write(msgs.DROPPEDDORACONN, 'Oracle connection dropped')
+
+
+#-------------------------------------------------------------------------------
+# getStagerDBConnectParams
+#-------------------------------------------------------------------------------
 def getStagerDBConnectParams():
     # find out the instance to use
     full_name = "DbCnvSvc"
@@ -62,6 +221,9 @@ def getStagerDBConnectParams():
     checkValueFound("DB name", dbname, inst, 'ORASTAGERCONFIG')
     return user, passwd, dbname
 
+#-------------------------------------------------------------------------------
+# getNSDBConnectParam
+#-------------------------------------------------------------------------------
 def getNSDBConnectParam(file):
     line = open('/etc/castor/' + file).readline()
     line = line[0:len(line)-1] #drop trailing \n
@@ -78,7 +240,6 @@ def getNSDBConnectParam(file):
     checkValueFound("password", passwd, 'nameserver', file)
     checkValueFound("DB name", dbname, 'nameserver', file)
     return user, passwd, dbname
-
 
 #-------------------------------------------------------------------------------
 # getVdqmDBConnectParams
@@ -117,7 +278,7 @@ def getVdqmDBConnectParams():
 
 
 #-------------------------------------------------------------------------------
-# connectToVmgr
+# connectTo_ methods
 #-------------------------------------------------------------------------------
 def connectToVmgr():
     # find out the instance to use
@@ -132,27 +293,12 @@ def connectToVmgr():
         if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
         try:
-            importOracle() 
-            conn = cx_Oracle.Connection( l.strip() )
+            conn = DBConnection( l.strip() )
             break
         except cx_Oracle.DatabaseError, exc:
-           print 'connectToVmgr Error:  Unexpected error while connecting to the VMGR db'
-           raise
+            print 'connectToVmgr Error:  Unexpected error while connecting to the VMGR db'
+            raise
     return conn
-
-
-def importOracle():
-    global cx_Oracle
-    try:
-        import cx_Oracle
-    except Exception:
-        raise Exception, '''Fatal: could not load module cx_Oracle.
-Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides and that
-your ORACLE environment is setup properly.'''
-
-def connectToDB(user, passwd, dbname):
-    importOracle()
-    return cx_Oracle.Connection(user + '/' + passwd + '@' + dbname)
 
 def connectToStager():
     user, passwd, dbname = getStagerDBConnectParams()
@@ -166,11 +312,12 @@ def connectToDLF():
     user, passwd, dbname = getNSDBConnectParam('DLFCONFIG')
     return connectToDB(user, passwd, dbname)
 
-def disconnectDB(connection):
-  connection.close()
 
-# create the nsFileCl dictionary from nslistclass
+#-------------------------------------------------------------------------------
+# parseNsListClass
+#-------------------------------------------------------------------------------
 def parseNsListClass():
+  '''creates the nsFileCl dictionary from nslistclass'''
   global nsFileCl 
   nsFileCl = {'0' : 'null'}
   print "Parsing nslistclass output..."
@@ -220,6 +367,9 @@ def intToBoolean(entry, value):
     else:
         return value
 
+#-------------------------------------------------------------------------------
+# castorObject
+#-------------------------------------------------------------------------------
 class castorObject(dict):
   '''a base object for CASTOR items.
   This includes clever printing and case insensitive member access'''
@@ -301,6 +451,9 @@ def fillObjectn2n(stcur, obj, entry, table):
   stmt = 'SELECT ' + table + '.* FROM ' + table + ',' + jointable + ' WHERE ' + jointable + '.' + key1 + '=' + table + '.id AND ' + jointable + '.' + key2 + '=' + str(obj.id)
   fillObjectgeneric(stcur, obj, entry, table, stmt)
 
+#-------------------------------------------------------------------------------
+# getSvcClass
+#-------------------------------------------------------------------------------
 def getSvcClass(svcClassName):
     '''Gets the content of a given service class'''
     try:
@@ -317,6 +470,9 @@ def getSvcClass(svcClassName):
         print e
         sys.exit(-1)
 
+#-------------------------------------------------------------------------------
+# getFileClass
+#-------------------------------------------------------------------------------
 def getFileClass(fileClassName):
     '''Gets the content of a given file class'''
     try:
@@ -329,6 +485,10 @@ def getFileClass(fileClassName):
         print e
         sys.exit(-1)
 
+
+#-------------------------------------------------------------------------------
+# CastorConf
+#-------------------------------------------------------------------------------
 class CastorConf(dict):
     '''This class allows easy manipulation of the castor config file from python.
     It caches the content of the file for fast access and refreshes it regularly.
@@ -376,7 +536,7 @@ class CastorConf(dict):
             try:
                 value = typ(strvalue)
             except ValueError:
-                syslog.syslog(syslog.LOG_ERR, "Invalid " + category + '/' + key + ' option, ignoring it : ' + strvalue)
+                dlf.writeerr(msgs.INVALIDOPT, msg='Invalid ' + category + '/' + key + ' option, ignoring it : ' + strvalue)
                 value = default
         except KeyError:
             value = default
