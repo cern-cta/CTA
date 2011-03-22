@@ -1,7 +1,7 @@
 '''
 Created on May 18, 2010
 
-TreeRules define per level and model what count/children/parent methods to use and attributes to evaluate.
+RuleMapping define per level and model what count/children/parent methods to use and attributes to evaluate.
 fparams define additional parameters that will be passed to a TransFunction.
 A TransFunction translates object attributes into numbers.
 

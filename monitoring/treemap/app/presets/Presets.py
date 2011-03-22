@@ -18,7 +18,7 @@ from app.presets.options.BooleanOption import BooleanOption
 from app.presets.options.DateOption import DateOption
 from app.presets.options.SpinnerOption import SpinnerOption
 from app.tools.Inspections import getDefaultNumberOfLevels
-from app.treemap.objecttree.TreeRules import LevelRules
+from app.treemap.objecttree.RuleMapping import LevelRules
 import copy
     
 class Preset(object):

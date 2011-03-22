@@ -15,7 +15,7 @@ from app.tools.StatusTools import generateStatusFile
 from app.treemap.objecttree.ObjectTree import ObjectTree
 from app.treemap.objecttree.Postprocessors import *
 from app.treemap.objecttree.TreeNode import TreeNode
-from app.treemap.objecttree.TreeRules import LevelRules
+from app.treemap.objecttree.RuleMapping import LevelRules
 from app.treemap.objecttree.Annex import Annex
 import inspect
 

@@ -1,7 +1,7 @@
 '''
 Created on Jul 14, 2010
 
-A ViewNodeDimension extracts specific information ("Dimension") from a ViewNode and provides a method getValue to access the value 
+A Dimension extracts specific information ("Dimension") from a ViewNode and provides a method getValue to access the value 
 It is like watching at ViewNode from different points of view. Sometimes you want to see the level af a node, sometimes you want to see a description of a node.
 
 This "Dimension" can then be associated with a graphical property by using DimensionVisPropMapping:
@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from app.dirs.models import *
 from app.tools.Inspections import ModelAttributeFinder
 from app.tools.TextTools import sizeInBytes, splitText
-from app.treemap.drawing.dimensionmapping.AttributeTranslators import *
+from app.treemap.drawing.dimensionmapping.Translators import *
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.viewtree.ViewNode import ViewNode
 import exceptions
@@ -27,7 +27,7 @@ import math
 import string
 import sys
 
-class ViewNodeDimensionBase(object):
+class DimensionInterface(object):
     '''
     classdocs
     '''
@@ -38,12 +38,12 @@ class ViewNodeDimensionBase(object):
         raise Exception("implementation of getValue() not found")
 
 #outputs the level number
-class LevelDimension(ViewNodeDimensionBase):
+class LevelDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self):
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
@@ -53,26 +53,26 @@ class LevelDimension(ViewNodeDimensionBase):
         return ret
 
         
-class ConstantDimension(ViewNodeDimensionBase):
+class ConstantDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self, constant):
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
         self.constant = constant
         
     def getValue(self, tnode):
         return self.constant
     
 #evaluates any attribute to number   
-class ColumnDimension(ViewNodeDimensionBase):
+class ColumnDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self, attrname, translation): #translation.translate (db object)
         
         assert(translation is not None)
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
         self.translation = translation
         self.attrname = attrname
 
@@ -88,12 +88,12 @@ class ColumnDimension(ViewNodeDimensionBase):
         
         return ret
     
-class RawColumnDimension(ViewNodeDimensionBase):
+class RawColumnDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self, attrname, translation = RawLinearTranslator()): #translation.translate (object)
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
         self.translation = translation
         self.attrname = attrname
 
@@ -104,12 +104,12 @@ class RawColumnDimension(ViewNodeDimensionBase):
         ret = self.translation.translate(modelinstance, self.attrname)
         return ret
     
-class FileExtensionDimension(ViewNodeDimensionBase):
+class FileExtensionDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self, attrname, translation = FileExtensionTranslator()): #translation.translate (object)
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
         self.translation = translation
         self.attrname = attrname
 
@@ -123,13 +123,13 @@ class FileExtensionDimension(ViewNodeDimensionBase):
             return None
         return ret
     
-class DirToolTipDimension(ViewNodeDimensionBase):
+class DirToolTipDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self): #translation.translate (object)
         
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
 
         
     def getValue(self, tnode):
@@ -162,13 +162,13 @@ class DirToolTipDimension(ViewNodeDimensionBase):
                                                 'nbfiles':nbfiles, 'nbdirs':nbdirs, 'nbsubtreefiles':nbsubtreefiles, 'nbsubtreedirs':nbsubtreedirs}, \
                                 context_instance=None)
         
-class FileToolTipDimension(ViewNodeDimensionBase):
+class FileToolTipDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self): #translation.translate (object)
         
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
 
         
     def getValue(self, tnode):
@@ -199,13 +199,13 @@ class FileToolTipDimension(ViewNodeDimensionBase):
                                                 'dirnameparts': dirnameparts}, \
                                 context_instance=None)
     
-class AnnexToolTipDimension(ViewNodeDimensionBase):
+class AnnexToolTipDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self): #translation.translate (object)
         
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
 
         
     def getValue(self, tnode):
@@ -233,13 +233,13 @@ class AnnexToolTipDimension(ViewNodeDimensionBase):
                                                       'dirnameparts': dirnameparts, 'nbitems': nbitems}, \
                                 context_instance=None)
     
-class RequestsToolTipDimension(ViewNodeDimensionBase):
+class RequestsToolTipDimension(DimensionInterface):
     '''
     classdocs
     '''
     def __init__(self): #translation.translate (object)
         
-        ViewNodeDimensionBase.__init__(self)
+        DimensionInterface.__init__(self)
 
         
     def getValue(self, tnode):

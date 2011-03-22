@@ -27,12 +27,12 @@ from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
-from app.treemap.drawing.dimensionmapping.AttributeTranslators import *
+from app.treemap.drawing.dimensionmapping.Translators import *
 from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import DimensionVisPropMapping
-from app.treemap.drawing.dimensionmapping.ViewNodeDimensions import *
+from app.treemap.drawing.dimensionmapping.Dimensions import *
 from app.treemap.objecttree.Postprocessors import *
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
-from app.treemap.objecttree.TreeRules import LevelRules
+from app.treemap.objecttree.RuleMapping import LevelRules
 from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
 import datetime
 import re
