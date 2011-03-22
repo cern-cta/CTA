@@ -1218,7 +1218,7 @@ BEGIN
       unused INTEGER := 0;
     BEGIN
       FOR line IN (SELECT DiskServer.name || ':' || FileSystem.mountPoint AS candidate, DiskServer.id
-                     FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskCopy
+                     FROM DiskServer, FileSystem, DiskPool2SvcClass
                     WHERE FileSystem.diskServer = DiskServer.id
                       AND FileSystem.diskPool = DiskPool2SvcClass.parent
                       AND DiskPool2SvcClass.child = SvcClassId
