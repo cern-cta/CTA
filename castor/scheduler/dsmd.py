@@ -35,6 +35,9 @@ import tempfile
 import threading
 import Queue
 import connectionpool
+import castor_tools
+import syslog
+import daemon
 
 # usage function
 def usage(exitCode):
@@ -43,8 +46,9 @@ def usage(exitCode):
 
 # first parse the options
 verbose = False
+fake = False
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose', 'fakemode'])
 except Exception, e:
     print e
     usage(1)
@@ -53,6 +57,8 @@ for f, v in options:
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
+    elif f == '--fakemode':
+        fake = True
     else:
         print "unknown option : " + f
         usage(1)
@@ -71,44 +77,44 @@ class DiskServerManagerService(rpyc.Service):
     def exposed_scheduleJob(self, scheduler, jobid, job, jobtype='standard'):
         '''Called when a new job needs to be scheduled.
         Queues the new job.'''
-        if verbose: print 'scheduleJob called from ' + scheduler + ' for jobid ' + jobid + ' (' + jobtype + ')'
+        log(syslog.LOG_DEBUG, 'scheduleJob called from ' + scheduler + ' for jobid ' + jobid + ' (' + jobtype + ')')
         return jobQueue.put(scheduler, jobid, job, jobtype)
 
     def exposed_nbJobs(self):
         '''Called when bhosts or bqueues monitoring is needed.
         Returns the number of slots. running jobs and pending jobs on the diskserver'''
-        if verbose: print 'nbJobs called'
+        log(syslog.LOG_DEBUG, 'nbJobs called')
         return (int(configuration['JobManager']['MaxNbStreams']), runningJobs.nbJobs(), jobQueue.qsize())
 
     def exposed_badmin(self):
         '''Called when the diskserver should be reconfigured, e.g. on a badmin call'''
-        if verbose: print 'badmin called'
+        log(syslog.LOG_DEBUG, 'badmin called')
         configuration.refresh()
 
     def exposed_bjobs(self):
         '''Called when bjobs monitoring is needed.
         Lists all jobs running or pending on this host'''
-        if verbose: print 'bjobs called'
+        log(syslog.LOG_DEBUG, 'bjobs called')
         return tuple(runningJobs.bjobs() + jobQueue.bjobs())
 
     def exposed_jobAlreadyStarted(self, jobid):
         '''Called when a job has started on another diskserver and can be canceled on this one'''
-        print 'Canceled start of ' + jobid + '(already started on another host)'
+        log('Canceled start of ' + jobid + '(already started on another host)')
         jobQueue.cancel(jobid)
 
     def exposed_getQueuingJobs(self, scheduler):
         '''returns the list of jobs in the queue'''
-        if verbose: print 'getQueuingJobs called from ' + scheduler
+        log(syslog.LOG_DEBUG, 'getQueuingJobs called from ' + scheduler)
         return tuple(jobQueue.list())
 
     def exposed_d2dSourceReady(self, jobid):
         '''called when a d2d source is ready to deliver data'''
-        if verbose: print 'd2dSourceReady called for jobid ' + jobid
+        log(syslog.LOG_DEBUG, 'd2dSourceReady called for jobid ' + jobid)
         jobQueue.d2dSourceReady(jobid)
 
     def exposed_d2dend(self, jobid):
         '''called when a d2d copy is over and we are the source'''
-        if verbose: print 'd2dend called for jobid ' + jobid
+        log(syslog.LOG_DEBUG, 'd2dend called for jobid ' + jobid)
         runningJobs.d2dend(jobid)
 
 class ActivityControl(threading.Thread):
@@ -133,7 +139,7 @@ class ActivityControl(threading.Thread):
                     # somewhere else
                     connections.jobStarting(scheduler, socket.gethostname(), jobid, jobtype)
                     # log job start
-                    print 'Starting ' + jobid + ' (' + jobtype + ')'
+                    log('Starting ' + jobid + ' (' + jobtype + ')')
                     # in case of d2dsource, do not actually start for real, only take note
                     if jobtype == 'd2dsource':
                         runningJobs.d2dstart(jobid, scheduler, job, jobtype, arrivalTime)
@@ -148,10 +154,13 @@ class ActivityControl(threading.Thread):
                         cmd = list(job[:-1])
                         cmd.append('file://'+notifFileName)
                         # start the job
-                        process = subprocess.Popen(cmd)
+                        if not fake:
+                          process = subprocess.Popen(cmd)
+                        else:
+                          process = 0
                         runningJobs.add(jobid, scheduler, job, notifFileName, process, jobtype, arrivalTime)
                 except ValueError:
-                    print 'Canceled start of ' + jobid + '(already started on another host)'
+                    log('Canceled start of ' + jobid + '(already started on another host)')
                     # the job has already started somewhere else, so give up
                     pass
                 except EnvironmentError:
@@ -189,7 +198,10 @@ class RunningJobs:
         for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
             # take care that fake d2dsource jobs have no process
             if process != None:
-                rc = process.poll()
+                if not fake:
+                  rc = process.poll()
+                else:
+                  rc = True
                 if rc != None:
                     # remove the notification file
                     os.remove(notifyFileName)
@@ -333,12 +345,19 @@ def initQueues():
                 jobQueue.put(scheduler, jobid, job, jobtype, arrivaltime)
         except Exception, e:
             # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
-            print 'No queue could be retrieved from ' + scheduler + ' (' + str(e) + ')'
+            log('No queue could be retrieved from ' + scheduler + ' (' + str(e) + ')')
             pass
 
-if __name__ == "__main__":
+# Note that from python 2.5 on, the daemonization should use the "with" statement :
+# with daemon.DaemonContext():
+#   rest of the code
+context = daemon.DaemonContext()
+context.__enter__()
+try:
+    # setup logging
+    syslog.openlog('dsmd', 0, syslog.LOG_LOCAL3)
+    log = syslog.syslog
     # get configuration
-    import castor_tools
     configuration = castor_tools.castorConf()
     # create a queue of jobs to be run
     jobQueue = JobQueue()
@@ -365,3 +384,5 @@ if __name__ == "__main__":
     # so let's stop the other threads
     activityControl.stop()
     jobCompletionControl.stop()
+finally:
+    context.__exit__(None, None, None)
