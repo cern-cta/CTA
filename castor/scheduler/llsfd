@@ -283,7 +283,7 @@ try:
     # defines a service listening for monitoring queries and answering them
     from rpyc.utils.server import ThreadedServer
     llsfd = ThreadedServer(SchedulerService,
-                           port = configuration.getValue('Scheduler', 'Port', 2681, int),
+                           port = configuration.getValue('Scheduler', 'Port', 15011, int),
                            auto_register=False)
     llsfd.daemon = True
     # launch a processing thread that will regularly check if we need to schedule new jobs

@@ -299,7 +299,7 @@ try:
     # launch a service listening for new jobs from the central scheduler and filling the queue
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(DiskServerManagerService, 
-                       port = configuration.getValue('DiskManager', 'Port', 56406, int),
+                       port = configuration.getValue('DiskManager', 'Port', 15011, int),
                        auto_register=False)
     t.daemon = True
     t.start()
