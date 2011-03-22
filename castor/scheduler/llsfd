@@ -158,7 +158,7 @@ class SchedulerService(rpyc.Service):
   def exposed_jobStarting(self, diskserver, jobid, jobtype):
     '''called when a job started on a given diskserver'''
     log(syslog.LOG_DEBUG, 'jobStarting called for job ' + jobid + ' (' + jobtype + ') on ' + diskserver)
-    machinesToInform = queuingJobs.remove(diskserver, jobid, jobtype)
+    machinesToInform = queuingJobs.jobStarting(diskserver, jobid, jobtype)
 
   def exposed_getQueuingJobs(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of jobs'''
@@ -220,6 +220,7 @@ try:
   # launch a processing thread that will regularly check if we need to schedule new jobs
   # and dispatch them on the relevant diskservers
   dispatch = dispatcher.Dispatcher(connections, queuingJobs)
+  dispatch.setName('Dispatcher')
   dispatch.setDaemon(True)
   dispatch.start()
   # launch a service listening for monitoring queries and answering them

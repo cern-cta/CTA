@@ -25,9 +25,10 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import time
+import pwd
 import Queue
 import threading
+import syslog
 
 class LocalQueue(Queue.Queue):
   '''Class managing a queue of pending jobs.
@@ -54,16 +55,27 @@ class LocalQueue(Queue.Queue):
     # set of jobs to start with highest priority
     self._priorityQueue = Queue.Queue()
 
-  def put(self, scheduler, jobid, job, jobtype, arrivaltime = None):
+  def put(self, scheduler, jobid, job, jobtype, arrivaltime):
     '''Put new job in the queue'''
     self._lock.acquire()
-    # first keep note of the new job (index by subreqId)
-    if arrivaltime == None: arrivaltime = time.time()
-    self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
-    # then add it to the underlying queue
-    Queue.Queue.put(self,jobid)
-    self._lock.release()
-    return arrivaltime
+    try:
+      # first keep note of the new job (index by subreqId)
+      self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
+      # then add it to the underlying queue
+      Queue.Queue.put(self,jobid)
+    finally:
+      self._lock.release()
+
+  def priorityPut(self, scheduler, jobid, job, jobtype, arrivaltime):
+    '''Put new job in the priority queue'''
+    self._lock.acquire()
+    try:
+      # first keep note of the new job (index by subreqId)
+      self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
+      # then add it to the underlying queue
+      self._priorityQueue.put(jobid)
+    finally:
+      self._lock.release()
 
   def get(self):
     '''get a job from the queue'''
@@ -81,52 +93,79 @@ class LocalQueue(Queue.Queue):
           continue
       self._lock.acquire()
       try:
-        # remove it from the list of pending jobs
-        scheduler, job, jobtype, arrivalTime = self._queuingJobs[jobid]
-        del self._queuingJobs[jobid]
-        found = True
-      except KeyError:
-        # this job has already been canceled. Go to next one
-        pass
-      self._lock.release()
+        try:
+          # remove it from the list of pending jobs
+          scheduler, job, jobtype, arrivalTime = self._queuingJobs[jobid]
+          del self._queuingJobs[jobid]
+          found = True
+        except KeyError:
+          # this job has already been canceled. Go to next one
+          pass
+      finally:
+        self._lock.release()
     # return
     return scheduler, jobid, job, jobtype, arrivalTime
 
   def cancel(self, jobid):
     '''cancels a given queuing job so that it will never be started'''
     self._lock.acquire()
-    # only remove it from the _queuingJobs dictionnary as we cannot
-    # remove it from the queue. When it will get picked from the
-    # queue, it will be ignored
     try:
-      del self._queuingJobs[jobid]
-    except KeyError:
-      # already gone ? Fine with us
-      pass
-    self._lock.release()
+      # only remove it from the _queuingJobs dictionnary as we cannot
+      # remove it from the queue. When it will get picked from the
+      # queue, it will be ignored
+      try:
+        del self._queuingJobs[jobid]
+      except KeyError:
+        # already gone ? Fine with us
+        pass
+    finally:
+      self._lock.release()
 
   def d2dSourceReady(self, jobid):
     '''Called when a disk 2 disk copy source informs us that it's ready
     we can thus unblock the corresponding job'''
-    # ignore if nothing is pending for this source
     self._lock.acquire()
-    if jobid in self._pendingD2dDest:
-      self._pendingD2dDest.remove(jobid)
-      # push job to priority queue
-      self._priorityQueue.put(jobid)
-    self._lock.release()
+    try:
+      # if nothing is pending for this source, keep a note that the source started in runningSourcesWithoutDest
+      if jobid in self._pendingD2dDest:
+        self._pendingD2dDest.remove(jobid)
+        # else push job to priority queue
+        self._priorityQueue.put(jobid)
+    finally:
+      self._lock.release()
 
   def d2dDestReady(self, scheduler, jobid, job, arrivaltime, jobtype):
     '''called when a d2ddest job could not start as the source is not ready'''
     self._lock.acquire()
-    # we put the job on a pending list
-    self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
-    self._pendingD2dDest.add(jobid)
-    self._lock.release()
+    try:
+      # we put the job on a pending list
+      self._queuingJobs[jobid] = (scheduler, job, jobtype, arrivaltime)
+      self._pendingD2dDest.add(jobid)
+    finally:
+      self._lock.release()
+
+  def nbJobs(self):
+    '''returns number of queuing jobs'''
+    return len(self._queuingJobs)
 
   def bjobs(self):
     '''lists pending jobs in suitable format for bjobs'''
-    return [(job[0], job[1][0], job[1][1][20], 'PEND', job[1][2], job[1][3], None) for job in self._queuingJobs.items()]
+    syslog.syslog("Content of _pendingD2dDest")
+    for lll in self._pendingD2dDest:
+      syslog.syslog(lll)
+    syslog.syslog("End of content of _pendingD2dDest")      
+    res = []
+    for job in self._queuingJobs.items():
+      scheduler, rawjob, jobtype, arrivalTime = job[1]
+      if jobtype == 'standard':
+        try:
+          user = pwd.getpwuid(int(rawjob[20]))[0]
+        except KeyError:
+          user = rawjob[20]
+      else:
+        user = 'stage'
+      res.append((job[0], scheduler, user, 'PEND', jobtype, arrivalTime, None))
+    return res
 
   def list(self):
     '''lists pending jobs'''

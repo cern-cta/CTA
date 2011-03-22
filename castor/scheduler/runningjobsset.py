@@ -26,7 +26,7 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os
+import os, pwd
 import threading
 import subprocess
 import time
@@ -45,14 +45,14 @@ class PopenWrapper(subprocess.Popen):
 class RunningJobsSet:
   '''handles a list of running jobs and is able to poll them regularly and list the ones that ended'''
 
-  def __init__(self, fake=False):
+  def __init__(self, connections, fake=False):
     '''constructor'''
+    # connection pool to be used for sending messages to schedulers
+    self.connections = connections
     # do we run in fake mode ?
     self.fake = fake
     # standard jobs and disk2disk copy destinations
     self._jobs = set()
-    # disk2diskcopy source jobs
-    self._d2dsourcejobs = set()
     # global lock for the 2 sets
     self._lock = threading.Lock()
     # list jobs already running on the node, left over from the last time we ran
@@ -85,56 +85,71 @@ class RunningJobsSet:
   def add(self, jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, startTime=None):
     '''add a new running job to the list'''
     self._lock.acquire()
-    if startTime == None:
+    try:
+      if startTime == None:
         startTime = time.time()
-    self._jobs.add((jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, startTime))
-    self._lock.release()
+      self._jobs.add((jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, startTime))
+    finally:
+      self._lock.release()
 
   def nbJobs(self):
     '''returns number of running jobs'''
-    return len(self._jobs)+len(self._d2dsourcejobs)
+    return len(self._jobs)
 
   def poll(self):
     '''checks for finished jobs and clean them up'''
+    sourcesToBeInformed = []
     self._lock.acquire()
-    ended = []
-    for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
-      # take care that fake d2dsource jobs have no process
-      if process != None:
-        if not self.fake:
-          rc = process.poll()
-        else:
-          rc = True
-        if rc != None:
-          # remove the notification file
-          os.remove(notifyFileName)
-          # append to list of ended jobs
-          ended.append(process)
-    # cleanup ended jobs
-    self._jobs = set(job for job in self._jobs if job[4] not in ended)
-    self._lock.release()
+    try:
+      ended = []
+      for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
+        # take care that fake d2dsource jobs have no process
+        if process != None:
+          if not self.fake:
+            rc = process.poll()
+          else:
+            rc = True
+          if rc != None:
+            # remove the notification file
+            os.remove(notifyFileName)
+            # append to list of ended jobs
+            ended.append(process)
+            # in case of disk to disk copy, remember to inform source
+            if jobtype == 'd2ddest':
+              sourcesToBeInformed.append((scheduler, jobid))
+      # cleanup ended jobs
+      self._jobs = set(job for job in self._jobs if job[4] not in ended)
+    finally:
+      self._lock.release()
+    for scheduler, jobid in sourcesToBeInformed:
+      try:
+        self.connections.d2dend(scheduler, jobid)
+      except Exception, e:
+        # log that we've failed
+        log(syslog.LOG_ERR, "Informing " + scheduler + " that d2d transfer of " + jobid + " is over failed with error " + str(e))
 
   def d2dstart(self, jobid, scheduler, job, jobtype, arrivalTime):
     '''called when a disk to disk copy starts and we are the source of it'''
-    self._lock.acquire()
-    self._jobs.add((jobid, scheduler, job, None, None, jobtype, arrivalTime, time.time()))
-    self._d2dsourcejobs.add((jobid))
-    self._lock.release()
+    self.add(jobid, scheduler, job, None, None, jobtype, arrivalTime)
 
   def d2dend(self, jobid):
     '''called when a disk to disk copy ends and we are the source of it'''
+    self._lock.acquire()
     try:
-      self._lock.acquire()
-      self._d2dsourcejobs.remove(jobid)
       self._jobs = set(job for job in self._jobs if job[0] != jobid)
-    except KeyError:
-      # we've probably restarted and forgot about it, let's give up
-      pass
-    self._lock.release()
+    finally:
+      self._lock.release()
 
   def bjobs(self):
     '''lists running jobs in suitable format for bjobs'''
     res = []
     for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
-      res.append((jobid, scheduler, job[20], 'RUN', jobtype, arrivalTime, runTime))
+      if jobtype == 'standard':
+        try:
+          user = pwd.getpwuid(int(job[20]))[0]
+        except KeyError:
+          user = job[20]
+      else:
+        user = 'stage'
+      res.append((jobid, scheduler, user, 'RUN', jobtype, arrivalTime, runTime))
     return res

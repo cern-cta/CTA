@@ -61,13 +61,13 @@ conf = castor_tools.castorConf()
 try:
   rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
   jobs = rpcconn.root.bjobs(diskPool)
-  print 'JOBID                                USER    STAT  TYPE      QUEUE      FROM_HOST                EXEC_HOST                SUBMIT_TIME       START_TIME'
+  print 'JOBID                                USER     STAT  TYPE      QUEUE      FROM_HOST                EXEC_HOST                SUBMIT_TIME       START_TIME'
   for jobid, scheduler, user, status, diskPool, execHost, jobtype, submitTime, startTime in jobs:
     ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
     if startTime != None :
       sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
     else:
       sstartTime = ''
-    print '%-37s%-8s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (jobid, user, status, jobtype, diskPool, scheduler, execHost, ssubmitTime, sstartTime)
+    print '%-37s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (jobid, user, status, jobtype, diskPool, scheduler, execHost, ssubmitTime, sstartTime)
 except Exception, e:
   print 'Caught exception : ' + str(e)

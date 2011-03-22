@@ -72,17 +72,17 @@ class DiskServerManagerService(rpyc.Service):
   This service handles all the calls from the central scheduling, from
   job starting to monitoring'''
 
-  def exposed_scheduleJob(self, scheduler, jobid, job, jobtype='standard'):
+  def exposed_scheduleJob(self, scheduler, jobid, job, arrivaltime, jobtype='standard'):
     '''Called when a new job needs to be scheduled.
     Queues the new job.'''
     log(syslog.LOG_DEBUG, 'scheduleJob called from ' + scheduler + ' for jobid ' + jobid + ' (' + jobtype + ')')
-    return jobQueue.put(scheduler, jobid, job, jobtype)
+    jobQueue.put(scheduler, jobid, job, jobtype, arrivaltime)
 
   def exposed_nbJobs(self):
     '''Called when bhosts or bqueues monitoring is needed.
     Returns the number of slots. running jobs and pending jobs on the diskserver'''
     log(syslog.LOG_DEBUG, 'nbJobs called')
-    return (int(configuration['DiskManager']['MaxNbJobs']), jobQueue.qsize(), runningJobs.nbJobs())
+    return (int(configuration['DiskManager']['MaxNbJobs']), jobQueue.nbJobs(), runningJobs.nbJobs())
 
   def exposed_badmin(self):
     '''Called when the diskserver should be reconfigured, e.g. on a badmin call'''
@@ -121,7 +121,7 @@ class ActivityControl(threading.Thread):
 
   def __init__(self):
     '''constructor'''
-    super(ActivityControl,self).__init__()
+    super(ActivityControl,self).__init__(name='ActivityControl')
     self._alive = True
 
   def run(self):
@@ -164,7 +164,14 @@ class ActivityControl(threading.Thread):
         except EnvironmentError:
           # we have tried to start a disk to disk copy and the source is not yet ready
           # we will put it in a priority queue
+          log('Start postponned until source is ready for ' + jobid)
           jobQueue.d2dDestReady(scheduler, jobid, job, arrivalTime, jobtype)
+        except Exception, e:
+          # we could not connect to scheduler to check whether the job can be started
+          log(syslog.LOG_ERR, "Informing " + scheduler + " that job " + jobid + ' started failed with error ' + str(e))
+          # put back the job in the queue
+          jobQueue.priorityPut(scheduler, jobid, job, jobtype, arrivalTime)
+          time.sleep(1)          
       else:
         time.sleep(.05)
 
@@ -178,7 +185,7 @@ class JobCompletionControl(threading.Thread):
 
   def __init__(self):
     '''constructor'''
-    super(JobCompletionControl,self).__init__()
+    super(JobCompletionControl,self).__init__(name='JobCompletionControl')
     self._alive = True
 
   def run(self):
@@ -228,10 +235,10 @@ try:
   log = syslog.syslog
   # create a queue of jobs to be run
   jobQueue = localqueue.LocalQueue()
-  # create a list of running Jobs
-  runningJobs = runningjobsset.RunningJobsSet(fake)
   # create a connection pool for connections to the stagers
   connections = connectionpool.ConnectionPool(int(configuration['Sched']['Port']))
+  # create a list of running Jobs
+  runningJobs = runningjobsset.RunningJobsSet(connections, fake)
   # initialize the queues of pending and running jobs using the knowledge of the central schedulers
   initQueues()
   # launch a processing thread that will regularly check if we need to start new jobs from the queue

@@ -1178,7 +1178,7 @@ BEGIN
          AND ((status = dconst.SUBREQUEST_READYFORSCHED)
           OR  (status = dconst.SUBREQUEST_BEINGSCHED
          AND lastModificationTime < getTime() - 1800))
-         FOR UPDATE;
+         FOR UPDATE NO WAIT;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
       UPDATE SubRequest

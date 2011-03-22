@@ -27,6 +27,7 @@
 # *****************************************************************************/
 
 import sys
+import time
 import threading
 import cx_Oracle
 import syslog
@@ -82,36 +83,45 @@ class Dispatcher(threading.Thread):
     log(jobid + '(d2d source) : ' + str(schedSourceCandidates[0]))
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
+    arrivaltime =  time.time()
     try:
-      # send the job to the appropriate diskserver
-      arrivaltime = self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, 'd2dsource')
       # register the job in the local list of pending jobs
-      self.queuingJobs.put(diskserver,jobid, cmd, arrivaltime, 'd2dsource')
+      self.queuingJobs.put(jobid, arrivaltime, [(diskserver, cmd)], 'd2dsource')
+      # send the job to the appropriate diskserver
+      self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2dsource')
     except Exception, e:
       # log that we've failed
-      log("Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
-      # we coudl not schedule the source so fail the job
+      log(LOG_ERR, "Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
+      # we coudl not schedule the source so fail the job in the DB
       self.failJob(jobid, 1721, "Unable to schedule on source host")  # 1721 = ESTSCHEDERR
+      # and remove it from the server queue
+      self.queuingJobs.remove(jobid)
       return
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.getvalue().split('|')]
     log(jobid + '(d2d destinations) : ' + str(schedDestCandidates))
-    scheduleSucceeded = False
+    # build the list of hosts and jobs to launch
+    jobList = []
     for diskserver, mountpoint in schedDestCandidates:
       cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
+      jobList.append((diskserver, cmd))
+    # put jobs in the queue of pending jobs
+    self.queuingJobs.put(jobid, arrivaltime, jobList, 'd2ddest')
+    # send the jobs to the appropriate diskservers
+    scheduleSucceeded = False
+    for diskserver, cmd in jobList:
       try:
-        # send the job to the appropriate diskserver
-        arrivaltime = self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, 'd2ddest')
-        # register the job in the local list of pending jobs
-        self.queuingJobs.put(diskserver,jobid, cmd, arrivaltime, 'd2ddest')
+        self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2ddest')
         scheduleSucceeded = True
       except Exception, e:
         # log that we've failed
-        log("Scheduling d2d on " + diskserver + " (destination) failed with error " + str(e))
+        log(LOG_ERR, "Scheduling d2d on " + diskserver + " (destination) failed with error " + str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
-      # we could not schedule anywhere for destination.... so fail the job
+      # we could not schedule anywhere for destination.... so fail the job in the DB
       self.failJob(jobid, 1721, "Unable to schedule on any destination host")  # 1721 = ESTSCHEDERR
+      # and remove it from the server queue
+      self.queuingJobs.remove(jobid)
    
 
   def scheduleJob(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
@@ -122,8 +132,9 @@ class Dispatcher(threading.Thread):
     schedCandidates = [candidate.split(':') for candidate in srRfs.getvalue().split('|')]
     jobid = srSubReqId.getvalue()
     log(jobid + ' : ' + str(schedCandidates))
-    # schedule the job on each machine
-    scheduleSucceeded = False
+    # build a list of jobs to schedule for each machine
+    arrivaltime =  time.time()
+    jobList = []
     for diskserver, mountpoint in schedCandidates:
       ipAddress = int(clientIp.getvalue())
       cmd = ("/usr/bin/stagerjob",
@@ -149,19 +160,25 @@ class Dispatcher(threading.Thread):
              "-S", str(reqSvcClass.getvalue()),
              "-t", str(int(reqCreationTime.getvalue())),
              "-R", diskserver+':'+mountpoint)
+      jobList.append((diskserver, cmd))
+    # put jobs in the queue of pending jobs
+    self.queuingJobs.put(jobid, arrivaltime, jobList)
+    # send the jobs to the appropriate diskservers
+    scheduleSucceeded = False
+    for diskserver, cmd in jobList:
       try:
-        # send the job to the appropriate diskserver
-        arrivaltime = self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd)
-        # register the job in the local list of pending jobs
-        self.queuingJobs.put(diskserver,jobid, cmd, arrivaltime)
+        self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime)
         scheduleSucceeded = True
       except Exception, e:
         # log that we've failed
-        log("Scheduling on " + diskserver + " failed with error " + str(e))
+        log(LOG_ERR, "Scheduling on " + diskserver + " failed with error " + str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
-      # we could not schedule anywhere.... so fail the job
+      # we could not schedule anywhere.... so fail the job in the DB
       self.failJob(jobid, 1721, "Unable to schedule job") # 1721 = ESTSCHEDERR
+      # and remove it from the server queue
+      self.queuingJobs.remove(jobid)
+
 
   def run(self):
     '''main method, containing the infinite loop'''

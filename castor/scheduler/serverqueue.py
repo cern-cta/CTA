@@ -30,6 +30,8 @@
 import threading
 import syslog
 
+log = syslog.syslog
+
 class ServerQueue(dict):
   '''a dictionnary of queuing jobs, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
@@ -45,73 +47,119 @@ class ServerQueue(dict):
     # list of source d2d jobs running
     self._d2dsourcerunning = {}
 
-  def put(self, diskserver, jobid, job, arrivaltime, jobtype='standard'):
+  def put(self, jobid, arrivaltime, jobList, jobtype='standard'):
     '''Adds a new job. jobtype can be one of 'standard', 'd2dsource' and 'd2ddest' '''
     self._lock.acquire()
-    # add job to the list of queuing jobs on the diskserver
-    # note the extra argument, used only for d2ddest jobs and telling whether the source is ready
-    if diskserver not in self:
-      self[diskserver] = {}
-    self[diskserver][jobid] = [job, arrivaltime, jobtype, False]
-    # add the diskserver to the jobLocations list for this job (except for sources)
-    if jobtype != 'd2dsource':
-      if jobid not in self._jobsLocations:
-        self._jobsLocations[jobid] = set()
-      self._jobsLocations[jobid].add(diskserver)
-    self._lock.release()
+    try:
+      for diskserver, job in jobList:
+        # add job to the list of queuing jobs on the diskserver
+        # note the extra argument, used only for d2ddest jobs and telling whether the source is ready
+        # As it could be that the source has already started when the destinations are entered, we have
+        # to infer this argument from the jobid, looking into the list of running sources
+        if diskserver not in self:
+          self[diskserver] = {}
+        self[diskserver][jobid] = [job, arrivaltime, jobtype, jobid in self._d2dsourcerunning]
+        # add the diskserver to the jobLocations list for this job (except for sources)
+        if jobtype != 'd2dsource':
+          if jobid not in self._jobsLocations:
+            self._jobsLocations[jobid] = set()
+          self._jobsLocations[jobid].add(diskserver)
+    finally:
+      self._lock.release()
 
-  def remove(self, diskserver, jobid, jobtype):
+  def remove(self, jobid):
+    '''drops a job from the queue'''
+    self._lock.acquire()
+    try:
+      # get the list of mcahines potentially running the job
+      machines = self._jobsLocations[jobid]
+      # clean up _jobsLocations
+      del self._jobsLocations[jobid]
+      # for each machine, cleanup the queue
+      for machine in machines: del self[machine][jobid]
+      # if we have a source job already running, stop it
+      if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
+    finally:
+      self._lock.release()
+
+  def jobStarting(self, diskserver, jobid, jobtype):
     '''Removes a job and gives back the list of other nodes where it was pending.
     Raises ValueError when not found'''
-    self._lock.acquire()
     if jobtype == 'd2dsource':
-      # the source job is starting, mark all destinations ready
-      for ds in self._jobsLocations[jobid]:
-        self[ds][jobid] = self[ds][jobid][0:3]+[True]
-      # remember where the source is running
-      self._d2dsourcerunning[jobid] = diskserver
-      self._lock.release()
+      self._lock.acquire()
+      try:
+        # the source job is starting, mark all destinations (and the source) ready
+        try :
+          for ds in self._jobsLocations[jobid]:
+            self[ds][jobid] = self[ds][jobid][0:3]+[True]
+        except KeyError:
+          # no destination yet, no problem, the source was only too fast to start
+          pass
+        # remember where the source is running
+        self._d2dsourcerunning[jobid] = diskserver
+      finally:
+        self._lock.release()
       # inform all destination machines that the source is ready
       for machine in self._jobsLocations[jobid]:
         if machine != diskserver:
           log(syslog.LOG_DEBUG, 'Calling d2dSourceReady on ' + machine + ' for jobid ' + jobid)
-          self.connections.d2dSourceReady(machine, jobid)
+          try:
+            self.connections.d2dSourceReady(machine, jobid)
+          except Exception, e:
+            # log that we've failed
+            log(LOG_ERR, "Informing " + diskserver + " that source of " + jobid + " is ready failed with error " + str(e))
     else:
-      # check whether we are in a race condition where the job has already been
-      # started somewhere else but the calling diskserver does not yet know about it.
-      if jobid not in self._jobsLocations:
-        # in such a case, let the diskserver know by raising an exception
-        log(syslog.LOG_DEBUG, "Race condition detected : this job has already started : " + jobid)
+      self._lock.acquire()
+      try:
+        # check whether we are in a race condition where the job has already been
+        # started somewhere else but the calling diskserver does not yet know about it.
+        if jobid not in self._jobsLocations:
+          # in such a case, let the diskserver know by raising an exception
+          log(syslog.LOG_DEBUG, "Race condition detected : this job has already started : " + jobid)
+          raise ValueError
+        # if a destination job wants to start, check whether the source is ready
+        if jobtype == 'd2ddest' and not self[diskserver][jobid][3]:
+          log(syslog.LOG_DEBUG, "Source is not ready yet for jobid " + jobid + ' and diskserver ' + diskserver)
+          raise EnvironmentError
+        # drop the job from all queues. Note that this desynchronizes the queues as seen
+        # by the diskservers from the queues seen by the central manager. In case of a
+        # restart of a diskserver manager, its queue will be magically "cleaned up"
+        # However, the diskservers concerned will be notified.
+        machines = self._jobsLocations[jobid]
+        del self._jobsLocations[jobid]
+        for machine in machines: del self[machine][jobid]
+      finally:
         self._lock.release()
-        raise ValueError
-      # if a destination job wants to start, check whether the source is ready
-      if jobtype == 'd2ddest' and not self[diskserver][jobid][3]:
-        log(syslog.LOG_DEBUG, "Source is not ready yet for jobid " + jobid + ' and diskserver ' + diskserver)
-        self._lock.release()
-        raise EnvironmentError
-      # drop the job from all queues. Note that this desynchronizes the queues as seen
-      # by the diskservers from the queues seen by the central manager. In case of a
-      # restart of a diskserver manager, its queue will be magically "cleaned up"
-      # However, the diskservers concerned will be notified.
-      machines = self._jobsLocations[jobid]
-      del self._jobsLocations[jobid]
-      for machine in machines: del self[machine][jobid]
-      self._lock.release()
       # inform all other machines that this job has been handled
       for machine in machines:
         if machine != diskserver:
-          self.connections.jobAlreadyStarted(machine, jobid)
+          log(syslog.LOG_DEBUG, 'informing ' + machine + ' for ' + jobid)
+          try:
+            self.connections.jobAlreadyStarted(machine, jobid)
+          except Exception, e:
+            # log that we've failed
+            log(LOG_ERR, "Informing " + diskserver + " that job " + jobid + " has already started with error " + str(e))
 
-  def d2dend(self, jobid):
+  def d2dend(self, jobid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
-    self._lock.acquire()
-    # get the source location
-    diskserver = self._d2dsourcerunning[jobid]
-    # cleanup
-    del self._d2dsourcerunning[jobid]
+    if lock:
+      self._lock.acquire()
+    try:
+      # get the source location
+      diskserver = self._d2dsourcerunning[jobid]
+      # remove d2dsource job from the queue
+      del self[diskserver][jobid]
+      # remove from list of d2dsources
+      del self._d2dsourcerunning[jobid]
+    finally:
+      if lock: 
+        self._lock.release()
     # inform the source diskserver
-    self.connections.d2dend(diskserver, jobid)
-    self._lock.release()
+    try:
+      self.connections.d2dend(diskserver, jobid)
+    except Exception, e:
+      # log that we've failed
+      log(LOG_ERR, "Informing " + diskserver + " that d2d copy of " + jobid + " is over failed with error " + str(e))
 
   def list(self, diskserver):
     if diskserver in self:
