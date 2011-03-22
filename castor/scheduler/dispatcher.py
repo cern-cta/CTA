@@ -59,8 +59,12 @@ class Worker(threading.Thread):
     '''main method to the threads. Only get work from the queue and do it'''
     while self.running:
       try:
-        func, args = self.workqueue.get()
+        func, args = self.workqueue.get(True, 1)
         func(*args)
+      except Queue.Empty:
+        # we've timed out, let's just retry. We only use the timeout so that this
+        # thread can stop even if there is nothing in the queue
+        pass
       except Exception, e:
         log(syslog.LOG_ERR, 'Exception caught in Worker thread (' + str(e.__class__) + ') : ' + str(e))
 
@@ -170,6 +174,13 @@ class Dispatcher(threading.Thread):
     # a DBUpdater thread
     self.dbthread = DBUpdater(self.updateDBQueue)
     self.dbthread.setName('DBUpdater')
+
+  def join(self):
+    # join first the other threads
+    for w in self.workers: w.join()
+    self.dbthread.join()
+    # then call join on master one
+    threading.Thread.join(self)
 
   def dbConnection(self):
     '''returns a connection to the stager DB.
@@ -396,3 +407,6 @@ class Dispatcher(threading.Thread):
   def stop(self):
     '''Stops processing of this thread'''
     self.running = False
+    for w in self.workers:
+      w.running = False
+    self.dbthread.running = False

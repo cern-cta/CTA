@@ -256,7 +256,7 @@ def handler(signum, frame):
     log('SIGINT received. Exiting')
   else:
     log('Unexpected signal %d received. Exiting') % signum
-  sys.exit(1)
+  sys.exit()
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
 
@@ -266,41 +266,51 @@ if daemonize:
   context = daemon.DaemonContext()
   context.__enter__()
 try:
-  # get configuration
-  configuration = castor_tools.castorConf()
-  # setup logging
-  verbosity = configuration['dsmd']['LogMask']
-  syslog.openlog('dsmd', 0, syslog.LOG_LOCAL3)
-  syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
-  log = syslog.syslog
-  # create a queue of jobs to be run
-  jobQueue = localqueue.LocalQueue(configuration)
-  # create a connection pool for connections to the stagers
-  connections = connectionpool.ConnectionPool(int(configuration['Sched']['Port']))
-  # create a list of running Jobs
-  runningJobs = runningjobsset.RunningJobsSet(connections, fake)
-  # initialize the queues of pending and running jobs using the knowledge of the central schedulers
-  initQueues()
-  # launch a processing thread that will regularly check if we need to start new jobs from the queue
-  activityControl = ActivityControl()
-  activityControl.setDaemon(True)
-  activityControl.start()
-  # launch a management thread that will regularly check job completions, d2d transfer to be restarted
-  # and jobs to be dropped from the queue, because of timeouts, lack of space, etc...
-  management = ManagementThread()
-  management.setDaemon(True)
-  management.start()
-  # launch a service listening for new jobs from the central scheduler and filling the queue
-  from rpyc.utils.server import ThreadedServer
-  t = ThreadedServer(DiskServerManagerService, 
-                     port = int(configuration['DiskManager']['Port']),
-                     auto_register=False)
-  t.daemon = True
-  t.start()
-  # we reach this point when the service has stopped
-  # so let's stop the other threads
-  activityControl.stop()
-  management.stop()
+  try:
+    # get configuration
+    configuration = castor_tools.castorConf()
+    # setup logging
+    verbosity = configuration.getValue('dsmd', 'LogMask', 'LOG_INFO')
+    syslog.openlog('dsmd', 0, syslog.LOG_LOCAL3)
+    syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
+    # create a connection pool for connections to the stagers
+    connections = connectionpool.ConnectionPool()
+    # create a queue of jobs to be run
+    jobQueue = localqueue.LocalQueue(configuration, connections)
+    # create a list of running Jobs
+    runningJobs = runningjobsset.RunningJobsSet(connections, fake)
+    # initialize the queues of pending and running jobs using the knowledge of the central schedulers
+    initQueues()
+    # launch a processing thread that will regularly check if we need to start new jobs from the queue
+    activityControl = ActivityControl()
+    activityControl.setDaemon(True)
+    activityControl.start()
+    # launch a management thread that will regularly check job completions, d2d transfer to be restarted
+    # and jobs to be dropped from the queue, because of timeouts, lack of space, etc...
+    management = ManagementThread()
+    management.setDaemon(True)
+    management.start()
+    # launch a service listening for new jobs from the central scheduler and filling the queue
+    from rpyc.utils.server import ThreadedServer
+    t = ThreadedServer(DiskServerManagerService, 
+                       port = configuration.getValue('DiskManager', 'Port', 56406, int),
+                       auto_register=False)
+    t.daemon = True
+    t.start()
+    # we reach this point when the service has stopped
+    # so let's stop the other threads
+    activityControl.stop()
+    management.stop()
+  except SystemExit:
+    # we are exiting, fine
+    pass
+  except Exception, e:
+    print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    log(syslog.LOG_ERR, 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e))
+    raise
 finally:
   if daemonize:
-    context.__exit__(None, None, None)
+    try:
+      context.__exit__(None, None, None)
+    except:
+      pass

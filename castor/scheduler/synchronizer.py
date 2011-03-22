@@ -74,7 +74,13 @@ class Synchronizer(threading.Thread):
       while self.running:
         # first wait a bit before starting so that we are not syncronized between
         # daemons at a restart, or after errors
-        time.sleep(random.randint(1, checkInterval))
+        slept = 0
+        while slept < random.randint(1, checkInterval):
+          # note that we sleep one second at a time so that we can exit
+          # if the thread stops running
+          if not self.running: break
+          time.sleep(1)
+          slept = slept + 1
         try:
           # prepare a cursor for database polling
           stcur = self.dbConnection().cursor()
@@ -103,7 +109,15 @@ class Synchronizer(threading.Thread):
                 # Thus we have to give up with synchronization for this round
                 log(syslog.LOG_ERROR, 'Error caught while trying to synchronize DB jobs with scheduler jobs. Giving up for this round. Error was : ' + str(e)
               # sleep until next check
-              time.sleep(checkInterval)
+              slept = 0
+              while slept < checkInterval:
+                # note that we sleep one second at a time so that we can exit
+                # if the thread stops running
+                if not self.running: break
+                time.sleep(1)
+                slept = slept + 1
+          finally:
+            stcur.close()
         except Exception, e:
           # log error
           log(syslog.LOG_ERR, 'Caught exception in Synchronizer thread (' + str(e.__class__) + ') : ' + str(e))

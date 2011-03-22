@@ -244,8 +244,7 @@ def handler(signum, frame):
     log('SIGINT received. Exiting')
   else:
     log('Unexpected signal %d received. Exiting') % signum
-  dispatch.stop()
-  sys.exit(1)
+  sys.exit()
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
 
@@ -256,59 +255,82 @@ if daemonize:
   context = daemon.DaemonContext()
   context.__enter__()
 try:
-  # get configuration
-  configuration = castor_tools.castorConf()
-  # setup logging
-  verbosity = configuration['llsfd']['LogMask']
-  syslog.openlog('llsfd', 0, syslog.LOG_LOCAL3)
-  syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
-  log = syslog.syslog
-  # global cache on the list of diskservers
-  diskServerList = DiskServerListCache()
-  # create a connection pool for connections to the DiskServers
-  connections = connectionpool.ConnectionPool(int(configuration['DiskManager']['Port']))
-  # a dictionnary holding the list of jobs submitted by us and still queuing for each diskserver
-  queuingJobs = serverqueue.ServerQueue(connections)
-  # initialize the queues of pending and running jobs using the knowledge of the diskservers
-  initQueues()
-  # launch a processing thread that will regularly check if we need to schedule new jobs
-  # and dispatch them on the relevant diskservers
-  dispatch = dispatcher.Dispatcher(connections, queuingJobs, configuration, nbWorkers)
-  dispatch.setName('Dispatcher')
-  dispatch.setDaemon(True)
-  dispatch.start()
-  # launch a processing thread that will regularly check if there are jobs to abort
-  abort = aborter.Aborter(connections, self)
-  abort.setName('Aborter')
-  abort.setDaemon(True)
-  abort.start()
-  # launch a processing thread that will regularly synchronize the stager DB with the running
-  # jobs, meaning that it will check that jobs running for already long according to the DB
-  # are effectively still running. If they are not, is will update the DB accordingly
-  synchro = synchronizer.Synchronizer(connections, diskServerList, self)
-  synchro.setName('Synchronize')
-  synchro.setDaemon(True)
-  synchro.start()
-  # launch a service listening for monitoring queries and answering them
-  from rpyc.utils.server import ThreadedServer
-  t = ThreadedServer(SchedulerService,
-                     port = int(configuration['Sched']['Port']),
-                     auto_register=False)
-  t.daemon = True
-  t.start()
+  try :
+    # get configuration
+    configuration = castor_tools.castorConf()
+    # setup logging
+    verbosity = configuration.getValue('llsfd', 'LogMask', 'LOG_INFO')
+    syslog.openlog('llsfd', 0, syslog.LOG_LOCAL3)
+    syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
+    # global cache on the list of diskservers
+    diskServerList = DiskServerListCache()
+    # create a connection pool for connections to the DiskServers
+    connections = connectionpool.ConnectionPool()
+    # a dictionnary holding the list of jobs submitted by us and still queuing for each diskserver
+    queuingJobs = serverqueue.ServerQueue(connections)
+    # initialize the queues of pending and running jobs using the knowledge of the diskservers
+    initQueues()
+    # defines a service listening for monitoring queries and answering them
+    from rpyc.utils.server import ThreadedServer
+    llsfd = ThreadedServer(SchedulerService,
+                           port = configuration.getValue('Scheduler', 'Port', 2681, int),
+                           auto_register=False)
+    llsfd.daemon = True
+    # launch a processing thread that will regularly check if we need to schedule new jobs
+    # and dispatch them on the relevant diskservers
+    dispatch = dispatcher.Dispatcher(connections, queuingJobs, nbWorkers)
+    dispatch.setName('Dispatcher')
+    dispatch.setDaemon(True)
+    dispatch.start()
+    # launch a processing thread that will regularly check if there are jobs to abort
+    abort = aborter.Aborter(connections)
+    abort.setName('Aborter')
+    abort.setDaemon(True)
+    abort.start()
+    # launch a processing thread that will regularly synchronize the stager DB with the running
+    # jobs, meaning that it will check that jobs running for already long according to the DB
+    # are effectively still running. If they are not, is will update the DB accordingly
+    synchro = synchronizer.Synchronizer(connections, diskServerList)
+    synchro.setName('Synchronize')
+    synchro.setDaemon(True)
+    synchro.start()
+    # starts listening
+    llsfd.start()
+  except SystemExit:
+    # we are exiting, fine
+    pass
+  except Exception, e:
+    print 'Caught unexpected exception, exiting : ' + str(e)
+    log(syslog.LOG_ERR, 'Caught unexpected exception, exiting : ' + str(e))
+    raise
 finally:
-  # cleanup all ongoing activities
+  # clean up all connections and threads that may be running
   try:
     connections.closeall()
+  except:
+    pass
+  try:
     dispatch.stop()
     dispatch.join()
+  except:
+    pass
+  try:
     abort.stop()
     abort.join()
+  except:
+    pass
+  try:
     synchro.stop()
     synchro.join()
-    t.close()
+  except:
+    pass
+  try:
+    llsfd.close()
   except:
     pass
   # if we are a daemon, call __exit__
   if daemonize:
-    context.__exit__(None, None, None)
+    try:
+      context.__exit__(None, None, None)
+    except:
+      pass
