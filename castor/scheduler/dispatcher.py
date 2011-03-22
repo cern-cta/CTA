@@ -99,63 +99,69 @@ class DBUpdater(threading.Thread):
 
   def run(self):
     '''main method to the threads. Only get work from the queue and do it'''
-    while self.running:
-      # get something from the queue and then empty the queue and list all the updates to be done in one bulk
-      successes = []
-      failures = []
-      # check whether there is something to do
-      try:
-        # we go out every second in case the thread has ended in the meantime
-        jobid, fileid, errcode, errmsg = self.workqueue.get(True, 1)
-        if errcode != None:
-          failures.append((jobid, fileid, errcode, errmsg))
-        else:
-          successes.append((jobid, fileid))
-      except Queue.Empty:
-        continue
-      # empty the queue so that we go only once to the DB
-      try:
-        while True:
-          jobid, fileid, errcode, errmsg = self.workqueue.get(False)
+    try:
+      while self.running:
+        # get something from the queue and then empty the queue and list all the updates to be done in one bulk
+        successes = []
+        failures = []
+        # check whether there is something to do
+        try:
+          # we go out every second in case the thread has ended in the meantime
+          jobid, fileid, errcode, errmsg = self.workqueue.get(True, 1)
           if errcode != None:
             failures.append((jobid, fileid, errcode, errmsg))
           else:
             successes.append((jobid, fileid))
-      except Queue.Empty:
-        # we are over, the queue is empty
-        pass
-      # Now call the DB for failures
-      if failures:
-        jobids, fileids, errcodes, errmsgs = zip(*failures)
+        except Queue.Empty:
+          continue
+        # empty the queue so that we go only once to the DB
         try:
-          stcur = self.dbConnection().cursor()
+          while True:
+            jobid, fileid, errcode, errmsg = self.workqueue.get(False)
+            if errcode != None:
+              failures.append((jobid, fileid, errcode, errmsg))
+            else:
+              successes.append((jobid, fileid))
+        except Queue.Empty:
+          # we are over, the queue is empty
+          pass
+        # Now call the DB for failures
+        if failures:
+          jobids, fileids, errcodes, errmsgs = zip(*failures)
           try:
-            stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", [list(jobids), list(errcodes), list(errmsgs)])
+            stcur = self.dbConnection().cursor()
+            try:
+              stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", [list(jobids), list(errcodes), list(errmsgs)])
+              for jobid, fileid, errcode, errmsg in failures:
+                # 'Failed job' message
+                dlf.writeerr(msgs.FAILEDJOB, subreqid=jobid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
+            finally:
+              stcur.close()
+          except Exception, e:
             for jobid, fileid, errcode, errmsg in failures:
-              # 'Failed job' message
-              dlf.writeerr(msgs.FAILEDJOB, subreqid=jobid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
-          finally:
-            stcur.close()
-        except Exception, e:
-          for jobid, fileid, errcode, errmsg in failures:
-            # 'Exception caught while failing job' message
-            dlf.writeerr(msgs.FAILINGJOBEXCEPTION, subreqid=jobid, fileid=fileid, type=str(e.__class__), msg=str(e))
-      # And call the DB for successes
-      if successes:
-        for jobid, fileid in successes:
-          # 'Marking jobs scheduled' message
-          dlf.write(msgs.JOBSCHEDULED, subreqid=jobid, fileid=fileid)
-        try:
-          stcur = self.dbConnection().cursor()
-          try:
-            stcur.execute("BEGIN jobScheduled(:jobids); END;", [[jobid for jobid, fileid in successes]])
-          finally:
-            stcur.close()
-        except Exception, e:
+              # 'Exception caught while failing job' message
+              dlf.writeerr(msgs.FAILINGJOBEXCEPTION, subreqid=jobid, fileid=fileid, type=str(e.__class__), msg=str(e))
+        # And call the DB for successes
+        if successes:
           for jobid, fileid in successes:
-            # 'Exception caught while marking job scheduled' message
-            dlf.writeerr(msgs.JOBSCHEDULEDEXCEPTION, subreqid=jobid, fileid=fileid,
-                         type=str(e.__class__), msg=str(e))
+            # 'Marking jobs scheduled' message
+            dlf.write(msgs.JOBSCHEDULED, subreqid=jobid, fileid=fileid)
+          try:
+            stcur = self.dbConnection().cursor()
+            try:
+              stcur.execute("BEGIN jobScheduled(:jobids); END;", [[jobid for jobid, fileid in successes]])
+            finally:
+              stcur.close()
+          except Exception, e:
+            for jobid, fileid in successes:
+              # 'Exception caught while marking job scheduled' message
+              dlf.writeerr(msgs.JOBSCHEDULEDEXCEPTION, subreqid=jobid, fileid=fileid,
+                           type=str(e.__class__), msg=str(e))
+    finally:
+      try:
+        castor_tools.disconnectDB(self.dbConnection())
+      except Exception:
+        pass
 
 
 class Dispatcher(threading.Thread):
