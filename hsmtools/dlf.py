@@ -29,6 +29,16 @@ import syslog
 import castor_tools
 import thread
 
+# a little, useful enum type, with parameterized base value
+def enum(*args, **kwds):
+    if kwds['base'] == None:
+        base = 0
+    else:
+        base = kwds['base']
+        print base
+    enums = dict(zip(args, range(base, base+len(args))))
+    return type('Enum', (), enums)
+
 _messages = {}
 _priorities = { syslog.LOG_EMERG:   "Emerg",
                 syslog.LOG_ALERT:   "Alert",
@@ -57,9 +67,9 @@ def init(facility):
 
 def addmessages(msgs):
     '''Add new messages to the set of known messages'''
-    # add messages given to the list of know ones (or overwrite any existing one)
+    # add messages given to the list of known ones (or overwrite any existing one)
     # and specifiy that we did not yet send them to the server
-    # messages should be passed as a dictionnay with the key beeing the message
+    # messages should be passed as a dictionary with the key being the message
     # number and the value being the message itself
     for msgnb in msgs:
         _messages[msgnb] = [msgs[msgnb], False]
