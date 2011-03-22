@@ -1,5 +1,5 @@
 .lf 8 transfermanagerd.man
-.TH transfermanagerd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "transfermanagerd"
+.TH transfermanagerd 8 "2011/03/21" CASTOR "transfermanagerd"
 .SH NAME
 transfermanagerd \- starts the CASTOR's transfer manager daemon
 .SH SYNOPSIS

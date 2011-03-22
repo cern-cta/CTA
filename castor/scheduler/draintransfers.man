@@ -1,0 +1,34 @@
+.lf 8 draintransfers.man
+.TH draintransfers 8 "2011/03/21" CASTOR "draintransfers"
+.SH NAME
+draintransfers \- puts the transfermanager daemon on the specified machine in drain mode
+.SH SYNOPSIS
+.B draintransfers
+[
+.BI -h
+]
+<machine>
+.SH DESCRIPTION
+.LP
+Puts the transfermanager daemon on the specified machine in drain mode
+
+
+Once in drain mode, the transfer manager daemon will keep following up ongoing transfers but will stop handling any new one. Once all transfers it was taking care of are drained, the daemon can be definitely stopped.
+
+
+Note that this mode is dedicated to retirement of machines and long (> few second) pauses of the transfer manager daemon. A simple restart of the transfer manager daemon does not require usage of the drain mode.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

@@ -89,56 +89,63 @@ class Synchronizer(threading.Thread):
             subReqIdsCur.arraysize = 200
             # infinite loop over the polling of the DB
             while self.running:
+              # 'Synchronizing stager DB with Transfer Manager' message
+              dlf.writedebug(msgs.SYNCDBWITHTM)
+              # list pending and running transfers in the scheduling system
+              stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
+              subReqIds = set([t[0] for t in subReqIdsCur.fetchall()])
+              try:
                 # list pending and running transfers in the scheduling system
-                stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
-                subReqIds = set(subReqIdsCur.fetchall())
-                try:
-                  # list pending and running transfers in the scheduling system
-                  allLlsfTransfers = set()
-                  diskservers = self.diskServerList.getset()
-                  for ds in diskservers:
-                    # call the function on the appropriate diskserver
-                    allLlsfTransfers = allLlsfTransfers | set(self.connections.transferset(ds))
-                  # find out the set of transfers in the DB and no more in the scheduling system
-                  transfersToFail = list(subReqIds - allLlsfTransfers)
-                  # and inform the stager
-                  if transfersToFail:
-                    # get back the fileids for the logs. We need to go back to the DB just for this
-                    conn = self.dbConnection(False)
-                    fileIdsCur = conn.cursor()
-                    fileIdsCur.arraysize = 200
-                    stcur = conn.cursor()
-                    stcur.callproc('getFileIdsForSrs', [transfersToFail, fileIdsCur])
-                    fileids = map(tuple, fileIdsCur.fetchall())
-                    conn.commit()
-                    # 'Transfer killed by synchronization as it disappeared from the scheduling system'
-                    for transferid, fileid in zip(transfersToFail, fileids):
-                      dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, fileid=fileid)
-                    # prepare the transfers so that we have only tuples going onver the wire
-                    transfers = tuple(map(tuple,
-                                     zip(transfersToFail, fileids,
-                                         [1015] * len(transfersToFail), # SEINTERNAL error code
-                                         ['Transfer has disappeared from the scheduling system'] * len(transfersToFail))))
-                    # finally inform the stager
-                    self.connections.transfersKilled(self.hostname, transfers)
-                except Exception, e:
-                  # we could not list all pending running transfers in the system
-                  # Thus we have to give up with synchronization for this round
-                  # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
-                  dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
-                # sleep until next check
-                slept = 0
-                while slept < checkInterval:
-                  # note that we sleep one second at a time so that we can exit
-                  # if the thread stops running
-                  if not self.running: break
-                  time.sleep(1)
-                  slept = slept + 1
+                allTMTransfers = set()
+                diskservers = self.diskServerList.getset()
+                for ds in diskservers:
+                  # call the function on the appropriate diskserver
+                  allTMTransfers = allTMTransfers | set(self.connections.transferset(ds))
+                # find out the set of transfers in the DB and no more in the scheduling system
+                transfersToFail = list(subReqIds - allTMTransfers)
+                # and inform the stager
+                if transfersToFail:
+                  # get back the fileids for the logs. We need to go back to the DB just for this
+                  conn = self.dbConnection(False)
+                  fileIdsCur = conn.cursor()
+                  fileIdsCur.arraysize = 200
+                  stcur = conn.cursor()
+                  stcur.callproc('getFileIdsForSrs', [transfersToFail, fileIdsCur])
+                  fileids = map(tuple, fileIdsCur.fetchall())
+                  conn.commit()
+                  # 'Transfer killed by synchronization as it disappeared from the scheduling system'
+                  for transferid, fileid in zip(transfersToFail, fileids):
+                    dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, fileid=fileid)
+                  # prepare the transfers so that we have only tuples going onver the wire
+                  transfers = tuple(map(tuple,
+                                   zip(transfersToFail, fileids,
+                                       [1015] * len(transfersToFail), # SEINTERNAL error code
+                                       ['Transfer has disappeared from the scheduling system'] * len(transfersToFail))))
+                  # finally inform the stager
+                  self.connections.transfersKilled(self.hostname, transfers)
+                else:
+                  # 'No discrepancy during synchronization' message
+                  dlf.writedebug(msgs.SYNCNODISCREPANCY)
+              except Exception, e:
+                # we could not list all pending running transfers in the system
+                # Thus we have to give up with synchronization for this round
+                # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
+                dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
+              # sleep until next check
+              slept = 0
+              while slept < checkInterval:
+                # note that we sleep one second at a time so that we can exit
+                # if the thread stops running
+                if not self.running: break
+                time.sleep(1)
+                slept = slept + 1
           finally:
             stcur.close()
         except Exception, e:
           # "Caught exception in Synchronizer thread" message
           dlf.writeerr(msgs.SYNCHROEXCEPTION, type=str(e.__class__), msg=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+          self.dbConnection().checkForReconnection(e)
     finally:
       # try to clean up what we can
       try:

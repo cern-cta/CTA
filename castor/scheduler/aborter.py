@@ -61,7 +61,7 @@ class Aborter(threading.Thread):
     try:
       while self.running:
         try:
-          # setup an oracle connection and register our interest for 'transfersReadyToSchedule' alerts
+          # setup an oracle connection and register our interest for 'transfersToAbort' alerts
           stcur = self.dbConnection().cursor()
           try:
             stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersToAbort'); END;");
@@ -78,24 +78,22 @@ class Aborter(threading.Thread):
                 subReqIds = tuple(id for item in subReqIdsCur.fetchall() for id in item)
                 if subReqIds:
                   # call the internal method on all schedulers (including ourselves)
-                  # note that this is a replication of the exposed_bkill function of SchedulerService
-                  # unfortunately, we cannot call it directly (lack of reference to the service object
+                  # note that this is a replication of the exposed_killtransfersinternal function
+                  # of TransferManagerService
+                  # Unfortunately, we cannot call it directly (lack of reference to the service object
                   # as it's created by the rpyc framework) and we do not want to call it via rpyc
                   # as it would creates too many intricated calls
                   for scheduler in self.config['DiskManager']['ServerHosts'].split():
-                    self.connections.bkillinternal(scheduler, subReqIds)
-                # and commit the changes in the DB so that we do not try to drop these transfers again
-                self.dbConnection().commit()
+                    self.connections.killtransfersinternal(scheduler, subReqIds)
+                  # and commit the changes in the DB so that we do not try to drop these transfers again
+                  self.dbConnection().commit()
           finally:
             stcur.close()
         except Exception, e:
           # "Caught exception in Aborter thread" message
           dlf.writeerr(msgs.ABORTEREXCEPTION, type=str(e.__class__), msg=str(e))
-          # roll back in case
-          try:
-            self.dbConnection().rollback()
-          except:
-            pass
+          # check whether we should reconnect to DB, and do so if needed
+          self.dbConnection().checkForReconnection(e)
           # then sleep a bit to not loop to fast on the error
           time.sleep(1)
     finally:
@@ -106,8 +104,9 @@ class Aborter(threading.Thread):
           stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersToAbort'); END;");
         finally:
           stcur.close()
-      except Exception:
-        pass
+      except Exception, e:
+        # check whether we should reconnect to DB, and do so if needed
+        self.dbConnection().checkForReconnection(e)
       try:
         castor_tools.disconnectDB(self.dbConnection())
       except Exception:

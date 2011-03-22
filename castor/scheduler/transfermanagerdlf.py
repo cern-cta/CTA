@@ -40,7 +40,7 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'GETQUEUEINGTRANSFERSCALLED', 'GETRUNNINGD2DSOURCETRANSFERSCALLED', 'D2DENDCALLED',
                 'DRAINCALLED', 'SYNCHROKILLEDTRANSFER', 'FAILTRANSFEREXCEPTION',
                 'NOQUEUERETRIEVED', 'SIGNALRECEIVED', 'UNEXPECTEDEXCEPTION',
-                'COULDNOTCONTACTDS')
+                'COULDNOTCONTACTDS', 'SYNCDBWITHTM', 'SYNCNODISCREPANCY')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -81,4 +81,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.NOQUEUERETRIEVED : 'No queue could be retrieved',
                  msgs.SIGNALRECEIVED : 'Received signal',
                  msgs.UNEXPECTEDEXCEPTION : 'Caught unexpected exception, exiting',
-                 msgs.COULDNOTCONTACTDS : 'Could not contact diskserver'})                
+                 msgs.COULDNOTCONTACTDS : 'Could not contact diskserver',
+                 msgs.SYNCDBWITHTM : 'Synchronizing stager DB with Transfer Manager',
+                 msgs.SYNCNODISCREPANCY : 'No discrepancy during synchronization'})

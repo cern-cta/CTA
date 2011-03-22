@@ -140,6 +140,8 @@ class DBUpdater(threading.Thread):
             for transferid, fileid, errcode, errmsg in failures:
               # 'Exception caught while failing transfer' message
               dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, fileid=fileid, type=str(e.__class__), msg=str(e))
+            # check whether we should reconnect to DB, and do so if needed
+            self.dbConnection().checkForReconnection(e)
         # And call the DB for successes
         if successes:
           for transferid, fileid in successes:
@@ -156,6 +158,8 @@ class DBUpdater(threading.Thread):
               # 'Exception caught while marking transfer scheduled' message
               dlf.writeerr(msgs.TRANSFERSCHEDULEDEXCEPTION, subreqid=transferid, fileid=fileid,
                            type=str(e.__class__), msg=str(e))
+            # check whether we should reconnect to DB, and do so if needed
+            self.dbConnection().checkForReconnection(e)
     finally:
       if self.stagerConnection != None:
         try:
@@ -177,7 +181,7 @@ class Dispatcher(threading.Thread):
     # the list of queueing transfers
     self.queueingTransfers = queueingTransfers
     # our own name
-    self.hostname = socket.gethostname()
+    self.hostname = socket.getfqdn()
     # max number of transfers to be scheduled per second. If None, request throttling is not active 
     self.maxNbTransfersScheduledPerSecond = maxNbTransfersScheduledPerSecond
     # a counter of number of scheduled transfers in the current second
@@ -239,9 +243,9 @@ class Dispatcher(threading.Thread):
     arrivaltime =  time.time()
     try:
       # register the transfer in the local list of pending transfers
-      self.queueingTransfers.put(transferid, arrivaltime, [(diskserver, cmd)], 'd2dsource')
+      self.queueingTransfers.put(transferid, arrivaltime, [(diskserver, cmd)], 'd2dsrc')
       # send the transfer to the appropriate diskserver
-      self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsource')
+      self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsrc')
     except Exception, e:
       # 'Scheduling d2d source failed' message
       dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, fileid=fileid, diskserver=diskserver, error=str(e))
@@ -344,10 +348,10 @@ class Dispatcher(threading.Thread):
     try:
       while self.running:
         try:
-          # setup an oracle connection and register our interest for 'transfersReadyToSchedule' alerts
+          # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
           stcur = self.dbConnection().cursor()
           try:
-            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersReadyToSchedule'); END;");
+            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transferReadyToSchedule'); END;");
             # prepare a cursor for database polling
             stcur = self.dbConnection().cursor()
             stcur.arraysize = 50
@@ -428,6 +432,8 @@ class Dispatcher(threading.Thread):
         except Exception, e:
           # "Caught exception in Dispatcher thread" message
           dlf.writeerr(msgs.DISPATCHEXCEPTION, type=str(e.__class__), msg=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+          self.dbConnection().checkForReconnection(e)
           # then sleep a bit to not loop to fast on the error
           time.sleep(1)
     finally:
@@ -446,11 +452,12 @@ class Dispatcher(threading.Thread):
       try:
         stcur = self.dbConnection().cursor()
         try:
-          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersReadyToSchedule'); END;");
+          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transferReadyToSchedule'); END;");
         finally:
           stcur.close()
-      except Exception:
-        pass
+      except Exception, e:
+        # check whether we should reconnect to DB, and do so if needed
+        self.dbConnection().checkForReconnection(e)
       try:
         castor_tools.disconnectDB(self.dbConnection())
       except Exception:

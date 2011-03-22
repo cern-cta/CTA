@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                   llsf.py
+# *                   transfermanagerd.py
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -74,9 +74,9 @@ class DiskServerListCache:
   def __init__(self, refreshDelay=300):
     '''constructor'''
     # a dictionnary of diskpools with the list of diskservers in each of them
-    self._diskPool2DiskServer = None
+    self.diskPool2DiskServer = None
     # a dictionnary of diskservers with the associated pool for each of them
-    self._diskServer2DiskPool = None
+    self.diskServer2DiskPool = None
     self.refreshDelay = refreshDelay
     self.lastRefresh = 0
     # build the cache right now
@@ -97,12 +97,13 @@ class DiskServerListCache:
         stcur.execute(stDiskServers)
         rows = stcur.fetchall()
         # build up the list of new ones
-        self._diskPool2DiskServer = {}
-        self._diskServer2DiskPool = {}
+        self.diskPool2DiskServer = {}
+        self.diskServer2DiskPool = {}
         for diskserver, diskPool in rows:
-          if diskPool not in self._diskPool2DiskServer : self._diskPool2DiskServer[diskPool] = []
-          self._diskPool2DiskServer[diskPool].append(diskserver)
-          self._diskServer2DiskPool[diskserver] = diskPool
+          if diskPool not in self.diskPool2DiskServer : self.diskPool2DiskServer[diskPool] = []
+          self.diskPool2DiskServer[diskPool].append(diskserver)
+          self.diskServer2DiskPool[diskserver] = diskPool
+        self.lastRefresh = time.time()
       finally:
         try:
           castor_tools.disconnectDB(stconn)
@@ -119,7 +120,7 @@ class DiskServerListCache:
     if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
       self.refresh()
     # return the list
-    return self._diskPool2DiskServer
+    return self.diskPool2DiskServer
 
   def getset(self):
     '''returns the set of diskservers from the cache, or builds it from the DB if needed'''
@@ -127,11 +128,11 @@ class DiskServerListCache:
     if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
       self.refresh()
     # return the set
-    return self._diskServer2DiskPool.keys()
+    return self.diskServer2DiskPool.keys()
 
   def getDiskServerPool(self, diskserver):
     '''returns the pool in which a given diskserver lives'''
-    return self._diskServer2DiskPool[diskserver]
+    return self.diskServer2DiskPool[diskserver]
 
 def extendedSum(t):
   '''behaves like sum for tuples of numbers but is also able to handle a special case of
@@ -145,9 +146,15 @@ def extendedSum(t):
   keys = reduce(lambda a,b : a|set(b), [set()] + dt)
   return tuple((n, sum([d.get(n,0) for d in dt])) for n in keys)
 
-class SchedulerService(rpyc.Service):
+class TransferManagerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
   There are mainly 2 kinds : monitoring requests and callbacks from the diskservers'''
+
+  def __init__(self, conn):
+    '''constructor'''
+    rpyc.Service.__init__(self, conn)
+    # connection to the stager DB
+    self.stagerConnection = None
 
   def dbConnection(self): 
     '''returns a connection to the stager DB.
@@ -161,7 +168,11 @@ class SchedulerService(rpyc.Service):
     '''gather the results of the call to func for all diskServers'''
     res = {}
     dslist = diskServerList.getlist()
-    if diskPool != None: dslist = {diskPool : dslist[diskPool]}
+    if diskPool != None:
+      if diskPool in dslist:
+        dslist = {diskPool : dslist[diskPool]}
+      else:
+        dslist = {}
     for diskPool in dslist:
       res[diskPool] = {}
       for ds in dslist[diskPool]:
@@ -179,19 +190,19 @@ class SchedulerService(rpyc.Service):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users). Only tansfers handled by this transfer manager
     are reported'''
-    return tuple(queueingTransfers.nbTransfersPerPool(diskServerList, diskPool, user))
+    return tuple(queueingTransfers.nbTransfersPerPool(diskServerList, diskPool, user).items())
 
   def _computeNbTransfersPerPool(self, diskPool=None, user=None):
     '''internal method to compute the number of unique transfers pending per pool
     accross all transfer managers. For this purpose, it contacts all running transfer
     managers and sums up the results. Results can be restricted to a given pool and a
     given user'''
-    nbtransfersPerPool = {}
+    nbTransfersPerPool = {}
     for scheduler in configuration['DiskManager']['ServerHosts'].split():
       for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
         if diskpool not in nbTransfersPerPool: nbTransfersPerPool[diskpool] = 0
         nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
-    return nbtransfersPerPool
+    return nbTransfersPerPool
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per diskpool for a given diskpool and user.
@@ -221,6 +232,7 @@ class SchedulerService(rpyc.Service):
     for diskPool in nbs:
       if len(nbs[diskPool]) > 0:
         data = map(extendedSum,zip(*nbs[diskPool].values()))
+        if diskPool not in nbtransfersPerPool: nbtransfersPerPool[diskPool] = 0
         res.append(tuple([diskPool, nbtransfersPerPool[diskPool]] + data))
       else:
         res.append((diskPool,))
@@ -241,7 +253,10 @@ class SchedulerService(rpyc.Service):
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
     hosts = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # flatten it to a list of (diskserver, (values))
-    hostslist = reduce(lambda x,y:x+y, [diskserver.items() for diskserver in hosts.values()])
+    if hosts :
+      hostslist = reduce(lambda x,y:x+y, [diskserver.items() for diskserver in hosts.values()])
+    else:
+      hostslist = []
     # return a tuple of (diskserver, value1, value2, ...)
     return tuple(tuple([host[0]]+list(host[1])) for host in hostslist)
 
@@ -256,31 +271,48 @@ class SchedulerService(rpyc.Service):
           res.append((transferid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
     return tuple(res)
 
+  def _killtransfers(self, method, arg):
+    '''internal method handling transfer killing. This is called from
+    exposed_killalltransfers/killtransfers with the proper internal method and argument.
+    It calls it on all schedulers and then handles the update of the stager DB'''
+    # call the internal method on all schedulers (including ourselves)
+    killedtransfers = []
+    killedtransferids = []
+    for scheduler in configuration['DiskManager']['ServerHosts'].split():
+      for transferid, fileid in getattr(connections,method)(scheduler, arg):
+        # for the transfers actually killed (and only once per tranfer
+        if transferid not in killedtransferids:
+          # Remember to fail the transfer in the stager DB with ESTKILLED error code
+          killedtransferids.append(transferid)
+          killedtransfers.append([transferid, fileid, 1713, 'Transfer killed by admin'])
+    # update stagerDB
+    self.exposed_transfersKilled(killedtransfers)    
+
   def exposed_killalltransfers(self, user=None):
     '''killalltransfers removes all transfers from all queues on all servers and diskservers'''
-    dlf.writedebug(msgs.KILLALLTRANSFERSCALLED, subreqid=transferid)
-    # call the internal method on all schedulers (including ourselves)
-    for scheduler in configuration['DiskManager']['ServerHosts'].split():
-      connections.killalltransfersinternal(scheduler, user)
+    dlf.writedebug(msgs.KILLALLTRANSFERSCALLED, user=user)
+    # call the internal method
+    self._killtransfers('killalltransfersinternal', user)
 
   def exposed_killtransfers(self, transferids):
     '''killtransfers removes given transfers from all queues on all servers and diskservers'''
     for transferid in transferids:
       dlf.writedebug(msgs.KILLTRANSFERSCALLED, subreqid=transferid)
-    # call the internal method on all schedulers (including ourselves)
-    for scheduler in configuration['DiskManager']['ServerHosts'].split():
-      connections.killtransfersinternal(scheduler, transferids)
+    # call the internal method
+    self._killtransfers('killtransfersinternal', transferids)
 
   def exposed_killalltransfersinternal(self, user):
-    '''killalltransfersinternal removes all transfers from the queues handled by this scheduler'''
-    dlf.writedebug(msgs.KILLALLTRANSFERSINTERNALCALLED)
-    queueingTransfers.removeall(user)
+    '''killalltransfersinternal removes all transfers from the queues handled by this scheduler.
+    Return a tuple of (transferid, file) tuples for the transfers actually removed'''
+    dlf.writedebug(msgs.KILLALLTRANSFERSINTERNALCALLED, user=user)
+    return tuple(queueingTransfers.removeall(user).items())
 
   def exposed_killtransfersinternal(self, transferIds=None):
-    '''killtransfersinternal removes transfers from the queues handled by this scheduler'''
+    '''killtransfersinternal removes transfers from the queues handled by this scheduler.
+    Return a tuple of (transferid, file) tuples for the transfers actually removed'''
     for transferId in transferIds:
       dlf.writedebug(msgs.KILLTRANSFERSINTERNALCALLED, subreqid=transferId)
-    queueingTransfers.remove(transferids)
+    return tuple(queueingTransfers.remove(transferIds).items())
 
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
@@ -288,7 +320,7 @@ class SchedulerService(rpyc.Service):
       dlf.writedebug(msgs.TRANSFERSKILLEDCALLED, subreqid=transferid, fileid=fileid, errno=errno, errmsg=errmsg)
     # only inform the stager
     try:
-      stcur = dispatcher.dbConnection().cursor()
+      stcur = self.dbConnection().cursor()
       stcur.arraysize = 50
       transferids, fileids, errnos, errmsgs = map(list,zip(*transfers))
       stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
@@ -297,6 +329,8 @@ class SchedulerService(rpyc.Service):
       for transferid, fileid, errno, errmsg in transfers:
         # "Exception caught while failing transfer" message
         dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, fileid=fileid, type=str(e.__class__), msg=str(e))
+      # check whether we should reconnect to DB, and do so if needed
+      self.dbConnection().checkForReconnection(e)
 
   def exposed_transfersCanceled(self, machine, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
@@ -321,7 +355,7 @@ class SchedulerService(rpyc.Service):
     return tuple(queueingTransfers.listQueueingTransfers(diskserver))
 
   def exposed_getRunningD2dSourceTransfers(self, diskserver):
-    '''called on the (re)start of the diskManager to rebuild the list of running d2dsource transfers'''
+    '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCETRANSFERSCALLED, diskserver=diskserver)
     return tuple(queueingTransfers.listRunningD2dSources(diskserver))
 
@@ -342,11 +376,11 @@ def initQueues():
   for diskPool in dslist:
     for ds in dslist[diskPool]:
       try:
-        # first list the running d2dsource transfers
-        for transferid, transfer, arrivaltime in connections.getConnection(ds).getRunningD2dSource(socket.gethostname()):
+        # first list the running d2dsrc transfers
+        for transferid, transfer, arrivaltime in connections.getConnection(ds).getRunningD2dSource(socket.getfqdn()):
           queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
         # then list queueing transfers
-        for transferid, transfer, transfertype, arrivaltime in connections.getConnection(ds).getQueueingTransfers(socket.gethostname()):
+        for transferid, transfer, transfertype, arrivaltime in connections.getConnection(ds).getQueueingTransfers(socket.getfqdn()):
           queueingTransfers.put(ds, transferid, transfer, arrivaltime, transfertype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
@@ -380,7 +414,7 @@ def drain():
 
 import signal
 def handler(signum, frame):
-  '''signal handler for the llsf daemon, only logging and calling sys.exit'''
+  '''signal handler for the transfer manager daemon, only logging and calling sys.exit'''
   # 'Received signal' message
   dlf.write(msgs.SIGNALRECEIVED, signal=signum)
   sys.exit()
@@ -409,7 +443,7 @@ try:
     initQueues()
     # defines a service listening for monitoring queries and answering them
     from rpyc.utils.server import ThreadedServer
-    transfermanager = ThreadedServer(SchedulerService,
+    transfermanager = ThreadedServer(TransferManagerService,
                                      port = configuration.getValue('Scheduler', 'Port', 15011, int),
                                      auto_register=False)
     transfermanager.daemon = True

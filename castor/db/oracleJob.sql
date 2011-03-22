@@ -1030,11 +1030,6 @@ BEGIN
        -- Confirm SubRequest status hasn't changed after acquisition of lock
        SELECT id INTO srId FROM SubRequest
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Update the reason for termination.
-       UPDATE SubRequest 
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the transfer, procedures that
        -- would have been called if the transfer failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
@@ -1044,6 +1039,11 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Update the reason for termination, overriding the error code set above
+       UPDATE SubRequest 
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
+        WHERE id = srId;
        -- Release locks
        COMMIT;
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1242,7 +1242,7 @@ END;
 CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
 BEGIN 
-  DBMS_ALERT.SIGNAL('transfersReadyToSchedule', ''); 
+  DBMS_ALERT.SIGNAL('transferReadyToSchedule', ''); 
 END;
 /
 
@@ -1287,7 +1287,7 @@ BEGIN
       -- We do not wait forever in order to ensure that we will retry from time to
       -- time to dig out candidates that timed out in status BEINGSCHED.
       CLOSE c;
-      DBMS_ALERT.WAITONE('transfersReadyToSchedule', unusedMessage, unusedStatus, 3);
+      DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
       -- try again to find something
       OPEN c;
       FETCH c INTO srIntId;

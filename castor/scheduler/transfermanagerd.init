@@ -56,7 +56,7 @@ start() {
         # Write the pid to a file.
         RETVAL=$?
         if [ $RETVAL -eq 0 ]; then
-                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
+                pid=`ps -eo pid,ppid,comm | egrep " 1 transfermanager\$" | awk '{print $1}'`
                 rm -f /var/run/$prog.pid
                 if [ -n "$pid" ]; then
                         echo $pid > /var/run/$prog.pid

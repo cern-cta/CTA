@@ -54,7 +54,7 @@ dlf.addmessages({msgs.CREATEDORACONN : 'Created new Oracle connection',
 #-------------------------------------------------------------------------------
 # DBConnection
 #-------------------------------------------------------------------------------
-class DBConnection:
+class DBConnection(object):
     '''This class wraps an Oracle database connection with the ability to automatically reconnect when 
     the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
     
@@ -87,6 +87,29 @@ class DBConnection:
         # 'Created new Oracle connection' message
         dlf.write(msgs.CREATEDORACONN)
     
+    def dropConnection(self):
+        '''Drop existing internal connection'''
+        try:
+            # first close the connection
+            self.connection.close()
+        except:
+            # it may fail in some cases, but we anyway wanted to close it, so we ignore
+            pass
+        self.connection = None
+
+    def checkForReconnection(self, e):
+        '''Given an exception, check whether we want to reconnect on that one.
+        If yes, drop the existing connection'''
+        # first check whether we have an Oracle exception. If not, exit
+        if not isinstance(e, cx_Oracle.Error): return
+        # extract ORACLE error code
+        error, = e.args
+        errorcode = error.code
+        # check whether to reconnect
+        if (errorcode in self.errorCodesForReconnect) or (errorcode >= 25401 and errorcode <= 25409):
+            # We should reconnect
+            self.dropConnection()
+
     # autocommit property
     def set_autocommit(self, value):
         self._autocommit = value
@@ -109,12 +132,9 @@ class DBConnection:
                     return getattr(self.connection, name)(*args)
                 else:
                     return lambda: NotImplemented()
-            except cx_Oracle.OperationalError, e:
+            except cx_Oracle.Error, e:
                 # we got an Oracle error, let's see if we have to reconnect
-                if (e.args.code in self.errorCodesForReconnect) or (e.args.code >= 25401 and e.args.code <= 25409):
-                    # yes, try again
-                    self.connection.close()
-                    self.connection = None
+                checkForReconnection(e)
                 raise
         return facade
 

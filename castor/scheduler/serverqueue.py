@@ -35,21 +35,21 @@ class ServerQueue(dict):
   '''a dictionnary of queueing transfers, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
 
-  def __init__(self, connections, transfermanager):
+  def __init__(self, connections):
     '''constructor'''
     dict.__init__(self)
     # a pool of connections to the diskservers
     self.connections = connections
     # a global lock for this queue
-    self._lock = threading.Lock()
+    self.lock = threading.Lock()
     # dictionnary containing the set of machines on which each transfer is queueing
-    self._transfersLocations = {}
+    self.transfersLocations = {}
     # list of source d2d transfers running
-    self._d2dsourcerunning = {}
+    self.d2dsrcrunning = {}
 
   def put(self, transferid, arrivaltime, transferList, transfertype='standard'):
-    '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsource' and 'd2ddest' '''
-    self._lock.acquire()
+    '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
+    self.lock.acquire()
     try:
       for diskserver, transfer in transferList:
         # add transfer to the list of queueing transfers on the diskserver
@@ -57,49 +57,65 @@ class ServerQueue(dict):
         # As it could be that the source has already started when the destinations are entered, we have
         # to infer this argument from the transferid, looking into the list of running sources
         if diskserver not in self: self[diskserver] = {}
-        self[diskserver][transferid] = [transfer, arrivaltime, transfertype, transferid in self._d2dsourcerunning]
+        self[diskserver][transferid] = [transfer, arrivaltime, transfertype, transferid in self.d2dsrcrunning]
         # add the diskserver to the transferLocations list for this transfer (except for sources)
-        if transfertype != 'd2dsource':
-          if transferid not in self._transfersLocations:
-            self._transfersLocations[transferid] = set()
-          self._transfersLocations[transferid].add(diskserver)
+        if transfertype != 'd2dsrc':
+          if transferid not in self.transfersLocations:
+            self.transfersLocations[transferid] = set()
+          self.transfersLocations[transferid].add(diskserver)
     finally:
-      self._lock.release()
+      self.lock.release()
 
   def _removetransfer(self, transferid, transfersPerMachine):
-    '''internal method remove one given transfer from the queue, adding its locations
-    to the given dictionnary and calling d2dend if needed.
+    '''internal method removing one given transfer from the queue, adding its locations
+    to the given dictionnary and calling d2dend if needed. Also returns the fileid of the
+    file concerned by the transfer for logging reasons.
     Not that the locking is not handled here, it's left to the responsability of the caller'''
     try:
       # get the list of machines potentially running the transfer
-      machines = self._transfersLocations[transferid]
+      machines = self.transfersLocations[transferid]
       # clean up _transfersLocations
-      del self._transfersLocations[transferid]
+      del self.transfersLocations[transferid]
       # for each machine, cleanup the server queue and note down where the transfer was sent
+      fileid = None
       for machine in machines:
+        # if first one, found out fileid
+        if not fileid:
+          transfer = self[machine][transferid][0]
+          fileid = (transfer[8], int(transfer[6]))
+        # note where transfer was sent
         if machine not in transfersPerMachine: transfersPerMachine[machine] = []
         transfersPerMachine[machine].append(transferid)
+        # cleanup
         del self[machine][transferid]
       # if we have a source transfer already running, stop it
-      if transferid in self._d2dsourcerunning: d2dend(transferid,lock=False)
+      if transferid in self.d2dsrcrunning: d2dend(transferid,lock=False)
+      return fileid
     except KeyError:
       # we are not handling this transfer, fine, ignore it then
-      pass
+      return None
 
   def remove(self, transferids):
-    '''drops transfers from the queues'''
+    '''drops transfers from the queues and return a dictionnary "transferid => fileid" listing
+    the transfers actually removed and for each of them, the concerned file'''
     transfersPerMachine = {}
+    fileids = {}
     # first cleanup our own queue
-    self._lock.acquire()
+    self.lock.acquire()
     try:
-      for transferid in transferids: self._removetransfer(transferid, transfersPerMachine)
+      for transferid in transferids:
+        fileid = self._removetransfer(transferid, transfersPerMachine)
+        if fileid:
+          fileids[transferid] = fileid
     finally:
-      self._lock.release()
+      self.lock.release()
     # then tell the machines to remove these transfers from their queues
     for machine in transfersPerMachine:
-      connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+    # return
+    return fileids
 
-  def _transfer2user(rawtransfer):
+  def _transfer2user(self, transfertype, rawtransfer):
     if transfertype == 'standard':
       try:
         return pwd.getpwuid(int(rawtransfer[20]))[0]
@@ -109,47 +125,61 @@ class ServerQueue(dict):
       return 'stage'
 
   def removeall(self, requser):
-    '''drops transfers from the queues'''
+    '''drops transfers from the queues return a dictionnary "transferid => fileid" listing
+    the transfers actually removed and for each of them, the concerned file'''
     transfersPerMachine = {}
+    fileids = {}
     # first cleanup our own queue
-    self._lock.acquire()
+    self.lock.acquire()
     try:
+      transferstodrop = []
       # Go through all transfers
-      for transferid in self._transfersLocations:
+      for transferid in self.transfersLocations:
         # ignore if not the right user
         if requser:
-          rawtransfer, arrivaltime, transfertype, d2drun = self[self._transfersLocations[transferid][0]][transferid]
-          if _transfer2user(rawtransfer) != reqUser: continue
-        # else drop the transfer from our queue
-        self._removetransfer(transferid, transfersPerMachine)
+          # get user of for first location. For + break is used as set has no access to a random item
+          for ds in self.transfersLocations[transferid]:
+            rawtransfer, arrivaltime, transfertype, d2drun = self[ds][transferid]
+            break
+          if self._transfer2user(transfertype, rawtransfer) != requser: continue
+        # else put in the list of transfers to really drop
+        # note that we can not drop here as we are looping on transfersLocations that would be modified
+        transferstodrop.append(transferid)
+      # now remove selected transfers
+      for transferid in transferstodrop:
+        fileid = self._removetransfer(transferid, transfersPerMachine)
+        if fileid:
+          fileids[transferid] = fileid
     finally:
-      self._lock.release()
+      self.lock.release()
     # then tell the machines to remove these transfers from their queues
     for machine in transfersPerMachine:
-      connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+    # return
+    return fileids
 
   def transferStarting(self, diskserver, transferid, transfertype):
     '''Removes a transfer and gives back the list of other nodes where it was pending.
     Raises ValueError when not found'''
-    if transfertype == 'd2dsource':
-      self._lock.acquire()
+    if transfertype == 'd2dsrc':
+      self.lock.acquire()
       try:
         # the source transfer is starting, mark all destinations (and the source) ready
         try :
-          for ds in self._transfersLocations[transferid]:
+          for ds in self.transfersLocations[transferid]:
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
         except KeyError:
           # no destination yet, no problem, the source was only too fast to start
           pass
         # remember where the source is running
-        self._d2dsourcerunning[transferid] = diskserver
+        self.d2dsrcrunning[transferid] = diskserver
       finally:
-        self._lock.release()
+        self.lock.release()
     else:
-      self._lock.acquire()
+      self.lock.acquire()
       try:
         # check whether the transfer has already been started somewhere else
-        if transferid not in self._transfersLocations:
+        if transferid not in self.transfersLocations:
           # in such a case, let the diskserver know by raising an exception
           # "Transfer had already started. Cancel start" message
           dlf.writedebug(msgs.TRANSFERALREADYSTARTED, diskserver=diskserver, subreqid=transferid)
@@ -163,29 +193,29 @@ class ServerQueue(dict):
         # by the diskservers from the queues seen by the central manager. In case of a
         # restart of a diskserver manager, its queue will be magically "cleaned up"
         # However, the diskservers concerned will be notified.
-        machines = self._transfersLocations[transferid]
-        del self._transfersLocations[transferid]
+        machines = self.transfersLocations[transferid]
+        del self.transfersLocations[transferid]
         for machine in machines: del self[machine][transferid]
       finally:
-        self._lock.release()
+        self.lock.release()
 
   def d2dend(self, transferid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
     if lock:
-      self._lock.acquire()
+      self.lock.acquire()
     try:
       # get the source location
-      diskserver = self._d2dsourcerunning[transferid]
+      diskserver = self.d2dsrcrunning[transferid]
       # remember the fileid in case of error
       transfer = self[diskserver][transferid][0]
       fileid = (transfer[8], int(transfer[6]))
-      # remove d2dsource transfer from the queue
+      # remove d2dsrc transfer from the queue
       del self[diskserver][transferid]
-      # remove from list of d2dsources
-      del self._d2dsourcerunning[transferid]
+      # remove from list of d2dsrcs
+      del self.d2dsrcrunning[transferid]
     finally:
       if lock: 
-        self._lock.release()
+        self.lock.release()
     # inform the source diskserver
     try:
       self.connections.d2dend(diskserver, transferid)
@@ -194,81 +224,93 @@ class ServerQueue(dict):
       dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=transferid, fileid=fileid, error=str(e))
 
   def putRunningD2dSource(self, diskserver, transferid, transfer, arrivaltime):
-    '''Adds a new d2dsource transfer to the list of runnign ones'''
-    self._lock.acquire()
+    '''Adds a new d2dsrc transfer to the list of runnign ones'''
+    self.lock.acquire()
     try:
-      # add transfer to the list of running d2dsource transfers on the diskserver
+      # add transfer to the list of running d2dsrc transfers on the diskserver
       if diskserver not in self: self[diskserver] = {}
-      self[diskserver][transferid] = [transfer, arrivaltime, 'd2dsource', 'True']
-      self._d2dsourcerunning[transferid] = diskserver
+      self[diskserver][transferid] = [transfer, arrivaltime, 'd2dsrc', 'True']
+      self.d2dsrcrunning[transferid] = diskserver
     finally:
-      self._lock.release()
+      self.lock.release()
 
   def nbTransfersPerPool(self, diskServerList, reqdiskpool=None, requser=None):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users)'''
     res = {}
-    # for each transfer
-    for transferid in self._transfersLocations:
-      # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
-      for diskserver in self._transfersLocations[transferid][0]:
-        # get diskpool
-        diskpool = diskServerList.getDiskServerPool(diskserver)
-        # are we interested in this diskpool ?
-        if reqdiskpool and reqdiskPool != diskpool: break
-        # are we interested in this user ?
-        if requser:
-          rawtransfer, arrivaltime, transfertype, d2drun = self[diskserver][transferid]
-          if requser != _transfer2user(rawtransfer): break
-        # increase counter for corresponding diskpool
-        if diskpool not in res: res[diskpool] = 0
-        res[diskpool] = res[diskpool] + 1
-        # no need to really loop, we already counted this guy
-        break
+    self.lock.acquire()
+    try:
+      # for each transfer
+      for transferid in self.transfersLocations:
+        # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
+        for diskserver in self.transfersLocations[transferid]:
+          # get diskpool
+          diskpool = diskServerList.getDiskServerPool(diskserver)
+          # are we interested in this diskpool ?
+          if reqdiskpool and reqdiskPool != diskpool: break
+          # are we interested in this user ?
+          if requser:
+            rawtransfer, arrivaltime, transfertype, d2drun = self[diskserver][transferid]
+            if requser != self._transfer2user(transfertype, rawtransfer): break
+          # increase counter for corresponding diskpool
+          if diskpool not in res: res[diskpool] = 0
+          res[diskpool] = res[diskpool] + 1
+          # no need to really loop, we already counted this guy
+          break
+    finally:
+      self.lock.release()
     return res
 
   def listQueueingTransfers(self, diskserver):
     '''This is called by the scheduler when rebuilding the list of queueing transfers for a given diskserver'''
     if diskserver in self:
-      res = [tuple([transferid]+transfer[0:3]) for transferid, transfer in self[diskserver].items() if transferid not in self._d2dsourcerunning]
-      return res
+      self.lock.acquire()
+      try:
+        res = [tuple([transferid]+transfer[0:3]) for transferid, transfer in self[diskserver].items() if transferid not in self.d2dsrcrunning]
+        return res
+      finally:
+        self.lock.release()
     else:
       return []
 
   def listRunningD2dSources(self, diskserver):
-    '''This is called by the scheduler when rebuilding the list of running d2dsource transfers for a given diskserver'''
+    '''This is called by the scheduler when rebuilding the list of running d2dsrc transfers for a given diskserver'''
     res = []
-    for transferid in [transferid for transferid in self._d2dsourcerunning if self._d2dsourcerunning[transferid] == diskserver]:
-      transfer, arrivaltime, transfertype, ready = self[diskserver][transferid]
-      res.append((transferid, transfer, arrivaltime))
+    self.lock.acquire()
+    try:
+      for transferid in [transferid for transferid in self.d2dsrcrunning if self.d2dsrcrunning[transferid] == diskserver]:
+        transfer, arrivaltime, transfertype, ready = self[diskserver][transferid]
+        res.append((transferid, transfer, arrivaltime))
+    finally:
+      self.lock.release()
     return res
 
   def transfersCanceled(self, machine, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
     transfersKilled = []
-    self._lock.acquire()
+    self.lock.acquire()
     try:
       # for each transfer
       for transferid, fileid, rc, msg in transfers:
         try:
           # cleanup the queue for the given transfer on the given machine
-          del self._transfersLocations[transferid].remove(machine)
+          self.transfersLocations[transferid].remove(machine)
           del self[machine][transferid]
-          if not self._transfersLocations[transferid]:
+          if not self.transfersLocations[transferid]:
             # no other candidate machine for this transfer. It has to be failed
             transfersKilled.append((transferid, fileid, rc, msg))
             # clean up _transfersLocations
-            del self._transfersLocations[transferid]
+            del self.transfersLocations[transferid]
             # if we have a source transfer already running, stop it
-            if transferid in self._d2dsourcerunning: d2dend(transferid,lock=False)
+            if transferid in self.d2dsrcrunning: d2dend(transferid,lock=False)
         except KeyError, e:
           # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore
           # "Unexpected KeyError exception caught in transfersCanceled" message
           dlf.writeerr(msgs.TRANSFERCANCELEXCEPTION, error=str(e))
     finally:
-      self._lock.release()
+      self.lock.release()
     # inform the stager of the transfers that were killed
     return transfersKilled
 

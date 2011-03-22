@@ -1,0 +1,42 @@
+.lf 8 killtransfers.man
+.TH killtransfers 8 "2011/03/21" CASTOR "killtransfers"
+.SH NAME
+killtransfers \- kills transfers pending in the transfer manager
+.SH SYNOPSIS
+.B killtransfers
+[
+.BI -h
+]
+<transferid> [...]
+.P
+.B killtransfers
+.BI -a
+[
+.BI -u
+<user>
+]
+.SH DESCRIPTION
+.LP
+Kills transfers pending in the transfer manager.
+The first form kills a given set of transfers. The second form kills all pending transfers, or all those belonging to the given user if -u is used.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-a,\ \-\-all
+kills all pending transfers. Can be limited to the transfers of a given user when combined with -u
+.TP
+.BI \-u,\ \-\-user
+limits the effect of -a to the pending jobs of the given user
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

@@ -93,7 +93,7 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.SUMMARIZETRANSFERSCALLED)
     queueingData = transferQueue.nbTransfers(user, detailed)
     runningData = runningTransfers.nbTransfers(user, detailed)
-    return (configuration.getValue('DiskManager', 'NbSlots', None, int)) + queueingData + runningData
+    return (configuration.getValue('DiskManager', 'NbSlots', None, int),) + queueingData + runningData
 
   def exposed_listTransfers(self, user=None):
     '''Lists all transfers running or pending on this host'''
@@ -117,7 +117,7 @@ class DiskServerManagerService(rpyc.Service):
     return tuple(transferQueue.listQueueingTransfers())
 
   def exposed_getRunningD2dSource(self, scheduler):
-    '''returns the list of running d2dsource transfers'''
+    '''returns the list of running d2dsrc transfers'''
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCECALLED, scheduler=scheduler)
     return tuple(runningTransfers.listRunningD2dSources())
 
@@ -129,7 +129,7 @@ class DiskServerManagerService(rpyc.Service):
 def checkSpaceLeftOnFS(transfertype, transfer):
   ''' check whether there is space available for a given transfer'''
   # check whether this transfer will write data
-  if transfertype == 'd2dsource': return True
+  if transfertype == 'd2dsrc': return True
   if transfertype == 'standard' and transfer[16] == 'r' : return True
   # get the transfer filesystem
   fs = transfer[-1].split(':')[1]
@@ -149,7 +149,7 @@ class ActivityControl(threading.Thread):
   def __init__(self):
     '''constructor'''
     super(ActivityControl,self).__init__(name='ActivityControl')
-    self._alive = True
+    self.alive = True
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -169,11 +169,11 @@ class ActivityControl(threading.Thread):
               # notifies the central scheduler that we want to start this transfer
               # this may raise a ValueError exception if it already started
               # somewhere else
-              connections.transferStarting(scheduler, socket.gethostname(), transferid, transfertype)
+              connections.transferStarting(scheduler, socket.getfqdn(), transferid, transfertype)
               # "Transfer starting" message
               dlf.write(msgs.TRANSFERSTARTING, subreqid=transferid, fileid=fileid, transfertype=transfertype)
-              # in case of d2dsource, do not actually start for real, only take note
-              if transfertype == 'd2dsource':
+              # in case of d2dsrc, do not actually start for real, only take note
+              if transfertype == 'd2dsrc':
                 runningTransfers.add(transferid, scheduler, transfer, None, None, transfertype, arrivalTime)
               else:
                 # create a local file to hold the former LSF scheduler info
@@ -218,7 +218,7 @@ class ActivityControl(threading.Thread):
 
   def stop(self):
     '''stops processing in this thread'''
-    self._alive = False
+    self.alive = False
 
 class ManagementThread(threading.Thread):
   '''Management thread of the disk server manager, dealing with transfer completion control and associated cleanup,
@@ -228,11 +228,11 @@ class ManagementThread(threading.Thread):
   def __init__(self):
     '''constructor'''
     super(ManagementThread,self).__init__(name='ManagementThread')
-    self._alive = True
+    self.alive = True
 
   def run(self):
     '''main method, containing the infinite loop'''
-    while self._alive:
+    while self.alive:
       try:
         # check for running transfers that have completed
         runningTransfers.poll()
@@ -240,6 +240,8 @@ class ManagementThread(threading.Thread):
         transferQueue.pollD2dDest()
         # check for transfer to be canceled for various reasons (timeout, missing resources, ...)
         transferQueue.checkForTransfersCancelation()
+        # recompute list of ongoing tape transfers
+        runningTransfers.listTapeTransfers()
       except Exception, e:
         # 'Caught exception in Management thread' message
         dlf.writeerr(msgs.MGMTEXCEPTION, type=str(e.__class__), msg=str(e))
@@ -248,16 +250,16 @@ class ManagementThread(threading.Thread):
 
   def stop(self):
     '''stops processing in this thread'''
-    self._alive = False
+    self.alive = False
 
 def initQueues():
   for scheduler in configuration['DiskManager']['ServerHosts'].split():
     try:
-      # rebuild list of running d2dsource transfers
-      for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler,socket.gethostname()):
-        runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsource', arrivaltime)
+      # rebuild list of running d2dsrc transfers
+      for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler,socket.getfqdn()):
+        runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
       # rebuild transfer's queue
-      for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler,socket.gethostname()):
+      for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler,socket.getfqdn()):
         transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve

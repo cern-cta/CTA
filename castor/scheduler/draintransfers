@@ -67,4 +67,4 @@ except Exception, e:
   print 'Caught exception : ' + str(e)
   if verbose:
     import traceback
-    print traceback.print_tb(sys.exc_info()[2])
+    traceback.print_tb(sys.exc_info()[2])

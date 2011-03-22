@@ -50,7 +50,7 @@ for f, v in options:
   if f == '-h' or f == '--help':
     usage(0)
   elif f == '-a' or f == '--all':
-    killAll = True
+    killall = True
   elif f == '-u' or f == '--user':
     if user:
       print 'Cannot use -u|--user twice'
@@ -85,4 +85,4 @@ except Exception, e:
   print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
   if verbose:
     import traceback
-    print traceback.print_tb(sys.exc_info()[2])
+    traceback.print_tb(sys.exc_info()[2])
