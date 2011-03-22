@@ -278,7 +278,8 @@ try:
     llsfd.daemon = True
     # launch a processing thread that will regularly check if we need to schedule new jobs
     # and dispatch them on the relevant diskservers
-    dispatch = dispatcher.Dispatcher(connections, queuingJobs, nbWorkers)
+    maxNbJobsScheduledPerSecond = configuration.getValue('Sched', 'MaxNbJobsScheduledPerSecond', None, int)
+    dispatch = dispatcher.Dispatcher(connections, queuingJobs, maxNbJobsScheduledPerSecond, nbWorkers)
     dispatch.setName('Dispatcher')
     dispatch.setDaemon(True)
     dispatch.start()

@@ -146,7 +146,7 @@ class DBUpdater(threading.Thread):
 class Dispatcher(threading.Thread):
   '''scheduling thread, responsible for connecting to the stager database and scheduling jobs'''
 
-  def __init__(self, connections, queuingJobs, configuration, nbWorkers=5):
+  def __init__(self, connections, queuingJobs, maxNbJobsScheduledPerSecond = None, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the job queue to use'''
     threading.Thread.__init__(self)
     # whether we should continue running
@@ -159,6 +159,12 @@ class Dispatcher(threading.Thread):
     self.config = configuration
     # our own name
     self.hostname = socket.gethostname()
+    # max number of jobs to be scheduled per second. If None, request throttling is not active 
+    self.maxNbJobsScheduledPerSecond = maxNbJobsScheduledPerSecond
+    # a counter of number of scheduled jobs in the current second
+    self.nbJobsScheduled = 0
+    # the current second, so that we can reset the previous counter when it changes
+    self.currentSecond = 0
     # whether we are connected to the stager DB
     self.stagerConnection = None
     # a queue of work to be done by the workers
@@ -316,65 +322,86 @@ class Dispatcher(threading.Thread):
         try:
           # setup an oracle connection and register our interest for 'jobsReadyToSchedule' alerts
           stcur = self.dbConnection().cursor()
-          stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsReadyToSchedule'); END;");
-          # prepare a cursor for database polling
-          stcur = self.dbConnection().cursor()
-          stcur.arraysize = 50
-          srId = stcur.var(cx_Oracle.NUMBER)
-          srSubReqId = stcur.var(cx_Oracle.STRING)
-          srProtocol = stcur.var(cx_Oracle.STRING)
-          srXsize = stcur.var(cx_Oracle.NUMBER)
-          srRfs = stcur.var(cx_Oracle.STRING)
-          reqId = stcur.var(cx_Oracle.STRING)
-          cfFileId = stcur.var(cx_Oracle.NUMBER)
-          cfNsHost = stcur.var(cx_Oracle.STRING)
-          reqSvcClass = stcur.var(cx_Oracle.STRING)
-          reqType = stcur.var(cx_Oracle.NUMBER)
-          reqEuid = stcur.var(cx_Oracle.NUMBER)
-          reqEgid = stcur.var(cx_Oracle.NUMBER)
-          reqUsername = stcur.var(cx_Oracle.STRING)
-          srOpenFlags = stcur.var(cx_Oracle.STRING)
-          clientIp = stcur.var(cx_Oracle.NUMBER)
-          clientPort = stcur.var(cx_Oracle.NUMBER)
-          clientVersion = stcur.var(cx_Oracle.NUMBER)
-          clientType = stcur.var(cx_Oracle.NUMBER)
-          reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
-          reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
-          clientSecure = stcur.var(cx_Oracle.NUMBER)
-          reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
-          reqCreationTime = stcur.var(cx_Oracle.NUMBER)
-          reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
-          sourceRfs = stcur.var(cx_Oracle.STRING)
-          stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
-          # infinite loop over the polling of the DB
-          while self.running:
-              # see whether there is something to do
-              # not that this will hang until something comes or the internal timeout is reached
-              stcur.execute(stJobToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
-                                              cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
-                                              srOpenFlags, clientIp, clientPort, clientVersion, clientType,
-                                              reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
-                                              reqCreationTime, reqDefaultFileSize, sourceRfs));
-              # in case of timeout, we may have nothing to do
-              if srId.getvalue() != None:
-                log(syslog.LOG_DEBUG, 'jobToSchedule returned srId ' + str(int(srId.getvalue())))
-                # standard jobs and disk to disk copies are not handled the same way
-                # but in both cases, errors are handled internally and no exception
-                # others than the ones implying the end of the processing
-                if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-                  self.workToDispatch.put((self.scheduleD2d,
-                                           (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
-                                            cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
-                                            reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
-                                            reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
-                else:
-                  self.workToDispatch.put((self.scheduleJob,
-                                           (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
-                                            srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
-                                            srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
-                                            srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
-                                            reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
-                                            reqSvcClass.getvalue(), reqCreationTime.getvalue())))
+          try:
+            stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsReadyToSchedule'); END;");
+            # prepare a cursor for database polling
+            stcur = self.dbConnection().cursor()
+            stcur.arraysize = 50
+            srId = stcur.var(cx_Oracle.NUMBER)
+            srSubReqId = stcur.var(cx_Oracle.STRING)
+            srProtocol = stcur.var(cx_Oracle.STRING)
+            srXsize = stcur.var(cx_Oracle.NUMBER)
+            srRfs = stcur.var(cx_Oracle.STRING)
+            reqId = stcur.var(cx_Oracle.STRING)
+            cfFileId = stcur.var(cx_Oracle.NUMBER)
+            cfNsHost = stcur.var(cx_Oracle.STRING)
+            reqSvcClass = stcur.var(cx_Oracle.STRING)
+            reqType = stcur.var(cx_Oracle.NUMBER)
+            reqEuid = stcur.var(cx_Oracle.NUMBER)
+            reqEgid = stcur.var(cx_Oracle.NUMBER)
+            reqUsername = stcur.var(cx_Oracle.STRING)
+            srOpenFlags = stcur.var(cx_Oracle.STRING)
+            clientIp = stcur.var(cx_Oracle.NUMBER)
+            clientPort = stcur.var(cx_Oracle.NUMBER)
+            clientVersion = stcur.var(cx_Oracle.NUMBER)
+            clientType = stcur.var(cx_Oracle.NUMBER)
+            reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
+            reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
+            clientSecure = stcur.var(cx_Oracle.NUMBER)
+            reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
+            reqCreationTime = stcur.var(cx_Oracle.NUMBER)
+            reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
+            sourceRfs = stcur.var(cx_Oracle.STRING)
+            stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
+            # infinite loop over the polling of the DB
+            while self.running:
+                # see whether there is something to do
+                # not that this will hang until something comes or the internal timeout is reached
+                stcur.execute(stJobToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
+                                                cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
+                                                srOpenFlags, clientIp, clientPort, clientVersion, clientType,
+                                                reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
+                                                reqCreationTime, reqDefaultFileSize, sourceRfs));
+                # in case of timeout, we may have nothing to do
+                if srId.getvalue() != None:
+                  log(syslog.LOG_DEBUG, 'jobToSchedule returned srId ' + str(int(srId.getvalue())))
+                  # standard jobs and disk to disk copies are not handled the same way
+                  # but in both cases, errors are handled internally and no exception
+                  # others than the ones implying the end of the processing
+                  if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
+                    self.workToDispatch.put((self.scheduleD2d,
+                                             (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
+                                              cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
+                                              reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
+                                              reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
+                  else:
+                    self.workToDispatch.put((self.scheduleJob,
+                                             (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
+                                              srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
+                                              srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
+                                              srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
+                                              reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
+                                              reqSvcClass.getvalue(), reqCreationTime.getvalue())))
+                  # if maxNbJobsScheduledPerSecondis not None, request throttling is active
+                  # What it does is keep a count of the number of scheduled request in the current second
+                  # and wait the rest of the second if it reached the limit
+                  if self.maxNbJobsScheduledPerSecond:
+                    currentTime = time.time()
+                    currentSecond = trunc(currentTime)
+                    # reset the counters if we've changed second
+                    if currentSecond != self.currentSecond:
+                      self.currentSecond = currentSecond
+                      self.nbJobsScheduled = 0
+                    # increase counter of number of jobs scheduled within the current second
+                    self.nbJobsScheduled = self.nbJobsScheduled + 1
+                    # did we reach our quota of requests for this second ?
+                    if self.nbJobsScheduled > self.maxNbJobsScheduledPerSecond:
+                      # check that the second is not just over, so that we do not sleep a negative time
+                      if currentTime < self.currentSecond + 1:
+                        # wait until the second is over
+                        time.sleep(self.currentSecond + 1 - currentTime)
+          finally:
+            stcur.close()
         except Exception, e:
           # log error
           log(syslog.LOG_ERR, 'Caught exception in Dispatcher thread (' + str(e.__class__) + ') : ' + str(e))
