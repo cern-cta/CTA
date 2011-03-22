@@ -102,7 +102,15 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.arraysize = 50
-    stfixSQL = 'UPDATE Castorfile SET fileSize = :fs WHERE fileid = :fid'
+    stfixSQL = '''DECLARE
+      cfId NUMBER;
+    BEGIN
+      UPDATE Castorfile SET fileSize = :fs
+       WHERE fileid = :fid
+      RETURNING id INTO cfId;
+      UPDATE DiskCopy SET DiskCopySize = :fs
+       WHERE castorfile = cfId;
+    END;'''
     print "Fixing stager..."
     for f in fileids:
         stcur.execute(stfixSQL, fid=f[0], fs=f[1])
