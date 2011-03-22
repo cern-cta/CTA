@@ -553,6 +553,11 @@ int main(int argc, char** argv) {
   castor::job::stagerjob::InputArguments* arguments = 0;
   castor::job::stagerjob::PluginContext context;
 
+  // detach from parent (except if we are usign LSF)
+  if (NULL == getenv("LSB_JOBID")) {
+    setsid();
+  }
+
   try {
     // Initializing logging
     using namespace castor::job::stagerjob;
