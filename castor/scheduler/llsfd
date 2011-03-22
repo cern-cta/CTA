@@ -31,9 +31,10 @@ import rpyc
 import time
 import threading
 import socket
-import syslog
 import daemon
-import castor_tools, connectionpool, dispatcher, serverqueue
+import castor_tools, connectionpool, dispatcher, serverqueue, aborter, synchronizer
+import dlf
+from llsfddlf import msgs
 
 # usage function
 def usage(exitCode):
@@ -123,14 +124,15 @@ class SchedulerService(rpyc.Service):
           # call the function on the appropriate diskserver
           res[diskPool][ds] = getattr(connections,func)(ds)
         except Exception, e:
-          # we've tried...
-          log(syslog.LOG_NOTICE, 'No answer to ' + func + ' from ' + ds + ' (' + str(e) + ')')
+          # 'Could not contact diskserver' message
+          dlf.writenotice(msgs.COULDNOTCONTACTDS, function=func, diskserver=ds,
+                          errortype=str(e.__class__), error=str(e))
           pass
     return res
 
   def exposed_bqueues(self, diskPool=None):
     '''bqueues lists the number of running and pending jobs per queue'''
-    log(syslog.LOG_DEBUG, 'bqueues called for diskPool ' + str(diskPool))
+    dlf.writedebug(msgs.BQUEUESCALLED, diskpool=diskPool)
     nbs = self.dispatch('nbJobs', diskPool)
     res = []
     for diskPool in nbs:
@@ -143,7 +145,7 @@ class SchedulerService(rpyc.Service):
   def exposed_bhosts(self, diskPool=None):
     '''bhosts lists the hosts in the scheduling facility together with the number of
     running and pending jobs for each of them and their number of slots'''
-    log(syslog.LOG_DEBUG, 'bhosts called for diskPool ' + str(diskPool))
+    dlf.writedebug(msgs.BHOSTSCALLED, diskpool=diskPool)
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
     hosts = self.dispatch('nbJobs', diskPool)
     # flatten it to a list of (diskserver, (values))
@@ -153,7 +155,7 @@ class SchedulerService(rpyc.Service):
 
   def exposed_badmin(self, diskPool=None):
     '''badmin reconfigures the scheduling facility'''
-    log(syslog.LOG_DEBUG, 'badmin called for diskPool ' + str(diskPool))
+    dlf.writedebug(msgs.BADMINCALLED, diskpool=diskPool)
     # reset all known diskservers
     self.dispatch('badmin', diskPool)
     # and reset list of known diskServers
@@ -161,7 +163,7 @@ class SchedulerService(rpyc.Service):
 
   def exposed_bjobs(self, diskPool=None):
     '''bqueues lists the number of running and pending jobs per queue'''
-    log(syslog.LOG_DEBUG, 'bjobs called for diskPool ' + str(diskPool))
+    dlf.writedebug(msgs.BJOBSCALLED, diskpool=diskPool)
     jobs = self.dispatch('bjobs', diskPool)
     res = []
     for diskPool in jobs:
@@ -172,51 +174,64 @@ class SchedulerService(rpyc.Service):
 
   def exposed_bkill(self, jobids):
     '''bkill removes jobs from all queues on all servers and diskservers'''
-    log(syslog.LOG_DEBUG, 'bkill called for jobs ' + jobids)
+    for jobid in jobids:
+      dlf.writedebug(msgs.BKILLCALLED, subreqid=jobid)
     # call the internal method on all schedulers (including ourselves)
     for scheduler in configuration['DiskManager']['ServerHosts'].split():
       connections.bkillinternal(scheduler, jobids)
 
   def exposed_bkillinternal(self, jobids):
     '''bkillinternal removes jobs from the queues handled by this scheduler (server queue and diskserver's)'''
-    log(syslog.LOG_DEBUG, 'bkillinternal called for jobs ' + jobids)
+    for jobid in jobids:
+      dlf.writedebug(msgs.BKILLINTERNALCALLED, subreqid=jobid)
     queuingJobs.remove(jobids)
 
   def exposed_jobsKilled(self, jobs):
     '''informs the stager that these jobs have been killed'''
-    log(syslog.LOG_DEBUG, 'jobsKilled called for jobs ' + ', '.join([jobid for jobid, rc, s in jobs]))
+    for jobid, fileid, errno, errmsg in jobs:
+      dlf.writedebug(msgs.JOBSKILLEDCALLED, subreqid=jobid, fileid=fileid, errno=errno, errmsg=errmsg)
     # only inform the stager
     try:
       stcur = dispatcher.dbConnection().cursor()
       stcur.arraysize = 50
-      srIds, errCodes, errMessages = zip(*failures)
-      stcur.execute("BEGIN jobFailedSafe(:1, :2, :3); END;", srIds, errCodes, errMessages)
+      jobids, fileids, errnos, errmsgs = map(list,zip(*jobs))
+      stcur.execute("BEGIN jobFailedSafe(:1, :2, :3); END;", [jobids, errnos, errmsgs])
+      stcur.close()
     except Exception, e:
-      log(syslog.LOG_ERR, 'Exception caught while failing jobs ' + ', '.join(jobs[0]) + ' (' + str(e.__class__) + ') : ' + str(e))
+      for jobid, fileid, errno, errmsg in jobs:
+        # "Exception caught while failing job" message
+        dlf.writeerr(msgs.FAILJOBEXCEPTION, subreqid=jobid, fileid=fileid, type=str(e.__class__), msg=str(e))
 
   def exposed_jobsCanceled(self, machine, jobs):
     '''cancels jobs in the queues and informs the stager in case there is no
     remaining machines where it could run'''
-    queuingJobs.jobsCanceled(machine, jobs)
+    for jobid, fileid, rc, s in jobs:
+      dlf.writedebug(msgs.JOBSCANCELEDCALLED, diskserver=machine,
+                     subreqid=jobid, fileid=fileid, errcode=rc, errmsg=s)
+    # first cancel jobs in the queue
+    jobskilled = queuingJobs.jobsCanceled(machine, jobs)
+    # for those that are really over, inform the stager
+    if jobskilled:
+      self.exposed_jobsKilled(jobskilled)
 
   def exposed_jobStarting(self, diskserver, jobid, jobtype):
     '''called when a job started on a given diskserver'''
-    log(syslog.LOG_DEBUG, 'jobStarting called for job ' + jobid + ' (' + jobtype + ') on ' + diskserver)
+    dlf.writedebug(msgs.JOBSTARTINGCALLED, diskserver=diskserver, subreqid=jobid, jobtype=jobtype)
     machinesToInform = queuingJobs.jobStarting(diskserver, jobid, jobtype)
 
   def exposed_getQueuingJobs(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of jobs'''
-    log(syslog.LOG_DEBUG, 'getQueuingJobs called for ' + diskserver)
+    dlf.writedebug(msgs.GETQUEUINGJOBSCALLED, diskserver=diskserver)
     return tuple(queuingJobs.listQueuingJobs(diskserver))
 
   def exposed_getRunningD2dSourceJobs(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the list of running d2dsource jobs'''
-    log(syslog.LOG_DEBUG, 'getRunningD2dSourceJobs called for ' + diskserver)
+    dlf.writedebug(msgs.GETRUNNINGD2DSOURCEJOBSCALLED, diskserver=diskserver)
     return tuple(queuingJobs.listRunningD2dSources(diskserver))
 
   def exposed_d2dend(self, jobid):
     '''called when a d2d is over. Responsible for informing the source of the d2d'''
-    log(syslog.LOG_DEBUG, 'd2dend called for jobid ' + jobid)
+    dlf.writedebug(msgs.D2DENDCALLED, subreqid=jobid)
     queuingJobs.d2dend(jobid)
 
 def initQueues():
@@ -233,17 +248,14 @@ def initQueues():
           queuingJobs.put(ds, jobid, job, arrivaltime, jobtype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
-        log(syslog.LOG_NOTICE, 'No queue could be retrieved from ' + ds + ' (' + str(e) + ')')
+        # 'No queue could be retrieved' message
+        dlf.writenotice(msgs.NOQUEUERETRIEVED, diskserver=ds, error=str(e))
 
 import signal
 def handler(signum, frame):
-  '''signal handler for the llsf daemon, only logging'''
-  if signum == signal.SIGTERM:
-    log('SIGTERM received. Exiting')
-  elif signum == signal.SIGINT:
-    log('SIGINT received. Exiting')
-  else:
-    log('Unexpected signal %d received. Exiting') % signum
+  '''signal handler for the llsf daemon, only logging and calling sys.exit'''
+  # 'Received signal' message
+  dlf.write(msgs.SIGNALRECEIVED, signal=signum)
   sys.exit()
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
@@ -259,9 +271,7 @@ try:
     # get configuration
     configuration = castor_tools.castorConf()
     # setup logging
-    verbosity = configuration.getValue('llsfd', 'LogMask', 'LOG_INFO')
-    syslog.openlog('llsfd', 0, syslog.LOG_LOCAL3)
-    syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
+    dlf.init('llsfd')
     # global cache on the list of diskservers
     diskServerList = DiskServerListCache()
     # create a connection pool for connections to the DiskServers
@@ -301,8 +311,9 @@ try:
     # we are exiting, fine
     pass
   except Exception, e:
-    print 'Caught unexpected exception, exiting : ' + str(e)
-    log(syslog.LOG_ERR, 'Caught unexpected exception, exiting : ' + str(e))
+    # 'Caught unexpected exception, exiting' message
+    print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
     raise
 finally:
   # clean up all connections and threads that may be running

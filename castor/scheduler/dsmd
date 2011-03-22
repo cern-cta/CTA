@@ -34,8 +34,9 @@ import socket
 import tempfile
 import threading
 import connectionpool, castor_tools, localqueue, runningjobsset
-import syslog
 import daemon
+import dlf
+from dsmddlf import msgs
 
 # usage function
 def usage(exitCode):
@@ -75,50 +76,51 @@ class DiskServerManagerService(rpyc.Service):
   def exposed_scheduleJob(self, scheduler, jobid, job, arrivaltime, jobtype='standard'):
     '''Called when a new job needs to be scheduled.
     Queues the new job.'''
-    log(syslog.LOG_DEBUG, 'scheduleJob called from ' + scheduler + ' for jobid ' + jobid + ' (' + jobtype + ')')
+    dlf.writedebug(msgs.SCHEDULEJOBCALLED, scheduler=scheduler, subreqid=jobid,
+                   jobtype=jobtype, fileid=(job[8],int(job[6])))
     jobQueue.put(scheduler, jobid, job, jobtype, arrivaltime)
 
   def exposed_nbJobs(self):
     '''Called when bhosts or bqueues monitoring is needed.
     Returns the number of slots. running jobs and pending jobs on the diskserver'''
-    log(syslog.LOG_DEBUG, 'nbJobs called')
+    dlf.writedebug(msgs.NBJOBSCALLED)
     return (configuration.getValue('DiskManager', 'NbSlots', None, int), jobQueue.nbJobs(), runningJobs.nbJobs())
 
   def exposed_badmin(self):
     '''Called when the diskserver should be reconfigured, e.g. on a badmin call'''
-    log(syslog.LOG_DEBUG, 'badmin called')
+    dlf.writedebug(msgs.BADMINCALLED)
     configuration.refresh()
 
   def exposed_bjobs(self):
     '''Called when bjobs monitoring is needed.
     Lists all jobs running or pending on this host'''
-    log(syslog.LOG_DEBUG, 'bjobs called')
+    dlf.writedebug(msgs.BJOBSCALLED)
     return tuple(runningJobs.bjobs() + jobQueue.bjobs())
 
   def exposed_jobset(self):
     '''Lists all pending and running jobs'''
-    log(syslog.LOG_DEBUG, 'jobset called')
+    dlf.writedebug(msgs.JOBSETCALLED)
     return tuple(runningJobs.jobset() | jobQueue.jobset())
 
   def exposed_bkill(self, jobids):
     '''Called when some jobs should be killed'''
-    log(syslog.LOG_DEBUG, 'bkill called')
+    dlf.writedebug(msgs.BKILLCALLED, jobids=', '.join(jobids))
     # remove jobs from the local queue
     jobsCanceled = jobQueue.remove(jobids)
 
   def exposed_getQueuingJobs(self, scheduler):
     '''returns the list of jobs in the queue'''
-    log(syslog.LOG_DEBUG, 'getQueuingJobs called from ' + scheduler)
+    dlf.writedebug(msgs.GETQUEUINGJOBSCALLED, scheduler=scheduler)
     return tuple(jobQueue.listQueuingJobs())
 
   def exposed_getRunningD2dSource(self, scheduler):
     '''returns the list of running d2dsource jobs'''
-    log(syslog.LOG_DEBUG, 'getRunningD2dSource called from ' + scheduler)
+    dlf.writedebug(msgs.GETRUNNINGD2DSOURCECALLED, scheduler=scheduler)
     return tuple(runningJobs.listRunningD2dSources())
 
   def exposed_d2dend(self, jobid):
     '''called when a d2d copy is over and we are the source'''
-    log(syslog.LOG_DEBUG, 'd2dend called for jobid ' + jobid)
+    dlf.writedebug(msgs.D2DENDCALLED, subreqid=jobid)
     runningJobs.d2dend(jobid)
 
   def checkSpaceLeftOnFS(fs):
@@ -149,21 +151,22 @@ class ActivityControl(threading.Thread):
         if runningJobs.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', None, int):
           # get a new job from the jobQueue
           scheduler, jobid, job, jobtype, arrivalTime = jobQueue.get()
+          fileid = (job[8], int(job[6]))
           try:
-            # notifies the central scheduler that we want to start this job
-            # this may raise a ValueError exception if it already started
-            # somewhere else
-            connections.jobStarting(scheduler, socket.gethostname(), jobid, jobtype)
-            # log job start
-            log('Starting ' + jobid + ' (' + jobtype + ')')
-            # in case of d2dsource, do not actually start for real, only take note
-            if jobtype == 'd2dsource':
-              runningJobs.add(jobid, scheduler, job, None, None, jobtype, arrivalTime)
+            # in case of jobs wanting to write data, we check that space is available
+            if not checkSpaceLeftOnFS(jobtype, job):
+              # not enough space, we cancel the job
+              connections.jobsCanceled(scheduler, socket.getfqdn(), set([(jobid, fileid, 28, 'No space left on device')])) # ENOSPC
             else:
-              # in case of jobs wanting to write data, we check the space available
-              if not checkSpaceLeftOnFS(job[-1].split(':')[1]):
-                # not enough space, we cancel the job
-                self.connections.jobsCanceled(scheduler, socket.gethostname(), [jobid])
+              # notifies the central scheduler that we want to start this job
+              # this may raise a ValueError exception if it already started
+              # somewhere else
+              connections.jobStarting(scheduler, socket.gethostname(), jobid, jobtype)
+              # "Job starting" message
+              dlf.write(msgs.JOBSTARTING, subreqid=jobid, fileid=fileid, jobtype=jobtype)
+              # in case of d2dsource, do not actually start for real, only take note
+              if jobtype == 'd2dsource':
+                runningJobs.add(jobid, scheduler, job, None, None, jobtype, arrivalTime)
               else:
                 # create a local file to hold the former LSF scheduler info
                 notifFileHandle, notifFileName = tempfile.mkstemp()
@@ -181,25 +184,32 @@ class ActivityControl(threading.Thread):
                   process = 0
                 runningJobs.add(jobid, scheduler, job, notifFileName, process, jobtype, arrivalTime)
           except ValueError:
-            log('Canceled start of ' + jobid + '(already started on another host)')
+            # 'Job start canceled (already started on another host)' message
+            dlf.writedebug(msgs.JOBALREADYSTARTED, subreqid=jobid, fileid=fileid)
             # the job has already started somewhere else, so give up
             pass
           except EnvironmentError:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a priority queue
-            log('Start postponned until source is ready for ' + jobid)
+            # "Start postponned until source is ready" message
+            dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=jobid, fileid=fileid)
             jobQueue.d2dDestReady(scheduler, jobid, job, arrivalTime, jobtype)
           except Exception, e:
             # we could not connect to scheduler to check whether the job can be started
             log(syslog.LOG_ERR, "Informing " + scheduler + " that job " + jobid + ' started failed with error ' + str(e))
             # put back the job in the queue
             jobQueue.priorityPut(scheduler, jobid, job, jobtype, arrivalTime)
-            time.sleep(1)          
+          except Exception, e:
+            # startup of the job failed with unexpected error
+            # 'Job starting failed' message
+            dlf.writeerr(msgs.JOBSTARTINGFAILED, subreqid=jobid, fileid=fileid, error=str(e))
+            time.sleep(1)
         else:
           time.sleep(.05)
-      except Exception, e:
-        log(syslog.LOG_ERR, "Caught exception in ActivityControl thread (" + str(e.__class__) + ') : ' + str(e))
-        time.sleep(1)          
+      except:
+        # "Caught exception in ActivityControl thread" message
+        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION, type=str(e.__class__), msg=str(e))
+        time.sleep(1)
 
   def stop(self):
     '''stops processing in this thread'''
@@ -226,7 +236,8 @@ class ManagementThread(threading.Thread):
         # check for job to be canceled for various reasons (timeout, missing resources, ...)
         jobQueue.checkForJobCancelation()
       except Exception, e:
-        log(syslog.LOG_ERR, "Caught exception in ManagementThread thread (" + str(e.__class__) + ") : " + str(e))
+        # 'Caught exception in Management thread' message
+        dlf.writeerr(msgs.MGMTEXCEPTION, type=str(e.__class__), msg=str(e))
       # do not loop too fast
       time.sleep(1)
 
@@ -245,17 +256,14 @@ def initQueues():
         jobQueue.put(scheduler, jobid, job, jobtype, arrivaltime)
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
-      log('No queue could be retrieved from ' + scheduler + ' (' + str(e) + ')')
-      pass
+      # 'No queue could be retrieved' message
+      dlf.writenotice(msgs.NOQUEUERETRIEVED, scheduler=scheduler, error=str(e))
 
 import signal
 def handler(signum, frame):
-  if signum == signal.SIGTERM:
-    log('SIGTERM received. Exiting')
-  elif signum == signal.SIGINT:
-    log('SIGINT received. Exiting')
-  else:
-    log('Unexpected signal %d received. Exiting') % signum
+  '''signal handler for the disk server manager daemon, only logging and calling sys.exit'''
+  # 'Received signal' message
+  dlf.write(msgs.SIGNALRECEIVED, signal=signum)
   sys.exit()
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
@@ -270,9 +278,7 @@ try:
     # get configuration
     configuration = castor_tools.castorConf()
     # setup logging
-    verbosity = configuration.getValue('dsmd', 'LogMask', 'LOG_INFO')
-    syslog.openlog('dsmd', 0, syslog.LOG_LOCAL3)
-    syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
+    dlf.init('dsmd')
     # create a connection pool for connections to the stagers
     connections = connectionpool.ConnectionPool()
     # create a queue of jobs to be run
@@ -305,8 +311,9 @@ try:
     # we are exiting, fine
     pass
   except Exception, e:
+    # 'Caught unexpected exception, exiting' message
     print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
-    log(syslog.LOG_ERR, 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e))
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
     raise
 finally:
   if daemonize:

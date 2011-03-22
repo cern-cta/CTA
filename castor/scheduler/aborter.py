@@ -28,10 +28,10 @@
 
 import time
 import threading
-import syslog
 import castor_tools
-
-log = syslog.syslog
+import socket
+import dlf
+from llsfddlf import msgs
 
 class Aborter(threading.Thread):
   '''Aborter thread, responsible for connecting to the stager database and getting the list of jobs to be aborted'''
@@ -80,8 +80,8 @@ class Aborter(threading.Thread):
               # and commit the changes in the DB so that we do not try to drop these jobs again
               stcur.execute("COMMIT")
         except Exception, e:
-          # log error
-          log(syslog.LOG_ERR, 'Caught exception in Aborter thread (' + str(e.__class__) + ') : ' + str(e))
+          # "Caught exception in Aborter thread" message
+          dlf.writeerr(msgs.ABORTEREXCEPTION, type=str(e.__class__), msg=str(e))
           # roll back in case
           try:
             stcur.execute("ROLLBACK")

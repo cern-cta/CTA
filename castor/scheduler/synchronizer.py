@@ -29,11 +29,12 @@
 
 import time
 import threading
-import syslog
 import castor_tools
 import random
-
-log = syslog.syslog
+import socket
+import castor_tools
+import dlf
+from llsfddlf import msgs
 
 class Synchronizer(threading.Thread):
   '''synchronizer class of the low latency scheduling facility of the CASTOR project
@@ -55,12 +56,12 @@ class Synchronizer(threading.Thread):
     # whether we are connected to the stager DB
     self.stagerConnection = None
 
-  def dbConnection(self):
+  def dbConnection(self, autocommit=True):
     '''returns a connection to the stager DB.
     The connection is cached and reconnections are handled'''
     if self.stagerConnection == None:
       self.stagerConnection = castor_tools.connectToStager()
-      self.stagerConnection.autocommit = True
+    self.stagerConnection.autocommit = autocommit
     return self.stagerConnection
 
   def run(self):
@@ -99,15 +100,32 @@ class Synchronizer(threading.Thread):
                   # call the function on the appropriate diskserver
                   allLlsfJobs = allLlsfJobs | set(connections.jobset(ds))
                 # find out the set of jobs in the DB and no more in the scheduling system
-                jobsToFail = subReqIds - allLlsfJobs
+                jobsToFail = list(subReqIds - allLlsfJobs)
                 # and inform the stager
-                llsfd.jobsKilled(zip(list(jobsToFail),
-                                     [1015 for i in range(len(jobsToFail))], # SEINTERNAL error code
-                                     ['Job has disappeared from the scheduling system' for i in range(len(jobsToFail))]))
+                if jobsToFail:
+                  # get back the fileids for the logs. We need to go back to the DB just for this
+                  conn = self.dbConnection(False)
+                  fileIdsCur = conn.cursor()
+                  fileIdsCur.arraysize = 200
+                  stcur = conn.cursor()
+                  stcur.callproc('getFileIdsForSrs', [jobsToFail, fileIdsCur])
+                  fileids = map(tuple, fileIdsCur.fetchall())
+                  conn.commit()
+                  # 'Job killed by synchronization as it disappeared from the scheduling system'
+                  for jobid, fileid in zip(jobsToFail, fileids):
+                    dlf.write(msgs.SYNCHROKILLEDJOB, subreqid=jobid, fileid=fileid)
+                  # prepare the jobs so that we have only tuples going onver the wire
+                  jobs = tuple(map(tuple,
+                                   zip(jobsToFail, fileids,
+                                       [1015] * len(jobsToFail), # SEINTERNAL error code
+                                       ['Job has disappeared from the scheduling system'] * len(jobsToFail))))
+                  # finally inform the stager
+                  self.connections.jobsKilled(self.hostname, jobs)
               except Exception, e:
                 # we could not list all pending running jobs in the system
                 # Thus we have to give up with synchronization for this round
-                log(syslog.LOG_ERROR, 'Error caught while trying to synchronize DB jobs with scheduler jobs. Giving up for this round. Error was : ' + str(e)
+                # 'Error caught while trying to synchronize DB jobs with scheduler jobs. Giving up for this round.'
+                dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
               # sleep until next check
               slept = 0
               while slept < checkInterval:
@@ -119,8 +137,8 @@ class Synchronizer(threading.Thread):
           finally:
             stcur.close()
         except Exception, e:
-          # log error
-          log(syslog.LOG_ERR, 'Caught exception in Synchronizer thread (' + str(e.__class__) + ') : ' + str(e))
+          # "Caught exception in Synchronizer thread" message
+          dlf.writeerr(msgs.SYNCHROEXCEPTION, type=str(e.__class__), msg=str(e))
     finally:
       # try to clean up what we can
       try:

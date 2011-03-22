@@ -30,17 +30,9 @@ import os, pwd
 import threading
 import subprocess
 import time
-import syslog
-
-log = syslog.syslog
-
-class PopenWrapper(subprocess.Popen):
-  '''little wrapper around Popen allowing to create a Popen object from a process pid.
-     note that this code is linux specific and that the Popen object will not be fully
-     functionnal. But at least it poll method can be used'''
-  def __init__(self, pid):
-      '''constructor'''
-      self.pid = pid
+import dlf
+from dsmddlf import msgs
+import castor_tools
 
 class RunningJobsSet:
   '''handles a list of running jobs and is able to poll them regularly and list the ones that ended'''
@@ -61,7 +53,8 @@ class RunningJobsSet:
   def populate(self):
     '''populates the list of ongoing jobs from the system.
     note that this is linux specific code'''
-    log(syslog.LOG_DEBUG, 'populating running scripts from system')
+    # 'populating running scripts from system' message
+    dlf.writedebug(msgs.POPULATING)
     # loop over all processes
     pids= [pid for pid in os.listdir('/proc') if pid.isdigit()]
     for pid in pids:
@@ -75,12 +68,23 @@ class RunningJobsSet:
           process = PopenWrapper(pid)
           jobtype = 'standard'
           if args[0] == '/usr/bin/d2dtransfer': jobtype = 'd2ddest'
-          arrivalTime = os.stat(os.path.join('/proc', pid, 'cmdline'))[-2]
-          startTime = arrivalTime
-          # create the entry in the list of running jobs
-          self._jobs.add(jobid, 'unknown', cmdline, notifFileName, process, jobtype, arrivalTime, startTime)
-          # log
-          log('Found job ' + jobid + ' already running')
+          try:
+            arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
+            startTime = arrivalTime
+            # create the entry in the list of running jobs, associated to the first scheduler we find
+            self._jobs.add((jobid, self.config['DiskManager']['ServerHosts'].split()[0], tuple(args), notifFileName, None, jobtype, arrivalTime, startTime))
+            # keep in memory that this was a rebuilt entry
+            leftOvers[jobid] = int(pid)
+            # 'Found job already running' message
+            fileid = (args[8],int(args[6]))
+            dlf.write(msgs.FOUNDJOBALREADYRUNNING, subreqid=jobid, fileid=fileid)
+          except Exception:
+            # could not stat the proc file, it means that this process has ended in the meantime, so ignore it
+            pass
+      except Exception:
+        # could not open the proc file, it means that this process has ended in the meantime, so ignore it
+        pass
+    return leftOvers
 
   def add(self, jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, startTime=None):
     '''add a new running job to the list'''
@@ -102,8 +106,8 @@ class RunningJobsSet:
     for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
       if jobtype == 'd2dsource':
         protocol = 'd2dsrc'
-      elif jobtype == 'd2dend':
-        protocol = 'd2dend'
+      elif jobtype == 'd2ddest':
+        protocol = 'd2ddest'
       else:
         protocol = job[10]
       n = n + self.config.getValue('DiskManager', protocol+'Weight', None, int)
@@ -122,37 +126,47 @@ class RunningJobsSet:
           if not self.fake:
             rc = process.poll()
           else:
-            rc = True
-          if rc != None:
-            # remove the notification file
+            rc = process.poll(-1)
+            isEnded = (rc!=None)
+        if isEnded:
+          # get fileid
+          fileid = (job[8], int(job[6]))
+          # "job ended message"
+          dlf.writedebug(msgs.JOBENDED, subreqid=jobid, fileid=fileid, rc=rc)
+          # remove the notification file
+          try:
             os.remove(notifyFileName)
-            # append to list of ended jobs
-            ended.append(process)
-            # in case of disk to disk copy, remember to inform source
-            if jobtype == 'd2ddest':
-              sourcesToBeInformed.append((scheduler, jobid))
-            # in case of jobs killed by a signal, remember to inform the DB
-            if rc < 0:
-              if scheduler not in killedJobs: killedJobs[scheduler] = []
-              killedJobs[scheduler].append((jobid, rc, 'Caught signal'))
+          except OSError:
+            # already removed ? that's fine
+            pass
+          # append to list of ended jobs
+          ended.append(jobid)
+          # in case of disk to disk copy, remember to inform source
+          if jobtype == 'd2ddest':
+            sourcesToBeInformed.append((scheduler, jobid, fileid))
+          # in case of jobs killed by a signal, remember to inform the DB
+          if rc < 0:
+            if scheduler not in killedJobs: killedJobs[scheduler] = []
+            killedJobs[scheduler].append((jobid, fileid, rc, 'Job has been killed'))
       # cleanup ended jobs
       self._jobs = set(job for job in self._jobs if job[4] not in ended)
     finally:
       self._lock.release()
     # inform schedulers of disk to disk transfers that are over
-    for scheduler, jobid in sourcesToBeInformed:
+    for scheduler, jobid, fileid in sourcesToBeInformed:
       try:
         self.connections.d2dend(scheduler, jobid)
       except Exception, e:
-        # log that we've failed
-        log(syslog.LOG_ERR, "Informing " + scheduler + " that d2d transfer of " + jobid + " is over failed with error " + str(e))
+        # "Informing scheduler that d2d transfer is over failed" message
+        dlf.writeerr(msgs.INFORMJOBISOVERFAILED, scheduler=scheduler, subreqid=jobid, fileid=fileid, error=str(e))
     # inform schedulers of jobs killed
     for scheduler in killedJobs:
       try:
         self.connections.jobsKilled(scheduler, tuple(killedJobs[scheduler]))
       except Exception, e:
-        # log that we've failed
-        log(syslog.LOG_ERR, "Informing " + scheduler + " that jobs " + ', '.join([jobid for jobid, rc, s in killedJobs[scheduler]]) + " were killed by signals failed with error " + str(e))
+        for jobid, fileid, rc, msg in killedJobs[scheduler]:
+          # "Informing scheduler that jobs were killed by signals failed" message
+          dlf.writeerr(msgs.INFORMJOBKILLEDFAILED, scheduler=scheduler, subreqid=jobid, fileid=fileid)
 
   def d2dend(self, jobid):
     '''called when a disk to disk copy ends and we are the source of it'''
@@ -174,6 +188,9 @@ class RunningJobsSet:
       else:
         user = 'stage'
       res.append((jobid, scheduler, user, 'RUN', jobtype, arrivalTime, runTime))
+      n = n + 1
+      if n >= 1000: # give up with full listing if too many jobs
+        break
     return res
 
   def jobset(self):

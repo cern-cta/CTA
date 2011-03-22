@@ -397,6 +397,10 @@ CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
 CREATE GLOBAL TEMPORARY TABLE StreamsToDoHelper (id NUMBER)
   ON COMMIT DELETE ROWS;
 
+/* Global temporary table to handle output of the processBulkRequest procedure */
+CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBER, nsHost VARCHAR(2048))
+  ON COMMIT DELETE ROWS;
+
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);

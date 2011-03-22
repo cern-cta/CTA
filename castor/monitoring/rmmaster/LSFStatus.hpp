@@ -127,6 +127,8 @@ namespace castor {
         /// The last time data were refreshed
         u_signed64 m_lastUpdate;
 
+        /// says whether getLSFStatus was already called or not, only used in case in noLSF mode
+        bool m_getLSFStatusCalled;
       };
 
     } // End of namespace rmmaster

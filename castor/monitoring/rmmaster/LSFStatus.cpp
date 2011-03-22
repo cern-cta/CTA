@@ -49,7 +49,8 @@ castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   m_rmMasterService(0),
   m_prevMasterName(""),
   m_prevProduction(false),
-  m_lastUpdate(0) {
+  m_lastUpdate(0),
+  m_getLSFStatusCalled(false) {
 
   // Check whether we run with or without LSF
   char *noLSFValue = getconfent("RmMaster", "NoLSFMode", 0);
@@ -124,26 +125,49 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     // If it dies, somebody else will be able to take the lock and will become the
     // new master.
 
-    // We have no clue on the master as in the LSF case, but we know the candidates
-    char* value = getconfent("RmMaster", "NoLSFMode", 0);
-    if (0 != value) masterName = std::string("one of ") + value;
-    hostName = castor::System::getHostName();
-
-    // Are we here for the first time ?
-    bool firstCall = (m_lastUpdate == 0);
-    
     // For stability reasons we cache the result of the query to the ORACLE DB and only
     // refresh it when updating is enabled and 10 seconds has passed since the
     // previous query.
-    if (firstCall || (update && ((time(NULL) - m_lastUpdate) > 10))) {
+    if ((!m_getLSFStatusCalled) || (update && ((time(NULL) - m_lastUpdate) > 10))) {
       production = m_rmMasterService->isMonitoringMaster();
       m_lastUpdate = time(NULL);
     } else {
       production = m_prevProduction;
     }
 
+    // fill the hostname and mastername
+    hostName = castor::System::getHostName();
+    if (production) {
+      masterName = hostName;
+    } else {
+      // we are not the master. We do not know who it is, but we can build a list of candidates
+      char** hosts;
+      int count;
+      int rc = getconfent_multi("DiskManager", "ServerHosts", 1, &hosts, &count);
+      if (0 == rc) {
+        // loop through candidates and only remove ourselves
+        int nbCandidates = 0;
+        masterName = "";
+        for (int i = 0; i < count; i++) {
+          if (0 != strcmp (hosts[i], hostName.c_str())) {
+            if (nbCandidates > 0) masterName += ", ";
+            masterName += hosts[i];
+            nbCandidates++;
+          }
+        }
+        if (nbCandidates > 1) masterName = "one of " + masterName;
+        // cleanup memory allocated by getconfent_multi
+        for (int i = 0; i < count; i++) free(hosts[i]);
+        free(hosts);
+      } else {
+        // no entry in config file about the possible candidates, giving up
+        masterName = "unknown";
+      }
+    }
+    
     // Announce if we have changed status
-    if (firstCall) {
+    if (!m_getLSFStatusCalled) {
+      m_getLSFStatusCalled = true;
       // "LSF initialization information"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Master", masterName)};
@@ -159,6 +183,8 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
       }
     }
+    // remember current state
+    m_prevProduction = production;
 
   } else {
 

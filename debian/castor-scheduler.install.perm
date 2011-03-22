@@ -5,3 +5,5 @@
 %attr(0644,root,root) usr/lib/python*/site-packages/dispatcher.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/aborter.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/synchronizer.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/llsfddlf.py*

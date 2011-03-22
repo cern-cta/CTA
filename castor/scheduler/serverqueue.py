@@ -28,9 +28,8 @@
 # *****************************************************************************/
 
 import threading
-import syslog
-
-log = syslog.syslog
+import dlf
+from llsfddlf import msgs
 
 class ServerQueue(dict):
   '''a dictionnary of queuing jobs, with the list of machines to which they were sent
@@ -118,11 +117,13 @@ class ServerQueue(dict):
         # check whether the job has already been started somewhere else
         if jobid not in self._jobsLocations:
           # in such a case, let the diskserver know by raising an exception
-          log(syslog.LOG_DEBUG, diskserver + " : job " + jobid + " had already started. Cancel start.")
+          # "Job had already started. Cancel start" message
+          dlf.writedebug(msgs.JOBALREADYSTARTED, diskserver=diskserver, subreqid=jobid)
           raise ValueError
         # if a destination job wants to start, check whether the source is ready
         if jobtype == 'd2ddest' and not self[diskserver][jobid][3]:
-          log(syslog.LOG_DEBUG, "Source is not ready yet for jobid " + jobid + ' and diskserver ' + diskserver)
+          # "Source is not ready yet" message
+          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=jobid)
           raise EnvironmentError
         # drop the job from all queues. Note that this desynchronizes the queues as seen
         # by the diskservers from the queues seen by the central manager. In case of a
@@ -141,6 +142,9 @@ class ServerQueue(dict):
     try:
       # get the source location
       diskserver = self._d2dsourcerunning[jobid]
+      # remember the fileid in case of error
+      job = self[diskserver][jobid][0]
+      fileid = (job[8], int(job[6]))
       # remove d2dsource job from the queue
       del self[diskserver][jobid]
       # remove from list of d2dsources
@@ -152,8 +156,8 @@ class ServerQueue(dict):
     try:
       self.connections.d2dend(diskserver, jobid)
     except Exception, e:
-      # log that we've failed
-      log(syslog.LOG_ERR, "Informing " + diskserver + " that d2d copy of " + jobid + " is over failed with error " + str(e))
+      # "Informing diskserver that d2d copy is over failed" message
+      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=jobid, fileid=fileid, error=str(e))
 
   def putRunningD2dSource(self, diskserver, jobid, job, arrivaltime):
     '''Adds a new d2dsource job to the list of runnign ones'''
@@ -189,14 +193,14 @@ class ServerQueue(dict):
     self._lock.acquire()
     try:
       # for each job
-      for jobid, rc, msg in jobs:
+      for jobid, fileid, rc, msg in jobs:
         try:
           # cleanup the queue for the given job on the given machine
           del self._jobsLocations[jobid][machine]
           del self[machine][jobid]
           if not self._jobsLocations[jobid]:
             # no other candidate machine for this job. It has to be failed
-            jobsKilled.append((jobid, rc, msg))
+            jobsKilled.append((jobid, fileid, rc, msg))
             # clean up _jobsLocations
             del self._jobsLocations[jobid]
             # if we have a source job already running, stop it
@@ -204,7 +208,8 @@ class ServerQueue(dict):
         except KeyError, e:
           # we are not handling this job or it is not queued for the given machine
           # we can only log this oddity and ignore
-          log(syslog.LOG_ERR, 'Unexpected KeyError exception caught in jobsCanceled : ' + str(e))
+          # "Unexpected KeyError exception caught in jobsCanceled" message
+          dlf.writeerr(msgs.JOBCANCELEXCEPTION, error=str(e))
     finally:
       self._lock.release()
     # inform the stager of the jobs that were killed

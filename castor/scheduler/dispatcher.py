@@ -30,12 +30,11 @@ import sys
 import time
 import threading
 import cx_Oracle
-import syslog
 import socket
 import castor_tools
 import Queue
-
-log = syslog.syslog
+import dlf
+from llsfddlf import msgs
 
 class Worker(threading.Thread):
   '''Worker thread, responsible for scheduling effectively the jobs on the diskservers'''
@@ -66,7 +65,8 @@ class Worker(threading.Thread):
         # thread can stop even if there is nothing in the queue
         pass
       except Exception, e:
-        log(syslog.LOG_ERR, 'Exception caught in Worker thread (' + str(e.__class__) + ') : ' + str(e))
+        # "Caught exception in Worker thread" message
+        dlf.writeerr(msgs.WORKEREXCEPTION, type=str(e.__class__), msg=str(e))
 
 class DBUpdater(threading.Thread):
   '''Worker thread, responsible for updating DB asynchronously and in bulk after the job scheduling'''
@@ -106,41 +106,56 @@ class DBUpdater(threading.Thread):
       # check whether there is something to do
       try:
         # we go out every second in case the thread has ended in the meantime
-        jobid, errcode, errmsg = self.workqueue.get(True, 1)
+        jobid, fileid, errcode, errmsg = self.workqueue.get(True, 1)
         if errcode != None:
-          failures.append((jobid, errcode, errmsg))
+          failures.append((jobid, fileid, errcode, errmsg))
         else:
-          successes.append(jobid)
+          successes.append((jobid, fileid))
       except Queue.Empty:
         continue
       # empty the queue so that we go only once to the DB
       try:
         while True:
-          jobid, errcode, errmsg = self.workqueue.get(False)
+          jobid, fileid, errcode, errmsg = self.workqueue.get(False)
           if errcode != None:
-            failures.append((jobid, errcode, errmsg))
+            failures.append((jobid, fileid, errcode, errmsg))
           else:
-            successes.append(jobid)
+            successes.append((jobid, fileid))
       except Queue.Empty:
         # we are over, the queue is empty
         pass
       # Now call the DB for failures
       if failures:
-        failures = zip(*failures)
-        log('Failing jobs ' + ', '.join(failures[0]))
+        jobids, fileids, errcodes, errmsgs = zip(*failures)
         try:
           stcur = self.dbConnection().cursor()
-          stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", failures)
+          try:
+            stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", [list(jobids), list(errcodes), list(errmsgs)])
+            for jobid, fileid, errcode, errmsg in failures:
+              # 'Failed job' message
+              dlf.writeerr(msgs.FAILEDJOB, subreqid=jobid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
+          finally:
+            stcur.close()
         except Exception, e:
-          log(syslog.LOG_ERR, 'Exception caught while failing jobs ' + ', '.join(failures[0]) + ' (' + str(e.__class__) + ') : ' + str(e))
+          for jobid, fileid, errcode, errmsg in failures:
+            # 'Exception caught while failing job' message
+            dlf.writeerr(msgs.FAILINGJOBEXCEPTION, subreqid=jobid, fileid=fileid, type=str(e.__class__), msg=str(e))
       # And call the DB for successes
       if successes:
-        log('Marking jobs scheduled : ' + ', '.join(successes))
+        for jobid, fileid in successes:
+          # 'Marking jobs scheduled' message
+          dlf.write(msgs.JOBSCHEDULED, subreqid=jobid, fileid=fileid)
         try:
           stcur = self.dbConnection().cursor()
-          stcur.execute("BEGIN jobScheduled(:jobids); END;", [successes])
+          try:
+            stcur.execute("BEGIN jobScheduled(:jobids); END;", [[jobid for jobid, fileid in successes]])
+          finally:
+            stcur.close()
         except Exception, e:
-          log(syslog.LOG_ERR, 'Exception caught while marking jobs ' + ', '.join(successes) + ' as scheduled (' + str(e.__class__) + ') : ' + str(e))
+          for jobid, fileid in successes:
+            # 'Exception caught while marking job scheduled' message
+            dlf.writeerr(msgs.JOBSCHEDULEDEXCEPTION, subreqid=jobid, fileid=fileid,
+                         type=str(e.__class__), msg=str(e))
 
 
 class Dispatcher(threading.Thread):
@@ -212,7 +227,9 @@ class Dispatcher(threading.Thread):
     # first schedule a job on the source node
     schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
     jobid = srSubReqId
-    log(jobid + '(d2d source) : ' + str(schedSourceCandidates[0]))
+    fileid = (str(cfNsHost), int(cfFileId))
+    # 'Scheduling d2d source' message
+    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=jobid, fileid=fileid, machine=str(schedSourceCandidates[0]))
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
     arrivaltime =  time.time()
@@ -222,16 +239,17 @@ class Dispatcher(threading.Thread):
       # send the job to the appropriate diskserver
       self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2dsource')
     except Exception, e:
-      # log that we've failed
-      log(syslog.LOG_ERR, "Scheduling d2d on " + diskserver + " (source) failed with error " + str(e))
+      # 'Scheduling d2d source failed' message
+      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
       # we coudl not schedule the source so fail the job in the DB
-      self.updateDBQueue.put((jobId, 1721, "Unable to schedule on source host"))  # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobId, fileid, 1721, "Unable to schedule on source host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
       return
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
-    log(jobid + '(d2d destinations) : ' + str(schedDestCandidates))
+    # 'Scheduling d2d destination' message
+    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=jobid, fileid=fileid, machines=str(schedDestCandidates))
     # build the list of hosts and jobs to launch
     jobList = []
     for diskserver, mountpoint in schedDestCandidates:
@@ -246,16 +264,16 @@ class Dispatcher(threading.Thread):
         self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2ddest')
         scheduleSucceeded = True
       except Exception, e:
-        # log that we've failed
-        log(syslog.LOG_ERR, "Scheduling d2d on " + diskserver + " (destination) failed with error " + str(e))
+        # 'Scheduling d2d destination failed' message
+        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
       # we could not schedule anywhere for destination.... so fail the job in the DB
-      self.updateDBQueue.put((jobid, 1721, "Unable to schedule on any destination host"))  # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobid, fileid, 1721, "Unable to schedule on any destination host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
     else:
-      self.updateDBQueue.put((jobid, None, None))
+      self.updateDBQueue.put((jobid, fileid, None, None))
 
 
   def scheduleJob(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
@@ -265,7 +283,9 @@ class Dispatcher(threading.Thread):
     # extract list of candidates where to schedule and log
     schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     jobid = srSubReqId
-    log(jobid + ' : ' + str(schedCandidates))
+    fileid = (str(cfNsHost), int(cfFileId))
+    # 'Scheduling standard job' message
+    dlf.writedebug(msgs.SCHEDJOB, subreqid=jobid, fileid=fileid, machines=str(schedCandidates))
     # build a list of jobs to schedule for each machine
     arrivaltime =  time.time()
     jobList = []
@@ -304,16 +324,16 @@ class Dispatcher(threading.Thread):
         self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime)
         scheduleSucceeded = True
       except Exception, e:
-        # log that we've failed
-        log(syslog.LOG_ERR, "Scheduling on " + diskserver + " failed with error " + str(e))
+        # 'Scheduling standard job failed' message
+        dlf.writeerr(msgs.SCHEDJOBFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
       # we could not schedule anywhere.... so fail the job in the DB
-      self.updateDBQueue.put((jobid, 1721, "Unable to schedule job")) # 1721 = ESTSCHEDERR
+      self.updateDBQueue.put((jobid, fileid, 1721, "Unable to schedule job")) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queuingJobs.remove(jobid)
     else:
-      self.updateDBQueue.put((jobid, None, None))
+      self.updateDBQueue.put((jobid, fileid, None, None))
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -364,7 +384,6 @@ class Dispatcher(threading.Thread):
                                                 reqCreationTime, reqDefaultFileSize, sourceRfs));
                 # in case of timeout, we may have nothing to do
                 if srId.getvalue() != None:
-                  log(syslog.LOG_DEBUG, 'jobToSchedule returned srId ' + str(int(srId.getvalue())))
                   # standard jobs and disk to disk copies are not handled the same way
                   # but in both cases, errors are handled internally and no exception
                   # others than the ones implying the end of the processing
@@ -387,7 +406,7 @@ class Dispatcher(threading.Thread):
                   # and wait the rest of the second if it reached the limit
                   if self.maxNbJobsScheduledPerSecond:
                     currentTime = time.time()
-                    currentSecond = trunc(currentTime)
+                    currentSecond = int(currentTime)
                     # reset the counters if we've changed second
                     if currentSecond != self.currentSecond:
                       self.currentSecond = currentSecond
@@ -395,7 +414,7 @@ class Dispatcher(threading.Thread):
                     # increase counter of number of jobs scheduled within the current second
                     self.nbJobsScheduled = self.nbJobsScheduled + 1
                     # did we reach our quota of requests for this second ?
-                    if self.nbJobsScheduled > self.maxNbJobsScheduledPerSecond:
+                    if self.nbJobsScheduled >= self.maxNbJobsScheduledPerSecond:
                       # check that the second is not just over, so that we do not sleep a negative time
                       if currentTime < self.currentSecond + 1:
                         # wait until the second is over
@@ -403,8 +422,8 @@ class Dispatcher(threading.Thread):
           finally:
             stcur.close()
         except Exception, e:
-          # log error
-          log(syslog.LOG_ERR, 'Caught exception in Dispatcher thread (' + str(e.__class__) + ') : ' + str(e))
+          # "Caught exception in Dispatcher thread" message
+          dlf.writeerr(msgs.DISPATCHEXCEPTION, type=str(e.__class__), msg=str(e))
           # then sleep a bit to not loop to fast on the error
           time.sleep(1)
     finally:

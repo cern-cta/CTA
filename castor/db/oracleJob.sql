@@ -908,6 +908,25 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing getFileIdsForSrs.
+   This method returns the list of fileids associated to the given list of
+   subrequests */
+CREATE OR REPLACE PROCEDURE getFileIdsForSrs
+  (subReqIds IN castor."strList", fileids OUT castor.FileEntry_Cur) AS
+  fid NUMBER;
+  nh VARCHAR(2048);
+BEGIN
+  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+    SELECT fileid, nsHost INTO fid, nh
+      FROM Castorfile, SubRequest
+     WHERE SubRequest.subreqId = subReqIds(i)
+       AND SubRequest.castorFile = CastorFile.id;
+    INSERT INTO getFileIdsForSrsHelper VALUES (i, fid, nh);
+  END LOOP;
+  OPEN fileids FOR SELECT nh, fileid FROM getFileIdsForSrsHelper ORDER BY rowno;
+END;
+/
+
 /* PL/SQL method implementing jobFailed, providing bulk termination of file
  * transfers.
  * This is deprecated and should go when the jobmanager and LSF are dropped.

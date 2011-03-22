@@ -55,6 +55,7 @@ InstallTarget(vdqmdeletepriority,755)
 
 InstallNonExecFile(castor_tools.pm,$(PERL_LIBDIR),755)
 InstallNonExecFile(castor_tools.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(dlf.py,$(PYTHON_LIBDIR),644)
 
 EXEMANPAGE(reclaim)
 EXEMANPAGE(cleanLostFiles)

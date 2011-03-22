@@ -84,7 +84,7 @@ const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_checkIfFi
 /// SQL statement for isMonitoringMasterStatementString.
 /// Note that we use lock number 369174921, which was picked up randomly
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_isMonitoringMasterStatementString =
-  "BEGIN :1 = dbms_lock.request(369174921, dbms_lock.X_MODE, 0); END;";
+  "BEGIN :1 := dbms_lock.request(369174921, dbms_lock.X_MODE, 0); END;";
 
 //-----------------------------------------------------------------------------
 // OraRmMasterSvc

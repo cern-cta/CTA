@@ -30,7 +30,8 @@ import time
 import Queue
 import socket
 import threading
-import syslog
+import dlf
+from dsmddlf import msgs
 
 class LocalQueue(Queue.Queue):
   '''Class managing a queue of pending jobs.
@@ -155,7 +156,7 @@ class LocalQueue(Queue.Queue):
         jobid, timeOfNextTry = self._pendingD2dDest[i]
         if timeOfNextTry < currentTime:
           # put the jobid back into the priority queue in it's time to retry the job
-          syslog.syslog("Retrying job " + jobid)
+          dlf.writedebug(msgs.RETRYJOB, subreqid=jobid) # "Retrying job" message
           self._priorityQueue.put(jobid)
           toBeDeleted.append(jobid)
       # cleanup list of pending jobids
@@ -172,7 +173,8 @@ class LocalQueue(Queue.Queue):
         timeouts[svcclass] = int(timeout)
       except ValueError:
         del timeouts[svcclass]
-        syslog.syslog(syslog.LOG_ERR, "Invalid JobManager/PendingTimeouts option, ignoring entry " + svcclass + ':' + timeout)
+        # "Invalid JobManager/PendingTimeouts option, ignoring entry" message
+        dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, svcclass=svcclass, timeout=timeout)
     # get the disk to disk copy timeout
     d2dtimeout =  configuration.getValue('JobManager', 'DiskCopyPendingTimeout', None, int)
     # get current time and diskserver status
@@ -196,7 +198,10 @@ class LocalQueue(Queue.Queue):
       if timeout != None and currenttime - arrivaltime > timeout:
           self.remove(jobid)
           if scheduler not in canceledJobs: canceledJobs[scheduler] = []
-          canceledJobs[scheduler].append((jobid, -1, 'Timed out while queueing'))
+          fileid = (job[8], int(job[6]))
+          canceledJobs[scheduler].append((jobid, fileid, 1004, 'Timed out while queueing (timeout was ' + str(timeout) + 's')) # SETIMEDOUT
+    if toberemoved:
+      self.remove(toberemoved)
 
   def checkForDisabledHardwareJobsCancelation(self, canceledJobs):
     '''Checks which jobs need to be canceled because hardware has been disabled'''
@@ -227,7 +232,8 @@ class LocalQueue(Queue.Queue):
           msg = "Job terminated, source filesystem for disk2disk copy is DISABLED"
         else: # standard, d2ddest
           msg = "Job terminated, all filesystems are DRAINING or DISABLED"
-        canceledJobs[scheduler].append((jobid, -1, msg))
+        fileid = (job[8], int(job[6]))
+        CANCELEDJOBS[scheduler].append((jobid, fileid, 1023, msg)) # SEWOULDBLOCK, Resource temporarily unavailable
         continue
 
   def checkForJobsCancelation(self):
@@ -260,6 +266,9 @@ class LocalQueue(Queue.Queue):
       else:
         user = 'stage'
       res.append((job[0], scheduler, user, 'PEND', jobtype, arrivalTime, None))
+      n = n + 1
+      if n >= 1000: # give up with full listing if too many jobs
+        break
     return res
 
   def jobset(self):
