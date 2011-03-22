@@ -104,14 +104,14 @@ class SquaredTreemapDesigner(object):
         
     def setLabelText(self, vnode):
         try:
-            vnode.setProperty('labeltext', self.mapping.getLinkedValue('labeltext', vnode))
+            vnode.setProperty('labeltext', self.mapping.getMappedValue('labeltext', vnode))
         except Exception, e:
             vnode.setProperty('labeltext', vnode.getProperty('treenode').getObject().__str__())
             
     def setIcon(self, vnode):
         icon = False
         try:
-            icon = self.mapping.getLinkedValue('icon', vnode)
+            icon = self.mapping.getMappedValue('icon', vnode)
             vnode.setProperty('icon', icon)
                 
         except Exception, e:
@@ -137,7 +137,7 @@ class SquaredTreemapDesigner(object):
     def setIconFile(self, vnode):
         iconfile = False
         try:
-            iconfile = self.mapping.getLinkedValue('iconfile', vnode)
+            iconfile = self.mapping.getMappedValue('iconfile', vnode)
             vnode.setProperty('iconfile', iconfile)
                 
         except Exception, e:
@@ -146,19 +146,19 @@ class SquaredTreemapDesigner(object):
             
     def setLabelTextIsbold(self, vnode):
         try:
-            vnode.setProperty('labeltextisbold', self.mapping.getLinkedValue('labeltextisbold', vnode))
+            vnode.setProperty('labeltextisbold', self.mapping.getMappedValue('labeltextisbold', vnode))
         except Exception, e:
             vnode.setProperty('labeltextisbold', self.labeltextisbold)
             
     def setToolTipInfoText(self, vnode):
         try:
-            vnode.setProperty('htmltooltiptext', self.mapping.getLinkedValue('htmltooltiptext', vnode))
+            vnode.setProperty('htmltooltiptext', self.mapping.getMappedValue('htmltooltiptext', vnode))
         except Exception, e:
             vnode.setProperty('htmltooltiptext', vnode.getProperty('treenode').getObject().__str__())
         
     def setFillColor(self, vnode):
         try:
-            r,g,b,a = self.googleColors(self.mapping.getLinkedValue('fillcolor', vnode))
+            r,g,b,a = self.googleColors(self.mapping.getMappedValue('fillcolor', vnode))
         except:
             try:
                 r,g,b,a = self.googleColors(vnode.getProperty('level'))
@@ -169,7 +169,7 @@ class SquaredTreemapDesigner(object):
         
     def setStrokeColor(self,vnode):
         try:
-            r,g,b,a = self.googleColors(self.mapping.getLinkedValue('strokecolor', vnode))
+            r,g,b,a = self.googleColors(self.mapping.getMappedValue('strokecolor', vnode))
         except:
             try:
                 r,g,b,a = self.googleColors(vnode.getProperty('level') + 2)
@@ -180,7 +180,7 @@ class SquaredTreemapDesigner(object):
         
     def setStrokeSize(self,vnode):
         try:
-            strokesize = self.mapping.getLinkedValue('strokesize', vnode)
+            strokesize = self.mapping.getMappedValue('strokesize', vnode)
             if strokesize < self.minstrokesize: strokesize = self.minstrokesize
             vnode.setProperty('strokesize', strokesize)
         except:
@@ -193,7 +193,7 @@ class SquaredTreemapDesigner(object):
             
     def setLabelFontSize(self,vnode):
         try:
-            vnode.setProperty('labelfontsize', self.mapping.getLinkedValue('labelfontsize', vnode))
+            vnode.setProperty('labelfontsize', self.mapping.getMappedValue('labelfontsize', vnode))
         except:
             vnode.setProperty('labelfontsize', self.labelfontsize)
             
@@ -206,12 +206,12 @@ class SquaredTreemapDesigner(object):
             human_eye_sensitivity = 1.0
         
         try:
-            b = self.mapping.getLinkedValue('radiallight.brightness', vnode)* human_eye_sensitivity
+            b = self.mapping.getMappedValue('radiallight.brightness', vnode)* human_eye_sensitivity
         except:
             b = human_eye_sensitivity*self.radiallightbrightness
          
         try:   
-            h = self.mapping.getLinkedValue('radiallight.hue', vnode)
+            h = self.mapping.getMappedValue('radiallight.hue', vnode)
             if(h is None):
                 fillc = vnode.getProperty('fillcolor')
                 h,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
@@ -227,7 +227,7 @@ class SquaredTreemapDesigner(object):
             h = random.random()
             
         try:
-            o = self.mapping.getLinkedValue('radiallight.opacity', vnode)
+            o = self.mapping.getMappedValue('radiallight.opacity', vnode)
         except:
             o = 0.5
             

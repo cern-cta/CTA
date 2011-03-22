@@ -7,7 +7,7 @@ It is like watching at ViewNode from different points of view. Sometimes you wan
 This "Dimension" can then be associated with a graphical property by using DimensionVisPropMapping:
 
 mapping = DimensionVisPropMapping()
-mapping.addPropertyLink('Dirs', 'fillcolor', LevelDimension())
+mapping.mapVisPropetyToDimension('Dirs', 'fillcolor', LevelDimension())
 
 In the example above:
 If LevelDimension.getValue() returns 1, TreeDesigner will decode and set the fillcolor associated with number 1.

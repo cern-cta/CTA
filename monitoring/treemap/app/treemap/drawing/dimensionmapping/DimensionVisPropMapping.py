@@ -5,7 +5,7 @@ stores relations between a node properties and Dimensions (which define values o
 model the node is related to + specific node property (ie. text in the label) -> Dimension defining the value (ie. a db column)
 
 DimensionVisPropMapping mapping
-mapping.addPropertyLink('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
+mapping.mapVisPropetyToDimension('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
 
 All available ViewNode properties like 'labeltext' are set by TreeBuilder and TreeCalculators.
 See there for further description
@@ -29,11 +29,11 @@ class DimensionVisPropMapping(object):
         self.proplink = {}
         
     
-    def addPropertyLink(self, modelname, propertyname, dimensionobject):
+    def mapVisPropetyToDimension(self, modelname, propertyname, dimensionobject):
         #no check reuirements like min max and istext?
         self.proplink[(modelname,propertyname)] = dimensionobject
         
-    def getLinkedValue(self, propertyname, node):
+    def getMappedValue(self, propertyname, node):
         try:
             modelname = node.getProperty('treenode').getObject().__class__.__name__
         except:
