@@ -24,7 +24,7 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os, sys, syslog
+import os, sys, time, syslog
 
 def checkValueFound(name, value, instance, configFile):
     if len(value) == 0:
@@ -330,16 +330,23 @@ def getFileClass(fileClassName):
         sys.exit(-1)
 
 class CastorConf(dict):
-    '''This class allows easy manipulation of a castor.conf file from python'''
-    def __init__(self, fileName='/etc/castor/castor.conf'):
+    '''This class allows easy manipulation of the castor config file from python.
+    It caches the content of the file for fast access and reloads it regularly (except
+    if the delay is < 0) or when requested (refresh method)'''
+
+    def __init__(self, reloadDelay=30, fileName='/etc/castor/castor.conf'):
         '''constructor'''
         self.fileName = fileName
+        self.reloadDealy = reloadDelay
+        # read the config file right now
         self.refresh()
+
     def refresh(self):
         '''refresh the cache of the config file by rereading and reparsing it'''
         # reset the current configuration
         self.clear()
         # parse the file
+        self.lastRefresh = time.time()
         f = open(self.fileName)
         for line in f.readlines():
             line = line.strip()
@@ -353,16 +360,21 @@ class CastorConf(dict):
                 print "Ignoring entry %s %s %s as it's a redefinition" % (category, name, value)
                 print "Value used : " + self[category][name]
         f.close()
+
     def getValue(self,category,key,default=None,typ=str):
         '''returns the value of a configuration item casted into the given type.
         also handles casting errors and a default value if nothing is found'''
+        # check whether we need to refresh our data first
+        if self.reloadDelay >= 0 and time.time() > self.lastRefresh + self.reloadDely:
+            self.refresh()
+        # now deal with the config item
         try:
             strvalue = configuration[category][key]
             try:
-                minFreeSpacePerc = typ(strvalue)
+                value = typ(strvalue)
             except ValueError:
                 syslog.syslog(syslog.LOG_ERR, "Invalid " + category + '/' + key + ' option, ignoring it : ' + strvalue)
-            value = default
+                value = default
         except KeyError:
             value = default
         return value
