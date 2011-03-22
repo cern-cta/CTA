@@ -3,3 +3,5 @@
 %attr(0644,root,root) etc/logrotate.d/castor-scheduler
 %attr(0644,root,root) usr/lib/python*/site-packages/serverqueue.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/dispatcher.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/aborter.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/synchronizer.py*

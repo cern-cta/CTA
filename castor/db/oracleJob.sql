@@ -800,6 +800,7 @@ END;
  * used to determine if any of the requested filesystems specified by a
  * transfer are available. Returns 0 if at least one requested filesystem is
  * available otherwise 1.
+ * This is deprecated and should go when the jobmanager and LSF are dropped
  */
 CREATE OR REPLACE FUNCTION checkAvailOfSchedulerRFS
   (rfs IN VARCHAR2, reqType IN NUMBER)
@@ -835,6 +836,8 @@ END;
  * transfers and whether they should be terminated because no space exists
  * in the target service class or none of the requested filesystems are
  * available.
+ * This is deprecated and should go when the jobmanager and LSF are dropped
+ * It has been replaced by getSchedulerJobs2
  */
 CREATE OR REPLACE PROCEDURE getSchedulerJobs
   (transfers OUT castor.SchedulerJobs_Cur) AS
@@ -885,9 +888,30 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing getSchedulerJobs2.
+   This method lists all known transfers
+   that are started/pending for more than an hour */
+CREATE OR REPLACE PROCEDURE getSchedulerJobs2
+  (transfers OUT castor.UUIDRecord_Cur) AS
+BEGIN
+  OPEN transfers FOR
+    SELECT SR.subReqId
+      FROM SubRequest SR,
+        -- Union of all requests that could result in scheduler transfers
+        (SELECT id, svcClass, reqid, 40  AS reqType FROM StagePutRequest             UNION ALL
+         SELECT id, svcClass, reqid, 133 AS reqType FROM StageDiskCopyReplicaRequest UNION ALL
+         SELECT id, svcClass, reqid, 35  AS reqType FROM StageGetRequest             UNION ALL
+         SELECT id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
+     WHERE SR.status = 6  -- READY
+       AND SR.request = Request.id
+       AND SR.lastModificationTime < getTime() - 3600;
+END;
+/
 
 /* PL/SQL method implementing jobFailed, providing bulk termination of file
  * transfers.
+ * This is deprecated and should go when the jobmanager and LSF are dropped.
+ * It has been replaced by jobFailedLockedFile and jobFailedSafe
  */
 CREATE OR REPLACE
 PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList",
@@ -946,8 +970,65 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing jobFailedSafe, providing bulk termination of file
+ * transfers.
+ */
 CREATE OR REPLACE
-PROCEDURE jobFailed2(subReqId IN castor."strList", errno IN castor."cnumList", errmsg IN castor."strList")
+PROCEDURE jobFailedSafe(subReqIds IN castor."strList",
+                        errnos IN castor."cnumList",
+                        errmsg IN castor."strList") AS
+  srId  NUMBER;
+  dcId  NUMBER;
+  cfId  NUMBER;
+  rType NUMBER;
+BEGIN
+  -- Loop over all jobs to fail
+  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+    BEGIN
+      -- Get the necessary information needed about the request.
+      SELECT SubRequest.id, SubRequest.diskCopy,
+             Id2Type.type, SubRequest.castorFile
+        INTO srId, dcId, rType, cfId
+        FROM SubRequest, Id2Type
+       WHERE SubRequest.subReqId = subReqIds(i)
+         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
+         AND SubRequest.request = Id2Type.id;
+       -- Lock the CastorFile.
+       SELECT id INTO cfId FROM CastorFile
+        WHERE id = cfId FOR UPDATE;
+       -- Confirm SubRequest status hasn't changed after acquisition of lock
+       SELECT id INTO srId FROM SubRequest
+        WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
+       -- Update the reason for termination.
+       UPDATE SubRequest 
+          SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
+              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
+        WHERE id = srId;
+       -- Call the relevant cleanup procedure for the job, procedures that
+       -- would have been called if the job failed on the remote execution host.
+       IF rType = 40 THEN      -- StagePutRequest
+         putFailedProc(srId);
+       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+         disk2DiskCopyFailed(dcId, 0);
+       ELSE                    -- StageGetRequest or StageUpdateRequest
+         getUpdateFailedProc(srId);
+       END IF;
+       -- Release locks
+       COMMIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;  -- The SubRequest may have be removed, nothing to be done.
+    END;
+  END LOOP;
+END;
+/
+
+/* PL/SQL method implementing jobFailed2, providing bulk termination of file
+ * transfers. in case the castorfile is already locked
+ */
+CREATE OR REPLACE
+PROCEDURE jobFailedLockedFile(subReqId IN castor."strList",
+                              errno IN castor."cnumList",
+                              errmsg IN castor."strList")
 AS
   srId  NUMBER;
   dcId  NUMBER;
@@ -983,6 +1064,7 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing jobScheduled and called in bulk when jobs have been successfully scheduled */
 CREATE OR REPLACE
 PROCEDURE jobScheduled(subReqIds IN castor."strList") AS
 BEGIN
@@ -993,7 +1075,10 @@ BEGIN
        AND status = dconst.SUBREQUEST_BEINGSCHED;
 END;
 
-/* PL/SQL method implementing jobToSchedule */
+/* PL/SQL method implementing jobToSchedule
+ * This is deprecated and should go when the jobmanager and LSF are dropped.
+ * It has been replaced by jobToSchedule2
+ */
 CREATE OR REPLACE
 PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
                         srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
@@ -1123,7 +1208,7 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER tr_SubRequest_informScheduler AFTER UPDATE OF status ON SubRequest
+CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
 BEGIN 
   DBMS_ALERT.SIGNAL('jobsReadyToSchedule', ''); 
@@ -1288,3 +1373,26 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing jobToAbort */
+CREATE OR REPLACE
+PROCEDURE jobsToAbortProc(srIdCur OUT castor.IDRecord_Cur) AS
+  srId NUMBER;
+  srIds "numList";
+  unusedMessage VARCHAR2(2048);
+  unusedStatus INTEGER;
+BEGIN
+  BEGIN
+    -- find out whether there is something
+    SELECT uuid INTO srId FROM JobsToAbort WHERE ROWNUM < 2;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- There is nothing to abort. Wait for next alert concerning something
+    -- to abort or at least 3 seconds.
+    DBMS_ALERT.WAITONE('jobsToAbort', unusedMessage, unusedStatus, 3);
+  END; 
+  -- Either we found something or we timedout, in both cases
+  -- we go back to python so that it can handle cases like signals and exit
+  -- We will probably be back soon :-)
+  DELETE FROM jobsToAbort RETURNING uuid BULK COLLECT INTO srIds;
+  OPEN srIdCur FOR SELECT * FROM TABLE(srIds);
+END;
+/

@@ -2,3 +2,4 @@
 %attr(0755,root,root) usr/bin/bjobs.py*
 %attr(0755,root,root) usr/bin/badmin.py*
 %attr(0755,root,root) usr/bin/bqueues.py*
+%attr(0755,root,root) usr/bin/bkill.py*

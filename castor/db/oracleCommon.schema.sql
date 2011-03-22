@@ -337,7 +337,9 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to handle output of the jobFailed procedure */
+/* Global temporary table to handle output of the jobFailed procedure
+ * This table is deprecated and should go when the jobmanager and LSF are dropped.
+ */
 CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
   (subReqId VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
@@ -620,3 +622,9 @@ CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(readRate, writeRate,
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
 
+
+/************/
+/* Aborting */
+/************/
+
+CREATE TABLE JobsToAbort (uuid VARCHAR2(2048) NOT NULL);

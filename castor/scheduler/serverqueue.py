@@ -67,20 +67,33 @@ class ServerQueue(dict):
     finally:
       self._lock.release()
 
-  def remove(self, jobid):
-    '''drops a job from the queue'''
+  def remove(self, jobids):
+    '''drops jobs from the queues'''
+    jobsPerMachine = {}
     self._lock.acquire()
     try:
-      # get the list of mcahines potentially running the job
-      machines = self._jobsLocations[jobid]
-      # clean up _jobsLocations
-      del self._jobsLocations[jobid]
-      # for each machine, cleanup the queue
-      for machine in machines: del self[machine][jobid]
-      # if we have a source job already running, stop it
-      if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
+      # for each job
+      for jobid in jobids:
+        try:
+          # get the list of machines potentially running the job
+          machines = self._jobsLocations[jobid]
+          # clean up _jobsLocations
+          del self._jobsLocations[jobid]
+          # for each machine, cleanup the server queue and note down where the job was sent
+          for machine in machines:
+            if machine not in jobsPerMachine: jobsPerMachine[machine] = []
+            jobsPerMachine[machine].append(jobid)
+            del self[machine][jobid]
+          # if we have a source job already running, stop it
+          if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
+        except KeyError:
+          # we are not handling this job, fine, ignore it then
+          pass
     finally:
       self._lock.release()
+    # finally tell the machines to remove these jobs from their queues
+    for machine in jobsPerMachine:
+      connections.bkill(machine, tuple(jobsPerMachine[machine]))
 
   def jobStarting(self, diskserver, jobid, jobtype):
     '''Removes a job and gives back the list of other nodes where it was pending.
@@ -168,3 +181,32 @@ class ServerQueue(dict):
       job, arrivaltime, jobtype, ready = self[diskserver][jobid]
       res.append((jobid, job, arrivaltime))
     return res
+
+  def exposed_jobsCanceled(self, machine, jobs):
+    '''cancels jobs in the queues and informs the stager in case there is no
+    remaining machines where it could run'''
+    jobsKilled = []
+    self._lock.acquire()
+    try:
+      # for each job
+      for jobid, rc, msg in jobs:
+        try:
+          # cleanup the queue for the given job on the given machine
+          del self._jobsLocations[jobid][machine]
+          del self[machine][jobid]
+          if not self._jobsLocations[jobid]:
+            # no other candidate machine for this job. It has to be failed
+            jobsKilled.append((jobid, rc, msg))
+            # clean up _jobsLocations
+            del self._jobsLocations[jobid]
+            # if we have a source job already running, stop it
+            if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
+        except KeyError, e:
+          # we are not handling this job or it is not queued for the given machine
+          # we can only log this oddity and ignore
+          log(syslog.LOG_ERR, 'Unexpected KeyError exception caught in jobsCanceled : ' + str(e))
+    finally:
+      self._lock.release()
+    # inform the stager of the jobs that were killed
+    llsfd.jobsKilled(jobsKilled)
+

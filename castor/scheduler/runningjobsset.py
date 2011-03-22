@@ -78,7 +78,7 @@ class RunningJobsSet:
           arrivalTime = os.stat(os.path.join('/proc', pid, 'cmdline'))[-2]
           startTime = arrivalTime
           # create the entry in the list of running jobs
-          runningJobs.add(jobid, 'unknown', cmdline, notifFileName, process, jobtype, arrivalTime, startTime)
+          self._jobs.add(jobid, 'unknown', cmdline, notifFileName, process, jobtype, arrivalTime, startTime)
           # log
           log('Found job ' + jobid + ' already running')
 
@@ -99,6 +99,7 @@ class RunningJobsSet:
   def poll(self):
     '''checks for finished jobs and clean them up'''
     sourcesToBeInformed = []
+    killedJobs = {}
     self._lock.acquire()
     try:
       ended = []
@@ -117,16 +118,28 @@ class RunningJobsSet:
             # in case of disk to disk copy, remember to inform source
             if jobtype == 'd2ddest':
               sourcesToBeInformed.append((scheduler, jobid))
+            # in case of jobs killed by a signal, remember to inform the DB
+            if rc < 0:
+              if scheduler not in killedJobs: killedJobs[scheduler] = []
+              killedJobs[scheduler].append((jobid, rc, 'Caught signal'))
       # cleanup ended jobs
       self._jobs = set(job for job in self._jobs if job[4] not in ended)
     finally:
       self._lock.release()
+    # inform schedulers of disk to disk transfers that are over
     for scheduler, jobid in sourcesToBeInformed:
       try:
         self.connections.d2dend(scheduler, jobid)
       except Exception, e:
         # log that we've failed
         log(syslog.LOG_ERR, "Informing " + scheduler + " that d2d transfer of " + jobid + " is over failed with error " + str(e))
+    # inform schedulers of jobs killed
+    for scheduler in killedJobs:
+      try:
+        self.connections.jobsKilled(scheduler, tuple(killedJobs[scheduler]))
+      except Exception, e:
+        # log that we've failed
+        log(syslog.LOG_ERR, "Informing " + scheduler + " that jobs " + ', '.join([jobid for jobid, rc, s in killedJobs[scheduler]]) + " were killed by signals failed with error " + str(e))
 
   def d2dend(self, jobid):
     '''called when a disk to disk copy ends and we are the source of it'''
@@ -149,6 +162,10 @@ class RunningJobsSet:
         user = 'stage'
       res.append((jobid, scheduler, user, 'RUN', jobtype, arrivalTime, runTime))
     return res
+
+  def jobset(self):
+    '''Lists all pending and running jobs'''
+    return set([jobid for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs])
 
   def listRunningD2dSources(self):
     '''lists running d2dsource jobs'''

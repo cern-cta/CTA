@@ -66,8 +66,11 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
+  TYPE UUIDRecord IS RECORD (uuid VARCHAR(2048));
+  TYPE UUIDRecord_Cur IS REF CURSOR RETURN UUIDRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
+  /* These types are deprecated and should go when the jobmanager and LSF are dropped*/
   TYPE SchedulerJobLine IS RECORD (
     subReqId VARCHAR(2048),
     reqId VARCHAR(2048),
@@ -75,6 +78,7 @@ CREATE OR REPLACE PACKAGE castor AS
     noFSAvail INTEGER);
   TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
   TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedProcHelper%ROWTYPE;
+  /* end of deprecated code */
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -620,6 +624,8 @@ BEGIN
           WHEN 2 THEN processAbortForPut(sr);
         END CASE;
         DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
+        -- make the scheduler aware so that it can remove the job from the queues if needed
+        INSERT INTO JobsToAbort VALUES (sr.srId);
         nbItems := nbItems - 1;
       EXCEPTION WHEN SrLocked THEN
         -- we close the session here and exit the inner loop
@@ -627,6 +633,8 @@ BEGIN
         EXIT;
       END;
     END LOOP;
+    -- wake up the scheduler so that it can remove the job from the queues now
+    DBMS_ALERT.SIGNAL('jobsToAbort', ''); 
   END LOOP;
 END;
 /
@@ -2625,7 +2633,11 @@ BEGIN
              errorCode = 4,  -- EINTR
              errorMessage = 'Canceled by another user request'
        WHERE id = srIds(i) OR parent = srIds(i);
+      -- make the scheduler aware so that it can remove the job from the queues if needed
+      INSERT INTO JobsToAbort VALUES (srIds(i));
     END LOOP;
+    -- wake up the scheduler so that it can remove the job from the queues now
+    DBMS_ALERT.SIGNAL('jobsToAbort', '');
   END IF;
   -- Set selected DiskCopies to either INVALID or FAILED. We deliberately
   -- ignore WAITDISK2DISKCOPY's (see bug #78826)

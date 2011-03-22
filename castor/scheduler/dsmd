@@ -95,6 +95,17 @@ class DiskServerManagerService(rpyc.Service):
     log(syslog.LOG_DEBUG, 'bjobs called')
     return tuple(runningJobs.bjobs() + jobQueue.bjobs())
 
+  def exposed_jobset(self):
+    '''Lists all pending and running jobs'''
+    log(syslog.LOG_DEBUG, 'jobset called')
+    return tuple(runningJobs.jobset() | jobQueue.jobset())
+
+  def exposed_bkill(self, jobids):
+    '''Called when some jobs should be killed'''
+    log(syslog.LOG_DEBUG, 'bkill called')
+    # remove jobs from the local queue
+    jobsCanceled = jobQueue.remove(jobids)
+
   def exposed_getQueuingJobs(self, scheduler):
     '''returns the list of jobs in the queue'''
     log(syslog.LOG_DEBUG, 'getQueuingJobs called from ' + scheduler)
@@ -109,6 +120,17 @@ class DiskServerManagerService(rpyc.Service):
     '''called when a d2d copy is over and we are the source'''
     log(syslog.LOG_DEBUG, 'd2dend called for jobid ' + jobid)
     runningJobs.d2dend(jobid)
+
+  def checkSpaceLeftOnFS(fs):
+    ''' check whether there is space available on a given filesystem'''
+    # find out the limit in terms of free space, from the config file
+    minFreeSpacePerc = configuration.getValue('RmNode','MinAllowedFreeSpace',0,float)
+    # get status of the filesystem
+    stat = os.statvfs(fs)
+    availableSpace = s.f_bavail * s.f_frsize
+    totalSpace = s.f_blocks * s.f_bsize
+    # do the check
+    return availableSpace > minFreeSpacePerc * totalSpace
 
 class ActivityControl(threading.Thread):
   '''activity control thread.
@@ -138,21 +160,26 @@ class ActivityControl(threading.Thread):
             if jobtype == 'd2dsource':
               runningJobs.add(jobid, scheduler, job, None, None, jobtype, arrivalTime)
             else:
-              # create a local file to hold the former LSF scheduler info
-              notifFileHandle, notifFileName = tempfile.mkstemp()
-              notifFile = os.fdopen(notifFileHandle, 'w')
-              notifFile.write(job[-1])
-              notifFile.close()
-              os.chmod(notifFileName, 0666)
-              # build the stagerJob command line and execute it
-              cmd = list(job[:-1])
-              cmd.append('file://'+notifFileName)
-              # start the job
-              if not fake:
-                process = subprocess.Popen(cmd)
+              # in case of jobs wanting to write data, we check the space available
+              if not checkSpaceLeftOnFS(job[-1].split(':')[1]):
+                # not enough space, we cancel the job
+                self.connections.jobsCanceled(scheduler, socket.gethostname(), [jobid])
               else:
-                process = 0
-              runningJobs.add(jobid, scheduler, job, notifFileName, process, jobtype, arrivalTime)
+                # create a local file to hold the former LSF scheduler info
+                notifFileHandle, notifFileName = tempfile.mkstemp()
+                notifFile = os.fdopen(notifFileHandle, 'w')
+                notifFile.write(job[-1])
+                notifFile.close()
+                os.chmod(notifFileName, 0666)
+                # build the stagerJob command line and execute it
+                cmd = list(job[:-1])
+                cmd.append('file://'+notifFileName)
+                # start the job
+                if not fake:
+                  process = subprocess.Popen(cmd)
+                else:
+                  process = 0
+                runningJobs.add(jobid, scheduler, job, notifFileName, process, jobtype, arrivalTime)
           except ValueError:
             log('Canceled start of ' + jobid + '(already started on another host)')
             # the job has already started somewhere else, so give up
@@ -178,13 +205,14 @@ class ActivityControl(threading.Thread):
     '''stops processing in this thread'''
     self._alive = False
 
-class JobCompletionControl(threading.Thread):
-  '''Core of the job completion control thread. This thread is responsible for detecting
-  terminated jobs and cleaning up the list of running jobs accordingly'''
+class ManagementThread(threading.Thread):
+  '''Management thread of the disk server manager, dealing with job completion control and associated cleanup,
+  with job cancelation in case of no space, timeouts, etc... and with restart of disk to disk transfer
+  that are waiting on the sources when these are ready'''
 
   def __init__(self):
     '''constructor'''
-    super(JobCompletionControl,self).__init__(name='JobCompletionControl')
+    super(ManagementThread,self).__init__(name='ManagementThread')
     self._alive = True
 
   def run(self):
@@ -195,9 +223,11 @@ class JobCompletionControl(threading.Thread):
         runningJobs.poll()
         # check for d2d destination jobs that could now start
         jobQueue.pollD2dDest()
-        # do not loop too fast
+        # check for job to be canceled for various reasons (timeout, missing resources, ...)
+        jobQueue.checkForJobCancelation()
       except Exception, e:
-        log(syslog.LOG_ERR, "Caught exception in JobCompletionControl thread (" + str(e.__class__) + ") : " + str(e))
+        log(syslog.LOG_ERR, "Caught exception in ManagementThread thread (" + str(e.__class__) + ") : " + str(e))
+      # do not loop too fast
       time.sleep(1)
 
   def stop(self):
@@ -255,10 +285,11 @@ try:
   activityControl = ActivityControl()
   activityControl.setDaemon(True)
   activityControl.start()
-  # launch a processing thread that will regularly check job completions
-  jobCompletionControl = JobCompletionControl()
-  jobCompletionControl.setDaemon(True)
-  jobCompletionControl.start()
+  # launch a management thread that will regularly check job completions, d2d transfer to be restarted
+  # and jobs to be dropped from the queue, because of timeouts, lack of space, etc...
+  management = ManagementThread()
+  management.setDaemon(True)
+  management.start()
   # launch a service listening for new jobs from the central scheduler and filling the queue
   from rpyc.utils.server import ThreadedServer
   t = ThreadedServer(DiskServerManagerService, 
@@ -269,7 +300,7 @@ try:
   # we reach this point when the service has stopped
   # so let's stop the other threads
   activityControl.stop()
-  jobCompletionControl.stop()
+  management.stop()
 finally:
   if daemonize:
     context.__exit__(None, None, None)

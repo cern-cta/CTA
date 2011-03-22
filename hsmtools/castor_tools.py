@@ -24,7 +24,7 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os, sys
+import os, sys, syslog
 
 def checkValueFound(name, value, instance, configFile):
     if len(value) == 0:
@@ -353,6 +353,20 @@ class CastorConf(dict):
                 print "Ignoring entry %s %s %s as it's a redefinition" % (category, name, value)
                 print "Value used : " + self[category][name]
         f.close()
+    def getValue(self,category,key,default=None,typ=str):
+        '''returns the value of a configuration item casted into the given type.
+        also handles casting errors and a default value if nothing is found'''
+        try:
+            strvalue = configuration[category][key]
+            try:
+                minFreeSpacePerc = typ(strvalue)
+            except ValueError:
+                syslog.syslog(syslog.LOG_ERR, "Invalid " + category + '/' + key + ' option, ignoring it : ' + strvalue)
+            value = default
+        except KeyError:
+            value = default
+        return value
+
 
 globalCastorConf = None
 def castorConf():

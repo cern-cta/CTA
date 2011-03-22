@@ -70,30 +70,42 @@ class DiskServerListCache:
   # class variable
   _diskServerList = None
 
-  def getlist(self):
-    '''returns the list from the cache, or builds it if needed'''
-    if self._diskServerList == None:
-      # query the stager database
-      stconn = castor_tools.connectToStager()
-      stcur = stconn.cursor()
-      stcur.arraysize = 50
-      stDiskServers = '''SELECT UNIQUE DiskServer.name, DiskPool.name
-                           FROM FileSystem, DiskServer, DiskPool
-                          WHERE FileSystem.diskServer = DiskServer.id
-                            AND FileSystem.diskPool = DiskPool.id'''
-      stcur.execute(stDiskServers)
-      rows = stcur.fetchall()
+  def _rebuild(self):
+    '''rebuild the cache of diskservers/diskpools'''
+    # query the stager database
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    stcur.arraysize = 50
+    stDiskServers = '''SELECT UNIQUE DiskServer.name, DiskPool.name
+                         FROM FileSystem, DiskServer, DiskPool
+                        WHERE FileSystem.diskServer = DiskServer.id
+                          AND FileSystem.diskPool = DiskPool.id'''
+    stcur.execute(stDiskServers)
+    rows = stcur.fetchall()
       # build up the list
-      self._diskServerList = {}
-      for diskserver, diskPool in rows:
-        if diskPool not in self._diskServerList : self._diskServerList[diskPool] = []
-        self._diskServerList[diskPool].append(diskserver)
-      castor_tools.disconnectDB(stconn)
+    self._diskServerList = {}
+    self._diskServerSet = set()
+    for diskserver, diskPool in rows:
+      if diskPool not in self._diskServerList : self._diskServerList[diskPool] = []
+      self._diskServerList[diskPool].append(diskserver)
+      self._diskServerSet.add(diskserver)
+    castor_tools.disconnectDB(stconn)
+
+  def getlist(self):
+    '''returns the list of diskservers from the cache, clustered by diskpool.
+    Builds this list form the DB if needed'''
+    if self._diskServerList == None: self._rebuild()
     return self._diskServerList
+
+  def getset(self):
+    '''returns the set of diskservers from the cache, or builds it from the DB if needed'''
+    if self._diskServerSet == None: self._rebuild()
+    return self._diskServerSet
 
   def clear(self):
     '''clears the cache'''
     self._diskServerList = None
+    self._diskServerSet = None
 
 class SchedulerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
@@ -157,6 +169,35 @@ class SchedulerService(rpyc.Service):
         for jobid, scheduler, user, status, jobtype, arrivalTime, startTime in jobs[diskPool][ds]:
           res.append((jobid, scheduler, user, status, diskPool, ds, jobtype, arrivalTime, startTime))
     return tuple(res)
+
+  def exposed_bkill(self, jobids):
+    '''bkill removes jobs from all queues on all servers and diskservers'''
+    log(syslog.LOG_DEBUG, 'bkill called for jobs ' + jobids)
+    # call the internal method on all schedulers (including ourselves)
+    for scheduler in configuration['DiskManager']['ServerHosts'].split():
+      connections.bkillinternal(scheduler, jobids)
+
+  def exposed_bkillinternal(self, jobids):
+    '''bkillinternal removes jobs from the queues handled by this scheduler (server queue and diskserver's)'''
+    log(syslog.LOG_DEBUG, 'bkillinternal called for jobs ' + jobids)
+    queuingJobs.remove(jobids)
+
+  def exposed_jobsKilled(self, jobs):
+    '''informs the stager that these jobs have been killed'''
+    log(syslog.LOG_DEBUG, 'jobsKilled called for jobs ' + ', '.join([jobid for jobid, rc, s in jobs]))
+    # only inform the stager
+    try:
+      stcur = dispatcher.dbConnection().cursor()
+      stcur.arraysize = 50
+      srIds, errCodes, errMessages = zip(*failures)
+      stcur.execute("BEGIN jobFailedSafe(:1, :2, :3); END;", srIds, errCodes, errMessages)
+    except Exception, e:
+      log(syslog.LOG_ERR, 'Exception caught while failing jobs ' + ', '.join(jobs[0]) + ' (' + str(e.__class__) + ') : ' + str(e))
+
+  def exposed_jobsCanceled(self, machine, jobs):
+    '''cancels jobs in the queues and informs the stager in case there is no
+    remaining machines where it could run'''
+    queuingJobs.jobsCanceled(machine, jobs)
 
   def exposed_jobStarting(self, diskserver, jobid, jobtype):
     '''called when a job started on a given diskserver'''
@@ -236,6 +277,18 @@ try:
   dispatch.setName('Dispatcher')
   dispatch.setDaemon(True)
   dispatch.start()
+  # launch a processing thread that will regularly check if there are jobs to abort
+  abort = aborter.Aborter(connections, self)
+  abort.setName('Aborter')
+  abort.setDaemon(True)
+  abort.start()
+  # launch a processing thread that will regularly synchronize the stager DB with the running
+  # jobs, meaning that it will check that jobs running for already long according to the DB
+  # are effectively still running. If they are not, is will update the DB accordingly
+  synchro = synchronizer.Synchronizer(connections, diskServerList, self)
+  synchro.setName('Synchronize')
+  synchro.setDaemon(True)
+  synchro.start()
   # launch a service listening for monitoring queries and answering them
   from rpyc.utils.server import ThreadedServer
   t = ThreadedServer(SchedulerService,
@@ -249,6 +302,10 @@ finally:
     connections.closeall()
     dispatch.stop()
     dispatch.join()
+    abort.stop()
+    abort.join()
+    synchro.stop()
+    synchro.join()
     t.close()
   except:
     pass

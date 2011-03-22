@@ -126,7 +126,7 @@ class DBUpdater(threading.Thread):
         log('Failing jobs ' + ', '.join(failures[0]))
         try:
           stcur = self.dbConnection().cursor()
-          stcur.execute("BEGIN jobFailed2(:1, :2, :3); END;", failures)
+          stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", failures)
         except Exception, e:
           log(syslog.LOG_ERR, 'Exception caught while failing jobs ' + ', '.join(failures[0]) + ' (' + str(e.__class__) + ') : ' + str(e))
       # And call the DB for successes
@@ -333,7 +333,7 @@ class Dispatcher(threading.Thread):
           reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
           reqCreationTime = stcur.var(cx_Oracle.NUMBER)
           reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
-          sourceRfs = stcur.var(cx_Oracle.STRING) # castor.DiskServerList_Cur
+          sourceRfs = stcur.var(cx_Oracle.STRING)
           stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
           # infinite loop over the polling of the DB
           while self.running:
