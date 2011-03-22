@@ -44,11 +44,12 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
-(castor::monitoring::ClusterStatus* clusterStatus) :
+(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF) :
   m_clusterStatus(clusterStatus),
   m_startup(time(NULL)),
   m_timeout(DEFAULT_TIMEOUT),
-  m_lastPause(time(NULL)) {
+  m_lastPause(time(NULL)) ,
+  m_noLSF(noLSF) {
 
   // "Heartbeat thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 36, 0, 0);
@@ -83,18 +84,20 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void*) throw() {
     }
 
     // Get the information about who is the current resource monitoring master
-    try {
-      bool production;
-      castor::monitoring::rmmaster::LSFStatus::getInstance()->
-	getLSFStatus(production, false);
-      if (!production) {
-	m_lastPause = time(NULL);
-	return;
+    if (!m_noLSF) {
+      try {
+        bool production;
+        castor::monitoring::rmmaster::LSFStatus::getInstance()->
+          getLSFStatus(production, false);
+        if (!production) {
+          m_lastPause = time(NULL);
+          return;
+        }
+      } catch (castor::exception::Exception& e) {
+        // All errors are interpreted as us not being the master server. The real
+        // error will be reported by the DatabaseActuatorThread
+        return;
       }
-    } catch (castor::exception::Exception& e) {
-      // All errors are interpreted as us not being the master server. The real
-      // error will be reported by the DatabaseActuatorThread
-      return;
     }
 
     // If the rmmaster daemon has just started we cannot trust the information

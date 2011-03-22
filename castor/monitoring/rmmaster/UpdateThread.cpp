@@ -40,8 +40,9 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::UpdateThread::UpdateThread
-(castor::monitoring::ClusterStatus* clusterStatus) :
-  m_clusterStatus(clusterStatus) {
+(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF) :
+  m_clusterStatus(clusterStatus),
+  m_noLSF(noLSF) {
   // "Update thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 34, 0, 0);
 }
@@ -100,17 +101,19 @@ void castor::monitoring::rmmaster::UpdateThread::handleStreamReport
   throw (castor::exception::Exception) {
 
   // Get the information about who is the current resource monitoring master
-  try {
-    bool production;
-    castor::monitoring::rmmaster::LSFStatus::getInstance()->
-      getLSFStatus(production, false);
-    if (!production) {
+  if (!m_noLSF) {
+    try {
+      bool production;
+      castor::monitoring::rmmaster::LSFStatus::getInstance()->
+        getLSFStatus(production, false);
+      if (!production) {
+        return;
+      }
+    } catch (castor::exception::Exception& e) {
+      // All errors are interpreted as us not being the master server. The real
+      // error will be reported by the DatabaseActuatorThread
       return;
     }
-  } catch (castor::exception::Exception& e) {
-    // All errors are interpreted as us not being the master server. The real
-    // error will be reported by the DatabaseActuatorThread
-    return;
   }
 
   // Cast normal string into sharedMemory one in order to be able to search for

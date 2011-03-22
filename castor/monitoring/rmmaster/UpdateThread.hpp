@@ -54,8 +54,9 @@ namespace castor {
         /**
          * Constructor
          * @param clusterStatus pointer to the status of the cluster
+         * @param noLSF whether to run in no LSF mode
          */
-        UpdateThread(castor::monitoring::ClusterStatus* clusterStatus);
+        UpdateThread(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF);
 
 	/// Not implemented
 	virtual void init() {};
@@ -83,6 +84,9 @@ namespace castor {
 
         /// Machine Status List
         castor::monitoring::ClusterStatus* m_clusterStatus;
+
+        /// whether we are in no LSF node
+        bool m_noLSF;
 
       };
 

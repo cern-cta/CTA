@@ -87,21 +87,51 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Initialize LSF
-    lsb_init((char*)"rmmasterd");
+    // Check whether we should run in noLSF mode
+    char *noLSFValue = getconfent("RmMaster", "NoLSFMode", 0);
+    bool noLSF = (noLSFValue != NULL && strcasecmp(noLSFValue, "yes") == 0);
 
-    // "RmMaster Daemon started"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Port", listenPort),
-       castor::dlf::Param("UpdateInterval", updateInterval)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 2, params);
+    if (!noLSF) {
+        
+      // Attempt to find the LSF cluster and master name for logging purposes.
+      // This isn't really required but could be useful for future debugging
+      // efforts
+      std::string clusterName("Unknown");
+      std::string masterName("Unknown");
+      char **results = NULL;
 
+      // Errors are ignored here!
+      lsb_init((char*)"rmmasterd");
+      clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
+      if (cInfo != NULL) {
+        clusterName = cInfo[0].clusterName;
+        masterName  = cInfo[0].masterName;
+      }
+
+      // "RmMaster Daemon started"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Port", listenPort),
+         castor::dlf::Param("UpdateInterval", updateInterval),
+         castor::dlf::Param("Cluster", clusterName),
+         castor::dlf::Param("Master", masterName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 4, params);
+
+    } else {
+        
+      // "RmMaster Daemon started"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Port", listenPort),
+         castor::dlf::Param("UpdateInterval", updateInterval),
+         castor::dlf::Param("Comment", "Running in noLSF mode")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 3, params);
+    }
+    
     // DB threadpool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
-        (daemon.clusterStatus()), updateInterval));
+        (daemon.clusterStatus(), noLSF), updateInterval));
     daemon.getThreadPool('D')->setNbThreads(1);
 
     // Update threadpool
@@ -109,7 +139,7 @@ int main(int argc, char *argv[]) {
       (new castor::server::UDPListenerThreadPool
        ("Update",
         new castor::monitoring::rmmaster::UpdateThread
-        (daemon.clusterStatus()), listenPort));
+        (daemon.clusterStatus(), noLSF), listenPort));
     daemon.getThreadPool('U')->setNbThreads(1);
 
     // Monitor threadpool
@@ -117,15 +147,15 @@ int main(int argc, char *argv[]) {
       (new castor::server::TCPListenerThreadPool
        ("Collector",
         new castor::monitoring::rmmaster::CollectorThread
-        (daemon.clusterStatus()), listenPort));
-    daemon.getThreadPool('C')->setNbThreads(6);
+        (daemon.clusterStatus(), noLSF), listenPort));
+    daemon.getThreadPool('C')->setNbThreads(3);
 
     // Heartbeat threadpool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Heartbeat",
         new castor::monitoring::rmmaster::HeartbeatThread
-	(daemon.clusterStatus()), updateInterval));
+	(daemon.clusterStatus(), noLSF), updateInterval));
     daemon.getThreadPool('H')->setNbThreads(1);
 
     // Start daemon
