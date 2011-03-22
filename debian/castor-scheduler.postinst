@@ -1,0 +1,2 @@
+/sbin/chkconfig --add llsfd
+/sbin/service llsfd condrestart > /dev/null 2>&1 || :

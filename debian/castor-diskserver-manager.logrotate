@@ -1,0 +1,7 @@
+/var/log/castor/dsmd*.log {
+    compress
+    daily
+    missingok
+    rotate 120
+    delaycompress
+}

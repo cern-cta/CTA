@@ -50,6 +50,12 @@ class ConnectionPool:
             self.connections[machine].close()
             del self.connections[machine]
 
+    def closeall(self):
+        '''Close all connections'''
+        for machine in self.connections:
+            self.connections[machine].close()
+        self.connections = {}
+
     def __getattr__(self, name):
         '''we implement a proxying facility here, where any method will be forwarded
         to the connection of the machine given as first argument.

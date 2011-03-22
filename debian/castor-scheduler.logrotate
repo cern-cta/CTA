@@ -1,0 +1,7 @@
+/var/log/castor/llsfd*.log {
+    compress
+    daily
+    missingok
+    rotate 120
+    delaycompress
+}

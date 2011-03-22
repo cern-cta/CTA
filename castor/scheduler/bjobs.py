@@ -33,7 +33,7 @@ import time
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [svcClass]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [diskPool]'
   sys.exit(exitCode)
 
 # first parse the options
@@ -49,22 +49,25 @@ for f, v in options:
         print "unknown option : " + f
         usage(1)
 
-svcClass = None
+diskPool = None
 if len(args) > 0:
-    svcClass = args[0]
+    diskPool = args[0]
     if len(args) > 1:
       print "Too many arguments"
       usage(1)
 
 # connect to server and gather numbers
 conf = castor_tools.castorConf()
-rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
-jobs = rpcconn.root.bjobs(svcClass)
-print 'JOBID                                USER    STAT  TYPE      QUEUE      FROM_HOST                EXEC_HOST                SUBMIT_TIME       START_TIME'
-for jobid, scheduler, user, status, svcClass, execHost, jobtype, submitTime, startTime in jobs:
+try:
+  rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
+  jobs = rpcconn.root.bjobs(diskPool)
+  print 'JOBID                                USER    STAT  TYPE      QUEUE      FROM_HOST                EXEC_HOST                SUBMIT_TIME       START_TIME'
+  for jobid, scheduler, user, status, diskPool, execHost, jobtype, submitTime, startTime in jobs:
     ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
     if startTime != None :
       sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
     else:
       sstartTime = ''
-    print '%-37s%-8s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (jobid, user, status, jobtype, svcClass, scheduler, execHost, ssubmitTime, sstartTime)
+    print '%-37s%-8s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (jobid, user, status, jobtype, diskPool, scheduler, execHost, ssubmitTime, sstartTime)
+except Exception, e:
+  print 'Caught exception : ' + str(e)

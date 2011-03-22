@@ -1,0 +1,5 @@
+%attr(0750,root,root) etc/init.d/dsmd
+%attr(0750,root,root) usr/bin/dsmd
+%attr(0644,root,root) etc/logrotate.d/castor-diskserver-manager
+%attr(0644,root,root) usr/lib/python*/site-packages/localqueue.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/runningjobsset.py*

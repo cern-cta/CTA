@@ -1,0 +1,42 @@
+.lf 8 dsmd.man
+.TH dsmd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "dsmd"
+.SH NAME
+dsmd \- starts the CASTOR DiskServer Manager Daemon
+.SH SYNOPSIS
+.B dsmd
+[
+.BI -f
+]
+[
+.BI -h
+]
+[
+.BI --fakemode
+]
+.SH DESCRIPTION
+.LP
+The
+.B dsmd
+command starts the CASTOR DiskServer Manager daemon.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-f,\ \-\-foreground
+runs in foreground mode (no daemonization).
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-\-fakemode
+fakes processing by not starting jobs, but still handling queues.
+To be only used for testing purposes.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

@@ -946,6 +946,38 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE
+PROCEDURE jobFailed2(in_subReqId IN VARCHAR2, errno IN NUMBER, errmsg IN VARCHAR2)
+AS
+  srId  NUMBER;
+  dcId  NUMBER;
+  rType NUMBER;
+BEGIN
+  -- Get the necessary information needed about the request.
+  SELECT SubRequest.id, SubRequest.diskCopy, Id2Type.type
+    INTO srId, dcId, rType
+    FROM SubRequest, Id2Type
+   WHERE SubRequest.subReqId = in_subReqId
+     AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
+     AND SubRequest.request = Id2Type.id;
+   -- Update the reason for termination.
+   UPDATE SubRequest 
+      SET errorCode = decode(errno, 0, errorCode, errno),
+          errorMessage = decode(errmsg, NULL, errorMessage, errmsg)
+    WHERE id = srId;
+   -- Call the relevant cleanup procedure for the job, procedures that
+   -- would have been called if the job failed on the remote execution host.
+   IF rType = 40 THEN      -- StagePutRequest
+     putFailedProc(srId);
+   ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+     disk2DiskCopyFailed(dcId, 0);
+   ELSE                    -- StageGetRequest or StageUpdateRequest
+     getUpdateFailedProc(srId);
+   END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;  -- The SubRequest may have be removed, nothing to be done.
+END;
+/
 
 /* PL/SQL method implementing jobToSchedule */
 CREATE OR REPLACE
@@ -1087,18 +1119,18 @@ END;
 /* PL/SQL method implementing jobToSchedule */
 CREATE OR REPLACE
 PROCEDURE jobToSchedule2(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
-                        srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
-                        srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
-                        cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
-                        reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
-                        reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
-                        reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
-                        clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                        clientVersion OUT INTEGER,     clientType OUT INTEGER,
-                        reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
-                        clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
-                        reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
-                        sourceRfs OUT VARCHAR2) AS
+                         srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
+                         srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
+                         cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
+                         reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
+                         reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
+                         reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
+                         clientIp OUT INTEGER,          clientPort OUT INTEGER,
+                         clientVersion OUT INTEGER,     clientType OUT INTEGER,
+                         reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
+                         clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
+                         reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
+                         sourceRfs OUT VARCHAR2) AS
   cfId NUMBER;
   -- Cursor to select the next candidate for submission to the scheduler orderd
   -- by creation time.
@@ -1119,18 +1151,23 @@ BEGIN
   LOOP
     -- Retrieve the next candidate
     FETCH c INTO srIntId;
-    WHILE c%NOTFOUND LOOP
+    IF c%NOTFOUND THEN
+      -- There are no candidates available. Wait for next alert concerning something
+      -- to schedule or at least 3 seconds.
+      -- We do not wait forever in order to ensure that we will retry from time to
+      -- time to dig out candidates that timed out in status BEINGSCHED.
       CLOSE c;
+      DBMS_ALERT.WAITONE('jobsReadyToSchedule', unusedMessage, unusedStatus, 3);
+      -- try again to find something
       OPEN c;
       FETCH c INTO srIntId;
       IF c%NOTFOUND THEN
-        -- There are no candidates available. Wait for next alert concerning something
-        -- to schedule or at least 5s before we retry.
-        -- We do not wait forever in order to ensure that we will still try from time to
-        -- time to dig out candidates that timed out in status BEINGSCHED
-        DBMS_ALERT.WAITONE('jobsReadyToSchedule', unusedMessage, unusedStatus, 5); 
+        -- still nothing. We will give back the control to the application
+        -- so that it can handle cases like signals and exit. We will probably
+        -- be back soon :-)
+        RETURN;
       END IF;
-    END LOOP; 
+    END IF; 
     BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is either in READYFORSCHED or has been stuck in
@@ -1226,7 +1263,7 @@ BEGIN
                       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                       AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
                       -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
-                      AND FileSystem.id NOT IN
+                      AND DiskServer.id NOT IN
                             (SELECT diskserver FROM DiskCopy, FileSystem
                               WHERE DiskCopy.castorFile = cfId
                                 AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY,

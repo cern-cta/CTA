@@ -1,0 +1,243 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   llsf.py
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
+# *
+# * low latency scheduling facility of the CASTOR project
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+import sys
+import getopt
+import rpyc
+import time
+import threading
+import socket
+import syslog
+import daemon
+import castor_tools, connectionpool, dispatcher, serverqueue
+
+# usage function
+def usage(exitCode):
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground]'
+  sys.exit(exitCode)
+
+# first parse the options
+daemonize = True
+try:
+  options, args = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground'])
+except Exception, e:
+  print e
+  usage(1)
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-f' or f == '--foreground':
+    daemonize = False
+  else:
+    print "unknown option : " + f
+    usage(1)
+
+# If any arg, complain and stop
+if len(args) != 0:
+  print "Unknown arguments : " + ' '.join(args) + "\n"
+  usage(1)
+
+class DiskServerListCache:
+  '''cache for the list of diskservers, organized by service class.'''
+
+  # class variable
+  _diskServerList = None
+
+  def getlist(self):
+    '''returns the list from the cache, or builds it if needed'''
+    if self._diskServerList == None:
+      # query the stager database
+      stconn = castor_tools.connectToStager()
+      stcur = stconn.cursor()
+      stcur.arraysize = 50
+      stDiskServers = '''SELECT UNIQUE DiskServer.name, DiskPool.name
+                           FROM FileSystem, DiskServer, DiskPool
+                          WHERE FileSystem.diskServer = DiskServer.id
+                            AND FileSystem.diskPool = DiskPool.id'''
+      stcur.execute(stDiskServers)
+      rows = stcur.fetchall()
+      # build up the list
+      self._diskServerList = {}
+      for diskserver, diskPool in rows:
+        if diskPool not in self._diskServerList : self._diskServerList[diskPool] = []
+        self._diskServerList[diskPool].append(diskserver)
+      castor_tools.disconnectDB(stconn)
+    return self._diskServerList
+
+  def clear(self):
+    '''clears the cache'''
+    self._diskServerList = None
+
+class SchedulerService(rpyc.Service):
+  '''This service is responsible for answering all requests made to the scheduler.
+  There are mainly 2 kinds : monitoring requests and callbacks from the diskservers'''
+
+  def dispatch(self, func, diskPool):
+    '''gather the results of the call to func for all diskServers'''
+    res = {}
+    dslist = diskServerList.getlist()
+    if diskPool != None: dslist = {diskPool : dslist[diskPool]}
+    for diskPool in dslist:
+      res[diskPool] = {}
+      for ds in dslist[diskPool]:
+        try:
+          # call the function on the appropriate diskserver
+          res[diskPool][ds] = getattr(connections,func)(ds)
+        except Exception, e:
+          # we've tried...
+          log(syslog.LOG_NOTICE, 'No answer to ' + func + ' from ' + ds + ' (' + str(e) + ')')
+          pass
+    return res
+
+  def exposed_bqueues(self, diskPool=None):
+    '''bqueues lists the number of running and pending jobs per queue'''
+    log(syslog.LOG_DEBUG, 'bqueues called for diskPool ' + str(diskPool))
+    nbs = self.dispatch('nbJobs', diskPool)
+    res = []
+    for diskPool in nbs:
+      if len(nbs[diskPool]) > 0:
+        res.append(tuple([diskPool] + map(sum,zip(*nbs[diskPool].values()))))
+      else:
+        res.append((diskPool,0,0,0))
+    return tuple(res)
+
+  def exposed_bhosts(self, diskPool=None):
+    '''bhosts lists the hosts in the scheduling facility together with the number of
+    running and pending jobs for each of them and their number of slots'''
+    log(syslog.LOG_DEBUG, 'bhosts called for diskPool ' + str(diskPool))
+    # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
+    hosts = self.dispatch('nbJobs', diskPool)
+    # flatten it to a list of (diskserver, (values))
+    hostslist = reduce(lambda x,y:x+y, [diskserver.items() for diskserver in hosts.values()])
+    # return a tuple of (diskserver, value1, value2, ...)
+    return tuple(tuple([host[0]]+list(host[1])) for host in hostslist)
+
+  def exposed_badmin(self, diskPool=None):
+    '''badmin reconfigures the scheduling facility'''
+    log(syslog.LOG_DEBUG, 'badmin called for diskPool ' + str(diskPool))
+    # reset all known diskservers
+    self.dispatch('badmin', diskPool)
+    # and reset list of known diskServers
+    diskServerList.clear()
+
+  def exposed_bjobs(self, diskPool=None):
+    '''bqueues lists the number of running and pending jobs per queue'''
+    log(syslog.LOG_DEBUG, 'bjobs called for diskPool ' + str(diskPool))
+    jobs = self.dispatch('bjobs', diskPool)
+    res = []
+    for diskPool in jobs:
+      for ds in jobs[diskPool]:
+        for jobid, scheduler, user, status, jobtype, arrivalTime, startTime in jobs[diskPool][ds]:
+          res.append((jobid, scheduler, user, status, diskPool, ds, jobtype, arrivalTime, startTime))
+    return tuple(res)
+
+  def exposed_jobStarting(self, diskserver, jobid, jobtype):
+    '''called when a job started on a given diskserver'''
+    log(syslog.LOG_DEBUG, 'jobStarting called for job ' + jobid + ' (' + jobtype + ') on ' + diskserver)
+    machinesToInform = queuingJobs.remove(diskserver, jobid, jobtype)
+
+  def exposed_getQueuingJobs(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the queue of jobs'''
+    log(syslog.LOG_DEBUG, 'getQueuingJobs called for ' + diskserver)
+    return tuple(queuingJobs.list(diskserver))
+
+  def exposed_d2dend(self, jobid):
+    '''called when a d2d is over. Responsible for informing the source of the d2d'''
+    log(syslog.LOG_DEBUG, 'd2dend called for jobid ' + jobid)
+    queuingJobs.d2dend(jobid)
+
+def initQueues():
+  '''initializes the queue of pending jobs by rebuilding it from the local queues of each diskserver'''
+  dslist = diskServerList.getlist()
+  for diskPool in dslist:
+    for ds in dslist[diskPool]:
+      try:
+        for jobid, job, jobtype, arrivaltime in connections.getConnection(ds).getQueuingJobs(socket.gethostname()):
+          queuingJobs.put(ds, jobid, job, arrivaltime, jobtype)
+      except Exception, e:
+        # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
+        log(syslog.LOG_NOTICE, 'No queue could be retrieved from ' + ds + ' (' + str(e) + ')')
+
+import signal
+def handler(signum, frame):
+  '''signal handler for the llsf daemon, only logging'''
+  if signum == signal.SIGTERM:
+    log('SIGTERM received. Exiting')
+  elif signum == signal.SIGINT:
+    log('SIGINT received. Exiting')
+  else:
+    log('Unexpected signal %d received. Exiting') % signum
+  sys.exit(1)
+signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGINT, handler)
+
+# Note that from python 2.5 on, the daemonization should use the "with" statement :
+# with daemon.DaemonContext():
+#   rest of the code
+if daemonize:
+  context = daemon.DaemonContext()
+  context.__enter__()
+try:
+  # get configuration
+  configuration = castor_tools.castorConf()
+  # setup logging
+  verbosity = configuration['llsfd']['LogMask']
+  syslog.openlog('llsfd', 0, syslog.LOG_LOCAL3)
+  syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, verbosity)))
+  log = syslog.syslog
+  # global cache on the list of diskservers
+  diskServerList = DiskServerListCache()
+  # create a connection pool for connections to the DiskServers
+  connections = connectionpool.ConnectionPool(int(configuration['DiskManager']['Port']))
+  # a dictionnary holding the list of jobs submitted by us and still queuing for each diskserver
+  queuingJobs = serverqueue.ServerQueue(connections)
+  # initialize the queues of pending and running jobs using the knowledge of the diskservers
+  initQueues()
+  # launch a processing thread that will regularly check if we need to schedule new jobs
+  # and dispatch them on the relevant diskservers
+  dispatch = dispatcher.Dispatcher(connections, queuingJobs)
+  dispatch.setDaemon(True)
+  dispatch.start()
+  # launch a service listening for monitoring queries and answering them
+  from rpyc.utils.server import ThreadedServer
+  t = ThreadedServer(SchedulerService,
+                     port = int(configuration['Sched']['Port']),
+                     auto_register=False)
+  t.daemon = True
+  t.start()
+finally:
+  # cleanup all ongoing activities
+  try:
+    connections.closeall()
+    dispatch.stop()
+    dispatch.join()
+    t.close()
+  except:
+    pass
+  # if we are a daemon, call __exit__
+  if daemonize:
+    context.__exit__(None, None, None)

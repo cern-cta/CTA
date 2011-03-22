@@ -32,7 +32,7 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [svcClass]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [diskPool]'
   sys.exit(exitCode)
 
 # first parse the options
@@ -48,17 +48,20 @@ for f, v in options:
         print "unknown option : " + f
         usage(1)
 
-svcClass = None
+diskPool = None
 if len(args) > 0:
-    svcClass = args[0]
+    diskPool = args[0]
     if len(args) > 1:
       print "Too many arguments"
       usage(1)
 
 # connect to server and gather numbers
 conf = castor_tools.castorConf()
-rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
-counts = rpcconn.root.bqueues(svcClass)
-print 'SVCCLASS          MAX  PEND   RUN'
-for row in counts:
+try:
+  rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
+  counts = rpcconn.root.bqueues(diskPool)
+  print 'DISKPOOL          MAX  PEND   RUN'
+  for row in counts:
     print '%-15s%6d%6d%6d' % row
+except Exception, e:
+  print 'Caught exception : ' + str(e)

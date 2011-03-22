@@ -1,0 +1,2 @@
+/sbin/chkconfig --add dsmd
+/sbin/service dsmd condrestart > /dev/null 2>&1 || :

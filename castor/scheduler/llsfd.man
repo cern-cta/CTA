@@ -1,0 +1,35 @@
+.lf 8 llsfd.man
+.TH llsfd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "llsfd"
+.SH NAME
+llsfd \- starts the CASTOR low latency scheduling facility daemon
+.SH SYNOPSIS
+.B llsfd
+[
+.BI -f
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+.LP
+The
+.B llsfd
+command starts the CASTOR scheduling daemon.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-f,\ \-\-foreground
+runs in foreground mode (no daemonization).
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+
