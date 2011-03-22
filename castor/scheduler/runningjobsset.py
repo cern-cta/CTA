@@ -96,6 +96,19 @@ class RunningJobsSet:
     '''returns number of running jobs'''
     return len(self._jobs)
 
+  def nbUsedSlots(self):
+    '''returns number of slots occupied by running jobs'''
+    n = 0
+    for jobid, scheduler, job, notifyFileName, process, jobtype, arrivalTime, runTime in self._jobs:
+      if jobtype == 'd2dsource':
+        protocol = 'd2dsrc'
+      elif jobtype == 'd2dend':
+        protocol = 'd2dend'
+      else:
+        protocol = job[10]
+      n = n + self.config.getValue('DiskManager', protocol+'Weight', None, int)
+    return n
+
   def poll(self):
     '''checks for finished jobs and clean them up'''
     sourcesToBeInformed = []

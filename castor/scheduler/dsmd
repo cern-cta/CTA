@@ -82,7 +82,7 @@ class DiskServerManagerService(rpyc.Service):
     '''Called when bhosts or bqueues monitoring is needed.
     Returns the number of slots. running jobs and pending jobs on the diskserver'''
     log(syslog.LOG_DEBUG, 'nbJobs called')
-    return (int(configuration['DiskManager']['MaxNbJobs']), jobQueue.nbJobs(), runningJobs.nbJobs())
+    return (configuration.getValue('DiskManager', 'NbSlots', None, int), jobQueue.nbJobs(), runningJobs.nbJobs())
 
   def exposed_badmin(self):
     '''Called when the diskserver should be reconfigured, e.g. on a badmin call'''
@@ -146,7 +146,7 @@ class ActivityControl(threading.Thread):
     while True:
       try:
         # check number of running jobs against limit
-        if runningJobs.nbJobs() < int(configuration['DiskManager']['MaxNbJobs']):
+        if runningJobs.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', None, int):
           # get a new job from the jobQueue
           scheduler, jobid, job, jobtype, arrivalTime = jobQueue.get()
           try:
