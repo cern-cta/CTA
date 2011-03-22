@@ -235,6 +235,12 @@ class SchedulerService(rpyc.Service):
     dlf.writedebug(msgs.D2DENDCALLED, subreqid=jobid)
     queuingJobs.d2dend(jobid)
 
+  def exposed_drain(self):
+    '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
+    but no new work is taken'''
+    dlf.writedebug(msgs.DRAINCALLED)
+    drain()
+
 def initQueues():
   '''initializes the queue of pending jobs by rebuilding it from the local queues of each diskserver'''
   dslist = diskServerList.getlist()
@@ -251,6 +257,31 @@ def initQueues():
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
         # 'No queue could be retrieved' message
         dlf.writenotice(msgs.NOQUEUERETRIEVED, diskserver=ds, error=str(e))
+
+def drain():
+  '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
+  This allows to handled ongoing transfers before stopping the server'''
+  try:
+    if dispatch:
+      dispatch.stop()
+      dispatch.join()
+  except:
+    pass
+  abort = None
+  try:
+    if abort:
+      abort.stop()
+      abort.join()
+  except:
+    pass
+  abort = None
+  try:
+    if synchro:
+      synchro.stop()
+      synchro.join()
+  except:
+    pass
+  synchro = None
 
 import signal
 def handler(signum, frame):
@@ -322,21 +353,8 @@ finally:
     connections.closeall()
   except:
     pass
-  try:
-    dispatch.stop()
-    dispatch.join()
-  except:
-    pass
-  try:
-    abort.stop()
-    abort.join()
-  except:
-    pass
-  try:
-    synchro.stop()
-    synchro.join()
-  except:
-    pass
+  # drain will stop the dispatch, abort and synchro threads
+  drain()
   try:
     llsfd.close()
   except:
