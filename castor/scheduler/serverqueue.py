@@ -19,199 +19,256 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * serverqueue class of the low latency scheduling facility of the CASTOR project
-# * this class is responsible for managing a queue of jobs in the server memory.
-# * This queue lists all jobs pending on the different diskservers, and started
+# * serverqueue class of the transfer manager of the CASTOR project
+# * this class is responsible for managing a queue of transfers in the server memory.
+# * This queue lists all transfers pending on the different diskservers, and started
 # * by a given server
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
 import threading
-import dlf
-from llsfddlf import msgs
+import dlf, pwd
+from transfermanagerdlf import msgs
 
 class ServerQueue(dict):
-  '''a dictionnary of queuing jobs, with the list of machines to which they were sent
+  '''a dictionnary of queueing transfers, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
 
-  def __init__(self, connections):
+  def __init__(self, connections, transfermanager):
     '''constructor'''
     dict.__init__(self)
+    # a pool of connections to the diskservers
     self.connections = connections
     # a global lock for this queue
     self._lock = threading.Lock()
-    # dictionnary containing the set of jobs running on each machine
-    self._jobsLocations = {}
-    # list of source d2d jobs running
+    # dictionnary containing the set of machines on which each transfer is queueing
+    self._transfersLocations = {}
+    # list of source d2d transfers running
     self._d2dsourcerunning = {}
 
-  def put(self, jobid, arrivaltime, jobList, jobtype='standard'):
-    '''Adds a new job. jobtype can be one of 'standard', 'd2dsource' and 'd2ddest' '''
+  def put(self, transferid, arrivaltime, transferList, transfertype='standard'):
+    '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsource' and 'd2ddest' '''
     self._lock.acquire()
     try:
-      for diskserver, job in jobList:
-        # add job to the list of queuing jobs on the diskserver
-        # note the extra argument, used only for d2ddest jobs and telling whether the source is ready
+      for diskserver, transfer in transferList:
+        # add transfer to the list of queueing transfers on the diskserver
+        # note the extra argument, used only for d2ddest transfers and telling whether the source is ready
         # As it could be that the source has already started when the destinations are entered, we have
-        # to infer this argument from the jobid, looking into the list of running sources
-        if diskserver not in self:
-          self[diskserver] = {}
-        self[diskserver][jobid] = [job, arrivaltime, jobtype, jobid in self._d2dsourcerunning]
-        # add the diskserver to the jobLocations list for this job (except for sources)
-        if jobtype != 'd2dsource':
-          if jobid not in self._jobsLocations:
-            self._jobsLocations[jobid] = set()
-          self._jobsLocations[jobid].add(diskserver)
+        # to infer this argument from the transferid, looking into the list of running sources
+        if diskserver not in self: self[diskserver] = {}
+        self[diskserver][transferid] = [transfer, arrivaltime, transfertype, transferid in self._d2dsourcerunning]
+        # add the diskserver to the transferLocations list for this transfer (except for sources)
+        if transfertype != 'd2dsource':
+          if transferid not in self._transfersLocations:
+            self._transfersLocations[transferid] = set()
+          self._transfersLocations[transferid].add(diskserver)
     finally:
       self._lock.release()
 
-  def remove(self, jobids):
-    '''drops jobs from the queues'''
-    jobsPerMachine = {}
+  def _removetransfer(self, transferid, transfersPerMachine):
+    '''internal method remove one given transfer from the queue, adding its locations
+    to the given dictionnary and calling d2dend if needed.
+    Not that the locking is not handled here, it's left to the responsability of the caller'''
+    try:
+      # get the list of machines potentially running the transfer
+      machines = self._transfersLocations[transferid]
+      # clean up _transfersLocations
+      del self._transfersLocations[transferid]
+      # for each machine, cleanup the server queue and note down where the transfer was sent
+      for machine in machines:
+        if machine not in transfersPerMachine: transfersPerMachine[machine] = []
+        transfersPerMachine[machine].append(transferid)
+        del self[machine][transferid]
+      # if we have a source transfer already running, stop it
+      if transferid in self._d2dsourcerunning: d2dend(transferid,lock=False)
+    except KeyError:
+      # we are not handling this transfer, fine, ignore it then
+      pass
+
+  def remove(self, transferids):
+    '''drops transfers from the queues'''
+    transfersPerMachine = {}
+    # first cleanup our own queue
     self._lock.acquire()
     try:
-      # for each job
-      for jobid in jobids:
-        try:
-          # get the list of machines potentially running the job
-          machines = self._jobsLocations[jobid]
-          # clean up _jobsLocations
-          del self._jobsLocations[jobid]
-          # for each machine, cleanup the server queue and note down where the job was sent
-          for machine in machines:
-            if machine not in jobsPerMachine: jobsPerMachine[machine] = []
-            jobsPerMachine[machine].append(jobid)
-            del self[machine][jobid]
-          # if we have a source job already running, stop it
-          if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
-        except KeyError:
-          # we are not handling this job, fine, ignore it then
-          pass
+      for transferid in transferids: self._removetransfer(transferid, transfersPerMachine)
     finally:
       self._lock.release()
-    # finally tell the machines to remove these jobs from their queues
-    for machine in jobsPerMachine:
-      connections.bkill(machine, tuple(jobsPerMachine[machine]))
+    # then tell the machines to remove these transfers from their queues
+    for machine in transfersPerMachine:
+      connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
 
-  def jobStarting(self, diskserver, jobid, jobtype):
-    '''Removes a job and gives back the list of other nodes where it was pending.
+  def _transfer2user(rawtransfer):
+    if transfertype == 'standard':
+      try:
+        return pwd.getpwuid(int(rawtransfer[20]))[0]
+      except KeyError:
+        return rawtransfer[20]
+    else:
+      return 'stage'
+
+  def removeall(self, requser):
+    '''drops transfers from the queues'''
+    transfersPerMachine = {}
+    # first cleanup our own queue
+    self._lock.acquire()
+    try:
+      # Go through all transfers
+      for transferid in self._transfersLocations:
+        # ignore if not the right user
+        if requser:
+          rawtransfer, arrivaltime, transfertype, d2drun = self[self._transfersLocations[transferid][0]][transferid]
+          if _transfer2user(rawtransfer) != reqUser: continue
+        # else drop the transfer from our queue
+        self._removetransfer(transferid, transfersPerMachine)
+    finally:
+      self._lock.release()
+    # then tell the machines to remove these transfers from their queues
+    for machine in transfersPerMachine:
+      connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+
+  def transferStarting(self, diskserver, transferid, transfertype):
+    '''Removes a transfer and gives back the list of other nodes where it was pending.
     Raises ValueError when not found'''
-    if jobtype == 'd2dsource':
+    if transfertype == 'd2dsource':
       self._lock.acquire()
       try:
-        # the source job is starting, mark all destinations (and the source) ready
+        # the source transfer is starting, mark all destinations (and the source) ready
         try :
-          for ds in self._jobsLocations[jobid]:
-            self[ds][jobid] = self[ds][jobid][0:3]+[True]
+          for ds in self._transfersLocations[transferid]:
+            self[ds][transferid] = self[ds][transferid][0:3]+[True]
         except KeyError:
           # no destination yet, no problem, the source was only too fast to start
           pass
         # remember where the source is running
-        self._d2dsourcerunning[jobid] = diskserver
+        self._d2dsourcerunning[transferid] = diskserver
       finally:
         self._lock.release()
     else:
       self._lock.acquire()
       try:
-        # check whether the job has already been started somewhere else
-        if jobid not in self._jobsLocations:
+        # check whether the transfer has already been started somewhere else
+        if transferid not in self._transfersLocations:
           # in such a case, let the diskserver know by raising an exception
-          # "Job had already started. Cancel start" message
-          dlf.writedebug(msgs.JOBALREADYSTARTED, diskserver=diskserver, subreqid=jobid)
+          # "Transfer had already started. Cancel start" message
+          dlf.writedebug(msgs.TRANSFERALREADYSTARTED, diskserver=diskserver, subreqid=transferid)
           raise ValueError
-        # if a destination job wants to start, check whether the source is ready
-        if jobtype == 'd2ddest' and not self[diskserver][jobid][3]:
+        # if a destination transfer wants to start, check whether the source is ready
+        if transfertype == 'd2ddest' and not self[diskserver][transferid][3]:
           # "Source is not ready yet" message
-          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=jobid)
+          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=transferid)
           raise EnvironmentError
-        # drop the job from all queues. Note that this desynchronizes the queues as seen
+        # drop the transfer from all queues. Note that this desynchronizes the queues as seen
         # by the diskservers from the queues seen by the central manager. In case of a
         # restart of a diskserver manager, its queue will be magically "cleaned up"
         # However, the diskservers concerned will be notified.
-        machines = self._jobsLocations[jobid]
-        del self._jobsLocations[jobid]
-        for machine in machines: del self[machine][jobid]
+        machines = self._transfersLocations[transferid]
+        del self._transfersLocations[transferid]
+        for machine in machines: del self[machine][transferid]
       finally:
         self._lock.release()
 
-  def d2dend(self, jobid, lock=True):
+  def d2dend(self, transferid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
     if lock:
       self._lock.acquire()
     try:
       # get the source location
-      diskserver = self._d2dsourcerunning[jobid]
+      diskserver = self._d2dsourcerunning[transferid]
       # remember the fileid in case of error
-      job = self[diskserver][jobid][0]
-      fileid = (job[8], int(job[6]))
-      # remove d2dsource job from the queue
-      del self[diskserver][jobid]
+      transfer = self[diskserver][transferid][0]
+      fileid = (transfer[8], int(transfer[6]))
+      # remove d2dsource transfer from the queue
+      del self[diskserver][transferid]
       # remove from list of d2dsources
-      del self._d2dsourcerunning[jobid]
+      del self._d2dsourcerunning[transferid]
     finally:
       if lock: 
         self._lock.release()
     # inform the source diskserver
     try:
-      self.connections.d2dend(diskserver, jobid)
+      self.connections.d2dend(diskserver, transferid)
     except Exception, e:
       # "Informing diskserver that d2d copy is over failed" message
-      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=jobid, fileid=fileid, error=str(e))
+      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=transferid, fileid=fileid, error=str(e))
 
-  def putRunningD2dSource(self, diskserver, jobid, job, arrivaltime):
-    '''Adds a new d2dsource job to the list of runnign ones'''
+  def putRunningD2dSource(self, diskserver, transferid, transfer, arrivaltime):
+    '''Adds a new d2dsource transfer to the list of runnign ones'''
     self._lock.acquire()
     try:
-      # add job to the list of running d2dsource jobs on the diskserver
+      # add transfer to the list of running d2dsource transfers on the diskserver
       if diskserver not in self: self[diskserver] = {}
-      self[diskserver][jobid] = [job, arrivaltime, 'd2dsource', 'True']
-      self._d2dsourcerunning[jobid] = diskserver
+      self[diskserver][transferid] = [transfer, arrivaltime, 'd2dsource', 'True']
+      self._d2dsourcerunning[transferid] = diskserver
     finally:
       self._lock.release()
 
-  def listQueuingJobs(self, diskserver):
-    '''This is called by the scheduler when rebuilding the list of queuing jobs for a given diskserver'''
+  def nbTransfersPerPool(self, diskServerList, reqdiskpool=None, requser=None):
+    '''returns the number of unique transfers pending on the pool given (or all pools)
+    for the given user (or all users)'''
+    res = {}
+    # for each transfer
+    for transferid in self._transfersLocations:
+      # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
+      for diskserver in self._transfersLocations[transferid][0]:
+        # get diskpool
+        diskpool = diskServerList.getDiskServerPool(diskserver)
+        # are we interested in this diskpool ?
+        if reqdiskpool and reqdiskPool != diskpool: break
+        # are we interested in this user ?
+        if requser:
+          rawtransfer, arrivaltime, transfertype, d2drun = self[diskserver][transferid]
+          if requser != _transfer2user(rawtransfer): break
+        # increase counter for corresponding diskpool
+        if diskpool not in res: res[diskpool] = 0
+        res[diskpool] = res[diskpool] + 1
+        # no need to really loop, we already counted this guy
+        break
+    return res
+
+  def listQueueingTransfers(self, diskserver):
+    '''This is called by the scheduler when rebuilding the list of queueing transfers for a given diskserver'''
     if diskserver in self:
-      res = [tuple([jobid]+job[0:3]) for jobid, job in self[diskserver].items() if jobid not in self._d2dsourcerunning]
+      res = [tuple([transferid]+transfer[0:3]) for transferid, transfer in self[diskserver].items() if transferid not in self._d2dsourcerunning]
       return res
     else:
       return []
 
   def listRunningD2dSources(self, diskserver):
-    '''This is called by the scheduler when rebuilding the list of running d2dsource jobs for a given diskserver'''
+    '''This is called by the scheduler when rebuilding the list of running d2dsource transfers for a given diskserver'''
     res = []
-    for jobid in [jobid for jobid in self._d2dsourcerunning if self._d2dsourcerunning[jobid] == diskserver]:
-      job, arrivaltime, jobtype, ready = self[diskserver][jobid]
-      res.append((jobid, job, arrivaltime))
+    for transferid in [transferid for transferid in self._d2dsourcerunning if self._d2dsourcerunning[transferid] == diskserver]:
+      transfer, arrivaltime, transfertype, ready = self[diskserver][transferid]
+      res.append((transferid, transfer, arrivaltime))
     return res
 
-  def exposed_jobsCanceled(self, machine, jobs):
-    '''cancels jobs in the queues and informs the stager in case there is no
+  def transfersCanceled(self, machine, transfers):
+    '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
-    jobsKilled = []
+    transfersKilled = []
     self._lock.acquire()
     try:
-      # for each job
-      for jobid, fileid, rc, msg in jobs:
+      # for each transfer
+      for transferid, fileid, rc, msg in transfers:
         try:
-          # cleanup the queue for the given job on the given machine
-          del self._jobsLocations[jobid][machine]
-          del self[machine][jobid]
-          if not self._jobsLocations[jobid]:
-            # no other candidate machine for this job. It has to be failed
-            jobsKilled.append((jobid, fileid, rc, msg))
-            # clean up _jobsLocations
-            del self._jobsLocations[jobid]
-            # if we have a source job already running, stop it
-            if jobid in self._d2dsourcerunning: d2dend(jobid,lock=False)
+          # cleanup the queue for the given transfer on the given machine
+          del self._transfersLocations[transferid].remove(machine)
+          del self[machine][transferid]
+          if not self._transfersLocations[transferid]:
+            # no other candidate machine for this transfer. It has to be failed
+            transfersKilled.append((transferid, fileid, rc, msg))
+            # clean up _transfersLocations
+            del self._transfersLocations[transferid]
+            # if we have a source transfer already running, stop it
+            if transferid in self._d2dsourcerunning: d2dend(transferid,lock=False)
         except KeyError, e:
-          # we are not handling this job or it is not queued for the given machine
+          # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore
-          # "Unexpected KeyError exception caught in jobsCanceled" message
-          dlf.writeerr(msgs.JOBCANCELEXCEPTION, error=str(e))
+          # "Unexpected KeyError exception caught in transfersCanceled" message
+          dlf.writeerr(msgs.TRANSFERCANCELEXCEPTION, error=str(e))
     finally:
       self._lock.release()
-    # inform the stager of the jobs that were killed
-    llsfd.jobsKilled(jobsKilled)
+    # inform the stager of the transfers that were killed
+    return transfersKilled
 

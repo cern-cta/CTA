@@ -1,4 +1,4 @@
-/var/log/castor/dsmd*.log {
+/var/log/castor/diskmanagerd*.log {
     compress
     daily
     missingok

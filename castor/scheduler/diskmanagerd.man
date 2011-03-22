@@ -1,9 +1,9 @@
-.lf 8 dsmd.man
-.TH dsmd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "dsmd"
+.lf 8 diskmanagerd.man
+.TH diskmanagerd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "diskmanagerd"
 .SH NAME
-dsmd \- starts the CASTOR DiskServer Manager Daemon
+diskmanagerd \- starts the CASTOR DiskServer Manager Daemon
 .SH SYNOPSIS
-.B dsmd
+.B diskmanagerd
 [
 .BI -f
 ]
@@ -16,7 +16,7 @@ dsmd \- starts the CASTOR DiskServer Manager Daemon
 .SH DESCRIPTION
 .LP
 The
-.B dsmd
+.B diskmanagerd
 command starts the CASTOR DiskServer Manager daemon.
 .LP
 

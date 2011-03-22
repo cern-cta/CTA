@@ -132,4 +132,6 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'tapebridged');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (30, 'operations');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (31, 'transfermanagerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (32, 'diskmanagerd');
 

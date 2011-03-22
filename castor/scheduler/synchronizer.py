@@ -19,9 +19,9 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * synchronizer class of the low latency scheduling facility of the CASTOR project
+# * synchronizer class of the transfer manager of the CASTOR project
 # * this class is responsible for regularly synchronizing the stager DB with the running
-# * jobs, meaning that it will check that jobs running for already long according to the DB
+# * transfers, meaning that it will check that transfers running for already long according to the DB
 # * are effectively still running. If they are not, is will update the DB accordingly
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
@@ -34,16 +34,16 @@ import random
 import socket
 import castor_tools
 import dlf
-from llsfddlf import msgs
+from transfermanagerdlf import msgs
 
 class Synchronizer(threading.Thread):
-  '''synchronizer class of the low latency scheduling facility of the CASTOR project
+  '''synchronizer class of the transfer manager of the CASTOR project
   this class is responsible for regularly synchronizing the stager DB with the running
-  jobs, meaning that it will check that jobs running for already long according to the DB
+  transfers, meaning that it will check that transfers running for already long according to the DB
   are effectively still running. If they are not, is will update the DB accordingly'''
 
-  def __init__(self, connections, diskServerList, llsfd):
-    '''constructor of this thread. Arguments are the connection pool and the parent llsfd object'''
+  def __init__(self, connections, diskServerList):
+    '''constructor of this thread'''
     threading.Thread.__init__(self)
     # whether we should continue running
     self.running = True
@@ -51,10 +51,12 @@ class Synchronizer(threading.Thread):
     self.connections = connections
     # list of diskservers
     self.diskServerList = diskServerList
-    # link to the llsfd object
-    self.llsfd = llsfd
     # whether we are connected to the stager DB
     self.stagerConnection = None
+    # our own name
+    self.hostname = socket.getfqdn()
+    # configuration
+    self.config = castor_tools.castorConf()
 
   def dbConnection(self, autocommit=True):
     '''returns a connection to the stager DB.
@@ -67,10 +69,7 @@ class Synchronizer(threading.Thread):
   def run(self):
     '''main method, containing the infinite loop'''
     # get the interval between 2 checks
-    checkInterval = configuration.getValue("JobManager","ManagementInterval",None,int)
-    if checkInterval == None:
-      raise ValueError, 'no JobManager/ManagementInterval entry in configuration file'
-      sys.exit(1)
+    checkInterval = self.config.getValue("JobManager", "ManagementInterval", 3600, int)
     try:
       while self.running:
         # first wait a bit before starting so that we are not syncronized between
@@ -85,55 +84,56 @@ class Synchronizer(threading.Thread):
         try:
           # prepare a cursor for database polling
           stcur = self.dbConnection().cursor()
-          subReqIdsCur = self.dbConnection().cursor()
-          subReqIdsCur.arraysize = 200
-          # infinite loop over the polling of the DB
-          while self.running:
-              # list pending and running jobs in the scheduling system
-              stcur.callproc('getSchedulerJobs2', subReqIdsCur)
-              subReqIds = set(subReqIdsCur.fetchall())
-              try:
-                # list pending and running jobs in the scheduling system
-                allLlsfJobs = set()
-                diskservers = diskServerList.getset()
-                for ds in diskServerList:
-                  # call the function on the appropriate diskserver
-                  allLlsfJobs = allLlsfJobs | set(connections.jobset(ds))
-                # find out the set of jobs in the DB and no more in the scheduling system
-                jobsToFail = list(subReqIds - allLlsfJobs)
-                # and inform the stager
-                if jobsToFail:
-                  # get back the fileids for the logs. We need to go back to the DB just for this
-                  conn = self.dbConnection(False)
-                  fileIdsCur = conn.cursor()
-                  fileIdsCur.arraysize = 200
-                  stcur = conn.cursor()
-                  stcur.callproc('getFileIdsForSrs', [jobsToFail, fileIdsCur])
-                  fileids = map(tuple, fileIdsCur.fetchall())
-                  conn.commit()
-                  # 'Job killed by synchronization as it disappeared from the scheduling system'
-                  for jobid, fileid in zip(jobsToFail, fileids):
-                    dlf.write(msgs.SYNCHROKILLEDJOB, subreqid=jobid, fileid=fileid)
-                  # prepare the jobs so that we have only tuples going onver the wire
-                  jobs = tuple(map(tuple,
-                                   zip(jobsToFail, fileids,
-                                       [1015] * len(jobsToFail), # SEINTERNAL error code
-                                       ['Job has disappeared from the scheduling system'] * len(jobsToFail))))
-                  # finally inform the stager
-                  self.connections.jobsKilled(self.hostname, jobs)
-              except Exception, e:
-                # we could not list all pending running jobs in the system
-                # Thus we have to give up with synchronization for this round
-                # 'Error caught while trying to synchronize DB jobs with scheduler jobs. Giving up for this round.'
-                dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
-              # sleep until next check
-              slept = 0
-              while slept < checkInterval:
-                # note that we sleep one second at a time so that we can exit
-                # if the thread stops running
-                if not self.running: break
-                time.sleep(1)
-                slept = slept + 1
+          try:
+            subReqIdsCur = self.dbConnection().cursor()
+            subReqIdsCur.arraysize = 200
+            # infinite loop over the polling of the DB
+            while self.running:
+                # list pending and running transfers in the scheduling system
+                stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
+                subReqIds = set(subReqIdsCur.fetchall())
+                try:
+                  # list pending and running transfers in the scheduling system
+                  allLlsfTransfers = set()
+                  diskservers = self.diskServerList.getset()
+                  for ds in diskservers:
+                    # call the function on the appropriate diskserver
+                    allLlsfTransfers = allLlsfTransfers | set(self.connections.transferset(ds))
+                  # find out the set of transfers in the DB and no more in the scheduling system
+                  transfersToFail = list(subReqIds - allLlsfTransfers)
+                  # and inform the stager
+                  if transfersToFail:
+                    # get back the fileids for the logs. We need to go back to the DB just for this
+                    conn = self.dbConnection(False)
+                    fileIdsCur = conn.cursor()
+                    fileIdsCur.arraysize = 200
+                    stcur = conn.cursor()
+                    stcur.callproc('getFileIdsForSrs', [transfersToFail, fileIdsCur])
+                    fileids = map(tuple, fileIdsCur.fetchall())
+                    conn.commit()
+                    # 'Transfer killed by synchronization as it disappeared from the scheduling system'
+                    for transferid, fileid in zip(transfersToFail, fileids):
+                      dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, fileid=fileid)
+                    # prepare the transfers so that we have only tuples going onver the wire
+                    transfers = tuple(map(tuple,
+                                     zip(transfersToFail, fileids,
+                                         [1015] * len(transfersToFail), # SEINTERNAL error code
+                                         ['Transfer has disappeared from the scheduling system'] * len(transfersToFail))))
+                    # finally inform the stager
+                    self.connections.transfersKilled(self.hostname, transfers)
+                except Exception, e:
+                  # we could not list all pending running transfers in the system
+                  # Thus we have to give up with synchronization for this round
+                  # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
+                  dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
+                # sleep until next check
+                slept = 0
+                while slept < checkInterval:
+                  # note that we sleep one second at a time so that we can exit
+                  # if the thread stops running
+                  if not self.running: break
+                  time.sleep(1)
+                  slept = slept + 1
           finally:
             stcur.close()
         except Exception, e:

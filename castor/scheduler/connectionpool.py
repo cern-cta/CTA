@@ -25,21 +25,31 @@
 # *****************************************************************************/
 
 import rpyc
+import castor_tools
 
 class ConnectionPool:
     '''Object handling a pool of connections to identical remote services'''
-    connections = {}
 
-    def __init__(self, port):
+    def __init__(self):
         '''constructor'''
-        self._port = port
+        # the configuration of CASTOR
+        self.config = castor_tools.castorConf()
+        # cached connections
+        self.connections = {}
 
     def getConnection(self, machine):
         '''returns an open connection to the specified machine'''
         # if not in cache, or if connection was lost, create new connection
         if machine not in self.connections or self.connections[machine].closed:
+            # find out the port to be used
+            if machine not in self.config.getValue('DiskManager', 'ServerHosts').split():
+                # we have a diskserver
+                port = self.config.getValue('DiskManager', 'Port', 56406, int)
+            else:
+                # we have a master node
+                port = self.config.getValue('Scheduler', 'Port', 2681, int)
             # create the connection
-            rpcconn = rpyc.connect(machine, self._port)
+            rpcconn = rpyc.connect(machine, port)
             # cache it
             self.connections[machine] = rpcconn
         return self.connections[machine].root
@@ -73,3 +83,4 @@ class ConnectionPool:
                 conn = self.getConnection(machine)
                 return getattr(conn, name)(*args)
         return f
+"/usr/lib/python2.4/site-packages/connectionpool.py"

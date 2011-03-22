@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                   bhosts.py
+# *                   killtransfers.py
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -20,7 +20,7 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * command line to display the state of the different disk servers
+# * command line to unqueue pending transfers
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
@@ -29,39 +29,60 @@ import sys
 import getopt
 import rpyc
 import castor_tools
+import time
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [diskPool]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] transferid[...]'
+  print '        ' + sys.argv[0] + ' [-h|--help] -a|--all [-u|--user <user>]'
   sys.exit(exitCode)
 
 # first parse the options
+user = None
+killall = False
+verbose = False
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+  options, args = getopt.getopt(sys.argv[1:], 'hau:v', ['help', 'verbose'])
 except Exception, e:
-    print e
-    usage(1)
+  print e
+  usage(1)
 for f, v in options:
-    if f == '-h' or f == '--help':
-        usage(0)
-    else:
-        print "unknown option : " + f
-        usage(1)
-
-diskPool = None
-if len(args) > 0:
-    diskPool = args[0]
-    if len(args) > 1:
-      print "Too many arguments"
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-a' or f == '--all':
+    killAll = True
+  elif f == '-u' or f == '--user':
+    if user:
+      print 'Cannot use -u|--user twice'
       usage(1)
+    user = v
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
+
+if not killall and user:
+  print "-u|--user can only be used in conjunction with -a|--all"
+  usage(1)
+if killall and len(args) > 0:
+  print "No arguments expected when -a|--all used"
+  usage(1)
+if not killall and len(args) == 0:
+  print "Missing argument"
+  usage(1)
 
 # connect to server and gather numbers
 conf = castor_tools.castorConf()
 try:
-  rpcconn = rpyc.connect(conf['JOBMANAGER']['HOST'], 2681)
-  dss = rpcconn.root.bhosts(diskPool)
-  print 'DISKSERVER                  MAX  PEND   RUN'
-  for ds in dss:
-    print '%-25s%6d%6d%6d' % ds
+  rpcconn = rpyc.connect(conf.getValue('JOBMANAGER', 'HOST'), conf.getValue('TransferManager', 'Port', 15011, int))
+  if killall:
+    rpcconn.root.killalltransfers(user)
+  else:
+    rpcconn.root.killtransfers(args)  
+  print 'transfer(s) killed'
 except Exception, e:
-  print 'Caught exception : ' + str(e)
+  print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
+  if verbose:
+    import traceback
+    print traceback.print_tb(sys.exc_info()[2])

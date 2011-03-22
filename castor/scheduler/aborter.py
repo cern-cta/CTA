@@ -19,8 +19,8 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * aborter class of the low latency scheduling facility of the CASTOR project
-# * this class is responsible for polling the DB for jobs to abort and
+# * aborter class of the transfer manager of the CASTOR project
+# * this class is responsible for polling the DB for transfers to abort and
 # * effectively abort them on the relevant diskservers.
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
@@ -31,22 +31,22 @@ import threading
 import castor_tools
 import socket
 import dlf
-from llsfddlf import msgs
+from transfermanagerdlf import msgs
 
 class Aborter(threading.Thread):
-  '''Aborter thread, responsible for connecting to the stager database and getting the list of jobs to be aborted'''
+  '''Aborter thread, responsible for connecting to the stager database and getting the list of transfers to be aborted'''
 
-  def __init__(self, connections, llsfd):
-    '''constructor of this thread. Arguments are the connection pool and the parent llsfd object'''
+  def __init__(self, connections):
+    '''constructor of this thread'''
     threading.Thread.__init__(self)
     # whether we should continue running
     self.running = True
     # a pool of connections to the diskservers
     self.connections = connections
-    # link to the llsfd object
-    self.llsfd = llsfd
     # whether we are connected to the stager DB
     self.stagerConnection = None
+    # the global configuration object
+    self.config = castor_tools.castorConf()
 
   def dbConnection(self):
     '''returns a connection to the stager DB.
@@ -61,30 +61,39 @@ class Aborter(threading.Thread):
     try:
       while self.running:
         try:
-          # setup an oracle connection and register our interest for 'jobsReadyToSchedule' alerts
+          # setup an oracle connection and register our interest for 'transfersReadyToSchedule' alerts
           stcur = self.dbConnection().cursor()
-          stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsToAbort'); END;");
-          # prepare a cursor for database polling
-          stcur = self.dbConnection().cursor()
-          subReqIdsCur = self.dbConnection().cursor()
-          subReqIdsCur.arraysize = 200
-          # infinite loop over the polling of the DB
-          while self.running:
-              # see whether there is something to do
-              # not that this will hang until something comes or the internal timeout is reached
-              stcur.callproc('jobsToAbortProc', (1, subReqIdsCur))
-              # kill the corresponding jobs
-              subReqIds = subReqIdsCur.fetchall()
-              if subReqIds:
-                self.llsfd.bkill(subReqIds)
-              # and commit the changes in the DB so that we do not try to drop these jobs again
-              stcur.execute("COMMIT")
+          try:
+            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersToAbort'); END;");
+            # prepare a cursor for database polling
+            stcur = self.dbConnection().cursor()
+            subReqIdsCur = self.dbConnection().cursor()
+            subReqIdsCur.arraysize = 200
+            # infinite loop over the polling of the DB
+            while self.running:
+                # see whether there is something to do
+                # not that this will hang until something comes or the internal timeout is reached
+                stcur.callproc('transfersToAbortProc', [subReqIdsCur])
+                # kill the corresponding transfers
+                subReqIds = tuple(id for item in subReqIdsCur.fetchall() for id in item)
+                if subReqIds:
+                  # call the internal method on all schedulers (including ourselves)
+                  # note that this is a replication of the exposed_bkill function of SchedulerService
+                  # unfortunately, we cannot call it directly (lack of reference to the service object
+                  # as it's created by the rpyc framework) and we do not want to call it via rpyc
+                  # as it would creates too many intricated calls
+                  for scheduler in self.config['DiskManager']['ServerHosts'].split():
+                    self.connections.bkillinternal(scheduler, subReqIds)
+                # and commit the changes in the DB so that we do not try to drop these transfers again
+                self.dbConnection().commit()
+          finally:
+            stcur.close()
         except Exception, e:
           # "Caught exception in Aborter thread" message
           dlf.writeerr(msgs.ABORTEREXCEPTION, type=str(e.__class__), msg=str(e))
           # roll back in case
           try:
-            stcur.execute("ROLLBACK")
+            self.dbConnection().rollback()
           except:
             pass
           # then sleep a bit to not loop to fast on the error
@@ -93,7 +102,10 @@ class Aborter(threading.Thread):
       # try to clean up what we can
       try:
         stcur = self.dbConnection().cursor()
-        stcur.execute("BEGIN DBMS_ALERT.REMOVE('jobsToAbort'); END;");
+        try:
+          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersToAbort'); END;");
+        finally:
+          stcur.close()
       except Exception:
         pass
       try:

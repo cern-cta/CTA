@@ -36,6 +36,7 @@ def usage(exitCode):
   sys.exit(exitCode)
 
 # first parse the options
+verbose = False
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:

@@ -730,14 +730,14 @@ END;
 
 
 /* PL/SQL method implementing getUpdateFailed */
-CREATE OR REPLACE PROCEDURE getUpdateFailedProc
-(srId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE getUpdateFailedProcExt
+(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE SubRequest
      SET status = 7, -- FAILED
-         errorCode = 1015, -- SEINTERNAL
-         errorMessage = 'Job terminated with failure'
+         errorCode = errno,
+         errorMessage = errmsg
    WHERE id = srId;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest
@@ -747,9 +747,15 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE getUpdateFailedProc
+(srId IN NUMBER) AS
+BEGIN
+  getUpdateFailedProcExt(srId, 1015, 'Job terminated with failure');  -- SEINTERNAL
+END;
+/
 
 /* PL/SQL method implementing putFailedProc */
-CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE putFailedProcExt(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
   dcId INTEGER;
   cfId INTEGER;
   unused INTEGER;
@@ -760,8 +766,8 @@ BEGIN
   -- Fail the subRequest
   UPDATE SubRequest
      SET status = 7, -- FAILED
-         errorCode = 1015, -- SEINTERNAL
-         errorMessage = 'Job terminated with failure'
+         errorCode = errno,
+         errorMessage = errmsg
    WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -795,6 +801,12 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing putFailedProc */
+CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
+BEGIN
+  putFailedProcExt(srId, 1015, 'Job terminated with failure');  -- SEINTERNAL
+END;
+/
 
 /* PL/SQL function implementing checkAvailOfSchedulerRFS, this function can be
  * used to determine if any of the requested filesystems specified by a
@@ -888,10 +900,10 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing getSchedulerJobs2.
+/* PL/SQL method implementing getSchedulerTransfers.
    This method lists all known transfers
    that are started/pending for more than an hour */
-CREATE OR REPLACE PROCEDURE getSchedulerJobs2
+CREATE OR REPLACE PROCEDURE getSchedulerTransfers
   (transfers OUT castor.UUIDRecord_Cur) AS
 BEGIN
   OPEN transfers FOR
@@ -989,19 +1001,19 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing jobFailedSafe, providing bulk termination of file
+/* PL/SQL method implementing transferFailedSafe, providing bulk termination of file
  * transfers.
  */
 CREATE OR REPLACE
-PROCEDURE jobFailedSafe(subReqIds IN castor."strList",
-                        errnos IN castor."cnumList",
-                        errmsg IN castor."strList") AS
+PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
+                             errnos IN castor."cnumList",
+                             errmsg IN castor."strList") AS
   srId  NUMBER;
   dcId  NUMBER;
   cfId  NUMBER;
   rType NUMBER;
 BEGIN
-  -- Loop over all jobs to fail
+  -- Loop over all transfers to fail
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
@@ -1020,11 +1032,11 @@ BEGIN
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Update the reason for termination.
        UPDATE SubRequest 
-          SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
               errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
         WHERE id = srId;
-       -- Call the relevant cleanup procedure for the job, procedures that
-       -- would have been called if the job failed on the remote execution host.
+       -- Call the relevant cleanup procedure for the transfer, procedures that
+       -- would have been called if the transfer failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
          putFailedProc(srId);
        ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
@@ -1041,13 +1053,13 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing jobFailed2, providing bulk termination of file
+/* PL/SQL method implementing transferFailedLockedFile, providing bulk termination of file
  * transfers. in case the castorfile is already locked
  */
 CREATE OR REPLACE
-PROCEDURE jobFailedLockedFile(subReqId IN castor."strList",
-                              errno IN castor."cnumList",
-                              errmsg IN castor."strList")
+PROCEDURE transferFailedLockedFile(subReqId IN castor."strList",
+                                   errno IN castor."cnumList",
+                                   errmsg IN castor."strList")
 AS
   srId  NUMBER;
   dcId  NUMBER;
@@ -1067,8 +1079,8 @@ BEGIN
           SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
               errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
         WHERE id = srId;
-       -- Call the relevant cleanup procedure for the job, procedures that
-       -- would have been called if the job failed on the remote execution host.
+       -- Call the relevant cleanup procedure for the transfer, procedures that
+       -- would have been called if the transfer failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
          putFailedProc(srId);
        ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
@@ -1083,9 +1095,9 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing jobScheduled and called in bulk when jobs have been successfully scheduled */
+/* PL/SQL method implementing transferScheduled and called in bulk when transfers have been successfully scheduled */
 CREATE OR REPLACE
-PROCEDURE jobScheduled(subReqIds IN castor."strList") AS
+PROCEDURE transferScheduled(subReqIds IN castor."strList") AS
 BEGIN
   FORALL i IN subReqIds.FIRST .. subReqIds.LAST
     UPDATE SubRequest 
@@ -1096,7 +1108,7 @@ END;
 
 /* PL/SQL method implementing jobToSchedule
  * This is deprecated and should go when the jobmanager and LSF are dropped.
- * It has been replaced by jobToSchedule2
+ * It has been replaced by transferToSchedule
  */
 CREATE OR REPLACE
 PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
@@ -1230,25 +1242,25 @@ END;
 CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
 BEGIN 
-  DBMS_ALERT.SIGNAL('jobsReadyToSchedule', ''); 
+  DBMS_ALERT.SIGNAL('transfersReadyToSchedule', ''); 
 END;
 /
 
-/* PL/SQL method implementing jobToSchedule */
+/* PL/SQL method implementing transferToSchedule */
 CREATE OR REPLACE
-PROCEDURE jobToSchedule2(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
-                         srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
-                         srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
-                         cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
-                         reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
-                         reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
-                         reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
-                         clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                         clientVersion OUT INTEGER,     clientType OUT INTEGER,
-                         reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
-                         clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
-                         reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
-                         sourceRfs OUT VARCHAR2) AS
+PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
+                             srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
+                             srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
+                             cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
+                             reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
+                             reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
+                             reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
+                             clientIp OUT INTEGER,          clientPort OUT INTEGER,
+                             clientVersion OUT INTEGER,     clientType OUT INTEGER,
+                             reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
+                             clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
+                             reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
+                             sourceRfs OUT VARCHAR2) AS
   cfId NUMBER;
   -- Cursor to select the next candidate for submission to the scheduler orderd
   -- by creation time.
@@ -1275,7 +1287,7 @@ BEGIN
       -- We do not wait forever in order to ensure that we will retry from time to
       -- time to dig out candidates that timed out in status BEINGSCHED.
       CLOSE c;
-      DBMS_ALERT.WAITONE('jobsReadyToSchedule', unusedMessage, unusedStatus, 3);
+      DBMS_ALERT.WAITONE('transfersReadyToSchedule', unusedMessage, unusedStatus, 3);
       -- try again to find something
       OPEN c;
       FETCH c INTO srIntId;
@@ -1392,26 +1404,27 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing jobToAbort */
+/* PL/SQL method implementing transfersToAbort */
 CREATE OR REPLACE
-PROCEDURE jobsToAbortProc(srIdCur OUT castor.IDRecord_Cur) AS
-  srId NUMBER;
-  srIds "numList";
+PROCEDURE transfersToAbortProc(srUuidCur OUT castor.UUIDRecord_Cur) AS
+  srUuid VARCHAR2(2048);
+  srUuids strListTable;
   unusedMessage VARCHAR2(2048);
   unusedStatus INTEGER;
 BEGIN
   BEGIN
     -- find out whether there is something
-    SELECT uuid INTO srId FROM JobsToAbort WHERE ROWNUM < 2;
+    SELECT uuid INTO srUuid FROM TransfersToAbort WHERE ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- There is nothing to abort. Wait for next alert concerning something
     -- to abort or at least 3 seconds.
-    DBMS_ALERT.WAITONE('jobsToAbort', unusedMessage, unusedStatus, 3);
+    DBMS_ALERT.WAITONE('transfersToAbort', unusedMessage, unusedStatus, 3);
   END; 
   -- Either we found something or we timedout, in both cases
   -- we go back to python so that it can handle cases like signals and exit
   -- We will probably be back soon :-)
-  DELETE FROM jobsToAbort RETURNING uuid BULK COLLECT INTO srIds;
-  OPEN srIdCur FOR SELECT * FROM TABLE(srIds);
+  DELETE FROM transfersToAbort RETURNING uuid BULK COLLECT INTO srUuids;
+  OPEN srUuidCur FOR SELECT * FROM TABLE(srUuids);
 END;
 /
+

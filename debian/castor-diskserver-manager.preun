@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service dsmd stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del dsmd
+    /sbin/service diskmanagerd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del diskmanagerd
 fi

@@ -463,7 +463,7 @@ BEGIN
       UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
-      -- recall case, let's see whether we can cancel the recalle
+      -- recall case, let's see whether we can cancel the recall
       DECLARE
         segId INTEGER;
         unusedIds "numList";
@@ -574,7 +574,7 @@ BEGIN
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
     INSERT INTO processBulkAbortFileReqsHelper (
-      SELECT SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost
+      SELECT SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
          AND request = origReqId);
@@ -584,14 +584,15 @@ BEGIN
       DECLARE
         srId NUMBER;
         cfId NUMBER;
+        srUuid VARCHAR(2048);
       BEGIN
-        SELECT SubRequest.id, CastorFile.id INTO srId, cfId
+        SELECT SubRequest.id, CastorFile.id, SubRequest.subreqId INTO srId, cfId, srUuid
           FROM SubRequest, CastorFile
          WHERE request = origReqId
            AND SubRequest.castorFile = CastorFile.id
            AND CastorFile.fileid = fileIds(i)
            AND CastorFile.nsHost = nsHosts(i);
-        INSERT INTO processBulkAbortFileReqsHelper VALUES (srId, cfId, fileIds(i), nsHosts(i));
+        INSERT INTO processBulkAbortFileReqsHelper VALUES (srId, cfId, fileIds(i), nsHosts(i), srUuid);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- this fileid/nshost did not exist in the request, send an error back
         INSERT INTO ProcessBulkRequestHelper
@@ -603,7 +604,7 @@ BEGIN
   -- handle aborts in bulk while avoiding deadlocks
   WHILE nbItems > 0 LOOP
     firstOne := TRUE;
-    FOR sr IN (SELECT srId, cfId, fileId, nsHost FROM processBulkAbortFileReqsHelper) LOOP
+    FOR sr IN (SELECT srId, cfId, fileId, nsHost, uuid FROM processBulkAbortFileReqsHelper) LOOP
       BEGIN
         IF firstOne THEN
           -- on the first item, we take a blocking lock as we are sure that we will not
@@ -624,8 +625,8 @@ BEGIN
           WHEN 2 THEN processAbortForPut(sr);
         END CASE;
         DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
-        -- make the scheduler aware so that it can remove the job from the queues if needed
-        INSERT INTO JobsToAbort VALUES (sr.srId);
+        -- make the scheduler aware so that it can remove the transfer from the queues if needed
+        INSERT INTO TransfersToAbort VALUES (sr.uuid);
         nbItems := nbItems - 1;
       EXCEPTION WHEN SrLocked THEN
         -- we close the session here and exit the inner loop
@@ -633,8 +634,8 @@ BEGIN
         EXIT;
       END;
     END LOOP;
-    -- wake up the scheduler so that it can remove the job from the queues now
-    DBMS_ALERT.SIGNAL('jobsToAbort', ''); 
+    -- wake up the scheduler so that it can remove the transfer from the queues now
+    DBMS_ALERT.SIGNAL('transfersToAbort', ''); 
   END LOOP;
 END;
 /
@@ -2437,7 +2438,6 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   nbRes INTEGER;
   dcsToRm "numList";
   srIds "numList";
-  srType INTEGER;
   dcStatus INTEGER;
   nsHostName VARCHAR2(2048);
   migSvcClass NUMBER;
@@ -2628,24 +2628,29 @@ BEGIN
         FROM TABLE(dcsToRm) dcidTable) 	 
      AND status IN (0, 1, 2, 4, 5, 6, 13); -- START, RESTART, RETRY, WAITTAPERECALL, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
-    FOR i IN srIds.FIRST .. srIds.LAST LOOP
-      SELECT type INTO srType
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.request = Id2Type.id
-         AND SubRequest.id = srIds(i);
-      UPDATE SubRequest
-         SET status = CASE
-             WHEN status IN (6, 13) AND srType = 133 THEN 9 ELSE 7
-             END,  -- FAILED_FINISHED for DiskCopyReplicaRequests in status READYFORSCHED or READY, otherwise FAILED
-             -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
-             errorCode = 4,  -- EINTR
-             errorMessage = 'Canceled by another user request'
-       WHERE id = srIds(i) OR parent = srIds(i);
-      -- make the scheduler aware so that it can remove the job from the queues if needed
-      INSERT INTO JobsToAbort VALUES (srIds(i));
-    END LOOP;
-    -- wake up the scheduler so that it can remove the job from the queues now
-    DBMS_ALERT.SIGNAL('jobsToAbort', '');
+    DECLARE
+      srType INTEGER;
+      srUuid VARCHAR(2048);
+    BEGIN
+      FOR i IN srIds.FIRST .. srIds.LAST LOOP
+        SELECT type, subreqId INTO srType, srUuid
+          FROM SubRequest, Id2Type
+         WHERE SubRequest.request = Id2Type.id
+           AND SubRequest.id = srIds(i);
+        UPDATE SubRequest
+           SET status = CASE
+               WHEN status IN (6, 13) AND srType = 133 THEN 9 ELSE 7
+               END,  -- FAILED_FINISHED for DiskCopyReplicaRequests in status READYFORSCHED or READY, otherwise FAILED
+               -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
+               errorCode = 4,  -- EINTR
+               errorMessage = 'Canceled by another user request'
+         WHERE id = srIds(i) OR parent = srIds(i);
+        -- make the scheduler aware so that it can remove the transfer from the queues if needed
+        INSERT INTO TransfersToAbort VALUES (srUuid);
+      END LOOP;
+    END;
+    -- wake up the scheduler so that it can remove the transfer from the queues now
+    DBMS_ALERT.SIGNAL('transfersToAbort', '');
   END IF;
   -- Set selected DiskCopies to either INVALID or FAILED. We deliberately
   -- ignore WAITDISK2DISKCOPY's (see bug #78826)

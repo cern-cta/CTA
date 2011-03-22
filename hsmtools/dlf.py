@@ -31,11 +31,10 @@ import thread
 
 # a little, useful enum type, with parameterized base value
 def enum(*args, **kwds):
-    if kwds['base'] == None:
-        base = 0
-    else:
+    try:
         base = kwds['base']
-        print base
+    except KeyError:
+        base = 0
     enums = dict(zip(args, range(base, base+len(args))))
     return type('Enum', (), enums)
 
@@ -109,6 +108,11 @@ def writeerr(msgnb, **params):
     '''Writes a log message with the LOG_ERR priority.
     See writep for more details'''
     writep(syslog.LOG_ERR, msgnb, **params)
+
+def writewarning(msgnb, **params):
+    '''Writes a log message with the LOG_WARNING priority.
+    See writep for more details'''
+    writep(syslog.LOG_WARNING, msgnb, **params)
 
 def writenotice(msgnb, **params):
     '''Writes a log message with the LOG_NOTICE priority.

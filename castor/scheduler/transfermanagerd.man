@@ -1,0 +1,42 @@
+.lf 8 transfermanagerd.man
+.TH transfermanagerd 8 "$Date: 2010/11/05 17:40:00 $" CASTOR "transfermanagerd"
+.SH NAME
+transfermanagerd \- starts the CASTOR's transfer manager daemon
+.SH SYNOPSIS
+.B transfermanagerd
+[
+.BI -f
+]
+[
+.BI -h
+]
+[
+.BI -n
+<nb worker threads>
+]
+.SH DESCRIPTION
+.LP
+The
+.B transfermanagerd
+command starts the CASTOR scheduling daemon.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-f,\ \-\-foreground
+runs in foreground mode (no daemonization).
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-n,\ \-\-nbworkers
+number of worker threads dispatching the transfers to the diskservers. Default is 5.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

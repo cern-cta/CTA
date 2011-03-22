@@ -346,7 +346,7 @@ CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
 
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
-  (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048))
+  (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048), uuid VARCHAR(2048))
   ON COMMIT DELETE ROWS;
 
 /* Global temporary table to handle output of the processBulkRequest procedure */
@@ -631,4 +631,4 @@ CREATE INDEX I_FileSystem_Rate
 /* Aborting */
 /************/
 
-CREATE TABLE JobsToAbort (uuid VARCHAR2(2048) NOT NULL);
+CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048) NOT NULL);

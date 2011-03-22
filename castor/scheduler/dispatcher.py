@@ -19,8 +19,8 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * dispatcher class of the low latency scheduling facility of the CASTOR project
-# * this class is responsible for polling the DB for jobs to dispatch and
+# * dispatcher class of the transfer manager of the CASTOR project
+# * this class is responsible for polling the DB for transfers to dispatch and
 # * effectively dispatch them on the relevant diskservers.
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
@@ -34,10 +34,10 @@ import socket
 import castor_tools
 import Queue
 import dlf
-from llsfddlf import msgs
+from transfermanagerdlf import msgs
 
 class Worker(threading.Thread):
-  '''Worker thread, responsible for scheduling effectively the jobs on the diskservers'''
+  '''Worker thread, responsible for scheduling effectively the transfers on the diskservers'''
 
   def __init__(self, workqueue):
     '''constructor'''
@@ -69,7 +69,7 @@ class Worker(threading.Thread):
         dlf.writeerr(msgs.WORKEREXCEPTION, type=str(e.__class__), msg=str(e))
 
 class DBUpdater(threading.Thread):
-  '''Worker thread, responsible for updating DB asynchronously and in bulk after the job scheduling'''
+  '''Worker thread, responsible for updating DB asynchronously and in bulk after the transfer scheduling'''
 
   def __init__(self, workqueue):
     '''constructor'''
@@ -96,7 +96,6 @@ class DBUpdater(threading.Thread):
       self.stagerConnection.autocommit = True
     return self.stagerConnection
 
-
   def run(self):
     '''main method to the threads. Only get work from the queue and do it'''
     try:
@@ -107,83 +106,82 @@ class DBUpdater(threading.Thread):
         # check whether there is something to do
         try:
           # we go out every second in case the thread has ended in the meantime
-          jobid, fileid, errcode, errmsg = self.workqueue.get(True, 1)
+          transferid, fileid, errcode, errmsg = self.workqueue.get(True, 1)
           if errcode != None:
-            failures.append((jobid, fileid, errcode, errmsg))
+            failures.append((transferid, fileid, errcode, errmsg))
           else:
-            successes.append((jobid, fileid))
+            successes.append((transferid, fileid))
         except Queue.Empty:
           continue
         # empty the queue so that we go only once to the DB
         try:
           while True:
-            jobid, fileid, errcode, errmsg = self.workqueue.get(False)
+            transferid, fileid, errcode, errmsg = self.workqueue.get(False)
             if errcode != None:
-              failures.append((jobid, fileid, errcode, errmsg))
+              failures.append((transferid, fileid, errcode, errmsg))
             else:
-              successes.append((jobid, fileid))
+              successes.append((transferid, fileid))
         except Queue.Empty:
           # we are over, the queue is empty
           pass
         # Now call the DB for failures
         if failures:
-          jobids, fileids, errcodes, errmsgs = zip(*failures)
+          transferids, fileids, errcodes, errmsgs = zip(*failures)
           try:
             stcur = self.dbConnection().cursor()
             try:
-              stcur.execute("BEGIN jobFailedLockedFile(:1, :2, :3); END;", [list(jobids), list(errcodes), list(errmsgs)])
-              for jobid, fileid, errcode, errmsg in failures:
-                # 'Failed job' message
-                dlf.writeerr(msgs.FAILEDJOB, subreqid=jobid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
+              stcur.execute("BEGIN transferFailedLockedFile(:1, :2, :3); END;", [list(transferids), list(errcodes), list(errmsgs)])
+              for transferid, fileid, errcode, errmsg in failures:
+                # 'Failed transfer' message
+                dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
             finally:
               stcur.close()
           except Exception, e:
-            for jobid, fileid, errcode, errmsg in failures:
-              # 'Exception caught while failing job' message
-              dlf.writeerr(msgs.FAILINGJOBEXCEPTION, subreqid=jobid, fileid=fileid, type=str(e.__class__), msg=str(e))
+            for transferid, fileid, errcode, errmsg in failures:
+              # 'Exception caught while failing transfer' message
+              dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, fileid=fileid, type=str(e.__class__), msg=str(e))
         # And call the DB for successes
         if successes:
-          for jobid, fileid in successes:
-            # 'Marking jobs scheduled' message
-            dlf.write(msgs.JOBSCHEDULED, subreqid=jobid, fileid=fileid)
+          for transferid, fileid in successes:
+            # 'Marking transfers scheduled' message
+            dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, fileid=fileid)
           try:
             stcur = self.dbConnection().cursor()
             try:
-              stcur.execute("BEGIN jobScheduled(:jobids); END;", [[jobid for jobid, fileid in successes]])
+              stcur.execute("BEGIN transferScheduled(:transferids); END;", [[transferid for transferid, fileid in successes]])
             finally:
               stcur.close()
           except Exception, e:
-            for jobid, fileid in successes:
-              # 'Exception caught while marking job scheduled' message
-              dlf.writeerr(msgs.JOBSCHEDULEDEXCEPTION, subreqid=jobid, fileid=fileid,
+            for transferid, fileid in successes:
+              # 'Exception caught while marking transfer scheduled' message
+              dlf.writeerr(msgs.TRANSFERSCHEDULEDEXCEPTION, subreqid=transferid, fileid=fileid,
                            type=str(e.__class__), msg=str(e))
     finally:
-      try:
-        castor_tools.disconnectDB(self.dbConnection())
-      except Exception:
-        pass
+      if self.stagerConnection != None:
+        try:
+          castor_tools.disconnectDB(self.stagerConnection)
+        except Exception:
+          pass
 
 
 class Dispatcher(threading.Thread):
-  '''scheduling thread, responsible for connecting to the stager database and scheduling jobs'''
+  '''scheduling thread, responsible for connecting to the stager database and scheduling transfers'''
 
-  def __init__(self, connections, queuingJobs, maxNbJobsScheduledPerSecond = None, nbWorkers=5):
-    '''constructor of this thread. Arguments are the connection pool and the job queue to use'''
+  def __init__(self, connections, queueingTransfers, maxNbTransfersScheduledPerSecond = None, nbWorkers=5):
+    '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
     threading.Thread.__init__(self)
     # whether we should continue running
     self.running = True
     # a pool of connections to the diskservers
     self.connections = connections
-    # the list of queueing jobs
-    self.queuingJobs = queuingJobs
-    # the configuration to use
-    self.config = configuration
+    # the list of queueing transfers
+    self.queueingTransfers = queueingTransfers
     # our own name
     self.hostname = socket.gethostname()
-    # max number of jobs to be scheduled per second. If None, request throttling is not active 
-    self.maxNbJobsScheduledPerSecond = maxNbJobsScheduledPerSecond
-    # a counter of number of scheduled jobs in the current second
-    self.nbJobsScheduled = 0
+    # max number of transfers to be scheduled per second. If None, request throttling is not active 
+    self.maxNbTransfersScheduledPerSecond = maxNbTransfersScheduledPerSecond
+    # a counter of number of scheduled transfers in the current second
+    self.nbTransfersScheduled = 0
     # the current second, so that we can reset the previous counter when it changes
     self.currentSecond = 0
     # whether we are connected to the stager DB
@@ -230,71 +228,71 @@ class Dispatcher(threading.Thread):
                "-X", str(int(reqSourceDiskCopy)),
                "-S", str(reqSvcClass),
                "-t", str(int(reqCreationTime))]
-    # first schedule a job on the source node
+    # first schedule a transfer on the source node
     schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
-    jobid = srSubReqId
+    transferid = srSubReqId
     fileid = (str(cfNsHost), int(cfFileId))
     # 'Scheduling d2d source' message
-    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=jobid, fileid=fileid, machine=str(schedSourceCandidates[0]))
+    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=transferid, fileid=fileid, machine=str(schedSourceCandidates[0]))
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
     arrivaltime =  time.time()
     try:
-      # register the job in the local list of pending jobs
-      self.queuingJobs.put(jobid, arrivaltime, [(diskserver, cmd)], 'd2dsource')
-      # send the job to the appropriate diskserver
-      self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2dsource')
+      # register the transfer in the local list of pending transfers
+      self.queueingTransfers.put(transferid, arrivaltime, [(diskserver, cmd)], 'd2dsource')
+      # send the transfer to the appropriate diskserver
+      self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsource')
     except Exception, e:
       # 'Scheduling d2d source failed' message
-      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
-      # we coudl not schedule the source so fail the job in the DB
-      self.updateDBQueue.put((jobId, fileid, 1721, "Unable to schedule on source host"))  # 1721 = ESTSCHEDERR
+      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, fileid=fileid, diskserver=diskserver, error=str(e))
+      # we coudl not schedule the source so fail the transfer in the DB
+      self.updateDBQueue.put((transferId, fileid, 1721, "Unable to schedule on source host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
-      self.queuingJobs.remove(jobid)
+      self.queueingTransfers.remove(transferid)
       return
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     # 'Scheduling d2d destination' message
-    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=jobid, fileid=fileid, machines=str(schedDestCandidates))
-    # build the list of hosts and jobs to launch
-    jobList = []
+    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=transferid, fileid=fileid, machines=str(schedDestCandidates))
+    # build the list of hosts and transfers to launch
+    transferList = []
     for diskserver, mountpoint in schedDestCandidates:
       cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
-      jobList.append((diskserver, cmd))
-    # put jobs in the queue of pending jobs
-    self.queuingJobs.put(jobid, arrivaltime, jobList, 'd2ddest')
-    # send the jobs to the appropriate diskservers
+      transferList.append((diskserver, cmd))
+    # put transfers in the queue of pending transfers
+    self.queueingTransfers.put(transferid, arrivaltime, transferList, 'd2ddest')
+    # send the transfers to the appropriate diskservers
     scheduleSucceeded = False
-    for diskserver, cmd in jobList:
+    for diskserver, cmd in transferList:
       try:
-        self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime, 'd2ddest')
+        self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2ddest')
         scheduleSucceeded = True
       except Exception, e:
         # 'Scheduling d2d destination failed' message
-        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
+        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, fileid=fileid, diskserver=diskserver, error=str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
-      # we could not schedule anywhere for destination.... so fail the job in the DB
-      self.updateDBQueue.put((jobid, fileid, 1721, "Unable to schedule on any destination host"))  # 1721 = ESTSCHEDERR
+      # we could not schedule anywhere for destination.... so fail the transfer in the DB
+      self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on any destination host"))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
-      self.queuingJobs.remove(jobid)
+      self.queueingTransfers.remove(transferid)
     else:
-      self.updateDBQueue.put((jobid, fileid, None, None))
+      self.updateDBQueue.put((transferid, fileid, None, None))
 
 
-  def scheduleJob(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
-                  srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
-                  reqEuid, reqEgid, clientSecure, reqSvcClass, reqCreationTime):
+  def scheduleTransfer(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
+                       srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
+                       reqEuid, reqEgid, clientSecure, reqSvcClass, reqCreationTime):
     '''Schedules a disk to disk copy and handle issues '''
     # extract list of candidates where to schedule and log
     schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
-    jobid = srSubReqId
+    transferid = srSubReqId
     fileid = (str(cfNsHost), int(cfFileId))
-    # 'Scheduling standard job' message
-    dlf.writedebug(msgs.SCHEDJOB, subreqid=jobid, fileid=fileid, machines=str(schedCandidates))
-    # build a list of jobs to schedule for each machine
+    # 'Scheduling standard transfer' message
+    dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transferid, fileid=fileid, machines=str(schedCandidates))
+    # build a list of transfers to schedule for each machine
     arrivaltime =  time.time()
-    jobList = []
+    transferList = []
     for diskserver, mountpoint in schedCandidates:
       ipAddress = int(clientIp)
       cmd = ("/usr/bin/stagerjob",
@@ -320,36 +318,36 @@ class Dispatcher(threading.Thread):
              "-S", str(reqSvcClass),
              "-t", str(int(reqCreationTime)),
              "-R", diskserver+':'+mountpoint)
-      jobList.append((diskserver, cmd))
-    # put jobs in the queue of pending jobs
-    self.queuingJobs.put(jobid, arrivaltime, jobList)
-    # send the jobs to the appropriate diskservers
+      transferList.append((diskserver, cmd))
+    # put transfers in the queue of pending transfers
+    self.queueingTransfers.put(transferid, arrivaltime, transferList)
+    # send the transfers to the appropriate diskservers
     scheduleSucceeded = False
-    for diskserver, cmd in jobList:
+    for diskserver, cmd in transferList:
       try:
-        self.connections.scheduleJob(diskserver, self.hostname, jobid, cmd, arrivaltime)
+        self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime)
         scheduleSucceeded = True
       except Exception, e:
-        # 'Scheduling standard job failed' message
-        dlf.writeerr(msgs.SCHEDJOBFAILED, subreqid=jobid, fileid=fileid, diskserver=diskserver, error=str(e))
+        # 'Scheduling standard transfer failed' message
+        dlf.writeerr(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, fileid=fileid, diskserver=diskserver, error=str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
-      # we could not schedule anywhere.... so fail the job in the DB
-      self.updateDBQueue.put((jobid, fileid, 1721, "Unable to schedule job")) # 1721 = ESTSCHEDERR
+      # we could not schedule anywhere.... so fail the transfer in the DB
+      self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule transfer")) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
-      self.queuingJobs.remove(jobid)
+      self.queueingTransfers.remove(transferid)
     else:
-      self.updateDBQueue.put((jobid, fileid, None, None))
+      self.updateDBQueue.put((transferid, fileid, None, None))
 
   def run(self):
     '''main method, containing the infinite loop'''
     try:
       while self.running:
         try:
-          # setup an oracle connection and register our interest for 'jobsReadyToSchedule' alerts
+          # setup an oracle connection and register our interest for 'transfersReadyToSchedule' alerts
           stcur = self.dbConnection().cursor()
           try:
-            stcur.execute("BEGIN DBMS_ALERT.REGISTER('jobsReadyToSchedule'); END;");
+            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersReadyToSchedule'); END;");
             # prepare a cursor for database polling
             stcur = self.dbConnection().cursor()
             stcur.arraysize = 50
@@ -378,19 +376,19 @@ class Dispatcher(threading.Thread):
             reqCreationTime = stcur.var(cx_Oracle.NUMBER)
             reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
             sourceRfs = stcur.var(cx_Oracle.STRING)
-            stJobToSchedule = 'BEGIN jobToSchedule2(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
+            stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
             # infinite loop over the polling of the DB
             while self.running:
                 # see whether there is something to do
                 # not that this will hang until something comes or the internal timeout is reached
-                stcur.execute(stJobToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
-                                                cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
-                                                srOpenFlags, clientIp, clientPort, clientVersion, clientType,
-                                                reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
-                                                reqCreationTime, reqDefaultFileSize, sourceRfs));
+                stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
+                                                     cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
+                                                     srOpenFlags, clientIp, clientPort, clientVersion, clientType,
+                                                     reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
+                                                     reqCreationTime, reqDefaultFileSize, sourceRfs));
                 # in case of timeout, we may have nothing to do
                 if srId.getvalue() != None:
-                  # standard jobs and disk to disk copies are not handled the same way
+                  # standard transfers and disk to disk copies are not handled the same way
                   # but in both cases, errors are handled internally and no exception
                   # others than the ones implying the end of the processing
                   if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
@@ -400,27 +398,27 @@ class Dispatcher(threading.Thread):
                                               reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
                                               reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
                   else:
-                    self.workToDispatch.put((self.scheduleJob,
+                    self.workToDispatch.put((self.scheduleTransfer,
                                              (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
                                               srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
                                               srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
                                               srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
                                               reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
                                               reqSvcClass.getvalue(), reqCreationTime.getvalue())))
-                  # if maxNbJobsScheduledPerSecondis not None, request throttling is active
+                  # if maxNbTransfersScheduledPerSecondis not None, request throttling is active
                   # What it does is keep a count of the number of scheduled request in the current second
                   # and wait the rest of the second if it reached the limit
-                  if self.maxNbJobsScheduledPerSecond:
+                  if self.maxNbTransfersScheduledPerSecond:
                     currentTime = time.time()
                     currentSecond = int(currentTime)
                     # reset the counters if we've changed second
                     if currentSecond != self.currentSecond:
                       self.currentSecond = currentSecond
-                      self.nbJobsScheduled = 0
-                    # increase counter of number of jobs scheduled within the current second
-                    self.nbJobsScheduled = self.nbJobsScheduled + 1
+                      self.nbTransfersScheduled = 0
+                    # increase counter of number of transfers scheduled within the current second
+                    self.nbTransfersScheduled = self.nbTransfersScheduled + 1
                     # did we reach our quota of requests for this second ?
-                    if self.nbJobsScheduled >= self.maxNbJobsScheduledPerSecond:
+                    if self.nbTransfersScheduled >= self.maxNbTransfersScheduledPerSecond:
                       # check that the second is not just over, so that we do not sleep a negative time
                       if currentTime < self.currentSecond + 1:
                         # wait until the second is over
@@ -447,7 +445,10 @@ class Dispatcher(threading.Thread):
         pass
       try:
         stcur = self.dbConnection().cursor()
-        stcur.execute("BEGIN DBMS_ALERT.REMOVE('jobsReadyToSchedule'); END;");
+        try:
+          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersReadyToSchedule'); END;");
+        finally:
+          stcur.close()
       except Exception:
         pass
       try:

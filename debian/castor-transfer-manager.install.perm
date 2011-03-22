@@ -1,9 +1,9 @@
-%attr(0755,root,root) etc/init.d/llsfd
-%attr(0750,root,root) usr/bin/llsfd
-%attr(0644,root,root) etc/logrotate.d/castor-scheduler
+%attr(0755,root,root) etc/init.d/transfermanagerd
+%attr(0750,root,root) usr/bin/transfermanagerd
+%attr(0644,root,root) etc/logrotate.d/castor-transfer-manager
 %attr(0644,root,root) usr/lib/python*/site-packages/serverqueue.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/dispatcher.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/aborter.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/synchronizer.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
-%attr(0644,root,root) usr/lib/python*/site-packages/llsfddlf.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/transfermanagerdlf.py*

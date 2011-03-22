@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 #/******************************************************************************
-#                      llsfd.init
+#                      diskmanagerd.init
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -31,7 +31,7 @@
 . /etc/rc.d/init.d/functions
 
 # Variables
-prog="llsfd"
+prog="diskmanagerd"
 RETVAL=0
 
 # Source sysconfig files
@@ -47,11 +47,7 @@ start() {
         echo -n $"Starting $prog: "
 
         cd /var/log/castor
-        # LD_PRELOAD is a work around some bad interaction between the oracle signal handling and the python
-        # one leading to segmentation faults on reception of a SIGINT
-        # the problem has to deal with the sslsshandler symbol in libclntsh.so.
-        # The work around of ORACLE is to preload libclntsh.so manually via LD_PRELOAD
-        LD_PRELOAD=libclntsh.so daemon /usr/bin/$prog $LLSFD_OPTIONS
+        daemon /usr/bin/$prog $DISKMANAGERD_OPTIONS
 
         # Write the pid to a file.
         RETVAL=$?

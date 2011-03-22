@@ -45,8 +45,8 @@ your ORACLE environment is setup properly.'''
 # DLF initialization
 DLF_BASE_CASTORTOOLSLIB = 1000
 
-msgs = enum('CREATEDORACONN', 'DROPPEDORACONN', 'INVALIDOPT', 
-            base=DLF_BASE_CASTORTOOLSLIB)
+msgs = dlf.enum('CREATEDORACONN', 'DROPPEDORACONN', 'INVALIDOPT', 
+                base=DLF_BASE_CASTORTOOLSLIB)
 dlf.addmessages({msgs.CREATEDORACONN : 'Created new Oracle connection',
                  msgs.DROPPEDORACONN : 'Oracle connection dropped',
                  msgs.INVALIDOPT : 'Invalid option in castor.conf'})
@@ -66,7 +66,7 @@ class DBConnection:
         importOracle()
         self.connString = connString
         self._autocommit = False
-        self.initConnection()
+        self.connection = None
         # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
         self.errorCodesForReconnect = [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012, 1003, 12571, 1033, 1089, 12537]
     
@@ -84,25 +84,25 @@ class DBConnection:
         if dbVer[0] <> DBConnection.SCHEMAVERSION:
             raise ValueError, 'Version mismatch between the database and the software : "'
             + dbVer + '" versus "' + DBConnection.SCHEMAVERSION + '"'
-        dlf.write(msgs.CREATEDORACONN, 'Created new Oracle connection')
+        # 'Created new Oracle connection' message
+        dlf.write(msgs.CREATEDORACONN)
     
     # autocommit property
     def set_autocommit(self, value):
         self._autocommit = value
-        self.connection.autocommit = value
+        if self.connection:
+            self.connection.autocommit = value
     
     def get_autocommit(self):
         return self._autocommit
         
-    self.autocommit = property(get_autocommit, set_autocommit)
-    
-    def cursor(self):
-        '''Returns a wrapper around cx_Oracle.cursor'''
-        return DBCursor(self)
+    autocommit = property(get_autocommit, set_autocommit)
     
     def __getattr__(self, name):
         '''Implements a facade pattern: any method of the underlying connection is exposed by this class,
         but disconnections are handled automatically'''
+        if not self.connection:
+            self.initConnection()
         def facade(*args):
             try:
                 if hasattr(self.connection, name):
@@ -114,63 +114,9 @@ class DBConnection:
                 if (e.args.code in self.errorCodesForReconnect) or (e.args.code >= 25401 and e.args.code <= 25409):
                     # yes, try again
                     self.connection.close()
-                    self.initConnection()
-                    return getattr(self.connection, name)(*args)
-                else:
-                    # no, something else has happened, the caller will sort it out
-                    raise
+                    self.connection = None
+                raise
         return facade
-
-#-------------------------------------------------------------------------------
-# DBCursor
-#-------------------------------------------------------------------------------
-class DBCursor:
-    '''This class wraps a cx_Oracle.cursor object with the ability to automatically reconnect when 
-    the underlying db connection drops. See DBConnection'''
-     
-    def __init__(self, dbConnection)
-        self.dbConnection = dbConnection
-        self.cursor = dbConnection.connection.cursor()
-        self._arraysize = 50    # default value in cx_Oracle.cursor
-        self.retriableCalls = ['execute', 'callproc']   # only those two methods are retried for dropped connections
-        
-    # arraysize property
-    def set_arraysize(self, value):
-        self._arraysize = value
-        self.cursor.arraysize = value
-    
-    def get_arraysize(self):
-        return self._arraysize
-        
-    self.arraysize = property(get_arraysize, set_arraysize)
-    
-    def __getattr__(self, name):
-        '''Implements a facade pattern: any method of the underlying cursor is exposed by this class,
-        and in case of retriable calls, as defined in self.retriableCalls, disconnections are handled automatically'''
-        
-        if name not in self.retriableCalls or not hasattr(self.cursor, name):
-            return getattr(self.cursor, name)
-
-        def facade(*args):
-            try:
-                return getattr(self.cursor, name)(*args)
-            except cx_Oracle.OperationalError, e:
-                # we got an Oracle error, let's see if we have to reconnect
-                if (e.args.code in self.errorCodesForReconnect) or (e.args.code >= 25401 and e.args.code <= 25409):
-                    # yes, try again: we are either in execute or in callproc, hence the cursor
-                    # has no state and it is fine to get a new one and reexecute the same method
-                    # (fetch operations wouldn't work with this pattern so they're NOT retriable
-                    self.dbConnection.connection.close()
-                    self.dbConnection.initConnection()
-                    self.cursor = self.dbConnection.connection.cursor()
-                    self.cursor.arraysize = self._arraysize
-                    return getattr(self.cursor, name)(*args)
-                else:
-                    # no, something else has happened, the caller will sort it out
-                    raise
-
-        return facade
-
 
 #-------------------------------------------------------------------------------
 # connectToDB
@@ -183,7 +129,8 @@ def connectToDB(user, passwd, dbname):
 #-------------------------------------------------------------------------------
 def disconnectDB(connection):
     connection.close()
-    dlf.write(msgs.DROPPEDDORACONN, 'Oracle connection dropped')
+    # 'Oracle connection dropped'
+    dlf.write(msgs.DROPPEDORACONN)
 
 
 #-------------------------------------------------------------------------------
@@ -532,10 +479,11 @@ class CastorConf(dict):
             self.refresh()
         # now deal with the config item
         try:
-            strvalue = configuration[category][key]
+            strvalue = self[category][key]
             try:
                 value = typ(strvalue)
             except ValueError:
+                # 'Invalid option in castor.conf' message
                 dlf.writeerr(msgs.INVALIDOPT, msg='Invalid ' + category + '/' + key + ' option, ignoring it : ' + strvalue)
                 value = default
         except KeyError:
