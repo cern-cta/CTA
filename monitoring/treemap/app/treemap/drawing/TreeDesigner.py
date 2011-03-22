@@ -15,7 +15,7 @@ If a property is not available, there is a hardcoded default value
 '''
 from app.tools.ColorFunctions import *
 from app.treemap.defaultproperties.TreeMapProperties import treemap_props
-from app.treemap.drawing.metricslinking.MetricsLinker import MetricsLinker
+from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import DimensionVisPropMapping
 from app.treemap.viewtree.ViewTree import ViewTree
 import cairo
 import random
@@ -26,15 +26,15 @@ class SquaredTreemapDesigner(object):
     classdocs
     '''
 
-    def __init__(self, vtree, treemap_props, metricslinkage = None):
+    def __init__(self, vtree, treemap_props, mapping = None):
         '''
         Constructor
         '''
-        assert (metricslinkage is not None or isinstance(metricslinkage, MetricsLinker))
+        assert (mapping is not None or isinstance(mapping, DimensionVisPropMapping))
         
         assert (isinstance(vtree, ViewTree)) 
         self.vtree = vtree
-        self.metricslinkage = metricslinkage
+        self.mapping = mapping
         
         self.strokesize = treemap_props['strokesize']
         self.labelfontsize = treemap_props['labelfontsize']
@@ -104,14 +104,14 @@ class SquaredTreemapDesigner(object):
         
     def setLabelText(self, vnode):
         try:
-            vnode.setProperty('labeltext', self.metricslinkage.getLinkedValue('labeltext', vnode))
+            vnode.setProperty('labeltext', self.mapping.getLinkedValue('labeltext', vnode))
         except Exception, e:
             vnode.setProperty('labeltext', vnode.getProperty('treenode').getObject().__str__())
             
     def setIcon(self, vnode):
         icon = False
         try:
-            icon = self.metricslinkage.getLinkedValue('icon', vnode)
+            icon = self.mapping.getLinkedValue('icon', vnode)
             vnode.setProperty('icon', icon)
                 
         except Exception, e:
@@ -137,7 +137,7 @@ class SquaredTreemapDesigner(object):
     def setIconFile(self, vnode):
         iconfile = False
         try:
-            iconfile = self.metricslinkage.getLinkedValue('iconfile', vnode)
+            iconfile = self.mapping.getLinkedValue('iconfile', vnode)
             vnode.setProperty('iconfile', iconfile)
                 
         except Exception, e:
@@ -146,19 +146,19 @@ class SquaredTreemapDesigner(object):
             
     def setLabelTextIsbold(self, vnode):
         try:
-            vnode.setProperty('labeltextisbold', self.metricslinkage.getLinkedValue('labeltextisbold', vnode))
+            vnode.setProperty('labeltextisbold', self.mapping.getLinkedValue('labeltextisbold', vnode))
         except Exception, e:
             vnode.setProperty('labeltextisbold', self.labeltextisbold)
             
     def setToolTipInfoText(self, vnode):
         try:
-            vnode.setProperty('htmltooltiptext', self.metricslinkage.getLinkedValue('htmltooltiptext', vnode))
+            vnode.setProperty('htmltooltiptext', self.mapping.getLinkedValue('htmltooltiptext', vnode))
         except Exception, e:
             vnode.setProperty('htmltooltiptext', vnode.getProperty('treenode').getObject().__str__())
         
     def setFillColor(self, vnode):
         try:
-            r,g,b,a = self.googleColors(self.metricslinkage.getLinkedValue('fillcolor', vnode))
+            r,g,b,a = self.googleColors(self.mapping.getLinkedValue('fillcolor', vnode))
         except:
             try:
                 r,g,b,a = self.googleColors(vnode.getProperty('level'))
@@ -169,7 +169,7 @@ class SquaredTreemapDesigner(object):
         
     def setStrokeColor(self,vnode):
         try:
-            r,g,b,a = self.googleColors(self.metricslinkage.getLinkedValue('strokecolor', vnode))
+            r,g,b,a = self.googleColors(self.mapping.getLinkedValue('strokecolor', vnode))
         except:
             try:
                 r,g,b,a = self.googleColors(vnode.getProperty('level') + 2)
@@ -180,7 +180,7 @@ class SquaredTreemapDesigner(object):
         
     def setStrokeSize(self,vnode):
         try:
-            strokesize = self.metricslinkage.getLinkedValue('strokesize', vnode)
+            strokesize = self.mapping.getLinkedValue('strokesize', vnode)
             if strokesize < self.minstrokesize: strokesize = self.minstrokesize
             vnode.setProperty('strokesize', strokesize)
         except:
@@ -193,7 +193,7 @@ class SquaredTreemapDesigner(object):
             
     def setLabelFontSize(self,vnode):
         try:
-            vnode.setProperty('labelfontsize', self.metricslinkage.getLinkedValue('labelfontsize', vnode))
+            vnode.setProperty('labelfontsize', self.mapping.getLinkedValue('labelfontsize', vnode))
         except:
             vnode.setProperty('labelfontsize', self.labelfontsize)
             
@@ -206,12 +206,12 @@ class SquaredTreemapDesigner(object):
             human_eye_sensitivity = 1.0
         
         try:
-            b = self.metricslinkage.getLinkedValue('radiallight.brightness', vnode)* human_eye_sensitivity
+            b = self.mapping.getLinkedValue('radiallight.brightness', vnode)* human_eye_sensitivity
         except:
             b = human_eye_sensitivity*self.radiallightbrightness
          
         try:   
-            h = self.metricslinkage.getLinkedValue('radiallight.hue', vnode)
+            h = self.mapping.getLinkedValue('radiallight.hue', vnode)
             if(h is None):
                 fillc = vnode.getProperty('fillcolor')
                 h,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
@@ -227,7 +227,7 @@ class SquaredTreemapDesigner(object):
             h = random.random()
             
         try:
-            o = self.metricslinkage.getLinkedValue('radiallight.opacity', vnode)
+            o = self.mapping.getLinkedValue('radiallight.opacity', vnode)
         except:
             o = 0.5
             
