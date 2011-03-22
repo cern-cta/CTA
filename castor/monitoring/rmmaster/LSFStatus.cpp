@@ -25,12 +25,15 @@
  *****************************************************************************/
 
 // Include files
+// Note that OraRmMasterSvc has to be included BEFORE LSFStatus, as it includes ORACLE
+// header files that clash with LSF ones for some macro definitions !
+#include "castor/monitoring/rmmaster/ora/OraRmMasterSvc.hpp"
 #include "castor/monitoring/rmmaster/LSFStatus.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/System.hpp"
 #include "Cmutex.h"
 #include "Cthread_api.h"
-
+#include "getconfent.h"
 
 //-----------------------------------------------------------------------------
 // Space declaration for the static LSFStatus instance
@@ -43,17 +46,37 @@ castor::monitoring::rmmaster::LSFStatus::s_instance(0);
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   throw(castor::exception::Exception) :
+  m_rmMasterService(0),
   m_prevMasterName(""),
+  m_prevProduction(false),
   m_lastUpdate(0) {
 
-  // Initialize the LSF library
-    if (lsb_init((char*)"RmMasterDaemon") < 0) {
+  // Check whether we run with or without LSF
+  char *noLSFValue = getconfent("RmMaster", "NoLSFMode", 0);
+  m_noLSF = (noLSFValue != NULL && strcasecmp(noLSFValue, "yes") == 0);
 
-    // "Failed to initialize the LSF batch library (LSBLIB)"
-    castor::exception::Exception e(SEINTERNAL);
-    e.getMessage() << "Failed to initialize the LSF batch library (LSBLIB): "
-		   << lsberrno ? lsb_sysmsg() : "no message";
-    throw e;
+  if (m_noLSF) {
+    // initialize the OraRmMasterSvc. Note that we do not use here the standard,
+    // thread specific service. We create our own instance of it so that we have
+    // a private, dedicated connection to ORACLE that will not be commited by
+    // any other acitivity of thre thread.
+    m_rmMasterService =
+      new castor::monitoring::rmmaster::ora::OraRmMasterSvc("LSFStatusOraSvc");
+    if (0 == m_rmMasterService) {
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to create an OraRmMasterSVC";
+      throw e;
+    }
+  } else {
+    // Initialize the LSF library
+    if (lsb_init((char*)"RmMasterDaemon") < 0) {
+      
+      // "Failed to initialize the LSF batch library (LSBLIB)"
+      castor::exception::Exception e(SEINTERNAL);
+      e.getMessage() << "Failed to initialize the LSF batch library (LSBLIB): "
+                     << lsberrno ? lsb_sysmsg() : "no message";
+      throw e;
+    }
   }
 }
 
@@ -94,66 +117,112 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
 (bool &production, std::string &masterName, std::string &hostName, bool update)
   throw(castor::exception::Exception) {
 
-  // Set the defaults
-  production = true;
-  masterName = hostName = "";
+  if (m_noLSF) {
 
-  // For stability reasons we cache the result of the query to LSF and only
-  // refresh it when updating is enabled and 1 minute has passed since the
-  // previous query.
-  std::string clusterName("");
-  if ((m_prevMasterName == "") || (update && ((time(NULL) - m_lastUpdate) > 60))) {
+    // we are running in no LSF mode. The status here is given by the ability to
+    // take a lock in the DB. The one that has this lock is declared the master.
+    // If it dies, somebody else will be able to take the lock and will become the
+    // new master.
 
-    // Get the name of the LSF master. This is the equivalent to `lsid`
-    char **results = NULL;
-    clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
-    if (cInfo == NULL) {
-      castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << "LSF reported : " << lsb_sysmsg();
+    // We have no clue on the master as in the LSF case, but we know the candidates
+    char* value = getconfent("RmMaster", "NoLSFMode", 0);
+    if (0 != value) masterName = std::string("one of ") + value;
+    hostName = castor::System::getHostName();
+
+    // Are we here for the first time ?
+    bool firstCall = (m_lastUpdate == 0);
+    
+    // For stability reasons we cache the result of the query to the ORACLE DB and only
+    // refresh it when updating is enabled and 10 seconds has passed since the
+    // previous query.
+    if (firstCall || (update && ((time(NULL) - m_lastUpdate) > 10))) {
+      production = m_rmMasterService->isMonitoringMaster();
+      m_lastUpdate = time(NULL);
+    } else {
+      production = m_prevProduction;
+    }
+
+    // Announce if we have changed status
+    if (firstCall) {
+      // "LSF initialization information"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Master", masterName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 1, params);
+    } else if (m_prevProduction != production) {
+      if (production) {
+        // "Assuming role as production RmMaster server, LSF failover detected"
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
+      } else {
+        // "Assuming role as slave RmMaster server. LSF failover detected"
+        castor::dlf::Param params[] =
+  	{castor::dlf::Param("Master", masterName)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
+      }
+    }
+
+  } else {
+
+    // Set the defaults
+    production = true;
+    masterName = hostName = "";
+
+    // For stability reasons we cache the result of the query to LSF and only
+    // refresh it when updating is enabled and 1 minute has passed since the
+    // previous query.
+    std::string clusterName("");
+    if ((m_prevMasterName == "") || (update && ((time(NULL) - m_lastUpdate) > 60))) {
+
+      // Get the name of the LSF master. This is the equivalent to `lsid`
+      char **results = NULL;
+      clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
+      if (cInfo == NULL) {
+        castor::exception::Exception e(SEINTERNAL);
+        e.getMessage() << "LSF reported : " << lsb_sysmsg();
+        throw e;
+      }
+
+      Cthread_mutex_lock(&m_prevMasterName);
+      clusterName = cInfo[0].clusterName;
+      masterName  = cInfo[0].masterName;
+      m_lastUpdate = time(NULL);
+    } else {
+      Cthread_mutex_lock(&m_prevMasterName);
+      masterName = m_prevMasterName;
+    }
+
+    // Determine the hostname of the machine we are currently running on. If
+    // its different to the LSF master then we are the slave
+    try {
+      hostName = castor::System::getHostName();
+      if (masterName != hostName) {
+        production = false;
+      }
+    } catch (castor::exception::Exception& e) {
+      Cthread_mutex_unlock(&m_prevMasterName);
       throw e;
     }
 
-    Cthread_mutex_lock(&m_prevMasterName);
-    clusterName = cInfo[0].clusterName;
-    masterName  = cInfo[0].masterName;
-    m_lastUpdate = time(NULL);
-  } else {
-    Cthread_mutex_lock(&m_prevMasterName);
-    masterName = m_prevMasterName;
-  }
-
-  // Determine the hostname of the machine we are currently running on. If
-  // its different to the LSF master then we are the slave
-  try {
-    hostName = castor::System::getHostName();
-    if (masterName != hostName) {
-      production = false;
-    }
-  } catch (castor::exception::Exception& e) {
-    Cthread_mutex_unlock(&m_prevMasterName);
-    throw e;
-  }
-
-  // Announce if we have changed status
-  if (m_prevMasterName == "") {
-    // "LSF initialization information"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Cluster", clusterName),
-       castor::dlf::Param("Master", masterName)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 2, params);
-  } else if (m_prevMasterName != masterName) {
-    if (production) {
-      // "Assuming role as production RmMaster server, LSF failover detected"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
-    } else if (m_prevMasterName == hostName) {
-      // "Assuming role as slave RmMaster server. LSF failover detected"
+    // Announce if we have changed status
+    if (m_prevMasterName == "") {
+      // "LSF initialization information"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Master", masterName)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
+        {castor::dlf::Param("Cluster", clusterName),
+         castor::dlf::Param("Master", masterName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 2, params);
+    } else if (m_prevMasterName != masterName) {
+      if (production) {
+        // "Assuming role as production RmMaster server, LSF failover detected"
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
+      } else if (m_prevMasterName == hostName) {
+        // "Assuming role as slave RmMaster server. LSF failover detected"
+        castor::dlf::Param params[] =
+  	{castor::dlf::Param("Master", masterName)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
+      }
     }
-  }
 
-  // Return
-  m_prevMasterName = masterName;
-  Cthread_mutex_unlock(&m_prevMasterName);
+    // Return
+    m_prevMasterName = masterName;
+    Cthread_mutex_unlock(&m_prevMasterName);
+  }
 }

@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
-        (daemon.clusterStatus(), noLSF), updateInterval));
+        (daemon.clusterStatus()), updateInterval));
     daemon.getThreadPool('D')->setNbThreads(1);
 
     // Update threadpool
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
       (new castor::server::UDPListenerThreadPool
        ("Update",
         new castor::monitoring::rmmaster::UpdateThread
-        (daemon.clusterStatus(), noLSF), listenPort));
+        (daemon.clusterStatus()), listenPort));
     daemon.getThreadPool('U')->setNbThreads(1);
 
     // Monitor threadpool
@@ -147,15 +147,15 @@ int main(int argc, char *argv[]) {
       (new castor::server::TCPListenerThreadPool
        ("Collector",
         new castor::monitoring::rmmaster::CollectorThread
-        (daemon.clusterStatus(), noLSF), listenPort));
-    daemon.getThreadPool('C')->setNbThreads(3);
+        (daemon.clusterStatus()), listenPort));
+    daemon.getThreadPool('C')->setNbThreads(6);
 
     // Heartbeat threadpool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Heartbeat",
         new castor::monitoring::rmmaster::HeartbeatThread
-	(daemon.clusterStatus(), noLSF), updateInterval));
+	(daemon.clusterStatus()), updateInterval));
     daemon.getThreadPool('H')->setNbThreads(1);
 
     // Start daemon

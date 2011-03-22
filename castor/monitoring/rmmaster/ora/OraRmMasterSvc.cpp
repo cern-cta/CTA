@@ -81,6 +81,11 @@ const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getFileSy
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_checkIfFilesExistStatementString =
   "SELECT checkIfFilesExist(:1, :2) FROM Dual";
 
+/// SQL statement for isMonitoringMasterStatementString.
+/// Note that we use lock number 369174921, which was picked up randomly
+const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_isMonitoringMasterStatementString =
+  "BEGIN :1 = dbms_lock.request(369174921, dbms_lock.X_MODE, 0); END;";
+
 //-----------------------------------------------------------------------------
 // OraRmMasterSvc
 //-----------------------------------------------------------------------------
@@ -89,7 +94,8 @@ castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::str
   m_storeClusterStatusStatement(0),
   m_getDiskServersStatement(0),
   m_getFileSystemsStatement(0),
-  m_checkIfFilesExistStatement(0) {}
+  m_checkIfFilesExistStatement(0),
+  m_isMonitoringMasterStatement(0) {}
 
 //-----------------------------------------------------------------------------
 // ~OraRmMasterSvc
@@ -128,12 +134,15 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::reset() throw() {
       deleteStatement(m_getFileSystemsStatement);
     if(m_checkIfFilesExistStatement)
       deleteStatement(m_checkIfFilesExistStatement);
+    if(m_isMonitoringMasterStatement)
+      deleteStatement(m_isMonitoringMasterStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_storeClusterStatusStatement = 0;
   m_getDiskServersStatement     = 0;
   m_getFileSystemsStatement     = 0;
   m_checkIfFilesExistStatement  = 0;
+  m_isMonitoringMasterStatement  = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -534,3 +543,27 @@ bool castor::monitoring::rmmaster::ora::OraRmMasterSvc::checkIfFilesExist
     throw ex;
   }
 }
+
+//-----------------------------------------------------------------------------
+// isMonitoringMaster
+//-----------------------------------------------------------------------------
+bool castor::monitoring::rmmaster::ora::OraRmMasterSvc::isMonitoringMaster()
+  throw (castor::exception::Exception) {
+  try {
+    if (m_isMonitoringMasterStatement == NULL) {
+      m_isMonitoringMasterStatement = createStatement(s_isMonitoringMasterStatementString);
+      m_isMonitoringMasterStatement->registerOutParam(1, oracle::occi::OCCIINT);
+    }
+    m_isMonitoringMasterStatement->execute();
+    int rc = m_isMonitoringMasterStatement->getInt(1);
+    // 0 means we got the lock, 4 means we were already owning it
+    return (rc == 0 or rc == 4);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in isMonitoringMaster."
+                    << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+

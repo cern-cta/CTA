@@ -55,9 +55,8 @@ namespace castor {
         /**
          * Constructor
          * @param clusterStatus pointer to the status of the cluster
-         * @param noLSF whether to run in no LSF mode
          */
-        DatabaseActuatorThread(ClusterStatus* clusterStatus, bool noLSF)
+        DatabaseActuatorThread(ClusterStatus* clusterStatus)
           throw (castor::exception::Exception);
 
         /**
@@ -87,9 +86,6 @@ namespace castor {
 
 	/// The previous recorded name of the LSF master
 	std::string m_prevMasterName;
-
-        /// whether we are in no LSF node
-        bool m_noLSF;
 
       };
 

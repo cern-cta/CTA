@@ -54,7 +54,7 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::CollectorThread::CollectorThread
-(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF) : m_noLSF(noLSF) {
+(castor::monitoring::ClusterStatus* clusterStatus) {
   m_updater =
     new castor::monitoring::rmmaster::ora::StatusUpdateHelper(clusterStatus);
   // "Collector thread created"
@@ -112,14 +112,12 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     // Get the information about who is the current resource monitoring master
     std::string masterName;
     std::string hostName;
-    bool production = true;
-    if (!m_noLSF) {
-      try {
-        castor::monitoring::rmmaster::LSFStatus::getInstance()->
-          getLSFStatus(production, masterName, hostName, false);
-      } catch (castor::exception::Exception& e) {
-        // Ignore error
-      }
+    bool production;
+    try {
+      castor::monitoring::rmmaster::LSFStatus::getInstance()->
+	getLSFStatus(production, masterName, hostName, false);
+    } catch (castor::exception::Exception& e) {
+      // Ignore error
     }
 
     // Handle it

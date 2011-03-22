@@ -39,12 +39,11 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::DatabaseActuatorThread::DatabaseActuatorThread
-(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF)
+(castor::monitoring::ClusterStatus* clusterStatus)
   throw (castor::exception::Exception) :
   m_rmMasterService(0),
   m_clusterStatus(clusterStatus),
-  m_prevMasterName(""),
-  m_noLSF(noLSF) {
+  m_prevMasterName("") {
   // "DatabaseActuator thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 33, 0, 0);
 }
@@ -92,18 +91,16 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 32, 0, 0);
 
   // Get the information about who is the current resource monitoring master
-  bool production = true;
-  if (!m_noLSF) {
-    try {
-      castor::monitoring::rmmaster::LSFStatus::getInstance()->
-        getLSFStatus(production, true);
-    } catch (castor::exception::Exception& e) {
-      // "Failed to determine the status of LSF, skipping database synchronization"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Details", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 1, params);
-      return;
-    }
+  bool production;
+  try {
+    castor::monitoring::rmmaster::LSFStatus::getInstance()->
+      getLSFStatus(production, true);
+  } catch (castor::exception::Exception& e) {
+    // "Failed to determine the status of LSF, skipping database synchronization"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Details", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 1, params);
+    return;
   }
 
   // If we are the slave we need to retrieve the cluster status not update it!

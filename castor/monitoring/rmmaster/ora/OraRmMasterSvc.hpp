@@ -110,6 +110,16 @@ namespace castor {
           (std::string diskServer, std::string fileSystem)
             throw (castor::exception::Exception);
 
+          /**
+           * Check whether we are the monitoring master. This is given by the ability to
+           * take a lock in the DB. The one that has this lock is declared the master.
+           * If it dies, somebody else will be able to take the lock and will become the
+           * new master.
+           * @return true if we are the monitoring master
+           * @exception Exception in case of error
+           */
+          virtual bool isMonitoringMaster() throw(castor::exception::Exception);
+
         private:
 
           /// SQL statement for function storeClusterStatus
@@ -131,6 +141,12 @@ namespace castor {
 
           /// SQL statement object for function checkIfFilesExist
           oracle::occi::Statement *m_checkIfFilesExistStatement;
+
+          /// SQL statement for function isMonitoringMaster
+          static const std::string s_isMonitoringMasterStatementString;
+
+          /// SQL statement object for function isMonitoringMaster
+          oracle::occi::Statement *m_isMonitoringMasterStatement;
 
         }; // end of class OraRmMasterSvc
 

@@ -51,9 +51,8 @@ namespace castor {
         /**
          * Constructor
          * @param clusterStatus pointer to the status of the cluster
-         * @param noLSF whether to run in no LSF mode
          */
-        CollectorThread(castor::monitoring::ClusterStatus* clusterStatus, bool noLSF);
+        CollectorThread(castor::monitoring::ClusterStatus* clusterStatus);
 
 	/**
 	 * Destructor
@@ -76,9 +75,6 @@ namespace castor {
 
         /// Cluster update status helper, shared with OraRmMasterSvc
         castor::monitoring::rmmaster::ora::StatusUpdateHelper* m_updater;
-
-        /// whether we are in no LSF node
-        bool m_noLSF;
 
       };
 

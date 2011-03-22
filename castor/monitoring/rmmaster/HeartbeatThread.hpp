@@ -53,9 +53,8 @@ namespace castor {
 	/**
 	 * Constructor
 	 * @param clusterStatus pointer to the status of the cluster
-         * @param noLSF whether to run in no LSF mode
 	 */
-	HeartbeatThread(ClusterStatus* clusterStatus, bool noLSF);
+	HeartbeatThread(ClusterStatus* clusterStatus);
 
 	/// Not implemented
 	virtual void init() {};
@@ -81,9 +80,6 @@ namespace castor {
 
 	/// The time that the server became the resource master
 	u_signed64 m_lastPause;
-
-        /// whether we are in no LSF node
-        bool m_noLSF;
 
       };
 
