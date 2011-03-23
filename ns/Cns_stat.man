@@ -68,7 +68,7 @@ time_t		mtime;		/* last file modification */
 .br
 time_t		ctime;		/* last metadata modification */
 .br
-short		fileclass;		/* 1--> experiment, 2 --> user */
+short		fileclass;
 .br
 char		status;		/* '-' --> online, 'm' --> migrated */
 .RE

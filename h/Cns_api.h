@@ -71,7 +71,7 @@ struct Cns_direnstat {
 	time_t		atime;		/* last access to file */
 	time_t		mtime;		/* last file modification */
 	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
+	short		fileclass;
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	unsigned short	d_reclen;	/* length of this entry */
 	char		d_name[1];
@@ -87,7 +87,7 @@ struct Cns_direnstatc {
 	time_t		atime;		/* last access to file */
 	time_t		mtime;		/* last file modification */
 	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
+	short		fileclass;
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	char		*comment;
 	unsigned short	d_reclen;	/* length of this entry */
@@ -123,7 +123,7 @@ struct Cns_direnstatg {
 	time_t		atime;		/* last access to file */
 	time_t		mtime;		/* last file modification */
 	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
+	short		fileclass;
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	char		csumtype[3];
 	char		csumvalue[CA_MAXCKSUMLEN+1];
@@ -164,7 +164,7 @@ struct Cns_filestat {
 	time_t		atime;		/* last access to file */
 	time_t		mtime;		/* last file modification */
 	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
+	short		fileclass;
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 };
 
@@ -179,7 +179,7 @@ struct Cns_filestatg {
 	time_t		atime;		/* last access to file */
 	time_t		mtime;		/* last file modification */
 	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
+	short		fileclass;
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	char		csumtype[3];
 	char		csumvalue[CA_MAXCKSUMLEN+1];
@@ -195,7 +195,7 @@ struct Cns_filestatcs {
         time_t          atime;          /* last access to file */
         time_t          mtime;          /* last file modification */
         time_t          ctime;          /* last metadata modification */
-        short           fileclass;      /* 1 --> experiment, 2 --> user */
+        short           fileclass;
         char            status;         /* ' ' --> online, 'm' --> migrated */
         char            csumtype[3];
         char            csumvalue[CA_MAXCKSUMLEN+1];
