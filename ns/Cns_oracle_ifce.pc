@@ -49,7 +49,7 @@ Cns_oracle_error(char *func,
       sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  ||
       sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 ||
       sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  ||
-      sqlca->sqlcode == -12571 || 
+      sqlca->sqlcode == -12571 ||
        (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
       sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
     if (dbfd->connected == 1) {
@@ -1123,18 +1123,30 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
   }
 }
 
-int Cns_get_smd_enabled_copy_count_by_pfid(struct Cns_dbfd *dbfd,
-                                           u_signed64 fileid,
-                                           int *count)
+int Cns_get_smd_copy_count_by_pfid(struct Cns_dbfd *dbfd,
+                                   u_signed64 fileid,
+                                   int *count,
+                                   int filter)
 {
-  char func[39];
+  char func[31];
   struct sqlca sqlca;
 
-  strncpy (func, "Cns_get_smd_enabled_copy_count_by_pfid", 39);
-  EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
-    FROM Cns_seg_metadata
-    WHERE s_fileid = :fileid
-    AND s_status = '-';
+  strncpy (func, "Cns_get_smd_copy_count_by_pfid", 31);
+  if (filter == 1) {  /* Enabled only */
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid
+      AND s_status = '-';
+  } else if (filter == 2) {  /* Disabled only */
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid
+      AND s_status = 'D';
+  } else {
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid;
+  }
   switch (sqlca.sqlcode) {
   case 0:
     return(0);
@@ -1284,7 +1296,6 @@ int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
                            u_signed64 *size,
                            u_signed64 *maxfileid,
                            u_signed64 *avgcompression)
-     
 {
   char func[23];
   char count_str[21];
@@ -1300,7 +1311,7 @@ int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
      - the weightedsum is used to compute a weighted average of the segment
        sizes, using 1/compression as weights, and accounting segments
        with missing (0) compression factors as their original sizes */
-  EXEC SQL SELECT TO_CHAR(COUNT(*)), 
+  EXEC SQL SELECT TO_CHAR(COUNT(*)),
                   TO_CHAR(NVL(SUM(segsize), 0)),
                   TO_CHAR(NVL(MAX(s_fileid), 0)),
                   TO_CHAR(NVL(SUM(decode(compression, 0, segsize/100, segsize/compression)), 0))
@@ -1944,7 +1955,7 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
     nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
             schema_version);
     return 0;
-  }   
+  }
   default:
     Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
     return -1;

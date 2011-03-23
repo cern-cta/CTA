@@ -1,0 +1,198 @@
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_OPEN 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_open \- open and possibly creates a new CASTOR file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_openx (const uid_t " owneruid,
+.BI "const gid_t " ownergid,
+.BI "const char *" path,
+.BI "const int " flags,
+.BI "const mode_t " mode,
+.BI "const int " classid,
+.BI "struct Cns_fileid * " file_uniqueid,
+.BI "struct Cns_filestatcs * " statbuf)
+.SH DESCRIPTION
+.B ---- FOR INTERNAL USE ONLY! ----
+.LP
+.B Cns_openx
+Given a
+.IR path
+for a file, returns a statcs structure plus the file unique id (name server
+hostname and file id).
+.LP
+The parameter
+.IR path
+specifies the logical pathname relative to the current CASTOR directory or the
+full CASTOR pathname.
+.LP
+The parameter
+.IR flags
+must include one of the following access modes:
+.B O_RDONLY,
+.B O_WRONLY,
+or
+.B O_RDWR.
+These request opening the file read-only, write-only, or read/write,
+respectively.
+.LP
+In additions, zero or more file creation flags and file status flags can be
+bitwise-or'd in
+.IR flags.
+The list of supported file creation flags are:
+.B O_CREAT,
+.B O_EXCL,
+and
+.B O_TRUNC.
+.LP
+If the file exists and is opened with
+.BR O_TRUNC ,
+the file size will be reset if no existing segments are associated to the file.
+.LP
+If the file does not exist and is opened with
+.BR O_CREAT ,
+a new entry is created in the name server database. The file's owner ID is set
+To the value of
+.IR owneruid .
+The group ID of the file is set to the value of
+.IR ownergid
+or is taken from the parent directory if the latter has the
+.B S_ISGID
+bit set.
+.LP
+The access permission bits for the file are taken from
+.IR mode ,
+then all bits set in the requestor's file mode creation mask are cleared (see
+.BR Cns_umask (3)).
+.LP
+The parameter
+.IR classid
+can be used to explicitly set the file class of a newly created file. If the
+value is zero then the file shall inherit the file class of its parent
+directory.
+.LP
+The structure pointed to by
+.IR file_uniqueid
+contains the following members:
+.LP
+.RS
+char        server;      /* the name of the server hostname */
+.br
+u_signed64  fileid;      /* the fileid associated to the file */
+.RE
+.LP
+The structure pointed to by
+.IR statbuf
+contains the following members:
+.LP
+.RS
+u_signed64  fileid;      /* entry unique identifier */
+.br
+mode_t      filemode;    /* see below */
+.br
+int         nlink;       /* number of files in a directory */
+.br
+uid_t       uid;
+.br
+gid_t       gid;
+.br
+u_signed64  filesize;
+.br
+time_t      atime;       /* last access to file */
+.br
+time_t      mtime;       /* last file modification */
+.br
+time_t      ctime;       /* last metadata modification */
+.br
+short       fileclass;
+.br
+char        status;      /* '-' --> online, 'm' --> migrated */
+.br
+char        csumtype[3];
+.br
+char        csumvalue[CA_MAXCKSUMLEN + 1];
+.RE
+.LP
+Execution of this command requires the requestor to have ADMIN privileges.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I path
+prefix does not exist Or,
+.B O_CREAT
+is not set and the named file does not exist. Or,
+.I classid
+is defined but does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or the file does not exist and write permission on the parent directory
+is denied or the file exists and write permission on the file itself is denied.
+.TP
+.B EEXIST
+path already exists and
+.B O_CREAT
+and
+.B O_EXCL
+were not used.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EISDIR
+.I path
+is an existing directory.
+.TP
+.B ENOSPC
+The name server database is full.
+.TP
+.B EMLINK
+.I path
+contains too many files and/or directories.
+.TP
+.B EFAULT
+One of
+.I path
+or
+.I file_uniqueid
+or
+.I statbuf
+is a NULL pointer.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

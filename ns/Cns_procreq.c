@@ -300,8 +300,8 @@ int Cns_srv_chclass(char *req_data,
   if (fmd_entry.fileclass != new_class_entry.classid) {
 
     /* If the file has segments make sure the new fileclass allows them! */
-    if (Cns_get_smd_enabled_copy_count_by_pfid
-        (&thip->dbfd, fmd_entry.fileid, &count))
+    if (Cns_get_smd_copy_count_by_pfid
+        (&thip->dbfd, fmd_entry.fileid, &count, 1))
       RETURN (serrno);
     if (count && (new_class_entry.nbcopies == 0))
       RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
@@ -590,7 +590,7 @@ int Cns_delete_file_metadata(struct Cns_srv_thread_info *thip,
             (long long int)fmd_entry->atime, (long long int) fmd_entry->mtime,
             (long long int)fmd_entry->ctime, fmd_entry->fileclass,
             fmd_entry->status, fmd_entry->csumtype, fmd_entry->csumvalue);
-  }  
+  }
   if (Cns_delete_fmd_entry (&thip->dbfd, rec_addr))
     return (serrno);
   return (0);
@@ -3315,8 +3315,8 @@ int Cns_srv_updateseg_status(char *req_data,
   if (Cns_get_class_by_id
       (&thip->dbfd, filentry.fileclass, &class_entry, 0, NULL))
     RETURN (serrno);
-  if (Cns_get_smd_enabled_copy_count_by_pfid
-      (&thip->dbfd, filentry.fileid, &count))
+  if (Cns_get_smd_copy_count_by_pfid
+      (&thip->dbfd, filentry.fileid, &count, 1))
     RETURN (serrno);
   if (count > class_entry.nbcopies)
     RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
@@ -3832,7 +3832,7 @@ int Cns_srv_replacetapecopy(int magic,
             new_smd_entry[i].blockid[2], new_smd_entry[i].blockid[3],
             new_smd_entry[i].checksum_name, new_smd_entry[i].checksum);
 
-   /* Insert new file segment entry */
+    /* Insert new file segment entry */
     if (Cns_insert_smd_entry (&thip->dbfd, &new_smd_entry[i])){
       RETURN (serrno);
     }
@@ -4775,8 +4775,8 @@ int Cns_srv_setsegattrs(int magic,
   }
 
   /* Verify that we don't have too many enabled segments for this file */
-  if (Cns_get_smd_enabled_copy_count_by_pfid
-      (&thip->dbfd, smd_entry.s_fileid, &count))
+  if (Cns_get_smd_copy_count_by_pfid
+      (&thip->dbfd, smd_entry.s_fileid, &count, 1))
     RETURN (serrno);
   if (count > class_entry.nbcopies)
     RETURN (ENSTOOMANYSEGS);
@@ -5746,3 +5746,211 @@ int Cns_srv_updatefile_checksum(char *req_data,
     RETURN (serrno);
   RETURN (0);
 }
+
+/* Cns_srv_open - open a file */
+
+int Cns_srv_openx(char *req_data,
+                  struct Cns_srv_thread_info *thip,
+                  struct Cns_srv_request_info *reqinfo)
+{
+  /* Variables */
+  struct Cns_file_metadata  fmd_entry;
+  struct Cns_file_metadata  parent_dir;
+  struct Cns_class_metadata class_entry;
+  Cns_dbrec_addr rec_addr;  /* File record address */
+  Cns_dbrec_addr rec_addrp; /* Parent record address */
+  char       *func = "openx";
+  char       *rbp;
+  char       cwdpath[CA_MAXPATHLEN + 1];
+  char       path[CA_MAXPATHLEN + 1];
+  int        classid;
+  int        flags;
+  int        nbsegs;
+  uid_t      owneruid;
+  gid_t      ownergid;
+  mode_t     mask;
+  mode_t     mode;
+  u_signed64 cwd;
+  char       repbuf[93];
+  char       *sbp;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
+
+  unmarshall_LONG (rbp, owneruid);
+  unmarshall_LONG (rbp, ownergid);
+  unmarshall_WORD (rbp, mask);
+  unmarshall_HYPER (rbp, cwd);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN + 1))
+    RETURN (SENAMETOOLONG);
+  unmarshall_LONG (rbp, flags);
+  flags = ntohopnflg (flags);
+  unmarshall_LONG (rbp, mode);
+  unmarshall_LONG (rbp, classid);
+
+  /* Check if namespace is in 'readonly' mode */
+  if (rdonly)
+    RETURN (EROFS);
+
+  /* Construct log message */
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (reqinfo->logbuf,
+           "OwnerUid=%d OwnerGid=%d Mask=%o Cwd=\"%s\" Path=\"%s\" Flags=%o "
+           "Mode=%o ClassId=%d",
+           owneruid, ownergid, mask, cwdpath, path, flags, mode, classid);
+
+  /* The call to open files is a privileged one, so here we check that the
+   * user issuing the call is authorized to do so
+   */
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
+                  localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  /* Check parent directory components for (write)/search permission and get
+   * basename entry if it exists
+   */
+  if (Cns_parsepath (&thip->dbfd, cwd, path, owneruid, ownergid,
+                     reqinfo->clienthost,
+                     &parent_dir, (flags & O_CREAT) ? &rec_addrp : NULL,
+                     &fmd_entry,  (flags & O_TRUNC) ? &rec_addr  : NULL,
+                     (flags & (O_CREAT | O_EXCL)) ? CNS_NOFOLLOW : 0))
+    RETURN (serrno);
+
+  if (fmd_entry.fileid) {  /* File exists */
+    reqinfo->fileid = fmd_entry.fileid;
+
+    if ((flags & O_CREAT) && (flags & O_EXCL))
+      RETURN (EEXIST)
+        if (*fmd_entry.name == '/')  /* Cns_create / */
+          RETURN (EISDIR);
+    if ((fmd_entry.filemode & S_IFDIR) == S_IFDIR)  /* Is a directory */
+      RETURN (EISDIR);
+
+    /* Check the file permissions */
+    if (Cns_chkentryperm (&fmd_entry, (flags & O_WRONLY ||
+                                       flags & O_RDWR   ||
+                                       flags & O_TRUNC) ?
+                          S_IWRITE : S_IREAD, owneruid, ownergid,
+                          reqinfo->clienthost))
+      RETURN (EACCES);
+
+    /* If the file was opened with O_TRUNC and has one of the writable access
+     * modes check whether we should delete the segments associated to the file
+     * and reset the file size.
+     *
+     * Note: We should really reset the file size and drop the segments in all
+     * cases. See #68818: Remove all tapecopies on file overwrite.
+     */
+    if ((flags & O_TRUNC) && ((flags & O_WRONLY) || (flags & O_RDWR))) {
+
+      /* Determine the number of segments the file has, segment status is not
+       * taken into consideration.
+       */
+      nbsegs = 0;
+      if (Cns_get_smd_copy_count_by_pfid
+          (&thip->dbfd, fmd_entry.fileid, &nbsegs, 0))
+        RETURN (serrno);
+
+      /* If the file has zero segments, reset the file size */
+      if (nbsegs == 0) {
+
+        /* Reset the filesize and update the time attributes */
+        fmd_entry.filesize = 0;
+        fmd_entry.mtime = time (0);
+        fmd_entry.ctime = fmd_entry.mtime;
+        fmd_entry.status = '-';
+        if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
+          RETURN (serrno);
+
+        /* Ammend logging parameters */
+        sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
+                 " Truncated=\"True\"");
+      }
+    }
+  } else {  /* New file */
+    if ((flags & O_CREAT) == 0)
+      RETURN (ENOENT);
+    if (parent_dir.fileclass <= 0)
+      RETURN (EINVAL);
+
+    /* If a class id was supplied, verify the class exists otherwise use the
+     * fileclass of the parent directory
+     */
+    fmd_entry.fileclass = parent_dir.fileclass;
+    if (classid > 0) {
+      if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry, 0, NULL)) {
+        nslogit("MSG=\"Unable to find file class\" REQID=%s ClassId=%d "
+                "RtnCode=%d", reqinfo->reqid, classid, serrno);
+        RETURN (serrno);
+      }
+      fmd_entry.fileclass = classid;
+
+      /* Ammend logging parameters */
+      sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " ClassName=\"%s\"",
+               class_entry.name);
+    }
+
+    /* Get a unique id for the file */
+    if (Cns_unique_id (&thip->dbfd, &fmd_entry.fileid) < 0)
+      RETURN (serrno);
+    reqinfo->fileid = fmd_entry.fileid;
+
+    /* Set the attributes of the new file */
+    fmd_entry.filemode = S_IFREG | ((mode & ~S_IFMT) & ~mask);
+    fmd_entry.nlink = 1;
+    fmd_entry.uid = owneruid;
+    if (parent_dir.filemode & S_ISGID) {
+      fmd_entry.gid = parent_dir.gid;
+      if (ownergid == fmd_entry.gid)
+        fmd_entry.filemode |= S_ISGID;
+    } else {
+      fmd_entry.gid = ownergid;
+    }
+    fmd_entry.atime = time (0);
+    fmd_entry.mtime = fmd_entry.atime;
+    fmd_entry.ctime = fmd_entry.atime;
+    fmd_entry.status = '-';
+
+    /* Inherit the ACLs of the parent directory */
+    if (*parent_dir.acl)
+      Cns_acl_inherit (&parent_dir, &fmd_entry, mode);
+
+    /* Write the new file entry */
+    if (Cns_insert_fmd_entry (&thip->dbfd, &fmd_entry))
+      RETURN (serrno);
+
+    /* Update the parent directory entry */
+    parent_dir.nlink++;
+    parent_dir.mtime = time (0);
+    parent_dir.ctime = parent_dir.mtime;
+    if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
+      RETURN (serrno);
+
+    /* Ammend logging parameters */
+    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
+  }
+
+  /* Marshall return value, the attributes of the file */
+  sbp = repbuf;
+  marshall_HYPER (sbp, fmd_entry.fileid);
+  marshall_WORD (sbp, fmd_entry.filemode);
+  marshall_LONG (sbp, fmd_entry.nlink);
+  marshall_LONG (sbp, fmd_entry.uid);
+  marshall_LONG (sbp, fmd_entry.gid);
+  marshall_HYPER (sbp, fmd_entry.filesize);
+  marshall_TIME_T (sbp, fmd_entry.atime);
+  marshall_TIME_T (sbp, fmd_entry.mtime);
+  marshall_TIME_T (sbp, fmd_entry.ctime);
+  marshall_WORD (sbp, fmd_entry.fileclass);
+  marshall_BYTE (sbp, fmd_entry.status);
+  marshall_STRING (sbp, fmd_entry.csumtype);
+  marshall_STRING (sbp, fmd_entry.csumvalue);
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  RETURN (0)
+    }

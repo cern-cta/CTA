@@ -451,8 +451,8 @@ int procdirreq(int magic,
                                 endlist, &dblistptr)))
       return (c);
   } else if (req_type == CNS_LISTLINKS) {
-    if ((c = Cns_srv_listlinks (req_data, thip, &thip->reqinfo, &lnk_entry, endlist,
-                                &dblistptr)))
+    if ((c = Cns_srv_listlinks (req_data, thip, &thip->reqinfo, &lnk_entry,
+                                endlist, &dblistptr)))
       return (c);
   } else {
     if ((c = Cns_srv_listtape (magic, req_data, thip, &thip->reqinfo, &fmd_entry,
@@ -597,6 +597,9 @@ int procreq(int magic,
     break;
   case CNS_MODCLASS:
     c = Cns_srv_modifyclass (req_data, thip, &thip->reqinfo);
+    break;
+  case CNS_OPENX:
+    c = Cns_srv_openx (req_data, thip, &thip->reqinfo);
     break;
   case CNS_OPENDIR:
     c = procdirreq (magic, req_type, req_data, thip);
@@ -768,7 +771,7 @@ doit(void *arg)
       thip->s = -1;
       return NULL;
     }
-    Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, 
+    Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech,
                              &thip->Csec_auth_id);
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username,CA_MAXUSRNAMELEN, &thip->Csec_uid

@@ -61,6 +61,7 @@ NSLIB_OBJS	=	Cns_aborttrans.o \
                         Cns_listlinks.o \
                         Cns_mkdir.o \
                         Cns_modifyclass.o \
+                        Cns_openx.o \
                         Cns_opendir.o \
                         Cns_ping.o \
                         Cns_queryclass.o \

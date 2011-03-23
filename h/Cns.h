@@ -134,6 +134,7 @@
 #define CNS_DROPSEGS            87
 #define CNS_UNLINKBYVID         88
 #define CNS_DELSEGBYCOPYNO      89
+#define CNS_OPENX               90
 
                         /* name server reply types */
 
