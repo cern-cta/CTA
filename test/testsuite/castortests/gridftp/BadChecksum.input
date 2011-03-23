@@ -4,4 +4,4 @@ stager_actualput -M <noTapeFileName> -P gsiftp
 <globus-url-copy> file://<localFileName> <gsiftpURL>
 sleep 5
 stager_qry -M <noTapeFileName>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(5)" "$(NF)}'

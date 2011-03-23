@@ -1,7 +1,7 @@
 STAGE_SVCCLASS=<diskOnlyServiceClass> <rfcp> <localFileName> <rfioTURL>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
 rfchmod 777 <rfioTURL>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
 rfchmod 600 <rfioTURL>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
 nsrm <noTapeFileName>

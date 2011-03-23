@@ -3,7 +3,7 @@ nsln -s <noTapeFileName> <noTapeFileName1>
 rfcp <noTapeFileName1> <tmpLocalFileName>
 diff <tmpLocalFileName> <localFileName>
 nsrm <noTapeFileName>
-nsls -l <noTapeFileName1>
+nsls -l <noTapeFileName1> | awk '{print $(NF-2)" "$(NF)}'
 rfcp <noTapeFileName1> <tmpLocalFileName1>
 rfcp <localFileName> <noTapeFileName>
 rfcp <noTapeFileName1> <tmpLocalFileName2>

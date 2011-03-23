@@ -1,11 +1,11 @@
 echo 'small file' > <tmpLocalFileName>
 echo 'a bigger file, only for few bytes though' > <tmpLocalFileName1>
-ls -l <tmpLocalFileName>
-ls -l <tmpLocalFileName1>
+ls -l <tmpLocalFileName> | awk '{print $(5)" "$(NF)}'
+ls -l <tmpLocalFileName1> | awk '{print $(5)" "$(NF)}'
 rfcp <tmpLocalFileName> <noTapeFileName>
 nsln -s <noTapeFileName> <noTapeFileName1>
-nsls -l <noTapeFileName1>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName1> | awk '{print $5" "$(NF-2)" "$(NF)}'
+nsls -l <noTapeFileName> | awk '{print $(5)" "$(NF)}'
 rfcp <tmpLocalFileName1> <noTapeFileName1>
-nsls -l <noTapeFileName1>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName1> | awk '{print $5" "$(NF-2)" "$(NF)}'
+nsls -l <noTapeFileName> | awk '{print $(5)" "$(NF)}'

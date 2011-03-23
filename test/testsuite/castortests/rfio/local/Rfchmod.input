@@ -1,7 +1,7 @@
 <rfcp> <localFileName> <tmpLocalFileName>
-ls -l <tmpLocalFileName>
+ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
 rfchmod 777 <tmpLocalFileName>
-ls -l <tmpLocalFileName>
+ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
 rfchmod 600 <tmpLocalFileName>
-ls -l <tmpLocalFileName>
+ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
 rm <tmpLocalFileName>

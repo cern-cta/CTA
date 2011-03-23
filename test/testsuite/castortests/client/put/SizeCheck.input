@@ -1,10 +1,9 @@
 stager_put -M <noTapeFileName>
 rfcp <localFileName> <noTapeFileName>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(5)" "$(NF)}'
 stager_putdone -M <noTapeFileName>
-nsls -l <noTapeFileName>
+nsls -l <noTapeFileName> | awk '{print $(5)" "$(NF)}'
 stager_qry -M <noTapeFileName>
-
 rfcp <localFileName> <noTapeFileName1>
-nsls -l <noTapeFileName1>
+nsls -l <noTapeFileName1> | awk '{print $(5)" "$(NF)}'
 stager_qry -M <noTapeFileName1>

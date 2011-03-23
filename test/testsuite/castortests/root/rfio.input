@@ -1,7 +1,7 @@
 echo 'TFile *f = new TRFIOFile("<rootRFIOURL>","RECREATE");#TNtuple *ntuple = new TNtuple("ntuple","test","x:y:z");#ntuple->Fill(1,2,3);#ntuple->Fill(4,5,6);#f->Write();#.q' | sed 's/#/\n/g' > <tmpLocalFileName>
 cat <tmpLocalFileName> | <rootbin>
 sleep 3
-nsls -l <noTapeFileName>
+nsls <noTapeFileName>
 stager_qry -M <noTapeFileName>
 echo 'TFile *f = new TRFIOFile("<rootRFIOURL>","READ");#f->ls();#ntuple.Print();#.q' | sed 's/#/\n/g' > <tmpLocalFileName1>
 cat <tmpLocalFileName1> | <rootbin>

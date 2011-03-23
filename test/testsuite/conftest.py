@@ -302,7 +302,7 @@ def compareOutput(setup, output, gold, testName, localTags):
         neededValues.sort()
         foundValues = randomOrderFound[key]
         foundValues.sort()
-        assert(neededValues == foundValues, "Wrong set of values found in output for tag " + key)
+        assert neededValues == foundValues, "Wrong set of values found in output for tag " + key
 
 
 ########################################

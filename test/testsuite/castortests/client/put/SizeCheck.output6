@@ -1,5 +1,5 @@
     **** : trace level set to 3
-    stager: stage_put Usertag=NULL Protocol=rfio3 File=<noTapeFileName> mode=420/size=0
+    stager: stage_put Usertag=NULL Protocol=rfio3 File=<noTapeFileName1> mode=420/size=0
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
     stager: Setting euid: <userid>
