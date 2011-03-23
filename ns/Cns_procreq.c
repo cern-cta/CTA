@@ -5826,9 +5826,9 @@ int Cns_srv_openx(char *req_data,
     reqinfo->fileid = fmd_entry.fileid;
 
     if ((flags & O_CREAT) && (flags & O_EXCL))
-      RETURN (EEXIST)
-        if (*fmd_entry.name == '/')  /* Cns_create / */
-          RETURN (EISDIR);
+      RETURN (EEXIST);
+    if (*fmd_entry.name == '/')  /* Cns_create / */
+      RETURN (EISDIR);
     if ((fmd_entry.filemode & S_IFDIR) == S_IFDIR)  /* Is a directory */
       RETURN (EISDIR);
 
@@ -5952,5 +5952,5 @@ int Cns_srv_openx(char *req_data,
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0)
-    }
+  RETURN (0);
+}
