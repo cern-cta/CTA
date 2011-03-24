@@ -1,9 +1,9 @@
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_OPEN 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
+.TH CNS_OPENX 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
 .SH NAME
-Cns_open \- open and possibly creates a new CASTOR file
+Cns_openx \- open and possibly create a new CASTOR file
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
@@ -11,7 +11,7 @@ Cns_open \- open and possibly creates a new CASTOR file
 .sp
 .BI "int Cns_openx (const uid_t " owneruid,
 .BI "const gid_t " ownergid,
-.BI "const char *" path,
+.BI "const char * " path,
 .BI "const int " flags,
 .BI "const mode_t " mode,
 .BI "const int " classid,
@@ -21,7 +21,7 @@ Cns_open \- open and possibly creates a new CASTOR file
 .B ---- FOR INTERNAL USE ONLY! ----
 .LP
 .B Cns_openx
-Given a
+given a
 .IR path
 for a file, returns a statcs structure plus the file unique id (name server
 hostname and file id).
@@ -67,7 +67,7 @@ bit set.
 .LP
 The access permission bits for the file are taken from
 .IR mode ,
-then all bits set in the requestor's file mode creation mask are cleared (see
+then all bits set in the requester's file mode creation mask are cleared (see
 .BR Cns_umask (3)).
 .LP
 The parameter
@@ -118,7 +118,7 @@ char        csumtype[3];
 char        csumvalue[CA_MAXCKSUMLEN + 1];
 .RE
 .LP
-Execution of this command requires the requestor to have ADMIN privileges.
+Execution of this command requires the requester to have ADMIN privileges.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -182,6 +182,9 @@ or the length of a
 .I path
 component exceeds
 .BR CA_MAXNAMELEN .
+.TP
+.B EROFS
+The name server is in read only mode.
 .TP
 .B SENOSHOST
 Host unknown.

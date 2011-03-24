@@ -269,6 +269,7 @@ EXTERN_C int Cns_bulkexist (const char *, u_signed64 *, int *);
 EXTERN_C int Cns_mkdir (const char *, mode_t);
 EXTERN_C int Cns_mkdirg (const char *, const char *, mode_t);
 EXTERN_C int Cns_modifyclass (char *, int, char *, struct Cns_fileclass *);
+EXTERN_C int Cns_openx (const uid_t, const gid_t, const char *, const int, const mode_t, const int, struct Cns_fileid *, struct Cns_filestatcs *);
 EXTERN_C Cns_DIR *Cns_opendir (const char *);
 EXTERN_C Cns_DIR *Cns_opendirg (const char *, const char *);
 EXTERN_C Cns_DIR *Cns_opendirxg (char *, const char *, const char *);

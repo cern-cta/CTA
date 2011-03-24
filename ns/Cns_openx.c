@@ -3,7 +3,9 @@
  * All rights reserved
  */
 
-/* Cns_open - open a file */
+/* Cns_openx - open a file */
+
+/* ---- FOR INTERNAL USE ONLY! ---- */
 
 #include <errno.h>
 #include <string.h>
@@ -46,7 +48,7 @@ Cns_openx(const uid_t owneruid,
     return (-1);
   Cns_getid(&uid, &gid);
 
-  if (! path || !statbuf || ! file_uniqueid) {
+  if (! path || ! statbuf || ! file_uniqueid) {
     serrno = EFAULT;
     return (-1);
   }

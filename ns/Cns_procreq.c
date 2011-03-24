@@ -5747,7 +5747,7 @@ int Cns_srv_updatefile_checksum(char *req_data,
   RETURN (0);
 }
 
-/* Cns_srv_open - open a file */
+/* Cns_srv_openx - open and possibly create a new CASTOR file */
 
 int Cns_srv_openx(char *req_data,
                   struct Cns_srv_thread_info *thip,
