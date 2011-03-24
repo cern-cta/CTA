@@ -138,31 +138,6 @@ BEGIN
 END;
 /
 
-
-/* Workaround for framework */
-CREATE OR REPLACE TRIGGER TR_TapeCopy_fileTransactionId
-BEFORE INSERT OR UPDATE OF fileTransactionId ON TapeCopy
-FOR EACH ROW
-BEGIN
-  -- Workaround for framework allowing better constraints
-  IF (:new.fileTransactionId IN (0)) THEN
-    :new.fileTransactionId := NULL;
-  END IF;
-END;
-/
-
-/* Workaround for framework */
-CREATE OR REPLACE TRIGGER TR_Tape_TapeGatewayRequestId
-BEFORE INSERT OR UPDATE OF tapeGatewayRequestId ON Tape
-FOR EACH ROW
-BEGIN
-  -- Workaround for framework allowing better constraints
-  IF (:new.tapeGatewayRequestId IN (0)) THEN
-    :new.tapeGatewayRequestId := NULL;
-  END IF;
-END;
-/
-
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
 CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
