@@ -242,7 +242,7 @@ END;
 
 /* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
    the recall with be FAILED */
-CREATE OR REPLACE PROCEDURE cancelRecallForTape (vid IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE cancelRecallForTape (tpvid IN VARCHAR2) AS
 BEGIN
   FOR a IN (SELECT DISTINCT(DiskCopy.id), DiskCopy.castorfile
               FROM Segment, Tape, TapeCopy, DiskCopy
@@ -250,7 +250,7 @@ BEGIN
                AND Segment.copy = TapeCopy.id
                AND DiskCopy.castorfile = TapeCopy.castorfile
                AND DiskCopy.status = 2  -- WAITTAPERECALL
-               AND Tape.vid = vid
+               AND Tape.vid = tpvid
              ORDER BY DiskCopy.id ASC)
   LOOP
     cancelRecall(a.castorfile, a.id, 7);
