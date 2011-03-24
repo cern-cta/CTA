@@ -55,7 +55,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-jobmanager-server
 Architecture: any
-Depends: logrotate, LSF-GLIBC-2.3-devel
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  The Job Manager server used to submit jobs into the scheduler
 
@@ -169,7 +169,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rmmaster-server
 Architecture: any
-Depends: logrotate, castor-lib-monitor, LSF-GLIBC-2.3-devel
+Depends: logrotate, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master server
 
