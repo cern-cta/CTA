@@ -385,7 +385,6 @@ void procreq(int magic,
       sendrep (thip->s, CUPV_RC, c);
       return;
     }
-    cupvlogit("MSG=\"Database connection established\"");
   }
 
   switch (req_type) {

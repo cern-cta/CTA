@@ -527,7 +527,6 @@ int procreq(int magic,
         sendrep (thip->s, MSG_ERR, "Database open error: %d\n", c);
         return (c);
       }
-      nslogit("MSG=\"Database connection established\"");
     }
   }
 

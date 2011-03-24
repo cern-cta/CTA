@@ -439,7 +439,6 @@ void procreq(const int magic,
         sendrep (thip->s, VMGR_RC, c);
         return;
       }
-      vmgrlogit("MSG=\"Database connection established\"");
     }
   }
 
