@@ -215,6 +215,13 @@ class Annex(models.Model, ModelInterface):
     def getClassName(self):
         return self.__class__.__name__
     
+    def getVeryParentClassName(self):
+        if self.parent.getClassName() == 'Annex':
+            cname = self.parent.getVeryParentClassName()
+        else:
+            cname = self.parent.__class__.__name__
+        return cname
+    
     def setEvaluations(self, value):
         self.evaluation = value;
         self.corrected_evaluation = self.evaluation

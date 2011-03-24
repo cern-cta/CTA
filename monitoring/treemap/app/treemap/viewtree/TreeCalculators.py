@@ -23,7 +23,7 @@ from app.treemap.viewtree.ViewNode import ViewNode
 from app.treemap.viewtree.ViewTree import ViewTree
 import math
 
-class SquaredTreemapCalculator(object):
+class DefaultTreemapCalculator(object):
     '''
     classdocs
     '''
@@ -59,7 +59,7 @@ class SquaredTreemapCalculator(object):
         
         vnode = ViewNode()
         vnode.setProperty('treenode', root)
-        if treemap_props['label']:
+        if treemap_props['labels']:
             vnode.setProperty('labelheight', self.labelheight)
             vnode.setProperty('labelwidth', width)
         else:
@@ -82,10 +82,10 @@ class SquaredTreemapCalculator(object):
         
         x = self.paddingsize/2.0
         y = self.paddingsize/2.0
-        if treemap_props['label']: y = y + self.labelheight
+        if treemap_props['labels']: y = y + self.labelheight
         width = width - self.paddingsize
         height = height - self.paddingsize
-        if treemap_props['label']: height = height - self.labelheight
+        if treemap_props['labels']: height = height - self.labelheight
         
         self.calculateRecursion.__dict__['notextcount'] = 0
         self.calculateRecursion.__dict__["ratiocount"] = 0
@@ -134,7 +134,7 @@ class SquaredTreemapCalculator(object):
         nblines = 0 #counts how many lines are completed before the cleanup code starts
         
         #go deeper only if parent had a label (in case label activated)
-        if treemap_props['label']:
+        if treemap_props['labels']:
             parentcsize = viewtree.getCurrentObject().getProperty('labelheight')
             if parentcsize <= 0.0:
                 return
@@ -263,7 +263,7 @@ class SquaredTreemapCalculator(object):
                     
                     #store the calculated values
                     vn = ViewNode()
-                    if (2*labelheight > (chheight-2.0)) or not treemap_props['label']:
+                    if (2*labelheight > (chheight-2.0)) or not treemap_props['labels']:
                         vn.setProperty('labelheight', 0.0)
                         vn.setProperty('labelwidth', 0.0)
                     else:
@@ -373,7 +373,7 @@ class SquaredTreemapCalculator(object):
                     continue
                 #store the calculated values
                 vn = ViewNode()
-                if (2.0 * labelheight > (chheight-2.0)) or not treemap_props['label']:
+                if (2.0 * labelheight > (chheight-2.0)) or not treemap_props['labels']:
                     vn.setProperty('labelheight', 0.0)
                     vn.setProperty('labelwidth', 0.0)
                 else:

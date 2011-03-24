@@ -320,6 +320,9 @@ class LevelRules(object):
             if not rule.isValid():
                 return False
         return True
+    
+    def nbLevels(self):
+        return len(self.rules)
          
     
 #    #returns data structured like this: [level][ruleindex]{rulesdict}    

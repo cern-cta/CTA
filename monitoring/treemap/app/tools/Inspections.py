@@ -158,9 +158,6 @@ def getPostProcessorNames():
     
     return ret
 
-def getDefaultNumberOfLevels():
-    return 8
-
 def getModelsNotToCache():
     return [];
 

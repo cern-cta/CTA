@@ -43,7 +43,7 @@ treemap_props = {
 'strokesizedecrease': 0.5,
 'minstrokesize': 0.0,
 
-'label': True,
+'labels': True,
 'labelfontsize': 12.0, 
 'labelheight': 12.0,
 'labeltextisbold': True, 
@@ -51,7 +51,7 @@ treemap_props = {
 'radiallightbrightness': 0.4,
 
 'objecttree': None, #will be set when available (by TreeBuilder)
-'viewtree': None, #will be set when available (by SquaredTreemapCalculator) 
+'viewtree': None, #will be set when available (by DefaultTreemapCalculator) 
 
 'levelrules': None,#will be set when available (by the view)
 'granularity': 1500.0, #minimum rectangle area factor

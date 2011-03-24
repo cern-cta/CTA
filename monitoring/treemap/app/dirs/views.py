@@ -22,7 +22,7 @@ from app.presets.options.OptionsReader import OptionsReader
 from app.presets.options.SpinnerOption import SpinnerOption
 from app.dirs.models import *
 from app.tools.GarbageDeleters import deleteOldImageFiles, deleteOldStatusFiles
-from app.tools.Inspections import getAvailableModels, getDefaultNumberOfLevels, getModelsNotToCache
+import app.tools.Inspections
 from app.tools.StatusTools import *
 from app.treemap.defaultproperties.TreeMapProperties import *
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
@@ -33,7 +33,7 @@ from app.treemap.drawing.dimensionmapping.Dimensions import *
 from app.treemap.objecttree.Postprocessors import *
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
 from app.treemap.objecttree.RuleMapping import LevelRules
-from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+from app.treemap.viewtree.TreeCalculators import DefaultTreemapCalculator
 import datetime
 import re
 import app.presets
@@ -51,21 +51,23 @@ def redirectOldLink(request, *args, **kwargs):
 def redirectHome(request, *args, **kwargs):
     return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
 
+def tableView(request, options, preseid, rootmodel, theid):
+    pass
+
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
 def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False):    
+#    app.algorithmstudy.Analysis.doMeasurements()
     thetime = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''
     treemap_props_cp = copy.copy(treemap_props)
 #    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     
-    if rootmodel in getModelsNotToCache(): refresh_cache = True
+    if rootmodel in app.tools.Inspections.getModelsNotToCache(): refresh_cache = True
     statusfilename = getStatusFileNameFromCookie(request)
     
     imagewidth = treemap_props_cp['pxwidth']
     imageheight = treemap_props_cp['pxheight']
-    
-    nbdefinedlevels = getDefaultNumberOfLevels()
 
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT
@@ -76,6 +78,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     #whenever you see a full path like app.presets.Presets, it is a way to solve a circular dependecy 
     thepreset = app.presets.Presets.getPresetByStaticId(presetid)
     presetlr = app.presets.Presets.filterPreset(thepreset, optr.getOption('flatview'), optr.getOption('smalltobig')).lr
+    nbdefinedlevels = presetlr.nbLevels()
         
     cache_key = calcCacheKey(presetid = presetid, theid = theid, parentmodel = "Annex", depth = depth, lr = presetlr, options = optr.getCorrectedOptions(presetid))
     cache_expire = settings.CACHE_MIDDLEWARE_SECONDS
@@ -96,14 +99,9 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
-    
-    #define LevelRules
-    lr = LevelRules()
-    
+
     #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
-    for i in range(2):
-        lr.appendRuleObject(presetlr.getRuleObject(i))
-    treemap_props_cp['levelrules'] = lr
+    setTruncatedLevelRulesCopy(treemap_props_cp, presetlr, 2)
     
     try:
         globals()[rootmodel].start
@@ -124,7 +122,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     try:
         root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
-        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + lr.getUniqueLevelRulesId() + ".png"
+        filenm = hash(optr.getCorrectedOptions(presetid)).__str__() + hash(root.getClassName()).__str__() + hash(root.getIdReplacement()).__str__() + str(presetid) + str(depth) + treemap_props_cp['levelrules'].getUniqueLevelRulesId() + ".png"
         
         start = datetime.datetime.now()
         print 'start generating first object tree ' + root.__str__()
@@ -156,22 +154,13 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
                 options = optr.getCorrectedOptions(presetid)
                 newurlpart = app.dirs.urls.UrlDefault().buildUrl(presetid = presetid, options = options, rootmodel = rootmodel, theid = theid)
                 return redirect(to = settings.DJANGORESPONSE_URL + '/treemaps/' + newurlpart)
-        
-        lr = LevelRules()        
-        for i in range(nbdefinedlevels):
-            lr.appendRuleObject(presetlr.getRuleObject(i)) 
-        treemap_props_cp['levelrules']=lr
-        
+         
+        treemap_props_cp['levelrules']=presetlr
         tb = TreeBuilder(treemap_props_cp)
         otree = tb.generateObjectTree(rootobject = anx, statusfilename = statusfilename) 
             
-    else: #no Annex display needed
-        
-        lr = LevelRules()
-        for i in range(nbdefinedlevels):
-            lr.appendRuleObject(presetlr.getRuleObject(i))  
-        treemap_props_cp['levelrules']=lr 
-           
+    else: #no Annex display needed 
+        treemap_props_cp['levelrules']=presetlr
         tb = TreeBuilder(treemap_props_cp)    
         otree = tb.generateObjectTree(rootobject = root, statusfilename = statusfilename)     
         
@@ -179,7 +168,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     start = datetime.datetime.now()
     print 'start calculating rectangle sizes'
          
-    tc = SquaredTreemapCalculator(treemap_props = treemap_props_cp)
+    tc = DefaultTreemapCalculator(treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
         
@@ -198,7 +187,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     
     start = datetime.datetime.now()
     print "drawing something"
-    drawer = SquarifiedTreemapDrawer(tree, treemap_props_cp)
+    drawer = SquarifiedTreemapDrawer(treemap_props_cp)
 
     fullfilepath= serverdict + treemapdir + "/" + filenm
     print fullfilepath
@@ -235,7 +224,7 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
         if defurl.match():
             theid = defurl.getParameter('theid')
             model = defurl.getParameter('rootmodel')
-            if (newmodel is not None) and (newmodel in getAvailableModels()) and (model != newmodel):
+            if (newmodel is not None) and (newmodel in app.tools.Inspections.getAvailableModels()) and (model != newmodel):
                 model = newmodel
                 #theid = idsuffix
             
@@ -261,7 +250,6 @@ def redir(request, options, urlending, refreshcache, presetid, newmodel = None, 
 
 def preset(request, options,  urlending):
     if options is None: options = ''
-    nblevels = getDefaultNumberOfLevels()
     optr = None
     statusfilename = ''
     
@@ -387,68 +375,35 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
+    iconparams = []
     tooltipshift = [None] * len(nodes)
     
     for (idx, node) in enumerate(nodes):
-        x1 = int(round(node.getProperty('x'),0))
-        y1 = int(round(node.getProperty('y'),0)) 
-        x2 = 0.0
-        csize = 0.0
-        if((not(vtree.nodeHasChildren(node)))):
-            csize = node.getProperty('height')
-            x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))
+        nodeisannex = node.getProperty('treenode').getObject().getClassName() == 'Annex'
+        #generate link suffix
+        if(nodeisannex and (node.getProperty('level') == 1)):
+            zoomoptionsstring = updateAnnexZoomInOptions(depth, options, presetid)
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
+        elif (nodeisannex and (node.getProperty('level') == 0)):
+            zoomoptionsstring = updateAnnexZoomInOptions(depth -1, options, presetid)
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
         else:
-            csize = node.getProperty('labelheight')
-            x2 = int(round(node.getProperty('x') + node.getProperty('labelwidth'),0))
-            
-        y2 = int(round(node.getProperty('y') + csize,0))
-        
-        #must fit to UrlDefault!
-        if(node.getProperty('treenode').getObject().getClassName() == 'Annex'):
-            optr = OptionsReader(options, presetid) 
-            optr.extendOptions("annexzoom",presetid)
-            optr.setOption('annexzoom',presetid, node.getProperty('treenode').getObject().getDepth() + 1)
-            zoomoptionsstring = "{" + optr.getCorrectedOptions(presetid) + "}"
-            
-            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getAnnexParent().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
-        else:
-            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
-        
+            if nodeisannex:
+                zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getVeryParentClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+            else:
+                zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+       
+        #generate label information like label coordinates, labelcontent
         info = node.getProperty('htmltooltiptext')
-        thehash = node.getProperty('treenode').getObject().__hash__()
-        
+        thehash = node.getProperty('treenode').getObject().__hash__() 
+        x1,y1,x2,y2 = calcLinkCoordinates(vtree, node)
         mapparams[idx] = (x1,y1,x2,y2,thehash,linksuffix,info)
-        
-        textlines = 1
-        oldpos, fpos = 0 ,0
-        fpos = info.find('<br>', fpos)
-        maxtooltipwidth = 0
-        
-        while fpos != -1:
-            textlines = textlines + 1
-            
-            tooltipwidth = 0.0
-            for character in info[oldpos:fpos]:
-                if character.islower():
-                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.61
-                else:
-                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.66
-            tooltipwidth = int(tooltipwidth)
-                    
-            if tooltipwidth > maxtooltipwidth: maxtooltipwidth = tooltipwidth
-            oldpos = fpos
-            fpos = info.find('<br>', fpos + 1)
 
-        if maxtooltipwidth > 0: 
-            tooltipwidth =  maxtooltipwidth
-        else:
-            tooltipwidth = 600
-            
-        tooltipheight = int(round(textlines * 12.0 * 1.7))
-
-#        itemwidth = int(round(x2-x1))
-#        itemheight = int(round(y2-y1)) 
-        
+        #generate tooltip data
+        tooltipwidth, tooltipheight = estimateToolTipSize(info, tooltipfontsize)
+                
         shiftx = 20
         shifty = 20
         
@@ -460,6 +415,23 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
 #        elif (y1 + shifty) > imageheight and shifty <= 20:
 #            shifty = 2*shifty   
         tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, thehash, linksuffix)
+        
+        #generate icon links 
+        if node.getProperty('icon'):
+            if(node.getProperty('level') == 0):
+                if nodeisannex:
+                    zoomoptionsstring = updateAnnexZoomInOptions(depth, options, presetid)
+                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
+                else:
+                    zoomoptionsstring = updateAnnexZoomInOptions(depth-1, options, presetid)
+                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+            else:
+                zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+                
+            thehash = node.getProperty('treenode').getObject().__hash__() + 5
+            x1,y1,x2,y2 = node.getProperty('iconcoords')['x'], node.getProperty('iconcoords')['y'], node.getProperty('iconcoords')['x'] + node.getProperty('iconcoords')['width'], node.getProperty('iconcoords')['y']+node.getProperty('iconcoords')['height']
+            iconparams.append((x1,y1,x2,y2,thehash,linksuffix))
         
     rt = vtree.getRoot().getProperty('treenode').getObject()
     parents = []
@@ -481,7 +453,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     urlending = ''
     for pr in parents:  
         nvtext = pr.getNaviName()
-        urlending = app.dirs.urls.UrlDefault().buildUrl(presetid, optionsstring, pr.getClassName(), pr.getIdReplacement())   
+        zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
+        urlending = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, pr.getClassName(), pr.getIdReplacement())   
         navlinkparts.append( (nvtext, str(pr), urlending) )
     
     generationtime = datetime.datetime.now() - thetime
@@ -504,7 +477,8 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': treemapdir, 'icondir': icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 'progressbardict': progressbardict, 
      'progressbarsizepx': progressbarsizepx, 'presetdefault':getCurrentPresetSelections(request, presetid, options), 'optionshtml': optionshtml, 'statusfilename' : statusfilename, \
-     'relstatuspath': relstatuspath, 'apacheserver': apacheserver, 'djangoresponseurl': settings.DJANGORESPONSE_URL} , context_instance=None)
+     'relstatuspath': relstatuspath, 'apacheserver': apacheserver, 'djangoresponseurl': settings.DJANGORESPONSE_URL, \
+     'iconparams': iconparams} , context_instance=None,)
     
     #mapparams, tooltipshift
     totaltime = datetime.datetime.now() - thetime
@@ -625,3 +599,65 @@ def cleanGarbageFilesRandomly(imagetresholdage, statusfiletresholdage):
     #probability of cleaning status files should be low, because they only remain undeleted if a view doesn't finish execution
     if (datetime.datetime.now().second % 59) == 0:    
         deleteOldStatusFiles(statusfiletresholdage)
+        
+def estimateToolTipSize(htmltext, tooltipfontsize):
+        textlines = 1
+        oldpos, fpos = 0 ,0
+        fpos = htmltext.find('<br>', fpos)
+        maxtooltipwidth = 0
+        
+        while fpos != -1:
+            textlines = textlines + 1
+            
+            tooltipwidth = 0.0
+            for character in htmltext[oldpos:fpos]:
+                if character.islower():
+                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.61
+                else:
+                    tooltipwidth = tooltipwidth + tooltipfontsize * 0.66
+            tooltipwidth = int(tooltipwidth)
+                    
+            if tooltipwidth > maxtooltipwidth: maxtooltipwidth = tooltipwidth
+            oldpos = fpos
+            fpos = htmltext.find('<br>', fpos + 1)
+
+        if maxtooltipwidth > 0: 
+            tooltipwidth =  maxtooltipwidth
+        else:
+            tooltipwidth = 600
+            
+        tooltipheight = int(round(textlines * 12.0 * 1.7))
+        return tooltipwidth, tooltipheight
+    
+def updateAnnexZoomInOptions(depth, options, presetid):
+        optr = OptionsReader(options, presetid) 
+        optr.extendOptions("annexzoom",presetid)
+        optr.setOption('annexzoom',presetid, depth)
+        return''.join([bla for bla in ["{",  optr.getCorrectedOptions(presetid), "}"]]) 
+    
+def setTruncatedLevelRulesCopy(treemap_props, presetlr, levels):
+    nbdefinedlevels = presetlr.nbLevels()
+    if levels > nbdefinedlevels : levels = nbdefinedlevels
+    
+    lr = LevelRules()
+    #define only the first 2 levels because we only need the level 1 to see if there is an Annex in full size
+    for i in range(levels):
+        lr.appendRuleObject(presetlr.getRuleObject(i))
+    treemap_props['levelrules'] = lr
+    
+def calcLinkCoordinates(vtree, node):
+    x1 = int(round(node.getProperty('x'),0))
+    y1 = int(round(node.getProperty('y'),0)) 
+    x2 = 0.0
+    csize = 0.0
+    if((not(vtree.nodeHasChildren(node)))):
+        csize = node.getProperty('height')
+        x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))
+    else:
+        csize = node.getProperty('labelheight')
+        x2 = int(round(node.getProperty('x') + node.getProperty('labelwidth'),0))
+    y2 = int(round(node.getProperty('y') + csize,0))
+    
+    return x1,y1,x2,y2
+        
+    y2 = int(round(node.getProperty('y') + csize,0))

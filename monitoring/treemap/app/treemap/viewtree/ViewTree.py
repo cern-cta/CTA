@@ -174,6 +174,13 @@ class ViewTree(object):
         self.children_cached = False
 
         self.depth_inscope = self.depth_inscope - 1
+        
+    def getParentNode(self):
+        child = self.node_inscope
+        self.traverseBack()
+        parent = self.node_inscope
+        self.traverseIntoChild(child)
+        return parent
     
     def traveseToRoot(self):
         self.node_inscope = self.root#    def report_change(self):

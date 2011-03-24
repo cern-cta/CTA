@@ -17,7 +17,6 @@ from django.conf import settings
 from app.presets.options.BooleanOption import BooleanOption
 from app.presets.options.DateOption import DateOption
 from app.presets.options.SpinnerOption import SpinnerOption
-from app.tools.Inspections import getDefaultNumberOfLevels
 from app.treemap.objecttree.RuleMapping import LevelRules
 import copy
     
@@ -32,6 +31,9 @@ class Preset(object):
         
 presetdict = {}
     
+def getDefaultNumberOfLevels():
+    return 8    
+
 def getPreset(presetname):
     try:
         return presetdict[presetname]

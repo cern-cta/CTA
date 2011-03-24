@@ -7,7 +7,7 @@ from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
-from app.treemap.viewtree.TreeCalculators import SquaredTreemapCalculator
+from app.treemap.viewtree.TreeCalculators import DefaultTreemapCalculator
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 import app.presets.Presets
@@ -110,13 +110,14 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     
     collectcondition = root.countChildren() > 5
     
-    tb = TreeBuilder(lr)
+    treemap_props_cp['levelrules'] = lr
+    tb = TreeBuilder(treemap_props_cp)
     
     otree = tb.generateObjectTree(rootobject = root, statusfilename = 'bla') 
     
     print 'start calculating rectangle sizes'
          
-    tc = SquaredTreemapCalculator(otree = otree, treemap_props = treemap_props_cp)
+    tc = DefaultTreemapCalculator(treemap_props = treemap_props_cp)
 
     tree = tc.calculate(optr.getOption('optitext'))
     
@@ -138,7 +139,7 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     #    profile.runctx('designer.designTreemap()', globals(), {'designer':designer})
         designer.designTreemap()
         start = datetime.datetime.now()
-        drawer = SquarifiedTreemapDrawer(tree, treemap_props_cp)
+        drawer = SquarifiedTreemapDrawer(treemap_props_cp)
         
         fullfilepath= serverdict + treemapdir + "/" + filenm
         print fullfilepath

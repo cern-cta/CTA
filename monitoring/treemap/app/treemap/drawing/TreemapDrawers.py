@@ -19,12 +19,12 @@ class SquarifiedTreemapDrawer(object):
     classdocs
     '''
 
-    def __init__(self, vtree, treemap_props):
+    def __init__(self, treemap_props):
         '''
         Constructor
         '''
-        assert (isinstance(vtree, ViewTree)) 
-        self.vtree = vtree
+        self.vtree = treemap_props['viewtree']
+        assert (isinstance(self.vtree, ViewTree)) 
         
         self.mapwidth = treemap_props['pxwidth']
         self.mapheight = treemap_props['pxheight']
@@ -56,7 +56,7 @@ class SquarifiedTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('strokesize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
-        if treemap_props['label']:
+        if treemap_props['labels']:
             iconx, icony, iconwidth, iconheight = root.getProperty('iconcoords')['x'],root.getProperty('iconcoords')['y'],root.getProperty('iconcoords')['width'], root.getProperty('iconcoords')['height']
             iconfile = root.getProperty('iconfile')
             self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)

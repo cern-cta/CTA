@@ -342,6 +342,15 @@ document.write(browsertext);
 						</a>
 					</li>
         	{% endfor %}
+        	{% for x1, y1 ,x2 , y2, hash, theid in iconparams %}
+					<li>
+						<a class="cls{{hash}}" href="{{djangoresponseurl}}/treemaps/{{theid}}" title = "">
+							<span title = "{{djangoresponseurl}}/treemaps/{{theid}}">
+								{{ info|escapefilter }}
+							</span>
+						</a>
+					</li>
+        	{% endfor %}
         	</ul>  
 	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
 	   <br><br> <div style="font-size: 14px" >The displayed data is from 09.12.2010.<br>Requests are live.</div>
@@ -413,6 +422,16 @@ document.write(browsertext);
 			  	{% endfor %}
 				
 				{% for x1, y1 ,x2 ,y2, hash, theid, info in mapparams %}
+					#map a.cls{{hash}} 
+					{
+						top:{{y1}}px;
+						left:{{x1}}px;
+						width:{{x2|sub:x1}}px;
+						height:{{y2|sub:y1}}px;
+					}
+				{% endfor %}
+				
+				{% for x1, y1 ,x2 ,y2, hash, theid in iconparams %}
 					#map a.cls{{hash}} 
 					{
 						top:{{y1}}px;
