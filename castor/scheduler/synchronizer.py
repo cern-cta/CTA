@@ -72,7 +72,7 @@ class Synchronizer(threading.Thread):
       # first wait a bit before starting so that we are not syncronized between
       # daemons at a restart, or after errors
       slept = 0
-      checkinterval = random.randint(1, self.config.getValue("JobManager", "ManagementInterval", 3600, int))
+      checkinterval = random.randint(1, self.config.getValue("JobManager", "ManagementInterval", 300, int))
       while slept < checkinterval:
         # note that we sleep one second at a time so that we can exit
         # if the thread stops running
@@ -136,7 +136,7 @@ class Synchronizer(threading.Thread):
                 dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
               # sleep until next check
               slept = 0
-              while slept < self.config.getValue("JobManager", "ManagementInterval", 3600, int):
+              while slept < self.config.getValue("JobManager", "ManagementInterval", 300, int):
                 # note that we sleep one second at a time so that we can exit
                 # if the thread stops running
                 if not self.running: break
