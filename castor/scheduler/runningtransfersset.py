@@ -122,9 +122,11 @@ class RunningTransfersSet(object):
                 if (fdstat.st_mode & stat.S_IRUSR) == 0:
                   transfertype = 'recall'
                 else:
-                  transfertype = 'migr'                
+                  transfertype = 'migr'
+                # find out the fileid
+                fileid = int(os.path.basename(targetpath).split('@')[0])
                 # and add it to the list of ongoing tape transfers
-                newTapeTransfer = (transfertype, os.stat(cmdpath).st_mtime)
+                newTapeTransfer = (transfertype, os.stat(cmdpath).st_mtime, fileid)
                 foundlocalfile = True
                 break
           if not foundsocket:
@@ -152,12 +154,12 @@ class RunningTransfersSet(object):
       # first reset the list
       self.tapeTransfers = []
       # then refill it
-      for ttype, ttime, inode in newTapeTransfers:
+      for ttype, ttime, fileid, inode in newTapeTransfers:
         try:
           thost = inode2host[inode]
         except KeyError:
           thost = '?'
-        self.tapeTransfers.append((transfertype, os.stat(cmdpath).st_mtime, thost))
+        self.tapeTransfers.append((transfertype, os.stat(cmdpath).st_mtime, thost, fileid))
     finally:
       self.tapelock.release()
 
@@ -170,16 +172,17 @@ class RunningTransfersSet(object):
     pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
     leftOvers = {}
     for pid in pids:
-      cmdline = open(os.path.sep+os.path.join('proc', pid, 'cmdline'), 'rb').read()
-      # find out the ones concerning us
-      if cmdline.startswith('/usr/bin/stagerjob') or cmdline.startswith('/usr/bin/d2dtransfer'):
-          # get all details we need
-          args = cmdline.split('\0')
-          transferid = args[4]
-          notifFileName = args[-1][7:] # drop the leading 'file://'
-          transfertype = 'standard'
-          if args[0] == '/usr/bin/d2dtransfer': transfertype = 'd2ddest'
-          try:
+      try:
+        cmdline = open(os.path.sep+os.path.join('proc', pid, 'cmdline'), 'rb').read()
+        # find out the ones concerning us
+        if cmdline.startswith('/usr/bin/stagerjob') or cmdline.startswith('/usr/bin/d2dtransfer'):
+            # get all details we need
+            args = cmdline.split('\0')
+            transferid = args[4]
+            reqid = args[2]
+            notifFileName = args[-1][7:] # drop the leading 'file://'
+            transfertype = 'standard'
+            if args[0] == '/usr/bin/d2dtransfer': transfertype = 'd2ddest'
             arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
             startTime = arrivalTime
             # create the entry in the list of running transfers, associated to the first scheduler we find
@@ -188,10 +191,12 @@ class RunningTransfersSet(object):
             leftOvers[transferid] = int(pid)
             # 'Found transfer already running' message
             fileid = (args[8],int(args[6]))
-            dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqid=transferid, fileid=fileid)
-          except Exception:
-            # could not stat the proc file, it means that this process has ended in the meantime, so ignore it
-            pass
+            dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqid=transferid, reqid=reqid, fileid=fileid)
+      except:
+        # exceptions caught here mean we could not get the info we wanted on the
+        # process we were looking at. We only ignore this process as it has probably
+        # finished in the mean time
+        pass
     return leftOvers
 
   def add(self, transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, startTime=None):
@@ -220,7 +225,7 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
-        if transfertype in ('d2dsrc', 'd2dest'):
+        if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
           user = 'stage'
         else:
@@ -243,7 +248,7 @@ class RunningTransfersSet(object):
     if not reqUser or reqUser == 'stage':
       self.tapelock.acquire()
       try:
-        for transfertype, startTime, remotehost in self.tapeTransfers:
+        for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
           n = n + 1
           nbslots = self.config.getValue('DiskManager', transfertype+'Weight', None, int)
           ns = ns + nbslots
@@ -265,7 +270,7 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
-        if transfertype in ('d2dsrc', 'd2dest'):
+        if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
         else:
           protocol = transfer[10]
@@ -275,7 +280,7 @@ class RunningTransfersSet(object):
     # and now tape transfers
     self.tapelock.acquire()
     try:
-      for transfertype, startTime, remotehost in self.tapeTransfers:
+      for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
         n = n + self.config.getValue('DiskManager', transfertype+'Weight', None, int)        
     finally:
       self.tapelock.release()
@@ -319,7 +324,7 @@ class RunningTransfersSet(object):
           # get fileid
           fileid = (transfer[8], int(transfer[6]))
           # "transfer ended message"
-          dlf.writedebug(msgs.TRANSFERENDED, subreqid=transferid, fileid=fileid, rc=rc)
+          dlf.writedebug(msgs.TRANSFERENDED, subreqid=transferid, reqid=transfer[2], fileid=fileid, rc=rc)
           # remove the notification file
           try:
             os.remove(notifyFileName)
@@ -330,30 +335,30 @@ class RunningTransfersSet(object):
           ended.append(transferid)
           # in case of disk to disk copy, remember to inform source
           if transfertype == 'd2ddest':
-            sourcesToBeInformed.append((scheduler, transferid, fileid))
+            sourcesToBeInformed.append((scheduler, transferid, fileid, transfer[2]))
           # in case of transfers killed by a signal, remember to inform the DB
           if rc < 0:
             if scheduler not in killedTransfers: killedTransfers[scheduler] = []
-            killedTransfers[scheduler].append((transferid, fileid, rc, 'Transfer has been killed'))
+            killedTransfers[scheduler].append((transferid, fileid, rc, 'Transfer has been killed', transfer[2]))
       # cleanup ended transfers
       self.transfers = set(transfer for transfer in self.transfers if transfer[0] not in ended)
     finally:
       self.lock.release()
     # inform schedulers of disk to disk transfers that are over
-    for scheduler, transferid, fileid in sourcesToBeInformed:
+    for scheduler, transferid, fileid, reqid in sourcesToBeInformed:
       try:
-        self.connections.d2dend(scheduler, transferid)
+        self.connections.d2dend(scheduler, transferid, reqid)
       except Exception, e:
         # "Informing scheduler that d2d transfer is over failed" message
-        dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, scheduler=scheduler, subreqid=transferid, fileid=fileid, error=str(e))
+        dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, error=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
         self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]))
       except Exception, e:
-        for transferid, fileid, rc, msg in killedTransfers[scheduler]:
+        for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Informing scheduler that transfers were killed by signals failed" message
-          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, scheduler=scheduler, subreqid=transferid, fileid=fileid)
+          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid)
 
   def d2dend(self, transferid):
     '''called when a disk to disk copy ends and we are the source of it'''
@@ -379,7 +384,7 @@ class RunningTransfersSet(object):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transferid, scheduler, user, 'RUN', transfertype, arrivalTime, runTime))
+          res.append((transferid, transfer[6], scheduler, user, 'RUN', transfertype, arrivalTime, runTime))
           n = n + 1
           if n >= 1000: # give up with full listing if too many transfers
             break
@@ -388,8 +393,8 @@ class RunningTransfersSet(object):
     # then add the tape ones
     self.tapelock.acquire()
     try:
-      for transfertype, startTime, remotehost in self.tapeTransfers:
-        res.append(('-', remotehost, 'stage', 'TAPE', transfertype, startTime, startTime))
+      for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
+        res.append(('-', fileid, remotehost, 'stage', 'TAPE', transfertype, startTime, startTime))
     finally:
       self.tapelock.release()
     return res
@@ -398,7 +403,7 @@ class RunningTransfersSet(object):
     '''Lists all pending and running transfers'''
     self.lock.acquire()
     try:
-      return set([transferid for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers])
+      return set([(transferid, transfer[2]) for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers])
     finally:
       self.lock.release()
 
@@ -407,5 +412,18 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       return [(transferid, transfer, arrivalTime) for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers if transfertype == 'd2dsrc']
+    finally:
+      self.lock.release()
+
+  def anyTransfersFromScheduler(self, reqscheduler):
+    '''Tells whether any transfer is running that is handled by the given scheduler'''
+    self.lock.acquire()
+    try:
+      # go through the transfer
+      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+        # Stop whenever we find one
+        if reqscheduler == scheduler: return True
+      # No transfer found
+      return False
     finally:
       self.lock.release()

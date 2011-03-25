@@ -76,7 +76,7 @@ class DiskServerManagerService(rpyc.Service):
   def exposed_scheduleTransfer(self, scheduler, transferid, transfer, arrivaltime, transfertype='standard'):
     '''Called when a new transfer needs to be scheduled.
     Queues the new transfer.'''
-    dlf.writedebug(msgs.SCHEDULETRANSFERCALLED, scheduler=scheduler, subreqid=transferid,
+    dlf.writedebug(msgs.SCHEDULETRANSFERCALLED, scheduler=scheduler, subreqid=transferid, reqid=transfer[2],
                    transfertype=transfertype, fileid=(transfer[8],int(transfer[6])))
     transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
 
@@ -93,7 +93,7 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.SUMMARIZETRANSFERSCALLED)
     queueingData = transferQueue.nbTransfers(user, detailed)
     runningData = runningTransfers.nbTransfers(user, detailed)
-    return (configuration.getValue('DiskManager', 'NbSlots', None, int),) + queueingData + runningData
+    return (configuration.getValue('DiskManager', 'NbSlots', 0, int),) + queueingData + runningData
 
   def exposed_listTransfers(self, user=None):
     '''Lists all transfers running or pending on this host'''
@@ -111,6 +111,11 @@ class DiskServerManagerService(rpyc.Service):
     # remove transfers from the local queue
     transfersCanceled = transferQueue.remove(transferids)
 
+  def exposed_transferAlreadyStarted(self, jobid, reqid):
+    '''Called when a job has started on another diskserver and can be canceled on this one'''
+    dlf.writedebug(msgs.TRANSFERALREADYSTARTEDCALLED, subreqid=transferid, reqid=reqid)
+    transferQueue.remove(transferid)
+
   def exposed_getQueueingTransfers(self, scheduler):
     '''returns the list of transfers in the queue'''
     dlf.writedebug(msgs.GETQUEUEINGTRANSFERSCALLED, scheduler=scheduler)
@@ -121,10 +126,16 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCECALLED, scheduler=scheduler)
     return tuple(runningTransfers.listRunningD2dSources())
 
-  def exposed_d2dend(self, transferid):
+  def exposed_d2dend(self, transferid, reqid):
     '''called when a d2d copy is over and we are the source'''
-    dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid)
+    dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid, reqid=reqid)
     runningTransfers.d2dend(transferid)
+
+  def exposed_anyTransfersFromScheduler(self, scheduler):
+    '''Tells whether any transfer is queueing/ongoing that is handled
+    by the given scheduler'''
+    dlf.writedebug(msgs.ANYTRANSFERFROMSCHED, scheduler=scheduler)
+    return transferQueue.anyTransfersFromScheduler(scheduler) or runningTransfers.anyTransfersFromScheduler(scheduler)  
 
 def checkSpaceLeftOnFS(transfertype, transfer):
   ''' check whether there is space available for a given transfer'''
@@ -156,22 +167,26 @@ class ActivityControl(threading.Thread):
     while True:
       try:
         # check number of running transfers against limit
-        if runningTransfers.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', None, int):
+        if runningTransfers.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', 0, int):
           # get a new transfer from the transferQueue
           scheduler, transferid, transfer, transfertype, arrivalTime = transferQueue.get()
+          # check whether we got something or timed out
+          if scheduler == None:
+            # We timed out, retry straight
+            continue
           fileid = (transfer[8], int(transfer[6]))
           try:
             # in case of transfers wanting to write data, we check that space is available
             if not checkSpaceLeftOnFS(transfertype, transfer):
               # not enough space, we cancel the transfer
-              connections.transfersCanceled(scheduler, socket.getfqdn(), set([(transferid, fileid, 28, 'No space left on device')])) # ENOSPC
+              connections.transfersCanceled(scheduler, socket.getfqdn(), set([(transferid, fileid, 28, 'No space left on device', transfer[2])])) # ENOSPC
             else:
               # notifies the central scheduler that we want to start this transfer
               # this may raise a ValueError exception if it already started
               # somewhere else
-              connections.transferStarting(scheduler, socket.getfqdn(), transferid, transfertype)
+              connections.transferStarting(scheduler, socket.getfqdn(), transferid, transfer[2], transfertype)
               # "Transfer starting" message
-              dlf.write(msgs.TRANSFERSTARTING, subreqid=transferid, fileid=fileid, transfertype=transfertype)
+              dlf.write(msgs.TRANSFERSTARTING, subreqid=transferid, reqid=transfer[2], fileid=fileid, transfertype=transfertype)
               # in case of d2dsrc, do not actually start for real, only take note
               if transfertype == 'd2dsrc':
                 runningTransfers.add(transferid, scheduler, transfer, None, None, transfertype, arrivalTime)
@@ -181,33 +196,34 @@ class ActivityControl(threading.Thread):
                 notifFile = os.fdopen(notifFileHandle, 'w')
                 notifFile.write(transfer[-1])
                 notifFile.close()
-                os.chmod(notifFileName, 0666)
+                os.chmod(notifFileName, 0444)
                 # build the stagerTransfer command line and execute it
                 cmd = list(transfer[:-1])
                 cmd.append('file://'+notifFileName)
                 # start the transfer
                 if not fake:
-                  process = subprocess.Popen(cmd, close_fds=True)
+                  env = os.environ.copy()
+                  env['LSB_JOBID'] = 'unused for TM'
+                  process = subprocess.Popen(cmd, close_fds=True, env=env)
                 else:
                   process = 0
                 runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)
           except ValueError:
             # 'Transfer start canceled (already started on another host)' message
-            dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, fileid=fileid)
+            dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
             # the transfer has already started somewhere else, so give up
             pass
           except EnvironmentError:
             # we have tried to start a disk to disk copy and the source is not yet ready
-            # we will put it in a priority queue
+            # we will put it in a pending queue
             # "Start postponned until source is ready" message
-            dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transferid, fileid=fileid)
+            dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transferid, reqid=transfer[2], fileid=fileid)
+            # put the transfer into the pending queue
             transferQueue.d2dDestReady(scheduler, transferid, transfer, arrivalTime, transfertype)
-            # put back the transfer in the queue
-            transferQueue.priorityPut(scheduler, transferid, transfer, transfertype, arrivalTime)
           except Exception, e:
             # startup of the transfer failed with unexpected error
             # 'Transfer starting failed' message
-            dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, fileid=fileid, error=str(e))
+            dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid, error=str(e))
             time.sleep(1)
         else:
           time.sleep(.05)

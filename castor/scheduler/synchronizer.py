@@ -68,19 +68,20 @@ class Synchronizer(threading.Thread):
 
   def run(self):
     '''main method, containing the infinite loop'''
-    # get the interval between 2 checks
-    checkInterval = self.config.getValue("JobManager", "ManagementInterval", 3600, int)
     try:
+      # first wait a bit before starting so that we are not syncronized between
+      # daemons at a restart, or after errors
+      slept = 0
+      checkinterval = random.randint(1, self.config.getValue("JobManager", "ManagementInterval", 3600, int))
+      while slept < checkinterval:
+        # note that we sleep one second at a time so that we can exit
+        # if the thread stops running
+        if not self.running: break
+        time.sleep(1)
+        slept = slept + 1
+      # loop over reconnections to the DB.
+      # This loop should never actually loop unless we have DB issues
       while self.running:
-        # first wait a bit before starting so that we are not syncronized between
-        # daemons at a restart, or after errors
-        slept = 0
-        while slept < random.randint(1, checkInterval):
-          # note that we sleep one second at a time so that we can exit
-          # if the thread stops running
-          if not self.running: break
-          time.sleep(1)
-          slept = slept + 1
         try:
           # prepare a cursor for database polling
           stcur = self.dbConnection().cursor()
@@ -93,7 +94,7 @@ class Synchronizer(threading.Thread):
               dlf.writedebug(msgs.SYNCDBWITHTM)
               # list pending and running transfers in the scheduling system
               stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
-              subReqIds = set([t[0] for t in subReqIdsCur.fetchall()])
+              subReqIds = set(subReqIdsCur.fetchall())
               try:
                 # list pending and running transfers in the scheduling system
                 allTMTransfers = set()
@@ -110,17 +111,19 @@ class Synchronizer(threading.Thread):
                   fileIdsCur = conn.cursor()
                   fileIdsCur.arraysize = 200
                   stcur = conn.cursor()
-                  stcur.callproc('getFileIdsForSrs', [transfersToFail, fileIdsCur])
+                  stcur.callproc('getFileIdsForSrs', [[transferid for transferid, reqid in transfersToFail], fileIdsCur])
                   fileids = map(tuple, fileIdsCur.fetchall())
                   conn.commit()
                   # 'Transfer killed by synchronization as it disappeared from the scheduling system'
-                  for transferid, fileid in zip(transfersToFail, fileids):
-                    dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, fileid=fileid)
+                  for (transferid, reqid), fileid in zip(transfersToFail, fileids):
+                    dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
                   # prepare the transfers so that we have only tuples going onver the wire
                   transfers = tuple(map(tuple,
-                                   zip(transfersToFail, fileids,
+                                   zip([transferid for transferid, reqid in transfersToFail],
+                                       fileids,
                                        [1015] * len(transfersToFail), # SEINTERNAL error code
-                                       ['Transfer has disappeared from the scheduling system'] * len(transfersToFail))))
+                                       ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
+                                       [reqid for transferid, reqid in transfersToFail])))
                   # finally inform the stager
                   self.connections.transfersKilled(self.hostname, transfers)
                 else:
@@ -133,7 +136,7 @@ class Synchronizer(threading.Thread):
                 dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
               # sleep until next check
               slept = 0
-              while slept < checkInterval:
+              while slept < self.config.getValue("JobManager", "ManagementInterval", 3600, int):
                 # note that we sleep one second at a time so that we can exit
                 # if the thread stops running
                 if not self.running: break

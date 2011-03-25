@@ -889,10 +889,10 @@ END;
    This method lists all known transfers
    that are started/pending for more than an hour */
 CREATE OR REPLACE PROCEDURE getSchedulerTransfers
-  (transfers OUT castor.UUIDRecord_Cur) AS
+  (transfers OUT castor.UUIDPairRecord_Cur) AS
 BEGIN
   OPEN transfers FOR
-    SELECT SR.subReqId
+    SELECT SR.subReqId, Request.reqid
       FROM SubRequest SR,
         -- Union of all requests that could result in scheduler transfers
         (SELECT id, svcClass, reqid, 40  AS reqType FROM StagePutRequest             UNION ALL
@@ -1262,28 +1262,31 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
   unusedMessage VARCHAR2(2048);
   unusedStatus INTEGER;
 BEGIN
-  -- Loop on all candidates for submission into LSF
+  -- Open a cursor on potential candidates
   OPEN c;
-  LOOP
-    -- Retrieve the next candidate
+  -- Retrieve the first candidate
+  FETCH c INTO srIntId;
+  IF c%NOTFOUND THEN
+    -- There is no candidate available. Wait for next alert concerning something
+    -- to schedule for a maximum of 3 seconds.
+    -- We do not wait forever in order to ensure that we will retry from time to
+    -- time to dig out candidates that timed out in status BEINGSCHED. Plus we
+    -- need to give the control back to the caller daemon in case it should exit
+    CLOSE c;
+    DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
+    -- try again to find something now that we waited
+    OPEN c;
     FETCH c INTO srIntId;
     IF c%NOTFOUND THEN
-      -- There are no candidates available. Wait for next alert concerning something
-      -- to schedule or at least 3 seconds.
-      -- We do not wait forever in order to ensure that we will retry from time to
-      -- time to dig out candidates that timed out in status BEINGSCHED.
-      CLOSE c;
-      DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
-      -- try again to find something
-      OPEN c;
-      FETCH c INTO srIntId;
-      IF c%NOTFOUND THEN
-        -- still nothing. We will give back the control to the application
-        -- so that it can handle cases like signals and exit. We will probably
-        -- be back soon :-)
-        RETURN;
-      END IF;
-    END IF; 
+      -- still nothing. We will give back the control to the application
+      -- so that it can handle cases like signals and exit. We will probably
+      -- be back soon :-)
+      RETURN;
+    END IF;
+  END IF; 
+  LOOP
+    -- we reached this point because we have found at least one candidate
+    -- let's loop on the candidates until we find one we can process
     BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is either in READYFORSCHED or has been stuck in
@@ -1303,6 +1306,7 @@ BEGIN
        WHERE id = srIntId
       RETURNING id, subReqId, protocol, xsize, requestedFileSystems
         INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
+      -- and we exit the loop on candidates
       EXIT;
     EXCEPTION
       -- Try again, either we failed to accquire the lock on the subrequest or
@@ -1312,11 +1316,18 @@ BEGIN
       WHEN SrLocked THEN
         NULL;
     END;
+    -- we are here because the current candidate could not be handled
+    -- let's go to the next one
+    FETCH c INTO srIntId;
+    IF c%NOTFOUND THEN
+      -- no next one ? then we can return
+      RETURN;
+    END IF;
   END LOOP;
   CLOSE c;
 
-  -- Extract the rest of the information required to submit a job into the
-  -- scheduler through the job manager.
+  -- We finally got a valid candidate, let's process it
+  -- Extract the rest of the information required by transfer manager
   SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
          Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
          Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,

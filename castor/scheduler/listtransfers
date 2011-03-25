@@ -106,15 +106,15 @@ def processTransfersListing(rpconn, diskpool, user):
   '''retrieves and display full listing of the running transfers for the given diskpool and user'''
   try:
     transfers = rpconn.root.listTransfers(diskpool, user)
-    print 'TRANSFERID                           USER     STAT  TYPE      POOL       SCHEDULER                 DISKSERVER               SUBMIT_TIME       START_TIME'
+    print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
     n = 0
-    for id, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
+    for id, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
       ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
       if startTime != None :
         sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
       else:
         sstartTime = ''
-      print '%-37s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (id, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
+      print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (id, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
       n = n + 1
     if n > 1000:
       print 'Note that the list may have been truncated to 1000 pending and 1000 running transfers per hosts'

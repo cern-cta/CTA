@@ -90,10 +90,10 @@ class ServerQueue(dict):
         del self[machine][transferid]
       # if we have a source transfer already running, stop it
       if transferid in self.d2dsrcrunning: d2dend(transferid,lock=False)
-      return fileid
+      return fileid, transfer[2]
     except KeyError:
       # we are not handling this transfer, fine, ignore it then
-      return None
+      return None, None
 
   def remove(self, transferids):
     '''drops transfers from the queues and return a dictionnary "transferid => fileid" listing
@@ -104,9 +104,9 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       for transferid in transferids:
-        fileid = self._removetransfer(transferid, transfersPerMachine)
+        fileid, reqid = self._removetransfer(transferid, transfersPerMachine)
         if fileid:
-          fileids[transferid] = fileid
+          fileids[transferid] = (fileid, reqid)
     finally:
       self.lock.release()
     # then tell the machines to remove these transfers from their queues
@@ -147,9 +147,9 @@ class ServerQueue(dict):
         transferstodrop.append(transferid)
       # now remove selected transfers
       for transferid in transferstodrop:
-        fileid = self._removetransfer(transferid, transfersPerMachine)
+        fileid, reqid = self._removetransfer(transferid, transfersPerMachine)
         if fileid:
-          fileids[transferid] = fileid
+          fileids[transferid] = (fileid, reqid)
     finally:
       self.lock.release()
     # then tell the machines to remove these transfers from their queues
@@ -158,7 +158,7 @@ class ServerQueue(dict):
     # return
     return fileids
 
-  def transferStarting(self, diskserver, transferid, transfertype):
+  def transferStarting(self, diskserver, transferid, reqid, transfertype):
     '''Removes a transfer and gives back the list of other nodes where it was pending.
     Raises ValueError when not found'''
     if transfertype == 'd2dsrc':
@@ -182,12 +182,12 @@ class ServerQueue(dict):
         if transferid not in self.transfersLocations:
           # in such a case, let the diskserver know by raising an exception
           # "Transfer had already started. Cancel start" message
-          dlf.writedebug(msgs.TRANSFERALREADYSTARTED, diskserver=diskserver, subreqid=transferid)
+          dlf.writedebug(msgs.TRANSFERALREADYSTARTED, diskserver=diskserver, subreqid=transferid, reqid=reqid)
           raise ValueError
         # if a destination transfer wants to start, check whether the source is ready
         if transfertype == 'd2ddest' and not self[diskserver][transferid][3]:
           # "Source is not ready yet" message
-          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=transferid)
+          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=transferid, reqid=reqid)
           raise EnvironmentError
         # drop the transfer from all queues. Note that this desynchronizes the queues as seen
         # by the diskservers from the queues seen by the central manager. In case of a
@@ -198,8 +198,18 @@ class ServerQueue(dict):
         for machine in machines: del self[machine][transferid]
       finally:
         self.lock.release()
+      # inform all other machines that this job has been handled
+      for machine in machines:
+        if machine != diskserver:
+          try:
+            # "Informing diskserver that job started somewhere else" message
+            dlf.writedebug(msgs.INFODSJOBSTARTED, diskserver=machine, subreqid=transferid, reqid=reqid)
+            self.connections.transferAlreadyStarted(machine, transferid, reqid)
+          except Exception, e:
+            # "Informing diskserver that job started somewhere else failed" message
+            dlf.writeerr(msgs.INFODSJOBSTARTEDFAILED, diskserver=machine, subreqid=transferid, reqid=reqid, type=str(e.__class__), msg=str(e))
 
-  def d2dend(self, transferid, lock=True):
+  def d2dend(self, transferid, reqid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
     if lock:
       self.lock.acquire()
@@ -218,10 +228,10 @@ class ServerQueue(dict):
         self.lock.release()
     # inform the source diskserver
     try:
-      self.connections.d2dend(diskserver, transferid)
+      self.connections.d2dend(diskserver, transferid, reqid)
     except Exception, e:
       # "Informing diskserver that d2d copy is over failed" message
-      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=transferid, fileid=fileid, error=str(e))
+      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, error=str(e))
 
   def putRunningD2dSource(self, diskserver, transferid, transfer, arrivaltime):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
@@ -292,18 +302,18 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       # for each transfer
-      for transferid, fileid, rc, msg in transfers:
+      for transferid, fileid, rc, msg, reqid in transfers:
         try:
           # cleanup the queue for the given transfer on the given machine
           self.transfersLocations[transferid].remove(machine)
           del self[machine][transferid]
           if not self.transfersLocations[transferid]:
             # no other candidate machine for this transfer. It has to be failed
-            transfersKilled.append((transferid, fileid, rc, msg))
+            transfersKilled.append((transferid, fileid, rc, msg, reqid))
             # clean up _transfersLocations
             del self.transfersLocations[transferid]
             # if we have a source transfer already running, stop it
-            if transferid in self.d2dsrcrunning: d2dend(transferid,lock=False)
+            if transferid in self.d2dsrcrunning: d2dend(transferid,reqid,lock=False)
         except KeyError, e:
           # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore

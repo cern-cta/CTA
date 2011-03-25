@@ -267,8 +267,8 @@ class TransferManagerService(rpyc.Service):
     res = []
     for diskPool in transfers:
       for ds in transfers[diskPool]:
-        for transferid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
-          res.append((transferid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
+        for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
+          res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
     return tuple(res)
 
   def _killtransfers(self, method, arg):
@@ -279,12 +279,12 @@ class TransferManagerService(rpyc.Service):
     killedtransfers = []
     killedtransferids = []
     for scheduler in configuration['DiskManager']['ServerHosts'].split():
-      for transferid, fileid in getattr(connections,method)(scheduler, arg):
+      for transferid, (fileid, reqid) in getattr(connections,method)(scheduler, arg):
         # for the transfers actually killed (and only once per tranfer
         if transferid not in killedtransferids:
           # Remember to fail the transfer in the stager DB with ESTKILLED error code
           killedtransferids.append(transferid)
-          killedtransfers.append([transferid, fileid, 1713, 'Transfer killed by admin'])
+          killedtransfers.append([transferid, fileid, 1713, 'Transfer killed by admin', reqid])
     # update stagerDB
     self.exposed_transfersKilled(killedtransfers)    
 
@@ -316,38 +316,38 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
-    for transferid, fileid, errno, errmsg in transfers:
-      dlf.writedebug(msgs.TRANSFERSKILLEDCALLED, subreqid=transferid, fileid=fileid, errno=errno, errmsg=errmsg)
+    for transferid, fileid, errno, errmsg, reqid in transfers:
+      dlf.writedebug(msgs.TRANSFERSKILLEDCALLED, subreqid=transferid, reqid=reqid, fileid=fileid, errno=errno, errmsg=errmsg)
     # only inform the stager
     try:
       stcur = self.dbConnection().cursor()
       stcur.arraysize = 50
-      transferids, fileids, errnos, errmsgs = map(list,zip(*transfers))
+      transferids, fileids, errnos, errmsgs, reqids = map(list,zip(*transfers))
       stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
       stcur.close()
     except Exception, e:
-      for transferid, fileid, errno, errmsg in transfers:
+      for transferid, fileid, errno, errmsg, reqid in transfers:
         # "Exception caught while failing transfer" message
-        dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, fileid=fileid, type=str(e.__class__), msg=str(e))
+        dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, type=str(e.__class__), msg=str(e))
       # check whether we should reconnect to DB, and do so if needed
       self.dbConnection().checkForReconnection(e)
 
   def exposed_transfersCanceled(self, machine, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
-    for transferid, fileid, rc, s in transfers:
+    for transferid, fileid, rc, s, reqid in transfers:
       dlf.writedebug(msgs.TRANSFERSCANCELEDCALLED, diskserver=machine,
-                     subreqid=transferid, fileid=fileid, errcode=rc, errmsg=s)
+                     subreqid=transferid, reqid=reqid, fileid=fileid, errcode=rc, errmsg=s)
     # first cancel transfers in the queue
     transferskilled = queueingTransfers.transfersCanceled(machine, transfers)
     # for those that are really over, inform the stager
     if transferskilled:
       self.exposed_transfersKilled(transferskilled)
 
-  def exposed_transferStarting(self, diskserver, transferid, transfertype):
+  def exposed_transferStarting(self, diskserver, transferid, reqid, transfertype):
     '''called when a transfer started on a given diskserver'''
-    dlf.writedebug(msgs.TRANSFERSTARTINGCALLED, diskserver=diskserver, subreqid=transferid, transfertype=transfertype)
-    machinesToInform = queueingTransfers.transferStarting(diskserver, transferid, transfertype)
+    dlf.writedebug(msgs.TRANSFERSTARTINGCALLED, diskserver=diskserver, subreqid=transferid, reqid=reqid, transfertype=transfertype)
+    machinesToInform = queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
 
   def exposed_getQueueingTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
@@ -359,15 +359,17 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCETRANSFERSCALLED, diskserver=diskserver)
     return tuple(queueingTransfers.listRunningD2dSources(diskserver))
 
-  def exposed_d2dend(self, transferid):
+  def exposed_d2dend(self, transferid, reqid):
     '''called when a d2d is over. Responsible for informing the source of the d2d'''
-    dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid)
-    queueingTransfers.d2dend(transferid)
+    dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid, reqid=reqid)
+    queueingTransfers.d2dend(transferid, reqid)
 
   def exposed_drain(self):
     '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
     but no new work is taken'''
     dlf.writedebug(msgs.DRAINCALLED)
+    # go to drain mode, where only the main service stays up and we do not take any new requests
+    # then wait for the end of ongoing requests and stop the daemon
     drain()
 
 def initQueues():
@@ -381,36 +383,63 @@ def initQueues():
           queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
         # then list queueing transfers
         for transferid, transfer, transfertype, arrivaltime in connections.getConnection(ds).getQueueingTransfers(socket.getfqdn()):
-          queueingTransfers.put(ds, transferid, transfer, arrivaltime, transfertype)
+          queueingTransfers.put(transferid, arrivaltime, [(ds, transfer)], transfertype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
         # 'No queue could be retrieved' message
         dlf.writenotice(msgs.NOQUEUERETRIEVED, diskserver=ds, error=str(e))
 
+class Suicider(threading.Thread):
+  '''Regularly checks the number of ongoing transfers and commits suicide when it goes down to 0'''
+
+  def __init__(self, connections):
+    threading.Thread.__init__(self)
+    # a pool of connections to the diskservers
+    self.connections = connections
+
+  def run(self):
+    '''main method, containing the infinite loop checking for the transfers to be over'''
+    # loop until we commit suicide
+    while True:
+      oktodie = True
+      # checks whether it is ok to die
+      dslist = diskServerList.getlist()
+      for diskPool in dslist:
+        for ds in dslist[diskPool]:
+          try:
+            oktodie = not connections.anyTransfersFromScheduler(ds, socket.getfqdn())
+          except Exception, e:
+            # 'Could not contact diskserver' message
+            dlf.writenotice(msgs.COULDNOTCONTACTDS, function='anyTransfersFromScheduler', diskserver=ds,
+                            errortype=str(e.__class__), error=str(e))
+            pass
+          # do not continue contacting machines if some are already not ok
+          if not oktodie: break
+        if not oktodie: break
+      # if all is over, commit suicide
+      if oktodie:
+        transfermanager.close()
+        break
+      else:
+        # else sleep one second between two checks
+        time.sleep(1)
+ 
 def drain():
   '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
-  This allows to handled ongoing transfers before stopping the server'''
-  try:
-    if dispatch:
-      dispatch.stop()
-      dispatch.join()
-  except:
-    pass
-  abort = None
-  try:
-    if abort:
-      abort.stop()
-      abort.join()
-  except:
-    pass
-  abort = None
-  try:
-    if synchro:
-      synchro.stop()
-      synchro.join()
-  except:
-    pass
-  synchro = None
+  Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon'''
+  # first stop threads handling new requests, aborts and synchronization
+  global dispatchThread, abortThread, synchroThread
+  for thread in [dispatchThread, abortThread, synchroThread]:
+    try:
+      thread.stop()
+      thread.join()
+    except:
+      pass
+  # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
+  suicideThread = Suicider(connections)
+  suicideThread.setName('Suicider')
+  suicideThread.setDaemon(True)
+  suicideThread.start()
 
 import signal
 def handler(signum, frame):
@@ -449,22 +478,22 @@ try:
     transfermanager.daemon = True
     # launch a processing thread that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
-    dispatch = dispatcher.Dispatcher(connections, queueingTransfers, nbWorkers)
-    dispatch.setName('Dispatcher')
-    dispatch.setDaemon(True)
-    dispatch.start()
+    dispatchThread = dispatcher.Dispatcher(connections, queueingTransfers, nbWorkers)
+    dispatchThread.setName('Dispatcher')
+    dispatchThread.setDaemon(True)
+    dispatchThread.start()
     # launch a processing thread that will regularly check if there are transfers to abort
-    abort = aborter.Aborter(connections)
-    abort.setName('Aborter')
-    abort.setDaemon(True)
-    abort.start()
+    abortThread = aborter.Aborter(connections)
+    abortThread.setName('Aborter')
+    abortThread.setDaemon(True)
+    abortThread.start()
     # launch a processing thread that will regularly synchronize the stager DB with the running
     # transfers, meaning that it will check that transfers running for already long according to the DB
     # are effectively still running. If they are not, is will update the DB accordingly
-    synchro = synchronizer.Synchronizer(connections, diskServerList)
-    synchro.setName('Synchronize')
-    synchro.setDaemon(True)
-    synchro.start()
+    synchroThread = synchronizer.Synchronizer(connections, diskServerList)
+    synchroThread.setName('Synchronize')
+    synchroThread.setDaemon(True)
+    synchroThread.start()
     # starts listening
     transfermanager.start()
   except SystemExit:

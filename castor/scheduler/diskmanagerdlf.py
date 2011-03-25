@@ -36,7 +36,8 @@ msgs = dlf.enum('SCHEDULETRANSFERCALLED', 'SUMMARIZETRANSFERSCALLED',
                 'NOQUEUERETRIEVED', 'SIGNALRECEIVED', 'UNEXPECTEDEXCEPTION',
                 'POPULATING', 'FOUNDTRANSFERALREADYRUNNING', 'TRANSFERENDED',
                 'INFORMTRANSFERISOVERFAILED', 'INFORMTRANSFERKILLEDFAILED',
-                'RETRYTRANSFER', 'INVALIDTIMEOUTOPTION', 'DSREFRESHFAILED')
+                'RETRYTRANSFER', 'INVALIDTIMEOUTOPTION', 'DSREFRESHFAILED',
+                'ANYTRANSFERFROMSCHED', 'TRANSFERALREADYSTARTEDCALLED')
 
 # initialization of the messages
 dlf.addmessages({msgs.SCHEDULETRANSFERCALLED : 'scheduleTransfer called',
@@ -63,4 +64,6 @@ dlf.addmessages({msgs.SCHEDULETRANSFERCALLED : 'scheduleTransfer called',
                  msgs.INFORMTRANSFERKILLEDFAILED : 'Informing scheduler that transfers were killed by signals failed',
                  msgs.RETRYTRANSFER : 'Retrying transfer',
                  msgs.INVALIDTIMEOUTOPTION : 'Invalid JobManager/PendingTimeouts option, ignoring entry',
-                 msgs.DSREFRESHFAILED : 'failed to refresh list of diskservers, kept old list'})
+                 msgs.DSREFRESHFAILED : 'failed to refresh list of diskservers, kept old list',
+                 msgs.ANYTRANSFERFROMSCHED : 'anyTransfersFromScheduler called',
+                 msgs.TRANSFERALREADYSTARTEDCALLED : 'transferAlreadyStarted called'})

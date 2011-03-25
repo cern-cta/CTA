@@ -76,19 +76,8 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
-  def priorityPut(self, scheduler, transferid, transfer, transfertype, arrivaltime):
-    '''Put new transfer in the priority queue'''
-    self.lock.acquire()
-    try:
-      # first keep note of the new transfer (index by subreqId)
-      self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
-      # then add it to the underlying queue
-      self.priorityQueue.put(transferid)
-    finally:
-      self.lock.release()
-
   def get(self):
-    '''get a transfer from the queue'''
+    '''get a transfer from the queue. Times out after 1s'''
     found = False
     while not found:
       # try to get a priority transfer first
@@ -100,7 +89,7 @@ class LocalQueue(Queue.Queue):
         try:
           transferid = Queue.Queue.get(self, timeout=1)
         except Queue.Empty:
-          continue
+          return None, None, None, None, None
       self.lock.acquire()
       try:
         try:
@@ -142,14 +131,16 @@ class LocalQueue(Queue.Queue):
     '''called when a d2ddest transfer could not start as the source is not ready'''
     self.lock.acquire()
     try:
-      # compute next time when we should try to start this transfer
+      # compute next time when we should try to start this transfer. We will actually wait
+      # as much as has already passed between the arrival of this request and now,
+      # caped to the MaxRetryInterval 
       currentTime = time.time()
-      timeToNextTry = (currentTime-arrivaltime)/2
+      timeToNextTry = currentTime - arrivaltime
       maxTime = self.config.getValue('DiskManager', 'MaxRetryInterval', 300, int)
       if timeToNextTry > maxTime: timeToNextTry = maxTime
       # and put the transfer into the list of pending ones
       self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
-      self.pendingD2dDest.append((transferid, currentTime + timeToNextTry))
+      self.pendingD2dDest.append((transferid, transfer[2], currentTime + timeToNextTry))
     finally:
       self.lock.release()
 
@@ -160,15 +151,14 @@ class LocalQueue(Queue.Queue):
     toBeDeleted = []
     try:
       # loop over all pending transferids
-      for i in range(len(self.pendingD2dDest)):
-        transferid, timeOfNextTry = self.pendingD2dDest[i]
+      for transferid, reqid, timeOfNextTry in self.pendingD2dDest:
         if timeOfNextTry < currentTime:
           # put the transferid back into the priority queue in it's time to retry the transfer
-          dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferid) # "Retrying transfer" message
+          dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferid, reqid=reqid) # "Retrying transfer" message
           self.priorityQueue.put(transferid)
           toBeDeleted.append(transferid)
       # cleanup list of pending transferids
-      self.pendingD2dDest = [(transferid, nextTry) for transferid, nextTry in self.pendingD2dDest if transferid not in toBeDeleted]
+      self.pendingD2dDest = [(transferid, reqid, nextTry) for transferid, reqid, nextTry in self.pendingD2dDest if transferid not in toBeDeleted]
     finally:
       self.lock.release()
 
@@ -211,7 +201,7 @@ class LocalQueue(Queue.Queue):
           toberemoved.append(transferid)
           if scheduler not in canceledTransfers: canceledTransfers[scheduler] = []
           fileid = (transfer[8], int(transfer[6]))
-          canceledTransfers[scheduler].append((transferid, fileid, 1004, 'Timed out while queueing (timeout was ' + str(timeout) + 's')) # SETIMEDOUT
+          canceledTransfers[scheduler].append((transferid, fileid, 1004, 'Timed out while queueing (timeout was ' + str(timeout) + 's)', transfer[2])) # SETIMEDOUT
       if toberemoved:
         self._remove(toberemoved)
     finally:
@@ -250,7 +240,7 @@ class LocalQueue(Queue.Queue):
           else: # standard, d2ddest
             msg = "Transfer terminated, all filesystems are DRAINING or DISABLED"
           fileid = (transfer[8], int(transfer[6]))
-          canceledTransfers[scheduler].append((transferid, fileid, 1023, msg)) # SEWOULDBLOCK, Resource temporarily unavailable
+          canceledTransfers[scheduler].append((transferid, fileid, 1023, msg, transfer[2])) # SEWOULDBLOCK, Resource temporarily unavailable
           continue
       self._remove(toberemoved)
     finally:
@@ -284,7 +274,7 @@ class LocalQueue(Queue.Queue):
     self.lock.acquire()
     try:
       for scheduler, rawtransfer, transfertype, arrivalTime in self.queueingTransfers.values():
-        if transfertype in ('d2dsrc', 'd2dest'):
+        if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
           user = 'stage'
         else:
@@ -324,7 +314,7 @@ class LocalQueue(Queue.Queue):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transfer[0], scheduler, user, 'PEND', transfertype, arrivalTime, None))
+          res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', transfertype, arrivalTime, None))
           n = n + 1
           if n >= 1000: # give up with full listing if too many transfers
             break
@@ -336,7 +326,7 @@ class LocalQueue(Queue.Queue):
     '''Lists all pending and running transfers'''
     self.lock.acquire()
     try:
-      return set(self.queueingTransfers.keys())
+      return set([(transferid,transfer[1][2]) for transferid, transfer in self.queueingTransfers.items()])
     finally:
       self.lock.release()
 
@@ -344,6 +334,19 @@ class LocalQueue(Queue.Queue):
     '''lists pending transfers'''
     self.lock.acquire()
     try:
-      return [tuple([transfer[0]])+transfer[1][1:4] for transfer in self.queueingTransfers.items()]
+      return [(transferid, transfer, transfertype, arrivaltime) for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems()]
+    finally:
+      self.lock.release()
+
+  def anyTransfersFromScheduler(self, reqscheduler):
+    '''Tells whether any transfer is queueing that is handled by the given scheduler'''
+    self.lock.acquire()
+    try:
+      # go through the transfer
+      for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems():
+        # Stop whenever we find one
+        if reqscheduler == scheduler: return True
+      # No transfer found
+      return False
     finally:
       self.lock.release()

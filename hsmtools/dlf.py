@@ -89,9 +89,14 @@ def writep(priority, msgnb, **params):
     rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], thread.get_ident(), _messages[msgnb][0])
     if params.has_key('fileid'): rawmsg = rawmsg + ("NSHOSTNAME=%s NSFILEID=%d " % params['fileid'])
     if params.has_key('reqid'): rawmsg = rawmsg + ('REQID=%s ' % params['reqid'])
+    if params.has_key('subreqid'): rawmsg = rawmsg + ('SUBREQID=%s ' % params['subreqid'])
     for param in params:
-        if param in ['reqid', 'fileid']: continue
-        rawmsg = rawmsg + param.upper() + ("=%s " % str(params[param]))
+        if param in ['reqid', 'fileid', 'subreqid']: continue
+        value = params[param]
+        if isinstance(value, str) and ' ' in value:
+            rawmsg = rawmsg + param + ('="%s" ' % value)
+        else:
+            rawmsg = rawmsg + param + ('=%s ' % str(value))
     syslog.syslog(priority, rawmsg);
 
 def write(msgnb, **params):
