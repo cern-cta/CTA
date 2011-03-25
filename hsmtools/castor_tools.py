@@ -59,7 +59,7 @@ class DBConnection(object):
     the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
     
     # class-level constant defining the database schemaVersion expected by the code
-    SCHEMAVERSION = "2_1_10_0"
+    SCHEMAVERSION = "2_1_11_0"
     
     def __init__(self, connString):
         '''Constructor'''
