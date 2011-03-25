@@ -1804,9 +1804,9 @@ sub check_leftovers ( $ )
     }
     $sth = $dbh -> prepare("SELECT count (*) from ( 
                               SELECT dc.id from diskcopy dc where
-                                dc.status NOT IN ( 0, 7 )
+                                dc.status NOT IN ( 0, 7, 4 )
                               UNION ALL
-                              SELECT tc.id from tapecopy tc)"); # Discopy_staged diskcopy_invalid
+                              SELECT tc.id from tapecopy tc)"); # Discopy_staged diskcopy_invalid diskcopy_failed
     $sth -> execute ();
     @row = $sth->fetchrow_array();
     return $row[0];
@@ -1845,7 +1845,7 @@ sub print_leftovers ( $ )
                                   FROM castorfile cf
                                   LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
                                   LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
-                                 WHERE dc.status NOT IN ( 0, 7)"); # Discopy_staged diskcopy_invalid
+                                 WHERE dc.status NOT IN ( 0, 7, 4)"); # Discopy_staged diskcopy_invalid diskcopy_failed
     $sth -> execute();
     while ( my @row = $sth->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
