@@ -54,7 +54,7 @@ struct Cupv_srv_request_info {
         gid_t           gid;
         char            *username;
         char            *clienthost;
-        char            reqid[CUUID_STRING_LEN + 1];
+        char            requuid[CUUID_STRING_LEN + 1];
         char            logbuf[LOGBUFSZ];
         u_signed64      starttime;
 };

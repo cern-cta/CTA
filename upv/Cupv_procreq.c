@@ -53,7 +53,7 @@ int check_server_perm(struct Cupv_srv_thread_info *thip)
 
   cupvlogit("MSG=\"Checking for UPV_ADMIN privilege\" REQID=%s Uid=%d Gid=%d "
             "FromHost=\"%s\"",
-            thip->reqinfo.reqid, thip->reqinfo.uid, thip->reqinfo.gid,
+            thip->reqinfo.requuid, thip->reqinfo.uid, thip->reqinfo.gid,
             thip->reqinfo.clienthost);
 
   strcpy(requested.srchost, thip->reqinfo.clienthost);
@@ -391,7 +391,7 @@ int Cupv_srv_check(char *req_data,
     strcpy(requested.srchost, reqinfo->clienthost);
     cupvlogit("MSG=\"Source Host not specified, using client host\" REQID=%s "
               "ClientHost=\"%s\"",
-              reqinfo->reqid, reqinfo->clienthost);
+              reqinfo->requuid, reqinfo->clienthost);
   }
 
   /* Case TGT not specified, replace with clienthost */
@@ -399,7 +399,7 @@ int Cupv_srv_check(char *req_data,
     strcpy(requested.tgthost, reqinfo->clienthost);
     cupvlogit("MSG=\"Target Host not specified, using client host\" REQID=%s "
               "ClientHost=\"%s\"",
-              reqinfo->reqid, reqinfo->clienthost);
+              reqinfo->requuid, reqinfo->clienthost);
   }
 
   c = Cupv_util_check(&requested, thip);

@@ -218,7 +218,7 @@ int cupvlogreq(struct Cupv_srv_request_info *reqinfo,
   len += snprintf(buffer + len, sizeof(buffer) - len,
 		  "MSG=\"Processing complete\" REQID=%s Function=\"%.255s\" "
 		  "Username=\"%.30s\" Uid=%d Gid=%d ClientHost=\"%.255s\" ",
-		  reqinfo->reqid, func, reqinfo->username, reqinfo->uid,
+		  reqinfo->requuid, func, reqinfo->username, reqinfo->uid,
 		  reqinfo->gid, reqinfo->clienthost);
 
   /* Append the log buffer associated to the request. */

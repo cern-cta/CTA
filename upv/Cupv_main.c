@@ -460,8 +460,8 @@ void *doit(void *arg)
     /* Generate a unique request id to identify this new request. */
     Cuuid_t cuuid = nullCuuid;
     Cuuid_create(&cuuid);
-    thip->reqinfo.reqid[CUUID_STRING_LEN] = 0;
-    Cuuid2string(thip->reqinfo.reqid, CUUID_STRING_LEN + 1, &cuuid);
+    thip->reqinfo.requuid[CUUID_STRING_LEN] = 0;
+    Cuuid2string(thip->reqinfo.requuid, CUUID_STRING_LEN + 1, &cuuid);
 
     procreq (magic, req_type, req_data, thip);
   } else if (c > 0) {
@@ -499,7 +499,7 @@ int Cupv_check_regexp_syntax(char *tobechecked,
 
   cupvlogit("MSG=\"Checking regular expression syntax\" REQID=%s "
             "Expression=\"%s\" BeginningOk=%d EndOk=%d",
-            reqinfo->reqid, tobechecked, beginok, endok);
+            reqinfo->requuid, tobechecked, beginok, endok);
 
   /* Checking that the buffer can hold the complete address */
   if (i + (!beginok) + (!endok) > CA_MAXREGEXPLEN) {
@@ -596,7 +596,7 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
   if (requested->uid == 0
       && (strcmp(requested->srchost, requested->tgthost) == 0)) {
     cupvlogit("MSG=\"Access GRANTED - user is root on localhost\" REQID=%s",
-              thip->reqinfo.reqid);
+              thip->reqinfo.requuid);
     return(0);
   }
 
@@ -615,13 +615,13 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
 
     if (c < 0) {
       cupvlogit("MSG=\"Error: Access DENIED - Problem accessing DB\" REQID=%s",
-                thip->reqinfo.reqid);
+                thip->reqinfo.requuid);
       return(-1);
     }
 
     if (Cupv_compare_priv(requested, &db_entry) == 0) {
       cupvlogit("MSG=\"Access GRANTED - Authorization found in DB\" REQID=%s",
-                thip->reqinfo.reqid);
+                thip->reqinfo.requuid);
 
       /* Calling list_privilege_entry with endlist = 1 to free the resources*/
       Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1);
@@ -634,7 +634,7 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
 
   /* Nothing was found, return 1 */
   cupvlogit("MSG=\"Access DENIED - NO Authorization found in DB\" REQID=%s",
-            thip->reqinfo.reqid);
+            thip->reqinfo.requuid);
 
   /* Calling list_privilege_entry with endlist = 1 to free the resources*/
   Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1);

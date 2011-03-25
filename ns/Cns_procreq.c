@@ -560,7 +560,7 @@ int Cns_delete_segment_metadata(struct Cns_srv_thread_info *thip,
           "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
           "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
           "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
-          thip->reqinfo.reqid, nshostname, smd_entry->s_fileid,
+          thip->reqinfo.requuid, nshostname, smd_entry->s_fileid,
           smd_entry->copyno, smd_entry->fsec, smd_entry->segsize,
           smd_entry->compression, smd_entry->s_status, smd_entry->vid,
           smd_entry->side, smd_entry->fseq, smd_entry->blockid[0],
@@ -583,7 +583,7 @@ int Cns_delete_file_metadata(struct Cns_srv_thread_info *thip,
             "OwnerUid=%d OwnerGid=%d FileSize=%d Atime=%lld Mtime=%lld "
             "Ctime=%lld FileClass=%d Status=\"%c\" ChecksumType=\"%s\" "
             "ChecksumValue=\"%s\"",
-            thip->reqinfo.reqid, nshostname, fmd_entry->fileid,
+            thip->reqinfo.requuid, nshostname, fmd_entry->fileid,
             fmd_entry->parent_fileid, fmd_entry->guid, fmd_entry->name,
             fmd_entry->filemode, fmd_entry->nlink, fmd_entry->uid,
             fmd_entry->gid, fmd_entry->filesize,
@@ -3365,7 +3365,7 @@ int Cns_srv_updateseg_checksum(int magic,
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
           "ChecksumValue=\"%lx\"",
-          reqinfo->reqid, nshostname, old_smd_entry.s_fileid,
+          reqinfo->requuid, nshostname, old_smd_entry.s_fileid,
           old_smd_entry.copyno, old_smd_entry.fsec, old_smd_entry.segsize,
           old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
           old_smd_entry.side, old_smd_entry.fseq, old_smd_entry.blockid[0],
@@ -3378,7 +3378,7 @@ int Cns_srv_updateseg_checksum(int magic,
         || old_smd_entry.checksum_name[0] == '\0')) {
     nslogit("MSG=\"Missing checksum information, segment metadata cannot be "
             "updated\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu ",
-            reqinfo->reqid, nshostname, old_smd_entry.s_fileid);
+            reqinfo->requuid, nshostname, old_smd_entry.s_fileid);
     RETURN(EPERM);
   }
 
@@ -3411,7 +3411,7 @@ int Cns_srv_updateseg_checksum(int magic,
     if (!checksum_ok && smd_entry.checksum != 0) {
       nslogit("MSG=\"No checksum value defined for checksum type, setting "
               "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
-              reqinfo->reqid, nshostname, smd_entry.s_fileid);
+              reqinfo->requuid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
@@ -3421,7 +3421,7 @@ int Cns_srv_updateseg_checksum(int magic,
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
           "ChecksumValue=\"%lx\"",
-          reqinfo->reqid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
+          reqinfo->requuid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
           smd_entry.fsec, smd_entry.segsize, smd_entry.compression,
           smd_entry.s_status, smd_entry.vid, smd_entry.side, smd_entry.fseq,
           smd_entry.blockid[0], smd_entry.blockid[1], smd_entry.blockid[2],
@@ -3518,7 +3518,7 @@ int Cns_srv_replaceseg(int magic,
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
           "ChecksumValue=\"%lx\"",
-          reqinfo->reqid, nshostname, old_smd_entry.s_fileid,
+          reqinfo->requuid, nshostname, old_smd_entry.s_fileid,
           old_smd_entry.copyno, old_smd_entry.fsec, old_smd_entry.segsize,
           old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
           old_smd_entry.side, old_smd_entry.fseq, old_smd_entry.blockid[0],
@@ -3566,7 +3566,7 @@ int Cns_srv_replaceseg(int magic,
     if (!checksum_ok && smd_entry.checksum != 0) {
       nslogit("MSG=\"No checksum value defined for checksum type, setting "
               "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
-              reqinfo->reqid, nshostname, smd_entry.s_fileid);
+              reqinfo->requuid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
@@ -3576,7 +3576,7 @@ int Cns_srv_replaceseg(int magic,
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
           "ChecksumValue=\"%lx\"",
-          reqinfo->reqid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
+          reqinfo->requuid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
           smd_entry.fsec, smd_entry.segsize, smd_entry.compression,
           smd_entry.s_status, smd_entry.vid, smd_entry.side, smd_entry.fseq,
           smd_entry.blockid[0], smd_entry.blockid[1], smd_entry.blockid[2],
@@ -3691,7 +3691,7 @@ int Cns_srv_replacetapecopy(int magic,
   if ( copyno == -1 ){
     nslogit("MSG=\"Cannot find old copyno\" REQID=%s NSHOSTNAME=%s "
             "NSFILEID=%llu",
-            reqinfo->reqid, nshostname, filentry.fileid, nshostname);
+            reqinfo->requuid, nshostname, filentry.fileid, nshostname);
     RETURN (ENSNOSEG);
   }
 
@@ -3711,7 +3711,7 @@ int Cns_srv_replacetapecopy(int magic,
     if (nboldsegs > CA_MAXSEGS ){
       nslogit("MSG=\"Too many segments for file\" REQID=%s NSHOSTNAME=%s "
               "NSFILEID=%llu",
-              reqinfo->reqid, nshostname, filentry.fileid);
+              reqinfo->requuid, nshostname, filentry.fileid);
       RETURN (EINVAL);
     }
   }
@@ -3723,7 +3723,7 @@ int Cns_srv_replacetapecopy(int magic,
   if ( !nboldsegs ) {
     nslogit("MSG=\"Cannot find old segment for copyno\" REQID=%s "
             "NSHOSTNAME=%s NSFILEID=%llu CopyNo=%d",
-            reqinfo->reqid, nshostname, filentry.fileid, copyno);
+            reqinfo->requuid, nshostname, filentry.fileid, copyno);
     RETURN (ENSNOSEG);
   }
 
@@ -3774,7 +3774,7 @@ int Cns_srv_replacetapecopy(int magic,
       if (!checksum_ok && new_smd_entry[i].checksum != 0) {
         nslogit("MSG=\"No checksum value defined for checksum type, setting "
                 "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
-                reqinfo->reqid, nshostname, filentry.fileid);
+                reqinfo->requuid, nshostname, filentry.fileid);
         new_smd_entry[i].checksum = 0;
       }
     }
@@ -3794,7 +3794,7 @@ int Cns_srv_replacetapecopy(int magic,
             "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
             "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
             "ChecksumValue=\"%lx\"",
-            reqinfo->reqid, nshostname, new_smd_entry[i].s_fileid,
+            reqinfo->requuid, nshostname, new_smd_entry[i].s_fileid,
             new_smd_entry[i].copyno, new_smd_entry[i].fsec,
             new_smd_entry[i].segsize, new_smd_entry[i].compression,
             new_smd_entry[i].s_status, new_smd_entry[i].vid,
@@ -4417,7 +4417,7 @@ int Cns_srv_setfsizecs(int magic,
       nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
               "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
               "ExpectedChecksum=\"0x%s\"",
-              reqinfo->reqid, nshostname, filentry.fileid, csumvalue,
+              reqinfo->requuid, nshostname, filentry.fileid, csumvalue,
               filentry.csumvalue);
       RETURN (SECHECKSUM);
     }
@@ -4684,7 +4684,7 @@ int Cns_srv_setsegattrs(int magic,
             "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
             "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
             "ChecksumValue=\"%lx\"",
-            reqinfo->reqid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
+            reqinfo->requuid, nshostname, smd_entry.s_fileid, smd_entry.copyno,
             smd_entry.fsec, smd_entry.segsize, smd_entry.compression,
             smd_entry.s_status, smd_entry.vid, smd_entry.side, smd_entry.fseq,
             smd_entry.blockid[0], smd_entry.blockid[1], smd_entry.blockid[2],
@@ -4716,7 +4716,7 @@ int Cns_srv_setsegattrs(int magic,
           nslogit("MSG=\"Checksum mismatch between file and segment\" REQID=%s "
                   "NSHOSTNAME=%s NSFILEID=%llu FileChecksum=\"0x%s\" "
                   "SegmentChecksum=\"0x%s\"",
-                  reqinfo->reqid, nshostname, filentry.fileid,
+                  reqinfo->requuid, nshostname, filentry.fileid,
                   smd_entry.checksum);
           RETURN (SECHECKSUM);
         }
@@ -5795,7 +5795,7 @@ int Cns_srv_openx(char *req_data,
     if (classid > 0) {
       if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry, 0, NULL)) {
         nslogit("MSG=\"Unable to find file class\" REQID=%s ClassId=%d "
-                "RtnCode=%d", reqinfo->reqid, classid, serrno);
+                "RtnCode=%d", reqinfo->requuid, classid, serrno);
         RETURN (serrno);
       }
       fmd_entry.fileclass = classid;
@@ -5965,7 +5965,7 @@ int Cns_srv_closex(char *req_data,
       nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
               "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
               "ExpectedChecksum=\"0x%s\"",
-              reqinfo->reqid, nshostname, fmd_entry.fileid, csumvalue,
+              reqinfo->requuid, nshostname, fmd_entry.fileid, csumvalue,
               fmd_entry.csumvalue);
       RETURN (SECHECKSUM);
     }

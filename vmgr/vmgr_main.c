@@ -607,8 +607,8 @@ void *procconnection(void *const arg) {
     /* Generate a unique request id to identify this new request. */
     Cuuid_t cuuid = nullCuuid;
     Cuuid_create(&cuuid);
-    thip->reqinfo.reqid[CUUID_STRING_LEN] = 0;
-    Cuuid2string(thip->reqinfo.reqid, CUUID_STRING_LEN + 1, &cuuid);
+    thip->reqinfo.requuid[CUUID_STRING_LEN] = 0;
+    Cuuid2string(thip->reqinfo.requuid, CUUID_STRING_LEN + 1, &cuuid);
 
     procreq (magic, req_type, req_data, thip);
   } else if (c > 0) {

@@ -221,12 +221,12 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
     len += snprintf(buffer + len, sizeof(buffer) - len,
                     "MSG=\"Processing complete\" REQID=%s "
                     "NSHOSTNAME=%.*s NSFILEID=%llu Function=\"%.255s\" ",
-                    reqinfo->reqid, CA_MAXHOSTNAMELEN, nshostname,
+                    reqinfo->requuid, CA_MAXHOSTNAMELEN, nshostname,
                     reqinfo->fileid, func);
   } else {
     len += snprintf(buffer + len, sizeof(buffer) - len,
                     "MSG=\"Processing complete\" REQID=%s Function=\"%.255s\" ",
-                    reqinfo->reqid, func);
+                    reqinfo->requuid, func);
   }
 
   /* Append the request credentials which are part of every message. */
