@@ -53,6 +53,10 @@ Cns_openx(const uid_t owneruid,
     return (-1);
   }
 
+  /* Initialize the Cns_fileid structure */
+  file_uniqueid->fileid    = 0;
+  file_uniqueid->server[0] = 0;
+
   if (strlen (path) > CA_MAXPATHLEN) {
     serrno = ENAMETOOLONG;
     return (-1);
@@ -85,6 +89,9 @@ Cns_openx(const uid_t owneruid,
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen);  /* Update length field */
 
+  /* Initialize the response buffer */
+  memset (repbuf, 0, sizeof(repbuf));
+
   /* Send request */
   c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
   if (c == 0) {
@@ -112,7 +119,21 @@ Cns_openx(const uid_t owneruid,
       unmarshall_HYPER (rbp, file_uniqueid->fileid);
     } else {
       file_uniqueid->fileid = statbuf->fileid;
-    }
+    } 
+  } else {
+    /* Normally when an error occurs we do not unmarshall any response from the
+     * server. In the context of Cns_openx we at least try to unmarshall the
+     * fileid of the file. Why? In order to return as much information back to
+     * the caller as possible. Take for example, the use-case where a file
+     * exists but the user has no access to READ or WRITE to it, here it is
+     * still nice to gain access to the fileid for pure logging purposes.
+     *
+     * Note: In cases where we cannot even connect to the name server we are
+     * protected by the initialization of the response buffer to zero's.
+     */
+    rbp = repbuf;
+    strcpy (file_uniqueid->server, server);
+    unmarshall_HYPER (rbp, file_uniqueid->fileid);
   }
   if (c && serrno == SENAMETOOLONG) {
     serrno = ENAMETOOLONG;

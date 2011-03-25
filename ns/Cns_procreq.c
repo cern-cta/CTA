@@ -5666,8 +5666,8 @@ int Cns_srv_openx(char *req_data,
   mode_t     mode;
   u_signed64 cwd;
   char       repbuf[93];
-  char       *sbp;
-
+  char       *sbp = repbuf;
+  
   /* Unmarshall message body */
   rbp = req_data;
   unmarshall_LONG (rbp, reqinfo->uid);
@@ -5719,20 +5719,31 @@ int Cns_srv_openx(char *req_data,
   if (fmd_entry.fileid) {  /* File exists */
     reqinfo->fileid = fmd_entry.fileid;
 
-    if ((flags & O_CREAT) && (flags & O_EXCL))
+    /* Marshall the fileid */
+    marshall_HYPER (sbp, fmd_entry.fileid);
+
+    if ((flags & O_CREAT) && (flags & O_EXCL)) {
+      sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EEXIST);
-    if (*fmd_entry.name == '/')  /* Cns_create / */
+    }
+    if (*fmd_entry.name == '/') { /* Cns_create / */
+      sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EISDIR);
-    if ((fmd_entry.filemode & S_IFDIR) == S_IFDIR)  /* Is a directory */
+    }
+    if ((fmd_entry.filemode & S_IFDIR) == S_IFDIR) {  /* Is a directory */
+      sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EISDIR);
+    }
 
     /* Check the file permissions */
     if (Cns_chkentryperm (&fmd_entry, (flags & O_WRONLY ||
                                        flags & O_RDWR   ||
                                        flags & O_TRUNC) ?
                           S_IWRITE : S_IREAD, owneruid, ownergid,
-                          reqinfo->clienthost))
+                          reqinfo->clienthost)) {
+      sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EACCES);
+    }
 
     /* If the file was opened with O_TRUNC and has one of the writable access
      * modes check whether we should delete the segments associated to the file
@@ -5748,8 +5759,10 @@ int Cns_srv_openx(char *req_data,
        */
       nbsegs = 0;
       if (Cns_get_smd_copy_count_by_pfid
-          (&thip->dbfd, fmd_entry.fileid, &nbsegs, 0))
+          (&thip->dbfd, fmd_entry.fileid, &nbsegs, 0)) {
+        sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
         RETURN (serrno);
+      }
 
       /* If the file has zero segments, reset the file size */
       if (nbsegs == 0) {
@@ -5759,8 +5772,10 @@ int Cns_srv_openx(char *req_data,
         fmd_entry.mtime = time (0);
         fmd_entry.ctime = fmd_entry.mtime;
         fmd_entry.status = '-';
-        if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
+        if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry)) {
+          sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
           RETURN (serrno);
+        }
 
         /* Ammend logging parameters */
         sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
@@ -5828,11 +5843,14 @@ int Cns_srv_openx(char *req_data,
 
     /* Ammend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
+
+    /* Marshall the fileid */
+    marshall_HYPER (sbp, fmd_entry.fileid);
   }
 
-  /* Marshall return value, the attributes of the file */
-  sbp = repbuf;
-  marshall_HYPER (sbp, fmd_entry.fileid);
+  /* Marshall the rest of the file attributes excluding the fileid which has
+   * already been marshalled
+   */
   marshall_WORD (sbp, fmd_entry.filemode);
   marshall_LONG (sbp, fmd_entry.nlink);
   marshall_LONG (sbp, fmd_entry.uid);
