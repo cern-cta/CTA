@@ -337,7 +337,6 @@ int proclistreq(int magic,
   int new_req_type = -1;
   fd_set readfd, readmask;
   struct timeval timeval;
-  DBLISTPTR dblistptr;
   int endlist = 0;
 
   /* Wait for list requests and process them */
@@ -346,8 +345,7 @@ int proclistreq(int magic,
   while (1) {
     switch (req_type) {
     case CUPV_LIST:
-      if ((c = Cupv_srv_list (req_data, thip, &thip->reqinfo, endlist,
-			      &dblistptr)))
+      if ((c = Cupv_srv_list (req_data, thip, &thip->reqinfo, endlist)))
 	return (c);
       break;
     }
@@ -593,9 +591,6 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
   struct Cupv_userpriv db_entry;
   struct Cupv_userpriv filter;
   int c;
-  DBLISTPTR dblistptr;
-
-  memset (&dblistptr, 0, sizeof(DBLISTPTR));
 
   /* Action is authorized is the user is root on local machine */
   if (requested->uid == 0
@@ -616,7 +611,7 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
 
   /* Looping on corresponding entries to check authorization */
   while ((c = Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, &filter,
-                                         0, &dblistptr)) == 0) {
+                                         0)) == 0) {
 
     if (c < 0) {
       cupvlogit("MSG=\"Error: Access DENIED - Problem accessing DB\" REQID=%s",
@@ -629,8 +624,7 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
                 thip->reqinfo.reqid);
 
       /* Calling list_privilege_entry with endlist = 1 to free the resources*/
-      Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1,
-                                 &dblistptr);
+      Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1);
 
       return(0);
     }
@@ -643,8 +637,7 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
             thip->reqinfo.reqid);
 
   /* Calling list_privilege_entry with endlist = 1 to free the resources*/
-  Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1,
-                             &dblistptr);
+  Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1);
   return(1);
 }
 

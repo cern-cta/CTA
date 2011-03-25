@@ -658,8 +658,7 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
                         u_signed64 parent_fileid,
                         struct Cns_file_metadata *fmd_entry,
                         int getattr,
-                        int endlist,
-                        DBLISTPTR *dblistptr)
+                        int endlist)
 {
   short ac_ind;        /* indicator variable for acl column */
   short ct_ind;        /* indicator variable for csumtype column */
@@ -889,8 +888,7 @@ int Cns_get_smd_by_copyno(struct Cns_dbfd *dbfd,
                           struct Cns_seg_metadata *smd_entry,
                           int lock,
                           Cns_dbrec_addr *rec_addr,
-                          int endlist,
-                          DBLISTPTR *dblistptr)
+                          int endlist)
 {
   char fileid_str[21];
   char func[22];
@@ -1051,8 +1049,7 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
                         struct Cns_seg_metadata *smd_entry,
                         int lock,
                         Cns_dbrec_addr *rec_addr,
-                        int endlist,
-                        DBLISTPTR *dblistptr)
+                        int endlist)
 {
   char fileid_str[21];
   char func[20];
@@ -1342,8 +1339,7 @@ int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
                        char *vid,
                        int fseq,
                        struct Cns_seg_metadata *smd_entry,
-                       int endlist,
-                       DBLISTPTR *dblistptr)
+                       int endlist)
 {
   char fileid_str[21];
   char func[19];
@@ -1423,8 +1419,7 @@ int Cns_get_tppool_by_cid(struct Cns_dbfd *dbfd,
                           struct Cns_tp_pool *tppool_entry,
                           int lock,
                           Cns_dbrec_addr *rec_addr,
-                          int endlist,
-                          DBLISTPTR *dblistptr)
+                          int endlist)
 {
   char func[22];
   char rowid_value[19];
@@ -1782,8 +1777,7 @@ int Cns_insert_umd_entry(struct Cns_dbfd *dbfd,
 int Cns_list_class_entry(struct Cns_dbfd *dbfd,
                          int bol,
                          struct Cns_class_metadata *class_entry,
-                         int endlist,
-                         DBLISTPTR *dblistptr)
+                         int endlist)
 {
   char func[21];
   struct sqlca sqlca;
@@ -1832,8 +1826,7 @@ int Cns_list_lnk_entry(struct Cns_dbfd *dbfd,
                        int bol,
                        char *linkname,
                        struct Cns_symlinks *lnk_entry,
-                       int endlist,
-                       DBLISTPTR *dblistptr)
+                       int endlist)
 {
   char fileid_str[21];
   char func[19];
@@ -1964,8 +1957,7 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   return 0;
 }
 
-int Cns_start_tr(int s,
-                 struct Cns_dbfd *dbfd)
+int Cns_start_tr(struct Cns_dbfd *dbfd)
 {
   dbfd->tr_started = 1;
   return (0);

@@ -104,7 +104,7 @@ int Cupv_srv_delete(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cupv_start_tr (thip->s, &thip->dbfd);
+  (void) Cupv_start_tr (&thip->dbfd);
 
   if(Cupv_get_privilege_entry(&thip->dbfd, &priv, 1, &rec_addr)) {
     RETURN(serrno);
@@ -165,7 +165,7 @@ int Cupv_srv_add(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cupv_start_tr (thip->s, &thip->dbfd);
+  (void) Cupv_start_tr (&thip->dbfd);
 
   if (Cupv_insert_privilege_entry(&thip->dbfd, &priv)) {
     RETURN (serrno);
@@ -237,7 +237,7 @@ int Cupv_srv_modify(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cupv_start_tr (thip->s, &thip->dbfd);
+  (void) Cupv_start_tr (&thip->dbfd);
 
   if (Cupv_get_privilege_entry (&thip->dbfd, &priv, 1, &rec_addr)) {
     RETURN (serrno);
@@ -283,8 +283,7 @@ int Cupv_srv_modify(char *req_data,
 int Cupv_srv_list(char *req_data,
                   struct Cupv_srv_thread_info *thip,
                   struct Cupv_srv_request_info *reqinfo,
-                  int endlist,
-                  DBLISTPTR *dblistptr)
+                  int endlist)
 {
   int bol;        /* beginning of list flag */
   int c;
@@ -327,7 +326,7 @@ int Cupv_srv_list(char *req_data,
 
   while (nbentries < maxnbentries &&
          (c = Cupv_list_privilege_entry (&thip->dbfd, bol, &priv_entry, &filter,
-                                         endlist, dblistptr)) == 0) {
+                                         endlist)) == 0) {
 
     marshall_LONG (sbp, priv_entry.uid);
     marshall_LONG (sbp, priv_entry.gid);

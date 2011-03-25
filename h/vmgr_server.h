@@ -47,7 +47,6 @@ struct vmgr_dbfd {
 };
 
 typedef char vmgr_dbrec_addr[19];
-typedef int DBLISTPTR;
 
 struct vmgr_srv_request_info {
         uid_t           uid;
@@ -132,7 +131,7 @@ EXTERN_C int vmgr_list_model_entry (struct vmgr_dbfd *, int, struct vmgr_tape_me
 EXTERN_C int vmgr_list_pool_entry_byte_u64 (struct vmgr_dbfd *, int, struct vmgr_tape_pool_byte_u64 *, int);
 EXTERN_C int vmgr_list_side_entry_byte_u64 (struct vmgr_dbfd *, int, char *, char *, struct vmgr_tape_side_byte_u64 *, int);
 EXTERN_C int vmgr_opendb (struct vmgr_dbfd *);
-EXTERN_C int vmgr_start_tr (int, struct vmgr_dbfd *);
+EXTERN_C int vmgr_start_tr (struct vmgr_dbfd *);
 EXTERN_C int vmgr_update_library_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_library *);
 EXTERN_C int vmgr_update_model_entry (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_media *);
 EXTERN_C int vmgr_update_pool_entry_byte_u64 (struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_pool_byte_u64 *);

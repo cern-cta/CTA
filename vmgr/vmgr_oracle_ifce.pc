@@ -1455,8 +1455,7 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
   return (0);
 }
 
-int vmgr_start_tr(int s,
-                  struct vmgr_dbfd *dbfd)
+int vmgr_start_tr(struct vmgr_dbfd *dbfd)
 {
   dbfd->tr_started = 1;
   return (0);

@@ -77,7 +77,7 @@ int vmgr_srv_deletedenmap(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_denmap_entry_byte_u64 (&thip->dbfd, model, media_letter,
 				      density, &denmap_entry, 1, &rec_addr))
@@ -118,7 +118,7 @@ int vmgr_srv_deletedgnmap(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_dgnmap_entry (&thip->dbfd, model, library, &dgnmap_entry,
 			     1, &rec_addr))
@@ -156,7 +156,7 @@ int vmgr_srv_deletelibrary(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_library_entry (&thip->dbfd, library,
 			      &library_entry, 1, &rec_addr))
@@ -202,7 +202,7 @@ int vmgr_srv_deletemodel(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_model_entry (&thip->dbfd, model, &cartridge, 1, &rec_addr))
     RETURN (serrno);
@@ -242,7 +242,7 @@ int vmgr_srv_deletepool(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, pool_name, &pool_entry,
 				    1, &rec_addr))
@@ -292,7 +292,7 @@ int vmgr_srv_deletetape(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 1, &rec_addr))
     RETURN (serrno);
@@ -385,7 +385,7 @@ int vmgr_srv_deltag(char *req_data,
     RETURN (EACCES);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_get_tag_by_vid (&thip->dbfd, vid, &tag_entry, 1, &rec_addr))
     RETURN (serrno);
@@ -448,7 +448,7 @@ int vmgr_srv_enterdenmap(const int magic,
     RETURN (EINVAL);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
     RETURN (serrno);
@@ -508,7 +508,7 @@ int vmgr_srv_enterdenmap_byte_u64(const int magic,
     RETURN (EINVAL);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_denmap_entry_byte_u64 (&thip->dbfd, &denmap_entry))
     RETURN (serrno);
@@ -560,7 +560,7 @@ int vmgr_srv_enterdgnmap(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_dgnmap_entry (&thip->dbfd, &dgnmap_entry))
     RETURN (serrno);
@@ -602,7 +602,7 @@ int vmgr_srv_enterlibrary(char *req_data,
   library_entry.nb_free_slots = library_entry.capacity;
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_library_entry (&thip->dbfd, &library_entry))
     RETURN (serrno);
@@ -645,7 +645,7 @@ int vmgr_srv_entermodel(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_model_entry (&thip->dbfd, &cartridge))
     RETURN (serrno);
@@ -683,7 +683,7 @@ int vmgr_srv_enterpool(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   if (vmgr_insert_pool_entry_byte_u64 (&thip->dbfd, &pool_entry))
     RETURN (serrno);
@@ -762,7 +762,7 @@ int vmgr_srv_entertape(char *req_data,
     strcpy (side_entry.poolname, "default");
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Check if pool exists and lock entry */
   if (vmgr_get_pool_entry_byte_u64 (&thip->dbfd, side_entry.poolname,
@@ -941,7 +941,7 @@ int vmgr_srv_gettape(int magic,
     RETURN (EINVAL);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
   if (Cthread_mutex_lock (&onealloc))
     RETURN (serrno);
 
@@ -1620,7 +1620,7 @@ int vmgr_srv_modifylibrary(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entry */
   memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
@@ -1679,7 +1679,7 @@ int vmgr_srv_modifymodel(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entry */
   memset((void *) &cartridge, 0, sizeof(struct vmgr_tape_media));
@@ -1731,7 +1731,7 @@ int vmgr_srv_modifypool(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entry */
   memset((void *) &pool_entry, 0, sizeof(pool_entry));
@@ -1827,7 +1827,7 @@ int vmgr_srv_modifytape(char *req_data,
   }
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock tape entry */
   memset((void *) &tape, 0, sizeof(tape));
@@ -2351,7 +2351,7 @@ int vmgr_srv_reclaim(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entries */
   memset((void *) &tape, 0, sizeof(tape));
@@ -2438,7 +2438,7 @@ int vmgr_srv_settag(char *req_data,
     RETURN (EACCES);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Add the tag entry or replace the tag text if the entry exists */
   if (vmgr_insert_tag_entry (&thip->dbfd, &tag_entry)) {
@@ -2489,7 +2489,7 @@ int vmgr_srv_tpmounted(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entry */
   memset((void *) &tape, 0, sizeof(tape));
@@ -2569,7 +2569,7 @@ int vmgr_srv_updatetape(int magic,
 	   (int) Flags);
 
   /* Start transaction */
-  (void) vmgr_start_tr (thip->s, &thip->dbfd);
+  (void) vmgr_start_tr (&thip->dbfd);
 
   /* Get and lock entries */
   memset((void *) &side_entry, 0, sizeof(side_entry));

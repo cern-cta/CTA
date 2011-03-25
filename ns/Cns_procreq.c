@@ -238,7 +238,7 @@ int Cns_srv_chclass(char *req_data,
            cwdpath, path, classid, class_name);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -400,7 +400,7 @@ int Cns_srv_chmod(char *req_data,
            cwdpath, path, mode);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -476,7 +476,7 @@ int Cns_srv_chown(char *req_data,
            cwdpath, path, new_uid, new_gid);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -604,7 +604,6 @@ int Cns_delete_segs(struct Cns_srv_thread_info *thip,
 {
   struct Cns_seg_metadata smd_entry;
   Cns_dbrec_addr rec_addrs;
-  DBLISTPTR dblistptr;
   int       found = 0;
   int       bof = 1;
   int       c;
@@ -613,8 +612,7 @@ int Cns_delete_segs(struct Cns_srv_thread_info *thip,
    * applicable.
    */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
-                                   &smd_entry, 1, &rec_addrs, 0,
-                                   &dblistptr)) == 0) {
+                                   &smd_entry, 1, &rec_addrs, 0)) == 0) {
     bof = 0;
     if (copyno && (smd_entry.copyno != copyno)) {
       continue;
@@ -624,7 +622,7 @@ int Cns_delete_segs(struct Cns_srv_thread_info *thip,
       return (serrno);
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
-                              &smd_entry, 1, &rec_addrs, 1, &dblistptr);
+                              &smd_entry, 1, &rec_addrs, 1);
   if (c < 0)
     return (serrno);
   if (!found) {
@@ -686,7 +684,7 @@ int Cns_srv_creat(int magic,
            mask, cwdpath, path, mode, guid);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get/lock
    * basename entry if it exists
@@ -807,7 +805,7 @@ int Cns_srv_delcomment(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get basename
    * entry
@@ -844,7 +842,6 @@ int Cns_srv_delete(char *req_data,
   int bof = 1;
   int c;
   u_signed64 cwd;
-  DBLISTPTR dblistptr;
   struct Cns_file_metadata filentry;
   char *func = "delete";
   struct Cns_file_metadata parent_dir;
@@ -874,7 +871,7 @@ int Cns_srv_delete(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and
    * get/lock basename entry
@@ -905,15 +902,14 @@ int Cns_srv_delete(char *req_data,
   /* Mark file segments if any as logically deleted */
   bof = 1;
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                   &smd_entry, 1, &rec_addrs, 0,
-                                   &dblistptr)) == 0) {
+                                   &smd_entry, 1, &rec_addrs, 0)) == 0) {
     smd_entry.s_status = 'D';
     if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
       RETURN (serrno);
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid, &smd_entry,
-                              1, &rec_addrs, 1, &dblistptr);
+                              1, &rec_addrs, 1);
   if (c < 0)
     RETURN (serrno);
 
@@ -940,7 +936,6 @@ int Cns_srv_deleteclass(char *req_data,
   struct Cns_class_metadata class_entry;
   char class_name[CA_MAXCLASNAMELEN+1];
   int classid;
-  DBLISTPTR dblistptr;
   char *func = "deleteclass";
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -965,7 +960,7 @@ int Cns_srv_deleteclass(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (classid > 0) {
     if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry,
@@ -979,14 +974,13 @@ int Cns_srv_deleteclass(char *req_data,
       RETURN (serrno);
   }
   while (Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                &tppool_entry, 1, &rec_addrt, 0,
-                                &dblistptr) == 0) {
+                                &tppool_entry, 1, &rec_addrt, 0) == 0) {
     if (Cns_delete_tppool_entry (&thip->dbfd, &rec_addrt))
       RETURN (serrno);
     bol = 0;
   }
   (void) Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                &tppool_entry, 1, &rec_addrt, 1, &dblistptr);
+                                &tppool_entry, 1, &rec_addrt, 1);
   if (Cns_delete_class_entry (&thip->dbfd, &rec_addr))
     RETURN (serrno);
   RETURN (0);
@@ -1010,7 +1004,6 @@ int Cns_srv_delsegbycopyno(char *req_data,
   struct Cns_file_metadata fmd_entry;
   struct Cns_seg_metadata  smd_entry;
   Cns_dbrec_addr rec_addr;
-  DBLISTPTR  dblistptr;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -1042,7 +1035,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (fileid) {
 
@@ -1077,11 +1070,11 @@ int Cns_srv_delsegbycopyno(char *req_data,
 
   /* Count the number of file segments left */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
-                                   &smd_entry, 0, NULL, 0, &dblistptr)) == 0) {
+                                   &smd_entry, 0, NULL, 0)) == 0) {
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
-                              &smd_entry, 0, NULL, 1, &dblistptr);
+                              &smd_entry, 0, NULL, 1);
   if (c < 0)
     RETURN (serrno);
 
@@ -1108,7 +1101,6 @@ int compute_du4dir (struct Cns_srv_thread_info *thip,
 {
   int bod = 1;
   int c;
-  DBLISTPTR dblistptr;
   struct dirlist {
     u_signed64 fileid;
     struct dirlist *next;
@@ -1121,8 +1113,7 @@ int compute_du4dir (struct Cns_srv_thread_info *thip,
   if (Cns_chkentryperm (direntry, S_IREAD|S_IEXEC, uid, gid, clienthost))
     return (EACCES);
   while ((c = Cns_get_fmd_by_pfid (&thip->dbfd, bod, direntry->fileid,
-                                   &fmd_entry, 1, 0,
-                                   &dblistptr)) == 0) {
+                                   &fmd_entry, 1, 0)) == 0) {
     if (fmd_entry.filemode & S_IFDIR) {
       if ((dlc = (struct dirlist *)
            malloc (sizeof(struct dirlist))) == NULL) {
@@ -1144,7 +1135,7 @@ int compute_du4dir (struct Cns_srv_thread_info *thip,
     bod = 0;
   }
   (void) Cns_get_fmd_by_pfid (&thip->dbfd, bod, direntry->fileid,
-                              &fmd_entry, 1, 1, &dblistptr);
+                              &fmd_entry, 1, 1);
   while (dlf) {
     if (c > 0 && Cns_get_fmd_by_fileid (&thip->dbfd, dlf->fileid,
                                         &fmd_entry, 0, NULL) == 0)
@@ -1298,7 +1289,7 @@ int Cns_srv_enterclass(char *req_data,
     RETURN (EINVAL);
   if (class_entry.max_filesize < class_entry.min_filesize)
     RETURN (EINVAL);
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (Cns_insert_class_entry (&thip->dbfd, &class_entry))
     RETURN (serrno);
@@ -1452,7 +1443,6 @@ int Cns_srv_getlinks(char *req_data,
   int bol = 1;
   int c;
   u_signed64 cwd;
-  DBLISTPTR dblistptr;
   struct Cns_file_metadata fmd_entry;
   char *func = "getlinks";
   char guid[CA_MAXGUIDLEN+1];
@@ -1524,7 +1514,7 @@ int Cns_srv_getlinks(char *req_data,
   }
   marshall_STRING (sbp, lnk_entry.linkname);
   while ((c = Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry.linkname,
-                                  &lnk_entry, 0, &dblistptr)) == 0) {
+                                  &lnk_entry, 0)) == 0) {
     bol = 0;
     p = tmp_path;
     if (Cns_getpath_by_fileid (&thip->dbfd, lnk_entry.fileid, &p))
@@ -1537,7 +1527,7 @@ int Cns_srv_getlinks(char *req_data,
     marshall_STRING (sbp, p);
   }
   (void) Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry.linkname, &lnk_entry,
-                             1, &dblistptr);
+                             1);
   if (c < 0)
     RETURNQ (serrno);
   if (sbp > repbuf)
@@ -1593,7 +1583,6 @@ int Cns_srv_getsegattrs(int magic,
   int bof = 1;
   int c;
   u_signed64 cwd;
-  DBLISTPTR dblistptr;
   u_signed64 fileid;
   struct Cns_file_metadata filentry;
   char *func = "getsegattrs";
@@ -1654,7 +1643,7 @@ int Cns_srv_getsegattrs(int magic,
   sbp = repbuf;
   marshall_WORD (sbp, nbseg); /* Will be updated */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                   &smd_entry, 0, NULL, 0, &dblistptr)) == 0) {
+                                   &smd_entry, 0, NULL, 0)) == 0) {
     marshall_WORD (sbp, smd_entry.copyno);
     marshall_WORD (sbp, smd_entry.fsec);
     marshall_HYPER (sbp, smd_entry.segsize);
@@ -1673,7 +1662,7 @@ int Cns_srv_getsegattrs(int magic,
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid, &smd_entry,
-                              0, NULL, 1, &dblistptr);
+                              0, NULL, 1);
   if (c < 0)
     RETURN (serrno);
 
@@ -1726,7 +1715,7 @@ int Cns_srv_lchown(char *req_data,
            cwdpath, path, new_uid, new_gid);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -1806,8 +1795,7 @@ int Cns_srv_listclass(char *req_data,
                       struct Cns_srv_thread_info *thip,
                       struct Cns_srv_request_info *reqinfo,
                       struct Cns_class_metadata *class_entry,
-                      int endlist,
-                      DBLISTPTR *dblistptr)
+                      int endlist)
 {
   int bol; /* Beginning of class list flag */
   int bot; /* Beginning of tape pools list flag */
@@ -1824,7 +1812,6 @@ int Cns_srv_listclass(char *req_data,
   char *rbp;
   char *sav_sbp;
   char *sbp;
-  DBLISTPTR tplistptr;
   struct Cns_tp_pool tppool_entry;
 
   /* Unmarshall message body */
@@ -1845,8 +1832,7 @@ int Cns_srv_listclass(char *req_data,
   marshall_WORD (sbp, nbentries);  /* Will be updated */
 
   if (bol || endlist)
-    c = Cns_list_class_entry (&thip->dbfd, bol, class_entry,
-                              endlist, dblistptr);
+    c = Cns_list_class_entry (&thip->dbfd, bol, class_entry, endlist);
   else
     c = 0;
   while (c == 0) {
@@ -1873,8 +1859,7 @@ int Cns_srv_listclass(char *req_data,
     marshall_LONG (sbp, nbtppools); /* Will be updated */
     maxsize -= listentsz;
     while ((c = Cns_get_tppool_by_cid (&thip->dbfd, bot, class_entry->classid,
-                                       &tppool_entry, 0, NULL, 0,
-                                       &tplistptr)) == 0) {
+                                       &tppool_entry, 0, NULL, 0)) == 0) {
       maxsize -= CA_MAXPOOLNAMELEN + 1;
       if (maxsize < 0) {
         sbp = sav_sbp;
@@ -1885,15 +1870,14 @@ int Cns_srv_listclass(char *req_data,
       bot = 0;
     }
     (void) Cns_get_tppool_by_cid (&thip->dbfd, bot, class_entry->classid,
-                                  &tppool_entry, 0, NULL, 1, &tplistptr);
+                                  &tppool_entry, 0, NULL, 1);
     if (c < 0)
       RETURN (serrno);
 
     marshall_LONG (q, nbtppools);
     nbentries++;
     bol = 0;
-    c = Cns_list_class_entry (&thip->dbfd, bol, class_entry,
-                              endlist, dblistptr);
+    c = Cns_list_class_entry (&thip->dbfd, bol, class_entry, endlist);
   }
   if (c < 0)
     RETURN (serrno);
@@ -1912,8 +1896,7 @@ int Cns_srv_listlinks(char *req_data,
                       struct Cns_srv_thread_info *thip,
                       struct Cns_srv_request_info *reqinfo,
                       struct Cns_symlinks *lnk_entry,
-                      int endlist,
-                      DBLISTPTR *dblistptr)
+                      int endlist)
 {
   int bol; /* Beginning of list flag */
   int c;
@@ -2005,8 +1988,8 @@ int Cns_srv_listlinks(char *req_data,
     nbentries++;
   }
   if (bol || endlist)
-    c = Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry->linkname,
-                            lnk_entry, endlist, dblistptr);
+    c = Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry->linkname, lnk_entry,
+                            endlist);
   else
     c = 0;
   while (c == 0) {
@@ -2018,8 +2001,8 @@ int Cns_srv_listlinks(char *req_data,
     maxsize -= listentsz;
     nbentries++;
     bol = 0;
-    c = Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry->linkname,
-                            lnk_entry, endlist, dblistptr);
+    c = Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry->linkname, lnk_entry,
+                            endlist);
   }
   if (c < 0)
     RETURN (serrno);
@@ -2205,8 +2188,7 @@ int Cns_srv_listtape(int magic,
                      struct Cns_srv_request_info *reqinfo,
                      struct Cns_file_metadata *fmd_entry,
                      struct Cns_seg_metadata *smd_entry,
-                     int endlist,
-                     DBLISTPTR *dblistptr)
+                     int endlist)
 {
   int bov; /* Beginning of volume flag */
   int c;
@@ -2253,7 +2235,7 @@ int Cns_srv_listtape(int magic,
     maxsize -= ((direntsz + strlen (fmd_entry->name) + 8) / 8) * 8;
   }
   while ((c = Cns_get_smd_by_vid (&thip->dbfd, bov, vid, fseq, smd_entry,
-                                  endlist, dblistptr)) == 0) {
+                                  endlist)) == 0) {
     bov = 0;
     if (Cns_get_fmd_by_fileid (&thip->dbfd, smd_entry->s_fileid,
                                fmd_entry, 0, NULL) < 0) {
@@ -2400,7 +2382,7 @@ int Cns_srv_mkdir(int magic,
            mask, cwdpath, path, mode, guid);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get
    * basename entry if it exists
@@ -2465,7 +2447,6 @@ int Cns_srv_modifyclass(char *req_data,
   char class_name[CA_MAXCLASNAMELEN+1];
   uid_t class_user;
   int classid;
-  DBLISTPTR dblistptr;
   int flags;
   char *func = "modifyclass";
   int i;
@@ -2518,7 +2499,7 @@ int Cns_srv_modifyclass(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get and lock entry */
   memset((void *) &class_entry, 0, sizeof(struct Cns_class_metadata));
@@ -2577,8 +2558,7 @@ int Cns_srv_modifyclass(char *req_data,
 
     /* Delete the entries which are not needed anymore */
     while (Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                  &tppool_entry, 1, &rec_addrt, 0,
-                                  &dblistptr) == 0) {
+                                  &tppool_entry, 1, &rec_addrt, 0) == 0) {
       p = tppools;
       for (i = 0; i < nbtppools; i++) {
         if (strcmp (tppool_entry.tape_pool, p) == 0) break;
@@ -2594,7 +2574,7 @@ int Cns_srv_modifyclass(char *req_data,
       bol = 0;
     }
     (void) Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                  &tppool_entry, 1, &rec_addrt, 1, &dblistptr);
+                                  &tppool_entry, 1, &rec_addrt, 1);
 
     /* Add the new entries if any */
     tppool_entry.classid = class_entry.classid;
@@ -2719,7 +2699,6 @@ int Cns_srv_queryclass(char *req_data,
   struct Cns_class_metadata class_entry;
   char class_name[CA_MAXCLASNAMELEN+1];
   int classid;
-  DBLISTPTR dblistptr;
   char *func = "queryclass";
   int nbtppools = 0;
   char *q;
@@ -2770,14 +2749,13 @@ int Cns_srv_queryclass(char *req_data,
   q = sbp;
   marshall_LONG (sbp, nbtppools); /* Will be updated */
   while ((c = Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                     &tppool_entry, 0, NULL, 0,
-                                     &dblistptr)) == 0) {
+                                     &tppool_entry, 0, NULL, 0)) == 0) {
     marshall_STRING (sbp, tppool_entry.tape_pool);
     nbtppools++;
     bol = 0;
   }
   (void) Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
-                                &tppool_entry, 0, NULL, 1, &dblistptr);
+                                &tppool_entry, 0, NULL, 1);
   if (c < 0)
     RETURN (serrno);
 
@@ -2796,8 +2774,6 @@ int Cns_srv_readdir(int magic,
                     struct Cns_seg_metadata *smd_entry,
                     struct Cns_user_metadata *umd_entry,
                     int endlist,
-                    DBLISTPTR *dblistptr,
-                    DBLISTPTR *smdlistptr,
                     int *beginp)
 {
   int bod; /* Beginning of directory flag */
@@ -2847,7 +2823,7 @@ int Cns_srv_readdir(int magic,
 
   if (endlist && getattr == 2)
     (void) Cns_get_smd_by_pfid (&thip->dbfd, 0, fmd_entry->fileid,
-                                smd_entry, 0, NULL, 1, smdlistptr);
+                                smd_entry, 0, NULL, 1);
   if (! bod && ! endlist) {
     fnl = strlen (fmd_entry->name);
     if (getattr == 0) {  /* readdir */
@@ -2865,14 +2841,13 @@ int Cns_srv_readdir(int magic,
         marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
         nbentries++;
         maxsize -= ((direntsz + fnl + 8) / 8) * 8;
-        if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
-                                      fmd_entry->fileid, smd_entry, 0, NULL,
-                                      0, smdlistptr))) break;
+        if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
+                                      smd_entry, 0, NULL, 0))) break;
         if (fnl >= maxsize)
           goto reply;
       }
       (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
-                                  smd_entry, 0, NULL, 1, smdlistptr);
+                                  smd_entry, 0, NULL, 1);
       if (c < 0)
         RETURN (serrno);
     } else if (getattr == 3) { /* readdirc */
@@ -2891,7 +2866,7 @@ int Cns_srv_readdir(int magic,
   }
 
   while ((c = Cns_get_fmd_by_pfid (&thip->dbfd, bod, dir_fileid, fmd_entry,
-                                   getattr, endlist, dblistptr)) == 0) {
+                                   getattr, endlist)) == 0) {
     fnl = strlen (fmd_entry->name);
     if (getattr == 0) {  /* readdir */
       if (fnl >= maxsize) break;
@@ -2907,9 +2882,9 @@ int Cns_srv_readdir(int magic,
       bof = 1;
       /* Loop on segments */
       while (1) {
-        if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
-                                      fmd_entry->fileid, smd_entry, 0, NULL,
-                                      0, smdlistptr))) break;
+        if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
+                                      smd_entry, 0, NULL, 0)))
+          break;
         if (fnl >= maxsize)
           goto reply;
         marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
@@ -2918,7 +2893,7 @@ int Cns_srv_readdir(int magic,
         maxsize -= ((direntsz + fnl + 8) / 8) * 8;
       }
       (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
-                                  smd_entry, 0, NULL, 1, smdlistptr);
+                                  smd_entry, 0, NULL, 1);
       if (c < 0)
         RETURN (serrno);
     } else if (getattr == 3) { /* readdirc */
@@ -2953,7 +2928,7 @@ int Cns_srv_readdir(int magic,
     eod = 1;
 
     /* Start transaction */
-    (void) Cns_start_tr (thip->s, &thip->dbfd);
+    (void) Cns_start_tr (&thip->dbfd);
 
     /* Update directory access time */
     if (!rdonly) {
@@ -3080,7 +3055,7 @@ int Cns_srv_rename(char *req_data,
            cwdpath, oldpath, newpath);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check 'old' parent directory components for write/search permission and
    * get/lock basename entry
@@ -3280,7 +3255,7 @@ int Cns_srv_updateseg_status(char *req_data,
     RETURN (EINVAL);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
@@ -3361,7 +3336,7 @@ int Cns_srv_updateseg_checksum(int magic,
   sprintf (reqinfo->logbuf, "CopyNo=%d Fsec=%d", copyno, fsec);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
@@ -3506,7 +3481,7 @@ int Cns_srv_replaceseg(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
@@ -3629,7 +3604,6 @@ int Cns_srv_replacetapecopy(int magic,
 {
   u_signed64 fileid = 0;
   int rc,checksum_ok, nboldsegs, nbseg ,copyno, bof, i;
-  DBLISTPTR dblistptr; /* In fact an int */
   int CA_MAXSEGS = 20; /* Maximum number of segments of a file */
   time_t last_mod_time = 0;
 
@@ -3671,7 +3645,7 @@ int Cns_srv_replacetapecopy(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
@@ -3699,8 +3673,7 @@ int Cns_srv_replacetapecopy(int magic,
                                     &old_smd_entry[nboldsegs],
                                     0,
                                     &backup_rec_addr[nboldsegs],
-                                    0,
-                                    &dblistptr)) == 0) {
+                                    0)) == 0) {
     /* We want only segments, which are on the oldvid */
     if ( strcmp( old_smd_entry[nboldsegs].vid, oldvid ) == 0 ){
       /* Store the copyno for first right segment. we have to know it for the
@@ -3724,15 +3697,13 @@ int Cns_srv_replacetapecopy(int magic,
 
   /* After we have the copyno, we get the old segs by this no */
   bof = 1;
-  dblistptr = 0;
   while ((rc = Cns_get_smd_by_copyno (&thip->dbfd, bof,
                                       filentry.fileid,
                                       copyno,
                                       &old_smd_entry[nboldsegs],
                                       1,
                                       &backup_rec_addr[nboldsegs],
-                                      0,
-                                      &dblistptr )) == 0) {
+                                      0)) == 0) {
     nboldsegs++;
     bof = 0;
 
@@ -3877,7 +3848,7 @@ int Cns_srv_rmdir(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get/lock
    * basename entry
@@ -3973,7 +3944,7 @@ int Cns_srv_setacl(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -4094,7 +4065,7 @@ int Cns_srv_setatime(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (fileid) {
 
@@ -4175,7 +4146,7 @@ int Cns_srv_setcomment(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Ccheck parent directory components for search permission and get basename
    * entry
@@ -4272,7 +4243,7 @@ int Cns_srv_setfsize(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (fileid) {
 
@@ -4396,7 +4367,7 @@ int Cns_srv_setfsizecs(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (fileid) {
 
@@ -4524,7 +4495,7 @@ int Cns_srv_setfsizeg(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_guid (&thip->dbfd, guid, &filentry, 1, &rec_addr))
@@ -4626,7 +4597,7 @@ int Cns_srv_setsegattrs(int magic,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   if (fileid) {
 
@@ -4838,7 +4809,7 @@ int Cns_srv_starttrans(int magic,
     sprintf (reqinfo->logbuf, "Comment=\"%s\"", comment);
   }
 
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
   thip->dbfd.tr_mode++;
   RETURN (0);
 }
@@ -5105,7 +5076,7 @@ int Cns_srv_symlink(char *req_data,
            cwdpath, target, linkname);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get
    * basename entry if it exists
@@ -5165,7 +5136,6 @@ int Cns_srv_undelete(char *req_data,
   int bof = 1;
   int c;
   u_signed64 cwd;
-  DBLISTPTR dblistptr;
   struct Cns_file_metadata filentry;
   char *func = "undelete";
   struct Cns_file_metadata parent_dir;
@@ -5195,7 +5165,7 @@ int Cns_srv_undelete(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get/lock
    * basename entry
@@ -5225,15 +5195,14 @@ int Cns_srv_undelete(char *req_data,
 
   /* Remove the mark "logically deleted" on the file segments if any */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                   &smd_entry, 1, &rec_addrs, 0,
-                                   &dblistptr)) == 0) {
+                                   &smd_entry, 1, &rec_addrs, 0)) == 0) {
     smd_entry.s_status = '-';
     if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
       RETURN (serrno);
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                              &smd_entry, 1, &rec_addrs, 1, &dblistptr);
+                              &smd_entry, 1, &rec_addrs, 1);
   if (c < 0)
     RETURN (serrno);
 
@@ -5291,7 +5260,7 @@ int Cns_srv_unlink(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for write/search permission and get/lock
    * basename entry
@@ -5375,7 +5344,6 @@ int Cns_srv_unlinkbyvid(char *req_data,
   Cns_dbrec_addr rec_addr;
   Cns_dbrec_addr rec_addrp;
   Cns_dbrec_addr rec_addru;
-  DBLISTPTR dblistptr;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -5401,13 +5369,13 @@ int Cns_srv_unlinkbyvid(char *req_data,
   /* Delete the files on the volume */
   bov   = 1;
   count = 0;
-  while ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0, &smd_entry,
-                                 0, &dblistptr)) == 0) {
+  while ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0,
+                                 &smd_entry, 0)) == 0) {
 
     /* To avoid holding too many locks in the namespace we commit each file
      * unlink.
      */
-    (void) Cns_start_tr (thip->s, &thip->dbfd);
+    (void) Cns_start_tr (&thip->dbfd);
 
     /* Lock the file and parent directory entries */
     bov = 0;
@@ -5470,8 +5438,8 @@ int Cns_srv_unlinkbyvid(char *req_data,
      * hit CTRL-C with the intention of terminating the operation.
      */
     if (count >= 1000) {
-      if ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0, &smd_entry,
-                                  0, &dblistptr)) == 0) {
+      if ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0,
+                                  &smd_entry, 0)) == 0) {
         RETURNQ(0);
       } else {
         break;
@@ -5528,7 +5496,7 @@ int Cns_srv_utime(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -5623,7 +5591,7 @@ int Cns_srv_updatefile_checksum(char *req_data,
   }
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for search permission and get/lock
    * basename entry
@@ -5736,7 +5704,7 @@ int Cns_srv_openx(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Check parent directory components for (write)/search permission and get
    * basename entry if it exists
@@ -5951,7 +5919,7 @@ int Cns_srv_closex(char *req_data,
     RETURN (serrno);
 
   /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
+  (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))

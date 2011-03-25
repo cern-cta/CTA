@@ -172,8 +172,7 @@ int Cupv_closedb(struct Cupv_dbfd *dbfd)
   return (0);
 }
 
-int Cupv_start_tr(int s,
-                  struct Cupv_dbfd *dbfd)
+int Cupv_start_tr(struct Cupv_dbfd *dbfd)
 {
   dbfd->tr_started = 1;
   return (0);
@@ -383,8 +382,7 @@ int Cupv_list_privilege_entry(struct Cupv_dbfd *dbfd,
                               int bol,
                               struct Cupv_userpriv *priv_entry,
                               struct Cupv_userpriv *filter,
-                              int endlist,
-                              DBLISTPTR *dblistptr)
+                              int endlist)
 {
   char func[22];
   struct sqlca sqlca;

@@ -183,7 +183,7 @@ int Cns_main(struct main_args *main_args)
     direntry.mtime = direntry.atime;
     direntry.ctime = direntry.atime;
     direntry.status = '-';
-    (void) Cns_start_tr (0, &dbfd);
+    (void) Cns_start_tr (&dbfd);
     if (Cns_insert_fmd_entry (&dbfd, &direntry) < 0) {
       (void) Cns_abort_tr (&dbfd);
       (void) Cns_closedb (&dbfd);
@@ -424,7 +424,6 @@ int procdirreq(int magic,
   int bod = 1;
   int c;
   struct Cns_class_metadata class_entry;
-  DBLISTPTR dblistptr;
   int endlist = 0;
   struct Cns_file_metadata fmd_entry;
   struct Cns_symlinks lnk_entry;
@@ -433,7 +432,6 @@ int procdirreq(int magic,
   fd_set readfd, readmask;
   char *req_data2;
   struct Cns_seg_metadata smd_entry;
-  DBLISTPTR smdlistptr;
   struct timeval timeval;
   struct Cns_user_metadata umd_entry;
 
@@ -441,22 +439,20 @@ int procdirreq(int magic,
   memset (&lnk_entry,   0, sizeof(struct Cns_symlinks));
   memset (&smd_entry,   0, sizeof(struct Cns_seg_metadata));
 
-  memset (&dblistptr, 0, sizeof(DBLISTPTR));
   if (req_type == CNS_OPENDIR) {
-    memset (&smdlistptr, 0, sizeof(DBLISTPTR));
     if ((c = Cns_srv_opendir (magic, req_data, thip, &thip->reqinfo)))
       return (c);
   } else if (req_type == CNS_LISTCLASS) {
     if ((c = Cns_srv_listclass (req_data, thip, &thip->reqinfo, &class_entry,
-                                endlist, &dblistptr)))
+                                endlist)))
       return (c);
   } else if (req_type == CNS_LISTLINKS) {
     if ((c = Cns_srv_listlinks (req_data, thip, &thip->reqinfo, &lnk_entry,
-                                endlist, &dblistptr)))
+                                endlist)))
       return (c);
   } else {
     if ((c = Cns_srv_listtape (magic, req_data, thip, &thip->reqinfo, &fmd_entry,
-                               &smd_entry, endlist, &dblistptr)))
+                               &smd_entry, endlist)))
       return (c);
   }
   sendrep (thip->s, CNS_IRC, 0);
@@ -477,24 +473,22 @@ int procdirreq(int magic,
       if (new_req_type != CNS_READDIR)
         endlist = 1;
       c = Cns_srv_readdir (magic, req_data2, thip, &thip->reqinfo, &fmd_entry,
-                           &smd_entry, &umd_entry, endlist, &dblistptr,
-                           &smdlistptr,
-                           &bod);
+                           &smd_entry, &umd_entry, endlist, &bod);
     } else if (req_type == CNS_LISTCLASS) {
       if (new_req_type != CNS_LISTCLASS)
         endlist = 1;
       c = Cns_srv_listclass (req_data2, thip, &thip->reqinfo, &class_entry,
-                             endlist, &dblistptr);
+                             endlist);
     } else if (req_type == CNS_LISTLINKS) {
       if (new_req_type != CNS_LISTLINKS)
         endlist = 1;
       c = Cns_srv_listlinks (req_data2, thip, &thip->reqinfo, &lnk_entry,
-                             endlist, &dblistptr);
+                             endlist);
     } else {
       if (new_req_type != CNS_LISTTAPE)
         endlist = 1;
       c = Cns_srv_listtape (magic, req_data2, thip, &thip->reqinfo, &fmd_entry,
-                            &smd_entry, endlist, &dblistptr);
+                            &smd_entry, endlist);
     }
     if (req_data2 != req_data)
       free (req_data2);

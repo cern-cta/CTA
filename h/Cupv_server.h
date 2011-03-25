@@ -48,7 +48,6 @@ struct Cupv_dbfd {
 };
 
 typedef char Cupv_dbrec_addr[19];
-typedef int DBLISTPTR;
 
 struct Cupv_srv_request_info {
         uid_t           uid;
@@ -86,7 +85,7 @@ EXTERN_C int Cupv_check_regexp (char *);
 EXTERN_C int Cupv_check_regexp_syntax (char *, struct Cupv_srv_request_info *);
 EXTERN_C int Cupv_compare_priv (struct Cupv_userpriv *, struct Cupv_userpriv *);
 EXTERN_C int Cupv_opendb (struct Cupv_dbfd *);
-EXTERN_C int Cupv_start_tr (int, struct Cupv_dbfd *);
+EXTERN_C int Cupv_start_tr (struct Cupv_dbfd *);
 EXTERN_C int Cupv_end_tr (struct Cupv_dbfd *);
 EXTERN_C int Cupv_init_dbpkg ();
 EXTERN_C int Cupv_abort_tr (struct Cupv_dbfd *);
@@ -96,9 +95,9 @@ EXTERN_C int Cupv_get_privilege_entry (struct Cupv_dbfd *, struct Cupv_userpriv 
 EXTERN_C int Cupv_delete_privilege_entry (struct Cupv_dbfd *, Cupv_dbrec_addr *);
 EXTERN_C int Cupv_insert_privilege_entry (struct Cupv_dbfd *, struct Cupv_userpriv *);
 EXTERN_C int Cupv_update_privilege_entry (struct Cupv_dbfd *, Cupv_dbrec_addr *, struct Cupv_userpriv *);
-EXTERN_C int Cupv_list_privilege_entry  (struct Cupv_dbfd *, int, struct Cupv_userpriv *, struct Cupv_userpriv *, int, DBLISTPTR *);
+EXTERN_C int Cupv_list_privilege_entry  (struct Cupv_dbfd *, int, struct Cupv_userpriv *, struct Cupv_userpriv *, int);
 
-EXTERN_C int Cupv_srv_list (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *, int, DBLISTPTR *);
+EXTERN_C int Cupv_srv_list (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *, int);
 EXTERN_C int Cupv_srv_add (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
 EXTERN_C int Cupv_srv_delete (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
 EXTERN_C int Cupv_srv_modify (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
