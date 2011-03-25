@@ -13,7 +13,6 @@ debian/castor/usr/share/man/man3/Cns_delcomment.3castor.gz
 debian/castor/usr/share/man/man3/Cns_delete.3castor.gz
 debian/castor/usr/share/man/man3/Cns_deleteclass.3castor.gz
 debian/castor/usr/share/man/man3/Cns_delsegbycopyno.3castor.gz
-debian/castor/usr/share/man/man3/Cns_dropsegs.3castor.gz
 debian/castor/usr/share/man/man3/Cns_enterclass.3castor.gz
 debian/castor/usr/share/man/man3/Cns_getcomment.3castor.gz
 debian/castor/usr/share/man/man3/Cns_getcwd.3castor.gz

@@ -58,7 +58,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 13, "PutDone enforced by internal cleaning"},
      { 15, "Error caught in nsFilesDeleted"},
      { 16, "Error caught in stgFilesDeleted"},
-     { 17, "rollback called"},
+     { 17, "Rollback called"},
      { 18, "setfsize ignored by nameserver because of concurrent file modification in another stager"},
      { 19, "Segment has no tape associated" },
      { 20, "Segment is in bad status, could not be used for recall" },
@@ -75,6 +75,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 32, "Error caught when calling Cns_getpath. This file won't be deleted from the nameserver when it should have been" },
      { 33, "Error caught when unlinking file" },
      { 34, "Invalid FILEQUERY/MAXNBRESPONSES configuration option, using default" },
+     { 35, "Cns_closex ignored by name server due to concurrent file modification on another stager" },
      { -1, ""}};
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);

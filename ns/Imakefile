@@ -37,12 +37,12 @@ NSLIB_OBJS	=	Cns_aborttrans.o \
                         Cns_chdir.o \
                         Cns_chmod.o \
                         Cns_chown.o \
+                        Cns_closex.o \
                         Cns_closedir.o \
                         Cns_creat.o \
                         Cns_delcomment.o \
                         Cns_delete.o \
                         Cns_deleteclass.o \
-                        Cns_dropsegs.o \
                         Cns_delsegbycopyno.o \
                         Cns_du.o \
                         Cns_endsess.o \
@@ -142,7 +142,6 @@ CLIENTLIBMANPAGE(Cns_creatg)
 CLIENTLIBMANPAGE(Cns_delcomment)
 CLIENTLIBMANPAGE(Cns_delete)
 CLIENTLIBMANPAGE(Cns_deleteclass)
-CLIENTLIBMANPAGE(Cns_dropsegs)
 CLIENTLIBMANPAGE(Cns_delsegbycopyno)
 CLIENTLIBMANPAGE(Cns_endsess)
 CLIENTLIBMANPAGE(Cns_endtrans)

@@ -611,11 +611,9 @@ END;
 
 
 /* PL/SQL method implementing prepareForMigration
-   returnCode can take 3 values :
-    - 0 : nothing special
-    - 1 : the file got deleted while it was written to
-    - 2 : the file is 0 bytes and was thus "migrated" by only
-          changing the diskCopy status.
+   returnCode can take 2 values :
+    - 0 : Nothing special
+    - 1 : The file got deleted while it was being written to
 */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
@@ -633,8 +631,9 @@ BEGIN
   returnCode := 0;
   -- Get CastorFile
   SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest WHERE id = srId;
-  -- Lock the CastorFile
-  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Lock the CastorFile and get the fileid and name server host
+  SELECT id, fileid, nsHost INTO cfId, fId, nh
+    FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   -- check that we are a Put or an Update
   SELECT Request.id INTO unused
@@ -644,9 +643,10 @@ BEGIN
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   BEGIN
-    -- Check that there is a PrepareToPut/Update going on. There can be only a single one
-    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
-    -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
+    -- Check that there is a PrepareToPut/Update going on. There can be only a
+    -- single one or none. If there was a PrepareTo, any subsequent PPut would
+    -- be rejected and any subsequent PUpdate would be directly archived (cf.
+    -- processPrepareRequest).
     SELECT SubRequest.diskCopy INTO unused
       FROM SubRequest,
        (SELECT id FROM StagePrepareToPutRequest UNION ALL
@@ -654,38 +654,30 @@ BEGIN
      WHERE SubRequest.CastorFile = cfId
        AND Request.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
-    -- if we got here, we are a Put inside a PrepareToPut
+    -- If we got here, we are a Put inside a PrepareToPut
     contextPIPP := 0;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- here we are a standalone Put
+    -- Here we are a standalone Put
     contextPIPP := 1;
   END;
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
-  -- was deleted via stageRm while being written to. Thus, we should just give up
+  -- was deleted via stageRm while being written to. Thus, we should just give
+  -- up
   BEGIN
     SELECT status INTO unused
       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
     returnCode := 1;
-    -- But we still would like to have the fileId and nameserver
-    -- host for logging reasons
-    SELECT fileId, nsHost INTO fId, nh
-      FROM CastorFile WHERE id = cfId;
     RETURN;
   END;
   -- Now we can safely update CastorFile's file size
   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts
    WHERE id = cfId AND (lastUpdateTime IS NULL OR ts >= lastUpdateTime);
   -- If ts < lastUpdateTime, we were late and another job already updated the
-  -- CastorFile. So we nevertheless retrieve the real file size, and
-  -- we take a lock on the CastorFile. Together with triggers, this insures that
-  -- we are the only ones to deal with its copies.
-  SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
-    FROM CastorFile
-    WHERE id = cfId
-    FOR UPDATE;
-  -- Get uid, gid and svcclass from Request
+  -- CastorFile. So we nevertheless retrieve the real file size.
+  SELECT fileSize INTO realFileSize FROM CastorFile WHERE id = cfId;
+  -- Get svcclass from Request
   SELECT svcClass INTO svcId
     FROM SubRequest,
       (SELECT id, svcClass FROM StagePutRequest UNION ALL
@@ -696,13 +688,6 @@ BEGIN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
     putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
-    -- identify the cases where a file is 0 bytes and has thus been
-    -- "migrated" by only updating the DiskCopy status
-    -- this case will then be handled by the OraJobSvc in order
-    -- to drop any potential existing segment in the nameserver
-    IF realFileSize = 0 THEN
-      returnCode := 2;
-    END IF;
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update

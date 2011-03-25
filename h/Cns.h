@@ -131,10 +131,11 @@
 #define CNS_STATCS              84
 #define CNS_UPDATEFILE_CHECKSUM 85
 #define CNS_UPDATESEG_STATUS    86
-#define CNS_DROPSEGS            87
+#define CNS_DROPSEGS            87 /* deprecated, Cns_closex */
 #define CNS_UNLINKBYVID         88
 #define CNS_DELSEGBYCOPYNO      89
 #define CNS_OPENX               90
+#define CNS_CLOSEX              91
 
                         /* name server reply types */
 

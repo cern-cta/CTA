@@ -4791,80 +4791,6 @@ int Cns_srv_setsegattrs(int magic,
   RETURN (0);
 }
 
-/* Cns_srv_dropsegs - drops all segments of a file */
-
-int Cns_srv_dropsegs(char *req_data,
-                     struct Cns_srv_thread_info *thip,
-                     struct Cns_srv_request_info *reqinfo)
-{
-  char       *func = "dropsegs";
-  char       *rbp;
-  char       path[CA_MAXPATHLEN+1];
-  char       cwdpath[CA_MAXPATHLEN+1];
-  u_signed64 cwd;
-  u_signed64 fileid = 0;
-  struct Cns_file_metadata fmd_entry;
-  Cns_dbrec_addr rec_addr;
-
-  /* Unmarshall message body */
-  rbp = req_data;
-  unmarshall_LONG (rbp, reqinfo->uid);
-  unmarshall_LONG (rbp, reqinfo->gid);
-  get_client_actual_id (thip);
-  unmarshall_HYPER (rbp, cwd);
-  unmarshall_HYPER (rbp, fileid);
-  if (fileid > 0)
-    reqinfo->fileid = fileid;
-  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
-
-  /* Construct log message */
-  get_cwd_path (thip, cwd, cwdpath);
-  sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
-
-  /* Check if the user is authorized to drop segments */
-  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
-                  localhost, P_ADMIN))
-    RETURN (serrno);
-
-  /* Start transaction */
-  (void) Cns_start_tr (thip->s, &thip->dbfd);
-
-  if (fileid) {
-
-    /* Get/lock basename entry */
-    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
-      RETURN (serrno);
-  } else {
-
-    /* Check parent directory components for search permission and get/lock
-     * basename entry
-     */
-    if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
-                       reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
-                       CNS_MUST_EXIST))
-      RETURN (serrno);
-
-    /* Record the fileid being processed */
-    reqinfo->fileid = fmd_entry.fileid;
-  }
-
-  /* Check if the entry is a regular file */
-  if (fmd_entry.filemode & S_IFDIR)
-    RETURN (EISDIR);
-  if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
-    RETURN (SEINTERNAL);
-  if (*fmd_entry.name == '/')
-    RETURN (SEINTERNAL);
-
-  /* Delete file segments */
-  if (Cns_delete_segs(thip, &fmd_entry, 0) != 0)
-    if (serrno != SEENTRYNFND)
-      RETURN (serrno);
-
-  RETURN (0);
-}
-
 /* Cns_srv_startsess - start session */
 
 int Cns_srv_startsess(char *req_data,
@@ -5935,6 +5861,146 @@ int Cns_srv_openx(char *req_data,
     /* Ammend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
   }
+
+  /* Marshall return value, the attributes of the file */
+  sbp = repbuf;
+  marshall_HYPER (sbp, fmd_entry.fileid);
+  marshall_WORD (sbp, fmd_entry.filemode);
+  marshall_LONG (sbp, fmd_entry.nlink);
+  marshall_LONG (sbp, fmd_entry.uid);
+  marshall_LONG (sbp, fmd_entry.gid);
+  marshall_HYPER (sbp, fmd_entry.filesize);
+  marshall_TIME_T (sbp, fmd_entry.atime);
+  marshall_TIME_T (sbp, fmd_entry.mtime);
+  marshall_TIME_T (sbp, fmd_entry.ctime);
+  marshall_WORD (sbp, fmd_entry.fileclass);
+  marshall_BYTE (sbp, fmd_entry.status);
+  marshall_STRING (sbp, fmd_entry.csumtype);
+  marshall_STRING (sbp, fmd_entry.csumvalue);
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  RETURN (0);
+}
+
+/* Cns_srv_closex - close a file, setting its size and checksum attributes where appropriate */
+
+int Cns_srv_closex(char *req_data,
+                   struct Cns_srv_thread_info *thip,
+                   struct Cns_srv_request_info *reqinfo)
+{
+  /* Variables */
+  struct Cns_file_metadata fmd_entry;
+  Cns_dbrec_addr rec_addr;  /* File record address */
+  char         *func = "closex";
+  char         *rbp;
+  char         csumtype[3];
+  char         csumvalue[CA_MAXCKSUMLEN + 1];
+  time_t       last_mod_time = 0;
+  time_t       new_mod_time = 0;
+  u_signed64   fileid;
+  u_signed64   filesize;
+  unsigned int checksum = 0;
+  char         *dp = NULL;
+  char         repbuf[93];
+  char         *sbp;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
+
+  unmarshall_HYPER (rbp, fileid);
+  if (fileid > 0)
+    reqinfo->fileid = fileid;
+  unmarshall_HYPER (rbp, filesize);
+  if (unmarshall_STRINGN (rbp, csumtype, 3))
+    RETURN (EINVAL);
+  if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN + 1))
+    RETURN (EINVAL);
+  unmarshall_TIME_T (rbp, new_mod_time);
+  unmarshall_TIME_T (rbp, last_mod_time);
+
+  /* Check if namespace is in 'readonly' mode */
+  if (rdonly)
+    RETURN (EROFS);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf,
+           "FileSize=%llu ChecksumType=\"%s\" ChecksumValue=\"%s\" "
+           "NewModTime=%lld LastModTime=%lld",
+           filesize, csumtype, csumvalue,
+           (long long int)new_mod_time, (long long int)last_mod_time);
+
+  /* Check that the checksum type and value are valid. For now only adler32 (AD)
+   * and pre-adler32 (PA) are supported.
+   */
+  if (csumtype[0] != '\0' && strcmp(csumtype, "AD") && strcmp(csumtype, "PA"))
+    RETURN (EINVAL);
+  if (csumvalue[0] != '\0') {
+    checksum = strtoul (csumvalue, &dp, 16);
+    if (*dp != '\0') {
+      RETURN (EINVAL);
+    }
+  }
+
+  /* The call to close files is a privileged one, so here we check that the
+   * user issuing the call is authorized to do so
+   */
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
+                  localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  /* Get/lock basename entry */
+  if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
+    RETURN (serrno);
+
+  /* We deliberately don't check the parent directory components for search
+   * permissions as the previous call to CUPV has already verified that we are
+   * an ADMIN so the check is superfluous.
+   */
+
+  if (fmd_entry.filemode & S_IFDIR) /* Operation not permitted on directories */
+    RETURN (EISDIR);
+
+  /* Check for concurrent modifications, this can be seen when the timestamp of
+   * the current name server file is newer than the last known modification
+   * time
+   */
+  if ((fmd_entry.mtime > last_mod_time) && (last_mod_time > 0))
+    RETURN (ENSFILECHG);
+
+  /* Check for end-to-end checksum mismatch */
+  if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&
+      (strcmp (csumtype, "AD") == 0)) {
+    if (strcmp (fmd_entry.csumvalue, csumvalue) != 0) {
+      nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
+              "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
+              "ExpectedChecksum=\"0x%s\"",
+              reqinfo->reqid, nshostname, fmd_entry.fileid, csumvalue,
+              fmd_entry.csumvalue);
+      RETURN (SECHECKSUM);
+    }
+  }
+
+  /* Update the file metadata entry */
+  fmd_entry.filesize = filesize;
+  fmd_entry.mtime = new_mod_time;
+  fmd_entry.ctime = fmd_entry.mtime;
+  strcpy (fmd_entry.csumtype, csumtype);
+  strcpy (fmd_entry.csumvalue, csumvalue);
+
+  /* Delete the segments associated to the file */
+  if (Cns_delete_segs (thip, &fmd_entry, 0) != 0)
+    if (serrno != SEENTRYNFND)
+      RETURN (serrno);
+  if (fmd_entry.status == 'm')
+    fmd_entry.status = '-';
+
+  if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
+    RETURN (serrno);
 
   /* Marshall return value, the attributes of the file */
   sbp = repbuf;

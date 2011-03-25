@@ -212,12 +212,12 @@ EXTERN_C int Cns_srv_chclass (char *, struct Cns_srv_thread_info *, struct Cns_s
 EXTERN_C int Cns_srv_chdir (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_chmod (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_chown (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_closex (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_creat (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delcomment (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_deleteclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delsegbycopyno (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_dropsegs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_du (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_endsess (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_endtrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

@@ -82,8 +82,6 @@
 #include <serrno.h>
 #include <string.h>
 
-#define NS_SEGMENT_NOTOK (' ')
-
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
@@ -600,7 +598,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       m_prepareForMigrationStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
     }
-    // execute the statement and see whether we found something
+    // Execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subReqId);
     m_prepareForMigrationStatement->setDouble(2, fileSize);
     m_prepareForMigrationStatement->setDouble(3, timeStamp);
@@ -612,118 +610,85 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       throw ex;
     }
 
-    // collect NS related output
+    // Populate the fileid structure to be passed to Cns_closex and DLF log
+    // messages
     struct Cns_fileid fileid;
-    fileid.fileid =
-      (u_signed64)m_prepareForMigrationStatement->getDouble(4);
-    std::string nsHost =
-      m_prepareForMigrationStatement->getString(5);
+    fileid.fileid = (u_signed64)m_prepareForMigrationStatement->getDouble(4);
     strncpy(fileid.server,
-            nsHost.c_str(),
+            m_prepareForMigrationStatement->getString(5).c_str(),
             CA_MAXHOSTNAMELEN);
 
     // Check for errors
     int returnCode = m_prepareForMigrationStatement->getInt(6);
-    // only 2 values (other than 0) need to ba handled for the returnCode :
-    //   - 1 : the file got deleted while it was written to
-    //   - 2 : the file is 0 bytes and was thus "migrated" by only
-    //         changing the diskCopy status.
     if (returnCode == 1) {
-      // The file got deleted while it was written to
-      // This by itself is not an error, but we should not take
-      // any action here. We thus log something and return
+      // The file got deleted while it was begin written to. This by itself is
+      // not an error, but we should not take any action here.
       // "File was deleted while it was written to. Giving up with migration."
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                               DLF_BASE_ORACLELIB, 0, 0, &fileid);
-      // also rollback the prepareForMigration
+      // Rollback the prepareForMigration changes
       cnvSvc()->rollback();
       return;
     }
-    bool dropSegments = false;
-    if (returnCode == 2) {
-      // the file is 0 bytes and was thus "migrated" by only
-      // changing the diskCopy status. We still need to drop all
-      // associated segments in the nameserver DB
-      dropSegments = true;
-    }
 
-    // Update name server
+    // If we got this far we need to update the file size and checksum
+    // information related to the file in the name server. By updating the
+    // size we also delete any segments associated to that file.
+
+    // Prepare the name server error buffer
     char cns_error_buffer[512];  /* Cns error buffer */
     *cns_error_buffer = 0;
     if (Cns_seterrbuf(cns_error_buffer, sizeof(cns_error_buffer)) != 0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
-        << "prepareForMigration : Cns_seterrbuf failed.";
-      // rollback the prepareForMigration
+        << "prepareForMigration: Cns_seterrbuf failed.";
+      // Rollback the prepareForMigration changes
       cnvSvc()->rollback();
       throw ex;
     }
 
-    // drop segments if needed
-    if (dropSegments) {
-      int rc = Cns_dropsegs(0, &fileid);
-      if (rc != 0) {
-        // raise an error
+    // Check if checksum information should be updated in the name space.
+    bool useChkSum = true;
+    const char *confValue = getconfent("CNS", "USE_CKSUM", 0);
+    if (confValue != NULL) {
+      if (!strncasecmp(confValue, "no", 2)) {
+        useChkSum = false;
+      }
+    }
+
+    // Call Cns_closex.
+    int rc = 0;
+    if (useChkSum) {
+      rc = Cns_closex(&fileid, fileSize, csumtype.c_str(), csumvalue.c_str(),
+                      timeStamp, timeStamp, NULL);
+    } else {
+      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, timeStamp, NULL);
+    }
+
+    if (rc != 0) {
+      if (serrno == ENSFILECHG) {
+        // Special case where the Cns_closex was not taken into account due to
+        // concurrent modifications on the same file on another stager. This is
+        // ok, but we still log something.
+        // "Cns_closex ignored by name server due to concurrent file modification on another stager"
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 35, 0, 0, &fileid);
+      } else {
         castor::exception::Exception ex(serrno);
         ex.getMessage()
-          << "prepareForMigration : Cns_dropsegs failed : "
-          << sstrerror(serrno);
-        // rollback the prepareForMigration
+          << "prepareForMigration: Cns_closex failed: ";
+        if (!strcmp(cns_error_buffer, "")) {
+          ex.getMessage() << sstrerror(serrno);
+        } else {
+          ex.getMessage() << cns_error_buffer;
+        }
+        // Rollback the prepareForMigration changes
         cnvSvc()->rollback();
         throw ex;
       }
     }
 
-    // timeStamp is zero only if this function is used by putDone
-    // it that case with the putDone not scheduled the file size
-    // should NOT be updated
-    if (timeStamp != 0) {
-
-      // Update size in the nameserver and checksum in name server
-      bool useChkSum = true;
-      const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
-      if ((confvalue != NULL) && (csumtype != "") && (csumvalue != "")) {
-        if (!strncasecmp(confvalue, "no", 2)) {
-          useChkSum = false;
-        }
-      }
-
-      // Update the size of file and its checksum if possible
-      int rc = 0;
-      if (useChkSum) {
-        rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp, timeStamp);
-      } else {
-        rc = Cns_setfsize(0, &fileid, fileSize, timeStamp, timeStamp);
-      }
-
-      if (rc != 0) {
-        if (serrno == ENSFILECHG) {
-          // special case where the setfsize was not taken into
-          // account due to concurrent modifications on the same
-          // file on another stager. This is ok, but we still log
-          // something
-          // "setfsize ignored by nameserver because of concurrent file modification in another stager"
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 18, 0, 0, &fileid);
-        } else {
-          castor::exception::Exception ex(serrno);
-          ex.getMessage()
-            << "prepareForMigration : "
-            << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
-            << " failed : ";
-          if (!strcmp(cns_error_buffer, "")) {
-            ex.getMessage() << sstrerror(serrno);
-          } else {
-            ex.getMessage() << cns_error_buffer;
-          }
-          // rollback the prepareForMigration
-          cnvSvc()->rollback();
-          throw ex;
-        }
-      }
-      
-      // commit prepareForMigration procedure
-      cnvSvc()->commit();
-    }
+    // Commit the prepareForMigration changes
+    cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
