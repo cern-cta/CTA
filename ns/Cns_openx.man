@@ -169,8 +169,6 @@ One of
 .I path
 or
 .I file_uniqueid
-or
-.I statbuf
 is a NULL pointer.
 .TP
 .B ENAMETOOLONG

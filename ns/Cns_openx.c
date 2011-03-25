@@ -48,7 +48,7 @@ Cns_openx(const uid_t owneruid,
     return (-1);
   Cns_getid(&uid, &gid);
 
-  if (! path || ! statbuf || ! file_uniqueid) {
+  if (! path || ! file_uniqueid) {
     serrno = EFAULT;
     return (-1);
   }
@@ -91,22 +91,28 @@ Cns_openx(const uid_t owneruid,
 
     /* Unmarshall response */
     rbp = repbuf;
-    unmarshall_HYPER (rbp, statbuf->fileid);
-    unmarshall_WORD (rbp, statbuf->filemode);
-    unmarshall_LONG (rbp, statbuf->nlink);
-    unmarshall_LONG (rbp, statbuf->uid);
-    unmarshall_LONG (rbp, statbuf->gid);
-    unmarshall_HYPER (rbp, statbuf->filesize);
-    unmarshall_TIME_T (rbp, statbuf->atime);
-    unmarshall_TIME_T (rbp, statbuf->mtime);
-    unmarshall_TIME_T (rbp, statbuf->ctime);
-    unmarshall_WORD (rbp, statbuf->fileclass);
-    unmarshall_BYTE (rbp, statbuf->status);
-    unmarshall_STRING (rbp, statbuf->csumtype);
-    unmarshall_STRING (rbp, statbuf->csumvalue);
+    if (statbuf != NULL) {
+      unmarshall_HYPER (rbp, statbuf->fileid);
+      unmarshall_WORD (rbp, statbuf->filemode);
+      unmarshall_LONG (rbp, statbuf->nlink);
+      unmarshall_LONG (rbp, statbuf->uid);
+      unmarshall_LONG (rbp, statbuf->gid);
+      unmarshall_HYPER (rbp, statbuf->filesize);
+      unmarshall_TIME_T (rbp, statbuf->atime);
+      unmarshall_TIME_T (rbp, statbuf->mtime);
+      unmarshall_TIME_T (rbp, statbuf->ctime);
+      unmarshall_WORD (rbp, statbuf->fileclass);
+      unmarshall_BYTE (rbp, statbuf->status);
+      unmarshall_STRING (rbp, statbuf->csumtype);
+      unmarshall_STRING (rbp, statbuf->csumvalue);
+    }
 
     strcpy (file_uniqueid->server, server);
-    file_uniqueid->fileid = statbuf->fileid;
+    if (statbuf == NULL) {
+      unmarshall_HYPER (rbp, file_uniqueid->fileid);
+    } else {
+      file_uniqueid->fileid = statbuf->fileid;
+    }
   }
   if (c && serrno == SENAMETOOLONG) {
     serrno = ENAMETOOLONG;
