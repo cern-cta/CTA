@@ -11,5 +11,5 @@
     stager: Waiting for callback from castor
     stager: <uuid4> CBK <answer duration4> s before callback from <server ip4> was received
 Received 2 responses
-<noTapeFileName1> <fileid@ns> STAGED
-<noTapeFileName2> <fileid@ns1> STAGED
+<fileName> <fileid@ns> STAGED
+<otherFileName> <fileid@ns1> STAGED

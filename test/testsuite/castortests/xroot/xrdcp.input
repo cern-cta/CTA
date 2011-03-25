@@ -3,3 +3,4 @@ stager_qry -M <noTapeFileName>
 <xrdcp> <xrdcpURL> <tmpLocalFileName>
 diff <tmpLocalFileName> <localFileName>
 rm <tmpLocalFileName>
+nsrm <noTapeFileName>
