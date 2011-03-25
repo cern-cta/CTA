@@ -2,5 +2,5 @@
     nocompress
     weekly
     missingok
-    rotate 120
+    rotate 200
 }
