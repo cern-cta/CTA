@@ -449,8 +449,7 @@ try:
     transfermanager.daemon = True
     # launch a processing thread that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
-    maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', None, int)
-    dispatch = dispatcher.Dispatcher(connections, queueingTransfers, maxNbTransfersScheduledPerSecond, nbWorkers)
+    dispatch = dispatcher.Dispatcher(connections, queueingTransfers, nbWorkers)
     dispatch.setName('Dispatcher')
     dispatch.setDaemon(True)
     dispatch.start()

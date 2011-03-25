@@ -171,7 +171,7 @@ class DBUpdater(threading.Thread):
 class Dispatcher(threading.Thread):
   '''scheduling thread, responsible for connecting to the stager database and scheduling transfers'''
 
-  def __init__(self, connections, queueingTransfers, maxNbTransfersScheduledPerSecond = None, nbWorkers=5):
+  def __init__(self, connections, queueingTransfers, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
     threading.Thread.__init__(self)
     # whether we should continue running
@@ -182,8 +182,6 @@ class Dispatcher(threading.Thread):
     self.queueingTransfers = queueingTransfers
     # our own name
     self.hostname = socket.getfqdn()
-    # max number of transfers to be scheduled per second. If None, request throttling is not active 
-    self.maxNbTransfersScheduledPerSecond = maxNbTransfersScheduledPerSecond
     # a counter of number of scheduled transfers in the current second
     self.nbTransfersScheduled = 0
     # the current second, so that we can reset the previous counter when it changes
@@ -412,7 +410,8 @@ class Dispatcher(threading.Thread):
                   # if maxNbTransfersScheduledPerSecondis not None, request throttling is active
                   # What it does is keep a count of the number of scheduled request in the current second
                   # and wait the rest of the second if it reached the limit
-                  if self.maxNbTransfersScheduledPerSecond:
+                  maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', None, int)
+                  if maxNbTransfersScheduledPerSecond:
                     currentTime = time.time()
                     currentSecond = int(currentTime)
                     # reset the counters if we've changed second
@@ -422,7 +421,7 @@ class Dispatcher(threading.Thread):
                     # increase counter of number of transfers scheduled within the current second
                     self.nbTransfersScheduled = self.nbTransfersScheduled + 1
                     # did we reach our quota of requests for this second ?
-                    if self.nbTransfersScheduled >= self.maxNbTransfersScheduledPerSecond:
+                    if self.nbTransfersScheduled >= maxNbTransfersScheduledPerSecond:
                       # check that the second is not just over, so that we do not sleep a negative time
                       if currentTime < self.currentSecond + 1:
                         # wait until the second is over
