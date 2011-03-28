@@ -81,7 +81,7 @@ class DBConnection(object):
         cur.close()
         if dbVer == None:
             raise ValueError, 'No CastorVersion table found in the database'
-        if dbVer[0] <> DBConnection.SCHEMAVERSION:
+        if dbVer[0] != DBConnection.SCHEMAVERSION:
             raise ValueError, 'Version mismatch between the database and the software : "'
             + dbVer + '" versus "' + DBConnection.SCHEMAVERSION + '"'
         # 'Created new Oracle connection' message
@@ -101,7 +101,8 @@ class DBConnection(object):
         '''Given an exception, check whether we want to reconnect on that one.
         If yes, drop the existing connection'''
         # first check whether we have an Oracle exception. If not, exit
-        if not isinstance(e, cx_Oracle.Error): return
+        if not isinstance(e, cx_Oracle.Error):
+            return
         # extract ORACLE error code
         error, = e.args
         errorcode = error.code
@@ -134,7 +135,7 @@ class DBConnection(object):
                     return lambda: NotImplemented()
             except cx_Oracle.Error, e:
                 # we got an Oracle error, let's see if we have to reconnect
-                checkForReconnection(e)
+                self.checkForReconnection(e)
                 raise
         return facade
 
@@ -191,13 +192,13 @@ def getStagerDBConnectParams():
 #-------------------------------------------------------------------------------
 # getNSDBConnectParam
 #-------------------------------------------------------------------------------
-def getNSDBConnectParam(file):
-    line = open('/etc/castor/' + file).readline()
+def getNSDBConnectParam(filename):
+    line = open('/etc/castor/' + filename).readline()
     line = line[0:len(line)-1] #drop trailing \n
     sl = line.find('/')
     if sl == -1:
         raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
-    ar = line.find('@',sl)
+    ar = line.find('@', sl)
     if ar == -1:
         raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
     user = line[0:sl]
@@ -262,7 +263,7 @@ def connectToVmgr():
         try:
             conn = DBConnection( l.strip() )
             break
-        except cx_Oracle.DatabaseError, exc:
+        except cx_Oracle.DatabaseError:
             print 'connectToVmgr Error:  Unexpected error while connecting to the VMGR db'
             raise
     return conn
@@ -284,21 +285,20 @@ def connectToDLF():
 # parseNsListClass
 #-------------------------------------------------------------------------------
 def parseNsListClass():
-  '''creates the nsFileCl dictionary from nslistclass'''
-  global nsFileCl 
-  nsFileCl = {'0' : 'null'}
-  print "Parsing nslistclass output..."
-  #nsout = open('nslistclass_output.txt', 'r')
-  nsout = os.popen("nslistclass | grep -C1 CLASS_ID | awk '{ print $2 }'", 'r')
-  while(1):
-    currentLine = nsout.readline()
-    if currentLine == '':
-      nsout.close()
-      return
-    nsFileCl[currentLine.strip('\n')] = nsout.readline().strip('\n')
-    nsout.readline()
-    nsout.readline()
-
+    '''creates the nsFileCl dictionary from nslistclass'''
+    global nsFileCl 
+    nsFileCl = {'0' : 'null'}
+    print "Parsing nslistclass output..."
+    #nsout = open('nslistclass_output.txt', 'r')
+    nsout = os.popen("nslistclass | grep -C1 CLASS_ID | awk '{ print $2 }'", 'r')
+    while(1):
+        currentLine = nsout.readline()
+        if currentLine == '':
+            nsout.close()
+            return
+        nsFileCl[currentLine.strip('\n')] = nsout.readline().strip('\n')
+        nsout.readline()
+        nsout.readline()
 
 DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_WAITDISK2DISKCOPY",
@@ -338,85 +338,89 @@ def intToBoolean(entry, value):
 # castorObject
 #-------------------------------------------------------------------------------
 class castorObject(dict):
-  '''a base object for CASTOR items.
-  This includes clever printing and case insensitive member access'''
-  def __init__(self, name):
-    self.name = name
-  def __str__(self):
-    res = '[# ' + self.name + ' #]\n'
-    for s in self.keys():
-      if isinstance(self[s], type([])):
-        res = res + s.lower() + " :\n"
-        i = 0
-        for t in self[s]:
-          res = res + "  " + str(i) + " :\n"
-          # this is only reindenting
-          for l in str(t).split('\n'):
-            if len(l) > 0:
-              res = res + '    ' + l + '\n'
-          i = i + 1
-      else:
-        res = res + s.lower() + " : " + str(intToBoolean(s, self[s])) + "\n"
-    return res
-  def __getattr__(self, name):
-    return self[name.upper()]
+    '''A base object for CASTOR items.
+    This includes clever printing and case insensitive member access'''
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        res = '[# ' + self.name + ' #]\n'
+        for s in self.keys():
+            if isinstance(self[s], type([])):
+                res = res + s.lower() + " :\n"
+                i = 0
+                for t in self[s]:
+                    res = res + "  " + str(i) + " :\n"
+                    # this is only reindenting
+                    for l in str(t).split('\n'):
+                        if len(l) > 0:
+                            res = res + '    ' + l + '\n'
+                i = i + 1
+            else:
+                res = res + s.lower() + " : " + str(intToBoolean(s, self[s])) + "\n"
+        return res 
+
+    def __getattr__(self, name):
+        return self[name.upper()]
 
 def getObject(stcur, table, key, value):
-  '''Gets an object from the DB'''
-  stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '='
-  if type(value) == type(''): stmt = stmt + "'"
-  stmt = stmt + value
-  if type(value) == type(''): stmt = stmt + "'"  
-  stcur.execute(stmt)
-  rawobj = stcur.fetchone()
-  if None == rawobj:
-    raise ValueError, "Found no " + table + " with " + key + " : '" + value + "'"
-  obj = castorObject(table)
-  i = 0
-  for d in stcur.description:
-    obj[d[0]] = rawobj[i]
-    i = i + 1
-  return obj
-
-def fillObjectgeneric(stcur, obj, entry, table, stmt):
-  '''Fill an object with the children given by a DB stmt'''
-  stcur.execute(stmt)
-  rawobjs = stcur.fetchall()
-  obj[entry] = []
-  for r in rawobjs:
-    child = castorObject(table)
+    '''Gets an object from the DB'''
+    stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '='
+    if type(value) == type(''):
+        stmt = stmt + "'"
+    stmt = stmt + value
+    if type(value) == type(''):
+        stmt = stmt + "'"  
+    stcur.execute(stmt)
+    rawobj = stcur.fetchone()
+    if None == rawobj:
+        raise ValueError, "Found no " + table + " with " + key + " : '" + value + "'"
+    obj = castorObject(table)
     i = 0
     for d in stcur.description:
-      child[d[0]] = r[i]
-      i = i + 1
-    obj[entry].append(child)
+        obj[d[0]] = rawobj[i]
+        i = i + 1
+    return obj
+
+def fillObjectgeneric(stcur, obj, entry, table, stmt):
+    '''Fill an object with the children given by a DB stmt'''
+    stcur.execute(stmt)
+    rawobjs = stcur.fetchall()
+    obj[entry] = []
+    for r in rawobjs:
+        child = castorObject(table)
+        i = 0
+        for d in stcur.description:
+            child[d[0]] = r[i]
+            i = i + 1
+        obj[entry].append(child)
 
 def fillObject12n(stcur, obj, entry, table, key):
-  '''Fill an object following a 1->n relation'''
-  stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '=' + str(obj.id)
-  fillObjectgeneric(stcur, obj, entry, table, stmt)
+    '''Fill an object following a 1->n relation'''
+    stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '=' + str(obj.id)
+    fillObjectgeneric(stcur, obj, entry, table, stmt)
 
 def fillObjectn21(stcur, obj, entry, table):
-  '''Fill an object following a n->1 relation'''
-  value = obj[entry.upper()]
-  if value == 0:
-      obj[entry.upper()] = None
-  else:
-      stmt = 'SELECT * FROM ' + table + ' WHERE id =' + str(value)
-      fillObjectgeneric(stcur, obj, entry.upper(), table, stmt)
+    '''Fill an object following a n->1 relation'''
+    value = obj[entry.upper()]
+    if value == 0:
+        obj[entry.upper()] = None
+    else:
+        stmt = 'SELECT * FROM ' + table + ' WHERE id =' + str(value)
+        fillObjectgeneric(stcur, obj, entry.upper(), table, stmt)
 
 def fillObjectn2n(stcur, obj, entry, table):
-  '''Fill an object following a n->n relation'''
-  if obj.name < table:
-    jointable = obj.name + '2' + table
-    key1 = 'child'
-    key2 = 'parent'
-  else:
-    jointable = table + '2' + obj.name
-    key1 = 'parent'
-    key2 = 'child'
-  stmt = 'SELECT ' + table + '.* FROM ' + table + ',' + jointable + ' WHERE ' + jointable + '.' + key1 + '=' + table + '.id AND ' + jointable + '.' + key2 + '=' + str(obj.id)
-  fillObjectgeneric(stcur, obj, entry, table, stmt)
+    '''Fill an object following a n->n relation'''
+    if obj.name < table:
+        jointable = obj.name + '2' + table
+        key1 = 'child'
+        key2 = 'parent'
+    else:
+        jointable = table + '2' + obj.name
+        key1 = 'parent'
+        key2 = 'child'
+    stmt = 'SELECT ' + table + '.* FROM ' + table + ',' + jointable + ' WHERE ' + jointable + '.' + key1 + '=' + table + '.id AND ' + jointable + '.' + key2 + '=' + str(obj.id)
+    fillObjectgeneric(stcur, obj, entry, table, stmt)
 
 #-------------------------------------------------------------------------------
 # getSvcClass
@@ -480,8 +484,9 @@ class CastorConf(dict):
         f = open(self.fileName)
         for line in f.readlines():
             line = line.strip()
-            if len(line) == 0 or line[0] == '#': continue # ignore comments
-            category, name, value = line.split(None,2)
+            if len(line) == 0 or line[0] == '#':
+                continue # ignore comments
+            category, name, value = line.split(None, 2)
             if category not in self:
                 self[category] = {}
             if name not in self[category]:
@@ -491,7 +496,7 @@ class CastorConf(dict):
                 print "Value used : " + self[category][name]
         f.close()
 
-    def getValue(self,category,key,default=None,typ=str):
+    def getValue(self, category, key, default=None, typ=str):
         '''returns the value of a configuration item casted into the given type.
         also handles casting errors and a default value if nothing is found'''
         # check whether we need to refresh our data first
