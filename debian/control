@@ -83,7 +83,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-transfer-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, castor-dbtools, rpyc
+Depends: python, logrotate, python-daemon, castor-dbtools, python-rpyc
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, central server package
 
@@ -95,7 +95,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-diskserver-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, rpyc
+Depends: python, logrotate, python-daemon, python-rpyc
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR
 
