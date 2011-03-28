@@ -4762,6 +4762,80 @@ int Cns_srv_setsegattrs(int magic,
   RETURN (0);
 }
 
+/* Cns_srv_dropsegs - drops all segments of a file */
+
+int Cns_srv_dropsegs(char *req_data,
+                     struct Cns_srv_thread_info *thip,
+                     struct Cns_srv_request_info *reqinfo)
+{
+  char       *func = "dropsegs";
+  char       *rbp;
+  char       path[CA_MAXPATHLEN+1];
+  char       cwdpath[CA_MAXPATHLEN+1];
+  u_signed64 cwd;
+  u_signed64 fileid = 0;
+  struct Cns_file_metadata fmd_entry;
+  Cns_dbrec_addr rec_addr;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
+  unmarshall_HYPER (rbp, cwd);
+  unmarshall_HYPER (rbp, fileid);
+  if (fileid > 0)
+    reqinfo->fileid = fileid;
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURN (SENAMETOOLONG);
+
+  /* Construct log message */
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
+
+  /* Check if the user is authorized to drop segments */
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
+                  localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
+  (void) Cns_start_tr (&thip->dbfd);
+
+  if (fileid) {
+
+    /* Get/lock basename entry */
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
+      RETURN (serrno);
+  } else {
+
+    /* Check parent directory components for search permission and get/lock
+     * basename entry
+     */
+    if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
+                       reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
+                       CNS_MUST_EXIST))
+      RETURN (serrno);
+
+    /* Record the fileid being processed */
+    reqinfo->fileid = fmd_entry.fileid;
+  }
+
+  /* Check if the entry is a regular file */
+  if (fmd_entry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+  if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
+    RETURN (SEINTERNAL);
+  if (*fmd_entry.name == '/')
+    RETURN (SEINTERNAL);
+
+  /* Delete file segments */
+  if (Cns_delete_segs(thip, &fmd_entry, 0) != 0)
+    if (serrno != SEENTRYNFND)
+      RETURN (serrno);
+
+  RETURN (0);
+}
+
 /* Cns_srv_startsess - start session */
 
 int Cns_srv_startsess(char *req_data,

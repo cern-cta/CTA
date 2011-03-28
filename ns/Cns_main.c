@@ -552,6 +552,9 @@ int procreq(int magic,
   case CNS_DELETE:
     c = Cns_srv_delete (req_data, thip, &thip->reqinfo);
     break;
+  case CNS_DROPSEGS:
+    c = Cns_srv_dropsegs (req_data, thip, &thip->reqinfo);
+    break;
   case CNS_DELSEGBYCOPYNO:
     c = Cns_srv_delsegbycopyno (req_data, thip, &thip->reqinfo);
     break;

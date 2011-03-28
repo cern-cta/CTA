@@ -247,6 +247,7 @@ EXTERN_C int Cns_creatx (const char *, mode_t, struct Cns_fileid *);
 EXTERN_C int Cns_delcomment (const char *);
 EXTERN_C int Cns_delete (const char *);
 EXTERN_C int Cns_deleteclass (char *, int, char *);
+EXTERN_C int Cns_dropsegs (const char *, struct Cns_fileid *);
 EXTERN_C int Cns_delsegbycopyno (const char *, struct Cns_fileid *, int);
 EXTERN_C int Cns_du (const char *, int, u_signed64 *, u_signed64 *);
 EXTERN_C int Cns_endsess ();

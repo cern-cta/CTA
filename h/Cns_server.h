@@ -217,6 +217,7 @@ EXTERN_C int Cns_srv_delcomment (char *, struct Cns_srv_thread_info *, struct Cn
 EXTERN_C int Cns_srv_delete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_deleteclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delsegbycopyno (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_dropsegs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_du (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_endsess (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_endtrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

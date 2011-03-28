@@ -43,6 +43,7 @@ NSLIB_OBJS	=	Cns_aborttrans.o \
                         Cns_delcomment.o \
                         Cns_delete.o \
                         Cns_deleteclass.o \
+                        Cns_dropsegs.o \
                         Cns_delsegbycopyno.o \
                         Cns_du.o \
                         Cns_endsess.o \
