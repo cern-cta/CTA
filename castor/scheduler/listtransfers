@@ -40,10 +40,10 @@ def usage(exitCode):
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hspu:vxr:', ['help', 'summary', 'poolsummary', 'user', 'verbose', 'extra', 'restrict'])
+  options, args = getopt.getopt(sys.argv[1:], 'hspu:vxr:', ['help', 'summary', 'poolsummary', 'user', 'verbose', 'extra', 'restrict'])
 except Exception, e:
-    print e
-    usage(1)
+  print e
+  usage(1)
 summary = False
 poolsummary = False
 user = None
@@ -97,10 +97,10 @@ if extraprotocols and not extra:
 # then parse the arguments, if any
 diskpool = None
 if len(args) > 0:
-    diskpool = args[0]
-    if len(args) > 1:
-      print "Too many arguments, only one diskpool can be given"
-      usage(1)
+  diskpool = args[0]
+  if len(args) > 1:
+    print "Too many arguments, only one diskpool can be given"
+    usage(1)
 
 def processTransfersListing(rpconn, diskpool, user):
   '''retrieves and display full listing of the running transfers for the given diskpool and user'''
@@ -108,13 +108,13 @@ def processTransfersListing(rpconn, diskpool, user):
     transfers = rpconn.root.listTransfers(diskpool, user)
     print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
     n = 0
-    for id, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
+    for transid, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
       ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
       if startTime != None :
         sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
       else:
         sstartTime = ''
-      print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (id, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
+      print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
       n = n + 1
     if n > 1000:
       print 'Note that the list may have been truncated to 1000 pending and 1000 running transfers per hosts'

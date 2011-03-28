@@ -32,7 +32,6 @@ import threading
 import castor_tools
 import random
 import socket
-import castor_tools
 import dlf
 from transfermanagerdlf import msgs
 
@@ -76,7 +75,8 @@ class Synchronizer(threading.Thread):
       while slept < checkinterval:
         # note that we sleep one second at a time so that we can exit
         # if the thread stops running
-        if not self.running: break
+        if not self.running:
+          break
         time.sleep(1)
         slept = slept + 1
       # loop over reconnections to the DB.

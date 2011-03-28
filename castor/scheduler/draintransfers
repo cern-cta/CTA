@@ -38,25 +38,25 @@ def usage(exitCode):
 # first parse the options
 verbose = False
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+  options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
-    print e
-    usage(1)
+  print e
+  usage(1)
 for f, v in options:
-    if f == '-h' or f == '--help':
-        usage(0)
-    elif f == '-v' or f == '--verbose':
-        verbose = True
-    else:
-        print "unknown option : " + f
-        usage(1)
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
 
 tmNode = None
 if len(args) > 0:
-    tmNode = args[0]
-    if len(args) > 1:
-      print "Too many arguments"
-      usage(1)
+  tmNode = args[0]
+  if len(args) > 1:
+    print "Too many arguments"
+    usage(1)
 
 # connect to server and gather numbers
 conf = castor_tools.castorConf()

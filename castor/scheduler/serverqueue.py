@@ -56,7 +56,8 @@ class ServerQueue(dict):
         # note the extra argument, used only for d2ddest transfers and telling whether the source is ready
         # As it could be that the source has already started when the destinations are entered, we have
         # to infer this argument from the transferid, looking into the list of running sources
-        if diskserver not in self: self[diskserver] = {}
+        if diskserver not in self:
+          self[diskserver] = {}
         self[diskserver][transferid] = [transfer, arrivaltime, transfertype, transferid in self.d2dsrcrunning]
         # add the diskserver to the transferLocations list for this transfer (except for sources)
         if transfertype != 'd2dsrc':
@@ -84,12 +85,14 @@ class ServerQueue(dict):
           transfer = self[machine][transferid][0]
           fileid = (transfer[8], int(transfer[6]))
         # note where transfer was sent
-        if machine not in transfersPerMachine: transfersPerMachine[machine] = []
+        if machine not in transfersPerMachine:
+          transfersPerMachine[machine] = []
         transfersPerMachine[machine].append(transferid)
         # cleanup
         del self[machine][transferid]
       # if we have a source transfer already running, stop it
-      if transferid in self.d2dsrcrunning: d2dend(transferid,lock=False)
+      if transferid in self.d2dsrcrunning:
+        d2dend(transferid, lock=False)
       return fileid, transfer[2]
     except KeyError:
       # we are not handling this transfer, fine, ignore it then
@@ -141,7 +144,8 @@ class ServerQueue(dict):
           for ds in self.transfersLocations[transferid]:
             rawtransfer, arrivaltime, transfertype, d2drun = self[ds][transferid]
             break
-          if self._transfer2user(transfertype, rawtransfer) != requser: continue
+          if self._transfer2user(transfertype, rawtransfer) != requser:
+            continue
         # else put in the list of transfers to really drop
         # note that we can not drop here as we are looping on transfersLocations that would be modified
         transferstodrop.append(transferid)
@@ -195,7 +199,8 @@ class ServerQueue(dict):
         # However, the diskservers concerned will be notified.
         machines = self.transfersLocations[transferid]
         del self.transfersLocations[transferid]
-        for machine in machines: del self[machine][transferid]
+        for machine in machines:
+          del self[machine][transferid]
       finally:
         self.lock.release()
       # inform all other machines that this job has been handled
@@ -238,7 +243,8 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       # add transfer to the list of running d2dsrc transfers on the diskserver
-      if diskserver not in self: self[diskserver] = {}
+      if diskserver not in self:
+        self[diskserver] = {}
       self[diskserver][transferid] = [transfer, arrivaltime, 'd2dsrc', 'True']
       self.d2dsrcrunning[transferid] = diskserver
     finally:
@@ -257,13 +263,16 @@ class ServerQueue(dict):
           # get diskpool
           diskpool = diskServerList.getDiskServerPool(diskserver)
           # are we interested in this diskpool ?
-          if reqdiskpool and reqdiskPool != diskpool: break
+          if reqdiskpool and reqdiskpool != diskpool:
+            break
           # are we interested in this user ?
           if requser:
             rawtransfer, arrivaltime, transfertype, d2drun = self[diskserver][transferid]
-            if requser != self._transfer2user(transfertype, rawtransfer): break
+            if requser != self._transfer2user(transfertype, rawtransfer):
+              break
           # increase counter for corresponding diskpool
-          if diskpool not in res: res[diskpool] = 0
+          if diskpool not in res:
+            res[diskpool] = 0
           res[diskpool] = res[diskpool] + 1
           # no need to really loop, we already counted this guy
           break
@@ -313,7 +322,8 @@ class ServerQueue(dict):
             # clean up _transfersLocations
             del self.transfersLocations[transferid]
             # if we have a source transfer already running, stop it
-            if transferid in self.d2dsrcrunning: d2dend(transferid,reqid,lock=False)
+            if transferid in self.d2dsrcrunning:
+              d2dend(transferid, reqid, lock=False)
         except KeyError, e:
           # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore

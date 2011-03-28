@@ -29,7 +29,6 @@
 import time
 import threading
 import castor_tools
-import socket
 import dlf
 from transfermanagerdlf import msgs
 
@@ -64,29 +63,29 @@ class Aborter(threading.Thread):
           # setup an oracle connection and register our interest for 'transfersToAbort' alerts
           stcur = self.dbConnection().cursor()
           try:
-            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersToAbort'); END;");
+            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersToAbort'); END;")
             # prepare a cursor for database polling
             stcur = self.dbConnection().cursor()
             subReqIdsCur = self.dbConnection().cursor()
             subReqIdsCur.arraysize = 200
             # infinite loop over the polling of the DB
             while self.running:
-                # see whether there is something to do
-                # not that this will hang until something comes or the internal timeout is reached
-                stcur.callproc('transfersToAbortProc', [subReqIdsCur])
-                # kill the corresponding transfers
-                subReqIds = tuple(id for item in subReqIdsCur.fetchall() for id in item)
-                if subReqIds:
-                  # call the internal method on all schedulers (including ourselves)
-                  # note that this is a replication of the exposed_killtransfersinternal function
-                  # of TransferManagerService
-                  # Unfortunately, we cannot call it directly (lack of reference to the service object
-                  # as it's created by the rpyc framework) and we do not want to call it via rpyc
-                  # as it would creates too many intricated calls
-                  for scheduler in self.config['DiskManager']['ServerHosts'].split():
-                    self.connections.killtransfersinternal(scheduler, subReqIds)
-                  # and commit the changes in the DB so that we do not try to drop these transfers again
-                  self.dbConnection().commit()
+              # see whether there is something to do
+              # not that this will hang until something comes or the internal timeout is reached
+              stcur.callproc('transfersToAbortProc', [subReqIdsCur])
+              # kill the corresponding transfers
+              subReqIds = tuple(id for item in subReqIdsCur.fetchall() for id in item)
+              if subReqIds:
+                # call the internal method on all schedulers (including ourselves)
+                # note that this is a replication of the exposed_killtransfersinternal function
+                # of TransferManagerService
+                # Unfortunately, we cannot call it directly (lack of reference to the service object
+                # as it's created by the rpyc framework) and we do not want to call it via rpyc
+                # as it would creates too many intricated calls
+                for scheduler in self.config['DiskManager']['ServerHosts'].split():
+                  self.connections.killtransfersinternal(scheduler, subReqIds)
+                # and commit the changes in the DB so that we do not try to drop these transfers again
+                self.dbConnection().commit()
           finally:
             stcur.close()
         except Exception, e:
@@ -101,7 +100,7 @@ class Aborter(threading.Thread):
       try:
         stcur = self.dbConnection().cursor()
         try:
-          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersToAbort'); END;");
+          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersToAbort'); END;")
         finally:
           stcur.close()
       except Exception, e:

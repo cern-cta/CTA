@@ -28,7 +28,6 @@
 
 import os, pwd, stat, re, string, socket
 import threading
-import subprocess
 import time
 import dlf
 from diskmanagerdlf import msgs
@@ -59,7 +58,7 @@ class RunningTransfersSet(object):
     # lock for the tapeTransfers variable
     self.tapelock = threading.Lock()
 
-  def _parsesockettable(self,inodes):
+  def _parsesockettable(self, inodes):
     '''Parses the proc filesystem to map socket inodes to actual host names.
     note that only IPv4 is supported here, although supporting IPv6 is trivial.
     Only a different file should be open, namefile /proc/net/tcp6.
@@ -72,10 +71,11 @@ class RunningTransfersSet(object):
         cols = self._SOCKET_TABLE_LINE_DELIMITER.split(l.strip())
         # get inode and see whether we are interested
         inode = int(cols[13])
-        if inode not in inodes:continue
+        if inode not in inodes:
+          continue
         # get remote IP address
         rawip = cols[3] # needs to be reversed
-        packedip = "".join([chr(int(rawip[i:i+2],16)) for i in range(len(rawip)-2,-1,-2)])
+        packedip = "".join([chr(int(rawip[i:i+2], 16)) for i in range(len(rawip)-2, -1, -2)])
         try:
           ip = socket.inet_ntop(socket.AF_INET, packedip)
           # get remote host
@@ -102,7 +102,8 @@ class RunningTransfersSet(object):
         cmdpath = os.path.join(pidpath, 'cmdline')
         cmdline = open(cmdpath, 'rb').read()
         # do we deal with a tape transfer ?
-        if cmdline[0:18] != '/usr/bin/rfiod\0-sl': continue
+        if cmdline[0:18] != '/usr/bin/rfiod\0-sl':
+          continue
         # recall or migration ? To find out, we find the open file on the filesystem and look at its mode
         fdpath = os.path.join(pidpath, 'fd')
         # loop though the filedescriptors
@@ -112,7 +113,8 @@ class RunningTransfersSet(object):
           linkpath = os.path.join(fdpath, fd)
           fdstat = os.lstat(linkpath)
           # only consider links
-          if not stat.S_ISLNK(fdstat.st_mode) : continue
+          if not stat.S_ISLNK(fdstat.st_mode):
+            continue
           # and only consider links to local filesystem or sockets
           targetpath = os.readlink(linkpath)
           if not foundlocalfile:
@@ -176,22 +178,23 @@ class RunningTransfersSet(object):
         cmdline = open(os.path.sep+os.path.join('proc', pid, 'cmdline'), 'rb').read()
         # find out the ones concerning us
         if cmdline.startswith('/usr/bin/stagerjob') or cmdline.startswith('/usr/bin/d2dtransfer'):
-            # get all details we need
-            args = cmdline.split('\0')
-            transferid = args[4]
-            reqid = args[2]
-            notifFileName = args[-1][7:] # drop the leading 'file://'
-            transfertype = 'standard'
-            if args[0] == '/usr/bin/d2dtransfer': transfertype = 'd2ddest'
-            arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
-            startTime = arrivalTime
-            # create the entry in the list of running transfers, associated to the first scheduler we find
-            self.transfers.add((transferid, self.config['DiskManager']['ServerHosts'].split()[0], tuple(args), notifFileName, None, transfertype, arrivalTime, startTime))
-            # keep in memory that this was a rebuilt entry
-            leftOvers[transferid] = int(pid)
-            # 'Found transfer already running' message
-            fileid = (args[8],int(args[6]))
-            dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqid=transferid, reqid=reqid, fileid=fileid)
+          # get all details we need
+          args = cmdline.split('\0')
+          transferid = args[4]
+          reqid = args[2]
+          notifFileName = args[-1][7:] # drop the leading 'file://'
+          transfertype = 'standard'
+          if args[0] == '/usr/bin/d2dtransfer':
+            transfertype = 'd2ddest'
+          arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
+          startTime = arrivalTime
+          # create the entry in the list of running transfers, associated to the first scheduler we find
+          self.transfers.add((transferid, self.config['DiskManager']['ServerHosts'].split()[0], tuple(args), notifFileName, None, transfertype, arrivalTime, startTime))
+          # keep in memory that this was a rebuilt entry
+          leftOvers[transferid] = int(pid)
+          # 'Found transfer already running' message
+          fileid = (args[8], int(args[6]))
+          dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqid=transferid, reqid=reqid, fileid=fileid)
       except:
         # exceptions caught here mean we could not get the info we wanted on the
         # process we were looking at. We only ignore this process as it has probably
@@ -238,9 +241,11 @@ class RunningTransfersSet(object):
           n = n + 1
           nbslots = self.config.getValue('DiskManager', protocol+'Weight', None, int)
           ns = ns + nbslots
-          if protocol not in nproto: nproto[protocol] = 0
+          if protocol not in nproto:
+            nproto[protocol] = 0
           nproto[protocol] = nproto[protocol] + 1
-          if protocol not in nsproto: nsproto[protocol] = 0
+          if protocol not in nsproto:
+            nsproto[protocol] = 0
           nsproto[protocol] = nsproto[protocol] + nbslots
     finally:
       self.lock.release()
@@ -252,9 +257,11 @@ class RunningTransfersSet(object):
           n = n + 1
           nbslots = self.config.getValue('DiskManager', transfertype+'Weight', None, int)
           ns = ns + nbslots
-          if transfertype not in nproto: nproto[transfertype] = 0
+          if transfertype not in nproto:
+            nproto[transfertype] = 0
           nproto[transfertype] = nproto[transfertype] + 1
-          if transfertype not in nsproto: nsproto[transfertype] = 0
+          if transfertype not in nsproto:
+            nsproto[transfertype] = 0
           nsproto[transfertype] = nsproto[transfertype] + nbslots
       finally:
         self.tapelock.release()
@@ -338,7 +345,8 @@ class RunningTransfersSet(object):
             sourcesToBeInformed.append((scheduler, transferid, fileid, transfer[2]))
           # in case of transfers killed by a signal, remember to inform the DB
           if rc < 0:
-            if scheduler not in killedTransfers: killedTransfers[scheduler] = []
+            if scheduler not in killedTransfers:
+              killedTransfers[scheduler] = []
             killedTransfers[scheduler].append((transferid, fileid, rc, 'Transfer has been killed', transfer[2]))
       # cleanup ended transfers
       self.transfers = set(transfer for transfer in self.transfers if transfer[0] not in ended)
@@ -422,7 +430,8 @@ class RunningTransfersSet(object):
       # go through the transfer
       for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
         # Stop whenever we find one
-        if reqscheduler == scheduler: return True
+        if reqscheduler == scheduler:
+          return True
       # No transfer found
       return False
     finally:

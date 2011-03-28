@@ -72,7 +72,7 @@ class LocalQueue(Queue.Queue):
       # first keep note of the new transfer (index by subreqId)
       self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
       # then add it to the underlying queue
-      Queue.Queue.put(self,transferid)
+      Queue.Queue.put(self, transferid)
     finally:
       self.lock.release()
 
@@ -137,7 +137,8 @@ class LocalQueue(Queue.Queue):
       currentTime = time.time()
       timeToNextTry = currentTime - arrivaltime
       maxTime = self.config.getValue('DiskManager', 'MaxRetryInterval', 300, int)
-      if timeToNextTry > maxTime: timeToNextTry = maxTime
+      if timeToNextTry > maxTime:
+        timeToNextTry = maxTime
       # and put the transfer into the list of pending ones
       self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
       self.pendingD2dDest.append((transferid, transfer[2], currentTime + timeToNextTry))
@@ -199,7 +200,8 @@ class LocalQueue(Queue.Queue):
         # if we found a timeout, check and cancel if needed
         if timeout >= 0 and currenttime - arrivaltime > timeout:
           toberemoved.append(transferid)
-          if scheduler not in canceledTransfers: canceledTransfers[scheduler] = []
+          if scheduler not in canceledTransfers:
+            canceledTransfers[scheduler] = []
           fileid = (transfer[8], int(transfer[6]))
           canceledTransfers[scheduler].append((transferid, fileid, 1004, 'Timed out while queueing (timeout was ' + str(timeout) + 's)', transfer[2])) # SETIMEDOUT
       if toberemoved:
@@ -234,7 +236,8 @@ class LocalQueue(Queue.Queue):
           cancelTransfer = True
         if cancelTransfer:
           toberemoved.append(transferid)
-          if scheduler not in canceledTransfers: canceledTransfers[scheduler] = []
+          if scheduler not in canceledTransfers:
+            canceledTransfers[scheduler] = []
           if transfertype == 'd2dsrc':
             msg = "Transfer terminated, source filesystem for disk2disk copy is DISABLED"
           else: # standard, d2ddest
@@ -252,7 +255,7 @@ class LocalQueue(Queue.Queue):
     # check whether transfers need to be canceled for timeouts
     self.checkForTimeoutTransfersCancelation(canceledTransfers)
     # All further processing requires resource killing to be active.
-    if self.config.getValue('JobManager','ResReqKill','yes').lower() != 'no':
+    if self.config.getValue('JobManager', 'ResReqKill', 'yes').lower() != 'no':
       # check whether transfers need to be canceled when hardware gets disabled
       self.checkForDisabledHardwareTransfersCancelation(canceledTransfers)
     # Inform the schedulers of canceled transfers
@@ -287,9 +290,11 @@ class LocalQueue(Queue.Queue):
           n = n + 1
           nbslots = self.config.getValue('DiskManager', protocol+'Weight', None, int)
           ns = ns + nbslots
-          if protocol not in nproto: nproto[protocol] = 0
+          if protocol not in nproto:
+            nproto[protocol] = 0
           nproto[protocol] = nproto[protocol] + 1
-          if protocol not in nsproto: nsproto[protocol] = 0
+          if protocol not in nsproto:
+            nsproto[protocol] = 0
           nsproto[protocol] = nsproto[protocol] + nbslots
     finally:
       self.lock.release()
@@ -326,7 +331,7 @@ class LocalQueue(Queue.Queue):
     '''Lists all pending and running transfers'''
     self.lock.acquire()
     try:
-      return set([(transferid,transfer[1][2]) for transferid, transfer in self.queueingTransfers.items()])
+      return set([(transferid, transfer[1][2]) for transferid, transfer in self.queueingTransfers.items()])
     finally:
       self.lock.release()
 
@@ -345,7 +350,8 @@ class LocalQueue(Queue.Queue):
       # go through the transfer
       for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems():
         # Stop whenever we find one
-        if reqscheduler == scheduler: return True
+        if reqscheduler == scheduler:
+          return True
       # No transfer found
       return False
     finally:

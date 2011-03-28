@@ -100,7 +100,8 @@ class DiskServerListCache:
         self.diskPool2DiskServer = {}
         self.diskServer2DiskPool = {}
         for diskserver, diskPool in rows:
-          if diskPool not in self.diskPool2DiskServer : self.diskPool2DiskServer[diskPool] = []
+          if diskPool not in self.diskPool2DiskServer:
+            self.diskPool2DiskServer[diskPool] = []
           self.diskPool2DiskServer[diskPool].append(diskserver)
           self.diskServer2DiskPool[diskserver] = diskPool
         self.lastRefresh = time.time()
@@ -140,11 +141,13 @@ def extendedSum(t):
     (('key1', value), ...)
   In such a case, the resulting tuple will contain every key present in any of the original tuples
   and for each key, the sum of the values for this key in the different tuples'''
-  if len(t) == 0: return 0
-  if isinstance(t[0], int): return sum(t)
-  dt = map(dict,t)
-  keys = reduce(lambda a,b : a|set(b), [set()] + dt)
-  return tuple((n, sum([d.get(n,0) for d in dt])) for n in keys)
+  if len(t) == 0:
+    return 0
+  if isinstance(t[0], int):
+    return sum(t)
+  dt = map(dict, t)
+  keys = reduce(lambda a, b : a|set(b), [set()] + dt)
+  return tuple((n, sum([d.get(n, 0) for d in dt])) for n in keys)
 
 class TransferManagerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
@@ -178,12 +181,11 @@ class TransferManagerService(rpyc.Service):
       for ds in dslist[diskPool]:
         try:
           # call the function on the appropriate diskserver
-          res[diskPool][ds] = getattr(connections,func)(ds, *args)
+          res[diskPool][ds] = getattr(connections, func)(ds, *args)
         except Exception, e:
           # 'Could not contact diskserver' message
           dlf.writenotice(msgs.COULDNOTCONTACTDS, function=func, diskserver=ds,
                           errortype=str(e.__class__), error=str(e))
-          pass
     return res
 
   def exposed_nbTransfersPerPool(self, diskPool=None, user=None):
@@ -200,7 +202,8 @@ class TransferManagerService(rpyc.Service):
     nbTransfersPerPool = {}
     for scheduler in configuration['DiskManager']['ServerHosts'].split():
       for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
-        if diskpool not in nbTransfersPerPool: nbTransfersPerPool[diskpool] = 0
+        if diskpool not in nbTransfersPerPool:
+          nbTransfersPerPool[diskpool] = 0
         nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
     return nbTransfersPerPool
 
@@ -231,8 +234,9 @@ class TransferManagerService(rpyc.Service):
     res = []
     for diskPool in nbs:
       if len(nbs[diskPool]) > 0:
-        data = map(extendedSum,zip(*nbs[diskPool].values()))
-        if diskPool not in nbtransfersPerPool: nbtransfersPerPool[diskPool] = 0
+        data = map(extendedSum, zip(*nbs[diskPool].values()))
+        if diskPool not in nbtransfersPerPool:
+          nbtransfersPerPool[diskPool] = 0
         res.append(tuple([diskPool, nbtransfersPerPool[diskPool]] + data))
       else:
         res.append((diskPool,))
@@ -254,7 +258,7 @@ class TransferManagerService(rpyc.Service):
     hosts = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # flatten it to a list of (diskserver, (values))
     if hosts :
-      hostslist = reduce(lambda x,y:x+y, [diskserver.items() for diskserver in hosts.values()])
+      hostslist = reduce(lambda x, y:x+y, [diskserver.items() for diskserver in hosts.values()])
     else:
       hostslist = []
     # return a tuple of (diskserver, value1, value2, ...)
@@ -279,7 +283,7 @@ class TransferManagerService(rpyc.Service):
     killedtransfers = []
     killedtransferids = []
     for scheduler in configuration['DiskManager']['ServerHosts'].split():
-      for transferid, (fileid, reqid) in getattr(connections,method)(scheduler, arg):
+      for transferid, (fileid, reqid) in getattr(connections, method)(scheduler, arg):
         # for the transfers actually killed (and only once per tranfer
         if transferid not in killedtransferids:
           # Remember to fail the transfer in the stager DB with ESTKILLED error code
@@ -322,7 +326,7 @@ class TransferManagerService(rpyc.Service):
     try:
       stcur = self.dbConnection().cursor()
       stcur.arraysize = 50
-      transferids, fileids, errnos, errmsgs, reqids = map(list,zip(*transfers))
+      transferids, fileids, errnos, errmsgs, reqids = map(list, zip(*transfers))
       stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
       stcur.close()
     except Exception, e:
@@ -412,10 +416,11 @@ class Suicider(threading.Thread):
             # 'Could not contact diskserver' message
             dlf.writenotice(msgs.COULDNOTCONTACTDS, function='anyTransfersFromScheduler', diskserver=ds,
                             errortype=str(e.__class__), error=str(e))
-            pass
           # do not continue contacting machines if some are already not ok
-          if not oktodie: break
-        if not oktodie: break
+          if not oktodie:
+            break
+        if not oktodie:
+          break
       # if all is over, commit suicide
       if oktodie:
         transfermanager.close()
