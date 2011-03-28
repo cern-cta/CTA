@@ -36,7 +36,7 @@
 #include "castor/stager/daemon/UpdateHandler.hpp"
 
 #include "castor/BaseObject.hpp"
-#include "castor/PortsConfig.hpp"
+#include "castor/PortNumbers.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
@@ -44,6 +44,7 @@
 #include "Cns_api.h"
 #include "expert_api.h"
 #include "serrno.h"
+#include "getconfent.h"
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
@@ -67,9 +68,10 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
-
+#include "castor/System.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -80,11 +82,32 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread() throw (castor::exception::Exception) :
+castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread()
+  throw (castor::exception::Exception) :
   BaseRequestSvcThread("JobReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC)
 {
-  m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
-  m_jobManagerPort = castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_JOBMANAGER);
+  // Determine the jobmanager host and notification port on which to send UDP
+  // messages too wake up the jobmanager to reduce processing latencies.
+  const char *value = NULL;
+
+  // First the host
+  m_jobManagerHost = "";
+  if ((value = getconfent("JOBMANAGER", "HOST", 0))) {
+    m_jobManagerHost = value;
+  }
+
+  // Second the port
+  m_jobManagerPort = castor::JOBMANAGER_DEFAULT_NOTIFYPORT;
+  if ((value = getconfent("JOBMANAGER", "NOTIFYPORT", 0))) {
+    try {
+      m_jobManagerPort = castor::System::porttoi((char *)value);
+    } catch (castor::exception::Exception& ex) {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: "
+		     << ex.getMessage().str() << std::endl;
+      throw e;
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -124,7 +147,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* subRe
     stgRequestHandler->preHandle();
     stgRequestHandler->handle();
 
-    if (stgRequestHandler->notifyJobManager()) {
+    if (stgRequestHandler->notifyJobManager() && (m_jobManagerHost != "")) {
       castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
     }
 

@@ -40,7 +40,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               MessageAck.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
-              PortsConfig.cpp \
               Services.cpp \
               System.cpp \
               bwlist/Privilege.cpp \

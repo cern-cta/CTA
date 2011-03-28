@@ -102,11 +102,11 @@ int castor::System::porttoi(char* str)
     e.getMessage() << "Bad port value." << std::endl;
     throw e;
   }
-  if (iport > 65535) {
+  if ((iport > 65535) || (iport < 0)) {
     castor::exception::Exception e(errno);
     e.getMessage()
       << "Invalid port value : " << iport
-      << ". Must be < 65535." << std::endl;
+      << ". Must be < 65535 and > 0." << std::endl;
     throw e;
   }
   return iport;

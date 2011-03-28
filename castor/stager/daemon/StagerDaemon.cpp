@@ -35,7 +35,9 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/PortsConfig.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/PortNumbers.hpp"
+#include "castor/System.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -59,8 +61,9 @@ int main(int argc, char* argv[]){
     castor::stager::daemon::StagerDaemon stagerDaemon;
 
     castor::stager::IStagerSvc* stgService =
-      dynamic_cast<castor::stager::IStagerSvc*>(
-        castor::BaseObject::services()->service("DbStagerSvc", castor::SVC_DBSTAGERSVC));
+      dynamic_cast<castor::stager::IStagerSvc*>
+      (castor::BaseObject::services()->service
+       ("DbStagerSvc", castor::SVC_DBSTAGERSVC));
     if(stgService == 0) {
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "Failed to load DbStagerSvc, check for shared libraries configuration" << std::endl;
@@ -70,42 +73,52 @@ int main(int argc, char* argv[]){
     /*******************************/
     /* thread pools for the stager */
     /*******************************/
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("JobRequestSvcThread",
-        new castor::stager::daemon::JobRequestSvcThread()));
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("JobRequestSvcThread",
+	new castor::stager::daemon::JobRequestSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("PrepRequestSvcThread",
-        new castor::stager::daemon::PrepRequestSvcThread()));
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("PrepRequestSvcThread",
+	new castor::stager::daemon::PrepRequestSvcThread()));
 
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("StageRequestSvcThread",
+	new castor::stager::daemon::StageRequestSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("StageRequestSvcThread",
-        new castor::stager::daemon::StageRequestSvcThread()));
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("BulkStageReqSvcThread",
+	new castor::stager::daemon::BulkStageReqSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("BulkStageReqSvcThread",
-        new castor::stager::daemon::BulkStageReqSvcThread()));
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("QueryRequestSvcThread",
+	new castor::stager::daemon::QueryRequestSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("QueryRequestSvcThread",
-        new castor::stager::daemon::QueryRequestSvcThread()));
+    // These threads poll the database every 2 seconds.
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("ErrorSvcThread",
+	new castor::stager::daemon::ErrorSvcThread(), 2));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("ErrorSvcThread",
-        new castor::stager::daemon::ErrorSvcThread(), 2));   // those threads poll the db every 2 secs.
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("jobSvcThread",
+	new castor::stager::daemon::JobSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("jobSvcThread",
-        new castor::stager::daemon::JobSvcThread()));
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("GcSvcThread",
+	new castor::stager::daemon::GcSvcThread()));
 
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("GcSvcThread",
-        new castor::stager::daemon::GcSvcThread()));
-
-    stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("CleaningThread",
-        new castor::stager::daemon::CleaningThread(), 4000));   // this thread only dumps logs from cleanup
+    // These thrads dump the logs from the cleanup table
+    stagerDaemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("CleaningThread",
+	new castor::stager::daemon::CleaningThread(), 4000));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
@@ -117,8 +130,22 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('G')->setNbThreads(6);
     stagerDaemon.getThreadPool('C')->setNbThreads(1);
 
-    stagerDaemon.addNotifierThreadPool(
-      castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_STAGER));
+    // Determine the notification port for the notifier thread pool. The port
+    // will be used to recieve UDP notifications from the request handler to
+    // wake up the various stager services.
+    int notifyPort = castor::STAGER_DEFAULT_NOTIFYPORT;
+    const char *value = getconfent("STAGER", "NOTIFYPORT", 0);
+    if (value) {
+      try {
+	notifyPort = castor::System::porttoi((char *)value);
+      } catch (castor::exception::Exception& ex) {
+	castor::exception::InvalidArgument e;
+	e.getMessage() << "Invalid STAGER/NOTIFYPORT value: "
+		       << ex.getMessage().str() << std::endl;
+	throw e;
+      }
+    }
+    stagerDaemon.addNotifierThreadPool(notifyPort);
 
     stagerDaemon.parseCommandLine(argc, argv);
 
@@ -145,7 +172,8 @@ int main(int argc, char* argv[]){
 /******************************************************************************************/
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
-castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::Exception)
+castor::stager::daemon::StagerDaemon::StagerDaemon()
+  throw (castor::exception::Exception)
   : castor::server::BaseDaemon("stagerd") {
 
   castor::dlf::Message stagerDlfMessages[]={
