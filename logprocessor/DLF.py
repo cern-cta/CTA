@@ -14,7 +14,6 @@
 import sys
 import re
 import time
-import os
 import LoggingCommon
 
 # Constants
@@ -65,10 +64,10 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 for line in f.readlines():
                     if line[0:1] not in '#':
                         self.__connString = line.rstrip( '\n' )
-                f.close
+                f.close()
             except:
                 raise LoggingCommon.ConfigError( 'Unable to parse connect '
-                                                 'string file: ' + connString )
+                                                 'string file: ' + self.__connString )
 
         #-----------------------------------------------------------------------
         # Try and connect to the database
@@ -141,7 +140,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 self.__conn = cx_Oracle.Connection( self.__connString )
                 self.__curs = self.__conn.cursor()
                 break
-            except cx_Oracle.DatabaseError, e:
+            except cx_Oracle.DatabaseError:
                 continue
 
     #---------------------------------------------------------------------------
@@ -755,7 +754,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Process the key-value pairs
         #-----------------------------------------------------------------------
-        id     = len(self.__msgQueue)
+        msgid  = len(self.__msgQueue)
         kv_str = []
         kv_int = []
         kvdict = message['key-value']
@@ -789,9 +788,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                                       ' characters in length: ' + str(message))
                 msg['subreqid'] = kvdict[kv]
             else:
-                intval = None
                 rec = {}
-                rec['id']        = id
+                rec['id']        = msgid
                 rec['timestamp'] = msg['timestamp']
                 rec['name']      = kv
 
@@ -915,14 +913,14 @@ class DLFMsgParser:
         #-----------------------------------------------------------------------
         # Parse the message
         #-----------------------------------------------------------------------
-        types = [('log', self.exp), ('msgadd', self.maddexp)]
-        type  = None
-        res   = None
+        types   = [('log', self.exp), ('msgadd', self.maddexp)]
+        msgtype = None
+        res     = None
 
         for t in types:
             res = t[1].match( msg )
             if res:
-                type = t[0]
+                msgtype = t[0]
                 break
 
         if not res:
@@ -933,8 +931,8 @@ class DLFMsgParser:
         #-----------------------------------------------------------------------
         # We have a normal log message
         #-----------------------------------------------------------------------
-        result['type'] = type
-        if type == 'log':
+        result['type'] = msgtype
+        if msgtype == 'log':
             for g in res.groupdict().keys():
                 if g == 'message':
                     continue
@@ -965,7 +963,7 @@ class DLFMsgParser:
         #-----------------------------------------------------------------------
         # We have a message text insertion message
         #-----------------------------------------------------------------------
-        elif type == 'msgadd':
+        elif msgtype == 'msgadd':
             result['facility'] = res.group( 'ident' )
             result['msgno']    = res.group( 'msgno' )
             result['msgtext']  = res.group( 'msgtext' )

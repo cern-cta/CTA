@@ -132,7 +132,7 @@ def checkDaemon():
         for pid in pidList:
             if os.path.exists( '/proc/' + str(pid) ):
                 pids.append( pid )
-    except ValueError, val:
+    except ValueError:
         f.close()
         raise RuntimeError( 'Malformed pid file, please kill the process ' +
                             'manually, remove: ' + str(pidFilePath) + ', and ' +
@@ -171,6 +171,7 @@ def startDaemon( config, configproc ):
     # Check if we can access the files
     #---------------------------------------------------------------------------
     global logFilePath
+    pidFile = None
     try:
         for proc in processes:
             logFile = file( logFilePath + '.' + proc.name, 'a+' )
@@ -220,7 +221,6 @@ def startDaemon( config, configproc ):
     #---------------------------------------------------------------------------
     logFilePath += '.'
     logFilePath += currentProcess.name
-    outLog = None
     os.setsid()
     try:
         devNull = file( '/dev/null', 'r' )
@@ -251,7 +251,7 @@ def startDaemon( config, configproc ):
 #-------------------------------------------------------------------------------
 # Stop the deamon
 #-------------------------------------------------------------------------------
-def stopDaemon( config ):
+def stopDaemon():
     #---------------------------------------------------------------------------
     # Check if the daemon is running
     #---------------------------------------------------------------------------
@@ -273,7 +273,7 @@ def stopDaemon( config ):
     try:
       os.remove( pidFilePath )
     except Exception, e:
-      raise RuntimeError( 'Unable to remove: ' + pidFile + ' please do it' +
+      raise RuntimeError( 'Unable to remove: ' + pidFilePath + ' please do it' +
                           ' manually: ' + str(e) )
     print 'The deamons have been stopped'
 
@@ -342,7 +342,7 @@ if __name__ == '__main__':
             if opts['-d'] == 'start':
                 startDaemon( config, cp )
             elif opts['-d'] == 'stop':
-                stopDaemon( cp )
+                stopDaemon()
             else:
                 print 'You can either start or stop the deamon'
                 sys.exit( 3 )
