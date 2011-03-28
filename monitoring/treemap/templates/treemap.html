@@ -331,7 +331,7 @@ document.write(browsertext);
     <tr>
     
     <!-- The map -->
-    <td align="center" valign="middle" width={{imagewidth}} style="height: auto">     	
+    <td align="center" valign="middle" width={{imagewidth}} style="height: {{imageheight}}">     	
         	<ul id="map">
  			{% for x1, y1 ,x2 , y2, hash, theid, info in mapparams %}
 					<li>
@@ -362,6 +362,9 @@ document.write(browsertext);
 			</div>
 		</noscript>
 		
+	<td>
+	test
+	</td>	
 	</tr> </table>
 	<div style="display: none" id="hiddencallframe"></div>
 	<div style="display: none" id="timerid"></div>

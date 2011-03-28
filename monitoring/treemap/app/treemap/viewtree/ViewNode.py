@@ -7,28 +7,28 @@ holds a dictionary collecting properties of a Node (key-value pairs)
 '''
 
 class ViewNode(object):
-    '''
-    classdocs
-    '''
-
-
     def __init__(self):
-        '''
-        Constructor
-        '''
-        self.props = {}
+        self.treenode = None
+        self.x = 0.0
+        self.y = 0.0
+        self.width = 0.0
+        self.height = 0.0
+        self.level = 0.0
+        self.hasannex = False
+        self.paddingsize = 0.0
         
-    def setProperty (self, key, value):
-        self.props[key] = value
+        self.labeltext = ''
+        self.labelfontsize = 0.0
+        self.labeltextisbold = True
+        self.labelheight = 0.0
+        self.labelwidth = 0.0
         
-    def getProperty (self, key):
-        try:
-            return self.props[key]
-        except KeyError:
-            return None
-    
-#    def getObject(self):
-#        return self.obj
-    
-    def __str__(self):
-        return self.obj.__str__()
+        self.icon = False
+        self.iconfile = ''
+        self.iconcoords = {'x':0.0,'y':0.0,'width':0.0,'height':0.0}
+        
+        self.htmltooltiptext = ''
+        self.fillcolor = {'r':0.0, 'g':0.0, 'b':0.0, 'a':0.0}
+        self.strokecolor = {'r':0.0, 'g':0.0, 'b':0.0, 'a':0.0}
+        self.strokesize = 0.0
+        self.radiallight = {'brightness': 0.0, 'hue':0.0, 'opacity': 0.0 }

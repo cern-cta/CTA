@@ -35,7 +35,7 @@ class DimensionVisPropMapping(object):
         
     def getMappedValue(self, propertyname, node):
         try:
-            modelname = node.getProperty('treenode').getObject().__class__.__name__
+            modelname = node.treenode.getObject().__class__.__name__
         except:
             raise Exception("Viewnode has no information about related Treenode")
         

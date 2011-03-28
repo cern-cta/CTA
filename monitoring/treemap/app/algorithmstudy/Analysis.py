@@ -171,8 +171,8 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     del otree
     
     for child in children:
-        if not isinstance( child.getProperty('treenode').getObject(), Annex):
-            if child.getProperty('treenode').getObject().countChildren() > 0:
-                generateTreemap(options, presetid, child.getProperty('treenode').getObject().getClassName(), child.getProperty('treenode').getObject().getIdReplacement(), measurements, count+1)
+        if not isinstance( child.treenode.getObject(), Annex):
+            if child.treenode.getObject().countChildren() > 0:
+                generateTreemap(options, presetid, child.treenode.getObject().getClassName(), child.treenode.getObject().getIdReplacement(), measurements, count+1)
             
     del tree

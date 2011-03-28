@@ -362,7 +362,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     treemapdir = settings.REL_TREEMAP_DICT
     icondir = settings.REL_ICON_DICT
     
-    parentid = vtree.getRoot().getProperty('treenode').getNakedParent().pk
+    parentid = vtree.getRoot().treenode.getNakedParent().pk
     print "PARENTID ", parentid
     #must fit to UrlDefault!
     parentoptionsstring = optionsstring
@@ -371,7 +371,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     if pzoom > 0:
         parentor.setOption('annexzoom',presetid, pzoom - 1)
         parentoptionsstring = parentor.getCorrectedOptions(presetid)
-    parentidstr = app.dirs.urls.UrlDefault().buildUrl(presetid, parentoptionsstring, vtree.getRoot().getProperty('treenode').getNakedParent().getClassName(), vtree.getRoot().getProperty('treenode').getNakedParent().getIdReplacement())
+    parentidstr = app.dirs.urls.UrlDefault().buildUrl(presetid, parentoptionsstring, vtree.getRoot().treenode.getNakedParent().getClassName(), vtree.getRoot().treenode.getNakedParent().getIdReplacement())
     
     nodes = vtree.getAllNodes()
     mapparams = [None] * len(nodes)
@@ -379,25 +379,25 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     tooltipshift = [None] * len(nodes)
     
     for (idx, node) in enumerate(nodes):
-        nodeisannex = node.getProperty('treenode').getObject().getClassName() == 'Annex'
+        nodeisannex = node.treenode.getObject().getClassName() == 'Annex'
         #generate link suffix
-        if(nodeisannex and (node.getProperty('level') == 1)):
+        if(nodeisannex and (node.level == 1)):
             zoomoptionsstring = updateAnnexZoomInOptions(depth, options, presetid)
-            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
-        elif (nodeisannex and (node.getProperty('level') == 0)):
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.treenode.getObject().getIdReplacement())
+        elif (nodeisannex and (node.level == 0)):
             zoomoptionsstring = updateAnnexZoomInOptions(depth -1, options, presetid)
-            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
+            linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.treenode.getObject().getIdReplacement())
         else:
             if nodeisannex:
                 zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
-                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getVeryParentClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.treenode.getObject().getVeryParentClassName(), node.treenode.getObject().getIdReplacement())
             else:
                 zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
-                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.treenode.getObject().getClassName(), node.treenode.getObject().getIdReplacement())
        
         #generate label information like label coordinates, labelcontent
-        info = node.getProperty('htmltooltiptext')
-        thehash = node.getProperty('treenode').getObject().__hash__() 
+        info = node.htmltooltiptext
+        thehash = node.treenode.getObject().__hash__() 
         x1,y1,x2,y2 = calcLinkCoordinates(vtree, node)
         mapparams[idx] = (x1,y1,x2,y2,thehash,linksuffix,info)
 
@@ -417,23 +417,23 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
         tooltipshift[idx] = (shiftx, shifty, tooltipwidth, tooltipheight, thehash, linksuffix)
         
         #generate icon links 
-        if node.getProperty('icon'):
-            if(node.getProperty('level') == 0):
+        if node.icon:
+            if(node.level == 0):
                 if nodeisannex:
                     zoomoptionsstring = updateAnnexZoomInOptions(depth, options, presetid)
-                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.getProperty('treenode').getObject().getIdReplacement())
+                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, rootmodel, node.treenode.getObject().getIdReplacement())
                 else:
                     zoomoptionsstring = updateAnnexZoomInOptions(depth-1, options, presetid)
-                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+                    linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.treenode.getObject().getClassName(), node.treenode.getObject().getIdReplacement())
             else:
                 zoomoptionsstring = updateAnnexZoomInOptions(0, options, presetid)
-                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.getProperty('treenode').getObject().getClassName(), node.getProperty('treenode').getObject().getIdReplacement())
+                linksuffix = app.dirs.urls.UrlDefault().buildUrl(presetid, zoomoptionsstring, node.treenode.getObject().getClassName(), node.treenode.getObject().getIdReplacement())
                 
-            thehash = node.getProperty('treenode').getObject().__hash__() + 5
-            x1,y1,x2,y2 = node.getProperty('iconcoords')['x'], node.getProperty('iconcoords')['y'], node.getProperty('iconcoords')['x'] + node.getProperty('iconcoords')['width'], node.getProperty('iconcoords')['y']+node.getProperty('iconcoords')['height']
+            thehash = node.treenode.getObject().__hash__() + 5
+            x1,y1,x2,y2 = node.iconcoords['x'], node.iconcoords['y'], node.iconcoords['x'] + node.iconcoords['width'], node.iconcoords['y']+node.iconcoords['height']
             iconparams.append((x1,y1,x2,y2,thehash,linksuffix))
         
-    rt = vtree.getRoot().getProperty('treenode').getObject()
+    rt = vtree.getRoot().treenode.getObject()
     parents = []
     
     while True:
@@ -472,7 +472,7 @@ def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lr
     progressbardict = settings.PUBLIC_APACHE_URL + settings.REL_PBARIMG_DICT
     progressbarsizepx = "%.0f"%(200.0)
         
-    response = render_to_string('imagemap.html', \
+    response = render_to_string('treemap.html', \
     {'parentid': parentidstr, 'filename': filenm, 'mapparams': mapparams, 'navilink': navlinkparts, 'imagewidth': int(imagewidth), 'imageheight': int(imageheight),\
      'tooltipfontsize': tooltipfontsize,'tooltipshift': tooltipshift, 'treemapdir': treemapdir, 'icondir': icondir, \
      'rootsuffix': rootsuffix, 'generationtime': generationtime, 'presetnames': presetnames, 'progressbardict': progressbardict, 
@@ -646,18 +646,18 @@ def setTruncatedLevelRulesCopy(treemap_props, presetlr, levels):
     treemap_props['levelrules'] = lr
     
 def calcLinkCoordinates(vtree, node):
-    x1 = int(round(node.getProperty('x'),0))
-    y1 = int(round(node.getProperty('y'),0)) 
+    x1 = int(round(node.x,0))
+    y1 = int(round(node.y,0)) 
     x2 = 0.0
     csize = 0.0
     if((not(vtree.nodeHasChildren(node)))):
-        csize = node.getProperty('height')
-        x2 = int(round(node.getProperty('x') + node.getProperty('width'),0))
+        csize = node.height
+        x2 = int(round(node.x + node.width,0))
     else:
-        csize = node.getProperty('labelheight')
-        x2 = int(round(node.getProperty('x') + node.getProperty('labelwidth'),0))
-    y2 = int(round(node.getProperty('y') + csize,0))
+        csize = node.labelheight
+        x2 = int(round(node.x + node.labelwidth,0))
+    y2 = int(round(node.y + csize,0))
     
     return x1,y1,x2,y2
         
-    y2 = int(round(node.getProperty('y') + csize,0))
+    y2 = int(round(node.y + csize,0))

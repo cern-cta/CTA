@@ -104,102 +104,102 @@ class SquaredTreemapDesigner(object):
         
     def setLabelText(self, vnode):
         try:
-            vnode.setProperty('labeltext', self.mapping.getMappedValue('labeltext', vnode))
+            vnode.labeltext = self.mapping.getMappedValue('labeltext', vnode)
         except Exception, e:
-            vnode.setProperty('labeltext', vnode.getProperty('treenode').getObject().__str__())
+            vnode.labeltext = vnode.treenode.getObject().__str__()
             
     def setIcon(self, vnode):
         icon = False
         try:
             icon = self.mapping.getMappedValue('icon', vnode)
-            vnode.setProperty('icon', icon)
+            vnode.icon = icon
                 
         except Exception, e:
-            icon = vnode.getProperty('hasannex')
-            vnode.setProperty('icon', icon)
+            icon = vnode.hasannex
+            vnode.icon = icon
             
         if icon:
-            iconx = vnode.getProperty('x') + vnode.getProperty('labelwidth') - vnode.getProperty('labelheight')
-            icony = vnode.getProperty('y')
-            iconwidth = vnode.getProperty('labelheight')
-            iconheight = vnode.getProperty('labelheight')
-            labelwidth = vnode.getProperty('labelwidth')-iconwidth
+            iconx = vnode.x + vnode.labelwidth - vnode.labelheight
+            icony = vnode.y
+            iconwidth = vnode.labelheight
+            iconheight = vnode.labelheight
+            labelwidth = vnode.labelwidth -iconwidth
             
             if labelwidth > 0.0:
-                vnode.setProperty('iconcoords', {'x':iconx,'y':icony,'width':iconwidth,'height':iconheight})
-                vnode.setProperty('labelwidth', labelwidth)
+                vnode.iconcoords = {'x':iconx,'y':icony,'width':iconwidth,'height':iconheight}
+                vnode.labelwidth =  labelwidth
             else:
-                vnode.setProperty('iconcoords', {'x':0,'y':0,'width':0,'height':0})
-                vnode.setProperty('icon', False)
+                vnode.iconcoords = {'x':0,'y':0,'width':0,'height':0}
+                vnode.icon = False
         else:
-            vnode.setProperty('iconcoords', {'x':0,'y':0,'width':0,'height':0})
+            vnode.iconcoords = {'x':0,'y':0,'width':0,'height':0}
             
     def setIconFile(self, vnode):
         iconfile = False
         try:
             iconfile = self.mapping.getMappedValue('iconfile', vnode)
-            vnode.setProperty('iconfile', iconfile)
+            vnode.iconfile = iconfile
                 
         except Exception, e:
             iconfile = treemap_props["defaulticonfile"]
-            vnode.setProperty('iconfile', iconfile)
+            vnode.iconfile = iconfile
             
     def setLabelTextIsbold(self, vnode):
         try:
-            vnode.setProperty('labeltextisbold', self.mapping.getMappedValue('labeltextisbold', vnode))
+            vnode.labeltextisbold = self.mapping.getMappedValue('labeltextisbold', vnode)
         except Exception, e:
-            vnode.setProperty('labeltextisbold', self.labeltextisbold)
+            vnode.labeltextisbold = self.labeltextisbold
             
     def setToolTipInfoText(self, vnode):
         try:
-            vnode.setProperty('htmltooltiptext', self.mapping.getMappedValue('htmltooltiptext', vnode))
+            vnode.htmltooltiptext = self.mapping.getMappedValue('htmltooltiptext', vnode)
         except Exception, e:
-            vnode.setProperty('htmltooltiptext', vnode.getProperty('treenode').getObject().__str__())
+            vnode.htmltooltiptext = vnode.treenode.getObject().__str__()
         
     def setFillColor(self, vnode):
         try:
             r,g,b,a = self.googleColors(self.mapping.getMappedValue('fillcolor', vnode))
         except:
             try:
-                r,g,b,a = self.googleColors(vnode.getProperty('level'))
+                r,g,b,a = self.googleColors(vnode.level)
             except KeyError:
                 raise Exception("Level information for node is missing")
             
-        vnode.setProperty('fillcolor', {'r':r, 'g':g, 'b':b, 'a':a} )
+        vnode.fillcolor = {'r':r, 'g':g, 'b':b, 'a':a} 
         
     def setStrokeColor(self,vnode):
         try:
             r,g,b,a = self.googleColors(self.mapping.getMappedValue('strokecolor', vnode))
         except:
             try:
-                r,g,b,a = self.googleColors(vnode.getProperty('level') + 2)
+                r,g,b,a = self.googleColors(vnode.level + 2)
             except KeyError:
                 raise Exception("Level information for node is missing")
 #        r,g,b = addValueToRgb(r,g,b,-0.3)
-        vnode.setProperty('strokecolor', {'r':r, 'g':g, 'b':b, 'a':a} )
+        vnode.strokecolor = {'r':r, 'g':g, 'b':b, 'a':a}
         
     def setStrokeSize(self,vnode):
         try:
             strokesize = self.mapping.getMappedValue('strokesize', vnode)
             if strokesize < self.minstrokesize: strokesize = self.minstrokesize
-            vnode.setProperty('strokesize', strokesize)
+            vnode.strokesize = strokesize
         except:
             try:
-                strokesize = self.strokesize - vnode.getProperty('level') * self.strokesizedecrease
+                strokesize = self.strokesize - vnode.level * self.strokesizedecrease
                 if strokesize < self.minstrokesize: strokesize = self.minstrokesize
-                vnode.setProperty('strokesize', strokesize)
+                vnode.strokesize = strokesize
             except KeyError:
                 raise Exception("Level information for node is missing")
             
     def setLabelFontSize(self,vnode):
         try:
-            vnode.setProperty('labelfontsize', self.mapping.getMappedValue('labelfontsize', vnode))
+            vnode.labelfontsize = self.mapping.getMappedValue('labelfontsize', vnode)
         except:
-            vnode.setProperty('labelfontsize', self.labelfontsize)
+            vnode.labelfontsize = self.labelfontsize
             
     def setRadialLight(self, vnode):
         try:
-            fillc = vnode.getProperty('fillcolor')
+            fillc = vnode.fillcolor
             sensitivityfactor = 7.0
             human_eye_sensitivity = ((0.299*fillc['r'] + 0.114 * fillc['b'] + 0.587 * fillc['g'])/3) * sensitivityfactor
         except:
@@ -213,10 +213,10 @@ class SquaredTreemapDesigner(object):
         try:   
             h = self.mapping.getMappedValue('radiallight.hue', vnode)
             if(h is None):
-                fillc = vnode.getProperty('fillcolor')
+                fillc = vnode.fillcolor
                 h,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
             else:
-                fillc = vnode.getProperty('fillcolor')
+                fillc = vnode.fillcolor
                 ch,s,v = rgbToHsv(fillc['r'], fillc['g'], fillc['b'])
                 if(math.fabs(ch-h)) < 0.1: h=1.0-h
                 red,green,blue = hsvToRgb(h,s,v)
@@ -231,6 +231,6 @@ class SquaredTreemapDesigner(object):
         except:
             o = 0.5
             
-        vnode.setProperty('radiallight', {'brightness': b, 'hue':h, 'opacity': o })
+        vnode.radiallight = {'brightness': b, 'hue':h, 'opacity': o }
  
    

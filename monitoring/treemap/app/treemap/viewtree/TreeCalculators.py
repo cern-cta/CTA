@@ -42,7 +42,7 @@ class DefaultTreemapCalculator(object):
             raise Exception("treemap_props['objecttree'] doesn't exist or is None. You might use TreeBuilder. TreeBuilder creates the tree and updates your treemap_props ")
         self.otree = self.treemap_props['objecttree']
         
-    def calculate(self, optimizefortxt = False, sorted = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
+    def calculate(self, optimizefortxt = False, ordered = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
         width = self.treemap_props['pxwidth']
         height = self.treemap_props['pxheight']
         
@@ -58,24 +58,24 @@ class DefaultTreemapCalculator(object):
         self.treemap_props['viewtree'] = viewtree
         
         vnode = ViewNode()
-        vnode.setProperty('treenode', root)
+        vnode.treenode = root
         if treemap_props['labels']:
-            vnode.setProperty('labelheight', self.labelheight)
-            vnode.setProperty('labelwidth', width)
+            vnode.labelheight = self.labelheight
+            vnode.labelwidth = width
         else:
-            vnode.setProperty('labelheight', 0.0)
-            vnode.setProperty('labelwidth', 0.0)
+            vnode.labelheight = 0.0
+            vnode.labelwidth = 0.0
             
-        vnode.setProperty('paddingsize', self.paddingsize)
-        vnode.setProperty('x', 0.0)
-        vnode.setProperty('y', 0.0)
-        vnode.setProperty('width', width)
-        vnode.setProperty('height', height)
-        vnode.setProperty('level', self.otree.getCurrentObject().getDepth())
+        vnode.paddingsize = self.paddingsize
+        vnode.x = 0.0
+        vnode.y = 0.0
+        vnode.width = width
+        vnode.height = height
+        vnode.level = self.otree.getCurrentObject().getDepth()
         if self.otree.getCurrentAnnexChild() is None:
-            vnode.setProperty('hasannex', False)
+            vnode.hasannex = False
         else:
-            vnode.setProperty('hasannex', True)
+            vnode.hasannex = True
             
         viewtree.setRoot(vnode)
         viewtree.traverseIntoChild(vnode)
@@ -91,15 +91,15 @@ class DefaultTreemapCalculator(object):
         self.calculateRecursion.__dict__["ratiocount"] = 0
         self.calculateRecursion.__dict__["ratiosum"] = 0.0
         
-        self.calculateRecursion(x, y, width ,height , viewtree, self.paddingsize, self.minpaddingsize, self.labelheight, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+        self.calculateRecursion(x, y, width ,height , viewtree, self.paddingsize, self.minpaddingsize, self.labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
         
         print "notextcount: ", self.calculateRecursion.__dict__['notextcount']
         if self.calculateRecursion.__dict__["ratiocount"] > 0: print "AVERAGE RATIO: ", self.calculateRecursion.__dict__["ratiosum"]/self.calculateRecursion.__dict__["ratiocount"]
         return viewtree
         
-    #line: The items are ordered graphically in lines of equally tall squares
+    #line: The items are sorted graphically in lines of equally tall squares
     #it is like a line of text but with rectangles instead of letters
-    def calculateRecursion(self, startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision):
+    def calculateRecursion(self, startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision):
 
         #calculate the area in square pixels
 #        print "level ", self.otree.getLevel()
@@ -120,7 +120,7 @@ class DefaultTreemapCalculator(object):
 #                viewtree.deleteChildren()
 #                parentvnode = viewtree.getCurrentObject();
 #                
-#                self.calculateRecursion(parentvnode.getProperty('x'), parentvnode.getProperty('y'), parentvnode.getProperty('width') ,parentvnode.getProperty('height'), viewtree, parentvnode.getProperty('paddingsize'), minpaddingsize, labelheight, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+#                self.calculateRecursion(parentvnode.x, parentvnode.y, parentvnode.width ,parentvnode.height, viewtree, parentvnode.paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
 #                
 #                self.otree.traverseIntoChild(oitem)
 #                viewtree.traverseIntoChild(vitem)
@@ -135,12 +135,12 @@ class DefaultTreemapCalculator(object):
         
         #go deeper only if parent had a label (in case label activated)
         if treemap_props['labels']:
-            parentcsize = viewtree.getCurrentObject().getProperty('labelheight')
+            parentcsize = viewtree.getCurrentObject().labelheight
             if parentcsize <= 0.0:
                 return
         
         #children at the current position, ordered from the biggest to smallest, the algorithm works only if children[i] <= children[i+1]
-        if sorted:
+        if ordered:
             children = self.otree.getSortedChildren()
         else:
             children = self.otree.getChildren()
@@ -199,9 +199,9 @@ class DefaultTreemapCalculator(object):
                 includeoverflow = (direction == VERTICAL) and ((linesum + sqwidth) > linelen)
                 includetrigger = (includeoverflowold == False) and (includeoverflow == True) and optimizefortxt
                 
-                #optimize by detecting big size differences if the incoming values are sorted
+                #optimize by detecting big size differences if the incoming values are ordered
                 #bigdifftrigger = sqwidthold/sqwidth > 1.5
-                #if sorted == False: bigdifftrigger = False 
+                #if ordered == False: bigdifftrigger = False 
                 bigdifftrigger = False
                 #if min and max greater 0
                 if min_value_in_strip > 0: bigdifftrigger = math.sqrt(max_value_in_strip)/math.sqrt(min_value_in_strip) > 12.0
@@ -264,26 +264,26 @@ class DefaultTreemapCalculator(object):
                     #store the calculated values
                     vn = ViewNode()
                     if (2*labelheight > (chheight-2.0)) or not treemap_props['labels']:
-                        vn.setProperty('labelheight', 0.0)
-                        vn.setProperty('labelwidth', 0.0)
+                        vn.labelheight = 0.0
+                        vn.labelwidth = 0.0
                     else:
-                        vn.setProperty('labelheight', labelheight)
-                        vn.setProperty('labelwidth', chwidth - paddingsize)
+                        vn.labelheight = labelheight
+                        vn.labelwidth = chwidth - paddingsize
                         
-                    vn.setProperty('treenode', ch)
-                    vn.setProperty('paddingsize', paddingsize)
-                    vn.setProperty('x', startx + paddingsize/2.0)
-                    vn.setProperty('y', starty + paddingsize/2.0)
-                    vn.setProperty('width', chwidth - paddingsize)
-                    vn.setProperty('height', chheight - paddingsize)
-                    vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
+                    vn.treenode = ch
+                    vn.paddingsize = paddingsize
+                    vn.x = startx + paddingsize/2.0
+                    vn.y = starty + paddingsize/2.0
+                    vn.width = chwidth - paddingsize
+                    vn.height = chheight - paddingsize
+                    vn.level = self.otree.getCurrentObject().getDepth() + 1
                     
                     currently_inscope = self.otree.getCurrentObject()
                     self.otree.traverseIntoChild(ch)
                     if self.otree.getCurrentAnnexChild() is None:
-                        vn.setProperty('hasannex', False)
+                        vn.hasannex = False
                     else:
-                        vn.setProperty('hasannex', True)
+                        vn.hasannex = True
                     self.otree.traverseBack()
                     
                     totalchildnodes.append(ch)
@@ -374,26 +374,26 @@ class DefaultTreemapCalculator(object):
                 #store the calculated values
                 vn = ViewNode()
                 if (2.0 * labelheight > (chheight-2.0)) or not treemap_props['labels']:
-                    vn.setProperty('labelheight', 0.0)
-                    vn.setProperty('labelwidth', 0.0)
+                    vn.labelheight = 0.0
+                    vn.labelwidth = 0.0
                 else:
-                    vn.setProperty('labelheight', labelheight)
-                    vn.setProperty('labelwidth', chwidth-paddingsize)
+                    vn.labelheight = labelheight
+                    vn.labelwidth = chwidth-paddingsize
                     
-                vn.setProperty('treenode', ch)
-                vn.setProperty('paddingsize', paddingsize)
-                vn.setProperty('x', startx+paddingsize/2.0)
-                vn.setProperty('y', starty+paddingsize/2.0)
-                vn.setProperty('width', chwidth-paddingsize)
-                vn.setProperty('height', chheight-paddingsize)
-                vn.setProperty('level', self.otree.getCurrentObject().getDepth() + 1)
+                vn.treenode = ch
+                vn.paddingsize = paddingsize
+                vn.x = startx+paddingsize/2.0
+                vn.y = starty+paddingsize/2.0
+                vn.width = chwidth-paddingsize
+                vn.height = chheight-paddingsize
+                vn.level = self.otree.getCurrentObject().getDepth() + 1
                 
                 currently_inscope = self.otree.getCurrentObject()
                 self.otree.traverseIntoChild(ch)
                 if self.otree.getCurrentAnnexChild() is None:
-                    vn.setProperty('hasannex', False)
+                    vn.hasannex = False
                 else:
-                    vn.setProperty('hasannex', True)
+                    vn.hasannex = True
                     
                 self.otree.traverseBack()
                     
@@ -417,13 +417,13 @@ class DefaultTreemapCalculator(object):
             viewtree.traverseIntoChild(totalviewnodes[i])
             
             #see if it is big enough to have a label and do recursion
-            #(startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
-            csize = totalviewnodes[i].getProperty('labelheight')
+            #(startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
+            csize = totalviewnodes[i].labelheight
             if csize <= 0.0:
                 self.calculateRecursion.__dict__['notextcount'] = self.calculateRecursion.__dict__['notextcount'] + 1
-                self.calculateRecursion(totalviewnodes[i].getProperty('x')+paddingsize/2.0, totalviewnodes[i].getProperty('y')+paddingsize/2.0, totalviewnodes[i].getProperty('width')-paddingsize ,totalviewnodes[i].getProperty('height')-paddingsize, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y +paddingsize/2.0, totalviewnodes[i].width - paddingsize ,totalviewnodes[i].height-paddingsize, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
             else:
-                self.calculateRecursion(totalviewnodes[i].getProperty('x')+paddingsize/2.0, totalviewnodes[i].getProperty('y') + csize + paddingsize/2.0, totalviewnodes[i].getProperty('width')-paddingsize ,totalviewnodes[i].getProperty('height') - csize-paddingsize, viewtree, paddingsize, minpaddingsize, csize, optimizefortxt, sorted, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y + csize + paddingsize/2.0, totalviewnodes[i].width-paddingsize ,totalviewnodes[i].height - csize-paddingsize, viewtree, paddingsize, minpaddingsize, csize, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
                 
             self.otree.traverseBack()
             viewtree.traverseBack()

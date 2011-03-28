@@ -55,12 +55,12 @@ class SquarifiedTreemapDrawer(object):
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
         
-        self.drawRect(root.getProperty('x'), root.getProperty('y'), root.getProperty('width'), root.getProperty('height'), root.getProperty('strokesize'), root.getProperty('level'), root.getProperty('fillcolor'), root.getProperty('strokecolor'), root.getProperty('radiallight'))
+        self.drawRect(root.x, root.y, root.width, root.height, root.strokesize, root.level, root.fillcolor, root.strokecolor, root.radiallight)
         if treemap_props['labels']:
-            iconx, icony, iconwidth, iconheight = root.getProperty('iconcoords')['x'],root.getProperty('iconcoords')['y'],root.getProperty('iconcoords')['width'], root.getProperty('iconcoords')['height']
-            iconfile = root.getProperty('iconfile')
+            iconx, icony, iconwidth, iconheight = root.iconcoords['x'],root.iconcoords['y'],root.iconcoords['width'], root.iconcoords['height']
+            iconfile = root.iconfile
             self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
-            self.printText(root.getProperty('treenode').getObject().__str__(), root.getProperty('x') + root.getProperty('strokesize'), root.getProperty('y') + root.getProperty('strokesize'), root.getProperty('width')-2* root.getProperty('strokesize') - iconwidth, root.getProperty('labelfontsize'), root.getProperty('labeltextisbold'))
+            self.printText(root.treenode.getObject().__str__(), root.x + root.strokesize, root.y + root.strokesize, root.width-2* root.strokesize - iconwidth, root.labelfontsize, root.labeltextisbold)
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
@@ -74,16 +74,16 @@ class SquarifiedTreemapDrawer(object):
         children = self.vtree.getChildren()
         
         for child in children: #(self, text, x, y, max_text_width, max_text_height)
-            strokesize = child.getProperty('strokesize')
+            strokesize = child.strokesize
             
-            self.drawRect(child.getProperty('x'), child.getProperty('y'), child.getProperty('width'), child.getProperty('height'), strokesize, child.getProperty('level'), child.getProperty('fillcolor'), child.getProperty('strokecolor'), child.getProperty('radiallight'))
+            self.drawRect(child.x, child.y, child.width, child.height, strokesize, child.level, child.fillcolor, child.strokecolor, child.radiallight)
                     
-            if child.getProperty('labelheight') > 0.0:
-                txt = child.getProperty('labeltext')
-                iconx, icony, iconwidth, iconheight = child.getProperty('iconcoords')['x'],child.getProperty('iconcoords')['y'],child.getProperty('iconcoords')['width'],child.getProperty('iconcoords')['height']
-                iconfile = child.getProperty('iconfile')
+            if child.labelheight > 0.0:
+                txt = child.labeltext
+                iconx, icony, iconwidth, iconheight = child.iconcoords['x'],child.iconcoords['y'],child.iconcoords['width'],child.iconcoords['height']
+                iconfile = child.iconfile
                 self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
-                self.printText(txt, child.getProperty('x') + strokesize, child.getProperty('y') + strokesize, child.getProperty('width')-2*strokesize - iconwidth, child.getProperty('labelfontsize'), child.getProperty('labeltextisbold'))
+                self.printText(txt, child.x + strokesize, child.y + strokesize, child.width-2*strokesize - iconwidth, child.labelfontsize, child.labeltextisbold)
                 
             
             self.vtree.traverseIntoChild(child)

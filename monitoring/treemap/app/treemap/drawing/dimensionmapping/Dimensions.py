@@ -47,7 +47,7 @@ class LevelDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        ret = tnode.getProperty('level')
+        ret = tnode.level
         #convert to integer in case it is a float
         ret = int(ret - ret%1)
         return ret
@@ -79,7 +79,7 @@ class ColumnDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.treenode.getObject()
         
         ret = self.translation.translate(modelinstance, self.attrname)
         
@@ -100,7 +100,7 @@ class RawColumnDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.treenode.getObject()
         ret = self.translation.translate(modelinstance, self.attrname)
         return ret
     
@@ -116,7 +116,7 @@ class FileExtensionDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.treenode.getObject()
         try:
             ret = self.translation.translate(modelinstance, self.attrname)/float(self.translation.max)
         except:
@@ -134,17 +134,17 @@ class DirToolTipDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
+        modelinstance = tnode.treenode.getObject()
         assert(isinstance(modelinstance, Dirs))
         
-        size = float(tnode.getProperty('treenode').getEvalValue())
-        psize = tnode.getProperty('treenode').getSiblingsSum()
+        size = float(tnode.treenode.getEvalValue())
+        psize = tnode.treenode.getSiblingsSum()
         bytesize = long(modelinstance.totalsize)
         
         itemnameparts = splitText(modelinstance.fullname.__str__(), 50, 39)
-        attrname = tnode.getProperty('treenode').getAttrName()
-        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
-        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        attrname = tnode.treenode.getAttrName()
+        attrvalue = "%.2f"%(float(tnode.treenode.getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.treenode.getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
         percentagestring = ''
         if(psize == 0):
@@ -173,20 +173,20 @@ class FileToolTipDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
-        parent = tnode.getProperty('treenode').getNakedParent()
+        modelinstance = tnode.treenode.getObject()
+        parent = tnode.treenode.getNakedParent()
         assert(isinstance(modelinstance, CnsFileMetadata))
         
-        size = float(tnode.getProperty('treenode').getEvalValue())
-        psize = tnode.getProperty('treenode').getSiblingsSum()
+        size = float(tnode.treenode.getEvalValue())
+        psize = tnode.treenode.getSiblingsSum()
         bytesize = long(modelinstance.filesize)
         dirname = parent.__str__()
         
         itemnameparts = splitText(modelinstance.name.__str__(), 50, 39)
         dirnameparts = splitText(dirname, 50, 39)
-        attrname = tnode.getProperty('treenode').getAttrName()
-        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
-        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        attrname = tnode.treenode.getAttrName()
+        attrvalue = "%.2f"%(float(tnode.treenode.getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.treenode.getEvalValue()))
         sizestring = ''.join([bla for bla in (sizeInBytes(bytesize), " (", long(bytesize).__str__(), " Bytes)")])
         percentagestring = ''
         if(psize == 0):
@@ -210,9 +210,9 @@ class AnnexToolTipDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        tnobj = tnode.getProperty('treenode')
+        tnobj = tnode.treenode
         modelinstance = tnobj.getObject()
-        parent = tnode.getProperty('treenode').getNakedParent()
+        parent = tnode.treenode.getNakedParent()
         
         assert(isinstance(modelinstance, Annex))
         
@@ -244,12 +244,12 @@ class RequestsToolTipDimension(DimensionInterface):
         
     def getValue(self, tnode):
         assert(tnode is not None and isinstance(tnode, ViewNode))
-        modelinstance = tnode.getProperty('treenode').getObject()
-        parent = tnode.getProperty('treenode').getNakedParent()
+        modelinstance = tnode.treenode.getObject()
+        parent = tnode.treenode.getNakedParent()
         assert(isinstance(modelinstance, Requestsatlas) or isinstance(modelinstance, Requestscms) or isinstance(modelinstance, Requestsalice) or isinstance(modelinstance, Requestslhcb) or isinstance(modelinstance, Requestspublic))
         
-        size = float(tnode.getProperty('treenode').getEvalValue())
-        psize = tnode.getProperty('treenode').getSiblingsSum()
+        size = float(tnode.treenode.getEvalValue())
+        psize = tnode.treenode.getSiblingsSum()
         
         bytesize = modelinstance.filesize
         if bytesize is None: 
@@ -260,9 +260,9 @@ class RequestsToolTipDimension(DimensionInterface):
         nbreq = modelinstance.requestscount
         
         itemnameparts = splitText(modelinstance.filename, 50, 39)
-        attrname = tnode.getProperty('treenode').getAttrName()
-        attrvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValueNoPostProcess()))
-        attrprocvalue = "%.2f"%(float(tnode.getProperty('treenode').getEvalValue()))
+        attrname = tnode.treenode.getAttrName()
+        attrvalue = "%.2f"%(float(tnode.treenode.getEvalValueNoPostProcess()))
+        attrprocvalue = "%.2f"%(float(tnode.treenode.getEvalValue()))
         percentagestring = ''
         if(psize == 0):
             percentagestring = "%.2f"%(100)
