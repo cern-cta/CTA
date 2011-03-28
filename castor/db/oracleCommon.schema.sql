@@ -133,6 +133,7 @@ CREATE INDEX I_TapeCopy_VID ON TapeCopy(VID);
 /* This transaction id is the mean to track a migration, so it obviously needs to be unique */
 ALTER TABLE TapeCopy ADD CONSTRAINT UN_TAPECOPY_FILETRID 
   UNIQUE (FileTransactionId) USING INDEX;
+
 /* Create sequence for the File request IDs. */
 CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
   
@@ -156,7 +157,7 @@ CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
 CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
 CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
-CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null)) LOCAL;
+CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,NULL)) LOCAL;
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -631,4 +632,4 @@ CREATE INDEX I_FileSystem_Rate
 /* Aborting */
 /************/
 
-CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048) NOT NULL);
+CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048) CONSTRAINT NN_TransfersToAbort_Uuid NOT NULL);
