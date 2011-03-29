@@ -63,7 +63,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   const int                           listenSock,
   const int                           initialRtcpdSock,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-  tapegateway::Volume                 &volume,
+  const tapegateway::Volume           &volume,
   const uint32_t                      nbFilesOnDestinationTape,
   BoolFunctor                         &stoppingGracefully,
   Counter<uint64_t>                   &tapebridgeTransactionCounter) throw() :
@@ -154,12 +154,19 @@ int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
     net::getPeerHostName(connectedSock.get(), hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId     ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()            ),
-      castor::dlf::Param("IP"                , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"              , port                      ),
-      castor::dlf::Param("HostName"          , hostName                  ),
-      castor::dlf::Param("socketFd"          , connectedSock.get()       ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId       ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId       ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()              ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit      ),
+      castor::dlf::Param("deviceGroupName"   , m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost     ),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort     ),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("IP"                , castor::dlf::IPAddress(ip)  ),
+      castor::dlf::Param("Port"              , port                        ),
+      castor::dlf::Param("HostName"          , hostName                    ),
+      castor::dlf::Param("socketFd"          , connectedSock.get()         ),
       castor::dlf::Param("nbDiskTapeConns"   ,
         m_sockCatalogue.getNbDiskTapeIOControlConns())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_RTCPD_CALLBACK,
@@ -253,9 +260,16 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
 
         // Write a log message
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId),
-          castor::dlf::Param("TPVID"             , m_volume.vid()       )};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+          castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId      ),
+          castor::dlf::Param("volReqId"          , m_jobRequest.volReqId      ),
+          castor::dlf::Param("TPVID"             , m_volume.vid()             ),
+          castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit     ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+          castor::dlf::Param("clientHost"        , m_jobRequest.clientHost    ),
+          castor::dlf::Param("clientPort"        , m_jobRequest.clientPort    ),
+          castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType()))};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
           TAPEBRIDGE_SELECT_INTR, params);
 
       // Else select encountered an error other than an interruption
@@ -371,9 +385,16 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
           close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
 
           castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-            castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-            castor::dlf::Param("socketFd"          , pendingSock          )};
+            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+            castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+            castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+            castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
+            castor::dlf::Param("socketFd"          , pendingSock            )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
 
@@ -399,9 +420,15 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
 
       {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId ),
-          castor::dlf::Param("TPVID"               , m_volume.vid()        ),
-          castor::dlf::Param("volReqId"            , m_jobRequest.volReqId ),
+          castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
+          castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
+          castor::dlf::Param("TPVID"               , m_volume.vid()         ),
+          castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+          castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
+          castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
+          castor::dlf::Param("clientType",
+            utils::volumeClientTypeToString(m_volume.clientType())),
           castor::dlf::Param("socketFd"            , pendingSock           ),
           castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -426,11 +453,17 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
 
         {
           castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId ),
-            castor::dlf::Param("TPVID"               , m_volume.vid()        ),
-            castor::dlf::Param("volReqId"            , m_jobRequest.volReqId ),
+            castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
+            castor::dlf::Param("TPVID"               , m_volume.vid()         ),
+            castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+            castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
+            castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
             castor::dlf::Param("initialSocketFd"     ,
-              m_sockCatalogue.getInitialRtcpdConn()                          ),
+              m_sockCatalogue.getInitialRtcpdConn()),
             castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             TAPEBRIDGE_SEND_END_OF_SESSION_TO_RTCPD, params);
@@ -458,15 +491,14 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
     {
       // Get information about the rtcpd disk/tape IO control-connection that
       // is waiting for the reply from the pending client-connection
-      int            rtcpdSock               = 0;
-      uint32_t       rtcpdReqMagic           = 0;
-      uint32_t       rtcpdReqType            = 0;
-      char           *rtcpdReqTapePath       = NULL;
-      uint64_t       aggregatorTransactionId = 0;
-      struct timeval clientReqTimeStamp      = {0, 0};
+      int            rtcpdSock          = 0;
+      uint32_t       rtcpdReqMagic      = 0;
+      uint32_t       rtcpdReqType       = 0;
+      char           *rtcpdReqTapePath  = NULL;
+      uint64_t       tapebridgeTransId  = 0;
+      struct timeval clientReqTimeStamp = {0, 0};
       m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdReqMagic,
-        rtcpdReqType, rtcpdReqTapePath, aggregatorTransactionId,
-        clientReqTimeStamp);
+        rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId, clientReqTimeStamp);
 
       // Release the client-connection from the catalogue
       m_sockCatalogue.releaseClientConn(rtcpdSock, pendingSock);
@@ -498,7 +530,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
       // Invoke the handler
       try {
         (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdReqMagic,
-          rtcpdReqType, rtcpdReqTapePath, aggregatorTransactionId,
+          rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId,
           clientReqTimeStamp);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ECANCELED,
@@ -549,19 +581,24 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
 
   // Send the request for the first file to migrate to the client
   time_t connectDuration = 0;
-  const uint64_t aggregatorTransactionId =
+  const uint64_t tapebridgeTransId =
     m_tapebridgeTransactionCounter.next();
   utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
-    m_jobRequest.volReqId, aggregatorTransactionId, m_jobRequest.clientHost,
+    m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
     m_jobRequest.clientPort, connectDuration));
   {
     castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("clientSock"        , clientSock.get()       ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
       castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType"        ,
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        , clientSock.get()       ),
       castor::dlf::Param("connectDuration"   , connectDuration        )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_FILETOMIGRATEREQUEST, params);
@@ -571,18 +608,23 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   int closedClientSock = 0;
   std::auto_ptr<tapegateway::FileToMigrate> fileFromClient(
     ClientTxRx::receiveFileToMigrateReplyAndClose(m_jobRequest.volReqId,
-      aggregatorTransactionId, closedClientSock = clientSock.release()));
+      tapebridgeTransId, closedClientSock = clientSock.release()));
 
   if(fileFromClient.get() != NULL) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId",
-        fileFromClient->mountTransactionId()),
-      castor::dlf::Param("TPVID"     , m_volume.vid()         ),
       castor::dlf::Param("tapebridgeTransId", 
         fileFromClient->aggregatorTransactionId()),
-      castor::dlf::Param("clientSock", closedClientSock       ),
+      castor::dlf::Param("mountTransactionId",
+        fileFromClient->mountTransactionId()),
+      castor::dlf::Param("volReqId"  , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"     , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit" , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
       castor::dlf::Param("clientHost", m_jobRequest.clientHost),
       castor::dlf::Param("clientPort", m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock", closedClientSock       ),
       castor::dlf::Param("fileTransactionId",
         fileFromClient->fileTransactionId()                   ),
       castor::dlf::Param("path"      , fileFromClient->path() )};
@@ -591,30 +633,42 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   } else {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("clientSock"        , closedClientSock       ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
       castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort)};
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        , closedClientSock       )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
   }
 
   // If there is no file to migrate
   if(fileFromClient.get() == NULL) {
-    const uint64_t aggregatorTransactionId =
+    const uint64_t tapebridgeTransId =
       m_tapebridgeTransactionCounter.next();
 
     // Notify client of end of session and return
     try {
       ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
-        aggregatorTransactionId, m_jobRequest.clientHost,
+        tapebridgeTransId, m_jobRequest.clientHost,
       m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
       castor::dlf::Param params[] = {
+        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
         castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-        castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
         castor::dlf::Param("Message"           , ex.getMessage().str()  ),
         castor::dlf::Param("Code"              , ex.code()              )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
@@ -709,20 +763,26 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   processSocks();
 
   {
-    const uint64_t aggregatorTransactionId =
+    const uint64_t tapebridgeTransId =
       m_tapebridgeTransactionCounter.next();
     try {
       ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
-        aggregatorTransactionId, m_jobRequest.clientHost,
-        m_jobRequest.clientPort);
+        tapebridgeTransId, m_jobRequest.clientHost, m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
       castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransActionId"     , m_jobRequest.volReqId  ),
-        castor::dlf::Param("TPVID"                  , m_volume.vid()         ),
-        castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-        castor::dlf::Param("Message"                , ex.getMessage().str()  ),
-        castor::dlf::Param("Code"                   , ex.code()              )};
+        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("Message"           , ex.getMessage().str()  ),
+        castor::dlf::Param("Code"              , ex.code()              )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         TAPEBRIDGE_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
@@ -769,18 +829,24 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runRecallSession()
     processSocks();
 
     {
-      const uint64_t aggregatorTransactionId =
-        m_tapebridgeTransactionCounter.next();
+      const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
-          aggregatorTransactionId, m_jobRequest.clientHost,
+          tapebridgeTransId, m_jobRequest.clientHost,
           m_jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
+          castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
           castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+          castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+          castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+          castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+          castor::dlf::Param("clientType",
+            utils::volumeClientTypeToString(m_volume.clientType())),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
@@ -851,19 +917,24 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runDumpSession()
     processSocks();
 
     {
-      const uint64_t aggregatorTransactionId =
-        m_tapebridgeTransactionCounter.next();
+      const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
 
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
-          aggregatorTransactionId, m_jobRequest.clientHost,
-          m_jobRequest.clientPort);
+          tapebridgeTransId, m_jobRequest.clientHost, m_jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
+          castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
           castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+          castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+          castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+          castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+          castor::dlf::Param("clientType",
+            utils::volumeClientTypeToString(m_volume.clientType())),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
@@ -905,15 +976,21 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpdRequest(
     const char *reqTypeName = utils::rtcopyReqTypeToString(header.reqType);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("socketFd"          , socketFd             ),
-      castor::dlf::Param("magic"             , magicHex             ),
-      castor::dlf::Param("magicName"         , magicName            ),
-      castor::dlf::Param("reqType"           , reqTypeHex           ),
-      castor::dlf::Param("reqTypeName"       , reqTypeName          ),
-      castor::dlf::Param("len"               , header.lenOrStatus   )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("socketFd"          , socketFd               ),
+      castor::dlf::Param("magic"             , magicHex               ),
+      castor::dlf::Param("magicName"         , magicName              ),
+      castor::dlf::Param("reqType"           , reqTypeHex             ),
+      castor::dlf::Param("reqTypeName"       , reqTypeName            ),
+      castor::dlf::Param("len"               , header.lenOrStatus     )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_PROCESSING_TAPE_DISK_RQST, params);
   }
@@ -1005,19 +1082,23 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
     if(m_volume.mode() == tapegateway::WRITE) {
       // Send a FileToMigrateRequest to the client
       time_t connectDuration = 0;
-      const uint64_t aggregatorTransactionId =
-        m_tapebridgeTransactionCounter.next();
+      const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
       utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
-        m_jobRequest.volReqId, aggregatorTransactionId,
-        m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
+        m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+        m_jobRequest.clientPort, connectDuration));
       {
         castor::dlf::Param params[] = {
+          castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
           castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-          castor::dlf::Param("clientSock"        , clientSock.get()       ),
+          castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+          castor::dlf::Param("clientType",
+            utils::volumeClientTypeToString(m_volume.clientType())),
+          castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("connectDuration"   , connectDuration        )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           TAPEBRIDGE_SENT_FILETOMIGRATEREQUEST, params);
@@ -1026,26 +1107,30 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
       // Add the client connection to the socket catalogue so that the
       // association with the rtcpd connection is made
       m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-        body.tapePath, clientSock.release(), aggregatorTransactionId);
+        body.tapePath, clientSock.release(), tapebridgeTransId);
 
     // Else recalling (READ or DUMP)
     } else {
 
       // Send a FileToRecallRequest to the client
       time_t connectDuration = 0;
-      const uint64_t aggregatorTransactionId =
-        m_tapebridgeTransactionCounter.next();
+      const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
       utils::SmartFd clientSock(ClientTxRx::sendFileToRecallRequest(
-        m_jobRequest.volReqId, aggregatorTransactionId,
-        m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
+        m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+        m_jobRequest.clientPort, connectDuration));
       {
         castor::dlf::Param params[] = {
+          castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
           castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-          castor::dlf::Param("clientSock"        , clientSock.get()       ),
+          castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+          castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+          castor::dlf::Param("clientType",
+            utils::volumeClientTypeToString(m_volume.clientType())),
+          castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("connectDuration"   , connectDuration        )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           TAPEBRIDGE_SENT_FILETORECALLREQUEST, params);
@@ -1054,15 +1139,21 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
       // Add the client connection to the socket catalogue so that the
       // association with the rtcpd connection is made
       m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-        body.tapePath, clientSock.release(), aggregatorTransactionId);
+        body.tapePath, clientSock.release(), tapebridgeTransId);
     }
     break;
   case RTCP_POSITIONED:
     {
       castor::dlf::Param params[] = {
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
         castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
         castor::dlf::Param("filePath"          , body.filePath          ),
         castor::dlf::Param("tapePath"          , body.tapePath          )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1080,15 +1171,22 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
   case RTCP_FINISHED:
     {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-        castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-        castor::dlf::Param("filePath"          , body.filePath        ),
-        castor::dlf::Param("tapePath"          , body.tapePath        ),
-        castor::dlf::Param("tapeFseq"          , body.tapeFseq        ),
-        castor::dlf::Param("diskFseq"          , body.diskFseq        ),
-        castor::dlf::Param("bytesIn"           , body.bytesIn         ),
-        castor::dlf::Param("bytesOut"          , body.bytesOut        )};
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqID"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("filePath"          , body.filePath          ),
+        castor::dlf::Param("tapePath"          , body.tapePath          ),
+        castor::dlf::Param("tapeFseq"          , body.tapeFseq          ),
+        castor::dlf::Param("diskFseq"          , body.diskFseq          ),
+        castor::dlf::Param("bytesIn"           , body.bytesIn           ),
+        castor::dlf::Param("bytesOut"          , body.bytesOut          )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_FILE_TRANSFERED, params);
 
@@ -1114,23 +1212,28 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
         } 
 
         time_t connectDuration = 0;
-        const uint64_t aggregatorTransactionId =
+        const uint64_t tapebridgeTransId =
           m_tapebridgeTransactionCounter.next();
         utils::SmartFd clientSock(ClientTxRx::sendFileMigratedNotification(
-          m_jobRequest.volReqId, aggregatorTransactionId,
-          m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
-          fileTransactonId, body.segAttr.nameServerHostName,
-          body.segAttr.castorFileId, body.tapeFseq, body.blockId,
-          body.positionMethod, body.segAttr.segmCksumAlgorithm,
-          body.segAttr.segmCksum, fileSize, compressedFileSize));
+          m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+          m_jobRequest.clientPort, connectDuration, fileTransactonId,
+          body.segAttr.nameServerHostName, body.segAttr.castorFileId,
+          body.tapeFseq, body.blockId, body.positionMethod,
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, fileSize,
+          compressedFileSize));
         {
           castor::dlf::Param params[] = {
+            castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
             castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
             castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-            castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-            castor::dlf::Param("clientSock"        , clientSock.get()       ),
+            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
+            castor::dlf::Param("clientSock"        , clientSock.get()       ),
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1139,15 +1242,20 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
 
         int closedClientSock = 0;
         ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-          aggregatorTransactionId, closedClientSock = clientSock.release());
+          tapebridgeTransId, closedClientSock = clientSock.release());
         {
           castor::dlf::Param params[] = {
+            castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
             castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
             castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-            castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-            castor::dlf::Param("clientSock"        , closedClientSock       ),
+            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
+            castor::dlf::Param("clientSock"        , closedClientSock       ),
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1159,23 +1267,27 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
         const uint64_t fileSize = body.bytesOut; // "out" from the tape
 
         time_t connectDuration = 0;
-        const uint64_t aggregatorTransactionId =
+        const uint64_t tapebridgeTransId =
           m_tapebridgeTransactionCounter.next();
         utils::SmartFd clientSock(ClientTxRx::sendFileRecalledNotification(
-          m_jobRequest.volReqId, aggregatorTransactionId,
-          m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
-          fileTransactonId, body.segAttr.nameServerHostName,
-          body.segAttr.castorFileId, body.tapeFseq, body.filePath,
-          body.positionMethod, body.segAttr.segmCksumAlgorithm,
-          body.segAttr.segmCksum, fileSize));
+          m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+          m_jobRequest.clientPort, connectDuration, fileTransactonId,
+          body.segAttr.nameServerHostName, body.segAttr.castorFileId,
+          body.tapeFseq, body.filePath, body.positionMethod,
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, fileSize));
         {
           castor::dlf::Param params[] = {
+            castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
             castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-            castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-            castor::dlf::Param("clientSock"        , clientSock.get()       ),
+            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
+            castor::dlf::Param("clientSock"        , clientSock.get()       ),
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1184,15 +1296,20 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
 
         int closedClientSock = 0;
         ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-          aggregatorTransactionId, closedClientSock = clientSock.release());
+          tapebridgeTransId, closedClientSock = clientSock.release());
         {
           castor::dlf::Param params[] = {
+            castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
             castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-            castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-            castor::dlf::Param("clientSock"        , closedClientSock       ),
+            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+            castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+            castor::dlf::Param("clientType",
+              utils::volumeClientTypeToString(m_volume.clientType())),
+            castor::dlf::Param("clientSock"        , closedClientSock       ),
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1347,14 +1464,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::fileToMigrateClientCallback(
-  const int clientSock,
-  const IObject *obj,
-  const int rtcpdSock,
-  const uint32_t rtcpdReqMagic,
-  const uint32_t rtcpdReqType,
-  const char *,
-  const uint64_t aggregatorTransactionId,
-  struct timeval)
+  const int            clientSock,
+  const IObject *const obj,
+  const int            rtcpdSock,
+  const uint32_t       rtcpdReqMagic,
+  const uint32_t       rtcpdReqType,
+  const char *const,
+  const uint64_t       tapebridgeTransId,
+  const struct         timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1367,20 +1484,25 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId           ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit          ),
+    castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType())),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
     castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_FILETOMIGRATE, params);
 
   ClientTxRx::checkTransactionIds("FileToMigrate",
-    m_jobRequest.volReqId  , reply->mountTransactionId(),
-    aggregatorTransactionId, reply->aggregatorTransactionId());
+    m_jobRequest.volReqId, reply->mountTransactionId(),
+    tapebridgeTransId    , reply->aggregatorTransactionId());
 
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
@@ -1450,10 +1572,16 @@ void
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock            )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
@@ -1468,10 +1596,16 @@ void
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock            )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
@@ -1483,14 +1617,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::fileToRecallClientCallback(
-  const int      clientSock,
-  const IObject  *obj,
-  const int      rtcpdSock,
-  const uint32_t rtcpdReqMagic,
-  const uint32_t rtcpdReqType,
-  const char     *rtcpdReqTapePath,
-  const uint64_t aggregatorTransactionId,
-  struct timeval)
+  const int            clientSock,
+  const IObject *const obj,
+  const int            rtcpdSock,
+  const uint32_t       rtcpdReqMagic,
+  const uint32_t       rtcpdReqType,
+  const char *const    rtcpdReqTapePath,
+  const uint64_t       tapebridgeTransId,
+  const struct         timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1503,20 +1637,25 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId           ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit          ),
+    castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType())),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
     castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_FILETORECALL, params);
 
   ClientTxRx::checkTransactionIds("FileToRecall",
-     m_jobRequest.volReqId  , reply->mountTransactionId(),
-     aggregatorTransactionId, reply->aggregatorTransactionId());
+     m_jobRequest.volReqId, reply->mountTransactionId(),
+     tapebridgeTransId    , reply->aggregatorTransactionId());
 
   // Throw an exception if there is no tape path associated with the
   // initiating rtcpd request
@@ -1580,10 +1719,16 @@ void
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock            )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
@@ -1598,10 +1743,16 @@ void
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock             )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
@@ -1613,14 +1764,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::noMoreFilesClientCallback(
-  const int clientSock,
-  const IObject* obj,
-  const int rtcpdSock,
-  const uint32_t rtcpdReqMagic,
-  const uint32_t rtcpdReqType,
-  const char*,
-  const uint64_t aggregatorTransactionId,
-  struct timeval)
+  const int            clientSock,
+  const IObject *const obj,
+  const int            rtcpdSock,
+  const uint32_t       rtcpdReqMagic,
+  const uint32_t       rtcpdReqType,
+  const char *const,
+  const uint64_t       tapebridgeTransId,
+  const struct         timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1633,18 +1784,23 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId           ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit          ),
+    castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
-    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType())),
+    castor::dlf::Param("clientSock"        , clientSock                      )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
 
   ClientTxRx::checkTransactionIds("NoMoreFiles",
-    m_jobRequest.volReqId  , reply->mountTransactionId(),
-    aggregatorTransactionId, reply->aggregatorTransactionId());
+    m_jobRequest.volReqId, reply->mountTransactionId(),
+    tapebridgeTransId    , reply->aggregatorTransactionId());
 
   // Tell RTCPD there is no file by sending an empty file list
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
@@ -1660,10 +1816,16 @@ void
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-      castor::dlf::Param("TPVID"             , m_volume.vid()       ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock             )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
@@ -1676,14 +1838,14 @@ void
 void
   castor::tape::tapebridge::BridgeProtocolEngine::
   endNotificationErrorReportClientCallback(
-  const int clientSock,
-  const IObject* obj,
+  const int            clientSock,
+  const IObject *const obj,
   const int,
   const uint32_t,
   const uint32_t,
   const char*,
   const uint64_t,
-  struct timeval)
+  const struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1697,12 +1859,17 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId           ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit          ),
+    castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType())),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("errorCode"         , reply->errorCode()              ),
     castor::dlf::Param("errorMessage"      , reply->errorMessage()           )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1720,14 +1887,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::notificationAcknowledge(
-  const int clientSock,
-  const IObject* obj,
+  const int            clientSock,
+  const IObject *const obj,
   const int,
   const uint32_t,
   const uint32_t,
   const char*,
-  const uint64_t aggregatorTransactionId,
-  struct timeval)
+  const uint64_t tapebridgeTransId,
+  const struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1741,16 +1908,21 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId           ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit          ),
+    castor::dlf::Param("deviceGroupName", m_jobRequest.deviceGroupName),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
-    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType())),
+    castor::dlf::Param("clientSock"        , clientSock                      )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_NOTIFCATIONACKNOWLEDGE, params);
 
   ClientTxRx::checkTransactionIds("NotificationAcknowledge",
-    m_jobRequest.volReqId  , reply->mountTransactionId(),
-    aggregatorTransactionId, reply->aggregatorTransactionId());
+    m_jobRequest.volReqId, reply->mountTransactionId(),
+    tapebridgeTransId    , reply->aggregatorTransactionId());
 }

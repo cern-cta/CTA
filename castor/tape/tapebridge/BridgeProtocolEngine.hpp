@@ -79,7 +79,7 @@ public:
     const int                           rtcpdListenSock,
     const int                           initialRtcpdSock,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    tapegateway::Volume                 &volume,
+    const tapegateway::Volume           &volume,
     const uint32_t                      nbFilesOnDestinationTape,
     BoolFunctor                         &stoppingGracefully,
     Counter<uint64_t>                   &tapebridgeTransactionCounter) throw();
@@ -121,7 +121,7 @@ private:
   /**
    * The volume message received from the client.
    */
-  tapegateway::Volume &m_volume;
+  const tapegateway::Volume &m_volume;
 
   /**
    * If migrating and the client is the tape-gateway, then this is the next
@@ -224,7 +224,7 @@ private:
    *                           rtcpd request.  If there is no such tape path,
    *                           then the value of this parameter should be set
    *                           to NULL.
-   * @param aggregatorTransactionId The tapebridge transaction ID associated
+   * @param tapebridgeTransId  The tapebridge transaction ID associated
    *                           with the request sent to the client.  If no
    *                           request was sent then this parameter should be
    *                           set to 0.
@@ -232,12 +232,12 @@ private:
    */
   typedef void (BridgeProtocolEngine::*ClientMsgCallback)(
     const int            clientSock,
-    const IObject        *obj,
+    const IObject *const obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
-    const char           *rtcpdTapePath,
-    const uint64_t       aggregatorTransactionId,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
     const struct timeval clientReqTimeStamp);
 
   /**
@@ -290,7 +290,7 @@ private:
    * RTCP_FILE_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void rtcpFileReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -300,7 +300,7 @@ private:
    * RTCP_FILEERR_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void rtcpFileErrReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -331,7 +331,7 @@ private:
    * RTCP_TAPEREQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void rtcpTapeReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -341,7 +341,7 @@ private:
    * RTCP_TAPEERR rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void rtcpTapeErrReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -370,7 +370,7 @@ private:
    * RTCP_ENDOF_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void rtcpEndOfReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -380,7 +380,7 @@ private:
    * GIVE_OUTP rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   * BridgeProtocolEngine::MsgBodyCallback.
    */
   void giveOutpRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
@@ -414,85 +414,85 @@ private:
    * FileToMigrate client message handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   * BridgeProtocolEngine::ClientMsgCallback.
    */
   void fileToMigrateClientCallback(
-    const int      clientSock,
-    const IObject  *obj,
-    const int      rtcpdSock,
-    const uint32_t rtcpdMagic,
-    const uint32_t rtcpdReqType,
-    const char     *rtcpdTapePath,
-    const uint64_t aggregatorTransactionId,
-    struct timeval clientReqTimeStamp)
+    const int            clientSock,
+    const IObject *const obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
+    const struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
    * FileToRecall client message handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   * BridgeProtocolEngine::ClientMsgCallback.
    */
   void fileToRecallClientCallback(
-    const int      clientSock,
-    const IObject  *obj,
-    const int      rtcpdSock,
-    const uint32_t rtcpdMagic,
-    const uint32_t rtcpdReqType,
-    const char     *rtcpdTapePath,
-    const uint64_t aggregatorTransactionId,
-    struct timeval clientReqTimeStamp)
+    const int            clientSock,
+    const IObject *const obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
+    const struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
    * NoMoreFiles client message handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   * BridgeProtocolEngine::ClientMsgCallback.
    */
   void noMoreFilesClientCallback(
-    const int      clientSock,
-    const IObject  *obj,
-    const int      rtcpdSock,
-    const uint32_t rtcpdMagic,
-    const uint32_t rtcpdReqType,
-    const char     *rtcpdTapePath,
-    const uint64_t aggregatorTransactionId,
-    struct timeval clientReqTimeStamp)
+    const int            clientSock,
+    const IObject *const obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
+    const struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
    * EndNotificationErrorReport client message handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   * BridgeProtocolEngine::ClientMsgCallback.
    */
   void endNotificationErrorReportClientCallback(
-    const int      clientSock,
-    const IObject  *obj,
-    const int      rtcpdSock,
-    const uint32_t rtcpdMagic,
-    const uint32_t rtcpdReqType,
-    const char     *rtcpdTapePath,
-    const uint64_t aggregatorTransactionId,
-    struct timeval clientReqTimeStamp)
+    const int            clientSock,
+    const IObject *const obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
+    const struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
    * NotificationAcknowledge client message handler.
    *
    * For full documenation please see the documentation of the type
-   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   * BridgeProtocolEngine::ClientMsgCallback.
    */
   void notificationAcknowledge(
-    const int      clientSock,
-    const IObject  *obj,
-    const int      rtcpdSock,
-    const uint32_t rtcpdMagic,
-    const uint32_t rtcpdReqType,
-    const char     *rtcpdTapePath,
-    const uint64_t aggregatorTransactionId,
-    struct timeval clientReqTimeStamp)
+    const int            clientSock,
+    const IObject *const obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char *const    rtcpdTapePath,
+    const uint64_t       tapebridgeTransId,
+    const struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
 }; // class BridgeProtocolEngine

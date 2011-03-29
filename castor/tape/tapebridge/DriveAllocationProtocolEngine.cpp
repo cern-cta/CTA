@@ -149,8 +149,8 @@ castor::tape::tapegateway::Volume
 
     TAPE_THROW_CODE(EBADMSG,
       ": VDQM and RTCPD drive units do not match"
-      ": VDQM drive unit='" << jobRequest.driveUnit           << "'"
-      " RTCPD drive unit='" << rtcpdRequestInfoReply.volReqId << "'");
+      ": VDQM drive unit='" << jobRequest.driveUnit       << "'"
+      " RTCPD drive unit='" << rtcpdRequestInfoReply.unit << "'");
   }
 
   // If the VDQM and RTCPD volume request IDs do not match
