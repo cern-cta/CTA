@@ -82,8 +82,7 @@ class DBConnection(object):
         if dbVer == None:
             raise ValueError, 'No CastorVersion table found in the database'
         if dbVer[0] != DBConnection.SCHEMAVERSION:
-            raise ValueError, 'Version mismatch between the database and the software : "'
-            + dbVer + '" versus "' + DBConnection.SCHEMAVERSION + '"'
+            raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + DBConnection.SCHEMAVERSION
         # 'Created new Oracle connection' message
         dlf.write(msgs.CREATEDORACONN)
     
@@ -513,7 +512,7 @@ class CastorConf(dict):
                 dlf.writeerr(msgs.INVALIDOPT, msg='Invalid ' + category + '/' + key + ' option, ignoring it : ' + strvalue)
                 value = default
         except KeyError:
-            if default :
+            if default != None:
                 value = default
             else:
                 raise KeyError('No Entry found for ' + category + '/' + key + ' in config file')

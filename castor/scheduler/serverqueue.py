@@ -92,7 +92,7 @@ class ServerQueue(dict):
         del self[machine][transferid]
       # if we have a source transfer already running, stop it
       if transferid in self.d2dsrcrunning:
-        d2dend(transferid, lock=False)
+        self.d2dend(transferid, transfer[2], lock=False)
       return fileid, transfer[2]
     except KeyError:
       # we are not handling this transfer, fine, ignore it then
@@ -285,7 +285,7 @@ class ServerQueue(dict):
     if diskserver in self:
       self.lock.acquire()
       try:
-        res = [tuple([transferid]+transfer[0:3]) for transferid, transfer in self[diskserver].items() if transferid not in self.d2dsrcrunning]
+        res = [tuple([transferid]+transfer[0:3]) for transferid, transfer in self[diskserver].items() if (transferid not in self.d2dsrcrunning) or self.d2dsrcrunning[transferid] != diskserver]
         return res
       finally:
         self.lock.release()
@@ -323,7 +323,7 @@ class ServerQueue(dict):
             del self.transfersLocations[transferid]
             # if we have a source transfer already running, stop it
             if transferid in self.d2dsrcrunning:
-              d2dend(transferid, reqid, lock=False)
+              self.d2dend(transferid, reqid, lock=False)
         except KeyError, e:
           # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore

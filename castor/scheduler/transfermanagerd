@@ -44,8 +44,9 @@ def usage(exitCode):
 # first parse the options
 daemonize = True
 nbWorkers = 5
+verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hvfn:', ['help', 'foreground', 'nbworkers'])
+  options, args = getopt.getopt(sys.argv[1:], 'hvfn:v', ['help', 'foreground', 'nbworkers', 'verbose'])
 except Exception, e:
   print e
   usage(1)
@@ -56,6 +57,8 @@ for f, v in options:
     daemonize = False
   elif f == '-n' or f == '--nbworkers':
     nbWorkers = int(v)
+  elif f == '-v' or f == '--verbose':
+    verbose = True
   else:
     print "unknown option : " + f
     usage(1)
@@ -74,9 +77,9 @@ class DiskServerListCache:
   def __init__(self, refreshDelay=300):
     '''constructor'''
     # a dictionnary of diskpools with the list of diskservers in each of them
-    self.diskPool2DiskServer = None
+    self.diskPool2DiskServer = {}
     # a dictionnary of diskservers with the associated pool for each of them
-    self.diskServer2DiskPool = None
+    self.diskServer2DiskPool = {}
     self.refreshDelay = refreshDelay
     self.lastRefresh = 0
     # build the cache right now
@@ -311,12 +314,12 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.KILLALLTRANSFERSINTERNALCALLED, user=user)
     return tuple(queueingTransfers.removeall(user).items())
 
-  def exposed_killtransfersinternal(self, transferIds=None):
+  def exposed_killtransfersinternal(self, transferids=None):
     '''killtransfersinternal removes transfers from the queues handled by this scheduler.
     Return a tuple of (transferid, file) tuples for the transfers actually removed'''
-    for transferId in transferIds:
-      dlf.writedebug(msgs.KILLTRANSFERSINTERNALCALLED, subreqid=transferId)
-    return tuple(queueingTransfers.remove(transferIds).items())
+    for transferid in transferids:
+      dlf.writedebug(msgs.KILLTRANSFERSINTERNALCALLED, subreqid=transferid)
+    return tuple(queueingTransfers.remove(transferids).items())
 
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
@@ -433,13 +436,23 @@ def drain():
   '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
   Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon'''
   # first stop threads handling new requests, aborts and synchronization
-  global dispatchThread, abortThread, synchroThread
-  for thread in [dispatchThread, abortThread, synchroThread]:
-    try:
-      thread.stop()
-      thread.join()
-    except:
-      pass
+  # note that these threads may not be defined yet. In such a case, a NameError will be raised
+  # and caught by the corresponding except
+  try:
+    dispatchThread.stop()
+    dispatchThread.join()
+  except:
+    pass
+  try:
+    abortThread.stop()
+    abortThread.join()
+  except:
+    pass
+  try:
+    synchroThread.stop()
+    synchroThread.join()
+  except:
+    pass
   # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
   suicideThread = Suicider(connections)
   suicideThread.setName('Suicider')
@@ -507,6 +520,9 @@ try:
   except Exception, e:
     # 'Caught unexpected exception, exiting' message
     print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    if verbose:
+      import traceback
+      traceback.print_tb(sys.exc_info()[2])
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
     raise
 finally:

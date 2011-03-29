@@ -46,8 +46,9 @@ def usage(exitCode):
 # first parse the options
 daemonize = True
 fake = False
+verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground', 'fakemode'])
+  options, args = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground', 'fakemode', 'verbose'])
 except Exception, e:
   print e
   usage(1)
@@ -58,6 +59,8 @@ for f, v in options:
     daemonize = False
   elif f == '--fakemode':
     fake = True
+  elif f == '-v' or f == '--verbose':
+    verbose = True
   else:
     print "unknown option : " + f
     usage(1)
@@ -111,10 +114,10 @@ class DiskServerManagerService(rpyc.Service):
     # remove transfers from the local queue
     transfersCanceled = transferQueue.remove(transferids)
 
-  def exposed_transferAlreadyStarted(self, jobid, reqid):
+  def exposed_transferAlreadyStarted(self, transferid, reqid):
     '''Called when a job has started on another diskserver and can be canceled on this one'''
     dlf.writedebug(msgs.TRANSFERALREADYSTARTEDCALLED, subreqid=transferid, reqid=reqid)
-    transferQueue.remove(transferid)
+    transferQueue.remove([transferid])
 
   def exposed_getQueueingTransfers(self, scheduler):
     '''returns the list of transfers in the queue'''
@@ -336,6 +339,9 @@ try:
   except Exception, e:
     # 'Caught unexpected exception, exiting' message
     print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    if verbose:
+      import traceback
+      traceback.print_tb(sys.exc_info()[2])
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
     raise
 finally:
