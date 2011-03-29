@@ -270,7 +270,7 @@ EXTERN_C int Cns_bulkexist (const char *, u_signed64 *, int *);
 EXTERN_C int Cns_mkdir (const char *, mode_t);
 EXTERN_C int Cns_mkdirg (const char *, const char *, mode_t);
 EXTERN_C int Cns_modifyclass (char *, int, char *, struct Cns_fileclass *);
-EXTERN_C int Cns_openx (const uid_t, const gid_t, const char *, const int, const mode_t, const int, struct Cns_fileid *, struct Cns_filestatcs *);
+EXTERN_C int Cns_openx (const uid_t, const gid_t, const char *, const int, const mode_t, const int, int *, struct Cns_fileid *, struct Cns_filestatcs *);
 EXTERN_C Cns_DIR *Cns_opendir (const char *);
 EXTERN_C Cns_DIR *Cns_opendirg (const char *, const char *);
 EXTERN_C Cns_DIR *Cns_opendirxg (char *, const char *, const char *);
@@ -321,15 +321,4 @@ EXTERN_C int Cns_getrealid (uid_t *, gid_t *);
 EXTERN_C int Cns_unsetid ();
 EXTERN_C int send2nsdx (int *, char *, char *, int, char *, int, void **, int *);
 
-			/* function protypes for ID tables */
-
-EXTERN_C int Cns_getgrpbygid (gid_t, char *);
-EXTERN_C int Cns_getgrpbynam (char *, gid_t *);
-EXTERN_C int Cns_getusrbyuid (uid_t, char *);
-EXTERN_C int Cns_getusrbynam (char *, uid_t *);
-EXTERN_C int Cns_getidmap (const char *, int, const char **, uid_t *, gid_t *);
-EXTERN_C int Cns_modifygrpmap (gid_t, char *);
-EXTERN_C int Cns_modifyusrmap (uid_t, char *);
-EXTERN_C int Cns_rmgrpmap (gid_t, char *);
-EXTERN_C int Cns_rmusrmap (uid_t, char *);
 #endif

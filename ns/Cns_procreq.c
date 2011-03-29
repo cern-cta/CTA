@@ -5739,7 +5739,7 @@ int Cns_srv_openx(char *req_data,
   mode_t     mask;
   mode_t     mode;
   u_signed64 cwd;
-  char       repbuf[93];
+  char       repbuf[REPBUFSZ];
   char       *sbp = repbuf;
   
   /* Unmarshall message body */
@@ -5792,6 +5792,9 @@ int Cns_srv_openx(char *req_data,
 
   if (fmd_entry.fileid) {  /* File exists */
     reqinfo->fileid = fmd_entry.fileid;
+
+    /* Marshall the new file flag */
+    marshall_LONG (sbp, 0);
 
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);
@@ -5917,6 +5920,9 @@ int Cns_srv_openx(char *req_data,
 
     /* Ammend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
+
+    /* Marshall the newfile flag */
+    marshall_LONG (sbp, 1);
 
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);

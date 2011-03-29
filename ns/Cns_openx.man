@@ -15,6 +15,7 @@ Cns_openx \- open and possibly create a new CASTOR file
 .BI "const int " flags,
 .BI "const mode_t " mode,
 .BI "const int " classid,
+.BI "int * " newfile,
 .BI "struct Cns_fileid * " file_uniqueid,
 .BI "struct Cns_filestatcs * " statbuf)
 .SH DESCRIPTION
@@ -75,6 +76,11 @@ The parameter
 can be used to explicitly set the file class of a newly created file. If the
 value is zero then the file shall inherit the file class of its parent
 directory.
+.LP
+The
+.I newfile
+parameter will be set to 1 if the call resulted in the creation of a new file
+otherwise 0.
 .LP
 The structure pointed to by
 .IR file_uniqueid

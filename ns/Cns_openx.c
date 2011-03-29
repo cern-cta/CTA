@@ -25,6 +25,7 @@ Cns_openx(const uid_t owneruid,
           const int flags,
           const mode_t mode,
           const int classid,
+          int *newfile,
           struct Cns_fileid *file_uniqueid,
           struct Cns_filestatcs *statbuf)
 {
@@ -35,7 +36,7 @@ Cns_openx(const uid_t owneruid,
   char  *rbp;
   char  *sbp;
   char  func[10];
-  char  repbuf[93];
+  char  repbuf[REPBUFSZ];
   char  sendbuf[REQBUFSZ];
   char  server[CA_MAXHOSTNAMELEN + 1];
   gid_t gid;
@@ -98,6 +99,8 @@ Cns_openx(const uid_t owneruid,
 
     /* Unmarshall response */
     rbp = repbuf;
+    unmarshall_LONG (rbp, *newfile);
+
     if (statbuf != NULL) {
       unmarshall_HYPER (rbp, statbuf->fileid);
       unmarshall_WORD (rbp, statbuf->filemode);
@@ -133,6 +136,7 @@ Cns_openx(const uid_t owneruid,
      */
     rbp = repbuf;
     strcpy (file_uniqueid->server, server);
+    unmarshall_LONG (rbp, *newfile);
     unmarshall_HYPER (rbp, file_uniqueid->fileid);
   }
   if (c && serrno == SENAMETOOLONG) {
