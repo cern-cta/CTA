@@ -63,7 +63,7 @@ dlf.addmessages({msgs.SCHEDULETRANSFERCALLED : 'scheduleTransfer called',
                  msgs.INFORMTRANSFERISOVERFAILED : 'Informing scheduler that d2d transfer is over failed',
                  msgs.INFORMTRANSFERKILLEDFAILED : 'Informing scheduler that transfers were killed by signals failed',
                  msgs.RETRYTRANSFER : 'Retrying transfer',
-                 msgs.INVALIDTIMEOUTOPTION : 'Invalid JobManager/PendingTimeouts option, ignoring entry',
+                 msgs.INVALIDTIMEOUTOPTION : 'Invalid TransferManager/PendingTimeouts option, ignoring entry',
                  msgs.DSREFRESHFAILED : 'failed to refresh list of diskservers, kept old list',
                  msgs.ANYTRANSFERFROMSCHED : 'anyTransfersFromScheduler called',
                  msgs.TRANSFERALREADYSTARTEDCALLED : 'transferAlreadyStarted called'})

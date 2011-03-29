@@ -498,7 +498,8 @@ class CastorConf(dict):
 
     def getValue(self, category, key, default=None, typ=str):
         '''returns the value of a configuration item casted into the given type.
-        also handles casting errors and a default value if nothing is found'''
+        also handles casting errors and a default value if nothing is found. In case
+        default is not given or is None, a KeyError is raised if the key is not found'''
         # check whether we need to refresh our data first
         if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
             self.refresh()
@@ -512,7 +513,10 @@ class CastorConf(dict):
                 dlf.writeerr(msgs.INVALIDOPT, msg='Invalid ' + category + '/' + key + ' option, ignoring it : ' + strvalue)
                 value = default
         except KeyError:
-            value = default
+            if default :
+                value = default
+            else:
+                raise KeyError('No Entry found for ' + category + '/' + key + ' in config file')
         return value
 
 

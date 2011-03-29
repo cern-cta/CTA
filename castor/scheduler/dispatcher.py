@@ -408,11 +408,11 @@ class Dispatcher(threading.Thread):
                                             srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
                                             reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
                                             reqSvcClass.getvalue(), reqCreationTime.getvalue())))
-                # if maxNbTransfersScheduledPerSecondis not None, request throttling is active
+                # if maxNbTransfersScheduledPerSecond is given, request throttling is active
                 # What it does is keep a count of the number of scheduled request in the current second
                 # and wait the rest of the second if it reached the limit
-                maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', None, int)
-                if maxNbTransfersScheduledPerSecond:
+                maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', -1, int)
+                  if maxNbTransfersScheduledPerSecond >= 0:
                   currentTime = time.time()
                   currentSecond = int(currentTime)
                   # reset the counters if we've changed second

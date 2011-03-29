@@ -74,7 +74,8 @@ if not killall and len(args) == 0:
 # connect to server and gather numbers
 conf = castor_tools.castorConf()
 try:
-  rpcconn = rpyc.connect(conf.getValue('JOBMANAGER', 'HOST'), conf.getValue('TransferManager', 'Port', 15011, int))
+  rpcconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
+                         conf.getValue('TransferManager', 'Port', 15011, int))
   if killall:
     rpcconn.root.killalltransfers(user)
   else:

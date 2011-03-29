@@ -236,7 +236,8 @@ def processDiskPoolListing(rpconn, diskpool, user, extra, extraprotocols):
 conf = castor_tools.castorConf()
 try:
   # connect to server and gather numbers
-  rpconn = rpyc.connect(conf.getValue('JOBMANAGER', 'HOST'), conf.getValue('JOBMANAGER', 'NOTIFYPORT', 15011, int))
+  rpconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
+                        conf.getValue('TransferManager', 'Port', 15011, int))
   # display the proper listing
   if summary:
     processHostListing(rpconn, diskpool, user, extra, extraprotocols)

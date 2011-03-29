@@ -167,16 +167,16 @@ class LocalQueue(Queue.Queue):
     '''Checks which transfers need to be canceled because they are queueing for too long'''
     # get timeouts from configuration
     timeouts = dict([entry.split(':') for entry in
-                     self.config.getValue('JobManager', 'PendingTimeouts', '').split()])
+                     self.config.getValue('TransferManager', 'PendingTimeouts', '').split()])
     for svcclass, timeout in timeouts.items():
       try:
         timeouts[svcclass] = int(timeout)
       except ValueError:
         del timeouts[svcclass]
-        # "Invalid JobManager/PendingTimeouts option, ignoring entry" message
+        # "Invalid TransferManager/PendingTimeouts option, ignoring entry" message
         dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, svcclass=svcclass, timeout=timeout)
     # get the disk to disk copy timeout
-    d2dtimeout =  self.config.getValue('JobManager', 'DiskCopyPendingTimeout', None, int)
+    d2dtimeout =  self.config.getValue('TransferManager', 'DiskCopyPendingTimeout', 7200, int)
     # get current time and diskserver status
     currenttime = time.time()
     # loop over the transfers
@@ -255,7 +255,7 @@ class LocalQueue(Queue.Queue):
     # check whether transfers need to be canceled for timeouts
     self.checkForTimeoutTransfersCancelation(canceledTransfers)
     # All further processing requires resource killing to be active.
-    if self.config.getValue('JobManager', 'ResReqKill', 'yes').lower() != 'no':
+    if self.config.getValue('TransferManager', 'KillRequests', 'yes').lower() != 'no':
       # check whether transfers need to be canceled when hardware gets disabled
       self.checkForDisabledHardwareTransfersCancelation(canceledTransfers)
     # Inform the schedulers of canceled transfers
