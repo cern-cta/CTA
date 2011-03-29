@@ -86,7 +86,10 @@ def writep(priority, msgnb, **params):
         syslog.syslog(syslog.LOG_INFO | syslog.LOG_LOCAL2, 'MSGNO=%d MSGTEXT="%s"' % (msgnb, _messages[msgnb][0]))
         _messages[msgnb][1] = True
     # build the message raw text
-    rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], thread.get_ident(), _messages[msgnb][0])
+    # note that the thread id is not the actual linux thread id but the "fake" python one
+    # note also that we cut it to 5 digits (potentially creating colisions) so that it does
+    # not exceed the length expected by som eother components (e.g. syslog)
+    rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], thread.get_ident()%10000, _messages[msgnb][0])
     if params.has_key('fileid'):
         rawmsg = rawmsg + ("NSHOSTNAME=%s NSFILEID=%d " % params['fileid'])
     if params.has_key('reqid'):
