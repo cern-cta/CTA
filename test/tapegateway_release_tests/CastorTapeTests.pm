@@ -81,6 +81,8 @@ our @export   = qw(
                    getOrastagerconfigParam
                    cleanup
 		   elapsed_time
+                   spawn_testsuite
+                   wait_testsuite
                    ); # Symbols to autoexport (:DEFAULT tag)
 
 # keep track of the locally created files and of the recalled and locally rfcped files.
@@ -173,7 +175,8 @@ sub read_config ( $ )
 			  'local_stagerd',
 			  'local_tapegatewayd',
                           'local_expertd',
-                          'local_logprocessord');
+                          'local_logprocessord',
+                          'testsuite_config_location');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'castor_single_subdirectory',
                           'castor_dual_subdirectory', 'switchoverToTapeGateway',
@@ -2204,6 +2207,35 @@ sub cleanup () {
         }
         `su $environment{username} -c \"nsrm $remote_files[$i]->{name}\"`;
     }
+}
+
+sub spawn_testsuite ()
+{
+    my ( $pid, $rd, $wr );
+    # create a pipe for parent-child communication.
+    pipe ($rd, $wr);
+    if ( $pid = fork) { # parent part: just return child's pid and 
+        close ($wr);
+        return ($rd, $pid);
+    } else { # child part: just call the testsuite, return the standard output in the 
+        die "Cannot fork: $!" unless defined $pid;
+        close ($rd);
+        print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --all --notape --failnores\")`;
+        close ($wr);
+        exit;    
+    }
+}
+
+sub wait_testsuite ( $$ )
+{
+    my ( $pid, $rd ) = ( shift, shift );
+    my $ret = "";
+    while (my $l = <$rd>) {
+        $ret .= $l;
+    }
+    close ($rd);
+    waitpid ( $pid, 0 );
+    return $ret;
 }
 
 # Final cleanup of the library.
