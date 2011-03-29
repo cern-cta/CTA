@@ -2216,11 +2216,11 @@ sub spawn_testsuite ()
     pipe ($rd, $wr);
     if ( $pid = fork) { # parent part: just return child's pid and 
         close ($wr);
-        return ($rd, $pid);
+        return ($pid, $rd);
     } else { # child part: just call the testsuite, return the standard output in the 
         die "Cannot fork: $!" unless defined $pid;
         close ($rd);
-        print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --all --notape --failnores\")`;
+        print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --all --notape --failnores 2>&1\")`;
         close ($wr);
         exit;    
     }
