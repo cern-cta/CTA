@@ -3,4 +3,5 @@
     daily
     missingok
     rotate 200
+    delaycompress
 }

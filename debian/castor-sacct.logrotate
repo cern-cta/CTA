@@ -3,4 +3,5 @@
     weekly
     missingok
     rotate 200
+    delaycompress
 }
