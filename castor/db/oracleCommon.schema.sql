@@ -8,7 +8,7 @@
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_10_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_11_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
