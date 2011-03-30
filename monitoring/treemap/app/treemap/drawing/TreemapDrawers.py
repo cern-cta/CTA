@@ -47,10 +47,10 @@ class SquarifiedTreemapDrawer(object):
         self.ctx.set_font_options(fo)
         
     def drawTreemap(self, filename):
-        self.printText.__dict__['brokentextcount'] = 0
-        self.printText.__dict__['brokentextletters'] = 0
-        self.printText.__dict__['fulltextcount'] = 0
-        self.printText.__dict__['fulltextletters'] = 0
+        self.drawText.__dict__['brokentextcount'] = 0
+        self.drawText.__dict__['brokentextletters'] = 0
+        self.drawText.__dict__['fulltextcount'] = 0
+        self.drawText.__dict__['fulltextletters'] = 0
 
         self.vtree.traveseToRoot()
         root = self.vtree.getCurrentObject()
@@ -59,16 +59,16 @@ class SquarifiedTreemapDrawer(object):
         if treemap_props['labels']:
             iconx, icony, iconwidth, iconheight = root.iconcoords['x'],root.iconcoords['y'],root.iconcoords['width'], root.iconcoords['height']
             iconfile = root.iconfile
-            self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
-            self.printText(root.treenode.getObject().__str__(), root.x + root.strokesize, root.y + root.strokesize, root.width-2* root.strokesize - iconwidth, root.labelfontsize, root.labeltextisbold)
+            self.drawSVG(iconfile,iconx, icony, iconwidth, iconheight)
+            self.drawText(root.treenode.getObject().__str__(), root.x + root.strokesize, root.y + root.strokesize, root.width-2* root.strokesize - iconwidth, root.labelfontsize, root.labeltextisbold)
         self.drawRecursion()
         
         self.surface.write_to_png (filename)
         
-        print "brokentextcount ", self.printText.__dict__['brokentextcount']
-        print "fulltextcount ", self.printText.__dict__['fulltextcount']
-        print "brokentextletters ", self.printText.__dict__['brokentextletters']
-        print "fulltextletters ", self.printText.__dict__['fulltextletters']
+        print "brokentextcount ", self.drawText.__dict__['brokentextcount']
+        print "fulltextcount ", self.drawText.__dict__['fulltextcount']
+        print "brokentextletters ", self.drawText.__dict__['brokentextletters']
+        print "fulltextletters ", self.drawText.__dict__['fulltextletters']
         
     def drawRecursion(self):
         children = self.vtree.getChildren()
@@ -82,8 +82,8 @@ class SquarifiedTreemapDrawer(object):
                 txt = child.labeltext
                 iconx, icony, iconwidth, iconheight = child.iconcoords['x'],child.iconcoords['y'],child.iconcoords['width'],child.iconcoords['height']
                 iconfile = child.iconfile
-                self.printSVG(iconfile,iconx, icony, iconwidth, iconheight)
-                self.printText(txt, child.x + strokesize, child.y + strokesize, child.width-2*strokesize - iconwidth, child.labelfontsize, child.labeltextisbold)
+                self.drawSVG(iconfile,iconx, icony, iconwidth, iconheight)
+                self.drawText(txt, child.x + strokesize, child.y + strokesize, child.width-2*strokesize - iconwidth, child.labelfontsize, child.labeltextisbold)
                 
             
             self.vtree.traverseIntoChild(child)
@@ -195,7 +195,7 @@ class SquarifiedTreemapDrawer(object):
         self.ctx.set_source_rgba(r,g,b,a) 
         self.ctx.stroke ()
         
-    def printSVG(self, svgfilename = '', x = 0.0, y=0.0, width=0.0, height=0.0):
+    def drawSVG(self, svgfilename = '', x = 0.0, y=0.0, width=0.0, height=0.0):
         if width == 0.0 or height == 0.0: return
         x = float(x)
         y = float(y)
@@ -223,7 +223,7 @@ class SquarifiedTreemapDrawer(object):
         #restore transformation matrix
         self.ctx.restore()
         
-    def printText(self, text, x, y, max_text_width, max_text_height, isbold): #text, x, y, subwidth, subheight, bordersize, level):
+    def drawText(self, text, x, y, max_text_width, max_text_height, isbold): #text, x, y, subwidth, subheight, bordersize, level):
         pix_x = 1.0/self.mapwidth
         pix_y = 1.0/self.mapheight
 #        
@@ -278,11 +278,11 @@ class SquarifiedTreemapDrawer(object):
             print "another notext"
         
         if text [-2:] == '..':
-            self.printText.__dict__['brokentextcount'] = self.printText.__dict__['brokentextcount'] + 1
-            self.printText.__dict__['brokentextletters'] = self.printText.__dict__['brokentextletters'] + len(text) - 2
+            self.drawText.__dict__['brokentextcount'] = self.drawText.__dict__['brokentextcount'] + 1
+            self.drawText.__dict__['brokentextletters'] = self.drawText.__dict__['brokentextletters'] + len(text) - 2
         else:
-            self.printText.__dict__['fulltextcount'] = self.printText.__dict__['fulltextcount'] + 1
-            self.printText.__dict__['fulltextletters'] = self.printText.__dict__['fulltextletters'] + len(text)
+            self.drawText.__dict__['fulltextcount'] = self.drawText.__dict__['fulltextcount'] + 1
+            self.drawText.__dict__['fulltextletters'] = self.drawText.__dict__['fulltextletters'] + len(text)
 
         
     def rotateFuzzyValue(self, value, step):

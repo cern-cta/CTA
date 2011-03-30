@@ -5,7 +5,7 @@
 <html>
 <head>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="PRIVATE">
-<title>TreeMaps</title>
+<title>TreeMap</title>
 
 <link rel="stylesheet" type="text/css" media="all" href="{{apacheserver}}/css/calendar/calendar-blue2.css" title="win2k-cold-1" />
 <script type="text/javascript" src="{{apacheserver}}/js/calendar/calendar.js"></script>
@@ -270,7 +270,6 @@ function moveProgressBar(e)
 </div>
 
 <script type="text/javascript">
-browsertext = "Detected browser is: " + detectedBrowser();
 document.write(browsertext);
 </script>
 
@@ -354,6 +353,44 @@ document.write(browsertext);
         	</ul>  
 	   <br><a href="{{djangoresponseurl}}/treemaps/{{parentid}}" > <img border="0" title="one level back" src="{{apacheserver}}/{{icondir}}/arrow.png"></a> {% for dirname, flname, theid in navilink %}<a href="{{djangoresponseurl}}/treemaps/{{theid}}" title = {{flname}}>{{dirname}}</a>{% if forloop.counter0 %}/{% endif %}{% endfor %} <a href = "{{apacheserver}}/{{treemapdir}}/{{filename}}"> <img src="{{apacheserver}}/{{icondir}}/floppy.png" border="0" title = "Download Treemap"> </a>
 	   <br><br> <div style="font-size: 14px" >The displayed data is from 09.12.2010.<br>Requests are live.</div>
+	</td>
+		
+	<td align="center" valign="top">
+		<table style="font-size: 14px">
+			<tr>
+				<td>
+				<img border="0" title="paperclip" src="{{apacheserver}}/{{icondir}}/paperclip.png">
+				</td>
+				<td>
+				there is more items to display
+				</td>
+			</tr>
+			<tr>
+				<td>
+				<img border="0" title="paperclip" src="{{apacheserver}}/{{icondir}}/levelcolors.png">
+				</td>
+				<td>
+				fill color indicates level
+				</td>
+			</tr>
+			<tr>
+				<td>
+				<img border="0" title="paperclip" src="{{apacheserver}}/{{icondir}}/radialgradients.png">
+				</td>
+				<td>
+				file extension if detected
+				</td>
+			</tr>
+			<tr>
+				<td>
+				<img border="0" title="paperclip" src="{{apacheserver}}/{{icondir}}/boldandnot.png">
+				</td>
+				<td>
+				label bold = directory/default<br>
+				label normal = file
+				</td>
+			</tr>
+		</table>
 	</td>	
 		<noscript>
 			<div style="color:#7F1F1F" align = "center">
@@ -361,10 +398,6 @@ document.write(browsertext);
 				Please enable JavaScript and reload the page
 			</div>
 		</noscript>
-		
-	<td>
-	test
-	</td>	
 	</tr> </table>
 	<div style="display: none" id="hiddencallframe"></div>
 	<div style="display: none" id="timerid"></div>

@@ -156,11 +156,11 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
         drawer.drawTreemap(fullfilepath)
     
 
-        print drawer.printText.__dict__['brokentextcount']
-        measurements['brokentextcount'] = measurements['brokentextcount'] + drawer.printText.__dict__['brokentextcount']
-        measurements['brokentextletters'] = measurements['brokentextletters'] + drawer.printText.__dict__['brokentextletters']
-        measurements['fulltextcount'] = measurements['fulltextcount'] + drawer.printText.__dict__['fulltextcount']
-        measurements['fulltextletters'] = measurements['fulltextletters'] + drawer.printText.__dict__['fulltextletters'] 
+        print drawer.drawText.__dict__['brokentextcount']
+        measurements['brokentextcount'] = measurements['brokentextcount'] + drawer.drawText.__dict__['brokentextcount']
+        measurements['brokentextletters'] = measurements['brokentextletters'] + drawer.drawText.__dict__['brokentextletters']
+        measurements['fulltextcount'] = measurements['fulltextcount'] + drawer.drawText.__dict__['fulltextcount']
+        measurements['fulltextletters'] = measurements['fulltextletters'] + drawer.drawText.__dict__['fulltextletters'] 
     
         os.remove(fullfilepath + '.lock')
     
