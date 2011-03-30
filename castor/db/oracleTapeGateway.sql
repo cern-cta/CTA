@@ -10,7 +10,7 @@
 /* PROCEDURE */
 
 /* tg_findFromTGRequestId */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_findFromTGRequestId (
   inTapeGatewayRequestId IN  INTEGER,
   outTapeId              OUT INTEGER,
@@ -64,7 +64,7 @@ END;
 /
 
 /* tg_findFromVDQMReqId */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_findFromVDQMReqId (
   inVDQMReqId IN  INTEGER,
   outTapeId              OUT INTEGER,
@@ -118,7 +118,7 @@ END;
 /
 
 /* tg_RequestIdFromVDQMReqId */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_RequestIdFromVDQMReqId (
   inVDQMReqId IN  INTEGER,
   outTgrId    OUT INTEGER) AS
@@ -175,7 +175,7 @@ END;
 /
 
 /* tg_findVDQMReqFromTGReqId */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_findVDQMReqFromTGReqId (
   inTGReqId     IN  INTEGER,
   outVDQMReqId  OUT INTEGER) AS
@@ -199,7 +199,7 @@ END;
 /
 
 /* attach drive request to tape */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_attachDriveReqToTape(
   inTapeRequestId IN NUMBER,
   inVdqmId    IN NUMBER,
@@ -282,7 +282,7 @@ END;
 /
         
 /* attach the tapes to the streams  */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_attachTapesToStreams (
   inStartFseqs IN castor."cnumList",
   inStrIds     IN castor."cnumList",
@@ -367,7 +367,7 @@ END;
 /
 
 /* update the db when a tape session is ended */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_endTapeSession(inTransId IN NUMBER, inErrorCode IN INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
@@ -488,7 +488,7 @@ END;
 /
 
 /* mark a migration or recall as failed saving in the db the error code associated with the failure */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_failFileTransfer(
   inTransId      IN NUMBER,    -- The VDQM transaction ID
   inFileId    IN NUMBER,       -- File ID
@@ -559,7 +559,7 @@ END;
 /
 
 /* retrieve from the db all the tapecopies that faced a failure for migration */
-create or replace
+CREATE OR REPLACE
 PROCEDURE  tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_MIG_RETRY
@@ -574,7 +574,7 @@ END;
 
 
 /* retrieve from the db all the tapecopies that faced a failure for recall */
-create or replace
+CREATE OR REPLACE
 PROCEDURE  tg_getFailedRecalls(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_REC_RETRY
@@ -588,7 +588,7 @@ END;
 /
 
 /* default migration candidate selection policy */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_defaultMigrSelPolicy(inStreamId IN INTEGER,
                                   outDiskServerName OUT NOCOPY VARCHAR2,
                                   outMountPoint OUT NOCOPY VARCHAR2,
@@ -798,7 +798,7 @@ END;
 
 /* drain disk migration candidate selection policy */
 
-create or replace 
+CREATE OR REPLACE 
 PROCEDURE tg_drainDiskMigrSelPolicy(inStreamId        IN INTEGER,
                                     outDiskServerName OUT NOCOPY VARCHAR2,
                                     outMountPoint     OUT NOCOPY VARCHAR2,
@@ -1096,7 +1096,7 @@ END;
 /
 
 /* get a candidate for migration */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getFileToMigrate(
   inVDQMtransacId IN  NUMBER,
   outRet           OUT INTEGER,
@@ -1266,7 +1266,7 @@ END;
 /
 
 /* get a candidate for recall */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getFileToRecall (inTransId IN  NUMBER, outRet OUT INTEGER,
   outVid OUT NOCOPY VARCHAR2, outFile OUT castorTape.FileToRecallCore_Cur) AS
   varTgrId         INTEGER; -- TapeGateway Request Id
@@ -1349,7 +1349,7 @@ END;
 /
 
 /* get the information from the db for a successful migration */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getRepackVidAndFileInfo(
   inFileId          IN  NUMBER, 
   inNsHost          IN VARCHAR2,
@@ -1430,7 +1430,7 @@ END;
 /
 
 /* get the information from the db for a successful recall */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getSegmentInfo(
   inTransId     IN NUMBER,
   inFseq        IN INTEGER,
@@ -1474,7 +1474,7 @@ END;
 /
 
 /* get the stream without any tape associated */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getStreamsWithoutTapes(outStrList OUT castorTape.Stream_Cur) AS
 BEGIN
   -- get streams in state PENDING with a non-NULL TapeGatewayRequestId
@@ -1489,7 +1489,7 @@ END;
 /
 
 /* get tape with a pending request in VDQM */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getTapesWithDriveReqs(
   inTimeLimit     IN  NUMBER,
   outTapeRequest OUT castorTape.tapegatewayrequest_Cur) AS
@@ -1569,7 +1569,7 @@ END;
 /
 
 /* get a tape without any drive requests sent to VDQM */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getTapeWithoutDriveReq(
   outReqId    OUT NUMBER,
   outTapeMode OUT NUMBER,
@@ -1632,7 +1632,7 @@ END;
 
 
 /* get tape to release in VMGR */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_getTapeToRelease(
   inVdqmReqId IN  INTEGER, 
   outVID      OUT NOCOPY VARCHAR2, 
@@ -1662,7 +1662,7 @@ END;
 /
 
 /* invalidate a file that it is not possible to tape as candidate to migrate or recall */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_invalidateFile(
   inTransId   IN NUMBER,
   inFileId    IN NUMBER, 
@@ -1696,7 +1696,7 @@ END;
 
 
 /* restart taperequest which had problems */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_restartLostReqs(
   trIds IN castor."cnumList") AS
   vdqmId INTEGER;
@@ -1715,7 +1715,7 @@ END;
 
 
 /* update the db after a successful migration */
-create or replace
+CREATE OR REPLACE
 PROCEDURE TG_SetFileMigrated(
   inTransId         IN  NUMBER, 
   inFileId          IN  NUMBER,
@@ -1792,7 +1792,7 @@ END;
 
 
 /* update the db after a successful recall */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_setFileRecalled(
   inTransId          IN  NUMBER, 
   inFileId           IN  NUMBER,
@@ -1920,7 +1920,7 @@ END;
 
 
 /* save in the db the results returned by the retry policy for migration */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_setMigRetryResult(
   tcToRetry IN castor."cnumList",
   tcToFail  IN castor."cnumList" ) AS
@@ -2055,7 +2055,7 @@ END;
 
 
 /* update the db when a tape session is started */
-create or replace
+CREATE OR REPLACE
 PROCEDURE  tg_startTapeSession(
   inVdqmReqId    IN  NUMBER,
   outVid         OUT NOCOPY VARCHAR2,
@@ -2149,7 +2149,7 @@ END;
 
 
 /* delete streams for not existing tapepools */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_deleteStream(inStrId IN NUMBER) AS
   varUnused NUMBER;
   varTcIds  "numList"; -- TapeCopy Ids
@@ -2178,7 +2178,7 @@ END;
 
 
 /* delete taperequest  for not existing tape */
-create or replace
+CREATE OR REPLACE
 PROCEDURE tg_deleteTapeRequest( inTGReqId IN NUMBER ) AS
   /* The tape gateway request does not exist per se, but 
    * references to its ID should be removed (with needed consequences

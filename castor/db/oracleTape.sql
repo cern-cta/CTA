@@ -112,7 +112,7 @@ BEGIN
       /* The VID MUST be defined when the tapecopy gets selected */
       IF :new.VID IS NULL THEN
         RAISE_APPLICATION_ERROR(-20119,
-          'Moving/creating (in)to TAPECOPY_SELECTED State without a VID  (TC.ID: '||
+          'Moving/creating (in)to TAPECOPY_SELECTED State without a VID (TC.ID: '||
           :new.ID||' VID:'|| :old.VID||'=>'||:new.VID||' Status:'||:old.status||'=>'||:new.status||')');
       END IF;
     WHEN tconst.TAPECOPY_STAGED THEN

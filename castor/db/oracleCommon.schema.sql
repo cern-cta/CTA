@@ -632,4 +632,6 @@ CREATE INDEX I_FileSystem_Rate
 /* Aborting */
 /************/
 
-CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048) CONSTRAINT NN_TransfersToAbort_Uuid NOT NULL);
+CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048)
+  CONSTRAINT NN_TransfersToAbort_Uuid NOT NULL);
+
