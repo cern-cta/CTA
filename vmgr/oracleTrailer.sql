@@ -269,9 +269,9 @@ END VMGR_UPDATE_POOL_OWNER;
 DECLARE
   nbTable         INTEGER        := 0;
   createTableStmt VARCHAR2(1024) :=
-    'CREATE TABLE vmgr_tape_status_code (' ||
-    '  status_number NUMBER  NOT NULL, '   ||
-    '  status_string VARCHAR2(100)   , '   ||
+    'CREATE TABLE vmgr_tape_status_code ('                                         ||
+    '  status_number NUMBER CONSTRAINT NN_VmgrTapeStatusCodes_Number NOT NULL, '   ||
+    '  status_string VARCHAR2(100)   , '                                           ||
     '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
 BEGIN
   SELECT COUNT(*) INTO nbTable FROM USER_TABLES
