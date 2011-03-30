@@ -124,7 +124,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
         context.jobSvc->putFailed
           (args.subRequestId, args.fileId.fileid, args.fileId.server);
         castor::exception::Internal e;
-        e.getMessage() << "No data transfered";
+        e.getMessage() << "No data transferred";
         throw e;
       }
     } else {

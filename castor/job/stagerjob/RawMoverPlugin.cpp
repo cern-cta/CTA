@@ -172,7 +172,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     if (stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       // deal with the case of an empty file when the child failed
       if (childFailed && (0 == statbuf.st_size)) {
-        // "No data transfered"
+        // "No data transferred"
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param("Path", context.fullDestPath),
@@ -194,7 +194,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
         context.jobSvc->putFailed
           (args.subRequestId, args.fileId.fileid, args.fileId.server);
         castor::exception::NoValue e;
-        e.getMessage() << "No data transfered";
+        e.getMessage() << "No data transferred";
         throw e;
       }
       // Extract checksum information from extended attributes if instructed

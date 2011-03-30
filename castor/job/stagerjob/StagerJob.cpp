@@ -599,7 +599,7 @@ int main(int argc, char** argv) {
 
       // Errors
       { STAT64FAIL,      "stat64 error" },
-      { NODATAWRITTEN,   "No data transfered" },
+      { NODATAWRITTEN,   "No data transferred" },
       { UNLINKFAIL,      "unlink error" },
       { CHILDEXITED,     "Child exited" },
       { CHILDSIGNALED,   "Child exited due to uncaught signal" },

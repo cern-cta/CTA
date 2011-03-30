@@ -103,7 +103,7 @@ namespace castor {
 
         // Errors
         STAT64FAIL =      40, /* stat64 error */
-        NODATAWRITTEN =   49, /* No data transfered */
+        NODATAWRITTEN =   49, /* No data transferred */
         UNLINKFAIL =      50, /* unlink error */
         CHILDEXITED =     41, /* Child exited */
         CHILDSIGNALED =   42, /* Child exited due to uncaught signal */
