@@ -10,6 +10,8 @@
 #ifndef _CNS_API_H
 #define _CNS_API_H
 #include <utime.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "Cns_constants.h"
 #include "Cns_struct.h"
 #include "osdep.h"
