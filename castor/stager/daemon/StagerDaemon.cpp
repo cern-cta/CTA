@@ -211,8 +211,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     /*************************/
     /* StgRequestSvcThread  */
     { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
-    { STAGER_SETGC,"SetGC Request"},
-    { STAGER_SETGC_DETAILS, "SetGC details"},/* SYSTEM LEVEL ALSO */
+    { STAGER_SETGC,"SetGCWeight Request"},
     { STAGER_RM, "Rm Request"},
     { STAGER_RMPERFORMED, "Rm performed"},
     { STAGER_PUTDONE,"PutDone Request"},
@@ -228,7 +227,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_SUBREQ_SELECTED, "Request selected by subRequestToDo"},
     { STAGER_REQ_PROCESSED, "Request processed"},
     { STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
-    { STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
     { STAGER_WAITSUBREQ, "Request moved to Wait"},
     { STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
     { STAGER_GET_REPLICATION, "Triggering internal DiskCopy replication"},
@@ -246,7 +244,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_USER_NONFILE, "User asking for a non existing file"},
     { STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
     { STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
-    { STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
     { STAGER_CNS_EXCEPTION, "Error on the Name Server"},
     { STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
     { STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},

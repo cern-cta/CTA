@@ -29,6 +29,7 @@
 #define STAGER_ISTAGERSVC_HPP 1
 
 // Include Files
+#include "Cns_api.h"
 #include "castor/Constants.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
@@ -191,27 +192,16 @@ namespace castor {
        * Retrieves a CastorFile from the database based on its fileId
        * and name server. Creates a new one if none if found.
        * Caller is in charge of the deletion of the allocated object
-       * @param fileId the fileId of the CastorFile
-       * @param nsHost the name server to use
-       * @param svcClass the service class of the castor file.
+       * @param subreq the subRequest concerning this file
+       * @param cnsFileId the NS fileid structure of the CastorFile
+       * @param cnsFilestat the NS filestat structure of the file
        * Used only in case of creation of a new castor file.
-       * @param fileClass the file class of the castor file.
-       * Used only in case of creation of a new castor file.
-       * @param fileSize the size fo the castor file.
-       * Used only in case of creation of a new castor file.
-       * @param fileName the name of the castor file at the time
-       * of this call. This will go to the DB as lastKnownFileName.
-       * @param lastUpdateTime the time of the last modification of
-       * this file at the time of this call. This will be used in
-       * case a new CastorFile will be created
-       * @return the CastorFile, or 0 if none found
+       * @return the CastorFile instance.
        * @exception Exception in case of error
        */
       virtual castor::stager::CastorFile* selectCastorFile
-      (const u_signed64 fileId, const std::string nsHost,
-       u_signed64 svcClass, u_signed64 fileClass,
-       u_signed64 fileSize, const std::string fileName,
-       time_t lastUpdateTime)
+        (castor::stager::SubRequest* subreq,
+         const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat)
         throw (castor::exception::Exception) = 0;
 
       /**

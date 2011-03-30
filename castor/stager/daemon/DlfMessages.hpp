@@ -52,7 +52,6 @@ namespace castor{
 	/*************************/
 	/* StgRequestSvcThread  */
 	STAGER_SETGC = 38, /* "SetGC Request" */
-	STAGER_SETGC_DETAILS = 39, /* "SetGC details" *//* SYSTEM LEVEL ALSO */
 	STAGER_RM = 40, /* Rm Request" */
 	STAGER_RMPERFORMED = 41, /* Rm performed" */
 	STAGER_PUTDONE = 42, /* "PutDone Request" */
@@ -60,15 +59,14 @@ namespace castor{
 
 	/***********************/
 	/* BulkStageSvcThread  */
-        STAGER_BLKSTGSVC_ABORT = 152, /* Abort processed */
-        STAGER_BLKSTGSVC_UNKREQ = 153, /* "Unknown request processed" */
+  STAGER_BLKSTGSVC_ABORT = 152, /* Abort processed */
+  STAGER_BLKSTGSVC_UNKREQ = 153, /* "Unknown request processed" */
 
 	/******************/
 	/*  SYSTEM LEVEL */
 	/****************/
 	/* after calling the corresponding stagerService function, to show the decision taken */
 	STAGER_ARCHIVE_SUBREQ = 51, /* Archiving subrequest" */
-	STAGER_NOTHING_TOBEDONE = 52, /* Diskcopy available, nothing to be done */
 	STAGER_WAITSUBREQ = 53, /* Request moved to Wait" */
 	STAGER_REPACK_MIGRATION = 54, /* Starting Repack Migration" */
 	STAGER_GET_REPLICATION = 55, /* Triggering internal DiskCopy replication */
@@ -86,7 +84,6 @@ namespace castor{
 	STAGER_USER_NONFILE = 75, /*User asking for a Non Existing File" */
 	STAGER_INVALID_FILESYSTEM = 76, /*Invalid fileSystem" */
 	STAGER_UNABLETOPERFORM = 77, /* Unable to perform request, notifying user */
-	STAGER_EXPERT_EXCEPTION = 78, /* "Error while asking the expert system" */
 	STAGER_CNS_EXCEPTION = 79, /* Error on the name server */
 	STAGER_SUBREQUESTUUID_EXCEPTION = 80, /* Impossible to get the subrequest Uuid */
 	STAGER_REQUESTUUID_EXCEPTION = 81, /* Impossible to get the request Uuid */

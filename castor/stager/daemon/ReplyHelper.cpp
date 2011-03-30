@@ -61,16 +61,16 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, 
+      void ReplyHelper::setAndSendIoResponse(RequestHelper* reqHelper, 
 					     Cns_fileid* cnsFileid, 
 					     int errorCode, 
 					     std::string errorMessage, 
 					     const castor::stager::DiskCopyInfo* diskCopy)
-	throw(castor::exception::Exception)
+        throw(castor::exception::Exception)
       {
-        if(stgRequestHelper->fileRequest) {
-          if(stgRequestHelper->fileRequest->client() == 0) {
-            stgRequestHelper->dbSvc->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
+        if(reqHelper->fileRequest) {
+          if(reqHelper->fileRequest->client() == 0) {
+            reqHelper->dbSvc->fillObj(reqHelper->baseAddr, reqHelper->fileRequest, castor::OBJ_IClient, false);
           }
         }
         else {
@@ -85,26 +85,26 @@ namespace castor{
           ioResponse->setFileId(0);
         }
 
-        if (!stgRequestHelper->fileRequest->reqId().empty()) {
-          this->ioResponse->setReqAssociated(stgRequestHelper->fileRequest->reqId());
+        if (!reqHelper->fileRequest->reqId().empty()) {
+          this->ioResponse->setReqAssociated(reqHelper->fileRequest->reqId());
         } else {
           // no UUID?? at this stage just log it and try to go on
-          castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-            castor::dlf::Param("Filename",stgRequestHelper->subrequest->fileName()),
-            castor::dlf::Param("Username",stgRequestHelper->username),
-            castor::dlf::Param("Groupname", stgRequestHelper->groupname),
+          castor::dlf::Param params[]={ castor::dlf::Param(reqHelper->subrequestUuid),
+            castor::dlf::Param("Filename",reqHelper->subrequest->fileName()),
+            castor::dlf::Param("Username",reqHelper->username),
+            castor::dlf::Param("Groupname", reqHelper->groupname),
             castor::dlf::Param("Function", "ReplyHelper.setAndSendIoResponse")
           };
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
+          castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
 
         if (diskCopy) {
           ioResponse->setFileName(diskCopy->diskCopyPath());
 	  ioResponse->setServer(diskCopy->diskServer());
         }
-	ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
-	ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
-        ioResponse->setId(stgRequestHelper->subrequest->id());
+	ioResponse->setCastorFileName(reqHelper->subrequest->fileName());
+	ioResponse->setStatus(reqHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
+        ioResponse->setId(reqHelper->subrequest->id());
 
         /* errorCode = exception.code() */
         if(errorCode != 0){
@@ -118,18 +118,18 @@ namespace castor{
           this->ioResponse->setErrorMessage(ioRespErrorMessage);
         }
 
-        this->requestReplier->sendResponse(stgRequestHelper->fileRequest->client(), ioResponse, false);
+        this->requestReplier->sendResponse(reqHelper->fileRequest->client(), ioResponse, false);
       }
 
 
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
-      void ReplyHelper::endReplyToClient(RequestHelper* stgRequestHelper) throw(castor::exception::Exception){
+      void ReplyHelper::endReplyToClient(RequestHelper* reqHelper) throw(castor::exception::Exception){
         /* to update the subrequest on DB */
-        bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-        if(!requestLeft && stgRequestHelper->fileRequest != 0) {
-          requestReplier->sendEndResponse(stgRequestHelper->fileRequest->client(), stgRequestHelper->fileRequest->reqId());
+        bool requestLeft = reqHelper->stagerService->updateAndCheckSubRequest(reqHelper->subrequest);
+        if(!requestLeft && reqHelper->fileRequest != 0) {
+          requestReplier->sendEndResponse(reqHelper->fileRequest->client(), reqHelper->fileRequest->reqId());
         }
       }
 

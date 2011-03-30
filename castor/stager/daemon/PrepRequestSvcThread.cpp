@@ -25,10 +25,9 @@
 *****************************************************************************/
 
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/OpenRequestHandler.hpp"
 #include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 
 #include "castor/stager/daemon/RepackHandler.hpp"
@@ -43,7 +42,7 @@
 
 #include "stager_constants.h"
 #include "Cns_api.h"
-#include "expert_api.h"
+
 #include "serrno.h"
 #include "getconfent.h"
 
@@ -115,55 +114,53 @@ castor::stager::daemon::PrepRequestSvcThread::PrepRequestSvcThread()
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::PrepRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
 
-  RequestHelper* stgRequestHelper= NULL;
-  JobRequestHandler* stgRequestHandler = NULL;
+  RequestHelper* reqHelper= NULL;
+  OpenRequestHandler* stgRequestHandler = NULL;
 
   try {
     int typeRequest=0;
-    stgRequestHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
+    reqHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
 
     switch(typeRequest){
       case OBJ_StagePrepareToGetRequest:
-        stgRequestHandler = new PrepareToGetHandler(stgRequestHelper);
+        stgRequestHandler = new PrepareToGetHandler(reqHelper);
         break;
 
       case OBJ_StageRepackRequest:
-        stgRequestHandler = new RepackHandler(stgRequestHelper);
+        stgRequestHandler = new RepackHandler(reqHelper);
         break;
 
       case OBJ_StagePrepareToPutRequest:
-        stgRequestHandler = new PrepareToPutHandler(stgRequestHelper);
+        stgRequestHandler = new PrepareToPutHandler(reqHelper);
         break;
 
       case OBJ_StagePrepareToUpdateRequest:
-        stgRequestHandler = new PrepareToUpdateHandler(stgRequestHelper);
+        stgRequestHandler = new PrepareToUpdateHandler(reqHelper);
         break;
 
       default:
-        // XXX should never happen, but happens?!
         castor::exception::Internal e;
         e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
-        stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
+        reqHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
         throw e;
     }
 
-    stgRequestHandler->preHandle();
     stgRequestHandler->handle();
 
     if (stgRequestHandler->notifyJobManager() && (m_jobManagerHost != "")) {
       castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
     }
 
-    delete stgRequestHelper;
+    delete reqHelper;
     delete stgRequestHandler;
 
   }
   catch(castor::exception::Exception& ex){
 
-    handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
+    handleException(reqHelper, ex.code(), ex.getMessage().str());
 
     /* we delete our objects */
-    if(stgRequestHelper) delete stgRequestHelper;
+    if(reqHelper) delete reqHelper;
     if(stgRequestHandler) delete stgRequestHandler;
   }
 }

@@ -1,17 +1,15 @@
 /***********************************************************************************************************/
 /* PrepareToUpdatetHandler: Constructor and implementation of the PrepareToUpdate request handler   */
-/* Since it is jobOriented, it uses the mostly part of the JobRequestHandler class                 */
+/* Since it is jobOriented, it uses the mostly part of the OpenRequestHandler class                 */
 /* Depending if the file exist, it can follow the huge flow (scheduled, as Get) or a small one (as Put) */
 /* We need to reply to the client (just in case of error )                                             */
 /******************************************************************************************************/
 
 
 
-#include "castor/stager/daemon/CnsHelper.hpp"
+
 #include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
 #include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
 #include "castor/stager/daemon/PrepareToPutHandler.hpp"
 #include "castor/stager/daemon/PrepareToGetHandler.hpp"
@@ -19,7 +17,7 @@
 #include "stager_uuid.h"
 #include "stager_constants.h"
 #include "Cns_api.h"
-#include "expert_api.h"
+
 
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -41,41 +39,37 @@
 #include <string>
 
 
-
 namespace castor{
   namespace stager{
     namespace daemon{
-      
-      PrepareToUpdateHandler::PrepareToUpdateHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception) :
-        UpdateHandler(stgRequestHelper)
-      {
-        this->typeRequest = OBJ_StagePrepareToUpdateRequest;
-      }
 
-      /*********************************************/
-      /* handler for the PrepareToUpdate request  */
-      /*******************************************/
       void PrepareToUpdateHandler::handle() throw(castor::exception::Exception)
       {
-        stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(stgCnsHelper->cnsFileid));
+        // Inherited behavior from RequestHandler, overriding the OpenRequestHandler one
+        RequestHandler::handle();
         
-        RequestHandler* h = 0;
+        /* check permissions and open the file according to the request type file */
+        bool recreate = reqHelper->openNameServerFile() || ((reqHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
+
+        /* get the castorFile entity and populate its links in the db */
+        reqHelper->getCastorFile();
+
+        reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(reqHelper->cnsFileid));
+        
         if(recreate) {
-          // delegate to PPut
-          h = new PrepareToPutHandler(stgRequestHelper, stgCnsHelper);
-        } else {
-          // delegate to PGet
-          h = new PrepareToGetHandler(stgRequestHelper, stgCnsHelper);
+          // delegate to PrepareToPut (may throw exception, which are forwarded)
+          PrepareToPutHandler* h = new PrepareToPutHandler(reqHelper);
+          h->handlePut();
+          delete h;
+        }
+        else {
+          // delegate to PrepareToGet (may throw exception, which are forwarded)
+          PrepareToGetHandler* h = new PrepareToGetHandler(reqHelper);
+          h->handleGet();
+          delete h;
         }      
-        h->handle();   // may throw exception, just forward it - logging is done in the callee
-        h->stgCnsHelper = 0;
-        delete h;
       }
-      
-      
-      
       
     }// end daemon namespace
   }// end stager namespace
 }//end castor namespace 
-

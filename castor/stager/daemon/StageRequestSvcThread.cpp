@@ -25,10 +25,9 @@
 *****************************************************************************/
 
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/OpenRequestHandler.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
 
 #include "castor/stager/daemon/PutDoneHandler.hpp"
@@ -40,7 +39,7 @@
 
 #include "stager_constants.h"
 #include "Cns_api.h"
-#include "expert_api.h"
+
 #include "serrno.h"
 
 #include "castor/dlf/Dlf.hpp"
@@ -66,8 +65,6 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -86,48 +83,46 @@ castor::stager::daemon::StageRequestSvcThread::StageRequestSvcThread() throw()
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
 
-  RequestHelper* stgRequestHelper= NULL;
+  RequestHelper* reqHelper= NULL;
   RequestHandler* stgRequestHandler = NULL;
 
   try {
     int typeRequest=0;
-    stgRequestHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
+    reqHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
 
     switch(typeRequest){
 
       case OBJ_StagePutDoneRequest:
-      stgRequestHandler = new PutDoneHandler(stgRequestHelper);
+      stgRequestHandler = new PutDoneHandler(reqHelper);
       break;
 
       case OBJ_StageRmRequest:
-      stgRequestHandler = new RmHandler(stgRequestHelper);
+      stgRequestHandler = new RmHandler(reqHelper);
       break;
 
       case OBJ_SetFileGCWeight:
-      stgRequestHandler = new SetGCWeightHandler(stgRequestHelper);
+      stgRequestHandler = new SetGCWeightHandler(reqHelper);
       break;
 
       default:
-        // XXX should never happen, but happens?!
         castor::exception::Internal e;
         e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
-        stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
+        reqHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
         throw e;
     }//end switch(typeRequest)
 
-    stgRequestHandler->preHandle();
     stgRequestHandler->handle();
 
-    delete stgRequestHelper;
+    delete reqHelper;
     delete stgRequestHandler;
 
   }
   catch(castor::exception::Exception& ex){
 
-    handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
+    handleException(reqHelper, ex.code(), ex.getMessage().str());
 
     /* we delete our objects */
-    if(stgRequestHelper) delete stgRequestHelper;
+    if(reqHelper) delete reqHelper;
     if(stgRequestHandler) delete stgRequestHandler;
   }
 }

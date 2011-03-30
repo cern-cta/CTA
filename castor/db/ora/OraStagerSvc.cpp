@@ -137,7 +137,7 @@ const std::string castor::db::ora::OraStagerSvc::s_createEmptyFileStatementStrin
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-  "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
+"BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for getBestDiskCopyToRead
 const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
@@ -894,31 +894,29 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
 // selectCastorFile
 //------------------------------------------------------------------------------
 castor::stager::CastorFile*
-castor::db::ora::OraStagerSvc::selectCastorFile
-(const u_signed64 fileId, const std::string nsHost,
- u_signed64 svcClass, u_signed64 fileClass,
- u_signed64 fileSize, std::string fileName,
- time_t lastUpdateTime)
+castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subreq,
+  const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
     m_selectCastorFileStatement =
       createStatement(s_selectCastorFileStatementString);
     m_selectCastorFileStatement->registerOutParam
-      (8, oracle::occi::OCCIDOUBLE);
-    m_selectCastorFileStatement->registerOutParam
       (9, oracle::occi::OCCIDOUBLE);
+    m_selectCastorFileStatement->registerOutParam
+      (10, oracle::occi::OCCIDOUBLE);
     m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   try {
-    m_selectCastorFileStatement->setDouble(1, fileId);
-    m_selectCastorFileStatement->setString(2, nsHost);
-    m_selectCastorFileStatement->setDouble(3, svcClass);
-    m_selectCastorFileStatement->setDouble(4, fileClass);
-    m_selectCastorFileStatement->setDouble(5, fileSize);
-    m_selectCastorFileStatement->setString(6, fileName);
-    m_selectCastorFileStatement->setDouble(7, lastUpdateTime);
+    m_selectCastorFileStatement->setDouble(1, cnsFileId->fileid);
+    m_selectCastorFileStatement->setString(2, cnsFileId->server);
+    m_selectCastorFileStatement->setDouble(3, subreq->request()->svcClass()->id());
+    m_selectCastorFileStatement->setDouble(4, cnsFileStat->fileclass);
+    m_selectCastorFileStatement->setDouble(5, cnsFileStat->filesize);
+    m_selectCastorFileStatement->setString(6, subreq->fileName());
+    m_selectCastorFileStatement->setDouble(7, subreq->id());
+    m_selectCastorFileStatement->setDouble(8, cnsFileStat->mtime);
 
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
@@ -931,12 +929,13 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     // Found the CastorFile, so create it in memory
     castor::stager::CastorFile* result =
       new castor::stager::CastorFile();
-    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(8));
-    result->setFileId(fileId);
-    result->setNsHost(nsHost);
-    result->setLastKnownFileName(fileName);
-    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
-    result->setLastUpdateTime(lastUpdateTime);
+    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(9));
+    result->setFileId(cnsFileId->fileid);
+    result->setNsHost(cnsFileId->server);
+    result->setLastKnownFileName(subreq->fileName());
+    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(10));
+    result->setLastUpdateTime(cnsFileStat->mtime);
+    subreq->setCastorFile(result);    // executed in the PL/SQL procedure
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1463,28 +1462,14 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     throw ex;
   }
 
-  if (Cns_setid(euid, egid) != 0) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_setid failed : ";
-    if (!strcmp(cns_error_buffer, "")) {
-      ex.getMessage() << sstrerror(serrno);
-    } else {
-      ex.getMessage() << cns_error_buffer;
-    }
-    throw ex;
-  }
-
   // Get segments for castorFile
   struct Cns_fileid fileid;
   fileid.fileid = castorFile->fileId();
   strncpy(fileid.server,
           castorFile->nsHost().c_str(),
           CA_MAXHOSTNAMELEN+1);
-
   struct Cns_segattrs *nsSegmentAttrs = 0;
   int nbNsSegments = 0;
-
   int rc = Cns_getsegattrs
     (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
   if (-1 == rc) {

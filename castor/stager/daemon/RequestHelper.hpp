@@ -1,147 +1,157 @@
-/******************************************************************************************************************/
-/* Helper class containing the objects and methods which interact to performe the processing of the request      */
-/* it is needed to provide:                                                                                     */
-/*     - a common place where its objects can communicate                                                      */
-/*     - a way to pass the set of objects from the main flow (DBService thread) to the specific handler */
-/* It is an attribute for all the request handlers                                                           */
-/* **********************************************************************************************************/
+/******************************************************************************
+ *                castor/stager/daemon/RequestHelper.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * Helper class for handling file-oriented user requests
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
 
 #ifndef STAGER_REQUEST_HELPER_HPP
 #define STAGER_REQUEST_HELPER_HPP 1
 
-#include "castor/stager/daemon/CnsHelper.hpp"
-
-#include "castor/IObject.hpp"
-#include "castor/stager/IStagerSvc.hpp"
-#include "castor/db/DbCnvSvc.hpp"
-#include "castor/BaseAddress.hpp"
-#include "castor/stager/SubRequest.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/IClient.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/FileClass.hpp"
-#include "stager_uuid.h"
-#include "stager_constants.h"
-
-#include "Cns_api.h"
-
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "u64subr.h"
-
-
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
-#include "castor/stager/Tape.hpp"
-#include "castor/exception/Exception.hpp"
-
-#include "castor/ObjectSet.hpp"
-#include "castor/Constants.hpp"
-
-#include "serrno.h"
-#include <errno.h>
-
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/DlfMessages.hpp"
-
 #include <vector>
 #include <iostream>
 #include <string>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-namespace castor{
-  namespace stager{
-    namespace daemon{
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "Cns_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "serrno.h"
+#include <errno.h>
 
-      class RequestHelper : public virtual castor::BaseObject{
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/Constants.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/db/DbCnvSvc.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/IClient.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/FileClass.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
+
+namespace castor {
+
+  namespace stager {
+
+    namespace daemon {
+
+      class RequestHelper {
 
       public:
 
-	/* services needed: database and stager services*/
-	castor::stager::IStagerSvc* stagerService;
-	castor::db::DbCnvSvc* dbSvc;
+        // services needed: database and stager services
+        castor::stager::IStagerSvc* stagerService;
+        castor::db::DbCnvSvc* dbSvc;
+        castor::BaseAddress* baseAddr;
 
-	// for logging purposes
-	struct Cns_fileid cnsFileId;
+        // NameServer data
+        struct Cns_fileid cnsFileid;
+        struct Cns_filestatcs cnsFilestat;
+      
+        // request & co
+        castor::stager::SubRequest* subrequest;
+        castor::stager::FileRequest* fileRequest;
+        castor::stager::SvcClass* svcClass;
+        castor::stager::CastorFile* castorFile;
 
-	/* BaseAddress */
-	castor::BaseAddress* baseAddr;
+        // resolved username and groupname        
+        std::string username;
+        std::string groupname;
+      
+        // for logging purposes
+        Cuuid_t subrequestUuid;
+        Cuuid_t requestUuid;
+      
+        timeval tvStart;
 
-	/* subrequest and fileRequest  */
-	castor::stager::SubRequest* subrequest;
+        RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
+          throw(castor::exception::Exception);
 
-	castor::stager::FileRequest* fileRequest;
+        ~RequestHelper() throw();
 
-	/* service class */
-	castor::stager::SvcClass* svcClass;
+        /**
+         * Resolves the svcClass if not resolved yet
+         * @throw exception in case of any database error
+         */
+        void resolveSvcClass() throw(castor::exception::Exception);
 
-	/* castorFile attached to the subrequest*/
-	castor::stager::CastorFile* castorFile;
+        /**
+         * Checks the existence of the requested file in the NameServer, and creates it if the request allows for
+         * creation. Internally sets the fileId and nsHost for the file.
+         * @return true if the file has been created
+         * @throw exception in case of permission denied or non extisting file and no right to create it
+         */
+        bool openNameServerFile()
+          throw(castor::exception::Exception);
 
-	std::string username;
-	std::string groupname;
+        /**
+         * Stats the requested file in the NameServer.
+         * @throw exception in case of any NS error except ENOENT. serrno is set accordingly.
+         */
+        void statNameServerFile()
+          throw(castor::exception::Exception);
 
-	/* Cuuid_t thread safe variables */
-	Cuuid_t subrequestUuid;
-	Cuuid_t requestUuid;
+        /**
+         * Gets the castorFile from the db, calling selectCastorFile
+         * @throw exception in case of any database error
+         */
+        void getCastorFile() throw(castor::exception::Exception);
 
-	std::string default_protocol;
+        /**
+         * Extracts the username and groupname from uid,gid
+         * @throw exception in case of invalid user
+         */
+        void setUsernameAndGroupname() throw(castor::exception::Exception);
 
-	timeval tvStart;
-
-	RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
-
-	/* destructor */
-	~RequestHelper() throw();
-
-	/**
-   * resolve the svClass if not resolved yet by using the stagerService
-   */
-	void resolveSvcClass() throw(castor::exception::Exception);
-
-	/* get subrequest and request uuids */
-	void setUuids() throw ();
-
-	/**
-	 *  link the castorFile to the ServiceClass
-	 */
-	void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
-
-	/************************************************************************************/
-	/* set the username and groupname string versions using id2name c function  */
-	/**********************************************************************************/
-	void setUsernameAndGroupname() throw(castor::exception::Exception);
-
-	/**
-	 * Checks if the user (euid,egid) has the right permission for this request.
-	 * Write permissions are needed for any request that changes any attribute of the file,
-	 * this includes PutDone.
-	 * @param fileCreated true if the file has just been created. In such a case, read permission
-	 * is sufficient for any operation, allowing for putting read-only files.
-	 * @param stgCnsHelper information about the file to be checked e.g. the uid and gid.
-	 * @throw exception when the user has not enough permissions for this request.
-	 */
-	void checkFilePermission(bool fileCreated,
-				 castor::stager::daemon::CnsHelper* stgCnsHelper)
-	  throw(castor::exception::Exception);
-
-	/**
-	 * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
-	 * @param level the DLF logging level
-	 * @param messageNb the message number as defined in DlfMessages.hpp
-	 * @param fid the fileId structure if needed
-	 */
-	void logToDlf(int level, int messageNb, struct Cns_fileid* fid = 0) throw();
+        /**
+         * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
+         * @param level the DLF logging level
+         * @param messageNb the message number as defined in DlfMessages.hpp
+         * @param fid the fileId structure if needed
+         */
+        void logToDlf(int level, int messageNb, struct Cns_fileid* fid = 0) throw();
 
       }; //end RequestHelper class
+      
     }//end namespace daemon
+    
   }//end namespace stager
+  
 }//end namespace castor
-
-
 
 #endif

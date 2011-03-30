@@ -1,5 +1,5 @@
 /****************************************************************************************************************************/
-/* handler for the Update subrequest, since it is jobOriented, it uses the mostly part of the JobRequestHandler class*/
+/* handler for the Update subrequest, since it is jobOriented, it uses the mostly part of the OpenRequestHandler class*/
 /* depending if the file exist, it can follow the huge flow (jobOriented, as Get) or a small one                          */
 /*************************************************************************************************************************/
 
@@ -8,63 +8,40 @@
 #define STAGER_UPDATE_HANDLER_HPP 1
 
 
-#include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
-#include "castor/stager/daemon/ReplyHelper.hpp"
-
-#include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
-
-
-#include "stager_uuid.h"
-#include "stager_constants.h"
-
-#include "Cns_api.h"
-#include "expert_api.h"
-
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "u64subr.h"
-
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
-
-#include "castor/exception/Exception.hpp"
-
 #include "serrno.h"
 #include <errno.h>
-
 #include <iostream>
 #include <string>
+
+#include "stager_constants.h"
+#include "Cns_api.h"
+#include "u64subr.h"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/OpenRequestHandler.hpp"
 
 
 namespace castor{
   namespace stager{
     namespace daemon{
       
-      class RequestHelper;
-      class CnsHelper;
       
-      class UpdateHandler : public virtual JobRequestHandler{
-        
-      protected:
-        
-        bool recreate;
+      class UpdateHandler : public OpenRequestHandler {
         
       public:
       
         /* constructor */
-        UpdateHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        UpdateHandler(RequestHelper* reqHelper) throw(castor::exception::Exception) :
+          OpenRequestHandler(reqHelper) {};
         /* destructor */
-        ~UpdateHandler() throw();
-        
-        /* set the internal attribute "toRecreateCastorFile depending on fileExist" */
-        /* which determines the real flow of the handler */
-        virtual void preHandle() throw(castor::exception::Exception);
+        ~UpdateHandler() throw() {};
         
         /* handler for the Update request  */
-        void handle() throw(castor::exception::Exception);
-        
+        virtual void handle() throw(castor::exception::Exception);
         
       }; //end UpdateHandler class
       

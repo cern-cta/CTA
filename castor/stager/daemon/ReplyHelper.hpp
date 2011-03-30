@@ -15,7 +15,6 @@
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/exception/Exception.hpp"
-
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "u64subr.h"
@@ -58,7 +57,7 @@ namespace castor{
         /* requests done via xrootd                                                                */
         /*******************************************************************************************/
         void setAndSendIoResponse
-        (RequestHelper* stgRequestHelper, 
+        (RequestHelper* reqHelper, 
          Cns_fileid* cnsFileid,
          int errorCode,
          std::string errorMessage,
@@ -69,7 +68,7 @@ namespace castor{
         /*********************************************************************************************/
         /* check if there is any subrequest left and send the endResponse to client if it is needed */
         /*******************************************************************************************/
-        void endReplyToClient(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        void endReplyToClient(RequestHelper* reqHelper) throw(castor::exception::Exception);
         
         
       }; // end ReplyHelper  

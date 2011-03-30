@@ -1,115 +1,90 @@
 /**********************************************************************************************/
 /* PrepareToGetHandler: Constructor and implementation of the get subrequest's handler */
-/* It inherits from the JobRequestHandler and it needs to reply to the client         */
+/* It inherits from the OpenRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
-
-
-#include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
-#include "castor/stager/daemon/ReplyHelper.hpp"
-#include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
-#include "castor/stager/daemon/PrepareToGetHandler.hpp"
-
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
-
 #include <iostream>
 #include <string>
+
+#include "Cns_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/stager/Tape.hpp"
+
+#include "castor/stager/daemon/DlfMessages.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/PrepareToGetHandler.hpp"
 
 
 namespace castor{
   namespace stager{
     namespace daemon{
       
-      PrepareToGetHandler::PrepareToGetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
-      {
-        this->stgRequestHelper = stgRequestHelper;
-        this->stgCnsHelper = stgCnsHelper;
-        this->typeRequest = OBJ_StagePrepareToGetRequest;
-      }
-      
-      /*******************************************************************/
-      /* function to set the handler's attributes according to its type */
-      /*****************************************************************/
-      void PrepareToGetHandler::handlerSettings() throw(castor::exception::Exception)
-      {	
-        this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
-      }
-      
-      
       bool PrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         bool reply = false;
-        int result = stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest);
+        int result = reqHelper->stagerService->processPrepareRequest(reqHelper->subrequest);
         switch(result) {
           case -2:                         // this happens for repacks that need to wait on other requests
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+          reqHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+          reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(reqHelper->cnsFileid));
           reply = true;
           break;
           
           case -1:
-          stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+          reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
           break;
           
           case DISKCOPY_STAGED:             // nothing to do, just log it
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
+          reqHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
+          reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(reqHelper->cnsFileid));
           reply = true;
           break;
           
           case DISKCOPY_WAITDISK2DISKCOPY:    // nothing to do (the db is already updated), log that a replication is about to happen
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
+          reqHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+          reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(reqHelper->cnsFileid));
           reply = true;
           break;
           
           case DISKCOPY_WAITTAPERECALL:   // trigger a recall
           {
             // reset the filesize to the nameserver one, as we don't have anything in the db
-            stgRequestHelper->subrequest->castorFile()->setFileSize(stgCnsHelper->cnsFilestat.filesize);
+            reqHelper->subrequest->castorFile()->setFileSize(reqHelper->cnsFilestat.filesize);
             // first check the special case of 0 bytes files
-            if (0 == stgCnsHelper->cnsFilestat.filesize) {
-              stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, false);
-              stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
+            if (0 == reqHelper->cnsFilestat.filesize) {
+              reqHelper->stagerService->createEmptyFile(reqHelper->subrequest, false);
+              reqHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
               reply = true;
               break;
             }
             // answer client only if success
             castor::stager::Tape *tape = 0;
-            reply = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
+            reply = reqHelper->stagerService->createRecallCandidate(reqHelper->subrequest, reqHelper->svcClass, tape);
             if (reply) {
               // "Triggering Tape Recall"
               castor::dlf::Param params[] = {
-                castor::dlf::Param("Type", castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()]),
-                castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
-                castor::dlf::Param("Username", stgRequestHelper->username),
-                castor::dlf::Param("Groupname", stgRequestHelper->groupname),
-                castor::dlf::Param("SvcClass", stgRequestHelper->svcClass->name()),
+                castor::dlf::Param("Type", castor::ObjectsIdStrings[reqHelper->fileRequest->type()]),
+                castor::dlf::Param("Filename", reqHelper->subrequest->fileName()),
+                castor::dlf::Param("Username", reqHelper->username),
+                castor::dlf::Param("Groupname", reqHelper->groupname),
+                castor::dlf::Param("SvcClass", reqHelper->svcClass->name()),
                 castor::dlf::Param("TPVID", tape->vid()),
                 castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
-                castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),
-              castor::dlf::Param(stgRequestHelper->subrequestUuid)};
-              castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
+                castor::dlf::Param("FileSize", reqHelper->subrequest->castorFile()->fileSize()),
+              castor::dlf::Param(reqHelper->subrequestUuid)};
+              castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(reqHelper->cnsFileid));
             } else {
               // no tape copy found because of Tape0 file, log it
               // any other tape error will throw an exception and will be classified as LVL_ERROR 
-              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+              reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
             }
             if (tape != 0)
               delete tape;
@@ -119,33 +94,36 @@ namespace castor{
         return reply;
       }
       
-      
-      
       void PrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
+        OpenRequestHandler::handle();
         
+        handleGet();
+      }
+      
+      
+      void PrepareToGetHandler::handleGet() throw(castor::exception::Exception)
+      {        
         ReplyHelper* stgReplyHelper = NULL;
         castor::stager::DiskCopyInfo *diskCopy = NULL;
         try{
-          handlerSettings();
           
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOGET, &(stgCnsHelper->cnsFileid));
-          jobOriented();	  
+          reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOGET, &(reqHelper->cnsFileid));
           
           if(switchDiskCopiesForJob()) {
-            if(stgRequestHelper->subrequest->answered() == 0) {
+            if(reqHelper->subrequest->answered() == 0) {
               stgReplyHelper = new ReplyHelper();
-              if(stgRequestHelper->subrequest->protocol() == "xroot") {
-                diskCopy = stgRequestHelper->stagerService->
-                  getBestDiskCopyToRead(stgRequestHelper->subrequest->castorFile(),
-					                              stgRequestHelper->svcClass);
+              if(reqHelper->subrequest->protocol() == "xroot") {
+                diskCopy = reqHelper->stagerService->
+                  getBestDiskCopyToRead(reqHelper->subrequest->castorFile(),
+					                              reqHelper->svcClass);
               }
               if (diskCopy) {
-                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);
+                stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "", diskCopy);
               } else {              
-                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
+                stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "");
               }
-              stgReplyHelper->endReplyToClient(stgRequestHelper);
+              stgReplyHelper->endReplyToClient(reqHelper);
             
               delete stgReplyHelper;
               stgReplyHelper = 0;
@@ -154,7 +132,7 @@ namespace castor{
             }
             else {
               // no reply needs to be sent to the client, archive the subrequest
-              stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id(), SUBREQUEST_FINISHED);
+              reqHelper->stagerService->archiveSubReq(reqHelper->subrequest->id(), SUBREQUEST_FINISHED);
             }
           }
         }
@@ -171,19 +149,12 @@ namespace castor{
           castor::dlf::Param params[] = {
             castor::dlf::Param("Error Code", e.code()),
           castor::dlf::Param("Error Message", e.getMessage().str())};
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2, params, &(stgCnsHelper->cnsFileid));
+          castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2, params, &(reqHelper->cnsFileid));
           throw(e);
         }        
         
       }
       
-      
-      /***********************************************************************/
-      /*    destructor                                                      */
-      PrepareToGetHandler::~PrepareToGetHandler() throw()
-      {
-        
-      }
       
     }//end namespace dbservice
   }//end namespace stager

@@ -31,10 +31,9 @@ DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 DBSERVICEDAEMONBIN_SRCS = \
-	CnsHelper.cpp \
-	GetHandler.cpp \
-	JobRequestHandler.cpp \
 	StagerDaemon.cpp \
+	GetHandler.cpp \
+	OpenRequestHandler.cpp \
 	PrepareToGetHandler.cpp \
 	PrepareToPutHandler.cpp \
 	PrepareToUpdateHandler.cpp \
@@ -58,6 +57,7 @@ DBSERVICEDAEMONBIN_SRCS = \
         JobSvcThread.cpp \
 	CleaningThread.cpp \
 	NsOverride.cpp
+
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.o)
 NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),,,750)
 MakeDir(LogPath,0755)

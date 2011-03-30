@@ -4,39 +4,25 @@
 /******************************************************************************************** */
 
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
-
+#include "castor/stager/daemon/PutDoneHandler.hpp"
 
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/IService.hpp"
 #include "castor/stager/IJobSvc.hpp"
-
-
-#include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/JobRequestHandler.hpp"
-#include "castor/stager/daemon/PutDoneHandler.hpp"
-
 #include "stager_uuid.h"
 #include "stager_constants.h"
 #include "castor/Constants.hpp"
 #include "Cns_api.h"
-#include "expert_api.h"
-
 #include "Cpwd.h"
 #include "Cgrp.h"
 
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
-
 #include "castor/exception/Exception.hpp"
-
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
-
 
 #include "serrno.h"
 #include <errno.h>
@@ -45,54 +31,54 @@
 #include <string>
 
 
-
-
-
-
-
-
 namespace castor{
   namespace stager{
     namespace daemon{
       
-      PutDoneHandler::PutDoneHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
-      {     	
-        this->stgRequestHelper = stgRequestHelper;
-        this->typeRequest = OBJ_StagePutDoneRequest;
-        
-        
-      }
-      
-      
       void PutDoneHandler::handle() throw(castor::exception::Exception)
       {
-        ReplyHelper* stgReplyHelper= NULL;
+        RequestHandler::handle();
+
+        ReplyHelper* stgReplyHelper = NULL;
+        
+        // check if file exists         
+        reqHelper->statNameServerFile();
+        if(serrno == ENOENT) {
+          reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 0);
+          castor::exception::Exception e(ENOENT);
+          throw e;
+        }
+
+        // check write permissions
+        if(0 != Cns_accessUser(reqHelper->subrequest->fileName().c_str(), W_OK,
+                               reqHelper->fileRequest->euid(), reqHelper->fileRequest->egid())) {
+          castor::exception::Exception ex(serrno);
+          reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, &(reqHelper->cnsFileid));
+          throw ex;
+        }
+        
+        // get/create CastorFile
+        reqHelper->getCastorFile();
+          
         try{
+          reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PUTDONE, &(reqHelper->cnsFileid));
           
-          /**************************************************************************/
-          /* common part for all the handlers: get objects, link, check/create file*/
-          
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PUTDONE, &(stgCnsHelper->cnsFileid));
-          
-          jobOriented();/* until it will be explored */
-          
-          
-          switch(stgRequestHelper->stagerService->processPutDoneRequest(stgRequestHelper->subrequest)) {
+          switch(reqHelper->stagerService->processPutDoneRequest(reqHelper->subrequest)) {
             
             case -1:  // request put in wait
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+            reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(reqHelper->cnsFileid));
             break;
             
             case 0:   // error
-            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+            reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
             break;
             
             case 1:   // ok
-            stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
+            reqHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
             
             stgReplyHelper = new ReplyHelper();
-            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
-            stgReplyHelper->endReplyToClient(stgRequestHelper);
+            stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "No error");
+            stgReplyHelper->endReplyToClient(reqHelper);
             delete stgReplyHelper;
             stgReplyHelper = 0;
             break;
@@ -102,20 +88,16 @@ namespace castor{
         catch(castor::exception::Exception& e){
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())
           };
           
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUTDONE, 2 ,params, &(stgCnsHelper->cnsFileid));
-          throw(e);
+          castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUTDONE, 2, params, &(reqHelper->cnsFileid));
+          throw e;
         }
       }
-      
-      
-      
-      
       
     }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
-

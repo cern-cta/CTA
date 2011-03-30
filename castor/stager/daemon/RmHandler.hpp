@@ -8,13 +8,10 @@
 #define STAGER_RM_HANDLER_HPP 1
 
 #include "castor/stager/daemon/RequestHandler.hpp"
-
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 
 #include "u64subr.h"
-
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/stager/SubRequest.hpp"
 
@@ -35,20 +32,18 @@ namespace castor{
     namespace daemon{
       
       class RequestHelper;
-      class CnsHelper;
       
       class RmHandler : public RequestHandler {
         
       public:
         /* constructor */
-        RmHandler(RequestHelper* stgRequestHelper) throw ();
+        RmHandler(RequestHelper* reqHelper) throw () :
+          RequestHandler(reqHelper) {};
         /* destructor */
         ~RmHandler() throw() {};
         
-        virtual void preHandle() throw(castor::exception::Exception);
-        
         /* rm subrequest handler */
-        void handle() throw(castor::exception::Exception);
+        virtual void handle() throw(castor::exception::Exception);
         
       }; // end RmHandler class
       

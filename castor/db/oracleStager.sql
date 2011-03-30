@@ -2285,6 +2285,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
                                               fn IN VARCHAR2,
+                                              srId IN NUMBER,
                                               lut IN NUMBER,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
@@ -2292,9 +2293,16 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   nsHostName VARCHAR2(2048);
   previousLastKnownFileName VARCHAR2(2048);
+  fcId NUMBER;
 BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
+  -- Resolve the fileclass
+  BEGIN
+    SELECT id INTO fcId FROM FileClass WHERE classId = fc;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR (-20010, 'File class '|| fc ||' not found in database');
+  END;
   BEGIN
     -- try to find an existing file
     SELECT id, fileSize, lastKnownFileName
@@ -2318,6 +2326,8 @@ BEGIN
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
+    UPDATE SubRequest SET castorFile = rid
+     WHERE id = srId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's create a new one
     -- take care that the name of the new file is not already the lastKnownFileName
@@ -2330,15 +2340,19 @@ BEGIN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, normalizePath(fn))
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
+    UPDATE SubRequest SET castorFile = rid
+     WHERE id = srId;
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- the violated constraint indicates that the file was created by another client
   -- while we were trying to create it ourselves. We can thus use the newly created file
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
+  UPDATE SubRequest SET castorFile = rid
+   WHERE id = srId;
 END;
 /
 

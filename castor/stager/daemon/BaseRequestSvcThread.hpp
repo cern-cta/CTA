@@ -37,7 +37,6 @@
 #include "castor/Constants.hpp"
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 
 
 namespace castor {
@@ -56,7 +55,7 @@ namespace castor {
         
         virtual castor::IObject* select() throw();
         
-        void handleException(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw();
+        void handleException(RequestHelper* reqHelper, int errorCode, std::string errorMessage) throw();
         
       protected:
         std::string m_name;

@@ -26,7 +26,6 @@
 
 
 #include "castor/stager/daemon/RequestHelper.hpp"
-#include "castor/stager/daemon/CnsHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
@@ -76,20 +75,20 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
 // handleException
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::BaseRequestSvcThread::handleException(
-  RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
-  if(stgRequestHelper == 0 || stgRequestHelper->dbSvc == 0 || stgRequestHelper->subrequest == 0) {
+  RequestHelper* reqHelper, int errorCode, std::string errorMessage) throw() {
+  if(reqHelper == 0 || reqHelper->dbSvc == 0 || reqHelper->subrequest == 0) {
     // exception thrown before being able to do anything with the db
     // we can't do much here...
     return;        
   }
-  stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
+  reqHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
 
-  if(stgRequestHelper->fileRequest != NULL) {
+  if(reqHelper->fileRequest != NULL) {
     try {
       // inform the client about the error
       ReplyHelper *stgReplyHelper = new ReplyHelper();
-      stgReplyHelper->setAndSendIoResponse(stgRequestHelper, (stgCnsHelper ? &(stgCnsHelper->cnsFileid) : 0), errorCode, errorMessage);
-      stgReplyHelper->endReplyToClient(stgRequestHelper);
+      stgReplyHelper->setAndSendIoResponse(reqHelper, (reqHelper ? &(reqHelper->cnsFileid) : 0), errorCode, errorMessage);
+      stgReplyHelper->endReplyToClient(reqHelper);
       delete stgReplyHelper;
     } catch (castor::exception::Exception& ignored) {}
   }
@@ -97,7 +96,7 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     // if we didn't get the fileRequest, we probably got a serious failure, and we can't answer the client
     // just try to update the db
     try {
-      stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+      reqHelper->dbSvc->updateRep(reqHelper->baseAddr, reqHelper->subrequest, true);
     }
     catch (castor::exception::Exception& ignored) {}
   }
