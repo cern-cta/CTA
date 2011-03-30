@@ -1,3 +1,0 @@
-rpm -qa | grep castor-vmgr-client
-vmgrlistpool | grep <tapepool>
-vmgrlisttape -P <tapepool> -x | grep -v "FULL|DISABLED|ARCHIVE" | awk '{print $1" "$8}'

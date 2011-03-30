@@ -1,8 +1,0 @@
-vmgrlisttape -P <tapepool> -x | awk  '{  print $1" "$11; }'
-nslisttape -V <VID>
-dd bs=1024 count=10240 if=/dev/urandom of=<tmpLocalFileName>
-rfcp <tmpLocalFileName> <remoteFileName>
-writetp <VID> 1 <remoteFileName>
-readtp  <VID> 1 <remoteFileName1>
-rfcp <remoteFileName1> <tmpLocalFileName1>
-diff <tmpLocalFileName> <tmpLocalFileName1>
