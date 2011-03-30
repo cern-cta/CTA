@@ -49,7 +49,7 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {CHECKER_CANNOT_UPDATE_DB, "VdqmRequestsChecker: cannot update db"},
 {CHECKER_RELEASING_UNUSED_TAPE, "VdqmRequestsChecker: releasing BUSY tape"},
 {CHECKER_VMGR_ERROR, "VdqmRequestsChecker: vmgr error,impossible to reset BUSY state"},
-{CHECHER_TAPES_FOUND, "VdqmRequestsChecker: tapes to check found"},
+{CHECKER_TAPES_FOUND, "VdqmRequestsChecker: tapes to check found"},
 {CHECKER_TAPES_RESURRECTED, "VdqmRequestsChecker: tapes resurrected"},
 {LINKER_GETTING_STREAMS, "TapeStreamLinker: getting streams to resolve"},
 {LINKER_NO_STREAM, "TapeStreamLinker: no stream to resolve"},

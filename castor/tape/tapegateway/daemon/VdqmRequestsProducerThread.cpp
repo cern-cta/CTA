@@ -120,7 +120,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
       castor::dlf::Param("request id", request->taperequest()),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_TAPE_FOUND,params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_TAPE_FOUND,params);
 
   // On success, disengage the safety mechanism to not rollback.
   scpTrans.release();
@@ -225,7 +225,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
   };
 
   // tape is fine
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR,paramsVmgr);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_QUERYING_VMGR,paramsVmgr);
 
   VdqmTapeGatewayHelper vdqmHelper;
   int vdqmReqId=0;
@@ -253,7 +253,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
       };
 
       // submition went fine
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_SUBMITTING_VDQM, paramsVdqm);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_SUBMITTING_VDQM, paramsVdqm);
       gettimeofday(&tvStart, NULL);
 
       try {

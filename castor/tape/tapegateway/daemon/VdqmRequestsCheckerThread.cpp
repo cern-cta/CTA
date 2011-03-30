@@ -114,7 +114,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECHER_TAPES_FOUND, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, CHECKER_TAPES_FOUND, params);
 
   std::list<castor::tape::tapegateway::TapeGatewayRequest> tapesToRetry;
 
@@ -133,7 +133,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 
     castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_QUERYING_VDQM, params);
 
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
@@ -193,7 +193,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     {
      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECKER_TAPES_RESURRECTED, paramsReset);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, CHECKER_TAPES_RESURRECTED, paramsReset);
     
 
 

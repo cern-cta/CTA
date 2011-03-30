@@ -18,7 +18,7 @@
 18,CHECKER_CANNOT_UPDATE_DB,"VdqmRequestsChecker: cannot update db"
 19,CHECKER_RELEASING_UNUSED_TAPE,"VdqmRequestsChecker: releasing BUSY tape"
 20,CHECKER_VMGR_ERROR,"VdqmRequestsChecker: vmgr error,impossible to reset BUSY state"
-21,CHECHER_TAPES_FOUND,"VdqmRequestsChecker: tapes to check found"
+21,CHECKER_TAPES_FOUND,"VdqmRequestsChecker: tapes to check found"
 22,CHECKER_TAPES_RESURRECTED,"VdqmRequestsChecker: tapes resurrected"
 23,LINKER_GETTING_STREAMS,"TapeStreamLinker: getting streams to resolve"
 24,LINKER_NO_STREAM,"TapeStreamLinker: no stream to resolve"

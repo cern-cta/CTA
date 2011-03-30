@@ -105,7 +105,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_STREAMS_FOUND, paramsTapes);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_STREAMS_FOUND, paramsTapes);
 
   if (streamsToResolve.size() !=  tapepools.size()){
     castor::exception::Exception ex(EINVAL);
@@ -135,7 +135,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
         castor::dlf::Param("TapePool",(*tapepool).name())
     };
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,LINKER_QUERYING_VMGR, paramsVmgr);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,LINKER_QUERYING_VMGR, paramsVmgr);
     int lastFseq=-1;
     castor::stager::Tape tapeToUse;
 
@@ -179,7 +179,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
           castor::dlf::Param("StreamId",(*strItem).id()),
           castor::dlf::Param("TPVID",tapeToUse.vid())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_LINKING_TAPE_STREAM, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_STREAM, params);
 
       strIds.push_back((*strItem).id());
       vids.push_back(tapeToUse.vid());
