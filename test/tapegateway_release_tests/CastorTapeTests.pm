@@ -2222,7 +2222,7 @@ sub spawn_testsuite ()
         close ($rd);
         print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --all --notape --failnores 2>&1\")`;
         close ($wr);
-        exit;    
+        POSIX::_exit(0);    
     }
 }
 
