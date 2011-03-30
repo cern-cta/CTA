@@ -58,7 +58,7 @@ namespace ora         {
     OraTapeGatewaySvc(const std::string name); 
     virtual ~OraTapeGatewaySvc() throw();
     virtual inline unsigned int id() const;
-    static const unsigned int ID();
+    static unsigned int ID();
     void reset() throw ();
     
   public:
