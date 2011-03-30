@@ -1,0 +1,14 @@
+    **** : trace level set to 3
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: Setting euid: <userid3>
+    stager: Setting egid: <groupid3>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port3>
+    stager: <sending time3> Sending request
+    stager: <uuid3> SND <send duration3> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip3> was received
+POOL <poolName3>          CAPACITY <capacity3> FREE <free3>
+POOL <poolName4>          CAPACITY <capacity4> FREE <free4>
+<IgnoreRestOfOutput>

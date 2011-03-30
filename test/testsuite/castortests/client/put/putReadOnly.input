@@ -1,0 +1,7 @@
+echo 'a readonly file' > <tmpLocalFileName>
+chmod 444 <tmpLocalFileName>
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> <rfcp> <tmpLocalFileName> <noTapeFileName>
+nsls -l <noTapeFileName>
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> <rfcp> <tmpLocalFileName> <noTapeFileName>
+rm -rf <tmpLocalFileName>
+nsrm -rf <noTapeFileName>

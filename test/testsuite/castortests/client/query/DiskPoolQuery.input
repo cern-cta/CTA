@@ -1,3 +1,4 @@
 stager_qry -s
 stager_qry -s -S <tapeServiceClass>
 stager_qry -s -S '*'
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> stager_qry -s
