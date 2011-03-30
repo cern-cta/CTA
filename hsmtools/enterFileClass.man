@@ -21,6 +21,9 @@ enterFileClass \- define a new file class in the stager catalogue
 [
 .BI --NbCopies " nbCopies"
 ]
+[
+.BI --ClassId " classId"
+]
 .SH DESCRIPTION
 .B enterFileClass
 enters a new file class definition in the CASTOR stager catalogue
@@ -54,6 +57,9 @@ switch.
 .BI \-\-NbCopies " nbCopies"
 Specifies the number of tape copies required for the CASTOR files belonging
 to this file class
+.TP
+.BI \-\-ClassId " classId"
+Specifies the file class id as defined in the name server
 .LP
 The CASTOR stager retrieves the fileclass name for a given CASTOR file from the
 CASTOR name server. It does, however, only retrieve the name and will not use the

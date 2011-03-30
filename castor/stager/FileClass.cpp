@@ -37,6 +37,7 @@
 castor::stager::FileClass::FileClass() throw() :
   m_name(""),
   m_nbCopies(0),
+  m_classId(0),
   m_id(0) {
 }
 
@@ -61,6 +62,7 @@ void castor::stager::FileClass::print(std::ostream& stream,
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "nbCopies : " << m_nbCopies << std::endl;
+  stream << indent << "classId : " << m_classId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

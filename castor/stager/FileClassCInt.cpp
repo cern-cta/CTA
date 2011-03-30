@@ -127,6 +127,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileClass_classId
+  //----------------------------------------------------------------------------
+  int Cstager_FileClass_classId(castor::stager::FileClass* instance, u_signed64* var) {
+    *var = instance->classId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileClass_setClassId
+  //----------------------------------------------------------------------------
+  int Cstager_FileClass_setClassId(castor::stager::FileClass* instance, u_signed64 new_var) {
+    instance->setClassId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileClass_id
   //----------------------------------------------------------------------------
   int Cstager_FileClass_id(castor::stager::FileClass* instance, u_signed64* var) {

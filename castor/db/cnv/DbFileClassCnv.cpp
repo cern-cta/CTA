@@ -51,7 +51,7 @@ static castor::CnvFactory<castor::db::cnv::DbFileClassCnv>* s_factoryDbFileClass
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbFileClassCnv::s_insertStatementString =
-"INSERT INTO FileClass (name, nbCopies, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
+"INSERT INTO FileClass (name, nbCopies, classId, id) VALUES (:1,:2,:3,ids_seq.nextval) RETURNING id INTO :4";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbFileClassCnv::s_deleteStatementString =
@@ -59,19 +59,19 @@ const std::string castor::db::cnv::DbFileClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbFileClassCnv::s_selectStatementString =
-"SELECT name, nbCopies, id FROM FileClass WHERE id = :1";
+"SELECT name, nbCopies, classId, id FROM FileClass WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbFileClassCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE RecordType IS RECORD (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER); \
+   TYPE RecordType IS RECORD (name VARCHAR2(2048), nbCopies NUMBER, classId INTEGER, id INTEGER); \
    TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT name, nbCopies, id \
+     OPEN objs FOR SELECT name, nbCopies, classId, id \
                      FROM FileClass t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -82,7 +82,7 @@ const std::string castor::db::cnv::DbFileClassCnv::s_bulkSelectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbFileClassCnv::s_updateStatementString =
-"UPDATE FileClass SET name = :1, nbCopies = :2 WHERE id = :3";
+"UPDATE FileClass SET name = :1, nbCopies = :2, classId = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbFileClassCnv::s_storeTypeStatementString =
@@ -223,7 +223,7 @@ void castor::db::cnv::DbFileClassCnv::createRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -231,8 +231,9 @@ void castor::db::cnv::DbFileClassCnv::createRep(castor::IAddress*,
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->setInt(2, obj->nbCopies());
+    m_insertStatement->setUInt64(3, obj->classId());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(3));
+    obj->setId(m_insertStatement->getUInt64(4));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -252,6 +253,7 @@ void castor::db::cnv::DbFileClassCnv::createRep(castor::IAddress*,
                     << " and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
                     << "  nbCopies : " << obj->nbCopies() << std::endl
+                    << "  classId : " << obj->classId() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -278,7 +280,7 @@ void castor::db::cnv::DbFileClassCnv::bulkCreateRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -326,6 +328,25 @@ void castor::db::cnv::DbFileClassCnv::bulkCreateRep(castor::IAddress*,
     }
     m_insertStatement->setDataBuffer
       (2, nbCopiesBuffer, castor::db::DBTYPE_INT, sizeof(nbCopiesBuffer[0]), nbCopiesBufLens);
+    // build the buffers for classId
+    double* classIdBuffer = (double*) malloc(nb * sizeof(double));
+    if (classIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(classIdBuffer);
+    unsigned short* classIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (classIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(classIdBufLens);
+    for (int i = 0; i < nb; i++) {
+      classIdBuffer[i] = objs[i]->classId();
+      classIdBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (3, classIdBuffer, castor::db::DBTYPE_UINT64, sizeof(classIdBuffer[0]), classIdBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -340,7 +361,7 @@ void castor::db::cnv::DbFileClassCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (3, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (4, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -412,7 +433,8 @@ void castor::db::cnv::DbFileClassCnv::updateRep(castor::IAddress*,
     // Update the current object
     m_updateStatement->setString(1, obj->name());
     m_updateStatement->setInt(2, obj->nbCopies());
-    m_updateStatement->setUInt64(3, obj->id());
+    m_updateStatement->setUInt64(3, obj->classId());
+    m_updateStatement->setUInt64(4, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -499,7 +521,8 @@ castor::IObject* castor::db::cnv::DbFileClassCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setName(rset->getString(1));
     object->setNbCopies(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
+    object->setClassId(rset->getUInt64(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
     return object;
   } catch (castor::exception::SQLError& e) {
@@ -547,7 +570,8 @@ castor::db::cnv::DbFileClassCnv::bulkCreateObj(castor::IAddress* address)
       // Now retrieve and set members
       object->setName(rset->getString(1));
       object->setNbCopies(rset->getInt(2));
-      object->setId(rset->getUInt64(3));
+      object->setClassId(rset->getUInt64(3));
+      object->setId(rset->getUInt64(4));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -587,7 +611,8 @@ void castor::db::cnv::DbFileClassCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::FileClass*>(obj);
     object->setName(rset->getString(1));
     object->setNbCopies(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
+    object->setClassId(rset->getUInt64(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
   } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;

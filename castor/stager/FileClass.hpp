@@ -96,7 +96,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_name
-       * The name of the FileClass
+       * The name of the file class
        * @return the value of m_name
        */
       std::string name() const {
@@ -105,7 +105,7 @@ namespace castor {
 
       /**
        * Set the value of m_name
-       * The name of the FileClass
+       * The name of the file class
        * @param new_var the new value of m_name
        */
       void setName(std::string new_var) {
@@ -114,7 +114,7 @@ namespace castor {
 
       /**
        * Get the value of m_nbCopies
-       * The number of copies on tape for a file of this FileClass
+       * The number of copies on tape for a file of this file class
        * @return the value of m_nbCopies
        */
       unsigned int nbCopies() const {
@@ -123,11 +123,29 @@ namespace castor {
 
       /**
        * Set the value of m_nbCopies
-       * The number of copies on tape for a file of this FileClass
+       * The number of copies on tape for a file of this file class
        * @param new_var the new value of m_nbCopies
        */
       void setNbCopies(unsigned int new_var) {
         m_nbCopies = new_var;
+      }
+
+      /**
+       * Get the value of m_classId
+       * The NameServer id of the file class
+       * @return the value of m_classId
+       */
+      u_signed64 classId() const {
+        return m_classId;
+      }
+
+      /**
+       * Set the value of m_classId
+       * The NameServer id of the file class
+       * @param new_var the new value of m_classId
+       */
+      void setClassId(u_signed64 new_var) {
+        m_classId = new_var;
       }
 
       /**
@@ -150,11 +168,14 @@ namespace castor {
 
     private:
 
-      /// The name of the FileClass
+      /// The name of the file class
       std::string m_name;
 
-      /// The number of copies on tape for a file of this FileClass
+      /// The number of copies on tape for a file of this file class
       unsigned int m_nbCopies;
+
+      /// The NameServer id of the file class
+      u_signed64 m_classId;
 
       /// The id of this object
       u_signed64 m_id;

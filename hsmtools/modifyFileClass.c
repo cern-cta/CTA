@@ -54,6 +54,7 @@ enum FileClassAttributes {
   NsHost,
   GetFromCns,
   NbCopies,
+  ClassId
 };
 
 static struct Coptions longopts[] = {
@@ -62,6 +63,7 @@ static struct Coptions longopts[] = {
   {"NsHost",REQUIRED_ARGUMENT,0,NsHost},
   {"GetFromCns",NO_ARGUMENT,&cns_flag,GetFromCns},
   {"NbCopies",REQUIRED_ARGUMENT,0,NbCopies},
+  {"ClassId",REQUIRED_ARGUMENT,0,ClassId},
   {NULL, 0, NULL, 0}
 };
 
@@ -78,8 +80,8 @@ void usage(char *cmd)
 
 int main(int argc, char *argv[])
 {
-  int ch, rc, nbCopies = -1;
-  int nbCopiesSet = 0;
+  int ch, rc, nbCopies = -1, classId = -1;
+  int nbCopiesSet = 0, classIdSet = 0;
   char *cmd, *name = NULL, *nsHost = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -120,6 +122,10 @@ int main(int argc, char *argv[])
       break;
     case NsHost:
       nsHost = strdup(Coptarg);
+      break;
+    case ClassId:
+      classIdSet++;
+      classId = atoi(Coptarg);
       break;
     case GetFromCns:
       break;
@@ -165,12 +171,22 @@ int main(int argc, char *argv[])
       nbCopies = nsFileClass.nbcopies;
       nbCopiesSet++;
     }
+    if ( classIdSet == 0 ) {
+      classId = nsFileClass.classid;
+      classIdSet++;
+    }
   }
 
   if ( nbCopiesSet > 0 ) {
     Cstager_FileClass_setNbCopies(
                                   fileClassOld,
                                   nbCopies
+                                  );
+  }
+  if ( classIdSet > 0 ) {
+    Cstager_FileClass_setClassId(
+                                  fileClassOld,
+                                  classId
                                   );
   }
 

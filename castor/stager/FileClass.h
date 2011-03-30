@@ -85,27 +85,39 @@ int Cstager_FileClass_clone(struct Cstager_FileClass_t* instance,
 
 /**
  * Get the value of name
- * The name of the FileClass
+ * The name of the file class
  */
 int Cstager_FileClass_name(struct Cstager_FileClass_t* instance, const char** var);
 
 /**
  * Set the value of name
- * The name of the FileClass
+ * The name of the file class
  */
 int Cstager_FileClass_setName(struct Cstager_FileClass_t* instance, const char* new_var);
 
 /**
  * Get the value of nbCopies
- * The number of copies on tape for a file of this FileClass
+ * The number of copies on tape for a file of this file class
  */
 int Cstager_FileClass_nbCopies(struct Cstager_FileClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbCopies
- * The number of copies on tape for a file of this FileClass
+ * The number of copies on tape for a file of this file class
  */
 int Cstager_FileClass_setNbCopies(struct Cstager_FileClass_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of classId
+ * The NameServer id of the file class
+ */
+int Cstager_FileClass_classId(struct Cstager_FileClass_t* instance, u_signed64* var);
+
+/**
+ * Set the value of classId
+ * The NameServer id of the file class
+ */
+int Cstager_FileClass_setClassId(struct Cstager_FileClass_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id
