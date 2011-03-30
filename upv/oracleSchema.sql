@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
  * This script creates a new Castor User Privilege Validator schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -25,11 +24,11 @@
 
 /* SQL statement for User Privilege table */
 CREATE TABLE USER_PRIVILEGE
-       (U_ID NUMBER(6) NOT NULL,
-        G_ID NUMBER(6) NOT NULL,
-        SRC_HOST VARCHAR2(63) NOT NULL,
-        TGT_HOST VARCHAR2(63) NOT NULL,
-        PRIV_CAT NUMBER(6) NOT NULL);
+  (U_ID NUMBER(6) CONSTRAINT NN_UserPrivilege_UID NOT NULL,
+   G_ID NUMBER(6) CONSTRAINT NN_UserPrivilege_GID NOT NULL,
+   SRC_HOST VARCHAR2(63) CONSTRAINT NN_UserPrivilege_SrcHost NOT NULL,
+   TGT_HOST VARCHAR2(63) CONSTRAINT NN_UserPrivilege_TgtHost NOT NULL,
+   PRIV_CAT NUMBER(6) CONSTRAINT NN_UserPrivilege_PrivCat NOT NULL);
 
 ALTER TABLE USER_PRIVILEGE
   ADD CONSTRAINT usr_priv_uk UNIQUE (U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT);
