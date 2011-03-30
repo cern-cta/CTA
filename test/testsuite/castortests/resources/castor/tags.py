@@ -53,11 +53,17 @@ def _checkDirPath(self, name, isTape):
 Setup._checkDirPath = _checkDirPath
 
 def _createCastorDir(self, path, filetype):
-    # create the file in the namespace
+    # create the path in the namespace
     output = Popen('nsmkdir ' + path)
     # check it went fine
     assert len(output) == 0 or output.find('File exists'), \
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
+    # set ACL to enable the unprivileged user to write on this path
+    output = Popen('nssetacl -m u:' + self.options.get('Tags', 'unprivUid') + ':rwx,m:rwx ' + path) + \
+        Popen('nssetacl -m d:u:' + self.options.get('Tags', 'unprivUid') + ':rwx,d:m:rwx ' + path)
+    assert len(output) == 0, \
+        'Failed to set ACLs for user ' + self.options.get('Tags', 'unprivUid') + \
+        ' on working directory ' + path + os.linesep + "Error :" + os.linesep + output
     # print directory name 
     print os.linesep+"Working in directory " + path + " for " + filetype + " files"
     # return the created dir
