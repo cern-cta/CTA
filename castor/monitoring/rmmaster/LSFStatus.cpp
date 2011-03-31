@@ -31,6 +31,7 @@
 #include "castor/monitoring/rmmaster/LSFStatus.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/System.hpp"
+#include "castor/db/newora/OraCnvSvc.hpp"
 #include "Cmutex.h"
 #include "Cthread_api.h"
 #include "getconfent.h"
@@ -47,6 +48,7 @@ castor::monitoring::rmmaster::LSFStatus::s_instance(0);
 castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   throw(castor::exception::Exception) :
   m_rmMasterService(0),
+  m_cnvSvc(0),
   m_prevMasterName(""),
   m_prevProduction(false),
   m_lastUpdate(0),
@@ -60,9 +62,15 @@ castor::monitoring::rmmaster::LSFStatus::LSFStatus()
     // initialize the OraRmMasterSvc. Note that we do not use here the standard,
     // thread specific service. We create our own instance of it so that we have
     // a private, dedicated connection to ORACLE that will not be commited by
-    // any other acitivity of thre thread.
+    // any other activity of the thread.
+    m_cnvSvc = new castor::db::ora::OraCnvSvc("DbCnvSvc");
+    if (0 == m_cnvSvc) {
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to create an OraCnvSvc";
+      throw e;
+    }
     m_rmMasterService =
-      new castor::monitoring::rmmaster::ora::OraRmMasterSvc("LSFStatusOraSvc");
+      new castor::monitoring::rmmaster::ora::OraRmMasterSvc("LSFStatusOraSvc", m_cnvSvc);
     if (0 == m_rmMasterService) {
       castor::exception::Internal e;
       e.getMessage() << "Unable to create an OraRmMasterSVC";
@@ -79,6 +87,20 @@ castor::monitoring::rmmaster::LSFStatus::LSFStatus()
       throw e;
     }
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// Destructor
+//-----------------------------------------------------------------------------
+castor::monitoring::rmmaster::LSFStatus::~LSFStatus() throw() {
+  // release the services that we have created locally.
+  // Note that this will in particular disconnect from ORACLE and thus release
+  // the lock on the RmMasterLock table that we may have hold if we were the
+  // master rmMaster. A new session will then be able to take this lock and
+  // become the master
+  if (0 != m_rmMasterService) delete m_rmMasterService;
+  if (0 != m_cnvSvc) delete m_cnvSvc;
 }
 
 

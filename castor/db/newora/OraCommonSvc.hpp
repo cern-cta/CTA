@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/db/DbBaseObj.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/stager/ICommonSvc.hpp"
@@ -53,7 +54,7 @@ namespace castor {
         /**
          * default constructor
          */
-        OraCommonSvc(const std::string name);
+        OraCommonSvc(const std::string name, castor::ICnvSvc* cnvSvc = 0);
 
         /**
          * default destructor

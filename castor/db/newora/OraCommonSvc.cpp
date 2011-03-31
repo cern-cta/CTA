@@ -89,8 +89,9 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 //------------------------------------------------------------------------------
 // OraCommonSvc
 //------------------------------------------------------------------------------
-castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
-  BaseSvc(name), DbBaseObj(0),
+castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
+                                            castor::ICnvSvc* cnvSvc) :
+  BaseSvc(name), DbBaseObj(cnvSvc),
   m_requestToDoStatement(0),
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),

@@ -84,13 +84,14 @@ const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_checkIfFi
 /// SQL statement for isMonitoringMasterStatementString.
 /// Note that we use lock number 369174921, which was picked up randomly
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_isMonitoringMasterStatementString =
-  "BEGIN :1 := dbms_lock.request(369174921, dbms_lock.X_MODE, 0); END;";
+  "BEGIN :1 := isMonitoringMaster(); END;";
 
 //-----------------------------------------------------------------------------
 // OraRmMasterSvc
 //-----------------------------------------------------------------------------
-castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::string name) :
-  OraCommonSvc(name),
+castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::string name,
+                                                                  castor::ICnvSvc* cnvSvc) :
+  OraCommonSvc(name, cnvSvc),
   m_storeClusterStatusStatement(0),
   m_getDiskServersStatement(0),
   m_getFileSystemsStatement(0),
@@ -556,8 +557,8 @@ bool castor::monitoring::rmmaster::ora::OraRmMasterSvc::isMonitoringMaster()
     }
     m_isMonitoringMasterStatement->execute();
     int rc = m_isMonitoringMasterStatement->getInt(1);
-    // 0 means we got the lock, 4 means we were already owning it
-    return (rc == 0 or rc == 4);
+    // 1 means we got the lock, 0 means we could not get it
+    return rc == 1;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

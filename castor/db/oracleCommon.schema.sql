@@ -635,3 +635,17 @@ CREATE INDEX I_FileSystem_Rate
 CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048)
   CONSTRAINT NN_TransfersToAbort_Uuid NOT NULL);
 
+
+/***************************************************/
+/* rmMaster main lock, only used to elect a master */
+/***************************************************/
+CREATE TABLE RmMasterLock (unused NUMBER);
+CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
+  locked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (locked, -54);
+BEGIN
+  LOCK TABLE RmMasterLock IN EXCLUSIVE MODE NOWAIT;
+  RETURN 1;
+EXCEPTION WHEN locked THEN
+  RETURN 0;
+END;

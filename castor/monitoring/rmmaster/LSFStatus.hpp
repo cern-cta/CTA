@@ -42,6 +42,13 @@ extern "C" {
 
 namespace castor {
 
+  namespace db { 
+    namespace ora {
+      // Forward declarations
+      class OraCnvSvc;
+    }
+  }
+
   namespace monitoring {
 
     namespace rmmaster {
@@ -108,15 +115,19 @@ namespace castor {
         /**
          * Default destructor
          */
-        virtual ~LSFStatus() throw() {};
+        virtual ~LSFStatus() throw();
 
       private:
 
         /// says whether we are running without LSF
         bool m_noLSF;
 
-        /// rmmaster service to call ORACLE, only used in case in noLSF mode
+        /// rmmaster service to call ORACLE, only used in case of noLSF mode
         castor::monitoring::rmmaster::ora::OraRmMasterSvc* m_rmMasterService;
+
+        /// ORACLE conversion service used by the previous rmmaster service
+        /// only used in case in noLSF mode
+        castor::db::ora::OraCnvSvc* m_cnvSvc;
 
         /// The previous name of the LSF master, only used in LSF mode
         std::string m_prevMasterName;
