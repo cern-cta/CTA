@@ -5,8 +5,10 @@
 .SH NAME
 Cns_openx \- open and possibly create a new CASTOR file
 .SH SYNOPSIS
-.B #include <sys/types.h>
-.br
+.nf
+\fB#include <sys/types.h>\fR
+\fB#include <sys/stat.h>\fR
+\fB#include <fcntl.h>\fR
 \fB#include "Cns_api.h"\fR
 .sp
 .BI "int Cns_openx (const uid_t " owneruid,
