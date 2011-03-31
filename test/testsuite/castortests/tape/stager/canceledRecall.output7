@@ -12,4 +12,4 @@
     stager: Waiting for callback from castor
     stager: <uuid7> CBK <answer duration7> s before callback from <server ip7> was received
 Received 1 responses
-<noTapeFileName> SUBREQUEST_FAILED 2 File not found on this service class
+<tapeFileName> SUBREQUEST_FAILED 2 File not found on this service class
