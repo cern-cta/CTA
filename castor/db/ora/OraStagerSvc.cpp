@@ -806,6 +806,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       if (!subreq->request()) {
         cnvSvc()->fillObj(&ad, subreq, OBJ_FileRequest, false);
       }
+      cnvSvc()->fillObj(&ad, cf, OBJ_FileClass, false);
       int nbCopies = cf->fileClass()->nbCopies();
       createTapeCopySegmentsForRecall
         (cf, subreq->request()->euid(),
