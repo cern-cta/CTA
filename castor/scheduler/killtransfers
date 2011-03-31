@@ -25,6 +25,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''command line of the CASTOR transfer manager suite allowing to unqueue pending transfers and fail them'''
+
 import sys
 import getopt
 import rpyc
@@ -32,6 +34,7 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
+  '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] transferid[...]'
   print '        ' + sys.argv[0] + ' [-h|--help] -a|--all [-u|--user <user>]'
   sys.exit(exitCode)

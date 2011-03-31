@@ -25,6 +25,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''localqueue module of the CASTOR disk server manager.
+Handles a local queue of transfers pending on a given diskserver'''
+
 import pwd
 import time
 import Queue
@@ -214,14 +217,15 @@ class LocalQueue(Queue.Queue):
     # get the hardware status
     try :
       state = dict([entry.rstrip().split('=') for entry in open('/etc/castor/status').readlines()])
-    except:
+    except Exception:
       # could not get the status, let's have it empty, meaning disabled
       state = {}
     # loop over the transfers
     self.lock.acquire()
     try:
       toberemoved = []
-      for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems():
+      for transferid, transfertuple in self.queueingTransfers.iteritems():
+        scheduler, transfer, transfertype = transfertuple[:3]
         # get the concerned fileSystem
         filesystem = transfer[-1].split(':')[1]
         try:
@@ -276,7 +280,9 @@ class LocalQueue(Queue.Queue):
     nsproto = {}
     self.lock.acquire()
     try:
-      for scheduler, rawtransfer, transfertype, arrivalTime in self.queueingTransfers.values():
+      for transfertuple in self.queueingTransfers.values():
+        rawtransfer = transfertuple[1]
+        transfertype = rawtransfer[2]
         if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
           user = 'stage'
@@ -339,7 +345,8 @@ class LocalQueue(Queue.Queue):
     '''lists pending transfers'''
     self.lock.acquire()
     try:
-      return [(transferid, transfer, transfertype, arrivaltime) for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems()]
+      # return transferid, transfer, transfertype, arrivaltime
+      return [(transferid, transfertuple[1], transfertuple[2], transfertuple[3]) for transferid, transfertuple in self.queueingTransfers.iteritems()]
     finally:
       self.lock.release()
 
@@ -348,9 +355,9 @@ class LocalQueue(Queue.Queue):
     self.lock.acquire()
     try:
       # go through the transfer
-      for transferid, (scheduler, transfer, transfertype, arrivaltime) in self.queueingTransfers.iteritems():
+      for transfertuple in self.queueingTransfers.values():
         # Stop whenever we find one
-        if reqscheduler == scheduler:
+        if reqscheduler == transfertuple[0]:
           return True
       # No transfer found
       return False

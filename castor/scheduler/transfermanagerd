@@ -25,6 +25,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+"""transfer manager daemon of CASTOR."""
+
 import sys
 import getopt
 import rpyc
@@ -38,6 +40,7 @@ from transfermanagerdlf import msgs
 
 # usage function
 def usage(exitCode):
+  '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground] [-n|--nbworkers <nb worker threads>]'
   sys.exit(exitCode)
 
@@ -46,9 +49,9 @@ daemonize = True
 nbWorkers = 5
 verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hvfn:v', ['help', 'foreground', 'nbworkers', 'verbose'])
-except Exception, e:
-  print e
+  options, arguments = getopt.getopt(sys.argv[1:], 'hvfn:v', ['help', 'foreground', 'nbworkers', 'verbose'])
+except Exception, parsingException:
+  print parsingException
   usage(1)
 for f, v in options:
   if f == '-h' or f == '--help':
@@ -64,8 +67,8 @@ for f, v in options:
     usage(1)
 
 # If any arg, complain and stop
-if len(args) != 0:
-  print "Unknown arguments : " + ' '.join(args) + "\n"
+if len(arguments) != 0:
+  print "Unknown arguments : " + ' '.join(arguments) + "\n"
   usage(1)
 
 class DiskServerListCache:
@@ -111,7 +114,7 @@ class DiskServerListCache:
       finally:
         try:
           castor_tools.disconnectDB(stconn)
-        except:
+        except Exception:
           pass
     except Exception, e:
       # 'failed to refresh list of diskservers, kept old list' message
@@ -148,7 +151,7 @@ def extendedSum(t):
     return 0
   if isinstance(t[0], int):
     return sum(t)
-  dt = map(dict, t)
+  dt = [dict(item) for item in t]
   keys = reduce(lambda a, b : a|set(b), [set()] + dt)
   return tuple((n, sum([d.get(n, 0) for d in dt])) for n in keys)
 
@@ -237,7 +240,7 @@ class TransferManagerService(rpyc.Service):
     res = []
     for diskPool in nbs:
       if len(nbs[diskPool]) > 0:
-        data = map(extendedSum, zip(*nbs[diskPool].values()))
+        data = [extendedSum(item) for item in zip(*nbs[diskPool].values())]
         if diskPool not in nbtransfersPerPool:
           nbtransfersPerPool[diskPool] = 0
         res.append(tuple([diskPool, nbtransfersPerPool[diskPool]] + data))
@@ -329,7 +332,9 @@ class TransferManagerService(rpyc.Service):
     try:
       stcur = self.dbConnection().cursor()
       stcur.arraysize = 50
-      transferids, fileids, errnos, errmsgs, reqids = map(list, zip(*transfers))
+      data = [list(item) for item in zip(*transfers)]
+      transferids = data[0]
+      errnos, errmsgs = data[2:4]
       stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
       stcur.close()
     except Exception, e:
@@ -354,7 +359,7 @@ class TransferManagerService(rpyc.Service):
   def exposed_transferStarting(self, diskserver, transferid, reqid, transfertype):
     '''called when a transfer started on a given diskserver'''
     dlf.writedebug(msgs.TRANSFERSTARTINGCALLED, diskserver=diskserver, subreqid=transferid, reqid=reqid, transfertype=transfertype)
-    machinesToInform = queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
+    queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
 
   def exposed_getQueueingTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
@@ -399,11 +404,6 @@ def initQueues():
 class Suicider(threading.Thread):
   '''Regularly checks the number of ongoing transfers and commits suicide when it goes down to 0'''
 
-  def __init__(self, connections):
-    threading.Thread.__init__(self)
-    # a pool of connections to the diskservers
-    self.connections = connections
-
   def run(self):
     '''main method, containing the infinite loop checking for the transfers to be over'''
     # loop until we commit suicide
@@ -441,20 +441,20 @@ def drain():
   try:
     dispatchThread.stop()
     dispatchThread.join()
-  except:
+  except Exception:
     pass
   try:
     abortThread.stop()
     abortThread.join()
-  except:
+  except Exception:
     pass
   try:
     synchroThread.stop()
     synchroThread.join()
-  except:
+  except Exception:
     pass
   # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
-  suicideThread = Suicider(connections)
+  suicideThread = Suicider()
   suicideThread.setName('Suicider')
   suicideThread.setDaemon(True)
   suicideThread.start()
@@ -517,29 +517,29 @@ try:
   except SystemExit:
     # we are exiting, fine
     pass
-  except Exception, e:
+  except Exception, unexpectedException:
     # 'Caught unexpected exception, exiting' message
-    print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
     if verbose:
       import traceback
       traceback.print_tb(sys.exc_info()[2])
-    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(unexpectedException.__class__), msg=str(unexpectedException))
     raise
 finally:
   # clean up all connections and threads that may be running
   try:
     connections.closeall()
-  except:
+  except Exception:
     pass
   # drain will stop the dispatch, abort and synchro threads
   drain()
   try:
     transfermanager.close()
-  except:
+  except Exception:
     pass
   # if we are a daemon, call __exit__
   if daemonize:
     try:
       context.__exit__(None, None, None)
-    except:
+    except Exception:
       pass

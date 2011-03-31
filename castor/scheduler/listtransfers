@@ -27,6 +27,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''command line of the CASTOR transfer manager suite allowing to list ongoing transfers'''
+
 import sys
 import time
 import getopt
@@ -35,18 +37,19 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
+  '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary] [-p|--poolsummary] [-u|--user <user>] [-x|--extra [-r|--restrict p1[:...]]] [diskpool]'
   sys.exit(exitCode)
 
 # first parse the options
 try:
   options, args = getopt.getopt(sys.argv[1:], 'hspu:vxr:', ['help', 'summary', 'poolsummary', 'user', 'verbose', 'extra', 'restrict'])
-except Exception, e:
-  print e
+except Exception, parseException:
+  print parseException
   usage(1)
 summary = False
 poolsummary = False
-user = None
+requser = None
 verbose = False
 extra = False
 extraprotocols = None
@@ -64,10 +67,10 @@ for f, v in options:
       usage(1)
     poolsummary = True
   elif f == '-u' or f == '--user':
-    if user != None:
+    if requser != None:
       print "-u/--user cannot be given twice"
       usage(1)
-    user = v
+    requser = v
   elif f == '-h' or f == '--help':
     usage(0)
   elif f == '-x' or f == '--extra':
@@ -95,17 +98,17 @@ if extraprotocols and not extra:
   usage(1)
 
 # then parse the arguments, if any
-diskpool = None
+reqdiskpool = None
 if len(args) > 0:
-  diskpool = args[0]
+  reqdiskpool = args[0]
   if len(args) > 1:
     print "Too many arguments, only one diskpool can be given"
     usage(1)
 
-def processTransfersListing(rpconn, diskpool, user):
+def processTransfersListing():
   '''retrieves and display full listing of the running transfers for the given diskpool and user'''
   try:
-    transfers = rpconn.root.listTransfers(diskpool, user)
+    transfers = rpconn.root.listTransfers(reqdiskpool, requser)
     print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
     n = 0
     for transid, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
@@ -121,11 +124,11 @@ def processTransfersListing(rpconn, diskpool, user):
   except Exception, e:
     print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
 
-def _buildProtocolList(summary, extraprotocols):
+def _buildProtocolList(summaryreport):
   '''helper function to list the set of protocols reported in the summary'''
   # build list of protocols found in summary
   protocols = set()
-  for report in summary:
+  for report in summaryreport:
     for col in report:
       if isinstance(col, tuple):
         protocols = protocols | set(dict(col).keys())
@@ -141,21 +144,21 @@ def _buildTitleAndCoStrings(presubtitle, preformat, protocols):
   stblocklen = len(subtitleblock)
   title = ' ' * len(presubtitle)
   subtitle = presubtitle
-  format = preformat
+  dataformat = preformat
   blockformat = '%7d %7d %7d %7d'
   # go through the protocols (and total) and build title, subtitles and format string
   for col in ['total'] + protocols:
     pad = (stblocklen - len(col))/2
     title = title + ' ' + '-' * (pad-1) + ' ' + col.upper() + ' ' + '-' * (stblocklen-pad-len(col)-1) + ' '
     subtitle = subtitle + ' ' + subtitleblock + ' '
-    format = format + ' ' + blockformat + ' '
-  return title, subtitle, format
+    dataformat = dataformat + ' ' + blockformat + ' '
+  return title, subtitle, dataformat
 
-def processHostListing(rpconn, diskpool, user, extra, extraprotocols):
+def processHostListing():
   '''retrieves and display summary of the running transfers per host for the given diskpool and user'''
-  summary = rpconn.root.summarizeTransfersPerHost(diskpool, user, extra)
+  summaryreport = rpconn.root.summarizeTransfersPerHost(reqdiskpool, requser, extra)
   if extra:
-    # summary is a tuple of reports of this form :
+    # summaryreport is a tuple of reports of this form :
     # (hostname, nbslots,
     #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
     #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
@@ -163,14 +166,14 @@ def processHostListing(rpconn, diskpool, user, extra, extraprotocols):
     #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))
     #
     # first we need to build a set of protocols to be displayed for the per protocol numbers
-    protocols = _buildProtocolList(summary, extraprotocols)
+    protocols = _buildProtocolList(summaryreport)
     # now build the title lines and the format line
-    title, subtitle, format = _buildTitleAndCoStrings('DISKSERVER                  NBSLOTS', '%-25s%7d', protocols)
+    title, subtitle, dataformat = _buildTitleAndCoStrings('DISKSERVER                  NBSLOTS', '%-25s%7d', protocols)
     # display title and subtitle
     print title
     print subtitle
     # go through the lines of data
-    for hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto in summary:
+    for hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto in summaryreport:
       # start with non protocol specific data
       data = [hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
       # and for each protocol
@@ -179,19 +182,19 @@ def processHostListing(rpconn, diskpool, user, extra, extraprotocols):
         for t in nbQueueingTransfersPerProto, nbQueueingSlotsPerProto, nbRunningTransfersPerProto, nbRunningSlotsPerProto:
           data.append(dict(t).get(protocol, 0))
       # finally print a line for these data
-      print format % tuple(data)
+      print dataformat % tuple(data)
   else:
-    # summary is a tuple of reports of this form :
+    # summaryreport is a tuple of reports of this form :
     # (hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
     print 'DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN'
-    for ds in summary:
+    for ds in summaryreport:
       print '%-25s%7d %7d %7d %7d %7d' % ds
 
-def processDiskPoolListing(rpconn, diskpool, user, extra, extraprotocols):
+def processDiskPoolListing():
   '''retrieves and display summary of the running transfers per diskpool for the given diskpool and user'''
-  summary = rpconn.root.summarizeTransfersPerPool(diskpool, user, extra)
+  summaryreport = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
   if extra:
-    # summary is a tuple of reports of this form :
+    # summaryreport is a tuple of reports of this form :
     # (diskpoolName, nbUniqueQueueingTransfers, nbslots,
     #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
     #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
@@ -199,17 +202,17 @@ def processDiskPoolListing(rpconn, diskpool, user, extra, extraprotocols):
     #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))
     #
     # first we need to build a set of protocols to be displayed for the per protocol numbers
-    protocols = _buildProtocolList(summary, extraprotocols)
+    protocols = _buildProtocolList(summaryreport)
     # build title, subtitle and format strings
-    title, subtitle, format = _buildTitleAndCoStrings('DISKPOOL          NBSLOTS  NBUTPEND', '%-15s%8d%9d', protocols)
+    title, subtitle, dataformat = _buildTitleAndCoStrings('DISKPOOL          NBSLOTS  NBUTPEND', '%-15s%8d%9d', protocols)
     # display title and subtitle
     print title
     print subtitle
     # go through the lines of data
-    for s in summary:
+    for s in summaryreport:
       # start with non protocol specific data
       if len(s) == 1:
-        data = [s[0]] + [0 for n in range(6 + len(protocols) * 4)]
+        data = [s[0]] + [0] * (6 + len(protocols) * 4)
       else:
         poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = s
         data = [poolname, nbslots, nbUniqueQueueingTransfers, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
@@ -219,13 +222,13 @@ def processDiskPoolListing(rpconn, diskpool, user, extra, extraprotocols):
           for t in nbQueueingTransfersPerProto, nbQueueingSlotsPerProto, nbRunningTransfersPerProto, nbRunningSlotsPerProto:
             data.append(dict(t).get(protocol, 0))
       # finally print a line for these data
-      print format % tuple(data)
+      print dataformat % tuple(data)
   else:
-    # summary is a tuple of reports of this form :
+    # summaryreport is a tuple of reports of this form :
     # (diskpoolName, nbUniqueTransfers, nbslots,
     #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
     print 'DISKPOOL          NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
-    for s in summary:
+    for s in summaryreport:
       if len(s) == 1:
         print '%-15s%8d %8d %8d %8d %8d %8d' % (s[0], 0, 0, 0, 0, 0, 0)
       else:
@@ -240,13 +243,13 @@ try:
                         conf.getValue('TransferManager', 'Port', 15011, int))
   # display the proper listing
   if summary:
-    processHostListing(rpconn, diskpool, user, extra, extraprotocols)
+    processHostListing()
   elif poolsummary:
-    processDiskPoolListing(rpconn, diskpool, user, extra, extraprotocols)
+    processDiskPoolListing()
   else:
-    processTransfersListing(rpconn, diskpool, user)
-except Exception, e:
-  print 'Caught exception : ' + str(e)
+    processTransfersListing()
+except Exception, unexpectedException:
+  print 'Caught exception : ' + str(unexpectedException)
   if verbose:
     import traceback
     traceback.print_tb(sys.exc_info()[2])

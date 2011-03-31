@@ -27,6 +27,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''synchronizer module of the CASTOR transfer manager.
+Handle background synchronization between the stager DB and the transfer manager'''
+
 import time
 import threading
 import castor_tools
@@ -112,18 +115,18 @@ class Synchronizer(threading.Thread):
                   fileIdsCur.arraysize = 200
                   stcur = conn.cursor()
                   stcur.callproc('getFileIdsForSrs', [[transferid for transferid, reqid in transfersToFail], fileIdsCur])
-                  fileids = map(tuple, fileIdsCur.fetchall())
+                  fileids = [tuple(item) for item in fileIdsCur.fetchall()]
                   conn.commit()
                   # 'Transfer killed by synchronization as it disappeared from the scheduling system'
                   for (transferid, reqid), fileid in zip(transfersToFail, fileids):
                     dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
                   # prepare the transfers so that we have only tuples going onver the wire
-                  transfers = tuple(map(tuple,
-                                   zip([transferid for transferid, reqid in transfersToFail],
-                                       fileids,
-                                       [1015] * len(transfersToFail), # SEINTERNAL error code
-                                       ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
-                                       [reqid for transferid, reqid in transfersToFail])))
+                  transfers = tuple([tuple(item) for item in
+                                     zip([transferid for transferid, reqid in transfersToFail],
+                                         fileids,
+                                         [1015] * len(transfersToFail), # SEINTERNAL error code
+                                         ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
+                                         [reqid for transferid, reqid in transfersToFail])])
                   # finally inform the stager
                   self.connections.transfersKilled(self.hostname, transfers)
                 else:
@@ -139,7 +142,8 @@ class Synchronizer(threading.Thread):
               while slept < self.config.getValue("TransferManager", "SynchronizationInterval", 300, int):
                 # note that we sleep one second at a time so that we can exit
                 # if the thread stops running
-                if not self.running: break
+                if not self.running:
+                  break
                 time.sleep(1)
                 slept = slept + 1
           finally:

@@ -24,6 +24,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''connection pool module of the CASTOR transfer manager.
+Handles a pool of cached rpyc connections to different nodes'''
+
 import rpyc
 import castor_tools
 
@@ -72,6 +75,7 @@ class ConnectionPool(object):
     So calling connectionPool.foo('machine1', 1,2,3) will be forwarded to a call
     to foo(1,2,3) on the connection associated to machine 'machine1' '''
     def f(machine, *args):
+      '''wrapped method doing the actual call'''
       try:
         # try existing connection
         conn = self.getConnection(machine)

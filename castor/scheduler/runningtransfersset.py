@@ -26,6 +26,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''runningtransferset module of the CASTOR disk server manager.
+Handle a set of running transfers on a given diskserver'''
+
 import os, pwd, stat, re, string, socket
 import threading
 import time
@@ -82,7 +85,7 @@ class RunningTransfersSet(object):
           addrstr = socket.gethostbyaddr(ip)
           # build dictionnary of connections
           inode2host[inode] = addrstr[0]
-        except:
+        except Exception:
           pass
       connfile.close()
       return inode2host
@@ -143,7 +146,7 @@ class RunningTransfersSet(object):
             newTapeTransfers.append(newTapeTransfer+(inode,))
           else:
             newTapeTransfers.append(newTapeTransfer+(None,))
-      except:
+      except Exception:
         # exceptions caught here mean we could not get the info we wanted on the
         # process we were looking at. We only ignore this process for this round
         # as it's probably not a tape process (or it would not have raised an exception)
@@ -161,7 +164,7 @@ class RunningTransfersSet(object):
           thost = inode2host[inode]
         except KeyError:
           thost = '?'
-        self.tapeTransfers.append((transfertype, os.stat(cmdpath).st_mtime, thost, fileid))
+        self.tapeTransfers.append((ttype, ttime, thost, fileid))
     finally:
       self.tapelock.release()
 
@@ -195,7 +198,7 @@ class RunningTransfersSet(object):
           # 'Found transfer already running' message
           fileid = (args[8], int(args[6]))
           dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqid=transferid, reqid=reqid, fileid=fileid)
-      except:
+      except Exception:
         # exceptions caught here mean we could not get the info we wanted on the
         # process we were looking at. We only ignore this process as it has probably
         # finished in the mean time
@@ -227,7 +230,9 @@ class RunningTransfersSet(object):
     # first we deal with the regular transfers
     self.lock.acquire()
     try:
-      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+      for transfertuple in self.transfers:
+        transfer = transfertuple[2]
+        transfertype = transfertuple[5]
         if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
           user = 'stage'
@@ -253,7 +258,8 @@ class RunningTransfersSet(object):
     if not reqUser or reqUser == 'stage':
       self.tapelock.acquire()
       try:
-        for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
+        for transfertuple in self.tapeTransfers:
+          transfertype = transfertuple[0]
           n = n + 1
           nbslots = self.config.getValue('DiskManager', transfertype+'Weight', None, int)
           ns = ns + nbslots
@@ -276,7 +282,9 @@ class RunningTransfersSet(object):
     # regular transfers first
     self.lock.acquire()
     try:
-      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+      for transfertuple in self.transfers:
+        transfer = transfertuple[2]
+        transfertype = transfertuple[5]
         if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
         else:
@@ -287,7 +295,8 @@ class RunningTransfersSet(object):
     # and now tape transfers
     self.tapelock.acquire()
     try:
-      for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
+      for transfertuple in self.tapeTransfers:
+        transfertype = transfertuple[0]
         n = n + self.config.getValue('DiskManager', transfertype+'Weight', None, int)        
     finally:
       self.tapelock.release()
@@ -300,7 +309,8 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       ended = []
-      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+      for transfertuple in self.transfers:
+        transferid, scheduler, transfer, notifyFileName, process, transfertype = transfertuple[:6]
         # check whether the transfer is over
         isEnded = False
         if transferid in self.leftOverTransfers:
@@ -366,7 +376,7 @@ class RunningTransfersSet(object):
       except Exception, e:
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Informing scheduler that transfers were killed by signals failed" message
-          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid)
+          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, msg=msg)
 
   def d2dend(self, transferid):
     '''called when a disk to disk copy ends and we are the source of it'''
@@ -383,7 +393,9 @@ class RunningTransfersSet(object):
     # first list the standard transfers
     self.lock.acquire()
     try:
-      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+      for transfertuple in self.transfers:
+        transferid, scheduler, transfer = transfertuple[:3]
+        transfertype, arrivalTime, runTime = transfertuple[5:]
         if transfertype == 'standard':
           try:
             user = pwd.getpwuid(int(transfer[20]))[0]
@@ -411,7 +423,8 @@ class RunningTransfersSet(object):
     '''Lists all pending and running transfers'''
     self.lock.acquire()
     try:
-      return set([(transferid, transfer[2]) for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers])
+      # retrieve transferid and reqid
+      return set([(transfertuple[0], transfertuple[2][2]) for transfertuple in self.transfers])
     finally:
       self.lock.release()
 
@@ -419,7 +432,8 @@ class RunningTransfersSet(object):
     '''lists running d2dsrc transfers'''
     self.lock.acquire()
     try:
-      return [(transferid, transfer, arrivalTime) for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers if transfertype == 'd2dsrc']
+      # retrieve transferid, transfer and arrivalTime for transfertype 'd2dsrc'
+      return [(transfertuple[0], transfertuple[2], transfertuple[6]) for transfertuple in self.transfers if transfertuple[5] == 'd2dsrc']
     finally:
       self.lock.release()
 
@@ -428,9 +442,9 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       # go through the transfer
-      for transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, runTime in self.transfers:
+      for transfertuple in self.transfers:
         # Stop whenever we find one
-        if reqscheduler == scheduler:
+        if reqscheduler == transfertuple[1]:
           return True
       # No transfer found
       return False

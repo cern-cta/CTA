@@ -24,6 +24,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''Declaration of all log messages of the transfer manager daemon'''
+
 import dlf
 
 # declarations of all messages constants

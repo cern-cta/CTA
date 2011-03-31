@@ -25,6 +25,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''command line of the CASTOR transfer manager suite allowing to drain and stop a transfer manager daemon'''
+
 import sys
 import getopt
 import rpyc
@@ -32,6 +34,7 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
+  '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] <transferManagerNode>'
   sys.exit(exitCode)
 

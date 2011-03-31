@@ -26,6 +26,10 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''dispatcher module of the transfer manager daemon.
+Handles the polling from the stager DB for new request
+and their dispatching to the proper diskservers'''
+
 import time
 import threading
 import cx_Oracle
@@ -125,7 +129,10 @@ class DBUpdater(threading.Thread):
           pass
         # Now call the DB for failures
         if failures:
-          transferids, fileids, errcodes, errmsgs, reqids = zip(*failures)
+          data = zip(*failures)
+          transferids = data[0]
+          errcodes = data[2]
+          errmsgs = data[3]
           try:
             stcur = self.dbConnection().cursor()
             try:

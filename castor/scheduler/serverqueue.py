@@ -27,6 +27,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''serverqueue module of the CASTOR transfer manager.
+Manages the transfers pending on the different diskservers'''
+
 import threading
 import dlf, pwd
 from transfermanagerdlf import msgs
@@ -119,6 +122,7 @@ class ServerQueue(dict):
     return fileids
 
   def _transfer2user(self, transfertype, rawtransfer):
+    '''finds out the user for the given transfer, depending on the type'''
     if transfertype == 'standard':
       try:
         return pwd.getpwuid(int(rawtransfer[20]))[0]
@@ -142,7 +146,8 @@ class ServerQueue(dict):
         if requser:
           # get user of for first location. For + break is used as set has no access to a random item
           for ds in self.transfersLocations[transferid]:
-            rawtransfer, arrivaltime, transfertype, d2drun = self[ds][transferid]
+            rawtransfer = self[ds][transferid][0]
+            transfertype = self[ds][transferid][2]
             break
           if self._transfer2user(transfertype, rawtransfer) != requser:
             continue
@@ -267,7 +272,8 @@ class ServerQueue(dict):
             break
           # are we interested in this user ?
           if requser:
-            rawtransfer, arrivaltime, transfertype, d2drun = self[diskserver][transferid]
+            rawtransfer = self[diskserver][transferid][0]
+            transfertype = self[diskserver][transferid][2]
             if requser != self._transfer2user(transfertype, rawtransfer):
               break
           # increase counter for corresponding diskpool
@@ -298,7 +304,7 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       for transferid in [transferid for transferid in self.d2dsrcrunning if self.d2dsrcrunning[transferid] == diskserver]:
-        transfer, arrivaltime, transfertype, ready = self[diskserver][transferid]
+        transfer, arrivaltime = self[diskserver][transferid][0:2]
         res.append((transferid, transfer, arrivaltime))
     finally:
       self.lock.release()

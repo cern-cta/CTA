@@ -25,6 +25,8 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+"""disk server manager daemon of CASTOR."""
+
 import os, sys
 import getopt
 import time
@@ -40,6 +42,7 @@ from diskmanagerdlf import msgs
 
 # usage function
 def usage(exitCode):
+  '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground] [--fakemode]'
   sys.exit(exitCode)
 
@@ -48,9 +51,9 @@ daemonize = True
 fake = False
 verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground', 'fakemode', 'verbose'])
-except Exception, e:
-  print e
+  options, arguments = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground', 'fakemode', 'verbose'])
+except Exception, parsingException:
+  print parsingException
   usage(1)
 for f, v in options:
   if f == '-h' or f == '--help':
@@ -66,8 +69,8 @@ for f, v in options:
     usage(1)
 
 # If any arg, complain and stop
-if len(args) != 0:
-  print "Unknown arguments : " + ' '.join(args) + "\n"
+if len(arguments) != 0:
+  print "Unknown arguments : " + ' '.join(arguments) + "\n"
   usage(1)
 
 
@@ -112,7 +115,7 @@ class DiskServerManagerService(rpyc.Service):
     '''Called when some transfers should be killed'''
     dlf.writedebug(msgs.KILLTRANSFERSCALLED, transferids=', '.join(transferids))
     # remove transfers from the local queue
-    transfersCanceled = transferQueue.remove(transferids)
+    transferQueue.remove(transferids)
 
   def exposed_transferAlreadyStarted(self, transferid, reqid):
     '''Called when a job has started on another diskserver and can be canceled on this one'''
@@ -143,12 +146,14 @@ class DiskServerManagerService(rpyc.Service):
 def checkSpaceLeftOnFS(transfertype, transfer):
   ''' check whether there is space available for a given transfer'''
   # check whether this transfer will write data
-  if transfertype == 'd2dsrc': return True
-  if transfertype == 'standard' and transfer[16] == 'r' : return True
+  if transfertype == 'd2dsrc':
+    return True
+  if transfertype == 'standard' and transfer[16] == 'r' :
+    return True
   # get the transfer filesystem
   fs = transfer[-1].split(':')[1]
   # find out the limit in terms of free space, from the config file
-  minFreeSpacePerc = configuration.getValue('RmNode','MinAllowedFreeSpace',0,float)
+  minFreeSpacePerc = configuration.getValue('RmNode', 'MinAllowedFreeSpace', 0, float)
   # get status of the filesystem
   stat = os.statvfs(fs)
   availableSpace = stat.f_bavail * stat.f_frsize
@@ -162,7 +167,7 @@ class ActivityControl(threading.Thread):
 
   def __init__(self):
     '''constructor'''
-    super(ActivityControl,self).__init__(name='ActivityControl')
+    super(ActivityControl, self).__init__(name='ActivityControl')
     self.alive = True
 
   def run(self):
@@ -215,7 +220,6 @@ class ActivityControl(threading.Thread):
             # 'Transfer start canceled (already started on another host)' message
             dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
             # the transfer has already started somewhere else, so give up
-            pass
           except EnvironmentError:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue
@@ -246,7 +250,7 @@ class ManagementThread(threading.Thread):
 
   def __init__(self):
     '''constructor'''
-    super(ManagementThread,self).__init__(name='ManagementThread')
+    super(ManagementThread, self).__init__(name='ManagementThread')
     self.alive = True
 
   def run(self):
@@ -272,13 +276,14 @@ class ManagementThread(threading.Thread):
     self.alive = False
 
 def initQueues():
+  '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
   for scheduler in configuration['DiskManager']['ServerHosts'].split():
     try:
       # rebuild list of running d2dsrc transfers
-      for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler,socket.getfqdn()):
+      for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn()):
         runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
       # rebuild transfer's queue
-      for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler,socket.getfqdn()):
+      for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn()):
         transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
@@ -336,17 +341,17 @@ try:
   except SystemExit:
     # we are exiting, fine
     pass
-  except Exception, e:
+  except Exception, unexpectedException:
     # 'Caught unexpected exception, exiting' message
-    print 'Caught unexpected exception, exiting : (' + str(e.__class__) + ') : ' + str(e)
+    print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
     if verbose:
       import traceback
       traceback.print_tb(sys.exc_info()[2])
-    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(e.__class__), msg=str(e))
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(unexpectedException.__class__), msg=str(unexpectedException))
     raise
 finally:
   if daemonize:
     try:
       context.__exit__(None, None, None)
-    except:
+    except Exception:
       pass

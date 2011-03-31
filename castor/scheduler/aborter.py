@@ -26,6 +26,9 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
+'''aborter thread of the CASTOR's transfer manager.
+Deals with abort requests by polling the stager DB for new ones'''
+
 import time
 import threading
 import castor_tools
