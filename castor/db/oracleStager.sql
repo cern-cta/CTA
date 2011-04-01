@@ -1525,6 +1525,7 @@ BEGIN
                    -- string created by the stager from these results e.g. ds1:fs1|ds2:fs2|
                    -- can exceed the maximum length allowed by LSF causing the submission
                    -- process to fail.
+                   -- XXX to be reviewed once LSF is dropped.
                    SUM(LENGTH(DiskServer.name) + LENGTH(FileSystem.mountPoint) + 2)
                    OVER (ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate,
                                                  FileSystem.nbReadStreams,
@@ -1548,62 +1549,67 @@ BEGIN
       -- replication forbidden
       result := 0;  -- DISKCOPY_STAGED
     ELSE
-      -- check whether we need to replicate, i.e. compare total current
-      -- # of diskcopies, regardless hardware availability and including
-      -- outstanding replications (cf. replicateOnClose), against maxReplicaNb.
-      SELECT COUNT(*), max(maxReplicaNb) INTO nbDCs, maxDCs FROM (
-        SELECT DiskCopy.id, maxReplicaNb
-          FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.fileSystem = FileSystem.id
-           AND FileSystem.diskpool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = SvcClass.id
-           AND SvcClass.id = svcClassId
-           AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-         UNION ALL
-        SELECT DiskCopy.id, -1
+      -- check whether there's already an ongoing replication
+      BEGIN
+        SELECT DiskCopy.id INTO srcDcId
           FROM DiskCopy, StageDiskCopyReplicaRequest
          WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
            AND StageDiskCopyReplicaRequest.svcclass = svcClassId
            AND DiskCopy.castorfile = cfId
-           AND DiskCopy.status = 1);  -- WAITDISK2DISKCOPY
-      IF nbDCs < maxDCs OR maxDCs = 0 THEN
-        -- we have to replicate. Do it only if we have enough
-        -- available diskservers.
-        SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs
-          FROM DiskServer, FileSystem, DiskPool2SvcClass
-         WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.diskPool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = svcClassId
-           AND FileSystem.status = 0 -- PRODUCTION
-           AND DiskServer.status = 0 -- PRODUCTION
-           AND DiskServer.id NOT IN (
-             SELECT DISTINCT(DiskServer.id)
-               FROM DiskCopy, FileSystem, DiskServer
-              WHERE DiskCopy.castorfile = cfId
-                AND DiskCopy.fileSystem = FileSystem.id
-                AND FileSystem.diskserver = DiskServer.id
-                AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
-        IF nbDSs > 0 THEN
-	  BEGIN
-            -- yes, we can replicate. Select the best candidate for replication
-            getBestDiskCopyToReplicate(cfId, -1, -1, 1, svcClassId, srcDcId, svcClassId);
-            -- and create a replication request without waiting on it.
-            createDiskCopyReplicaRequest(0, srcDcId, svcClassId, svcClassId, reuid, regid);
-            -- result is different for logging purposes
-            result := dconst.DISKCOPY_WAITDISK2DISKCOPY;
-          EXCEPTION WHEN NO_DATA_FOUND THEN
-            -- replication failed. We still go ahead with the access
-            result := dconst.DISKCOPY_STAGED;  
-          END;
+           AND DiskCopy.status = dconst.DISKCOPY_WAITDISK2DISKCOPY;
+        -- found an ongoing replication, we don't trigger another one
+        result := dconst.DISKCOPY_STAGED;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- ok, we can replicate; do we need to? compare total current
+        -- # of diskcopies, regardless hardware availability, against maxReplicaNb.
+        SELECT COUNT(*), max(maxReplicaNb) INTO nbDCs, maxDCs FROM (
+          SELECT DiskCopy.id, maxReplicaNb
+            FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.fileSystem = FileSystem.id
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = SvcClass.id
+             AND SvcClass.id = svcClassId
+             AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR));
+        IF nbDCs < maxDCs OR maxDCs = 0 THEN
+          -- we have to replicate. Do it only if we have enough
+          -- available diskservers.
+          SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs
+            FROM DiskServer, FileSystem, DiskPool2SvcClass
+           WHERE FileSystem.diskServer = DiskServer.id
+             AND FileSystem.diskPool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = svcClassId
+             AND FileSystem.status = 0 -- PRODUCTION
+             AND DiskServer.status = 0 -- PRODUCTION
+             AND DiskServer.id NOT IN (
+               SELECT DISTINCT(DiskServer.id)
+                 FROM DiskCopy, FileSystem, DiskServer
+                WHERE DiskCopy.castorfile = cfId
+                  AND DiskCopy.fileSystem = FileSystem.id
+                  AND FileSystem.diskserver = DiskServer.id
+                  AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR));
+          IF nbDSs > 0 THEN
+            BEGIN
+              -- yes, we can replicate. Select the best candidate for replication
+              srcDcId := 0;
+              getBestDiskCopyToReplicate(cfId, -1, -1, 1, svcClassId, srcDcId, svcClassId);
+              -- and create a replication request without waiting on it.
+              createDiskCopyReplicaRequest(0, srcDcId, svcClassId, svcClassId, reuid, regid);
+              -- result is different for logging purposes
+              result := dconst.DISKCOPY_WAITDISK2DISKCOPY;
+            EXCEPTION WHEN NO_DATA_FOUND THEN
+              -- replication failed. We still go ahead with the access
+              result := dconst.DISKCOPY_STAGED;  
+            END;
+          ELSE
+            -- no replication to be done
+            result := dconst.DISKCOPY_STAGED;
+          END IF;
         ELSE
           -- no replication to be done
           result := dconst.DISKCOPY_STAGED;
         END IF;
-      ELSE
-        -- no replication to be done
-        result := dconst.DISKCOPY_STAGED;
-      END IF;
+      END;
     END IF;   -- end internal replication processing
   ELSE
     -- No diskcopies available for this service class:
