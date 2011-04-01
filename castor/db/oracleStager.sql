@@ -2758,6 +2758,17 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* PL/SQL function to elect a rmmaster daemon in NoLSFMode */
+CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
+  locked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (locked, -54);
+BEGIN
+  LOCK TABLE RmMasterLock IN EXCLUSIVE MODE NOWAIT;
+  RETURN 1;
+EXCEPTION WHEN locked THEN
+  RETURN 0;
+END;
+/
 
 /* PL/SQL method implementing storeClusterStatus */
 CREATE OR REPLACE PROCEDURE storeClusterStatus

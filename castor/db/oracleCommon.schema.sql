@@ -638,6 +638,7 @@ CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048)
 /*******************************/
 /* running job synchronization */
 /*******************************/
+
 CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper(subreqId VARCHAR2(2048)) ON COMMIT DELETE ROWS;
 CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 (subreqId VARCHAR2(2048), reqId VARCHAR2(2048),
@@ -648,15 +649,5 @@ ON COMMIT PRESERVE ROWS;
 /***************************************************/
 /* rmMaster main lock, only used to elect a master */
 /***************************************************/
-CREATE TABLE RmMasterLock (unused NUMBER);
-CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
-  locked EXCEPTION;
-  PRAGMA EXCEPTION_INIT (locked, -54);
-BEGIN
-  LOCK TABLE RmMasterLock IN EXCLUSIVE MODE NOWAIT;
-  RETURN 1;
-EXCEPTION WHEN locked THEN
-  RETURN 0;
-END;
-/
 
+CREATE TABLE RmMasterLock (unused NUMBER);
