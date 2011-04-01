@@ -237,19 +237,19 @@ sub badDayFileCreation ( $$$$ )
     #           on tape
     #           recalled
 
-#    my @error_list = ( #"missing ns entry on rfcp",
-#                       #"missing filesystem on rfcp",
-#                       #"missing stream on rfcp",
-#                       "missing tapepool on rfcp",
-#                       "missing segment on rfcp",
-#                       "missing tape on rfcp",
-#                       #"missing ns entry on rfcp",
-#                       #"wrong checksum on rfcp",
-#                       #"wrong size on rfcp",
-#                       "wrong segment on rfcp",
-#                       "missing second tape segment in ns on migrated"
-#                       );
-    my @error_list = ( "nothing on rfcp" );
+    my @error_list = ( #"missing ns entry on rfcp",
+                       #"missing filesystem on rfcp",
+                       #"missing stream on rfcp",
+                       "missing tapepool on rfcp",
+                       "missing segment on rfcp",
+                       "missing tape on rfcp",
+                       #"missing ns entry on rfcp",
+                       #"wrong checksum on rfcp",
+                       #"wrong size on rfcp",
+                       "wrong segment on rfcp",
+                       "missing second tape segment in ns on migrated"
+                       );
+#    my @error_list = ( "nothing on rfcp" );
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
     my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
     my $dual_subdir = CastorTapeTests::get_environment('castor_dual_subdirectory');

@@ -166,7 +166,7 @@ sub read_config ( $ )
     $environment{hostname} = $local_host;
     my @per_host_vars = ( 'username', 'file_size', 'file_number', 'castor_directory',
                           'migration_timeout', 'poll_interval', 'tapepool', 'svcclass', 
-			  'local_jobmanagerd',
+			  'local_transfermanagerd',
 			  'local_mighunterd',
 			  'local_rechandlerd',
 			  'local_rhd',
@@ -988,6 +988,8 @@ sub unblock_stuck_files ()
                 if ($nsid =~ /^\s+(\d+)/ ) {
                     print "t=".elapsed_time()."s. NSFILE=".$1."\n";
                 }
+                my $stager_status = `su $environment{username} -c \"stager_qry -M $entry{name}\"`;
+                print "t=".elapsed_time()."s. stager status=".$stager_status."\n";
                 if (defined $entry{breaking_type} && $entry{breaking_done}) {
                     print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                 }
@@ -1048,6 +1050,8 @@ sub unblock_stuck_files ()
                     if ($nsid =~ /^\s+(\d+)/ ) {
                         print "t=".elapsed_time()."s. NSFILE=".$1."\n";
                     }
+                    my $stager_status = `su $environment{username} -c \"stager_qry -M $entry{name}\"`;
+                    print "t=".elapsed_time()."s. stager status=".$stager_status."\n";
                     if (defined $entry{breaking_type} && $entry{breaking_done}) {
                         print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
                     }
@@ -1341,7 +1345,7 @@ sub startDaemons ()
 {
     my %castor_deamons_locations =
 	(
-	 'jobmanagerd' => './castor/jobmanager/jobmanagerd',
+         'transfermanagerd' => './castor/scheduler/transfermanagerd',
 	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
 	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
 	 'rhd'         => './castor/rh/rhd',
@@ -1374,7 +1378,7 @@ sub startSingleDaemon ( $ )
 {
     my %castor_deamons_locations =
 	(
-	 'jobmanagerd' => './castor/jobmanager/jobmanagerd',
+         'transfermanagerd' => './castor/scheduler/transfermanagerd',
 	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
 	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
 	 'rhd'         => './castor/rh/rhd',
@@ -1733,6 +1737,7 @@ sub executeSQLPlusScript ( $$$$$ )
     my $tmpScript = `mktemp`;  # This creates and empty 0600 file.
     chomp $tmpScript;
     `echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpScript`;
+    #`echo "SET ECHO ON;" >> $tmpScript`;
     `echo "CONNECT $u/$p\@$db" >> $tmpScript`;
     `echo >> $tmpScript`;
     `cat $f >> $tmpScript`;
@@ -1769,6 +1774,7 @@ sub executeSQLPlusScriptNoError ( $$$$$ )
     my $tmpScript = `mktemp`;  # This creates and empty 0600 file.
     chomp $tmpScript;
     `echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpScript`;
+    #`echo "SET ECHO ON;" >> $tmpScript`;
     `echo "CONNECT $u/$p\@$db" >> $tmpScript`;
     `echo >> $tmpScript`;
     `cat $f >> $tmpScript`;
@@ -1979,7 +1985,7 @@ sub reinstall_stager_db()
     $initial_green_light = 1;
 
     # Ensure all of the daemons accessing the stager-database are dead
-    killDaemonWithTimeout('jobmanagerd' , 2);
+    killDaemonWithTimeout('transfermanagerd' , 2);
     killDaemonWithTimeout('mighunterd'  , 2);
     killDaemonWithTimeout('rechandlerd' , 2);
     killDaemonWithTimeout('rhd'         , 2);
@@ -2077,7 +2083,7 @@ sub reinstall_stager_db()
     unlink $hacked_creation;
     
     # Restart some daemons (not all yet)
-    startSingleDaemon ( 'jobmanagerd' );
+    startSingleDaemon ( 'transfermanagerd' );
     #startSingleDaemon ( 'mighunterd' );
     startSingleDaemon ( 'rechandlerd' );
     startSingleDaemon ( 'rhd' );
@@ -2220,7 +2226,9 @@ sub spawn_testsuite ()
     } else { # child part: just call the testsuite, return the standard output in the 
         die "Cannot fork: $!" unless defined $pid;
         close ($rd);
+        print print "t=".elapsed_time()."s.About to run testsuite\n";
         print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --verbose --rfio --client --root 2>&1\")`;
+        print "t=".elapsed_time()."s. testsuite run complete\n";
         close ($wr);
         POSIX::_exit(0);    
     }
@@ -2230,6 +2238,7 @@ sub wait_testsuite ( $$ )
 {
     my ( $pid, $rd ) = ( shift, shift );
     my $ret = "";
+    print "t=".elapsed_time()."s. Waiting for testsuite run completion...\n";
     while (my $l = <$rd>) {
         $ret .= $l;
     }
