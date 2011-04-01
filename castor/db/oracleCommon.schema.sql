@@ -493,6 +493,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig 
   VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 
+INSERT INTO CastorConfig
+  VALUES ('RmMaster', 'NoLSFMode', 'no', 'Whether we are running in NoLSF mode');
+
 /* Populate the general/owner option of the CastorConfig table */
 UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
  WHERE class = 'general' AND key = 'owner';
