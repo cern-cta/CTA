@@ -72,6 +72,11 @@ TAPEPOOLNAME = stager_dev04
 # Local file name to be used as sample data
 localFileName = /etc/group
 
+# Client uid/gid to be used for testing as unprivileged user; the chosen
+# user shall be able via ACLs to write on the namespace.
+# Provided default is dteam001:cg
+unprivUid = 18118
+unprivGid = 2688
 
 # Control of which test to run when no flags is given for a given set
 # If any flag is given on the command line, this part is ignored for the corresponding set
