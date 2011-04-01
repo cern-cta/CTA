@@ -60,7 +60,7 @@ def _createCastorDir(self, path, filetype):
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
     # set ACL to enable the unprivileged user to write on this path
     output = Popen('nssetacl -m u:' + self.options.get('Tags', 'unprivUid') + ':rwx,m:rwx ' + path) + \
-        Popen('nssetacl -m d:u:' + self.options.get('Tags', 'unprivUid') + ':rwx,d:u::rx,d:g::rx,d:o:rx,d:m:rwx ' + path)
+        Popen('nssetacl -m d:u:' + self.options.get('Tags', 'unprivUid') + ':rwx,d:u::rwx,d:g::rx,d:o:rx,d:m:rwx ' + path)
     assert len(output) == 0, \
         'Failed to set ACLs for user ' + self.options.get('Tags', 'unprivUid') + \
         ' on working directory ' + path + os.linesep + "Error :" + os.linesep + output
