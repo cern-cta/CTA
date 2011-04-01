@@ -5787,7 +5787,7 @@ int Cns_srv_openx(char *req_data,
                      reqinfo->clienthost,
                      &parent_dir, (flags & O_CREAT) ? &rec_addrp : NULL,
                      &fmd_entry,  (flags & O_TRUNC) ? &rec_addr  : NULL,
-                     (flags & (O_CREAT | O_EXCL)) ? CNS_NOFOLLOW : 0))
+                     (flags & (O_CREAT & O_EXCL)) ? CNS_NOFOLLOW : 0))
     RETURN (serrno);
 
   if (fmd_entry.fileid) {  /* File exists */
