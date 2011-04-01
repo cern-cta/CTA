@@ -998,6 +998,8 @@ PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
   cfId  NUMBER;
   rType NUMBER;
 BEGIN
+  -- give up if nothing to be done
+  IF subReqIds.COUNT = 0 THEN RETURN; END IF;
   -- Loop over all transfers to fail
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
@@ -1425,3 +1427,65 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing syncRunningTransfers
+ * This is called by the transfer manager daemon on the restart of a disk server manager
+ * in order to sync running transfers in the database with the reality of the machine.
+ * This is particularly useful to terminate cleanly transfers interupted by a power cut
+ */
+CREATE OR REPLACE
+PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
+                               transfers IN castor."strList",
+                               killedTransfersCur OUT castor.TransferRecord_Cur) AS
+  unused VARCHAR2(2048);
+  fileid NUMBER;
+  nsHost VARCHAR2(2048);
+  reqId VARCHAR2(2048);
+  killedTransfers castor."strList";
+  errnos castor."cnumList";
+  errmsg castor."strList";
+BEGIN
+  -- cleanup from previous round
+  DELETE FROM SyncRunningTransfersHelper2;
+  -- insert the list of running transfers into a temporary table for easy access
+  FORALL i IN transfers.FIRST .. transfers.LAST
+    INSERT INTO SyncRunningTransfersHelper VALUES (transfers(i));
+  -- Go through all running transfers from the DB point of view for the given diskserver
+  FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest, DiskCopy, FileSystem, DiskServer
+              WHERE SubRequest.status = dconst.SUBREQUEST_READY
+                AND Subrequest.diskCopy = DiskCopy.id
+                AND DiskCopy.fileSystem = FileSystem.id
+                AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT
+                AND FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = machine) LOOP
+    BEGIN
+      -- check if they are running on the diskserver
+      SELECT * INTO unused FROM SyncRunningTransfersHelper
+       WHERE subreqId = SR.subreqId;
+      -- this one was still running, nothing to do then
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- this transfer is not running anymore although the stager DB believes it is
+      -- we first get its reqid and fileid
+      SELECT Request.reqId INTO reqId FROM 
+        (SELECT reqId, id from StageGetRequest UNION ALL
+         SELECT reqId, id from StagePutRequest UNION ALL
+         SELECT reqId, id from StageUpdateRequest UNION ALL
+         SELECT reqId, id from StageRepackRequest) Request
+       WHERE Request.id = SR.request;
+      SELECT fileid, nsHost INTO fileid, nsHost FROM CastorFile WHERE id = SR.castorFile;
+      -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
+      INSERT INTO SyncRunningTransfersHelper2 VALUES (SR.subreqId, reqId, fileid, nsHost, 1015, 'Transfer has been killed while running');
+    END;
+  END LOOP;
+  -- fail the transfers that are no more running
+  SELECT subreqId, errorCode, errorMsg BULK COLLECT
+    INTO killedTransfers, errnos, errmsg
+    FROM SyncRunningTransfersHelper2;
+  -- Note that the next call will commit (even once per transfer to kill)
+  -- This is ok as SyncRunningTransfersHelper2 was declared "ON COMMIT PRESERVE ROWS" and
+  -- is a temporary table so it's content is only visible to our connection.
+  transferFailedSafe(killedTransfers, errnos, errmsg);
+  -- and return list of transfers that have been failed, for logging purposes
+  OPEN killedTransfersCur FOR SELECT subreqId, reqId, fileid, nsHost FROM SyncRunningTransfersHelper2;
+END;
+/

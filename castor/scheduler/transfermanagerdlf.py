@@ -43,7 +43,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'DRAINCALLED', 'SYNCHROKILLEDTRANSFER', 'FAILTRANSFEREXCEPTION',
                 'NOQUEUERETRIEVED', 'SIGNALRECEIVED', 'UNEXPECTEDEXCEPTION',
                 'COULDNOTCONTACTDS', 'SYNCDBWITHTM', 'SYNCNODISCREPANCY',
-                'INFODSJOBSTARTED', 'INFODSJOBSTARTEDFAILED', 'DSREFRESHFAILED')
+                'INFODSJOBSTARTED', 'INFODSJOBSTARTEDFAILED', 'DSREFRESHFAILED',
+                'SYNCRUNCALLED', 'SYNCRUNEXCEPTION', 'RUNTRANSFERDISAPPEARED')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -89,4 +90,7 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.SYNCNODISCREPANCY : 'No discrepancy during synchronization',
                  msgs.INFODSJOBSTARTED : "Informing diskserver that job started somewhere else",
                  msgs.INFODSJOBSTARTEDFAILED : "Informing diskserver that job started somewhere else failed",
-                 msgs.DSREFRESHFAILED : 'failed to refresh list of diskservers, kept old list'})
+                 msgs.DSREFRESHFAILED : 'failed to refresh list of diskservers, kept old list',
+                 msgs.SYNCRUNCALLED : 'syncRunningTransfers called',
+                 msgs.SYNCRUNEXCEPTION : 'Exception caught while synchronizing running transfers, giving up with synchronization',
+                 msgs.RUNTRANSFERDISAPPEARED : 'Transfer was marked as failed in stager DB after it disappeared from the machine'})

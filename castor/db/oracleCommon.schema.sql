@@ -635,6 +635,15 @@ CREATE INDEX I_FileSystem_Rate
 CREATE TABLE TransfersToAbort (uuid VARCHAR2(2048)
   CONSTRAINT NN_TransfersToAbort_Uuid NOT NULL);
 
+/*******************************/
+/* running job synchronization */
+/*******************************/
+CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper(subreqId VARCHAR2(2048)) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
+(subreqId VARCHAR2(2048), reqId VARCHAR2(2048),
+ fileid NUMBER, nsHost VARCHAR2(2048),
+ errorCode NUMBER, errorMsg VARCHAR2(2048))
+ON COMMIT PRESERVE ROWS;
 
 /***************************************************/
 /* rmMaster main lock, only used to elect a master */

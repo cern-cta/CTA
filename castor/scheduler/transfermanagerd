@@ -384,6 +384,31 @@ class TransferManagerService(rpyc.Service):
     # then wait for the end of ongoing requests and stop the daemon
     drain()
 
+  def exposed_syncRunningTransfers(self, diskserver, runningTransfers):
+    '''synchronizes the stager database with the reality of jobs running on a given machine.
+    This is called at the restart of the diskserver manager daemon so that the jobs that may
+    have been killed while no daemon was running are properly terminated.'''
+    dlf.writedebug(msgs.SYNCRUNCALLED)
+    try:
+      # connect to the DB and call the proper PL/SQL procedure
+      stcur = self.dbConnection().cursor()
+      stcur.arraysize = 50
+      respcur = self.dbConnection().cursor()
+      respcur.arraysize = 50
+      stcur.execute("BEGIN syncRunningTransfers(:1, :2, :3); END;", [diskserver, list(runningTransfers), respcur])
+      terminatedtransfers = respcur.fetchall()
+      stcur.close()
+      respcur.close()
+      # log the termination of the terminated transfers
+      for transferId, reqId, fileid, nsHost in terminatedtransfers:
+        # 'Transfer was marked as failed in stager DB after it disappeared from the machine' message
+        dlf.write(msgs.RUNTRANSFERDISAPPEARED, diskserver=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
+    except Exception, e:
+      # "Exception caught while synchronizing running transfers, giving up with synchronization" message
+      dlf.writeerr(msgs.SYNCRUNEXCEPTION, diskserver=diskserver, type=str(e.__class__), msg=str(e))
+      # check whether we should reconnect to DB, and do so if needed
+      self.dbConnection().checkForReconnection(e)
+
 def initQueues():
   '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''
   dslist = diskServerList.getlist()

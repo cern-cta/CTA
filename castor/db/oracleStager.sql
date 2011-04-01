@@ -70,6 +70,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE UUIDRecord_Cur IS REF CURSOR RETURN UUIDRecord;
   TYPE UUIDPairRecord IS RECORD (uuid1 VARCHAR(2048), uuid2 VARCHAR(2048));
   TYPE UUIDPairRecord_Cur IS REF CURSOR RETURN UUIDPairRecord;
+  TYPE TransferRecord IS RECORD (subreId VARCHAR(2048), resId VARCHAR(2048), fileId NUMBER, nsHost VARCHAR2(2048));
+  TYPE TransferRecord_Cur IS REF CURSOR RETURN TransferRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
   /* These types are deprecated and should go when the jobmanager and LSF are dropped*/

@@ -104,11 +104,12 @@ class DBConnection(object):
             return
         # extract ORACLE error code
         error, = e.args
-        errorcode = error.code
-        # check whether to reconnect
-        if (errorcode in self.errorCodesForReconnect) or (errorcode >= 25401 and errorcode <= 25409):
-            # We should reconnect
-            self.dropConnection()
+        if isinstance(error, cx_Oracle._Error):
+            errorcode = error.code
+            # check whether to reconnect
+            if (errorcode in self.errorCodesForReconnect) or (errorcode >= 25401 and errorcode <= 25409):
+                # We should reconnect
+                self.dropConnection()
 
     # autocommit property
     def set_autocommit(self, value):

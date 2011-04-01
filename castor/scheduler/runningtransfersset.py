@@ -170,9 +170,14 @@ class RunningTransfersSet(object):
 
   def populate(self):
     '''populates the list of ongoing transfers from the system.
-    note that this is linux specific code'''
+    Then synchronize with the stager DB (through the transfer manager)
+    so that transfers which are no more running but were not ended
+    properly in the databases are ended.
+    Note that this is linux specific code.'''
     # 'populating running scripts from system' message
     dlf.writedebug(msgs.POPULATING)
+    # get a random scheduler host
+    scheduler = self.config['DiskManager']['ServerHosts'].split()[0]
     # loop over all processes
     pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
     leftOvers = {}
@@ -192,7 +197,7 @@ class RunningTransfersSet(object):
           arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
           startTime = arrivalTime
           # create the entry in the list of running transfers, associated to the first scheduler we find
-          self.transfers.add((transferid, self.config['DiskManager']['ServerHosts'].split()[0], tuple(args), notifFileName, None, transfertype, arrivalTime, startTime))
+          self.transfers.add((transferid, scheduler, tuple(args), notifFileName, None, transfertype, arrivalTime, startTime))
           # keep in memory that this was a rebuilt entry
           leftOvers[transferid] = int(pid)
           # 'Found transfer already running' message
@@ -203,6 +208,9 @@ class RunningTransfersSet(object):
         # process we were looking at. We only ignore this process as it has probably
         # finished in the mean time
         pass
+    # send the list of running transfers to the stager DB for synchronization
+    self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+    # finally return
     return leftOvers
 
   def add(self, transferid, scheduler, transfer, notifyFileName, process, transfertype, arrivalTime, startTime=None):
