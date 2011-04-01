@@ -1,7 +1,8 @@
     **** : trace level set to 3
-    stager: stage_put Usertag=NULL Protocol=<protocol> File=<noTapeFileName> mode=420/size=0
+    stager: stage_prepareToPut Usertag=NULL
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
+    stager: stage_prepareToPut file=<noTapeFileName> proto=rfio size=0 mode=1b6
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>
@@ -10,5 +11,5 @@
     stager: <uuid4> SND <send duration4> s to send the request
     stager: Waiting for callback from castor
     stager: <uuid4> CBK <answer duration4> s before callback from <server ip4> was received
-<nb bytes> bytes in <time to transfer4> seconds through <interface in> and <interface out>
-<nb bytes> bytes in remote file
+Received 1 responses
+<noTapeFileName> SUBREQUEST_FAILED 95 Operation not supported

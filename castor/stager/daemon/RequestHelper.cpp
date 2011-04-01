@@ -271,6 +271,13 @@ namespace castor {
           strncpy(cnsFileid.server, cnsHost.c_str(), CA_MAXHOSTNAMELEN+1);
         }
         
+        // Deny PrepareToPut|Update on files with preset checksums
+        if(rc == 0 && (strncmp(cnsFilestat.csumtype, "PA", 2) == 0)
+            && (fileRequest->type() == OBJ_StagePrepareToPutRequest || fileRequest->type() == OBJ_StagePrepareToUpdateRequest)) {
+          rc = -1;
+          serrno = ENOTSUP;
+        }
+        
         if(rc != 0) {
           // the open failed, log it along with the fileid info in case the file existed in advance
           castor::exception::Exception ex(serrno);
@@ -286,7 +293,7 @@ namespace castor {
             castor::dlf::Param("Function", "Cns_openx"),
             castor::dlf::Param("Error", sstrerror(ex.code()))
           };
-          if ((ex.code() != ENOENT) && (ex.code() != EACCES) && (ex.code() != EISDIR)) {
+          if ((ex.code() != ENOENT) && (ex.code() != EACCES) && (ex.code() != EISDIR) && (ex.code() != ENOTSUP)) {
             // Error on the Name Server
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR,
               STAGER_CNS_EXCEPTION, 8, params, &cnsFileid);
