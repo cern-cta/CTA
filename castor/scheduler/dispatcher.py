@@ -297,6 +297,10 @@ class Dispatcher(threading.Thread):
     schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     transferid = srSubReqId
     fileid = (str(cfNsHost), int(cfFileId))
+    # we explicitely forbid transfers done as root user
+    if int(reqEuid) == 0:
+      self.updateDBQueue.put((transferid, fileid, 1721, "Transfer refused as requester is root", reqId)) # 1721 = ESTSCHEDERR
+      return
     # 'Scheduling standard transfer' message
     dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transferid, reqid=reqId, fileid=fileid, machines=str(schedCandidates))
     # build a list of transfers to schedule for each machine
