@@ -428,10 +428,20 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     // automatic closure by the database. Note: We only call putFailed in cases
     // of standalone puts and for files which had a preset checksum.
     if (e.code() == SECHECKSUM) {
-      // "Preset checksum mismatch detected, invoking putFailed"
-      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_CHKMISMATCH,
-                              fileId, nsHost);
-      jobSvc->putFailed(mcReq->subReqId(), fileId, nsHost);
+      try {
+        // "Preset checksum mismatch detected, invoking putFailed"
+        castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_CHKMISMATCH,
+                                fileId, nsHost);
+        jobSvc->putFailed(mcReq->subReqId(), fileId, nsHost);
+      } catch (castor::exception::Exception& e) {
+        // "Unexpected exception caught"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
+           castor::dlf::Param("Message", e.getMessage().str()),
+           castor::dlf::Param("Code", e.code())};
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                                fileId, nsHost, 3, params);
+      }
     } else {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
