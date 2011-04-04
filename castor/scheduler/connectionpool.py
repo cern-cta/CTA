@@ -27,7 +27,7 @@
 '''connection pool module of the CASTOR transfer manager.
 Handles a pool of cached rpyc connections to different nodes'''
 
-import rpyc
+import rpyc, rpyc.core.netref
 import castor_tools
 
 class ConnectionPool(object):
@@ -53,6 +53,13 @@ class ConnectionPool(object):
         port = self.config.getValue('Scheduler', 'Port', 15011, int)
       # create the connection
       rpcconn = rpyc.connect(machine, port)
+      # Make the setting up of the connection able to timeout
+      # This is in principle done by the rpyc framework on first use of the root attribute
+      # but as rpyc does it in a blocking manner, we had to do it "by hand" with
+      # proper timeout functionality
+      remote_root_ref = rpcconn.async_request(rpyc.core.consts.HANDLE_GETROOT)
+      remote_root_ref.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+      rpcconn._remote_root = remote_root_ref.value
       # cache it
       self.connections[machine] = rpcconn
     return self.connections[machine].root
@@ -77,13 +84,24 @@ class ConnectionPool(object):
     def f(machine, *args):
       '''wrapped method doing the actual call'''
       try:
-        # try existing connection
-        conn = self.getConnection(machine)
-        return getattr(conn, name)(*args)
-      except EOFError:
-        # if connection was lost, drop it
-        self.close(machine)
-        # and try again with a brand new connection
-        conn = self.getConnection(machine)
-        return getattr(conn, name)(*args)
+        gotException = False
+        while True:
+          try:
+            # try existing connection
+            conn = self.getConnection(machine)
+            remote_attr = rpyc.core.netref.asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
+            remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+            return remote_attr.value(*args)
+          except EOFError:
+            # if connection was lost, drop it
+            self.close(machine)
+            # and try again with a brand new connection, if it was our first attempt
+            if gotException:
+              raise
+            else:
+              gotException = True
+      except Exception, e:
+        # amend errors with the name of the machine that we were connecting too
+        e.args = e.args + ('trying to connect to ' + machine,)
+        raise e
     return f
