@@ -121,7 +121,7 @@ class RunningTransfersSet(object):
           # and only consider links to local filesystem or sockets
           targetpath = os.readlink(linkpath)
           if not foundlocalfile:
-            for fs in self.config['RmNode']['MountPoints'].split():
+            for fs in self.config.getValue('RmNode', 'MountPoints').split():
               if targetpath.startswith(fs):
                 # we got one tape transfer, let's compute it's direction
                 if (fdstat.st_mode & stat.S_IRUSR) == 0:
@@ -177,7 +177,7 @@ class RunningTransfersSet(object):
     # 'populating running scripts from system' message
     dlf.writedebug(msgs.POPULATING)
     # get a random scheduler host
-    scheduler = self.config['DiskManager']['ServerHosts'].split()[0]
+    scheduler = self.config.getValue('DiskManager', 'ServerHosts').split()[0]
     # loop over all processes
     pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
     leftOvers = {}
@@ -209,7 +209,11 @@ class RunningTransfersSet(object):
         # finished in the mean time
         pass
     # send the list of running transfers to the stager DB for synchronization
-    self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+    try:
+      self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+    except Exception, e:
+      # 'Exception caught when trying to synchronize running transfers with the database. Giving up' message
+      dlf.writeerr(msgs.SYNCRUNTRANSFERFAILED, type=str(e.__class__), msg=str(e))
     # finally return
     return leftOvers
 

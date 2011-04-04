@@ -277,7 +277,7 @@ class ManagementThread(threading.Thread):
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
-  for scheduler in configuration['DiskManager']['ServerHosts'].split():
+  for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
       for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn()):

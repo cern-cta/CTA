@@ -85,7 +85,7 @@ class Aborter(threading.Thread):
                 # Unfortunately, we cannot call it directly (lack of reference to the service object
                 # as it's created by the rpyc framework) and we do not want to call it via rpyc
                 # as it would creates too many intricated calls
-                for scheduler in self.config['DiskManager']['ServerHosts'].split():
+                for scheduler in self.config.getValue('DiskManager', 'ServerHosts').split():
                   self.connections.killtransfersinternal(scheduler, subReqIds)
                 # and commit the changes in the DB so that we do not try to drop these transfers again
                 self.dbConnection().commit()

@@ -206,7 +206,7 @@ class TransferManagerService(rpyc.Service):
     managers and sums up the results. Results can be restricted to a given pool and a
     given user'''
     nbTransfersPerPool = {}
-    for scheduler in configuration['DiskManager']['ServerHosts'].split():
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
         if diskpool not in nbTransfersPerPool:
           nbTransfersPerPool[diskpool] = 0
@@ -288,7 +288,7 @@ class TransferManagerService(rpyc.Service):
     # call the internal method on all schedulers (including ourselves)
     killedtransfers = []
     killedtransferids = []
-    for scheduler in configuration['DiskManager']['ServerHosts'].split():
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       for transferid, (fileid, reqid) in getattr(connections, method)(scheduler, arg):
         # for the transfers actually killed (and only once per tranfer
         if transferid not in killedtransferids:
@@ -416,10 +416,10 @@ def initQueues():
     for ds in dslist[diskPool]:
       try:
         # first list the running d2dsrc transfers
-        for transferid, transfer, arrivaltime in connections.getConnection(ds).getRunningD2dSource(socket.getfqdn()):
+        for transferid, transfer, arrivaltime in connections.getRunningD2dSource(ds, socket.getfqdn()):
           queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
         # then list queueing transfers
-        for transferid, transfer, transfertype, arrivaltime in connections.getConnection(ds).getQueueingTransfers(socket.getfqdn()):
+        for transferid, transfer, transfertype, arrivaltime in connections.getQueueingTransfers(ds, socket.getfqdn()):
           queueingTransfers.put(transferid, arrivaltime, [(ds, transfer)], transfertype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
