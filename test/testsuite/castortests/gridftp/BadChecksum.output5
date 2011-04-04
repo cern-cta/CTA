@@ -11,4 +11,4 @@
     stager: Waiting for callback from castor
     stager: <uuid5> CBK <answer duration5> s before callback from <server ip5> was received
 Received 1 responses
-<noTapeFileName> <fileid@ns> STAGEOUT
+Error 2/No such file or directory (File <noTapeFileName> (<fileid@ns>) not on disk cache)
