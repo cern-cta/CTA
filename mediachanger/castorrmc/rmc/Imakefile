@@ -15,7 +15,7 @@ TapeDependsOnLibrary(tape,castortape)
 
 RMCD_OBJS = rmc_serv.o rmc_procreq.o rmclogit.o sendrep.o usrmsg.o
 OPSGRP = OperatorGid
-TapeProgramTarget(rmcd,$(RMCD_OBJS),,,750)
+TapeProgramTarget(rmcd,$(RMCD_OBJS),,,755)
 ADMMANPAGE(rmcd)
 TapeMakeDir(LogPath,0755)
 LOGROTATE(castor-rmc-server,installtape)
