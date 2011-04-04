@@ -423,13 +423,24 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
       }
     }
   } catch (castor::exception::Exception& e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 3, params);
+    // For "Bad checksum" errors (1037) call putFailed() to invalidate the
+    // DiskCopy. If we don't do this the file remains stuck in STAGEOUT until
+    // automatic closure by the database. Note: We only call putFailed in cases
+    // of standalone puts and for files which had a preset checksum.
+    if (e.code() == SECHECKSUM) {
+      // "Preset checksum mismatch detected, invoking putFailed"
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_CHKMISMATCH,
+                              fileId, nsHost);
+      jobSvc->putFailed(mcReq->subReqId(), fileId, nsHost);
+    } else {
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Code", e.code())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                              fileId, nsHost, 3, params);
+    }
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }

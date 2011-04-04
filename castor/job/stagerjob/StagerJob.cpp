@@ -747,6 +747,7 @@ int main(int argc, char** argv) {
           e.code() == SETIMEDOUT   || // in case the client never answered
           e.code() == EHOSTUNREACH || // the client is not visible
           e.code() == SENOVALUE    || // no data was transfered
+          e.code() == SECHECKSUM   || // bad checksum
           e.code() == ENOENT) {       // file was removed while being modified
         loglevel = DLF_LVL_USER_ERROR;
       }

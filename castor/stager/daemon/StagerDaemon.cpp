@@ -311,6 +311,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_JOBSVC_D2DCS,   "Invoking disk2DiskCopyStart"},
     { STAGER_JOBSVC_1STBWR,  "Invoking firstByteWritten"},
     { STAGER_JOBSVC_DELWWR,  "File was removed by another user while being modified"},
+    { STAGER_JOBSVC_CHKMISMATCH, "Preset checksum mismatch detected, invoking putFailed"},
 
     { -1, "" }
 
