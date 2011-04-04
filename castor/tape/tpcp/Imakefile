@@ -73,11 +73,11 @@ WRITETPBIN_SRCS = \
   WriteTpMain.cpp
 WRITETPBIN_OBJS = $(WRITETPBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(dumptp,$(DUMPTPBIN_OBJS),,,750)
+NormalProgramTarget(dumptp,$(DUMPTPBIN_OBJS),,,755)
 EXEMANPAGE(dumptp)
 
-NormalProgramTarget(readtp,$(READTPBIN_OBJS),,,750)
+NormalProgramTarget(readtp,$(READTPBIN_OBJS),,,755)
 EXEMANPAGE(readtp)
 
-NormalProgramTarget(writetp,$(WRITETPBIN_OBJS),,,750)
+NormalProgramTarget(writetp,$(WRITETPBIN_OBJS),,,755)
 EXEMANPAGE(writetp)

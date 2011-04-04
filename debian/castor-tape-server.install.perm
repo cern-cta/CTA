@@ -2,9 +2,9 @@
 %attr(0755,root,root) etc/init.d/taped
 %attr(0644,root,root) etc/sysconfig/taped.example
 %attr(0644,root,root) etc/logrotate.d/castor-tape-server
-%attr(0750,root,root) usr/bin/confdrive
-%attr(0750,root,root) usr/bin/mounttape
-%attr(0750,root,root) usr/bin/posovl
-%attr(0750,root,root) usr/bin/rlstape
-%attr(0750,root,root) usr/bin/taped
+%attr(0755,root,root) usr/bin/confdrive
+%attr(0755,root,root) usr/bin/mounttape
+%attr(0755,root,root) usr/bin/posovl
+%attr(0755,root,root) usr/bin/rlstape
+%attr(0755,root,root) usr/bin/taped
 %attr(0755,root,root) usr/bin/tplabel

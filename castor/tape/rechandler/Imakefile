@@ -44,7 +44,7 @@ RECHANDLERDAEMONBIN_SRCS = \
 	ora/OraRecHandlerSvc.cpp
 
 RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.o)
-NormalProgramTarget(rechandlerd,$(RECHANDLERDAEMONBIN_OBJS),,,750)
+NormalProgramTarget(rechandlerd,$(RECHANDLERDAEMONBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
 ADMMANPAGE(rechandlerd)
 LOGROTATE(castor-rechandler-server,install)

@@ -228,7 +228,7 @@ PROC(Cns_oracle_ifce)
 MakeDir(LogPath,0755)
 NSORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
 
-NormalProgramTarget(nsd,$(NSD_OBJS),,$(NSORALIBS) $(NSLIBCSEC),750)
+NormalProgramTarget(nsd,$(NSD_OBJS),,$(NSORALIBS) $(NSLIBCSEC),755)
 ADMMANPAGE(nsd)
 LOGROTATE(castor-ns-server,install)
 SYSCONFIG(nsd,install)

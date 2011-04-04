@@ -40,4 +40,4 @@ TESTTPCPBIN_SRCS = \
 
 TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testtpcp,$(TESTTPCPBIN_OBJS),,,750)
+NormalProgramTarget(testtpcp,$(TESTTPCPBIN_OBJS),,,755)

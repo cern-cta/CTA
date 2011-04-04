@@ -51,9 +51,9 @@ MONLIB_OBJS = $(MONLIB_SRCS:.cpp=.o)
 SharedLibraryTarget(castormonitor,$(MONLIB_OBJS),,)
 
 MONITORDEPLIBS = DepSharedLibraryTargetName(castor/monitoring,castormonitor)
-NormalProgramTarget(rmGetNodes,RmGetNodes.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),750)
-NormalProgramTarget(checkSharedMemory,checkSharedMemory.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),750)
-NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),750)
+NormalProgramTarget(rmGetNodes,RmGetNodes.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),755)
+NormalProgramTarget(checkSharedMemory,checkSharedMemory.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),755)
+NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.o,$(MONITORDEPLIBS),$(MONITORDEPLIBS),755)
 
 include LOCAL_PATH/rmmaster/Makefile
 include LOCAL_PATH/rmnode/Makefile

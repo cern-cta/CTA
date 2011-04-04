@@ -62,7 +62,7 @@ TAPEGATEWAYDBIN_SRCS = \
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS)
 
 TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.o)
-NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),,,750)
+NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),,,755)
 ADMMANPAGE(tapegatewayd)
 SYSCONFIG(tapegatewayd,install)
 INITSCRIPT(tapegatewayd,install)

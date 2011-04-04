@@ -64,7 +64,7 @@ REPACKDBIN_SRCS =  RepackServer.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp \
 		$(REPACKCOMMON_SRC)
 REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.o)
-NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(SERVDEPLIB),$(SERVLIBS),750)
+NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(SERVDEPLIB),$(SERVLIBS),755)
 MakeDir(LogPath,0755)
 LOGROTATE(castor-repack-server,install)
 SYSCONFIG(repackd,install)

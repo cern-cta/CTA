@@ -5,5 +5,5 @@
 %attr(0755,root,root) usr/bin/stager_actualput
 %attr(0755,root,root) usr/bin/stager_abort
 %attr(0755,root,root) usr/bin/adler32
-%attr(0750,root,root) usr/bin/checkSharedMemory
-%attr(0750,root,root) usr/bin/dumpSharedMemory
+%attr(0755,root,root) usr/bin/checkSharedMemory
+%attr(0755,root,root) usr/bin/dumpSharedMemory

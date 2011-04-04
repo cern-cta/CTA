@@ -2,4 +2,4 @@
 %attr(0755,root,root) etc/init.d/nsd
 %attr(0644,root,root) etc/sysconfig/nsd.example
 %attr(0644,root,root) etc/logrotate.d/castor-ns-server
-%attr(0750,root,root) usr/bin/nsd
+%attr(0755,root,root) usr/bin/nsd

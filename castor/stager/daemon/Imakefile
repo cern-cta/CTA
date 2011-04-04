@@ -59,7 +59,7 @@ DBSERVICEDAEMONBIN_SRCS = \
 	NsOverride.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.o)
-NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),,,750)
+NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(stagerd)

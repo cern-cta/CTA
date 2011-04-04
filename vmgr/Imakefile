@@ -19,7 +19,7 @@ MakeDir(LogPath,0755)
 PROC(vmgr_oracle_ifce)
 VMGRD_OBJS = vmgr_main.o vmgr_oracle_ifce.o vmgr_procreq.o sendrep.o vmgrlogit.o
 ORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
-NormalProgramTarget(vmgrd,$(VMGRD_OBJS),,$(ORALIBS),750)
+NormalProgramTarget(vmgrd,$(VMGRD_OBJS),,$(ORALIBS),755)
 ADMMANPAGE(vmgrd)
 LOGROTATE(castor-vmgr-server,install)
 SYSCONFIG(vmgrd,install)

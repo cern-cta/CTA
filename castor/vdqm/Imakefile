@@ -60,7 +60,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic3RequestHandler.cpp \
                handler/VdqmMagic4RequestHandler.cpp
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.o)
-NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),,,750)
+NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
 ADMMANPAGE(vdqmd)
 LOGROTATE(castor-vdqm2-server,install)

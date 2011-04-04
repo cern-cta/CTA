@@ -33,7 +33,7 @@ DependsOnLibrary(castor/monitoring,castormonitor)
 
 RMNODEDBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 RMNODEDBIN_OBJS = $(RMNODEDBIN_SRCS:.cpp=.o)
-NormalProgramTarget(rmnoded,$(RMNODEDBIN_OBJS),,,750)
+NormalProgramTarget(rmnoded,$(RMNODEDBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 LOGROTATE(castor-rmnode-server,install)

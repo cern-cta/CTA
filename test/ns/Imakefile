@@ -19,5 +19,5 @@ NSTESTSRCS = TestThread.cpp \
        TestCnsStatThread.cpp \
        TestMTServer.cpp
 NSTESTOBJS = $(NSTESTSRCS:.cpp=.o)
-NormalProgramTarget(nstest,$(NSTESTOBJS),,,750)
+NormalProgramTarget(nstest,$(NSTESTOBJS),,,755)
 

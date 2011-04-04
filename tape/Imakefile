@@ -110,11 +110,11 @@ CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
 MOUNTTAPE_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
 RLSTAPE_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
-TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
-TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
-TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),750)
-TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
-TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),750)
+TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
+TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
 TapeProgramTarget(smc,smc.o,$(TAPELIB),$(TAPELIB),6755)
 TapeProgramTarget(tpdump,tpdump.o,$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tplabel,tplabel.o,$(TAPELIB),$(TAPELIB),755)

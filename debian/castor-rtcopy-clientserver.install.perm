@@ -4,4 +4,4 @@
 %attr(0755,root,root) usr/bin/tperrhandler
 %attr(0755,root,root) usr/bin/migrator
 %attr(0755,root,root) usr/bin/recaller
-%attr(0750,root,root) usr/bin/rtcpclientd
+%attr(0755,root,root) usr/bin/rtcpclientd

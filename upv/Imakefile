@@ -41,7 +41,7 @@ PROC(Cupv_oracle_ifce)
 CUPVD_OBJS = Cupv_main.o Cupv_oracle_ifce.o Cupv_procreq.o sendrep.o Cupv_util.o Cupvlogit.o
 MakeDir(LogPath,0755)
 ORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
-NormalProgramTarget(cupvd,$(CUPVD_OBJS),,$(ORALIBS),750)
+NormalProgramTarget(cupvd,$(CUPVD_OBJS),,$(ORALIBS),755)
 ADMMANPAGE(cupvd)
 LOGROTATE(castor-upv-server,install)
 SYSCONFIG(cupvd,install)

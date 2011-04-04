@@ -46,7 +46,7 @@ MIGHUNTERDAEMONBIN_SRCS = \
 
 MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),,,750)
+NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
 ADMMANPAGE(mighunterd)
 LOGROTATE(castor-mighunter-server,install)
