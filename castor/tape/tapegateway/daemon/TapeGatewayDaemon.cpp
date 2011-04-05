@@ -149,8 +149,9 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   } catch (castor::exception::Exception& e){
 
     castor::exception::Internal ex;
-    ex.getMessage() << "Caught castor exception : "
-     << sstrerror(e.code()) << e.getMessage().str() << std::endl;
+    ex.getMessage() << "Caught castor exception: "
+                    << sstrerror(e.code()) << " - "
+                    << e.getMessage().str() << std::endl;
     throw(ex);
     
   }

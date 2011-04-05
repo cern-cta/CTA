@@ -1819,7 +1819,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::checkConfiguration() thr
       // no data found, I should run the tapegateway instead of rtcpclientd
       castor::exception::Internal e;
       e.getMessage()
-	<< "the tape gateway cannot be run with such configuration, use rtcpclientd instead"
+	<< "Current configuration forbids running the tapegateway daemon, use rtcpclientd instead"
 	<< std::endl;
       throw e;
     }
