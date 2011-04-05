@@ -91,20 +91,23 @@ def writep(priority, msgnb, **params):
     # not exceed the length expected by som eother components (e.g. syslog)
     rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], thread.get_ident()%10000, _messages[msgnb][0])
     if params.has_key('fileid'):
-        rawmsg = rawmsg + ("NSHOSTNAME=%s NSFILEID=%d " % params['fileid'])
+        rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileid'])
     if params.has_key('reqid'):
-        rawmsg = rawmsg + ('REQID=%s ' % params['reqid'])
+        rawmsg += 'REQID=%s ' % (params['reqid'])
     if params.has_key('subreqid'):
-        rawmsg = rawmsg + ('SUBREQID=%s ' % params['subreqid'])
+        rawmsg += 'SUBREQID=%s ' % (params['subreqid']) 
     for param in params:
         if param in ['reqid', 'fileid', 'subreqid']:
             continue
         value = params[param]
         if isinstance(value, str) and ' ' in value:
-            rawmsg = rawmsg + param + ('="%s" ' % value)
+            value = value.replace('\n', ' ') # remove newlines
+            value = value.replace('\t', ' ') # remove tabs
+            value = value.replace('"', '\'') # escape double quotes
+            rawmsg += '%s="%s" ' % (param[0:20], value[0:1024])
         else:
-            rawmsg = rawmsg + param + ('=%s ' % str(value))
-    syslog.syslog(priority, rawmsg)
+            rawmsg += '%s=%s ' % (param[0:20], str(value))
+    syslog.syslog(priority, rawmsg.rstrip())
 
 def write(msgnb, **params):
     '''Writes a log message with the LOG_INFO priority.
