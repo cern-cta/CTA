@@ -147,7 +147,10 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 	    ack.setErrorCode(EAGAIN);
 	    std::ostringstream stst;
 	    stst << hostName << " is currently not the production rmMaster"
-		 << " server, try " << masterName;
+		 << " server";
+            if (masterName != "") {
+              stst << ", try " << masterName;
+            }
 	    ack.setErrorMessage(stst.str());
 	  }
         } else if (OBJ_FileSystemAdminReport == obj->type()) {
@@ -162,7 +165,10 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 	    ack.setErrorCode(EAGAIN);
 	    std::ostringstream stst;
 	    stst << hostName << " is currently not the production rmMaster"
-		 << " server, try " << masterName;
+		 << " server";
+            if (masterName != "") {
+              stst << ", try " << masterName;
+            }
 	    ack.setErrorMessage(stst.str());
 	  }
         } else {
