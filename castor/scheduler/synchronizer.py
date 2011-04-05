@@ -136,7 +136,7 @@ class Synchronizer(threading.Thread):
                 # we could not list all pending running transfers in the system
                 # Thus we have to give up with synchronization for this round
                 # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
-                dlf.writeerr(msgs.SYNCHROFAILED, type=str(e.__class__), msg=str(e))
+                dlf.writeerr(msgs.SYNCHROFAILED, Type=str(e.__class__), Message=str(e))
               # sleep until next check
               slept = 0
               while slept < self.config.getValue("TransferManager", "SynchronizationInterval", 300, int):
@@ -150,7 +150,7 @@ class Synchronizer(threading.Thread):
             stcur.close()
         except Exception, e:
           # "Caught exception in Synchronizer thread" message
-          dlf.writeerr(msgs.SYNCHROEXCEPTION, type=str(e.__class__), msg=str(e))
+          dlf.writeerr(msgs.SYNCHROEXCEPTION, Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
           self.dbConnection().checkForReconnection(e)
     finally:

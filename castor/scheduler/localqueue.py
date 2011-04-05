@@ -177,7 +177,7 @@ class LocalQueue(Queue.Queue):
       except ValueError:
         del timeouts[svcclass]
         # "Invalid TransferManager/PendingTimeouts option, ignoring entry" message
-        dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, svcclass=svcclass, timeout=timeout)
+        dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, SvcClass=svcclass, Timeout=timeout)
     # get the disk to disk copy timeout
     d2dtimeout =  self.config.getValue('TransferManager', 'DiskCopyPendingTimeout', 7200, int)
     # get current time and diskserver status

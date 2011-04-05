@@ -69,7 +69,7 @@ class Worker(threading.Thread):
         pass
       except Exception, e:
         # "Caught exception in Worker thread" message
-        dlf.writeerr(msgs.WORKEREXCEPTION, type=str(e.__class__), msg=str(e))
+        dlf.writeerr(msgs.WORKEREXCEPTION, Type=str(e.__class__), Message=str(e))
 
 class DBUpdater(threading.Thread):
   '''Worker thread, responsible for updating DB asynchronously and in bulk after the transfer scheduling'''
@@ -139,19 +139,19 @@ class DBUpdater(threading.Thread):
               stcur.execute("BEGIN transferFailedLockedFile(:1, :2, :3); END;", [list(transferids), list(errcodes), list(errmsgs)])
               for transferid, fileid, errcode, errmsg, reqid in failures:
                 # 'Failed transfer' message
-                dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, errorcode=errcode, errmsg=errmsg)
+                dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=errcode, ErrorMessage=errmsg)
             finally:
               stcur.close()
           except Exception, e:
             for transferid, fileid, errcode, errmsg, reqid in failures:
               # 'Exception caught while failing transfer' message
-              dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, type=str(e.__class__), msg=str(e))
+              dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
             # check whether we should reconnect to DB, and do so if needed
             self.dbConnection().checkForReconnection(e)
         # And call the DB for successes
         if successes:
           for transferid, fileid, reqid in successes:
-            # 'Marking transfers scheduled' message
+            # 'Marking transfer as scheduled' message
             dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
           try:
             stcur = self.dbConnection().cursor()
@@ -163,7 +163,7 @@ class DBUpdater(threading.Thread):
             for transferid, fileid, reqid in successes:
               # 'Exception caught while marking transfer scheduled' message
               dlf.writeerr(msgs.TRANSFERSCHEDULEDEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid,
-                           type=str(e.__class__), msg=str(e))
+                           Type=str(e.__class__), Message=str(e))
             # check whether we should reconnect to DB, and do so if needed
             self.dbConnection().checkForReconnection(e)
     finally:
@@ -242,7 +242,7 @@ class Dispatcher(threading.Thread):
     transferid = srSubReqId
     fileid = (str(cfNsHost), int(cfFileId))
     # 'Scheduling d2d source' message
-    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=transferid, reqid=reqId, fileid=fileid, machine=str(schedSourceCandidates[0]))
+    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=str(schedSourceCandidates[0]))
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
     arrivaltime =  time.time()
@@ -252,8 +252,8 @@ class Dispatcher(threading.Thread):
       # send the transfer to the appropriate diskserver
       self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsrc')
     except Exception, e:
-      # 'Scheduling d2d source failed' message
-      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, diskserver=diskserver, error=str(e))
+      # 'Failed to schedule d2d source' message
+      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
       # we coudl not schedule the source so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on source host", reqId))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
@@ -262,7 +262,7 @@ class Dispatcher(threading.Thread):
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     # 'Scheduling d2d destination' message
-    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=transferid, reqid=reqId, fileid=fileid, machines=str(schedDestCandidates))
+    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServers=str(schedDestCandidates))
     # build the list of hosts and transfers to launch
     transferList = []
     for diskserver, mountpoint in schedDestCandidates:
@@ -277,8 +277,8 @@ class Dispatcher(threading.Thread):
         self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2ddest')
         scheduleSucceeded = True
       except Exception, e:
-        # 'Scheduling d2d destination failed' message
-        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, diskserver=diskserver, error=str(e))
+        # 'Failed to scheduling d2d destination' message
+        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
       # we could not schedule anywhere for destination.... so fail the transfer in the DB
@@ -302,7 +302,7 @@ class Dispatcher(threading.Thread):
       self.updateDBQueue.put((transferid, fileid, 1721, "Transfer refused as requester is root", reqId)) # 1721 = ESTSCHEDERR
       return
     # 'Scheduling standard transfer' message
-    dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transferid, reqid=reqId, fileid=fileid, machines=str(schedCandidates))
+    dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServers=str(schedCandidates))
     # build a list of transfers to schedule for each machine
     arrivaltime =  time.time()
     transferList = []
@@ -341,8 +341,8 @@ class Dispatcher(threading.Thread):
         self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime)
         scheduleSucceeded = True
       except Exception, e:
-        # 'Scheduling standard transfer failed' message
-        dlf.writeerr(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, diskserver=diskserver, error=str(e))
+        # 'Failed to schedule standard transfer' message
+        dlf.writeerr(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
       # we could not schedule anywhere.... so fail the transfer in the DB
@@ -442,7 +442,7 @@ class Dispatcher(threading.Thread):
             stcur.close()
         except Exception, e:
           # "Caught exception in Dispatcher thread" message
-          dlf.writeerr(msgs.DISPATCHEXCEPTION, type=str(e.__class__), msg=str(e))
+          dlf.writeerr(msgs.DISPATCHEXCEPTION, Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
           self.dbConnection().checkForReconnection(e)
           # then sleep a bit to not loop to fast on the error

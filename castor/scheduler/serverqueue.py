@@ -191,12 +191,12 @@ class ServerQueue(dict):
         if transferid not in self.transfersLocations:
           # in such a case, let the diskserver know by raising an exception
           # "Transfer had already started. Cancel start" message
-          dlf.writedebug(msgs.TRANSFERALREADYSTARTED, diskserver=diskserver, subreqid=transferid, reqid=reqid)
+          dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
           raise ValueError
         # if a destination transfer wants to start, check whether the source is ready
         if transfertype == 'd2ddest' and not self[diskserver][transferid][3]:
           # "Source is not ready yet" message
-          dlf.writedebug(msgs.SOURCENOTREADY, diskserver=diskserver, subreqid=transferid, reqid=reqid)
+          dlf.writedebug(msgs.SOURCENOTREADY, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
           raise EnvironmentError
         # drop the transfer from all queues. Note that this desynchronizes the queues as seen
         # by the diskservers from the queues seen by the central manager. In case of a
@@ -213,11 +213,11 @@ class ServerQueue(dict):
         if machine != diskserver:
           try:
             # "Informing diskserver that job started somewhere else" message
-            dlf.writedebug(msgs.INFODSJOBSTARTED, diskserver=machine, subreqid=transferid, reqid=reqid)
+            dlf.writedebug(msgs.INFODSJOBSTARTED, DiskServer=machine, subreqid=transferid, reqid=reqid)
             self.connections.transferAlreadyStarted(machine, transferid, reqid)
           except Exception, e:
-            # "Informing diskserver that job started somewhere else failed" message
-            dlf.writeerr(msgs.INFODSJOBSTARTEDFAILED, diskserver=machine, subreqid=transferid, reqid=reqid, type=str(e.__class__), msg=str(e))
+            # "Failed to inform diskserver that job started elsewhere" message
+            dlf.writeerr(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine, subreqid=transferid, reqid=reqid, Type=str(e.__class__), Message=str(e))
 
   def d2dend(self, transferid, reqid, lock=True):
     '''called when a d2d copy ends in order to inform the source'''
@@ -240,8 +240,8 @@ class ServerQueue(dict):
     try:
       self.connections.d2dend(diskserver, transferid, reqid)
     except Exception, e:
-      # "Informing diskserver that d2d copy is over failed" message
-      dlf.writeerr(msgs.D2DOVERINFORMFAILED, diskserver=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, error=str(e))
+      # "Failed to inform diskserver that a d2d copy is over"
+      dlf.writeerr(msgs.D2DOVERINFORMFAILED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
 
   def putRunningD2dSource(self, diskserver, transferid, transfer, arrivaltime):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
@@ -334,7 +334,7 @@ class ServerQueue(dict):
           # we are not handling this transfer or it is not queued for the given machine
           # we can only log this oddity and ignore
           # "Unexpected KeyError exception caught in transfersCanceled" message
-          dlf.writeerr(msgs.TRANSFERCANCELEXCEPTION, error=str(e))
+          dlf.writeerr(msgs.TRANSFERCANCELEXCEPTION, Type=str(e.__class__), Message=str(e))
     finally:
       self.lock.release()
     # inform the stager of the transfers that were killed

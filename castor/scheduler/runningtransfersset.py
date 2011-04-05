@@ -213,7 +213,7 @@ class RunningTransfersSet(object):
       self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
     except Exception, e:
       # 'Exception caught when trying to synchronize running transfers with the database. Giving up' message
-      dlf.writeerr(msgs.SYNCRUNTRANSFERFAILED, type=str(e.__class__), msg=str(e))
+      dlf.writeerr(msgs.SYNCRUNTRANSFERFAILED, Type=str(e.__class__), Message=str(e))
     # finally return
     return leftOvers
 
@@ -353,7 +353,7 @@ class RunningTransfersSet(object):
           # get fileid
           fileid = (transfer[8], int(transfer[6]))
           # "transfer ended message"
-          dlf.writedebug(msgs.TRANSFERENDED, subreqid=transferid, reqid=transfer[2], fileid=fileid, rc=rc)
+          dlf.writedebug(msgs.TRANSFERENDED, subreqid=transferid, reqid=transfer[2], fileid=fileid, ReturnCode=rc)
           # remove the notification file
           try:
             os.remove(notifyFileName)
@@ -379,16 +379,16 @@ class RunningTransfersSet(object):
       try:
         self.connections.d2dend(scheduler, transferid, reqid)
       except Exception, e:
-        # "Informing scheduler that d2d transfer is over failed" message
-        dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, error=str(e))
+        # "Failed to inform scheduler that a d2d transfer is over" message
+        dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
         self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]))
       except Exception, e:
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
-          # "Informing scheduler that transfers were killed by signals failed" message
-          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, msg=msg)
+          # "Failed to inform scheduler that transfers were killed by signals" message
+          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Message=msg)
 
   def d2dend(self, transferid):
     '''called when a disk to disk copy ends and we are the source of it'''

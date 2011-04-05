@@ -118,7 +118,7 @@ class DiskServerListCache:
           pass
     except Exception, e:
       # 'failed to refresh list of diskservers, kept old list' message
-      dlf.writewarning(msgs.DSREFRESHFAILED, errortype=str(e.__class__), error=str(e))
+      dlf.writewarning(msgs.DSREFRESHFAILED, Type=str(e.__class__), Message=str(e))
 
   def getlist(self):
     '''returns the list of diskservers from the cache, clustered by diskpool.
@@ -190,8 +190,8 @@ class TransferManagerService(rpyc.Service):
           res[diskPool][ds] = getattr(connections, func)(ds, *args)
         except Exception, e:
           # 'Could not contact diskserver' message
-          dlf.writenotice(msgs.COULDNOTCONTACTDS, function=func, diskserver=ds,
-                          errortype=str(e.__class__), error=str(e))
+          dlf.writenotice(msgs.COULDNOTCONTACTDS, Function=func, DiskServer=ds,
+                          Type=str(e.__class__), Message=str(e))
     return res
 
   def exposed_nbTransfersPerPool(self, diskPool=None, user=None):
@@ -231,7 +231,7 @@ class TransferManagerService(rpyc.Service):
                     nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
                     nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
                     nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))'''
-    dlf.writedebug(msgs.SUMMARIZETRANSFERSPERPOOLCALLED, diskpool=diskPool, user=user, detailed=detailed)
+    dlf.writedebug(msgs.SUMMARIZETRANSFERSPERPOOLCALLED, DiskPool=diskPool, Username=user, Detailed=detailed)
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
     nbs = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # get the number of unique transfers running per diskpool
@@ -259,7 +259,7 @@ class TransferManagerService(rpyc.Service):
                          nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
                          nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
                          nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
-    dlf.writedebug(msgs.SUMMARIZETRANSFERSPERHOSTCALLED, diskpool=diskPool, user=user, detailed=detailed)
+    dlf.writedebug(msgs.SUMMARIZETRANSFERSPERHOSTCALLED, DiskPool=diskPool, Username=user, Detailed=detailed)
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
     hosts = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # flatten it to a list of (diskserver, (values))
@@ -272,7 +272,7 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_listTransfers(self, diskPool=None, user=None):
     '''lists the running and pending transfers per diskpool for a given diskpool and user'''
-    dlf.writedebug(msgs.LISTTRANSFERSCALLED, diskpool=diskPool)
+    dlf.writedebug(msgs.LISTTRANSFERSCALLED, DiskPool=diskPool)
     transfers = self.dispatch('listTransfers', diskPool, user)
     res = []
     for diskPool in transfers:
@@ -300,7 +300,7 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_killalltransfers(self, user=None):
     '''killalltransfers removes all transfers from all queues on all servers and diskservers'''
-    dlf.writedebug(msgs.KILLALLTRANSFERSCALLED, user=user)
+    dlf.writedebug(msgs.KILLALLTRANSFERSCALLED, Username=user)
     # call the internal method
     self._killtransfers('killalltransfersinternal', user)
 
@@ -314,7 +314,7 @@ class TransferManagerService(rpyc.Service):
   def exposed_killalltransfersinternal(self, user):
     '''killalltransfersinternal removes all transfers from the queues handled by this scheduler.
     Return a tuple of (transferid, file) tuples for the transfers actually removed'''
-    dlf.writedebug(msgs.KILLALLTRANSFERSINTERNALCALLED, user=user)
+    dlf.writedebug(msgs.KILLALLTRANSFERSINTERNALCALLED, Username=user)
     return tuple(queueingTransfers.removeall(user).items())
 
   def exposed_killtransfersinternal(self, transferids=None):
@@ -327,7 +327,7 @@ class TransferManagerService(rpyc.Service):
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
     for transferid, fileid, errno, errmsg, reqid in transfers:
-      dlf.writedebug(msgs.TRANSFERSKILLEDCALLED, subreqid=transferid, reqid=reqid, fileid=fileid, errno=errno, errmsg=errmsg)
+      dlf.writedebug(msgs.TRANSFERSKILLEDCALLED, subreqid=transferid, reqid=reqid, fileid=fileid, Errno=errno, ErrorMessage=errmsg)
     # only inform the stager
     try:
       stcur = self.dbConnection().cursor()
@@ -340,7 +340,7 @@ class TransferManagerService(rpyc.Service):
     except Exception, e:
       for transferid, fileid, errno, errmsg, reqid in transfers:
         # "Exception caught while failing transfer" message
-        dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, type=str(e.__class__), msg=str(e))
+        dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
       # check whether we should reconnect to DB, and do so if needed
       self.dbConnection().checkForReconnection(e)
 
@@ -348,8 +348,8 @@ class TransferManagerService(rpyc.Service):
     '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
     for transferid, fileid, rc, s, reqid in transfers:
-      dlf.writedebug(msgs.TRANSFERSCANCELEDCALLED, diskserver=machine,
-                     subreqid=transferid, reqid=reqid, fileid=fileid, errcode=rc, errmsg=s)
+      dlf.writedebug(msgs.TRANSFERSCANCELEDCALLED, Diskserver=machine,
+                     subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=rc, ErrorMessage=s)
     # first cancel transfers in the queue
     transferskilled = queueingTransfers.transfersCanceled(machine, transfers)
     # for those that are really over, inform the stager
@@ -358,17 +358,17 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_transferStarting(self, diskserver, transferid, reqid, transfertype):
     '''called when a transfer started on a given diskserver'''
-    dlf.writedebug(msgs.TRANSFERSTARTINGCALLED, diskserver=diskserver, subreqid=transferid, reqid=reqid, transfertype=transfertype)
+    dlf.writedebug(msgs.TRANSFERSTARTINGCALLED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, TransferType=transfertype)
     queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
 
   def exposed_getQueueingTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
-    dlf.writedebug(msgs.GETQUEUEINGTRANSFERSCALLED, diskserver=diskserver)
+    dlf.writedebug(msgs.GETQUEUEINGTRANSFERSCALLED, DiskServer=diskserver)
     return tuple(queueingTransfers.listQueueingTransfers(diskserver))
 
   def exposed_getRunningD2dSourceTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
-    dlf.writedebug(msgs.GETRUNNINGD2DSOURCETRANSFERSCALLED, diskserver=diskserver)
+    dlf.writedebug(msgs.GETRUNNINGD2DSOURCETRANSFERSCALLED, DiskServer=diskserver)
     return tuple(queueingTransfers.listRunningD2dSources(diskserver))
 
   def exposed_d2dend(self, transferid, reqid):
@@ -401,11 +401,11 @@ class TransferManagerService(rpyc.Service):
       respcur.close()
       # log the termination of the terminated transfers
       for transferId, reqId, fileid, nsHost in terminatedtransfers:
-        # 'Transfer was marked as failed in stager DB after it disappeared from the machine' message
-        dlf.write(msgs.RUNTRANSFERDISAPPEARED, diskserver=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
+        # 'Transfer was marked as failed in stager DB after it disappeared from the diskserver' message
+        dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
     except Exception, e:
       # "Exception caught while synchronizing running transfers, giving up with synchronization" message
-      dlf.writeerr(msgs.SYNCRUNEXCEPTION, diskserver=diskserver, type=str(e.__class__), msg=str(e))
+      dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
       # check whether we should reconnect to DB, and do so if needed
       self.dbConnection().checkForReconnection(e)
 
@@ -424,7 +424,7 @@ def initQueues():
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
         # 'No queue could be retrieved' message
-        dlf.writenotice(msgs.NOQUEUERETRIEVED, diskserver=ds, error=str(e))
+        dlf.writenotice(msgs.NOQUEUERETRIEVED, DiskServer=ds, Type=str(e.__class__), Message=str(e))
 
 class Suicider(threading.Thread):
   '''Regularly checks the number of ongoing transfers and commits suicide when it goes down to 0'''
@@ -442,8 +442,8 @@ class Suicider(threading.Thread):
             oktodie = not connections.anyTransfersFromScheduler(ds, socket.getfqdn())
           except Exception, e:
             # 'Could not contact diskserver' message
-            dlf.writenotice(msgs.COULDNOTCONTACTDS, function='anyTransfersFromScheduler', diskserver=ds,
-                            errortype=str(e.__class__), error=str(e))
+            dlf.writenotice(msgs.COULDNOTCONTACTDS, Function='anyTransfersFromScheduler', DiskServer=ds,
+                            Type=str(e.__class__), Message=str(e))
           # do not continue contacting machines if some are already not ok
           if not oktodie:
             break
@@ -488,7 +488,7 @@ import signal
 def handler(signum, frame):
   '''signal handler for the transfer manager daemon, only logging and calling sys.exit'''
   # 'Received signal' message
-  dlf.write(msgs.SIGNALRECEIVED, signal=signum)
+  dlf.write(msgs.SIGNALRECEIVED, Signal=signum)
   sys.exit()
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
@@ -497,7 +497,8 @@ signal.signal(signal.SIGINT, handler)
 # with daemon.DaemonContext():
 #   rest of the code
 if daemonize:
-  context = daemon.DaemonContext(detach_process=True)
+  context = daemon.DaemonContext(working_directory='/var/log/castor/',
+                                 detach_process=True)
   context.__enter__()
 try:
   try :
@@ -505,6 +506,8 @@ try:
     configuration = castor_tools.castorConf()
     # setup logging
     dlf.init('transfermanagerd')
+    # 'TransferManager Daemon started'
+    dlf.write(msgs.TRANSFERMANAGERDSTARTED)
     # global cache on the list of diskservers
     diskServerList = DiskServerListCache()
     # create a connection pool for connections to the DiskServers
@@ -539,6 +542,8 @@ try:
     synchroThread.start()
     # starts listening
     transfermanager.start()
+    # 'TransferManager Daemon stopped'
+    dlf.write(msgs.TRANSFERMANAGERDSTOPPED)
   except SystemExit:
     # we are exiting, fine
     pass
@@ -548,7 +553,7 @@ try:
     if verbose:
       import traceback
       traceback.print_tb(sys.exc_info()[2])
-    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, type=str(unexpectedException.__class__), msg=str(unexpectedException))
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
     raise
 finally:
   # clean up all connections and threads that may be running
