@@ -542,8 +542,6 @@ try:
     synchroThread.start()
     # starts listening
     transfermanager.start()
-    # 'TransferManager Daemon stopped'
-    dlf.write(msgs.TRANSFERMANAGERDSTOPPED)
   except SystemExit:
     # we are exiting, fine
     pass
@@ -573,3 +571,5 @@ finally:
       context.__exit__(None, None, None)
     except Exception:
       pass
+  # 'TransferManager Daemon stopped'
+  dlf.write(msgs.TRANSFERMANAGERDSTOPPED)

@@ -341,8 +341,6 @@ try:
     # so let's stop the other threads
     activityControl.stop()
     management.stop()
-    # 'DiskManager Daemon stoped'
-    dlf.write(msgs.DISKMANAGERDSTOPED)
   except SystemExit:
     # we are exiting, fine
     pass
@@ -360,3 +358,5 @@ finally:
       context.__exit__(None, None, None)
     except Exception:
       pass
+  # 'DiskManager Daemon stoped'
+  dlf.write(msgs.DISKMANAGERDSTOPED)
