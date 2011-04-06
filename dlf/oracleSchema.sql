@@ -81,8 +81,13 @@ CREATE TABLE dlf_host_map(hostid NUMBER CONSTRAINT PK_Host_Map_HostID PRIMARY KE
 /* SQL statements for dlf_nshost_map */
 CREATE TABLE dlf_nshost_map(nshostid NUMBER CONSTRAINT PK_NSHost_Map_NSHostID PRIMARY KEY CONSTRAINT NN_NSHost_Map_NSHostID NOT NULL, nshostname VARCHAR2(64) CONSTRAINT NN_NSHost_Map_NSHostName NOT NULL);
 
+/* Prompt for the value of the instance name */
+UNDEF instanceName
+ACCEPT instanceName DEFAULT castordlf PROMPT 'Enter the name of the castor instance: (default: castordlf, example: castoratlas) '
+SET VER OFF
+
 /* Fill the dlf_config table */
-INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
+INSERT INTO dlf_config (name, value, description) VALUES ('instance', '&instanceName', 'The name of the castor2 instance');
 INSERT INTO dlf_config (name, value, description) VALUES ('expiry', '90', 'The expiry time of the logging data in days');
 
 /* Fill the dlf_severities table */
