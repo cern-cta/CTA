@@ -475,31 +475,34 @@ CREATE TABLE CastorConfig
 
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
-INSERT INTO CastorConfig
-  VALUES ('general', 'instance', 'castorstager', 'Name of this Castor instance');
-INSERT INTO CastorConfig
-  VALUES ('general', 'owner', 'castor_stager', 'The database owner of the schema');
+/* Prompt for the value of the general/instance options */
+UNDEF instanceName
+ACCEPT instanceName DEFAULT castorstager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
+SET VER OFF
 
+INSERT INTO CastorConfig
+  VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
+
+/* Prompt for the value of the stager/nsHost option */
+UNDEF stagerNsHost
+ACCEPT stagerNsHost DEFAULT undefined PROMPT 'Enter the name of the stager/nsHost: (default: undefined, example: castorns) '
+
+INSERT INTO CastorConfig
+  VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
+
+
+INSERT INTO CastorConfig
+  VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
-
-INSERT INTO CastorConfig
-  VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
-
 INSERT INTO CastorConfig 
   VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
-
 INSERT INTO CastorConfig
   VALUES ('RmMaster', 'NoLSFMode', 'no', 'Whether we are running in NoLSF mode');
-
-/* Populate the general/owner option of the CastorConfig table */
-UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
- WHERE class = 'general' AND key = 'owner';
-
 COMMIT;
 
 
