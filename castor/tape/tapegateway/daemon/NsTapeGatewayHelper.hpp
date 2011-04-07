@@ -55,6 +55,8 @@ namespace castor {
 	      
 	void  getBlockIdToRecall(tape::tapegateway::FileToRecall& file, std::string vid) throw (castor::exception::Exception);
 
+	void checkFseqForWrite (const std::string &vid, int side, int Fseq) throw (castor::exception::Exception);
+
       };
     
     } // end of namespace tapegateway

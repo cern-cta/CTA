@@ -694,4 +694,30 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
   
 }
 
+// This checker function will raise an exception if the Fseq forseen for writing
+// is not strictly greater than the highest know Fseq for this tape in the name
+// server (meaning an overwrite).
+void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const std::string &vid, int side, int Fseq)
+     throw (castor::exception::Exception) {
+  struct Cns_segattrs segattrs;
+  memset (&segattrs, 0, sizeof(struct Cns_segattrs));
+  int rc = Cns_lastfseq (vid.c_str(), side, &segattrs);
+  if (rc != 0) { // Failure to contact the name server.
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
+      << "Cns_lastfseq failed for VID="<<vid.c_str()<< " side="<< side << " : rc="
+      << rc;
+    throw ex;
+  }
+  if (segattrs.fseq <= Fseq) { // Major error, we are about to overwrite an fseq
+    // referenced in the name server.
+    castor::exception::Exception ex(ERTWRONGFSEQ);
+    ex.getMessage()
+          << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
+          << "Fseq check failed for VID="<<vid.c_str()<< " side="<< side << " Fseq="
+          << Fseq << " last referenced segment in NS=" << segattrs.fseq;
+        throw ex;
+  }
+}
 

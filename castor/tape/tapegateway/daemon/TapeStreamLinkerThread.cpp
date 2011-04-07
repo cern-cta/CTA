@@ -46,6 +46,7 @@
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
@@ -142,6 +143,12 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
     try {
       // last Fseq is the value which should be used for the first file
       vmgrHelper.getTapeForStream(*strItem,*tapepool,lastFseq,tapeToUse);
+
+      // Validate the value received from the vmgr with the nameserver: for this given tape
+      // fseq should be strictly greater than the highest referenced segment on the tape
+      // to prevent overwrites.
+      NsTapeGatewayHelper nsHelper;
+      nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
     } catch(castor::exception::Exception& e) {
       castor::dlf::Param params[] = {
           castor::dlf::Param("StreamId",(*strItem).id()),
@@ -168,6 +175,17 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
           };
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
         }
+      } else if (e.code() == ERTWRONGFSEQ) {
+        // Major problem, the vmgr told us to write on an fseq still referenced in the NS
+        castor::dlf::Param params[] = {
+            castor::dlf::Param("StreamId",(*strItem).id()),
+            castor::dlf::Param("TapePool",(*tapepool).name()),
+            castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, INTERNAL_ERROR, params);
+        // Abort.
+        throw e;
       }
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
