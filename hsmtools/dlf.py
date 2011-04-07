@@ -100,13 +100,28 @@ def writep(priority, msgnb, **params):
         if param in ['reqid', 'fileid', 'subreqid']:
             continue
         value = params[param]
-        if isinstance(value, str) and ' ' in value:
-            value = value.replace('\n', ' ') # remove newlines
-            value = value.replace('\t', ' ') # remove tabs
-            value = value.replace('"', '\'') # escape double quotes
-            rawmsg += '%s="%s" ' % (param[0:20], value[0:1024])
-        else:
-            rawmsg += '%s=%s ' % (param[0:20], str(value))
+
+        # Integers
+        try:
+            rawmsg += '%s=%s ' % (param[0:20], int(value))
+            continue
+        except ValueError:
+            pass
+
+        # Floats
+        try:
+            rawmsg += '%s=%s ' % (param[0:20], float(value))
+            continue
+        except ValueError:
+            pass
+
+        # Strings
+        value = value.replace('\n', ' ') # remove newlines
+        value = value.replace('\t', ' ') # remove tabs
+        value = value.replace('"', '\'') # escape double quotes
+        value = value.strip("'") # remove trailing and leading signal quotes
+        rawmsg += '%s="%s" ' % (param[0:20], value[0:1024])
+
     syslog.syslog(priority, rawmsg.rstrip())
 
 def write(msgnb, **params):
