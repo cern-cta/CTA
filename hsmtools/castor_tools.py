@@ -460,7 +460,7 @@ def getFileClass(fileClassName):
 #-------------------------------------------------------------------------------
 # CastorConf
 #-------------------------------------------------------------------------------
-class CastorConf(dict):
+class CastorConf(object):
     '''This class allows easy manipulation of the castor config file from python.
     It caches the content of the file for fast access and refreshes it regularly.
     Refreshing can also be forced via the refresh method.
@@ -469,32 +469,38 @@ class CastorConf(dict):
 
     def __init__(self, refreshDelay=30, fileName='/etc/castor/castor.conf'):
         '''constructor'''
+        # the config file to be used
         self.fileName = fileName
+        # the refreshing cycle delay
         self.refreshDelay = refreshDelay
         self.lastRefresh = 0
+        # the cached dictionnary of configuration items
+        self.cache = {}
         # read the config file right now
         self.refresh()
 
     def refresh(self):
         '''refresh the cache of the config file by rereading and reparsing it'''
-        # reset the current configuration
-        self.clear()
+        # build up a new configuration dictionnary
+        newcache = {}
         # parse the file
-        self.lastRefresh = time.time()
         f = open(self.fileName)
         for line in f.readlines():
             line = line.strip()
             if len(line) == 0 or line[0] == '#':
                 continue # ignore comments
             category, name, value = line.split(None, 2)
-            if category not in self:
-                self[category] = {}
-            if name not in self[category]:
-                self[category][name] = value
+            if category not in newcache:
+                newcache[category] = {}
+            if name not in newcache[category]:
+                newcache[category][name] = value
             else:
                 print "Ignoring entry %s %s %s as it's a redefinition" % (category, name, value)
-                print "Value used : " + self[category][name]
+                print "Value used : " + newcache[category][name]
         f.close()
+        # replace the current cache with the new one (note : the update operation is atomic)
+        self.cache.update(newcache)
+        self.lastRefresh = time.time()
 
     def getValue(self, category, key, default=None, typ=str):
         '''returns the value of a configuration item casted into the given type.
@@ -505,7 +511,7 @@ class CastorConf(dict):
             self.refresh()
         # now deal with the config item
         try:
-            strvalue = self[category][key]
+            strvalue = self.cache[category][key]
             try:
                 value = typ(strvalue)
             except ValueError:
