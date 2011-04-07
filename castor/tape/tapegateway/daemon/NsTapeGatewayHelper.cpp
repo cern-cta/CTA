@@ -710,7 +710,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
       << rc;
     throw ex;
   }
-  if (segattrs.fseq <= Fseq) { // Major error, we are about to overwrite an fseq
+  if (Fseq <= segattrs.fseq) { // Major error, we are about to overwrite an fseq
     // referenced in the name server.
     castor::exception::Exception ex(ERTWRONGFSEQ);
     ex.getMessage()
