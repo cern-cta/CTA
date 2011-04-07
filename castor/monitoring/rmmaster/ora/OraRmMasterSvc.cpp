@@ -295,7 +295,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   };
   unsigned char (*bufferFSP)[21] =
     (unsigned char(*)[21]) calloc(fileSystemsL * 14 * 21, sizeof(unsigned char));
-  if (0 == lensFSP) {
+  if (0 == bufferFSP) {
     free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
     free(lensDSP); free(lensFSP); free(bufferDSP);
     castor::exception::OutOfMemory e; throw e;
