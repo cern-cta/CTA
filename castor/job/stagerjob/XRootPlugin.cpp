@@ -48,7 +48,7 @@
 
 // Defaults
 #define MSGIDENTLEN  43
-#define MSGCLOSELEN  8
+#define MSGCLOSELEN  10
 
 #define SELECT_TIMEOUT_XROOT_OPEN  30
 #define SELECT_TIMEOUT_XROOT_CLOSE 172800 // 2 days
@@ -240,15 +240,29 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
     throw e;
   }
 
-  // Interpret the CLOSE message
-  if (!strcmp(buf, "CLOSE 0")) {
+  // Interpret the mover exit status from the CLOSE message
+  if (!strncmp(buf, "CLOSE 0", 7)) {
     moverStatus = 0;
-  } else if (!strcmp(buf, "CLOSE 1")) {
+  } else if (!strncmp(buf, "CLOSE 1", 7)) {
     moverStatus = 1;
   } else {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "Invalid CLOSE message received: " << buf;
     throw ex;
+  }
+  
+  // If the file was opened for update determine if a write was actually
+  // performed on the file from the CLOSE message
+  if ((args.accessMode == castor::job::stagerjob::ReadWrite) &&
+      (strlen(buf) == 9)) {
+    if (!strncmp(&buf[8], "1", 1)) {
+      // "File update detected, changing access mode to write"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_SYSTEM,
+                              XROOTFILEUPDATE, 1, params, &args.fileId);
+      args.accessMode = castor::job::stagerjob::WriteOnly;
+    }
   }
 
   // Call the upper level postForkHook

@@ -124,7 +124,8 @@ namespace castor {
 
         XROOTENOENT =     51, /* Xrootd is not installed */
         XROOTBADTIMEOUT = 67, /* Invalid value for XROOT/TIMEOUTS option, using default */
-
+        XROOTFILEUPDATE = 71, /* File update detected, changing access mode to write */
+       
         RFIODBADPORT =    55, /* Invalid port range for RFIOD in config file, using default */
         RFIODBADMINPORT = 56, /* Invalid lower bound for RFIOD port range in config file, using default */
         RFIODBADMAXPORT = 57, /* Invalid upper bound for RFIOD port range in config file, using default */

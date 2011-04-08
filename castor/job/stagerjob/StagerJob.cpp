@@ -620,6 +620,7 @@ int main(int argc, char** argv) {
 
       { XROOTENOENT,     "Xrootd is not installed" },
       { XROOTBADTIMEOUT, "Invalid value for XROOT/TIMEOUTS option, using default" },
+      { XROOTFILEUPDATE, "File update detected, changing access mode to write" },
 
       { RFIODBADPORT,    "Invalid port range for RFIOD in config file, using default" },
       { RFIODBADMINPORT, "Invalid lower bound for RFIOD port range in config file, using default" },
