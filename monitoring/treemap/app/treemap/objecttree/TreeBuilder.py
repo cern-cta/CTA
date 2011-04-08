@@ -9,15 +9,13 @@ The children counting methods in models allow to see in advance if it's worth to
 
 @author: kblaszcz
 '''
-
-from app import settings
 from app.tools.StatusTools import generateStatusFile
+from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.ObjectTree import ObjectTree
 from app.treemap.objecttree.Postprocessors import *
 from app.treemap.objecttree.TreeNode import TreeNode
-from app.treemap.objecttree.RuleMapping import LevelRules
-from app.treemap.objecttree.Annex import Annex
-import inspect
+
+
 
 class TreeBuilder(object):
     '''

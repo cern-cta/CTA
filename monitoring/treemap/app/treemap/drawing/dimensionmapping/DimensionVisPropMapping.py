@@ -13,8 +13,6 @@ See there for further description
 @author: kblaszcz
 '''
 
-import exceptions
-
 #at the moment following properties are available:
 #fillcolor, strokecolor, strokesize, labelfontsize, radiallight.brightness, radiallight.hue, radiallight.opacity
 

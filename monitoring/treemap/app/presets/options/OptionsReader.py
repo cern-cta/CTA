@@ -6,10 +6,8 @@ An important function is to generate a new corrected string from the dictionary.
 An option can be excluded from the corrected string by setting includeasstring[optionname] to false
 @author: kblaszcz
 '''
-
-import re
-import datetime
 import app.presets.Presets
+
 class OptionsReader(object):
     '''
     classdocs

@@ -6,30 +6,15 @@
 #
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
+from app.dirs.ModelInterface import ModelInterface
+from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
+from app.errors.NoDataAvailableError import NoDataAvailableError
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, models
 from django.db.models.query import QuerySet
-from app import settings
-from app.presets.options.DateOption import DateOption
-from app.dirs.ModelInterface import ModelInterface
-from app.errors.NoDataAvailableError import NoDataAvailableError
-from app.tools.Inspections import *
-from app.tools.StatusTools import generateStatusFile
-from app.treemap.BasicTree import BasicTree
-from app.treemap.defaultproperties.TreeMapProperties import *
-from app.treemap.objecttree.ObjectTree import ObjectTree
-from app.treemap.objecttree.TreeBuilder import TreeBuilder
-from app.treemap.objecttree.RuleMapping import LevelRules
-from app.treemap.objecttree.Wrapper import Wrapper
-from app.treemap.objecttree.columntransformation import *
-import copy
-import datetime
-import profile
-from app.dirs.ModelSpecificFunctions.DirsFunctions import getDirByName
 import app.dirs.ModelSpecificFunctions.RequestsFunctions
-#!!!app.dirs.ModelSpecificFunctions.RequestsFunctions is imported at the end of the file!!!
-#if it is in the beginning of the file you will get a KeyError in RequestsFunctions, globals()[modelname]
+import datetime
 
 def lookForMissingNonInterfaceImplementations(modelname):
     #for now some nonsense here
@@ -156,6 +141,9 @@ class Dirs(models.Model, ModelInterface):
             self.files = self.getFilesOf(self.fileid)#self.cnsfilemetadata_set.all()
             self.files_cached = True
         return self.files
+    
+    def getChildren(self):
+        return self.getFilesAndDirectories()
     
     def getFilesAndDirectories(self):
 

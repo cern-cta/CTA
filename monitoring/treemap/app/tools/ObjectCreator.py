@@ -6,6 +6,7 @@ default constructor without parameters must be available
 '''
 import sys
 import inspect
+from app.dirs.models import *
 
  
 def createObject(moduleName, className ):
@@ -15,8 +16,8 @@ def createObject(moduleName, className ):
             module = __import__( moduleName )
         except ImportError, e:
             raise Exception( 'Unable to load module: ' + moduleName )
-    else:
-        module = sys.modules[moduleName]
+
+    module = sys.modules[moduleName]
 
     classes = dict(inspect.getmembers( module, inspect.isclass ))
     if not className in classes:

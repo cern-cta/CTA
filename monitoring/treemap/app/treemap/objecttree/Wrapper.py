@@ -2,11 +2,10 @@
 Created on May 5, 2010
 @author: kblaszcz
 '''
-import warnings
+
+from app.treemap.objecttree.columntransformation.ColumnTransformator import \
+    ColumnTransformator
 import inspect
-from app.treemap.objecttree.columntransformation.ColumnTransformator import ColumnTransformator
-from app.tools.Inspections import *
-from app.treemap.objecttree.Postprocessors import *
 
 class Wrapper(object):
     '''

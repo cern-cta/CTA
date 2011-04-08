@@ -3,13 +3,22 @@ Created on May 4, 2010
 set of useful functions enabling to easily scan for model attributes, available models etc
 @author: kblaszcz
 '''
-from django.db.models.base import ModelBase
-from django.db.models.fields import *
+#from django.db.models.base import ModelBase
+#from django.db.models.fields import *
+#from app.tools.ObjectCreator import createObject
+#from app.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
+#import inspect
+#import sys
+#from app.dirs.models import *
 from app.tools.ObjectCreator import createObject
-from app.treemap.objecttree.columntransformation.TransFunctions import evalStringBySimilarity
+from app.treemap.objecttree.columntransformation.TransFunctions import \
+    evalStringBySimilarity
+from django.conf import settings
+from django.db.models.base import ModelBase
 import inspect
 import sys
-from app.dirs.models import *
+
+
 
 class ModelAttributeFinder:
 
@@ -148,8 +157,8 @@ def getPostProcessorNames():
             module = __import__( modulename )
         except ImportError, e:
             return False
-    else:
-        module = sys.modules[modulename]
+        
+    module = sys.modules[modulename]
 
     classnames = dict(inspect.getmembers( module, inspect.isclass ))
     for classname in classnames.keys():

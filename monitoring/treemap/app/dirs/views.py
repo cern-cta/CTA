@@ -2,58 +2,54 @@
 django views and helper functions
 @author: kblaszcz
 '''
-
-
-# Create your views here.
+from app.errors.NoDataAvailableError import NoDataAvailableError
+from app.presets.options.BooleanOption import BooleanOption
+from app.presets.options.DateOption import DateOption
+from app.presets.options.OptionsReader import OptionsReader
+from app.presets.options.SpinnerOption import SpinnerOption
+from app.tools.ObjectCreator import createObject
+from app.tools.StatusTools import deleteStatusFile, generateStatusFile
+from app.treemap.defaultproperties.TreeMapProperties import treemap_props, \
+    getDefaultDimensionMapping
+from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
+from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
+from app.treemap.objecttree.RuleMapping import LevelRules
+from app.treemap.objecttree.TreeBuilder import TreeBuilder
+from app.treemap.viewtree.TreeCalculators import DefaultTreemapCalculator
 from django.conf import settings
-from django.conf.urls.defaults import *
-from django.core import serializers
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import redirect, render_to_response
 from django.template import resolve_variable
 from django.template.loader import render_to_string
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
-from app.presets.options.BooleanOption import BooleanOption
-from app.presets.options.DateOption import DateOption
-from app.presets.options.OptionsReader import OptionsReader
-from app.presets.options.SpinnerOption import SpinnerOption
-from app.dirs.models import *
-from app.tools.GarbageDeleters import deleteOldImageFiles, deleteOldStatusFiles
-import app.tools.Inspections
-from app.tools.StatusTools import *
-from app.treemap.defaultproperties.TreeMapProperties import *
-from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
-from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
-from app.treemap.drawing.dimensionmapping.Translators import *
-from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import DimensionVisPropMapping
-from app.treemap.drawing.dimensionmapping.Dimensions import *
-from app.treemap.objecttree.Postprocessors import *
-from app.treemap.objecttree.TreeBuilder import TreeBuilder
-from app.treemap.objecttree.RuleMapping import LevelRules
-from app.treemap.viewtree.TreeCalculators import DefaultTreemapCalculator
-import datetime
-import re
-import app.presets
-import time
+from app.algorithmstudy.Analysis import doMeasurements
 import app.dirs.urls
-import app.algorithmstudy.Analysis
-from app.treemap.defaultproperties.TreeMapProperties import treemap_props
-
-
+import app.presets.Presets
+import app.tools.Inspections
+import copy
+import datetime
+import os
+import profile
+import re
+import time
 
 def redirectOldLink(request, *args, **kwargs):
     return HttpResponse("URL couldn't be resolved. Here is the main link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
 #    return treeView(request, 'Dirs', theid)
 
 def redirectHome(request, *args, **kwargs):
-    return redirect(to = settings.PUBLIC_APACHE_URL + '/treemaps/0_Dirs_')
+    return redirect(to = settings.DJANGORESPONSE_URL + '/treemaps/0_Dirs_')
 
 #@cache_page(60 *60 * 24 * 3) #cache for 3 days
-def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False):    
-#    app.algorithmstudy.Analysis.doMeasurements()
+def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False, doprofile = False):   
+    
+    if doprofile:
+        profile.runctx("treeView(request = request, options = options, presetid = presetid, rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache, doprofile = False)", globals(), {'request' : request, 'presetid' : presetid, 'options': options, 'rootmodel':rootmodel, 'theid':theid, 'refresh_cache': refresh_cache})
+     
+    doMeasurements()
     thetime = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''
@@ -61,7 +57,6 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
 #    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     
     if rootmodel in app.tools.Inspections.getModelsNotToCache(): refresh_cache = True
-    statusfilename = getStatusFileNameFromCookie(request)
     
     imagewidth = treemap_props_cp['pxwidth']
     imageheight = treemap_props_cp['pxheight']
@@ -93,6 +88,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         
     if (notime and not optr.getOption('span')): cache_hit = False
     
+    statusfilename = getStatusFileNameFromCookie(request)
     if cache_hit and not refresh_cache:
         deleteStatusFile(statusfilename)
         return HttpResponse(value)
@@ -107,15 +103,6 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
         globals()[rootmodel].stop = optr.getOption('time')
     except AttributeError:
         pass
-
-    try:
-        if request.session['statusfile']['isvalid']:
-            statusfilename = request.session['statusfile']['name']
-            request.session['statusfile']['isvalid'] = False
-        else:
-            statusfilename = ''
-    except:
-        statusfilename = ''
     
     try:
         root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
@@ -271,14 +258,7 @@ def tableView(request, options, presetid, rootmodel, theid, refresh_cache = Fals
     except AttributeError:
         pass
 
-    try:
-        if request.session['statusfile']['isvalid']:
-            statusfilename = request.session['statusfile']['name']
-            request.session['statusfile']['isvalid'] = False
-        else:
-            statusfilename = ''
-    except:
-        statusfilename = ''
+    statusfilename = getStatusFileNameFromCookie(request)
     
     try:
         root = getRootObjectForTreemap(rootmodel, theid, statusfilename)
@@ -359,37 +339,6 @@ def tableView(request, options, presetid, rootmodel, theid, refresh_cache = Fals
     print 'time until now was: ' + (datetime.datetime.now() - start ).__str__()
     return response
 
-def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
-    defurl = app.dirs.urls.UrlDefault('{' + options + '}' + urlending)
-    
-    try:
-        if defurl.match():
-            theid = defurl.getParameter('theid')
-            model = defurl.getParameter('rootmodel')
-            if (newmodel is not None) and (newmodel in app.tools.Inspections.getAvailableModels()) and (model != newmodel):
-                model = newmodel
-                #theid = idsuffix
-            
-            #generate the new link to redirect
-            rediraddr = request.path
-            pos = rediraddr.rfind(urlending)
-            if pos == -1: raise Exception('invalid path in the response object')          
-            rediraddr = rediraddr[:pos]
-            pos = rediraddr.rfind('/{')
-            if pos != -1: rediraddr = rediraddr[:pos+1]
-            
-            newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
-            rediraddr = rediraddr + newurlpart
-            defurl = app.dirs.urls.UrlDefault(newurlpart) #new url with the new values
-            # = (statusfilename, already)
-            request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
-                
-            return redirect(to = rediraddr, args = {'request':request, 'options':  defurl.getParameter('options'), 'presetid':defurl.getParameter('presetid'), 'theid': defurl.getParameter('theid'), 'rootmodel': defurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
-    except Exception, e:
-        return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
-    
-    return Http404
-
 def preset(request, options,  urlending):
     if options is None: options = ''
     optr = None
@@ -461,7 +410,7 @@ def preset(request, options,  urlending):
                                 valuedict = re.match(option.getFullExpression(), options).groupdict() 
                                 thetime = datetime.datetime(int(valuedict['year']), int(valuedict['month']), int(valuedict['day']), int(valuedict['hour']), int(valuedict['minute']), int(valuedict['second']))
                             except Exception, e: #value is nowhere: take standard value
-                                models = preset.lr.getRuleObject(0).getUsedClassNames(self)
+                                models = preset.lr.getRuleObject(0).getUsedClassNames()
                                 for modelname in models:
                                     try:
                                         thetime = option.getStdVal();
@@ -487,11 +436,6 @@ def preset(request, options,  urlending):
     
     options = optr.getCorrectedOptions(preset.staticid)
     return redir(request, options, urlending, app.presets.Presets.getPreset(presetname).cachingenabled, app.presets.Presets.getPreset(presetname).staticid, app.presets.Presets.getPreset(presetname).rootmodel, extractedid, statusfilename)
-
-def setStatusFileInCookie(request, statusfilename):
-    request.session['statusfile'] = {'name': statusfilename, 'isvalid': True}
-    generateStatusFile(statusfilename, 0)
-    return HttpResponse('done', mimetype='text/plain')
 
 def respond(request, vtree, tooltipfontsize, imagewidth, imageheight, filenm, lrules, cache_key, cache_expire, thetime, rootidreplacement, rootmodel, nblevels, presetid, options = '', depth = 0):
     print "preparing response"
@@ -769,10 +713,41 @@ def respondTable(request, vtree, tooltipfontsize, imagewidth, imageheight, filen
     cache.add(cache_key, response, cache_expire)
     return HttpResponse(response)
 
-class DropDownEntry(object):
-    def __init__(self, text, value):
-        self.text = text
-        self.value = value
+def redir(request, options, urlending, refreshcache, presetid, newmodel = None, idsuffix = '', statusfilename = ''):
+    defurl = app.dirs.urls.UrlDefault('{' + options + '}' + urlending)
+    
+    try:
+        if defurl.match():
+            theid = defurl.getParameter('theid')
+            model = defurl.getParameter('rootmodel')
+            if (newmodel is not None) and (newmodel in app.tools.Inspections.getAvailableModels()) and (model != newmodel):
+                model = newmodel
+                #theid = idsuffix
+            
+            #generate the new link to redirect
+            rediraddr = request.path
+            pos = rediraddr.rfind(urlending)
+            if pos == -1: raise Exception('invalid path in the response object')          
+            rediraddr = rediraddr[:pos]
+            pos = rediraddr.rfind('/{')
+            if pos != -1: rediraddr = rediraddr[:pos+1]
+            
+            newurlpart = defurl.buildUrl(presetid = presetid, options = options, rootmodel = model, theid = theid)
+            rediraddr = rediraddr + newurlpart
+            defurl = app.dirs.urls.UrlDefault(newurlpart) #new url with the new values
+            # = (statusfilename, already)
+            request.session['statusfile'] = {'name': statusfilename}
+                
+            return redirect(to = rediraddr, args = {'request':request, 'options':  defurl.getParameter('options'), 'presetid':defurl.getParameter('presetid'), 'theid': defurl.getParameter('theid'), 'rootmodel': defurl.getParameter('rootmodel'), 'refresh_cache': refreshcache})
+    except Exception, e:
+        return redirect(to = '..', args = {'request':request, 'options':'', 'theid': '/castor', 'presetid':str(0), 'rootmodel': 'Dirs', 'refresh_cache': refreshcache})
+    
+    return Http404
+
+def setStatusFileInCookie(request, statusfilename):
+    request.session['statusfile'] = {'name': statusfilename}
+    generateStatusFile(statusfilename, 0)
+    return HttpResponse('done', mimetype='text/plain')
     
 def getCurrentPresetSelections(request, presetid, options = ''):
     try:
@@ -798,58 +773,11 @@ def getDefaultModel():
 
 def getDefaultPresets():
     return{'flat': False, 'presetname': "Default (Directory structure)", 'smalltobig': False}
-    
-def getDefaultDimensionMapping():
-    mapping = DimensionVisPropMapping()
-    mapping.mapVisPropetyToDimension('Annex', 'strokecolor', ConstantDimension(-1))
-    mapping.mapVisPropetyToDimension('Annex', 'strokesize', ConstantDimension(2))
-    mapping.mapVisPropetyToDimension('Annex', 'htmltooltiptext',AnnexToolTipDimension())
-    mapping.mapVisPropetyToDimension('Annex', 'fillcolor', ConstantDimension(-2))
-    mapping.mapVisPropetyToDimension('Annex', 'radiallight.opacity', ConstantDimension(0.0))
-    
-    mapping.mapVisPropetyToDimension('Dirs', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Dirs', 'htmltooltiptext', DirToolTipDimension())
-    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Dirs', 'labeltext', RawColumnDimension('name', AddPrefixTranslator('/')))
-    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
-    mapping.mapVisPropetyToDimension('Dirs', 'htmltooltiptext', DirToolTipDimension())
-    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
-    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
-    mapping.mapVisPropetyToDimension('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
-    
-    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'labeltextisbold', ConstantDimension(False))
-    
-    mapping.mapVisPropetyToDimension('Requestsatlas', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
-    mapping.mapVisPropetyToDimension('Requestsatlas', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mapping.mapVisPropetyToDimension('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
-    
-    mapping.mapVisPropetyToDimension('Requestscms', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
-    mapping.mapVisPropetyToDimension('Requestscms', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mapping.mapVisPropetyToDimension('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
-    
-    mapping.mapVisPropetyToDimension('Requestsalice', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
-    mapping.mapVisPropetyToDimension('Requestsalice', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mapping.mapVisPropetyToDimension('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
-    
-    mapping.mapVisPropetyToDimension('Requestslhcb', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
-    mapping.mapVisPropetyToDimension('Requestslhcb', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mapping.mapVisPropetyToDimension('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
-    
-    mapping.mapVisPropetyToDimension('Requestspublic', 'fillcolor', LevelDimension())
-    mapping.mapVisPropetyToDimension('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
-    mapping.mapVisPropetyToDimension('Requestspublic', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
-    mapping.mapVisPropetyToDimension('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
-
-    return mapping
 
 def getRootObjectForTreemap(rootmodel, rid, statusfilename):
     try:
         #Directory you want to show its content
-        root = globals()[rootmodel].__dict__['findObjectByIdReplacementId'](createObject(getModelsModuleName(rootmodel), rootmodel), rid, statusfilename)
+        root = globals()[rootmodel].__dict__['findObjectByIdReplacementId'](createObject(app.tools.Inspections.getModelsModuleName(rootmodel), rootmodel), rid, statusfilename)
     except ObjectDoesNotExist:
         raise Http404
         return render_to_response("Error") 
@@ -859,26 +787,10 @@ def getRootObjectForTreemap(rootmodel, rid, statusfilename):
 def getStatusFileNameFromCookie(request):
     statusfilename = ''
     try:
-        if request.session['statusfile']['isvalid']:
-            statusfilename = request.session['statusfile']['name']
-            request.session['statusfile']['isvalid'] = False
-        else:
-            statusfilename = ''
+        statusfilename = request.session['statusfile']['name']
     except:
         pass
     return statusfilename
-
-#deletes old Files if the divisor results in 0 by accident (randomly)
-#the more traffic, the higher the probability that someone hits the right time and triggers the cleaning
-#the random cleaning is perfomed because 
-#-it doesn't make sense to do it every time, it just should be done somewhen before the harddrive gets full
-#-a cron job would need to know the directories, and if they change in settings.py, you could forget to change the cron job
-def cleanGarbageFilesRandomly(imagetresholdage, statusfiletresholdage):
-    if (datetime.datetime.now().second % 20) == 0:
-        deleteOldImageFiles(imagetresholdage)
-    #probability of cleaning status files should be low, because they only remain undeleted if a view doesn't finish execution
-    if (datetime.datetime.now().second % 59) == 0:    
-        deleteOldStatusFiles(statusfiletresholdage)
         
 def estimateToolTipSize(htmltext, tooltipfontsize):
         textlines = 1

@@ -1,6 +1,5 @@
-from django.conf.urls.defaults import *
-from app import dirs
-from django.conf import settings 
+from django.conf.urls.defaults import patterns, include
+
     
 urlpatterns = patterns('',
     # Example:
@@ -12,7 +11,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
 #     (r'^admin/', include(admin.site.urls)),
-     (r'^treemaps/$', 'dirs.views.redirectHome'),
+     (r'^treemaps/$', 'app.dirs.views.redirectHome'),
      (r'^treemaps/', include('app.dirs.urls')),
 )
 

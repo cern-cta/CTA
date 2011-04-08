@@ -141,3 +141,6 @@ MODELS_LOCATION = 'app.dirs'
 #location of postprocessors
 POSTPROCESSORS_LOCATION = 'app.treemap.objecttree.Postprocessors'
 
+#TreeMap starts a thread that cleans up all the garbage files every GARBAGE_FILES_CLEANINIG_INTERVAL seconds
+GARBAGE_FILES_CLEANINIG_INTERVAL = 60*60*24
+

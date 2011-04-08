@@ -8,7 +8,6 @@ This enables to generate treemaps where the smallest values are displayed as the
 
 @author: kblaszcz
 '''
-import exceptions
 import math
 
 class PostProcessorBase(object):

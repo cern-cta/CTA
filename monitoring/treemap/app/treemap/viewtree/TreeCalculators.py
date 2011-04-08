@@ -16,7 +16,6 @@ y - rectangle y pos in the image
 
 @author: kblaszcz
 '''
-from app.treemap.defaultproperties.TreeMapProperties import treemap_props
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.ObjectTree import ObjectTree
 from app.treemap.viewtree.ViewNode import ViewNode
@@ -59,7 +58,7 @@ class DefaultTreemapCalculator(object):
         
         vnode = ViewNode()
         vnode.treenode = root
-        if treemap_props['labels']:
+        if self.treemap_props['labels']:
             vnode.labelheight = self.labelheight
             vnode.labelwidth = width
         else:
@@ -82,14 +81,15 @@ class DefaultTreemapCalculator(object):
         
         x = self.paddingsize/2.0
         y = self.paddingsize/2.0
-        if treemap_props['labels']: y = y + self.labelheight
+        if self.treemap_props['labels']: y = y + self.labelheight
         width = width - self.paddingsize
         height = height - self.paddingsize
-        if treemap_props['labels']: height = height - self.labelheight
+        if self.treemap_props['labels']: height = height - self.labelheight
         
         self.calculateRecursion.__dict__['notextcount'] = 0
         self.calculateRecursion.__dict__["ratiocount"] = 0
         self.calculateRecursion.__dict__["ratiosum"] = 0.0
+        self.calculateRecursion.__dict__["qualitysum"] = 0.0
         
         self.calculateRecursion(x, y, width ,height , viewtree, self.paddingsize, self.minpaddingsize, self.labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
         
@@ -134,7 +134,7 @@ class DefaultTreemapCalculator(object):
         nblines = 0 #counts how many lines are completed before the cleanup code starts
         
         #go deeper only if parent had a label (in case label activated)
-        if treemap_props['labels']:
+        if self.treemap_props['labels']:
             parentcsize = viewtree.getCurrentObject().labelheight
             if parentcsize <= 0.0:
                 return
@@ -260,10 +260,11 @@ class DefaultTreemapCalculator(object):
                            
                     self.calculateRecursion.__dict__["ratiocount"] = self.calculateRecursion.__dict__["ratiocount"] + 1
                     self.calculateRecursion.__dict__["ratiosum"] = self.calculateRecursion.__dict__["ratiosum"] + (chheight/chwidth)
+                    self.calculateRecursion.__dict__["qualitysum"] = self.calculateRecursion.__dict__["qualitysum"] + (min(chheight,chwidth)/max(chheight, chwidth))
                     
                     #store the calculated values
                     vn = ViewNode()
-                    if (2*labelheight > (chheight-2.0)) or not treemap_props['labels']:
+                    if (2*labelheight > (chheight-2.0)) or not self.treemap_props['labels']:
                         vn.labelheight = 0.0
                         vn.labelwidth = 0.0
                     else:
@@ -373,7 +374,7 @@ class DefaultTreemapCalculator(object):
                     continue
                 #store the calculated values
                 vn = ViewNode()
-                if (2.0 * labelheight > (chheight-2.0)) or not treemap_props['labels']:
+                if (2.0 * labelheight > (chheight-2.0)) or not self.treemap_props['labels']:
                     vn.labelheight = 0.0
                     vn.labelwidth = 0.0
                 else:

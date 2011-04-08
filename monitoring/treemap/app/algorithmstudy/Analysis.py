@@ -1,23 +1,23 @@
 from app import settings
-from app.dirs.models import *
-from app.dirs.views import getRootObjectForTreemap, getDefaultDimensionMapping
-from app.errors import NoDataAvailableError
+from app.dirs.ViewHelperFunctions import getRootObjectForTreemap
+from app.errors.NoDataAvailableError import NoDataAvailableError
 from app.presets.options.OptionsReader import OptionsReader
+from app.treemap.defaultproperties.TreeMapProperties import \
+    getDefaultDimensionMapping
 from app.treemap.drawing.TreeDesigner import SquaredTreemapDesigner
 from app.treemap.drawing.TreemapDrawers import SquarifiedTreemapDrawer
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.objecttree.TreeBuilder import TreeBuilder
 from app.treemap.viewtree.TreeCalculators import DefaultTreemapCalculator
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 import app.presets.Presets
 import datetime
 import os
-from app.treemap.defaultproperties.TreeMapProperties import treemap_props
+from app.dirs.models import *
+
 
 def doMeasurements():
     try:
-        measurements = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0, 'minratio':float("infinity"), 'maxratio':float("-infinity") }
+        measurements = {'notextcount': 0, 'ratio':0.0, 'ratiocount':0, 'treemapcount':0, 'brokentextcount':0, 'brokentextletters':0, 'fulltextcount':0, 'fulltextletters':0, 'minratio':float("infinity"), 'maxratio':float("-infinity"), 'quality':0, 'minquality':float("infinity"), 'maxquality': float("-infinity")}
         #generateTreemap('optitext=false',1,'Dirs', '/castor', measurements)
         generateTreemap('time=15.02.2011_15:26:26, span=1400, optitext=false',23,'Requestscms', '/castor', measurements)
         
@@ -26,16 +26,23 @@ def doMeasurements():
         
         print "WITHOUT: ", measurements
         print "avg ratio: ", float(measurements['ratio'])/float(measurements['treemapcount'])
+        print "min ratio: ", measurements['minratio']
+        print "max ratio: ", measurements['maxratio']
+        print "avg quality: ", float(measurements['quality'])/float(measurements['treemapcount'])
+        print "min ratio quality: ", measurements['minquality']
+        print "max ratio quality: ", measurements['maxquality']
         print "avg nb without text: ", float(measurements['notextcount'])/float(measurements['treemapcount'])
         print "avg nb with broken text: ", float(measurements['brokentextcount'])/float(measurements['treemapcount'])
         print "avg nb with full text: ", float(measurements['fulltextcount'])/float(measurements['treemapcount'])
         print "avg total nb letters full text: ", float(measurements['fulltextletters'])/float(measurements['treemapcount'])
         print "avg total nb letters broken text: ", float(measurements['brokentextletters'])/float(measurements['treemapcount'])
-        print "nb letters per one full text: ", (float(measurements['fulltextletters'])/float(measurements['fulltextcount']))
-        print "nb letters per one broken text: ", (float(measurements['brokentextletters'])/float(measurements['brokentextcount']))
+        try:
+            print "nb letters per one full text: ", (float(measurements['fulltextletters'])/float(measurements['fulltextcount']))
+            print "nb letters per one broken text: ", (float(measurements['brokentextletters'])/float(measurements['brokentextcount']))
+        except ZeroDivisionError:
+            pass
         print "total number letters per treemap: ", float(measurements['brokentextletters'] + measurements['fulltextletters'])/float(measurements['treemapcount'])
-        print "min ratio: ", measurements['minratio']
-        print "max ratio: ", measurements['maxratio']
+
         
 #        print "WITH: ", measurementswithoptitext
 #        print "avg ratio: ", float(measurementswithoptitext['ratio'])/float(measurementswithoptitext['treemapcount'])
@@ -52,22 +59,46 @@ def doMeasurements():
         print "No data"
 
 def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0):  
-    treemap_props_cp = copy.copy(treemap_props)
+    treemap_props_cp = {
+    'pxwidth': 1200.0, #width
+    'pxheight': 600.0, #height 
+    
+    'paddingsize': 0.0,
+    'paddingsizedecrease': 0.5,
+    'minpaddingsize': 0.0,
+    
+    'strokesize': 0.0,
+    'strokesizedecrease': 0.5,
+    'minstrokesize': 0.0,
+    
+    'labels': False,
+    'labelfontsize': 12.0, 
+    'labelheight': 12.0,
+    'labeltextisbold': True, 
+    
+    'radiallightbrightness': 0.4,
+    
+    'objecttree': None, #will be set when available (by TreeBuilder)
+    'viewtree': None, #will be set when available (by DefaultTreemapCalculator) 
+    
+    'levelrules': None,#will be set when available (by the view)
+    'granularity': 1500.0, #minimum rectangle area factor
+    'maxchildrenworthy': 500.0, #maximum number of children to traverse (except for root)
+    
+    'icons': False,
+    'defaulticonfile': settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg'
+    }
 #    checkAndPartiallyCorrectTreemapProps(treemap_props_cp)
     if count == 1000: return
     print measurements
     print options
-    time = datetime.datetime.now()
+    thetime = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''
     
 #    imagewidth = treemap_props_cp['pxwidth']
 #    treemap_props_cp['pxheight'] = treemap_props_cp['pxwidth']
 #    imageheight = treemap_props_cp['pxheight']
-    
-    treemap_props_cp['pxwidth'] = 800.0
-    treemap_props_cp['pxheight'] = 800.0
-
     
     serverdict = settings.LOCAL_APACHE_DICT
     treemapdir = settings.REL_TREEMAP_DICT 
@@ -124,13 +155,20 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     if collectcondition and (tc.calculateRecursion.__dict__['ratiocount'] != 0):
         measurements['notextcount'] = measurements['notextcount'] + tc.calculateRecursion.__dict__['notextcount']
         theratio = tc.calculateRecursion.__dict__['ratiosum']/tc.calculateRecursion.__dict__['ratiocount']
+        thequality = tc.calculateRecursion.__dict__['qualitysum']/tc.calculateRecursion.__dict__['ratiocount']
         
         if theratio > measurements['maxratio']:
             measurements['maxratio'] = theratio
         if theratio < measurements['minratio']:
             measurements ['minratio'] = theratio
+        
+        if thequality > measurements['maxquality']:
+            measurements['maxquality'] = thequality
+        if thequality < measurements['minquality']:
+            measurements ['minquality'] = thequality
             
         measurements['ratio'] = measurements['ratio'] + theratio
+        measurements['quality'] = measurements['quality'] + thequality
         measurements['ratiocount'] = measurements['ratiocount'] + 1
    
         dimmapping = getDefaultDimensionMapping() 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 #!/usr/bin/env python
+from app.OnServerStart import run
 from distutils import command
 from django.core.management import execute_manager
+
 try:
     import settings # Assumed to be in the same directory.
 except ImportError:
@@ -10,8 +12,14 @@ except ImportError:
     sys.exit(1)
 
 if __name__ == "__main__":
+    # Create cleaning threads
+    run()
+        
     execute_manager(settings)
     
+    #some tricks to work with older versions of Eclipse pydev extensions
+    #see video http://zootlinux.blogspot.com/2010/05/setting-up-pydev-in-eclipse-for-django.html
+    #16:30
     if settings.DEBUG and (command == "runserver" or command == "testserver"):
 
         # Make pydev debugger works for auto reload.
@@ -37,3 +45,5 @@ if __name__ == "__main__":
             return m(main_func, args, kwargs)
 
         autoreload.main = main
+        
+        

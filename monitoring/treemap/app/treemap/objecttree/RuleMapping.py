@@ -7,14 +7,11 @@ A TransFunction translates object attributes into numbers.
 
 @author: kblaszcz
 '''
-import app.tools.Inspections
 from app.tools.ObjectCreator import createObject
-from app.treemap.objecttree.Postprocessors import *
-import exceptions
+import app.tools.Inspections
 import inspect
 import sys
-import warnings
-import app.tools
+
 
 class ChildRules(object):
     '''

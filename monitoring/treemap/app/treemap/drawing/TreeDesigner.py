@@ -13,12 +13,13 @@ If a property is not available, there is a hardcoded default value
 
 @author: kblaszcz
 '''
-from app.tools.ColorFunctions import *
+from app.tools.ColorFunctions import rgbToHsv, hsvToRgb
 from app.treemap.defaultproperties.TreeMapProperties import treemap_props
-from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import DimensionVisPropMapping
+from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import \
+    DimensionVisPropMapping
 from app.treemap.viewtree.ViewTree import ViewTree
-import cairo
 import random
+import math
 
 
 class SquaredTreemapDesigner(object):

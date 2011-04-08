@@ -1,9 +1,22 @@
-from app import settings
+#from app import settings
+#import os
+#import stat
+#import time
+#import datetime
+#import thread
+import time
+from django.conf import settings
+import datetime
 import os
 import stat
-import time
-import datetime
 
+def cleanGarbageFiles():
+    thresholdage = settings.CACHE_MIDDLEWARE_SECONDS
+    intervalinseconds = settings.GARBAGE_FILES_CLEANINIG_INTERVAL
+    while(True):
+        deleteOldImageFiles(thresholdage)
+        deleteOldStatusFiles(thresholdage)
+        time.sleep(intervalinseconds)
 
 def deleteOldImageFiles(seconds):
     imagedir = settings.LOCAL_APACHE_DICT+settings.REL_TREEMAP_DICT

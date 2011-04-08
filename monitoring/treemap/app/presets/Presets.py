@@ -13,7 +13,6 @@ if you change the static id, you change the meaning of a URL to be a different p
 disable or enable caching for a particular preset by using cachingenabled
 @author: kblaszcz
 '''
-from django.conf import settings
 from app.presets.options.BooleanOption import BooleanOption
 from app.presets.options.DateOption import DateOption
 from app.presets.options.SpinnerOption import SpinnerOption

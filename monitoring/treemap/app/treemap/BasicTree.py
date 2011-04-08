@@ -3,9 +3,7 @@ Basic implementation of a tree
 @author: kblaszcz
 '''
 
-from app.treemap.objecttree.TreeNode import TreeNode
 import networkx as nx
-import warnings
 
 class BasicTree(object):
     '''

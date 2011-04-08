@@ -1,6 +1,5 @@
 from app.errors.NoDataAvailableError import NoDataAvailableError
 #!!!app.dirs.models is imported at the end of the file!!!
-import math
 import app.dirs
 
 #exploits the tree structure to be much faster than Dirs.objects.get(fullname=dirname)

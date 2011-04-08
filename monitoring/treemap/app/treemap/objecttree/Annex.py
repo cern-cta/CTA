@@ -5,14 +5,18 @@ Annex is a fake model, representing the sum of the Items which were too small to
 
 @author: kblaszcz
 '''
-
-
-from django.db import connection, transaction, models
-from app.tools.Inspections import *
-import inspect
 from app.dirs.ModelInterface import ModelInterface
-import app.dirs.urls
+from app.tools.ObjectCreator import createObject
+from django.db import models
 import app.tools.Inspections
+import app.dirs.models
+
+#from django.db import connection, transaction, models
+#from app.tools.Inspections import *
+#import inspect
+#from app.dirs.ModelInterface import ModelInterface
+#import app.dirs.urls
+#import app.tools.Inspections
 
 def buildAnnexId(rootmodel, depth, theid):
         if not(rootmodel in app.tools.Inspections.getAvailableModels()) and rootmodel !=  'Annex':

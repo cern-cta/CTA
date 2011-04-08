@@ -10,7 +10,6 @@ That translates a filename to a number
 '''
 
 import string
-import random
 
 class AttributeTranslatorInterface(object):
     def __init__(self):

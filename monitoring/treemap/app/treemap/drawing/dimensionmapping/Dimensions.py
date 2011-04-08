@@ -14,18 +14,25 @@ If LevelDimension.getValue() returns 1, TreeDesigner will decode and set the fil
 
 @author: kblaszcz
 '''
-from django.template.loader import render_to_string
+#from django.template.loader import render_to_string
+#from app.dirs.models import *
+#from app.tools.Inspections import ModelAttributeFinder
+#from app.tools.TextTools import sizeInBytes, splitText
+#from app.treemap.drawing.dimensionmapping.Translators import *
+#from app.treemap.objecttree.Annex import Annex
+#from app.treemap.viewtree.ViewNode import ViewNode
+#import exceptions
+#import inspect
+#import math
+#import string
+#import sys
 from app.dirs.models import *
-from app.tools.Inspections import ModelAttributeFinder
-from app.tools.TextTools import sizeInBytes, splitText
-from app.treemap.drawing.dimensionmapping.Translators import *
+from app.tools.TextTools import splitText, sizeInBytes
+from app.treemap.drawing.dimensionmapping.Translators import RawLinearTranslator, \
+    FileExtensionTranslator
 from app.treemap.objecttree.Annex import Annex
 from app.treemap.viewtree.ViewNode import ViewNode
-import exceptions
-import inspect
-import math
-import string
-import sys
+from django.template.loader import render_to_string
 
 class DimensionInterface(object):
     '''

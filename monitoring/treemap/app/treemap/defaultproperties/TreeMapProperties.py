@@ -26,6 +26,14 @@ radiallight {'brightness': b, 'hue':h, 'opacity': o } - defines brightness, hue 
 @author: kblaszcz
 '''
 #numbers must be floats!
+from app.treemap.drawing.dimensionmapping.DimensionVisPropMapping import \
+    DimensionVisPropMapping
+from app.treemap.drawing.dimensionmapping.Dimensions import \
+    AnnexToolTipDimension, LevelDimension, DirToolTipDimension, RawColumnDimension, \
+    FileToolTipDimension, FileExtensionDimension, RequestsToolTipDimension, ConstantDimension
+from app.treemap.drawing.dimensionmapping.Translators import AddPrefixTranslator, \
+    TopDirNameTranslator
+    
 from app.treemap.objecttree.ObjectTree import ObjectTree
 from app.treemap.viewtree.ViewTree import ViewTree
 import settings
@@ -60,6 +68,53 @@ treemap_props = {
 'icons': True,
 'defaulticonfile': settings.LOCAL_APACHE_DICT + settings.REL_SVG_DICT +  '/paperclip.svg'
 }
+
+def getDefaultDimensionMapping():
+    mapping = DimensionVisPropMapping()
+    mapping.mapVisPropetyToDimension('Annex', 'strokecolor', ConstantDimension(-1))
+    mapping.mapVisPropetyToDimension('Annex', 'strokesize', ConstantDimension(2))
+    mapping.mapVisPropetyToDimension('Annex', 'htmltooltiptext',AnnexToolTipDimension())
+    mapping.mapVisPropetyToDimension('Annex', 'fillcolor', ConstantDimension(-2))
+    mapping.mapVisPropetyToDimension('Annex', 'radiallight.opacity', ConstantDimension(0.0))
+    
+    mapping.mapVisPropetyToDimension('Dirs', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Dirs', 'htmltooltiptext', DirToolTipDimension())
+    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Dirs', 'labeltext', RawColumnDimension('name', AddPrefixTranslator('/')))
+    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'labeltext', RawColumnDimension('name'))
+    mapping.mapVisPropetyToDimension('Dirs', 'htmltooltiptext', DirToolTipDimension())
+    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'htmltooltiptext', FileToolTipDimension())
+    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
+    mapping.mapVisPropetyToDimension('Dirs', 'radiallight.hue', FileExtensionDimension(attrname = 'name'))
+    
+    mapping.mapVisPropetyToDimension('CnsFileMetadata', 'labeltextisbold', ConstantDimension(False))
+    
+    mapping.mapVisPropetyToDimension('Requestsatlas', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Requestsatlas', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.mapVisPropetyToDimension('Requestsatlas', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.mapVisPropetyToDimension('Requestsatlas', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    
+    mapping.mapVisPropetyToDimension('Requestscms', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Requestscms', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.mapVisPropetyToDimension('Requestscms', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.mapVisPropetyToDimension('Requestscms', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    
+    mapping.mapVisPropetyToDimension('Requestsalice', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Requestsalice', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.mapVisPropetyToDimension('Requestsalice', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.mapVisPropetyToDimension('Requestsalice', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    
+    mapping.mapVisPropetyToDimension('Requestslhcb', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Requestslhcb', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.mapVisPropetyToDimension('Requestslhcb', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.mapVisPropetyToDimension('Requestslhcb', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+    
+    mapping.mapVisPropetyToDimension('Requestspublic', 'fillcolor', LevelDimension())
+    mapping.mapVisPropetyToDimension('Requestspublic', 'htmltooltiptext', RequestsToolTipDimension())
+    mapping.mapVisPropetyToDimension('Requestspublic', 'labeltext', RawColumnDimension('filename', TopDirNameTranslator()))
+    mapping.mapVisPropetyToDimension('Requestspublic', 'radiallight.hue', FileExtensionDimension(attrname = 'filename'))
+
+    return mapping
 
 def checkAndPartiallyCorrectTreemapProps(props):
     height = props['pxheight']

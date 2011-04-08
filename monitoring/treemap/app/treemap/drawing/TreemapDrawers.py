@@ -6,13 +6,11 @@ The resulting output is written into a png file.
 
 @author: kblaszcz
 '''
-from app.tools.ColorFunctions import *
-from app.treemap.defaultproperties.TreeMapProperties import treemap_props
+from app.tools.ColorFunctions import addValueToRgb, setHueToRgb
 from app.treemap.viewtree.ViewTree import ViewTree
 import cairo
 import math
 import rsvg
-import settings
 
 class SquarifiedTreemapDrawer(object):
     '''
@@ -28,6 +26,7 @@ class SquarifiedTreemapDrawer(object):
         
         self.mapwidth = treemap_props['pxwidth']
         self.mapheight = treemap_props['pxheight']
+        self.treemap_props = treemap_props
     
         self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.mapwidth, self.mapheight)
         self.ctx = cairo.Context (self.surface)
@@ -56,7 +55,7 @@ class SquarifiedTreemapDrawer(object):
         root = self.vtree.getCurrentObject()
         
         self.drawRect(root.x, root.y, root.width, root.height, root.strokesize, root.level, root.fillcolor, root.strokecolor, root.radiallight)
-        if treemap_props['labels']:
+        if self.treemap_props['labels']:
             iconx, icony, iconwidth, iconheight = root.iconcoords['x'],root.iconcoords['y'],root.iconcoords['width'], root.iconcoords['height']
             iconfile = root.iconfile
             self.drawSVG(iconfile,iconx, icony, iconwidth, iconheight)

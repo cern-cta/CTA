@@ -3,17 +3,21 @@ Created on Apr 27, 2010
 
 @author: kblaszcz
 '''
-import inspect
-import sys
-import new
-import warnings
-from django.db.models import *
-from django.db.models.fields import *
-import datetime
-#import math
-from app.tools.ObjectCreator import createObject
+#import inspect
+#import sys
+#import new
+#import warnings
+#from django.db.models import *
+#from django.db.models.fields import *
+#import datetime
+##import math
+#from app.tools.ObjectCreator import createObject
+#from app.treemap.objecttree.columntransformation.TransFunctions import *
+#import app.tools
 from app.treemap.objecttree.columntransformation.TransFunctions import *
-import app.tools
+from django.db.models.fields import *
+import app.tools.Inspections
+import sys
 
 #USAGE EXAMPLE:
 #from app.dirs.models import Dirs
