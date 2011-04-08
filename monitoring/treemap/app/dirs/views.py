@@ -35,6 +35,7 @@ import os
 import profile
 import re
 import time
+from app.dirs.models import *
 
 def redirectOldLink(request, *args, **kwargs):
     return HttpResponse("URL couldn't be resolved. Here is the main link: <a href = \"" + settings.PUBLIC_APACHE_URL + "/treemaps/\"> here </a>")
@@ -49,7 +50,7 @@ def treeView(request, options, presetid, rootmodel, theid, refresh_cache = False
     if doprofile:
         profile.runctx("treeView(request = request, options = options, presetid = presetid, rootmodel = rootmodel, theid = theid, refresh_cache = refresh_cache, doprofile = False)", globals(), {'request' : request, 'presetid' : presetid, 'options': options, 'rootmodel':rootmodel, 'theid':theid, 'refresh_cache': refresh_cache})
      
-    doMeasurements()
+#    doMeasurements()
     thetime = datetime.datetime.now()
     presetid = int(presetid)
     if options is None: options = ''

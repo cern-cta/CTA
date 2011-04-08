@@ -61,7 +61,7 @@ def doMeasurements():
 def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0):  
     treemap_props_cp = {
     'pxwidth': 1200.0, #width
-    'pxheight': 600.0, #height 
+    'pxheight': 10.0, #height 
     
     'paddingsize': 0.0,
     'paddingsizedecrease': 0.5,
@@ -136,7 +136,7 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
     except AttributeError:
         pass
     
-    root = getRootObjectForTreemap(rootmodel, theid, 'bla')
+    root = getRootObjectForTreemap(rootmodel, theid, '')
     filenm = "dummy.png"  
     
     collectcondition = root.countChildren() > 5
