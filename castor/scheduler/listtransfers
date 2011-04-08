@@ -107,22 +107,19 @@ if len(args) > 0:
 
 def processTransfersListing():
   '''retrieves and display full listing of the running transfers for the given diskpool and user'''
-  try:
-    transfers = rpconn.root.listTransfers(reqdiskpool, requser)
-    print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
-    n = 0
-    for transid, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
-      ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
-      if startTime != None :
-        sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
-      else:
-        sstartTime = ''
-      print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
-      n = n + 1
-    if n > 1000:
-      print 'Note that the list may have been truncated to 1000 pending and 1000 running transfers per hosts'
-  except Exception, e:
-    print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
+  transfers = rpconn.root.listTransfers(reqdiskpool, requser)
+  print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
+  n = 0
+  for transid, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime in transfers:
+    ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
+    if startTime != None :
+      sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
+    else:
+      sstartTime = ''
+    print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
+    n = n + 1
+  if n > 1000:
+    print 'Note that the list may have been truncated to 1000 pending and 1000 running transfers per hosts'
 
 def _buildProtocolList(summaryreport):
   '''helper function to list the set of protocols reported in the summary'''
