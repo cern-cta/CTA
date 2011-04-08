@@ -47,21 +47,28 @@ _priorities = { syslog.LOG_EMERG:   "Emerg",
                 syslog.LOG_NOTICE:  "Notice",
                 syslog.LOG_INFO:    "Info",
                 syslog.LOG_DEBUG:   "Debug" }
-_specialParameters = {}
+_logmask = 0xff
 
+# Constants
+_LOG_PRIMASK = 0x07
 
 def init(facility):
     '''Initializes the distributed logging facility. Sets the facility name and the mask'''
-    # find out which logmask should be used
+    # Default logmask to include all messages up to and including INFO
+    global _logmask
+    syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_INFO))
+    # Find out which logmask should be used from castor.conf
     config = castor_tools.castorConf()
     smask = config.getValue(facility, "LogMask", "LOG_INFO")
-    # and set it
+    # Set the log mask
     try:
-        syslog.setlogmask(syslog.LOG_UPTO(getattr(syslog, smask)))
+        syslog.setlogmask(
+            syslog.LOG_UPTO(getattr(syslog, smask)))
+        _logmask = syslog.setlogmask(0)
     except AttributeError:
-        # unknow mask name
-        raise AttributeError('Bad log mask ' + smask + ' found for facility ' + facility)
-    # open syslog
+        # Unknown mask name
+        raise AttributeError('Invalid Argument: ' + smask + ' for ' + facility + '/LogMask option in castor.conf')
+    # Open syslog
     syslog.openlog(facility, syslog.LOG_PID, syslog.LOG_LOCAL3)
 
 def addmessages(msgs):
@@ -80,6 +87,10 @@ def writep(priority, msgnb, **params):
       - reqid : will be treated as the UUID of the ongoing request
       - fileid : will be treated as a pair(nshost, fileid)
     '''
+    # ignore messages whose priority is not of interest
+    global _logmask
+    if syslog.LOG_MASK(priority & _LOG_PRIMASK) & _logmask == 0:
+        return
     # check whether this is the first log of this message
     if not _messages[msgnb][1]:
         # then send the message to the server
@@ -100,6 +111,8 @@ def writep(priority, msgnb, **params):
         if param in ['reqid', 'fileid', 'subreqid']:
             continue
         value = params[param]
+        if value == None:
+            continue
 
         # Integers
         try:
