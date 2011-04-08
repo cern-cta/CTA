@@ -147,6 +147,11 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       // Validate the value received from the vmgr with the nameserver: for this given tape
       // fseq should be strictly greater than the highest referenced segment on the tape
       // to prevent overwrites.
+      //
+      // As a side effect, the tape will be left as BUSY (effect of getting tape from vmgr)
+      // and the gateway will immediately forget about it. This is a good thing as
+      // this badly referenced tape will not show up in the gateway again until an
+      // operator explicitly unblocks it.
       NsTapeGatewayHelper nsHelper;
       nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
     } catch(castor::exception::Exception& e) {

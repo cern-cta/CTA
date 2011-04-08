@@ -702,12 +702,16 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
   struct Cns_segattrs segattrs;
   memset (&segattrs, 0, sizeof(struct Cns_segattrs));
   int rc = Cns_lastfseq (vid.c_str(), side, &segattrs);
-  if (rc != 0) { // Failure to contact the name server.
-    castor::exception::Exception ex(serrno);
+  // Read serrno only once as it point at a function hidden behind a macro.
+  int save_serrno = serrno;
+  // If the name server does not know about the tape, we're safe (return, done).
+  if ((-1 == rc) && (ENOENT == save_serrno)) return;
+  if (rc != 0) { // Failure to contact the name server and all other errors.
+    castor::exception::Exception ex(save_serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
       << "Cns_lastfseq failed for VID="<<vid.c_str()<< " side="<< side << " : rc="
-      << rc;
+      << rc << " serrno =" << save_serrno << "(" << sstrerror(save_serrno) << ")";
     throw ex;
   }
   if (Fseq <= segattrs.fseq) { // Major error, we are about to overwrite an fseq
@@ -717,7 +721,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
           << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
           << "Fseq check failed for VID="<<vid.c_str()<< " side="<< side << " Fseq="
           << Fseq << " last referenced segment in NS=" << segattrs.fseq;
-        throw ex;
+    throw ex;
   }
 }
 
