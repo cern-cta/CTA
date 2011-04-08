@@ -264,7 +264,7 @@ class LocalQueue(Queue.Queue):
       self.checkForDisabledHardwareTransfersCancelation(canceledTransfers)
     # Inform the schedulers of canceled transfers
     for scheduler, transfers in canceledTransfers.iteritems():
-      self.connections.transfersCanceled(scheduler, socket.getfqdn(), transfers)
+      self.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers))
 
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of queueing transfers and number of queueing slots, plus details

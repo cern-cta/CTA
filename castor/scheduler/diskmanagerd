@@ -187,7 +187,7 @@ class ActivityControl(threading.Thread):
             # in case of transfers wanting to write data, we check that space is available
             if not checkSpaceLeftOnFS(transfertype, transfer):
               # not enough space, we cancel the transfer
-              connections.transfersCanceled(scheduler, socket.getfqdn(), set([(transferid, fileid, 28, 'No space left on device', transfer[2])])) # ENOSPC
+              connections.transfersCanceled(scheduler, socket.getfqdn(), tuple([(transferid, fileid, 28, 'No space left on device', transfer[2])])) # ENOSPC
             else:
               # notifies the central scheduler that we want to start this transfer
               # this may raise a ValueError exception if it already started
