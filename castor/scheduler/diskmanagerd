@@ -358,5 +358,5 @@ finally:
       context.__exit__(None, None, None)
     except Exception:
       pass
-  # 'DiskManager Daemon stoped'
-  dlf.write(msgs.DISKMANAGERDSTOPED)
+  # 'DiskManager Daemon stopped'
+  dlf.write(msgs.DISKMANAGERDSTOPPED)
