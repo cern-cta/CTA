@@ -51,7 +51,7 @@ def getDefaultOptionSet():
     
 def getPresetByStaticId(staticid):
     if staticid == 0:
-        return getPreset("blahblah")
+        return getPreset("this results in default preset")
     for preset in presetdict.values():
         if preset.staticid == staticid:
             return preset
