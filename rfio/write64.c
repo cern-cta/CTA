@@ -54,6 +54,9 @@ int rfio_write64_v2(int     s,
   int s_index;
   RFILE *rfptr;  /* RFILE pointer  */
 
+  /* Avoiding Valgrind error messages about uninitialized data */
+  memset(rfio_buf, 0, BUFSIZ);
+
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_write64(%d, %x, %d)", s, ptr, size) ;
   if (size == 0) {
