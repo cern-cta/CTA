@@ -35,77 +35,68 @@ static int rfio_parseln_old (char *, char **, char **,int);
 static int name1_key = -1;
 static int buffer_key = -1;
 
+static int path_key = -1;
+static int host_key = -1;
+
 /* parse name to host and path  */
 int rfio_parseln(char    *name,
                  char    **host,
                  char    **path,
-                 int    ln)  /* solve links or not ? */
+                 int     ln)  /* solve links or not ? */
 {
   RfioTURL_t turl;
-  char buf[CA_MAXHOSTNAMELEN+1];
-  int hasHost = 0;;
+  int hasHost = 0;
+  char *host_1 = NULL;
+  char *path_1 = NULL;
 
   /* First try out the name as if it was a tURL !
      If it isn't try the old RFIO parsing algorithm */
   if (rfioTURLFromString(name, &turl) < 0) {
     TRACE (3,"rfio","rfioTURLFromString does not recognize TURL");
-    return  rfio_parseln_old(name, host, path, ln);
+    return rfio_parseln_old(name, host, path, ln);
   }
+
+  Cglobals_get(&path_key, (void**)&path_1, CA_MAXPATHLEN + 1);
+  Cglobals_get(&host_key, (void**)&host_1, CA_MAXHOSTNAMELEN + 20);
+  *path_1 = *host_1 = 0;
 
   TRACE (3,"rfio","name was TURL <%s> <%d> <%s>",
          turl.rfioHostName, turl.rfioPort,turl.rfioPath);
   if (strlen(turl.rfioHostName) > 0) {
     hasHost = 1;
     if (turl.rfioPort > 0) {
-      int hostlen, portlen;
-      hostlen = strlen(turl.rfioHostName);
-      Csnprintf(buf, CA_MAXHOSTNAMELEN, ":%ld", turl.rfioPort);
-      buf[CA_MAXHOSTNAMELEN] = '\0';
-      portlen = strlen(buf);
-      *host =(char *)malloc(hostlen + portlen + 1);
-      if (*host == NULL) {
-        serrno = ENOMEM;
-        return -1;
-      }
-      strcpy(*host, turl.rfioHostName);
-      strcat(*host, buf);
+      Csnprintf(host_1, CA_MAXHOSTNAMELEN + 19, "%s:%ld",
+                turl.rfioHostName,
+                turl.rfioPort);
+      host_1[CA_MAXHOSTNAMELEN + 19] = '\0';
     } else {
-      *host = strdup(turl.rfioHostName);
-      if (*host == NULL) {
-        serrno = ENOMEM;
-        return -1;
-      }
+      strncpy(host_1, turl.rfioHostName, CA_MAXHOSTNAMELEN);
+      host_1[CA_MAXHOSTNAMELEN] = '\0';
     }
+    *host = host_1;
   } else {
     *host = NULL;
     TRACE (3,"rfio","No host given, using old RFIO parseln on path %s",
-           turl.rfioPath );
-    return  rfio_parseln_old(turl.rfioPath, host, path, ln);
+           turl.rfioPath);
+    return rfio_parseln_old(turl.rfioPath, host, path, ln);
   }
 
-  if (strlen(turl.rfioPath)>0) {
-    *path = strdup(turl.rfioPath);
-    if (*path == NULL) {
-      serrno = ENOMEM;
-      return -1;
-    }
+  if (strlen(turl.rfioPath) > 0) {
+    strncpy(path_1, turl.rfioPath, CA_MAXPATHLEN);
+    path_1[CA_MAXPATHLEN] = '\0';
   } else {
-    *path = "";
-    /*  Setting path to empty string rather than NULL */
+    path_1 = "";
   }
-
+  *path = path_1;
 
   return hasHost;
 }
-
-
-
 
 /* parse name to host and path  */
 static int rfio_parseln_old(char    *name,
                             char    **host,
                             char    **path,
-                            int    ln)  /* solve links or not ? */
+                            int     ln)  /* solve links or not ? */
 {
   char    *cp1, *cp2;
   register int i;
@@ -113,7 +104,7 @@ static int rfio_parseln_old(char    *name,
   char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
   int  n = 0;
   char  *name_1 = NULL;
-  char   *buffer = NULL;    /* To hold temporary strings */
+  char  *buffer = NULL;    /* To hold temporary strings */
   char  *cwd_server;       /* Current CASTOR working directory server */
   /*
    * forms recognized: host:<unix path name>

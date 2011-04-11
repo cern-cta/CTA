@@ -234,24 +234,38 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
   int* auxVal;
   char ** auxPoint;
   struct stage_options opts;
-  opts.stage_host=NULL;
-  opts.stage_port=0;
-  opts.service_class=NULL;
+  opts.stage_host = NULL;
+  opts.stage_port = 0;
+  opts.service_class = NULL;
 
-  ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
-  if(ret==0){
-    opts.stage_host=*auxPoint;
+  ret = Cglobals_get(&tStageHostKey, (void**) &auxPoint, sizeof(void*));
+  if (ret == 0) {
+    if (*auxPoint != NULL) {
+      opts.stage_host = strdup(*auxPoint);
+      if (opts.stage_host == NULL) {
+        serrno = ENOMEM;
+        return -1;
+      }
+    }
   }
-  ret=Cglobals_get(& tStagePortKey, (void**) &auxVal,sizeof(int));
-  if(ret==0){
-    opts.stage_port=*auxVal;
+  ret = Cglobals_get(&tStagePortKey, (void**) &auxVal, sizeof(int));
+  if (ret == 0) {
+    opts.stage_port = *auxVal;
   }
-  ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
-  if (ret==0){
-    opts.service_class=*auxPoint;
+  ret = Cglobals_get(&tSvcClassKey, (void**) &auxPoint, sizeof(void*));
+  if (ret == 0) {
+    if (*auxPoint != NULL) {
+      opts.service_class = strdup(*auxPoint);
+      if (opts.service_class == NULL) {
+        if (opts.stage_host != NULL)
+          free(opts.stage_host);
+        serrno = ENOMEM;
+        return -1;
+      }
+    }
   }
-
-  ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
+  
+  ret = getDefaultForGlobal(&opts.stage_host, &opts.stage_port, &opts.service_class);
 
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
@@ -263,7 +277,7 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
      * Check if an existing file is going to be updated
      */
     memset(&st,'\0',sizeof(st));
-    rc = Cns_stat(path,&st);
+    rc = Cns_stat(path, &st);
     /*
      * Make sure that filesize is 0 if file doesn't exist (a
      * overdoing) or that we will create (stage_out) if O_TRUNC.
@@ -271,8 +285,8 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
     if ( rc == -1 || ((flags & O_TRUNC) != 0)) st.filesize = 0;
 
     /** NOW CALL THE NEW STAGER API */
-    struct stage_io_fileresp *response;
-    char *requestId, *url;
+    struct stage_io_fileresp *response = NULL;
+    char *url = NULL;
 
     for (;;) {
       TRACE(3,"rfio","Calling stage_open with: %s %x %x",
@@ -284,42 +298,49 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
                       mode,
                       0,
                       &response,
-                      &requestId,
+                      NULL,
                       &opts);
       save_errno = errno;
       save_serrno = serrno;
       if (rc < 0) {
-        if ( (save_serrno == SECOMERR) ||
-             (save_serrno == SETIMEDOUT) ||
+        if ( (save_serrno == SECOMERR)     ||
+             (save_serrno == SETIMEDOUT)   ||
              (save_serrno == ECONNREFUSED) ||
-             (save_errno == ECONNREFUSED)
+             (save_errno  == ECONNREFUSED)
              ) {
           int retrySleepTime;
           retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
           sleep(retrySleepTime);
           continue;
         }
-        return -1;
-      } else break;
+
+        /* Free resources */
+        rc = -1;
+        goto end;
+      } else {
+        break;
+      }
     }
 
     if (response == NULL) {
       TRACE(3,"rfio","Received NULL response");
       serrno = SEINTERNAL;
-      return -1;
+      rc = -1;
+      goto end;
     }
 
     if (response->errorCode != 0) {
       TRACE(3,"rfio","stage_open error: %d/%s",
             response->errorCode, response->errorMessage);
       serrno = response->errorCode;
-      return -1;
+      rc = -1;
+      goto end;
     }
 
     url = stage_geturl(response);
-    if (url == 0) {
-      free(response);
-      return -1;
+    if (url == NULL) {
+      rc = -1;
+      goto end;
     }
 
     /*
@@ -339,10 +360,36 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
       rc = rfio_open(url, flags, mode);
     }
 
-    free(response);
-    free(url);
+  end:
 
+    /* Free response structure. Note: This logic should really as an API
+     * of the stager client library
+     */
+    if (response != NULL) {
+      if (response->castor_filename != NULL)
+        free(response->castor_filename);
+      if (response->protocol != NULL)
+        free(response->protocol);
+      if (response->server != NULL)
+        free(response->server);
+      if (response->filename != NULL)
+        free(response->filename);
+      if (response->errorMessage != NULL)
+        free(response->errorMessage);
+      free(response);
+    }
+
+    /* Free url */
+    if (url != NULL)
+      free(url);
   }
+
+  /* Free stager options */
+  if (opts.stage_host != NULL)
+    free(opts.stage_host);
+  if (opts.service_class != NULL)
+    free(opts.service_class);
+
   return(rc);
 }
 

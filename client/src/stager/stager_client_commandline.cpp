@@ -40,10 +40,9 @@
  *                                                                                                                  *
  *******************************************************************************************************************/
 
-int getDefaultForGlobal(
-                                 char** host,
-                                 int* port,
-                                 char** svc)
+int getDefaultForGlobal(char** host,
+                        int* port,
+                        char** svc)
 {
   char *hostMap, *hostDefault, *svcMap, *svcDefault;
   int portDefault, ret;
@@ -58,11 +57,11 @@ int getDefaultForGlobal(
   if (host == NULL || port == NULL || svc == NULL) {
     return (-1);
   }
-  if (*host) hostDefault = strdup(*host);
-  else hostDefault = NULL;
+  if (*host)
+    hostDefault = strdup(*host);
 
-  if (*svc) svcDefault = strdup(*svc);
-  else svcDefault = NULL;
+  if (*svc)
+    svcDefault = strdup(*svc);
 
   portDefault = *port;
 
@@ -80,7 +79,7 @@ int getDefaultForGlobal(
       free(hostDefault);
       hostDefault=NULL;
     }
-    aux=  getenv("STAGE_HOST");
+    aux = getenv("STAGE_HOST");
     hostDefault = aux == NULL ? NULL : strdup(aux);
     if (hostDefault == NULL || strcmp(hostDefault, "") == 0) {
       if (hostDefault != NULL) {
@@ -171,6 +170,10 @@ int getDefaultForGlobal(
   if (*svc == NULL || strcmp(*svc, "")) {
     *svc = strdup(svcDefault);
   }
+  if (hostDefault != NULL)
+    free(hostDefault);
+  if (svcDefault != NULL)
+    free(svcDefault);
 
   return (1);
 }
