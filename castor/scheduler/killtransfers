@@ -44,7 +44,7 @@ user = None
 killall = False
 verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hau:v', ['help', 'verbose'])
+  options, args = getopt.getopt(sys.argv[1:], 'hau:v', ['help', 'all', 'user', 'verbose'])
 except Exception, e:
   print e
   usage(1)
@@ -82,7 +82,7 @@ try:
   if killall:
     rpcconn.root.killalltransfers(user)
   else:
-    rpcconn.root.killtransfers(args)  
+    rpcconn.root.killtransfers(args)
   print 'transfer(s) killed'
 except Exception, e:
   print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
