@@ -418,7 +418,7 @@ class RunningTransfersSet(object):
         if not reqUser or user == reqUser:
           res.append((transferid, transfer[6], scheduler, user, 'RUN', transfertype, arrivalTime, runTime))
           n = n + 1
-          if n >= 1000: # give up with full listing if too many transfers
+          if n >= 100: # give up with full listing if too many transfers
             break
     finally:
       self.lock.release()

@@ -118,8 +118,8 @@ def processTransfersListing():
       sstartTime = ''
     print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
     n = n + 1
-  if n > 1000:
-    print 'Note that the list may have been truncated to 1000 pending and 1000 running transfers per hosts'
+  if n > 100:
+    print 'Note that the list may have been truncated to 100 pending and 100 running transfers per hosts'
 
 def _buildProtocolList(summaryreport):
   '''helper function to list the set of protocols reported in the summary'''

@@ -327,7 +327,7 @@ class LocalQueue(Queue.Queue):
         if not reqUser or user == reqUser:
           res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', transfertype, arrivalTime, None))
           n = n + 1
-          if n >= 1000: # give up with full listing if too many transfers
+          if n >= 100: # give up with full listing if too many transfers
             break
     finally:
       self.lock.release()
