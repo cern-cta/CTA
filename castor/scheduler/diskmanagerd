@@ -132,6 +132,11 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCECALLED, Scheduler=scheduler)
     return tuple(runningTransfers.listRunningD2dSources())
 
+  def exposed_retryD2dDest(self, transferid, reqid):
+    '''called when a d2d copy source has just started and the destination should be started'''
+    dlf.writedebug(msgs.RETRYD2DDEST, subreqid=transferid, reqid=reqid)
+    transferQueue.retryD2dDest(transferid, reqid)
+
   def exposed_d2dend(self, transferid, reqid):
     '''called when a d2d copy is over and we are the source'''
     dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid, reqid=reqid)
@@ -141,7 +146,7 @@ class DiskServerManagerService(rpyc.Service):
     '''Tells whether any transfer is queueing/ongoing that is handled
     by the given scheduler'''
     dlf.writedebug(msgs.ANYTRANSFERFROMSCHED, Scheduler=scheduler)
-    return transferQueue.anyTransfersFromScheduler(scheduler) or runningTransfers.anyTransfersFromScheduler(scheduler)  
+    return transferQueue.anyTransfersFromScheduler(scheduler) or runningTransfers.anyTransfersFromScheduler(scheduler)
 
 def checkSpaceLeftOnFS(transfertype, transfer):
   ''' check whether there is space available for a given transfer'''
@@ -332,7 +337,7 @@ try:
     management.start()
     # launch a service listening for new transfers from the central scheduler and filling the queue
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(DiskServerManagerService, 
+    t = ThreadedServer(DiskServerManagerService,
                        port = configuration.getValue('DiskManager', 'Port', 15011, int),
                        auto_register=False)
     t.daemon = True

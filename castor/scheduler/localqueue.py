@@ -148,6 +148,17 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
+  def retryD2dDest(self, transferid, reqid):
+    '''retries a given d2ddest job that was on hold because the source is not available '''
+    self.lock.acquire()
+    try:
+      # put the transferid back into the priority queue in it's time to retry the transfer
+      dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferid, reqid=reqid) # "Retrying transfer" message
+      self.priorityQueue.put(transferid)
+      self.pendingD2dDest = [(tid, rid, nextTry) for tid, rid, nextTry in self.pendingD2dDest if tid != transferid]
+    finally:
+      self.lock.release()
+
   def pollD2dDest(self):
     '''Checks which d2d destinations transfers waiting for sources should be retried'''
     self.lock.acquire()
@@ -282,7 +293,7 @@ class LocalQueue(Queue.Queue):
     try:
       for transfertuple in self.queueingTransfers.values():
         rawtransfer = transfertuple[1]
-        transfertype = rawtransfer[2]
+        transfertype = transfertuple[2]
         if transfertype in ('d2dsrc', 'd2ddest'):
           protocol = transfertype
           user = 'stage'

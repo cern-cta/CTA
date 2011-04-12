@@ -40,7 +40,7 @@ msgs = dlf.enum('SCHEDULETRANSFERCALLED', 'SUMMARIZETRANSFERSCALLED',
                 'INFORMTRANSFERISOVERFAILED', 'INFORMTRANSFERKILLEDFAILED',
                 'RETRYTRANSFER', 'INVALIDTIMEOUTOPTION', 'ANYTRANSFERFROMSCHED',
                 'TRANSFERALREADYSTARTEDCALLED', 'SYNCRUNTRANSFERFAILED',
-                'DISKMANAGERDSTARTED', 'DISKMANAGERDSTOPPED')
+                'DISKMANAGERDSTARTED', 'DISKMANAGERDSTOPPED', 'RETRYD2DDEST')
 
 # initialization of the messages
 dlf.addmessages({msgs.SCHEDULETRANSFERCALLED : 'scheduleTransfer called',
@@ -71,5 +71,6 @@ dlf.addmessages({msgs.SCHEDULETRANSFERCALLED : 'scheduleTransfer called',
                  msgs.TRANSFERALREADYSTARTEDCALLED : 'transferAlreadyStarted called',
                  msgs.SYNCRUNTRANSFERFAILED : 'Exception caught when trying to synchronize running transfers with the database. Giving up',
                  msgs.DISKMANAGERDSTARTED : 'DiskManager Daemon started',
-                 msgs.DISKMANAGERDSTOPPED : 'DiskManager Daemon stopped'})
+                 msgs.DISKMANAGERDSTOPPED : 'DiskManager Daemon stopped',
+                 msgs.RETRYD2DDEST : 'retryD2dDest called'})
 
