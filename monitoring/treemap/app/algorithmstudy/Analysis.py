@@ -150,7 +150,7 @@ def generateTreemap(options, presetid, rootmodel, theid, measurements, count = 0
          
     tc = DefaultTreemapCalculator(treemap_props = treemap_props_cp)
 
-    tree = tc.calculate(optr.getOption('optitext'))
+    tree = tc.calculate(optimizefortxt = optr.getOption('optitext'), strip = True)
     
     if collectcondition and (tc.calculateRecursion.__dict__['ratiocount'] != 0):
         measurements['notextcount'] = measurements['notextcount'] + tc.calculateRecursion.__dict__['notextcount']

@@ -41,7 +41,7 @@ class DefaultTreemapCalculator(object):
             raise Exception("treemap_props['objecttree'] doesn't exist or is None. You might use TreeBuilder. TreeBuilder creates the tree and updates your treemap_props ")
         self.otree = self.treemap_props['objecttree']
         
-    def calculate(self, optimizefortxt = False, ordered = True, bigdifftreshold = 1.5, squareoverflowdecision = False):
+    def calculate(self, optimizefortxt = False, ordered = True, bigdifftreshold = 1.5, squareoverflowdecision = False, strip = False):
         width = self.treemap_props['pxwidth']
         height = self.treemap_props['pxheight']
         
@@ -91,7 +91,7 @@ class DefaultTreemapCalculator(object):
         self.calculateRecursion.__dict__["ratiosum"] = 0.0
         self.calculateRecursion.__dict__["qualitysum"] = 0.0
         
-        self.calculateRecursion(x, y, width ,height , viewtree, self.paddingsize, self.minpaddingsize, self.labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
+        self.calculateRecursion(x, y, width ,height , viewtree, self.paddingsize, self.minpaddingsize, self.labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision, strip)
         
         print "notextcount: ", self.calculateRecursion.__dict__['notextcount']
         if self.calculateRecursion.__dict__["ratiocount"] > 0: print "AVERAGE RATIO: ", self.calculateRecursion.__dict__["ratiosum"]/self.calculateRecursion.__dict__["ratiocount"]
@@ -99,7 +99,7 @@ class DefaultTreemapCalculator(object):
         
     #line: The items are sorted graphically in lines of equally tall squares
     #it is like a line of text but with rectangles instead of letters
-    def calculateRecursion(self, startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision):
+    def calculateRecursion(self, startx, starty, width ,height, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision,strip):
 
         #calculate the area in square pixels
 #        print "level ", self.otree.getLevel()
@@ -160,9 +160,13 @@ class DefaultTreemapCalculator(object):
         line_collection = []
         
         VERTICAL, HORIZONTAL = range(2)
-        if width > height:
-            direction = VERTICAL
-            linelen = height
+        if(not strip):
+            if width > height:
+                direction = VERTICAL
+                linelen = height
+            else:
+                direction = HORIZONTAL
+                linelen = width
         else:
             direction = HORIZONTAL
             linelen = width
@@ -305,25 +309,31 @@ class DefaultTreemapCalculator(object):
                     remaining_ratio = (height-(ybeginning - startyold))/(width-(startx-startxold)-chwidth)
         
                 #calculate start coordinates and direction for the next line
-                if (direction == HORIZONTAL):
-                    if remaining_ratio < 1.0:
-                        direction = VERTICAL
-                        linelen = height - (starty-startyold) -chheight 
-                        startx = xbeginning
-                        starty = starty + chheight
-                    else:
-                        starty = starty + chheight
-                        startx = xbeginning
-                        
-                elif (direction == VERTICAL):
-                    if remaining_ratio >= 1.0:
-                        direction = HORIZONTAL
-                        linelen = width - (startx-startxold) -chwidth
-                        starty = ybeginning
-                        startx = startx + chwidth
-                    else:
-                        starty = ybeginning
-                        startx = startx + chwidth
+                if not strip:
+                    if (direction == HORIZONTAL):
+                        if remaining_ratio < 1.0:
+                            direction = VERTICAL
+                            linelen = height - (starty-startyold) -chheight 
+                            startx = xbeginning
+                            starty = starty + chheight
+                        else:
+                            starty = starty + chheight
+                            startx = xbeginning
+                            
+                    elif (direction == VERTICAL):
+                        if remaining_ratio >= 1.0:
+                            direction = HORIZONTAL
+                            linelen = width - (startx-startxold) -chwidth
+                            starty = ybeginning
+                            startx = startx + chwidth
+                        else:
+                            starty = ybeginning
+                            startx = startx + chwidth
+                else:
+                    linelen = width
+                    starty = starty + chheight
+                    startx = xbeginning
+
                 
                 #take care of the remaining child which belongs to the next line
                 linesum = sqwidth
@@ -422,9 +432,9 @@ class DefaultTreemapCalculator(object):
             csize = totalviewnodes[i].labelheight
             if csize <= 0.0:
                 self.calculateRecursion.__dict__['notextcount'] = self.calculateRecursion.__dict__['notextcount'] + 1
-                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y +paddingsize/2.0, totalviewnodes[i].width - paddingsize ,totalviewnodes[i].height-paddingsize, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y +paddingsize/2.0, totalviewnodes[i].width - paddingsize ,totalviewnodes[i].height-paddingsize, viewtree, paddingsize, minpaddingsize, labelheight, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision, strip)
             else:
-                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y + csize + paddingsize/2.0, totalviewnodes[i].width-paddingsize ,totalviewnodes[i].height - csize-paddingsize, viewtree, paddingsize, minpaddingsize, csize, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision)
+                self.calculateRecursion(totalviewnodes[i].x +paddingsize/2.0, totalviewnodes[i].y + csize + paddingsize/2.0, totalviewnodes[i].width-paddingsize ,totalviewnodes[i].height - csize-paddingsize, viewtree, paddingsize, minpaddingsize, csize, optimizefortxt, ordered, bigdifftreshold, squareoverflowdecision, strip)
                 
             self.otree.traverseBack()
             viewtree.traverseBack()

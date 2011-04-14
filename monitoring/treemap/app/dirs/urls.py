@@ -34,6 +34,7 @@ urlpatterns = patterns('',
 #    (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_group_(?P<rootmodel>\w+)_(?P<depth>\d+)_(?P<theid>.*)', 'dirs.views.groupView'),
     
     (r'({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'app.dirs.views.treeView'),
+    (r'table({(?P<options>.*)}){0,1}(?P<presetid>\d+)_(?P<rootmodel>\w+)_(?P<theid>.*)', 'app.dirs.views.tableView'),
     
     (r'setstatusfile_(?P<statusfilename>.*)', 'app.dirs.views.setStatusFileInCookie'),
     
