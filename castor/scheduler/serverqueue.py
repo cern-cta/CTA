@@ -233,7 +233,8 @@ class ServerQueue(dict):
       # get the source location
       diskserver = self.d2dsrcrunning[transferid]
       # remember the fileid in case of error
-      transfer = self[diskserver][transferid][0]
+      transfertuple = self[diskserver][transferid]
+      transfer = transfertuple[0]
       fileid = (transfer[8], int(transfer[6]))
       # remove d2dsrc transfer from the queue
       if not transferCancelation:
@@ -249,6 +250,16 @@ class ServerQueue(dict):
     except Exception, e:
       # "Failed to inform diskserver that a d2d copy is over"
       dlf.writeerr(msgs.D2DOVERINFORMFAILED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
+      # add back the transfer to the local lists
+      if not transferCancelation:
+        self.lock.acquire()
+      try:
+        self[diskserver][transferid] = transfertuple
+        self.d2dsrcrunning[transferid] = diskserver
+      finally:
+        if not transferCancelation:
+          self.lock.release()
+
 
   def putRunningD2dSource(self, diskserver, transferid, transfer, arrivaltime):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
