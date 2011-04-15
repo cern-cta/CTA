@@ -102,6 +102,6 @@ class ConnectionPool(object):
               gotException = True
       except Exception, e:
         # amend errors with the name of the machine that we were connecting too
-        e.args = e.args + ('trying to connect to ' + machine,)
+        e.args = e.args + ('connected to ' + machine,)
         raise e
     return f
