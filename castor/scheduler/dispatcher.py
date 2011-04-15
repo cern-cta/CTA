@@ -56,7 +56,7 @@ class Worker(threading.Thread):
   def stop(self):
     '''Stops the thread processing'''
     self.running = False
-  
+
   def run(self):
     '''main method to the threads. Only get work from the queue and do it'''
     while self.running:
@@ -104,68 +104,42 @@ class DBUpdater(threading.Thread):
     try:
       while self.running:
         # get something from the queue and then empty the queue and list all the updates to be done in one bulk
-        successes = []
         failures = []
         # check whether there is something to do
         try:
           # we go out every second in case the thread has ended in the meantime
           transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(True, 1)
-          if errcode != None:
-            failures.append((transferid, fileid, errcode, errmsg, reqid))
-          else:
-            successes.append((transferid, fileid, reqid))
+          failures.append((transferid, fileid, errcode, errmsg, reqid))
         except Queue.Empty:
           continue
         # empty the queue so that we go only once to the DB
         try:
           while True:
             transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(False)
-            if errcode != None:
-              failures.append((transferid, fileid, errcode, errmsg, reqid))
-            else:
-              successes.append((transferid, fileid, reqid))
+            failures.append((transferid, fileid, errcode, errmsg, reqid))
         except Queue.Empty:
           # we are over, the queue is empty
           pass
         # Now call the DB for failures
-        if failures:
-          data = zip(*failures)
-          transferids = data[0]
-          errcodes = data[2]
-          errmsgs = data[3]
+        data = zip(*failures)
+        transferids = data[0]
+        errcodes = data[2]
+        errmsgs = data[3]
+        try:
+          stcur = self.dbConnection().cursor()
           try:
-            stcur = self.dbConnection().cursor()
-            try:
-              stcur.execute("BEGIN transferFailedLockedFile(:1, :2, :3); END;", [list(transferids), list(errcodes), list(errmsgs)])
-              for transferid, fileid, errcode, errmsg, reqid in failures:
-                # 'Failed transfer' message
-                dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=errcode, ErrorMessage=errmsg)
-            finally:
-              stcur.close()
-          except Exception, e:
+            stcur.execute("BEGIN transferFailedLockedFile(:1, :2, :3); END;", [list(transferids), list(errcodes), list(errmsgs)])
             for transferid, fileid, errcode, errmsg, reqid in failures:
-              # 'Exception caught while failing transfer' message
-              dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
-            # check whether we should reconnect to DB, and do so if needed
-            self.dbConnection().checkForReconnection(e)
-        # And call the DB for successes
-        if successes:
-          for transferid, fileid, reqid in successes:
-            # 'Marking transfer as scheduled' message
-            dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
-          try:
-            stcur = self.dbConnection().cursor()
-            try:
-              stcur.execute("BEGIN transferScheduled(:transferids); END;", [[transferid for transferid, fileid, reqid in successes]])
-            finally:
-              stcur.close()
-          except Exception, e:
-            for transferid, fileid, reqid in successes:
-              # 'Exception caught while marking transfer scheduled' message
-              dlf.writeerr(msgs.TRANSFERSCHEDULEDEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid,
-                           Type=str(e.__class__), Message=str(e))
-            # check whether we should reconnect to DB, and do so if needed
-            self.dbConnection().checkForReconnection(e)
+              # 'Failed transfer' message
+              dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=errcode, ErrorMessage=errmsg)
+          finally:
+            stcur.close()
+        except Exception, e:
+          for transferid, fileid, errcode, errmsg, reqid in failures:
+            # 'Exception caught while failing transfer' message
+            dlf.writeerr(msgs.FAILINGTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+          self.dbConnection().checkForReconnection(e)
     finally:
       if self.stagerConnection != None:
         try:
@@ -254,7 +228,7 @@ class Dispatcher(threading.Thread):
     except Exception, e:
       # 'Failed to schedule d2d source' message
       dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
-      # we coudl not schedule the source so fail the transfer in the DB
+      # we could not schedule the source so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on source host", reqId))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queueingTransfers.remove(transferid)
@@ -286,8 +260,8 @@ class Dispatcher(threading.Thread):
       # and remove it from the server queue
       self.queueingTransfers.remove(transferid)
     else:
-      self.updateDBQueue.put((transferid, fileid, None, None, reqId))
-
+      # 'Marking transfer as scheduled' message
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
 
   def scheduleTransfer(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
                        srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
@@ -350,7 +324,8 @@ class Dispatcher(threading.Thread):
       # and remove it from the server queue
       self.queueingTransfers.remove(transferid)
     else:
-      self.updateDBQueue.put((transferid, fileid, None, None, reqId))
+      # 'Marking transfer as scheduled' message
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
 
   def run(self):
     '''main method, containing the infinite loop'''

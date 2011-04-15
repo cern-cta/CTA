@@ -158,11 +158,11 @@ BEGIN
   END IF;
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
-  UPDATE SubRequest 
+  UPDATE SubRequest
      SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
-  UPDATE DiskCopy 
+  UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
          fileSystem = fsId,
          nbCopyAccesses = nbCopyAccesses + 1
@@ -425,7 +425,7 @@ BEGIN
   -- comparison to the replica is different then some corruption has
   -- occurred and the new copy should not be kept
   --
-  -- In all cases we invalidate the new copy! 
+  -- In all cases we invalidate the new copy!
   IF (srcFsId IS NULL) OR
      (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
     -- Begin the process of invalidating the file replica
@@ -530,15 +530,15 @@ BEGIN
   srcFsId := -1;
   -- Lock the CastorFile
   SELECT id INTO cfId FROM CastorFile
-   WHERE id = 
-    (SELECT castorFile 
+   WHERE id =
+    (SELECT castorFile
        FROM DiskCopy
       WHERE id = dcId) FOR UPDATE;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE castorFile =
-       (SELECT castorFile FROM DiskCopy WHERE id = dcId); 
+       (SELECT castorFile FROM DiskCopy WHERE id = dcId);
   ELSE
     -- Set the diskcopy status to INVALID so that it will be garbage collected
     -- at a later date.
@@ -806,10 +806,10 @@ RETURN NUMBER IS
 BEGIN
   -- Count the number of requested filesystems which are available
   SELECT count(*) INTO rtn
-    FROM DiskServer, FileSystem 
+    FROM DiskServer, FileSystem
    WHERE DiskServer.id = FileSystem.diskServer
      AND DiskServer.name || ':' || FileSystem.mountPoint IN
-       (SELECT /*+ CARDINALITY(rfsTable 10) */ * 
+       (SELECT /*+ CARDINALITY(rfsTable 10) */ *
           FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
      -- For a requested filesystem to be available the following criteria
      -- must be meet:
@@ -868,7 +868,7 @@ BEGIN
         -- Table of all service classes with a boolean flag to indicate
         -- if there are any filesystems in PRODUCTION
         (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
-           LEFT JOIN 
+           LEFT JOIN
              (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
                 FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
                WHERE DS.ID = FS.diskServer
@@ -967,7 +967,7 @@ BEGIN
          getUpdateFailedProc(srId);
        END IF;
        -- Update the reason for termination, overriding the error code set above
-       UPDATE SubRequest 
+       UPDATE SubRequest
           SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
               errorMessage = ''
         WHERE id = srId;
@@ -1027,7 +1027,7 @@ BEGIN
          getUpdateFailedProc(srId);
        END IF;
        -- Update the reason for termination, overriding the error code set above
-       UPDATE SubRequest 
+       UPDATE SubRequest
           SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
               errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
         WHERE id = srId;
@@ -1062,7 +1062,7 @@ BEGIN
          AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
          AND SubRequest.request = Id2Type.id;
        -- Update the reason for termination.
-       UPDATE SubRequest 
+       UPDATE SubRequest
           SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
               errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
         WHERE id = srId;
@@ -1079,18 +1079,6 @@ BEGIN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
   END LOOP;
-END;
-/
-
-/* PL/SQL method implementing transferScheduled and called in bulk when transfers have been successfully scheduled */
-CREATE OR REPLACE
-PROCEDURE transferScheduled(subReqIds IN castor."strList") AS
-BEGIN
-  FORALL i IN subReqIds.FIRST .. subReqIds.LAST
-    UPDATE SubRequest 
-       SET status = dconst.SUBREQUEST_READY
-     WHERE subReqId = subReqIds(i)
-       AND status = dconst.SUBREQUEST_BEINGSCHED;
 END;
 /
 
@@ -1134,7 +1122,7 @@ BEGIN
       -- to the job manager that there is nothing to do. The jobt manager will
       -- try again shortly.
       RETURN;
-    END IF; 
+    END IF;
     BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is either in READYFORSCHED or has been stuck in
@@ -1157,7 +1145,7 @@ BEGIN
       EXIT;
     EXCEPTION
       -- Try again, either we failed to accquire the lock on the subrequest or
-      -- the subrequest being processed is not the correct state 
+      -- the subrequest being processed is not the correct state
       WHEN NO_DATA_FOUND THEN
         NULL;
       WHEN SrLocked THEN
@@ -1229,8 +1217,8 @@ END;
 
 CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
-BEGIN 
-  DBMS_ALERT.SIGNAL('transferReadyToSchedule', ''); 
+BEGIN
+  DBMS_ALERT.SIGNAL('transferReadyToSchedule', '');
 END;
 /
 
@@ -1285,7 +1273,7 @@ BEGIN
       -- be back soon :-)
       RETURN;
     END IF;
-  END IF; 
+  END IF;
   LOOP
     -- we reached this point because we have found at least one candidate
     -- let's loop on the candidates until we find one we can process
@@ -1296,14 +1284,13 @@ BEGIN
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
         FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srIntId
-         AND ((status = dconst.SUBREQUEST_READYFORSCHED)
-          OR  (status = dconst.SUBREQUEST_BEINGSCHED
+         AND status = dconst.SUBREQUEST_READYFORSCHED
          AND lastModificationTime < getTime() - 1800))
          FOR UPDATE NOWAIT;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
       UPDATE SubRequest
-         SET status = dconst.SUBREQUEST_BEINGSCHED,
+         SET status = dconst.SUBREQUEST_READY,
              lastModificationTime = getTime()
        WHERE id = srIntId
       RETURNING id, subReqId, protocol, xsize, requestedFileSystems
@@ -1312,7 +1299,7 @@ BEGIN
       EXIT;
     EXCEPTION
       -- Try again, either we failed to accquire the lock on the subrequest or
-      -- the subrequest being processed is not the correct state 
+      -- the subrequest being processed is not the correct state
       WHEN NO_DATA_FOUND THEN
         NULL;
       WHEN SrLocked THEN
@@ -1418,7 +1405,7 @@ BEGIN
     -- There is nothing to abort. Wait for next alert concerning something
     -- to abort or at least 3 seconds.
     DBMS_ALERT.WAITONE('transfersToAbort', unusedMessage, unusedStatus, 3);
-  END; 
+  END;
   -- Either we found something or we timedout, in both cases
   -- we go back to python so that it can handle cases like signals and exit
   -- We will probably be back soon :-)
@@ -1466,7 +1453,7 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this transfer is not running anymore although the stager DB believes it is
       -- we first get its reqid and fileid
-      SELECT Request.reqId INTO reqId FROM 
+      SELECT Request.reqId INTO reqId FROM
         (SELECT reqId, id from StageGetRequest UNION ALL
          SELECT reqId, id from StagePutRequest UNION ALL
          SELECT reqId, id from StageUpdateRequest UNION ALL
