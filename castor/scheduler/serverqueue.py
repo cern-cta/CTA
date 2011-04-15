@@ -179,13 +179,13 @@ class ServerQueue(dict):
         try :
           for ds in self.transfersLocations[transferid]:
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
+            # remember where the source is running
+            self.d2dsrcrunning[transferid] = diskserver
             # and make the destination disk aware that it can now start this transfer
             self.connections.retryD2dDest(ds, transferid, reqid)
         except KeyError:
           # no destination yet, no problem, the source was only too fast to start
           pass
-        # remember where the source is running
-        self.d2dsrcrunning[transferid] = diskserver
       finally:
         self.lock.release()
     else:
@@ -330,7 +330,6 @@ class ServerQueue(dict):
       return tuple(res)
     finally:
       self.lock.release()
-    return res
 
   def listRunningD2dSources(self, diskserver=None):
     '''lists running d2dsrc transfers for a given diskserver'''
