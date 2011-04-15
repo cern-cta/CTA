@@ -182,7 +182,11 @@ class ServerQueue(dict):
             # remember where the source is running
             self.d2dsrcrunning[transferid] = diskserver
             # and make the destination disk aware that it can now start this transfer
-            self.connections.retryD2dDest(ds, transferid, reqid)
+            try:
+              self.connections.retryD2dDest(ds, transferid, reqid)
+            except:
+              # not a big deal, the destination will retry it soon by itself
+              pass
         except KeyError:
           # no destination yet, no problem, the source was only too fast to start
           pass
