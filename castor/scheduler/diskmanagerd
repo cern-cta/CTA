@@ -39,6 +39,7 @@ import connectionpool, castor_tools, localqueue, runningtransfersset
 import daemon
 import dlf
 from diskmanagerdlf import msgs
+from threadpoolserver import ThreadPoolServer
 
 # usage function
 def usage(exitCode):
@@ -342,10 +343,10 @@ try:
     management.setDaemon(True)
     management.start()
     # launch a service listening for new transfers from the central scheduler and filling the queue
-    from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(DiskServerManagerService,
-                       port = configuration.getValue('DiskManager', 'Port', 15011, int),
-                       auto_register=False)
+    t = ThreadPoolServer(DiskServerManagerService,
+                         port = configuration.getValue('DiskManager', 'Port', 15011, int),
+                         auto_register=False,
+                         nbThreads = configuration.getValue('DiskManager', 'NbRpycThreads', 10, int))
     t.daemon = True
     t.start()
     # we reach this point when the service has stopped

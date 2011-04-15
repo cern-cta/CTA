@@ -37,6 +37,7 @@ import daemon
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter, synchronizer
 import dlf
 from transfermanagerdlf import msgs
+from threadpoolserver import ThreadPoolServer
 
 # usage function
 def usage(exitCode):
@@ -522,10 +523,10 @@ try:
     # initialize the queues of pending and running transfers using the knowledge of the diskservers
     initQueues()
     # defines a service listening for monitoring queries and answering them
-    from rpyc.utils.server import ThreadedServer
-    transfermanager = ThreadedServer(TransferManagerService,
-                                     port = configuration.getValue('Scheduler', 'Port', 15011, int),
-                                     auto_register=False)
+    transfermanager = ThreadPoolServer(TransferManagerService,
+                                       port = configuration.getValue('TransferManager', 'Port', 15011, int),
+                                       auto_register=False,
+                                       nbThreads = configuration.getValue('TransferManager', 'NbRpycThreads', 20, int))
     transfermanager.daemon = True
     # launch a processing thread that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
