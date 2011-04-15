@@ -221,6 +221,12 @@ class ActivityControl(threading.Thread):
                 else:
                   process = 0
                 runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)
+          except rpyc.core.async.AsyncResultTimeout:
+            # we timed out in the call to transfersCanceled or transferStarting. We need to try again
+            # thus we put the transfer into the priority queue
+            transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
+            # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
+            dlf.writedebug(msgs.TRANSFERSTARTTIMEOUT, subreqid=transferid, reqid=transfer[2], fileid=fileid)
           except ValueError:
             # 'Transfer start canceled (already started on another host)' message
             dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, reqid=transfer[2], fileid=fileid)

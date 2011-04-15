@@ -79,6 +79,17 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
+  def putPriority(self, scheduler, transferid, transfer, transfertype, arrivaltime):
+    '''Put new transfer in the queue'''
+    self.lock.acquire()
+    try:
+      # first keep note of the new transfer (index by subreqId)
+      self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
+      # then add it to the underlying priority queue
+      self.priorityQueue.put(transferid)
+    finally:
+      self.lock.release()
+
   def get(self):
     '''get a transfer from the queue. Times out after 1s'''
     found = False
@@ -136,7 +147,7 @@ class LocalQueue(Queue.Queue):
     try:
       # compute next time when we should try to start this transfer. We will actually wait
       # as much as has already passed between the arrival of this request and now,
-      # caped to the MaxRetryInterval 
+      # caped to the MaxRetryInterval
       currentTime = time.time()
       timeToNextTry = currentTime - arrivaltime
       maxTime = self.config.getValue('DiskManager', 'MaxRetryInterval', 300, int)
