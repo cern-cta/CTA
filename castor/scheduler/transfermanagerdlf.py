@@ -45,7 +45,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'COULDNOTCONTACTDS', 'SYNCDBWITHTM', 'SYNCNODISCREPANCY',
                 'INFODSJOBSTARTED', 'INFODSJOBSTARTEDFAILED', 'DSREFRESHFAILED',
                 'SYNCRUNCALLED', 'SYNCRUNEXCEPTION', 'RUNTRANSFERDISAPPEARED',
-                'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED')
+                'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
+                'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'GETALLRUNNINGD2DSOURCETRANSFERSCALLED')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -96,4 +97,8 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.SYNCRUNEXCEPTION : 'Exception caught while synchronizing running transfers, giving up with synchronization',
                  msgs.RUNTRANSFERDISAPPEARED : 'Transfer was marked as failed in stager DB after it disappeared from the diskserver',
                  msgs.TRANSFERMANAGERDSTARTED : 'TransferManager Daemon started',
-                 msgs.TRANSFERMANAGERDSTOPPED : 'TransferManager Daemon stopped'})
+                 msgs.TRANSFERMANAGERDSTOPPED : 'TransferManager Daemon stopped',
+                 msgs.NOD2DLEFTBEHIND : 'No disk to disk source source left behind',
+                 msgs.D2DSYNCFAILED : 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.',
+                 msgs.SYNCHROENDEDTRANSFER : 'Transfer ended by synchronization as the transfer disappeared from the DB',
+                 msgs.GETALLRUNNINGD2DSOURCETRANSFERSCALLED : 'getAllRunningD2dSourceTransfers called'})

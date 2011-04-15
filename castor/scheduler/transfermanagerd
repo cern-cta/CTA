@@ -165,7 +165,7 @@ class TransferManagerService(rpyc.Service):
     # connection to the stager DB
     self.stagerConnection = None
 
-  def dbConnection(self): 
+  def dbConnection(self):
     '''returns a connection to the stager DB.
     The connection is cached and reconnections are handled'''
     if self.stagerConnection == None:
@@ -296,7 +296,7 @@ class TransferManagerService(rpyc.Service):
           killedtransferids.append(transferid)
           killedtransfers.append([transferid, fileid, 1713, 'Transfer killed by admin', reqid])
     # update stagerDB
-    self.exposed_transfersKilled(killedtransfers)    
+    self.exposed_transfersKilled(killedtransfers)
 
   def exposed_killalltransfers(self, user=None):
     '''killalltransfers removes all transfers from all queues on all servers and diskservers'''
@@ -370,6 +370,11 @@ class TransferManagerService(rpyc.Service):
     '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
     dlf.writedebug(msgs.GETRUNNINGD2DSOURCETRANSFERSCALLED, DiskServer=diskserver)
     return tuple(queueingTransfers.listRunningD2dSources(diskserver))
+
+  def exposed_getAllRunningD2dSourceTransfers(self):
+    '''called by synchronization to list running d2dsrc transfers'''
+    dlf.writedebug(msgs.GETALLRUNNINGD2DSOURCETRANSFERSCALLED)
+    return tuple(queueingTransfers.listAllRunningD2dSources())
 
   def exposed_d2dend(self, transferid, reqid):
     '''called when a d2d is over. Responsible for informing the source of the d2d'''
@@ -456,7 +461,7 @@ class Suicider(threading.Thread):
       else:
         # else sleep one second between two checks
         time.sleep(1)
- 
+
 def drain():
   '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
   Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon'''

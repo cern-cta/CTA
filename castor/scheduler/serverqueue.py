@@ -74,7 +74,7 @@ class ServerQueue(dict):
     '''internal method removing one given transfer from the queue, adding its locations
     to the given dictionnary and calling d2dend if needed. Also returns the fileid of the
     file concerned by the transfer for logging reasons.
-    Not that the locking is not handled here, it's left to the responsability of the caller'''
+    Not that the locking is not handled here, it is left to the responsability of the caller'''
     try:
       # get the list of machines potentially running the transfer
       machines = self.transfersLocations[transferid]
@@ -305,12 +305,29 @@ class ServerQueue(dict):
     else:
       return []
 
-  def listRunningD2dSources(self, diskserver):
-    '''This is called by the scheduler when rebuilding the list of running d2dsrc transfers for a given diskserver'''
+  def listAllRunningD2dSources(self):
+    '''lists all running d2dsrc transfers as a tuple of (transferid,reqid,fileid) tuples'''
     res = []
     self.lock.acquire()
     try:
-      for transferid in [transferid for transferid in self.d2dsrcrunning if self.d2dsrcrunning[transferid] == diskserver]:
+      for transferid in self.d2dsrcrunning:
+        diskserver = self.d2dsrcrunning[transferid]
+        transfer = self[diskserver][transferid][0]
+        fileid = (transfer[8], int(transfer[6]))
+        reqid = transfer[2]
+        res.append((transferid, reqid, fileid))
+      return tuple(res)
+    finally:
+      self.lock.release()
+    return res
+
+  def listRunningD2dSources(self, diskserver=None):
+    '''lists running d2dsrc transfers for a given diskserver'''
+    res = []
+    self.lock.acquire()
+    try:
+      for transferid in [transferid for transferid in self.d2dsrcrunning
+                         if self.d2dsrcrunning[transferid] == diskserver]:
         transfer, arrivaltime = self[diskserver][transferid][0:2]
         res.append((transferid, transfer, arrivaltime))
     finally:

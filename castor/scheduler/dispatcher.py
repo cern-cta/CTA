@@ -261,7 +261,7 @@ class Dispatcher(threading.Thread):
       self.queueingTransfers.remove(transferid)
     else:
       # 'Marking transfer as scheduled' message
-      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
 
   def scheduleTransfer(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
                        srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
@@ -325,7 +325,7 @@ class Dispatcher(threading.Thread):
       self.queueingTransfers.remove(transferid)
     else:
       # 'Marking transfer as scheduled' message
-      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqid, fileid=fileid)
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
 
   def run(self):
     '''main method, containing the infinite loop'''
