@@ -74,6 +74,9 @@ Lines starting with a '#' character are considered comments and are therefore
 ignored.  Whitespace is allowed between the beginning of the line and a '#'
 character.  Please note that this option is mutually exclusive with the method
 of providing filenames on the command-line.
+.TP
+\fB\-n, \-\-nodata
+Send all data read from tape to the /dev/null of the tape server.
 
 .SH CASTOR CONFIGURATION PARAMETERS
 The \fBreadtp\fP command reads and uses the following CASTOR configuration
