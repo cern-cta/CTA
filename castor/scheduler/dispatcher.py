@@ -169,7 +169,7 @@ class Dispatcher(threading.Thread):
     # whether we are connected to the stager DB
     self.stagerConnection = None
     # a queue of work to be done by the workers
-    self.workToDispatch = Queue.Queue()
+    self.workToDispatch = Queue.Queue(2*nbWorkers)
     # a queue of updates to be done in the DB
     self.updateDBQueue = Queue.Queue()
     # a thread pool of Schedulers
@@ -452,7 +452,14 @@ class Dispatcher(threading.Thread):
 
   def stop(self):
     '''Stops processing of this thread'''
+    # first stop the acitivity of taking new jobs from the DB
     self.running = False
+    # now wait that the internal queue is empty
+    # note that this should be implemented with Queue.join and Queue.task_done if we would have python 2.5
+    while not self.workToDispatch.empty():
+      time.sleep(0.1)
+    # then stop the workers
     for w in self.workers:
       w.running = False
+    # and finally stop the DB thread
     self.dbthread.running = False
