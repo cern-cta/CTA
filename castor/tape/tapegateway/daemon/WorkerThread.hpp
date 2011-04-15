@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Giulia Taurelli, Eric Cano
  *****************************************************************************/
 
 #ifndef WORKER_THREAD_HPP
@@ -33,6 +33,7 @@
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
+#include "castor/tape/net/Constants.hpp"
 
 
 namespace castor     {
@@ -67,31 +68,25 @@ namespace tapegateway{
     virtual void stop() {}
 
   private:
-	
+    // Package of a requester's information
+    class requesterInfo {
+    public:
+      requesterInfo():port(0),ip(0){
+        hostName[0]='\0';
+      };
+      virtual ~requesterInfo() throw() {};
+      char hostName[castor::tape::net::HOSTNAMEBUFLEN];
+      unsigned short port;
+      unsigned long ip;
+    };
     // handlers used with the different message types
-
-    castor::IObject* handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-    
-    castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc  ) throw();
-
-    castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-    castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-    castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-    castor::IObject* handleEndWorker( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-    castor::IObject* handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-
-    // map to deal with the different request types
-
-    typedef castor::IObject* (WorkerThread::*Handler) (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc );
-
-    typedef std::map<u_signed64, Handler> HandlerMap;
-    HandlerMap m_handlerMap;
-
+    castor::IObject* handleStartWorker      (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleRecallUpdate     (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleMigrationUpdate  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleRecallMoreWork   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleMigrationMoreWork(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
   };
   
 } // end of tapegateway  

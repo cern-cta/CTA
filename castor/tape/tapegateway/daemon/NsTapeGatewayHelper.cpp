@@ -702,7 +702,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
   struct Cns_segattrs segattrs;
   memset (&segattrs, 0, sizeof(struct Cns_segattrs));
   int rc = Cns_lastfseq (vid.c_str(), side, &segattrs);
-  // Read serrno only once as it point at a function hidden behind a macro.
+  // Read serrno only once as it points at a function hidden behind a macro.
   int save_serrno = serrno;
   // If the name server does not know about the tape, we're safe (return, done).
   if ((-1 == rc) && (ENOENT == save_serrno)) return;
