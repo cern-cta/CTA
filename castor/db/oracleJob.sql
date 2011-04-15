@@ -905,6 +905,19 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing getSchedulerD2dTransfers.
+   This method lists all running D2d transfers */
+CREATE OR REPLACE PROCEDURE getSchedulerD2dTransfers
+  (transfers OUT castor.UUIDPairRecord_Cur) AS
+BEGIN
+  OPEN transfers FOR
+    SELECT SR.subReqId, Request.reqid
+      FROM SubRequest SR, StageDiskCopyReplicaRequest Request
+     WHERE SR.status = 6  -- READY
+       AND SR.request = Request.id;
+END;
+/
+
 /* PL/SQL method implementing getFileIdsForSrs.
    This method returns the list of fileids associated to the given list of
    subrequests */

@@ -68,75 +68,101 @@ class Synchronizer(threading.Thread):
     self.stagerConnection.autocommit = autocommit
     return self.stagerConnection
 
-  def checkDisappearedTransfers(self, subReqIds):
+  def checkDisappearedTransfers(self):
     '''check of running transfers that have disappeared from the scheduling system but are still in DB.
-    subReqIds is the list of transfers as seen by the DB'''
+    Raises exception in case of DB error that are handled in the calling method.'''
+    # 'Synchronizing stager DB with Transfer Manager' message
+    dlf.writedebug(msgs.SYNCDBWITHTM)
     try:
-      # list pending and running transfers in the scheduling system
-      allTMTransfers = set()
-      diskservers = self.diskServerList.getset()
-      for ds in diskservers:
-        # call the function on the appropriate diskserver
-        allTMTransfers = allTMTransfers | set(self.connections.transferset(ds))
-      # find out the set of transfers in the DB and no more in the scheduling system
-      transfersToFail = list(subReqIds - allTMTransfers)
-      # and inform the stager
-      if transfersToFail:
-        # get back the fileids for the logs. We need to go back to the DB just for this
-        conn = self.dbConnection(False)
-        fileIdsCur = conn.cursor()
-        fileIdsCur.arraysize = 200
-        stcur = conn.cursor()
-        stcur.callproc('getFileIdsForSrs', [[transferid for transferid, reqid in transfersToFail], fileIdsCur])
-        fileids = [tuple(item) for item in fileIdsCur.fetchall()]
-        conn.commit()
-        # 'Transfer killed by synchronization as it disappeared from the scheduling system'
-        for (transferid, reqid), fileid in zip(transfersToFail, fileids):
-          dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
-        # prepare the transfers so that we have only tuples going onver the wire
-        transfers = tuple([tuple(item) for item in
-                           zip([transferid for transferid, reqid in transfersToFail],
-                               fileids,
-                               [1015] * len(transfersToFail), # SEINTERNAL error code
-                               ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
-                               [reqid for transferid, reqid in transfersToFail])])
-        # finally inform the stager
-        self.connections.transfersKilled(self.hostname, transfers)
-      else:
-        # 'No discrepancy during synchronization' message
-        dlf.writedebug(msgs.SYNCNODISCREPANCY)
-    except Exception, e:
-      # we could not list all pending running transfers in the system
-      # Thus we have to give up with synchronization for this round
-      # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
-      dlf.writeerr(msgs.SYNCHROFAILED, Type=str(e.__class__), Message=str(e))
+      # prepare a cursor for database polling
+      stcur = self.dbConnection().cursor()
+      subReqIdsCur = self.dbConnection().cursor()
+      subReqIdsCur.arraysize = 200
+      # list pending and running transfers in the stager database
+      stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
+      subReqIds = set(subReqIdsCur.fetchall())
+      try:
+        # list pending and running transfers in the scheduling system
+        allTMTransfers = set()
+        diskservers = self.diskServerList.getset()
+        for ds in diskservers:
+          # call the function on the appropriate diskserver
+          allTMTransfers = allTMTransfers | set(self.connections.transferset(ds))
+        # find out the set of transfers in the DB and no more in the scheduling system
+        transfersToFail = list(subReqIds - allTMTransfers)
+        # and inform the stager
+        if transfersToFail:
+          # get back the fileids for the logs. We need to go back to the DB just for this
+          conn = self.dbConnection(False)
+          fileIdsCur = conn.cursor()
+          fileIdsCur.arraysize = 200
+          stcur = conn.cursor()
+          stcur.callproc('getFileIdsForSrs', [[transferid for transferid, reqid in transfersToFail], fileIdsCur])
+          fileids = [tuple(item) for item in fileIdsCur.fetchall()]
+          conn.commit()
+          # 'Transfer killed by synchronization as it disappeared from the scheduling system'
+          for (transferid, reqid), fileid in zip(transfersToFail, fileids):
+            dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
+          # prepare the transfers so that we have only tuples going onver the wire
+          transfers = tuple([tuple(item) for item in
+                             zip([transferid for transferid, reqid in transfersToFail],
+                                 fileids,
+                                 [1015] * len(transfersToFail), # SEINTERNAL error code
+                                 ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
+                                 [reqid for transferid, reqid in transfersToFail])])
+          # finally inform the stager
+          self.connections.transfersKilled(self.hostname, transfers)
+        else:
+          # 'No discrepancy during synchronization' message
+          dlf.writedebug(msgs.SYNCNODISCREPANCY)
+      except Exception, e:
+        # we could not list all pending running transfers in the system
+        # Thus we have to give up with synchronization for this round
+        # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
+        dlf.writeerr(msgs.SYNCHROFAILED, Type=str(e.__class__), Message=str(e))
+    finally:
+      stcur.close()
 
-  def checkD2dSrcLeftBehind(self, subReqIds):
+  def checkD2dSrcLeftBehind(self):
     '''check of d2d source transfers left behind, that is over in the DB. This happens in case of timeout on
     the message signaling the end of the transfer to the source diskserver'''
+    # 'Synchronizing stager DB with running d2d sources' message
+    dlf.writedebug(msgs.SYNCDBWITHD2DSRC)
     try:
-      # list pending and running transfers in the scheduling system
-      for scheduler in self.config.getValue('DiskManager', 'ServerHosts').split():
-        # list d2d source running and handled by that scheduler
-        allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(scheduler)
-        allTMD2dSrcSet = set([(transferid, reqid) for transferid, reqid, fileid in allTMD2dSrc])
-        # find out the set of these d2d source transfers that are no more in the DB
-        transfersToEnd = list(allTMD2dSrcSet - subReqIds)
-        # and end them
-        if transfersToEnd:
-          for transferid, reqid in transfersToEnd:
-            self.connections.d2dend(scheduler, transferid, reqid)
-            # 'Transfer ended by synchronization as the transfer disappeared from the DB' message
-            tid2fileid = dict([(transferid, fileid) for transferid, reqid, fileid in allTMD2dSrc])
-            dlf.write(msgs.SYNCHROENDEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=tid2fileid[transferid])
-      else:
-        # 'No disk to disk source source left behind'
-        dlf.writedebug(msgs.NOD2DLEFTBEHIND)
+      # list d2d source running and handled by this transfer manager
+      allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(self.hostname)
+      allTMD2dSrcSet = set([(transferid, reqid) for transferid, reqid, fileid in allTMD2dSrc])
     except Exception, e:
       # we could not list all pending running transfers in the system
       # Thus we have to give up with synchronization for this round
       # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
       dlf.writeerr(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e))
+    try:
+      # prepare a cursor for database polling
+      stcur = self.dbConnection().cursor()
+      subReqIdsCur = self.dbConnection().cursor()
+      subReqIdsCur.arraysize = 200
+      # list pending and running transfers in the stager database
+      stcur.callproc('getSchedulerD2dTransfers', [subReqIdsCur])
+      subReqIds = set(subReqIdsCur.fetchall())
+      # find out the set of these d2d source transfers that are no more in the DB
+      transfersToEnd = list(allTMD2dSrcSet - subReqIds)
+      # and end them
+      if transfersToEnd:
+        tid2fileid = dict([(transferid, fileid) for transferid, reqid, fileid in allTMD2dSrc])
+        for transferid, reqid in transfersToEnd:
+          # 'Transfer ended by synchronization as the transfer disappeared from the DB' message
+          dlf.write(msgs.SYNCHROENDEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=tid2fileid[transferid])
+          try:
+            self.connections.d2dend(self.hostname, transferid, reqid)
+          except:
+            # not a big deal, it may have ended in the mean time. Otherwise, we will retry later
+            pass
+      else:
+        # 'No disk to disk source source left behind'
+        dlf.writedebug(msgs.NOD2DLEFTBEHIND)
+    finally:
+      stcur.close()
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -156,33 +182,21 @@ class Synchronizer(threading.Thread):
       # This loop should never actually loop unless we have DB issues
       while self.running:
         try:
-          # prepare a cursor for database polling
-          stcur = self.dbConnection().cursor()
-          try:
-            subReqIdsCur = self.dbConnection().cursor()
-            subReqIdsCur.arraysize = 200
-            # infinite loop over the polling of the DB
-            while self.running:
-              # 'Synchronizing stager DB with Transfer Manager' message
-              dlf.writedebug(msgs.SYNCDBWITHTM)
-              # list pending and running transfers in the stager database
-              stcur.callproc('getSchedulerTransfers', [subReqIdsCur])
-              subReqIds = set(subReqIdsCur.fetchall())
-              # Go for a check of running transfers that have disappeared from the scheduling system
-              self.checkDisappearedTransfers(subReqIds)
-              # Go for a check of d2d source transfers that have been left behind (so no more in DB)
-              self.checkD2dSrcLeftBehind(subReqIds)
-              # sleep until next check
-              slept = 0
-              while slept < self.config.getValue("TransferManager", "SynchronizationInterval", 300, int):
-                # note that we sleep one second at a time so that we can exit
-                # if the thread stops running
-                if not self.running:
-                  break
-                time.sleep(1)
-                slept = slept + 1
-          finally:
-            stcur.close()
+          # infinite loop over the polling of the DB
+          while self.running:
+            # Go for a check of running transfers that have disappeared from the scheduling system
+            self.checkDisappearedTransfers()
+            # Go for a check of d2d source transfers that have been left behind (so no more in DB)
+            self.checkD2dSrcLeftBehind()
+            # sleep until next check
+            slept = 0
+            while slept < self.config.getValue("TransferManager", "SynchronizationInterval", 300, int):
+              # note that we sleep one second at a time so that we can exit
+              # if the thread stops running
+              if not self.running:
+                break
+              time.sleep(1)
+              slept = slept + 1
         except Exception, e:
           # "Caught exception in Synchronizer thread" message
           dlf.writeerr(msgs.SYNCHROEXCEPTION, Type=str(e.__class__), Message=str(e))

@@ -46,7 +46,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'INFODSJOBSTARTED', 'INFODSJOBSTARTEDFAILED', 'DSREFRESHFAILED',
                 'SYNCRUNCALLED', 'SYNCRUNEXCEPTION', 'RUNTRANSFERDISAPPEARED',
                 'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
-                'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'GETALLRUNNINGD2DSOURCETRANSFERSCALLED')
+                'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'GETALLRUNNINGD2DSOURCETRANSFERSCALLED',
+                'SYNCDBWITHD2DSRC')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -101,4 +102,5 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.NOD2DLEFTBEHIND : 'No disk to disk source source left behind',
                  msgs.D2DSYNCFAILED : 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.',
                  msgs.SYNCHROENDEDTRANSFER : 'Transfer ended by synchronization as the transfer disappeared from the DB',
-                 msgs.GETALLRUNNINGD2DSOURCETRANSFERSCALLED : 'getAllRunningD2dSourceTransfers called'})
+                 msgs.GETALLRUNNINGD2DSOURCETRANSFERSCALLED : 'getAllRunningD2dSourceTransfers called',
+                 msgs.SYNCDBWITHD2DSRC : 'Synchronizing stager DB with running d2d sources'})
