@@ -177,11 +177,11 @@ class ServerQueue(dict):
       try:
         # the source transfer is starting, mark all destinations (and the source) ready
         try :
+          # remember where the source is running
+          self.d2dsrcrunning[transferid] = diskserver
+          # and make the destinations (if any) aware that it can now start this transfer
           for ds in self.transfersLocations[transferid]:
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
-            # remember where the source is running
-            self.d2dsrcrunning[transferid] = diskserver
-            # and make the destination disk aware that it can now start this transfer
             try:
               self.connections.retryD2dDest(ds, transferid, reqid)
             except:
