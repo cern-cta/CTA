@@ -41,7 +41,7 @@ class LocalQueue(Queue.Queue):
   '''Class managing a queue of pending transfers.
   There are actually 2 queues, a dictionnary and a set involved :
     - the main queue is the object itself and holds all transfers that were not considered so far.
-    - _pendingD2dDest is a list of disk2disk destinations transfers that have been considered but could not
+    - _pendingD2dDest is a dictionary of disk2disk destinations transfers that have been considered but could not
       be started because the source was not ready. They will be retried regularly until the source
       becomes ready. They are stored together with the next time when to retry. The interval between
       retries is equal to half the time gone since the arrival of the transfer, with a maximum
@@ -64,7 +64,7 @@ class LocalQueue(Queue.Queue):
     # a global lock for the dictionnary
     self.lock = threading.Lock()
     # set of pending disk2disk destinations
-    self.pendingD2dDest = []
+    self.pendingD2dDest = {}
     # set of transfers to start with highest priority
     self.priorityQueue = Queue.Queue()
 
@@ -155,7 +155,7 @@ class LocalQueue(Queue.Queue):
         timeToNextTry = maxTime
       # and put the transfer into the list of pending ones
       self.queueingTransfers[transferid] = (scheduler, transfer, transfertype, arrivaltime)
-      self.pendingD2dDest.append((transferid, transfer[2], currentTime + timeToNextTry))
+      self.pendingD2dDest[transferid] = (transfer[2], currentTime + timeToNextTry)
     finally:
       self.lock.release()
 
@@ -166,7 +166,7 @@ class LocalQueue(Queue.Queue):
       # put the transferid back into the priority queue in it's time to retry the transfer
       dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferid, reqid=reqid) # "Retrying transfer" message
       self.priorityQueue.put(transferid)
-      self.pendingD2dDest = [(tid, rid, nextTry) for tid, rid, nextTry in self.pendingD2dDest if tid != transferid]
+      del self.pendingD2dDest[transferid]
     finally:
       self.lock.release()
 
@@ -177,14 +177,16 @@ class LocalQueue(Queue.Queue):
     toBeDeleted = []
     try:
       # loop over all pending transferids
-      for transferid, reqid, timeOfNextTry in self.pendingD2dDest:
+      for transferid in self.pendingD2dDest:
+        reqid, timeOfNextTry = self.pendingD2dDest[transferid]
         if timeOfNextTry < currentTime:
           # put the transferid back into the priority queue in it's time to retry the transfer
           dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferid, reqid=reqid) # "Retrying transfer" message
           self.priorityQueue.put(transferid)
           toBeDeleted.append(transferid)
       # cleanup list of pending transferids
-      self.pendingD2dDest = [(transferid, reqid, nextTry) for transferid, reqid, nextTry in self.pendingD2dDest if transferid not in toBeDeleted]
+      for tid in toBeDeleted:
+        del self.pendingD2dDest[tid]
     finally:
       self.lock.release()
 
