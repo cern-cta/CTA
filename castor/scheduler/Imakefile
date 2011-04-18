@@ -62,6 +62,7 @@ InstallNonExecFile(serverqueue.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(runningtransfersset.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(diskmanagerdlf.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(transfermanagerdlf.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(threadpoolserver.py,$(PYTHON_LIBDIR),644)
 
 InstallTarget(listtransfers,755)
 InstallTarget(draintransfers,755)
