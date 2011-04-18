@@ -1145,7 +1145,7 @@ BEGIN
        WHERE id = srIntId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
-         AND lastModificationTime < getTime() - 1800))
+         AND lastModificationTime < getTime() - 1800
          FOR UPDATE;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
