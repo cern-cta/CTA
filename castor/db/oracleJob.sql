@@ -1298,7 +1298,6 @@ BEGIN
         FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srIntId
          AND status = dconst.SUBREQUEST_READYFORSCHED
-         AND lastModificationTime < getTime() - 1800
          FOR UPDATE NOWAIT;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
