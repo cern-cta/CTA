@@ -176,7 +176,9 @@ sub read_config ( $ )
 			  'local_tapegatewayd',
                           'local_expertd',
                           'local_logprocessord',
-                          'testsuite_config_location');
+                          'testsuite_config_location',
+                          'instance_name',
+                          'cns_name');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'castor_single_subdirectory',
                           'castor_dual_subdirectory', 'switchoverToTapeGateway',
@@ -2068,6 +2070,8 @@ sub reinstall_stager_db()
     my $stageUid = &get_uid_for_username('stage');
     my $stageGid = &get_gid_for_username('stage');
     my $adminList = $environment{adminList};
+    my $instanceName = $environment{instance_name};
+    my $CNSName = $environment{cns_name};
     
     my $hacked_creation= `mktemp`;
     chomp $hacked_creation;
@@ -2075,9 +2079,11 @@ sub reinstall_stager_db()
     `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
     `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
     `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
-    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
     `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
     `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $hacked_creation, "Re-creating schema");
     unlink $hacked_creation;
