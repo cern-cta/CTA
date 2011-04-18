@@ -7,3 +7,4 @@
 %attr(0644,root,root) usr/lib/python*/site-packages/synchronizer.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/transfermanagerdlf.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/threadpoolserver.py*
