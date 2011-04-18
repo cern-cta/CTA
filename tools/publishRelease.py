@@ -121,7 +121,7 @@ def main(argv):
         if len(args):
             usage(sys.argv[0], 1)
     except getopt.GetoptError, e:
-        print >> sts.stderr, sys.argv[0] + ": " + str(e)
+        print >> sys.stderr, sys.argv[0] + ": " + str(e)
         usage(sys.argv[0], 1)
 
     for opt, arg in options:
@@ -143,6 +143,7 @@ def main(argv):
 
     # Create a temporary directory to construct the release artifacts.
     tmpdir = tempfile.mkdtemp()
+    rootdir = os.getcwd()
     os.chdir(tmpdir)
 
     # Query the Teamcity webserver using the REST API to see if a build exists
@@ -158,7 +159,7 @@ def main(argv):
                       "personal:false",
                       "status:SUCCESS" ])
 
-    print "[STEP 1/9] - Querying TeamCity server:", TEAMCITY_SERVER, "for release information"
+    print "[STEP 1/10] - Querying TeamCity server:", TEAMCITY_SERVER, "for release information"
 
     xml_handler = BuildsListXMLHandler()
     f = urllib2.urlopen(url)
@@ -168,23 +169,23 @@ def main(argv):
     # Check the results from the query to TeamCity, we should have one and only
     # one result!
     if len(xml_handler.getBuilds()) == 0:
-        print "[STEP 1/9] - No builds found for tag:", tag
+        print "[STEP 1/10] - No builds found for tag:", tag
         sys.exit(1)
     elif len(xml_handler.getBuilds()) > 1:
-        print "[STEP 1/9] - Too many build configurations found for tag:", tag
+        print "[STEP 1/10] - Too many build configurations found for tag:", tag
         sys.exit(1)
 
     # Log the information about the release.
     buildInfo = xml_handler.getBuilds()[0]
-    print "[STEP 1/9] - Found 1 build configuration:"
-    print "[STEP 1/9] -   BuildTypeId: ", buildInfo['BuildTypeId']
-    print "[STEP 1/9] -   BuildId:     ", buildInfo['BuildId']
-    print "[STEP 1/9] -   WebURL:      ", buildInfo['WebURL']
-    print "[STEP 1/9] -   ArtifactURL: ", buildInfo['ArtifactURL']
+    print "[STEP 1/10] - Found 1 build configuration:"
+    print "[STEP 1/10] -   BuildTypeId: ", buildInfo['BuildTypeId']
+    print "[STEP 1/10] -   BuildId:     ", buildInfo['BuildId']
+    print "[STEP 1/10] -   WebURL:      ", buildInfo['WebURL']
+    print "[STEP 1/10] -   ArtifactURL: ", buildInfo['ArtifactURL']
 
     # Download the artifacts zip file.
-    print "[STEP 2/9] - Downloading artifacts:"
-    print "[STEP 2/9] -  ", buildInfo['ArtifactURL'], "=>", tmpdir
+    print "[STEP 2/10] - Downloading artifacts:"
+    print "[STEP 2/10] -  ", buildInfo['ArtifactURL'], "=>", tmpdir
 
     # Note: We use wget as opposed to the urllib library for convenience!
     zipfile = os.path.join(tmpdir, "artifacts.zip")
@@ -192,7 +193,7 @@ def main(argv):
                  "--no-check-certificate", "-O", zipfile ])
 
     # Decompress the downloaded artifacts.
-    print "[STEP 3/9] - Decompressing:", zipfile
+    print "[STEP 3/10] - Decompressing:", zipfile
     runCommand([ "/usr/bin/unzip", zipfile, "-d", tmpdir ])
 
     # Delete any file from the extracted artifacts which is not an RPM or
@@ -214,10 +215,10 @@ def main(argv):
     # should just be the dist-version-arch directories!
     os.unlink(zipfile)
     for name in sorted(os.listdir(tmpdir)):
-        print "[STEP 3/9] -  ", name
+        print "[STEP 3/10] -  ", name
 
     # Move the artifacts to the correct directories.
-    print "[STEP 4/9] - Creating artifact layout:"
+    print "[STEP 4/10] - Creating artifact layout:"
     for name in sorted(os.listdir(tmpdir)):
         filepath = os.path.join(tmpdir, name)
         if not os.path.isdir(filepath):
@@ -235,18 +236,57 @@ def main(argv):
         dstdir = os.path.join(dstdir, arch)
 
         # Copy the srcdir artifacts to their final destination.
-        print "[STEP 4/9] -   Moving:", filepath, "=>", dstdir
+        print "[STEP 4/10] -   Moving:", filepath, "=>", dstdir
         shutil.move(filepath, dstdir)
+
+    # Remove all RPMs from the SL4 distribution which are not considered as
+    # part of the clientonly distribution
+    print "[STEP 5/10] - Restricting SL4 builds to CLIENT only packages"
+
+    # Construct a list of client packages from the control file. Essentially
+    # this is a filter of package names which belong to the XBS-Group: Client
+    f = open(os.path.join(rootdir, "../debian/control"))
+    clientpackages = []
+    pkgname = None
+    for line in f.readlines():
+        if line.startswith("Package:"):
+            pkgname = line[8:].strip()
+        if line.startswith("XBS-Group: Client"):
+            clientpackages.append(pkgname)
+    f.close()
+
+    # Loop over the contents of the SL4 directory
+    dstdir = os.path.join(tmpdir, "SL4")
+    for arch in os.listdir(dstdir):
+        archpath = os.path.join(dstdir, arch);
+        if not os.path.isdir(archpath):
+            continue
+
+        # Loop over architecture directory
+        for name in os.listdir(archpath):
+            filepath = os.path.join(archpath, name)
+            if not os.path.isfile(filepath):
+                continue  # Not a file
+            if not filepath.endswith(".rpm"):
+                continue  # Ignore non rpm base files
+            if filepath.endswith(".src.rpm"):
+                continue  # Ignore source rpms
+            if name.startswith("castor-debuginfo"):
+                continue  # Ignore debuginfo
+            pkgname = name.split(".")[0][0:-2]
+            if pkgname in clientpackages:
+                continue  # This is a client package
+            os.unlink(filepath)
 
     # Extract the source tarball from one of the source rpms. The first step to
     # achieve this is to find a source RPM.
-    print "[STEP 5/9] - Extracting source tarball from source RPM:"
+    print "[STEP 6/10] - Extracting source tarball from source RPM:"
     output = runCommand([ "/usr/bin/find", tmpdir, "-type", "f",
                           "-name", "*.src.rpm" ])
 
     # Record the source RPM name being used.
     srcrpm = output.split("\n")[0]
-    print "[STEP 5/9] -   Source RPM:    ", srcrpm
+    print "[STEP 6/10] -   Source RPM:    ", srcrpm
 
     # Using a combination of the rpm2cpio and cpio command extract the contents
     # of the source RPM. For CASTOR this should result in two new files the
@@ -266,7 +306,7 @@ def main(argv):
         else:
             tarfile = filepath
 
-    print "[STEP 5/9] -   Source Tarball:", tarfile
+    print "[STEP 7/10] -   Source Tarball:", tarfile
 
     # Create a directory for the contents of the tarball.
     dstdir = os.path.join(tmpdir, "extracted")
@@ -277,7 +317,7 @@ def main(argv):
     runCommand([ "/bin/tar", "-zxf", tarfile, "-C", dstdir,
                  "--strip-components", "1" ])
 
-    print "[STEP 6/9] - Publishing release support files:"
+    print "[STEP 7/10] - Publishing release support files:"
 
     # Create a list of files to be copied out of the extracted tarball
     # contents.
@@ -320,9 +360,9 @@ def main(argv):
 
     # Perform the actual copy of the files to their final destination.
     for type, value in files.iteritems():
-        print "[STEP 6/9] -  ", type
+        print "[STEP 7/10] -  ", type
         for filepath in value[1]:
-            print "[STEP 6/9] -    ", filepath.replace(tmpdir, "")
+            print "[STEP 7/10] -    ", filepath.replace(tmpdir, "")
             dstdir = os.path.join(tmpdir, value[0])
             if not os.path.exists(dstdir):
                 os.makedirs(dstdir)
@@ -330,8 +370,8 @@ def main(argv):
 
     # Create the tarball containing the testsuite.
     tarfile = os.path.join(tmpdir, "testsuite.tar.gz")
-    print "[STEP 7/9] - Creating Test Suite tarball:"
-    print "[STEP 7/9] -  ", tarfile
+    print "[STEP 8/10] - Creating Test Suite tarball:"
+    print "[STEP 8/10] -  ", tarfile
 
     # Copy the testsuite to a dedicated directory.
     srcdir = os.path.join(tmpdir, "extracted/test/testsuite")
@@ -346,14 +386,14 @@ def main(argv):
     shutil.rmtree(dstdir)
 
     # Publish the temporary directory to its final location.
-    print "[STEP 8/9] - Publishing temporary directory:"
-    print "[STEP 8/9] -  ", releasedir
+    print "[STEP 9/10] - Publishing temporary directory:"
+    print "[STEP 9/10] -  ", releasedir
 
     shutil.rmtree(os.path.join(tmpdir, "extracted"));
     shutil.copytree(tmpdir, releasedir)
 
     # Remove the temporary directory.
-    print "[STEP 9/9] - Removing temporary directory:", tmpdir
+    print "[STEP 10/10] - Removing temporary directory:", tmpdir
     shutil.rmtree(tmpdir)
 
 #------------------------------------------------------------------------------
