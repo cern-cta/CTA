@@ -404,34 +404,24 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
        castor::dlf::Param("FileSize", mcReq->fileSize())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_PFMIG,
                             fileId, nsHost, 4, params);
-    try {
-      jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
-                                  fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
-      // process any potential putDone waiting for this call by waking up a "Stage" thread
-      castor::server::NotifierThread::getInstance()->doNotify('S');
-    } catch (castor::exception::Exception& e) {
-      if (e.code() == ENOENT) {
-        // "File was removed by another user while being modified"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest")};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_JOBSVC_DELWWR,
-                                fileId, nsHost, 1, params);
-        res.setErrorCode(e.code());
-        res.setErrorMessage("File was removed by another user while being modified");
-      } else {
-        throw e;
-      }
-    }
+    jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
+                                fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
+    // process any potential putDone waiting for this call by waking up a "Stage" thread
+    castor::server::NotifierThread::getInstance()->doNotify('S');
   } catch (castor::exception::Exception& e) {
-    // For "Bad checksum" errors (1037) call putFailed() to invalidate the
+    // For "Bad checksum" (1037) and ENOENT errors call putFailed() to invalidate the
     // DiskCopy. If we don't do this the file remains stuck in STAGEOUT until
     // automatic closure by the database. Note: We only call putFailed in cases
     // of standalone puts and for files which had a preset checksum.
-    if (e.code() == SECHECKSUM) {
+    if (e.code() == SECHECKSUM || e.code() == ENOENT) {
       try {
+        // "File was removed by another user while being modified" or
         // "Preset checksum mismatch detected, invoking putFailed"
-        castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_CHKMISMATCH,
-                                fileId, nsHost);
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest")};
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR,
+                                  e.code() == ENOENT ? STAGER_JOBSVC_DELWWR : STAGER_JOBSVC_CHKMISMATCH,
+                                  fileId, nsHost, 1, params);
         jobSvc->putFailed(mcReq->subReqId(), fileId, nsHost);
       } catch (castor::exception::Exception& e) {
         // "Unexpected exception caught"
