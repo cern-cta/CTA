@@ -106,7 +106,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
       stst << "Unable to read request object from socket."
            << std::endl << e.getMessage().str();
       ack.setErrorMessage(stst.str());
-      // Closing and delete socket
+      // Closing and deleting socket
       if (sock != 0) {
         delete sock;
       }
@@ -260,7 +260,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 	 castor::dlf::Param("Port", port)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 4, params);
     }
-    // Closing and delete socket
+    // Closing and deleting socket
     delete sock;
   } catch (...) {
     // "General exception caught"
