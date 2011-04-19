@@ -2276,7 +2276,7 @@ END;
 /* This procedure resets the lastKnownFileName the CastorFile that has a given name
    inside an autonomous transaction. This should be called before creating/renaming any
    CastorFile so that lastKnownFileName stays unique */
-CREATE OR REPLACE PROCEDURE dropReusedLastKnowFileName(fileName IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE dropReusedLastKnownFileName(fileName IN VARCHAR2) AS
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   UPDATE /*+ INDEX (I_CastorFile_lastKnownFileName) */ CastorFile
@@ -2324,7 +2324,7 @@ BEGIN
     -- Note that this procedure will run in an autonomous transaction so that
     -- no dead lock can result from taking a second lock within this transaction
     IF fn != previousLastKnownFileName THEN
-      dropReusedLastKnowFileName(fn);
+      dropReusedLastKnownFileName(fn);
     END IF;
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
@@ -2340,11 +2340,11 @@ BEGIN
     -- we did not find the file, let's create a new one
     -- take care that the name of the new file is not already the lastKnownFileName
     -- of another file, that was renamed but for which the lastKnownFileName has
-    -- not been updated
+    -- not been updated.
     -- We actually reset the lastKnownFileName of such a file if needed
     -- Note that this procedure will run in an autonomous transaction so that
     -- no dead lock can result from taking a second lock within this transaction
-    dropReusedLastKnowFileName(fn);
+    dropReusedLastKnownFileName(fn);
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
