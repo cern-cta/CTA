@@ -475,7 +475,7 @@ void castor::rh::RHThread::run(void* param) {
     if (ack.status()) {
       // Notify the appropriate stager service
       std::map<int, std::string>::const_iterator it =
-	m_svcHandler.find(fr->type());
+        m_svcHandler.find(fr->type());
       if (it != m_svcHandler.end()) {
         castor::server::BaseServer::sendNotification
           (m_stagerHost, m_stagerPort, it->second[0], nbThreads);
