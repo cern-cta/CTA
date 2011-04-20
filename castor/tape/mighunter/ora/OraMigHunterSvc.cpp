@@ -199,6 +199,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
     if (m_startChosenStreamsStatement)        deleteStatement(m_startChosenStreamsStatement);
     if (m_stopChosenStreamsStatement)         deleteStatement(m_stopChosenStreamsStatement);
     if (m_resurrectCandidatesStatement)       deleteStatement(m_resurrectCandidatesStatement);
+    if (m_invalidateTapeCopiesStatement)      deleteStatement(m_invalidateTapeCopiesStatement);
     if (m_attachTapeCopiesToStreamsStatement) deleteStatement(m_attachTapeCopiesToStreamsStatement); 
     if (m_selectTapePoolNamesStatement)       deleteStatement(m_selectTapePoolNamesStatement);
     if (m_migHunterCleanUpStatement)          deleteStatement(m_migHunterCleanUpStatement);
@@ -213,6 +214,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
   m_startChosenStreamsStatement              = 0;
   m_stopChosenStreamsStatement               = 0;
   m_resurrectCandidatesStatement             = 0;
+  m_invalidateTapeCopiesStatement            = 0;
   m_attachTapeCopiesToStreamsStatement       = 0;
   m_selectTapePoolNamesStatement             = 0;
   m_migHunterCleanUpStatement                = 0;
