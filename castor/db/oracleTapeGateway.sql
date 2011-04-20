@@ -332,7 +332,7 @@ BEGIN
         varTape.stream    := inStrIds(i);
         varTape.status    := tconst.TAPE_WAITDRIVE;
         varTape.lastFseq  := inStartfseqs(i);
-        varTape.lastVdqmPingTime := 0; /* Force first ping immediately */
+        varTape.lastVdqmPingTime := getTime();
         INSERT INTO Tape T
         VALUES varTape RETURNING T.id into varTapeId;
         INSERT INTO id2type (id,type) values (varTape.Id,29);
