@@ -65,6 +65,7 @@ if len(args) > 1:
 diskServerName = args[0]
 
 # connect to the stager and execute the query
+rc = 0
 try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
@@ -95,7 +96,6 @@ try:
       stcur.execute(stCheckSQL, diskServerName=diskServerName)
       if stcur.fetchone():
         print 'No files found on ' + diskServerName
-        rc = 0
       else:
         print 'Unknown diskserver ' + diskServerName + '. Did you provide a fully qualified name ?'
         rc = 1
@@ -123,6 +123,8 @@ try:
           line = line + row[4]
         print line
     castor_tools.disconnectDB(stconn)
+except SystemExit:
+    sys.exit(rc)
 except Exception, e:
     print e
     sys.exit(1)
