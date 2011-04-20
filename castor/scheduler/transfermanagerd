@@ -504,9 +504,10 @@ class Suicider(threading.Thread):
         # else sleep one second between two checks
         time.sleep(1)
 
-def drain():
+def drain(wait=False):
   '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
-  Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon'''
+  Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon.
+  In case the wait argument is true, wait for this thread to be over'''
   # first stop threads handling new requests, aborts and synchronization
   # note that these threads may not be defined yet. In such a case, a NameError will be raised
   # and caught by the corresponding except
@@ -530,6 +531,9 @@ def drain():
   suicideThread.setName('Suicider')
   suicideThread.setDaemon(True)
   suicideThread.start()
+  # wait in the suicide if needed
+  if wait:
+    suicideThread.join()
 
 import signal
 def handler(signum, frame):
@@ -607,11 +611,9 @@ finally:
   except Exception:
     pass
   # drain will stop the dispatch, abort and synchro threads
-  drain()
-  try:
-    transfermanager.close()
-  except Exception:
-    pass
+  # it will launch a Suicider thread that will end the transfer manager once
+  # all calls have been handled
+  drain(True)
   # if we are a daemon, call __exit__
   if daemonize:
     try:
