@@ -87,5 +87,8 @@ try:
 except Exception, e:
   print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
   if verbose:
+    if hasattr(unexpectedException, "_remote_tb"):
+        print 'Remote trace :'
+        print unexpectedException._remote_tb[0]
     import traceback
     traceback.print_tb(sys.exc_info()[2])
