@@ -16,6 +16,8 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     available CHAR(1),
     status NUMBER,
     creationtime VARCHAR2(2048),
+    diskCopySize NUMBER,
+    castorFileSize NUMBER,
     gcWeight NUMBER);
   TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
   TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
@@ -81,13 +83,16 @@ BEGIN
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
                    decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
                    DiskCopy.status AS status,
-                   getTimeString(creationtime) AS creationtime,
+                   getTimeString(DiskCopy.creationtime) AS creationtime,
+                   DiskCopy.diskCopySize AS diskcopysize,
+                   CastorFile.fileSize AS castorfilesize,
                    trunc(DiskCopy.gcWeight, 2) AS gcweight
-              FROM DiskCopy, FileSystem, DiskServer, DiskPool
+              FROM DiskCopy, FileSystem, DiskServer, DiskPool, CastorFile
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
                AND DiskPool.id(+) = fileSystem.diskPool
-               AND DiskCopy.castorfile = getCF(ref)) LOOP
+               AND DiskCopy.castorFile = getCF(ref)
+               AND DiskCopy.castorFile = CastorFile.id) LOOP
      PIPE ROW(d);
   END LOOP;
 END;
