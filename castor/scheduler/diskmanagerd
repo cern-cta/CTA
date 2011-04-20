@@ -178,7 +178,7 @@ class ActivityControl(threading.Thread):
 
   def run(self):
     '''main method, containing the infinite loop'''
-    while True:
+    while self.alive:
       try:
         # check number of running transfers against limit
         if runningTransfers.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', 0, int):
@@ -365,6 +365,16 @@ try:
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
     raise
 finally:
+  try:
+    activityControl.stop()
+    activityControl.join()
+  except Exception:
+    pass
+  try:
+    management.stop()
+    management.join()
+  except Exception:
+    pass
   if daemonize:
     try:
       context.__exit__(None, None, None)
