@@ -91,7 +91,9 @@ class ConnectionPool(object):
             conn = self.getConnection(machine)
             remote_attr = rpyc.core.netref.asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
             remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
-            return remote_attr.value(*args)
+            result = rpyc.core.netref.asyncreq(remote_attr.value, rpyc.core.consts.HANDLE_CALL, args)
+            result.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+            return result.value
           except EOFError:
             # if connection was lost, drop it
             self.close(machine)
