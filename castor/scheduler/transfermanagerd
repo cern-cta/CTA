@@ -193,6 +193,8 @@ class TransferManagerService(rpyc.Service):
           # 'Could not contact diskserver' message
           dlf.writenotice(msgs.COULDNOTCONTACTDS, Function=func, DiskServer=ds,
                           Type=str(e.__class__), Message=str(e))
+          # fill dictionary with None value
+          res[diskPool][ds] = None
     return res
 
   def exposed_nbTransfersPerPool(self, diskPool=None, user=None):
@@ -208,10 +210,16 @@ class TransferManagerService(rpyc.Service):
     given user'''
     nbTransfersPerPool = {}
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
-      for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
-        if diskpool not in nbTransfersPerPool:
-          nbTransfersPerPool[diskpool] = 0
-        nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
+      try:
+        for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
+          if diskpool not in nbTransfersPerPool:
+            nbTransfersPerPool[diskpool] = 0
+          nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
+      except Exception, e:
+        # 'Could not contact transfer manager' message
+        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='_computeNbTransfersPerPool', TransferManager=scheduler,
+                        Type=str(e.__class__), Message=str(e))
+        raise IOError
     return nbTransfersPerPool
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
@@ -236,15 +244,38 @@ class TransferManagerService(rpyc.Service):
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
     nbs = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # get the number of unique transfers running per diskpool
-    nbtransfersPerPool = self._computeNbTransfersPerPool(diskPool, user)
+    try:
+      nbtransfersPerPool = self._computeNbTransfersPerPool(diskPool, user)
+    except IOError:
+      nbtransfersPerPool = None
     # flatten all data to a list of (diskpool, (values))
     res = []
     for diskPool in nbs:
       if len(nbs[diskPool]) > 0:
-        data = [extendedSum(item) for item in zip(*nbs[diskPool].values())]
-        if diskPool not in nbtransfersPerPool:
-          nbtransfersPerPool[diskPool] = 0
-        res.append(tuple([diskPool, nbtransfersPerPool[diskPool]] + data))
+        # deal with special cases for the nbtransfersPerPool
+        if not nbtransfersPerPool:
+          # case where we have no data for the pool
+          nbtransfers = '-'
+        elif diskPool not in nbtransfersPerPool:
+          # case where the pool has no diskserver
+          nbtransfers = 0
+        else:
+          # regular case
+          nbtransfers = nbtransfersPerPool[diskPool]
+        # check whether we have all data we need for the pool
+        gotalldata = True
+        for item in nbs[diskPool].values():
+          gotalldata = item != None
+          if not gotalldata:
+            break
+        # append an item to the result set
+        if gotalldata:
+          # we have all data, we need to aggregate them
+          data = [extendedSum(item) for item in zip(*nbs[diskPool].values())]
+          res.append(tuple([diskPool, nbtransfers] + data))
+        else:
+          # we are missing data, we cannot give anything sensible
+          res.append((diskPool, nbtransfers, None))
       else:
         res.append((diskPool,))
     return tuple(res)
@@ -265,11 +296,18 @@ class TransferManagerService(rpyc.Service):
     hosts = self.dispatch('summarizeTransfers', diskPool, user, detailed)
     # flatten it to a list of (diskserver, (values))
     if hosts :
-      hostslist = reduce(lambda x, y:x+y, [diskserver.items() for diskserver in hosts.values()])
+      hostslist = reduce(lambda x, y:x+y, [diskpool.items() for diskpool in hosts.values()])
     else:
       hostslist = []
-    # return a tuple of (diskserver, value1, value2, ...)
-    return tuple(tuple([host[0]]+list(host[1])) for host in hostslist)
+    # return a tuple of (diskserver, value1, value2, ...), or (diskserver, None) in case we got
+    # no list for a given diskserver
+    res = []
+    for host in hostslist:
+      if host[1]:
+        res.append(tuple([host[0]]+list(host[1])))
+      else:
+        res.append((host[0], '-'))
+    return tuple(res)
 
   def exposed_listTransfers(self, diskPool=None, user=None):
     '''lists the running and pending transfers per diskpool for a given diskpool and user'''
@@ -278,8 +316,11 @@ class TransferManagerService(rpyc.Service):
     res = []
     for diskPool in transfers:
       for ds in transfers[diskPool]:
-        for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
-          res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
+        if transfers[diskPool][ds] != None:
+          for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
+            res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
+        else:
+            res.append((None, ds))
     return tuple(res)
 
   def _killtransfers(self, method, arg):
