@@ -202,6 +202,8 @@ class Synchronizer(threading.Thread):
           dlf.writeerr(msgs.SYNCHROEXCEPTION, Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
           self.dbConnection().checkForReconnection(e)
+          # do not loop too fast
+          time.sleep(1)
     finally:
       # try to clean up what we can
       try:
