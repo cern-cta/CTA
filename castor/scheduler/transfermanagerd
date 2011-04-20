@@ -320,7 +320,7 @@ class TransferManagerService(rpyc.Service):
           for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
             res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
         else:
-            res.append((None, ds))
+          res.append((None, ds))
     return tuple(res)
 
   def _killtransfers(self, method, arg):
