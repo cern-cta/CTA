@@ -47,7 +47,7 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'SYNCRUNCALLED', 'SYNCRUNEXCEPTION', 'RUNTRANSFERDISAPPEARED',
                 'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
                 'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'GETALLRUNNINGD2DSOURCETRANSFERSCALLED',
-                'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM')
+                'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -104,5 +104,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.SYNCHROENDEDTRANSFER : 'Transfer ended by synchronization as the transfer disappeared from the DB',
                  msgs.GETALLRUNNINGD2DSOURCETRANSFERSCALLED : 'getAllRunningD2dSourceTransfers called',
                  msgs.SYNCDBWITHD2DSRC : 'Synchronizing stager DB with running d2d sources',
-                 msgs.COULDNOTCONTACTTM : 'Could not contact transfer manager'})
+                 msgs.COULDNOTCONTACTTM : 'Could not contact transfer manager',
+                 msgs.TRANSFERSTARTCONFIRMED : 'Transfer starting reconfirmed'})
 

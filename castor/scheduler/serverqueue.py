@@ -31,8 +31,42 @@
 Manages the transfers pending on the different diskservers'''
 
 import threading
-import dlf, pwd
+import dlf, pwd, time
 from transfermanagerdlf import msgs
+
+class RecentSchedules(object):
+  '''This class remembers the latest schedules and is thus able to detect double scheduling.
+     It actually keeps in memory the transfers of the current and lst time slots, where a slot
+     is 10s long.'''
+
+  def __init__(self):
+    '''constructor'''
+    # dictionnary of recently scheduled transfers and where they were scheduled
+    self.schedulesInCurrentSlot = {}
+    # dictionnary of transfers in the previous time slot and where they were scheduled
+    self.schedulesInPreviousSlot = {}
+    # start of current slot
+    self.currentSlot = 0
+
+  def add(self, transferid, diskserver):
+    '''adds a new job to the recently scheduled ones. Also drops old jobs when needed'''
+    # get slot of this transfer
+    slot = int(time.time())/10
+    # in case we start a new slot, cleanup
+    if slot != self.currentSlot:
+      # rotate slots
+      self.schedulesInPreviousSlot = self.schedulesInCurrentSlot
+      self.schedulesInCurrentSlot = {}
+      # remember new slot
+      self.currentSlot = slot
+    # add transfer to the new slot
+    self.schedulesInCurrentSlot[transferid] = diskserver
+
+  def isDoubleScheduling(self, transferid, diskserver):
+    '''Checks whether the given job has been already scheduled on the given machine recently'''
+    return (transferid in self.schedulesInCurrentSlot and self.schedulesInCurrentSlot[transferid] == diskserver) or \
+           (transferid in self.schedulesInPreviousSlot and self.schedulesInPreviousSlot[transferid] == diskserver)
+ 
 
 class ServerQueue(dict):
   '''a dictionnary of queueing transfers, with the list of machines to which they were sent
@@ -49,6 +83,8 @@ class ServerQueue(dict):
     self.transfersLocations = {}
     # list of source d2d transfers running
     self.d2dsrcrunning = {}
+    # memory of recently scheduled jobs
+    self.recentlyScheduled = RecentSchedules()
 
   def put(self, transferid, arrivaltime, transferList, transfertype='standard'):
     '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
@@ -184,7 +220,7 @@ class ServerQueue(dict):
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
             try:
               self.connections.retryD2dDest(ds, transferid, reqid)
-            except:
+            except Exception:
               # not a big deal, the destination will retry it soon by itself
               pass
         except KeyError:
@@ -197,15 +233,26 @@ class ServerQueue(dict):
       try:
         # check whether the transfer has already been started somewhere else
         if transferid not in self.transfersLocations:
-          # in such a case, let the diskserver know by raising an exception
+          # this transfer is supposed to be running. Let's check that it is not suppose to be
+          # running on the vey machine that wants to start it. That would mean that our answer
+          # to this machine never arrived and the machine is retrying
+          if self.recentlyScheduled.isDoubleScheduling(transferid, diskserver):
+            # we are precisely in the mentionned case. We can safely return as we already think
+            # that the job is running on that machine
+            # "Transfer starting reconfirmed" message
+            dlf.writedebug(msgs.TRANSFERSTARTCONFIRMED, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
+            return
+          # The tranfer has really started somewhere else. Let the diskserver know by raising an exception
           # "Transfer had already started. Cancel start" message
           dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
           raise ValueError
+        # We are now sure that the transfer has not yet started
         # if a destination transfer wants to start, check whether the source is ready
         if transfertype == 'd2ddest' and not self[diskserver][transferid][3]:
           # "Source is not ready yet" message
           dlf.writedebug(msgs.SOURCENOTREADY, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
           raise EnvironmentError
+        # this time, the transfer can start.
         # drop the transfer from all queues. Note that this desynchronizes the queues as seen
         # by the diskservers from the queues seen by the central manager. In case of a
         # restart of a diskserver manager, its queue will be magically "cleaned up"
@@ -214,6 +261,8 @@ class ServerQueue(dict):
         del self.transfersLocations[transferid]
         for machine in machines:
           del self[machine][transferid]
+        # Add this transfer to the recently scheduled ones
+        self.recentlyScheduled.add(transferid, diskserver)
       finally:
         self.lock.release()
       # inform all other machines that this job has been handled
