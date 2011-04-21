@@ -56,6 +56,8 @@ class ThreadPoolServer(rpyc.utils.server.Server):
 
   def __init__(self, *args, **kwargs):
     '''Initializes a ThreadPoolServer. In particular, instantiate the thread pool.'''
+    # last time we were overloaded
+    self.last_overload = 0
     # get the number of threads in the pool
     nbthreads = 20
     if 'nbThreads' in kwargs:
@@ -103,5 +105,17 @@ class ThreadPoolServer(rpyc.utils.server.Server):
       # try to put the request in the queue
       self._client_queue.put_nowait(sock)
     except Queue.Full:
-      # queue was full, reject request
-      raise rpyc.core.async.AsyncResultTimeout("server is overloaded")
+      # queue was full, we ignore the request
+      try:
+        sock.shutdown(socket.SHUT_RDWR)
+      except Exception, e:
+        pass
+      try:
+        sock.close()
+      except Exception, e:
+        pass
+      # but we log something regularly (max every 5s) when we are overloaded
+      current_time = time.time()
+      if current_time - self.last_overload > 5:
+        self.logger.warning("server is overloaded")
+        self.last_overload = current_time
