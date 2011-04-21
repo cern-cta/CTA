@@ -73,9 +73,10 @@ class Synchronizer(threading.Thread):
     Raises exception in case of DB error that are handled in the calling method.'''
     # 'Synchronizing stager DB with Transfer Manager' message
     dlf.writedebug(msgs.SYNCDBWITHTM)
+    # prepare a cursor for database polling
+    stcur = self.dbConnection().cursor()
     try:
-      # prepare a cursor for database polling
-      stcur = self.dbConnection().cursor()
+      # prepare a cursor for the result
       subReqIdsCur = self.dbConnection().cursor()
       subReqIdsCur.arraysize = 200
       # list pending and running transfers in the stager database
@@ -137,9 +138,11 @@ class Synchronizer(threading.Thread):
       # Thus we have to give up with synchronization for this round
       # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
       dlf.writeerr(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e))
+      return
+    # prepare a cursor for database polling
+    stcur = self.dbConnection().cursor()
     try:
-      # prepare a cursor for database polling
-      stcur = self.dbConnection().cursor()
+      # prepare a cursor for the results
       subReqIdsCur = self.dbConnection().cursor()
       subReqIdsCur.arraysize = 200
       # list pending and running transfers in the stager database
