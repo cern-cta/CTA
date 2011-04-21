@@ -292,11 +292,23 @@ def initQueues():
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
-      for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn()):
-        runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
+      while True:
+        try:
+          for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn()):
+            runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
+          break
+        except connectionpool.Timeout:
+          # as long as we get a timeout, we retry. This will not last.
+          time.sleep(0.1)
       # rebuild transfer's queue
-      for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn()):
-        transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
+      while True:
+        try:
+          for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn()):
+            transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
+          break
+        except connectionpool.Timeout:
+          # as long as we get a timeout, we retry. This will not last.
+          time.sleep(0.1)
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
       # 'No queue could be retrieved' message

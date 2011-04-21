@@ -35,6 +35,7 @@ import time
 import dlf
 from diskmanagerdlf import msgs
 import castor_tools
+import connectionpool
 
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
@@ -210,7 +211,13 @@ class RunningTransfersSet(object):
         pass
     # send the list of running transfers to the stager DB for synchronization
     try:
-      self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+      while True:
+        try:
+          self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+          break
+        except connectionpool.Timeout:
+          # as long as we get a timeout, we retry. This will not last. We still wait a little bit
+          time.sleep(0.1)
     except Exception, e:
       # 'Exception caught when trying to synchronize running transfers with the database. Giving up' message
       dlf.writeerr(msgs.SYNCRUNTRANSFERFAILED, Type=str(e.__class__), Message=str(e))
