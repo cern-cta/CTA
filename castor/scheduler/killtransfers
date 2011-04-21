@@ -91,4 +91,4 @@ except Exception, e:
         print 'Remote trace :'
         print unexpectedException._remote_tb[0]
     import traceback
-    traceback.print_tb(sys.exc_info()[2])
+    traceback.print_exc()

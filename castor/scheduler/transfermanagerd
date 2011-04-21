@@ -601,7 +601,7 @@ try:
     print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
     if verbose:
       import traceback
-      traceback.print_tb(sys.exc_info()[2])
+      traceback.print_exc()
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
     raise
 finally:
