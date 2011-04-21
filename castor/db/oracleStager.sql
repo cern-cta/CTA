@@ -400,6 +400,18 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE TRIGGER tr_Tape_Insert
+  BEFORE INSERT ON Tape
+FOR EACH ROW
+/**
+ * Converts an inserted lastVdqmPingTime of NULL to the current time.
+ */
+BEGIN
+  IF :NEW.lastVdqmPingTime IS NULL THEN
+    :NEW.lastVdqmPingTime := getTime();
+  END IF;
+END;
+/
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
 CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
