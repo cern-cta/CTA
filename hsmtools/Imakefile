@@ -38,6 +38,7 @@ NormalProgramTarget(stager_actualput,stager_actualput.o,,,755)
 
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.o,,,755)
 
+InstallTarget(fixFileSize,755)
 InstallTarget(cleanLostFiles,755)
 InstallTarget(diskServer_qry,755)
 InstallTarget(listFileClass,755)
