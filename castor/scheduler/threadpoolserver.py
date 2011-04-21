@@ -33,6 +33,21 @@ import rpyc.utils.server, rpyc.core.async
 import threading
 import Queue
 import time
+import logging, logging.handlers
+import sys, socket, os.path
+
+class SysLogCastorHandler(logging.handlers.SysLogHandler):
+  def emit(self, record):
+    '''Emit a record.
+    Adds to the default emit the handling of reduced size threads ids,
+    machineName and processName (last one is absent in python 2.4)'''
+    # modify some parameters, add others
+    record.thread = record.thread%10000
+    record.machineName = socket.gethostname().split('.')[0]
+    record.processName = os.path.basename(sys.argv[0])
+    # call original method
+    logging.handlers.SysLogHandler.emit(self, record)
+
 
 class ThreadPoolServer(rpyc.utils.server.Server):
   '''This server is threaded like the ThreadedServer but reuses threads so that
@@ -57,6 +72,12 @@ class ThreadPoolServer(rpyc.utils.server.Server):
       t = threading.Thread(target = self._authenticate_and_serve_clients, args=(self._client_queue,))
       t.daemon = True
       t.start()
+    # setup logging to DLF
+    self.logger.setLevel(logging.WARNING)
+    ch = SysLogCastorHandler(facility=logging.handlers.SysLogHandler.LOG_LOCAL3)
+    formatter = logging.Formatter('%(machineName)s %(processName)s[%(process)d]: LVL=%(levelname)s TID=%(thread)s MSG="%(message)s"')
+    ch.setFormatter(formatter)
+    self.logger.addHandler(ch)
 
   def _authenticate_and_serve_clients(self, queue):
     '''Main method run by the threads of the thread pool. It gets work from the
