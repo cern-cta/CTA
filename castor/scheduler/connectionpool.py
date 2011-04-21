@@ -30,6 +30,10 @@ Handles a pool of cached rpyc connections to different nodes'''
 import rpyc, rpyc.core.netref
 import castor_tools
 
+class Timeout(rpyc.core.async.AsyncResultTimeout):
+  '''Our name for the timeout exception on asynchronous calls'''
+  pass
+
 class ConnectionPool(object):
   '''Object handling a pool of connections to identical remote services'''
 
@@ -105,5 +109,8 @@ class ConnectionPool(object):
       except Exception, e:
         # amend errors with the name of the machine that we were connecting too
         e.args = e.args + ('connected to ' + machine,)
+        # replace AsyncResultTimeout with our own Timeout
+        if isinstance(e, rpyc.core.async.AsyncResultTimeout):
+          raise Timeout(e.args)
         raise e
     return f

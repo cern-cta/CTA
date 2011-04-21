@@ -222,7 +222,7 @@ class ActivityControl(threading.Thread):
                 else:
                   process = 0
                 runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)
-          except rpyc.core.async.AsyncResultTimeout:
+          except connectionpool.Timeout:
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
             # thus we put the transfer into the priority queue
             transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
