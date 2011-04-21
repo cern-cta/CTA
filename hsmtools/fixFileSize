@@ -87,13 +87,14 @@ try:
       UPDATE cns_file_metadata SET fileSize = :fs WHERE fileid = :fid;
       UPDATE cns_seg_metadata SET segsize = :fs WHERE s_fileid = :fid;
     END;'''
-    print "Fixing nameserver..."
+    print "Fixing nameserver...",
     for f in fileids:
         nscur.execute(nsfixSQL, fid=f[0], fs=f[1])
     nsconn.commit()
     castor_tools.disconnectDB(nsconn)
     print "Done"
 except Exception, e:
+    print "Failed to update nameserver database:"
     print e
     sys.exit(-1)
 
@@ -109,15 +110,17 @@ try:
        WHERE fileid = :fid
       RETURNING id INTO cfId;
       UPDATE DiskCopy SET DiskCopySize = :fs
-       WHERE castorfile = cfId;
+       WHERE castorfile = cfId
+         AND status IN (0, 10);
     END;'''
-    print "Fixing stager..."
+    print "Fixing stager...",
     for f in fileids:
         stcur.execute(stfixSQL, fid=f[0], fs=f[1])
     stconn.commit()
     castor_tools.disconnectDB(stconn)
     print "Done"
 except Exception, e:
+    print "Failed to update stager database:"
     print e
     sys.exit(-1)
 
