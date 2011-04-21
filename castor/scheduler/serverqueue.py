@@ -274,7 +274,7 @@ class ServerQueue(dict):
             self.connections.transferAlreadyStarted(machine, transferid, reqid)
           except Exception, e:
             # "Failed to inform diskserver that job started elsewhere" message
-            dlf.writeerr(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine, subreqid=transferid, reqid=reqid, Type=str(e.__class__), Message=str(e))
+            dlf.writenotice(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine, subreqid=transferid, reqid=reqid, Type=str(e.__class__), Message=str(e))
 
   def d2dend(self, transferid, reqid, transferCancelation=False):
     '''called when a d2d copy ends in order to inform the source.

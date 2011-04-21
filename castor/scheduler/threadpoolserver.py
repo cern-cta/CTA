@@ -92,7 +92,7 @@ class ThreadPoolServer(rpyc.utils.server.Server):
         pass
       except Exception, e:
         # "Caught exception in Worker thread" message
-        self.logger.info("failed to serve client, caught exception : %s", str(e))
+        self.logger.warning("failed to serve client, caught exception : %s", str(e))
         # wait a bit so that we do not loop too fast in case of error
         time.sleep(.2)
 

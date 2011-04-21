@@ -227,7 +227,7 @@ class Dispatcher(threading.Thread):
       self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsrc')
     except Exception, e:
       # 'Failed to schedule d2d source' message
-      dlf.writeerr(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+      dlf.writenotice(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
       # we could not schedule the source so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on source host", reqId))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
@@ -251,8 +251,8 @@ class Dispatcher(threading.Thread):
         self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2ddest')
         scheduleSucceeded = True
       except Exception, e:
-        # 'Failed to scheduling d2d destination' message
-        dlf.writeerr(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+        # 'Failed to schedule d2d destination' message
+        dlf.writenotice(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
     # we are over, check whether we could schedule the destination at all
     if not scheduleSucceeded:
       # we could not schedule anywhere for destination.... so fail the transfer in the DB
@@ -316,7 +316,7 @@ class Dispatcher(threading.Thread):
         scheduleSucceeded = True
       except Exception, e:
         # 'Failed to schedule standard transfer' message
-        dlf.writeerr(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+        dlf.writenotice(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
     # we are over, check whether we could schedule at all
     if not scheduleSucceeded:
       # we could not schedule anywhere.... so fail the transfer in the DB
