@@ -394,3 +394,4 @@ finally:
       pass
   # 'DiskManager Daemon stopped'
   dlf.write(msgs.DISKMANAGERDSTOPPED)
+  dlf.shutdown()

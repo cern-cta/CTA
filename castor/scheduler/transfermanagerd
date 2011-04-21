@@ -622,3 +622,4 @@ finally:
       pass
   # 'TransferManager Daemon stopped'
   dlf.write(msgs.TRANSFERMANAGERDSTOPPED)
+  dlf.shutdown()
