@@ -58,13 +58,11 @@ class DBConnection(object):
     '''This class wraps an Oracle database connection with the ability to automatically reconnect when 
     the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
     
-    # class-level constant defining the database schemaVersion expected by the code
-    SCHEMAVERSION = "2_1_11_0"
-    
-    def __init__(self, connString):
+    def __init__(self, connString, schemaVersion):
         '''Constructor'''
         importOracle()
         self.connString = connString
+        self.schemaVersion = schemaVersion
         self._autocommit = False
         self.connection = None
         # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
@@ -81,8 +79,8 @@ class DBConnection(object):
         cur.close()
         if dbVer == None:
             raise ValueError, 'No CastorVersion table found in the database'
-        if dbVer[0] != DBConnection.SCHEMAVERSION:
-            raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + DBConnection.SCHEMAVERSION
+        if dbVer[0] != self.schemaVersion:
+            raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + self.schemaVersion
         # 'Created new Oracle connection' message
         dlf.write(msgs.CREATEDORACONN)
     
@@ -142,8 +140,8 @@ class DBConnection(object):
 #-------------------------------------------------------------------------------
 # connectToDB
 #-------------------------------------------------------------------------------
-def connectToDB(user, passwd, dbname):
-    return DBConnection(user + '/' + passwd + '@' + dbname)
+def connectToDB(user, passwd, dbname, schemaVersion):
+    return DBConnection(user + '/' + passwd + '@' + dbname, schemaVersion)
 
 #-------------------------------------------------------------------------------
 # disconnectDB
@@ -269,16 +267,14 @@ def connectToVmgr():
     return conn
 
 def connectToStager():
+    STAGERSCHEMAVERSION = "2_1_11_0"
     user, passwd, dbname = getStagerDBConnectParams()
-    return connectToDB(user, passwd, dbname)
+    return connectToDB(user, passwd, dbname, STAGERSCHEMAVERSION)
 
 def connectToNS():
+    NSSCHEMAVERSION = "2_1_9_3"
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
-    return connectToDB(user, passwd, dbname)
-
-def connectToDLF():
-    user, passwd, dbname = getNSDBConnectParam('DLFCONFIG')
-    return connectToDB(user, passwd, dbname)
+    return connectToDB(user, passwd, dbname, NSSCHEMAVERSION)
 
 
 #-------------------------------------------------------------------------------
