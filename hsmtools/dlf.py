@@ -48,6 +48,7 @@ _priorities = { syslog.LOG_EMERG:   "Emerg",
                 syslog.LOG_INFO:    "Info",
                 syslog.LOG_DEBUG:   "Debug" }
 _logmask = 0xff
+_initialized = False
 
 # Constants
 _LOG_PRIMASK = 0x07
@@ -70,6 +71,18 @@ def init(facility):
         raise AttributeError('Invalid Argument: ' + smask + ' for ' + facility + '/LogMask option in castor.conf')
     # Open syslog
     syslog.openlog(facility, syslog.LOG_PID, syslog.LOG_LOCAL3)
+    _initialized = True
+
+def shutdown():
+    '''Close/shutdown the distributed logging facility interface'''
+    if not _initialized:
+        return
+    # Close the syslog API
+    syslog.closelog()
+    # Reset internal variables
+    _logmask = 0xff
+    _messages = {}
+    _initialize = False
 
 def addmessages(msgs):
     '''Add new messages to the set of known messages'''
@@ -87,6 +100,9 @@ def writep(priority, msgnb, **params):
       - reqid : will be treated as the UUID of the ongoing request
       - fileid : will be treated as a pair(nshost, fileid)
     '''
+    # check if API has been initialized
+    if not _initialized:
+        return
     # ignore messages whose priority is not of interest
     global _logmask
     if syslog.LOG_MASK(priority & _LOG_PRIMASK) & _logmask == 0:
