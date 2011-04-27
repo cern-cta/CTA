@@ -75,7 +75,7 @@ void RepackRestarter::run(void*) throw() {
 
   try {
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 64, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 64, 0, 0);
          
  	 
     // restart

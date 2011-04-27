@@ -70,7 +70,7 @@ void RepackCleaner::run(void*) {
 
   try {
   
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 41, 0, 0);
 
     // get all the tape
     tapes = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
@@ -108,7 +108,7 @@ void RepackCleaner::run(void*) {
 
   // we check if we are able to restart one of the subrequest on-hold
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 43, 0, 0);
     
     try {
       

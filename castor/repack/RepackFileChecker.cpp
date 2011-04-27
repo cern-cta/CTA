@@ -76,7 +76,7 @@ void RepackFileChecker::run(void*) throw(){
     Cuuid_t cuuid = nullCuuid;
     FileListHelper m_filehelper (ptr_server->getNsName());
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 13, 0, 0);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 13, 0, 0);
     sreqs = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECHECKED,false);
 
     sreq=sreqs.begin();

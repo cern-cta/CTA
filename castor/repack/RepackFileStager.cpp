@@ -71,7 +71,7 @@ void RepackFileStager::run(void*) throw() {
   std::vector<RepackSubRequest*>::iterator sreq;
   try {
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 18, 0, 0);
     
     // connect to the db
     // service to access the database

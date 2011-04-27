@@ -83,7 +83,7 @@ void RepackKiller::run(void*) throw() {
 
   try {
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 63, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 63, 0, 0);
         
     // remove
     
