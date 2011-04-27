@@ -710,19 +710,19 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
   castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue(
-    (char*)"(s,s,K,K,K,K,K,K,K,K,K,K)",
-    (elem.tapePoolName).c_str(),
-    (elem.castorFileName).c_str(),
-    elem.copyNb,
-    elem.fileId,
-    elem.fileSize,
-    elem.fileMode,
-    elem.uid,
-    elem.gid,
-    elem.aTime,
-    elem.mTime,
-    elem.cTime,
-    elem.fileClass));
+    (char*)"(s,s,K,K,K,i,K,K,K,K,K,i)",
+    (elem.tapePoolName).c_str(),     // char *     = s
+    (elem.castorFileName).c_str(),   // char *     = s
+    elem.copyNb,                     // u_signed64 = K
+    elem.fileId,                     // u_signed64 = K
+    elem.fileSize,                   // u_signed64 = K
+    elem.fileMode,                   // int        = i
+    elem.uid,                        // u_signed64 = K
+    elem.gid,                        // u_signed64 = K
+    elem.aTime,                      // u_signed64 = K
+    elem.mTime,                      // u_signed64 = K
+    elem.cTime,                      // u_signed64 = K
+    elem.fileClass));                // int        = i
 
   // Call the migration-policy Python-function
   castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc,

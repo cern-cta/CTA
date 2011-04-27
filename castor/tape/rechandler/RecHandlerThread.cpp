@@ -258,7 +258,7 @@ bool castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallP
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue("(s,K,K,K,K,K)", 
+  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue("(s,K,K,K,K,i)",
   	  (elem.vid).c_str(),elem.numSegments,elem.totalBytes,elem.ageOfOldestSegment,elem.priority,nbMountsForRecall));
 
   
