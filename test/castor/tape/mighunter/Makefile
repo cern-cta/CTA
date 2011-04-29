@@ -1,16 +1,20 @@
 ROOT_DIR=../../../..
-EXECUTABLES=testtapeutils
+EXECUTABLES=testmighunter migrationpolicystresstest
 COMMON_OPS=-g -pthread
 
-INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
+PYLIBS   = $(shell python ${ROOT_DIR}/config/pycompile.py --libs)
+PYINC    = $(shell python ${ROOT_DIR}/config/pycompile.py --inc)
+PYCFLAGS = $(shell python ${ROOT_DIR}/config/pycompile.py --cflags)
+
+INCLUDE_OPS=$(PYINC) -I$(ROOT_DIR) -I$(ROOT_DIR)/h
 
 all: $(EXECUTABLES)
 
 clean:
 	rm -f $(EXECUTABLES) *.o
 
-testtapeutils: \
-  testTapeUtilsMain.o \
+testmighunter: \
+  testMighunterMain.o \
   Exception.o \
   Communication.o \
   Internal.o \
@@ -25,14 +29,46 @@ testtapeutils: \
   Constants.o \
   getconfent.o \
   serror.o \
-  Cglobals.o
-	g++ $(COMMON_OPS) -lpthread -lcppunit -o $@ $^
+  Cglobals.o \
+  ScopedPythonLock.o \
+  tapepython.o \
+  SmartPyObjectPtr.o
+	g++ $(COMMON_OPS) -lpthread -lcppunit $(PYLIBS) -o $@ $^
 
-testTapeUtilsMain.o: \
-  testTapeUtilsMain.cpp
+migrationpolicystresstest: \
+  migrationPolicyStressTestMain.o \
+  Exception.o \
+  Communication.o \
+  Internal.o \
+  InvalidArgument.o \
+  InvalidConfigEntry.o \
+  InvalidConfiguration.o \
+  NoEntry.o \
+  OutOfMemory.o \
+  utils.o \
+  SmartFd.o \
+  SmartFILEPtr.o \
+  Constants.o \
+  getconfent.o \
+  serror.o \
+  Cglobals.o \
+  ScopedPythonLock.o \
+  tapepython.o \
+  SmartPyObjectPtr.o
+	g++ $(COMMON_OPS) -lpthread -lcppunit $(PYLIBS) -o $@ $^
+
+testMighunterMain.o: \
+  testMighunterMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-testTapeUtilsMain.cpp: TapeUtilsTest.hpp
+testMighunterMain.cpp: MigrationPolicyTest.hpp
+	touch $@
+
+migrationPolicyStressTestMain.o: \
+  migrationPolicyStressTestMain.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+migrationPolicyStressTestMain.cpp: MigrationPolicyStressTest.hpp
 	touch $@
 
 Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
@@ -82,3 +118,12 @@ serror.o: $(ROOT_DIR)/common/serror.c
 
 Cglobals.o: $(ROOT_DIR)/common/Cglobals.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ScopedPythonLock.o: $(ROOT_DIR)/castor/tape/python/ScopedPythonLock.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapepython.o: $(ROOT_DIR)/castor/tape/python/python.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+SmartPyObjectPtr.o: $(ROOT_DIR)/castor/tape/python/SmartPyObjectPtr.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

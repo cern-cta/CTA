@@ -213,12 +213,13 @@ template<typename T> void setBytes(T &object, const int c) throw() {
  * Safely copies source string into destination string.  The destination
  * will always be null terminated if this function is successful.
  *
- * @param dst Destination string.
- * @param src Source string.
- * @param n   The maximum number of characters to be copied from source to
+ * @param dst     Destination string.
+ * @param dstSize The size of the destination string including the terminating
+ *                null character.
+ * @param src     Source string.
  * destination.
  */
-void copyString(char *const dst, const char *src, const size_t n)
+void copyString(char *const dst, const size_t dstSize, const char *const src)
   throw(castor::exception::Exception);
 
 /**
@@ -228,10 +229,11 @@ void copyString(char *const dst, const char *src, const size_t n)
  * @param dst Destination string.
  * @param src Source string.
  */
-template<int n> void copyString(char (&dst)[n], const char *src)
+template<size_t dstSize> void copyString(char (&dst)[dstSize],
+  const char *const src)
   throw(castor::exception::Exception) {
 
-  copyString(dst, src, n);
+  copyString(dst, dstSize, src);
 }
 
 /**
@@ -365,11 +367,14 @@ const char *objectTypeToString(const unsigned int type);
  * The new-line characters are extracted from the file, but they are not
  * stored in the lines appended to the list.
  *
+ * An empty line, with or without a delimiting '\n' character will be appended
+ * to the list od lines as an empty string.
+ *
  * @param filename The filename of the file to be read.
  * @param lines The list to which each line of the file will be appended.
  */
-void readFileIntoList(const char *filename, std::list<std::string> &lines)
-  throw(castor::exception::Exception);
+void readFileIntoList(const char *const filename,
+  std::list<std::string> &lines) throw(castor::exception::Exception);
 
 /**
  * Appends to the specified list the filenames from the "filelist" file with
@@ -577,6 +582,19 @@ std::string tapeBlockIdToString(
   const unsigned char blockId1,
   const unsigned char blockId2,
   const unsigned char blockId3) throw();
+
+/**
+ * Appends the specified path to the value of the specified enviornment
+ * variable.  If the environment variable does not exist or is set with an
+ * empty string, then the specified path simply becomes the value of the
+ * environment variable.
+ *
+ * @param envVarName       The name of the environment variable.
+ * @param pathToBeAppended The path to be appended to the value of the
+ *                         environment variable.
+ */
+void appendPathToEnvVar(const std::string &envVarName,
+  const std::string &pathToBeAppended) throw(castor::exception::Exception);
 
 } // namespace utils
 } // namespace tape

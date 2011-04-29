@@ -198,23 +198,41 @@ void castor::tape::utils::toHex(const uint64_t i, char *dst,
 //-----------------------------------------------------------------------------
 // copyString
 //-----------------------------------------------------------------------------
-void castor::tape::utils::copyString(char *const dst,
-  const char *src, const size_t n) throw(castor::exception::Exception) {
+void castor::tape::utils::copyString(char *const dst, const size_t dstSize,
+  const char *const src) throw(castor::exception::Exception) {
 
-  const size_t srcLen = strlen(src);
-
-  if(srcLen >= n) {
+  if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
     ex.getMessage() << __FUNCTION__
-      << ": Source string is longer than destination.  Source length: "
-      << srcLen << " Max destination length: " << (n-1);
+      << ": Pointer to destination string is NULL";
 
     throw ex;
   }
 
-  strncpy(dst, src, n);
-    *(dst+n-1) = '\0'; // Ensure destination is null terminated
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __FUNCTION__
+      << ": Pointer to source string is NULL";
+
+    throw ex;
+  }
+
+  const size_t srcLen = strlen(src);
+
+  if(srcLen >= dstSize) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __FUNCTION__
+      << ": Source string is longer than destination.  Source length: "
+      << srcLen << " Max destination length: " << (dstSize - 1);
+
+    throw ex;
+  }
+
+  strncpy(dst, src, dstSize);
+  *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
 
 
@@ -479,7 +497,7 @@ const char *castor::tape::utils::objectTypeToString(const unsigned int type) {
 //------------------------------------------------------------------------------
 // readFileIntoList
 //------------------------------------------------------------------------------
-void castor::tape::utils::readFileIntoList(const char *filename,
+void castor::tape::utils::readFileIntoList(const char *const filename,
   std::list<std::string> &lines) throw(castor::exception::Exception) {
 
   std::ifstream file(filename);
@@ -495,11 +513,13 @@ void castor::tape::utils::readFileIntoList(const char *filename,
   std::string line;
 
   while(!file.eof()) {
+    line.clear();
+
     std::getline(file, line, '\n');
 
-    lines.push_back(line);
-
-    line.clear();
+    if(!line.empty() || !file.eof()) {
+      lines.push_back(line);
+    }
   }
 }
 
@@ -950,3 +970,39 @@ std::string castor::tape::utils::tapeBlockIdToString(
   return oss.str();
 }
 
+
+//---------------------------------------------------------------------------
+// appendPathToEnvVar
+//---------------------------------------------------------------------------
+void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
+  const std::string &pathToBeAppended) throw(castor::exception::Exception) {
+
+  // Get the current value of the enviornment variable (there may not be one)
+  const char *const currentPath = getenv(envVarName.c_str());
+
+  // Construct the new value of PYTHONPATH
+  std::string newPath;
+  if(currentPath == NULL || '\0' == *currentPath) {
+    newPath = pathToBeAppended;
+  } else {
+    newPath  = currentPath;
+    newPath += ":";
+    newPath += pathToBeAppended;
+  }
+
+  // Set the value of the environment variable to the new value
+  const int overwrite = 1;
+  const int rc = setenv(envVarName.c_str(), newPath.c_str(), overwrite);
+  if(rc == -1) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": setenv() call failed" <<
+      ": Insufficient space in the environment" <<
+      ": name=" << envVarName <<
+      " value=" << newPath <<
+      " overwrite=" << overwrite);
+  } else if(rc != 0) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": setenv() call failed" <<
+      ": Unknown error");
+  }
+}

@@ -47,22 +47,9 @@ void castor::tape::python::initializePython()
   // environment variable so the PyImport_ImportModule() function can find the
   // stream and migration policy modules
   {
-    // Get the current value of PYTHONPATH (there may not be one)
-    const char *const currentPath = getenv("PYTHONPATH");
-
-    // Construct the new value of PYTHONPATH
-    std::string newPath;
-    if(currentPath == NULL) {
-      newPath = CASTOR_POLICIES_DIRECTORY;
-    } else {
-      newPath  = currentPath;
-      newPath += ":";
-      newPath += CASTOR_POLICIES_DIRECTORY;
-    }
-
-    // Set PYTHONPATH to the new value
-    const int overwrite = 1;
-    setenv("PYTHONPATH", newPath.c_str(), overwrite);
+    const std::string envVarName("PYTHONPATH");
+    const std::string pathToBeAppended(CASTOR_POLICIES_DIRECTORY);
+    utils::appendPathToEnvVar(envVarName, pathToBeAppended);
   }
 
   // Initialize Python throwing an exception if a Python error occurs
