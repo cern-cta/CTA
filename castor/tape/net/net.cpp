@@ -47,7 +47,7 @@ int castor::tape::net::createListenerSock(
   const char           *addr,
   const unsigned short lowPort,
   const unsigned short highPort,
-  unsigned short&)
+  unsigned short       &chosenPort)
   throw(castor::exception::Exception) {
 
   // Check range validity
@@ -95,6 +95,9 @@ int castor::tape::net::createListenerSock(
 
     // If the bind was successful
     if(bindRc == 0) {
+
+      // Record the port number of the succesful bind
+      chosenPort = port;
 
       // Mark the socket as being a listener
       if(listen(sock.get(), LISTENBACKLOG) < 0) {
@@ -367,7 +370,7 @@ void castor::tape::net::getSockHostName(const int socketFd,
       ": " << gai_strerror(error));
   }
 
-  utils::copyString(buf, hostName, len);
+  utils::copyString(buf, len, hostName);
 }
 
 
@@ -453,7 +456,7 @@ void castor::tape::net::getPeerHostName(const int socketFd,
         ": " << gai_strerror(rc));
     }
 
-    utils::copyString(buf, hostName, len);
+    utils::copyString(buf, len, hostName);
   }
 }
 
