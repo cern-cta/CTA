@@ -89,7 +89,7 @@ namespace castor {
 
     try {
      
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 34, 0, 0);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 34, 0, 0);
       tapelist = oraSvc->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
       tape=tapelist.begin();
 
