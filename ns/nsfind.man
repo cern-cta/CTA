@@ -19,13 +19,13 @@ it is prefixed by the content of the
 environment variable.
 .SH OPTIONS
 .TP
-.BI -atime=NBDAYS
+.BI -atime NBDAYS
 if NBDAYS is is just a number, the file is selected if it was accessed exactly NBDAYS ago. If the argument is in the form +n, this means more than n days ago and if the argument is in the form -n, this means less than n days ago.
 .TP
-.BI -ctime=NBDAYS
+.BI -ctime NBDAYS
 the file is selected if its status changed NBDAYS ago. See -atime above.
 .TP
-.BI -inum=FILEID
+.BI -inum FILEID
 the file is selected if its fileid matches FILEID.
 .TP
 .B -ls
@@ -74,13 +74,13 @@ sticky bit is on
 .RE
 .RE
 .TP
-.BI -mtime=NBDAYS
+.BI -mtime NBDAYS
 the file is selected if it has been modified NBDAYS ago. See -atime above.
 .TP
-.BI -name=PATTERN
+.BI -name PATTERN
 select the file if the file name matches regular expression PATTERN.
 .TP
-.BI -type=TYPE
+.BI -type TYPE
 The file is of type TYPE:
 .RS
 .TP
