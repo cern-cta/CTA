@@ -1326,7 +1326,7 @@ int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
     }
     /* Return avgcompression back in CASTOR format, i.e. as compression
        'factor' and not its inverse that is the real compression ratio */
-    *avgcompression = *size / strtou64 (weightedsum_str);
+    *avgcompression = *size / strtof (weightedsum_str);
     return(0);
   } else {
     Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
