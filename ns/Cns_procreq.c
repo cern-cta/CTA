@@ -4717,7 +4717,7 @@ int Cns_srv_setsegattrs(int magic,
                   "NSHOSTNAME=%s NSFILEID=%llu FileChecksum=\"0x%s\" "
                   "SegmentChecksum=\"0x%s\"",
                   reqinfo->requuid, nshostname, filentry.fileid,
-                  smd_entry.checksum);
+                  filentry.csumvalue, smd_entry.checksum);
           RETURN (SECHECKSUM);
         }
       }
