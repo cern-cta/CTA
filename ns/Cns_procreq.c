@@ -4715,7 +4715,7 @@ int Cns_srv_setsegattrs(int magic,
         if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
           nslogit("MSG=\"Checksum mismatch between file and segment\" REQID=%s "
                   "NSHOSTNAME=%s NSFILEID=%llu FileChecksum=\"0x%s\" "
-                  "SegmentChecksum=\"0x%s\"",
+                  "SegmentChecksum=\"%lx\"",
                   reqinfo->requuid, nshostname, filentry.fileid,
                   filentry.csumvalue, smd_entry.checksum);
           RETURN (SECHECKSUM);
