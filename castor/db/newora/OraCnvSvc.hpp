@@ -96,9 +96,21 @@ namespace castor {
         /**
          * Creates an Oracle prepared statement exposed with the Oracle API
          * @param stmt the string statement to be prepared 
+         * @exception Exception throws an Exception in case of error
+         * creating the statement or establishing the underlying DB connection.
          */
         oracle::occi::Statement*
         createOraStatement(const std::string& stmt)
+          throw (castor::exception::Exception);
+        
+        /**
+         * Terminates a prepared statement created with the Oracle API
+         * @param stmt the statement to be deleted
+         * @exception Exception throws an Exception in case the
+         * Oracle API failed to terminate the statement or if
+         * the DB connection was not initialized.
+         */
+        void terminateStatement(oracle::occi::Statement* oraStmt)
           throw (castor::exception::Exception);
         
         /**
@@ -127,15 +139,6 @@ namespace castor {
         oracle::occi::Connection* getConnection()
           throw (castor::exception::Exception);
         
-        /**
-         * Closes a prepared statement wrapped with the
-         * db-independent CDBC API.
-         * This is called by ~OraStatement.
-         * @param stmt the statement to be deleted 
-         */
-        virtual void closeStatement(castor::db::IDbStatement* stmt)
-          throw (castor::exception::SQLError);
-        
         /// Oracle user name
         std::string m_user;
         
@@ -146,20 +149,19 @@ namespace castor {
         std::string m_dbName;
         
         /**
-        * The Oracle environment for this service
-        */
+         * The Oracle environment for this service
+         */
         oracle::occi::Environment* m_environment;
         
         /**
-        * The Oracle connection for this service
-        */
+         * The Oracle connection for this service
+         */
         oracle::occi::Connection* m_connection;
         
-        
         /**
-        * Friend declaration for OraStatement to allow call
-        * the private method closeStatement()
-        */
+         * Friend declaration for OraStatement to allow
+         * its bulk methods to access the Oracle DB connection
+         */
         friend class OraStatement;
         
       };

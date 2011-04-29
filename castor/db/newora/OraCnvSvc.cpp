@@ -351,9 +351,8 @@ castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std:
 oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
   throw (castor::exception::Exception) {
   try {
-    // XXX this is exposing the OCCI API - should it disappear?
-    oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
-    return statement;
+    oracle::occi::Statement* oraStmt = getConnection()->createStatement(stmt);
+    return oraStmt;
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error creating statement, Oracle code: " << e.getErrorCode()
@@ -364,16 +363,17 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
 }
 
 //------------------------------------------------------------------------------
-// closeStatement
+// terminateStatement
 //------------------------------------------------------------------------------
-void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
-  throw (castor::exception::SQLError) {
+void castor::db::ora::OraCnvSvc::terminateStatement(oracle::occi::Statement* oraStmt)
+  throw (castor::exception::Exception) {
   try {
-    castor::db::ora::OraStatement* oraStmt = dynamic_cast<castor::db::ora::OraStatement*>(stmt);
-    if (oraStmt == 0) return;
-    m_connection->terminateStatement(oraStmt->getStatementImpl());
-    // the stmt object is still alive; this method is called only inside ~OraStatement
-    // so there's no need to delete it.
+    if(0 == m_connection) {
+      castor::exception::SQLError ex;
+      ex.getMessage() << "Error closing statement, Oracle connection not initialized";
+      throw ex;
+    }
+    m_connection->terminateStatement(oraStmt);
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error closing statement, Oracle code: " << e.getErrorCode()

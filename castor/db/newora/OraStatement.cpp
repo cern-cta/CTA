@@ -60,7 +60,7 @@ castor::db::ora::OraStatement::~OraStatement() {
       free(m_arraySize);
     m_arraySize = 0;
     // Close statement
-    m_cnvSvc->closeStatement(this);
+    m_cnvSvc->terminateStatement(m_statement);
   }
   catch(oracle::occi::SQLException ignored) {}
 }

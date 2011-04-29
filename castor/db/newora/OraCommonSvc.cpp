@@ -430,7 +430,5 @@ castor::db::ora::OraCommonSvc::createStatement (const std::string &stmtString)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::deleteStatement(oracle::occi::Statement* stmt)
   throw (castor::exception::Exception) {
-  castor::db::ora::OraStatement* oraStmt =
-    new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
-  delete oraStmt;
+  dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->terminateStatement(stmt);
 }
