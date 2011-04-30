@@ -187,30 +187,30 @@ public:
       expectedNbOutputLines, policyOutputLines.size());
 
     std::list<std::string>::iterator itor = policyOutputLines.begin();
-    CPPUNIT_ASSERT_MESSAGE("tapePoolName"  , *(itor++) ==
-      "tapepool       = \"tapePoolName\""   );
-    CPPUNIT_ASSERT_MESSAGE("castorFileName", *(itor++) ==
-      "castorfilename = \"castorFileName\"" );
-    CPPUNIT_ASSERT_MESSAGE("copyNb"        , *(itor++) ==
-      "copynb         = 0x102030405060708L" );
-    CPPUNIT_ASSERT_MESSAGE("fileId"        , *(itor++) ==
-      "fileId         = 0x1112131415161718L");
-    CPPUNIT_ASSERT_MESSAGE("fileSize"      , *(itor++) ==
-      "fileSize       = 0x2122232425262728L");
-    CPPUNIT_ASSERT_MESSAGE("fileMode"      , *(itor++) ==
-      "fileMode       = 0x31323334"         );
-    CPPUNIT_ASSERT_MESSAGE("uid"           , *(itor++) ==
-      "uid            = 0x4142434445464748L");
-    CPPUNIT_ASSERT_MESSAGE("gid"           , *(itor++) ==
-      "gid            = 0x5152535455565758L");
-    CPPUNIT_ASSERT_MESSAGE("aTime"         , *(itor++) ==
-      "aTime          = 0x6162636465666768L");
-    CPPUNIT_ASSERT_MESSAGE("mTime"         , *(itor++) ==
-      "mTime          = 0x7172737475767778L");
-    CPPUNIT_ASSERT_MESSAGE("cTime"         , *(itor++) ==
-      "cTime          = 0x8182838485868788L");
-    CPPUNIT_ASSERT_MESSAGE("fileClass"     , *(itor++) ==
-      "fileClass      = 0x31323334"         );
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("tapePoolName"  ,
+      std::string("tapepool       = \"tapePoolName\""   ), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("castorFileName",
+      std::string("castorfilename = \"castorFileName\"" ), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("copyNb"        ,
+      std::string("copynb         = 0x102030405060708L" ), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("fileId"        ,
+      std::string("fileId         = 0x1112131415161718L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("fileSize"      ,
+      std::string("fileSize       = 0x2122232425262728L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("fileMode"      ,
+      std::string("fileMode       = 0x31323334"         ), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("uid"           ,
+      std::string("uid            = 0x4142434445464748L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("gid"           ,
+      std::string("gid            = 0x5152535455565758L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("aTime"         ,
+      std::string("aTime          = 0x6162636465666768L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("mTime"         ,
+      std::string("mTime          = 0x7172737475767778L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("cTime"         ,
+      std::string("cTime          = 0x8182838485868788L"), *(itor++));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("fileClass"     ,
+      std::string("fileClass      = 0x31323334"         ), *(itor++));
     CPPUNIT_ASSERT_MESSAGE("No more lines" , itor == policyOutputLines.end());
   } // testMigrationPolicy()
 
