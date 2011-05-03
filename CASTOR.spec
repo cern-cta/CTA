@@ -67,6 +67,12 @@ MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 %{__rm} -rf ${RPM_BUILD_ROOT}
+
+# rpmbuild --define="compilenostk 1" ...
+%if 0%{?compilenostk:1} > 0
+export CASTOR_NOSTK=1
+%endif
+
 %if %compiling_client
 %{__make} installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %else
