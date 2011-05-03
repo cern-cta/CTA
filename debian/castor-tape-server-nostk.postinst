@@ -1,0 +1,4 @@
+/bin/ln -s -f /usr/bin/mounttape-nostk /usr/bin/mounttape
+/bin/ln -s -f /usr/bin/rlstape-nostk /usr/bin/rlstape
+/sbin/chkconfig --add taped
+/sbin/service taped condrestart > /dev/null 2>&1 || :

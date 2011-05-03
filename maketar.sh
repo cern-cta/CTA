@@ -101,23 +101,20 @@ function copyInstallPerm {
       copyInstallPermInternal $package debian/$package.install.perm.tmp
       echo "%endif" >> CASTOR.spec
     fi
-    #rm -f debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp
 }
 
 #
 ## Append all sub-packages to CASTOR.spec
 #
-for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-tape-server` castor-tape-server castor-tape-server-nostk; do
+for this in `grep Package: debian/control | awk '{print $NF}'`; do
     package=$this
     actualPackage=$package
 
-    # handle nostk vs normal compilation of castor-tape-server
+    # ignore the STK version of the castor-tape-server if compiling without STK support
     if [ "$package" = "castor-tape-server" ]; then
-	echo "%if ! %compiling_nostk" >> CASTOR.spec
-    fi
-    if [ "$package" = "castor-tape-server-nostk" ]; then
-        echo "%else" >> CASTOR.spec
-        package="castor-tape-server"
+	if [ ! -z $CASTOR_NOSTK ]; then
+            continue
+        fi
     fi
 
     #
@@ -311,7 +308,6 @@ for this in `grep Package: debian/control | awk '{print $NF}' | grep -v castor-t
     fi
     echo >> CASTOR.spec
 done
-echo "%endif" >> CASTOR.spec # end of compiling_notstk if
 
 cd ..
 

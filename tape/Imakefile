@@ -7,11 +7,6 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 COMM 	Make tape daemon programs.
 
 TAPEACCT = tapeacct.o
-ifeq ($(CASTOR_NOSTK),)
-  CDKFLG = -DCDK -DLINUX
-  CDKINC = -I/usr/include/CDK
-  LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
-endif
 #if BuildSecureTape
 CPPFLAGS += -DTPCSEC
 AddLdFlags(-ldl)
@@ -19,8 +14,7 @@ AddLdFlags(-ldl)
 
 COMM ######################### FLAGS ##############################
 
-CPPFLAGS += -DTAPELOGFILE=TapeLogFile $(STAGERSUPERUSER) \
-	    $(CDKFLG) $(CDKINC) -DSCSIINC=TapeScsiInc
+CPPFLAGS += -DTAPELOGFILE=TapeLogFile $(STAGERSUPERUSER) -DSCSIINC=TapeScsiInc
 
 LOCAL_PATH/usrlocate.c: LOCAL_PATH/locate.c
 	RemoveFiles($@)
@@ -107,14 +101,10 @@ EXEMANPAGE(tpstat)
 TapeMakeDir(LogPath,0755)
 TAPED_OBJS = tpdaemon.o checkjobdied.o cvtden.o sendrep.o tplogit.o usrmsg.o
 CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
-MOUNTTAPE_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
-RLSTAPE_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
 TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
 TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
 TapeProgramTarget(smc,smc.o,$(TAPELIB),$(TAPELIB),6755)
 TapeProgramTarget(tpdump,tpdump.o,$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tplabel,tplabel.o,$(TAPELIB),$(TAPELIB),755)
@@ -128,3 +118,34 @@ LOGROTATE(castor-sacct,installtape)
 SYSCONFIG(taped,installtape)
 INITSCRIPT(taped,installtape)
 CONFIGFILE(TP,installtape)
+
+# Compile no STK version
+MOUNTTAPE_NOSTK_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
+RLSTAPE_NOSTK_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
+TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+
+# Compile STK objects. Note: only 2 objects, mounttape and rbtsubr need to be recompiled with STK options
+ifeq ($(CASTOR_NOSTK),)
+CDKFLG = -DCDK -DLINUX
+CDKINC = -I/usr/include/CDK
+LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
+
+LOCAL_PATH/mounttape-stk.c: $(CASTOR_ROOT)/tape/mounttape.c
+	RemoveFiles($@)
+	cp $< $@
+PREFIX(FilesToClean) += LOCAL_PATH/mounttape-stk.c
+COMPILEC(mounttape-stk.c, $(CDKFLG) $(CDKINC))
+
+LOCAL_PATH/rbtsubr-stk.c: $(CASTOR_ROOT)/tape/rbtsubr.c
+	RemoveFiles($@)
+	cp $< $@
+PREFIX(FilesToClean) += LOCAL_PATH/rbtsubr-stk.c
+COMPILEC(rbtsubr-stk.c, $(CDKFLG) $(CDKINC))
+
+# Compile STK version
+MOUNTTAPE_STK_OBJS = mounttape-stk.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr-stk.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
+RLSTAPE_STK_OBJS = rlstape.o getdrvstatus.o rbtsubr-stk.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
+TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
+TapeProgramTarget(rlstape,$(RLSTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
+endif

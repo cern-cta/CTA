@@ -1,0 +1,7 @@
+/var/log/castor/taped*.log {
+    compress
+    daily
+    missingok
+    rotate 200
+    delaycompress
+}

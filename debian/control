@@ -219,6 +219,12 @@ Build-Depends: stk-ssi, stk-ssi-devel
 Description: castor (Cern Advanced STORage system)
  Tape server
 
+Package: castor-tape-server-nostk
+Architecture: any
+Depends: logrotate
+Description: castor (Cern Advanced STORage system)
+ Tape server
+
 Package: castor-upv-client
 Architecture: any
 XBS-Group: Client
