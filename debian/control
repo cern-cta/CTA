@@ -214,6 +214,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-tape-server
 Architecture: any
 Depends: logrotate
+Conflicts: castor-tape-server-nostk
 Build-Depends: stk-ssi, stk-ssi-devel
 Description: castor (Cern Advanced STORage system)
  Tape server
