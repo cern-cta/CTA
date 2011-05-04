@@ -1254,7 +1254,7 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
   -- Cursor to select the next candidate for submission to the scheduler orderd
   -- by creation time.
   CURSOR c IS
-    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_CT_ID) */ SR.id
       FROM SubRequest
  PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY status ASC, SR.creationTime ASC;
