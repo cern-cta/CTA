@@ -426,7 +426,8 @@ BEGIN
           -- Delete the TapeCopies
           deleteTapeCopies(cf.cfId);
           -- See whether pending SubRequests exist
-          SELECT count(*) INTO nb FROM SubRequest
+          SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+            FROM SubRequest
            WHERE castorFile = cf.cfId
              AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
           IF nb = 0 THEN
@@ -453,7 +454,8 @@ BEGIN
             END;
           ELSE
             -- SubRequests exist, fail them
-            UPDATE SubRequest SET status = 7 -- FAILED
+            UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+               SET status = 7 -- FAILED
              WHERE castorFile = cf.cfId
                AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
           END IF;
@@ -497,7 +499,7 @@ BEGIN
   FORALL i IN dcIds.FIRST .. dcIds.LAST
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   -- put SubRequests into FAILED (for non FINISHED ones)
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
      SET status = 7,  -- FAILED
          errorCode = 16,  -- EBUSY
          errorMessage = 'Request canceled by another user request'
@@ -777,7 +779,8 @@ BEGIN
        WHERE id = f.dcid;
       -- and we also fail the correspondent prepareToPut/Update request if it exists
       BEGIN
-        SELECT id INTO srId   -- there can only be one outstanding PrepareToPut/Update, if any
+        SELECT /*+ INDEX(Subrequest I_Subrequest_Diskcopy)*/ id
+          INTO srId   -- there can only be one outstanding PrepareToPut/Update, if any
           FROM SubRequest
          WHERE status = 6 AND diskCopy = f.dcid;
         archiveSubReq(srId, 9);  -- FAILED_FINISHED

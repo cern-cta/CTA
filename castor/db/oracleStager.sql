@@ -439,7 +439,7 @@ BEGIN
         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
        WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
        WHERE id = srIntId
       RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
@@ -464,7 +464,10 @@ CREATE OR REPLACE PROCEDURE processAbortForGet(sr processBulkAbortFileReqsHelper
 BEGIN
   -- note the revalidation of the status and even of the existence of the subrequest
   -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
-  SELECT status INTO abortedSRstatus FROM SubRequest WHERE id = sr.srId;
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ status
+    INTO abortedSRstatus
+    FROM SubRequest
+   WHERE id = sr.srId;
   CASE
     WHEN abortedSRstatus = dconst.SUBREQUEST_START
       OR abortedSRstatus = dconst.SUBREQUEST_RESTART
@@ -506,7 +509,7 @@ BEGIN
         INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 16, 'Cannot abort ongoing recall'); -- EBUSY
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Nothing running, we can cancel the recall  
-        UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET status = 7 WHERE id = sr.srId;
         deleteTapeCopies(sr.cfId);
         UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
          WHERE castorfile = sr.cfid AND status = dconst.DISKCOPY_WAITTAPERECALL;
@@ -538,7 +541,7 @@ CREATE OR REPLACE PROCEDURE processAbortForPut(sr processBulkAbortFileReqsHelper
 BEGIN
   -- note the revalidation of the status and even of the existence of the subrequest
   -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
-  SELECT status INTO abortedSRstatus FROM SubRequest WHERE id = sr.srId;
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ status INTO abortedSRstatus FROM SubRequest WHERE id = sr.srId;
   CASE
     WHEN abortedSRstatus = dconst.SUBREQUEST_START
       OR abortedSRstatus = dconst.SUBREQUEST_RESTART
@@ -550,7 +553,9 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+         SET status = dconst.SUBREQUEST_FAILED
+       WHERE id = sr.srId;
       UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
        WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
                                                  dconst.DISKCOPY_WAITFS,
@@ -590,7 +595,8 @@ BEGIN
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
     INSERT INTO processBulkAbortFileReqsHelper (
-      SELECT SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
+      SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+             SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
          AND request = origReqId);
@@ -602,7 +608,8 @@ BEGIN
         cfId NUMBER;
         srUuid VARCHAR(2048);
       BEGIN
-        SELECT SubRequest.id, CastorFile.id, SubRequest.subreqId INTO srId, cfId, srUuid
+        SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+               SubRequest.id, CastorFile.id, SubRequest.subreqId INTO srId, cfId, srUuid
           FROM SubRequest, CastorFile
          WHERE request = origReqId
            AND SubRequest.castorFile = CastorFile.id
@@ -776,7 +783,7 @@ BEGIN
     FETCH c INTO srIntId;
     EXIT WHEN c%NOTFOUND;
     BEGIN
-      SELECT answered INTO srAnswered
+      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO srAnswered
         FROM SubRequest PARTITION (P_STATUS_7) 
        WHERE id = srIntId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
@@ -784,7 +791,9 @@ BEGIN
         archiveSubReq(srIntId, 9);  -- FAILED_FINISHED
       ELSE
         -- we got our subrequest
-        UPDATE subrequest SET status = 10 WHERE id = srIntId   -- FAILED_ANSWERING
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subrequest
+           SET status = 10   -- FAILED_ANSWERING
+         WHERE id = srIntId
         RETURNING retryCounter, fileName, protocol, xsize, priority, status,
                   modeBits, flags, subReqId, errorCode, errorMessage
         INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
@@ -829,7 +838,7 @@ BEGIN
   -- case when Updates and Puts come after a PrepareToPut and they need to wait on
   -- the first Update|Put to complete.
   -- Cf. recreateCastorFile and the DiskCopy statuses 5 and 11
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET parent = (SELECT SubRequest.id
                      FROM SubRequest, DiskCopy, Id2Type
                     WHERE SubRequest.diskCopy = DiskCopy.id
@@ -854,7 +863,7 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGE
   srIds "numList";
   clientId INTEGER;
 BEGIN
-  SELECT request INTO rId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ request INTO rId
     FROM SubRequest
    WHERE id = srId;
   BEGIN
@@ -862,7 +871,7 @@ BEGIN
     SELECT Id2Type.id INTO rId
       FROM Id2Type
      WHERE id = rId FOR UPDATE;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
            lastModificationTime = getTime(),
            status = finalStatus
@@ -870,7 +879,7 @@ BEGIN
     BEGIN
       -- Try to see whether another subrequest in the same
       -- request is still being processed
-      SELECT id INTO unused FROM SubRequest
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO unused FROM SubRequest
        WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- All subrequests have finished, we can archive
@@ -884,7 +893,7 @@ BEGIN
         USING OUT clientId, IN rId;
       DELETE FROM Client WHERE id = clientId;
       DELETE FROM Id2Type WHERE id IN (rId, clientId);
-      SELECT id BULK COLLECT INTO srIds
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id BULK COLLECT INTO srIds
         FROM SubRequest
        WHERE request = rId;
       FORALL i IN srIds.FIRST .. srIds.LAST
@@ -900,7 +909,7 @@ BEGIN
     -- and the subrequest was already archived: just update this subrequest,
     -- don't bother with the whole request. Note that this could
     -- happen only if someone archives an already archived subrequest.
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET lastModificationTime = getTime(),
            status = finalStatus
      WHERE id = srId;
@@ -1098,7 +1107,7 @@ BEGIN
   -- In such a case, we should fail the request with an ENOSPACE error
   IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
     dcId := -1;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7, -- FAILED
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since diskPool is full'
@@ -1134,7 +1143,7 @@ BEGIN
   IF checkPermission(destSvcClass, userid, groupid, 40) != 0 THEN
     -- Fail the subrequest and notify the client
     dcId := -1;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7, -- FAILED
            errorCode = 13, -- EACCES
            errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
@@ -1177,7 +1186,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        AND ROWNUM < 2;
     -- We are in one of the special cases. Don't schedule, don't recall
     dcId := -1;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7, -- FAILED
            errorCode = CASE
              WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
@@ -1200,7 +1209,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     IF checkPermission(destSvcClass, userid, groupid, 161) != 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7, -- FAILED
              errorCode = 13, -- EACCES
              errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
@@ -1249,7 +1258,7 @@ BEGIN
   -- Also for disk2disk copying across service classes make the originating
   -- subrequest wait on the completion of the transfer.
   IF sourceSrId > 0 THEN
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 5, parent = ids_seq.nextval -- WAITSUBREQ
      WHERE id = sourceSrId
     RETURNING castorFile, parent INTO cfId, srId;
@@ -1332,7 +1341,8 @@ BEGIN
   -- find a fileSystem for this empty file
   SELECT id, svcClass, euid, egid, name || ':' || mountpoint
     INTO fsId, svcClassId, ouid, ogid, fsPath
-    FROM (SELECT FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
+    FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+                 FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
             FROM DiskServer, FileSystem, DiskPool2SvcClass,
                  (SELECT id, svcClass, euid, egid from StageGetRequest UNION ALL
                   SELECT id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
@@ -1368,9 +1378,9 @@ BEGIN
   INSERT INTO Id2Type (id, type) VALUES (dcId, 5);  -- OBJ_DiskCopy
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
-    UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET diskCopy = dcId WHERE id = srId;
   ELSE
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET diskCopy = dcId,
            requestedFileSystems = fsPath,
            xsize = 0, status = 13, -- READYFORSCHED
@@ -1466,7 +1476,8 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
   regid NUMBER;
 BEGIN
   -- retrieve the castorFile and the svcClass for this subrequest
-  SELECT SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.upd
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+         SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.upd
     INTO cfId, reuid, regid, svcClassId, upd
     FROM (SELECT id, euid, egid, svcClass, 0 upd from StageGetRequest UNION ALL
           SELECT id, euid, egid, svcClass, 1 upd from StageUpdateRequest) Request,
@@ -1526,7 +1537,7 @@ BEGIN
     -- List available diskcopies for job scheduling
     OPEN sources
       FOR SELECT id, path, status, fsRate, mountPoint, name FROM (
-            SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+            SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
                    FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                   FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
                                   FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
@@ -1627,14 +1638,14 @@ BEGIN
     -- No diskcopies available for this service class:
     -- first check whether there's already a disk to disk copy going on
     BEGIN
-      SELECT SubRequest.id INTO d2dsrId
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO d2dsrId
         FROM StageDiskCopyReplicaRequest Req, SubRequest
        WHERE SubRequest.request = Req.id
          AND Req.svcClass = svcClassId    -- this is the destination service class
          AND status IN (13, 14, 6)  -- WAITINGFORSCHED, BEINGSCHED, READY
          AND castorFile = cfId;
       -- found it, wait on it
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET parent = d2dsrId, status = 5  -- WAITSUBREQ
        WHERE id = srId;
       result := -2;
@@ -1720,7 +1731,7 @@ BEGIN
     DECLARE
       srId NUMBER;
     BEGIN
-      SELECT SubRequest.id INTO srId
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO srId
         FROM SubRequest,
          (SELECT id FROM StagePrepareToPutRequest UNION ALL
           SELECT id FROM StagePrepareToUpdateRequest) Request
@@ -1782,11 +1793,12 @@ BEGIN
   END IF;
   -- update the Repack subRequest for this file. The status REPACK
   -- stays until the migration to the new tape is over.
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET diskCopy = dcId, status = 12  -- REPACK
    WHERE id = srId;   
   -- get the service class, uid and gid
-  SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ R.svcClass, euid, egid
+    INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND SubRequest.id = srId;
@@ -1823,7 +1835,8 @@ CREATE OR REPLACE PROCEDURE processPrepareRequest
   regid NUMBER;
 BEGIN
   -- retrieve the castorfile, the svcclass and the reqId for this subrequest
-  SELECT SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.repack
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+         SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.repack
     INTO cfId, reuid, regid, svcClassId, repack
     FROM (SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
           SELECT id, euid, egid, svcClass, 1 repack FROM StageRepackRequest UNION ALL
@@ -1908,7 +1921,7 @@ BEGIN
           -- However at the moment the tapegateway does not handle double repacks,
           -- so we simply fail this repack and rely on Repack to submit
           -- such double tape repacks one by one.
-          UPDATE SubRequest
+          UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
              SET status = 7,  -- FAILED
                  errorCode = 16,  -- EBUSY
                  errorMessage = 'File is currently being written or migrated'
@@ -1930,7 +1943,7 @@ BEGIN
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
       -- check whether there's already a recall, and get its svcClass
-      SELECT Request.svcClass, DiskCopy.id, repack
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ Request.svcClass, DiskCopy.id, repack
         INTO recSvcClass, recDcId, recRepack
         FROM (SELECT id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
               SELECT id, svcClass, 0 repack FROM StageGetRequest UNION ALL
@@ -1949,7 +1962,7 @@ BEGIN
       -- from a double repack request on the same file.
       IF repack = 1 AND recRepack = 1 THEN
         -- we are not able to handle a double repack, see the detailed comment above
-        UPDATE SubRequest
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
            SET status = 7,  -- FAILED
                errorCode = 16,  -- EBUSY
                errorMessage = 'File is currently being repacked'
@@ -1988,7 +2001,7 @@ CREATE OR REPLACE PROCEDURE processPutDoneRequest
   putSubReq NUMBER;
 BEGIN
   -- Get the svcClass and the castorFile for this subrequest
-  SELECT Req.svcclass, SubRequest.castorfile
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Req.svcclass, SubRequest.castorfile
     INTO svcClassId, cfId
     FROM SubRequest, StagePutDoneRequest Req
    WHERE Subrequest.request = Req.id
@@ -2001,7 +2014,7 @@ BEGIN
   -- Check whether there is a Put|Update going on
   -- If any, we'll wait on one of them
   BEGIN
-    SELECT subrequest.id INTO putSubReq
+    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ subrequest.id INTO putSubReq
       FROM SubRequest, Id2Type
      WHERE SubRequest.castorfile = cfId
        AND SubRequest.request = Id2Type.id
@@ -2009,7 +2022,7 @@ BEGIN
        AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
        AND ROWNUM < 2;
     -- we've found one, we wait
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET parent = putSubReq,
            status = 5, -- WAITSUBREQ
            lastModificationTime = getTime()
@@ -2032,7 +2045,7 @@ BEGIN
     IF nbDCs = 0 THEN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
-      UPDATE SubRequest SET
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET
         status = 7,  -- FAILED
         errorCode = 1,  -- EPERM
         errorMessage = 'putDone without a put, or wrong service class'
@@ -2075,7 +2088,7 @@ BEGIN
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
     -- check that we are a Put/Update
-    SELECT Request.svcClass INTO putSC
+    SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Request.svcClass INTO putSC
       FROM (SELECT id, svcClass FROM StagePutRequest UNION ALL
             SELECT id, svcClass FROM StageUpdateRequest) Request, SubRequest
      WHERE SubRequest.id = srId
@@ -2084,7 +2097,8 @@ BEGIN
       -- check that there is a PrepareToPut/Update going on. There can be only a single one
       -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
       -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-      SELECT SubRequest.diskCopy, PrepareRequest.svcClass INTO dcId, pputSC
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.diskCopy,
+             PrepareRequest.svcClass INTO dcId, pputSC
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
               SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.CastorFile = cfId
@@ -2096,7 +2110,7 @@ BEGIN
         -- No, this means we are a Put/Update and another PrepareToPut
         -- is already running in a different service class. This is forbidden
         dcId := 0;
-        UPDATE SubRequest
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
            SET status = 7, -- FAILED
                errorCode = 16, -- EBUSY
                errorMessage = 'A prepareToPut is running in another service class for this file'
@@ -2117,7 +2131,7 @@ BEGIN
     BEGIN
       -- we are either a prepareToPut, or a prepareToUpdate and it's the only one (file is being created).
       -- In case of prepareToPut we need to check that we are the only one
-      SELECT count(SubRequest.diskCopy) INTO nbPReqs
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(SubRequest.diskCopy) INTO nbPReqs
         FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.castorFile = cfId
@@ -2128,7 +2142,7 @@ BEGIN
         -- this means we are a PrepareToPut and another PrepareToPut/Update
         -- is already running. This is forbidden
         dcId := 0;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7, -- FAILED
                errorCode = 16, -- EBUSY
                errorMessage = 'Another prepareToPut/Update is ongoing for this file'
@@ -2143,7 +2157,7 @@ BEGIN
   -- check if there is space in the diskpool in case of
   -- disk only pool
   -- First get the svcclass and the user
-  SELECT svcClass, euid, egid INTO sclassId, ouid, ogid
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass, euid, egid INTO sclassId, ouid, ogid
     FROM Subrequest,
          (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
           SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
@@ -2155,7 +2169,7 @@ BEGIN
     -- The svcClass is declared disk only and has no space
     -- thus we cannot recreate the file
     dcId := 0;
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7, -- FAILED
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since disk pool is full'
@@ -2170,7 +2184,7 @@ BEGIN
       -- The svcClass is disk only and the file being overwritten asks for tape copy.
       -- This is impossible, so we deny the operation
       dcId := 0;
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7, -- FAILED
              errorCode = 22, -- EINVAL
              errorMessage = 'File recreation canceled since this service class doesn''t provide tape backend'
@@ -2185,7 +2199,7 @@ BEGIN
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
       dcId := 0;
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7, -- FAILED
              errorCode = 16, -- EBUSY
              errorMessage = 'File recreation canceled since file is being migrated'
@@ -2200,7 +2214,7 @@ BEGIN
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
       dcId := 0;
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7, -- FAILED
              errorCode = 16, -- EBUSY
              errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
@@ -2247,14 +2261,14 @@ BEGIN
           srParent NUMBER;
         BEGIN
           -- look for it
-          SELECT SubRequest.id INTO srParent
+          SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ SubRequest.id INTO srParent
             FROM SubRequest, Id2Type
            WHERE request = Id2Type.id
              AND type IN (40, 44)  -- Put, Update
              AND diskCopy = dcId
              AND status IN (13, 14, 6)  -- READYFORSCHED, BEINGSCHED, READY
              AND ROWNUM < 2;   -- if we have more than one just take one of them
-          UPDATE SubRequest
+          UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
              SET status = 5, parent = srParent  -- WAITSUBREQ
            WHERE id = srId;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2277,8 +2291,9 @@ BEGIN
   UPDATE CastorFile SET svcClass = sclassId
    WHERE id = cfId;
   -- link SubRequest and DiskCopy
-  UPDATE SubRequest SET diskCopy = dcId,
-                        lastModificationTime = getTime()
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+     SET diskCopy = dcId,
+         lastModificationTime = getTime()
    WHERE id = srId;
   -- we don't commit here, the stager will do that when
   -- the subRequest status will be updated to 6
@@ -2346,7 +2361,7 @@ BEGIN
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
-    UPDATE SubRequest SET castorFile = rid
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's create a new one
@@ -2363,7 +2378,7 @@ BEGIN
       VALUES (ids_seq.nextval, fId, nsHostName, sc, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
-    UPDATE SubRequest SET castorFile = rid
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId;
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
@@ -2371,7 +2386,7 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- while we were trying to create it ourselves. We can thus use the newly created file
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-  UPDATE SubRequest SET castorFile = rid
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
    WHERE id = srId;
 END;
 /
@@ -2401,7 +2416,7 @@ BEGIN
     RETURN;
   END IF;
   -- check if recreation is possible for SubRequests
-  SELECT count(*) INTO nbRes FROM SubRequest
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nbRes FROM SubRequest
    WHERE status != 11 AND castorFile = cfId;   -- ARCHIVED
   IF nbRes > 0 THEN
     -- We found something, thus we cannot recreate
@@ -2441,7 +2456,7 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FOR sr IN (SELECT id, status FROM SubRequest
+  FOR sr IN (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ id, status FROM SubRequest
               WHERE diskcopy IN
                 (SELECT /*+ CARDINALITY(dcidTable 5) */ *
                    FROM TABLE(dcsToRm) dcidTable)
@@ -2490,7 +2505,7 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This file does not exist in the stager catalog
     -- so we just fail the request
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 7,  -- FAILED
            errorCode = 2,  -- ENOENT
            errorMessage = 'File not found on disk cache'
@@ -2513,7 +2528,7 @@ BEGIN
     UNION ALL (
       -- and then diskcopies resulting from ongoing requests, for which the previous
       -- query wouldn't return any entry because of e.g. missing filesystem
-      SELECT DC.id
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ DC.id
         FROM (SELECT id FROM StagePrepareToPutRequest WHERE svcClass = scId UNION ALL
               SELECT id FROM StagePrepareToGetRequest WHERE svcClass = scId UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest WHERE svcClass = scId UNION ALL
@@ -2530,7 +2545,7 @@ BEGIN
       );
     IF dcsToRm.COUNT = 0 THEN
       -- We didn't find anything on this svcClass, fail and return
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7,  -- FAILED
              errorCode = 2,  -- ENOENT
              errorMessage = 'File not found on this service class'
@@ -2556,7 +2571,7 @@ BEGIN
          AND DiskCopy.id NOT IN
           (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable);
       IF nbRes = 0 THEN
-        UPDATE SubRequest
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
            SET status = 7,  -- FAILED
                errorCode = 16,  -- EBUSY
                errorMessage = 'As the file is not yet migrated, we cannot drop the last copy in this service class'
@@ -2592,7 +2607,7 @@ BEGIN
          AND castorFile = cfId;
       IF nbRes > 0 THEN
         -- We found something, thus we cannot remove
-        UPDATE SubRequest
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
            SET status = 7,  -- FAILED
                errorCode = 16,  -- EBUSY
                errorMessage = 'The file is not yet migrated'
@@ -2623,7 +2638,7 @@ BEGIN
          AND Segment.status = 7 -- SELECTED
          AND ROWNUM < 2;
       -- Something is running, so give up
-      UPDATE SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7,  -- FAILED
              errorCode = 16,  -- EBUSY
              errorMessage = 'The file is being recalled from tape'
@@ -2635,7 +2650,7 @@ BEGIN
        WHERE castorFile = cfId
          AND status NOT IN (4, 7, 9);  -- anything but FAILED, INVALID, BEINGDELETED
       IF nbRes = 0 THEN
-        UPDATE SubRequest
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
            SET status = 7,  -- FAILED
                errorCode = 2,  -- ENOENT
                errorMessage = 'File not found on disk cache'
@@ -2669,7 +2684,7 @@ BEGIN
       srUuid VARCHAR(2048);
     BEGIN
       FOR i IN srIds.FIRST .. srIds.LAST LOOP
-        SELECT type, subreqId INTO srType, srUuid
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ type, subreqId INTO srType, srUuid
           FROM SubRequest, Id2Type
          WHERE SubRequest.request = Id2Type.id
            AND SubRequest.id = srIds(i);
@@ -2749,20 +2764,20 @@ CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus 
   reqId INTEGER;
 BEGIN
   -- Lock the access to the Request
-  SELECT Id2Type.id INTO reqId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Id2Type.id INTO reqId
     FROM SubRequest, Id2Type
    WHERE SubRequest.id = srId
      AND Id2Type.id = SubRequest.request
      FOR UPDATE OF Id2Type.id;
   -- Update Status
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET status = newStatus,
          answered = 1,
          lastModificationTime = getTime(),
          getNextStatus = decode(newStatus, 6, 1, 8, 1, 9, 1, 0)  -- READY, FINISHED or FAILED_FINISHED -> GETNEXTSTATUS_FILESTAGED
    WHERE id = srId;
   -- Check whether it was the last subrequest in the request
-  SELECT id INTO result FROM SubRequest
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO result FROM SubRequest
    WHERE request = reqId
      AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
      AND answered = 0

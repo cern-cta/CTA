@@ -31,7 +31,7 @@ BEGIN
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize, DC.status,
                  CASE WHEN DC.svcClass IS NULL THEN
-                   (SELECT UNIQUE Req.svcClassName
+                   (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
                         (SELECT id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
                          SELECT id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
@@ -76,7 +76,8 @@ BEGIN
                  DC.path, CastorFile.fileSize,
                  CASE WHEN DC.dcSvcClass = svcClassId THEN DC.status
                       WHEN DC.fileSystem = 0 THEN
-                       (SELECT UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
+                       (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                        UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
                             (SELECT id, svcClass FROM StagePrepareToGetRequest    UNION ALL
                              SELECT id, svcClass FROM StagePrepareToPutRequest    UNION ALL
@@ -242,7 +243,9 @@ CREATE OR REPLACE PROCEDURE userTagStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  SELECT sr.castorfile BULK COLLECT INTO cfs
+  SELECT /*+ NO_USE_HASH(REQLIST SR) USE_NL(REQLIST SR) 
+             INDEX(SR I_SUBREQUEST_REQUEST) */
+         sr.castorfile BULK COLLECT INTO cfs
     FROM SubRequest sr,
          (SELECT id
             FROM StagePreparetogetRequest
@@ -298,7 +301,7 @@ BEGIN
            WHERE reqid = rid
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest 
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Request)*/ SubRequest 
        SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
@@ -332,7 +335,7 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest 
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Request)*/ SubRequest 
        SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))

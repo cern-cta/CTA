@@ -1417,7 +1417,7 @@ BEGIN
   BEGIN 
    --REPACK case
     -- Get the repackvid field from the existing request (if none, then we are not in a repack process
-     SELECT SRR.repackvid INTO outRepackVid
+     SELECT /*+ INDEX(sR I_Subrequest_Castorfile)*/ SRR.repackvid INTO outRepackVid
        FROM SubRequest sR, StageRepackRequest SRR
       WHERE SRR.id = SR.request
         AND sR.status = dconst.SUBREQUEST_REPACK
@@ -1781,7 +1781,7 @@ BEGIN
   END IF;
   -- archive Repack requests should any be in the db
   FOR i IN (
-    SELECT SR.id FROM SubRequest SR
+    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
     WHERE SR.castorfile = varCfId AND
           SR.status= dconst.SUBREQUEST_REPACK
     ) LOOP
@@ -1864,7 +1864,7 @@ BEGIN
   -- delete tapecopies
   deleteTapeCopies(varCfId);
   -- update diskcopy status, size and gweight
-  SELECT SR.id, SR.request
+  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request
     INTO varSubrequestId, varRequestId
     FROM SubRequest SR
    WHERE SR.diskcopy = varDcId;
@@ -1887,7 +1887,7 @@ BEGIN
         DC.diskCopySize = varFileSize
     WHERE Dc.id = varDcId;
   -- restart this subrequest so that the stager can follow it up
-  UPDATE SubRequest SR
+  UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
      SET SR.status = dconst.SUBREQUEST_RESTART, 
          SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
          SR.lastModificationTime = getTime(), SR.parent = 0
@@ -1906,7 +1906,7 @@ BEGIN
     END;
   END IF;
   -- restart other requests waiting on this recall
-  UPDATE SubRequest SR
+  UPDATE /*+ INDEX(SR I_Subrequest_Parent)*/ SubRequest SR
      SET SR.status = dconst.SUBREQUEST_RESTART,
          SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
          SR.lastModificationTime = getTime(), SR.parent = 0
@@ -1954,7 +1954,8 @@ BEGIN
     FOR i IN tcToFail.FIRST .. tcToFail.LAST LOOP
         BEGIN
         -- we don't need a lock on castorfile because we cannot have a parallel migration of the same file using repack
-          SELECT SubRequest.id, SubRequest.castorfile into srId, cfId
+          SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                 SubRequest.id, SubRequest.castorfile into srId, cfId
             FROM SubRequest,TapeCopy
             WHERE TapeCopy.id = tcToFail(i)
             AND SubRequest.castorfile = TapeCopy.castorfile
@@ -2038,7 +2039,7 @@ BEGIN
       deleteTapeCopies(cfId);
       
       -- fail subrequests
-      UPDATE SubRequest 
+      UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest 
         SET status = dconst.SUBREQUEST_FAILED,
             getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
             lastModificationTime = getTime(),
@@ -2217,7 +2218,7 @@ BEGIN
          AND DC.status = dconst.DISKCOPY_WAITTAPERECALL;
       deleteTapeCopies(varCfId);
       -- Fail the subrequest
-      UPDATE SubRequest SR
+      UPDATE /*+ INDEX(SR I_Subrequest_Castorfile)*/ SubRequest SR
          SET SR.status = dconst.SUBREQUEST_FAILED,
              SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
              SR.lastModificationTime = getTime(),

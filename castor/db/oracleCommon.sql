@@ -228,9 +228,10 @@ BEGIN
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
   -- Look for request associated to the recall and fail
   -- it and all the waiting ones
-  UPDATE SubRequest SET status = newSubReqStatus
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Diskcopy)*/ SubRequest
+     SET status = newSubReqStatus
    WHERE diskCopy = dcId RETURNING id BULK COLLECT INTO srIds;
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Parent)*/ SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
    WHERE status = 5 -- WAITSUBREQ
      AND parent IN
@@ -280,7 +281,8 @@ BEGIN
     -- If any TapeCopy, give up
     IF nb = 0 THEN
       -- See whether pending SubRequests exist
-      SELECT count(*) INTO nb FROM SubRequest
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+        FROM SubRequest
        WHERE castorFile = cfId
          AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- If any SubRequest, give up

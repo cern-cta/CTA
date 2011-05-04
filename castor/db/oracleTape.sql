@@ -670,7 +670,8 @@ BEGIN
     fileSystemId := 0;
     -- The DiskCopy had no FileSystem associated with it which indicates that
     -- This is a new recall. We try and select a good FileSystem for it!
-    FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+    FOR a IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                     DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                      FileSystem.diskserver, CastorFile.fileSize
                 FROM DiskServer, FileSystem, DiskPool2SvcClass,
                      (SELECT id, svcClass from StageGetRequest UNION ALL
@@ -745,7 +746,7 @@ BEGIN
   -- say whether the failure is fatal or not, we drop everything
   -- and we won't deny a future request for recall.
   deleteTapeCopies(cfId);
-  UPDATE SubRequest 
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest 
      SET status = dconst.SUBREQUEST_FAILED,
          getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, -- (not strictly correct but the request is over anyway)
          lastModificationTime = getTime(),
@@ -841,12 +842,12 @@ BEGIN
    WHERE id = dci;
   -- determine the type of the request
   SELECT type INTO reqType FROM Id2Type WHERE id =
-    (SELECT request FROM SubRequest WHERE id = subRequestId);
+    (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ request FROM SubRequest WHERE id = subRequestId);
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci, ouid, ogid);
   ELSE
     -- restart this subrequest if it's not a repack one
-    UPDATE SubRequest
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
            getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
            lastModificationTime = getTime(), parent = 0
@@ -1011,7 +1012,7 @@ BEGIN
   -- JUST rtcpclientd
   ret := NULL;
   -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-  SELECT SubRequest.id, StageRepackRequest.repackvid
+  SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ SubRequest.id, StageRepackRequest.repackvid
     INTO sreqid, ret
     FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
    WHERE stagerepackrequest.id = subrequest.request
@@ -1809,10 +1810,10 @@ BEGIN
        (SELECT 1 FROM SubRequest 
          WHERE request = R.id AND status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_REPACK));
   -- fail subrequests
-  UPDATE Subrequest SET status = dconst.SUBREQUEST_FAILED_FINISHED
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Request)*/ Subrequest SET status = dconst.SUBREQUEST_FAILED_FINISHED
    WHERE request = reqId AND status NOT IN (dconst.SUBREQUEST_FAILED_FINISHED, dconst.SUBREQUEST_ARCHIVED)
   RETURNING castorFile, diskcopy BULK COLLECT INTO cfIds, dcIds;
-  SELECT id INTO srId 
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO srId 
     FROM SubRequest 
    WHERE request = reqId AND ROWNUM = 1;
   archiveSubReq(srId, 9);
