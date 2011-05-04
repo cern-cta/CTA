@@ -53,7 +53,7 @@ namespace castor {
     /**
      * Destructor
      */
-    virtual ~BaseSvc() throw() {};
+    virtual ~BaseSvc() throw();
     
     /**
      * Get the service name

@@ -71,7 +71,7 @@ namespace castor {
          * Resets the converter. In particular any prepared
          * statements are destroyed
          */
-        virtual void reset() throw();
+        virtual void reset() throw() {};
 
       protected:
 

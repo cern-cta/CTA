@@ -67,9 +67,13 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
 // ~DbCnvSvc
 // -----------------------------------------------------------------------
 castor::db::DbCnvSvc::~DbCnvSvc() throw() {
-  // we're going away, so we notify all db oriented objects
-  // that their statements are not valid any longer.
-  dropConnection();
+  // we're going away, we delete all objects relying on us
+  for (std::set<castor::db::DbBaseObj*>::const_iterator it =
+         m_registeredDbObjs.begin();
+       it != m_registeredDbObjs.end();
+       it++) {
+    delete (*it);
+  }
 }
 
 // -----------------------------------------------------------------------

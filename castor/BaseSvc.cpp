@@ -37,6 +37,13 @@ castor::BaseSvc::BaseSvc(const std::string name) throw() :
   m_refs(1) {}
 
 // -----------------------------------------------------------------------
+// Destructor
+// -----------------------------------------------------------------------
+castor::BaseSvc::~BaseSvc() throw() {
+  svcs()->removeService(m_name);
+}
+
+// -----------------------------------------------------------------------
 // release
 // -----------------------------------------------------------------------
 void castor::BaseSvc::release() throw() {
@@ -46,7 +53,6 @@ void castor::BaseSvc::release() throw() {
   // of the time. Otherwise, services are constantly created
   // and released.
 //   if (0 == m_refs) {
-//     svcs()->removeService(name());
 //     delete this;
 //   }
 }
