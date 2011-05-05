@@ -422,6 +422,11 @@ class Setup:
                 path = os.sep.join([self.testdir,'resources',name])
                 if not os.path.isdir(path):
                     raise NameError('Could not find resource ' + name)
+                # check for tags.py file and absorb new definitions
+                if path not in self.processedTagspy:
+                    if os.path.isfile(path+os.sep+'tags.py'):
+                        execfile(path+os.sep+'tags.py')
+                        self.processedTagspy.append(path)
                 # run all tests
                 for ts, tn, fn in listTests(path, self.testdir, listResources=True):
                     self.runTest(ts,tn,fn)
@@ -455,11 +460,6 @@ class Setup:
                 # non existing file, i.e. nothing needed, it's all ok
                 pass
         elif os.path.isdir(path):
-            # check for tags.py file and absorb new definitions
-            if path not in self.processedTagspy:
-                if os.path.isfile(path+os.sep+'tags.py'):
-                    execfile(path+os.sep+'tags.py')
-                    self.processedTagspy.append(path)
             # check all resources in default.resources file
             self.checkResources(path+os.sep+'default.resources',skip, noRec=True)
 
