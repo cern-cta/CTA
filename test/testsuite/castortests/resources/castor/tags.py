@@ -25,7 +25,7 @@ Setup.getTag_castorTag = castorTag
 # declare new random order tags
 self.declareRandomOrderTag('noTapeFileName')
 self.declareRandomOrderTag('tapeFileName')
-self.declareRandomOrderTag('fileid@ns')
+self.declareRandomOrderTag('fileid')
 
 ##################################
 ### nameserver related methods ###
