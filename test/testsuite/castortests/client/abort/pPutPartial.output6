@@ -8,5 +8,5 @@
     stager: <sending time6> Sending request
     stager: <uuid6> SND <send duration6> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid6> CBK <answer duration6> s before callback from <server ip4> was received
+    stager: <uuid6> CBK <answer duration6> s before callback from <server ip6> was received
 Received 2 responses
