@@ -56,7 +56,7 @@ _LOG_PRIMASK = 0x07
 def init(facility):
     '''Initializes the distributed logging facility. Sets the facility name and the mask'''
     # Default logmask to include all messages up to and including INFO
-    global _logmask
+    global _logmask, _initialized
     syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_INFO))
     # Find out which logmask should be used from castor.conf
     config = castor_tools.castorConf()
@@ -75,6 +75,7 @@ def init(facility):
 
 def shutdown():
     '''Close/shutdown the distributed logging facility interface'''
+    global _logmask, _initialized
     if not _initialized:
         return
     # Close the syslog API
@@ -104,7 +105,6 @@ def writep(priority, msgnb, **params):
     if not _initialized:
         return
     # ignore messages whose priority is not of interest
-    global _logmask
     if syslog.LOG_MASK(priority & _LOG_PRIMASK) & _logmask == 0:
         return
     # check whether this is the first log of this message
