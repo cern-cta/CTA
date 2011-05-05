@@ -323,8 +323,8 @@ BEGIN
         -- Loop on file deletions. Select only enough files until we reach the
         -- 10000 return limit.
         FOR dc IN (SELECT id, castorFile FROM (
-                     SELECT id, castorFile FROM DiskCopy
-                      WHERE filesystem = fs.id
+                     SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ id, castorFile FROM DiskCopy
+                      WHERE fileSystem = fs.id
                         AND status = 0 -- STAGED
                         AND NOT EXISTS (
                           SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'

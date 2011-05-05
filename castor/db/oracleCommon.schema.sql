@@ -165,7 +165,6 @@ CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
-CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
