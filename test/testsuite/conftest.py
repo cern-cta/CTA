@@ -254,6 +254,12 @@ def compareOutput(setup, output, gold, testName, localTags):
         goldIndex = endTag+1
         # Special case for 'IgnoreRestOfOutput' tag
         if tag == 'IgnoreRestOfOutput': break
+        # find the base tag
+        match = re.search('\d+$',tag)
+        if match:
+            baseTag = tag[:match.start()]
+        else:
+            baseTag = tag
         # find the tag value in the output
         nextTagIndex = gold.find('<', goldIndex)
         if nextTagIndex == -1: nextTagIndex = len(gold)
@@ -268,12 +274,8 @@ def compareOutput(setup, output, gold, testName, localTags):
             # predefined value for the tag
             tagRefValue = setup.getTag(testName, tag)
             # try to see whether the tag is one of the random order type
-            matchObject = reduce(lambda x,y : x == None and y or x,
-                                 map(lambda x : re.match('('+x+')\d*', tag),
-                                     setup.randomOrderTags))
-            if matchObject:
+            if setup.hasRandomOrderTag(baseTag):
                 # special case for tags that may be reordered...
-                baseTag = matchObject.group(1)
                 if not randomOrderNeeded.has_key(baseTag): randomOrderNeeded[baseTag] = []
                 if not randomOrderFound.has_key(baseTag): randomOrderFound[baseTag] = []
                 randomOrderNeeded[baseTag].append(tagRefValue)
@@ -286,10 +288,19 @@ def compareOutput(setup, output, gold, testName, localTags):
         elif localTags.has_key(tag):
             # this tag has already been seen, check that its value did not change
             tagRefValue = localTags[tag][0]
-            assert tagRefValue == tagValue, \
-                   buildTagErrorMsg(setup, "Tag '" + tag + "' has changed value", \
-                                    output, tagRefValue, outIndex, outIndex+len(tagValue), gold, \
-                                    (localTags[tag][1], localTags[tag][2]))
+            # try to see whether the tag is one of the random order type
+            if setup.hasRandomOrderTag(baseTag):
+                # special case for tags that may be reordered...
+                if not randomOrderNeeded.has_key(baseTag): randomOrderNeeded[baseTag] = []
+                if not randomOrderFound.has_key(baseTag): randomOrderFound[baseTag] = []
+                randomOrderNeeded[baseTag].append(tagRefValue)
+                randomOrderFound[baseTag].append(tagValue)
+            else:
+                # check the tag value in the output
+                assert tagRefValue == tagValue, \
+                       buildTagErrorMsg(setup, "Tag '" + tag + "' has changed value", \
+                                        output, tagRefValue, outIndex, outIndex+len(tagValue), gold, \
+                                        (localTags[tag][1], localTags[tag][2]))
         else:
             # unknown tag, found out its value and register it
             # tags starting with 'variable' are not registered
@@ -361,6 +372,9 @@ class Setup:
 
     def declareRandomOrderTag(self, tag):
         self.randomOrderTags.append(tag)
+
+    def hasRandomOrderTag(self, tag):
+        return tag in self.randomOrderTags
 
     def suppressRegExp(self, re):
         self.suppressRegExps.append(re)
