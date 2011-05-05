@@ -159,7 +159,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       if (defined($this{$what})) {
         print "$this{$what}\n";
       }' $package Depends |
-      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
+      sed 's/^[ \t]*//' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ -n "${requires}" ]; then
         echo "Requires: ${requires}" >> CASTOR.spec
     fi
