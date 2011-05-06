@@ -49,7 +49,6 @@ debian/castor/usr/share/man/man3/Cns_updateseg_status.3castor.gz
 debian/castor/usr/share/man/man3/Cns_updatefile_checksum.3castor.gz
 debian/castor/usr/share/man/man3/Cns_utime.3castor.gz
 debian/castor/usr/share/man/man3/Cns_aborttrans.3castor.gz
-debian/castor/usr/share/man/man3/Cns_creatg.3castor.gz
 debian/castor/usr/share/man/man3/Cns_endsess.3castor.gz
 debian/castor/usr/share/man/man3/Cns_endtrans.3castor.gz
 debian/castor/usr/share/man/man3/Cns_getacl.3castor.gz

@@ -678,9 +678,6 @@ int procreq(int magic,
   case CNS_LISTLINKS:
     c = procdirreq (magic, req_type, req_data, thip);
     break;
-  case CNS_SETFSIZEG:
-    c = Cns_srv_setfsizeg (magic, req_data, thip, &thip->reqinfo);
-    break;
   case CNS_STATG:
     c = Cns_srv_statg (req_data, thip, &thip->reqinfo);
     break;

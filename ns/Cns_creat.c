@@ -98,14 +98,6 @@ Cns_creat(const char *path, mode_t mode)
 }
 
 int
-Cns_creatg(const char *path, const char *guid, mode_t mode)
-{
-  struct Cns_fileid file_uniqueid;
-
-  return (Cns_creatc (path, guid, mode, &file_uniqueid));
-}
-
-int
 Cns_creatx(const char *path, mode_t mode, struct Cns_fileid *file_uniqueid)
 {
   return (Cns_creatc (path, NULL, mode, file_uniqueid));

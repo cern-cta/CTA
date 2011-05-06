@@ -175,6 +175,5 @@ Name server is not running or is being shutdown.
 .BR Cns_chdir(3) ,
 .BR Cns_chmod(3) ,
 .BR Cns_chown(3) ,
-.BR Cns_creatg(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

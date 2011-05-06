@@ -97,7 +97,7 @@
 #define CNS_ENDTRANS            47
 #define CNS_ABORTTRANS          48
 #define CNS_LISTLINKS           49
-#define CNS_SETFSIZEG           50
+#define CNS_SETFSIZEG           50 /* removed */
 #define CNS_STATG               51
 #define CNS_STATR               52 /* removed */
 #define CNS_SETPTIME            53 /* removed */
