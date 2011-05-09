@@ -133,7 +133,7 @@ int main(int argc,
           *argv[i] == 'f' ? S_IFREG :
           *argv[i] == 'l' ? S_IFLNK : 0;
       } else if (strcmp (argv[i], "--help") == 0) {
-	hflg++;
+        hflg++;
       } else
         errflg++;
     }
@@ -196,6 +196,8 @@ int listentry(char *dir,
     printf ("%s ", u64tostr (statbuf->fileid, tmpbuf, 20));
     if (statbuf->filemode & S_IFDIR)
       modestr[0] = 'd';
+    else if ((statbuf->filemode & S_IFLNK) == S_IFLNK)
+      modestr[0] = 'l';
     else
       modestr[0] = statbuf->status;
     modestr[1] = (statbuf->filemode & S_IRUSR) ? 'r' : '-';
