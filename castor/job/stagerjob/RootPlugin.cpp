@@ -164,11 +164,6 @@ void castor::job::stagerjob::RootPlugin::preForkHook
       if (stat64((char *)context.fullDestPath.c_str(), &statbuf) == 0) {
         if (statbuf.st_mtime < time(NULL)) {
           m_prevFileMtime = statbuf.st_mtime;
-          castor::dlf::Param params2[] =
-            {castor::dlf::Param("PrevMtime", statbuf.st_ctime),
-             castor::dlf::Param(args.subRequestUuid)};
-          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
-                                  ROOTRDWRSTATERR, 2, params2, &args.fileId);
           break;
         }
 
@@ -263,11 +258,6 @@ void castor::job::stagerjob::RootPlugin::postForkHook
       (m_prevFileMtime > 0)) {
     struct stat64 statbuf;
     if (stat64((char *)context.fullDestPath.c_str(), &statbuf) == 0) {
-          castor::dlf::Param params2[] =
-            {castor::dlf::Param("CurMtime", statbuf.st_ctime),
-             castor::dlf::Param(args.subRequestUuid)};
-          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
-                                  ROOTRDWRSTATERR, 2, params2, &args.fileId);
       if (statbuf.st_mtime > m_prevFileMtime) {
         // "File update detected, changing access mode to write"
         castor::dlf::Param params[] =
