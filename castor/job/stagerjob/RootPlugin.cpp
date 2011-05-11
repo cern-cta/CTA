@@ -50,6 +50,7 @@ castor::job::stagerjob::RootPlugin rootPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::RootPlugin::RootPlugin() throw():
   RawMoverPlugin("root") {
+  m_prevFileMtime = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -152,6 +153,61 @@ void castor::job::stagerjob::RootPlugin::preForkHook
   }
   setSelectTimeOut(t);
 
+  // If this is an update make sure that the modification time of the file on
+  // disk is older than the current system clock time. This allows us in
+  // postForkHook to detect if the client actually made any changes to the
+  // file. This is workaround and does not cover all use-cases!!! (See: #29491)
+  if (args.accessMode == castor::job::stagerjob::ReadWrite) {
+    unsigned int attempts = 0;
+    for (attempts = 0; attempts < 60; attempts++) {
+      struct stat64 statbuf;
+      if (stat64((char *)context.fullDestPath.c_str(), &statbuf) == 0) {
+        if (statbuf.st_mtime < time(NULL)) {
+          m_prevFileMtime = statbuf.st_mtime;
+          castor::dlf::Param params2[] =
+            {castor::dlf::Param("PrevMtime", statbuf.st_ctime),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                                  ROOTRDWRSTATERR, 2, params2, &args.fileId);
+          break;
+        }
+
+        // Sleep 1 second, if after 60 seconds we cannot ensure that the 
+        // modification time of the file is in the past we exit the loop. This
+        // stops us looping indefinitely.
+        sleep(1);
+      } else {
+        // An error occurred in the stat call. Other than logging an error and
+        // exiting the loop there isn't much else we can do.
+        if (errno != ENOENT) {
+          // "Failed to determine file modification time, file may not be closed
+          // properly"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Path", context.fullDestPath),
+             castor::dlf::Param("Message", "Failed to stat64()"), 
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                                  ROOTRDWRSTATERR, 4, params, &args.fileId);
+        }
+        break;
+      }
+    }
+
+    // If we exhausted all attempts to get the modification time log a warning
+    // message
+    if ((m_prevFileMtime == 0) && (attempts == 60)) {
+      // "Failed to determine file modification time, file may not be closed
+      // properly"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Path", context.fullDestPath),
+         castor::dlf::Param("Message", "File is currently being modified"),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                              ROOTRDWRSTATERR, 3, params, &args.fileId);   
+    }
+  }
+
   // Call upper level
   RawMoverPlugin::preForkHook(args, context);
 }
@@ -196,8 +252,35 @@ void castor::job::stagerjob::RootPlugin::postForkHook
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
+
+  // Wait for children
+  bool childFailed = waitForChild(args);
+
+  // If the file was opened for update determine if a write was actually
+  // performed by comparing the previously known file modification time
+  // determined in the preForkHook with the current file modification time.
+  if ((args.accessMode == castor::job::stagerjob::ReadWrite) &&
+      (m_prevFileMtime > 0)) {
+    struct stat64 statbuf;
+    if (stat64((char *)context.fullDestPath.c_str(), &statbuf) == 0) {
+          castor::dlf::Param params2[] =
+            {castor::dlf::Param("CurMtime", statbuf.st_ctime),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                                  ROOTRDWRSTATERR, 2, params2, &args.fileId);
+      if (statbuf.st_mtime > m_prevFileMtime) {
+        // "File update detected, changing access mode to write"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param(args.subRequestUuid)};
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_SYSTEM,
+                                XROOTFILEUPDATE, 1, params, &args.fileId);
+        args.accessMode = castor::job::stagerjob::WriteOnly;
+      }
+    }
+  }
+
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context);
+  RawMoverPlugin::postForkHook(args, context, childFailed);
 }
 
 //------------------------------------------------------------------------------

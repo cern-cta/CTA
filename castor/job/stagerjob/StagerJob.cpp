@@ -634,6 +634,7 @@ int main(int argc, char** argv) {
       { ROOTDBADMINVAL,  "Lower bound for ROOT port range not in valid range, using default" },
       { ROOTDBADMAXVAL,  "Upper bound for ROOT port range not in valid range, using default" },
       { ROOTDBADTIMEOUT, "Invalid value for ROOT/TIMEOUT option, using default" },
+      { ROOTRDWRSTATERR, "Failed to determine file modification time, file may not be closed properly" },
 
       { -1, "" }};
     castor::dlf::dlf_init("stagerjob", messages);

@@ -137,7 +137,8 @@ namespace castor {
         ROOTDBADMAXPORT = 62, /* Invalid upper bound for ROOT port range in config file, using default */
         ROOTDBADMINVAL =  63, /* Lower bound for ROOT port range not in valid range, using default */
         ROOTDBADMAXVAL =  64, /* Upper bound for ROOT port range not in valid range, using default */
-        ROOTDBADTIMEOUT = 65  /* Invalid value for ROOT/TIMEOUT option, using default */
+        ROOTDBADTIMEOUT = 65, /* Invalid value for ROOT/TIMEOUT option, using default */
+        ROOTRDWRSTATERR = 72  /* Failed to determine file modification time, file may not be closed properly */
       };
 
       /**

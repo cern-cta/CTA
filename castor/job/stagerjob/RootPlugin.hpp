@@ -96,6 +96,10 @@ namespace castor {
         (InputArguments &args, std::string name)
           throw();
 
+        /// The modification time of the physical file on disk before any
+        /// potential update.
+        signed64 m_prevFileMtime;
+
       }; // end of class RootPlugin
 
     } // end of namespace stagerjob
