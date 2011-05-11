@@ -50,38 +50,50 @@ namespace castor {
         XRootPlugin() throw();
 
         /**
-         *
+         * Helper function to read data from the communication channel between
+         * stagerjob and the local xrootd server.
+         * @param socket The file descriptor to read data from
+         * @param buf A pointer to a buffer in which to store data
+         * @param len The amount of data to read from the socket
+         * @param timeout The amount of time in seconds to wait for data to be
+         * received.
+         * @exception Exception in case of error.
          */
         void recvMessage(int socket, char *buf, ssize_t len, int timeout)
           throw(castor::exception::Exception);
 
         /**
-         *
+         * The preForkHook used to establish a control channel with the local
+         * xrootd server prior to an xroot transfer taking place.
+         * @param args The arguments given to the stager job
+         * @param context The current context (localhost, port, etc...)
          */
         virtual void preForkHook(InputArguments &args,
                                  PluginContext &context)
           throw(castor::exception::Exception);
 
         /**
-         *
+         * Hook to wait for the closure of a file.
+         * @param args The arguments given to the stager job
+         * @param context The current context (localhost, port, etc...)
          */
         virtual void postForkHook(InputArguments &args,
                                   PluginContext &context)
           throw (castor::exception::Exception);
 
-        /**
-         *
-         */
+        /// Not implemented
         virtual void execMover(InputArguments&,
                                PluginContext&)
           throw (castor::exception::Exception) {};
 
       private:
 
-        ///
+        /// The amount of time in seconds to wait for the local xrootd server
+        /// to connect to stagerjob.
         int m_openTimeout;
 
-        ///
+        /// The amount of time in seconds to wait for xrootd to send a CLOSE
+        /// notification back to stagerjob.
         int m_closeTimeout;
 
       }; // end of class XRootPlugin
