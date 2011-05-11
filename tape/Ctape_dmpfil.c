@@ -152,6 +152,10 @@ int Ctape_dmpinit(char *path,
 	case D1500GC:
         case D5000G:
 	case D5000GC:
+	case D1600G:
+	case D1600GC:
+	case D4000G:
+	case D4000GC:
 	case DDS:
 	case DDSC:
 		break;
@@ -881,6 +885,12 @@ int Ctape_dmpfil(char *path,
         } else if (den == D5000G || den == D5000GC) {
                 perc = tape_used / 50000000000.0;
                 Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 5T CARTRIDGE *****\n", perc);
+        } else if (den == D1600G || den == D1600GC) {
+                perc = tape_used / 16000000000.0;
+                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 1.6T CARTRIDGE *****\n", perc);
+        } else if (den == D4000G || den == D4000GC) {
+                perc = tape_used / 40000000000.0;
+                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 4T CARTRIDGE *****\n", perc);
 	} else if (den == D400G || den == D400GC) {
 		perc = tape_used / 4000000000UL;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A LTO3 CARTRIDGE (400GB) *****\n",
