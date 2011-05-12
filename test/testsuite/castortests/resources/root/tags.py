@@ -5,27 +5,34 @@ def rootbin(self):
 Setup.getTag_rootbin = rootbin
 
 def rootRFIOURL(self, nb=0):
-    global RootTURLs
-    RootTURLs = ['rfio:///castor\?path=',
-                 'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path=',
-                 'rfio://',
-                 'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT'],
-                 'rfio:///',
-                 'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/']
     snb = ''
     if nb > 0: snb = str(nb)
-    return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb), RootTURLs))
+    return (lambda test : ['rfio:///castor\?path='+self.getTag(test, 'noTapeFileName'+snb),
+                           'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path='+self.getTag(test, 'noTapeFileName'+snb),
+                           'rfio://'+self.getTag(test, 'noTapeFileName'+snb),
+                           'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+self.getTag(test, 'noTapeFileName'+snb),
+                           'rfio:///'+self.getTag(test, 'noTapeFileName'+snb),
+                           'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/'+self.getTag(test, 'noTapeFileName'+snb)])
 Setup.getTag_rootRFIOURL = rootRFIOURL
 
 def rootCastorURL(self, nb=0):
-    global RootTURLs
-    RootTURLs = ['castor:///castor\?path=',
-                 'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path=',
-                 'castor://',
-                 'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT'],
-                 'castor:///',
-                 'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/']
     snb = ''
     if nb > 0: snb = str(nb)
-    return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb), RootTURLs))
+    return (lambda test : ['castor:///castor\?path='+self.getTag(test, 'noTapeFileName'+snb),
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path='+self.getTag(test, 'noTapeFileName'+snb),
+                           'castor://'+self.getTag(test, 'noTapeFileName'+snb),
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+self.getTag(test, 'noTapeFileName'+snb),
+                           'castor:///'+self.getTag(test, 'noTapeFileName'+snb),
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/'+self.getTag(test, 'noTapeFileName'+snb)])
 Setup.getTag_rootCastorURL = rootCastorURL
+
+def rootCastorURLparam(self, nb=0):
+    snb = ''
+    if nb > 0: snb = str(nb)
+    return (lambda test : ['castor:///castor\?path='+self.getTag(test, 'noTapeFileName'+snb)+'&',
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path='+self.getTag(test, 'noTapeFileName'+snb)+'&',
+                           'castor://'+self.getTag(test, 'noTapeFileName'+snb)+'?',
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+self.getTag(test, 'noTapeFileName'+snb)+'?',
+                           'castor:///'+self.getTag(test, 'noTapeFileName'+snb)+'?',
+                           'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/'+self.getTag(test, 'noTapeFileName'+snb)+'?'])
+Setup.getTag_rootCastorURLparam = rootCastorURLparam
