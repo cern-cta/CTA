@@ -1,0 +1,10 @@
+echo 'TFile *f = new TCastorFile("<rootCastorURLparam>filetype=raw","RECREATE");#f->WriteBuffer("garbage",7);#.q' | sed 's/#/\n/g' > <tmpLocalFileName>
+cat <tmpLocalFileName> | <rootbin>
+sleep 3
+nsls -l <noTapeFileName> | awk '{print $5" "$NF}'
+stager_qry -M <noTapeFileName>
+echo 'TFile *f = new TCastorFile("<rootCastorURLparam>filetype=raw","UPDATE");#f->WriteBuffer("a bit more garbage",18);#.q' | sed 's/#/\n/g' > <tmpLocalFileName1>
+cat <tmpLocalFileName1> | <rootbin>
+sleep 3
+nsls -l <noTapeFileName> | awk '{print $5" "$NF}'
+
