@@ -253,7 +253,7 @@ class TransferManagerService(rpyc.Service):
     for diskPool in nbs:
       if len(nbs[diskPool]) > 0:
         # deal with special cases for the nbtransfersPerPool
-        if not nbtransfersPerPool:
+        if nbtransfersPerPool == None:
           # case where we have no data for the pool
           nbtransfers = '-'
         elif diskPool not in nbtransfersPerPool:
