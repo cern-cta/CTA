@@ -61,8 +61,10 @@ class Worker(threading.Thread):
     '''main method to the threads. Only get work from the queue and do it'''
     while self.running:
       try:
-        func, args = self.workqueue.get(True, 1)
-        func(*args)
+        func, args = self.workqueue.get(True)
+        # func may be None in case we wanted to exit the blocking get in order to close the service
+        if func:
+          func(*args)
       except Queue.Empty:
         # we've timed out, let's just retry. We only use the timeout so that this
         # thread can stop even if there is nothing in the queue
@@ -108,8 +110,12 @@ class DBUpdater(threading.Thread):
         # check whether there is something to do
         try:
           # we go out every second in case the thread has ended in the meantime
-          transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(True, 1)
-          failures.append((transferid, fileid, errcode, errmsg, reqid))
+          transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(True)
+          # transferid may be None in case we wanted to exit the blocking get in order to close the service
+          if transferid:
+            failures.append((transferid, fileid, errcode, errmsg, reqid))
+          else:
+            continue
         except Queue.Empty:
           continue
         # empty the queue so that we go only once to the DB
@@ -183,11 +189,17 @@ class Dispatcher(threading.Thread):
     self.dbthread.setName('DBUpdater')
 
   def join(self, timeout=None):
-    # join first the other threads
+    # put None values to the worker queue so that workers go out of their blocking call to get
+    for i_unused in range(len(self.workers)):
+      self.workToDispatch.put((None, None))
+    # join the worker threads
     for w in self.workers:
       w.join(timeout)
+    # put None values to the updateDBQueue so that dbthread goes out of its blocking call to get
+    self.updateDBQueue.put((None, None, None, None, None))
+    # join the db thread
     self.dbthread.join(timeout)
-    # then call join on master one
+    # join the master thread
     threading.Thread.join(self, timeout)
 
   def dbConnection(self):
@@ -330,125 +342,97 @@ class Dispatcher(threading.Thread):
   def run(self):
     '''main method, containing the infinite loop'''
     configuration = castor_tools.castorConf()
-    try:
-      while self.running:
-        try:
-          # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
-          stcur = self.dbConnection().cursor()
-          try:
-            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transferReadyToSchedule'); END;")
-            # prepare a cursor for database polling
-            stcur = self.dbConnection().cursor()
-            stcur.arraysize = 50
-            srId = stcur.var(cx_Oracle.NUMBER)
-            srSubReqId = stcur.var(cx_Oracle.STRING)
-            srProtocol = stcur.var(cx_Oracle.STRING)
-            srXsize = stcur.var(cx_Oracle.NUMBER)
-            srRfs = stcur.var(cx_Oracle.STRING)
-            reqId = stcur.var(cx_Oracle.STRING)
-            cfFileId = stcur.var(cx_Oracle.NUMBER)
-            cfNsHost = stcur.var(cx_Oracle.STRING)
-            reqSvcClass = stcur.var(cx_Oracle.STRING)
-            reqType = stcur.var(cx_Oracle.NUMBER)
-            reqEuid = stcur.var(cx_Oracle.NUMBER)
-            reqEgid = stcur.var(cx_Oracle.NUMBER)
-            reqUsername = stcur.var(cx_Oracle.STRING)
-            srOpenFlags = stcur.var(cx_Oracle.STRING)
-            clientIp = stcur.var(cx_Oracle.NUMBER)
-            clientPort = stcur.var(cx_Oracle.NUMBER)
-            clientVersion = stcur.var(cx_Oracle.NUMBER)
-            clientType = stcur.var(cx_Oracle.NUMBER)
-            reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
-            reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
-            clientSecure = stcur.var(cx_Oracle.NUMBER)
-            reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
-            reqCreationTime = stcur.var(cx_Oracle.NUMBER)
-            reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
-            sourceRfs = stcur.var(cx_Oracle.STRING)
-            stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
-            # infinite loop over the polling of the DB
-            while self.running:
-              # see whether there is something to do
-              # not that this will hang until something comes or the internal timeout is reached
-              stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
-                                                   cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
-                                                   srOpenFlags, clientIp, clientPort, clientVersion, clientType,
-                                                   reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
-                                                   reqCreationTime, reqDefaultFileSize, sourceRfs))
-              # in case of timeout, we may have nothing to do
-              if srId.getvalue() != None:
-                # standard transfers and disk to disk copies are not handled the same way
-                # but in both cases, errors are handled internally and no exception
-                # others than the ones implying the end of the processing
-                if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-                  self.workToDispatch.put((self.scheduleD2d,
-                                           (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
-                                            cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
-                                            reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
-                                            reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
-                else:
-                  self.workToDispatch.put((self.scheduleTransfer,
-                                           (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
-                                            srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
-                                            srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
-                                            srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
-                                            reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
-                                            reqSvcClass.getvalue(), reqCreationTime.getvalue())))
-                # if maxNbTransfersScheduledPerSecond is given, request throttling is active
-                # What it does is keep a count of the number of scheduled request in the current second
-                # and wait the rest of the second if it reached the limit
-                maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', -1, int)
-                if maxNbTransfersScheduledPerSecond >= 0:
-                  currentTime = time.time()
-                  currentSecond = int(currentTime)
-                  # reset the counters if we've changed second
-                  if currentSecond != self.currentSecond:
-                    self.currentSecond = currentSecond
-                    self.nbTransfersScheduled = 0
-                  # increase counter of number of transfers scheduled within the current second
-                  self.nbTransfersScheduled = self.nbTransfersScheduled + 1
-                  # did we reach our quota of requests for this second ?
-                  if self.nbTransfersScheduled >= maxNbTransfersScheduledPerSecond:
-                    # check that the second is not just over, so that we do not sleep a negative time
-                    if currentTime < self.currentSecond + 1:
-                      # wait until the second is over
-                      time.sleep(self.currentSecond + 1 - currentTime)
-          finally:
-            stcur.close()
-        except Exception, e:
-          # "Caught exception in Dispatcher thread" message
-          dlf.writeerr(msgs.DISPATCHEXCEPTION, Type=str(e.__class__), Message=str(e))
-          # check whether we should reconnect to DB, and do so if needed
-          self.dbConnection().checkForReconnection(e)
-          # then sleep a bit to not loop to fast on the error
-          time.sleep(1)
-    finally:
-      # try to clean up what we can
-      for t in self.workers:
-        try:
-          t.stop()
-          t.join()
-        except Exception:
-          pass
+    while self.running:
       try:
-        self.dbthread.stop()
-        self.dbthread.join()
-      except Exception:
-        pass
-      try:
+        # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
         stcur = self.dbConnection().cursor()
         try:
-          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transferReadyToSchedule'); END;")
+          stcur.execute("BEGIN DBMS_ALERT.REGISTER('transferReadyToSchedule'); END;")
+          # prepare a cursor for database polling
+          stcur = self.dbConnection().cursor()
+          stcur.arraysize = 50
+          srId = stcur.var(cx_Oracle.NUMBER)
+          srSubReqId = stcur.var(cx_Oracle.STRING)
+          srProtocol = stcur.var(cx_Oracle.STRING)
+          srXsize = stcur.var(cx_Oracle.NUMBER)
+          srRfs = stcur.var(cx_Oracle.STRING)
+          reqId = stcur.var(cx_Oracle.STRING)
+          cfFileId = stcur.var(cx_Oracle.NUMBER)
+          cfNsHost = stcur.var(cx_Oracle.STRING)
+          reqSvcClass = stcur.var(cx_Oracle.STRING)
+          reqType = stcur.var(cx_Oracle.NUMBER)
+          reqEuid = stcur.var(cx_Oracle.NUMBER)
+          reqEgid = stcur.var(cx_Oracle.NUMBER)
+          reqUsername = stcur.var(cx_Oracle.STRING)
+          srOpenFlags = stcur.var(cx_Oracle.STRING)
+          clientIp = stcur.var(cx_Oracle.NUMBER)
+          clientPort = stcur.var(cx_Oracle.NUMBER)
+          clientVersion = stcur.var(cx_Oracle.NUMBER)
+          clientType = stcur.var(cx_Oracle.NUMBER)
+          reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
+          reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
+          clientSecure = stcur.var(cx_Oracle.NUMBER)
+          reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
+          reqCreationTime = stcur.var(cx_Oracle.NUMBER)
+          reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
+          sourceRfs = stcur.var(cx_Oracle.STRING)
+          stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
+          # infinite loop over the polling of the DB
+          while self.running:
+            # see whether there is something to do
+            # not that this will hang until something comes or the internal timeout is reached
+            stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
+                                                 cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
+                                                 srOpenFlags, clientIp, clientPort, clientVersion, clientType,
+                                                 reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
+                                                 reqCreationTime, reqDefaultFileSize, sourceRfs))
+            # in case of timeout, we may have nothing to do
+            if srId.getvalue() != None:
+              # standard transfers and disk to disk copies are not handled the same way
+              # but in both cases, errors are handled internally and no exception
+              # others than the ones implying the end of the processing
+              if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
+                self.workToDispatch.put((self.scheduleD2d,
+                                         (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
+                                          cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
+                                          reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
+                                          reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
+              else:
+                self.workToDispatch.put((self.scheduleTransfer,
+                                         (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
+                                          srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
+                                          srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),
+                                          srOpenFlags.getvalue(), clientType.getvalue(), clientPort.getvalue(),
+                                          reqEuid.getvalue(), reqEgid.getvalue(), clientSecure.getvalue(),
+                                          reqSvcClass.getvalue(), reqCreationTime.getvalue())))
+              # if maxNbTransfersScheduledPerSecond is given, request throttling is active
+              # What it does is keep a count of the number of scheduled request in the current second
+              # and wait the rest of the second if it reached the limit
+              maxNbTransfersScheduledPerSecond = configuration.getValue('TransferManager', 'MaxNbTransfersScheduledPerSecond', -1, int)
+              if maxNbTransfersScheduledPerSecond >= 0:
+                currentTime = time.time()
+                currentSecond = int(currentTime)
+                # reset the counters if we've changed second
+                if currentSecond != self.currentSecond:
+                  self.currentSecond = currentSecond
+                  self.nbTransfersScheduled = 0
+                # increase counter of number of transfers scheduled within the current second
+                self.nbTransfersScheduled = self.nbTransfersScheduled + 1
+                # did we reach our quota of requests for this second ?
+                if self.nbTransfersScheduled >= maxNbTransfersScheduledPerSecond:
+                  # check that the second is not just over, so that we do not sleep a negative time
+                  if currentTime < self.currentSecond + 1:
+                    # wait until the second is over
+                    time.sleep(self.currentSecond + 1 - currentTime)
         finally:
           stcur.close()
       except Exception, e:
+        # "Caught exception in Dispatcher thread" message
+        dlf.writeerr(msgs.DISPATCHEXCEPTION, Type=str(e.__class__), Message=str(e))
         # check whether we should reconnect to DB, and do so if needed
         self.dbConnection().checkForReconnection(e)
-      try:
-        castor_tools.disconnectDB(self.dbConnection())
-      except Exception:
-        pass
-
+        # then sleep a bit to not loop to fast on the error
+        time.sleep(1)
 
   def stop(self):
     '''Stops processing of this thread'''
