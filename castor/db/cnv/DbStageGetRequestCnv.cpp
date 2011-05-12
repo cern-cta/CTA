@@ -145,13 +145,6 @@ castor::db::cnv::DbStageGetRequestCnv::DbStageGetRequestCnv(castor::ICnvSvc* cnv
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbStageGetRequestCnv::~DbStageGetRequestCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStageGetRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -169,22 +162,6 @@ void castor::db::cnv::DbStageGetRequestCnv::reset() throw() {
     if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
     if(m_updateIClientStatement) delete m_updateIClientStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_selectSubRequestStatement = 0;
-  m_deleteSubRequestStatement = 0;
-  m_remoteUpdateSubRequestStatement = 0;
-  m_checkSvcClassExistStatement = 0;
-  m_updateSvcClassStatement = 0;
-  m_updateIClientStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

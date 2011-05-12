@@ -140,13 +140,6 @@ castor::db::cnv::DbRepackSubRequestCnv::DbRepackSubRequestCnv(castor::ICnvSvc* c
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbRepackSubRequestCnv::~DbRepackSubRequestCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -163,21 +156,6 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
     if(m_selectRepackSegmentStatement) delete m_selectRepackSegmentStatement;
     if(m_remoteUpdateRepackSegmentStatement) delete m_remoteUpdateRepackSegmentStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkRepackRequestExistStatement = 0;
-  m_updateRepackRequestStatement = 0;
-  m_selectRepackSegmentStatement = 0;
-  m_deleteRepackSegmentStatement = 0;
-  m_remoteUpdateRepackSegmentStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

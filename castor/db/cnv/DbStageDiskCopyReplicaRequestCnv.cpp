@@ -176,13 +176,6 @@ castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::DbStageDiskCopyReplicaRequest
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::~DbStageDiskCopyReplicaRequestCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -206,28 +199,6 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::reset() throw() {
     if(m_checkDiskCopyExistStatement) delete m_checkDiskCopyExistStatement;
     if(m_updateDiskCopyStatement) delete m_updateDiskCopyStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_selectSubRequestStatement = 0;
-  m_deleteSubRequestStatement = 0;
-  m_remoteUpdateSubRequestStatement = 0;
-  m_checkSvcClassExistStatement = 0;
-  m_updateSvcClassStatement = 0;
-  m_updateIClientStatement = 0;
-  m_checkSvcClassExistStatement = 0;
-  m_updateSvcClassStatement = 0;
-  m_checkDiskCopyExistStatement = 0;
-  m_updateDiskCopyStatement = 0;
-  m_checkDiskCopyExistStatement = 0;
-  m_updateDiskCopyStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

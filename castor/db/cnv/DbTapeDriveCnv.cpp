@@ -206,13 +206,6 @@ castor::db::cnv::DbTapeDriveCnv::DbTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbTapeDriveCnv::~DbTapeDriveCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -241,33 +234,6 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
     if(m_checkTapeServerExistStatement) delete m_checkTapeServerExistStatement;
     if(m_updateTapeServerStatement) delete m_updateTapeServerStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkVdqmTapeExistStatement = 0;
-  m_updateVdqmTapeStatement = 0;
-  m_selectTapeRequestStatement = 0;
-  m_deleteTapeRequestStatement = 0;
-  m_remoteUpdateTapeRequestStatement = 0;
-  m_checkTapeRequestExistStatement = 0;
-  m_updateTapeRequestStatement = 0;
-  m_selectTapeDriveDedicationStatement = 0;
-  m_deleteTapeDriveDedicationStatement = 0;
-  m_remoteUpdateTapeDriveDedicationStatement = 0;
-  m_insertTapeDriveCompatibilityStatement = 0;
-  m_deleteTapeDriveCompatibilityStatement = 0;
-  m_selectTapeDriveCompatibilityStatement = 0;
-  m_checkDeviceGroupNameExistStatement = 0;
-  m_updateDeviceGroupNameStatement = 0;
-  m_checkTapeServerExistStatement = 0;
-  m_updateTapeServerStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

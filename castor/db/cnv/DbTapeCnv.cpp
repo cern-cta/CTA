@@ -155,13 +155,6 @@ castor::db::cnv::DbTapeCnv::DbTapeCnv(castor::ICnvSvc* cnvSvc) :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbTapeCnv::~DbTapeCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -181,24 +174,6 @@ void castor::db::cnv::DbTapeCnv::reset() throw() {
     if(m_selectSegmentStatement) delete m_selectSegmentStatement;
     if(m_remoteUpdateSegmentStatement) delete m_remoteUpdateSegmentStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_selectStreamStatement = 0;
-  m_deleteStreamStatement = 0;
-  m_remoteUpdateStreamStatement = 0;
-  m_checkStreamExistStatement = 0;
-  m_updateStreamStatement = 0;
-  m_selectSegmentStatement = 0;
-  m_deleteSegmentStatement = 0;
-  m_remoteUpdateSegmentStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

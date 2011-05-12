@@ -152,13 +152,6 @@ castor::db::cnv::DbFileSystemCnv::DbFileSystemCnv(castor::ICnvSvc* cnvSvc) :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbFileSystemCnv::~DbFileSystemCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbFileSystemCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -177,23 +170,6 @@ void castor::db::cnv::DbFileSystemCnv::reset() throw() {
     if(m_checkDiskServerExistStatement) delete m_checkDiskServerExistStatement;
     if(m_updateDiskServerStatement) delete m_updateDiskServerStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkDiskPoolExistStatement = 0;
-  m_updateDiskPoolStatement = 0;
-  m_selectDiskCopyStatement = 0;
-  m_deleteDiskCopyStatement = 0;
-  m_remoteUpdateDiskCopyStatement = 0;
-  m_checkDiskServerExistStatement = 0;
-  m_updateDiskServerStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

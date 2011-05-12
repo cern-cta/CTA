@@ -168,13 +168,6 @@ castor::db::cnv::DbStreamCnv::DbStreamCnv(castor::ICnvSvc* cnvSvc) :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbStreamCnv::~DbStreamCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStreamCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -196,26 +189,6 @@ void castor::db::cnv::DbStreamCnv::reset() throw() {
     if(m_checkTapePoolExistStatement) delete m_checkTapePoolExistStatement;
     if(m_updateTapePoolStatement) delete m_updateTapePoolStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_insertTapeCopyStatement = 0;
-  m_deleteTapeCopyStatement = 0;
-  m_selectTapeCopyStatement = 0;
-  m_selectTapeStatement = 0;
-  m_deleteTapeStatement = 0;
-  m_remoteUpdateTapeStatement = 0;
-  m_checkTapeExistStatement = 0;
-  m_updateTapeStatement = 0;
-  m_checkTapePoolExistStatement = 0;
-  m_updateTapePoolStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

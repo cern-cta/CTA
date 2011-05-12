@@ -178,11 +178,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Reset the converter statements.
-         */
-        void reset() throw ();
-
-        /**
          * Fill the foreign representation with some of the objects.refered by a given C++
          * object.
          * @param address the place where to find the foreign representation

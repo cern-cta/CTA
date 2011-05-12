@@ -121,13 +121,6 @@ castor::db::cnv::DbTapeDriveDedicationCnv::DbTapeDriveDedicationCnv(castor::ICnv
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbTapeDriveDedicationCnv::~DbTapeDriveDedicationCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -141,18 +134,6 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::reset() throw() {
     if(m_checkTapeDriveExistStatement) delete m_checkTapeDriveExistStatement;
     if(m_updateTapeDriveStatement) delete m_updateTapeDriveStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkTapeDriveExistStatement = 0;
-  m_updateTapeDriveStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

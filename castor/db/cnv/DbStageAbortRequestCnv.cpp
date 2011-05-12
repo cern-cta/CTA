@@ -156,13 +156,6 @@ castor::db::cnv::DbStageAbortRequestCnv::DbStageAbortRequestCnv(castor::ICnvSvc*
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbStageAbortRequestCnv::~DbStageAbortRequestCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStageAbortRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -182,24 +175,6 @@ void castor::db::cnv::DbStageAbortRequestCnv::reset() throw() {
     if(m_selectNsFileIdStatement) delete m_selectNsFileIdStatement;
     if(m_remoteUpdateNsFileIdStatement) delete m_remoteUpdateNsFileIdStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_insertNewReqStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkSvcClassExistStatement = 0;
-  m_updateSvcClassStatement = 0;
-  m_updateIClientStatement = 0;
-  m_updateFileRequestStatement = 0;
-  m_selectNsFileIdStatement = 0;
-  m_deleteNsFileIdStatement = 0;
-  m_remoteUpdateNsFileIdStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

@@ -166,13 +166,6 @@ castor::db::cnv::DbChangePrivilegeCnv::DbChangePrivilegeCnv(castor::ICnvSvc* cnv
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbChangePrivilegeCnv::~DbChangePrivilegeCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -194,26 +187,6 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
     if(m_selectRequestTypeStatement) delete m_selectRequestTypeStatement;
     if(m_remoteUpdateRequestTypeStatement) delete m_remoteUpdateRequestTypeStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_insertNewReqStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkSvcClassExistStatement = 0;
-  m_updateSvcClassStatement = 0;
-  m_updateIClientStatement = 0;
-  m_selectBWUserStatement = 0;
-  m_deleteBWUserStatement = 0;
-  m_remoteUpdateBWUserStatement = 0;
-  m_selectRequestTypeStatement = 0;
-  m_deleteRequestTypeStatement = 0;
-  m_remoteUpdateRequestTypeStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------

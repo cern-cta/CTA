@@ -150,13 +150,6 @@ castor::db::cnv::DbSubRequestCnv::DbSubRequestCnv(castor::ICnvSvc* cnvSvc) :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::cnv::DbSubRequestCnv::~DbSubRequestCnv() throw() {
-  reset();
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbSubRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -175,23 +168,6 @@ void castor::db::cnv::DbSubRequestCnv::reset() throw() {
     if(m_updateSubRequestStatement) delete m_updateSubRequestStatement;
     if(m_updateFileRequestStatement) delete m_updateFileRequestStatement;
   } catch (castor::exception::Exception& ignored) {};
-  // Now reset all pointers to 0
-  m_insertStatement = 0;
-  m_deleteStatement = 0;
-  m_selectStatement = 0;
-  m_bulkSelectStatement = 0;
-  m_updateStatement = 0;
-  m_storeTypeStatement = 0;
-  m_deleteTypeStatement = 0;
-  m_checkDiskCopyExistStatement = 0;
-  m_updateDiskCopyStatement = 0;
-  m_checkCastorFileExistStatement = 0;
-  m_updateCastorFileStatement = 0;
-  m_checkSubRequestExistStatement = 0;
-  m_updateSubRequestStatement = 0;
-  m_updateFileRequestStatement = 0;
-  // Call upper level reset
-  this->DbBaseCnv::reset();
 }
 
 //------------------------------------------------------------------------------
