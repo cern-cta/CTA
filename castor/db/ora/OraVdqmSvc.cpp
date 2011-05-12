@@ -338,6 +338,7 @@ void castor::db::ora::OraVdqmSvc::StatementStringMap::addStmtStr(
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0) {
+  cnvSvc()->registerDepSvc(this);
 }
 
 
@@ -345,6 +346,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
 // ~OraVdqmSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::~OraVdqmSvc() throw() {
+  cnvSvc()->unregisterDepSvc(this);
   reset();
 }
 
@@ -366,6 +368,8 @@ unsigned int castor::db::ora::OraVdqmSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::reset() throw() {
+  // Call upper level reset
+  this->castor::BaseSvc::reset();
   // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   for(std::map<int, oracle::occi::Statement *>::iterator itor =
@@ -378,8 +382,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   }
   // Reset the stored statements
   m_statements.clear();
-  // Call upper level reset
-  this->castor::db::DbBaseObj::reset();
 }
 
 

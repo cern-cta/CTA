@@ -114,9 +114,9 @@ namespace castor {
           throw (castor::exception::Exception);
         
         /**
-         * Deletes the connection to the database
+         * Resets the service. In particular, drops the connection to the database
          */
-        virtual void dropConnection() throw();
+        void reset() throw();
         
         /**
          * Handles Oracle exceptions and make sure everything is reset

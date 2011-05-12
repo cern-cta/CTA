@@ -203,8 +203,6 @@ void CppHDbCnvWriter::writeClass(UMLClassifier *c) {
   *m_stream << getIndent(INDENT*ClassIndentLevel)
             << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
   writeMethods();
-  // Add reset method
-  writeReset(c);
   // FillRep methods
   writeFillRep();
   // FillObj methods
@@ -217,17 +215,6 @@ void CppHDbCnvWriter::writeClass(UMLClassifier *c) {
   m_indent--;
   *m_stream << getIndent() << "}; // end of class Db"
             << m_classInfo->className << "Cnv" << endl << endl;
-}
-
-//=============================================================================
-// writeReset
-//=============================================================================
-void CppHDbCnvWriter::writeReset(UMLClassifier */*c*/) {
-  writeDocumentation ("Reset the converter statements.",
-                      "", QString(""), *m_stream);
-  *m_stream << getIndent()
-            << "void reset() throw ();"
-            << endl << endl;
 }
 
 //=============================================================================

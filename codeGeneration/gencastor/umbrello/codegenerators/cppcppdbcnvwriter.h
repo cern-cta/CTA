@@ -45,9 +45,6 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes constructor and destructor
   void writeConstructors();
 
-  /// writes reset method
-  void writeReset();
-
   /// Chooses an order for 2 members in an assoc
   void ordonnateMembersInAssoc(Assoc* as,
                                Member** firstMember,

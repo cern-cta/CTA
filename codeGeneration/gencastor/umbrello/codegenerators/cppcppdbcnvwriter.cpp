@@ -151,8 +151,6 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeOraSqlStatements();
   // constructor and destructor
   writeConstructors();
-  // reset method
-  writeReset();
   // objtype methods
   writeObjType();
   // FillRep methods
@@ -871,21 +869,6 @@ void CppCppDbCnvWriter::writeConstructors() {
             << "Db" << m_classInfo->className << "Cnv::~Db"
             << m_classInfo->className << "Cnv() throw() {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "reset();" << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl << endl;
-}
-
-//=============================================================================
-// writeReset
-//=============================================================================
-void CppCppDbCnvWriter::writeReset() {
-  // Header
-  writeWideHeaderComment("reset", getIndent(), *m_stream);
-  *m_stream << "void " << m_classInfo->packageName << "::"
-            << m_prefix << m_classInfo->className
-            << "Cnv::reset() throw() {" << endl;
-  m_indent++;
   *m_stream << getIndent()
             << "//Here we attempt to delete the statements correctly"
             << endl << getIndent()
@@ -913,7 +896,6 @@ void CppCppDbCnvWriter::writeReset() {
             << "if(m_deleteTypeStatement) delete m_deleteTypeStatement;"
             << endl;
   // Associations dedicated statements
-  AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
@@ -986,82 +968,10 @@ void CppCppDbCnvWriter::writeReset() {
   m_indent--;
   *m_stream << getIndent()
             << "} catch (castor::exception::Exception& ignored) {};"
-            << endl << getIndent()
-            << "// Now reset all pointers to 0"
-            << endl << getIndent()
-            << "m_insertStatement = 0;"
-            << endl << getIndent()
-            << "m_deleteStatement = 0;"
-            << endl << getIndent()
-            << "m_selectStatement = 0;"
-            << endl << getIndent()
-            << "m_bulkSelectStatement = 0;"
-            << endl << getIndent()
-            << "m_updateStatement = 0;" << endl;
-  if (isNewRequest()) {
-    *m_stream << getIndent()
-              << "m_insertNewReqStatement = 0;"
-              << endl;
-  }
-  *m_stream << getIndent()
-            << "m_storeTypeStatement = 0;"
-            << endl << getIndent()
-            << "m_deleteTypeStatement = 0;" << endl;
-  // Associations dedicated statements
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->remotePart.name == "" ||
-        isEnum(as->remotePart.typeName)) continue;
-    if (as->remoteStereotype == SQLONLY) continue;
-    if (as->type.multiRemote == MULT_N &&
-        as->type.multiLocal == MULT_N) {
-      // N to N association
-      // Here we will use a dedicated table for the association
-      // Find out the parent and child in this table
-      *m_stream << getIndent()
-                << "m_insert"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement = 0;" << endl << getIndent()
-                << "m_delete"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement = 0;" << endl << getIndent()
-                << "m_select"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement = 0;" << endl;
-    } else {
-      if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract &&
-          as->localPart.name != "") {
-        // 1 to * association
-        *m_stream << getIndent()
-                  << "m_select" << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement = 0;" << endl << getIndent()
-                  << "m_delete" << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement = 0;" << endl << getIndent()
-                  << "m_remoteUpdate" << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement = 0;" << endl;
-      }
-      if (as->type.multiRemote == MULT_ONE) {
-        // * to 1
-        if (!as->remotePart.abstract) {
-          *m_stream << getIndent()
-                    << "m_check" << capitalizeFirstLetter(as->remotePart.typeName)
-                    << "ExistStatement = 0;" << endl;
-        }
-        *m_stream << getIndent()
-                  << "m_update" << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement = 0;" << endl;
-      }
-    }
-  }
-  // Call parent method
-  *m_stream << getIndent() << "// Call upper level reset" << endl
-            << getIndent() << "this->DbBaseCnv::reset();" << endl;
+            << endl;
   // End of the method
   m_indent--;
-  *m_stream << "}" << endl << endl;
+  *m_stream << getIndent() << "}" << endl << endl;
 }
 
 //=============================================================================

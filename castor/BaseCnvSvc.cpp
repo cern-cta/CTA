@@ -45,9 +45,9 @@ castor::BaseCnvSvc::BaseCnvSvc(const std::string name) :
   BaseSvc(name) {}
 
 // -----------------------------------------------------------------------
-// Destructor
+// reset
 // -----------------------------------------------------------------------
-castor::BaseCnvSvc::~BaseCnvSvc() throw() {
+void castor::BaseCnvSvc::reset() throw() {
   // release all converters
   std::map<unsigned int, IConverter*>::iterator it;
   for (it = m_converters.begin(); it != m_converters.end(); it++) {
@@ -56,29 +56,8 @@ castor::BaseCnvSvc::~BaseCnvSvc() throw() {
     }
   }
   m_converters.clear();
-}
-
-//-----------------------------------------------------------------------------
-// addConverter
-//-----------------------------------------------------------------------------
-bool castor::BaseCnvSvc::addConverter(IConverter* pConverter) {
-  if (pConverter !=0) {
-    unsigned int id = pConverter->repType();
-    if (m_converters[id] != 0) removeConverter(id);
-    m_converters[id] = pConverter;
-    return true;
-  }
-  return false;
-}
-
-//-----------------------------------------------------------------------------
-// removeConverter
-//-----------------------------------------------------------------------------
-bool castor::BaseCnvSvc::removeConverter(const unsigned int id) {
-  IConverter* c = m_converters[id];
-  if (c != 0) delete c;
-  m_converters.erase(id);
-  return true;
+  // call parent's reset
+  BaseSvc::reset();
 }
 
 //-----------------------------------------------------------------------------

@@ -90,18 +90,20 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 // OraCommonSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
-                                            castor::ICnvSvc* cnvSvc) :
-  BaseSvc(name), DbBaseObj(cnvSvc),
+                                            castor::ICnvSvc* conversionService) :
+  BaseSvc(name), DbBaseObj(conversionService),
   m_requestToDoStatement(0),
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0) {
+  cnvSvc()->registerDepSvc(this);
 }
 
 //------------------------------------------------------------------------------
 // ~OraCommonSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::~OraCommonSvc() throw() {
+  cnvSvc()->unregisterDepSvc(this);
   reset();
 }
 
@@ -123,6 +125,8 @@ unsigned int castor::db::ora::OraCommonSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::reset() throw() {
+  // Call upper level reset
+  this->castor::BaseSvc::reset();
   // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -136,8 +140,6 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   m_selectTapeStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
-  // Call upper level reset
-  this->castor::db::DbBaseObj::reset();
 }
 
 //------------------------------------------------------------------------------

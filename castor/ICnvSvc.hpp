@@ -56,19 +56,6 @@ namespace castor {
      */
     virtual ~ICnvSvc(){};
 
-    /** Add converter object to conversion service.
-     *  @param pConverter Pointer to converter object
-     *  @return boolean indicating success or failure.
-     */
-    virtual bool addConverter(IConverter* pConverter) = 0;
-
-    /** Remove converter object from conversion service (if present).
-     *  The converter is defined by the class type of the objects created.
-     *  @param id ID of the converter
-     *  @return boolean indicating success or failure.
-     */
-    virtual bool removeConverter(const unsigned int id) = 0;
-
     /** Retrieve converter from list
      *  @param id the id of the converter
      *  @return the converter corresponding to id or 0 if non was found

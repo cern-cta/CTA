@@ -60,22 +60,12 @@ namespace castor {
     /**
      * Destructor
      */
-    virtual ~BaseCnvSvc() throw();
+    virtual ~BaseCnvSvc() throw() {};
 
     /**
-     * Add converter object to conversion service.
-     * @param pConverter Pointer to converter object
-     * @return boolean indicating success or failure.
+     * resets the service
      */
-    virtual bool addConverter(IConverter* pConverter);
-
-    /**
-     * Remove converter object from conversion service (if present).
-     * The converter is defined by the class type of the objects created.
-     * @param id ID of the converter
-     * @return boolean indicating success or failure.
-     */
-    virtual bool removeConverter(const unsigned int id);
+    virtual void reset() throw();
 
     /**
      * Add an alias, that a rule that says that a given

@@ -41,6 +41,19 @@ castor::BaseSvc::BaseSvc(const std::string name) throw() :
 // -----------------------------------------------------------------------
 castor::BaseSvc::~BaseSvc() throw() {
   svcs()->removeService(m_name);
+  reset();
+}
+
+// -----------------------------------------------------------------------
+// resetDepSvc
+// -----------------------------------------------------------------------
+void castor::BaseSvc::reset() throw() {
+  // Call reset on all dependent services
+  for (std::set<castor::IService*>::const_iterator it = m_depSvcs.begin();
+       it != m_depSvcs.end();
+       it++) {
+    (*it)->reset();
+  }
 }
 
 // -----------------------------------------------------------------------

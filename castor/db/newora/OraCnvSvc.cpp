@@ -74,7 +74,7 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
 // ~OraCnvSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
-  dropConnection();
+  reset();
 }
 
 //------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     }
     m_connection->terminateStatement(stmt);
     if (codeVersion != dbVersion) {
-      dropConnection();
+      reset();
       castor::exception::BadVersion e;
       e.getMessage() << "Version mismatch between the database and the software : \""
                      << dbVersion << "\" versus \""
@@ -238,7 +238,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   }
   catch (oracle::occi::SQLException &orae) {
     // No CastorVersion table ?? This means bad version
-    dropConnection();
+    reset();
     castor::exception::SQLError e;
     e.getMessage() << "Not able to find the version of castor in the database"
                    << " Original error was " << orae.what();
@@ -257,11 +257,11 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
 }
 
 //------------------------------------------------------------------------------
-// dropConnection
+// reset
 //------------------------------------------------------------------------------
-void castor::db::ora::OraCnvSvc::dropConnection() throw() {
-  // inherited cleanup
-  castor::db::DbCnvSvc::dropConnection();
+void castor::db::ora::OraCnvSvc::reset() throw() {
+  // call parent method
+  castor::db::DbCnvSvc::reset();
   // drop the connection
   try {
     if (0 != m_connection && 0 != m_environment) {
@@ -280,7 +280,7 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
   } catch (oracle::occi::SQLException e) {
     // "Failed to drop the Oracle connection"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", e.what())};
+      {castor::dlf::Param("Messagne", e.what())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                             DLF_BASE_ORACLELIB + 26, 1, params);
   } catch (...) {};
@@ -403,6 +403,6 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     // but when fixed on the server side, the daemon will be able to reconnect.
     // - error #32102 'invalid OCI handle' seems to happen after an uncaught
     // Oracle side error, and a priori should act as a catch-all case.
-    dropConnection();  // reset values and drop the connection
+    reset();  // reset values and drop the connection
   }
 }

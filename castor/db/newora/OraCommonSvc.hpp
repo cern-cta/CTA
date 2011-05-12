@@ -54,7 +54,7 @@ namespace castor {
         /**
          * default constructor
          */
-        OraCommonSvc(const std::string name, castor::ICnvSvc* cnvSvc = 0);
+        OraCommonSvc(const std::string name, castor::ICnvSvc* conversionService = 0);
 
         /**
          * default destructor

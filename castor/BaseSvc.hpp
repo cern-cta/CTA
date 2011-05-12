@@ -29,6 +29,7 @@
 
 // Include Files
 #include <string>
+#include <set>
 
 // Local Includes
 #include "IService.hpp"
@@ -61,6 +62,23 @@ namespace castor {
     virtual const std::string name() const { return m_name; }
 
     /**
+     * Registration of a dependent service.
+     */
+    virtual void registerDepSvc(castor::IService* svc)
+      throw() { m_depSvcs.insert(svc); }
+
+    /**
+     * Unregistration of a dependent service.
+     */
+    virtual void unregisterDepSvc(castor::IService* svc)
+      throw() { m_depSvcs.erase(svc); }
+
+    /**
+     * resets the service
+     */
+    virtual void reset() throw();
+
+    /**
      * adds a reference
      */
     virtual void addRef() throw() { m_refs++; };
@@ -78,7 +96,10 @@ namespace castor {
     
     /** the reference counter */
     unsigned int m_refs;
-    
+
+    /** a list of dependent services */
+    std::set<castor::IService*> m_depSvcs;
+
   };
   
 } // end of castor namespace

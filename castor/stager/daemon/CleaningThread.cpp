@@ -56,7 +56,7 @@ void castor::stager::daemon::CleaningThread::run(void*) throw() {
     // now let's free up the database connection, which otherwise remains idle
     svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);
     castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
-    dbSvc->dropConnection();    
+    dbSvc->reset();    
   } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =

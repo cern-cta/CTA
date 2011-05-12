@@ -38,11 +38,6 @@ class CppHDbCnvWriter : public CppHBaseCnvWriter {
   /// writes members declarations
   void writeMembers();
 
-  /**
-   * write the reset method declaration
-   */
-  void writeReset(UMLClassifier *c);
-
   /// writes fillRep methods declaration
   void writeFillRep();
     

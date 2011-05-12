@@ -41,22 +41,6 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* service) :
   BaseObject(), m_cnvSvc(0), m_cnvSvcName("DbCnvSvc") {
   // if dynamic_cast returns 0, we go back to the default "DbCnvSvc" service
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(service);
-  cnvSvc()->registerDbObj(this);
-}
-
-// -----------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------
-castor::db::DbBaseObj::DbBaseObj(std::string serviceName) :
-  BaseObject(), m_cnvSvc(0), m_cnvSvcName(serviceName) {
-  cnvSvc()->registerDbObj(this);
-}
-
-// -----------------------------------------------------------------------
-// Destructor
-// -----------------------------------------------------------------------
-castor::db::DbBaseObj::~DbBaseObj() throw() {
-  if (0 != m_cnvSvc) m_cnvSvc->unregisterDbObj(this);
 }
 
 // -----------------------------------------------------------------------
@@ -112,8 +96,9 @@ castor::db::DbBaseObj::rollback() {
   try {
     cnvSvc()->rollback();
   } catch (castor::exception::Exception) {
-    // rollback failed, let's drop the connection for security
-    cnvSvc()->dropConnection();
+    // rollback failed, let's reset the conversion service
+    // (and thus drop the connection) for security
+    cnvSvc()->reset();
   }
 }
 

@@ -32,7 +32,6 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/VectorAddress.hpp"
-#include "castor/db/DbBaseObj.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -64,19 +63,6 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
 }
 
 // -----------------------------------------------------------------------
-// ~DbCnvSvc
-// -----------------------------------------------------------------------
-castor::db::DbCnvSvc::~DbCnvSvc() throw() {
-  // we're going away, we delete all objects relying on us
-  for (std::set<castor::db::DbBaseObj*>::const_iterator it =
-         m_registeredDbObjs.begin();
-       it != m_registeredDbObjs.end();
-       it++) {
-    delete (*it);
-  }
-}
-
-// -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
 unsigned int castor::db::DbCnvSvc::repType() const {
@@ -91,21 +77,17 @@ unsigned int castor::db::DbCnvSvc::RepType() {
 }
 
 // -----------------------------------------------------------------------
-// dropConnection
+// reset
 // -----------------------------------------------------------------------
-void castor::db::DbCnvSvc::dropConnection () throw() {
-  // make all registered db-oriented objects aware
-  for (std::set<castor::db::DbBaseObj*>::const_iterator it =
-         m_registeredDbObjs.begin();
-       it != m_registeredDbObjs.end();
-       it++) {
-    (*it)->reset();
-  }
-  if(m_getTypeStatement) delete m_getTypeStatement;
-  m_getTypeStatement = 0;
-  // child classes have to really drop the connection to the db
+void castor::db::DbCnvSvc::reset() throw() {
+  // call parent's reset
+  BaseCnvSvc::reset();
+  // drop local statements
+  try {
+    if (m_getTypeStatement) delete m_getTypeStatement;
+    m_getTypeStatement = 0;
+  } catch (castor::exception::Exception e) {};
 }
-
 
 // -----------------------------------------------------------------------
 // createObj

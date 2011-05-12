@@ -403,7 +403,7 @@ bool castor::monitoring::rmmaster::ora::StatusUpdateHelper::checkIfFilesExist
   // Now let's free up the database connection, which otherwise remains idle
   svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);
   castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
-  dbSvc->dropConnection();
+  dbSvc->reset();
 
   return rtn;
 }

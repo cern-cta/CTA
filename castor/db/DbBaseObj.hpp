@@ -57,21 +57,9 @@ namespace castor {
         DbBaseObj(castor::ICnvSvc* cnvSvc);
 
         /**
-         * Constructor. Tries to create a conversion service with the
-         * provided service name, and binds this object to it. 
-         */
-        DbBaseObj(std::string serviceName);
-        
-        /**
          * Destructor
          */
-        virtual ~DbBaseObj() throw();
-
-        /**
-         * Resets the converter. In particular any prepared
-         * statements are destroyed
-         */
-        virtual void reset() throw() {};
+        virtual ~DbBaseObj() throw() {};
 
       protected:
 

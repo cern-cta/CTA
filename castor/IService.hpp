@@ -55,6 +55,21 @@ namespace castor {
     virtual const std::string name() const = 0;
 
     /**
+     * Registration of a dependent service.
+     */
+    virtual void registerDepSvc(castor::IService* svc) throw() = 0;
+
+    /**
+     * Unregistration of a dependent service.
+     */
+    virtual void unregisterDepSvc(castor::IService* svc) throw() = 0;
+
+    /**
+     * resets the service
+     */
+    virtual void reset() throw() = 0;
+
+    /**
      * adds a reference to this service
      */
     virtual void addRef() = 0;
