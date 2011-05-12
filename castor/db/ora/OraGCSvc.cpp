@@ -582,10 +582,9 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
   return orphans;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // dumpCleanupLogs
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::dumpCleanupLogs()
   throw (castor::exception::Exception) {
   try {
@@ -643,9 +642,9 @@ void castor::db::ora::OraGCSvc::dumpCleanupLogs()
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // removeTerminatedRequests
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::removeTerminatedRequests()
   throw (castor::exception::Exception) {
   try {
@@ -669,7 +668,7 @@ void castor::db::ora::OraGCSvc::removeTerminatedRequests()
     castor::exception::Internal ex;
     // "Cleaning of archived requests failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
+      {castor::dlf::Param("Message", e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 6, 1, params);
     throw ex;
   }
