@@ -1,5 +1,5 @@
 ###############################################################################
-#      test/tapegateway_release_tests/test_gateway_wipe_reinstall_migrate.pl
+#      test/tapegateway_release_tests/CastorTapeTests.pm
 # 
 #  This file is part of the Castor project.
 #  See http://castor.web.cern.ch/castor
@@ -178,11 +178,12 @@ sub read_config ( $ )
                           'local_logprocessord',
                           'testsuite_config_location',
                           'instance_name',
-                          'cns_name');
+                          'cns_name',
+                          'run_testsuite');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
-                          'originalDropSchema', 'castor_single_subdirectory',
-                          'castor_dual_subdirectory', 'switchoverToTapeGateway',
-                          'switchoverToRtcpClientd');
+                          'originalDropSchema', 'originalSetPermissionsSQL', 
+                          'castor_single_subdirectory', 'castor_dual_subdirectory', 
+                          'switchoverToTapeGateway', 'switchoverToRtcpClientd');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -339,8 +340,10 @@ sub make_seed ( $ )
 	die "In $package_name::make_seed: file $file_name created with wrong size";
     }
     my $endtime = time();
-    print "t=".elapsed_time()."s. Seed file created in ".($endtime - $starttime)."s. Speed=".
-	($size/(1024*1024)/($endtime - $starttime))."MB/s.\n";
+    my $interval = ($endtime - $starttime);
+    if ($interval == 0) { $interval = 1; }
+    print "t=".elapsed_time()."s. Seed file created in ".$interval."s. Speed=".
+	($size/(1024*1024)/$interval)."MB/s.\n";
     
     # Hand over the file to the user
     print `chown $environment{'username'} $file_name`;
@@ -1956,15 +1959,21 @@ sub reinstall_stager_db()
     my $dbDir               = $environment{dbDir};
     my $originalDropSchema  = $environment{originalDropSchema};
     my $originalDbSchema    = $environment{originalDbSchema};
+    my $tstDir              = $environment{tstDir};
+    my $originalSetPermissionsSQL = $environment{originalSetPermissionsSQL};
 
     my $originalDropSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDropSchema;
     my $originalDbSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDbSchema;
+    my $originalSetPermissionSQLFullpath=$checkout_location.'/'.$tstDir.'/'.$originalSetPermissionsSQL;
 
     die "ABORT: $originalDropSchema does not exist\n"
        if ! -e $originalDropSchemaFullpath;
     
     die "ABORT: $originalDbSchema does not exist\n"
         if ! -e $originalDbSchemaFullpath;
+
+    die "ABORT: $originalSetPermissionSQLFullpath does not exist\n"
+        if ! -e $originalSetPermissionSQLFullpath;
     
     # Make sure we're running on the proper machine.
     my $host = `uname -n`;
@@ -2088,6 +2097,9 @@ sub reinstall_stager_db()
                            $hacked_creation, "Re-creating schema");
     unlink $hacked_creation;
     
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalSetPermissionSQLFullpath, "Creating additional permissions for testsuite");
+
     # Restart some daemons (not all yet)
     startSingleDaemon ( 'transfermanagerd' );
     #startSingleDaemon ( 'mighunterd' );
