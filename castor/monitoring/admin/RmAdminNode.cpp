@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/07 15:08:39 $ $Author: waldron $
  *
- * command line that allows to change a node status and admin status in RmMaster
+ * Command line that allows to change a node status and admin status in RmMaster
  *
  * @author sponcec3
  *****************************************************************************/
@@ -97,56 +97,56 @@ int main(int argc, char *argv[]) {
     while ((ch = Cgetopt_long(argc,argv,"ho:p:n:f:rdm:R",longopts,NULL)) != EOF) {
       switch (ch) {
       case 'h':
-	usage(progName);
-	return 0;
+        usage(progName);
+        return 0;
       case 'o':
-	rmMasterHost = Coptarg;
-	break;
+        rmMasterHost = Coptarg;
+        break;
       case 'p':
-	rmMasterPort = atoi(Coptarg);
-	break;
+        rmMasterPort = atoi(Coptarg);
+        break;
       case 'n':
-	nodeName = Coptarg;
-	break;
+        nodeName = Coptarg;
+        break;
       case 'f':
-	stateName = Coptarg;
-	force = true;
-	if (release || deleteFlag) {
-	  std::cerr << "Error : incompatible options used (force and "
-		    << (release ? "release" : "delete")
-		    << ")" << std::endl;
-	  usage(progName);
-	  return -1;
-	}
-	break;
+        stateName = Coptarg;
+        force = true;
+        if (release || deleteFlag) {
+          std::cerr << "Error : incompatible options used (force and "
+                    << (release ? "release" : "delete")
+                    << ")" << std::endl;
+          usage(progName);
+          return -1;
+        }
+        break;
       case 'r':
-	release = true;
-	if (force || deleteFlag) {
-	  std::cerr << "Error : incompatible options used (release and "
-		    << (force ? "force" : "delete")
-		    << ")" << std::endl;
-	  usage(progName);
-	  return -1;
-	}
-	break;
+        release = true;
+        if (force || deleteFlag) {
+          std::cerr << "Error : incompatible options used (release and "
+                    << (force ? "force" : "delete")
+                    << ")" << std::endl;
+          usage(progName);
+          return -1;
+        }
+        break;
       case 'd':
-	deleteFlag = true;
-	if (release || force) {
-	  std::cerr << "Error : incompatible options used (delete and "
-		    << (release ? "release" : "force")
-		    << ")" << std::endl;
-	  usage(progName);
-	  return -1;
-	}
-	break;
+        deleteFlag = true;
+        if (release || force) {
+          std::cerr << "Error : incompatible options used (delete and "
+                    << (release ? "release" : "force")
+                    << ")" << std::endl;
+          usage(progName);
+          return -1;
+        }
+        break;
       case 'm':
-	mountPoint = Coptarg;
-	break;
+        mountPoint = Coptarg;
+        break;
       case 'R':
-	recursive = true;
-	break;
+        recursive = true;
+        break;
       case '?':
-	std::cerr << "Unable to parse options" << std::endl;
+        std::cerr << "Unable to parse options" << std::endl;
         usage(progName);
         return 1;
       default:
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     }
     if (0 == nodeName) {
       std::cerr << "Missing node name. Please use -n,--node option !" << std::endl;
-      exit(1);
+      return 1;
     }
 
     // Compute the admin state
@@ -176,8 +176,8 @@ int main(int argc, char *argv[]) {
     } else {
       // Error
       std::cerr << "Missing option : one of force, release or delete must be given"
-		<< std::endl;
-      return -1;
+                << std::endl;
+      return 1;
     }
 
     // RmMaster Port
@@ -186,16 +186,16 @@ int main(int argc, char *argv[]) {
       // check environment
       p = getenv("RM_PORT");
       if (0 == p) {
-	// check configuration file
-	p = getconfent ("RM", "PORT", 0);
-	if (0 == p) {
-	  // take default
-	  rmMasterPort = RMMASTER_DEFAULT_PORT;
-	} else {
-	  rmMasterPort = atoi(p);
-	}
+        // check configuration file
+        p = getconfent ("RM", "PORT", 0);
+        if (0 == p) {
+          // take default
+          rmMasterPort = RMMASTER_DEFAULT_PORT;
+        } else {
+          rmMasterPort = atoi(p);
+        }
       } else {
-	rmMasterPort = atoi(p);
+        rmMasterPort = atoi(p);
       }
     }
 
@@ -205,15 +205,15 @@ int main(int argc, char *argv[]) {
       // check environment
       rmMasterHost = getenv ("RM_HOST");
       if (0 == rmMasterHost) {
-	// check configuration file
-	rmMasterHost = getconfent ("RM", "HOST", 0);
-	if (0 == rmMasterHost) {
-	  // error
-	  std::cerr << "Error : Could not figure out the RmMaster host\n"
-		    << "Please use --host option, set RM_HOST environment variable "
-		    <<	"or add and entry for RM/HOST in configuration file" << std::endl;
-	  exit(1);
-	}
+        // check configuration file
+        rmMasterHost = getconfent ("RM", "HOST", 0);
+        if (0 == rmMasterHost) {
+          // error
+          std::cerr << "Error : Could not figure out the RmMaster host\n"
+                    << "Please use --host option, set RM_HOST environment variable "
+                    <<        "or add and entry for RM/HOST in configuration file" << std::endl;
+          return 1;
+        }
       }
     }
 
@@ -221,46 +221,46 @@ int main(int argc, char *argv[]) {
     castor::IObject* obj;
     if (0 == mountPoint) {
       castor::monitoring::admin::DiskServerAdminReport* report =
-	new castor::monitoring::admin::DiskServerAdminReport();
+        new castor::monitoring::admin::DiskServerAdminReport();
       obj = report;
       report->setDiskServerName(nodeName);
       report->setAdminStatus(adminState);
       castor::stager::DiskServerStatusCode state = castor::stager::DISKSERVER_PRODUCTION;
       if (0 != stateName) {
-	if (0 == strcmp(stateName, "Draining")) {
-	  state = castor::stager::DISKSERVER_DRAINING;
-	} else if (0 == strcmp(stateName, "Disabled")) {
-	  state = castor::stager::DISKSERVER_DISABLED;
-	} else if (0 != strcmp(stateName, "Production")) {
-	  // Error
-	  std::cerr << "Invalid node status '" << stateName << "'\n"
-		    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
-		    << std::endl;
-	  exit(1);
-	}
+        if (0 == strcmp(stateName, "Draining")) {
+          state = castor::stager::DISKSERVER_DRAINING;
+        } else if (0 == strcmp(stateName, "Disabled")) {
+          state = castor::stager::DISKSERVER_DISABLED;
+        } else if (0 != strcmp(stateName, "Production")) {
+          // Error
+          std::cerr << "Invalid node status '" << stateName << "'\n"
+                    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
+                    << std::endl;
+          return 1;
+        }
       }
       report->setStatus(state);
       report->setRecursive(recursive);
     } else {
       castor::monitoring::admin::FileSystemAdminReport* report =
-	new castor::monitoring::admin::FileSystemAdminReport();
+        new castor::monitoring::admin::FileSystemAdminReport();
       obj = report;
       report->setDiskServerName(nodeName);
       report->setMountPoint(mountPoint);
       report->setAdminStatus(adminState);
       castor::stager::FileSystemStatusCodes state = castor::stager::FILESYSTEM_PRODUCTION;
       if (0 != stateName) {
-	if (0 == strcmp(stateName, "Draining")) {
-	  state = castor::stager::FILESYSTEM_DRAINING;
-	} else if (0 == strcmp(stateName, "Disabled")) {
-	  state = castor::stager::FILESYSTEM_DISABLED;
-	} else if (0 != strcmp(stateName, "Production")) {
-	  // Error
-	  std::cerr << "Invalid node status '" << stateName << "'\n"
-		    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
-		    << std::endl;
-	  exit(1);
-	}
+        if (0 == strcmp(stateName, "Draining")) {
+          state = castor::stager::FILESYSTEM_DRAINING;
+        } else if (0 == strcmp(stateName, "Disabled")) {
+          state = castor::stager::FILESYSTEM_DISABLED;
+        } else if (0 != strcmp(stateName, "Production")) {
+          // Error
+          std::cerr << "Invalid node status '" << stateName << "'\n"
+                    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
+                    << std::endl;
+          return 1;
+        }
       }
       report->setStatus(state);
     }
@@ -276,21 +276,25 @@ int main(int argc, char *argv[]) {
       dynamic_cast<castor::MessageAck*>(ackObj);
     if (0 == ack) {
       std::cerr << "No Acknowledgement from the RmMaster\n"
-		<< "Not sure the action was taken into account"
-		<< std::endl;
-      exit(1);
+                << "Not sure the action was taken into account"
+                << std::endl;
+      return 1;
     }
     if (!ack->status()) {
       std::cerr << strerror(ack->errorCode()) << "\n"
-		<< ack->errorMessage() << std::endl;
+                << ack->errorMessage() << std::endl;
+      return 1;
     }
   } catch (castor::exception::Exception& e) {
-    std::cerr << e.getMessage().str() << std::endl;    
+    std::cerr << e.getMessage().str() << std::endl;  
+    return 1;
   } catch (std::exception e) {
     std::cerr << "Caught standard exception : "
-              << e.what() << std::endl;    
+              << e.what() << std::endl;
+    return 1;
   } catch (...) {
     std::cerr << "Caught unknown exception !";
+    return 1;
   }
-  
+  return 0;  
 }
