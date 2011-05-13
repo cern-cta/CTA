@@ -190,16 +190,16 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     // Announce if we have changed status
     if (!m_getLSFStatusCalled) {
       m_getLSFStatusCalled = true;
-      // "LSF initialization information"
+      // "Initialization information"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Master", masterName)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 1, params);
     } else if (m_prevProduction != production) {
       if (production) {
-        // "Assuming role as production RmMaster server, LSF failover detected"
+        // "Assuming role as production RmMaster server, failover detected"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
       } else {
-        // "Assuming role as slave RmMaster server. LSF failover detected"
+        // "Assuming role as slave RmMaster server, failover detected"
         castor::dlf::Param params[] =
   	{castor::dlf::Param("Master", masterName)};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
@@ -252,17 +252,17 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
 
     // Announce if we have changed status
     if (m_prevMasterName == "") {
-      // "LSF initialization information"
+      // "Initialization information"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Cluster", clusterName),
          castor::dlf::Param("Master", masterName)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 49, 2, params);
     } else if (m_prevMasterName != masterName) {
       if (production) {
-        // "Assuming role as production RmMaster server, LSF failover detected"
+        // "Assuming role as production RmMaster server, failover detected"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
       } else if (m_prevMasterName == hostName) {
-        // "Assuming role as slave RmMaster server. LSF failover detected"
+        // "Assuming role as slave RmMaster server, failover detected"
         castor::dlf::Param params[] =
   	{castor::dlf::Param("Master", masterName)};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);

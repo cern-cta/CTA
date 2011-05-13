@@ -113,8 +113,9 @@ int main(int argc, char *argv[]) {
         {castor::dlf::Param("Port", listenPort),
          castor::dlf::Param("UpdateInterval", updateInterval),
          castor::dlf::Param("Cluster", clusterName),
-         castor::dlf::Param("Master", masterName)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 4, params);
+         castor::dlf::Param("Master", masterName),
+         castor::dlf::Param("LSFEnabled", "Yes")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 5, params);
 
     } else {
         
@@ -122,7 +123,7 @@ int main(int argc, char *argv[]) {
       castor::dlf::Param params[] =
         {castor::dlf::Param("Port", listenPort),
          castor::dlf::Param("UpdateInterval", updateInterval),
-         castor::dlf::Param("Comment", "Running in noLSF mode")};
+         castor::dlf::Param("LSFEnabled", "No")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 3, params);
     }
     
@@ -240,9 +241,9 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
     { 32, "DatabaseActuator thread running" },
     { 33, "DatabaseActuator thread created" },
     { 44, "Failed to synchronise shared memory with stager database" },
-    { 47, "Assuming role as production RmMaster server. LSF failover detected" },
-    { 48, "Assuming role as slave RmMaster server. LSF failover detected" },
-    { 49, "LSF initialization information" },
+    { 47, "Assuming role as production RmMaster server, failover detected" },
+    { 48, "Assuming role as slave RmMaster server, failover detected" },
+    { 49, "Initialization information" },
 
     { -1, "" }};
   dlfInit(messages);

@@ -83,7 +83,7 @@ class DiskServerManagerService(rpyc.Service):
   def exposed_scheduleTransfer(self, scheduler, transferid, transfer, arrivaltime, transfertype='standard'):
     '''Called when a new transfer needs to be scheduled.
     Queues the new transfer.'''
-    dlf.writedebug(msgs.SCHEDULETRANSFERCALLED, Scheduler=scheduler, subreqid=transferid, reqid=transfer[2],
+    dlf.writedebug(msgs.INVOKINGSCHEDULETRANSFER, Scheduler=scheduler, subreqid=transferid, reqid=transfer[2],
                    TransferType=transfertype, fileid=(transfer[8],int(transfer[6])))
     transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
 
@@ -97,50 +97,50 @@ class DiskServerManagerService(rpyc.Service):
                nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
                nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
                nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
-    dlf.writedebug(msgs.SUMMARIZETRANSFERSCALLED)
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERS)
     queueingData = transferQueue.nbTransfers(user, detailed)
     runningData = runningTransfers.nbTransfers(user, detailed)
     return (configuration.getValue('DiskManager', 'NbSlots', 0, int),) + queueingData + runningData
 
   def exposed_listTransfers(self, user=None):
     '''Lists all transfers running or pending on this host'''
-    dlf.writedebug(msgs.LISTTRANSFERSCALLED, Username=user)
+    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Username=user)
     return tuple(runningTransfers.listTransfers(user) + transferQueue.listTransfers(user))
 
   def exposed_transferset(self):
     '''Lists all pending and running transfers'''
-    dlf.writedebug(msgs.TRANSFERSETCALLED)
+    dlf.writedebug(msgs.INVOKINGTRANSFERSET)
     return tuple(runningTransfers.transferset() | transferQueue.transferset())
 
   def exposed_killtransfers(self, transferids):
     '''Called when some transfers should be killed'''
-    dlf.writedebug(msgs.KILLTRANSFERSCALLED, TransferIds=', '.join(transferids))
+    dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, TransferIds=', '.join(transferids))
     # remove transfers from the local queue
     transferQueue.remove(transferids)
 
   def exposed_transferAlreadyStarted(self, transferid, reqid):
     '''Called when a job has started on another diskserver and can be canceled on this one'''
-    dlf.writedebug(msgs.TRANSFERALREADYSTARTEDCALLED, subreqid=transferid, reqid=reqid)
+    dlf.writedebug(msgs.INVOKINGTRANSFERALREADYSTARTED, subreqid=transferid, reqid=reqid)
     transferQueue.remove([transferid])
 
   def exposed_getQueueingTransfers(self, scheduler):
     '''returns the list of transfers in the queue'''
-    dlf.writedebug(msgs.GETQUEUEINGTRANSFERSCALLED, Scheduler=scheduler)
+    dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, Scheduler=scheduler)
     return tuple(transferQueue.listQueueingTransfers())
 
   def exposed_getRunningD2dSource(self, scheduler):
     '''returns the list of running d2dsrc transfers'''
-    dlf.writedebug(msgs.GETRUNNINGD2DSOURCECALLED, Scheduler=scheduler)
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCE, Scheduler=scheduler)
     return tuple(runningTransfers.listRunningD2dSources())
 
   def exposed_retryD2dDest(self, transferid, reqid):
     '''called when a d2d copy source has just started and the destination should be started'''
-    dlf.writedebug(msgs.RETRYD2DDEST, subreqid=transferid, reqid=reqid)
+    dlf.writedebug(msgs.INVOKINGRETRYD2DDEST, subreqid=transferid, reqid=reqid)
     transferQueue.retryD2dDest(transferid, reqid)
 
   def exposed_d2dend(self, transferid, reqid):
     '''called when a d2d copy is over and we are the source'''
-    dlf.writedebug(msgs.D2DENDCALLED, subreqid=transferid, reqid=reqid)
+    dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferid, reqid=reqid)
     runningTransfers.d2dend(transferid)
 
   def exposed_anyTransfersFromScheduler(self, scheduler):
