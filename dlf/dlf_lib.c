@@ -560,24 +560,26 @@ int dlf_writep(Cuuid_t reqid,
   /* If this is the first time the current thread has processed a message of type
    * msgno then record a registration message. (See #77741)
    */
-  unsigned int *registered = pthread_getspecific(reg_key);
-  if (registered == NULL) {
-    unsigned int *tls = (unsigned int *)
-      calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
-    if (tls == NULL) {
+  {
+    unsigned int *registered = pthread_getspecific(reg_key);
+    if (registered == NULL) {
+      unsigned int *tls = (unsigned int *)
+        calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
+      if (tls == NULL) {
+        return (-1);
+      }
+      pthread_setspecific(reg_key, (void *)tls);
+      registered = pthread_getspecific(reg_key);
+    }
+
+    /* Sanity check: This should never happen! */
+    if (registered == NULL) {
       return (-1);
     }
-    pthread_setspecific(reg_key, (void *)tls);
-    registered = pthread_getspecific(reg_key);
-  }
-
-  /* Sanity check: This should never happen! */
-  if (registered == NULL) {
-    return (-1);
-  }
-  if (registered[msgno] == 0) {
-    syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, messages[msgno]);
-    registered[msgno] = 1;
+    if (registered[msgno] == 0) {
+      syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, messages[msgno]);
+      registered[msgno] = 1;
+    }
   }
 
   /* Terminate the string */

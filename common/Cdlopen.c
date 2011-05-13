@@ -77,9 +77,7 @@ void *Cdlopen(const char *filename,
 /* Note: dlerror() is NOT required to be reentrant, i.e. thread-safe */
 /* so we have to protect with a mutex */
 char *Cdlerror(void) {
-  int rc;
-
-  rc = Cmutex_lock(&Cdlopen_mutex,10); /* Oupss */
+  int rc = Cmutex_lock(&Cdlopen_mutex,10); /* Oupss */
   char* buf = dlerror();
   if (buf != NULL) {
     Csnprintf(Cdlopen_buffer, CDLOPEN_BUFLEN, "%s", buf);

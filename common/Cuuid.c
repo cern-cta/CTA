@@ -22,12 +22,13 @@ Cuuid_t nullCuuid;
 
 void Cuuid_create(Cuuid_t *uuid)
 {
-  /* Generate a UUID using libuuid */
   uuid_t internal_uuid;
+  char uuidstr[CUUID_STRING_LEN + 1];
+
+  /* Generate a UUID using libuuid */
   uuid_generate(internal_uuid);
 
   /* Convert the UUID to a string */
-  char uuidstr[CUUID_STRING_LEN + 1];
   uuidstr[CUUID_STRING_LEN] = 0;
   uuid_unparse(internal_uuid, uuidstr);
 
