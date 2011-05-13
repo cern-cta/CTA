@@ -88,9 +88,11 @@ int netconnect_timeout(SOCKET fd,
 	}
 
 	/* Restore previous handlers */
-	int save_errno = errno;
-	_netsignal(SIGPIPE, sigpipe);
-	errno = save_errno;
+	{
+		int save_errno = errno;
+		_netsignal(SIGPIPE, sigpipe);
+		errno = save_errno;
+	}
 	/* Restore blocking socket if connect was successful */
 	if ( timeout >= 0 && rc == 0 ) {
 		nonblocking = 0;
@@ -185,9 +187,11 @@ ssize_t netread_timeout(SOCKET fd,
 	}
 
 	/* Restore previous handlers */
-	int save_errno = errno;
-	_netsignal(SIGPIPE, sigpipe);
-	errno = save_errno;
+	{
+		int save_errno = errno;
+		_netsignal(SIGPIPE, sigpipe);
+		errno = save_errno;
+	}
 
 	if (flag != 0) {
 		/* Return -1 if error */
@@ -277,9 +281,11 @@ ssize_t netwrite_timeout(SOCKET fd,
 	}
 
 	/* Restore previous handlers */
-	int save_errno = errno;
-	_netsignal(SIGPIPE, sigpipe);
-	errno = save_errno;
+	{
+		int save_errno = errno;
+		_netsignal(SIGPIPE, sigpipe);
+		errno = save_errno;
+	}
 
 	if (flag != 0) {
 		/* Return -1 if error */
@@ -318,12 +324,11 @@ Sigfunc *_netsignal(int signo,
 int _net_isclosed(int fd)
 {
 	struct pollfd pollit;
+	char buf[1];
 	
 	pollit.fd = fd;
 	pollit.events = POLLIN;
 	pollit.revents = 0;
-	
-	char buf[1];
 	
 	/* Will return > 0 if the descriptor is closed */
 	if (poll(&pollit, 1, 0) > 0) {
