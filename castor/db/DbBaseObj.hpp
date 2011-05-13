@@ -31,6 +31,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/db/IDbStatement.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 
 namespace castor {
 
@@ -39,9 +40,6 @@ namespace castor {
   class ICnvSvc;
 
   namespace db {
-	  
-    class DbCnvSvc;
-
 
       /**
        * A base converter for Oracle database
@@ -83,6 +81,29 @@ namespace castor {
          * access to the underlying database conversion service for child classes
          */
         castor::db::DbCnvSvc* cnvSvc() throw (castor::exception::Exception);
+
+        /**
+         * register a Service to the underlying conversion service.
+         * The conversion service is created if needed.
+         * @param svc the service to register
+         */
+        void registerToCnvSvc(castor::IService* svc) throw () {
+          cnvSvc()->registerDepSvc(svc);
+        }
+
+        /**
+         * unregister a Service from the underlying conversion service.
+         * In case no conversion service exists, this is a noop
+         * @param svc the service to unregister
+         */
+        void unregisterFromCnvSvc(castor::IService* svc) throw () {
+          if (m_cnvSvc) m_cnvSvc->unregisterDepSvc(svc);
+        }
+
+        /**
+         * resets the service
+         */
+        virtual void reset() throw();
 
         /**
          * helper method to commit

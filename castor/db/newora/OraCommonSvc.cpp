@@ -96,14 +96,14 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0) {
-  cnvSvc()->registerDepSvc(this);
+  registerToCnvSvc(this);
 }
 
 //------------------------------------------------------------------------------
 // ~OraCommonSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::~OraCommonSvc() throw() {
-  cnvSvc()->unregisterDepSvc(this);
+  unregisterFromCnvSvc(this);
   reset();
 }
 
@@ -127,6 +127,7 @@ unsigned int castor::db::ora::OraCommonSvc::ID() {
 void castor::db::ora::OraCommonSvc::reset() throw() {
   // Call upper level reset
   this->castor::BaseSvc::reset();
+  this->castor::db::DbBaseObj::reset();
   // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {

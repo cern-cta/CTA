@@ -338,7 +338,7 @@ void castor::db::ora::OraVdqmSvc::StatementStringMap::addStmtStr(
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0) {
-  cnvSvc()->registerDepSvc(this);
+  registerToCnvSvc(this);
 }
 
 
@@ -346,7 +346,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
 // ~OraVdqmSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::~OraVdqmSvc() throw() {
-  cnvSvc()->unregisterDepSvc(this);
+  unregisterFromCnvSvc(this);
   reset();
 }
 

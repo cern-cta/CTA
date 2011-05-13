@@ -45,7 +45,7 @@ castor::BaseSvc::~BaseSvc() throw() {
 }
 
 // -----------------------------------------------------------------------
-// resetDepSvc
+// reset
 // -----------------------------------------------------------------------
 void castor::BaseSvc::reset() throw() {
   // Call reset on all dependent services
