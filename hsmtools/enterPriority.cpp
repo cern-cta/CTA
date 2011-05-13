@@ -177,9 +177,6 @@ int main(int argc, char *argv[]) {
     // set the priority
     stgsvc->enterPriority(muid, mgid, mpriority);
 
-    // cleanup
-    stgsvc->release();
-
   } catch (castor::exception::Exception& e) {
     if (e.code() == 1) {
       std::cerr << "Priority for uid: " << muid << " and gid: " << mgid

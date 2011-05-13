@@ -69,17 +69,6 @@ namespace castor {
      */
     virtual void reset() throw() = 0;
 
-    /**
-     * adds a reference to this service
-     */
-    virtual void addRef() = 0;
-    
-    /**
-     * removes a reference to the service and releases it
-     * if the count goes to 0
-     */
-    virtual void release() = 0;
-
   };
 
 } // end of namespace castor

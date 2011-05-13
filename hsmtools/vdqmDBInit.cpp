@@ -340,11 +340,6 @@ int main(int argc, char *argv[]) {
     // start the main loop to initialize the db
     initDB(svcs, iVdqmService);
 
-    // release the Oracle Conversion Service
-    cnvSvc->release();
-
-    delete iVdqmService;
-
   } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;

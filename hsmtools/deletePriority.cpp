@@ -146,9 +146,6 @@ int main(int argc, char *argv[]) {
     // delete the priority
     stgsvc->deletePriority(muid, mgid);
 
-    // cleanup
-    stgsvc->release();
-
   } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;

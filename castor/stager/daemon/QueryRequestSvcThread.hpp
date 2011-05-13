@@ -186,12 +186,8 @@ namespace castor {
          * helper method for cleaning up a request and releasing
          * services (only if not null)
          * @param req the request to clean
-         * @param svc a service to release
-         * @param extraSvc another service to release
          */
-        void cleanup (castor::stager::Request* req,
-                      castor::IService *svc,
-                      castor::IService *extraSvc) throw();
+        void cleanup (castor::stager::Request* req) throw();
 
       };
 

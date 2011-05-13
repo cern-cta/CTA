@@ -110,8 +110,6 @@ throw(castor::exception::Exception)
 //------------------------------------------------------------------------------
 castor::vdqm::handler::BaseRequestHandler::~BaseRequestHandler() 
 	throw() {
-	ptr_IVdqmService->release();
-	
 	//Reset the pointer
 	ptr_IVdqmService = 0;
 }

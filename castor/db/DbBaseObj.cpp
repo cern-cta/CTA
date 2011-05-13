@@ -80,8 +80,6 @@ castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc()
 // reset
 // -----------------------------------------------------------------------
 void castor::db::DbBaseObj::reset() throw() {
-  // release the current OraCnvSvc
-  if (m_cnvSvc) m_cnvSvc->release();
   m_cnvSvc = 0;
 }
 

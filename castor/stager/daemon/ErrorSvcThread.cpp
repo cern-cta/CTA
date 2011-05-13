@@ -74,7 +74,6 @@ castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
     }
     // actual work
     castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
-    stgSvc->release();
     return subReq;
   } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
@@ -253,6 +252,5 @@ void castor::stager::daemon::ErrorSvcThread::process
     delete subReq;
   }
   if (req) delete req;
-  if (stgSvc) stgSvc->release();
   return;
 }

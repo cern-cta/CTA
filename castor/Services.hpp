@@ -72,12 +72,6 @@ namespace castor {
       throw(castor::exception::Exception);
 
     /**
-     * removes reference to a service. This means that it will be
-     * recreated using the factory if ever needed
-     */
-    void removeService(const std::string name) throw();
-
-    /**
      * create foreign representation from a C++ Object
      * @param address where to store the representation of
      * the object

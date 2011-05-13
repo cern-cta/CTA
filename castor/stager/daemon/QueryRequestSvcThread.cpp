@@ -947,8 +947,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
 // cleanup
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::cleanup
-(castor::stager::Request* req,
- castor::IService *svc, castor::IService *extraSvc) throw() {
+(castor::stager::Request* req) throw() {
   if (0 != req) {
     castor::stager::SvcClass *svcClass = req->svcClass();
     if (0 != svcClass) {
@@ -956,8 +955,6 @@ void castor::stager::daemon::QueryRequestSvcThread::cleanup
     }
     delete req;
   }
-  if (svc) svc->release();
-  if (extraSvc) extraSvc->release();
 }
 
 //-----------------------------------------------------------------------------
@@ -995,7 +992,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     if (0 == client) {
       // "No client associated with request ! Cannot answer !"
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_NOCLI);
-      cleanup(req, qrySvc, rhSvc);
+      cleanup(req);
       return;
     }
   } catch (castor::exception::Exception& e) {
@@ -1007,7 +1004,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
-    cleanup(req, qrySvc, rhSvc);
+    cleanup(req);
     return;
   }
 
@@ -1054,7 +1051,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     castor::replier::RequestReplier::getInstance()->
       sendEndResponse(client, req->reqId());
     // Cleanup
-    cleanup(req, qrySvc, rhSvc);
+    cleanup(req);
     return;
   }
 
@@ -1100,6 +1097,6 @@ void castor::stager::daemon::QueryRequestSvcThread::process
   }
 
   // final cleanup
-  cleanup(req, qrySvc, rhSvc);
+  cleanup(req);
   return;
 }

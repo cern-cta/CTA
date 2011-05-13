@@ -77,7 +77,7 @@ namespace castor {
     /**
      * destructor
      */
-    ~RepackClient()throw();
+    ~RepackClient() throw() {};
 
     void run(int argc, char** argv);
 

@@ -388,7 +388,6 @@ void castor::stager::daemon::GcSvcThread::process
       // "No client associated with request ! Cannot answer !"
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_NOCLI);
       delete req;
-      gcSvc->release();
       return;
     }
   } catch (castor::exception::Exception& e) {
@@ -401,7 +400,6 @@ void castor::stager::daemon::GcSvcThread::process
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     if (req) delete req;
-    if (gcSvc) gcSvc->release();
     return;
   }
 
@@ -430,7 +428,6 @@ void castor::stager::daemon::GcSvcThread::process
       {castor::dlf::Param("Type", req->type())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_UNKREQ, 1, params);
     if (req) {delete req; req=0;}
-    if (gcSvc) gcSvc->release();
     return;
   }
   try {
@@ -446,6 +443,5 @@ void castor::stager::daemon::GcSvcThread::process
   }
   // Final cleanup
   if (req) { delete req; req=0;}
-  if (gcSvc) gcSvc->release();
   return;
 }

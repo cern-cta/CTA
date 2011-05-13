@@ -64,7 +64,6 @@ extern "C" {
   int Cstager_IJobSvc_delete(Cstager_IJobSvc_t* jobSvc) {
     try {
       if (0 == jobSvc) return 0;
-      if (0 != jobSvc->jobSvc) jobSvc->jobSvc->release();
     } catch (castor::exception::Exception& e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

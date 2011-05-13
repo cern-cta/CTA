@@ -78,24 +78,10 @@ namespace castor {
      */
     virtual void reset() throw();
 
-    /**
-     * adds a reference
-     */
-    virtual void addRef() throw() { m_refs++; };
-    
-    /**
-     * removes a reference to the service and releases it
-     * if the count goes to 0
-     */
-    virtual void release() throw();
-
   private:
 
     /** the service name */
     const std::string m_name;
-    
-    /** the reference counter */
-    unsigned int m_refs;
 
     /** a list of dependent services */
     std::set<castor::IService*> m_depSvcs;

@@ -64,7 +64,6 @@ extern "C" {
   int Cstager_IStagerSvc_delete(Cstager_IStagerSvc_t* stgSvc) {
     try {
       if (0 == stgSvc) return 0;
-      if (0 != stgSvc->stgSvc) stgSvc->stgSvc->release();
     } catch (castor::exception::Exception& e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

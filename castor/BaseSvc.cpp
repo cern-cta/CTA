@@ -33,14 +33,12 @@
 // -----------------------------------------------------------------------
 castor::BaseSvc::BaseSvc(const std::string name) throw() :
   BaseObject(),
-  m_name(name),
-  m_refs(1) {}
+  m_name(name) {}
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
 castor::BaseSvc::~BaseSvc() throw() {
-  svcs()->removeService(m_name);
   reset();
 }
 
@@ -54,18 +52,4 @@ void castor::BaseSvc::reset() throw() {
        it++) {
     (*it)->reset();
   }
-}
-
-// -----------------------------------------------------------------------
-// release
-// -----------------------------------------------------------------------
-void castor::BaseSvc::release() throw() {
-  m_refs--;
-  // Never release services. This can lead to memory leaks
-  // in very specific contexts but is an optimisation most
-  // of the time. Otherwise, services are constantly created
-  // and released.
-//   if (0 == m_refs) {
-//     delete this;
-//   }
 }

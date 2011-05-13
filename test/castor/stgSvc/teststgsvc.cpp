@@ -119,7 +119,6 @@ int main (int argc, char** argv) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
-    stgSvc->release();
     delete svcs;
     return 1;
   }
@@ -131,7 +130,6 @@ int main (int argc, char** argv) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
-    stgSvc->release();
     delete svcs;
     return 1;
   }

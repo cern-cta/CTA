@@ -726,7 +726,6 @@ void castor::stager::daemon::JobSvcThread::process
       // "No client associated with request ! Cannot answer !"
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOCLI);
       delete req;
-      jobSvc->release();
       return;
     }
   } catch (castor::exception::Exception& e) {
@@ -739,7 +738,6 @@ void castor::stager::daemon::JobSvcThread::process
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     if (req) delete req;
-    if (jobSvc) jobSvc->release();
     return;
   }
 
@@ -815,6 +813,5 @@ void castor::stager::daemon::JobSvcThread::process
   }
   // Final cleanup
   if (req) delete req;
-  if (jobSvc) jobSvc->release();
   return;
 }
