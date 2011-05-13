@@ -37,7 +37,7 @@
  *****************************************************************************/
 int32_t rtcp_recvRtcpHdr(const int socketFd, rtcpHdr_t *const hdr,
   const int timeout) {
-  uint32_t nbBytesRead = 0;
+  ssize_t nbBytesRead = 0;
   char hdrBuf[3 * sizeof(uint32_t)]; /* magic, reqtype and len */
   char *p = NULL;
   uint32_t nbBytesUnmarshalled = 0;
@@ -51,16 +51,16 @@ int32_t rtcp_recvRtcpHdr(const int socketFd, rtcpHdr_t *const hdr,
   memset(hdrBuf, '\0', sizeof(hdrBuf));
   nbBytesRead = netread_timeout(socketFd, hdrBuf, sizeof(hdrBuf), timeout);
 
-  if(nbBytesRead == -1) {
+  if(-1 == nbBytesRead) {
     return -1;
   }
 
-  if(nbBytesRead == 0) {
+  if(0 == nbBytesRead) {
     serrno = SECONNDROP;
     return -1;
   }
 
-  if(nbBytesRead != sizeof(hdrBuf)) {
+  if((size_t)nbBytesRead != sizeof(hdrBuf)) {
     serrno = SEINTERNAL;
 
     return -1;
@@ -74,7 +74,7 @@ int32_t rtcp_recvRtcpHdr(const int socketFd, rtcpHdr_t *const hdr,
 
   nbBytesUnmarshalled = p - hdrBuf;
 
-  if(nbBytesRead != nbBytesUnmarshalled) {
+  if((size_t)nbBytesRead != nbBytesUnmarshalled) {
     serrno = SEINTERNAL;
 
     return -1;
