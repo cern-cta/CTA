@@ -1,6 +1,6 @@
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
-EXECUTABLES=sendrtcopyjob
+EXECUTABLES=sendrtcopyjob testrtcpd
 COMMON_OPS=-g -pthread
 
 all: $(EXECUTABLES)
@@ -33,6 +33,13 @@ sendrtcopyjob: \
   Csnprintf.o \
   Cuuid.o
 	g++ $(COMMON_OPS) -lpthread -ldl -luuid -o $@ $^
+
+testrtcpd: \
+  testRtcpdMain.o \
+  rtcp_marshallVdqmClientInfoMsg.o \
+  Cglobals.o \
+  marshall.o
+	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
 
 sendrtcopyjob.o: sendrtcopyjob.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -101,4 +108,14 @@ Csnprintf.o: $(ROOT_DIR)/common/Csnprintf.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 Cuuid.o: $(ROOT_DIR)/common/Cuuid.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+marshall.o: $(ROOT_DIR)/common/marshall.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+testRtcpdMain.o: testRtcpdMain.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcp_marshallVdqmClientInfoMsg.o: \
+  $(ROOT_DIR)/rtcopy/rtcp_marshallVdqmClientInfoMsg.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

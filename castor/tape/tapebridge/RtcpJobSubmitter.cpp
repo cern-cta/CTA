@@ -56,7 +56,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
   const int                      clientPort,
   const int                      clientEuid,
   const int                      clientEgid,
-  const std::string              &deviceGroupName,
+  const std::string              &dgn,
   const std::string              &driveUnit,
   legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
@@ -70,13 +70,13 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
       ": Maximum: " << (sizeof(request.clientHost) - 1) << 
       ": Actual: " << clientHost.length());
   }
-  if(deviceGroupName.length() > sizeof(request.deviceGroupName) - 1) {
+  if(dgn.length() > sizeof(request.dgn) - 1) {
     castor::exception::Exception ex(EINVAL);
 
     TAPE_THROW_CODE(EINVAL,
-      ": Length of deviceGroupName string is too large"
-      ": Maximum: " << (sizeof(request.deviceGroupName) - 1) <<
-      ": Actual: " << deviceGroupName.length());
+      ": Length of dgn string is too large"
+      ": Maximum: " << (sizeof(request.dgn) - 1) <<
+      ": Actual: " << dgn.length());
   }
   if(driveUnit.length() > sizeof(request.driveUnit) - 1) {
     TAPE_THROW_CODE(EINVAL,
@@ -98,7 +98,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
   request.clientEuid = clientEuid;
   request.clientEgid = clientEgid;
   strcpy(request.clientHost     , clientHost.c_str());
-  strcpy(request.deviceGroupName, deviceGroupName.c_str());
+  strcpy(request.dgn            , dgn.c_str());
   strcpy(request.driveUnit      , driveUnit.c_str());
   strcpy(request.clientUserName , clientUserName.c_str());
 
@@ -148,14 +148,16 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
 // readReply
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
-  castor::io::AbstractTCPSocket &sock, const int,
-  const char *remoteCopyType, legacymsg::RtcpJobReplyMsgBody &reply)
+  castor::io::AbstractTCPSocket  &sock,
+  const int                      netReadWriteTimeout,
+  const char                     *remoteCopyType,
+  legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(sock.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
+    net::readBytes(sock.socket(), netReadWriteTimeout, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -219,7 +221,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    net::readBytes(sock.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
+    net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
       bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,

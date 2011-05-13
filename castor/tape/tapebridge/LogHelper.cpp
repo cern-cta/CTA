@@ -44,7 +44,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("clientEuid"        , body.clientEuid     ),
     castor::dlf::Param("clientEgid"        , body.clientEgid     ),
     castor::dlf::Param("clientHost"        , body.clientHost     ),
-    castor::dlf::Param("deviceGroupName"   , body.deviceGroupName),
+    castor::dlf::Param("dgn"               , body.dgn            ),
     castor::dlf::Param("driveUnit"         , body.driveUnit      ),
     castor::dlf::Param("clientUserName"    , body.clientUserName )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);

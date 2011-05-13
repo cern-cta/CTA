@@ -27,14 +27,15 @@ DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(tapebridge,castortapebridge)
 
 TAPEBRIDGEBIN_SRCS = \
+  BridgeClientInfoSender.cpp \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
   DlfMessageStrings.cpp \
-  DriveAllocationProtocolEngine.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   Packer.cpp \

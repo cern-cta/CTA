@@ -672,7 +672,7 @@ void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             ),
       castor::dlf::Param("errorCode"         , ex.code()              ),
-      castor::dlf::Param("errorrMessage"     , ex.getMessage().str()  )};
+      castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }

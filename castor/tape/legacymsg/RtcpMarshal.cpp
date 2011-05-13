@@ -51,7 +51,7 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
   const uint32_t len =
     4*sizeof(uint32_t)          +
     strlen(src.clientHost)      +
-    strlen(src.deviceGroupName) +
+    strlen(src.dgn)             +
     strlen(src.driveUnit)       +
     strlen(src.clientUserName)  +
     4; // 4 = the number of string termination characters
@@ -78,7 +78,7 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
   marshalUint32(src.clientEuid     , p);
   marshalUint32(src.clientEgid     , p);
   marshalString(src.clientHost     , p);
-  marshalString(src.deviceGroupName, p);
+  marshalString(src.dgn            , p);
   marshalString(src.driveUnit      , p);
   marshalString(src.clientUserName , p);
 
@@ -110,7 +110,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalUint32(src, srcLen, dst.clientEuid);
   unmarshalUint32(src, srcLen, dst.clientEgid);
   unmarshalString(src, srcLen, dst.clientHost);
-  unmarshalString(src, srcLen, dst.deviceGroupName);
+  unmarshalString(src, srcLen, dst.dgn);
   unmarshalString(src, srcLen, dst.driveUnit);
   unmarshalString(src, srcLen, dst.clientUserName);
 }

@@ -28,6 +28,7 @@ CommonDependsOnLibrary(vmgr,castorvmgr)
 CommonDependsOnLibrary(vdqm,castorvdqm)
 CommonDependsOnLibrary(tape,castortape)
 CommonDependsOnLibrary(expert,castorexpert)
+CommonDependsOnLibrary(tapebridge,castortapebridge)
 
 LOCAL_PATH/rtcpc_SendRecv.c: LOCAL_PATH/rtcp_SendRecv.c
 	RemoveFiles($@)
@@ -76,7 +77,11 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_TapeIO.o rtcp_InitNW.o \
 		rtcpd_ConvertData.o \
 		rtcpc_BuildReq.o rtcpapi.o rtcp_RetvalSHIFT.o \
-		rtcpd_tpdump.o rtcp_accounting.o
+		rtcpd_tpdump.o rtcp_accounting.o rtcp_recvRtcpHdr.o \
+		rtcp_marshallVdqmClientInfoMsg.o \
+		rtcpd_SendAckToVdqmOrTapeBridge.o \
+		rtcpd_GetClientInfoMsg.o \
+		rtcpd_GetClientInfo.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
 TapeProgramTarget(killjid,killjid.o,$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpd)

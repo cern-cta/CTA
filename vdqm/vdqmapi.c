@@ -884,7 +884,7 @@ int vdqm_SendVolPriority(char *vid, int tpMode, int priority,
     msg.priority = priority;
     msg.clientUID = geteuid();
     msg.clientGID = getegid();
-    // msg.clientHost is set by vdqm_SendVolPriority_Transfer
+    /* msg.clientHost is set by vdqm_SendVolPriority_Transfer */
     strncpy(msg.vid, vid, sizeof(msg.vid));
     msg.vid[sizeof(msg.vid)-1] = '\0';
     msg.tpMode = tpMode;
@@ -926,7 +926,7 @@ int vdqm_SendDelDrv(char *server, char *drive, char *dgn) {
 
     msg.clientUID = geteuid();
     msg.clientGID = getegid();
-    // msg.clientHost is set by vdqm_SendDelDrv_Transfer
+    /* msg.clientHost is set by vdqm_SendDelDrv_Transfer */
     strncpy(msg.server, server, sizeof(msg.server));
     msg.server[sizeof(msg.server)-1] = '\0';
     strncpy(msg.drive, drive, sizeof(msg.drive));
@@ -967,7 +967,7 @@ int vdqm_SendDedicate(char *server, char *drive, char *dgn,
         VDQM_API_RETURN(-1);
     }
 
-    // Expand dedication string
+    /* Expand dedication string */
     {
         char tmpstr[CA_MAXLINELEN+1], *p, *q;
         char keywords[][20] = VDQM_DEDICATE_PREFIX;
@@ -976,6 +976,8 @@ int vdqm_SendDedicate(char *server, char *drive, char *dgn,
         if ( *dedicate == '\0' ) {
            msg.dedicate[0] = '\0';
         } else {
+            int i = 0;
+
             if ( strlen(dedicate) > sizeof(tmpstr)-1 ) {
                 TRACE(1,"vdqm",
                       "vdqm_SendDedicate() dedication string too long (%d>%d)",
@@ -985,7 +987,6 @@ int vdqm_SendDedicate(char *server, char *drive, char *dgn,
             }
             strcpy(tmpstr,dedicate);
 
-            int i = 0;
             for (i=0; *keywords[i] != '\0'; i++) {
                 if ( (p = strstr(tmpstr,keywords[i])) == NULL ) {
                     if ( strlen(msg.dedicate) + strlen(defaults[i]) >
@@ -1021,7 +1022,7 @@ int vdqm_SendDedicate(char *server, char *drive, char *dgn,
 
     msg.clientUID = geteuid();
     msg.clientGID = getegid();
-    // msg.clientHost is set by vdqm_SendDedicate_Transfer
+    /* msg.clientHost is set by vdqm_SendDedicate_Transfer */
     strncpy(msg.server, server, sizeof(msg.server));
     msg.server[sizeof(msg.server)-1] = '\0';
     strncpy(msg.drive, drive, sizeof(msg.drive));

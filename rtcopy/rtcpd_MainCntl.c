@@ -43,6 +43,8 @@
 #include <serrno.h>
 #include "tplogger_api.h"
 
+#include "h/rtcpd_GetClientInfo.h"
+
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
 extern char *getconfent(const char *, const char *, int);
@@ -88,6 +90,18 @@ int Dumptape = FALSE;
 extern int ENOSPC_occurred;
 int ENOSPC_occurred = FALSE;
 
+/**
+ * Global variable that is set to a meaningful value if the the client of rtcpd
+ * is the tape-bridge daemon (see global_clientIsTapeBridge).
+ */
+static tapeBridgeClientInfoMsgBody_t global_tapeBridgeClientInfoMsgBody;
+
+/**
+ * Global variable stating whether or not the client of rtcpd is the
+ * tape-bridge daemon.
+ */
+static int global_clientIsTapeBridge = FALSE;
+
 /*
  * Set Debug flag if requested
  */
@@ -101,18 +115,6 @@ static void rtcpd_SetDebug() {
   return;
 }
 
-int rtcpd_CheckNoMoreTapes() {
-  struct stat st;
-
-  if ( stat(NOMORETAPES,&st) == 0 ) {
-    rtcp_log(LOG_INFO," tape service momentarily interrupted.\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_CheckNoMoreTapes",
-                     "Message", TL_MSG_PARAM_STR, "tape service momentarily interrupted" );
-    return(-1);
-  }
-  return(0);
-}
 /*
  * Check that client account code exists for requested group
  */
@@ -1354,28 +1356,31 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "Message", TL_MSG_PARAM_STR, "request successful" );
 
     tl_rtcpd.tl_log( &tl_rtcpd, 44, 22,
-                     "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
-                     "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
-                     "RequestType"     , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"             , TL_MSG_PARAM_STR   , vid,
-                     "Drive"           , TL_MSG_PARAM_STR   , unit,
-                     "Label"           , TL_MSG_PARAM_STR   , label,
-                     "MountTime"       , TL_MSG_PARAM_INT   , TMount,
-                     "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
-                     "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
-                     "TransferTime"    , TL_MSG_PARAM_INT   , Ttransfer,
-                     "PositionTime"    , TL_MSG_PARAM_INT   , Tposition,
-                     "DataVolumeMB"    , TL_MSG_PARAM_DOUBLE, totMBSz_d,
-                     "DataRateMBs"     , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
-                     "Files"           , TL_MSG_PARAM_INT   , totFiles,
-                     "DGN"             , TL_MSG_PARAM_STR   , dgn,
-                     "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
-                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,
-                     "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
-                     "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
-                     "ClientHost"      , TL_MSG_PARAM_STR   , client_host,
-                     "TPVID"           , TL_MSG_PARAM_TPVID , vid,
-                     "RequestState"    , TL_MSG_PARAM_STR   , "successful");
+      "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
+      "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
+      "RequestType"     , TL_MSG_PARAM_STR   ,
+        (mode == WRITE_ENABLE) ? "WRITE" : "READ",
+      "VID"             , TL_MSG_PARAM_STR   , vid,
+      "Drive"           , TL_MSG_PARAM_STR   , unit,
+      "Label"           , TL_MSG_PARAM_STR   , label,
+      "MountTime"       , TL_MSG_PARAM_INT   , TMount,
+      "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
+      "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
+      "TransferTime"    , TL_MSG_PARAM_INT   , Ttransfer,
+      "PositionTime"    , TL_MSG_PARAM_INT   , Tposition,
+      "DataVolumeMB"    , TL_MSG_PARAM_DOUBLE, totMBSz_d,
+      "DataRateMBs"     , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
+      "Files"           , TL_MSG_PARAM_INT   , totFiles,
+      "DGN"             , TL_MSG_PARAM_STR   , dgn,
+      "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
+      "ClientName"      , TL_MSG_PARAM_STR   , client_name,
+      "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
+      "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
+      "ClientHost"      , TL_MSG_PARAM_STR   ,
+        (global_clientIsTapeBridge ?
+          global_tapeBridgeClientInfoMsgBody.bridgeClientHost : client_host),
+      "TPVID"           , TL_MSG_PARAM_TPVID , vid,
+      "RequestState"    , TL_MSG_PARAM_STR   , "successful");
 
   } else {
     rtcp_log(LOG_INFO,"request failed\n");
@@ -1383,29 +1388,33 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request failed" );
     if ( Ttransfer <= 0 ) Ttransfer = 1;
+
     tl_rtcpd.tl_log( &tl_rtcpd, 44, 22,
-                     "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
-                     "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
-                     "RequestType"     , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"             , TL_MSG_PARAM_STR   , vid,
-                     "Label"           , TL_MSG_PARAM_STR   , label,
-                     "Drive"           , TL_MSG_PARAM_STR   , unit,
-                     "MountTime"       , TL_MSG_PARAM_INT   , TMount,
-                     "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
-                     "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
-                     "TransferTime"    , TL_MSG_PARAM_INT   , Ttransfer,
-                     "PositionTime"    , TL_MSG_PARAM_INT   , Tposition,
-                     "DataVolumeMB"    , TL_MSG_PARAM_DOUBLE, totMBSz_d,
-                     "DataRateMBs"     , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
-                     "Files"           , TL_MSG_PARAM_INT   , totFiles,
-                     "DGN"             , TL_MSG_PARAM_STR   , dgn,
-                     "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
-                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,
-                     "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
-                     "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
-                     "ClientHost"      , TL_MSG_PARAM_STR   , client_host,
-                     "TPVID"           , TL_MSG_PARAM_TPVID , vid,
-                     "RequestState"    , TL_MSG_PARAM_STR   , "failed");
+      "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
+      "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
+      "RequestType"     , TL_MSG_PARAM_STR   ,
+        (mode == WRITE_ENABLE) ? "WRITE" : "READ",
+      "VID"             , TL_MSG_PARAM_STR   , vid,
+      "Label"           , TL_MSG_PARAM_STR   , label,
+      "Drive"           , TL_MSG_PARAM_STR   , unit,
+      "MountTime"       , TL_MSG_PARAM_INT   , TMount,
+      "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
+      "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
+      "TransferTime"    , TL_MSG_PARAM_INT   , Ttransfer,
+      "PositionTime"    , TL_MSG_PARAM_INT   , Tposition,
+      "DataVolumeMB"    , TL_MSG_PARAM_DOUBLE, totMBSz_d,
+      "DataRateMBs"     , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
+      "Files"           , TL_MSG_PARAM_INT   , totFiles,
+      "DGN"             , TL_MSG_PARAM_STR   , dgn,
+      "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
+      "ClientName"      , TL_MSG_PARAM_STR   , client_name,
+      "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
+      "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
+      "ClientHost"      , TL_MSG_PARAM_STR   ,
+        (global_clientIsTapeBridge ?
+          global_tapeBridgeClientInfoMsgBody.bridgeClientHost : client_host),
+      "TPVID"           , TL_MSG_PARAM_TPVID , vid,
+      "RequestState"    , TL_MSG_PARAM_STR   , "failed");
   }
 
   rtcpd_SetProcError(RTCP_OK);
@@ -2299,18 +2308,20 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
 int rtcpd_MainCntl(SOCKET *accept_socket) {
   rtcpTapeRequest_t tapereq;
   rtcpFileRequest_t filereq;
-  rtcpHdr_t hdr;
   SOCKET *client_socket = NULL;
   rtcpClientInfo_t *client = NULL;
-  tape_list_t *tape;
-  int rc, retry, reqtype, errmsglen, status, CLThId;
-  char *errmsg;
+  tape_list_t *tape = NULL;
+  int rc = 0;
+  int retry = 0;
+  int status = 0;
+  int CLThId = 0;
   static int thPoolId = -1;
   static int thPoolSz = -1;
   char *cmd = NULL;
   char acctstr[7] = "";
   char envacct[20];
-  int save_errno;
+  int save_serrno = 0;
+  int save_errno = 0;
 
   (void)setpgrp();
   AbortFlag = 0;
@@ -2330,93 +2341,103 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     return(-1);
   }
 
-  /*
-   * Receive the request
-   */
-  memset(&tapereq,'\0',sizeof(tapereq));
-  memset(&filereq,'\0',sizeof(tapereq));
-  memset(&hdr,'\0',sizeof(hdr));
-  rc = rtcp_RecvReq(accept_socket,
-                    &hdr,
-                    client,
-                    &tapereq,
-                    &filereq);
+  memset(&tapereq, '\0', sizeof(tapereq));
+  memset(&filereq, '\0', sizeof(filereq));
+  {
+    char errBuf[1024];
+    memset(errBuf, '\0', sizeof(errBuf));
+    rc = rtcpd_GetClientInfo(
+      *accept_socket,
+      RTCP_NETTIMEOUT,
+      &tapereq,
+      &filereq,
+      client,
+      &global_clientIsTapeBridge,
+      &global_tapeBridgeClientInfoMsgBody,
+      errBuf,
+      sizeof(errBuf));
+    save_serrno = serrno;
+    if(0 != rc) {
+      rtcp_log(LOG_ERR, "rtcpd_MainCntl(): rtcpd_GetClientInfo %s\n", errBuf);
+      tl_rtcpd.tl_log(&tl_rtcpd, 3, 3,
+        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
+        "Message", TL_MSG_PARAM_STR, "rtcpd_GetClientInfo",
+        "Error"  , TL_MSG_PARAM_STR, errBuf);
 
-  if ( rc == -1 ) {
-    errmsg = sstrerror(serrno);
-    errmsglen = 0;
-    if ( errmsg != NULL ) errmsglen = strlen(errmsg);
-    rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_RecvReq(): %s\n",
-             (errmsg == NULL ? "Unknown error" : errmsg));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "rtcp_RecvReq",
-                     "Error"  , TL_MSG_PARAM_STR, (errmsg == NULL ? "Unknown error" : errmsg) );
-    /*
-     * Need to tell VDQM that we failed to receive the
-     * request. If it didn't originate from VDQM there
-     * is no harm since we're going to exit anyway.
-     */
-    (void)vdqm_AcknClientAddr(*accept_socket,
-                              rc,
-                              errmsglen,
-                              errmsg);
-    return(-1);
-  } else reqtype = rc;
+      (void)rtcp_CloseConnection(accept_socket);
+      rtcpd_FreeResources(NULL,&client,NULL);
 
-  /*
-   * Not SHIFT request. We only allow connections from VDQM or
-   * authorised hosts.
-   */
-  if ( rtcp_CheckConnect(accept_socket,NULL) != 1 ) {
-    rtcp_log(LOG_ERR,"rtcpd_MainCntl() connection from unauthorised host\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "connection from unauthorised host" );
-    (void)rtcp_CloseConnection(accept_socket);
-    rtcpd_FreeResources(NULL,&client,NULL);
-    return(-1);
+      serrno = save_serrno;
+      return(rc);
+    }
   }
 
   /*
-   * If local nomoretapes is set, we don't acknowledge VDQM message.
-   * VDQM will then requeue the request and put assigned drive in
-   * UNKNOWN status
-   */
-  if ( rtcpd_CheckNoMoreTapes() != 0 ) {
-    (void)rtcp_CloseConnection(accept_socket);
-    rtcpd_FreeResources(NULL,&client,NULL);
-    return(-1);
-  }
-
-  rc = vdqm_AcknClientAddr(*accept_socket,reqtype,0,NULL);
-  if ( rc == -1 ) {
-    rtcp_log(LOG_ERR,"rtcpd_MainCntl() vdqm_AcknClientAddr(): %s\n",
-             sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "vdqm_AcknClientAddr",
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-    (void)rtcp_CloseConnection(accept_socket);
-    rtcpd_FreeResources(NULL,&client,NULL);
-    return(-1);
-  }
-
-  /*
-   * We've got the client address so we don't need VDQM anymore
+   * We've got the client address so we don't need the tape-bridge or VDQM
+   * client-info connection any anymore
    */
   rc = rtcp_CloseConnection(accept_socket);
-  if ( rc == -1 ) {
+  save_serrno = serrno;
+  if(-1 == rc) {
+    char *errmsg = sstrerror(save_serrno);
+    if(NULL == errmsg) {
+      errmsg = "Unknown error";
+    }
+
     /*
-     * There was an error closing the connection to VDQM.
+     * There was an error closing the connection to the tape-bridge or VDQM.
      * Probably not serious, so we just log it and continue.
      */
-    rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CloseConnection(): %s\n",
-             sstrerror(serrno));
+    rtcp_log(LOG_ERR, "%s()"
+      ": rtcp_CloseConnection(): %s\n",
+      __FUNCTION__, errmsg);
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "rtcp_CloseConnection",
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, "rtcp_CloseConnection",
+      "Error"  , TL_MSG_PARAM_STR, errmsg);
+  }
+
+  /* Log whether or not the client is tapebridged */
+  {
+    char *const logMsg = global_clientIsTapeBridge ?
+      "Client is tapebridged" : "Client is not tapebridged";
+
+    rtcp_log(LOG_INFO, "%s()"
+      ": %s\n",
+      __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
+  }
+
+  /* Log the host name of the tapebridge client if applicable */
+  if(global_clientIsTapeBridge) {
+    char logMsg[128];
+
+    snprintf(logMsg, sizeof(logMsg), "Host name of tapebridged client is %s",
+      global_tapeBridgeClientInfoMsgBody.bridgeClientHost);
+    logMsg[sizeof(logMsg) - 1] = '\0';
+    rtcp_log(LOG_INFO, "%s()"
+      ": %s\n",
+      __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
+  }
+
+  /* Log whether or not buffered tape-marks will be used over muliple files */
+  {
+    char *const logMsg = (global_clientIsTapeBridge &&
+      global_tapeBridgeClientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles)
+      ? "Using buffered tape-marks over multiple files" :
+      "Not using buffered tape-marks over multiple files";
+
+    rtcp_log(LOG_INFO, "%s()"
+      ": %s\n",
+      __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
   }
 
   /*

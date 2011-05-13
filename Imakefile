@@ -47,3 +47,4 @@ include LOCAL_PATH/rtcopy/Makefile
 include LOCAL_PATH/common/Makefile
 include LOCAL_PATH/gridftp2/Makefile
 include LOCAL_PATH/shlib/Makefile
+include LOCAL_PATH/tapebridge/Makefile

@@ -14,6 +14,11 @@
 #if !defined(RTCP_H)
 #define RTCP_H
 
+#include "h/Castor_limits.h"
+#include "h/Cuuid.h"
+#include "h/net.h"
+#include "h/osdep.h"
+
 typedef struct rtcpHdr {
     int magic;
     int reqtype;

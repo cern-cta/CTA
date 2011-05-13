@@ -14,6 +14,9 @@
 #if !defined(RTCP_SERVER_H)
 #define RTCP_SERVER_H
 
+#include "h/Castor_limits.h"
+#include "h/rtcp.h"
+
 /*
  * Data buffers
  */
@@ -261,7 +264,7 @@ int rtcp_RecvTpDump (SOCKET *, rtcpDumpTapeRequest_t *);
 int rtcp_GetMsg (SOCKET *, char *, int);
 int rtcp_WriteAccountRecord (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int);
 int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
-int rtcp_CheckConnect (SOCKET *, tape_list_t *);
+int rtcp_CheckConnect (const SOCKET, tape_list_t *);
 int rtcpd_init_stgupdc (tape_list_t *);
 int rtcpd_GetRequestList (SOCKET *, rtcpClientInfo_t *,
 			  rtcpTapeRequest_t *, tape_list_t **,

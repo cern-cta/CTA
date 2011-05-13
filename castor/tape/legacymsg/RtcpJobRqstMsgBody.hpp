@@ -43,7 +43,7 @@ namespace legacymsg {
     uint32_t clientEuid;
     uint32_t clientEgid;
     char     clientHost[CA_MAXHOSTNAMELEN+1];
-    char     deviceGroupName[CA_MAXDGNLEN+1];
+    char     dgn[CA_MAXDGNLEN+1];
     char     driveUnit[CA_MAXUNMLEN+1];
     char     clientUserName[CA_MAXUSRNAMELEN+1];
   };

@@ -35,8 +35,6 @@
 #include <stdlib.h>
 #include <string>
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MigrationPolicyTest);
-
 int main() {
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =

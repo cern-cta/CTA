@@ -75,7 +75,6 @@ extern int rtcp_SendAckn (SOCKET *, int);
 extern int rtcp_CloseConnection (SOCKET *);
 
 extern int rtcp_Listen (SOCKET, SOCKET *, int, int);
-extern int rtcp_CheckConnect (SOCKET *, tape_list_t *);
 extern int rtcp_CallVMGR (tape_list_t *, char *);
 extern int rtcpc_InitReqStruct (
 				rtcpTapeRequest_t *, 
@@ -2073,10 +2072,7 @@ int rtcpc_runReq_ext(
        * At this stage we only authorise connections from the
        * selected tape server and authorised hosts.
        */
-      rc = rtcp_CheckConnect(
-                             &((*socks)->accept_socket),
-                             tape
-                             );
+      rc = rtcp_CheckConnect((*socks)->accept_socket, tape);
       if ( rc != 1 ) {
         rtcp_log(LOG_ERR,"rtcpc_runReq() dropping unauthorised connection\n");
         (void)rtcp_CloseConnection(

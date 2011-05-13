@@ -198,16 +198,16 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
   return(0);
 }
 
-int rtcp_CheckConnect(SOCKET *s, tape_list_t *tape) {
+int rtcp_CheckConnect(const SOCKET s, tape_list_t *tape) {
   char peerhost[CA_MAXHOSTNAMELEN+1], tmp[CA_MAXHOSTNAMELEN+1];
   char *tpserver;
   int l, rc;
 
   *peerhost = '\0';
   rtcp_log(LOG_DEBUG,"rtcp_CheckConnect() entered\n");
-  if ( s == NULL || *s == INVALID_SOCKET ) return(-1);
+  if ( s == INVALID_SOCKET ) return(-1);
 
-  if ( (rc = isadminhost(*s,peerhost)) == -1 && serrno != SENOTADMIN ) {
+  if ( (rc = isadminhost(s,peerhost)) == -1 && serrno != SENOTADMIN ) {
     rtcp_log(LOG_ERR,"rtcp_CheckConnect() failed to lookup connection\n");
     return(-1);
   }

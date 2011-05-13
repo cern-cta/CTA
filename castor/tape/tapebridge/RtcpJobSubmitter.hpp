@@ -59,28 +59,29 @@ namespace tapebridge {
      * network reads and writes.
      * @param remoteCopyType The remote-copy type to be used for exception
      * messages
-     * @param tapeRequestID The tape request ID.
+     * @param tapeRequestID  The tape request ID.
      * @param clientUserName The client user name.
-     * @param clientHost The client host.
-     * @param clientPort The client port.
-     * @param clientEuid The client user ID.
-     * @param clientEgid The client group ID.
-     * @param deviceGroupName The device group name.
-     * @param driveUnit The tape drive name.
-     * @param reply The reply from RTCPD which may be positive or negative.
+     * @param clientHost     The client host.
+     * @param clientPort     The client port.
+     * @param clientEuid     The client user ID.
+     * @param clientEgid     The client group ID.
+     * @param dgn            The device group name.
+     * @param driveUnit      The name of the tape drive unit.
+     * @param reply          The reply from RTCPD which may be positive or
+     *                       negative.
      */
     static void submit(
       const std::string              &host,
-      const unsigned int              port,
-      const int                       netReadWriteTimeout,
+      const unsigned int             port,
+      const int                      netReadWriteTimeout,
       const char                     *remoteCopyType,
-      const u_signed64                tapeRequestID,
+      const u_signed64               tapeRequestID,
       const std::string              &clientUserName,
       const std::string              &clientHost,
-      const int                       clientPort,
-      const int                       clientEuid,
-      const int                       clientEgid,
-      const std::string              &deviceGroupName,
+      const int                      clientPort,
+      const int                      clientEuid,
+      const int                      clientEgid,
+      const std::string              &dgn,
       const std::string              &driveUnit,
       legacymsg::RtcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
@@ -91,16 +92,18 @@ namespace tapebridge {
     /**
      * Reads the reply of the RTCOPY or tape tapebridge daemon.
      * 
-     * @param sock The socket of the connection to the RTCOPY or tape
-     * tapebridge daemon.
+     * @param sock The socket of the connection to the RTCOPY or tape-bridge
+     * daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
      * @param remoteCopyType The remote-copy type to be used for exception
      * messages.
-     * @param reply The reply from RTCPD.
+     * @param reply The reply from RTCOPY or tape-bridge daemon.
      */
-    static void readReply(castor::io::AbstractTCPSocket &sock,
-      const int netReadWriteTimeout, const char *remoteCopyType,
+    static void readReply(
+      castor::io::AbstractTCPSocket  &sock,
+      const int                      netReadWriteTimeout,
+      const char                     *remoteCopyType,
       legacymsg::RtcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 

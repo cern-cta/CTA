@@ -27,8 +27,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TapeUtilsTest);
-
 int main() {
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =

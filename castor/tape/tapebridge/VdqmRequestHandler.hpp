@@ -121,33 +121,23 @@ private:
   static StoppingGracefullyFunctor s_stoppingGracefullyFunctor;
 
   /**
-   * Gets the RTCOPY job from the specified VDQM connection socket and then
-   * deletes the socket object causing it to close the underlying connection.
-   *
-   * @param cuuid      The ccuid to be used for logging.
-   * @param sock       The VDQM connection socket.
-   * @param jobRequest Outpur parameter: The RTCOPY job request from the VDQM.
-   */
-  void getRtcpJobAndCloseConn(
-    const Cuuid_t                 &cuuid,
-    io::ServerSocket*             sock,
-    legacymsg::RtcpJobRqstMsgBody &jobRequest)
-    throw(castor::exception::Exception);
-
-  /**
    * The entry point of this thread delegates its work to this method with a
    * try and catch around the call so that we can throw exceptions.
    *
-   * @param cuuid                    The ccuid to be used for logging.
-   * @param jobRequest               The RTCOPY job request from the VDQM.
+   * @param cuuid                The ccuid to be used for logging.
+   * @param jobRequest           The RTCOPY job request from the VDQM.
    * @param tapebridgeTransactionCounter The counter used to generate
-   *                                 tapebridge transaction IDs.  These are the
-   *                                 IDs used in requests to the clients.
+   *                             tapebridge transaction IDs.  These are the IDs
+   *                             used in requests to the clients.
+   * @param bridgeCallbackSockFd The file descriptor of the listener socket to
+   *                             be used to accept callback connections from
+   *                             RTCPD.
    */
   void exceptionThrowingRun(
     const Cuuid_t                       &cuuid,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    Counter<uint64_t>                   &tapebridgeTransactionCounter)
+    Counter<uint64_t>                   &tapebridgeTransactionCounter,
+    const int                           bridgeCallbackSockFd)
     throw(castor::exception::Exception);
 
   /**
