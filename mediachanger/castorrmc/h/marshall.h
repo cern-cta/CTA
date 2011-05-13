@@ -18,6 +18,7 @@
 
 #include <osdep.h>              /* Operating system dependencies        */
 #include <memory.h>             /* memory operations definition         */
+#include <arpa/inet.h>
 
 #define SHORT			WORD
 /* #define U_SHORT			U_WORD */
