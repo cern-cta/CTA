@@ -37,7 +37,7 @@
  *****************************************************************************/
 int32_t rtcp_recvRtcpHdr(const int socketFd, rtcpHdr_t *const hdr,
   const int timeout) {
-  ssize_t nbBytesRead = 0;
+  uint32_t nbBytesRead = 0;
   char hdrBuf[3 * sizeof(uint32_t)]; /* magic, reqtype and len */
   char *p = NULL;
   uint32_t nbBytesUnmarshalled = 0;
