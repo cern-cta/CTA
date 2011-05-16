@@ -48,6 +48,7 @@ our @export   = qw(
                    check_environment
                    get_environment
                    set_environment
+                   clean_fileservers
                    register_remote_file
                    make_seed 
                    make_localfile 
@@ -284,6 +285,14 @@ sub poll_fileserver_readyness ( $$ )
 	sleep ( $interval );
     }
     die "Timeout in poll_fileserver_readyness";
+}
+
+# Clean disk servers of files (to be done after dropping the stager DB).
+sub clean_fileservers ()
+{
+    print "Cleaning leftover files on the files servers\n";
+    print `rmGetNodes  | grep name | perl -p -e 's/^.*name: //'  | xargs -i ssh root\@{} rm /srv/castor/*/*/* 2>&1`;
+    print "Done\n";
 }
 
 # Check that lsf has accessed the shared memory

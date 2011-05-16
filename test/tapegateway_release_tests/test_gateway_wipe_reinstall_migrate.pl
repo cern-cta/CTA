@@ -120,6 +120,9 @@ sub main ()
     # Let the dust settle
     print "t=".CastorTapeTests::elapsed_time."s\n";
     CastorTapeTests::poll_fileserver_readyness (5,60);
+    
+    # Clean the disk servers
+    CastorTapeTests::clean_fileservers ();
         
     # Migrate to the new system, with tape gateway, still running rtcpclientd
     $dbh=CastorTapeTests::open_db();
