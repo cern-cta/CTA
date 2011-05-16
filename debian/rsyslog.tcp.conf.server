@@ -49,9 +49,6 @@ if $fromhost-ip != '127.0.0.1' then ~
 # The default output file format, syslog style format
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
 
-# Required by openssh-server (SLC4 machines)
-#$AddUnixListenSocket /var/empty/sshd/dev/log
-
 # The default file creation mode
 $FileCreateMode 0600
 
