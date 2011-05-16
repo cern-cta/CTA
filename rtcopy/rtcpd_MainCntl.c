@@ -1117,11 +1117,14 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
 static void rtcpd_FreeResources(SOCKET **client_socket,
                                 rtcpClientInfo_t **client,
                                 tape_list_t **tape) {
-  tape_list_t *nexttape;
-  file_list_t *nextfile, *tmpfile;
+  tape_list_t *nexttape = NULL;
+  file_list_t *nextfile = NULL;
+  file_list_t *tmpfile = NULL;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
-  char ifce[5],dgn[CA_MAXDGNLEN+1],unit[CA_MAXUNMLEN+1];
+  char ifce[5];
+  char dgn[CA_MAXDGNLEN+1];
+  char unit[CA_MAXUNMLEN+1];
   u_signed64 totSz = 0;
   int totKBSz = 0;
   double totMBSz_d = 0.0;
@@ -1134,9 +1137,13 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int totFiles = 0;
   char vid[CA_MAXVIDLEN+1] = "N/A";
   char label[CA_MAXLBLTYPLEN+1] = "N/A";
-  int mode,jobID,status,rc;
+  int mode = 0;
+  int jobID = 0;
+  int status = 0;
+  int rc = 0;
   int VolReqID;
-  int client_uid, client_gid;
+  int client_uid = -1;
+  int client_gid = -1;
   char client_host[CA_MAXHOSTNAMELEN+1];
   char client_name[CA_MAXUSRNAMELEN+1];
 
@@ -1156,19 +1163,27 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   }
 
   /* Extract the client info */
+  strncpy(client_host, "N/A", sizeof(client_host));
+  client_host[sizeof(client_host) - 1] = '\0';
+  strncpy(client_name, "N/A", sizeof(client_name));
+  client_name[sizeof(client_name) - 1] = '\0';
   if (client && *client) {
-          if ((*client)->name) {
-                  strcpy(client_name, (*client)->name);
-          } else {
-                  strcpy(client_name, "N/A");
-          }
-          client_uid = (*client)->uid;
-          client_gid = (*client)->gid;
-          if ((*client)->clienthost) {
-                  strcpy(client_host, (*client)->clienthost);
-          } else {
-                  strcpy(client_host, "N/A");
-          }
+    if ((*client)->name) {
+      strncpy(client_name, (*client)->name, sizeof(client_name));
+      client_name[sizeof(client_name) - 1] = '\0';
+    } else {
+      strncpy(client_name, "N/A", sizeof(client_name));
+      client_name[sizeof(client_name) - 1] = '\0';
+    }
+    client_uid = (*client)->uid;
+    client_gid = (*client)->gid;
+    if ((*client)->clienthost) {
+      strncpy(client_host, (*client)->clienthost, sizeof(client_host));
+      client_host[sizeof(client_host) - 1] = '\0';
+    } else {
+      strncpy(client_host, "N/A", sizeof(client_host));
+      client_host[sizeof(client_host) - 1] = '\0';
+    }
   }
 
   if ( client != NULL && *client != NULL ) {
@@ -1178,15 +1193,22 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
   (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
   (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+
+  strncpy(unit, "N/A", sizeof(unit));
+  unit[sizeof(unit) - 1] = '\0';
+  strncpy(dgn, "N/A", sizeof(dgn));
+  dgn[sizeof(dgn) - 1] = '\0';
+  strncpy(ifce, "N/A", sizeof(ifce));
+  ifce[sizeof(ifce) - 1] = '\0';
   if ( tape != NULL && *tape != NULL ) {
     CLIST_ITERATE_BEGIN(*tape,nexttape) {
       tapereq = &(nexttape->tapereq);
       mode = tapereq->mode;
       jobID = tapereq->jobID;
-      strcpy(unit,tapereq->unit);
-      strcpy(dgn,tapereq->dgn);
-      strcpy(vid,tapereq->vid);
-      strcpy(label,tapereq->label);
+      strncpy(unit, tapereq->unit, sizeof(unit));
+      strncpy(dgn, tapereq->dgn, sizeof(dgn));
+      strncpy(vid, tapereq->vid, sizeof(vid));
+      strncpy(label, tapereq->label, sizeof(label));
       Tservice = ((time_t)tapereq->TEndUnmount -
                   (time_t)tapereq->TStartRequest);
       if (Tservice<0) {
@@ -1209,7 +1231,8 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       tmpfile = nextfile = nexttape->file;
       while ( nextfile != NULL ) {
         filereq = &(nextfile->filereq);
-        strcpy(ifce,filereq->ifce);
+        strncpy(ifce, filereq->ifce, sizeof(ifce));
+        ifce[sizeof(ifce) - 1] = '\0';
         if ( filereq->proc_status == RTCP_FINISHED ||
              filereq->proc_status == RTCP_PARTIALLY_FINISHED ||
              filereq->proc_status == RTCP_EOV_HIT ) {
