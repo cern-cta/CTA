@@ -283,6 +283,15 @@ class ServerQueue(dict):
     if not transferCancelation:
       self.lock.acquire()
     try:
+      if transferid not in self.d2dsrcrunning:
+        # the transfer has already disappeared (or was never started). This
+        # can happen due to raise conditions, e.g when we get a timeout on the
+        # start of the transfer when it has started already but the acknoledgement
+        # did not yet come.
+        # We can ignore these cases, but we still log
+        # "Unable to end d2d as it's not in the server list. Probable race condition" message
+        dlf.writewarn(msgs.D2DENDEXCEPTION, subreqid=transferid, reqid=reqid)
+        return
       # get the source location
       diskserver = self.d2dsrcrunning[transferid]
       # remember the fileid in case of error
@@ -405,24 +414,27 @@ class ServerQueue(dict):
     try:
       # for each transfer
       for transferid, fileid, rc, msg, reqid in transfers:
-        try:
-          # cleanup the queue for the given transfer on the given machine
-          self.transfersLocations[transferid].remove(machine)
-          if not self.transfersLocations[transferid]:
-            # no other candidate machine for this transfer. It has to be failed
-            transfersKilled.append((transferid, fileid, rc, msg, reqid))
-            # clean up _transfersLocations
-            del self.transfersLocations[transferid]
-            # if we have a source transfer already running, stop it
-            if transferid in self.d2dsrcrunning:
-              self.d2dend(transferid, reqid, transferCancelation=True)
-          # drop the transfer id from the machine queue
-          del self[machine][transferid]
-        except KeyError, e:
-          # we are not handling this transfer or it is not queued for the given machine
-          # we can only log this oddity and ignore
-          # "Unexpected KeyError exception caught in transfersCanceled" message
-          dlf.writeerr(msgs.TRANSFERCANCELEXCEPTION, Type=str(e.__class__), Message=str(e))
+        if transferid not in self.transfersLocations:
+          # the transfer has already disappeared (or was never started). This
+          # can happen due to raise conditions, e.g when we get a timeout on the
+          # start of the transfer when it has started already but the acknoledgement
+          # did not yet come.
+          # We can ignore these cases, but we still log
+          # "Unable to cancel transfer as it's not in the transfer list. Probable race condition" message
+          dlf.writewarn(msgs.TRANSFERCANCELEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid)
+          continue
+        # cleanup the queue for the given transfer on the given machine
+        self.transfersLocations[transferid].remove(machine)
+        if not self.transfersLocations[transferid]:
+          # no other candidate machine for this transfer. It has to be failed
+          transfersKilled.append((transferid, fileid, rc, msg, reqid))
+          # clean up _transfersLocations
+          del self.transfersLocations[transferid]
+          # if we have a source transfer already running, stop it
+          if transferid in self.d2dsrcrunning:
+            self.d2dend(transferid, reqid, transferCancelation=True)
+        # drop the transfer id from the machine queue
+        del self[machine][transferid]
     finally:
       self.lock.release()
     # inform the stager of the transfers that were killed

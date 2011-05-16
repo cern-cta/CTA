@@ -47,7 +47,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'INVOKINGSYNCRUN', 'SYNCRUNEXCEPTION', 'RUNTRANSFERDISAPPEARED',
                 'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
                 'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS',
-                'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED')
+                'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED',
+                'D2DENDEXCEPTION')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -56,7 +57,7 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.TRANSFERALREADYSTARTED : 'Transfer had already started. Cancel start',
                  msgs.SOURCENOTREADY : 'Source is not ready yet',
                  msgs.D2DOVERINFORMFAILED : 'Failed to inform diskserver that a d2d copy is over',
-                 msgs.TRANSFERCANCELEXCEPTION : 'Unexpected KeyError exception caught in transfersCanceled',
+                 msgs.TRANSFERCANCELEXCEPTION : 'Unable to cancel transfer as it\'s not in the transfer list. Probable race condition',
                  msgs.WORKEREXCEPTION : 'Exception caught in Worker thread',
                  msgs.FAILEDTRANSFER : 'Failed transfer',
                  msgs.FAILINGTRANSFEREXCEPTION : 'Exception caught while failing transfer',
@@ -105,5 +106,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS : 'Invoking getAllRunningD2dSourceTransfers',
                  msgs.SYNCDBWITHD2DSRC : 'Synchronizing stager DB with running d2d sources',
                  msgs.COULDNOTCONTACTTM : 'Could not contact transfer manager',
-                 msgs.TRANSFERSTARTCONFIRMED : 'Transfer starting reconfirmed'})
+                 msgs.TRANSFERSTARTCONFIRMED : 'Transfer starting reconfirmed',
+                 msgs.D2DENDEXCEPTION : 'Unable to end d2d as it\'s not in the server list. Probable race condition'})
 
