@@ -37,7 +37,7 @@ BEGIN
   BEGIN
     SELECT username INTO unused
       FROM all_users
-     WHERE username = upper('&&dlfschema');
+     WHERE username = upper('&dlfschema');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20000, 'User &dlfschema does not exist');
   END;
@@ -45,7 +45,7 @@ BEGIN
   BEGIN
     SELECT owner INTO unused
       FROM all_views
-     WHERE owner = upper('&&dlfschema')
+     WHERE owner = upper('&dlfschema')
        AND view_name = 'CASTORVERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20001, 'Unable to access the &dlfschema..CastorVersion. Check that the correct grants have been issued!');

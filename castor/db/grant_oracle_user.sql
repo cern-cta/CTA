@@ -40,7 +40,7 @@ BEGIN
   BEGIN
     SELECT username INTO unused
       FROM all_users
-     WHERE username = upper('&&username');
+     WHERE username = upper('&username');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20000, 'User &username does not exist');
   END;
