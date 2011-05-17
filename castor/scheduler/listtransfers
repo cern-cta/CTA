@@ -140,7 +140,7 @@ def _buildProtocolList(summaryreport):
   # restrict it if user requested so
   if extraprotocols:
     protocols = protocols & set(extraprotocols.split(':'))
-  return list(protocols)
+  return sorted(list(protocols))
 
 def _buildTitleAndCoStrings(presubtitle, preformat, preformatnodata, protocols):
   '''helper function to build title, subtitle and format string for the display in processHostListing
