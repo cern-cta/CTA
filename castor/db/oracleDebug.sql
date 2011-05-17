@@ -143,16 +143,16 @@ BEGIN
                    SubRequest.id AS SubReqId, SubRequest.parent AS SubReqParentId, SubRequest.Status,
                    username, machine, svcClassName, Request.id AS ReqId, Request.type AS ReqType
               FROM SubRequest,
-                    (SELECT id, username, machine, svcClassName, 'Get' AS type FROM StageGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PGet' AS type FROM StagePrepareToGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Put' AS type FROM StagePutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PPut' AS type FROM StagePrepareToPutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Upd' AS type FROM StageUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PUpd' AS type FROM StagePrepareToUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
+                    (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, username, machine, svcClassName, 'Get' AS type FROM StageGetRequest UNION ALL
+                     SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, username, machine, svcClassName, 'PGet' AS type FROM StagePrepareToGetRequest UNION ALL
+                     SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, username, machine, svcClassName, 'Put' AS type FROM StagePutRequest UNION ALL
+                     SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, username, machine, svcClassName, 'PPut' AS type FROM StagePrepareToPutRequest UNION ALL
+                     SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, username, machine, svcClassName, 'Upd' AS type FROM StageUpdateRequest UNION ALL
+                     SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, username, machine, svcClassName, 'PUpd' AS type FROM StagePrepareToUpdateRequest UNION ALL
+                     SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
+                     SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
+                     SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
+                     SELECT /*+ INDEX(SetFileGCWeight PK_SetFileGCWeight_Id) */ id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);

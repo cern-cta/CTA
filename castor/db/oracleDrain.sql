@@ -576,7 +576,7 @@ BEGIN
   -- to complete. This avoids having multiple requests to replicate the same
   -- file to the same target service class multiple times.
   BEGIN
-    SELECT DiskCopy.id INTO res
+    SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id INTO res
       FROM DiskCopy, StageDiskCopyReplicaRequest
      WHERE StageDiskCopyReplicaRequest.destDiskCopy = DiskCopy.id
        AND StageDiskCopyReplicaRequest.svcclass = svcId
@@ -597,7 +597,7 @@ BEGIN
   -- If we have attempted to replicate the file more than 10 times already then
   -- give up! The error will be exposed later to an administrator for manual
   -- corrective action.
-  SELECT count(*) INTO res
+  SELECT /*+ INDEX(R I_StageDiskCopyReplic_SourceDC) */ count(*) INTO res
     FROM StageDiskCopyReplicaRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND R.sourceDiskCopy = dcId

@@ -46,7 +46,7 @@ BEGIN
     raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
   -- Then the disk only check
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO sclassId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(Request PK_StageUpdateRequest_Id) */ svcClass INTO sclassId
     FROM Subrequest, StageUpdateRequest Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
@@ -67,8 +67,8 @@ BEGIN
         -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
         -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
         SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO nbRes
-          FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
-                SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
+          FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
+                SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest,
                SubRequest
          WHERE SubRequest.CastorFile = cfId
            AND PrepareRequest.id = SubRequest.request
@@ -131,9 +131,9 @@ BEGIN
          Request.svcClass
     INTO rdcId, srStatus, prevFsId, srSvcClass
     FROM SubRequest, DiskCopy,
-         (SELECT id, svcClass FROM StagePutRequest UNION ALL
-          SELECT id, svcClass FROM StageGetRequest UNION ALL
-          SELECT id, svcClass FROM StageUpdateRequest) Request
+         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
+          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest UNION ALL
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass FROM StageUpdateRequest) Request
    WHERE SubRequest.diskcopy = Diskcopy.id
      AND SubRequest.id = srId
      AND SubRequest.request = Request.id;
@@ -201,8 +201,8 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ euid, egid, svcClass, upd, diskCopy
     INTO reuid, regid, srSvcClass, isUpd, dcIdInReq
     FROM SubRequest,
-        (SELECT id, euid, egid, svcClass, 0 AS upd FROM StageGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 1 AS upd FROM StageUpdateRequest) Request
+        (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, euid, egid, svcClass, 0 AS upd FROM StageGetRequest UNION ALL
+         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, euid, egid, svcClass, 1 AS upd FROM StageUpdateRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantees we are the only ones dealing with its copies
@@ -311,8 +311,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
 BEGIN
   -- Check that we did not cancel the replication request in the mean time
   BEGIN
-    SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ SubRequest.status,
-           StageDiskCopyReplicaRequest.svcClassName
+    SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy) INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+           SubRequest.status, StageDiskCopyReplicaRequest.svcClassName
       INTO unused, destSvcClass
       FROM SubRequest, StageDiskCopyReplicaRequest
      WHERE SubRequest.diskcopy = dcId
@@ -482,7 +482,8 @@ BEGIN
          lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request
     INTO srId, proto, reqId;
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SvcClass.id INTO svcClassId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+         SvcClass.id INTO svcClassId
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
@@ -580,7 +581,7 @@ BEGIN
   -- Handle draining logic
   BEGIN
     -- Determine the source diskcopy and filesystem involved in the replication
-    SELECT sourceDiskCopy, fileSystem
+    SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ sourceDiskCopy, fileSystem
       INTO srcDcId, srcFsId
       FROM DiskCopy, StageDiskCopyReplicaRequest
      WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
@@ -650,8 +651,8 @@ BEGIN
   -- check that we are a Put or an Update
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Request.id INTO unused
     FROM SubRequest,
-       (SELECT id FROM StagePutRequest UNION ALL
-        SELECT id FROM StageUpdateRequest) Request
+       (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id FROM StagePutRequest UNION ALL
+        SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id FROM StageUpdateRequest) Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   BEGIN
@@ -661,8 +662,8 @@ BEGIN
     -- processPrepareRequest).
     SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.diskCopy INTO unused
       FROM SubRequest,
-       (SELECT id FROM StagePrepareToPutRequest UNION ALL
-        SELECT id FROM StagePrepareToUpdateRequest) Request
+       (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
+        SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) Request
      WHERE SubRequest.CastorFile = cfId
        AND Request.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
@@ -692,9 +693,9 @@ BEGIN
   -- Get svcclass from Request
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
     FROM SubRequest,
-      (SELECT id, svcClass FROM StagePutRequest UNION ALL
-       SELECT id, svcClass FROM StageUpdateRequest UNION ALL
-       SELECT id, svcClass FROM StagePutDoneRequest) Request
+      (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest          UNION ALL
+       SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass FROM StageUpdateRequest UNION ALL
+       SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
@@ -775,8 +776,8 @@ BEGIN
     -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
     -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO unused
-      FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
-            SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+      FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
+            SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
      WHERE SubRequest.castorFile = cfId
        AND PrepareRequest.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
@@ -786,7 +787,7 @@ BEGIN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = 1, parent = 0 -- RESTART
      WHERE id IN
-      (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id
+      (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ SubRequest.id
          FROM StagePutDoneRequest, SubRequest
         WHERE SubRequest.CastorFile = cfId
           AND StagePutDoneRequest.id = SubRequest.request
@@ -911,10 +912,14 @@ BEGIN
     SELECT SR.subReqId, Request.reqid
       FROM SubRequest SR,
         -- Union of all requests that could result in scheduler transfers
-        (SELECT id, svcClass, reqid, 40  AS reqType FROM StagePutRequest             UNION ALL
-         SELECT id, svcClass, reqid, 133 AS reqType FROM StageDiskCopyReplicaRequest UNION ALL
-         SELECT id, svcClass, reqid, 35  AS reqType FROM StageGetRequest             UNION ALL
-         SELECT id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
+        (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                id, svcClass, reqid, 40  AS reqType FROM StagePutRequest             UNION ALL
+         SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+                id, svcClass, reqid, 133 AS reqType FROM StageDiskCopyReplicaRequest UNION ALL
+         SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                id, svcClass, reqid, 35  AS reqType FROM StageGetRequest             UNION ALL
+         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.lastModificationTime < getTime() - 3600;
@@ -1199,22 +1204,26 @@ BEGIN
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
          reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
-         (SELECT id, username, euid, egid, reqid, client, creationTime,
+         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass
             FROM StagePutRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ 
+                 id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass
             FROM StageGetRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ 
+                 id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass
             FROM StageUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
                  (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
             FROM StageDiskCopyReplicaRequest) Request
@@ -1358,22 +1367,26 @@ BEGIN
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
          reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Client,
-         (SELECT id, username, euid, egid, reqid, client, creationTime,
+         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass, 40 type
             FROM StagePutRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass, 35 type
             FROM StageGetRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopy,
                  NULL destDiskCopy, NULL sourceSvcClass, 44 type
             FROM StageUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
+          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+                 id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
                  (SELECT name FROM SvcClass WHERE id = sourceSvcClass), 133 type
             FROM StageDiskCopyReplicaRequest) Request
@@ -1484,10 +1497,10 @@ BEGIN
       -- this transfer is not running anymore although the stager DB believes it is
       -- we first get its reqid and fileid
       SELECT Request.reqId INTO reqId FROM
-        (SELECT reqId, id from StageGetRequest UNION ALL
-         SELECT reqId, id from StagePutRequest UNION ALL
-         SELECT reqId, id from StageUpdateRequest UNION ALL
-         SELECT reqId, id from StageRepackRequest) Request
+        (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
+         SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
+         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest UNION ALL
+         SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ reqId, id from StageRepackRequest) Request
        WHERE Request.id = SR.request;
       SELECT fileid, nsHost INTO fileid, nsHost FROM CastorFile WHERE id = SR.castorFile;
       -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)

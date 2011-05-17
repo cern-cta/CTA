@@ -674,11 +674,11 @@ BEGIN
                      DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                      FileSystem.diskserver, CastorFile.fileSize
                 FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                     (SELECT id, svcClass from StageGetRequest UNION ALL
-                      SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-                      SELECT id, svcClass from StageRepackRequest UNION ALL
-                      SELECT id, svcClass from StageUpdateRequest UNION ALL
-                      SELECT id, svcClass from StagePrepareToUpdateRequest) Request,
+                     (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass from StageGetRequest                            UNION ALL
+                      SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass from StagePrepareToGetRequest UNION ALL
+                      SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass from StageRepackRequest                   UNION ALL
+                      SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass from StageUpdateRequest                   UNION ALL
+                      SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass from StagePrepareToUpdateRequest) Request,
                       SubRequest, CastorFile
                WHERE CastorFile.id = cfid
                  AND SubRequest.castorfile = cfid
@@ -825,11 +825,11 @@ BEGIN
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = dconst.DISKCOPY_FAILED;
   -- update diskcopy size and gweight
   SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
-    FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StageRepackRequest) Request
+    FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass, euid, egid FROM StageGetRequest                                  UNION ALL
+          SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass, euid, egid FROM StagePrepareToGetRequest       UNION ALL
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass, euid, egid FROM StageUpdateRequest                         UNION ALL
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
+          SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass, euid, egid FROM StageRepackRequest) Request
    WHERE Request.id = requestId;
   gcwProc := castorGC.getRecallWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'

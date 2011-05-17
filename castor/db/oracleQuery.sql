@@ -33,11 +33,11 @@ BEGIN
                  CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
-                        (SELECT id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
-                         SELECT id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
-                         SELECT id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                         SELECT id, svcClassName FROM StageRepackRequest          UNION ALL
-                         SELECT id, svcClassName FROM StageGetRequest) Req
+                        (SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
+                         SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
+                         SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+                         SELECT /*+ INDEX(StageGetRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest                UNION ALL
+                         SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
@@ -79,11 +79,11 @@ BEGIN
                        (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
-                            (SELECT id, svcClass FROM StagePrepareToGetRequest    UNION ALL
-                             SELECT id, svcClass FROM StagePrepareToPutRequest    UNION ALL
-                             SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
-                             SELECT id, svcClass FROM StageRepackRequest          UNION ALL
-                             SELECT id, svcClass FROM StageGetRequest) Req
+                            (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest       UNION ALL
+                             SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest       UNION ALL
+                             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+                             SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest                         UNION ALL
+                             SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest) Req
                               WHERE SubRequest.CastorFile = CastorFile.id
                                 AND request = Req.id
                                 AND svcClass = svcClassId)
@@ -200,27 +200,27 @@ BEGIN
              INDEX(SR I_SUBREQUEST_REQUEST) */
          sr.castorfile BULK COLLECT INTO cfs
     FROM SubRequest sr,
-         (SELECT id
+         (SELECT /*+ INDEX(StagePrepareToGetRequest I_StagePTGRequest_ReqId) */ id
             FROM StagePreparetogetRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StagePrepareToPutRequest I_StagePTPRequest_ReqId) */ id
             FROM StagePreparetoputRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest I_StagePTURequest_ReqId) */ id
             FROM StagePreparetoupdateRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StageGetRequest I_StageGetRequest_ReqId) */ id
             FROM stageGetRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(stagePutRequest I_stagePutRequest_ReqId) */ id
             FROM stagePutRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StageRepackRequest I_StageRepackRequest_ReqId) */ id
             FROM StageRepackRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
@@ -288,15 +288,15 @@ CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM (SELECT id
+    FROM (SELECT /*+ INDEX(StagePrepareToGetRequest I_StagePTGRequest_ReqId) */ id
             FROM StagePreparetogetRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest I_StagePTURequest_ReqId) */ id
             FROM StagePreparetoupdateRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT id
+          SELECT /*+ INDEX(StageRepackRequest I_StageRepackRequest_ReqId) */ id
             FROM StageRepackRequest
            WHERE reqid = rid
           );

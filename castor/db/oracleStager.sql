@@ -694,10 +694,14 @@ BEGIN
   -- dispatch actual processing depending on request type
   BEGIN
     SELECT rType, id INTO reqType, requestId FROM
-      (SELECT reqId, id, 1 as rtype from StageGetRequest UNION ALL
-       SELECT reqId, id, 1 as rtype from StagePrepareToGetRequest UNION ALL
-       SELECT reqId, id, 2 as rtype from StagePutRequest UNION ALL
-       SELECT reqId, id, 2 as rtype from StagePrepareToPutRequest)
+      (SELECT /*+ INDEX(StageGetRequest I_StageGetRequest_ReqId) */
+              reqId, id, 1 as rtype from StageGetRequest UNION ALL
+       SELECT /*+ INDEX(StagePrepareToGetRequest I_StagePTGRequest_ReqId) */
+              reqId, id, 1 as rtype from StagePrepareToGetRequest UNION ALL
+       SELECT /*+ INDEX(stagePutRequest I_stagePutRequest_ReqId) */
+              reqId, id, 2 as rtype from StagePutRequest UNION ALL
+       SELECT /*+ INDEX(StagePrepareToPutRequest I_StagePTPRequest_ReqId) */
+              reqId, id, 2 as rtype from StagePrepareToPutRequest)
      WHERE reqId = abortedReqUuid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- abort on non supported request type
@@ -1043,7 +1047,7 @@ BEGIN
          AND checkPermission(SvcClass.name, reuid, regid, 133) = 0
          AND NOT EXISTS (
            -- Don't select source diskcopies which already failed more than 10 times
-           SELECT 'x'
+           SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ 'x'
              FROM StageDiskCopyReplicaRequest R, SubRequest
             WHERE SubRequest.request = R.id
               AND R.sourceDiskCopy = DiskCopy.id
@@ -1344,10 +1348,14 @@ BEGIN
     FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
                  FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
             FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                 (SELECT id, svcClass, euid, egid from StageGetRequest UNION ALL
-                  SELECT id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
-                  SELECT id, svcClass, euid, egid from StageUpdateRequest UNION ALL
-                  SELECT id, svcClass, euid, egid from StagePrepareToUpdateRequest) Request,
+                 (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                         id, svcClass, euid, egid from StageGetRequest UNION ALL
+                  SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
+                         id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
+                  SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                         id, svcClass, euid, egid from StageUpdateRequest UNION ALL
+                  SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                         id, svcClass, euid, egid from StagePrepareToUpdateRequest) Request,
                   SubRequest
            WHERE SubRequest.id = srId
              AND Request.id = SubRequest.request
@@ -1430,7 +1438,7 @@ BEGIN
     -- and that we don't create too many replication requests that may exceed
     -- the maxReplicaNb defined on the service class
     BEGIN
-      SELECT DiskCopy.id INTO unused
+      SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id INTO unused
         FROM DiskCopy, StageDiskCopyReplicaRequest
        WHERE StageDiskCopyReplicaRequest.destdiskcopy = DiskCopy.id
          AND StageDiskCopyReplicaRequest.svcclass = a.id
@@ -1479,8 +1487,10 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.upd
     INTO cfId, reuid, regid, svcClassId, upd
-    FROM (SELECT id, euid, egid, svcClass, 0 upd from StageGetRequest UNION ALL
-          SELECT id, euid, egid, svcClass, 1 upd from StageUpdateRequest) Request,
+    FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                 id, euid, egid, svcClass, 0 upd from StageGetRequest UNION ALL
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                 id, euid, egid, svcClass, 1 upd from StageUpdateRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = srId;
@@ -1574,7 +1584,7 @@ BEGIN
     ELSE
       -- check whether there's already an ongoing replication
       BEGIN
-        SELECT DiskCopy.id INTO srcDcId
+        SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id INTO srcDcId
           FROM DiskCopy, StageDiskCopyReplicaRequest
          WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
            AND StageDiskCopyReplicaRequest.svcclass = svcClassId
@@ -1638,7 +1648,7 @@ BEGIN
     -- No diskcopies available for this service class:
     -- first check whether there's already a disk to disk copy going on
     BEGIN
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO d2dsrId
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ SubRequest.id INTO d2dsrId
         FROM StageDiskCopyReplicaRequest Req, SubRequest
        WHERE SubRequest.request = Req.id
          AND Req.svcClass = svcClassId    -- this is the destination service class
@@ -1733,8 +1743,10 @@ BEGIN
     BEGIN
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO srId
         FROM SubRequest,
-         (SELECT id FROM StagePrepareToPutRequest UNION ALL
-          SELECT id FROM StagePrepareToUpdateRequest) Request
+         (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
+            FROM StagePrepareToPutRequest UNION ALL
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
+            FROM StagePrepareToUpdateRequest) Request
        WHERE SubRequest.castorFile = cfId
          AND SubRequest.request = Request.id
          AND SubRequest.status = 6;  -- READY
@@ -1777,7 +1789,8 @@ BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT
    WHERE id = dcId RETURNING diskCopySize INTO fs;
   -- how many do we have to create ?
-  SELECT count(StageRepackRequest.repackVid) INTO nbTC
+  SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */
+         count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest
    WHERE SubRequest.request = StageRepackRequest.id
      AND (SubRequest.id = srId
@@ -1797,7 +1810,7 @@ BEGIN
      SET diskCopy = dcId, status = 12  -- REPACK
    WHERE id = srId;   
   -- get the service class, uid and gid
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ R.svcClass, euid, egid
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(R PK_StageRepackRequest_Id) */ R.svcClass, euid, egid
     INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
    WHERE SubRequest.request = R.id
@@ -1838,9 +1851,12 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.repack
     INTO cfId, reuid, regid, svcClassId, repack
-    FROM (SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
-          SELECT id, euid, egid, svcClass, 1 repack FROM StageRepackRequest UNION ALL
-          SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
+    FROM (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
+                 id, euid, egid, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+          SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */
+                 id, euid, egid, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                 id, euid, egid, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = srId;
@@ -1865,7 +1881,7 @@ BEGIN
        AND DiskServer.status = 0 -- PRODUCTION
        AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
      UNION ALL
-    SELECT DiskCopy.id
+    SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id
       FROM DiskCopy, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
        AND StageDiskCopyReplicaRequest.svcclass = svcClassId
@@ -1945,11 +1961,16 @@ BEGIN
       -- check whether there's already a recall, and get its svcClass
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ Request.svcClass, DiskCopy.id, repack
         INTO recSvcClass, recDcId, recRepack
-        FROM (SELECT id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
-              SELECT id, svcClass, 0 repack FROM StageGetRequest UNION ALL
-              SELECT id, svcClass, 1 repack FROM StageRepackRequest UNION ALL
-              SELECT id, svcClass, 0 repack FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
+        FROM (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ 
+                     id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                     id, svcClass, 0 repack FROM StageGetRequest UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */
+                     id, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                     id, svcClass, 0 repack FROM StageUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                     id, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
              SubRequest, DiskCopy
        WHERE SubRequest.request = Request.id
          AND SubRequest.castorFile = cfId
@@ -2001,7 +2022,8 @@ CREATE OR REPLACE PROCEDURE processPutDoneRequest
   putSubReq NUMBER;
 BEGIN
   -- Get the svcClass and the castorFile for this subrequest
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Req.svcclass, SubRequest.castorfile
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(Req PK_StagePutDoneRequest_Id) */
+         Req.svcclass, SubRequest.castorfile
     INTO svcClassId, cfId
     FROM SubRequest, StagePutDoneRequest Req
    WHERE Subrequest.request = Req.id
@@ -2089,8 +2111,10 @@ BEGIN
   BEGIN
     -- check that we are a Put/Update
     SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Request.svcClass INTO putSC
-      FROM (SELECT id, svcClass FROM StagePutRequest UNION ALL
-            SELECT id, svcClass FROM StageUpdateRequest) Request, SubRequest
+      FROM (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                   id, svcClass FROM StagePutRequest UNION ALL
+            SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                   id, svcClass FROM StageUpdateRequest) Request, SubRequest
      WHERE SubRequest.id = srId
        AND Request.id = SubRequest.request;
     BEGIN
@@ -2099,8 +2123,10 @@ BEGIN
       -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.diskCopy,
              PrepareRequest.svcClass INTO dcId, pputSC
-        FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+        FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
+                     id, svcClass FROM StagePrepareToPutRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                     id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.CastorFile = cfId
          AND PrepareRequest.id = SubRequest.request
          AND SubRequest.status = 6;  -- READY
@@ -2132,8 +2158,10 @@ BEGIN
       -- we are either a prepareToPut, or a prepareToUpdate and it's the only one (file is being created).
       -- In case of prepareToPut we need to check that we are the only one
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(SubRequest.diskCopy) INTO nbPReqs
-        FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
-              SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+        FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
+                FROM StagePrepareToPutRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
+                FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.castorFile = cfId
          AND PrepareRequest.id = SubRequest.request
          AND SubRequest.status = 6;  -- READY
@@ -2159,10 +2187,14 @@ BEGIN
   -- First get the svcclass and the user
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass, euid, egid INTO sclassId, ouid, ogid
     FROM Subrequest,
-         (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
+         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                 id, svcClass, euid, egid FROM StagePutRequest UNION ALL
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                 id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+          SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
+                 id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                 id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   IF checkFailJobsWhenNoSpace(sclassId) = 1 THEN
@@ -2529,14 +2561,22 @@ BEGIN
       -- and then diskcopies resulting from ongoing requests, for which the previous
       -- query wouldn't return any entry because of e.g. missing filesystem
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ DC.id
-        FROM (SELECT id FROM StagePrepareToPutRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StagePrepareToGetRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StagePrepareToUpdateRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StageRepackRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StagePutRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StageGetRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StageUpdateRequest WHERE svcClass = scId UNION ALL
-              SELECT id FROM StageDiskCopyReplicaRequest WHERE svcClass = scId) Request,
+        FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
+                FROM StagePrepareToPutRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id
+                FROM StagePrepareToGetRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
+                FROM StagePrepareToUpdateRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id
+                FROM StageRepackRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id
+                FROM StagePutRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id
+                FROM StageGetRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id
+                FROM StageUpdateRequest WHERE svcClass = scId UNION ALL
+              SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id
+                FROM StageDiskCopyReplicaRequest WHERE svcClass = scId) Request,
              SubRequest, DiskCopy DC
        WHERE SubRequest.diskCopy = DC.id
          AND Request.id = SubRequest.request

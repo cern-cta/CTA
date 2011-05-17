@@ -1417,7 +1417,8 @@ BEGIN
   BEGIN 
    --REPACK case
     -- Get the repackvid field from the existing request (if none, then we are not in a repack process
-     SELECT /*+ INDEX(sR I_Subrequest_Castorfile)*/ SRR.repackvid INTO outRepackVid
+     SELECT /*+ INDEX(sR I_Subrequest_Castorfile) INDEX(SRR PK_StageRepackRequest_Id) */
+            SRR.repackvid INTO outRepackVid
        FROM SubRequest sR, StageRepackRequest SRR
       WHERE SRR.id = SR.request
         AND sR.status = dconst.SUBREQUEST_REPACK
@@ -1869,11 +1870,11 @@ BEGIN
     FROM SubRequest SR
    WHERE SR.diskcopy = varDcId;
   SELECT REQ.svcClass, REQ.euid, REQ.egid INTO varSvcClassId, varEuid, varEgid
-    FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
-          SELECT id, svcClass, euid, egid FROM StageRepackRequest) REQ
+    FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass, euid, egid FROM StageGetRequest                                  UNION ALL
+          SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass, euid, egid FROM StagePrepareToGetRequest       UNION ALL
+          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass, euid, egid FROM StageUpdateRequest                         UNION ALL
+          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
+          SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass, euid, egid FROM StageRepackRequest) REQ
     WHERE REQ.id = varRequestId;
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
