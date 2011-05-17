@@ -29,6 +29,7 @@
 #include "test_exception.hpp"
 #include "h/marshall.h"
 #include "h/rtcp_constants.h"
+#include "h/rtcpd_GetClientInfo.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
 #include "h/tapebridge_sendTapeBridgeAck.h"
@@ -67,83 +68,37 @@ int createListenerSock_stdException(const char *addr,
 typedef struct {
   int                           inListenSocketFd;
   int32_t                       inMarshalledMsgBodyLen;
-  int                           outRtcpdHdrReadSuccess;
-  int                           outMagicCorrect;
-  int                           outReqTypeCorrect;
-  int                           outMsgBodyLenCorrect;
-  int                           outMsgBodyReadSuccess;
-  int                           outMsgBodyUnmarshallSuccess;
+  int                           outGetClientInfoSuccess;
   tapeBridgeClientInfoMsgBody_t outMsgBody;
-  int                           outSendAckSuccess;
-} rtcpd_thread_input_and_results_t;
+} server_thread_params;
 
 void *rtcpd_thread(void *arg) {
   try {
-    rtcpd_thread_input_and_results_t *threadResults =
-      (rtcpd_thread_input_and_results_t*)arg;
-    castor::tape::utils::SmartFd listenSock(threadResults->inListenSocketFd);
-    int save_serrno = 0;
+    server_thread_params *threadParams =
+      (server_thread_params*)arg;
+    castor::tape::utils::SmartFd listenSock(threadParams->inListenSocketFd);
 
     const time_t acceptTimeout = 10; // Timeout is in seconds
     castor::tape::utils::SmartFd connectionSockFd(
       castor::tape::net::acceptConnection(listenSock.get(), acceptTimeout));
 
-    // Read in the header of the rtcpd message from the VDQM or tape-bridge
     const int netReadWriteTimeout = 10; // Timeout is in seconds
-    rtcpHdr_t rtcpHdr;
-    memset(&rtcpHdr, '\0', sizeof(rtcpHdr));
-    const int recvRc = rtcp_recvRtcpHdr(connectionSockFd.get(), &rtcpHdr,
-      netReadWriteTimeout);
-    save_serrno = serrno;
-    threadResults->outRtcpdHdrReadSuccess = recvRc == 12;
-    if(!threadResults->outRtcpdHdrReadSuccess) {
-      return threadResults;
-    }
-
-    // Check the magic, reqtype and length entries in the header
-    threadResults->outMagicCorrect = rtcpHdr.magic == RTCOPY_MAGIC_OLD0;
-    if(!threadResults->outMagicCorrect) {
-      return threadResults;
-    }
-    threadResults->outReqTypeCorrect = rtcpHdr.reqtype == TAPEBRIDGE_CLIENTINFO;
-    if(!threadResults->outReqTypeCorrect) {
-      return threadResults;
-    }
-    threadResults->outMsgBodyLenCorrect =
-      rtcpHdr.len == threadResults->inMarshalledMsgBodyLen;
-    if(!threadResults->outMsgBodyLenCorrect) {
-      return threadResults;
-    }
-
-    // Read in the body of the message
-    char buf[RTCP_MSGBUFSIZ];
-    const int netreadMsgBodyRc = netread_timeout(connectionSockFd.get(), buf,
-      rtcpHdr.len, netReadWriteTimeout);
-    threadResults->outMsgBodyReadSuccess = netreadMsgBodyRc == rtcpHdr.len;
-    if(!threadResults->outMsgBodyReadSuccess) {
-      return threadResults;
-    }
-
-    // Unmarshall the body into the C structure
-    memset(&(threadResults->outMsgBody), '\0',
-      sizeof(threadResults->outMsgBody));
-    const int32_t unmarshallRc =
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(buf, sizeof(buf),
-      &(threadResults->outMsgBody));
-    threadResults->outMsgBodyUnmarshallSuccess = unmarshallRc == rtcpHdr.len;
-    if(!threadResults->outMsgBodyUnmarshallSuccess) {
-      return threadResults;
-    }
-
-    // Acknowledge the message
-    const uint32_t    ackStatus = 1234;
-    const char *const ackErrMsg = "errorMessage";
-    const int sendAckRc = tapebridge_sendTapeBridgeAck(connectionSockFd.get(),
-      netReadWriteTimeout, ackStatus, ackErrMsg);
-    threadResults->outSendAckSuccess = sendAckRc != -1;
-    if(!threadResults->outSendAckSuccess) {
-      return threadResults;
-    }
+    rtcpClientInfo_t client;
+    rtcpTapeRequest_t tapeReq;
+    rtcpFileRequest_t fileReq;
+    int clientIsTapeBridge = 0;
+    char errBuf[1024];
+    rtcpd_GetClientInfo(
+      connectionSockFd.get(),
+      netReadWriteTimeout,
+      &tapeReq,
+      &fileReq,
+      &client,
+      &clientIsTapeBridge,
+      &(threadParams->outMsgBody),
+      errBuf,
+      sizeof(errBuf));
+    threadParams->outGetClientInfoSuccess = 1;
   } catch(castor::exception::Exception &ce) {
     std::cerr <<
       "ERROR"
@@ -256,15 +211,15 @@ public:
   }
 
   void testSubmit() {
-    rtcpd_thread_input_and_results_t threadResults;
+    server_thread_params threadParams;
 
-    memset(&threadResults, '\0', sizeof(threadResults));
-    threadResults.inMarshalledMsgBodyLen =
+    memset(&threadParams, '\0', sizeof(threadParams));
+    threadParams.inMarshalledMsgBodyLen =
       tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
       &m_clientInfoMsgBody);
     CPPUNIT_ASSERT_MESSAGE(
       "tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize",
-      threadResults.inMarshalledMsgBodyLen > 0);
+      threadParams.inMarshalledMsgBodyLen > 0);
 
     castor::tape::utils::SmartFd listenSock;
     {
@@ -282,10 +237,10 @@ public:
     }
 
     // Create the TCP/IP server-thread
-    threadResults.inListenSocketFd = listenSock.release(); // Thread will close
+    threadParams.inListenSocketFd = listenSock.release(); // Thread will close
     pthread_t rtcpd_thread_id;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("pthread_create", 0,
-      pthread_create(&rtcpd_thread_id, NULL, rtcpd_thread, &threadResults));
+      pthread_create(&rtcpd_thread_id, NULL, rtcpd_thread, &threadParams));
 
     castor::tape::legacymsg::RtcpJobReplyMsgBody reply;
     memset(&reply, '\0', sizeof(reply));
@@ -310,54 +265,44 @@ public:
     }
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Thread results are same structure",
-      (void *)&threadResults, rtcpd_thread_result);
+      (void *)&threadParams, rtcpd_thread_result);
 
-    CPPUNIT_ASSERT_MESSAGE("Check rtcpd header read",
-      threadResults.outRtcpdHdrReadSuccess);
-    CPPUNIT_ASSERT_MESSAGE("Check message magic",
-      threadResults.outMagicCorrect);
-    CPPUNIT_ASSERT_MESSAGE("Check message reqType",
-      threadResults.outReqTypeCorrect);
-    CPPUNIT_ASSERT_MESSAGE("Check message body length",
-      threadResults.outMsgBodyLenCorrect);
-    CPPUNIT_ASSERT_MESSAGE("Check message body read success",
-      threadResults.outMsgBodyReadSuccess);
-    CPPUNIT_ASSERT_MESSAGE("Check message body unmarshall success",
-      threadResults.outMsgBodyUnmarshallSuccess);
+    CPPUNIT_ASSERT_MESSAGE("Check rtcpd_GetClientInfo",
+      threadParams.outGetClientInfoSuccess);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("volReqId",
-      m_clientInfoMsgBody.volReqId, threadResults.outMsgBody.volReqId);
+      m_clientInfoMsgBody.volReqId, threadParams.outMsgBody.volReqId);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeCallbackPort",
       m_clientInfoMsgBody.bridgeCallbackPort,
-      threadResults.outMsgBody.bridgeCallbackPort);
+      threadParams.outMsgBody.bridgeCallbackPort);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeClientCallbackPort",
       m_clientInfoMsgBody.bridgeClientCallbackPort,
-      threadResults.outMsgBody.bridgeClientCallbackPort);
+      threadParams.outMsgBody.bridgeClientCallbackPort);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientUID",
-      m_clientInfoMsgBody.clientUID, threadResults.outMsgBody.clientUID);
+      m_clientInfoMsgBody.clientUID, threadParams.outMsgBody.clientUID);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientGID",
-      m_clientInfoMsgBody.clientGID, threadResults.outMsgBody.clientGID);
+      m_clientInfoMsgBody.clientGID, threadParams.outMsgBody.clientGID);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles",
       m_clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles,
-      threadResults.outMsgBody.useBufferedTapeMarksOverMultipleFiles);
+      threadParams.outMsgBody.useBufferedTapeMarksOverMultipleFiles);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeHost",
       std::string(m_clientInfoMsgBody.bridgeHost),
-      std::string(threadResults.outMsgBody.bridgeHost));
+      std::string(threadParams.outMsgBody.bridgeHost));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeClientHost",
       std::string(m_clientInfoMsgBody.bridgeClientHost),
-      std::string(threadResults.outMsgBody.bridgeClientHost));
+      std::string(threadParams.outMsgBody.bridgeClientHost));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("dgn",
       std::string(m_clientInfoMsgBody.dgn),
-      std::string(threadResults.outMsgBody.dgn));
+      std::string(threadParams.outMsgBody.dgn));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("drive",
       std::string(m_clientInfoMsgBody.drive),
-      std::string(threadResults.outMsgBody.drive));
+      std::string(threadParams.outMsgBody.drive));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientName",
       std::string(m_clientInfoMsgBody.clientName),
-      std::string(threadResults.outMsgBody.clientName));
+      std::string(threadParams.outMsgBody.clientName));
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ack status", (uint32_t)1234, reply.status);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("ack status", -1, reply.status);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("ack errorMessage",
-      std::string("errorMessage"),
+      std::string("Buffered tape-marks over multiple files is not supported"),
       std::string(reply.errorMessage));
   }
 

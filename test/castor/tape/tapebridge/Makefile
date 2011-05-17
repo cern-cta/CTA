@@ -65,7 +65,11 @@ testtapebridge: \
   Cpwd.o \
   rtcpd_GetClientInfoMsg.o \
   rtcp_marshallVdqmClientInfoMsg.o \
-  rtcp_recvRtcpHdr.o
+  rtcp_recvRtcpHdr.o \
+  rtcpd_GetClientInfo.o \
+  rtcp_Listen.o \
+  rtcp_log.o \
+  rtcp_SendRecv.o
 	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
 
 testTapeBridgeMain.o: \
@@ -279,3 +283,15 @@ rtcp_recvRtcpHdr.o: $(ROOT_DIR)/rtcopy/rtcp_recvRtcpHdr.c
 $(ROOT_DIR)/rtcopy/rtcp_recvRtcpHdr.c: \
   $(ROOT_DIR)/h/rtcp_recvRtcpHdr.h
 	touch $@
+
+rtcpd_GetClientInfo.o: $(ROOT_DIR)/rtcopy/rtcpd_GetClientInfo.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -DNOMORETAPES=\"/var/run/nomoretapes\" -o $@ $^
+
+rtcp_Listen.o: $(ROOT_DIR)/rtcopy/rtcp_Listen.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcp_log.o: $(ROOT_DIR)/rtcopy/rtcp_log.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

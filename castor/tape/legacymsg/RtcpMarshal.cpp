@@ -187,7 +187,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpJobReplyMsgBody &dst) throw(castor::exception::Exception) {
 
   // Unmarshal the status number
-  legacymsg::unmarshalUint32(src, srcLen, dst.status);
+  legacymsg::unmarshalInt32(src, srcLen, dst.status);
 
   // The error message will be right trimmed if it is too large
   const size_t maxBytesToUnmarshal = srcLen < sizeof(dst.errorMessage) ?

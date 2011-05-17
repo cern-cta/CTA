@@ -39,8 +39,8 @@ namespace legacymsg {
    * An RCP job reply message.
    */
   struct RtcpJobReplyMsgBody {
-    uint32_t status;
-    char     errorMessage[1024];
+    int32_t status;
+    char    errorMessage[1024];
   };
 
 } // namespace legacymsg
