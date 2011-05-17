@@ -95,7 +95,7 @@ void *rtcpd_thread(void *arg) {
     const int recvRc = rtcp_recvRtcpHdr(connectionSockFd.get(), &rtcpHdr,
       netReadWriteTimeout);
     save_serrno = serrno;
-    threadResults->outRtcpdHdrReadSuccess = recvRc == 0;
+    threadResults->outRtcpdHdrReadSuccess = recvRc == 12;
     if(!threadResults->outRtcpdHdrReadSuccess) {
       return threadResults;
     }
