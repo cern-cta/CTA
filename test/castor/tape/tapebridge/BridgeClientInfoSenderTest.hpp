@@ -25,7 +25,7 @@
 #ifndef TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFOSUBMITTERTEST_HPP
 #define TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFOSUBMITTERTEST_HPP 1
 
-#include "rtcpd_recv_rtcpHdr.h"
+#include "rtcp_recvRtcpHdr.h"
 #include "test_exception.hpp"
 #include "h/marshall.h"
 #include "h/rtcp_constants.h"
@@ -92,7 +92,7 @@ void *rtcpd_thread(void *arg) {
     const int netReadWriteTimeout = 10; // Timeout is in seconds
     rtcpHdr_t rtcpHdr;
     memset(&rtcpHdr, '\0', sizeof(rtcpHdr));
-    const int recvRc = rtcpd_recv_rtcpHdr(connectionSockFd.get(), &rtcpHdr,
+    const int recvRc = rtcp_recvRtcpHdr(connectionSockFd.get(), &rtcpHdr,
       netReadWriteTimeout);
     save_serrno = serrno;
     threadResults->outRtcpdHdrReadSuccess = recvRc == 0;
