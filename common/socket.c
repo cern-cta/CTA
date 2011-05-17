@@ -121,6 +121,7 @@ s_recv (SOCKET s,
         else
             n = READ(s, buf, nb);
 #endif
+        serrno = errno;
         nb -= n;
 
 #ifdef READTIMEOUT
