@@ -290,7 +290,7 @@ class ServerQueue(dict):
         # did not yet come.
         # We can ignore these cases, but we still log
         # "Unable to end d2d as it's not in the server list. Probable race condition" message
-        dlf.writewarn(msgs.D2DENDEXCEPTION, subreqid=transferid, reqid=reqid)
+        dlf.writewarning(msgs.D2DENDEXCEPTION, subreqid=transferid, reqid=reqid)
         return
       # get the source location
       diskserver = self.d2dsrcrunning[transferid]
@@ -421,7 +421,7 @@ class ServerQueue(dict):
           # did not yet come.
           # We can ignore these cases, but we still log
           # "Unable to cancel transfer as it's not in the transfer list. Probable race condition" message
-          dlf.writewarn(msgs.TRANSFERCANCELEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid)
+          dlf.writewarning(msgs.TRANSFERCANCELEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid)
           continue
         # cleanup the queue for the given transfer on the given machine
         self.transfersLocations[transferid].remove(machine)
