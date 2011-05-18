@@ -29,4 +29,4 @@
 
 EXTERN_C int Cdomainname (char*, int);
 
-#endif // H_CDOMAINNAME_H
+#endif /* H_CDOMAINNAME_H */
