@@ -138,6 +138,72 @@ BEGIN
 END;
 /
 
+/* Trigger ensuring validity (or nullity) of tape in Stream state transitions */
+/* The tape column is no protected for validity by a foreign key constrain, so this could be added for extra safety TODO */
+CREATE OR REPLACE TRIGGER TR_Stream_Tape
+BEFORE INSERT OR UPDATE OF Status ON Stream
+FOR EACH ROW
+BEGIN
+  /* Enforce the state integrity of VID in state transitions */
+  
+  /* rtcpclientd is given full exception, no check */
+  IF rtcpclientdIsRunning THEN RETURN; END IF;
+  CASE :new.status
+    WHEN  tconst.STREAM_TO_BE_SENT_TO_VDQM THEN
+      /* The tape MUST be defined when the stream is ready to grab a drive */
+      IF :new.tape IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to STREAM_TO_BE_SENT_TO_VDQM State without a tape (S.ID: '||
+          :new.ID||' tape:'|| :old.tape||'=>'||:new.tape||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+    WHEN  tconst.STREAM_WAITDRIVE THEN
+      /* The tape MUST be defined when the stream is ready to grab a drive */
+      IF :new.tape IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to STREAM_WAITDRIVE State without a tape (S.ID: '||
+          :new.ID||' tape:'|| :old.tape||'=>'||:new.tape||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+       /* The tape MUST remain the same when going to STREAM_WAITDRIVE */
+       IF :new.tape != :old.tape THEN
+         RAISE_APPLICATION_ERROR(-20119,
+           'Moving to STREAM_WAITDRIVE State without carrying the tape over');
+       END IF;    
+    WHEN  tconst.STREAM_WAITMOUNT THEN
+      /* The tape MUST be defined when the stream is ready to grab a drive */
+      IF :new.tape IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to STREAM_WAITMOUNT State without a tape (S.ID: '||
+          :new.ID||' tape:'|| :old.tape||'=>'||:new.tape||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+       /* The tape MUST remain the same when going to STREAM_WAITMOUNT */
+       IF :new.tape != :old.tape THEN
+         RAISE_APPLICATION_ERROR(-20119,
+           'Moving to STREAM_WAITMOUNT State without carrying the tape over');
+       END IF;    
+    WHEN  tconst.STREAM_RUNNING THEN
+      /* The tape MUST be defined when the stream is ready to grab a drive */
+      IF :new.tape IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to STREAM_RUNNING State without a tape (S.ID: '||
+          :new.ID||' tape:'|| :old.tape||'=>'||:new.tape||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+       /* The tape MUST remain the same when going to STREAM_RUNNING */
+       IF :new.tape != :old.tape THEN
+         RAISE_APPLICATION_ERROR(-20119,
+           'Moving to STREAM_RUNNING State without carrying the tape over');
+       END IF;    
+    ELSE
+      /* In all other cases, tape should be NULL */
+      IF :new.tape IS NOT NULL THEN
+        RAISE_APPLICATION_ERROR(-20119,
+          'Moving/creating (in)to Stream state where VID makes no sense, yet tape!=NULL (stream.ID: '||
+          :new.ID||' tape:'|| :old.tape||'=>'||:new.tape||' Status:'||:old.status||'=>'||:new.status||')');
+      END IF;
+  END CASE;
+END;
+/
+
+
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
 CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
