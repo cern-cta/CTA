@@ -1782,9 +1782,6 @@ bool
   const std::string volid)
   throw (castor::exception::Exception) {
   
-  // Execute statement and get result
-  u_signed64 id;
-    
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
   const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT;
@@ -1817,7 +1814,6 @@ bool
     }
     // If we reach this point, then we selected successfully
     // a tape drive and it's id is in rset
-    id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException &oe) {
     handleException(oe);
