@@ -119,7 +119,7 @@ sub main ()
 
     # Let the dust settle
     print "t=".CastorTapeTests::elapsed_time."s\n";
-    CastorTapeTests::poll_fileserver_readyness (5,60);
+    CastorTapeTests::poll_fileserver_readyness (5,120);
     
     # Clean the disk servers
     CastorTapeTests::clean_fileservers ();
