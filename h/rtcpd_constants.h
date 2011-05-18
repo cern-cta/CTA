@@ -30,4 +30,4 @@
  */
 #define RTCPD_THREAD_POOL 3
 
-#endif // H_RTCPD_CONSTANTS
+#endif /* H_RTCPD_CONSTANTS */

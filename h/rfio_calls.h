@@ -49,4 +49,4 @@ int   srpclose(
                int     s,
                FILE    *fs);
 
-#endif // RFIO_RFIO_CALLS_H
+#endif /* RFIO_RFIO_CALLS_H */

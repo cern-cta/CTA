@@ -29,4 +29,4 @@
 
 int rfio_alrm(int rcode, char *buf);
 
-#endif // RFIO_ALRM_H
+#endif /* RFIO_ALRM_H */

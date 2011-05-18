@@ -31,4 +31,4 @@
 
 void wsacct(int package, void *acctstruct, int len);
 
-#endif // H_WSACCT_H
+#endif /* H_WSACCT_H */

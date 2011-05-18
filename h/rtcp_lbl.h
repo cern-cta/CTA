@@ -38,4 +38,4 @@ int wrttrllbl (int	tapefd, char	*path, char	*labelid, int	nblocks);;
 
 int deltpfil (int	tapefd, char	*path);
 
-#endif // H_RTCP_LBL_H
+#endif /* H_RTCP_LBL_H */

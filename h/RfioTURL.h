@@ -170,4 +170,4 @@ EXTERN_C int rfioTURLFromString (
   );
 */
 
-#endif // _RFIOTURL_H
+#endif /* _RFIOTURL_H */

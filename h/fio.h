@@ -37,4 +37,4 @@ int uf_close(int *unit);
 void uf_cread(int *unit, char *buf, int *nrec, int *nwant, int *ngot, int *irc);
 
 
-#endif // H_FIO_H
+#endif /* H_FIO_H */

@@ -30,4 +30,4 @@
 int send_scsi_cmd (int, char *, int, unsigned char *, int, unsigned char *,
                    int, char *, int, int, int, int *, char **); 
 
-#endif // H_SENDSCSISMD_H
+#endif /* H_SENDSCSISMD_H */

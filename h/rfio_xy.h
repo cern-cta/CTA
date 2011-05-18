@@ -41,4 +41,4 @@ int rfio_xyread(int lun, char* buf, int nrec, int nwant,
 int rfio_xywrite(int lun, char* buf, int nrec, int nwrit,
                  char* chopt, int *irc);
 
-#endif // H_RFIO_XY_H
+#endif /* H_RFIO_XY_H */

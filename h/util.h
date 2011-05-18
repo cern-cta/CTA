@@ -39,4 +39,4 @@
  */
 EXTERN_C int  check_for_strutou64 (char*);
 
-#endif // H_UTIL_H
+#endif /* H_UTIL_H */

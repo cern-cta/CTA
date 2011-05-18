@@ -31,4 +31,4 @@ int connecttpread(char * host, u_short aport);
 
 int checkkey(int sock, u_short  key);
 
-#endif // RFIO_CHECKKEY_H
+#endif /* RFIO_CHECKKEY_H */

@@ -377,4 +377,4 @@ struct acctstage64 {	/* accounting record for stage 64BITS software */
  */
 EXTERN_C int tapeacct (int, uid_t, gid_t, int, char*, char*, char*, int, int);
 
-#endif // H_SACCT_H
+#endif /* H_SACCT_H */

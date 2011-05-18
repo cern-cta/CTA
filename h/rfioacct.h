@@ -32,4 +32,4 @@ void rfioacct(int reqtype, uid_t uid, gid_t gid,
               int rc, struct rfiostat *infop,
               char* filename1, char* filename2);
 
-#endif // RFIO_RFIOACCT_H
+#endif /* RFIO_RFIOACCT_H */
