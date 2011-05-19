@@ -31,7 +31,7 @@ namespace castor {
    * The default port on which the tape-bridge daemon listens for connections
    * from the VDQM.
    */
-  static const unsigned int TAPEBRIDGE_VDQMPORT = 5070;
+  const unsigned int TAPEBRIDGE_VDQMPORT = 5070;
 
   /**
    * The default inclusive low port of the client-callback port-range of the
@@ -60,22 +60,22 @@ namespace castor {
   /**
    * The default port on which the job manager listenes for notifications.
    */
-  static const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;
+  const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;
 
   /**
    * The default port on which rtcpclientd listens for notifications.
    */
-  static const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use
+  const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use
 
   /**
    * The default port on which the stager listens for notifications.
    */
-  static const int STAGER_DEFAULT_NOTIFYPORT = 55015;
+  const int STAGER_DEFAULT_NOTIFYPORT = 55015;
 
   /**
    * The default port on which tapegateway listens for notifications.
    */
-  static const int TAPEGATEWAY_DEFAULT_NOTIFYPORT = 62801;  // for future use
+  const int TAPEGATEWAY_DEFAULT_NOTIFYPORT = 62801;  // for future use
 
 } // namespace castor
 
