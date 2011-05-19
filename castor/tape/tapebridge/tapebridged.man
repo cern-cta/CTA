@@ -39,16 +39,16 @@ The tapebridge daemon reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
 configuration file (the default location is /etc/castor/castor.conf).
 .TP
-\fBTAPEBRDIGE VDQMPORT
+\fBTAPEBRIDGE VDQMPORT
 The port on which the tapebridge will listen for RTCOPY jobs from the VDQM.
 The default is 5070.  This configuration parameter should \fBNOT\fP normally be
 set and the default should be used.
 .TP
-\fBTAPEBRDIGE RTCPDLOWPORT
+\fBTAPEBRIDGE RTCPDLOWPORT
 The inclusive low port of the tapebridge's RTCPD callback port number range.
 The default is 30101.
 .TP
-\fBTAPEBRDIGE RTCPDHIGHPORT
+\fBTAPEBRIDGE RTCPDHIGHPORT
 The inclusive high port of the tapebridge's RTCPD callback port number range.
 The default is 30200.
 .TP
