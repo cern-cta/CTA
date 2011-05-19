@@ -1,7 +1,7 @@
 ROOT_DIR=../../../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
-EXECUTABLES=testtapebridge
-COMMON_OPS=-Wall -pedantic -Wno-long-long -g -pthread
+EXECUTABLES=testtapebridge tapebridgedaemontester tapebridged
+COMMON_OPS=-Werror -Wall -pedantic -Wno-long-long -g -pthread
 
 all: $(EXECUTABLES)
 
@@ -17,15 +17,15 @@ testtapebridge: \
   utils.o \
   Cuuid.o \
   getconfent.o \
-  Exception.o \
-  InvalidArgument.o \
-  Communication.o \
-  Internal.o \
-  InvalidConfigEntry.o \
-  InvalidConfiguration.o \
-  TimeOut.o \
-  NoPortInRange.o \
-  TapeNetAcceptInterrupted.o \
+  exception_Exception.o \
+  exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
+  exception_InvalidConfigEntry.o \
+  exception_InvalidConfiguration.o \
+  exception_TimeOut.o \
+  exception_NoPortInRange.o \
+  exception_TapeNetAcceptInterrupted.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -46,8 +46,8 @@ testtapebridge: \
   SmartFILEPtr.o \
   ObjectSet.o \
   net.o \
-  LegacyTxRx.o \
-  LogHelper.o \
+  bridge_LegacyTxRx.o \
+  bridge_LogHelper.o \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
@@ -70,6 +70,162 @@ testtapebridge: \
   rtcp_Listen.o \
   rtcp_log.o \
   rtcp_SendRecv.o
+	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
+
+tapebridgedaemontester: \
+  tapebridgedaemontester.o \
+  exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
+  exception_Exception.o \
+  RemoteCopyConnection.o \
+  Cuuid.o \
+  AbstractSocket.o \
+  AbstractTCPSocket.o \
+  ClientSocket.o \
+  socket_timeout.o \
+  socket.o \
+  serror.o \
+  BaseAddress.o \
+  BaseObject.o \
+  ObjectSet.o \
+  StreamAddress.o \
+  Cnetdb.o \
+  Cmutex.o \
+  Services.o \
+  Factories.o \
+  Cdlopen.o \
+  Cglobals.o \
+  getconfent.o \
+  Dlf.o \
+  dlf_lib.o \
+  Csnprintf.o \
+  Constants.o \
+  test_exception.o
+	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
+
+tapebridged: \
+  TapeBridgeMain.o \
+  TapeBridgeDaemon.o \
+  bridge_BoolFunctor.o \
+  BridgeProtocolEngine.o \
+  BridgeSocketCatalogue.o \
+  bridge_ClientTxRx.o \
+  bridge_DlfMessageStrings.o \
+  bridge_LegacyTxRx.o \
+  bridge_LogHelper.o \
+  bridge_Packer.o \
+  bridge_Unpacker.o \
+  VdqmRequestHandler.o \
+  server_TCPListenerThreadPool.o \
+  server_UDPListenerThreadPool.o \
+  server_ListenerThreadPool.o \
+  server_DynamicThreadPool.o \
+  server_SignalThreadPool.o \
+  server_BaseThreadPool.o \
+  server_BaseDaemon.o \
+  server_BaseServer.o \
+  server_Queue.o \
+  server_Mutex.o \
+  server_ThreadNotification.o \
+  server_NotifierThread.o \
+  gateway_FileToMigrateRequest.o \
+  gateway_FileToMigrate.o \
+  gateway_FileMigratedNotification.o \
+  gateway_FileToRecallRequest.o \
+  gateway_FileToRecall.o \
+  gateway_FileRecalledNotification.o \
+  gateway_BaseFileInfo.o \
+  gateway_VolumeRequest.o \
+  gateway_Volume.o \
+  gateway_GatewayMessage.o \
+  gateway_PositionCommandCode.o \
+  gateway_PingNotification.o \
+  gateway_DumpParametersRequest.o \
+  gateway_DumpParameters.o \
+  gateway_DumpNotification.o \
+  gateway_FileToMigrate.o \
+  gateway_NoMoreFiles.o \
+  gateway_EndNotification.o \
+  gateway_EndNotificationErrorReport.o \
+  gateway_NotificationAcknowledge.o \
+  gateway_ClientType.o \
+  gateway_VolumeMode.o \
+  RtcpTxRx.o \
+  VmgrTxRx.o \
+  BridgeClientInfoSender.o \
+  dlf_Param.o \
+  CommonMarshal.o \
+  RtcpMarshal.o \
+  VmgrMarshal.o \
+  utils.o \
+  Cuuid.o \
+  Cthread.o \
+  Cgrp.o \
+  Cgetopt.o \
+  getconfent.o \
+  exception_Exception.o \
+  exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
+  exception_InvalidConfigEntry.o \
+  exception_InvalidConfiguration.o \
+  exception_TimeOut.o \
+  exception_TooBig.o \
+  exception_NoPortInRange.o \
+  exception_TapeNetAcceptInterrupted.o \
+  exception_PermissionDenied.o \
+  exception_OutOfMemory.o \
+  exception_NoEntry.o \
+  AbstractSocket.o \
+  AbstractTCPSocket.o \
+  ClientSocket.o \
+  ServerSocket.o \
+  UDPSocket.o \
+  socket_timeout.o \
+  Cglobals.o \
+  socket.o \
+  serror.o \
+  BaseAddress.o \
+  BaseObject.o \
+  Cmutex.o \
+  Services.o \
+  Factories.o \
+  Cdlopen.o \
+  Csnprintf.o \
+  Cnetdb.o \
+  StreamAddress.o \
+  SmartFd.o \
+  SmartFILEPtr.o \
+  ObjectSet.o \
+  net.o \
+  Dlf.o \
+  dlf_lib.o \
+  Constants.o \
+  tapebridge_marshall.o \
+  tapebridge_sendTapeBridgeAck.o \
+  marshall.o \
+  rtcpd_SendAckToVdqmOrTapeBridge.o \
+  vdqmapi.o \
+  vdqm_SendRecv.o \
+  log.o \
+  remote.o \
+  trace.o \
+  Cpwd.o \
+  rtcpd_GetClientInfoMsg.o \
+  rtcp_marshallVdqmClientInfoMsg.o \
+  rtcp_recvRtcpHdr.o \
+  rtcpd_GetClientInfo.o \
+  rtcp_Listen.o \
+  rtcp_log.o \
+  rtcp_SendRecv.o \
+  metrics_MetricsCollector.o \
+  metrics_Histogram.o \
+  metrics_Counter.o \
+  metrics_InternalCounter.o \
+  metrics_UpdateThread.o \
+  Cmutex.o \
+  castor_System.o
 	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
 
 testTapeBridgeMain.o: \
@@ -105,35 +261,58 @@ SmartFILEPtr.o: $(ROOT_DIR)/castor/tape/utils/SmartFILEPtr.cpp
 Cuuid.o: $(ROOT_DIR)/common/Cuuid.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+Cgrp.o: $(ROOT_DIR)/common/Cgrp.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+Cthread.o: $(ROOT_DIR)/common/Cthread.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+Cgetopt.o: $(ROOT_DIR)/common/Cgetopt.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 getconfent.o: $(ROOT_DIR)/common/getconfent.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
+exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-InvalidArgument.o: $(ROOT_DIR)/castor/exception/InvalidArgument.cpp
+exception_NoEntry.o: $(ROOT_DIR)/castor/exception/NoEntry.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
+exception_InvalidArgument.o: $(ROOT_DIR)/castor/exception/InvalidArgument.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-Internal.o: $(ROOT_DIR)/castor/exception/Internal.cpp
+exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-InvalidConfigEntry.o: $(ROOT_DIR)/castor/exception/InvalidConfigEntry.cpp
+exception_Internal.o: $(ROOT_DIR)/castor/exception/Internal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-InvalidConfiguration.o: $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
+exception_InvalidConfigEntry.o: $(ROOT_DIR)/castor/exception/InvalidConfigEntry.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-TimeOut.o: $(ROOT_DIR)/castor/exception/TimeOut.cpp
+exception_InvalidConfiguration.o: $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
+exception_TimeOut.o: $(ROOT_DIR)/castor/exception/TimeOut.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-TapeNetAcceptInterrupted.o: \
+exception_TooBig.o: $(ROOT_DIR)/castor/exception/TooBig.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_TapeNetAcceptInterrupted.o: \
   $(ROOT_DIR)/castor/exception/TapeNetAcceptInterrupted.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_PermissionDenied.o: \
+  $(ROOT_DIR)/castor/exception/PermissionDenied.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_OutOfMemory.o: \
+  $(ROOT_DIR)/castor/exception/OutOfMemory.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 AbstractSocket.o: $(ROOT_DIR)/castor/io/AbstractSocket.cpp
@@ -143,6 +322,12 @@ AbstractTCPSocket.o: $(ROOT_DIR)/castor/io/AbstractTCPSocket.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ClientSocket.o: $(ROOT_DIR)/castor/io/ClientSocket.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ServerSocket.o: $(ROOT_DIR)/castor/io/ServerSocket.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+UDPSocket.o: $(ROOT_DIR)/castor/io/UDPSocket.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 socket_timeout.o: $(ROOT_DIR)/common/socket_timeout.c
@@ -188,12 +373,6 @@ ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-LegacyTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-LogHelper.o: $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
@@ -295,3 +474,217 @@ rtcp_log.o: $(ROOT_DIR)/rtcopy/rtcp_log.c
 
 rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridgedaemontester.o: tapebridgedaemontester.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+RemoteCopyConnection.o: $(ROOT_DIR)/castor/vdqm/RemoteCopyConnection.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+TapeBridgeMain.o: $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeMain.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+TapeBridgeDaemon.o: $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeDaemon.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_BoolFunctor.o: $(ROOT_DIR)/castor/tape/tapebridge/BoolFunctor.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+BridgeProtocolEngine.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/BridgeProtocolEngine.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+BridgeSocketCatalogue.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/BridgeSocketCatalogue.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_ClientTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_DlfMessageStrings.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/DlfMessageStrings.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_LegacyTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_LogHelper.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_Packer.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/Packer.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+bridge_Unpacker.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/Unpacker.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+VdqmRequestHandler.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+dlf_Param.o: \
+  $(ROOT_DIR)/castor/dlf/Param.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+RtcpTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileToRecallRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileToRecall.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecall.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileRecalledNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_VolumeRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_Volume.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_GatewayMessage.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileToMigrateRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileToMigrate.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrate.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_FileMigratedNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_NoMoreFiles.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_BaseFileInfo.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfo.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_ClientType.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/ClientType.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_VolumeMode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_DumpParametersRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_DumpParameters.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpParameters.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_DumpNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_PositionCommandCode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_PingNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_EndNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/EndNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_EndNotificationErrorReport.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationErrorReport.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+gateway_NotificationAcknowledge.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/NotificationAcknowledge.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_TCPListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/TCPListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_UDPListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/UDPListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/ListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_DynamicThreadPool.o: \
+  $(ROOT_DIR)/castor/server/DynamicThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_SignalThreadPool.o: \
+  $(ROOT_DIR)/castor/server/SignalThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseThreadPool.o: \
+  $(ROOT_DIR)/castor/server/BaseThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseDaemon.o: \
+  $(ROOT_DIR)/castor/server/BaseDaemon.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseServer.o: \
+  $(ROOT_DIR)/castor/server/BaseServer.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Queue.o: \
+  $(ROOT_DIR)/castor/server/Queue.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Mutex.o: \
+  $(ROOT_DIR)/castor/server/Mutex.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ThreadNotification.o: \
+  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_NotifierThread.o: \
+  $(ROOT_DIR)/castor/server/NotifierThread.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_MetricsCollector.o: \
+  $(ROOT_DIR)/castor/metrics/MetricsCollector.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_Histogram.o: \
+  $(ROOT_DIR)/castor/metrics/Histogram.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_Counter.o: \
+  $(ROOT_DIR)/castor/metrics/Counter.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_InternalCounter.o: \
+  $(ROOT_DIR)/castor/metrics/InternalCounter.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_UpdateThread.o: \
+  $(ROOT_DIR)/castor/metrics/UpdateThread.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_System.o: $(ROOT_DIR)/castor/System.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -o $@ $^
