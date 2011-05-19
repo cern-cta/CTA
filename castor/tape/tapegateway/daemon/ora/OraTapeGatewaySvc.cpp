@@ -111,7 +111,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailed
    
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setRecRetryResultStatementString="BEGIN tg_setRecRetryResult(:1,:2);END;";
   
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString="BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString="BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTapeSessionStatementString="BEGIN tg_startTapeSession(:1,:2,:3,:4,:5,:6);END;";
 
@@ -1445,7 +1445,9 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
 // getRepackVidAndFileInfo
 //----------------------------------------------------------------------------
   
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& resp, std::string& vid, int& copyNumber, u_signed64& lastModificationTime, std::string& repackVid )
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& resp,
+      std::string& vid, int& copyNumber, u_signed64& lastModificationTime, std::string& repackVid,
+      std::string& serviceClass, std::string& fileClass, std::string& tapePool)
   throw (castor::exception::Exception){
   
   try {
@@ -1478,7 +1480,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
 
     m_getRepackVidAndFileInfoStatement->executeUpdate();
     
-    int ret=m_getRepackVidAndFileInfoStatement->getInt(10);
+    int ret=m_getRepackVidAndFileInfoStatement->getInt(13);
     if (ret==-1){
       //wrong file size
       castor::exception::Exception ex(ERTWRONGSIZE);
@@ -1490,7 +1492,9 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
     vid = m_getRepackVidAndFileInfoStatement->getString(7);
     copyNumber = m_getRepackVidAndFileInfoStatement->getInt(8);
     lastModificationTime= (u_signed64)m_getRepackVidAndFileInfoStatement->getDouble(9);
-
+    serviceClass = m_getRepackVidAndFileInfoStatement->getString(10);
+    fileClass = m_getRepackVidAndFileInfoStatement->getString(11);
+    tapePool = m_getRepackVidAndFileInfoStatement->getString(12);
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);

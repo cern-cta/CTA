@@ -153,7 +153,10 @@ namespace ora         {
 	       std::string& vid,
 	       int& copyNumber,
 	       u_signed64& lastModificationTime,
-	       std::string& repackVid )
+	       std::string& repackVid,
+	       std::string& serviceClass,
+	       std::string& fileClass,
+	       std::string& tapePool)
       throw (castor::exception::Exception);
 
     // To update the database when the tapebridge allows

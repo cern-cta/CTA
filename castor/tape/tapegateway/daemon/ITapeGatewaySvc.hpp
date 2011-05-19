@@ -191,7 +191,10 @@ namespace tapegateway {
 						    std::string& vid,
 						    int& copyNumber,
 						    u_signed64& lastModificationTime,
-						    std::string& repackVid )
+						    std::string& repackVid,
+						    std::string& serviceClass,
+						    std::string& fileClass,
+						    std::string& tapePool)
 	  throw (castor::exception::Exception)=0;
 
 

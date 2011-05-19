@@ -742,10 +742,14 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     std::string repackVid;
     int copyNumber;
     std::string vid;
+    std::string serviceClass;
+    std::string fileClass;
+    std::string tapePool;
     u_signed64 lastModificationTime;
     try {
       // This SQL procedure does not do any lock/updates.
-      oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,repackVid);
+      oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,repackVid,
+          serviceClass, fileClass, tapePool);
     } catch (castor::exception::Exception& e){
 
       castor::dlf::Param params[] ={
@@ -773,6 +777,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("HostName",requester.hostName),
         castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
         castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+        castor::dlf::Param("serviceClass",serviceClass),
+        castor::dlf::Param("fileClass",fileClass),
+        castor::dlf::Param("tapePool",tapePool),
         castor::dlf::Param("fseq",fileMigrated.fseq()),
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
@@ -802,6 +809,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("HostName",requester.hostName),
           castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
           castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("serviceClass",serviceClass),
+          castor::dlf::Param("fileClass",fileClass),
+          castor::dlf::Param("tapePool",tapePool),
           castor::dlf::Param("fseq",fileMigrated.fseq()),
           castor::dlf::Param("blockid", blockid),
           castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
@@ -824,6 +834,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("HostName",requester.hostName),
           castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
           castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("serviceClass",serviceClass),
+          castor::dlf::Param("fileClass",fileClass),
+          castor::dlf::Param("tapePool",tapePool),
           castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
           castor::dlf::Param("errorCode",sstrerror(e.code())),
           castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -849,6 +862,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("HostName",requester.hostName),
             castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
             castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("serviceClass",serviceClass),
+            castor::dlf::Param("fileClass",fileClass),
+            castor::dlf::Param("tapePool",tapePool),
             castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
             castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -882,6 +898,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("HostName",requester.hostName),
             castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
             castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("serviceClass",serviceClass),
+            castor::dlf::Param("fileClass",fileClass),
+            castor::dlf::Param("tapePool",tapePool),
             castor::dlf::Param("fseq",fileMigrated.fseq()),
             castor::dlf::Param("blockid", blockid),
             castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
@@ -918,6 +937,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("HostName",requester.hostName),
             castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
             castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("serviceClass",serviceClass),
+            castor::dlf::Param("fileClass",fileClass),
+            castor::dlf::Param("tapePool",tapePool),
             castor::dlf::Param("fseq",fileMigrated.fseq()),
             castor::dlf::Param("blockid", blockid),
             castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
@@ -944,6 +966,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("HostName",requester.hostName),
           castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
           castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("serviceClass",serviceClass),
+          castor::dlf::Param("fileClass",fileClass),
+          castor::dlf::Param("tapePool",tapePool),
           castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
           castor::dlf::Param("errorCode",sstrerror(e.code())),
           castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -969,6 +994,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("HostName",requester.hostName),
             castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
             castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+            castor::dlf::Param("serviceClass",serviceClass),
+            castor::dlf::Param("fileClass",fileClass),
+            castor::dlf::Param("tapePool",tapePool),
             castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
             castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -998,6 +1026,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("HostName",requester.hostName),
           castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
           castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+          castor::dlf::Param("serviceClass",serviceClass),
+          castor::dlf::Param("fileClass",fileClass),
+          castor::dlf::Param("tapePool",tapePool),
           castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
           castor::dlf::Param("errorCode",sstrerror(e.code())),
           castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -1024,6 +1055,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("Port",requester.port),
             castor::dlf::Param("HostName",requester.hostName),
             castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+            castor::dlf::Param("serviceClass",serviceClass),
+            castor::dlf::Param("fileClass",fileClass),
+            castor::dlf::Param("tapePool",tapePool),
             castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
             castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -1044,6 +1078,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("HostName",requester.hostName),
         castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
         castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+        castor::dlf::Param("serviceClass",serviceClass),
+        castor::dlf::Param("fileClass",fileClass),
+        castor::dlf::Param("tapePool",tapePool),
         castor::dlf::Param("fseq",fileMigrated.fseq()),
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),

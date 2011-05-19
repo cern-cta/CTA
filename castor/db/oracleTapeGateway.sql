@@ -1358,9 +1358,12 @@ PROCEDURE tg_getRepackVidAndFileInfo(
   inTransId         IN  NUMBER, 
   inBytesTransfered IN  NUMBER,
   outRepackVid     OUT NOCOPY VARCHAR2, 
-  outVID           OUT NOCOPY VARCHAR,
+  outVID           OUT NOCOPY VARCHAR2,
   outCopyNb        OUT INTEGER, 
-  outLastTime      OUT NUMBER, 
+  outLastTime      OUT NUMBER,
+  outSvcClass      OUT NOCOPY VARCHAR2,
+  outFileClass     OUT NOCOPY VARCHAR2,
+  outTapePool      OUT NOCOPY VARCHAR2,
   outRet           OUT INTEGER) AS 
   varCfId              NUMBER;  -- CastorFile Id
   varFileSize          NUMBER;  -- Expected file size
@@ -1369,11 +1372,19 @@ BEGIN
   outRepackVid:=NULL;
    -- ignore the repack state
   BEGIN
-    SELECT CF.lastupdatetime, CF.id, CF.fileSize 
-      INTO outLastTime, varCfId, varFileSize
-      FROM CastorFile CF
+    SELECT CF.lastupdatetime, CF.id, CF.fileSize,     SC.name,      FC.name 
+      INTO outLastTime,     varCfId, varFileSize, outSvcClass, outFileClass
+      FROM CastorFile CF 
+      LEFT OUTER JOIN SvcClass SC ON SC.Id = CF.SvcClass
+      LEFT OUTER JOIN FileClass FC ON FC.Id = CF.FileClass
      WHERE CF.fileid = inFileId 
        AND CF.nshost = inNsHost;
+     IF (outSvcClass IS NULL) THEN
+       outSvcClass = 'UNKNOWN';
+     END IF;
+     IF (outFileClass IS NULL) THEN
+       outFileClass = 'UNKNOWN';
+     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR (-20119,
          'Castorfile not found for File ID='||inFileId||' and nshost = '||
@@ -1403,8 +1414,10 @@ BEGIN
            inNsHost||') and fSeq='||inFseq||' in tg_getRepackVidAndFileInfo.');
     END;
     BEGIN
-      SELECT T.vid INTO outVID 
+      SELECT  T.vid,    TP.name
+        INTO outVID, outTapePool 
         FROM Tape T, Stream S
+        LEFT OUTER JOIN TapePool TP ON TP.Id = S.TapePool
        WHERE T.id = S.tape
          AND S.TapeGatewayRequestId = varTgrId;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1424,10 +1437,22 @@ BEGIN
         AND sR.status = dconst.SUBREQUEST_REPACK
         AND sR.castorFile = varCfId
         AND ROWNUM < 2;
+     IF (outRepackVid IS NOT NULL) THEN
+       SELECT TP.name INTO  outTapePool
+         FROM Tape T
+         LEFT OUTER JOIN Stream S on S.Tape = T.id
+         LEFT OUTER JOIN TapePool TP on TP.id = S.TapePool
+        WHERE T.VID =  outRepackVid
+          AND T.tpMode = TCONST.TPMODE_WRITE;
+     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
    -- standard migration
     NULL;
   END;
+  -- Format nicely in case of failure to find in both cases (repack and previous)
+  IF (outTapePool IS NULL) THEN
+    outTapePool = 'UNKNOWN';
+  END IF;
 END;
 /
 
