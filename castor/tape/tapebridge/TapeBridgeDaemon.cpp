@@ -167,9 +167,8 @@ void castor::tape::tapebridge::TapeBridgeDaemon::usage(std::ostream &os,
     "\n"
     "where options can be:\n"
     "\n"
-    "\t-f, --foreground            Remain in the Foreground\n"
-    "\t-c, --config config-file    Configuration file\n"
-    "\t-h, --help                  Print this help and exit\n"
+    "\t-f, --foreground Remain in the Foreground\n"
+    "\t-h, --help       Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -225,7 +224,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fc:p:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fh", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_parsedCommandLine.foregroundOptionSet = true;

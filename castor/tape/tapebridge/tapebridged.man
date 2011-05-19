@@ -30,10 +30,6 @@ forking and keep the parent process in the foreground.
 \fB\-f, \-\-foreground
 Remain in the foreground.
 .TP
-\fB\-c, \-\-config config-file
-Overides the default location of the CASTOR configuration file.  The default
-is /etc/castor/castor.conf
-.TP
 \fB\-h, \-\-help
 Prints the usage message
 
