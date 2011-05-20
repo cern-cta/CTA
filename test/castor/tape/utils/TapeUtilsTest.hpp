@@ -346,6 +346,32 @@ public:
     CPPUNIT_ASSERT_MESSAGE("path appended", combinedPaths == getenvResult);
   }
 
+  void testSplitString() {
+    const std::string line("col1 col2 col3 col4 col5 col6 col7 col8");
+    std::vector<std::string> columns;
+
+    castor::tape::utils::splitString(line, ' ', columns);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns.size()",
+      (std::vector<std::string>::size_type)8, columns.size());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col1"), columns[0]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col2"), columns[1]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col3"), columns[2]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col4"), columns[3]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col5"), columns[4]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col6"), columns[5]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col7"), columns[6]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
+      std::string("col8"), columns[7]);
+  }
+
   CPPUNIT_TEST_SUITE(TapeUtilsTest);
   CPPUNIT_TEST(testIndexedContainer);
   CPPUNIT_TEST(testToHex);
@@ -359,6 +385,7 @@ public:
   CPPUNIT_TEST(testAppendPathToUnsetEnvVar);
   CPPUNIT_TEST(testAppendPathToEmptyEnvVar);
   CPPUNIT_TEST(testAppendPathToNonEmptyEnvVar);
+  CPPUNIT_TEST(testSplitString);
   CPPUNIT_TEST_SUITE_END();
 };
 
