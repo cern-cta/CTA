@@ -46,8 +46,13 @@ class ConnectionPool(object):
 
   def getConnection(self, machine):
     '''returns an open connection to the specified machine'''
-    # if not in cache, or if connection was lost, create new connection
-    if machine not in self.connections or self.connections[machine].closed:
+    try:
+      # get the cached connection
+      conn = self.connections[machine]
+      # return it, as we found one
+      return conn.root
+    except KeyError:
+      # no cached connection, create a new one
       # find out the port to be used
       if machine not in self.config.getValue('DiskManager', 'ServerHosts').split():
         # we have a diskserver
@@ -66,18 +71,26 @@ class ConnectionPool(object):
       rpcconn._remote_root = remote_root_ref.value
       # cache it
       self.connections[machine] = rpcconn
-    return self.connections[machine].root
+      # and return
+      return rpcconn.root
 
   def close(self, machine):
     '''Close the connection to a given machine'''
     if machine in self.connections:
-      self.connections[machine].close()
+      conn = self.connections[machine]
       del self.connections[machine]
+      try:
+        conn.close()
+      except Exception:
+        pass
 
   def closeall(self):
     '''Close all connections'''
     for machine in self.connections:
-      self.connections[machine].close()
+      try:
+        self.connections[machine].close()
+      except Exception:
+        pass
     self.connections = {}
 
   def __getattr__(self, name):
