@@ -355,10 +355,11 @@ try:
     management.setDaemon(True)
     management.start()
     # launch a service listening for new transfers from the central scheduler and filling the queue
+    # By default, the number of threads in the server is the number of server hosts + 1
     t = ThreadPoolServer(DiskServerManagerService,
                          port = configuration.getValue('DiskManager', 'Port', 15011, int),
                          auto_register=False,
-                         nbThreads = configuration.getValue('DiskManager', 'NbRpycThreads', 10, int))
+                         nbThreads = len(configuration.getValue('DiskManager', 'ServerHosts').split())+1)
     t.daemon = True
     t.start()
     # we reach this point when the service has stopped
