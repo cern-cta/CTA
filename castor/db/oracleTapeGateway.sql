@@ -189,7 +189,7 @@ BEGIN
       FROM Tape T WHERE T.id = varTapeId;
   ELSIF (varStreamId IS NOT NULL) THEN
     SELECT S.vdqmVolReqId INTO outVDQMReqId
-      FROM Stream S WHERE S.id = varTapeId;  
+      FROM Stream S WHERE S.id = varStreamId;  
   ELSE
     RAISE_APPLICATION_ERROR (-20119, 
          'Could not find stream or tape read for TG request Id='|| 
