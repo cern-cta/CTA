@@ -178,12 +178,14 @@ class ActivityControl(threading.Thread):
 
   def run(self):
     '''main method, containing the infinite loop'''
+    global lastschedattempt
     while self.alive:
       try:
         # check number of running transfers against limit
         if runningTransfers.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', 0, int):
           # get a new transfer from the transferQueue
           scheduler, transferid, transfer, transfertype, arrivalTime = transferQueue.get()
+          lastschedattempt = time.time()
           # check whether we got something or timed out
           if scheduler == None:
             # We timed out, retry straight
@@ -250,6 +252,57 @@ class ActivityControl(threading.Thread):
         # "Caught exception in ActivityControl thread" message
         dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION, Type=str(e.__class__), Message=str(e))
         time.sleep(1)
+
+  def stop(self):
+    '''stops processing in this thread'''
+    self.alive = False
+
+class ActivityControlChecker(threading.Thread):
+  '''ActivityControlChecker thread of the disk server manager, checking the status
+  of the ActivityControl thread.
+  This thread regularly checks whether there are jobs waiting in the queue with slots
+  available for too long. In such a case, it drops the rpyc connections.
+  This is actually a work around some rpyc instabilities where we can get stuck in
+  receiving an rpyc message forever. This happens is only half of the message arrives,
+  as the reading of the rest of it has no timeout'''
+
+  def __init__(self):
+    '''constructor'''
+    super(ActivityControlChecker, self).__init__(name='ActivityControlChecker')
+    self.alive = True
+
+  def run(self):
+    '''main method, containing the infinite loop'''
+    while self.alive:
+      # do not loop too fast, but be able to exit in < 1s
+      for i in range(5):
+        if not self.alive: return
+        time.sleep(1)
+      # go for the checks
+      try:
+        # if empty queue, nothing looks bad
+        if transferQueue.empty():
+          continue
+        # if too few slots left, nothing looks bad
+        nbslots = configuration.getValue('DiskManager', 'NbSlots', 0, int)
+        maxnbemptyslots = int(configuration.getValue('DiskManager', 'maxNbEmptySlotsUnderLoad'))
+        if nbslots - runningTransfers.nbUsedSlots() < maxnbemptyslots:
+          continue
+        # did we scheduler recently ? Then it's ok, we are emptying the queue
+        if time.time() - lastschedattempt < 1:
+          continue
+        # We did not schedule recently.
+        # Let's wait for a bit so that the system has a chance to schedule something
+        time.sleep(1)
+        # check whether something was scheduled in the meantime
+        if time.time() - lastschedattempt > 1.5:
+          # nothing scheduled, this looks bad -> drop the connections
+          connections.closeall()
+          # 'Detected stuck ActivityControl thread. Killed connections to transfermanagerd' message
+          dlf.writenotice(msgs.ACTIVITYCHECKDROPCONN)
+      except Exception, e:
+        # 'Caught exception in ActivityControlChecker thread. Giving up for this round' message
+        dlf.writeerr(msgs.ACTIVITYCHECKEXCEPTION, Type=str(e.__class__), Message=str(e))
 
   def stop(self):
     '''stops processing in this thread'''
@@ -348,10 +401,17 @@ try:
     runningTransfers = runningtransfersset.RunningTransfersSet(connections, fake)
     # initialize the queues of pending and running transfers using the knowledge of the central schedulers
     initQueues()
+    # last time we've tried to schedule a transfer. This is used by the ActivityControlChecker
+    # to find out whether the ActivityControl thread is dead or not
+    lastschedattempt = 0
     # launch a processing thread that will regularly check if we need to start new transfers from the queue
     activityControl = ActivityControl()
     activityControl.setDaemon(True)
     activityControl.start()
+    # launch a processing thread that will regularly check if the activityControl one gets stuck
+    activityControlChecker = ActivityControlChecker()
+    activityControlChecker.setDaemon(True)
+    activityControlChecker.start()
     # launch a management thread that will regularly check transfer completions, d2d transfer to be restarted
     # and transfers to be dropped from the queue, because of timeouts, lack of space, etc...
     management = ManagementThread()
@@ -367,6 +427,7 @@ try:
     t.start()
     # we reach this point when the service has stopped
     # so let's stop the other threads
+    activityControlChecker.stop()
     activityControl.stop()
     management.stop()
   except SystemExit:
@@ -381,6 +442,11 @@ try:
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
     raise
 finally:
+  try:
+    activityControlChecker.stop()
+    activityControlChecker.join()
+  except Exception:
+    pass
   try:
     activityControl.stop()
     activityControl.join()

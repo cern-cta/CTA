@@ -41,7 +41,7 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'RETRYTRANSFER', 'INVALIDTIMEOUTOPTION', 'ANYTRANSFERFROMSCHED',
                 'INVOKINGTRANSFERALREADYSTARTED', 'SYNCRUNTRANSFERFAILED',
                 'DISKMANAGERDSTARTED', 'DISKMANAGERDSTOPPED', 'INVOKINGRETRYD2DDEST',
-                'TRANSFERSTARTTIMEOUT')
+                'TRANSFERSTARTTIMEOUT', 'ACTIVITYCHECKDROPCONN', 'ACTIVITYCHECKEXCEPTION')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer called',
@@ -74,5 +74,7 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer call
                  msgs.DISKMANAGERDSTARTED : 'DiskManager Daemon started',
                  msgs.DISKMANAGERDSTOPPED : 'DiskManager Daemon stopped',
                  msgs.INVOKINGRETRYD2DDEST : 'Invoking retryD2dDest called',
-                 msgs.TRANSFERSTARTTIMEOUT : 'Timeout when trying to start/cancel transfer. Putting it back to the queue'})
+                 msgs.TRANSFERSTARTTIMEOUT : 'Timeout when trying to start/cancel transfer. Putting it back to the queue',
+                 msgs.ACTIVITYCHECKDROPCONN : 'Detected stuck ActivityControl thread. Killed connections to transfermanagerd',
+                 msgs.ACTIVITYCHECKEXCEPTION : 'Caught exception in ActivityControlChecker thread. Giving up for this round'})
 
