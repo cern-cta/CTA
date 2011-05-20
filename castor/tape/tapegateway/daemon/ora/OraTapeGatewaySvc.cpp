@@ -1465,7 +1465,13 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
       m_getRepackVidAndFileInfoStatement->registerOutParam
 	(9, oracle::occi::OCCIDOUBLE);
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (10, oracle::occi::OCCIINT);
+        (10, oracle::occi::OCCISTRING, 2048 );
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+        (11, oracle::occi::OCCISTRING, 2048 );
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+        (12, oracle::occi::OCCISTRING, 2048 );
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+        (13, oracle::occi::OCCIINT);
     }
 
     m_getRepackVidAndFileInfoStatement->setDouble(1,(double)resp.fileid());
