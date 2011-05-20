@@ -29,10 +29,21 @@ Handles a pool of cached rpyc connections to different nodes'''
 
 import rpyc, rpyc.core.netref
 import castor_tools
+import exceptions
 
 class Timeout(rpyc.core.async.AsyncResultTimeout):
   '''Our name for the timeout exception on asynchronous calls'''
   pass
+
+def asyncreq(proxy, handler, *args):
+    """Overwrite of the rpyc.core.netref.asyncreq helper function to fix
+    the case where the connection has been dropped in the mean time"""
+    conn = object.__getattribute__(proxy, "____conn__")
+    connection = conn()
+    if not connection:
+      raise exceptions.ReferenceError('weakly-referenced object no longer exists')
+    oid = object.__getattribute__(proxy, "____oid__")
+    return connection.async_request(handler, oid, *args)
 
 class ConnectionPool(object):
   '''Object handling a pool of connections to identical remote services'''
@@ -106,17 +117,18 @@ class ConnectionPool(object):
           try:
             # try existing connection
             conn = self.getConnection(machine)
-            remote_attr = rpyc.core.netref.asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
+            remote_attr = asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
             remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
-            result = rpyc.core.netref.asyncreq(remote_attr.value, rpyc.core.consts.HANDLE_CALL, args)
+            result = asyncreq(remote_attr.value, rpyc.core.consts.HANDLE_CALL, args)
             result.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
             return result.value
-          except EOFError:
+          except (exceptions.ReferenceError, EOFError), e:
             # if connection was lost, drop it
             self.close(machine)
             # and try again with a brand new connection, if it was our first attempt
             if gotException:
-              raise
+              if isinstance(e, exceptions.ReferenceError):
+                raise Timeout()
             else:
               gotException = True
       except Exception, e:
