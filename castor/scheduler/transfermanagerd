@@ -209,9 +209,12 @@ class TransferManagerService(rpyc.Service):
     managers and sums up the results. Results can be restricted to a given pool and a
     given user'''
     nbTransfersPerPool = {}
+    # get the timeout to be used
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # go through all schedulers
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
-        for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user):
+        for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user, timeout=timeout):
           if diskpool not in nbTransfersPerPool:
             nbTransfersPerPool[diskpool] = 0
           nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
@@ -327,11 +330,13 @@ class TransferManagerService(rpyc.Service):
     '''internal method handling transfer killing. This is called from
     exposed_killalltransfers/killtransfers with the proper internal method and argument.
     It calls it on all schedulers and then handles the update of the stager DB'''
+    # get the admin timeout
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
     # call the internal method on all schedulers (including ourselves)
     killedtransfers = []
     killedtransferids = []
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
-      for transferid, (fileid, reqid) in getattr(connections, method)(scheduler, arg):
+      for transferid, (fileid, reqid) in getattr(connections, method)(scheduler, arg, timeout=timeout):
         # for the transfers actually killed (and only once per tranfer
         if transferid not in killedtransferids:
           # Remember to fail the transfer in the stager DB with ESTKILLED error code
@@ -458,15 +463,18 @@ class TransferManagerService(rpyc.Service):
 
 def initQueues():
   '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''
+  # get the timeout to be used
+  timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+  # loop through diskservers
   dslist = diskServerList.getlist()
   for diskPool in dslist:
     for ds in dslist[diskPool]:
       try:
         # first list the running d2dsrc transfers
-        for transferid, transfer, arrivaltime in connections.getRunningD2dSource(ds, socket.getfqdn()):
+        for transferid, transfer, arrivaltime in connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
           queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
         # then list queueing transfers
-        for transferid, transfer, transfertype, arrivaltime in connections.getQueueingTransfers(ds, socket.getfqdn()):
+        for transferid, transfer, transfertype, arrivaltime in connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
           queueingTransfers.put(transferid, arrivaltime, [(ds, transfer)], transfertype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve

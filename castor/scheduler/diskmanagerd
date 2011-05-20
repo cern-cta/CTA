@@ -289,12 +289,15 @@ class ManagementThread(threading.Thread):
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
+  # get the admin timeout
+  timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+  # loop on all transfermanagers
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
       while True:
         try:
-          for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn()):
+          for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
             runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
           break
         except connectionpool.Timeout:
@@ -303,7 +306,7 @@ def initQueues():
       # rebuild transfer's queue
       while True:
         try:
-          for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn()):
+          for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
             transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
           break
         except connectionpool.Timeout:

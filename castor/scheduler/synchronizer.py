@@ -73,6 +73,8 @@ class Synchronizer(threading.Thread):
     Raises exception in case of DB error that are handled in the calling method.'''
     # 'Synchronizing stager DB with Transfer Manager' message
     dlf.writedebug(msgs.SYNCDBWITHTM)
+    # get the timeout to be used
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     # prepare a cursor for database polling
     stcur = self.dbConnection().cursor()
     try:
@@ -88,7 +90,7 @@ class Synchronizer(threading.Thread):
         diskservers = self.diskServerList.getset()
         for ds in diskservers:
           # call the function on the appropriate diskserver
-          allTMTransfers = allTMTransfers | set(self.connections.transferset(ds))
+          allTMTransfers = allTMTransfers | set(self.connections.transferset(ds, timeout=timeout))
         # find out the set of transfers in the DB and no more in the scheduling system
         transfersToFail = list(subReqIds - allTMTransfers)
         # and inform the stager
@@ -112,7 +114,7 @@ class Synchronizer(threading.Thread):
                                  ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
                                  [reqid for transferid, reqid in transfersToFail])])
           # finally inform the stager
-          self.connections.transfersKilled(self.hostname, transfers)
+          self.connections.transfersKilled(self.hostname, transfers, timeout=timeout)
         else:
           # 'No discrepancy during synchronization' message
           dlf.writedebug(msgs.SYNCNODISCREPANCY)
@@ -131,7 +133,7 @@ class Synchronizer(threading.Thread):
     dlf.writedebug(msgs.SYNCDBWITHD2DSRC)
     try:
       # list d2d source running and handled by this transfer manager
-      allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(self.hostname)
+      allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(self.hostname, timeout=None)
       allTMD2dSrcSet = set([(transferid, reqid) for transferid, reqid, fileid in allTMD2dSrc])
     except Exception, e:
       # we could not list all pending running transfers in the system

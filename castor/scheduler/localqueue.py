@@ -287,8 +287,9 @@ class LocalQueue(Queue.Queue):
       # check whether transfers need to be canceled when hardware gets disabled
       self.checkForDisabledHardwareTransfersCancelation(canceledTransfers)
     # Inform the schedulers of canceled transfers
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     for scheduler, transfers in canceledTransfers.iteritems():
-      self.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers))
+      self.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers), timeout=timeout)
 
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of queueing transfers and number of queueing slots, plus details

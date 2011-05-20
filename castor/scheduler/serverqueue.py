@@ -32,6 +32,7 @@ Manages the transfers pending on the different diskservers'''
 
 import threading
 import dlf, pwd, time
+import castor_tools
 from transfermanagerdlf import msgs
 
 class RecentSchedules(object):
@@ -85,6 +86,8 @@ class ServerQueue(dict):
     self.d2dsrcrunning = {}
     # memory of recently scheduled jobs
     self.recentlyScheduled = RecentSchedules()
+    # get configuration
+    self.config = castor_tools.castorConf()
 
   def put(self, transferid, arrivaltime, transferList, transfertype='standard'):
     '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
@@ -200,8 +203,9 @@ class ServerQueue(dict):
     finally:
       self.lock.release()
     # then tell the machines to remove these transfers from their queues
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     for machine in transfersPerMachine:
-      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]), timeout=timeout)
     # return
     return fileids
 

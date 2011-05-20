@@ -213,7 +213,8 @@ class RunningTransfersSet(object):
     try:
       while True:
         try:
-          self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()))
+          timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+          self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()), timeout=timeout)
           break
         except connectionpool.Timeout:
           # as long as we get a timeout, we retry. This will not last. We still wait a little bit
@@ -381,17 +382,19 @@ class RunningTransfersSet(object):
       self.transfers = set(transfer for transfer in self.transfers if transfer[0] not in ended)
     finally:
       self.lock.release()
+    # get the admin timeout
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     # inform schedulers of disk to disk transfers that are over
     for scheduler, transferid, fileid, reqid in sourcesToBeInformed:
       try:
-        self.connections.d2dend(scheduler, transferid, reqid)
+        self.connections.d2dend(scheduler, transferid, reqid, timeout=timeout)
       except Exception, e:
         # "Failed to inform scheduler that a d2d transfer is over" message
         dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
-        self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]))
+        self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]), timeout=timeout)
       except Exception, e:
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Failed to inform scheduler that transfers were killed by signals" message

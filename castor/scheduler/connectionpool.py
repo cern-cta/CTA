@@ -108,10 +108,27 @@ class ConnectionPool(object):
     '''we implement a proxying facility here, where any method will be forwarded
     to the connection of the machine given as first argument.
     So calling connectionPool.foo('machine1', 1,2,3) will be forwarded to a call
-    to foo(1,2,3) on the connection associated to machine 'machine1' '''
-    def f(machine, *args):
+    to foo(1,2,3) on the connection associated to machine 'machine1'
+    A keyword argument timeout can also be passed to set a dedicated timeout on
+    the remote call and overwrite the default value given by the
+    TransferManager/ConnectionTimeout entry of the config file. Note that None
+    can be passed, meaning there is no timeout.
+    As an example, one can call connectionPool.foo('machine1', 1,2,3, timeout=3.5)'''
+    def f(machine, *args, **kwargs):
       '''wrapped method doing the actual call'''
       try:
+        # first see whether a timeout has been explicitely given. Note that this is the
+        # timeout for the actual call to the function. The timeout for internal calls
+        # is not touched and still given by the TransferManager/ConnectionTimeout entry
+        # in the config file
+        try:
+          timeout = kwargs['timeout']
+          del kwargs['timeout']
+        except KeyError:
+          timeout = self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float)
+        if len(kwargs) > 0:
+          raise TypeError("got unexpected keyword argument %r" % (kwargs.keys()[0],))
+        # we may want to retry in case we get an exception
         gotException = False
         while True:
           try:
@@ -120,7 +137,7 @@ class ConnectionPool(object):
             remote_attr = asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
             remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
             result = asyncreq(remote_attr.value, rpyc.core.consts.HANDLE_CALL, args)
-            result.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+            result.set_expiry(timeout)
             return result.value
           except (exceptions.ReferenceError, EOFError), e:
             # if connection was lost, drop it
