@@ -158,7 +158,7 @@ class Synchronizer(threading.Thread):
           dlf.write(msgs.SYNCHROENDEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=tid2fileid[transferid])
           try:
             self.connections.d2dend(self.hostname, transferid, reqid)
-          except:
+          except Exception:
             # not a big deal, it may have ended in the mean time. Otherwise, we will retry later
             pass
       else:

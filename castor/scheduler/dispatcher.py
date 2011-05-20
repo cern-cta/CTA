@@ -180,7 +180,7 @@ class Dispatcher(threading.Thread):
     self.updateDBQueue = Queue.Queue()
     # a thread pool of Schedulers
     self.workers = []
-    for i in range(nbWorkers):
+    for i in range(nbWorkers):          # pylint: disable=W0612
       t = Worker(self.workToDispatch)
       t.setName('Worker')
       self.workers.append(t)
@@ -376,7 +376,7 @@ class Dispatcher(threading.Thread):
           reqCreationTime = stcur.var(cx_Oracle.NUMBER)
           reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
           sourceRfs = stcur.var(cx_Oracle.STRING)
-          stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;'
+          stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :clientType, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;' # pylint: disable=C0301
           # infinite loop over the polling of the DB
           while self.running:
             # see whether there is something to do
