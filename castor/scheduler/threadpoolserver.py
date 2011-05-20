@@ -77,7 +77,7 @@ class ThreadPoolServer(rpyc.utils.server.Server):
         self.workers = []
         for i_unused in range(nbthreads):
             t = threading.Thread(target = self._serve_clients)
-            t.setName('ThreadPoolWroker')
+            t.setName('ThreadPoolWorker')
             t.daemon = True
             t.start()
             self.workers.append(t)
