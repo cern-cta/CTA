@@ -1380,10 +1380,10 @@ BEGIN
      WHERE CF.fileid = inFileId 
        AND CF.nshost = inNsHost;
      IF (outSvcClass IS NULL) THEN
-       outSvcClass = 'UNKNOWN';
+       outSvcClass := 'UNKNOWN';
      END IF;
      IF (outFileClass IS NULL) THEN
-       outFileClass = 'UNKNOWN';
+       outFileClass := 'UNKNOWN';
      END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR (-20119,
@@ -1451,7 +1451,7 @@ BEGIN
   END;
   -- Format nicely in case of failure to find in both cases (repack and previous)
   IF (outTapePool IS NULL) THEN
-    outTapePool = 'UNKNOWN';
+    outTapePool := 'UNKNOWN';
   END IF;
 END;
 /
