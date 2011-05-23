@@ -47,9 +47,7 @@ start() {
         echo -n $"Starting $prog: "
 
         cd /var/log/castor
-        # Note: The diskmanager daemon must run as root in order to be able to
-        # read the command line of processes running on the machine.
-        daemon /usr/bin/$prog $DISKMANAGERD_OPTIONS
+        daemon --user=stage /usr/bin/$prog $DISKMANAGERD_OPTIONS
 
         # Write the pid to a file.
         RETVAL=$?

@@ -125,6 +125,7 @@ CLIENTLIBMANPAGE(rfioreadopt)
 CLIENTLIBMANPAGE(rfiosetopt)
 
 MakeDir(LogPath,0755)
+MakeDir(/var/lib/rfiod,0755)
 SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \
 		checkkey.o fio.o rfstatfs.o alrm.o \

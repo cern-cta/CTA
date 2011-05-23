@@ -1371,6 +1371,10 @@ int  sropen64_v3(int         s,
   char     account[MAXACCTSIZE];         /* account string       */
   char     user[CA_MAXUSRNAMELEN+1];     /* User name            */
   char     reqhost[MAXHOSTNAMELEN];
+  char     parameters[MAXFILENAMSIZE];
+  char     infofile[MAXFILENAMSIZE];
+  int      d2dparam = 0;
+  unsigned int i;
   const char *value = NULL;
   char     *buf = NULL;
   char     *dp  = NULL;
@@ -1444,6 +1448,66 @@ int  sropen64_v3(int         s,
     unmarshall_LONG(p, passwd);
     unmarshall_WORD(p, mapping);
 
+    /*
+     * If the filename is not forced (i.e. provided by the client and not on the
+     * command line of the rfiod process) then check if the filename has any
+     * parameters in it.
+     */
+    if (forced_filename == NULL) {
+      *parameters = 0;
+      
+      /* Find the location of the first '?' character which is not escaped */
+      for (i = 1; i < strlen(filename); i++) {
+        if ((filename[i - 1] != '\\') && (filename[i] == '?')) {
+          strncpy(parameters, &filename[i + 1], sizeof(parameters));
+          filename[i] = '\0';
+          break;
+        } 
+      }
+      
+      /* Loop over the parameters provided in the filename and extract the key
+       * value pairs. For the time being we are only interested in the "d2d"
+       * parameter. We do not support any escaping here... this is a hack to
+       * allow the diskmanager daemon to distinguish the difference between
+       * tape and d2d based transfers!
+       */
+      if (parameters[0] != '\0') {
+        char *attr = strtok(parameters, "&");
+        while (attr != NULL) {
+          char *p = strchr(attr,'=');
+          if (p != NULL) {
+            *p++ = '\0';
+            if ((strcasecmp(attr, "d2d") == 0) &&
+                (strcasecmp(p, "true") == 0)) {
+              d2dparam = 1;
+	    }
+	  }
+	  attr = strtok(NULL, "&");
+	}
+      }
+      
+      /* Update the rfiod transfer information file */
+      sprintf(infofile, "/var/lib/rfiod/%d.info", getpid());
+      FILE *fp = fopen(infofile, "w");
+      if (fp == NULL) {
+        log(LOG_WARNING, "ropen64_v3: fopen(%s): %s, ignoring\n", infofile, strerror(errno));
+      } else {
+        fprintf(fp,
+		"CASTOR_OPENTIME=%lld\n"
+		"CASTOR_ACCESSMODE=%s\n"
+		"CASTOR_CLIENTHOSTNAME=%s\n"
+		"CASTOR_USER=%s\n"
+		"CASTOR_FILENAME=%s\n"
+		"CASTOR_D2D=%s\n",
+		(long long int)time(NULL),
+		((ntohopnflg(flags)) & O_RDWR) == O_RDWR ? "o" :
+		((ntohopnflg(flags)) & O_WRONLY) == O_WRONLY  ? "w" :
+		((ntohopnflg(flags)) & O_RDONLY) == O_RDONLY ? "r" : "unknown",
+		host, user, filename, d2dparam ? "true" : "false");
+        fclose(fp);
+      }
+    }
+    
     log(LOG_DEBUG,"ropen64_v3: Opening file %s for remote user: %s\n", CORRECT_FILENAME(filename), user);
     if (rt)
       log(LOG_DEBUG,"ropen64_v3: Mapping : %s\n", mapping ? "yes" : "no");
@@ -1532,6 +1596,7 @@ int  sropen64_v3(int         s,
           uid, gid, mask, ftype, flags, mode);
       log(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
       log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
+
       (void) umask((mode_t) CORRECT_UMASK(mask));
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {

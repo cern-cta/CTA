@@ -180,6 +180,17 @@ int set_snd_sockparam(int s,
   return(value);
 }
 
+void unlink_info_file(int pid)
+{
+  char infofile[MAXFILENAMSIZE];
+  sprintf(infofile, "/var/lib/rfiod/%d.info", pid);
+  if (unlink(infofile) != 0) {
+    if (errno != ENOENT) {
+      log(LOG_ERR, "unlink(%s): %s, ignoring\n", infofile, strerror(errno));
+    }
+  }
+}
+
 int main (int     argc,
           char    **argv)
 {
@@ -515,7 +526,7 @@ int main (int     argc,
           case -1:
             log(LOG_ERR,"fork(): %s \n",strerror(errno));
             break;
-          case 0:                          /* Child  */
+          case 0:                             /* Child  */
             close(s);
             mode = 0;
             doit(ns, &from, mode, uid, gid);
@@ -618,6 +629,13 @@ int doit(int      s,
 #define CLIENT_NAME_SIZE 1000
   char *Csec_mech;
   char *Csec_auth_id;
+  
+  /* Remove the transfer information file, we do this at request processing
+   * time to ensure that the data in the file is valid for this current
+   * process. If we rely solely on removing the file at shutdown then the file
+   * could be left behind after abnormal termination.
+   */
+  unlink_info_file(getpid());
 
   /* Check that the uid and gid is set and user is not root */
   /* Condition to be replaced when trusted host is supported */
@@ -805,9 +823,9 @@ int doit(int      s,
 
       shutdown(s, 2);
       if( close(s) < 0 )
-        log(LOG_ERR, "Error closing socket fildesc=%d, errno=%d\n", s, errno);
+        log(LOG_ERR, "error closing socket fildesc=%d, errno=%d\n", s, errno);
       else
-        log(LOG_INFO, "Closing socket fildesc=%d\n", s);
+        log(LOG_INFO, "closing socket fildesc=%d\n", s);
       if( mode ) return(1); else  exit(1);
     case RQST_CHKCON :
       log(LOG_DEBUG, "request type : check connect\n");
@@ -1185,6 +1203,7 @@ void check_child_exit(int block)
     } else {
       log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
     }
+    unlink_info_file(child_pid);
   } else {
     while ((child_pid = waitpid(-1, &term_status, WNOHANG)) > 0) {
       exit_code_from_last_child = WEXITSTATUS(term_status);
@@ -1195,6 +1214,7 @@ void check_child_exit(int block)
       } else {
         log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
       }
+      unlink_info_file(child_pid);
     }
   }
   return;

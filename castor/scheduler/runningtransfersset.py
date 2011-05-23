@@ -40,9 +40,6 @@ import connectionpool
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
  
-  _SOCKET_INODE_REGEXP = re.compile(r"socket:\[(\d+)\]$")
-  _SOCKET_TABLE_LINE_DELIMITER = re.compile("[%s:]+" % string.whitespace)
-
   def __init__(self, connections, fake=False):
     '''constructor'''
     # connection pool to be used for sending messages to schedulers
@@ -62,110 +59,68 @@ class RunningTransfersSet(object):
     # lock for the tapeTransfers variable
     self.tapelock = threading.Lock()
 
-  def _parsesockettable(self, inodes):
-    '''Parses the proc filesystem to map socket inodes to actual host names.
-    note that only IPv4 is supported here, although supporting IPv6 is trivial.
-    Only a different file should be open, namefile /proc/net/tcp6.
-    This code is linux specific'''
-    try:
-      connfile = open('/proc/net/tcp')
-      inode2host = {}
-      for l in connfile.readlines()[1:]:
-        # parse the line
-        cols = self._SOCKET_TABLE_LINE_DELIMITER.split(l.strip())
-        # get inode and see whether we are interested
-        inode = int(cols[13])
-        if inode not in inodes:
-          continue
-        # get remote IP address
-        rawip = cols[3] # needs to be reversed
-        packedip = "".join([chr(int(rawip[i:i+2], 16)) for i in range(len(rawip)-2, -1, -2)])
-        try:
-          ip = socket.inet_ntop(socket.AF_INET, packedip)
-          # get remote host
-          addrstr = socket.gethostbyaddr(ip)
-          # build dictionnary of connections
-          inode2host[inode] = addrstr[0]
-        except Exception:
-          pass
-      connfile.close()
-      return inode2host
-    except IOError:
-      return {}
-
   def listTapeTransfers(self):
     '''updates the list of ongoing tape transfers'''
     # build a first list of new tape transfers
     newTapeTransfers = []
-    # loop over all processes
+    # loop over all processes listed in proc
     procpath = os.path.sep + 'proc'
-    pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
-    for pid in pids :
+    for pid in os.listdir(procpath):
+      if not pid.isdigit():
+        continue  # not a pid
       try:
         pidpath = os.path.join(procpath, pid)
         cmdpath = os.path.join(pidpath, 'cmdline')
         cmdline = open(cmdpath, 'rb').read()
-        # do we deal with a tape transfer ?
+        # ignore non rfiod processes
         if cmdline[0:18] != '/usr/bin/rfiod\0-sl':
           continue
-        # recall or migration ? To find out, we find the open file on the filesystem and look at its mode
-        fdpath = os.path.join(pidpath, 'fd')
-        # loop though the filedescriptors
-        foundlocalfile = False
-        foundsocket = False
-        for fd in os.listdir(fdpath):
-          linkpath = os.path.join(fdpath, fd)
-          fdstat = os.lstat(linkpath)
-          # only consider links
-          if not stat.S_ISLNK(fdstat.st_mode):
-            continue
-          # and only consider links to local filesystem or sockets
-          targetpath = os.readlink(linkpath)
-          if not foundlocalfile:
-            for fs in self.config.getValue('RmNode', 'MountPoints').split():
-              if targetpath.startswith(fs):
-                # we got one tape transfer, let's compute it's direction
-                if (fdstat.st_mode & stat.S_IRUSR) == 0:
-                  transfertype = 'recall'
-                else:
-                  transfertype = 'migr'
-                # find out the fileid
-                fileid = int(os.path.basename(targetpath).split('@')[0])
-                # and add it to the list of ongoing tape transfers
-                newTapeTransfer = (transfertype, os.stat(cmdpath).st_mtime, fileid)
-                foundlocalfile = True
-                break
-          if not foundsocket:
-            matchobj = self._SOCKET_INODE_REGEXP.match(targetpath)
-            if matchobj:
-              foundsocket = True
-              inode = int(matchobj.group(1))
-          if foundlocalfile and foundsocket:
-            break
-        if foundlocalfile:
-          if foundsocket:
-            newTapeTransfers.append(newTapeTransfer+(inode,))
-          else:
-            newTapeTransfers.append(newTapeTransfer+(None,))
+        # container to hold the paramaters listed in the rfiod information
+        # file
+        params = {}
+        # open the rfio information file and extract the key value pairs
+        infopath = os.path.join('/var/lib/rfiod', pid + '.info')
+        f = open(infopath, 'r')
+        for line in f.readlines():
+          key, value = line.strip().split('=')
+          params[key] = value
+        f.close()
+        # process the parameters in the file
+        if params['CASTOR_USER'] != 'stage':
+          continue  # ignore processes not running as stage
+        if params['CASTOR_D2D'] == 'true':
+          continue  # ignore processes which are d2d transfers
+        # use the access mode to determine the type of transfer. If open
+        # exclusively for read then it's a migration stream
+        transfertype = None
+        if params['CASTOR_ACCESSMODE'] == 'r':
+          transfertype = 'migr'
+        elif params['CASTOR_ACCESSMODE'] == 'w':
+          transfertype = 'recall'
+        if transfertype == None:
+          continue
+        # extract the fileid from the filename
+        filepath = params['CASTOR_FILENAME']
+        fileid = int(os.path.basename(filepath).split('@')[0])
+        # we found a tape transfer
+        newTapeTransfers.append((transfertype,
+                                 int(params['CASTOR_OPENTIME']),
+                                 params['CASTOR_CLIENTHOSTNAME'],
+                                 fileid))
       except Exception:
-        # exceptions caught here mean we could not get the info we wanted on the
-        # process we were looking at. We only ignore this process for this round
-        # as it's probably not a tape process (or it would not have raised an exception)
-        pass
-    # convert the inodes in the first list into host names
-    inode2host = self._parsesockettable([item[2] for item in newTapeTransfers])
+        # ignore any exceptions, these are probably related to attempts to
+        # access process information which doesn't exist because the process
+        # disappeared when we were analysing it.
+        continue
+
     # renew the tapeTransfers list
     self.tapelock.acquire()
     try:
-      # first reset the list
+      # reset the list
       self.tapeTransfers = []
-      # then refill it
-      for ttype, ttime, fileid, inode in newTapeTransfers:
-        try:
-          thost = inode2host[inode]
-        except KeyError:
-          thost = '?'
-        self.tapeTransfers.append((ttype, ttime, thost, fileid))
+      # update the list
+      for value in newTapeTransfers:
+        self.tapeTransfers.append(value)
     finally:
       self.tapelock.release()
 

@@ -95,7 +95,7 @@ void castor::job::d2dtransfer::RfioMover::destination
   m_outputFile = diskCopy->mountPoint() + diskCopy->diskCopyPath();
   m_inputFile  = sourceDiskCopy->diskServer() + ":"
     + sourceDiskCopy->mountPoint() + sourceDiskCopy->diskCopyPath();
-
+  
   // Activate V3 RFIO protocol (Streaming mode)
   int v = RFIO_STREAM;
   rfiosetopt(RFIO_READOPT, &v, 4);
@@ -104,8 +104,13 @@ void castor::job::d2dtransfer::RfioMover::destination
   // serrno error indicators!! This is also true within the rfcp source code
   rfio_errno = serrno = 0;
 
+  // Construct the remote path to open on the source including the special "d2d"
+  // parameter which allows the diskmanager daemon to make the distinction
+  // between tape and d2d based transfers
+  std::string inputFileWithParams = m_inputFile + "?d2d=true";
+
   // Open the source file
-  m_inputFD = rfio_open64((char *)m_inputFile.c_str(), O_RDONLY, 0644);
+  m_inputFD = rfio_open64((char *)inputFileWithParams.c_str(), O_RDONLY, 0644);
   if (m_inputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_open64 the source: "
