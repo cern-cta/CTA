@@ -139,4 +139,5 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {TAPE_GATEWAY_FAILED_TO_START, "TapeGateway failed to start"},
 {INTERNAL_ERROR, "Internal error"},
 {VDQMREQUESTSPRODUCER_PROCESS_FAILED, "VdqmRequestsProducerThread::process() failed"},
+{LINKER_VMGRSETTOREADONLY_FAILED, "TapeStreamLinker: failed to set the tape to read only"},
 {-1, ""}};

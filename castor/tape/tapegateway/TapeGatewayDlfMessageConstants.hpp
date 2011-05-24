@@ -142,7 +142,8 @@ ORA_FILE_TO_RECALL_NS_ERROR=106, /* "Worker: OraTapeGatewaySvc: failed check aga
 LINKER_NOT_POOL=107, /* "TapeStreamLinker: this tapepool does not exist" */
 TAPE_GATEWAY_FAILED_TO_START=108, /* "TapeGateway failed to start" */
 INTERNAL_ERROR=109, /* "Internal error" */
-VDQMREQUESTSPRODUCER_PROCESS_FAILED=110 /* "VdqmRequestsProducerThread::process() failed" */
+VDQMREQUESTSPRODUCER_PROCESS_FAILED=110, /* "VdqmRequestsProducerThread::process() failed" */
+LINKER_VMGRSETTOREADONLY_FAILED=111 /* "TapeStreamLinker: failed to set the tape to read only" */
 }; // enum TapeGatewayDlfMessages
 } // namespace tapegateway
 } // namespace tape

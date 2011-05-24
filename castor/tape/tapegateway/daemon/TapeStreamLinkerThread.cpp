@@ -152,6 +152,10 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       // and the gateway will immediately forget about it. This is a good thing as
       // this badly referenced tape will not show up in the gateway again until an
       // operator explicitly unblocks it.
+      //
+      // As operationally, tapes get un-busied blindly by opeartors, we will more actively
+      // change the state to READONLY (which will rise questions, yet let the system operate
+      // as much as reasonably possible).
       NsTapeGatewayHelper nsHelper;
       nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
     } catch(castor::exception::Exception& e) {
@@ -181,6 +185,17 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
         }
       } else if (e.code() == ERTWRONGFSEQ) {
+        try {
+          vmgrHelper.setTapeAsReadonly(tapeToUse);
+        } catch (castor::exception::Exception e) {
+          castor::dlf::Param params[] = {
+              castor::dlf::Param("VID",tapeToUse.vid()),
+              castor::dlf::Param("TapePool",(*tapepool).name()),
+              castor::dlf::Param("errorCode",sstrerror(e.code())),
+              castor::dlf::Param("errorMessage",e.getMessage().str())
+          };
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_VMGRSETTOREADONLY_FAILED, params);
+        }
         // Major problem, the vmgr told us to write on an fseq still referenced in the NS
         castor::dlf::Param params[] = {
             castor::dlf::Param("StreamId",(*strItem).id()),

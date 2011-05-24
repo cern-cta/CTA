@@ -455,9 +455,25 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const casto
     if (rc <0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
-	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-	<<" vmgr_updatetape failed after ENOSPC";
+	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull"
+	<<" vmgr_modifytape failed with rc=" << rc << " serrno=" << serrno;
       throw ex;
     }
+  }
+}
+
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonly(const castor::stager::Tape& tape) throw (castor::exception::Exception){
+  int status=0;
+  getTapeStatusInVmgr(tape, status);
+  // Set the readonly bit in status
+  status |= TAPE_RDONLY;
+  serrno=0;
+  int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status);
+  if (rc <0) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+            << "castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonly"
+            <<" vmgr_modifytape failed with rc=" << rc << " serrno=" << serrno;
+    throw ex;
   }
 }
