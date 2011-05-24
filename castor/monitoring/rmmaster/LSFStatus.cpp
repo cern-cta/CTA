@@ -162,7 +162,12 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
       // serialize the call to isMonitoringMaster that is not thread safe
       pthread_mutex_lock(&m_masterCheckLock);
       // ask the DB whether we are the master
-      production = m_rmMasterService->isMonitoringMaster();
+      try {
+        production = m_rmMasterService->isMonitoringMaster();
+      } catch(castor::exception::Exception e) {
+        pthread_mutex_unlock(&m_masterCheckLock);
+        throw e;
+      }
       // release the serialization lock
       pthread_mutex_unlock(&m_masterCheckLock);
       // remember lass update time, for the caching
