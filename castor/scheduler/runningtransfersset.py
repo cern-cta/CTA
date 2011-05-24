@@ -56,13 +56,34 @@ class RunningTransfersSet(object):
     self.leftOverTransfers = self.populate()
     # list of ongoing tape transfers. Only transfer type and start time are listed here
     self.tapeTransfers = []
+    # dictionary of previously known tape transfers
+    self.prevTapeTransfers = {}
     # lock for the tapeTransfers variable
     self.tapelock = threading.Lock()
 
   def listTapeTransfers(self):
     '''updates the list of ongoing tape transfers'''
-    # build a first list of new tape transfers
-    newTapeTransfers = []
+    # the disk manager daemon still considers a migration stream as active even
+    # if no physical transfer is taking place for up to 10 seconds after the
+    # stream has ended.
+    #
+    # This logic prevents the disk manager daemon from starting a transfer just
+    # at the point when one tape migration stops and another one starts.
+    # Here we simply perform some maintenance operations on the list of
+    # previously known tape transfers.
+    for key in self.prevTapeTransfers.keys():
+      if self.prevTapeTransfers[key][0] == 'recall':
+        del self.prevTapeTransfers[key]  # always get rid of recall cases
+      elif self.prevTapeTransfers[key][4] < time.time() - 10:
+        del self.prevTapeTransfers[key]
+      else:
+        # reset the hostname to '-', this is not strictly necessary but
+        # provides a means to see which tape migrations are ongoing and those
+        # which have just ended
+        values = list(self.prevTapeTransfers[key])
+        values[2] = '-'
+        self.prevTapeTransfers[key] = values
+        
     # loop over all processes listed in proc
     procpath = os.path.sep + 'proc'
     for pid in os.listdir(procpath):
@@ -103,10 +124,12 @@ class RunningTransfersSet(object):
         filepath = params['CASTOR_FILENAME']
         fileid = int(os.path.basename(filepath).split('@')[0])
         # we found a tape transfer
-        newTapeTransfers.append((transfertype,
-                                 int(params['CASTOR_OPENTIME']),
-                                 params['CASTOR_CLIENTHOSTNAME'],
-                                 fileid))
+        key = str(pid) + ":" + params['CASTOR_OPENTIME']
+        self.prevTapeTransfers[key] = (transfertype,
+                                       int(params['CASTOR_OPENTIME']),
+                                       params['CASTOR_CLIENTHOSTNAME'],
+                                       fileid,
+                                       time.time())
       except Exception:
         # ignore any exceptions, these are probably related to attempts to
         # access process information which doesn't exist because the process
@@ -119,8 +142,8 @@ class RunningTransfersSet(object):
       # reset the list
       self.tapeTransfers = []
       # update the list
-      for value in newTapeTransfers:
-        self.tapeTransfers.append(value)
+      for values in self.prevTapeTransfers.itervalues():
+        self.tapeTransfers.append(values[0:4])
     finally:
       self.tapelock.release()
 
