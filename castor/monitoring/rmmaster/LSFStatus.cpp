@@ -76,6 +76,13 @@ castor::monitoring::rmmaster::LSFStatus::LSFStatus()
       e.getMessage() << "Unable to create an OraRmMasterSVC";
       throw e;
     }
+    // Initialize checkMasterLock
+    int rv = pthread_mutex_init(&m_masterCheckLock, NULL);
+    if (rv != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to pthread_mutex_init(m_masterCheckLock)";
+      throw e;
+    }
   } else {
     // Initialize the LSF library
     if (lsb_init((char*)"RmMasterDaemon") < 0) {
@@ -101,6 +108,7 @@ castor::monitoring::rmmaster::LSFStatus::~LSFStatus() throw() {
   // become the master
   if (0 != m_rmMasterService) delete m_rmMasterService;
   if (0 != m_cnvSvc) delete m_cnvSvc;
+  if (m_noLSF) pthread_mutex_destroy(&m_masterCheckLock);
 }
 
 
@@ -151,7 +159,13 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     // refresh it when updating is enabled and 10 seconds has passed since the
     // previous query.
     if ((!m_getLSFStatusCalled) || (update && ((time(NULL) - m_lastUpdate) > 10))) {
+      // serialize the call to isMonitoringMaster that is not thread safe
+      pthread_mutex_lock(&m_masterCheckLock);
+      // ask the DB whether we are the master
       production = m_rmMasterService->isMonitoringMaster();
+      // release the serialization lock
+      pthread_mutex_unlock(&m_masterCheckLock);
+      // remember lass update time, for the caching
       m_lastUpdate = time(NULL);
     } else {
       production = m_prevProduction;

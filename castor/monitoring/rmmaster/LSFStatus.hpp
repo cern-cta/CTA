@@ -31,6 +31,7 @@
 
 // Include files
 #include "castor/exception/Exception.hpp"
+#include <pthread.h>
 
 // LSF headers
 extern "C" {
@@ -131,6 +132,9 @@ namespace castor {
 
         /// The previous name of the LSF master, only used in LSF mode
         std::string m_prevMasterName;
+
+        /// Mutex to protect DB access when checking who is master, only used in noLSF mode
+        pthread_mutex_t m_masterCheckLock;
 
         /// The previous production status, only used in case in noLSF mode
         bool m_prevProduction;
