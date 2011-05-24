@@ -493,6 +493,10 @@ void clean4jobdied()
 	}
 	jids[j] = 0;
 
+	/* This function will fill in place the jids array with the ids of the processes
+	 * that are no here anymore (no /proc/<pid> entry).
+	 * n is their number.
+	 */
 	n = checkjobdied (jids);
 
 	for (j = 0; j < n; j++) {
