@@ -348,7 +348,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::inputForMigrationPolicy(std:
 //--------------------------------------------------------------------------
 // createOrUpdateStream
 //--------------------------------------------------------------------------
-int castor::tape::mighunter::ora::OraMigHunterSvc::createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb)
+int castor::tape::mighunter::ora::OraMigHunterSvc::createOrUpdateStream(std::string svcClassName, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb)
  throw (castor::exception::Exception){
 
   unsigned char (*buffer)[21] = 0;
@@ -365,7 +365,7 @@ int castor::tape::mighunter::ora::OraMigHunterSvc::createOrUpdateStream(std::str
     }
     // set input param
 
-    m_createOrUpdateStreamStatement->setString(1,svcClassId);
+    m_createOrUpdateStreamStatement->setString(1,svcClassName);
     m_createOrUpdateStreamStatement->setDouble(2,(double)initialSizeToTransfer);
     m_createOrUpdateStreamStatement->setDouble(3, (double)volumeThreashold);
     m_createOrUpdateStreamStatement->setDouble(4,(double)initialSizeCeiling);

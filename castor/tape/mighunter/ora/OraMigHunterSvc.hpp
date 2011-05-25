@@ -100,7 +100,7 @@ public:
   /**
    * createOrUpdateStream 
    */ 
-  virtual int createOrUpdateStream(std::string svcClassId,
+  virtual int createOrUpdateStream(std::string svcClassName,
     u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold,
     u_signed64 initialSizeCeiling, bool doClone, int tapeCopyNb)
     throw(castor::exception::Exception);

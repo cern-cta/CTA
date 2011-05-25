@@ -68,7 +68,7 @@ namespace castor {
          * createOrUpdateStream 
          */ 
 
-      virtual int createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb) throw (castor::exception::Exception)=0;
+      virtual int createOrUpdateStream(std::string svcClassName, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb) throw (castor::exception::Exception)=0;
 
       /**
        * Retrieves the candidate streams to be passed to the stream-policy
