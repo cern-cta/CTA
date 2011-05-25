@@ -204,14 +204,16 @@ def main(argv):
             continue
         for name in os.listdir(dirpath):
             filepath = os.path.join(dirpath, name)
-            if not os.path.isfile(filepath):
+            if os.path.isdir(filepath) and name == 'logs':
+                shutil.rmtree(filepath)
+            elif not os.path.isfile(filepath):
                 continue
-            if not name.endswith(".rpm"):
+            elif not name.endswith(".rpm"):
                 if os.path.isdir(filepath):
                     shutil.rmtree(filepath)
                 else:
                     os.unlink(filepath)
-            if name.startswith("castor-build-headers"):
+            elif name.startswith("castor-build-headers"):
                 os.unlink(filepath)
 
     # List the contents of the directory after decompression. This in theory
