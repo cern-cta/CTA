@@ -84,8 +84,13 @@ CREATE TABLE dlf_host_map(hostid NUMBER CONSTRAINT PK_Host_Map_HostID PRIMARY KE
 /* SQL statements for dlf_nshost_map */
 CREATE TABLE dlf_nshost_map(nshostid NUMBER CONSTRAINT PK_NSHost_Map_NSHostID PRIMARY KEY CONSTRAINT NN_NSHost_Map_NSHostID NOT NULL, nshostname VARCHAR2(64) CONSTRAINT NN_NSHost_Map_NSHostName NOT NULL);
 
+/* Prompt for the value of the instance name */
+UNDEF instanceName
+ACCEPT instanceName DEFAULT castordlf PROMPT 'Enter the name of the castor instance: (default: castordlf, example: castoratlas) '
+SET VER OFF
+
 /* Fill the dlf_config table */
-INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
+INSERT INTO dlf_config (name, value, description) VALUES ('instance', '&instanceName', 'The name of the castor2 instance');
 INSERT INTO dlf_config (name, value, description) VALUES ('expiry', '90', 'The expiry time of the logging data in days');
 
 /* Fill the dlf_severities table */
@@ -135,6 +140,8 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'tapebridged');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (30, 'operations');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (31, 'transfermanagerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (32, 'diskmanagerd');
 
 
 /* SQL statements for table UpgradeLog */
@@ -150,7 +157,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion

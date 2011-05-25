@@ -20,7 +20,6 @@ WHENEVER SQLERROR EXIT FAILURE;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/11/06 13:18:27  Author: waldron 
  *
  * This script creates a new Castor Volume Manager schema
  *
@@ -121,7 +120,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_10_1');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -154,7 +153,6 @@ AS
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/11/06 13:18:27  Author: waldron 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -290,7 +288,7 @@ BEGIN
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
       RAISE_APPLICATION_ERROR(-20504, 'The ' || vid_tape_var || ' tape' ||
-        ' cannot be moved, because it does not exist in the VMGR database.'); 
+        ' cannot be moved, because it does not exist in the VMGR database.');
   END;
 
   BEGIN
@@ -392,9 +390,9 @@ END VMGR_UPDATE_POOL_OWNER;
 
 /*
  * Create and populate the table VMGR_TAPE_STATUS_CODE.
- * 
+ *
  * The first BEGIN-END block check if the table already exist, an if not
- * it create the table. The second BEGIN-END block populate the table 
+ * it create the table. The second BEGIN-END block populate the table
  * with the vmgr status number (from 0 to 63) and the corresponding
  * string value generated following this bit set convencion:
  * 	  DISABLED =  1  (000001)
@@ -407,9 +405,9 @@ END VMGR_UPDATE_POOL_OWNER;
 DECLARE
   nbTable         INTEGER        := 0;
   createTableStmt VARCHAR2(1024) :=
-    'CREATE TABLE vmgr_tape_status_code (' ||
-    '  status_number NUMBER  NOT NULL, '   ||
-    '  status_string VARCHAR2(100)   , '   ||
+    'CREATE TABLE vmgr_tape_status_code ('                                         ||
+    '  status_number NUMBER CONSTRAINT NN_VmgrTapeStatusCodes_Number NOT NULL, '   ||
+    '  status_string VARCHAR2(100)   , '                                           ||
     '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
 BEGIN
   SELECT COUNT(*) INTO nbTable FROM USER_TABLES
