@@ -31,7 +31,12 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <stdio.h>
 
+extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+
 int main() {
+  char rtcpLogErrTxt[1024];
+  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
+
   castor::tape::utils::SmartFILEPtr stdinFd(stdin);
   castor::tape::utils::SmartFILEPtr stdoutFd(stdout);
   castor::tape::utils::SmartFILEPtr stderrFd(stderr);

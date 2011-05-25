@@ -70,12 +70,12 @@ typedef struct {
   int32_t                       inMarshalledMsgBodyLen;
   int                           outGetClientInfoSuccess;
   tapeBridgeClientInfoMsgBody_t outMsgBody;
-} server_thread_params;
+} rtcpd_thread_params;
 
 void *rtcpd_thread(void *arg) {
   try {
-    server_thread_params *threadParams =
-      (server_thread_params*)arg;
+    rtcpd_thread_params *threadParams =
+      (rtcpd_thread_params*)arg;
     castor::tape::utils::SmartFd listenSock(threadParams->inListenSocketFd);
 
     const time_t acceptTimeout = 10; // Timeout is in seconds
@@ -211,7 +211,7 @@ public:
   }
 
   void testSubmit() {
-    server_thread_params threadParams;
+    rtcpd_thread_params threadParams;
 
     memset(&threadParams, '\0', sizeof(threadParams));
     threadParams.inMarshalledMsgBodyLen =

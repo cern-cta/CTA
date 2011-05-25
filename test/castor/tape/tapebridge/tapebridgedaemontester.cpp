@@ -24,18 +24,267 @@
 
 #include "test_exception.hpp"
 #include "castor/PortNumbers.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/net/net.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "castor/vdqm/RemoteCopyConnection.hpp"
 #include "h/Cuuid.h"
+#include "h/rtcp_constants.h"
+#include "h/rtcpd_GetClientInfo.h"
+#include "h/tapebridge_constants.h"
+#include "h/tapebridge_marshall.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <exception>
+#include <iostream>
+#include <netinet/in.h>
+#include <pthread.h>
 #include <sstream>
-#define _XOPEN_SOURCE 600
-#include <string.h>
+#include <stdlib.h>
 #include <string>
-#include <sys/types.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
+
+extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+
+/**
+ * C++ wrapper around the connect() C function.  This wrapper converts errors
+ * reported by a return value of -1 from connect() in exceptions.
+ */
+void connect_stdException(
+  const int                    sockFd,
+  const struct sockaddr *const servAddr,
+  const socklen_t              addrLen) {
+
+  const int rc = connect(sockFd, servAddr, addrLen);
+  const int saved_errno = errno;
+  if(0 != rc) {
+    char buf[1024];
+    std::ostringstream oss;
+
+    oss <<
+      "Failed to connect"
+      ": Function=" << __FUNCTION__ <<
+      " Line=" << __LINE__ <<
+      ": " << strerror_r(saved_errno, buf, sizeof(buf));
+
+    test_exception te(oss.str());
+
+    throw te;
+  }
+}
+
+int createListenerSock_stdException(const char *addr,
+  const unsigned short lowPort, const unsigned short highPort,
+  unsigned short &chosenPort) {
+  try {
+    return castor::tape::net::createListenerSock(addr, lowPort, highPort,
+      chosenPort);
+  } catch(castor::exception::Exception &ex) {
+    test_exception te(ex.getMessage().str());
+
+    throw te;
+  }
+}
+
+typedef struct {
+  int                           inListenSocketFd;
+  int                           outGetClientInfoSuccess;
+  tapeBridgeClientInfoMsgBody_t outMsgBody;
+} rtcpdThread_params;
+
+void *exceptionThrowingRtcpdThread(void *arg) {
+  rtcpdThread_params *threadParams =
+    (rtcpdThread_params*)arg;
+  castor::tape::utils::SmartFd listenSock(threadParams->inListenSocketFd);
+
+  const time_t acceptTimeout = 10; // Timeout is in seconds
+  castor::tape::utils::SmartFd connectionFromBridge(
+    castor::tape::net::acceptConnection(listenSock.get(), acceptTimeout));
+
+  const int netReadWriteTimeout = 10; // Timeout is in seconds
+  rtcpClientInfo_t client;
+  rtcpTapeRequest_t tapeReq;
+  rtcpFileRequest_t fileReq;
+  int clientIsTapeBridge = 0;
+  char errBuf[1024];
+  rtcpd_GetClientInfo(
+    connectionFromBridge.get(),
+    netReadWriteTimeout,
+    &tapeReq,
+    &fileReq,
+    &client,
+    &clientIsTapeBridge,
+    &(threadParams->outMsgBody),
+    errBuf,
+    sizeof(errBuf));
+  threadParams->outGetClientInfoSuccess = 1;
+
+  close(connectionFromBridge.release());
+
+  castor::tape::utils::SmartFd
+    connectionToBridge(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
+
+  if(0 > connectionToBridge.get()) {
+    test_exception ex("Failed to create socket");
+    throw ex;
+  }
+
+
+  struct sockaddr_in bridgeAddr;
+  memset(&bridgeAddr, '\0', sizeof(bridgeAddr));
+  bridgeAddr.sin_family      = AF_INET;
+  bridgeAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  bridgeAddr.sin_port        = htons(client.clientport);
+
+  std::cout << "Connecting to 127.0.0.1:" << client.clientport << std::endl;
+
+  try {
+    connect_stdException(connectionToBridge.get(),
+      (struct sockaddr *)&bridgeAddr, sizeof(bridgeAddr));
+  } catch(std::exception &se) {
+    std::ostringstream oss;
+
+    oss <<
+      "Failed to connect to bridge"
+      ": Function=" << __FUNCTION__ <<
+      " Line=" << __LINE__ <<
+      ": host=127.0.0.1" <<
+      " port=" << client.clientport <<
+      ": " << se.what();
+
+    test_exception te(oss.str());
+    throw te;
+  }
+
+  std::cout << "Connected" << std::endl;
+
+  // Read in the message header
+  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
+  try {
+    castor::tape::net::readBytes(connectionToBridge.get(), netReadWriteTimeout,
+      sizeof(headerBuf), headerBuf);
+  } catch (castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+         ": Failed to read message header from remote-copy job submitter"
+      << ": " << ex.getMessage().str());
+  }
+
+  std::cout << "Read in message header" << std::endl;
+
+  // Unmarshal the messager header
+  castor::tape::legacymsg::MessageHeader header;
+  try {
+    const char *p           = headerBuf;
+    size_t     remainingLen = sizeof(headerBuf);
+    castor::tape::legacymsg::unmarshal(p, remainingLen, header);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EBADMSG,
+      ": Failed to unmarshal message header from remote-copy job submitter"
+      ": " << ex.getMessage().str());
+  }
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[1024];
+
+  // If the message body is too large
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
+    TAPE_THROW_CODE(EMSGSIZE,
+         ": Message body from remote-copy job submitter is too large"
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.lenOrStatus);
+  }
+     
+  // Read the message body
+  try {
+    castor::tape::net::readBytes(connectionToBridge.get(), netReadWriteTimeout,
+      header.lenOrStatus, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EIO,
+         ": Failed to read message body from remote-copy job submitter"
+      << ": "<< ex.getMessage().str());
+  }
+
+  std::cout << "Read in message body" << std::endl;
+
+  castor::tape::legacymsg::RtcpTapeRqstErrMsgBody request;
+  // Unmarshal the message body
+  try {
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.lenOrStatus;
+    castor::tape::legacymsg::unmarshal(p, remainingLen, request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to unmarshal message body from remote-copy job submitter"
+      << ": "<< ex.getMessage().str());
+  }
+
+  // Marshal the acknowledgement
+  castor::tape::legacymsg::MessageHeader ackMsg;
+  memset(&ackMsg, '\0', sizeof(ackMsg));
+  ackMsg.magic = RTCOPY_MAGIC;
+  ackMsg.reqType = RTCP_TAPEERR_REQ;
+  ackMsg.lenOrStatus = 0; // Success
+  char ackBuf[3 * sizeof(uint32_t)];
+  memset(ackBuf, '\0', sizeof(ackBuf));
+  size_t totalLen = 0;
+  try {
+    totalLen = castor::tape::legacymsg::marshal(ackBuf, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to marshal acknowledgement: "
+      << ex.getMessage().str());
+  }
+
+  // Send the acknowledgement
+  try {
+    castor::tape::net::writeBytes(connectionToBridge.get(), netReadWriteTimeout,
+      totalLen, ackBuf);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+         ": Failed to acknowledgement to tapebridged: "
+      << ex.getMessage().str());
+  }
+
+  close(connectionToBridge.release());
+
+  return arg;
+}
+
+
+void *rtcpdThread(void *arg) {
+  try {
+    return exceptionThrowingRtcpdThread(arg);
+  } catch(castor::exception::Exception &ce) {
+    std::cerr <<
+      "ERROR"
+      ": rtcpdThread"
+      ": Caught a castor::exception::Exception"
+      ": " << ce.getMessage().str() << std::endl;
+  } catch(std::exception &se) {
+    std::cerr <<
+      "ERROR"
+      ": rtcpdThread"
+      ": Caught an std::exception"
+      ": " << se.what() << std::endl;
+  } catch(...) {
+    std::cerr <<
+      "ERROR"
+      ": rtcpdThread"
+      ": Caught an unknown exception";
+  }
+
+  return arg;
+}
+
 
 bool pathExists(const char *const path) {
    struct stat fileStat;
@@ -46,12 +295,12 @@ bool pathExists(const char *const path) {
 }
 
 /**
- * Forks ann exec a tapebridged process and returns its process id.
+ * Forks and execs a tapebridged process and returns its process id.
  */
 pid_t forkAndExecTapebridged() throw(std::exception) {
-   const char *const executable  = "tapebridged";
-   pid_t             forkRc      = 0;
-   int               saved_errno = 0;
+   char *const executable  = "tapebridged";
+   pid_t       forkRc      = 0;
+   int         saved_errno = 0;
 
    if(!pathExists(executable)) {
      std::ostringstream oss;
@@ -88,8 +337,8 @@ pid_t forkAndExecTapebridged() throw(std::exception) {
      break;
    case 0: // Child
      {
-       char *argv[1] = {NULL};
-       execv(executable, argv);
+       char *const argv[3] = {executable, "-f", NULL};
+       execv(argv[0], argv);
      }
      exit(1); // Should never get here so exit with an error
    default: // Parent
@@ -97,14 +346,18 @@ pid_t forkAndExecTapebridged() throw(std::exception) {
    }
 }
 
-int main() {
-  const unsigned short port = castor::TAPEBRIDGE_VDQMPORT;
-  const std::string host("127.0.0.1");
-  bool acknSucc = false;
-  
+/*
+  std::cout << "Killing tapebridged" << std::endl;
+  system("killall tapebridged");
 
+  // Give tapebridged a chance to die
+  std::cout << "Sleeping 2 seconds" << std::endl;
+  sleep(2);
+
+  pid_t bridgePid = 0;
   try {
-    forkAndExecTapebridged();
+    bridgePid = forkAndExecTapebridged();
+    std::cout << "tapebridged running with pid=" << bridgePid << std::endl;
   } catch(std::exception &ex) {
     std::cerr <<
       "Aborting"
@@ -112,48 +365,99 @@ int main() {
     return(1);
   }
 
+  // Give tapebridged a chance to start listening on TAPEBRIDGE_VDQMPORT
+  std::cout << "Sleeping 1 second" << std::endl;
+  sleep(1);
+*/
+void executeProtocol() {
+  const unsigned short bridgePort = castor::TAPEBRIDGE_VDQMPORT;
+  const std::string bridgeHost("127.0.0.1");
+  bool acknSucc = false;
+
+  castor::vdqm::RemoteCopyConnection connection(bridgePort, bridgeHost);
+
+  std::cout <<
+    "Connecting to tapebridged"
+    ": bridgeHost=" << bridgeHost <<
+    " bridgePort=" << bridgePort << std::endl;
+  connection.connect();
+
+  std::cout << "Sending job" << std::endl;
+  const Cuuid_t        cuuid          = nullCuuid;
+  const char    *const remoteCopyType  = "RTCPD";
+  const u_signed64     tapeRequestID   = 1111;
+  const std::string    clientUserName  = "pippo";
+  const std::string    clientMachine   = "localhost";
+  const int            clientPort      = 2222;
+  const int            clientEuid      = 3333;
+  const int            clientEgid      = 4444;
+  const std::string    deviceGroupName = "DGN";
+  const std::string    tapeDriveName   = "drive";
+  acknSucc = connection.sendJob(
+    cuuid,
+    remoteCopyType,
+    tapeRequestID,
+    clientUserName,
+    clientMachine,
+    clientPort,
+    clientEuid,
+    clientEgid,
+    deviceGroupName,
+    tapeDriveName);
+
+  if(!acknSucc) {
+    test_exception te("Received a negative acknowledgement from tapebridged");
+
+    throw te;
+  }
+}
+
+int main() {
+  int rc = 0;
+  char rtcpLogErrTxt[1024];
+
+  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
+
+  // Create a fake rtcpd server socket
+  castor::tape::utils::SmartFd listenSock;
   try {
-    castor::vdqm::RemoteCopyConnection connection(port, host);
+    const unsigned short lowPort    = RTCOPY_PORT;
+    const unsigned short highPort   = RTCOPY_PORT;
+    unsigned short       chosenPort = 0;
 
-    std::cout <<
-      "Connecting to rtcpd"
-      ": host=" << host << " port=" << port << std::endl;
-    connection.connect();
+    listenSock.reset(createListenerSock_stdException("127.0.0.1", lowPort,
+      highPort, chosenPort));
+  } catch(std::exception &ex) {
+    std::cerr << "Failed to create fake rtcpd server socket"
+      ": port=" << RTCOPY_PORT << std::endl;
+    return(1);
+  }
+  std::cout << "Created a fake rtcpd server socket"
+    ": port=" << RTCOPY_PORT << std::endl;
 
-    std::cout << "Sending job" << std::endl;
-    const Cuuid_t        cuuid          = nullCuuid;
-    const char    *const remoteCopyType  = "RTCPD";
-    const u_signed64     tapeRequestID   = 1111;
-    const std::string    clientUserName  = "pippo";
-    const std::string    clientMachine   = "localhost";
-    const int            clientPort      = 2222;
-    const int            clientEuid      = 3333;
-    const int            clientEgid      = 4444;
-    const std::string    deviceGroupName = "DGN";
-    const std::string    tapeDriveName   = "drive";
-    acknSucc = connection.sendJob(
-      cuuid,
-      remoteCopyType,
-      tapeRequestID,
-      clientUserName,
-      clientMachine,
-      clientPort,
-      clientEuid,
-      clientEgid,
-      deviceGroupName,
-      tapeDriveName);
-  } catch(castor::exception::Exception &ex) {
-    std::cerr <<
-      "Failed to send job" <<
-      ": " << ex.getMessage().str() << std::endl;
+  // Create the rtcpd server-thread
+  rtcpdThread_params threadParams;
+  memset(&threadParams, '\0', sizeof(threadParams));
+  threadParams.inListenSocketFd = listenSock.release(); // Thread will close
+  pthread_t rtcpdThreadId;
+  rc = pthread_create(&rtcpdThreadId, NULL, rtcpdThread, &threadParams);
+  if(0 != rc) {
+    std::cerr << "Failed to create rtcpd server-thread" << std::endl;
     return(1);
   }
 
-  if(!acknSucc) {
-    std::cerr <<
-      "Received a negative acknowledgement from tapebridged" << std::endl;
+  try {
+    executeProtocol();
+  } catch(...) {
+    std::cerr << "Failed to execute protocol" << std::endl;
+  }
+
+  rc = pthread_join(rtcpdThreadId, NULL);
+  if(0 != rc) {
+    std::cerr << "Failed to join with rtcpd server-thread" << std::endl;
     return(1);
   }
 
   return 0;
 }
+

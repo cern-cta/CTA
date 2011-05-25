@@ -13,8 +13,9 @@ testtapebridge: \
   BridgeClientInfoSender.o \
   VmgrTxRx.o \
   VmgrMarshal.o \
-  CommonMarshal.o \
-  utils.o \
+  legacymsg_CommonMarshal.o \
+  legacymsg_RtcpMarshal.o \
+  tape_utils.o \
   Cuuid.o \
   getconfent.o \
   exception_Exception.o \
@@ -44,29 +45,28 @@ testtapebridge: \
   StreamAddress.o \
   SmartFd.o \
   SmartFILEPtr.o \
+  tape_net.o \
   ObjectSet.o \
-  net.o \
   bridge_LegacyTxRx.o \
   bridge_LogHelper.o \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
-  RtcpMarshal.o \
   tapebridge_marshall.o \
   tapebridge_sendTapeBridgeAck.o \
   marshall.o \
   test_exception.o \
-  rtcpd_SendAckToVdqmOrTapeBridge.o \
   vdqmapi.o \
   vdqm_SendRecv.o \
   log.o \
   remote.o \
   trace.o \
   Cpwd.o \
-  rtcpd_GetClientInfoMsg.o \
-  rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
   rtcpd_GetClientInfo.o \
+  rtcpd_SendAckToVdqmOrTapeBridge.o \
+  rtcpd_GetClientInfoMsg.o \
+  rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_Listen.o \
   rtcp_log.o \
   rtcp_SendRecv.o
@@ -74,12 +74,40 @@ testtapebridge: \
 
 tapebridgedaemontester: \
   tapebridgedaemontester.o \
-  exception_InvalidArgument.o \
   exception_Communication.o \
-  exception_Internal.o \
   exception_Exception.o \
+  exception_Internal.o \
+  exception_InvalidArgument.o \
+  exception_InvalidConfigEntry.o \
+  exception_InvalidConfiguration.o \
+  exception_NoPortInRange.o \
+  exception_TapeNetAcceptInterrupted.o \
+  exception_TimeOut.o \
   RemoteCopyConnection.o \
+  rtcpd_GetClientInfo.o \
+  rtcpd_GetClientInfoMsg.o \
+  rtcpd_SendAckToVdqmOrTapeBridge.o \
+  rtcp_marshallVdqmClientInfoMsg.o \
+  rtcp_recvRtcpHdr.o \
+  tapebridge_marshall.o \
+  tapebridge_sendTapeBridgeAck.o \
+  legacymsg_CommonMarshal.o \
+  legacymsg_RtcpMarshal.o \
+  tape_net.o \
+  tape_utils.o \
+  vdqm_SendRecv.o \
+  marshall.o \
+  SmartFd.o \
+  SmartFILEPtr.o \
   Cuuid.o \
+  log.o \
+  remote.o \
+  vdqmapi.o \
+  trace.o \
+  Cpwd.o \
+  rtcp_Listen.o \
+  rtcp_log.o \
+  rtcp_SendRecv.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -155,10 +183,10 @@ tapebridged: \
   VmgrTxRx.o \
   BridgeClientInfoSender.o \
   dlf_Param.o \
-  CommonMarshal.o \
-  RtcpMarshal.o \
+  legacymsg_CommonMarshal.o \
+  legacymsg_RtcpMarshal.o \
   VmgrMarshal.o \
-  utils.o \
+  tape_utils.o \
   Cuuid.o \
   Cthread.o \
   Cgrp.o \
@@ -198,7 +226,7 @@ tapebridged: \
   SmartFd.o \
   SmartFILEPtr.o \
   ObjectSet.o \
-  net.o \
+  tape_net.o \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
@@ -249,7 +277,7 @@ VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-utils.o: $(ROOT_DIR)/castor/tape/utils/utils.cpp
+tape_utils.o: $(ROOT_DIR)/castor/tape/utils/utils.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 SmartFd.o: $(ROOT_DIR)/castor/tape/utils/SmartFd.cpp
@@ -372,10 +400,13 @@ StreamAddress.o: $(ROOT_DIR)/castor/io/StreamAddress.cpp
 ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
+tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
+legacymsg_CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+legacymsg_RtcpMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/RtcpMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
@@ -385,9 +416,6 @@ dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 Constants.o: $(ROOT_DIR)/castor/Constants.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-RtcpMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/RtcpMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
