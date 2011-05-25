@@ -53,7 +53,7 @@ namespace castor {
 	void resetBusyTape(const castor::stager::Tape& tape) throw (castor::exception::Exception);
 	void updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file,const std::string& vid) throw (castor::exception::Exception);
 	void setTapeAsFull(const castor::stager::Tape& tape) throw (castor::exception::Exception);
-        void setTapeAsReadonly(const castor::stager::Tape& tape) throw (castor::exception::Exception);
+        void setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape) throw (castor::exception::Exception);
       };
     
     } // end of namespace tapegateway

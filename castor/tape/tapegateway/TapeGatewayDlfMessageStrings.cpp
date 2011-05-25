@@ -140,4 +140,5 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {INTERNAL_ERROR, "Internal error"},
 {VDQMREQUESTSPRODUCER_PROCESS_FAILED, "VdqmRequestsProducerThread::process() failed"},
 {LINKER_VMGRSETTOREADONLY_FAILED, "TapeStreamLinker: failed to set the tape to read only"},
+{LINKER_VMGR_NS_DISCREPANCY, "TapeStreamLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly"},
 {-1, ""}};

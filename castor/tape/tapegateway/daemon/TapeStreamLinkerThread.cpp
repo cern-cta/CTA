@@ -149,13 +149,9 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       // to prevent overwrites.
       //
       // As a side effect, the tape will be left as BUSY (effect of getting tape from vmgr)
-      // and the gateway will immediately forget about it. This is a good thing as
-      // this badly referenced tape will not show up in the gateway again until an
-      // operator explicitly unblocks it.
-      //
-      // As operationally, tapes get un-busied blindly by opeartors, we will more actively
-      // change the state to READONLY (which will rise questions, yet let the system operate
-      // as much as reasonably possible).
+      // and the gateway will immediately forget about it. This will be removed and replaced
+      // by a change to read only. This will maximise safety (no more attempts to write to this
+      // badly tracked tape) without disrutions (no problems for reads)
       NsTapeGatewayHelper nsHelper;
       nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
     } catch(castor::exception::Exception& e) {
@@ -186,7 +182,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
         }
       } else if (e.code() == ERTWRONGFSEQ) {
         try {
-          vmgrHelper.setTapeAsReadonly(tapeToUse);
+          vmgrHelper.setTapeAsReadonlyAndUnbusy(tapeToUse);
         } catch (castor::exception::Exception e) {
           castor::dlf::Param params[] = {
               castor::dlf::Param("VID",tapeToUse.vid()),
@@ -201,9 +197,10 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
             castor::dlf::Param("StreamId",(*strItem).id()),
             castor::dlf::Param("TapePool",(*tapepool).name()),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
-            castor::dlf::Param("errorMessage",e.getMessage().str())
+            castor::dlf::Param("errorMessage",e.getMessage().str()),
+            castor::dlf::Param("VID",tapeToUse.vid())
         };
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, INTERNAL_ERROR, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params);
         // Abort.
         throw e;
       }

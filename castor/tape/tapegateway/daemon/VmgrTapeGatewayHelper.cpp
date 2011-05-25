@@ -462,11 +462,12 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const casto
   }
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonly(const castor::stager::Tape& tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape) throw (castor::exception::Exception){
   int status=0;
   getTapeStatusInVmgr(tape, status);
   // Set the readonly bit in status
   status |= TAPE_RDONLY;
+  status &= ~TAPE_BUSY;
   serrno=0;
   int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status);
   if (rc <0) {
