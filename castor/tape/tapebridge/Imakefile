@@ -38,12 +38,10 @@ TAPEBRIDGEBIN_SRCS = \
   DlfMessageStrings.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
-  Packer.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \
-  Unpacker.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \
   ../legacymsg/CommonMarshal.cpp \

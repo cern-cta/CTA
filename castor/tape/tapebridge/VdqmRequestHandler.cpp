@@ -31,10 +31,8 @@
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/ClientTxRx.hpp"
-#include "castor/tape/tapebridge/Packer.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
-#include "castor/tape/tapebridge/Unpacker.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -524,58 +522,17 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       throw ex;
     }
 
-    enterBridgeOrTapeBridgeMode(cuuid, bridgeCallbackSockFd,
+    BridgeProtocolEngine bridgeProtocolEngine(cuuid, bridgeCallbackSockFd,
       rtcpdInitialSock.get(), jobRequest, *volume, tapeInfo.nbFiles,
       s_stoppingGracefullyFunctor, tapebridgeTransactionCounter);
+    bridgeProtocolEngine.run();
 
   // Else recalling
   } else {
     const uint32_t nbFilesOnDestinationTape = 0;
 
-    enterBridgeOrTapeBridgeMode(cuuid, bridgeCallbackSockFd,
-      rtcpdInitialSock.get(), jobRequest, *volume,
-      nbFilesOnDestinationTape, s_stoppingGracefullyFunctor,
-      tapebridgeTransactionCounter);
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// enterBridgeOrTapeBridgeMode
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::VdqmRequestHandler::enterBridgeOrTapeBridgeMode(
-  const Cuuid_t &cuuid,
-  const int listenSock,
-  const int initialRtcpdSock,
-  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-  tapegateway::Volume &volume,
-  const uint32_t nbFilesOnDestinationTape,
-  BoolFunctor &,
-  Counter<uint64_t> &tapebridgeTransactionCounter)
-  throw(castor::exception::Exception) {
-
-  // If the volume has the aggregation format
-  if(volume.label() == "ALB") {
-
-    // Enter tapebridge mode
-    if(volume.mode() == tapegateway::WRITE) {
-      Packer packer;
-      packer.run();
-    } else {
-      Unpacker unpacker;
-      unpacker.run();
-    }
-
-  // Else the volume does not have the aggregation format
-  } else {
-
-    // Enter bridge mode
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", jobRequest.volReqId)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_ENTERING_BRIDGE_MODE, params);
-    BridgeProtocolEngine bridgeProtocolEngine(cuuid, listenSock,
-      initialRtcpdSock, jobRequest, volume, nbFilesOnDestinationTape,
+    BridgeProtocolEngine bridgeProtocolEngine(cuuid, bridgeCallbackSockFd,
+      rtcpdInitialSock.get(), jobRequest, *volume, nbFilesOnDestinationTape,
       s_stoppingGracefullyFunctor, tapebridgeTransactionCounter);
     bridgeProtocolEngine.run();
   }

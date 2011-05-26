@@ -362,7 +362,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
       exception::Exception ce(ECANCELED);
 
       ce.getMessage() <<
-        "Received un-excpected data from the initial rtcpd connection";
+        "Received un-expected data from the initial rtcpd connection";
       throw(ce);
     }
     break;
