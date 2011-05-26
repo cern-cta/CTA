@@ -359,10 +359,20 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
     return true; // Continue the RTCOPY session
   case BridgeSocketCatalogue::INITIAL_RTCPD:
     {
+      // Not expecting any data from or a close of this connection.  Determine
+      // which and throw an exception with the appropriate error message.
+      bool connClosed = false;
+      char dummyBuf[1];
+      net::readBytesFromCloseable(connClosed, pendingSock, RTCPDNETRWTIMEOUT,
+        sizeof(dummyBuf), dummyBuf);
       exception::Exception ce(ECANCELED);
-
-      ce.getMessage() <<
-        "Received un-expected data from the initial rtcpd connection";
+      if(connClosed) {
+        ce.getMessage() <<
+          "Initial rtcpd connection un-expectedly closed";
+      } else {
+        ce.getMessage() <<
+          "Received un-expected data from the initial rtcpd connection";
+      }
       throw(ce);
     }
     break;
