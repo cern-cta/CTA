@@ -25,8 +25,12 @@ testtapebridge: \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
   exception_TimeOut.o \
+  exception_TooBig.o \
   exception_NoPortInRange.o \
   exception_TapeNetAcceptInterrupted.o \
+  exception_PermissionDenied.o \
+  exception_OutOfMemory.o \
+  exception_NoEntry.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -74,15 +78,50 @@ testtapebridge: \
 
 tapebridgedaemontester: \
   tapebridgedaemontester.o \
-  exception_Communication.o \
+  bridge_LegacyTxRx.o \
   exception_Exception.o \
-  exception_Internal.o \
   exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_TimeOut.o \
+  exception_TooBig.o \
   exception_NoPortInRange.o \
   exception_TapeNetAcceptInterrupted.o \
-  exception_TimeOut.o \
+  exception_PermissionDenied.o \
+  exception_OutOfMemory.o \
+  exception_NoEntry.o \
+  gateway_FileToMigrateRequest.o \
+  gateway_FileToMigrate.o \
+  gateway_FileMigratedNotification.o \
+  gateway_FileToRecallRequest.o \
+  gateway_FileToRecall.o \
+  gateway_FileRecalledNotification.o \
+  gateway_BaseFileInfo.o \
+  gateway_VolumeRequest.o \
+  gateway_Volume.o \
+  gateway_GatewayMessage.o \
+  gateway_PositionCommandCode.o \
+  gateway_PingNotification.o \
+  gateway_DumpParametersRequest.o \
+  gateway_DumpParameters.o \
+  gateway_DumpNotification.o \
+  gateway_FileToMigrate.o \
+  gateway_NoMoreFiles.o \
+  gateway_EndNotification.o \
+  gateway_EndNotificationErrorReport.o \
+  gateway_NotificationAcknowledge.o \
+  gateway_ClientType.o \
+  gateway_VolumeMode.o \
+  io_StreamCnvSvc.o \
+  io_StreamVolumeRequestCnv.o \
+  io_StreamVolumeCnv.o \
+  io_StreamBaseCnv.o \
+  castor_BaseCnvSvc.o \
+  castor_Converters.o \
+  castor_BaseSvc.o \
+  castor_ObjectCatalog.o \
   RemoteCopyConnection.o \
   rtcpd_GetClientInfo.o \
   rtcpd_GetClientInfoMsg.o \
@@ -144,6 +183,14 @@ tapebridged: \
   bridge_LogHelper.o \
   bridge_Packer.o \
   bridge_Unpacker.o \
+  io_StreamCnvSvc.o \
+  io_StreamVolumeRequestCnv.o \
+  io_StreamVolumeCnv.o \
+  io_StreamBaseCnv.o \
+  castor_BaseCnvSvc.o \
+  castor_Converters.o \
+  castor_BaseSvc.o \
+  castor_ObjectCatalog.o \
   VdqmRequestHandler.o \
   server_TCPListenerThreadPool.o \
   server_UDPListenerThreadPool.o \
@@ -716,3 +763,27 @@ metrics_UpdateThread.o: \
 
 castor_System.o: $(ROOT_DIR)/castor/System.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -o $@ $^
+
+io_StreamCnvSvc.o: $(ROOT_DIR)/castor/io/StreamCnvSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamVolumeRequestCnv.o: $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamVolumeCnv.o:$(ROOT_DIR)/castor/io/StreamVolumeCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamBaseCnv.o: $(ROOT_DIR)/castor/io/StreamBaseCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_BaseCnvSvc.o: $(ROOT_DIR)/castor/BaseCnvSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_Converters.o: $(ROOT_DIR)/castor/Converters.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_BaseSvc.o: $(ROOT_DIR)/castor/BaseSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

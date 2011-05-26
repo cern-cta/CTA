@@ -29,6 +29,8 @@
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapebridge/LegacyTxRx.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/vdqm/RemoteCopyConnection.hpp"
@@ -104,11 +106,11 @@ typedef struct {
 void *exceptionThrowingRtcpdThread(void *arg) {
   rtcpdThread_params *threadParams =
     (rtcpdThread_params*)arg;
-  castor::tape::utils::SmartFd listenSock(threadParams->inListenSocketFd);
+  castor::tape::utils::SmartFd rtcpdListenSock(threadParams->inListenSocketFd);
 
   const time_t acceptTimeout = 10; // Timeout is in seconds
   castor::tape::utils::SmartFd connectionFromBridge(
-    castor::tape::net::acceptConnection(listenSock.get(), acceptTimeout));
+    castor::tape::net::acceptConnection(rtcpdListenSock.get(), acceptTimeout));
 
   const int netReadWriteTimeout = 10; // Timeout is in seconds
   rtcpClientInfo_t client;
@@ -254,6 +256,43 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
 
+  // Marshall the request info
+  castor::tape::legacymsg::RtcpTapeRqstErrMsgBody requestInfoMsgBody;
+  memset(&requestInfoMsgBody, '\0', sizeof(requestInfoMsgBody));
+  castor::tape::utils::copyString(requestInfoMsgBody.unit, "drive");
+  requestInfoMsgBody.volReqId = 1111;
+  char requestInfoMsgBuf[1024];
+  memset(requestInfoMsgBuf, '\0', sizeof(requestInfoMsgBuf));
+  try {
+    totalLen = castor::tape::legacymsg::marshal(requestInfoMsgBuf,
+      requestInfoMsgBody);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to marshal acknowledgement: "
+      << ex.getMessage().str());
+  }
+
+  // Send the request info to tapebridged
+  try {
+    castor::tape::net::writeBytes(connectionToBridge.get(), netReadWriteTimeout,
+      totalLen, requestInfoMsgBuf);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+         ": Failed to send request info to tapebridged: "
+      << ex.getMessage().str());
+  }
+
+  // Receive acknowledgement from tapebridged
+  memset(&ackMsg, '\0', sizeof(ackMsg));
+  try {
+    castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(nullCuuid, 1111,
+      connectionToBridge.get(), netReadWriteTimeout, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EPROTO,
+         ": Failed to receive acknowledge from RTCPD: "
+      << ex.getMessage().str());
+  }
+
   close(connectionToBridge.release());
 
   return arg;
@@ -266,19 +305,48 @@ void *rtcpdThread(void *arg) {
   } catch(castor::exception::Exception &ce) {
     std::cerr <<
       "ERROR"
-      ": rtcpdThread"
+      ": " << __FUNCTION__ <<
       ": Caught a castor::exception::Exception"
       ": " << ce.getMessage().str() << std::endl;
   } catch(std::exception &se) {
     std::cerr <<
       "ERROR"
-      ": rtcpdThread"
+      ": " << __FUNCTION__ <<
       ": Caught an std::exception"
       ": " << se.what() << std::endl;
   } catch(...) {
     std::cerr <<
       "ERROR"
-      ": rtcpdThread"
+      ": " << __FUNCTION__ <<
+      ": Caught an unknown exception";
+  }
+
+  return arg;
+}
+
+void *exceptionThrowingClientThread(void *arg) {
+  return arg;
+}
+
+void *clientThread(void *arg) {
+  try {
+    return exceptionThrowingClientThread(arg);
+  } catch(castor::exception::Exception &ce) {
+    std::cerr <<
+      "ERROR"
+      ": " << __FUNCTION__ <<
+      ": Caught a castor::exception::Exception"
+      ": " << ce.getMessage().str() << std::endl;
+  } catch(std::exception &se) {
+    std::cerr <<
+      "ERROR"
+      ": " << __FUNCTION__ <<
+      ": Caught an std::exception"
+      ": " << se.what() << std::endl;
+  } catch(...) {
+    std::cerr <<
+      "ERROR"
+      ": " << __FUNCTION__ <<
       ": Caught an unknown exception";
   }
 
@@ -369,9 +437,10 @@ pid_t forkAndExecTapebridged() throw(std::exception) {
   std::cout << "Sleeping 1 second" << std::endl;
   sleep(1);
 */
-void executeProtocol() {
+void executeProtocol(const int clientPort, const int clientListenSockFd) {
   const unsigned short bridgePort = castor::TAPEBRIDGE_VDQMPORT;
   const std::string bridgeHost("127.0.0.1");
+  castor::tape::utils::SmartFd clientListenSock(clientListenSockFd);
   bool acknSucc = false;
 
   castor::vdqm::RemoteCopyConnection connection(bridgePort, bridgeHost);
@@ -388,7 +457,6 @@ void executeProtocol() {
   const u_signed64     tapeRequestID   = 1111;
   const std::string    clientUserName  = "pippo";
   const std::string    clientMachine   = "localhost";
-  const int            clientPort      = 2222;
   const int            clientEuid      = 3333;
   const int            clientEgid      = 4444;
   const std::string    deviceGroupName = "DGN";
@@ -410,6 +478,41 @@ void executeProtocol() {
 
     throw te;
   }
+
+  const time_t acceptTimeout = 10; // Timeout is in seconds
+  castor::tape::utils::SmartFd connectionFromBridge(
+    castor::tape::net::acceptConnection(clientListenSock.get(), acceptTimeout));
+
+  // Wrap the connection socket descriptor in a CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket callbackConnectionSock(
+    connectionFromBridge.release());
+
+  // Read in the object sent by the tapebridge
+  std::auto_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
+
+  // Cast the object to its type
+  castor::tape::tapegateway::VolumeRequest &volumeRequest =
+    dynamic_cast<castor::tape::tapegateway::VolumeRequest&>(*(firstObj.get()));
+  std::cout << "Selected drive unit is \"" << volumeRequest.unit() << "\"" <<
+    std::endl;
+
+  // Create the volume message for the tapebridge
+  castor::tape::tapegateway::Volume volumeMsg;
+  volumeMsg.setVid("D12345");
+  volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
+  volumeMsg.setMode(castor::tape::tapegateway::READ);
+  volumeMsg.setLabel("AUL");
+  volumeMsg.setMountTransactionId(1111);
+  volumeMsg.setAggregatorTransactionId(1);
+  volumeMsg.setDensity("density");
+
+  // Send the volume message to the tapebridge
+  callbackConnectionSock.sendObject(volumeMsg);
+
+  // Close the connection to the tapebridge
+  callbackConnectionSock.close();
 }
 
 int main() {
@@ -418,14 +521,32 @@ int main() {
 
   rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
 
+  // Create a fake client callback socket
+  const unsigned short clientPort = 65432;
+  castor::tape::utils::SmartFd clientListenSock;
+  try {
+    const unsigned short lowPort    = clientPort;
+    const unsigned short highPort   = clientPort;
+    unsigned short       chosenPort = 0;
+
+    clientListenSock.reset(createListenerSock_stdException("127.0.0.1", lowPort,
+      highPort, chosenPort));
+  } catch(std::exception &ex) {
+    std::cerr << "Failed to create fake client callback socket"
+      ": port=" << clientPort << std::endl;
+    return(1);
+  }
+  std::cout << "Created a fake client callback socket"
+    ": port=" << clientPort << std::endl;
+
   // Create a fake rtcpd server socket
-  castor::tape::utils::SmartFd listenSock;
+  castor::tape::utils::SmartFd rtcpdListenSock;
   try {
     const unsigned short lowPort    = RTCOPY_PORT;
     const unsigned short highPort   = RTCOPY_PORT;
     unsigned short       chosenPort = 0;
 
-    listenSock.reset(createListenerSock_stdException("127.0.0.1", lowPort,
+    rtcpdListenSock.reset(createListenerSock_stdException("127.0.0.1", lowPort,
       highPort, chosenPort));
   } catch(std::exception &ex) {
     std::cerr << "Failed to create fake rtcpd server socket"
@@ -438,7 +559,7 @@ int main() {
   // Create the rtcpd server-thread
   rtcpdThread_params threadParams;
   memset(&threadParams, '\0', sizeof(threadParams));
-  threadParams.inListenSocketFd = listenSock.release(); // Thread will close
+  threadParams.inListenSocketFd = rtcpdListenSock.release();
   pthread_t rtcpdThreadId;
   rc = pthread_create(&rtcpdThreadId, NULL, rtcpdThread, &threadParams);
   if(0 != rc) {
@@ -447,9 +568,21 @@ int main() {
   }
 
   try {
-    executeProtocol();
+    executeProtocol(clientPort, clientListenSock.release());
+  } catch(std::exception &se) {
+    std::cerr <<
+      "Failed to execute protocol"
+      ": Caught an std::exception"
+      ": " << se.what() << std::endl;
+  } catch(castor::exception::Exception &ce) {
+    std::cerr << 
+      "Failed to execute protocol"
+      ": Caught a castor::exception::Exception"
+      ": " << ce.getMessage().str() << std::endl;
   } catch(...) {
-    std::cerr << "Failed to execute protocol" << std::endl;
+    std::cerr <<
+      "Failed to execute protocol"
+      ": Caught an unknown exception" << std::endl;
   }
 
   rc = pthread_join(rtcpdThreadId, NULL);
