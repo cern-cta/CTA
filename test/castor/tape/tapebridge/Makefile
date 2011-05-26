@@ -181,8 +181,6 @@ tapebridged: \
   bridge_DlfMessageStrings.o \
   bridge_LegacyTxRx.o \
   bridge_LogHelper.o \
-  bridge_Packer.o \
-  bridge_Unpacker.o \
   io_StreamCnvSvc.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
@@ -587,14 +585,6 @@ bridge_LegacyTxRx.o: \
 
 bridge_LogHelper.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-bridge_Packer.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/Packer.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-bridge_Unpacker.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/Unpacker.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 VdqmRequestHandler.o: \
