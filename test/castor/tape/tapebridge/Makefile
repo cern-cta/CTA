@@ -115,6 +115,8 @@ tapebridgedaemontester: \
   gateway_ClientType.o \
   gateway_VolumeMode.o \
   io_StreamCnvSvc.o \
+  io_StreamEndNotificationCnv.o \
+  io_StreamNotificationAcknowledgeCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
   io_StreamBaseCnv.o \
@@ -182,6 +184,8 @@ tapebridged: \
   bridge_LegacyTxRx.o \
   bridge_LogHelper.o \
   io_StreamCnvSvc.o \
+  io_StreamEndNotificationCnv.o \
+  io_StreamNotificationAcknowledgeCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
   io_StreamBaseCnv.o \
@@ -755,6 +759,14 @@ castor_System.o: $(ROOT_DIR)/castor/System.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -o $@ $^
 
 io_StreamCnvSvc.o: $(ROOT_DIR)/castor/io/StreamCnvSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamEndNotificationCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamNotificationAcknowledgeCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamVolumeRequestCnv.o: $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.cpp

@@ -30,6 +30,8 @@
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
+#include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -162,10 +164,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
     throw te;
   }
   std::cout <<
-    "Made initial connection to tapebridged"
+    "RTCPD: Made initial connection to tapebridged"
     ": host=127.0.0.1 port=" << client.clientport << std::endl;
 
-  // Read in the message header from tapebridged
+  // Read in request for information from tapebridged
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
@@ -175,11 +177,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message header"
       << ": " << ex.getMessage().str());
   }
-  std::cout <<
-    "Read in message header of request for information from tapebridged" <<
-    std::endl;
-
-  // Unmarshal the messager header from tapebridged
   castor::tape::legacymsg::MessageHeader header;
   try {
     const char *p           = headerBuf;
@@ -190,18 +187,13 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       ": Failed to unmarshal message header"
       ": " << ex.getMessage().str());
   }
-
   char bodyBuf[1024];
-
-  // If the message body from tapebridged is too large
   if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body is too large"
          ": Maximum: " << sizeof(bodyBuf)
       << ": Received: " << header.lenOrStatus);
   }
-     
-  // Read the message body from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       header.lenOrStatus, bodyBuf);
@@ -210,12 +202,7 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message body from remote-copy job submitter"
       << ": "<< ex.getMessage().str());
   }
-  std::cout <<
-    "Read in message body of request for information from tapebridged" <<
-    std::endl;
-
   castor::tape::legacymsg::RtcpTapeRqstErrMsgBody request;
-  // Unmarshal the message body
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.lenOrStatus;
@@ -225,8 +212,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to unmarshal message body"
       << ": "<< ex.getMessage().str());
   }
+  std::cout <<
+    "RTCPD: Read request for information from tapebridged" << std::endl;
 
-  // Marshal the acknowledgement
+  // Write acknowlegdement of request for information to tapebridged
   castor::tape::legacymsg::MessageHeader ackMsg;
   memset(&ackMsg, '\0', sizeof(ackMsg));
   ackMsg.magic = RTCOPY_MAGIC;
@@ -242,8 +231,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to marshal acknowledgement: "
       << ex.getMessage().str());
   }
-
-  // Send the acknowledgement
   try {
     castor::tape::net::writeBytes(connection1ToBridge.get(),
       netReadWriteTimeout, totalLen, ackBuf);
@@ -253,10 +240,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote acknowledgement of request for information to tapebridged" <<
+    "RTCPD: Wrote acknowledgement of request for information to tapebridged" <<
     std::endl;
 
-  // Marshall the request info
+  // Write request information to tapebridged
   castor::tape::legacymsg::RtcpTapeRqstErrMsgBody requestInfoMsgBody;
   memset(&requestInfoMsgBody, '\0', sizeof(requestInfoMsgBody));
   castor::tape::utils::copyString(requestInfoMsgBody.unit, "drive");
@@ -271,8 +258,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to marshal acknowledgement: "
       << ex.getMessage().str());
   }
-
-  // Send the request info to tapebridged
   try {
     castor::tape::net::writeBytes(connection1ToBridge.get(),
       netReadWriteTimeout, totalLen, requestInfoMsgBuf);
@@ -281,9 +266,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to send request info to tapebridged: "
       << ex.getMessage().str());
   }
-  std::cout << "Wrote request information to tapebridged" << std::endl;
+  std::cout << "RTCPD: Wrote request information to tapebridged" << std::endl;
 
-  // Receive acknowledgement from tapebridged
+  // Read acknowledgement from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       sizeof(ackBuf), ackBuf);
@@ -293,10 +278,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ": " << ex.getMessage().str());
   }
   std::cout <<
-    "Received acknowledgement of request information from tapebridged" <<
+    "RTCPD: Read acknowledgement of request information from tapebridged" <<
     std::endl;
 
-  // Read in the message header of volume from tapebridged
+  // Read volume from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       sizeof(headerBuf), headerBuf);
@@ -305,9 +290,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message header"
       << ": " << ex.getMessage().str());
   }
-  std::cout << "Read in message header of volume from tapebridged" << std::endl;
-
-  // Unmarshal the messager header from tapebridged
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
@@ -317,16 +299,12 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       ": Failed to unmarshal message header from remote-copy job submitter"
       ": " << ex.getMessage().str());
   }
-
-  // If the message body from tapebridged is too large
   if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body is too large"
          ": Maximum: " << sizeof(bodyBuf)
       << ": Received: " << header.lenOrStatus);
   }
-
-  // Read the message body from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       header.lenOrStatus, bodyBuf);
@@ -335,9 +313,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message body"
       << ": "<< ex.getMessage().str());
   }
-  std::cout << "Read in message body of volume from tapebridged" << std::endl;
+  std::cout << "RTCPD: Read volume from tapebridged" << std::endl;
 
-  // Marshal the acknowledgement
+  // Write acknowledgement of volume to tapebrided
   memset(&ackMsg, '\0', sizeof(ackMsg));
   ackMsg.magic = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
@@ -350,8 +328,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to marshal acknowledgement: "
       << ex.getMessage().str());
   }
-
-  // Send the acknowledgement
   try {
     castor::tape::net::writeBytes(connection1ToBridge.get(),
       netReadWriteTimeout, totalLen, ackBuf);
@@ -361,9 +337,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote acknowledgement of volume to tapebridged" << std::endl;
+    "RTCPD: Wrote acknowledgement of volume to tapebridged" << std::endl;
 
-  // Read in the message header of request to request more work from tapebridged
+  // Read request to request more work from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       sizeof(headerBuf), headerBuf);
@@ -372,11 +348,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message header"
       << ": " << ex.getMessage().str());
   }
-  std::cout <<
-    "Read in message header of request to request more work from tapebridged" <<
-    std::endl;
-
-  // Unmarshal the messager header from tapebridged
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
@@ -386,16 +357,12 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       ": Failed to unmarshal message header"
       ": " << ex.getMessage().str());
   }
-
-  // If the message body from tapebridged is too large
   if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body is too large"
          ": Maximum: " << sizeof(bodyBuf)
       << ": Received: " << header.lenOrStatus);
   }
-
-  // Read the message body from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       header.lenOrStatus, bodyBuf);
@@ -405,10 +372,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ": "<< ex.getMessage().str());
   }
   std::cout <<
-    "Read in message body of request to request more work from tapebridged" <<
-    std::endl;
+    "RTCPD: Read request to request more work from tapebridged" << std::endl;
 
-  // Send the acknowledgement
+  // Write acknowledgement of request to request more work to tapebridged
   memset(&ackMsg, '\0', sizeof(ackMsg));
   ackMsg.magic = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_FILEERR_REQ;
@@ -430,10 +396,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote acknowledgement of request to request more work to tapebridged" <<
-    std::endl;
+    "RTCPD: Wrote acknowledgement of request to request more work to"
+    " tapebridged" << std::endl;
 
-  // Read in the message header/body of endOfFileList from tapebridged
+  // Read endOfFileList from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       sizeof(headerBuf), headerBuf);
@@ -442,11 +408,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message header"
       << ": " << ex.getMessage().str());
   }
-  std::cout <<
-    "Read in message header/body of endOfFileList from tapebridged" <<
-    std::endl;
-
-  // Unmarshal the messager header/body from tapebridged
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
@@ -456,8 +417,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       ": Failed to unmarshal message header/body"
       ": " << ex.getMessage().str());
   }
+  std::cout << "RTCPD: Read endOfFileList from tapebridged" << std::endl;
 
-  // Send the acknowledgement
+  // Write acknowledgement of endOfFileList to tapebridged
   memset(&ackMsg, '\0', sizeof(ackMsg));
   ackMsg.magic = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_NOMORE_REQ;
@@ -479,8 +441,7 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote acknowledgement of endOfFileList to tapebridged" <<
-    std::endl;
+    "RTCPD: Wrote acknowledgement of endOfFileList to tapebridged" << std::endl;
 
   // Make the second connection to tapebridged
   castor::tape::utils::SmartFd
@@ -511,10 +472,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
     throw te;
   }
   std::cout <<
-    "Made second connection to tapebridged"
+    "RTCPD: Made second connection to tapebridged"
     ": host=127.0.0.1 port=" << client.clientport << std::endl;
 
-  // Send an RTCP_ENDOF_REQ message to tapebridged using the second connection
+  // Write RTCP_ENDOF_REQ message to tapebridged using the second connection
   castor::tape::legacymsg::MessageHeader endofReqMsg;
   endofReqMsg.magic       = RTCOPY_MAGIC;
   endofReqMsg.reqType     = RTCP_ENDOF_REQ;
@@ -537,7 +498,7 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote RTCP_ENDOF_REQ message to tapebridged using the second connection" <<
+    "RTCPD: Wrote RTCP_ENDOF_REQ to tapebridged using the second connection" <<
     std::endl;
 
   // Receive acknowledgement from second connection to tapebridged
@@ -550,14 +511,15 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ": " << ex.getMessage().str());
   }
   std::cout <<
-    "Received acknowledgement of RTCP_ENDOF_REQ message from second"
+    "RTCPD: Received acknowledgement of RTCP_ENDOF_REQ from second"
     " connection to tapebridged" <<
     std::endl;
 
   close(connection2ToBridge.release());
-  std::cout << "Closed the second connection" << std::endl;
+  std::cout << "RTCPD: Closed the second connection to tapebridged" <<
+    std::endl;
 
-  // Read in the message header/body of RTCP_ENDOF_REQ message from tapebridged
+  // Read RTCP_ENDOF_REQ from tapebridged
   try {
     castor::tape::net::readBytes(connection1ToBridge.get(), netReadWriteTimeout,
       sizeof(headerBuf), headerBuf);
@@ -566,11 +528,6 @@ void *exceptionThrowingRtcpdThread(void *arg) {
          ": Failed to read message header"
       << ": " << ex.getMessage().str());
   }
-  std::cout <<
-    "Read in message header/body of RTCP_ENDOF_REQ message from tapebridged" <<
-    std::endl;
-
-  // Unmarshal the messager header/body from tapebridged
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
@@ -580,8 +537,10 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       ": Failed to unmarshal message header/body"
       ": " << ex.getMessage().str());
   }
+  std::cout << "RTCPD: Read in RTCP_ENDOF_REQ tapebridged" << std::endl;
 
-  // Send the acknowledgement
+
+  // Write acknowledgement of RTCP_ENDOF_REQ to tapebridged
   memset(&ackMsg, '\0', sizeof(ackMsg));
   ackMsg.magic = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_ENDOF_REQ;
@@ -603,11 +562,11 @@ void *exceptionThrowingRtcpdThread(void *arg) {
       << ex.getMessage().str());
   }
   std::cout <<
-    "Wrote acknowledgement of RTCP_ENDOF_REQ message to tapebridged" <<
+    "RTCPD: Wrote acknowledgement of RTCP_ENDOF_REQ to tapebridged" <<
     std::endl;
 
   close(connection1ToBridge.release());
-  std::cout << "Closed the initial connection" << std::endl;
+  std::cout << "RTCPD: Closed initial connection to tapebridged" << std::endl;
 
   return arg;
 }
@@ -757,15 +716,15 @@ void executeProtocol(const int clientPort, const int clientListenSockFd) {
   castor::tape::utils::SmartFd clientListenSock(clientListenSockFd);
   bool acknSucc = false;
 
+  // Connect to tapebridged as VDQM
   castor::vdqm::RemoteCopyConnection connection(bridgePort, bridgeHost);
-
   std::cout <<
-    "Connecting to tapebridged"
+    "VDQM: Connecting to tapebridged"
     ": bridgeHost=" << bridgeHost <<
     " bridgePort=" << bridgePort << std::endl;
   connection.connect();
 
-  std::cout << "Sending job" << std::endl;
+  // Write job to tapebridged
   const Cuuid_t        cuuid          = nullCuuid;
   const char    *const remoteCopyType  = "RTCPD";
   const u_signed64     tapeRequestID   = 1111;
@@ -786,33 +745,33 @@ void executeProtocol(const int clientPort, const int clientListenSockFd) {
     clientEgid,
     deviceGroupName,
     tapeDriveName);
-
   if(!acknSucc) {
     test_exception te("Received a negative acknowledgement from tapebridged");
 
     throw te;
   }
+  std::cout << "VDQM: Wrote job to tapebridged" << std::endl;
 
+  // Accept first callback connection from tapebridged as client
   const time_t acceptTimeout = 10; // Timeout is in seconds
-  castor::tape::utils::SmartFd connectionFromBridge(
+  castor::io::AbstractTCPSocket callbackConnection1(
     castor::tape::net::acceptConnection(clientListenSock.get(), acceptTimeout));
+  std::cout <<
+    "CLIENT: Accepted first callback connection from tapebridged" << std::endl;
 
-  // Wrap the connection socket descriptor in a CASTOR framework socket in
-  // order to get access to the framework marshalling and un-marshalling
-  // methods
-  castor::io::AbstractTCPSocket callbackConnectionSock(
-    connectionFromBridge.release());
-
-  // Read in the object sent by the tapebridge
-  std::auto_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
-
-  // Cast the object to its type
+  // Read VolumeRequest from tapebridged
+  std::auto_ptr<castor::IObject> obj1FromBridge(
+    callbackConnection1.readObject());
   castor::tape::tapegateway::VolumeRequest &volumeRequest =
-    dynamic_cast<castor::tape::tapegateway::VolumeRequest&>(*(firstObj.get()));
-  std::cout << "Selected drive unit is \"" << volumeRequest.unit() << "\"" <<
-    std::endl;
+    dynamic_cast<castor::tape::tapegateway::VolumeRequest&>(
+      *(obj1FromBridge.get()));
+  std::cout <<
+    "CLIENT: Read volume-request from tapebridged"
+    ": mountTransactionId=" << volumeRequest.mountTransactionId() <<
+    " aggregatorTransactionId=" << volumeRequest.aggregatorTransactionId() <<
+    " unit=\"" << volumeRequest.unit() << "\"" << std::endl;
 
-  // Create the volume message for the tapebridge
+  // Write volume message to the tapebridge
   castor::tape::tapegateway::Volume volumeMsg;
   volumeMsg.setVid("D12345");
   volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
@@ -821,12 +780,42 @@ void executeProtocol(const int clientPort, const int clientListenSockFd) {
   volumeMsg.setMountTransactionId(1111);
   volumeMsg.setAggregatorTransactionId(1);
   volumeMsg.setDensity("density");
+  callbackConnection1.sendObject(volumeMsg);
+  std::cout << "CLIENT: Wrote volume to tapebridged" << std::endl;
 
-  // Send the volume message to the tapebridge
-  callbackConnectionSock.sendObject(volumeMsg);
+  // Close the first callback connection from tapebridged
+  callbackConnection1.close();
+  std::cout <<
+    "CLIENT: Closed first callback connection from tapebridged" << std::endl;
 
-  // Close the connection to the tapebridge
-  callbackConnectionSock.close();
+  // Accept second callback connection from tapebridged as client
+  castor::io::AbstractTCPSocket callbackConnection2(
+    castor::tape::net::acceptConnection(clientListenSock.get(), acceptTimeout));
+  std::cout <<
+    "CLIENT: Accepted second callback connection from tapebridged" << std::endl;
+
+  // Read in EndNotification from tapebridged
+  std::auto_ptr<castor::IObject> obj2FromBridge(
+    callbackConnection2.readObject());
+  castor::tape::tapegateway::EndNotification &endNotification =
+    dynamic_cast<castor::tape::tapegateway::EndNotification&>(
+      *(obj2FromBridge.get()));
+  std::cout <<
+    "CLIENT: Read end-notification from tapebridged"
+    ": mountTransactionId=" << endNotification.mountTransactionId() <<
+    " aggregatorTransactionId=" << endNotification.aggregatorTransactionId() <<
+    std::endl;
+
+  // Write NotificationAcknowledge to tapebridged
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(1111);
+  acknowledge.setAggregatorTransactionId(2);
+  callbackConnection2.sendObject(acknowledge);
+
+  // Close second callback connection from tapebridged
+  callbackConnection2.close();
+  std::cout <<
+    "CLIENT: Closed second callback connection from tapebridged" << std::endl;
 }
 
 int main() {
@@ -850,7 +839,7 @@ int main() {
       ": port=" << clientPort << std::endl;
     return(1);
   }
-  std::cout << "Created a fake client callback socket"
+  std::cout << "CLIENT: Created callback socket"
     ": port=" << clientPort << std::endl;
 
   // Create a fake rtcpd server socket
@@ -867,7 +856,7 @@ int main() {
       ": port=" << RTCOPY_PORT << std::endl;
     return(1);
   }
-  std::cout << "Created a fake rtcpd server socket"
+  std::cout << "RTCPD: Created server socket"
     ": port=" << RTCOPY_PORT << std::endl;
 
   // Create the rtcpd server-thread
