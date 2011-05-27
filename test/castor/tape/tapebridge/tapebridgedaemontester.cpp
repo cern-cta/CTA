@@ -34,6 +34,7 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
+#include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/vdqm/RemoteCopyConnection.hpp"
 #include "h/Cuuid.h"
@@ -568,6 +569,9 @@ void *exceptionThrowingRtcpdThread(void *arg) {
   close(connection1ToBridge.release());
   std::cout << "RTCPD: Closed initial connection to tapebridged" << std::endl;
 
+  close(rtcpdListenSock.release());
+  std::cout << "RTCPD: Closed server socket" << std::endl;
+
   return arg;
 }
 
@@ -816,9 +820,16 @@ void executeProtocol(const int clientPort, const int clientListenSockFd) {
   callbackConnection2.close();
   std::cout <<
     "CLIENT: Closed second callback connection from tapebridged" << std::endl;
+
+  // Close client listen socket
+  close(clientListenSock.release());
+  std::cout << "CLIENT: Closed callback socket" << std::endl;
 }
 
 int main() {
+  castor::tape::utils::SmartFILEPtr smartStdin(stdin);
+  castor::tape::utils::SmartFILEPtr smartStdout(stdout);
+  castor::tape::utils::SmartFILEPtr smartStderr(stderr);
   int rc = 0;
   char rtcpLogErrTxt[1024];
 
