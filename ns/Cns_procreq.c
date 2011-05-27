@@ -414,7 +414,9 @@ int Cns_srv_chmod(char *req_data,
   reqinfo->fileid = fmd_entry.fileid;
 
   /* Check if the user is authorized to chmod this entry */
-  if (reqinfo->uid != fmd_entry.uid &&
+  if ((reqinfo->uid != fmd_entry.uid) &&
+      Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
+                  localhost, P_GRP_ADMIN) &&
       Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
     RETURN (EPERM);
