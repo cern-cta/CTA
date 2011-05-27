@@ -293,7 +293,8 @@ namespace castor {
             castor::dlf::Param("Function", "Cns_openx"),
             castor::dlf::Param("Error", sstrerror(ex.code()))
           };
-          if ((ex.code() != ENOENT) && (ex.code() != EACCES) && (ex.code() != EISDIR) && (ex.code() != ENOTSUP)) {
+          if ((ex.code() != ENOENT) && (ex.code() != EACCES) && (ex.code() != EISDIR)
+              && (ex.code() != EBUSY) && (ex.code() != ENOTSUP)) {
             // Error on the Name Server
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR,
               STAGER_CNS_EXCEPTION, 8, params, &cnsFileid);
