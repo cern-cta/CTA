@@ -108,14 +108,6 @@ namespace castor {
      */
     virtual bool shutdown(bool wait = true) throw ();
 
-    /**
-     * Gets this thread pool's active threads count.
-     * @return int m_nbActiveThreads
-     */
-    int getActiveThreads() {
-      return m_nbActiveThreads;
-    }
-
   private:
 
     /**

@@ -81,15 +81,16 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
 // shutdown
 //------------------------------------------------------------------------------
 bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
-  bool ret = castor::server::DynamicThreadPool::shutdown(wait);
-  // Also stop accepting connections as we're terminating
+  // Stop accepting connections as we're terminating
+  m_stopped = true;
   if(m_sock != 0) {
     try {
       m_sock->close();
     }
     catch(castor::exception::Exception& ignored) {}
   }
-  return ret;
+  // Call upper level
+  return castor::server::DynamicThreadPool::shutdown(wait);
 }
 
 //------------------------------------------------------------------------------

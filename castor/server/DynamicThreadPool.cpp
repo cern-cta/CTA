@@ -177,6 +177,7 @@ void castor::server::DynamicThreadPool::run()
       e.getMessage() << "Failed to create the producer thread";
       throw e;
     }
+    m_nbThreads++;
   }    
 
   // Threads have been created
@@ -258,7 +259,11 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
   } catch (...) {
     // ignore errors
   }
-  pthread_exit(0);
+
+  // Register thread destruction
+  pthread_mutex_lock(&pool->m_lock);
+  pool->m_nbThreads--;
+  pthread_mutex_unlock(&pool->m_lock);
   return 0;
 }
 
@@ -292,8 +297,10 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     QueueElement qe;
     qe.param = 0;
     try {
+      // blocks if current nbThreads is equal to the startup count,
+      // i.e. initThreads consumers and one producer
       pool->m_taskQueue.pop(
-        (pool->m_nbThreads == pool->m_initThreads), qe);
+        (pool->m_nbThreads == pool->m_initThreads + 1), qe);
     } catch (castor::exception::Exception& e) {
       if (e.code() == EPERM) {
         break;          // Queue terminated, destroy thread
@@ -362,7 +369,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     pool->m_idleTime += idleTime;
     pool->m_queueTime += queueTime;
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
-        (pool->m_nbThreads > pool->m_initThreads) &&
+        (pool->m_nbThreads > pool->m_initThreads + 1) &&
         (diff > 30)) {
       pool->m_lastPoolChange = time(NULL);
       pthread_mutex_unlock(&pool->m_lock);
@@ -379,14 +386,9 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                           DLF_BASE_FRAMEWORK + 21, 2, params);
   
-  // Register thread destruction
-  pthread_mutex_lock(&pool->m_lock);
-  pool->m_nbThreads--;
-  pthread_mutex_unlock(&pool->m_lock);
-  
   // Notify we're exiting
   try {
-    // thread specific cleanup
+    // user thread cleanup
     pool->m_thread->stop();
   } catch (castor::exception::Exception& any) {
     // "Thread run error"
@@ -402,8 +404,12 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   } catch (...) {
     // ignore errors
   }
-  pthread_exit(0);
-  return 0;  // Should not be here
+
+  // Register thread destruction
+  pthread_mutex_lock(&pool->m_lock);
+  pool->m_nbThreads--;
+  pthread_mutex_unlock(&pool->m_lock);
+  return 0;
 }
 
 
@@ -432,7 +438,7 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
   
   // Check to see if additional threads need to be started
   pthread_mutex_lock(&m_lock);
-  if ((m_nbThreads == 0) ||
+  if ((m_nbThreads == 1) ||
       ((m_nbThreads < m_maxThreads) &&
        (m_taskQueue.size() > m_threshold))) {
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);

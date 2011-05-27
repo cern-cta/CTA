@@ -170,7 +170,7 @@ void* castor::server::SignalThreadPool::_runner(void* param)
     // Thread initialization
     pool->m_thread->init();
 
-    while (!pool->m_stopped) {
+    while (true) {
       // wait to be woken up by a signal or for a timeout
       pool->waitSignalOrTimeout();
 
@@ -209,27 +209,23 @@ void* castor::server::SignalThreadPool::_runner(void* param)
                                   DLF_BASE_FRAMEWORK + 4, 2, params);
         }
       }
+      
+      // exit if we were told to stop
+      if(pool->m_stopped) break;
 
       // we are not anymore a running service
-      try {
-        pool->m_poolMutex.lock();
-        pool->m_nbActiveThreads--;
-        // update shared timers
-        pool->m_activeTime += activeTime;
-        pool->m_idleTime += idleTime;
-        pool->m_runsCount++;
-      }
-      catch (castor::exception::Exception& e) {
-        pool->m_nbActiveThreads--;   // unsafe
-        throw e;
-      }
+      pool->m_poolMutex.lock();
+      pool->m_nbActiveThreads--;
+      // update shared timers
+      pool->m_activeTime += activeTime;
+      pool->m_idleTime += idleTime;
+      pool->m_runsCount++;
       pool->m_poolMutex.release();
 
       // and continue forever until shutdown() is called
     }
 
-    // notify the user thread that we are over,
-    // e.g. for dropping a db connection
+    // notify the user thread that we are over
     pool->m_thread->stop();
   }
   catch (castor::exception::Exception& any) {
@@ -237,7 +233,7 @@ void* castor::server::SignalThreadPool::_runner(void* param)
       pool->m_thread->stop();
       pool->m_poolMutex.release();
     }
-    catch(...) {}
+    catch(castor::exception::Exception& ignored) {}
 
     // "Thread run error"
     castor::dlf::Param params[] =
@@ -253,6 +249,15 @@ void* castor::server::SignalThreadPool::_runner(void* param)
   } catch (...) {
     // ignore errors
   }
+  
+  // Register thread destruction
+  try {
+    pool->m_poolMutex.lock();
+  }
+  catch (castor::exception::Exception& ignored) {}
+  pool->m_nbActiveThreads--;
+  pool->m_poolMutex.release();
+  
   Cthread_exit(0);
   return 0;
 }

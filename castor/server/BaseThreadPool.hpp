@@ -134,6 +134,14 @@ namespace castor {
     }
 
     /**
+     * Gets this thread pool's active threads count.
+     * @return int m_nbActiveThreads
+     */
+    int getActiveThreads() {
+      return m_nbActiveThreads;
+    }
+
+    /**
      * Tells whether the pool has been terminated
      * @return the value of the m_stopped flag
      */
