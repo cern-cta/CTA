@@ -162,15 +162,17 @@ STGLIB_SRCS = BaseAddress.cpp \
               server/BaseServer.cpp \
               server/AuthListenerThreadPool.cpp \
               server/BaseThreadPool.cpp \
+              server/DynamicThreadPool.cpp \
               server/ListenerThreadPool.cpp \
               server/TCPListenerThreadPool.cpp \
               server/UDPListenerThreadPool.cpp \
               server/ForkedProcessPool.cpp \
-              server/Mutex.cpp \
               server/SignalThreadPool.cpp \
+              server/DbAlertedThreadPool.cpp \
+              server/Mutex.cpp \
               server/NotifierThread.cpp \
+              server/SelectProcessThread.cpp \
               server/ThreadNotification.cpp \
-              server/DynamicThreadPool.cpp \
               server/Queue.cpp \
               metrics/Counter.cpp \
               metrics/InternalCounter.cpp \

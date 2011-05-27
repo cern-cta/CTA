@@ -123,7 +123,6 @@ CREATE OR REPLACE PROCEDURE putStart
   srSvcClass INTEGER;
   fsId INTEGER;
   prevFsId INTEGER;
-  blah NUMBER;
 BEGIN
   -- Get diskCopy and subrequest related information
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
