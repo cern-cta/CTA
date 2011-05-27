@@ -231,6 +231,14 @@ void CppHDbCnvWriter::writeMembers() {
             << endl << getIndent()
             << "castor::db::IDbStatement *m_insertStatement;"
             << endl << endl << getIndent()
+            << "/// SQL statement for request bulk insertion"
+            << endl << getIndent()
+            << "static const std::string s_bulkInsertStatementString;"
+            << endl << endl << getIndent()
+            << "/// SQL statement object for request bulk insertion"
+            << endl << getIndent()
+            << "castor::db::IDbStatement *m_bulkInsertStatement;"
+            << endl << endl << getIndent()
             << "/// SQL statement for request deletion"
             << endl << getIndent()
             << "static const std::string s_deleteStatementString;"
@@ -280,27 +288,19 @@ void CppHDbCnvWriter::writeMembers() {
               << "castor::db::IDbStatement *m_insertNewReqStatement;"
               << endl << endl;
   }
-//   // Dealing with SubRequest needed to be stored in newSubRequests table
-//   if (m_classInfo->className == "SubRequest") {
-//     *m_stream << getIndent()
-//               << "/// SQL statement for request insertion into newSubRequests table"
-//               << endl << getIndent()
-//               << "static const std::string s_insertNewSubReqStatementString;"
-//               << endl << endl << getIndent()
-//               << "/// SQL statement object for request status insertion into newSubRequests table"
-//               << endl << getIndent()
-//               << "castor::db::IDbStatement *m_insertNewSubReqStatement;"
-//               << endl << endl;
-//   }
   // Dealing with type identification (storage and deletion)
   *m_stream << getIndent()
             << "/// SQL statement for type storage "
             << endl << getIndent()
             << "static const std::string s_storeTypeStatementString;"
+            << endl << getIndent()
+            << "static const std::string s_storeTypeBulkStatementString;"
             << endl << endl << getIndent()
             << "/// SQL statement object for type storage"
             << endl << getIndent()
             << "castor::db::IDbStatement *m_storeTypeStatement;"
+            << endl << getIndent()
+            << "castor::db::IDbStatement *m_storeTypeBulkStatement;"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion "
             << endl << getIndent()

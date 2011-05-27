@@ -203,25 +203,28 @@ void CppCppDbCnvWriter::ordonnateMembersInAssoc(Assoc* as,
 }
 
 //=============================================================================
-// writeConstants
+// writeInsertStmtConstants
 //=============================================================================
-void CppCppDbCnvWriter::writeConstants() {
-  writeWideHeaderComment("Static constants initialization",
-                         getIndent(),
-                         *m_stream);
+void CppCppDbCnvWriter::writeInsertStmtConstants(MemberList& members,
+                                                 AssocList& assocs,
+                                                 bool bulk) {
   *m_stream << getIndent()
-            << "/// SQL statement for request insertion"
+            << "/// SQL statement for request "
+            << (bulk ? "bulk insertion" : "insertion")
             << endl << getIndent()
             << "const std::string "
             << m_classInfo->fullPackageName
             << "Db" << m_classInfo->className
-            << "Cnv::s_insertStatementString =" << endl
-            << getIndent()
-            << "\"INSERT INTO " << m_classInfo->className
+            << (bulk ? "Cnv::s_bulkInsert" : "Cnv::s_insert")
+            << "StatementString =" << endl << getIndent()
+            << "\"INSERT"
+  // The following comment is to overcome a limitation in Oracle whereby we can't use
+  // the same statement string and object for both bulk and non-bulk operations with OCCI.
+  // See also bug #78533 in savannah.
+            << (bulk ? " /* bulk */ " : " ")
+            << "INTO " << m_classInfo->className
             << " (";
   bool first = true;
-  // create a list of members
-  MemberList members = createMembersList();
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
@@ -231,8 +234,6 @@ void CppCppDbCnvWriter::writeConstants() {
     *m_stream << mem->name;
     first = false;
   }
-  // create a list of associations
-  AssocList assocs = createAssocsList();
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
@@ -279,8 +280,25 @@ void CppCppDbCnvWriter::writeConstants() {
     }
   }
   *m_stream << ") RETURNING id INTO :" << n
-            << "\";" << endl << endl << getIndent()
-            << "/// SQL statement for request deletion"
+            << "\";" << endl << endl;
+}
+            
+//=============================================================================
+// writeConstants
+//=============================================================================
+void CppCppDbCnvWriter::writeConstants() {
+  writeWideHeaderComment("Static constants initialization",
+                         getIndent(),
+                         *m_stream);
+  // create a list of members
+  MemberList members = createMembersList();
+  // create a list of associations
+  AssocList assocs = createAssocsList();
+  // INSERT statements
+  writeInsertStmtConstants(members, assocs, false);
+  writeInsertStmtConstants(members, assocs, true);
+  // DELETE statement
+  *m_stream << getIndent() << "/// SQL statement for request deletion"
             << endl << getIndent()
             << "const std::string "
             << m_classInfo->fullPackageName
@@ -290,6 +308,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << "\"DELETE FROM " << m_classInfo->className
             << " WHERE id = :1\";" << endl << endl
             << getIndent()
+  // SELECT statements
             << "/// SQL statement for request selection"
             << endl << getIndent()
             << "const std::string "
@@ -299,7 +318,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << getIndent()
             << "\"SELECT ";
   // Go through the members
-  n = 0;
+  int n = 0;
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
@@ -411,6 +430,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << " END;\";"
             << endl << endl
             << getIndent()
+  // UPDATE statement
             << "/// SQL statement for request update"
             << endl << getIndent()
             << "const std::string "
@@ -421,7 +441,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << "\"UPDATE " << m_classInfo->className
             << " SET ";
   n = 0;
-  first = true;
+  bool first = true;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
@@ -448,6 +468,7 @@ void CppCppDbCnvWriter::writeConstants() {
   }
   *m_stream << " WHERE id = :" << n+1
             << "\";" << endl << endl << getIndent()
+  // Id2Type related statements
             << "/// SQL statement for type storage"
             << endl << getIndent()
             << "const std::string "
@@ -455,14 +476,14 @@ void CppCppDbCnvWriter::writeConstants() {
             << "Db" << m_classInfo->className
             << "Cnv::s_storeTypeStatementString =" << endl
             << getIndent()
-            << "\"INSERT /* "
-    // Do not remove this comment unless the BigId problem (sr #106879) is solved
-    // This is a workaround that consists in dissociating the different SQLs inserting
-    // into Id2Type by adding a different comment into them.
-    // Note that the problem has been solved by ORACLE but came back at the very
-    // end of 2009. So this was readded after it had been removed.
-            << m_classInfo->className
-            << " class */ INTO Id2Type (id, type) VALUES (:1, :2)\";"
+            << "\"INSERT INTO Id2Type (id, type) VALUES (:1, :2)\";"
+            << endl << endl << getIndent()
+            << "const std::string "
+            << m_classInfo->fullPackageName
+            << "Db" << m_classInfo->className
+            << "Cnv::s_storeTypeBulkStatementString =" << endl
+            << getIndent()
+            << "\"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)\";"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion"
             << endl << getIndent()
@@ -798,6 +819,7 @@ void CppCppDbCnvWriter::writeConstructors() {
             << " cnvSvc) :" << endl
             << getIndent() << "  DbBaseCnv(cnvSvc)," << endl
             << getIndent() << "  m_insertStatement(0)," << endl
+            << getIndent() << "  m_bulkInsertStatement(0)," << endl
             << getIndent() << "  m_deleteStatement(0)," << endl
             << getIndent() << "  m_selectStatement(0)," << endl
             << getIndent() << "  m_bulkSelectStatement(0)," << endl
@@ -806,6 +828,7 @@ void CppCppDbCnvWriter::writeConstructors() {
     *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
   }
   *m_stream << getIndent() << "  m_storeTypeStatement(0)," << endl
+            << getIndent() << "  m_storeTypeBulkStatement(0)," << endl
             << getIndent() << "  m_deleteTypeStatement(0)";
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
@@ -878,6 +901,8 @@ void CppCppDbCnvWriter::writeConstructors() {
   *m_stream << getIndent()
             << "if(m_insertStatement) delete m_insertStatement;"
             << endl << getIndent()
+            << "if(m_bulkInsertStatement) delete m_bulkInsertStatement;"
+            << endl << getIndent()
             << "if(m_deleteStatement) delete m_deleteStatement;"
             << endl << getIndent()
             << "if(m_selectStatement) delete m_selectStatement;"
@@ -892,6 +917,8 @@ void CppCppDbCnvWriter::writeConstructors() {
               << endl;
   }
   *m_stream << getIndent() << "if(m_storeTypeStatement) delete m_storeTypeStatement;"
+            << endl << getIndent()
+            << "if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;"
             << endl << getIndent()
             << "if(m_deleteTypeStatement) delete m_deleteTypeStatement;"
             << endl;
@@ -2041,12 +2068,14 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
 //=============================================================================
 void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
                                                       MemberList &members,
-                                                      AssocList &assocs) {
+                                                      AssocList &assocs,
+                                                      bool bulk) {
   // First check the statements
   stream << getIndent()
          << "// Check whether the statements are ok"
          << endl << getIndent()
-         << "if (0 == m_insertStatement) {" << endl;
+         << "if (0 == " << (bulk ? "m_bulkInsert" : "m_insert")
+         << "Statement) {" << endl;
   m_indent++;
   // Go through the members and assoc to find the number for id
   int n = 1;
@@ -2070,10 +2099,13 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
     }
   }
   stream << getIndent()
-         << "m_insertStatement = createStatement(s_insertStatementString);"
+         << (bulk ? "m_bulkInsert" : "m_insert")
+         << "Statement = createStatement(s_"
+         << (bulk ? "bulkInsert" : "insert")
+         << "StatementString);"
          << endl << getIndent()
-         << "m_insertStatement->registerOutParam("
-         << n
+         << (bulk ? "m_bulkInsert" : "m_insert")
+         << "Statement->registerOutParam(" << n
          << ", castor::db::DBTYPE_UINT64);" << endl;
   m_indent--;
   stream << getIndent() << "}" << endl;
@@ -2092,6 +2124,8 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
   m_indent++;
   stream << getIndent()
          << "m_storeTypeStatement = createStatement(s_storeTypeStatementString);"
+         << endl << getIndent()
+         << "m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);"
          << endl;
   m_indent--;
   stream << getIndent() << "}" << endl;
@@ -2115,7 +2149,7 @@ void CppCppDbCnvWriter::writeCreateRepContent(QTextStream &stream, bool &address
   // Check the statements
   MemberList members = createMembersList();
   AssocList assocs = createAssocsList();
-  writeCreateRepCheckStatements(stream, members, assocs);
+  writeCreateRepCheckStatements(stream, members, assocs, false);
   // Insert the object into the database
   stream << getIndent()
          << "// Now Save the current object"
@@ -2395,7 +2429,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
   // Check the statements
   MemberList members = createMembersList();
   AssocList assocs = createAssocsList();
-  writeCreateRepCheckStatements(stream, members, assocs);
+  writeCreateRepCheckStatements(stream, members, assocs, true);
   // Go through members and create buffers for the bulk insertion
   int n = 1;
   for (Member* mem = members.first();
@@ -2408,7 +2442,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
         mem->name != "lastAccessTime") {
       writeCreateBufferForSelect(stream, typeUsed, mem->name,
                                  getDbCType(mem->typeName),
-                                 n, "m_insertStatement");
+                                 n, "m_bulkInsertStatement");
       n++;
     }
   }
@@ -2420,12 +2454,12 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
     if (as->remoteStereotype == SQLONLY) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeCreateBufferForSelect(stream, typeUsed, as->remotePart.name,
-                                 "int", n, "m_insertStatement", true);
+                                 "int", n, "m_bulkInsertStatement", true);
       n++;
     } else if (as->type.multiRemote == MULT_ONE &&
                as->remotePart.name != "") {
       writeCreateBufferForSelect(stream, typeUsed, as->remotePart.name,
-                                 "u_signed64", n, "m_insertStatement", false,
+                                 "u_signed64", n, "m_bulkInsertStatement", false,
                                  true, as->remotePart.typeName);
       n++;
     }
@@ -2457,13 +2491,13 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
          << endl << getIndent()
          << "allocMem.push_back(idBufLens);"
          << endl << getIndent()
-         << "m_insertStatement->setDataBuffer" << endl
+         << "m_bulkInsertStatement->setDataBuffer" << endl
          << getIndent()
          << "  (" << n << ", "
          << "idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);" << endl;
   // Execute bulk insertion
   stream << getIndent()
-         << "m_insertStatement->execute(nb);"
+         << "m_bulkInsertStatement->execute(nb);"
          << endl;
   // Store returned ids into the objects
   stream << getIndent()
@@ -2478,16 +2512,16 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
   stream  << getIndent()
           << "// reuse idBuffer for bulk insertion into Id2Type"
           << endl << getIndent()
-          << "m_storeTypeStatement->setDataBuffer" << endl
+          << "m_storeTypeBulkStatement->setDataBuffer" << endl
           << getIndent()
           << "  (1, idBuffer, "
           << getDbTypeConstant("u_signed64")
           << ", sizeof(idBuffer[0]), idBufLens);" << endl;
   writeCreateBufferForSelect(stream, typeUsed, "type", "int",
-                             2, "m_storeTypeStatement");
+                             2, "m_storeTypeBulkStatement");
   // Execute bulk insertion into Id2Type
   stream << getIndent()
-         << "m_storeTypeStatement->execute(nb);"
+         << "m_storeTypeBulkStatement->execute(nb);"
          << endl;
   if (isNewRequest()) {
     // Prepare the buffers for bulk insertion into NewRequest

@@ -244,6 +244,12 @@ namespace castor {
         /// SQL statement object for request insertion
         castor::db::IDbStatement *m_insertStatement;
 
+        /// SQL statement for request bulk insertion
+        static const std::string s_bulkInsertStatementString;
+
+        /// SQL statement object for request bulk insertion
+        castor::db::IDbStatement *m_bulkInsertStatement;
+
         /// SQL statement for request deletion
         static const std::string s_deleteStatementString;
 
@@ -276,9 +282,11 @@ namespace castor {
 
         /// SQL statement for type storage 
         static const std::string s_storeTypeStatementString;
+        static const std::string s_storeTypeBulkStatementString;
 
         /// SQL statement object for type storage
         castor::db::IDbStatement *m_storeTypeStatement;
+        castor::db::IDbStatement *m_storeTypeBulkStatement;
 
         /// SQL statement for type deletion 
         static const std::string s_deleteTypeStatementString;

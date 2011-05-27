@@ -71,7 +71,8 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes the check statements part of the (bulk)createRep method
   void writeCreateRepCheckStatements(QTextStream &stream,
                                      MemberList &members,
-                                     AssocList &assocs);
+                                     AssocList &assocs,
+                                     bool bulk);
 
   /// writes the check statements part of the (bulk)createObj method
   void writeCreateObjCheckStatements(QString name);
@@ -119,6 +120,11 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes updateObj method's content
   void writeUpdateObjContent();
 
+  /// writes the [bulk]insertStatement constant
+  void writeInsertStmtConstants(MemberList& members,
+                                AssocList& assocs,
+                                bool bulk);
+  
   /**
    * write a call to set*** for attribute.
    * @param stream the stream into which the code should be written

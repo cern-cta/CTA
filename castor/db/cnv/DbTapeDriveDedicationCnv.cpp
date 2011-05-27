@@ -55,6 +55,10 @@ static castor::CnvFactory<castor::db::cnv::DbTapeDriveDedicationCnv>* s_factoryD
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_insertStatementString =
 "INSERT INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, startTime, endTime, reason, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9) RETURNING id INTO :10";
 
+/// SQL statement for request bulk insertion
+const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_bulkInsertStatementString =
+"INSERT /* bulk */ INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, startTime, endTime, reason, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9) RETURNING id INTO :10";
+
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteStatementString =
 "DELETE FROM TapeDriveDedication WHERE id = :1";
@@ -88,7 +92,10 @@ const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_updateStatementSt
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_storeTypeStatementString =
-"INSERT /* TapeDriveDedication class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+
+const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_storeTypeBulkStatementString =
+"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteTypeStatementString =
@@ -108,11 +115,13 @@ const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_updateTapeDriveSt
 castor::db::cnv::DbTapeDriveDedicationCnv::DbTapeDriveDedicationCnv(castor::ICnvSvc* cnvSvc) :
   DbBaseCnv(cnvSvc),
   m_insertStatement(0),
+  m_bulkInsertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
+  m_storeTypeBulkStatement(0),
   m_deleteTypeStatement(0),
   m_checkTapeDriveExistStatement(0),
   m_updateTapeDriveStatement(0) {}
@@ -125,11 +134,13 @@ castor::db::cnv::DbTapeDriveDedicationCnv::~DbTapeDriveDedicationCnv() throw() {
   // If something goes wrong, we just ignore it
   try {
     if(m_insertStatement) delete m_insertStatement;
+    if(m_bulkInsertStatement) delete m_bulkInsertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_checkTapeDriveExistStatement) delete m_checkTapeDriveExistStatement;
     if(m_updateTapeDriveStatement) delete m_updateTapeDriveStatement;
@@ -302,6 +313,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress*,
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->clientHost());
@@ -365,12 +377,13 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
   std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
-    if (0 == m_insertStatement) {
-      m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
+    if (0 == m_bulkInsertStatement) {
+      m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
+      m_bulkInsertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for clientHost
     unsigned int clientHostMaxLen = 0;
@@ -394,7 +407,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       strncpy(clientHostBuffer+(i*clientHostMaxLen), objs[i]->clientHost().c_str(), clientHostMaxLen);
       clientHostBufLens[i] = objs[i]->clientHost().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (1, clientHostBuffer, castor::db::DBTYPE_STRING, clientHostMaxLen, clientHostBufLens);
     // build the buffers for euid
     int* euidBuffer = (int*) malloc(nb * sizeof(int));
@@ -413,7 +426,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       euidBuffer[i] = objs[i]->euid();
       euidBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (2, euidBuffer, castor::db::DBTYPE_INT, sizeof(euidBuffer[0]), euidBufLens);
     // build the buffers for egid
     int* egidBuffer = (int*) malloc(nb * sizeof(int));
@@ -432,7 +445,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       egidBuffer[i] = objs[i]->egid();
       egidBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (3, egidBuffer, castor::db::DBTYPE_INT, sizeof(egidBuffer[0]), egidBufLens);
     // build the buffers for vid
     unsigned int vidMaxLen = 0;
@@ -456,7 +469,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       strncpy(vidBuffer+(i*vidMaxLen), objs[i]->vid().c_str(), vidMaxLen);
       vidBufLens[i] = objs[i]->vid().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (4, vidBuffer, castor::db::DBTYPE_STRING, vidMaxLen, vidBufLens);
     // build the buffers for accessMode
     int* accessModeBuffer = (int*) malloc(nb * sizeof(int));
@@ -475,7 +488,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       accessModeBuffer[i] = objs[i]->accessMode();
       accessModeBufLens[i] = sizeof(int);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (5, accessModeBuffer, castor::db::DBTYPE_INT, sizeof(accessModeBuffer[0]), accessModeBufLens);
     // build the buffers for startTime
     double* startTimeBuffer = (double*) malloc(nb * sizeof(double));
@@ -494,7 +507,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       startTimeBuffer[i] = objs[i]->startTime();
       startTimeBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (6, startTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(startTimeBuffer[0]), startTimeBufLens);
     // build the buffers for endTime
     double* endTimeBuffer = (double*) malloc(nb * sizeof(double));
@@ -513,7 +526,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       endTimeBuffer[i] = objs[i]->endTime();
       endTimeBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (7, endTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(endTimeBuffer[0]), endTimeBufLens);
     // build the buffers for reason
     unsigned int reasonMaxLen = 0;
@@ -537,7 +550,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       strncpy(reasonBuffer+(i*reasonMaxLen), objs[i]->reason().c_str(), reasonMaxLen);
       reasonBufLens[i] = objs[i]->reason().length()+1; // + 1 for the trailing \0
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (8, reasonBuffer, castor::db::DBTYPE_STRING, reasonMaxLen, reasonBufLens);
     // build the buffers for tapeDrive
     double* tapeDriveBuffer = (double*) malloc(nb * sizeof(double));
@@ -556,7 +569,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       tapeDriveBuffer[i] = (type == OBJ_TapeDrive && objs[i]->tapeDrive() != 0) ? objs[i]->tapeDrive()->id() : 0;
       tapeDriveBufLens[i] = sizeof(double);
     }
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (9, tapeDriveBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeDriveBuffer[0]), tapeDriveBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
@@ -571,14 +584,14 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       throw e;
     }
     allocMem.push_back(idBufLens);
-    m_insertStatement->setDataBuffer
+    m_bulkInsertStatement->setDataBuffer
       (10, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
-    m_insertStatement->execute(nb);
+    m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
     // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeStatement->setDataBuffer
+    m_storeTypeBulkStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
@@ -597,9 +610,9 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
     }
-    m_storeTypeStatement->setDataBuffer
+    m_storeTypeBulkStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeStatement->execute(nb);
+    m_storeTypeBulkStatement->execute(nb);
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
