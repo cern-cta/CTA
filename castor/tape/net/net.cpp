@@ -37,6 +37,7 @@
 #include <sstream>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <time.h>
 
 
@@ -75,6 +76,23 @@ int castor::tape::net::createListenerSock(
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to create socket"
       ": " << sstrerror(savedErrno));
+  }
+
+  // Set the SO_REUSEADDR socket option before calling bind
+  {
+    int reuseaddrOptval = 1;
+    if(0 > setsockopt(sock.get(), SOL_SOCKET, SO_REUSEADDR,
+      (char *)&reuseaddrOptval, sizeof(reuseaddrOptval))) {
+      const int savedErrno = errno;
+    
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to set socket option"
+        ": file-descriptor=" << sock.get() <<
+        " level=SOL_SOCKET"
+        " optname=SO_REUSEADDR"
+        " optval=" << reuseaddrOptval <<
+        ": " << sstrerror(savedErrno));
+    }
   }
 
   // Address structure to be used to bind the socket
