@@ -564,7 +564,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     while(waitForCallback) {
       try {
         connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
-          WAITCALLBACKTIMEOUT);
+                                                 timeout);
 
         waitForCallback = false;
       } catch(castor::exception::TimeOut &tx) {
