@@ -26,7 +26,7 @@ DLFCONF=/var/www/conf/dlf
  *     are set
  */
 
-all: checkORACLE checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
+all: checkORACLE checkLSF checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
 tape: checkSTK
 install: checkDESTDIR checkVERSION all installtape installclient
 
