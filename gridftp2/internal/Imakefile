@@ -31,10 +31,10 @@ ifeq ($(shell uname -m), x86_64)
   MOPTION=-m64
 endif
 
-CPPFLAGS += -I$(GLOBUS_LOCATION)/include/$(FLAVOR)
+CPPFLAGS += $(GLOBUS_INC)
 CFLAGS += $(MOPTION) -fPIC
-AddLdFlags(-L$(GLOBUS_LOCATION)/lib -lglobus_ftp_control_$(FLAVOR) $(MOPTION) -shared -lz)
+AddLdFlags($(GLOBUS_FTPLIB) $(MOPTION) -shared -lz)
 
-PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2int_$(FLAVOR),globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LOCATION)/lib)
+PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2int_$(FLAVOR),globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LIB_PATH))
 LOGROTATE(castor-gridftp-dsi-common,install)
 MakeDir(/var/log,0755)

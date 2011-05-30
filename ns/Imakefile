@@ -10,8 +10,7 @@ NSLIB = DepSharedLibraryTargetName(ns,castorns)
 AddLdFlags(-luuid)
 
 #if UseGSI
-GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
-NSLIBCSEC += -L$(GLOBUS_LOCATION)/lib $(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
+NSLIBCSEC += -lcrypto
 #endif
 NSLIBCSEC += -ldl
 

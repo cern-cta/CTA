@@ -49,6 +49,14 @@ ORACLE_LIBDIR := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-preco
 ORACLE_CPPFLAGS := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --cppflags)
 ORACLE_PROCINC := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --procinc)
 
+GLOBUS_CONFINC_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --confinc)
+GLOBUS_INC_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --inc)
+GLOBUS_INC := -I$(GLOBUS_CONFINC_PATH) -I$(GLOBUS_INC_PATH)
+GLOBUS_LIB_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --libdir)
+GLOBUS_GSSLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslib)
+GLOBUS_FTPLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --ftplib)
+GLOBUS_GSSLIB_THR := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslibthr)
+
 ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib
 else

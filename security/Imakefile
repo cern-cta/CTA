@@ -36,10 +36,10 @@ VOMS_LIB_NONPTHR=-L$(VOMS_LOCATION)/lib -lvomsc
 VOMS_LIB_PTHR=-L$(VOMS_LOCATION)/lib -lvomsc_$(VOMS_FLAVOUR)
 #endif
 #define SecAuthMechGSI       -DGSI
-#define SecIncludeDirGSI -I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOUR_NONPTHR) $(VOMS_INCLUDE) 
-#define SecLibsGSI -L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR_NONPTHR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR_NONPTHR) $(VOMS_LIB_NONPTHR)
-#define SecIncludeDirGSIpthr -I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOUR) $(VOMS_INCLUDE)
-#define SecLibsGSIpthr -L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR)  $(VOMS_LIB_PTHR)
+#define SecIncludeDirGSI $(GLOBUS_INC) $(VOMS_INCLUDE) 
+#define SecLibsGSI $(GLOBUS_GSSLIB) -lssl $(VOMS_LIB_NONPTHR)
+#define SecIncludeDirGSIpthr $(GLOBUS_INC) $(VOMS_INCLUDE)
+#define SecLibsGSIpthr $(GLOBUS_GSSLIB_THR) -lssl $(VOMS_LIB_PTHR)
 
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
 GSITLIB = SecLibsGSIpthr -lc -ldl

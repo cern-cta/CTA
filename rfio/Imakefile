@@ -18,10 +18,7 @@ CFLAGS += -DUSE_XFSPREALLOC
 RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
 
 #if UseGSI
-GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
-GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
-LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
-LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
+LIBCRYPTO += -lcrypto
 #endif
 AddLdFlags(-ldl)
 
@@ -134,7 +131,7 @@ SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		stager_uuid.o rfio_alignedbuf.o rfio_xfsprealloc.o
 CPPFLAGS += -I $(XFS_LOCATION)/include
 
-NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(CKSUMLIB),755)
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCRYPTO) $(RFIOLIB) $(CKSUMLIB),755)
 LOGROTATE(castor-rfio-server,install)
 SYSCONFIG(rfiod,install)
 INITSCRIPT(rfiod,install)

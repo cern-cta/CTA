@@ -63,14 +63,17 @@ checkLSF:
 	  exit 1; \
 	fi
 
-GLOBUS_LOCATION ?= /opt/globus
 checkGLOBUS:
-	@if [ ! -r $(GLOBUS_LOCATION)/include//**/GlobusFlavour/globus_config.h -o ! -r $(GLOBUS_LOCATION)/include//**/GlobusFlavour/globus_common.h ]; then \
-	  echo "Unable to find globus header files at $(GLOBUS_LOCATION). Giving up."; \
+	@if [ -z $(GLOBUS_CONFINC_PATH) ]; then \
+	  echo "Unable to find globus_config.h. Giving up."; \
+          exit 1; \
+        fi; \
+        if [ -z $(GLOBUS_INC_PATH) ]; then \
+	  echo "Unable to find globus header files. Giving up."; \
 	  exit 1; \
 	fi; \
-	if [ ! -r $(GLOBUS_LOCATION)/lib/libglobus_ftp_control_/**/GlobusFlavour.so ]; then \
-	  echo "Unable to find globus library files at $(GLOBUS_LOCATION). Giving up."; \
+	if [ -z $(GLOBUS_LIB_PATH) ]; then \
+	  echo "Unable to find globus library files. Giving up."; \
 	  exit 1; \
 	fi
 
