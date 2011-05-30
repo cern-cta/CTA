@@ -57,6 +57,8 @@ GLOBUS_GSSLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslib)
 GLOBUS_FTPLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --ftplib)
 GLOBUS_GSSLIB_THR := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslibthr)
 
+Krb5Config := $(shell if [ -r "/usr/kerberos/bin/krb5-config" ]; then echo /usr/kerberos/bin/krb5-config; else echo /usr/bin/krb5-config; fi)
+
 ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib
 else

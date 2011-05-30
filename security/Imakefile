@@ -74,28 +74,23 @@ LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 #endif
 
 #if UseKRB5
-#if UseHeimdalKrb5
-#define SecAuthMechKRB5    -DKRB5 -DHEIMDAL
-#else
-#define SecAuthMechKRB5    -DKRB5 
-#endif
-#define SecIncludeDirKRB5 $(shell Krb5Config gssapi --cflags)
-#define SecLibsKRB5 $(shell Krb5Config gssapi --libs)
+#define SecIncludeDirKRB5 $(shell $(Krb5Config) gssapi --cflags)
+#define SecLibsKRB5 $(shell $(Krb5Config) gssapi --libs)
 KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
 KRB5LIB = SecLibsKRB5 -lc -ldl
 SharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 LOCAL_PATH/Csec_plugin_KRB5.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -DKRB5 SecIncludeDirKRB5 $<
 LOCAL_PATH/Csec_plugin_KRB5.d: LOCAL_PATH/Csec_plugin_GSS.c
-	gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -DKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 LOCAL_PATH/Csec_plugin_KRB5_mapper.o:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -DKRB5 SecIncludeDirKRB5 $<
 LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
-	gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -DKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 IDLIB_OBJS = Csec_plugin_ID.o

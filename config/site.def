@@ -98,19 +98,12 @@ COMM Define the remote tape copy daemon log file.
 
 #define UseGSI	        YES
 #define UseKRB5	        YES
-#define UseHeimdalKrb5	NO
 
 #define BuildSecureTape	        NO
 #define BuildSecureVmgr	        NO
 #define BuildSecureCupv	        NO
 #define	BuildSecureVdqm	        NO
 #define BuildSecureRtcopy	NO
-
-#if UseHeimdalKrb5
-#define Krb5Config /usr/heimdal/bin/krb5-config
-#else
-#define Krb5Config /usr/kerberos/bin/krb5-config
-#endif
 
 #if UseGSI
 #define GSIMech GSI
