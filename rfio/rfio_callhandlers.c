@@ -25,7 +25,7 @@
 #include "rfio_callhandlers.h"
 #include "getconfent.h"
 #include "Castor_limits.h"
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 struct internal_context {
   int one_byte_at_least;

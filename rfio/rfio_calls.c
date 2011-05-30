@@ -22,7 +22,7 @@
 #include <common.h>
 #include <stdlib.h>
 #include <zlib.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <sys/param.h>
 #include <syslog.h>                     /* System logger                */
 #include <sys/time.h>

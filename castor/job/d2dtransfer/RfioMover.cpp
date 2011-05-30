@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 // Defaults
 #define RFIO_DEFAULT_BUFFER_SIZE (128 * 1024)

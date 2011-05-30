@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <string.h>
 #include <map>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/stager/IJobSvc.hpp"

@@ -42,7 +42,7 @@
 #include <errno.h>
 
 #include <zlib.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 #define  CA_MAXCKSUMLEN 32
 #define  CA_MAXCKSUMNAMELEN 15

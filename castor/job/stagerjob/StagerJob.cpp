@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <sstream>
 #include <signal.h>
 #include <fcntl.h>
