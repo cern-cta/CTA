@@ -51,11 +51,10 @@ int isremote(struct in_addr from_host,
     struct  ifconf  ifc;     /* ifconf structure      */
     struct  ifreq   *ifr;    /* Pointer on ifreq structure */
     int n ;          
-    unsigned int netw ;
     union adr {
         u_long adr_i;
         unsigned char adr_c[4];
-    } adr,*ladd;
+    } *ladd;
     struct in_addr in ;
     struct  sockaddr_in addr;
     char *last = NULL;
@@ -155,8 +154,6 @@ int isremote(struct in_addr from_host,
         }
     } /* if ( host_name != NULL ) */
 
-    netw = inet_netof(from_host);
-    adr.adr_i=from_host.s_addr;
     log(LOG_DEBUG, "isremote(): Client host is %s\n",inet_ntoa( from_host )) ;
 
     if( (s_s = socket(AF_INET, SOCK_DGRAM, 0)) == SOCKET_ERROR )  {

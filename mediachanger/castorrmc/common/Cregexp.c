@@ -790,7 +790,6 @@ char *_Cregexp_atom(int *flagp,
 {
 	char *ret;
 	int flags;
-	char dummy;
   
 	*flagp = WORST;		/* Tentatively. */
   
@@ -823,8 +822,7 @@ char *_Cregexp_atom(int *flagp,
 								_Cregexp_dummy,
 								_Cregexp_code,
 								_Cregexp_size);
-			/* Use dummy variable to avoid warning with gcc -Wall */
-			dummy = *(*_Cregexp_parse)++;
+			(*_Cregexp_parse)++;
 		} else {
 			ret = _Cregexp_node((char) ANYOF,
 								_Cregexp_dummy,
