@@ -6,8 +6,10 @@ class BaseDaemon {
 
 /**
  * @assoc 1 - 1 BridgeProtocolEngine
+ * @opt operations
  */
 class VdqmRequestHandler {
+public void run();
 }
 
 
