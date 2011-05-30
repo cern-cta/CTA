@@ -25,4 +25,6 @@ COMM Tape-bridge C library
 
 TAPEBRIDGELIB_OBJS = tapebridge_marshall.o tapebridge_sendTapeBridgeAck.o
 
+DependsOnLibrary(common,castorcommon)
+
 SharedLibraryTarget(castortapebridge,$(TAPEBRIDGELIB_OBJS),,)
