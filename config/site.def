@@ -104,17 +104,3 @@ COMM Define the remote tape copy daemon log file.
 #define BuildSecureCupv	        NO
 #define	BuildSecureVdqm	        NO
 #define BuildSecureRtcopy	NO
-
-#if UseGSI
-#define GSIMech GSI
-#define SecAuthMechGSI       -DGSI 
-#define VomsLocation    /opt/edg
-#if defined(__ia64__) || defined(__x86_64)
-#define GlobusFlavour   gcc64dbg
-#else
-#define GlobusFlavour   gcc32dbg
-#endif
-#else
-#define GSIMech
-#endif
-

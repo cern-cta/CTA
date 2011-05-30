@@ -23,54 +23,34 @@ ClientDependsOnLibrary(common,castorcommon)
 ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS) -ldl)
 
 #if UseGSI
-#if UseVOMS
-VOMS_LOCATION=VomsLocation
-#endif
-GLOBUS_FLAVOUR_NONPTHR=GlobusFlavour
-VOMS_FLAVOUR_NONPTHR=GlobusFlavour
-GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
-VOMS_FLAVOUR=GlobusFlavour/**/pthr
-#if UseVOMS
-VOMS_INCLUDE=-I$(VOMS_LOCATION)/include/glite/security/voms -DUSE_VOMS
-VOMS_LIB_NONPTHR=-L$(VOMS_LOCATION)/lib -lvomsc
-VOMS_LIB_PTHR=-L$(VOMS_LOCATION)/lib -lvomsc_$(VOMS_FLAVOUR)
-#endif
-#define SecAuthMechGSI       -DGSI
-#define SecIncludeDirGSI $(GLOBUS_INC) $(VOMS_INCLUDE) 
-#define SecLibsGSI $(GLOBUS_GSSLIB) -lssl $(VOMS_LIB_NONPTHR)
-#define SecIncludeDirGSIpthr $(GLOBUS_INC) $(VOMS_INCLUDE)
-#define SecLibsGSIpthr $(GLOBUS_GSSLIB_THR) -lssl $(VOMS_LIB_PTHR)
-
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
-GSITLIB = SecLibsGSIpthr -lc -ldl
-SharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GSITLIB))
+SharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
 GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
-GSILIB = SecLibsGSI -lc -ldl
-SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GSILIB))
+SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GLOBUS_GSSLIB) -lssl -lc -ldl)
 
 LOCAL_PATH/Csec_plugin_GSI.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -DGSI $(GLOBUS_INC) $<
 LOCAL_PATH/Csec_plugin_GSI.d: LOCAL_PATH/Csec_plugin_GSS.c
-	gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -DGSI $(GLOBUS_INC) $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 LOCAL_PATH/Csec_plugin_GSI_mapper.o: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -DGSI $(GLOBUS_INC) $<
 LOCAL_PATH/Csec_plugin_GSI_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
-	gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -DGSI $(GLOBUS_INC) $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 LOCAL_PATH/Csec_plugin_GSI_pthr.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix -DGSI $(GLOBUS_INC) $<
 LOCAL_PATH/Csec_plugin_GSI_pthr.d: LOCAL_PATH/Csec_plugin_GSS.c
-	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix -DGSI $(GLOBUS_INC) $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.o: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	@echo Compiling $@
-	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix -DGSI $(GLOBUS_INC) $<
 LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
-	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
+	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix -DGSI $(GLOBUS_INC) $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 #if UseKRB5
