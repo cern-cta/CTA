@@ -21,11 +21,14 @@ COMM
 COMM @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 TAPENETLIB_SRCS = \
   net.cpp
 
 TAPENETLIB_OBJS = $(TAPENETLIB_SRCS:.cpp=.o)
 
+DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 SharedLibraryTarget(castortapenet,$(TAPENETLIB_OBJS),,)

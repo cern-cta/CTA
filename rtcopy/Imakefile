@@ -29,6 +29,7 @@ CommonDependsOnLibrary(vdqm,castorvdqm)
 CommonDependsOnLibrary(tape,castortape)
 CommonDependsOnLibrary(expert,castorexpert)
 CommonDependsOnLibrary(tapebridge,castortapebridge)
+CommonDependsOnLibrary(rfio,castorrfio)
 
 LOCAL_PATH/rtcpc_SendRecv.c: LOCAL_PATH/rtcp_SendRecv.c
 	RemoveFiles($@)

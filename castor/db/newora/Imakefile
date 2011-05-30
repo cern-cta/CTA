@@ -25,11 +25,14 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 CPPFLAGS += -DORASTAGERCONFIGFILE=OraStagerConfigFile $(ORACLE_CPPFLAGS)
-AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh)
+AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
 
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(common,castorcommon)
 
 ORALIB_SRCS = OraCnvSvc.cpp \
             OraStatement.cpp \

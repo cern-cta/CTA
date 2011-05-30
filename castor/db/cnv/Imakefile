@@ -23,6 +23,8 @@ COMM Make Castor DB library
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
+AddLdFlags(-lstdc++)
+
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
      DbCastorFileCnv.cpp \

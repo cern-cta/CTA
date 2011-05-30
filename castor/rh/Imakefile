@@ -36,7 +36,7 @@ LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
 CPPFLAGS += -I $(MEMCACHED_LOCATION)/include
-AddLdFlags(-L $(MEMCACHED_LIB_LOCATION) -lmemcached -lstdc++)
+AddLdFlags(-L $(MEMCACHED_LIB_LOCATION) -lmemcached -lstdc++ -lm -ldl)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

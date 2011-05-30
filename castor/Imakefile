@@ -349,7 +349,7 @@ ClientDependsOnLibrary(ns,castorns)
 ClientDependsOnLibrary(dlf,castordlf)
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.o)
-ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),,)
+ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),,-lm)
 
 EXAMPLEFILE(castor.conf,/etc/castor,install)
 

@@ -25,13 +25,14 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 CPPFLAGS += $(ORACLE_CPPFLAGS) $(PYTHON_INC)
-AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh)
+AddLdFlags($(PYTHON_LIBS) -L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(ns,castorns)
 DependsOnLibrary(castor/tape/python,castortapepython)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 

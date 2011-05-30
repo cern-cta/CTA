@@ -24,6 +24,8 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(ns,castorns)

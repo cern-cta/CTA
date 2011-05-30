@@ -21,6 +21,8 @@ COMM
 COMM @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 TAPEUTILSLIB_SRCS = \
   ScopedLock.cpp \
   SmartFILEPtr.cpp \
@@ -30,5 +32,6 @@ TAPEUTILSLIB_SRCS = \
 
 TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.o)
 
+DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 SharedLibraryTarget(castortapeutils,$(TAPEUTILSLIB_OBJS),,)

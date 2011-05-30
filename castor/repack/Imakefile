@@ -24,6 +24,7 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
 CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=RepackConfigFile $(ORACLE_CPPFLAGS)
 SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
 SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,$(CASTOR_ROOT)/shlib -L$(ORACLE_LIBDIR) -locci -lclntsh
@@ -32,6 +33,7 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(vmgr,castorvmgr)
+DependsOnLibrary(ns,castorns)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 

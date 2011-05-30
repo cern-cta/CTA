@@ -23,6 +23,7 @@ COMM Make Castor libraries and executables
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
+AddLdFlags(-lstdc++)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 

@@ -23,6 +23,8 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 CPPFLAGS += -DORAVDQMCONFIGFILE=VdqmConfigFile
 
 DependsOnLibrary(common,castorcommon)

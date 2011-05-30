@@ -4,6 +4,7 @@ COMM
 COMM  Make stager clients.
 
 CPPFLAGS += -DSTAGEMAP=StageMapFile
+AddLdFlags(-lstdc++)
 
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(ns,castorns)

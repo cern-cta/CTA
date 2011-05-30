@@ -20,7 +20,7 @@ CPPFLAGS += -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\""
 
 SECLIB_OBJS = Csec_api_loader.o Csec_protocol_policy.o Csec_api.o Csec_errmsg.o Csec_apiinit.o Csec_common.o
 ClientDependsOnLibrary(common,castorcommon)
-ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS))
+ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS) -ldl)
 
 #if UseGSI
 #if UseVOMS

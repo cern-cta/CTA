@@ -21,6 +21,8 @@ COMM
 COMM @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(castor/tape/net,castortapenet)

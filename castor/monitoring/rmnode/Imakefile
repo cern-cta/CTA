@@ -24,6 +24,7 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
 CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 DependsOnLibrary(common,castorcommon)

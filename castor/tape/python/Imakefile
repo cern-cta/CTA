@@ -22,7 +22,7 @@ COMM @author Giulia Taurelli
 COMM
 
 CPPFLAGS += $(PYTHON_INC)
-AddLdFlags($(PYTHON_LIBS))
+AddLdFlags($(PYTHON_LIBS) -lstdc++)
 
 TAPEPYTHONLIB_SRCS = \
   python.cpp \
@@ -32,4 +32,5 @@ TAPEPYTHONLIB_SRCS = \
 TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.o)
 
 DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
 SharedLibraryTarget(castortapepython,$(TAPEPYTHONLIB_OBJS),,)

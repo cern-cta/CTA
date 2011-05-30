@@ -24,7 +24,7 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
 CXXFLAGS += `curl-config --cflags`
-AddLdFlags(-L $(LSF_LIB_LOCATION) -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`)
+AddLdFlags(-L $(LSF_LIB_LOCATION) -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs` -lstdc++)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)

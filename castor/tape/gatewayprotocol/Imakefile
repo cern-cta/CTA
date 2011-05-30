@@ -21,6 +21,8 @@ COMM
 COMM @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 COMM
 
+AddLdFlags(-lstdc++)
+
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
   ../tapegateway/DumpNotification.cpp \
