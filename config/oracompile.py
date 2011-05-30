@@ -72,13 +72,13 @@ def getOracleEnv(withPreCompiler, oracleVersions):
     dirpath = None
     found = False
     for directory in ORACLE_DIRS:
-        for libdir in LIBDIRS:
+        for lib in LIBDIRS:
             for version in oracleVersions:
                 for client in CLIENTS:
                     if not found:
                         # Check for a sub directory in the base matching the required ORACLE
                         # version.
-                        dirpathcand = directory.replace("__lib__", libdir)
+                        dirpathcand = directory.replace("__lib__", lib)
                         dirpathcand = dirpathcand.replace("__version__", version)
                         dirpathcand = dirpathcand.replace("__client__", client)
                         if not os.path.isdir(dirpathcand):
@@ -91,6 +91,7 @@ def getOracleEnv(withPreCompiler, oracleVersions):
                             continue
                         # We have a valid base directory
                         dirpath = dirpathcand
+                        libdir = lib
                         found = True
 
     # Set default values for the return argument.
