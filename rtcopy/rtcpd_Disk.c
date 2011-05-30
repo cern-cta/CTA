@@ -212,13 +212,11 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
  * Disk I/O wrappers
  */
 static int GetNewFortranUnit(int pool_index, file_list_t *file) {
-    rtcpFileRequest_t *filereq;
     int AssignedUnit, i, rc;
     diskIOstatus_t *diskIOstatus = NULL;
 
     if ( file == NULL ) return(-1);
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
-    filereq = &file->filereq;
     /*
      * Lock the Fortran Unit table and assign a new number.
      * Note that we use the proc_cntl lock in order to not
@@ -270,13 +268,11 @@ static int GetNewFortranUnit(int pool_index, file_list_t *file) {
 }
 
 static int ReturnFortranUnit(int pool_index, file_list_t *file) {
-    rtcpFileRequest_t *filereq;
     int rc;
     diskIOstatus_t *diskIOstatus = NULL;
 
     if ( file == NULL ) return(-1);
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
-    filereq = &file->filereq;
     if ( !VALID_FORTRAN_UNIT(file->FortranUnit) ) return(0);
     /*
      * Lock the Fortran Unit table and return the unit.
@@ -669,10 +665,8 @@ static int DiskFileClose(int disk_fd,
                          file_list_t *file) {
     rtcpFileRequest_t *filereq;
     int rc, irc, save_rfio_errno, save_serrno, save_errno;
-    diskIOstatus_t *diskIOstatus = NULL;
 
     if ( file == NULL ) return(-1);
-    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     filereq = &file->filereq;
 
     rtcp_log(LOG_DEBUG,"DiskFileClose(%s) close file descriptor %d\n",
@@ -791,7 +785,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         tape_list_t *tape,
                         file_list_t *file) {
     int rc, irc, status, i, j, blksiz, lrecl, save_serrno;
-    int buf_done, nb_bytes, proc_err, severity, last_errno, SendStartSignal;
+    int nb_bytes, proc_err, severity, last_errno, SendStartSignal;
     register int Uformat;
     register int debug = Debug;
     register int convert, concat;
@@ -800,7 +794,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     void *f77conv_context = NULL;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
-    rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
     if ( disk_fd < 0 || indxp == NULL || offset == NULL ||
@@ -810,7 +803,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         return(-1);
     }
 
-    tapereq = &tape->tapereq;
     filereq = &file->filereq;
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     diskIOstatus->disk_fseq = filereq->disk_fseq;
@@ -830,7 +822,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     SendStartSignal = TRUE;
     for (;;) {
         i = *indxp;
-        buf_done = FALSE;
         /*
          * Synchronize access to next buffer
          */
@@ -1177,7 +1168,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             databufs[i]->end_of_tpfile = FALSE;
             databufs[i]->last_buffer = FALSE;
             databufs[i]->flag = BUFFER_EMPTY;
-            buf_done = TRUE;
         }
 
         /*
@@ -1284,7 +1274,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
     register int debug = Debug;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
-    rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
     if ( disk_fd < 0 || indxp == NULL || offset == NULL ||
@@ -1292,7 +1281,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
         serrno = EINVAL;
         return(-1);
     }
-    tapereq = &tape->tapereq;
     filereq = &file->filereq;
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     diskIOstatus->disk_fseq = filereq->disk_fseq;
@@ -1687,7 +1675,6 @@ void *diskIOthread(void *arg) {
     rtcpClientInfo_t *client;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
-    diskIOstatus_t *diskIOstatus = NULL;
     u_signed64 nbbytes;
     SOCKET client_socket;
     char *p, u64buf[22];
@@ -1734,7 +1721,6 @@ void *diskIOthread(void *arg) {
         DiskIOfinished();
         return((void *)&failure);
     }
-    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     tapereq = &tape->tapereq;
     filereq = &file->filereq;
     mode = tapereq->mode;
@@ -2001,7 +1987,6 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     tape_list_t *nexttape;
     file_list_t *nextfile, *prevfile;
     u_signed64 prev_filesz;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
@@ -2089,7 +2074,6 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
      * for last tape file in the request and the file must start in the 
      * first volume.
      */
-    tapereq = &nexttape->tapereq;
     CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
         end_of_tpfile = FALSE;
         thIndex = -1;

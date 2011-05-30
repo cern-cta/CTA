@@ -391,7 +391,7 @@ int rmFile(char *svcClass, char *path)
 
 void dumpStat() 
 {
-  int i, fd, rc, oflags;
+  int i, fd, oflags;
   TimingItem_t *myItem;
   time_t now;
   char printBuffer[1024];
@@ -431,7 +431,7 @@ void dumpStat()
             (int)DELTA_TIME(myItem->stager_qry),
             (int)DELTA_TIME(myItem->stager_rm));
 
-    rc = write(fd,printBuffer,strlen(printBuffer));
+    write(fd,printBuffer,strlen(printBuffer));
     sprintf(printBuffer,
             "%s errors "
             "since %lu "
@@ -457,7 +457,7 @@ void dumpStat()
             countErrors(&(myItem->stager_qry_error)),
             countErrors(&(myItem->stager_rm_error)),
             countErrors(&(myItem->corruption_error)));
-    rc = write(fd,printBuffer,strlen(printBuffer));
+    write(fd,printBuffer,strlen(printBuffer));
     unlockTimingList();
   }
   close(fd);

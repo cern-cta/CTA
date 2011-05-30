@@ -41,7 +41,6 @@ int main(int argc,
   char *p;
   char filepath[CA_MAXPATHLEN+1];
 
-  unsigned int checksum = 0;
   char chksumvalue[CA_MAXCKSUMLEN+1];
   char chksumname[CA_MAXCKSUMNAMELEN+1];
 
@@ -59,7 +58,7 @@ int main(int argc,
   while ((c = Cgetopt_long (argc, argv, "k:n:", longopts, NULL)) != EOF && !errflg) {
     switch (c) {
     case 'k':
-      checksum = strtoul (Coptarg, &dp, 16);
+      strtoul (Coptarg, &dp, 16);
       if (*dp != '\0') {
         fprintf (stderr, "%s: invalid checksum: %s\n", argv[0], Coptarg);
         errflg++;

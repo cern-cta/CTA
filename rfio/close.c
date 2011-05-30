@@ -51,7 +51,6 @@ int rfio_close_v2(int     s)
   char  * trp ;  /* Pointer to a temporary buffer  */
   int temp= 0 ;  /* A temporary buffer has been allocated */
   int s_index;
-  int save_errno;
 
   // Avoiding Valgrind error messages about uninitialized data
   memset(rfio_buf, 0, BUFSIZ);
@@ -67,7 +66,6 @@ int rfio_close_v2(int     s)
     TRACE(2, "rfio", "rfio_close: using local close(%d)",s) ;
     status= close(s) ;
     if ( status < 0 ) serrno = 0;
-    save_errno = errno;
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;

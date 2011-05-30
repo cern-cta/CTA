@@ -447,8 +447,6 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 
-  time_t submit_time = 0;
-
   std::vector<castor::repack::RepackResponse*> resps=ack->repackresponse();
   if (resps.empty()){
     switch (ack->command()){
@@ -501,7 +499,6 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 
     switch ( ack->command() ){
       case GET_NS_STATUS :
-	submit_time = sub->submitTime();
 
           std::cout << "\n   *** Repacking of tape "<<sub->vid()<<" : details file by file ***\n" << std::endl;
 

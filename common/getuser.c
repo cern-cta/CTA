@@ -49,7 +49,6 @@ int get_user(char *from_node,
     char mapuser[CA_MAXUSRNAMELEN+1] ;
     char mapuid[6] ;
     char mapgid[6] ;
-    int counter ;
     char *last = NULL;
 
     if  ( (fsin=fopen(infile,"r"))==NULL ) {
@@ -85,7 +84,6 @@ int get_user(char *from_node,
         else continue ;
 
         /* Checking maphostnam */
-        counter = 0 ;
         if ( strcmp( maphostnam, from_node) && 
             !( (p=strchr(maphostnam,'*'))!= NULL && strstr(from_node,p+1) != NULL ) )
             continue ;

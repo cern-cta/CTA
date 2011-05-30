@@ -756,7 +756,6 @@ int twrite(int fd,char *ptr,int len,
            tape_list_t *tape, file_list_t *file) {
   int     rc, save_serrno, save_errno;
   char *errstr;
-  rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
 
   if ( tape == NULL || file == NULL ) {
@@ -764,7 +763,6 @@ int twrite(int fd,char *ptr,int len,
     (void) close(fd) ;
     return(-1);
   }
-  tapereq = &tape->tapereq;
   filereq = &file->filereq;
 
   if ( file->sonyraw == 0 ) {
@@ -915,7 +913,6 @@ int twrite(int fd,char *ptr,int len,
 int tread(int fd,char *ptr,int len,
           tape_list_t *tape, file_list_t *file) {
   int     rc, status, save_serrno;
-  rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
 
   if ( tape == NULL || file == NULL ) {
@@ -923,7 +920,6 @@ int tread(int fd,char *ptr,int len,
     (void) close(fd) ;
     return(-1);
   }
-  tapereq = &tape->tapereq;
   filereq = &file->filereq;
 
   if ( file->trec == 0 ) filereq->TStartTransferTape = (int)time(NULL);

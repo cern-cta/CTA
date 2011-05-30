@@ -27,7 +27,6 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
   char *message;
   char *valueStr;
   int   valueInt;
-  void *valueVoid;
   char *message2;
   char *value2Str;
   int value2Int;
@@ -147,7 +146,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
       }
     }
   } else {
-    valueVoid = va_arg(args, void *);
+    va_arg(args, void *);
     message2 = va_arg(args, char *);
     if (message2 != NULL) {
       if ((strcmp(message2, "STRING") == 0) || (strcmp(message2, "SIGNAL NAME") == 0)) {

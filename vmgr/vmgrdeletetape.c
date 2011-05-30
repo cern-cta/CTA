@@ -70,15 +70,11 @@ int countNsFilesOnTape(char *vid, unsigned int *nbActiveFiles,
 int main(int argc, char **argv) {
   int  c             = 0;
   int  nbParseErrors = 0;
-  char *nsHost       = NULL;
   char *vid          = NULL;
 
   /* Parse the command-line */
-  while((c = getopt (argc, argv, "h:V:")) != EOF) {
+  while((c = getopt (argc, argv, "V:")) != EOF) {
     switch (c) {
-    case 'h':
-      nsHost = optarg;
-      break;
     case 'V':
       vid = optarg;
       break;

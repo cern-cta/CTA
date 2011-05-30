@@ -188,7 +188,6 @@ void *_Cthread_start_pthread(void *arg) {
   unsigned              thID = 0;  /* Thread ID (WIN32) */
   void               *(*routine)(void *);
   void               *routineargs;
-  int                detached;
 
   if (arg == NULL) {
     serrno = EINVAL;
@@ -204,7 +203,6 @@ void *_Cthread_start_pthread(void *arg) {
 
   routine = start_params->_thread_routine;
   routineargs = start_params->_thread_arg;
-  detached = start_params->detached;
   free(arg);
   /* status = start_params->_thread_routine(start_params->_thread_arg); */
   status = routine(routineargs);

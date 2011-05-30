@@ -1907,7 +1907,6 @@ int   srclose64_v3(int       s,
   char        *p;
   char        tmpbuf[21], tmpbuf2[21];
   struct stat filestat;
-  int rc;
   int ret;
 
   (void)infop;
@@ -1926,7 +1925,7 @@ int   srclose64_v3(int       s,
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  rc = fstat(fd, &filestat);
+  fstat(fd, &filestat);
 
   /* Close the local file                                    */
   status = close(fd);

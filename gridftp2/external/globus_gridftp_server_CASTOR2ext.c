@@ -209,7 +209,6 @@ globus_l_gfs_CASTOR2ext_stat(
     globus_gfs_stat_t *                 stat_array;
     int                                 stat_count;
     int					stat_count_tmp;
-    globus_l_gfs_CASTOR2ext_handle_t *     CASTOR2ext_handle;
     
     char *                              func="globus_l_gfs_CASTOR2ext_stat";
     struct stat64                       statbuf;
@@ -222,9 +221,8 @@ globus_l_gfs_CASTOR2ext_stat(
     char *                              freepathname;
     char                                filename[CA_MAXNAMELEN+1];
     
+    (void)user_arg;
     GlobusGFSName(globus_l_gfs_CASTOR2ext_stat);
-
-    CASTOR2ext_handle = (globus_l_gfs_CASTOR2ext_handle_t *) user_arg;
 
     pathname=strdup(stat_info->pathname);
     

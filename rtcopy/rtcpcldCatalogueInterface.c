@@ -2463,7 +2463,6 @@ int rtcpcld_updcMigrFailed(tape_list_t *tape,
   struct Cstager_TapeCopy_t *tapeCopy     = NULL;
   struct Cstager_Stream_t   **streamArray = NULL;
   struct Cstager_Segment_t  *segment      = NULL;
-  struct Cstager_Tape_t     *tp           = NULL;
   struct C_BaseAddress_t    *baseAddr     = NULL;
   struct C_IAddress_t       *iAddr        = NULL;
   struct C_IObject_t        *iObj         = NULL;
@@ -2502,7 +2501,6 @@ int rtcpcld_updcMigrFailed(tape_list_t *tape,
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   segment = (struct Cstager_Segment_t *)file->dbRef->row;
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
@@ -2639,7 +2637,6 @@ int rtcpcld_updcRecallFailed(tape_list_t *tape,
                              int del_file)
 {
   struct Cstager_Segment_t *segment    = NULL;
-  struct Cstager_Tape_t    *tp         = NULL;
   struct C_BaseAddress_t   *baseAddr   = NULL;
   struct C_IAddress_t      *iAddr      = NULL;
   struct C_IObject_t       *iObj       = NULL;
@@ -2696,7 +2693,6 @@ int rtcpcld_updcRecallFailed(tape_list_t *tape,
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   segment = (struct Cstager_Segment_t *)fl->dbRef->row;
   if (segment == NULL ) {
     (void)dlf_write(
@@ -3114,13 +3110,11 @@ int rtcpcld_updcFileMigrated(tape_list_t *tape,
   struct Cstager_DiskCopy_t          **diskCopyArray = NULL;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   struct Cstager_Segment_t           *segment        = NULL;
-  struct Cstager_Tape_t              *tp             = NULL;
   struct C_BaseAddress_t             *baseAddr       = NULL;
   struct Cstager_ITapeSvc_t          *tpSvc          = NULL;
   struct C_IAddress_t                *iAddr          = NULL;
   struct C_IObject_t                 *iObj           = NULL;
   struct C_Services_t                *svcs           = NULL;
-  rtcpFileRequest_t                  *filereq        = NULL;
   struct Cns_fileid                  *fileid         = NULL;
   int                                rc              = 0;
   int                                nbTapeCopies    = 0;
@@ -3141,7 +3135,6 @@ int rtcpcld_updcFileMigrated(tape_list_t *tape,
     return(-1);
   }
 
-  filereq = &(file->filereq);
   fileid = NULL;
   (void)rtcpcld_getFileId(file,&fileid);
 
@@ -3168,9 +3161,6 @@ int rtcpcld_updcFileMigrated(tape_list_t *tape,
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  if ( tape->dbRef != NULL ) {
-      tp = (struct Cstager_Tape_t *)tape->dbRef->row;
-  }
   if ( file->dbRef != NULL ) {
     segment = (struct Cstager_Segment_t *)file->dbRef->row;
   }

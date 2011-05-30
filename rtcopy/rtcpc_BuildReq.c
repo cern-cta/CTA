@@ -264,7 +264,6 @@ static int rtcpc_A_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
 
@@ -288,8 +287,6 @@ static int rtcpc_A_opt(int mode,
 
     rc = 0;
     tl = *tape;
-
-    tapereq = &tl->tapereq;
 
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
@@ -327,7 +324,6 @@ static int rtcpc_b_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -350,8 +346,6 @@ static int rtcpc_b_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -405,7 +399,6 @@ static int rtcpc_C_opt(int mode,
     char conv_values[] = {FIXVAR,ASCCONV,EBCCONV};
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -425,8 +418,6 @@ static int rtcpc_C_opt(int mode,
 
     rc = 0;
     tl = *tape;
-
-    tapereq = &tl->tapereq;
     
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         strcpy(local_value,value);
@@ -510,7 +501,6 @@ static int rtcpc_E_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     int i;
     char erropts[][10] = { "skip", "keep", "ignoreeoi", "" };
@@ -535,8 +525,6 @@ static int rtcpc_E_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         q = p = local_value;
         filereq = &fl->filereq;
@@ -583,7 +571,6 @@ static int rtcpc_f_opt(int mode,
     char *p, *q, *local_value,fid[CA_MAXFIDLEN+1];
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -608,8 +595,6 @@ static int rtcpc_f_opt(int mode,
     tl = *tape;
 
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -637,7 +622,6 @@ static int rtcpc_F_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char valid_recfm[][10] = {"U,f77","U","U,bin","F","FB","FBS",
         "FS","F,-f77",""};
@@ -665,8 +649,6 @@ static int rtcpc_F_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -944,7 +926,6 @@ static int rtcpc_L_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -967,8 +948,6 @@ static int rtcpc_L_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1000,7 +979,6 @@ static int rtcpc_n_opt(int mode,
     int rc;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     (void)value;
@@ -1012,8 +990,6 @@ static int rtcpc_n_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     if ( rc != -1 ) {
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
@@ -1041,7 +1017,6 @@ static int rtcpc_N_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -1064,8 +1039,6 @@ static int rtcpc_N_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1091,7 +1064,6 @@ static int rtcpc_o_opt(int mode,
     int rc;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     (void)value;
@@ -1103,8 +1075,6 @@ static int rtcpc_o_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1257,7 +1227,6 @@ static int rtcpc_q_opt(int mode,
     int rc;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char *fseq_list, *p, *q;
 
@@ -1283,8 +1252,6 @@ static int rtcpc_q_opt(int mode,
     tl = *tape;
 
     if ( tl->file == NULL ) rc = newFileList(tape,NULL,mode);
-
-    tapereq = &tl->tapereq;
 
     while ( rc != -1 && q != NULL ) {
         CLIST_ITERATE_BEGIN(tl->file,fl) {
@@ -1331,7 +1298,6 @@ static int rtcpc_s_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -1354,8 +1320,6 @@ static int rtcpc_s_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1424,7 +1388,6 @@ static int rtcpc_t_opt(int mode,
     char *p, *q, *local_value;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -1447,8 +1410,6 @@ static int rtcpc_t_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1473,7 +1434,6 @@ static int rtcpc_T_opt(int mode,
     int rc;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     (void)value;
@@ -1485,8 +1445,6 @@ static int rtcpc_T_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*
@@ -1703,7 +1661,6 @@ static int rtcpc_Z_opt(int mode,
     int rc;
     tape_list_t *tl;
     file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
     if ( value == NULL ) {
@@ -1719,8 +1676,6 @@ static int rtcpc_Z_opt(int mode,
     rc = 0;
     tl = *tape;
 
-    tapereq = &tl->tapereq;
-    
     CLIST_ITERATE_BEGIN(tl->file,fl) {
         filereq = &fl->filereq;
         /*

@@ -1375,8 +1375,7 @@ int rtcpc_sendReqList(
                       rtcpc_sockets_t **socks,
                       tape_list_t *tape
                       ) {
-  int reqID, rc, tStartRequest, mode, local_severity, save_serrno = 0;
-  int dumptape = FALSE;
+  int reqID, rc, tStartRequest, local_severity, save_serrno = 0;
   tape_list_t *tl;
   file_list_t *fl;
   rtcpTapeRequest_t *tapereq;
@@ -1393,7 +1392,6 @@ int rtcpc_sendReqList(
     tapereq->TStartRequest = tStartRequest;
     tapereq->err.severity = tapereq->err.severity & ~RTCP_RESELECT_SERV;
     tapereq->tprc = 0;
-    mode = tapereq->mode;
     rtcp_log(
              LOG_DEBUG,
              "rtcpc_sendReqList(): send tape request, unit=%s, reqID %d\n",
@@ -1466,7 +1464,6 @@ int rtcpc_sendReqList(
        * This is the signature of a dumptape request. There
        * is only the tape request and an attached dumptape request.
        */
-      dumptape = TRUE;
       rtcp_log(LOG_DEBUG,"rtcpc_sendReqList(): send dumptape request\n");
       hdr->reqtype = RTCP_DUMPTAPE_REQ;
       rc = rtcp_SendReq(
@@ -1661,7 +1658,6 @@ void *rtcpc_processReqUpdate(void *arg)
   tape_list_t *tape, *tl;
   file_list_t *fl;
   rtcpHdr_t tmpHdr, *hdr;
-  rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq, fltmp;
   SOCKET s;
   int check_more_work, rc = 0, retval = 0, save_serrno= 0, reqID, dumptape;
@@ -1675,7 +1671,6 @@ void *rtcpc_processReqUpdate(void *arg)
   thr = (rtcpcThrData_t *)arg;
   hdr = &thr->hdr;
   tape = thr->tape;
-  tapereq = &thr->tapereq;
   filereq = &thr->filereq;
   s = thr->s;
   reqID = thr->reqID;

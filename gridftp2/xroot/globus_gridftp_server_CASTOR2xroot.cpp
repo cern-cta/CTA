@@ -270,12 +270,10 @@ extern "C" {
   static void
   globus_l_gfs_CASTOR2xroot_command(globus_gfs_operation_t op,
                                     globus_gfs_command_info_t*,
-                                    void *user_arg) {
-    globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
+                                    void*) {
     globus_result_t result;
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_command);
-    CASTOR2xroot_handle = (globus_l_gfs_CASTOR2xroot_handle_t *) user_arg;
     /* in gridftp disk server we do not allow to perform commads */
     result=GlobusGFSErrorGeneric("error: commands denied");
     globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);

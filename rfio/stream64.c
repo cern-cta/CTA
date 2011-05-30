@@ -833,7 +833,6 @@ int rfio_close64_v3(int     s)
   char     rfio_buf[BUFSIZ];
   int      s_index;
   int      eod = 0;            /* Close received on data socket*/
-  int      save_errno;
 
   /* Avoiding Valgrind error messages about uninitialized data */
   memset(rfio_buf, 0, BUFSIZ);
@@ -847,7 +846,6 @@ int rfio_close64_v3(int     s)
   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
     TRACE(2, "rfio", "rfio_close64_v3: using local close(%d)",s) ;
     status= close(s) ;
-    save_errno = errno;
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;

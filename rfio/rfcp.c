@@ -189,7 +189,6 @@ int main(int argc,
   int v;
 
   extern char * getifnam() ;
-  int input_is_local = 1;
 
   /* Init important variable for the cleaner */
   path1=path2=NULL;
@@ -295,7 +294,6 @@ int main(int argc,
 
   if ( l1 ) {
     strcpy(shost1,host1) ;
-    input_is_local = 0;
   }
 
   strcpy( filename, path1 );

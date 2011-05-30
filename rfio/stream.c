@@ -850,7 +850,6 @@ int rfio_close_v3(int     s)
   int n;
   char     rfio_buf[BUFSIZ];
   int s_index;
-  int save_errno;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_close_v3(%d)", s);
@@ -862,7 +861,6 @@ int rfio_close_v3(int     s)
 
     TRACE(2, "rfio", "rfio_close_v3: using local close(%d)",s) ;
     status= close(s) ;
-    save_errno = errno;
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;

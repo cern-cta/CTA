@@ -5862,7 +5862,6 @@ int Cns_srv_closex(char *req_data,
   time_t       new_mod_time = 0;
   u_signed64   fileid;
   u_signed64   filesize;
-  unsigned int checksum = 0;
   char         *dp = NULL;
   char         repbuf[93];
   char         *sbp;
@@ -5901,7 +5900,7 @@ int Cns_srv_closex(char *req_data,
   if (csumtype[0] != '\0' && strcmp(csumtype, "AD") && strcmp(csumtype, "PA"))
     RETURN (EINVAL);
   if (csumvalue[0] != '\0') {
-    checksum = strtoul (csumvalue, &dp, 16);
+    strtoul (csumvalue, &dp, 16);
     if (*dp != '\0') {
       RETURN (EINVAL);
     }

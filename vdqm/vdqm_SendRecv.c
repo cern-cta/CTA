@@ -758,7 +758,7 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
     char servername[CA_MAXHOSTNAMELEN+1];
     char *p;
-    int magic,reqtype,len,local_access; 
+    int magic,reqtype,len; 
     int rc;
     SOCKET s;
     
@@ -773,7 +773,6 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     }
     
     *servername = '\0';
-    local_access = 0;
     magic = len = 0;
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
@@ -851,7 +850,7 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     char *p;
     struct sockaddr_in from;
     socklen_t fromlen;
-    int magic,reqtype,len,local_access; 
+    int magic,reqtype,len; 
     int rc;
     SOCKET s;
     
@@ -867,7 +866,6 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     
     reqtype = -1;
     *servername = '\0';
-    local_access = 0;
     magic = len = 0;
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
@@ -961,7 +959,7 @@ int vdqm_SendDelDrv_Transfer(vdqmnw_t *nw, vdqmDelDrv_t *msg)
     char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
     char servername[CA_MAXHOSTNAMELEN+1];
     char *p;
-    int magic,reqtype,len,local_access;
+    int magic,reqtype,len;
     int rc;
     SOCKET s;
 
@@ -976,7 +974,6 @@ int vdqm_SendDelDrv_Transfer(vdqmnw_t *nw, vdqmDelDrv_t *msg)
     }
 
     *servername = '\0';
-    local_access = 0;
     magic = len = 0;
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
@@ -1049,7 +1046,7 @@ int vdqm_SendDedicate_Transfer(vdqmnw_t *nw, vdqmDedicate_t *msg)
     char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
     char servername[CA_MAXHOSTNAMELEN+1];
     char *p;
-    int magic,reqtype,len,local_access;
+    int magic,reqtype,len;
     int rc;
     SOCKET s;
 
@@ -1064,7 +1061,6 @@ int vdqm_SendDedicate_Transfer(vdqmnw_t *nw, vdqmDedicate_t *msg)
     }
 
     *servername = '\0';
-    local_access = 0;
     magic = len = 0;
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
@@ -1140,7 +1136,7 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     char *p;
     struct sockaddr_in from;
     socklen_t fromlen;
-    int magic,reqtype,len,local_access; 
+    int magic,reqtype,len; 
     int rc;
     SOCKET s;
     
@@ -1160,7 +1156,6 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     
     reqtype = -1;
     *servername = '\0';
-    local_access = 0;
     magic = len = 0;
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);

@@ -527,7 +527,7 @@ int migratorCallback(rtcpTapeRequest_t *tapereq,
   int rc = 0, msgNo;
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
-  char *blkid = NULL, *func = NULL;
+  char *blkid = NULL;
 
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
@@ -569,11 +569,9 @@ int migratorCallback(rtcpTapeRequest_t *tapereq,
   switch (filereq->proc_status) {
   case RTCP_POSITIONED:
     msgNo = RTCPCLD_MSG_CALLBACK_POS;
-    func = "processTapePositionCallback";
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
       msgNo = RTCPCLD_MSG_COPYFAILED;
-      func = "processFileCopyCallback";
       rc = migratorCallbackFileCopied(
                                       tapereq,
                                       filereq
@@ -582,7 +580,6 @@ int migratorCallback(rtcpTapeRequest_t *tapereq,
     break;
   case RTCP_FINISHED:
     msgNo = RTCPCLD_MSG_CALLBACK_CP;
-    func = "processFileCopyCallback";
     rc = migratorCallbackFileCopied(
                                     tapereq,
                                     filereq
@@ -594,7 +591,6 @@ int migratorCallback(rtcpTapeRequest_t *tapereq,
     break;
   case RTCP_REQUEST_MORE_WORK:
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
-    func = "processGetMoreWorkCallback";
     if ( filereq->cprc == 0 ) {
       rc = migratorCallbackMoreWork(filereq);
     }
@@ -613,11 +609,9 @@ int migratorCallback(rtcpTapeRequest_t *tapereq,
     break;
   default:
     msgNo = RTCPCLD_MSG_INTERNAL;
-    func = "unprocessedCallback";
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
       msgNo = RTCPCLD_MSG_COPYFAILED;
-      func = "processFileCopyCallback";
       rc = migratorCallbackFileCopied(
                                       tapereq,
                                       filereq

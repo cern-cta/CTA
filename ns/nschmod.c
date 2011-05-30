@@ -101,7 +101,6 @@ int chmoddir (char *dir,
 
 int main(int argc,char **argv)
 {
-  int absmode = 0;
   char *dp;
   int c = 0;
   int errflg = 0;
@@ -148,7 +147,6 @@ int main(int argc,char **argv)
       fprintf (stderr, "invalid mode: %s\n", mode_arg);
       exit (USERR);
     }
-    absmode = 1;
   } else { /* mnemonic */
     fprintf (stderr, "symbolic modes not supported yet\n");
     exit (USERR);

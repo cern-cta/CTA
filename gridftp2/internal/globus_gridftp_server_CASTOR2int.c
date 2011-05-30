@@ -349,12 +349,10 @@ globus_l_gfs_CASTOR2int_command(
     globus_gfs_command_info_t *         cmd_info,
     void *                              user_arg)
 {
-    globus_l_gfs_CASTOR2int_handle_t *     CASTOR2int_handle;
     globus_result_t                     result;
-    
     (void)cmd_info;
+    (void)user_arg;
     GlobusGFSName(globus_l_gfs_CASTOR2int_command);
-    CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     /* in gridftp disk server we do not allow to perform commads */
     result=GlobusGFSErrorGeneric("error: commands denied");
     globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
@@ -363,12 +361,10 @@ globus_l_gfs_CASTOR2int_command(
  
 int CASTOR2int_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2int_handle_t * CASTOR2int_handle)
    {
-   char *	host;
    int   	rc;
    char *	func="CASTOR2int_handle_open";
    char * uuid_path;
    
-   host=NULL;
    if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
      uuid_path = path;
      while(strchr(uuid_path, '/') != NULL) {

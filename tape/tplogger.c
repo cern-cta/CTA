@@ -307,7 +307,6 @@ int tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 	char              *name;
 	char              *string;
 	int               i;
-	int		  rv;
 	int               ok;
         int               err = 0;
         int               ndx = -1;
@@ -384,7 +383,7 @@ int tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 	if (ok == 1) {
 
                 Cthread_mutex_lock( &api_mutex );
-		rv = dlf_writep( req_id, prio, msg_no, NULL, num_params, plist );
+		dlf_writep( req_id, prio, msg_no, NULL, num_params, plist );
 		Cthread_mutex_unlock( &api_mutex );
 
 	} else {

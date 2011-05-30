@@ -1332,7 +1332,7 @@ void checkConfiguredPolicy()
 }
 
 int main() {
-  struct Cstager_Segment_t **failedSegments = NULL, *segm, **segms;
+  struct Cstager_Segment_t **failedSegments = NULL, *segm;
   struct Cstager_CastorFile_t *castorFile = NULL;
   struct Cstager_Tape_t *tp;
   struct Cstager_TapeCopy_t *tapeCopy;
@@ -1341,7 +1341,7 @@ int main() {
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *tapeErrorHunterFacilityName = TAPEERRORHANDLER_FACILITY;
-  int nbFailedSegments = 0, nbSegms, i, fseq, rc;
+  int nbFailedSegments = 0, i, fseq, rc;
   int tpErrorCode, tpSeverity, segErrorCode, segSeverity, mode;
   char *vid, *tpErrMsgTxt, *segErrMsgTxt, cns_error_buffer[512];
   int deleteDiskCopy = 0;
@@ -1388,8 +1388,6 @@ int main() {
   }
 
   for ( i=0; i<nbFailedSegments; i++ ) {
-    nbSegms = 0;
-    segms = NULL;
     segm = failedSegments[i];
     Cstager_Segment_id(segm,&key);
     Cstager_Segment_tape(segm,&tp);

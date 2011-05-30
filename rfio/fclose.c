@@ -21,7 +21,6 @@
 /* Remote file close           */
 int rfio_fclose(RFILE *fp)                      /* Remote file pointer                  */
 {
-  int     save_errno;
   int     status;
 
   INIT_TRACE("RFIO_TRACE");
@@ -43,7 +42,6 @@ int rfio_fclose(RFILE *fp)                      /* Remote file pointer          
   if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
     status= fclose((FILE *)fp) ;
     if ( status < 0 ) serrno = 0;
-    save_errno = errno;
     END_TRACE() ;
     rfio_errno = 0;
     return (status ? status : 0) ;

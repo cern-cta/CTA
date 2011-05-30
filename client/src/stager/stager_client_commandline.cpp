@@ -184,7 +184,7 @@ extern "C" {
 int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
                           char** service_class, char** usertag, int* display_reqid)
 {
-  int nargs, Coptind, Copterr, errflg;
+  int Coptind, Copterr, errflg;
   char c;
   static struct Coptions longopts[] =
     {
@@ -197,7 +197,6 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
       {NULL,            0,                  NULL,        0}
     };
 
-  nargs = argc;
   Coptind = 1;
   Copterr = 1;
   errflg = 0;

@@ -73,12 +73,11 @@ int main(int argc, char *argv[]) {
     extern char * Coptarg ; 
     extern int    Coptind ;
     int std = 0, mode=0;
-    int display_dedication = 1;
 
     *dgn = *server = '\0';
     Coptind = 1;
     Copterr = 1;
-    while ( (c = Cgetopt(argc,argv,"jg:S:xdD")) != EOF ) {
+    while ( (c = Cgetopt(argc,argv,"jg:S:xD")) != EOF ) {
         switch(c) {
         case 'j':
             give_jid = 0;
@@ -91,9 +90,6 @@ int main(int argc, char *argv[]) {
             break;
         case 'x':
             std = 1;
-            break;
-        case 'd':
-            display_dedication = 0;
             break;
         case 'D':
             drives_only = 1;

@@ -102,7 +102,6 @@ static int rfio_smunlink(int s,
 {
   char     buf[BUFSIZ];
   int             status;         /* remote fopen() status        */
-  int     len;
   int     rc, ans_req, rcode;
   char    *p=buf;
   int     uid;
@@ -119,7 +118,6 @@ static int rfio_smunlink(int s,
     *old_uid = -1;
   Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
 
-  len = strlen(filename)+1;
   uid = geteuid() ;
   gid = getegid () ;
   if ( uid != *old_uid ) {

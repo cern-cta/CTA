@@ -123,7 +123,7 @@ int tpd_main() {
 	struct sockaddr_in sin;
 	struct servent *sp;
 	struct timeval timeval;
-	time_t lasttime, tm, lasttime_monitor_msg_sent;
+	time_t lasttime, tm;
         time_t lasttime_vdqm_update;
         int vdqmchkintvl = VDQMCHKINTVLDFT;
 #ifdef TPCSEC
@@ -166,7 +166,6 @@ int tpd_main() {
 		exit (c);
 
 	lasttime = time(0);
-	lasttime_monitor_msg_sent = lasttime;
         lasttime_vdqm_update = 0;
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
@@ -445,11 +444,8 @@ int tpd_main() {
 int main(int argc,
          char **argv)
 {
-	struct main_args main_args;
-
-	main_args.argc = argc;
-	main_args.argv = argv;
-
+	(void)argc;
+	(void)argv;
 	if ((maxfds = Cinitdaemon ("taped", wait4child)) < 0)
 		exit (1);
 	exit (tpd_main());
@@ -1255,7 +1251,7 @@ reply:
 void prockilltreq(char *req_data,
                   char *clienthost)
 {
-	int c, i;
+	int i;
 	gid_t gid;
 	int jid;
 	char *path;
@@ -1281,8 +1277,6 @@ void prockilltreq(char *req_data,
                             "GID",        TL_MSG_PARAM_GID, gid,
                             "JobID",      TL_MSG_PARAM_INT, jid,
                             "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
-
-	c = 0;
 
 	/* check if reserv done */
 

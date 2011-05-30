@@ -181,7 +181,6 @@ void  RepackKiller::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(castor:
   
   /* get the files using the Filelisthelper */
   FileListHelper flp(ptr_server->getNsName());
-  Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   std::vector<std::string> filelist = flp.getFilePathnames(sreq);
   std::vector<std::string>::iterator filename = filelist.begin();
 

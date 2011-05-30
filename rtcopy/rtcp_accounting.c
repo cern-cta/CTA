@@ -128,7 +128,6 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     int mode = WRITE_DISABLE;
     int exitcode = 0;
     int fseq = 0;
-    int rc;
     char charcom, *p, stageID[CA_MAXSTGRIDLEN+1];
     char *disksrv = NULL;
     char *errmsgtxt = NULL;
@@ -168,10 +167,10 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         fseq = filereq->tape_fseq;
 
         if ( subtype == RTCPCMDC ) {
-            if ( AbortFlag == 0 ) rc = rtcp_RetvalSHIFT(tape,NULL,&exitcode);
+            if ( AbortFlag == 0 ) rtcp_RetvalSHIFT(tape,NULL,&exitcode);
             if ( AbortFlag == 1 ) exitcode = USERR;
             if ( AbortFlag == 2 ) exitcode = SYERR;
-        } else rc = rtcp_RetvalSHIFT(tape,file,&exitcode);
+        } else rtcp_RetvalSHIFT(tape,file,&exitcode);
 
         retry_nb = MAX_CPRETRY - filereq->err.max_cpretry;
         if ( retry_nb <= 0 ) retry_nb = MAX_TPRETRY - filereq->err.max_tpretry;
@@ -210,12 +209,12 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         exitcode = UNERR;
     }
 
-    rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
-                    stager_reqID,charcom,ifce,tapereq->vid,
-                    KBytes,retry_nb,exitcode,client->clienthost,disksrv,
-                    fseq,errmsgtxt);
+    rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
+               stager_reqID,charcom,ifce,tapereq->vid,
+               KBytes,retry_nb,exitcode,client->clienthost,disksrv,
+               fseq,errmsgtxt);
     if ( subtype == RTCPPRC || subtype == RTCPPRR ) 
-        rc = rtcp_AccountTiming(tape,file);
+        rtcp_AccountTiming(tape,file);
     return(0);
 }
 

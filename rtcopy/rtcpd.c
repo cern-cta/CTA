@@ -105,7 +105,6 @@ int rtcpd_main() {
     int pid;
     char workdir[] = WORKDIR;
     char tpserver[CA_MAXHOSTNAMELEN+1];
-    time_t starttime;
     SOCKET *listen_socket = NULL;
     SOCKET *request_socket = NULL;
     SOCKET accept_socket = INVALID_SOCKET;
@@ -181,7 +180,6 @@ int rtcpd_main() {
     }
 
     gethostname(tpserver,CA_MAXHOSTNAMELEN);
-    starttime = time(NULL);
 #if defined(__DATE__) && defined (__TIME__)
     rtcp_log(LOG_INFO,"Rtcopy server generated at %s %s. Started in %s:%s\n",
              __DATE__,__TIME__,tpserver,workdir);

@@ -82,13 +82,13 @@ throw (castor::exception::Exception) {
   struct sockaddr_in from;
   struct hostent *hp;
   int fromlen;
-  int magic,reqtype,len,local_access; 
+  int reqtype,len,local_access; 
   int rc;
   
       
   reqtype = -1;
   local_access = 0;
-  magic = len = 0;
+  len = 0;
 
   
   // Read rest of header. The magic number is already read out

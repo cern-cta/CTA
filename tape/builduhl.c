@@ -20,13 +20,10 @@ int builduhl(char uhl1[],
              char *inq_data,
              char *drive_serial_no)
 {
-	int blkcnt;
 	char buf[CA_MAXHOSTNAMELEN+1];
 	int i;
 	int n;
 	char *p;
-
-	blkcnt = 0;
 
 	/* build UHL1 */
 

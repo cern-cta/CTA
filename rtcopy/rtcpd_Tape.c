@@ -761,7 +761,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     int nb_skipped_blks = 0;
     register int Uformat;
     register int debug = Debug;
-    rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
     extern char *u64tostr (u_signed64, char *, int);
 
@@ -770,7 +769,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         serrno = EINVAL;
         return(-1);
     }
-    tapereq = &tape->tapereq;
     filereq = &file->filereq;
 
     /*

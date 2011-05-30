@@ -18,7 +18,6 @@ int main(int argc,char **argv)
 {
   int c;
   int errflg = 0;
-  int modify = 0;
   char *dp;
   int tmp;
   static struct Coptions longopts[] = {
@@ -52,11 +51,8 @@ int main(int argc,char **argv)
 
   Copterr = 1;
   Coptind = 1;
-  while ((c = Cgetopt_long (argc, argv, "m", longopts, NULL)) != EOF) {
+  while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
     switch (c) {
-    case 'm':
-      modify = 1;
-      break;
     case OPT_UID:
       if (Cupv_strtoi(&tmp, Coptarg, &dp, 10) == -1) {
 	errflg++;

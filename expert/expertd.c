@@ -211,7 +211,6 @@ int procreq(int req_type,
             char *clienthost,
             int s)
 {
-	int c;
   (void)data_len;
 	switch (req_type) {
 
@@ -221,13 +220,12 @@ int procreq(int req_type,
 	case EXP_RQ_RECALLER:
 	case EXP_RQ_GC:
 	case EXP_RQ_REPLICATION:
-		c = exp_srv_execute (req_type, req_data, clienthost, s);
+		exp_srv_execute (req_type, req_data, clienthost, s);
 		break;
 
 	default:
 		explogit (func, EXP98, "illegal request\n");
 		sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, EEXPILLREQ);
-		c = SEINTERNAL;
 		break;
 	}
 	/*

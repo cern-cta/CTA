@@ -30,12 +30,10 @@ int main(int	argc,
 	char *dvn;
 	char *dvrname;
 	char func[16];
-	gid_t gid;
 	int reason;
 	int rpfd;
 	int status;
 	int tapefd;
-	uid_t uid;
 	int vdqm_rc;
 	int vdqm_status;
 #if defined(linux)
@@ -67,8 +65,6 @@ int main(int	argc,
 	drive = argv[1];
 	dvn = argv[2];
 	rpfd = atoi (argv[3]);
-	uid = atoi (argv[4]);
-	gid = atoi (argv[5]);
 	jid = atoi (argv[6]);
 	dgn = argv[7];
 	dvrname = argv[8];

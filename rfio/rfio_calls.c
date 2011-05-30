@@ -2455,7 +2455,6 @@ int   srclose(int     s,
   char   * p;
   char tmpbuf[21], tmpbuf2[21];
   struct stat filestat;
-  int rc;
   int ret;
 
   log(LOG_INFO,"rclose(%d,%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d preseek\n",
@@ -2472,7 +2471,7 @@ int   srclose(int     s,
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  rc = fstat(fd, &filestat);
+  fstat(fd, &filestat);
 
   status = close(fd);
   rcode = ( status < 0 ) ? errno : 0;
@@ -3248,7 +3247,6 @@ int srreaddir(int s,
   int   namlen;       /* length of filename   */
   char  * p;          /* Pointer to buffer    */
   char  direntmsg[MAXFILENAMSIZE+WORDSIZE+3*LONGSIZE];  /* Reply msg */
-  int   msgsiz;       /* Message size         */
   struct dirent *dp = NULL;
 
   /*
@@ -3257,7 +3255,6 @@ int srreaddir(int s,
   log(LOG_DEBUG, "rreaddir(%d, 0x%x)\n",s, dirp);
   p= rqstbuf + 2*WORDSIZE;
 
-  msgsiz = 0;
   status = 0;
 
   dp = readdir(dirp);
@@ -3943,7 +3940,6 @@ int   srclose_v3(int     s,
   char *p;
   char tmpbuf[21], tmpbuf2[21];
   struct stat filestat;
-  int rc;
   int ret;
 
   (void)infop;
@@ -3962,7 +3958,7 @@ int   srclose_v3(int     s,
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  rc = fstat(fd, &filestat);
+  fstat(fd, &filestat);
 
   status = close(fd);
   rcode = ( status < 0 ) ? errno : 0;

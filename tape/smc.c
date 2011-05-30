@@ -510,10 +510,9 @@ int main(int argc,
 		break;
 	case 'M':
 	        if (*rmchost == '\0') {
-		  int ret;
 		  c = smc_move_medium(fd, loader, slotaddr, targetslotaddr,  invert);
 		  if (c != 0) {
-		    ret = smc_lasterror (&smc_status, &msgaddr);
+		    smc_lasterror (&smc_status, &msgaddr);
 		    fprintf(stderr, SR020, "move medium", msgaddr);
 		  }
 		

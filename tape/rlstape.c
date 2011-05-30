@@ -44,21 +44,16 @@ int rbtdmntchk( int*, char*, unsigned int* );
 int main(int	argc,
          char	**argv)
 {
-	char *acctname;
 	int c;
 	unsigned int demountforce;
-	int den;
-	struct devinfo *devinfo;
 	char *dgn;
 	char *drive;
 	char *dvn;
 	char *getconfent();
 	gid_t gid;
 	char *loader;
-	int mode;
 	int msglen;
 	int n;
-	char *name;
 	char *p;
 	char *q;
 	int rlsflags;
@@ -102,8 +97,6 @@ int main(int	argc,
 	rpfd = atoi (argv[4]);
 	uid = atoi (argv[5]);
 	gid = atoi (argv[6]);
-	name = argv[7];
-	acctname = argv[8];
 	jid = atoi (argv[9]);
 	ux = atoi (argv[10]);
 	rlsflags = atoi (argv[11]);
@@ -111,8 +104,6 @@ int main(int	argc,
 	devtype = argv[13];
 	dvrname = argv[14];
 	loader = argv[15];
-	mode = atoi (argv[16]);
-	den = atoi (argv[17]);
         tapealerts = 0;
         harderror = 0;
         mediaerror = 0;
@@ -145,7 +136,6 @@ int main(int	argc,
         }        
 
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
-	devinfo = Ctape_devinfo (devtype);
 
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 && errno == EBUSY)
 		sleep (UCHECKI);
