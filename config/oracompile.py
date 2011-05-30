@@ -31,9 +31,10 @@ import re
 import getopt
 
 # Constants
-ORACLE_INSTANTCLIENT_BASEDIR = "/usr/__lib__/oracle/__version__/client"
-ORACLE_AFS_BASEDIR           = "/afs/cern.ch/project/oracle/@sys/__version__"
-DEFAULT_ORACLE_VERSION       = "10.2.0.3"
+ORACLE_DIRS = ("/usr/__lib__/oracle/__version__/__client__",  "/afs/cern.ch/project/oracle/@sys/__version__")
+LIBDIRS     = ("lib", "lib64")
+VERSIONS    = ("11.2", "10.2.0.3", "10203")
+CLIENTS     = ("client", "client64")
 
 #------------------------------------------------------------------------------
 # Usage
@@ -54,7 +55,7 @@ def usage():
 #------------------------------------------------------------------------------
 # GetOracleEnv
 #------------------------------------------------------------------------------
-def getOracleEnv(withPreCompiler=False, oracleVersion=DEFAULT_ORACLE_VERSION):
+def getOracleEnv(withPreCompiler, oracleVersions):
 
     """
     Function to automatically determine the ORACLE environment required to
@@ -66,47 +67,31 @@ def getOracleEnv(withPreCompiler=False, oracleVersion=DEFAULT_ORACLE_VERSION):
     returned structure will keys with no value.
     """
 
-    # By default we try and use the installation of the local ORACLE
-    # instantclient (OIC) before falling back to /afs/. In order to do this we
-    # need to determine the naming convention for the lib directory i.e lib64
-    # vs lib.
-    libdir = ""
-    (bits, linkage) = platform.architecture()
-    if bits == "64bit":
-        libdir = "lib64"
-    elif bits == "32bit":
-        libdir = "lib"
-    else:
-        return ""
-
     # Try to determine the base directory to be used taking into consideration
     # the supported ORACLE versions.
     dirpath = None
-    for directory in (ORACLE_INSTANTCLIENT_BASEDIR, ORACLE_AFS_BASEDIR):
-
-        # Check for a sub directory in the base matching the required ORACLE
-        # version.
-        basedir = str.replace(directory, "__lib__", libdir)
-        dirpath = str.replace(basedir, "__version__", oracleVersion)
-        if not os.path.isdir(dirpath):
-
-            # The directory doesn't exist with a dotted version i.e. 10.2.0.3
-            # perhaps it exists without the dots e.g. 10203. This is a packaging
-            # different between OIC and /afs/ based installations.
-            dirpath = str.replace(basedir, "__version__",
-                                  str.replace(oracleVersion, ".", ""))
-            if not os.path.isdir(dirpath):
-                dirpath = None
-                continue  # Required version not found
-
-        # We have a valid directory lets check that the proc (Pro*C) binary
-        # exists. This is a simple check that the layout is as expected.
-        procpath = os.path.join(dirpath, "bin/proc")
-        if not os.path.isfile(procpath) and withPreCompiler:
-            dirpath = None
-            continue
-
-        break  # We have a valid base directory
+    found = False
+    for directory in ORACLE_DIRS:
+        for libdir in LIBDIRS:
+            for version in oracleVersions:
+                for client in CLIENTS:
+                    if not found:
+                        # Check for a sub directory in the base matching the required ORACLE
+                        # version.
+                        dirpathcand = directory.replace("__lib__", libdir)
+                        dirpathcand = dirpathcand.replace("__version__", version)
+                        dirpathcand = dirpathcand.replace("__client__", client)
+                        if not os.path.isdir(dirpathcand):
+                            # directory does not exist, next candidate please
+                            continue
+                        # We have a valid directory lets check that the proc (Pro*C) binary
+                        # exists. This is a simple check that the layout is as expected.
+                        procpath = os.sep.join([dirpathcand, "bin", "proc"])
+                        if not os.path.isfile(procpath) and withPreCompiler:
+                            continue
+                        # We have a valid base directory
+                        dirpath = dirpathcand
+                        found = True
 
     # Set default values for the return argument.
     rtn = dict()
@@ -166,14 +151,14 @@ def prefixCompilerOption(string, compilerOption):
 try:
     opts, args = getopt.getopt(sys.argv[1:], "h",
                                ["help", "with-precomp", "home", "cppflags",
-                                "procinc", "libdir", "bindir", "quiet"])
+                                "procinc", "libdir", "bindir", "quiet", "version="])
 except getopt.GetoptError:
     usage()
     sys.exit(2)
 
 # Defaults.
 withPreCompiler = False
-oracleVersion   = DEFAULT_ORACLE_VERSION
+oracleVersions  = VERSIONS
 quietMode       = False
 
 # Determine if we are in quiet mode.
@@ -188,12 +173,15 @@ for opt, arg in opts:
     if opt == "--with-precomp":
         withPreCompiler = True
     if opt == "--version":
-        oracleVersion = str(arg)
+        oracleVersions = [str(arg)]
 
 # Construct the return value based on the command line arguments.
-oraEnv   = getOracleEnv(withPreCompiler, oracleVersion)
+oraEnv   = getOracleEnv(withPreCompiler, oracleVersions)
 rtnValue = []
 for opt, arg in opts:
+    if opt == "-h" or opt == "--help":
+        usage()
+        exit()
     if opt == "--home":
         rtnValue.append(oraEnv['home'])
     if opt == "--cppflags":
