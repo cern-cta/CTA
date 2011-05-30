@@ -40,13 +40,8 @@
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
-#include "castor/stager/QryRequest.hpp"
-#include "castor/stager/StageAbortRequest.hpp"
-#include "castor/stager/GCFileList.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Server.hpp"
@@ -432,7 +427,7 @@ void castor::rh::RHThread::run(void* param) {
 
       // Handle the request
       if (ack.status()) {
-        nbThreads = handleRequest(fr, ad, cuuid);
+        nbThreads = handleRequest(fr);
       }
     } catch (castor::exception::PermissionDenied& e) {
       // "Permission Denied"
@@ -567,14 +562,10 @@ void castor::rh::RHThread::run(void* param) {
   delete sock;
 }
 
-
 //------------------------------------------------------------------------------
 // handleRequest
 //------------------------------------------------------------------------------
-unsigned int castor::rh::RHThread::handleRequest
-(castor::stager::Request* fr,
- castor::BaseAddress ad,
- Cuuid_t)
+unsigned int castor::rh::RHThread::handleRequest(castor::stager::Request* fr)
   throw (castor::exception::Exception) {
 
   // get RH service
@@ -588,80 +579,13 @@ unsigned int castor::rh::RHThread::handleRequest
     throw ex;
   }
 
-  // Check service class, and get its id
-  u_signed64 svcId = m_rhSvc->checkSvcClass(fr->svcClassName());
-  if (svcId > 0) {  // 0 means ok, but service class is '*'
-    stager::SvcClass* sc = new stager::SvcClass();
-    sc->setId(svcId);
-    fr->setSvcClass(sc);
+  // In case we can use the new way of storing the request, go for it
+  m_rhSvc->storeRequest(fr);
+  castor::stager::FileRequest* filereq =
+    dynamic_cast<castor::stager::FileRequest*>(fr);
+  if (0 != filereq) {
+    return filereq->subRequests().size();
+  } else {
+    return 1;
   }
-
-  // Check access rights
-  m_rhSvc->checkPermission(fr);
-
-  // Number of subrequests (when applicable)
-  unsigned int nbSubReqs = 1;
-
-  // Store request into the DB
-  try {
-    svcs()->createRep(&ad, fr, false);
-    if(fr->svcClass()) {
-      svcs()->fillRep(&ad, fr, OBJ_SvcClass, false);
-    }
-
-    // Store files for file requests
-    castor::stager::FileRequest* filreq =
-      dynamic_cast<castor::stager::FileRequest*>(fr);
-    if (0 != filreq) {
-      // And get number of subrequests
-      nbSubReqs = filreq->subRequests().size();
-      for(unsigned i = 0; i < nbSubReqs; i++) {
-        filreq->subRequests()[i]->setSvcHandler(m_svcHandler[filreq->type()]);
-      }
-      svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
-    }
-
-    // Store client for requests
-    castor::stager::Request* req =
-      dynamic_cast<castor::stager::Request*>(fr);
-    if (0 != req) {
-      svcs()->createRep(&ad, req->client(), false);
-      svcs()->fillRep(&ad, fr, OBJ_IClient, false);
-    }
-
-    // Store parameters for query requests
-    castor::stager::QryRequest* qryReq =
-      dynamic_cast<castor::stager::QryRequest*>(fr);
-    if (0 != qryReq) {
-      svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
-    }
-
-    // Store deletedFiles for fileList
-    castor::stager::GCFileList* fdReq =
-      dynamic_cast<castor::stager::GCFileList*>(fr);
-    if (0 != fdReq) {
-      svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
-    }
-
-    // Store users and types for changePrivilege requests
-    castor::bwlist::ChangePrivilege* cpReq =
-      dynamic_cast<castor::bwlist::ChangePrivilege*>(fr);
-    if (0 != cpReq) {
-      svcs()->fillRep(&ad, cpReq, OBJ_BWUser, false);
-      svcs()->fillRep(&ad, cpReq, OBJ_RequestType, false);
-    }
-
-    // Store fileids for abort requests
-    castor::stager::StageAbortRequest* abortReq =
-      dynamic_cast<castor::stager::StageAbortRequest*>(fr);
-    if (0 != abortReq) {
-      svcs()->fillRep(&ad, abortReq, OBJ_NsFileId, false);
-    }
-
-  } catch (castor::exception::Exception& e) {
-    svcs()->rollback(&ad);
-    throw e;
-  }
-
-  return nbSubReqs;
 }

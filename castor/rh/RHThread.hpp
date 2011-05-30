@@ -93,14 +93,10 @@ namespace castor {
       /**
        * Handles an incoming request
        * @param fr the request
-       * @param ad database conversion service
-       * @param cuuid the uuid of the request (for logging purposes)
        * @throw Exception in case of error
        * @return the number of subrequests involved
        */
-      unsigned int handleRequest(castor::stager::Request* fr,
-                                 castor::BaseAddress ad,
-                                 Cuuid_t cuuid)
+      unsigned int handleRequest(castor::stager::Request* fr)
         throw (castor::exception::Exception);
 
       /// Stager host
