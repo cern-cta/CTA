@@ -1301,13 +1301,14 @@ BEGIN
   END; 
   BEGIN
     -- Find the unprocessed segment of this tape with lowest fSeq
-    SELECT   SEG.id,   SEG.fSeq, SEG.Copy 
+    SELECT       id,       fSeq,    Copy 
       INTO varSegId, varNewFSeq, varTcId 
-      FROM Segment SEG
-     WHERE SEG.tape = varTapeId  
-       AND SEG.status = tconst.SEGMENT_UNPROCESSED
-       AND ROWNUM < 2
-     ORDER BY SEG.fseq ASC;
+      FROM (SELECT SEG.id id, SEG.fSeq fSeq, SEG.Copy Copy 
+              FROM Segment SEG
+             WHERE SEG.tape = varTapeId  
+               AND SEG.status = tconst.SEGMENT_UNPROCESSED
+             ORDER BY SEG.fseq ASC)
+     WHERE ROWNUM < 2;
     -- Lock the corresponding castorfile
     SELECT CF.id INTO varUnused 
       FROM Castorfile CF, TapeCopy TC
