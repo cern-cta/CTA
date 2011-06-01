@@ -1120,7 +1120,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
 
   try {
     FileToRecallRequest& fileToRecall = dynamic_cast<FileToRecallRequest&>(obj);
-    castor::dlf::Param params[] ={
+    castor::dlf::Param params_outloop[] ={
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
         castor::dlf::Param("Port",requester.port),
         castor::dlf::Param("HostName",requester.hostName),
@@ -1128,7 +1128,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
         castor::dlf::Param("tapebridgeTransId",fileToRecall.aggregatorTransactionId())
       };
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_RECALL_REQUESTED,params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,WORKER_RECALL_REQUESTED,params_outloop);
     
     timeval tvStart,tvEnd;
     gettimeofday(&tvStart, NULL);
@@ -1150,7 +1150,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
           castor::dlf::Param("errorMessage",e.getMessage().str())
       };
       
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_RETRIEVING_DB_ERROR, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_RECALL_RETRIEVING_DB_ERROR, params);
       
       EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(e.code());
@@ -1164,7 +1164,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     
     if (response->mountTransactionId()  == 0 ) {
       // I don't have anything to recall I send a NoMoreFiles
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_NO_FILE_TO_RECALL,params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_NO_FILE_TO_RECALL,params_outloop);
       delete response;
       
       NoMoreFiles* noMore= new NoMoreFiles();
@@ -1200,11 +1200,11 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
  
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_RECALL_RETRIEVED,completeParams, &castorFileId);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_RETRIEVED,completeParams, &castorFileId);
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_INVALID_CAST, 0,NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,WORKER_INVALID_CAST, 0,NULL);
     
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
@@ -1233,12 +1233,15 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
     
     FileToMigrateRequest& fileToMigrate = dynamic_cast<FileToMigrateRequest&>(obj);
     
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("mountTransactionId",fileToMigrate.mountTransactionId()),
-       castor::dlf::Param("tapebridgeTransId",fileToMigrate.aggregatorTransactionId()),
-      };
+    castor::dlf::Param params_outloop[] = {
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId",fileToMigrate.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",fileToMigrate.aggregatorTransactionId()),
+    };
      
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_REQUESTED,params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_REQUESTED,params_outloop);
 
     timeval tvStart,tvEnd;
     gettimeofday(&tvStart, NULL);
@@ -1272,7 +1275,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
     }
       
     if ( response->mountTransactionId() == 0 ) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_NO_FILE_TO_MIGRATE, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_NO_FILE_TO_MIGRATE, params_outloop);
       // I don't have anything to migrate I send an NoMoreFiles
 
       NoMoreFiles* noMore= new NoMoreFiles();
@@ -1310,11 +1313,11 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
         castor::dlf::Param("fileTransactionId", response->fileTransactionId()),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_RETRIEVED, paramsComplete, &castorFileId);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_RETRIEVED, paramsComplete, &castorFileId);
 
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_INVALID_CAST, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
