@@ -257,53 +257,59 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getStreamsWithoutTapes(std::list<castor::stager::Stream>& streams,std::list<castor::stager::TapePool>& tapepools )
   throw (castor::exception::Exception){
-
+  oracle::occi::ResultSet *rs = NULL;
   try {
     // Check whether the statements are ok
-    if (0 == m_getStreamsWithoutTapesStatement) {
+    if (!m_getStreamsWithoutTapesStatement) {
       m_getStreamsWithoutTapesStatement =
         createStatement(s_getStreamsWithoutTapesStatementString);
       m_getStreamsWithoutTapesStatement->registerOutParam
         (1, oracle::occi::OCCICURSOR);
     }
-
     // execute the statement and see whether we found something
- 
     unsigned int nb = m_getStreamsWithoutTapesStatement->executeUpdate();
-
     if (0 == nb) {
       cnvSvc()->commit(); 
       return;
     }
-
-    oracle::occi::ResultSet *rs =
-      m_getStreamsWithoutTapesStatement->getCursor(1);
-
+    rs = m_getStreamsWithoutTapesStatement->getCursor(1);
+    // Identify the columns of the cursor
+    resultSetIntrospector resIntros (rs);
+    int idIdx       = resIntros.findColumnIndex(                   "ID", oracle::occi::OCCI_SQLT_NUM);
+    int initSizeIdx = resIntros.findColumnIndex("INITIALSIZETOTRANSFER", oracle::occi::OCCI_SQLT_NUM);
+    int statIdx     = resIntros.findColumnIndex(               "STATUS", oracle::occi::OCCI_SQLT_NUM);
+    int TPIdIdx     = resIntros.findColumnIndex(             "TAPEPOOL", oracle::occi::OCCI_SQLT_NUM);
+    int TPNameIdx   = resIntros.findColumnIndex(                 "NAME", oracle::occi::OCCI_SQLT_CHR);
     // Run through the cursor
-   
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::Stream item;
-      item.setId((u_signed64)rs->getDouble(1));
-      item.setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
-      item.setStatus((castor::stager::StreamStatusCodes)rs->getInt(3));
+      item.setId((u_signed64)rs->getDouble(idIdx));
+      item.setInitialSizeToTransfer((u_signed64)rs->getDouble(initSizeIdx));
+      item.setStatus((castor::stager::StreamStatusCodes)rs->getInt(statIdx));
       streams.push_back(item);
 
       castor::stager::TapePool tp;
-      tp.setId((u_signed64)rs->getDouble(4));
-      tp.setName(rs->getString(5));
+      tp.setId((u_signed64)rs->getDouble(TPIdIdx));
+      tp.setName(rs->getString(TPNameIdx));
       tapepools.push_back(tp);
     }
-
     m_getStreamsWithoutTapesStatement->closeResultSet(rs);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException& e) {
+    if (rs) m_getStreamsWithoutTapesStatement->closeResultSet(rs);
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getStreamsWithoutTapes"
       << std::endl << e.what();
     throw ex;
+  } catch (std::exception& e) {
+    if (rs) m_getStreamsWithoutTapesStatement->closeResultSet(rs);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getStreamsWithoutTapes"
+      << std::endl << e.what();
+    throw ex;
   }
-
 }
 
 //----------------------------------------------------------------------------
@@ -1051,25 +1057,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)
 {
-  int TapecopyIdIndex  = -1;
-  int ErrorCodeIndex   = -1;
-  int NbRetryIndex     = -1;
-
-  const std::string TapecopyIdColumnTitle("ID");
-  const std::string ErrorCodeColumnTitle("ERRORCODE");
-  const std::string NbRetryColumnTitle("NBRETRY");
-
-  const int TapecopyIdColumnType (oracle::occi::OCCI_SQLT_NUM);
-  const int ErrorCodeColumnType (oracle::occi::OCCI_SQLT_NUM);
-  const int NbRetryColumnType (oracle::occi::OCCI_SQLT_NUM);
-
-  std::vector<oracle::occi::MetaData> ResStruct;
-  std::string ColName;
-  int ColType;  
-
+  oracle::occi::ResultSet *rs = NULL;
   try {
     // Check whether the statements are ok
-    if (0 == m_getFailedMigrationsStatement) {
+    if (!m_getFailedMigrationsStatement) {
       m_getFailedMigrationsStatement =
         createStatement(s_getFailedMigrationsStatementString);
       m_getFailedMigrationsStatement->registerOutParam
@@ -1081,51 +1072,31 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
       cnvSvc()->commit(); 
       return;
     }
-    oracle::occi::ResultSet *rs =
-      m_getFailedMigrationsStatement->getCursor(1);
-
-    // Find the indexes for the column we're interested in (the cursor returns
-    // TAPECOPY%ROWTYPE) so this code can survive schema changes.
-    {
-      // Get the description of the structure
-      ResStruct = rs->getColumnListMetaData();
-      // Loop on all the members of the structure, find columns matching name and type
-      // of needed data.
-      for (unsigned int i=0; i < ResStruct.size(); i++) {
-        ColName = (ResStruct[i].getString(oracle::occi::MetaData::ATTR_NAME));
-        ColType = (ResStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE));
-        if (ColName == TapecopyIdColumnTitle && ColType == TapecopyIdColumnType) {
-          TapecopyIdIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
-        } else if (ColName == ErrorCodeColumnTitle && ColType == ErrorCodeColumnType) {
-          ErrorCodeIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
-        } else if (ColName == NbRetryColumnTitle && ColType == NbRetryColumnType) {
-          NbRetryIndex = i + 1; // Columns are counted from 1 in OCCI ( *sigh* )
-        }
-      }
-    }
-    // ... and check everything was there
-    if ((-1 == TapecopyIdIndex) || (-1 == ErrorCodeIndex) || (-1 == NbRetryIndex)) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to find indexes for needed fields "<<
-          "in castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations"
-          << std::endl
-          << "TcIdx=" << TapecopyIdIndex << " EcIdx=" << ErrorCodeIndex
-          << " NbrIdx=" << NbRetryIndex << std::endl;
-      throw ex;
-    }
-
+    rs = m_getFailedMigrationsStatement->getCursor(1);
+    // Find columns in the cursor
+    resultSetIntrospector resIntros (rs);
+    int TapecopyIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
+    int ErrorCodeIndex  = resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
+    int NbRetryIndex    = resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.tapeCopyId=(u_signed64)rs->getDouble(TapecopyIdIndex);
-      item.errorCode=rs->getInt(ErrorCodeIndex);
-      item.nbRetry=rs->getInt(NbRetryIndex);
+      item.tapeCopyId = (u_signed64)rs->getDouble(TapecopyIdIndex);
+      item.errorCode  = rs->getInt(ErrorCodeIndex);
+      item.nbRetry    = rs->getInt(NbRetryIndex);
       candidates.push_back(item);
     }
     m_getFailedMigrationsStatement->closeResultSet(rs);
-
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException& e) {
+    if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
     handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getFailedMigrations"
+      << std::endl << e.what();
+    throw ex;
+  } catch (std::exception &e) { // This case is almost identical to the previous one, but does not call handleException
+    if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getFailedMigrations"
@@ -1264,53 +1235,52 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception){
-  
- 
+  oracle::occi::ResultSet *rs = NULL;
   try {
     // Check whether the statements are ok
-    if (0 == m_getFailedRecallsStatement) {
+    if (!m_getFailedRecallsStatement) {
       m_getFailedRecallsStatement =
-        createStatement(s_getFailedRecallsStatementString);
+          createStatement(s_getFailedRecallsStatementString);
       m_getFailedRecallsStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
+      (1, oracle::occi::OCCICURSOR);
     }
-
     // execute the statement and see whether we found something
- 
     unsigned int nb = m_getFailedRecallsStatement->executeUpdate();
-
     if (0 == nb) {
       cnvSvc()->commit(); 
       return;
     }
-
-
-   oracle::occi::ResultSet *rs =
-      m_getFailedRecallsStatement->getCursor(1);
-
+    rs = m_getFailedRecallsStatement->getCursor(1);
+    // Find columns for the cursor
+    resultSetIntrospector resIntros (rs);
+    int TapecopyIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
+    int ErrorCodeIndex  = resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
+    int NbRetryIndex    = resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor 
-
-    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {   
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.tapeCopyId=(u_signed64)rs->getDouble(2);
-      item.errorCode=rs->getInt(5);
-      item.nbRetry=rs->getInt(6);
+      item.tapeCopyId = (u_signed64)rs->getDouble(TapecopyIdIndex);
+      item.errorCode  = rs->getInt(ErrorCodeIndex);
+      item.nbRetry    = rs->getInt(NbRetryIndex);
       candidates.push_back(item);
-     
     }
-
     m_getFailedRecallsStatement->closeResultSet(rs);
-
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException& e) {
+    if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in getFailedRecalls"
-      << std::endl << e.what();
+          << "Error caught in getFailedRecalls"
+          << std::endl << e.what();
+    throw ex;
+  } catch (std::exception& e) { // same handling BUT no handleException
+    if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error caught in getFailedRecalls"
+          << std::endl << e.what();
     throw ex;
   }
-
-
 }
 
 //----------------------------------------------------------------------------
