@@ -1030,9 +1030,26 @@ BEGIN
   END IF;
 
   OPEN segments FOR
-    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm,
-           segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1,
-           blockId2, blockId3, creationTime, id, tape, copy, status, priority
+    SELECT fseq,
+           offset,
+           bytes_in,
+           bytes_out,
+           host_bytes,
+           segmCksumAlgorithm,
+           segmCksum,
+           errMsgTxt,
+           errorCode,
+           severity,
+           blockId0,
+           blockId1,
+           blockId2,
+           blockId3,
+           creationTime,
+           id,
+           tape,
+           copy,
+           status,
+           priority
       FROM Segment
      WHERE id IN (SELECT /*+ CARDINALITY(segsTable 5) */ *
                     FROM TABLE(segs) segsTable);
@@ -1060,9 +1077,26 @@ CREATE OR REPLACE PROCEDURE failedSegments
 BEGIN
   -- JUST rtcpclientd
   OPEN segments FOR
-    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm,
-           segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1,
-           blockId2, blockId3, creationTime, id, tape, copy, status, priority
+    SELECT fseq,
+           offset,
+           bytes_in,
+           bytes_out,
+           host_bytes,
+           segmCksumAlgorithm,
+           segmCksum,
+           errMsgTxt,
+           errorCode,
+           severity,
+           blockId0,
+           blockId1,
+           blockId2,
+           blockId3,
+           creationTime,
+           id,
+           tape,
+           copy,
+           status,
+           priority
       FROM Segment
      WHERE Segment.status = tconst.SEGMENT_FAILED;
 END;

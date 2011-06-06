@@ -30,7 +30,29 @@ CREATE OR REPLACE PACKAGE castor AS
     tapeGatewayRequest NUMBER,
     vid VARCHAR2(2048));
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy;
-  TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
+  TYPE Segment_Rec IS RECORD (
+    fseq,
+    offset,
+    bytes_in,
+    bytes_out,
+    host_bytes,
+    segmCksumAlgorithm,
+    segmCksum,
+    errMsgTxt,
+    errorCode,
+    severity,
+    blockId0,
+    blockId1,
+    blockId2,
+    blockId3,
+    creationTime,
+    id,
+    tape,
+    copy,
+    status,
+    priority
+  );
+  TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (
