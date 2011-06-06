@@ -367,9 +367,9 @@ BEGIN
               -- file
               NULL;
           END;
+          COMMIT;
         END LOOP;
       END IF;
-      COMMIT;
     END IF;
     -- We have enough files to exit the loop ?
     EXIT WHEN totalCount >= 10000;
