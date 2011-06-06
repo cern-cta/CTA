@@ -484,7 +484,8 @@ BEGIN
       END;
     END LOOP;
   END IF;
-  OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
+  OPEN fileIds FOR
+    SELECT fileId, nsHost FROM FilesDeletedProcOutput;
 END;
 /
 

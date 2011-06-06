@@ -1452,7 +1452,8 @@ BEGIN
   -- we go back to python so that it can handle cases like signals and exit
   -- We will probably be back soon :-)
   DELETE FROM transfersToAbort RETURNING uuid BULK COLLECT INTO srUuids;
-  OPEN srUuidCur FOR SELECT * FROM TABLE(srUuids);
+  OPEN srUuidCur FOR 
+    SELECT * FROM TABLE(srUuids);
 END;
 /
 
@@ -1489,7 +1490,7 @@ BEGIN
                 AND DiskServer.name = machine) LOOP
     BEGIN
       -- check if they are running on the diskserver
-      SELECT * INTO unused FROM SyncRunningTransfersHelper
+      SELECT subReqId INTO unused FROM SyncRunningTransfersHelper
        WHERE subreqId = SR.subreqId;
       -- this one was still running, nothing to do then
     EXCEPTION WHEN NO_DATA_FOUND THEN

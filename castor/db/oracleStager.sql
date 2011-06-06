@@ -31,27 +31,26 @@ CREATE OR REPLACE PACKAGE castor AS
     vid VARCHAR2(2048));
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy;
   TYPE Segment_Rec IS RECORD (
-    fseq,
-    offset,
-    bytes_in,
-    bytes_out,
-    host_bytes,
-    segmCksumAlgorithm,
-    segmCksum,
-    errMsgTxt,
-    errorCode,
-    severity,
-    blockId0,
-    blockId1,
-    blockId2,
-    blockId3,
-    creationTime,
-    id,
-    tape,
-    copy,
-    status,
-    priority
-  );
+    fseq NUMBER,
+    offset INTEGER,
+    bytes_in INTEGER,
+    bytes_out INTEGER,
+    host_bytes INTEGER,
+    segmCksumAlgorithm VARCHAR2(2048),
+    segmCksum NUMBER,
+    errMsgTxt VARCHAR2(2048),
+    errorCode NUMBER,
+    severity NUMBER,
+    blockId0 INTEGER,
+    blockId1 INTEGER,
+    blockId2 INTEGER,
+    blockId3 INTEGER,
+    creationTime INTEGER,
+    id INTEGER,
+    tape INTEGER,
+    copy INTEGER,
+    status INTEGER,
+    priority INTEGER);
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
@@ -71,7 +70,10 @@ CREATE OR REPLACE PACKAGE castor AS
     lastAccessTime INTEGER,
     hwStatus INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
-  TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
+  TYPE FileList IS RECORD (
+    fileId NUMBER,
+    nsHost VARCHAR2(2048));
+  TYPE FileList_Cur IS REF CURSOR RETURN FileList;
   TYPE DiskPoolQueryLine IS RECORD (
     isDP INTEGER,
     isDS INTEGER,
@@ -114,7 +116,9 @@ CREATE OR REPLACE PACKAGE castor AS
     noSpace INTEGER,
     noFSAvail INTEGER);
   TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
-  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedProcHelper%ROWTYPE;
+  TYPE JobFailedSubReqList IS RECORD (
+    subReqId VARCHAR2(2048));
+  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedSubReqList;
   /* end of deprecated code */
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
@@ -123,8 +127,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE TapeAccessPriority IS RECORD (
     euid INTEGER,
     egid INTEGER,
-    priority INTEGER
-  );
+    priority INTEGER);
   TYPE TapeAccessPriority_Cur IS REF CURSOR RETURN TapeAccessPriority;
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
