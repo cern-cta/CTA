@@ -86,7 +86,12 @@ CREATE OR REPLACE PACKAGE castor AS
     fileid INTEGER,
     nshost VARCHAR2(2048));
   TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;
-  TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
+  TYPE TapeAccessPriority IS RECORD (
+    euid INTEGER,
+    egid INTEGER,
+    priority INTEGER
+  );
+  TYPE TapeAccessPriority_Cur IS REF CURSOR RETURN TapeAccessPriority;
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR2(2048));
@@ -3010,7 +3015,7 @@ CREATE OR REPLACE PROCEDURE selectPriority(
   inUid IN INTEGER,
   inGid IN INTEGER,
   inPriority IN INTEGER,
-  dbInfo OUT castor.PriorityMap_Cur) AS
+  dbInfo OUT castor.TapeAccessPriority_Cur) AS
 BEGIN
   OPEN dbInfo FOR
     SELECT euid, egid, priority FROM PriorityMap
