@@ -565,7 +565,7 @@ PROCEDURE tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_MIG_RETRY
   OPEN outTapeCopies_c FOR
-    SELECT  castorFile, id, copyNb, status, errorCode, nbRetry,
+    SELECT castorFile, id, copyNb, status, errorCode, nbRetry,
            fileTransActionId, fseq, missingCopies, tapeGatewayRequestId, vid
       FROM TapeCopy TC
      WHERE TC.status = tconst.TAPECOPY_MIG_RETRY
