@@ -28,61 +28,63 @@ ERTZEROSIZE = 1612
 ERTWRONGSIZE = 1613
 ERTWRONGFSEQ = 1614   
 
-
 def recallRetry(errorCode,nbRetry):
-
-   # no retry
-   
-   if errorCode == ENOENT:
-      return 0
-   if errorCode == EACCESS:
-      return 0
-   if errorCode == EFAULT:
-      return 0
-   if errorCode == SENOSHOST:
-      return 0
-   if errorCode == SENOSSERV:
-      return 0
-   if errorCode == ENSFILECHG: 
-      return 0
-   if errorCode == ENOTDIR:
-      return 0
-   if errorCode == EISDIR: 
-      return 0
-   if errorCode == ENAMETOOLONG: 
-      return 0
-   if errorCode == EPERM: 
-      return 0
-   if errorCode == SEENTRYNFND:
-      return 0
-   if errorCode == SENOMAPFND:   
-      return 0
-   if errorCode == SECHECKSUM: 
-      return 0
-
-   # 5 retries
-   
-   if errorCode == EINVAL and nbRetry >=  5:
-      return 0
-   if errorCode == SECOMERR and nbRetry >=  5:
-      return 0   
-   if errorCode == EVMGRNACT and nbRetry >=  5:
-      return 0 
-   if errorCode == ENSNACT and nbRetry >=  5:
-      return 0
-   if errorCode == ENOMEM and nbRetry >=  5:
-      return 0 
-   if errorCode == ERTZEROSIZE and nbRetry >=  5:
-      return 0
-   if errorCode == ERTWRONGSIZE and nbRetry >=  5:
-      return 0  
-   if errorCode == ERTWRONGFSEQ and nbRetry >=  5:
-      return 0
-
-   # 1000 retries
-
-   if errorCode == EEXIST  and nbRetry >=  1000:
-      return 0
-
-   # other cases we loop
    return 1
+
+#def recallRetry(errorCode,nbRetry):
+#
+#  # no retry
+#  
+#  if errorCode == ENOENT:
+#     return 0
+#  if errorCode == EACCESS:
+#     return 0
+#  if errorCode == EFAULT:
+#     return 0
+#  if errorCode == SENOSHOST:
+#     return 0
+#  if errorCode == SENOSSERV:
+#     return 0
+#  if errorCode == ENSFILECHG: 
+#     return 0
+#  if errorCode == ENOTDIR:
+#     return 0
+#  if errorCode == EISDIR: 
+#     return 0
+#  if errorCode == ENAMETOOLONG: 
+#     return 0
+#  if errorCode == EPERM: 
+#     return 0
+#  if errorCode == SEENTRYNFND:
+#     return 0
+#  if errorCode == SENOMAPFND:   
+#     return 0
+#  if errorCode == SECHECKSUM: 
+#     return 0
+#
+#  # 5 retries
+#  
+#  if errorCode == EINVAL and nbRetry >=  5:
+#     return 0
+#  if errorCode == SECOMERR and nbRetry >=  5:
+#     return 0   
+#  if errorCode == EVMGRNACT and nbRetry >=  5:
+#     return 0 
+#  if errorCode == ENSNACT and nbRetry >=  5:
+#     return 0
+#  if errorCode == ENOMEM and nbRetry >=  5:
+#     return 0 
+#  if errorCode == ERTZEROSIZE and nbRetry >=  5:
+#     return 0
+#  if errorCode == ERTWRONGSIZE and nbRetry >=  5:
+#     return 0  
+#  if errorCode == ERTWRONGFSEQ and nbRetry >=  5:
+#     return 0
+#
+#  # 1000 retries
+#
+#  if errorCode == EEXIST  and nbRetry >=  1000:
+#     return 0
+#
+#  # other cases we loop
+#  return 1
