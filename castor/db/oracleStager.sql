@@ -18,7 +18,6 @@ CREATE OR REPLACE PACKAGE castor AS
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
-  TYPE Tape_Cur IS REF CURSOR RETURN Tape%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
