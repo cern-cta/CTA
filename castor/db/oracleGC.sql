@@ -224,6 +224,8 @@ PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
   dontGC INTEGER;
   totalCount INTEGER;
   unused INTEGER;
+  CastorFileLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (CastorFileLocked, -54);
 BEGIN
   -- First of all, check if we are in a Disk1 pool
   dontGC := 0;
@@ -286,7 +288,7 @@ BEGIN
     -- requests and reduces the stager DB load. Furthermore, if too much data is
     -- sent back to the client, the transfer time between the stager and client
     -- becomes very long and the message may timeout or may not even fit in the
-    -- clients receive buffer!!!!
+    -- clients receive buffer!
     totalCount := totalCount + dcIds.COUNT();
     EXIT WHEN totalCount >= 10000;
 
@@ -320,38 +322,51 @@ BEGIN
       -- If space is still required even after removal of INVALID files, consider
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
-        -- Loop on file deletions. Select only enough files until we reach the
-        -- 10000 return limit.
-        FOR dc IN (SELECT id, castorFile FROM (
-                     SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ id, castorFile FROM DiskCopy
-                      WHERE fileSystem = fs.id
-                        AND status = 0 -- STAGED
-                        AND NOT EXISTS (
-                          SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
-                            FROM SubRequest
-                           WHERE SubRequest.diskcopy = DiskCopy.id
-                             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
-                        AND NOT EXISTS
-                          -- Ignore diskcopies with active replications
-                          (SELECT /*+ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
-                             FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
-                            WHERE DCRR.destDiskCopy = DD.id
-                              AND DCRR.sourceDiskCopy = DiskCopy.id
-                              AND DD.status = 1)  -- WAITD2D
-                        ORDER BY gcWeight ASC)
-                    WHERE rownum <= 10000 - totalCount) LOOP
-          -- Mark the DiskCopy
-          UPDATE DiskCopy
-             SET status = 9, -- BEINGDELETED
-                 gcType = 0  -- GCTYPE_AUTO
-           WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
-          totalCount := totalCount + 1;
-          -- Update freed space
-          freed := freed + deltaFree;
-          -- Shall we continue ?
-          IF toBeFreed <= freed THEN
-            EXIT;
-          END IF;
+        -- Loop on file deletions
+        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ id, castorFile FROM DiskCopy
+                    WHERE fileSystem = fs.id
+                      AND status = 0 -- STAGED
+                      AND NOT EXISTS (
+                        SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+                          FROM SubRequest
+                         WHERE SubRequest.diskcopy = DiskCopy.id
+                           AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+                      AND NOT EXISTS
+                        -- Ignore diskcopies with active replications
+                        (SELECT /*+ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
+                           FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
+                          WHERE DCRR.destDiskCopy = DD.id
+                            AND DCRR.sourceDiskCopy = DiskCopy.id
+                            AND DD.status = 1)  -- WAITD2D
+                      ORDER BY gcWeight ASC) LOOP
+          BEGIN
+            -- Lock the CastorFile
+            SELECT id INTO unused FROM CastorFile
+             WHERE id = dc.castorFile FOR UPDATE NOWAIT;
+            -- Mark the DiskCopy as being deleted
+            UPDATE DiskCopy
+               SET status = 9, -- BEINGDELETED
+                   gcType = 0  -- GCTYPE_AUTO
+             WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
+            totalCount := totalCount + 1;
+            -- Update freed space
+            freed := freed + deltaFree;
+            -- Shall we continue ?
+            IF toBeFreed <= freed THEN
+              EXIT;
+            END IF;
+            IF totalCount >= 10000 THEN
+              EXIT;
+            END IF;           
+          EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+              -- The file no longer exists or has the wrong state
+              NULL;
+            WHEN CastorFileLocked THEN
+              -- Go to the next candidate, processing is taking place on the
+              -- file
+              NULL;
+          END;
         END LOOP;
       END IF;
       COMMIT;
