@@ -561,11 +561,12 @@ END;
 
 /* retrieve from the db all the tapecopies that faced a failure for migration */
 CREATE OR REPLACE
-PROCEDURE  tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
+PROCEDURE tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_MIG_RETRY
   OPEN outTapeCopies_c FOR
-    SELECT *
+    SELECT  castorFile, id, copyNb, status, errorCode, nbRetry,
+           fileTransActionId, fseq, missingCopies, tapeGatewayRequestId, vid
       FROM TapeCopy TC
      WHERE TC.status = tconst.TAPECOPY_MIG_RETRY
        AND ROWNUM < 1000 
@@ -576,15 +577,16 @@ END;
 
 /* retrieve from the db all the tapecopies that faced a failure for recall */
 CREATE OR REPLACE
-PROCEDURE  tg_getFailedRecalls(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
+PROCEDURE tg_getFailedRecalls(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_REC_RETRY
   OPEN outTapeCopies_c FOR
-    SELECT *
+    SELECT castorFile, id, copyNb, status, errorCode, nbRetry,
+           fileTransActionId, fseq, missingCopies, tapeGatewayRequestId, vid
       FROM TapeCopy TC
      WHERE TC.status = tconst.TAPECOPY_REC_RETRY
-      AND ROWNUM < 1000 
-      FOR UPDATE SKIP LOCKED;
+       AND ROWNUM < 1000 
+       FOR UPDATE SKIP LOCKED;
 END;
 /
 
@@ -2046,7 +2048,7 @@ BEGIN
   IF tcToFail(tcToFail.FIRST) != -1 THEN
     FOR i IN tcToFail.FIRST .. tcToFail.LAST  LOOP
 
-      -- lock castorFile	
+      -- lock castorFile
       SELECT castorFile INTO cfId 
         FROM TapeCopy,CastorFile
         WHERE TapeCopy.id = tcToFail(i) 
@@ -2233,7 +2235,7 @@ BEGIN
       FROM Segment SEG 
      WHERE SEG.tape = varTpReqId;
     FOR i IN varTcIds.FIRST .. varTcIds.LAST  LOOP
-      -- lock castorFile	
+      -- lock castorFile
       SELECT TC.castorFile INTO varCfId 
         FROM TapeCopy TC, CastorFile CF
         WHERE TC.id = varTcIds(i) 

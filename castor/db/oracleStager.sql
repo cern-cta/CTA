@@ -17,7 +17,19 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
+  TYPE TapeCopy IS RECORD (
+    castorFile NUMBER,
+    id NUMBER,
+    copyNb NUMBER,
+    status NUMBER,
+    errorCode NUMBER,
+    nbRetry NUMBER,
+    fileTransActionId NUMBER,
+    fseq NUMBER,
+    missingCopies NUMBER,
+    tapeGatewayRequest NUMBER,
+    vid VARCHAR2(2048));
+  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
