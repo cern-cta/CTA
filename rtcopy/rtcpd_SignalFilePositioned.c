@@ -34,7 +34,7 @@ int rtcpd_SignalFilePositioned(processing_cntl_t *const proc_cntl,
     tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
                      "Message", TL_MSG_PARAM_STR, "called" );
-    if ( tape == NULL || file == NULL ) {
+    if ( NULL == proc_cntl || NULL == tape || NULL == file ) {
         serrno = EINVAL;
         return(-1);
     }
