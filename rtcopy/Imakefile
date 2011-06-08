@@ -82,7 +82,8 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcp_marshallVdqmClientInfoMsg.o \
 		rtcpd_SendAckToVdqmOrTapeBridge.o \
 		rtcpd_GetClientInfoMsg.o \
-		rtcpd_GetClientInfo.o
+		rtcpd_GetClientInfo.o \
+		rtcpd_SignalFilePositioned.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
 TapeProgramTarget(killjid,killjid.o,$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpd)
