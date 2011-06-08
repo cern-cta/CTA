@@ -28,7 +28,12 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <iostream>
 
+extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+
 int main() {
+  char rtcpLogErrTxt[1024];
+  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
+
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =
     CppUnit::TestFactoryRegistry::getRegistry();

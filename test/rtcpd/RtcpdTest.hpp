@@ -29,6 +29,7 @@
 #include "h/serrno.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcp_marshallVdqmClientInfoMsg.h"
+#include "h/rtcpd_SignalFilePositioned.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <errno.h>
@@ -196,6 +197,45 @@ public:
       std::string(msgBody.clientName));
   }
 
+  void testRtcpd_SignalFilePositioned() {
+    processing_cntl_t proc_cntl;
+    tape_list_t       tape;
+    file_list_t       file;
+    int               rc = 0;
+    int               saved_serrno = 0;
+
+    memset(&proc_cntl, '\0', sizeof(proc_cntl));
+    memset(&tape     , '\0', sizeof(tape)     );
+    memset(&file     , '\0', sizeof(file)     );
+
+    rc = rtcpd_SignalFilePositioned(NULL, &tape, &file);
+    saved_serrno = serrno;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for proc_cntl = NULL",
+      -1,
+      rc);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for proc_cntl = NULL",
+      EINVAL,
+      saved_serrno);
+
+    rc = rtcpd_SignalFilePositioned(&proc_cntl, NULL, &file);
+    saved_serrno = serrno;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for tape = NULL",
+      -1,
+      rc);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for tape = NULL",
+      EINVAL,
+      saved_serrno);
+
+    rc = rtcpd_SignalFilePositioned(&proc_cntl, &tape, NULL);
+    saved_serrno = serrno;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for file = NULL",
+      -1,
+      rc);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for file = NULL",
+      EINVAL,
+      saved_serrno);
+  }
+
   CPPUNIT_TEST_SUITE(RtcpdTest);
   CPPUNIT_TEST(testMsgBodyMarshalledSize);
   CPPUNIT_TEST(testMarshallBufNull);
@@ -208,6 +248,7 @@ public:
   CPPUNIT_TEST(testUnmarshallBufLen1);
   CPPUNIT_TEST(testUnmarshallMsgBodyNull);
   CPPUNIT_TEST(testMarshallAndUnmarshallContents);
+  CPPUNIT_TEST(testRtcpd_SignalFilePositioned);
   CPPUNIT_TEST_SUITE_END();
 };
 

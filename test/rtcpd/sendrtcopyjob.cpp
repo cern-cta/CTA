@@ -81,6 +81,8 @@ int main(int argc, char **argv) {
       clientEgid,
       deviceGroupName,
       tapeDriveName);
+
+    std::cout << "acknSucc=" << (acknSucc ? "TRUE" : "FALSE") << std::endl;
   } catch(castor::exception::Exception &ex) {
     std::cerr <<
       "Failed to send job" <<
