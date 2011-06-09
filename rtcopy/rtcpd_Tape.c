@@ -35,7 +35,6 @@
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
-#include <rtcpd_SignalFilePositioned.h>
 #include <serrno.h>
 #include "tplogger_api.h"
 char *getconfent (char *, char *, int);
@@ -70,6 +69,60 @@ extern int AbortFlag;
 
 static int last_block_done = 0;
 static int WaitToJoin = FALSE;
+
+/*
+ * Signal to disk IO thread that file has been positioned (tape read with
+ * stager only).
+ */
+int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
+    int rc;
+
+    rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                     "Message", TL_MSG_PARAM_STR, "called" );
+    if ( tape == NULL || file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
+        return(-1);
+    }
+    rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                
+        (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
+                 sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                        
+        return(-1);
+    }
+    rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() returns\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                     "Message", TL_MSG_PARAM_STR, "returns" );
+    return(0);
+}
 
 static int WaitDiskIO() {
     int rc;
@@ -1617,7 +1670,7 @@ void *tapeIOthread(void *arg) {
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
 
                 TP_STATUS(RTCP_PS_WAITMTX);
-                rc = rtcpd_SignalFilePositioned(&proc_cntl, nexttape, nextfile);
+                rc = rtcpd_SignalFilePositioned(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_SignalFilePositioned() error");
 

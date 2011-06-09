@@ -257,6 +257,7 @@ int tcloserr  (int, tape_list_t *, file_list_t *);
 int twrite  (int, char *, int, tape_list_t *, file_list_t *);
 int tread  (int, char *, int, tape_list_t *, file_list_t *);
 int rtcpd_WaitForPosition (tape_list_t *, file_list_t *);
+int rtcpd_SignalFilePositioned (tape_list_t *, file_list_t *);
 int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
 int rtcp_SendTpDump (SOCKET *, rtcpDumpTapeRequest_t *);
 int rtcp_RecvTpDump (SOCKET *, rtcpDumpTapeRequest_t *);
