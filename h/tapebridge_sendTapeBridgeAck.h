@@ -25,6 +25,8 @@
 #ifndef H_TAPEBRIDGE_SENDTAPEBRIDGEACK_H
 #define H_TAPEBRIDGE_SENDTAPEBRIDGEACK_H 1
 
+#include "h/osdep.h"
+
 /**
  * Sends a TAPEBRIDGE_CLIENT-acknowledgement message using the specified
  * socket.
