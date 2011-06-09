@@ -183,7 +183,7 @@ ALTER TABLE Stream ADD (vdqmVolReqId NUMBER);
 ALTER TABLE Stream ADD (tapeGatewayRequestId NUMBER);
 
 ALTER TABLE Tape ADD (startTime NUMBER);
-ALTER TABLE Tape ADD (lastVdqmPingTime NUMBER CONSTRAINT NN_Tape_lastVdqmPingTime NOT NULL);
+ALTER TABLE Tape ADD (lastVdqmPingTime NUMBER DEFAULT 0 CONSTRAINT NN_Tape_lastVdqmPingTime NOT NULL);
 ALTER TABLE Tape ADD (vdqmVolReqId NUMBER);
 ALTER TABLE Tape ADD (lastFseq NUMBER);
 ALTER TABLE Tape ADD (tapeGatewayRequestId NUMBER);
