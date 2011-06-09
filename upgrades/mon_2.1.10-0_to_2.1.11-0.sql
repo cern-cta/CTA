@@ -51,6 +51,35 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* Determine the DLF schema that the monitoring procedures should run against */
+UNDEF dlfschema
+ACCEPT dlfschema DEFAULT castor_dlf PROMPT 'Enter the DLF schema to run monitoring queries against: (castor_dlf) ';
+SET VER OFF
+
+/* Check that the executing accounting can see the DLF base tables */
+DECLARE
+  unused VARCHAR2(2048);
+BEGIN
+  -- Check that the user exists
+  BEGIN
+    SELECT username INTO unused
+      FROM all_users
+     WHERE username = upper('&&dlfschema');
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20000, 'User &dlfschema does not exist');
+  END;
+  -- Check that the correct grants are present
+  BEGIN
+    SELECT owner INTO unused
+      FROM all_views
+     WHERE owner = upper('&&dlfschema')
+       AND view_name = 'CASTORVERSION';
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20001, 'Unable to access the &dlfschema..CastorVersion. Check that the correct grants have been issued!');
+  END;
+END;
+/
+
 INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_9_7', '2_1_11_0', 'NON TRANSPARENT');
 COMMIT;
