@@ -1268,11 +1268,11 @@ void castor::db::ora::OraRHSvc::storeChangePrivilegeRequest (castor::bwlist::Cha
       (14, bufferUid, oracle::occi::OCCI_SQLT_NUM,
        nbUsers, &nbUsers, 21, lensUid);
     m_storeChangePrivilegeStatement->setDataBufferArray
-      (14, bufferGid, oracle::occi::OCCI_SQLT_NUM,
+      (15, bufferGid, oracle::occi::OCCI_SQLT_NUM,
        nbUsers, &nbUsers, 21, lensGid);
     ub4 nbReqTypes = users.size();
     m_storeChangePrivilegeStatement->setDataBufferArray
-      (14, bufferReqType, oracle::occi::OCCI_SQLT_NUM,
+      (16, bufferReqType, oracle::occi::OCCI_SQLT_NUM,
        nbReqTypes, &nbReqTypes, 21, lensReqType);
     // execute the statement
     unsigned int rc = m_storeChangePrivilegeStatement->executeUpdate();

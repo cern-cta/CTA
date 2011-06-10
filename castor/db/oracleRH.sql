@@ -564,7 +564,7 @@ END;
 /
 
 /* inserts Files2Delete Requests in the stager DB */ 	 
-CREATE OR REPLACE PROCEDURE insertListPrivileges
+CREATE OR REPLACE PROCEDURE insertListPrivilegesRequest
   (machine IN VARCHAR2,
    euid IN INTEGER,
    egid IN INTEGER,
@@ -743,7 +743,7 @@ END;
 /
 
 /* inserts ChangePrivilege Request in the stager DB */ 	 
-CREATE OR REPLACE PROCEDURE insertChangePrivilege
+CREATE OR REPLACE PROCEDURE insertChangePrivilegeRequest
   (machine IN VARCHAR2,
    euid IN INTEGER,
    egid IN INTEGER,
@@ -757,9 +757,9 @@ CREATE OR REPLACE PROCEDURE insertChangePrivilege
    clientVersion IN INTEGER,
    clientSecure IN INTEGER,
    isGranted IN INTEGER,
-   reqTypes IN castor."cnumList",
    euids IN castor."cnumList",
-   egids IN castor."cnumList") AS
+   egids IN castor."cnumList",
+   reqTypes IN castor."cnumList") AS
   svcClassId NUMBER;
   reqId NUMBER;
   clientId NUMBER;
