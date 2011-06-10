@@ -14,10 +14,6 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_8_0';
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
-/* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER);
-CREATE INDEX I_Id2Type_TypeId ON Id2Type (type, id);
-
 CREATE INDEX I_RepackSegment_FileId ON RepackSegment (fileId);
 CREATE INDEX I_RepackSeg_RepackSubReq ON RepackSegment (repackSubRequest);
 CREATE INDEX I_RepackSubRequest_Status ON RepackSubRequest (status);
@@ -69,8 +65,6 @@ INSERT INTO RepackConfig
 CREATE OR REPLACE PROCEDURE repackCleanup AS
   t INTEGER;
   srIds "numList";
-  segIds "numList";
-  rIds "numList";
 BEGIN
   -- First perform some cleanup of old stuff:
   -- for each, read relevant timeout from configuration table
@@ -85,27 +79,18 @@ BEGIN
 
   IF srIds.COUNT > 0 THEN
     -- Delete segments
-    FOR i IN srIds.FIRST .. srIds.LAST LOOP
-      DELETE FROM RepackSegment WHERE RepackSubrequest = srIds(i)
-        RETURNING id BULK COLLECT INTO segIds;
-      FORALL j IN segIds.FIRST .. segIds.LAST 
-        DELETE FROM Id2Type WHERE id = segIds(j);
-    END LOOP;
+    FORALL i IN srIds.FIRST .. srIds.LAST
+      DELETE FROM RepackSegment WHERE repackSubrequest = srIds(i);
     COMMIT;
   END IF;
   
   -- Delete subrequests
   FORALL i IN srIds.FIRST .. srIds.LAST 
     DELETE FROM RepackSubrequest WHERE id = srIds(i);
-  FORALL i IN srIds.FIRST .. srIds.LAST  
-    DELETE FROM id2type WHERE id = srIds(i);
 
   -- Delete requests without any other subrequest
   DELETE FROM RepackRequest A WHERE NOT EXISTS 
-    (SELECT 'x' FROM RepackSubRequest WHERE A.id = repackrequest)
-    RETURNING A.id BULK COLLECT INTO rIds;
-  FORALL i IN rIds.FIRST .. rIds.LAST
-    DELETE FROM Id2Type WHERE id = rIds(i);
+    (SELECT 'x' FROM RepackSubRequest WHERE A.id = repackrequest);
   COMMIT;
 
   -- Loop over all tables which support row movement and recover space from
@@ -178,38 +163,38 @@ BEGIN
  COMMIT; -- to flush the temporary table
  -- RepackWorker remove subrequests -> TOBEREMOVED 
  IF st = 6 THEN 
-  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    --	 IF TOBECHECKED or TOBESTAGED or ONHOLD -> TOBECLEANED
-    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1, 9, 10, 11, 12) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId; 
-    		INSERT INTO listOfIds (id) VALUES (srId);  
-    		
-    --	 ONGOING -> TOBEREMOVED
-    		UPDATE RepackSubrequest SET Status=6 WHERE Status=2 AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId;
-    		INSERT INTO listOfIds (id) VALUES (srId);  
+    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+    --   IF TOBECHECKED or TOBESTAGED or ONHOLD -> TOBECLEANED
+        UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1, 9, 10, 11, 12) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId; 
+        INSERT INTO listOfIds (id) VALUES (srId);  
         
-    	END LOOP;
+    --   ONGOING -> TOBEREMOVED
+        UPDATE RepackSubrequest SET Status=6 WHERE Status=2 AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId;
+        INSERT INTO listOfIds (id) VALUES (srId);  
+        
+      END LOOP;
   END IF;
   
  -- RepackWorker subrequests -> TOBERESTARTED 
   IF st = 7 THEN
-  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    	-- JUST IF IT IS FINISHED OR FAILED
-    	    	 UPDATE RepackSubrequest SET Status=7 WHERE Status IN (4, 5) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId;
+    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+      -- JUST IF IT IS FINISHED OR FAILED
+             UPDATE RepackSubrequest SET Status=7 WHERE Status IN (4, 5) AND vid=tapeVids(i) AND ROWNUM <2  RETURNING id INTO srId;
              INSERT INTO listOfIds (id) VALUES (srId);
-    	END LOOP;
+      END LOOP;
   END IF; 
 
  -- RepackWorker subrequests -> ARCHIVED  
   IF st = 8 THEN
-  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    	-- JUST IF IT IS FINISHED OR FAILED 
-    	    	UPDATE RepackSubrequest SET Status=8 WHERE Status IN (4, 5) AND vid=tapeVids(i) AND ROWNUM < 2 RETURNING id INTO srId;
-    	    	INSERT INTO listOfIds(id) VALUES (srId);	
-    	END LOOP;
+    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+      -- JUST IF IT IS FINISHED OR FAILED 
+            UPDATE RepackSubrequest SET Status=8 WHERE Status IN (4, 5) AND vid=tapeVids(i) AND ROWNUM < 2 RETURNING id INTO srId;
+            INSERT INTO listOfIds(id) VALUES (srId);  
+      END LOOP;
   END IF;  
   OPEN rsr FOR
      SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
-      	FROM RepackSubRequest WHERE id in (select id from listOfIds); 
+        FROM RepackSubRequest WHERE id in (select id from listOfIds); 
 END;
 /
 
@@ -232,8 +217,8 @@ CREATE OR REPLACE PROCEDURE getSegmentsForSubRequest
 BEGIN
  OPEN rs FOR
      SELECT fileid, segsize, compression, filesec, copyno, blockid, fileseq, errorcode, errormessage, id, repacksubrequest
-       	FROM RepackSegment WHERE repacksubrequest=srId; -- not archived 
-       	      	
+        FROM RepackSegment WHERE repacksubrequest=srId; -- not archived 
+                
 END;
 /
 
@@ -244,7 +229,7 @@ CREATE OR REPLACE PROCEDURE getSubRequestByVid
 BEGIN
  OPEN rsr FOR
      SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
-       	FROM RepackSubRequest WHERE vid=rvid AND status!=8; -- not archived       	      	
+        FROM RepackSubRequest WHERE vid=rvid AND status!=8; -- not archived                 
 END;
 /
 
@@ -262,7 +247,7 @@ BEGIN
 -- Repack Monitor st = ONGOING 
   OPEN srs FOR
      SELECT RepackSubRequest.vid, RepackSubRequest.xsize, RepackSubRequest.status,  RepackSubRequest.filesmigrating, RepackSubRequest.filesstaging, RepackSubRequest.files,RepackSubRequest.filesfailed,RepackSubRequest.cuuid,RepackSubRequest.submittime,RepackSubRequest.filesstaged,RepackSubRequest.filesfailedsubmit,RepackSubRequest.retrynb,RepackSubRequest.id,RepackSubRequest.repackrequest
-       	FROM RepackSubRequest, RepackRequest WHERE RepackSubRequest.status=st and RepackRequest.id=RepackSubRequest.repackrequest ORDER BY RepackRequest.creationtime; 
+        FROM RepackSubRequest, RepackRequest WHERE RepackSubRequest.status=st and RepackRequest.id=RepackSubRequest.repackrequest ORDER BY RepackRequest.creationtime; 
 END;
 /
 
@@ -273,7 +258,6 @@ CREATE OR REPLACE PROCEDURE restartSubRequest (srId IN NUMBER) AS
  oldCuuid VARCHAR2(2048);
  oldRetrynb NUMBER;
  oldRepackrequest NUMBER;
- newSrId NUMBER;
 BEGIN
   -- archive the old repacksubrequest
   UPDATE RepackSubRequest SET status=8 WHERE id=srId;
@@ -281,8 +265,7 @@ BEGIN
   SELECT  vid,cuuid, retrynb,repackrequest INTO oldVid, oldCuuid, oldRetrynb,oldRepackrequest
    FROM RepackSubRequest WHERE id=srId;
   INSERT INTO RepackSubrequest (vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest) 
-    VALUES (oldVid, 0, 0, 0, 0, 0, 0,oldCuuid,0,0,0,oldRetrynb,ids_seq.nextval,oldRepackrequest) RETURN id INTO newSrId;
-  INSERT INTO id2type (id,type) VALUES (newSrId,97); -- new repacksubrequest
+    VALUES (oldVid, 0, 0, 0, 0, 0, 0,oldCuuid,0,0,0,oldRetrynb,ids_seq.nextval,oldRepackrequest);
   COMMIT;
 END;
 /
@@ -303,28 +286,25 @@ BEGIN
   (rmachine,rusername,rcreationTime,rpool,rpid,rsvcclass,rcommand,rstager,ruserid,rgroupid,rretryMax,rreclaim,rfinalPool, ids_seq.nextval) RETURNING id INTO rId; 
   counter:=0; 
   FOR i IN listVids.FIRST .. listVids.LAST LOOP
-  	BEGIN
-  	  SELECT id INTO unused FROM RepackSubRequest WHERE vid=listVids(i) AND STATUS != 8 AND ROWNUM <2; -- ARCHIVED
-  	EXCEPTION WHEN NO_DATA_FOUND THEN
-  		INSERT INTO RepackSubRequest (vid,xsize,status,filesMigrating,filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest) VALUES
-    	  	(listVids(i),0,0,0,0,0,0,0,0,0,0,rretryMax,ids_seq.nextval,rId) RETURNING id INTO srId;
-    		INSERT INTO id2type (id,type) VALUES (srId, 97);
-    		counter:=counter+1;
-    	END;
-    	INSERT INTO listOfStrs (id) VALUES (listVids(i));
+    BEGIN
+      SELECT id INTO unused FROM RepackSubRequest WHERE vid=listVids(i) AND STATUS != 8 AND ROWNUM <2; -- ARCHIVED
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      INSERT INTO RepackSubRequest (vid,xsize,status,filesMigrating,filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest)
+        VALUES (listVids(i),0,0,0,0,0,0,0,0,0,0,rretryMax,ids_seq.nextval,rId);
+      counter:=counter+1;
+      END;
+      INSERT INTO listOfStrs (id) VALUES (listVids(i));
   END LOOP;
   -- if there are no repack subrequest valid I delete the request
-  IF counter <> 0 THEN 
-  	INSERT INTO id2type (id,type) VALUES (rId, 96);
-  ELSE 
-        DELETE FROM RepackRequest WHERE id=rId;
+  IF counter = 0 THEN
+    DELETE FROM RepackRequest WHERE id=rId;
   END IF;
   OPEN rsr FOR
      SELECT vid, xsize, status, 
      filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,
      filesstaged,filesfailedsubmit,retrynb,id,repackrequest
-       	FROM RepackSubRequest
-       	 WHERE vid IN (SELECT id FROM listOfStrs ) AND status=0; -- TOBECHECKED
+        FROM RepackSubRequest
+         WHERE vid IN (SELECT id FROM listOfStrs ) AND status=0; -- TOBECHECKED
 END;
 /
 
@@ -339,7 +319,7 @@ errorMessages IN repack."strList") AS
 BEGIN
    FORALL i in fileIds.FIRST .. fileIds.LAST
        UPDATE RepackSegment SET errorCode=errorCodes(i),errorMessage=errorMessages(i)
-	  WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
+    WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
    COMMIT;
 END;
 /
@@ -576,4 +556,3 @@ BEGIN
 
 END validateRepackSubRequest;
 /
-

@@ -11,13 +11,6 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_8_3';
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;
 
-/* SQL statements for object types */
-CREATE TABLE Id2Type (
-  id   INTEGER,
-  type NUMBER,
-  CONSTRAINT PK_Id2Type_id PRIMARY KEY (id));
-CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
-
 /* Enumerations */
 CREATE TABLE TapeServerStatusCodes (
   id   NUMBER,
@@ -76,8 +69,6 @@ ALTER TABLE ClientIdentification MODIFY
   (magic CONSTRAINT NN_ClientIdentification_magic NOT NULL);
 ALTER TABLE ClientIdentification MODIFY
   (port CONSTRAINT NN_ClientIdentification_port NOT NULL);
-ALTER TABLE Id2Type MODIFY
-  (type CONSTRAINT NN_Id2Type_type NOT NULL);
 ALTER TABLE TapeAccessSpecification MODIFY
   (accessMode CONSTRAINT NN_TapeAccessSpec_accessMode NOT NULL);
 ALTER TABLE TapeDrive MODIFY
@@ -220,37 +211,7 @@ ALTER TABLE VolumePriority
 
 
 /* Foreign key constraints with an index for each */
-ALTER TABLE ClientIdentification
-  ADD CONSTRAINT FK_ClientIdentification_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-
-ALTER TABLE DeviceGroupName
-  ADD CONSTRAINT FK_DeviceGroupName_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-
-ALTER TABLE TapeAccessSpecification
-  ADD CONSTRAINT FK_TapeAccessSpecification_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-
 ALTER TABLE TapeDrive
-  ADD CONSTRAINT FK_TapeDrive_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_TapeDrive_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
@@ -288,12 +249,6 @@ CREATE INDEX I_FK_TapeDrive_status          ON TapeDrive (status);
 CREATE INDEX I_FK_TapeDrive_tapeServer      ON TapeDrive (tapeServer);
 
 ALTER TABLE TapeDriveCompatibility
-  ADD CONSTRAINT FK_TapeDriveCompatibility_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_TapeDriveComp_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
@@ -303,12 +258,6 @@ ALTER TABLE TapeDriveCompatibility
 CREATE INDEX I_FK_TapeDriveComp_accessSpec ON TapeDriveCompatibility (tapeAccessSpecification);
 
 ALTER TABLE TapeDriveDedication
-  ADD CONSTRAINT FK_TapeDriveDedication_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
@@ -318,12 +267,6 @@ ALTER TABLE TapeDriveDedication
 CREATE INDEX I_FK_TapeDriveDedic_tapeDrive ON TapeDriveDedication (tapeDrive);
 
 ALTER TABLE TapeRequest
-  ADD CONSTRAINT FK_TapeRequest_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_TapeRequest_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
@@ -375,12 +318,6 @@ CREATE INDEX I_FK_TapeRequest_status       ON TapeRequest (status);
 CREATE INDEX I_FK_TapeRequest_client       ON TapeRequest (client);
 
 ALTER TABLE TapeServer
-  ADD CONSTRAINT FK_TapeServer_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_TapeServer_actingMode
     FOREIGN KEY (actingMode)
     REFERENCES TapeServerStatusCodes (id)
@@ -389,29 +326,7 @@ ALTER TABLE TapeServer
     ENABLE;
 CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
-ALTER TABLE VdqmTape
-  ADD CONSTRAINT FK_VdqmTape_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-
-ALTER TABLE VolumePriority
-  ADD CONSTRAINT FK_VolumePriority_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-
 ALTER TABLE Tape2DriveDedication
-  ADD CONSTRAINT FK_Tp2DrvDedic_id
-    FOREIGN KEY (id)
-    REFERENCES Id2Type (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
   ADD CONSTRAINT FK_Tp2DrvDedic_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
@@ -2079,7 +1994,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     driveIdVar           NUMBER;
     TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
     dedicationsToDelete  dedicationList_t;
-    dedicationIdVar      NUMBER;
   BEGIN
 
     -- Get the id of the tape drive
@@ -2130,46 +2044,29 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
         DELETE FROM TapeDriveDedication
           WHERE TapeDriveDedication.id = dedicationsToDelete(i);
-        DELETE FROM Id2Type
-          WHERE Id2Type.id = dedicationsToDelete(i);
       END LOOP;
     END IF;
 
     -- Insert new dedications
     IF gidVar IS NOT NULL THEN
       INSERT INTO TapeDriveDedication(id, tapeDrive, egid)
-        VALUES(ids_seq.nextval, driveIdVar, gidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
+        VALUES(ids_seq.nextval, driveIdVar, gidVar);
     END IF;
     IF hostVar IS NOT NULL THEN
       INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
-        VALUES(ids_seq.nextval, driveIdVar, hostVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
+        VALUES(ids_seq.nextval, driveIdVar, hostVar);
     END IF;
     IF modeVar IS NOT NULL THEN
       INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
-        VALUES(ids_seq.nextval, driveIdVar, modeVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
+        VALUES(ids_seq.nextval, driveIdVar, modeVar);
     END IF;
     IF uidVar IS NOT NULL THEN
       INSERT INTO TapeDriveDedication(id, tapeDrive, euid)
-        VALUES(ids_seq.nextval, driveIdVar, uidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
+        VALUES(ids_seq.nextval, driveIdVar, uidVar);
     END IF;
     IF vidVar IS NOT NULL THEN
       INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
-        VALUES(ids_seq.nextval, driveIdVar, vidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
+        VALUES(ids_seq.nextval, driveIdVar, vidVar);
     END IF;
 
   END dedicateDrive;
@@ -2197,8 +2094,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
           DELETE FROM Tape2DriveDedication
             WHERE Tape2DriveDedication.id = dedicationsToDelete(i);
-          DELETE FROM Id2Type
-            WHERE Id2Type.id = dedicationsToDelete(i);
         END LOOP;
       END IF;
 
@@ -2248,17 +2143,12 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
         DELETE FROM Tape2DriveDedication
           WHERE Tape2DriveDedication.id = dedicationsToDelete(i);
-        DELETE FROM Id2Type
-          WHERE Id2Type.id = dedicationsToDelete(i);
       END LOOP;
     END IF;
 
     -- Insert new dedication
     INSERT INTO Tape2DriveDedication(id, vid, tapeDrive)
-      VALUES(ids_seq.nextval, vidVar, driveIdVar)
-      RETURNING id INTO dedicationIdVar;
-    INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 160);
+      VALUES(ids_seq.nextval, vidVar, driveIdVar);
 
   END dedicateTape;
 
@@ -2319,7 +2209,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     DELETE FROM TapeDrive2TapeDriveComp WHERE parent    = driveIdVar;
     DELETE FROM TapeDriveDedication     WHERE tapeDrive = driveIdVar;
     DELETE FROM TapeDrive               WHERE id        = driveIdVar;
-    DELETE FROM Id2Type                 WHERE id        = driveIdVar;
 
   END deleteDrive;
 
@@ -2575,16 +2464,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
           END IF;
       END;
 
-      -- If a row for the priority was successfully created then
-      IF priorityIdVar IS NOT NULL THEN
-
-        -- Update Id2Type
-        INSERT INTO Id2Type (id, type)
-        VALUES (priorityIdVar, 151); -- 151=OBJ_VolumePriority
-
-      -- Else a competing thread created the row first
-      ELSE
-
+      -- If a row for the priority was not successfully created then
+      -- a competing thread created the row first
+      IF priorityIdVar IS NULL THEN
         -- Select and get a lock on the row
         SELECT id INTO priorityIdVar FROM VolumePriority WHERE
             VolumePriority.vid          = vidVar
@@ -2642,7 +2524,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
     -- Delete the volume priority row
     DELETE FROM VolumePriority WHERE VolumePriority.id = priorityIdVar;
-    DELETE FROM Id2Type        WHERE Id2Type.id        = priorityIdVar;
 
     -- Give the ID of the volume priority row that was deleted
     returnVar := priorityIdVar;
