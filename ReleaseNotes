@@ -192,6 +192,9 @@
         2.1.11 name server front end. Please make sure to upgrade the name
         server before proceeding with the stager upgrade.
 
+      - Due to changes in how CASTOR and XROOT communicate (#80643) the old
+        xrootd-xcastor2fs plugin is no longer compatible with this release
+        and needs to be upgraded to version 1.0.9-19 or newer.
 
       Instructions
       ------------
