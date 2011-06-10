@@ -77,7 +77,7 @@ namespace castor {
          * @param objType the type of the object to retrieve
          * @exception Exception throws an Exception in case of error
          */
-        castor::IObject* getObjFromId (u_signed64 id, unsigned objType)
+        castor::IObject* getObjFromId (u_signed64 id, int objType)
           throw (castor::exception::Exception);
 
         /**
@@ -89,7 +89,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         std::vector<castor::IObject*>
-        getObjsFromIds(std::vector<u_signed64> &ids, unsigned objType)
+        getObjsFromIds(std::vector<u_signed64> &ids, int objType)
           throw (castor::exception::Exception);
 
         /**

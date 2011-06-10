@@ -169,7 +169,7 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
       // Found no Request to handle
       return 0;
     }
-    unsigned type = m_requestToDoStatement->getInteger(3);
+    unsigned type = m_requestToDoStatement->getInt(3);
     // Create result
     IObject* obj = cnvSvc()->getObjFromId(id, type);
     if (0 == obj) {
