@@ -79,14 +79,13 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
   if(reqHelper == 0 || reqHelper->dbSvc == 0 || reqHelper->subrequest == 0) {
     // exception thrown before being able to do anything with the db
     // we can't do much here...
-    return;        
+    return;
   }
-  reqHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
-
-  if(reqHelper->fileRequest != NULL) {
+  if(reqHelper->fileRequest != 0 && reqHelper->subrequest != 0) {
     try {
       // inform the client about the error
       ReplyHelper *stgReplyHelper = new ReplyHelper();
+      reqHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
       stgReplyHelper->setAndSendIoResponse(reqHelper, (reqHelper ? &(reqHelper->cnsFileid) : 0), errorCode, errorMessage);
       stgReplyHelper->endReplyToClient(reqHelper);
       delete stgReplyHelper;
@@ -96,7 +95,9 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     // if we didn't get the fileRequest, we probably got a serious failure, and we can't answer the client
     // just try to update the db
     try {
-      reqHelper->dbSvc->updateRep(reqHelper->baseAddr, reqHelper->subrequest, true);
+      if(reqHelper->dbSvc) {
+        reqHelper->dbSvc->updateRep(reqHelper->baseAddr, reqHelper->subrequest, true);
+      }
     }
     catch (castor::exception::Exception& ignored) {}
   }
