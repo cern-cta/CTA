@@ -60,12 +60,10 @@ namespace castor {
           svc = castor::BaseObject::services()->
             service("DbCnvSvc", castor::SVC_DBCNV);
           dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
-
           baseAddr = new BaseAddress();
           baseAddr->setCnvSvcName("DbCnvSvc");
           baseAddr->setCnvSvcType(SVC_DBCNV);
 
-          dbSvc->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false);
           fileRequest = subrequest->request();
           typeRequest = fileRequest->type();
           // uuids, never empty in normal cases 

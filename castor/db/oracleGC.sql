@@ -420,8 +420,6 @@ BEGIN
               WHERE id = dcIds(i)));
     -- Loop over the deleted files; first use FORALL for bulk operation
     FORALL i IN dcIds.FIRST .. dcIds.LAST
-      DELETE FROM Id2Type WHERE id = dcIds(i);
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- Then use a normal loop to clean castorFiles. Note: We order the list to
     -- prevent a deadlock
@@ -454,7 +452,6 @@ BEGIN
               nsh VARCHAR2(2048);
             BEGIN
               -- Delete the CastorFile
-              DELETE FROM id2Type WHERE id = cf.cfId;
               DELETE FROM CastorFile WHERE id = cf.cfId
               RETURNING fileId, nsHost, fileClass
                 INTO fid, nsh, fc;
@@ -512,8 +509,6 @@ BEGIN
   SELECT id BULK COLLECT INTO dcIds
     FROM Diskcopy WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
-    DELETE FROM Id2Type WHERE id = dcIds(i);
-  FORALL i IN dcIds.FIRST .. dcIds.LAST
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   -- put SubRequests into FAILED (for non FINISHED ones)
   UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
@@ -527,8 +522,6 @@ BEGIN
     deleteTapeCopies(cfIds(i));
   END LOOP;
   -- Finally drop castorFiles in bulk
-  FORALL i IN cfIds.FIRST .. cfIds.LAST
-    DELETE FROM Id2Type WHERE id = cfIds(i);
   FORALL i IN cfIds.FIRST .. cfIds.LAST
     DELETE FROM CastorFile WHERE id = cfIds(i);
 END;
@@ -750,8 +743,6 @@ BEGIN
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
   FORALL i IN dcIds.FIRST..dcIds.LAST
-    DELETE FROM Id2Type WHERE id = dcIds(i);
-  FORALL i IN dcIds.FIRST..dcIds.LAST
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
@@ -784,12 +775,11 @@ BEGIN
                AND d.creationTime < getTime() - timeOut
                AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
                AND NOT EXISTS (
-                 SELECT /*+ INDEX(ID2TYPE PK_ID2TYPE_ID) */ 'x'
-                   FROM SubRequest, Id2Type
+                 SELECT 'x'
+                   FROM SubRequest
                   WHERE castorFile = c.id
-                    AND SubRequest.request = Id2Type.id
                     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
-                    AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
+                    AND reqType NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7  -- INVALID

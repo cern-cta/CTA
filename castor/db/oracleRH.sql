@@ -87,13 +87,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertSimpleRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -116,7 +112,7 @@ CREATE OR REPLACE PROCEDURE insertFileRequest
    flags IN INTEGER,
    svcClassName IN VARCHAR2,
    reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
+   inReqType IN INTEGER,
    clientIP IN INTEGER,
    clientPort IN INTEGER,
    clientVersion IN INTEGER,
@@ -136,64 +132,58 @@ CREATE OR REPLACE PROCEDURE insertFileRequest
   svcHandler VARCHAR2(100);
 BEGIN
   -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
   SELECT ids_seq.nextval INTO clientId FROM DUAL;
   creationTime := getTime();
   -- insert the request itself
   CASE
-    WHEN reqType = 35 THEN -- StageGetRequest
+    WHEN inReqType = 35 THEN -- StageGetRequest
       INSERT INTO StageGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 36 THEN -- StagePrepareToGetRequest
+    WHEN inReqType = 36 THEN -- StagePrepareToGetRequest
       INSERT INTO StagePrepareToGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 40 THEN -- StagePutRequest
+    WHEN inReqType = 40 THEN -- StagePutRequest
       INSERT INTO StagePutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 37 THEN -- StagePrepareToPutRequest
+    WHEN inReqType = 37 THEN -- StagePrepareToPutRequest
       INSERT INTO StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 44 THEN -- StageUpdateRequest
+    WHEN inReqType = 44 THEN -- StageUpdateRequest
       INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 38 THEN -- StagePrepareToUpdateRequest
+    WHEN inReqType = 38 THEN -- StagePrepareToUpdateRequest
       INSERT INTO StagePrepareToUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 42 THEN -- StageRmRequest
+    WHEN inReqType = 42 THEN -- StageRmRequest
       INSERT INTO StageRmRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 39 THEN -- StagePutDoneRequest
+    WHEN inReqType = 39 THEN -- StagePutDoneRequest
       INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
-    WHEN reqType = 119 THEN -- StageRepackRequest
+    WHEN inReqType = 119 THEN -- StageRepackRequest
       INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
-    WHEN reqType = 95 THEN -- SetFileGCWeight
+    WHEN inReqType = 95 THEN -- SetFileGCWeight
       INSERT INTO SetFileGCWeight (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeNumParam,reqId,svcClassId,clientId);
     ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertFileRequest : ' || TO_CHAR(reqType));
+      raise_application_error(-20122, 'Unsupported request type in insertFileRequest : ' || TO_CHAR(inReqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- get the request's service handler
-  SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=reqType;
+  SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
     -- get unique ids for the subrequest
     SELECT ids_seq.nextval INTO subreqId FROM DUAL;
     -- insert the subrequest
-    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus)
-    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, NULL, 0, reqId, 0);
-    -- insert the id2type row for the subrequest
-    INSERT INTO Id2Type VALUES (subreqId, 27);
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
+    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, NULL, 0, reqId, 0, inReqType);
   END LOOP;
 END;
 /
@@ -242,13 +232,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertStartRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -300,13 +286,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertD2dRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -346,13 +328,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertVersionQueryRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -395,13 +373,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertFileQueryRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- Loop on query parameters
   FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
     -- get unique ids for the query parameter
@@ -409,8 +383,6 @@ BEGIN
     -- insert the query parameter
     INSERT INTO QueryParameter (value, id, query, querytype)
     VALUES (qpValues(i), queryParamId, reqId, qpTypes(i));
-    -- insert the id2type row for the query parameter
-    INSERT INTO Id2Type VALUES (queryParamId, 71);
   END LOOP;
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
@@ -453,13 +425,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertDiskPoolQueryRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -505,13 +473,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertMoverClose : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -551,13 +515,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertFiles2Delete : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -599,13 +559,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertListPrivileges : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
@@ -648,13 +604,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertStageAbortRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- Loop on fileids
   FOR i IN fileids.FIRST .. fileids.LAST LOOP
     -- ignore fake items passed only because ORACLE does not like empty arrays
@@ -664,8 +616,6 @@ BEGIN
     -- insert the fileid
     INSERT INTO NsFileId (fileId, nsHost, id, request)
     VALUES (fileids(i), nsHosts(i), fileidId, reqId);
-    -- insert the id2type row for the subrequest
-    INSERT INTO Id2Type VALUES (fileidId, 192);
   END LOOP;
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
@@ -720,13 +670,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertGCRequest : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- Loop on diskCopies
   FOR i IN diskCopyIds.FIRST .. diskCopyIds.LAST LOOP
     -- get unique ids for the diskCopy
@@ -734,8 +680,6 @@ BEGIN
     -- insert the fileid
     INSERT INTO GCFile (diskCopyId, id, request)
     VALUES (diskCopyIds(i), gcFileId, reqId);
-    -- insert the id2type row for the subrequest
-    INSERT INTO Id2Type VALUES (gcFileId, 81);
   END LOOP;
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
@@ -780,13 +724,9 @@ BEGIN
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertChangePrivilege : ' || TO_CHAR(reqType));
   END CASE;
-  -- insert the id2type row for the request
-  INSERT INTO Id2Type VALUES (reqid, reqType);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert the id2type row for the client
-  INSERT INTO Id2Type VALUES (clientId, 129);
   -- Loop on request types
   FOR i IN reqTypes.FIRST .. reqTypes.LAST LOOP
     -- get unique ids for the request type
@@ -794,8 +734,6 @@ BEGIN
     -- insert the request type
     INSERT INTO RequestType (reqType, id, request)
     VALUES (reqTypes(i), subobjId, reqId);
-    -- insert the id2type row for the request type
-    INSERT INTO Id2Type VALUES (subobjId, 154);
   END LOOP;
   -- Loop on BWUsers
   FOR i IN euids.FIRST .. euids.LAST LOOP
@@ -804,8 +742,6 @@ BEGIN
     -- insert the BWUser
     INSERT INTO BWUser (euid, egid, id, request)
     VALUES (euids(i), egids(i), subobjId, reqId);
-    -- insert the id2type row for the request type
-    INSERT INTO Id2Type VALUES (subobjId, 153);
   END LOOP;
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);

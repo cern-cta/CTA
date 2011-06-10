@@ -68,12 +68,7 @@ namespace castor{
 					     const castor::stager::DiskCopyInfo* diskCopy)
         throw(castor::exception::Exception)
       {
-        if(reqHelper->fileRequest) {
-          if(reqHelper->fileRequest->client() == 0) {
-            reqHelper->dbSvc->fillObj(reqHelper->baseAddr, reqHelper->fileRequest, castor::OBJ_IClient, false);
-          }
-        }
-        else {
+        if(!reqHelper->fileRequest) {
           castor::exception::Internal e;
           e.getMessage() << "No request available, cannot answer to client";
           throw e;
@@ -84,20 +79,7 @@ namespace castor{
         } else {
           ioResponse->setFileId(0);
         }
-
-        if (!reqHelper->fileRequest->reqId().empty()) {
-          this->ioResponse->setReqAssociated(reqHelper->fileRequest->reqId());
-        } else {
-          // no UUID?? at this stage just log it and try to go on
-          castor::dlf::Param params[]={ castor::dlf::Param(reqHelper->subrequestUuid),
-            castor::dlf::Param("Filename",reqHelper->subrequest->fileName()),
-            castor::dlf::Param("Username",reqHelper->username),
-            castor::dlf::Param("Groupname", reqHelper->groupname),
-            castor::dlf::Param("Function", "ReplyHelper.setAndSendIoResponse")
-          };
-          castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
-        }
-
+        ioResponse->setReqAssociated(reqHelper->fileRequest->reqId());
         if (diskCopy) {
           ioResponse->setFileName(diskCopy->diskCopyPath());
 	  ioResponse->setServer(diskCopy->diskServer());
@@ -115,10 +97,10 @@ namespace castor{
           }
 
           /* ioRespErrorMessage = ex.message() */
-          this->ioResponse->setErrorMessage(ioRespErrorMessage);
+          ioResponse->setErrorMessage(ioRespErrorMessage);
         }
 
-        this->requestReplier->sendResponse(reqHelper->fileRequest->client(), ioResponse, false);
+        requestReplier->sendResponse(reqHelper->fileRequest->client(), ioResponse, false);
       }
 
 

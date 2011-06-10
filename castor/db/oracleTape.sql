@@ -877,9 +877,9 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   svcClassId NUMBER;
   missingTCs INTEGER;
 BEGIN
-  SELECT SubRequest.id, SubRequest.request, DiskCopy.id,
+  SELECT SubRequest.id, SubRequest.reqType, SubRequest.request, DiskCopy.id,
          CastorFile.id, Castorfile.FileSize, TapeCopy.missingCopies
-    INTO subRequestId, requestId, dci, cfId, fs, missingTCs
+    INTO subRequestId, reqType, requestId, dci, cfId, fs, missingTCs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -887,7 +887,6 @@ BEGIN
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = dconst.DISKCOPY_WAITTAPERECALL;
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
-  DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = dconst.DISKCOPY_FAILED);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = dconst.DISKCOPY_FAILED;
   -- update diskcopy size and gweight
   SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
@@ -906,9 +905,6 @@ BEGIN
          gcWeight = gcw,
          diskCopySize = fs
    WHERE id = dci;
-  -- determine the type of the request
-  SELECT type INTO reqType FROM Id2Type WHERE id =
-    (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ request FROM SubRequest WHERE id = subRequestId);
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci, ouid, ogid);
   ELSE
@@ -930,7 +926,6 @@ BEGIN
           INSERT INTO TapeCopy (id, copyNb, castorFile, status)
           VALUES (ids_seq.nextval, 0, cfId, tconst.TAPECOPY_CREATED)
           RETURNING id INTO tcId;
-          INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
         END LOOP;
       END;
     END IF;
@@ -978,7 +973,6 @@ BEGIN
   -- DEADLOCK_DETECTED exception.
   BEGIN
     DELETE FROM Stream  WHERE id = streamId;
-    DELETE FROM Id2Type WHERE id = streamId;
   EXCEPTION
     -- When the stream cannot be deleted
     WHEN CHILD_RECORD_FOUND OR DEADLOCK_DETECTED THEN
@@ -1563,7 +1557,6 @@ BEGIN
            lastButOneFileSystemUsed, tapepool, status)
         VALUES (ids_seq.nextval, initSize, NULL, NULL, NULL, NULL, tpId, tconst.STREAM_CREATED)
         RETURN id INTO strId;
-        INSERT INTO Id2Type (id, type) VALUES (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  BEGIN
 	    -- clone the new stream with one from the same tapepool
@@ -1924,12 +1917,10 @@ BEGIN
        SET status = decode(status, dconst.DISKCOPY_WAITTAPERECALL, dconst.DISKCOPY_FAILED, dconst.DISKCOPY_INVALID) -- WAITTAPERECALL->FAILED, otherwise INVALID
      WHERE id = dcIds(i);
 
-  -- delete tapecopy from id2type and get the ids
-  DELETE FROM id2type WHERE id IN 
-   (SELECT id FROM TAPECOPY
-     WHERE castorfile IN (SELECT /*+ CARDINALITY(cfIdsTable 5) */ *
-                            FROM TABLE(cfIds) cfIdsTable))
-  RETURNING id BULK COLLECT INTO tcIds;
+  -- get the ids
+  SELECT id BULK COLLECT INTO tcIds FROM TAPECOPY
+   WHERE castorfile IN (SELECT /*+ CARDINALITY(cfIdsTable 5) */ *
+                            FROM TABLE(cfIds) cfIdsTable);
 
   -- detach tapecopies from stream
   FORALL i IN tcids.FIRST .. tcids.LAST
@@ -1945,15 +1936,10 @@ BEGIN
       FROM TABLE(tcids) tcIdsTable)
   RETURNING id, tape BULK COLLECT INTO segIds, tapeIds;
 
-  FORALL i IN segIds.FIRST .. segIds.LAST
-    DELETE FROM id2type WHERE id = segIds(i);
-
   -- delete the orphan segments (this should not be necessary)
   DELETE FROM segment WHERE tape IN 
     (SELECT id FROM tape WHERE vid = inputVid) 
   RETURNING id BULK COLLECT INTO segIds;
-  FORALL i IN segIds.FIRST .. segIds.LAST
-    DELETE FROM id2type WHERE id = segIds(i);
 
   -- update the tape as not used
   UPDATE tape SET status = tconst.TAPE_UNUSED WHERE vid = inputVid AND tpmode = tconst.TPMODE_READ;

@@ -201,13 +201,11 @@ BEGIN
   FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
     FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
     -- Delete the segment(s)
-      DELETE FROM Id2Type WHERE id = s.id;
       DELETE FROM Segment WHERE id = s.id;
     END LOOP;
     -- Delete from Stream2TapeCopy
     DELETE FROM Stream2TapeCopy WHERE child = t.id;
     -- Delete the TapeCopy
-    DELETE FROM Id2Type WHERE id = t.id;
     DELETE FROM TapeCopy WHERE id = t.id;
   END LOOP;
 END;
@@ -295,7 +293,6 @@ BEGIN
           -- Delete the failed TapeCopies
           deleteTapeCopies(cfId);
           -- Delete the CastorFile
-          DELETE FROM id2Type WHERE id = cfId;
           DELETE FROM CastorFile WHERE id = cfId
             RETURNING fileId, nsHost, fileClass
             INTO fid, nsh, fc;

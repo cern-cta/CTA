@@ -216,8 +216,6 @@ BEGIN
     -- Break out of the loop when the cursor returns no results
     EXIT WHEN reqIds.count = 0;
     -- Delete data
-    FORALL i IN reqIds.FIRST .. reqIds.LAST
-      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
     FORALL i IN clientIds.FIRST .. clientIds.LAST
       DELETE FROM Client WHERE id = clientIds(i);
     FORALL i IN srIds.FIRST .. srIds.LAST

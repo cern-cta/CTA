@@ -13,9 +13,6 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_11_0';
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
-/* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
-
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
@@ -72,7 +69,8 @@ CREATE TABLE SubRequest
    errorMessage VARCHAR2(2048), id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
    diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
    request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
-   svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL
+   svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
+   reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT

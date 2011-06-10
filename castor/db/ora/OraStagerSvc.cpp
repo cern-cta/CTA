@@ -35,6 +35,16 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/StageGetRequest.hpp"
+#include "castor/stager/StagePutRequest.hpp"
+#include "castor/stager/StageUpdateRequest.hpp"
+#include "castor/stager/StagePrepareToGetRequest.hpp"
+#include "castor/stager/StagePrepareToPutRequest.hpp"
+#include "castor/stager/StagePrepareToUpdateRequest.hpp"
+#include "castor/stager/StageRepackRequest.hpp"
+#include "castor/stager/StagePutDoneRequest.hpp"
+#include "castor/stager/StageRmRequest.hpp"
+#include "castor/stager/SetFileGCWeight.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
@@ -105,7 +115,7 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
+  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24, :25, :26, :27, :28, :29); END;";
 
 /// SQL statement for processBulkRequest
 const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementString =
@@ -113,7 +123,7 @@ const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementSt
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
-  "BEGIN subRequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
+  "BEGIN subRequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for getDiskCopiesForJob
 const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForJobStatementString =
@@ -339,15 +349,47 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (8, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (9, oracle::occi::OCCIINT);
+        (9, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
         (10, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (11, oracle::occi::OCCISTRING, 2048);
+        (11, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (12, oracle::occi::OCCIINT);
+        (12, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
-        (13, oracle::occi::OCCISTRING, 2048);
+        (13, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (14, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (15, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (16, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (17, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (18, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (19, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (20, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (21, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (22, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (23, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (24, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (25, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (26, oracle::occi::OCCIDOUBLE);
+      m_subRequestToDoStatement->registerOutParam
+        (27, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (28, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (29, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     m_subRequestToDoStatement->setString(1, service);
@@ -370,19 +412,79 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
     result->setId(srId);
+    result->setSvcHandler(service);
     result->setRetryCounter(m_subRequestToDoStatement->getInt(3));
     result->setFileName(m_subRequestToDoStatement->getString(4));
     result->setProtocol(m_subRequestToDoStatement->getString(5));
     result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
-    result->setPriority(m_subRequestToDoStatement->getInt(7));
-    result->setStatus
-      ((enum castor::stager::SubRequestStatusCodes)
-       m_subRequestToDoStatement->getInt(8));
-    result->setModeBits(m_subRequestToDoStatement->getInt(9));
-    result->setFlags(m_subRequestToDoStatement->getInt(10));
-    result->setSubreqId(m_subRequestToDoStatement->getString(11));
-    result->setAnswered(m_subRequestToDoStatement->getInt(12));
-    result->setSvcHandler(m_subRequestToDoStatement->getString(13));
+    result->setStatus(castor::stager::SUBREQUEST_WAITSCHED);
+    result->setModeBits(m_subRequestToDoStatement->getInt(7));
+    result->setFlags(m_subRequestToDoStatement->getInt(8));
+    result->setSubreqId(m_subRequestToDoStatement->getString(9));
+    result->setAnswered(m_subRequestToDoStatement->getInt(10));
+    result->setReqType(m_subRequestToDoStatement->getInt(11));
+    castor::stager::FileRequest* req;
+    switch(result->reqType()) {
+      case castor::OBJ_StageGetRequest:
+        req = new castor::stager::StageGetRequest();
+        break;
+      case castor::OBJ_StagePutRequest:
+        req = new castor::stager::StagePutRequest();
+        break;
+      case castor::OBJ_StageUpdateRequest:
+        req = new castor::stager::StageUpdateRequest();
+        break;
+      case castor::OBJ_StagePrepareToGetRequest:
+        req = new castor::stager::StagePrepareToGetRequest();
+        break;
+      case castor::OBJ_StagePrepareToPutRequest:
+        req = new castor::stager::StagePrepareToPutRequest();
+        break;
+      case castor::OBJ_StagePrepareToUpdateRequest:
+        req = new castor::stager::StagePrepareToUpdateRequest();
+        break;
+      case castor::OBJ_StageRepackRequest:
+        {
+          castor::stager::StageRepackRequest* rreq =
+            new castor::stager::StageRepackRequest();
+          rreq->setRepackVid(m_subRequestToDoStatement->getString(25));
+          req = rreq;
+          break;
+        }
+      case castor::OBJ_StagePutDoneRequest:
+        req = new castor::stager::StagePutDoneRequest();
+        break;
+      case castor::OBJ_StageRmRequest:
+        req = new castor::stager::StageRmRequest();
+        break;
+      case castor::OBJ_SetFileGCWeight:
+        {
+          castor::stager::SetFileGCWeight* greq =
+            new castor::stager::SetFileGCWeight();
+          greq->setWeight((u_signed64)m_subRequestToDoStatement->getDouble(26));
+          req = greq;
+          break;
+        }
+    }
+    result->setRequest(req);
+    req->setId((u_signed64)m_subRequestToDoStatement->getDouble(12));
+    req->setFlags(m_subRequestToDoStatement->getInt(13));
+    req->setUserName(m_subRequestToDoStatement->getString(14));
+    req->setEuid(m_subRequestToDoStatement->getInt(15));
+    req->setEgid(m_subRequestToDoStatement->getInt(16));
+    req->setMask(m_subRequestToDoStatement->getInt(17));
+    req->setPid(m_subRequestToDoStatement->getInt(18));
+    req->setMachine(m_subRequestToDoStatement->getString(19));
+    req->setSvcClassName(m_subRequestToDoStatement->getString(20));
+    req->setUserTag(m_subRequestToDoStatement->getString(21));
+    req->setReqId(m_subRequestToDoStatement->getString(22));
+    req->setCreationTime(m_subRequestToDoStatement->getInt(23));
+    req->setLastModificationTime(m_subRequestToDoStatement->getInt(24));
+    castor::rh::Client* cl = new castor::rh::Client();
+    req->setClient(cl);
+    cl->setIpAddress(m_subRequestToDoStatement->getInt(27));
+    cl->setPort(m_subRequestToDoStatement->getInt(28));
+    cl->setVersion(m_subRequestToDoStatement->getInt(29));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -479,15 +581,15 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
       m_subRequestFailedToDoStatement->registerOutParam
         (1, oracle::occi::OCCIDOUBLE);
       m_subRequestFailedToDoStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->registerOutParam
         (3, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
+        (4, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
-        (5, oracle::occi::OCCIDOUBLE);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->registerOutParam
-        (6, oracle::occi::OCCIINT);
+        (6, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
@@ -495,11 +597,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
       m_subRequestFailedToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 2048);
-      m_subRequestFailedToDoStatement->registerOutParam
-        (11, oracle::occi::OCCIINT);
-      m_subRequestFailedToDoStatement->registerOutParam
-        (12, oracle::occi::OCCISTRING, 2048);
+        (10, oracle::occi::OCCIDOUBLE);
       m_subRequestFailedToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -521,20 +619,28 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
     result->setId((u_signed64)m_subRequestFailedToDoStatement->getDouble(1));
-    result->setRetryCounter(m_subRequestFailedToDoStatement->getInt(2));
-    result->setFileName(m_subRequestFailedToDoStatement->getString(3));
-    result->setProtocol(m_subRequestFailedToDoStatement->getString(4));
-    result->setXsize((u_signed64)m_subRequestFailedToDoStatement->getDouble(5));
-    result->setPriority(m_subRequestFailedToDoStatement->getInt(6));
-    result->setStatus
-      ((enum castor::stager::SubRequestStatusCodes)
-       m_subRequestFailedToDoStatement->getInt(7));
-    result->setModeBits(m_subRequestFailedToDoStatement->getInt(8));
-    result->setFlags(m_subRequestFailedToDoStatement->getInt(9));
-    result->setSubreqId(m_subRequestFailedToDoStatement->getString(10));
-    result->setErrorCode(m_subRequestFailedToDoStatement->getInt(11));
-    result->setErrorMessage(m_subRequestFailedToDoStatement->getString(12));
+    result->setFileName(m_subRequestFailedToDoStatement->getString(2));
+    result->setStatus(castor::stager::SUBREQUEST_FAILED_ANSWERING);
+    result->setSubreqId(m_subRequestFailedToDoStatement->getString(3));
+    result->setErrorCode(m_subRequestFailedToDoStatement->getInt(4));
+    result->setErrorMessage(m_subRequestFailedToDoStatement->getString(5));
     result->setSvcHandler("ErrorSvc");
+    // XXX here we allocate a StageGetRequest, but in fact the request type is irrelevant:
+    // XXX a FileRequest should be returned instead, except that it is abstract.
+    castor::stager::StageGetRequest* req = new castor::stager::StageGetRequest();
+    result->setRequest(req);
+    req->setReqId(m_subRequestFailedToDoStatement->getString(6));
+    castor::rh::Client* cl = new castor::rh::Client();
+    req->setClient(cl);
+    cl->setIpAddress(m_subRequestFailedToDoStatement->getInt(7));
+    cl->setPort(m_subRequestFailedToDoStatement->getInt(8));
+    cl->setVersion(m_subRequestFailedToDoStatement->getInt(9));
+    u_signed64 fileid = (u_signed64)m_subRequestFailedToDoStatement->getDouble(10);
+    if(fileid > 0) {
+      castor::stager::CastorFile* cf = new castor::stager::CastorFile();
+      cf->setFileId(fileid);
+      result->setCastorFile(cf);
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException e) {

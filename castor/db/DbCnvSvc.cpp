@@ -52,6 +52,8 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
   addAlias(58, 5);
   // Add alias for TapeCopyForMigration on TapeCopy
   addAlias(59, 30);
+  // Add alias for IClient on Client
+  addAlias(13, 129);
 }
 
 // -----------------------------------------------------------------------

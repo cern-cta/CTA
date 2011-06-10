@@ -335,7 +335,6 @@ BEGIN
         varTape.lastVdqmPingTime := getTime();
         INSERT INTO Tape T
         VALUES varTape RETURNING T.id into varTapeId;
-        INSERT INTO id2type (id,type) values (varTape.Id,29);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
       -- TODO: proper locking could prevent this.
       -- It could happen that the tape go created in the mean time. So now we
@@ -1756,7 +1755,6 @@ PROCEDURE TG_SetFileMigrated(
   varTapeCopyCount      INTEGER;
   varCfId               NUMBER;
   varTcId               NUMBER;
-  varTcIds              "numList";
   varTapeId             NUMBER;
   varStreamId           NUMBER;
 BEGIN
@@ -1802,19 +1800,15 @@ BEGIN
       WHERE DC.castorFile = varCfId
         AND DC.status= dconst.DISKCOPY_CANBEMIGR;
      DELETE FROM tapecopy TC
-      WHERE castorfile = varCfId 
-  RETURNING id BULK COLLECT INTO varTcIds;
-     FORALL i IN varTcIds.FIRST .. varTcIds.LAST
-       DELETE FROM id2type 
-         WHERE id=varTcIds(i);
+      WHERE castorfile = varCfId; 
   END IF;
   -- archive Repack requests should any be in the db
   FOR i IN (
     SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
     WHERE SR.castorfile = varCfId AND
-          SR.status= dconst.SUBREQUEST_REPACK
+          SR.status = dconst.SUBREQUEST_REPACK
     ) LOOP
-      archivesubreq(i.id, 8); -- SUBREQUEST_FINISHED
+    archiveSubReq(i.id, 8); -- SUBREQUEST_FINISHED
   END LOOP;
   COMMIT;
 END;
@@ -1923,14 +1917,10 @@ BEGIN
    WHERE SR.id = varSubrequestId;
   -- and trigger new migrations if missing tape copies were detected
   IF varMissingCopies > 0 THEN
-    DECLARE
-      newTcId INTEGER;
     BEGIN
       FOR i IN 1..varMissingCopies LOOP
         INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
-        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0)
-        RETURNING id INTO newTcId;
-        INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
+        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0);
       END LOOP;
     END;
   END IF;
@@ -2202,7 +2192,6 @@ BEGIN
        AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy STTC 
                         WHERE STTC.child = varTcIds(i));
   -- Finally drop the stream itself
-  DELETE FROM id2type ITT where ITT.id = inStrId;
   DELETE FROM Stream S where S.id= inStrId;
 END;
 /

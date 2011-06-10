@@ -611,7 +611,6 @@ BEGIN
   -- without waiting for garbage collection as the transfer was never started
   IF fsId = 0 THEN
     DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM Id2Type WHERE id = dcId;
   END IF;
   -- Continue draining process
   drainFileSystem(srcFsId);
@@ -703,15 +702,11 @@ BEGIN
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = 1, parent = 0 -- RESTART
-     WHERE id IN
-      (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id
-         FROM SubRequest, Id2Type
-        WHERE SubRequest.request = Id2Type.id
-          AND Id2Type.type = 39       -- PutDone
-          AND SubRequest.castorFile = cfId
-          AND SubRequest.status = 5); -- WAITSUBREQ
+     WHERE reqType = 39  -- PutDone
+       AND castorFile = cfId
+       AND status = 5; -- WAITSUBREQ
   END IF;
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
@@ -796,7 +791,6 @@ BEGIN
     -- thus cleanup DiskCopy and maybe the CastorFile
     -- (the physical file is dropped by the job)
     DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM Id2Type WHERE id = dcId;
     deleteCastorFile(cfId);
   END;
 END;
@@ -977,13 +971,11 @@ BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ SubRequest.id, SubRequest.diskCopy,
-             Id2Type.type, SubRequest.castorFile
+      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
         INTO srId, dcId, rType, cfId
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqIds(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
+        FROM SubRequest
+       WHERE subReqId = subReqIds(i)
+         AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Lock the CastorFile.
        SELECT id INTO cfId FROM CastorFile
         WHERE id = cfId FOR UPDATE;
@@ -1037,13 +1029,11 @@ BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ SubRequest.id, SubRequest.diskCopy,
-             Id2Type.type, SubRequest.castorFile
+      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
         INTO srId, dcId, rType, cfId
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqIds(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
+        FROM SubRequest
+       WHERE subReqId = subReqIds(i)
+         AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Lock the CastorFile.
        SELECT id INTO cfId FROM CastorFile
         WHERE id = cfId FOR UPDATE;
@@ -1088,12 +1078,11 @@ BEGIN
   FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT SubRequest.id, SubRequest.diskCopy, Id2Type.type
+      SELECT id, diskCopy, reqType
         INTO srId, dcId, rType
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqId(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
+        FROM SubRequest
+       WHERE subReqId = subReqId(i)
+         AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Update the reason for termination.
        UPDATE SubRequest
           SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
@@ -1191,18 +1180,16 @@ BEGIN
   -- scheduler through the job manager.
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name,
-         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username,
+         reqType, Request.reqId, Request.euid, Request.egid, Request.username,
          Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
          Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-         (SELECT type
-            FROM Id2type
-           WHERE id = Client.id) clientType, Client.secure, Request.creationTime,
+         129 clientType, Client.secure, Request.creationTime,
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfId, cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid,
          reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
          reqDefaultFileSize
-    FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
+    FROM SubRequest, CastorFile, SvcClass, Client,
          (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
                  id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopy,
@@ -1229,7 +1216,6 @@ BEGIN
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
      AND Request.svcClass = SvcClass.id
-     AND Id2type.id = SubRequest.request
      AND Request.id = SubRequest.request
      AND Request.client = Client.id;
 

@@ -55,22 +55,28 @@ CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
   t NUMBER;
   cfId NUMBER;
 BEGIN
-  SELECT type INTO t FROM id2Type WHERE id = ref;
-  IF (t = 2) THEN -- CASTORFILE
-    RETURN ref;
-  ELSIF (t = 5) THEN -- DiskCopy
-    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
-  ELSIF (t = 27) THEN -- SubRequest
-    SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
-  ELSIF (t = 30) THEN -- TapeCopy
-    SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
-  ELSIF (t = 18) THEN -- Segment
-    SELECT castorFile INTO cfId FROM TapeCopy, Segment WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
-  END IF;
+  SELECT id INTO cfId FROM CastorFile WHERE id = ref OR fileId = ref;
   RETURN cfId;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
-  SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- DiskCopy?
+BEGIN
+  SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
   RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- SubRequest?
+BEGIN
+  SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- TapeCopy?
+BEGIN
+  SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- Segment?
+BEGIN
+  SELECT castorFile INTO cfId FROM TapeCopy, Segment
+   WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
+  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, TapeCopy or Segment with id = ' || ref);
+END; END; END; END;
 END;
 /
 
@@ -152,7 +158,7 @@ BEGIN
                      SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
                      SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
                      SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
-                     SELECT /*+ INDEX(SetFileGCWeight PK_SetFileGCWeight_Id) */ id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
+                     SELECT /*+ INDEX(SetFileGCWeight PK_SetFileGCWeight_Id) */ id, username, machine, svcClassName, 'SetGCW' AS type FROM SetFileGCWeight) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);

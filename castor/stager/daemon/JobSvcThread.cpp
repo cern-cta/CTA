@@ -105,6 +105,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
     nsHost = sReq->nsHost();
     // Loading the subrequest from db
     ad.setTarget(sReq->subreqId());
+    ad.setObjType(castor::OBJ_SubRequest);
     castor::IObject *obj = 0;
     try {
       obj = svcs->createObj(&ad);
