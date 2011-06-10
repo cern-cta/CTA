@@ -347,6 +347,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_reqType
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_reqType(castor::stager::SubRequest* instance, int* var) {
+    *var = instance->reqType();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setReqType
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setReqType(castor::stager::SubRequest* instance, int new_var) {
+    instance->setReqType(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

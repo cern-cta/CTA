@@ -275,17 +275,29 @@ int Cstager_SubRequest_setRequestedFileSystems(struct Cstager_SubRequest_t* inst
 
 /**
  * Get the value of svcHandler
- * Service that should handle this subrequest. To be used only by the server.
- * Clients should leave this field empty.
+ * Stager service that should handle this subrequest. Clients should leave this
+ * field empty.
  */
 int Cstager_SubRequest_svcHandler(struct Cstager_SubRequest_t* instance, const char** var);
 
 /**
  * Set the value of svcHandler
- * Service that should handle this subrequest. To be used only by the server.
- * Clients should leave this field empty.
+ * Stager service that should handle this subrequest. Clients should leave this
+ * field empty.
  */
 int Cstager_SubRequest_setSvcHandler(struct Cstager_SubRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqType
+ * The numeric type of the request. Clients should leave this field empty.
+ */
+int Cstager_SubRequest_reqType(struct Cstager_SubRequest_t* instance, int* var);
+
+/**
+ * Set the value of reqType
+ * The numeric type of the request. Clients should leave this field empty.
+ */
+int Cstager_SubRequest_setReqType(struct Cstager_SubRequest_t* instance, int new_var);
 
 /**
  * Get the value of id

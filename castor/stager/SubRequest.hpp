@@ -373,8 +373,8 @@ namespace castor {
 
       /**
        * Get the value of m_svcHandler
-       * Service that should handle this subrequest. To be used only by the server.
-       * Clients should leave this field empty.
+       * Stager service that should handle this subrequest. Clients should leave this
+       * field empty.
        * @return the value of m_svcHandler
        */
       std::string svcHandler() const {
@@ -383,12 +383,30 @@ namespace castor {
 
       /**
        * Set the value of m_svcHandler
-       * Service that should handle this subrequest. To be used only by the server.
-       * Clients should leave this field empty.
+       * Stager service that should handle this subrequest. Clients should leave this
+       * field empty.
        * @param new_var the new value of m_svcHandler
        */
       void setSvcHandler(std::string new_var) {
         m_svcHandler = new_var;
+      }
+
+      /**
+       * Get the value of m_reqType
+       * The numeric type of the request. Clients should leave this field empty.
+       * @return the value of m_reqType
+       */
+      int reqType() const {
+        return m_reqType;
+      }
+
+      /**
+       * Set the value of m_reqType
+       * The numeric type of the request. Clients should leave this field empty.
+       * @param new_var the new value of m_reqType
+       */
+      void setReqType(int new_var) {
+        m_reqType = new_var;
       }
 
       /**
@@ -584,8 +602,11 @@ namespace castor {
       /// The filesystems requested to fulfil the jobs resource requirements in the scheduler
       std::string m_requestedFileSystems;
 
-      /// Service that should handle this subrequest. To be used only by the server. Clients should leave this field empty.
+      /// Stager service that should handle this subrequest. Clients should leave this field empty.
       std::string m_svcHandler;
+
+      /// The numeric type of the request. Clients should leave this field empty.
+      int m_reqType;
 
       /// The id of this object
       u_signed64 m_id;
