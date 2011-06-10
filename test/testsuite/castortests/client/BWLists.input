@@ -1,0 +1,2 @@
+stager_listprivileges -U `getent passwd <unprivUid> | cut -d: -f 1`
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> stager_addprivilege -U `getent passwd <unprivUid> | cut -d: -f 1`
