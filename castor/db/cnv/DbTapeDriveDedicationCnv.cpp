@@ -90,17 +90,6 @@ const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_bulkSelectStateme
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_updateStatementString =
 "UPDATE TapeDriveDedication SET clientHost = :1, euid = :2, egid = :3, vid = :4, accessMode = :5, startTime = :6, endTime = :7, reason = :8 WHERE id = :9";
 
-/// SQL statement for type storage
-const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
-
-const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_storeTypeBulkStatementString =
-"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
-
-/// SQL statement for type deletion
-const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteTypeStatementString =
-"DELETE FROM Id2Type WHERE id = :1";
-
 /// SQL existence statement for member tapeDrive
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_checkTapeDriveExistStatementString =
 "SELECT id FROM TapeDrive WHERE id = :1";
@@ -120,9 +109,6 @@ castor::db::cnv::DbTapeDriveDedicationCnv::DbTapeDriveDedicationCnv(castor::ICnv
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_storeTypeStatement(0),
-  m_storeTypeBulkStatement(0),
-  m_deleteTypeStatement(0),
   m_checkTapeDriveExistStatement(0),
   m_updateTapeDriveStatement(0) {}
 
@@ -139,9 +125,6 @@ castor::db::cnv::DbTapeDriveDedicationCnv::~DbTapeDriveDedicationCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_storeTypeStatement) delete m_storeTypeStatement;
-    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
-    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_checkTapeDriveExistStatement) delete m_checkTapeDriveExistStatement;
     if(m_updateTapeDriveStatement) delete m_updateTapeDriveStatement;
   } catch (castor::exception::Exception& ignored) {};
@@ -311,10 +294,6 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress*,
       m_insertStatement = createStatement(s_insertStatementString);
       m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
-    }
     // Now Save the current object
     m_insertStatement->setString(1, obj->clientHost());
     m_insertStatement->setInt(2, obj->euid());
@@ -327,9 +306,6 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress*,
     m_insertStatement->setUInt64(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(10));
-    m_storeTypeStatement->setUInt64(1, obj->id());
-    m_storeTypeStatement->setUInt64(2, obj->type());
-    m_storeTypeStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -380,10 +356,6 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
     if (0 == m_bulkInsertStatement) {
       m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
       m_bulkInsertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for clientHost
     unsigned int clientHostMaxLen = 0;
@@ -590,29 +562,6 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeBulkStatement->setDataBuffer
-      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
-    // build the buffers for type
-    int* typeBuffer = (int*) malloc(nb * sizeof(int));
-    if (typeBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBuffer);
-    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (typeBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBufLens);
-    for (int i = 0; i < nb; i++) {
-      typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(int);
-    }
-    m_storeTypeBulkStatement->setDataBuffer
-      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeBulkStatement->execute(nb);
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -699,12 +648,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress*,
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
     // Now Delete the object
-    m_deleteTypeStatement->setUInt64(1, obj->id());
-    m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (endTransaction) {

@@ -94,17 +94,6 @@ const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_bulkSelectStateme
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_updateStatementString =
 "UPDATE FilesDeletionFailed SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11 WHERE id = :12";
 
-/// SQL statement for type storage
-const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
-
-const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_storeTypeBulkStatementString =
-"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
-
-/// SQL statement for type deletion
-const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_deleteTypeStatementString =
-"DELETE FROM Id2Type WHERE id = :1";
-
 /// SQL statement for request insertion into newRequests table
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_insertNewReqStatementString =
 "INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
@@ -145,9 +134,6 @@ castor::db::cnv::DbFilesDeletionFailedCnv::DbFilesDeletionFailedCnv(castor::ICnv
   m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_insertNewReqStatement(0),
-  m_storeTypeStatement(0),
-  m_storeTypeBulkStatement(0),
-  m_deleteTypeStatement(0),
   m_selectGCFileStatement(0),
   m_deleteGCFileStatement(0),
   m_remoteUpdateGCFileStatement(0),
@@ -169,9 +155,6 @@ castor::db::cnv::DbFilesDeletionFailedCnv::~DbFilesDeletionFailedCnv() throw() {
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_insertNewReqStatement) delete m_insertNewReqStatement;
-    if(m_storeTypeStatement) delete m_storeTypeStatement;
-    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
-    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_deleteGCFileStatement) delete m_deleteGCFileStatement;
     if(m_selectGCFileStatement) delete m_selectGCFileStatement;
     if(m_remoteUpdateGCFileStatement) delete m_remoteUpdateGCFileStatement;
@@ -516,10 +499,6 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::createRep(castor::IAddress*,
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
     }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
-    }
     // Now Save the current object
     m_insertStatement->setUInt64(1, obj->flags());
     m_insertStatement->setString(2, obj->userName());
@@ -537,9 +516,6 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::createRep(castor::IAddress*,
     m_insertStatement->setUInt64(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(15));
-    m_storeTypeStatement->setUInt64(1, obj->id());
-    m_storeTypeStatement->setUInt64(2, obj->type());
-    m_storeTypeStatement->execute();
     m_insertNewReqStatement->setUInt64(1, obj->id());
     m_insertNewReqStatement->setUInt64(2, obj->type());
     m_insertNewReqStatement->execute();
@@ -601,10 +577,6 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateRep(castor::IAddress*,
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for flags
     double* flagsBuffer = (double*) malloc(nb * sizeof(double));
@@ -916,8 +888,8 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateRep(castor::IAddress*,
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeBulkStatement->setDataBuffer
+    // reuse idBuffer for bulk insertion into NewRequest
+    m_insertNewReqStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
@@ -936,13 +908,6 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateRep(castor::IAddress*,
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
     }
-    m_storeTypeBulkStatement->setDataBuffer
-      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeBulkStatement->execute(nb);
-    // reuse idBuffer for bulk insertion into NewRequest
-    m_insertNewReqStatement->setDataBuffer
-      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
-    // reuse typeBuffer for bulk insertion into NewRequest
     m_insertNewReqStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_insertNewReqStatement->execute(nb);
@@ -1035,12 +1000,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::deleteRep(castor::IAddress*,
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
     // Now Delete the object
-    m_deleteTypeStatement->setUInt64(1, obj->id());
-    m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     for (std::vector<castor::stager::GCFile*>::iterator it = obj->files().begin();

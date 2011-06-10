@@ -298,20 +298,6 @@ namespace castor {
         /// SQL statement object for request status insertion into newRequests table
         castor::db::IDbStatement *m_insertNewReqStatement;
 
-        /// SQL statement for type storage 
-        static const std::string s_storeTypeStatementString;
-        static const std::string s_storeTypeBulkStatementString;
-
-        /// SQL statement object for type storage
-        castor::db::IDbStatement *m_storeTypeStatement;
-        castor::db::IDbStatement *m_storeTypeBulkStatement;
-
-        /// SQL statement for type deletion 
-        static const std::string s_deleteTypeStatementString;
-
-        /// SQL statement object for type deletion
-        castor::db::IDbStatement *m_deleteTypeStatement;
-
         /// SQL select statement for member parameters
         static const std::string s_selectQueryParameterStatementString;
 

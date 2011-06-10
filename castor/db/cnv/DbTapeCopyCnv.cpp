@@ -95,17 +95,6 @@ const std::string castor::db::cnv::DbTapeCopyCnv::s_bulkSelectStatementString =
 const std::string castor::db::cnv::DbTapeCopyCnv::s_updateStatementString =
 "UPDATE TapeCopy SET copyNb = :1, errorCode = :2, nbRetry = :3, missingCopies = :4, status = :5 WHERE id = :6";
 
-/// SQL statement for type storage
-const std::string castor::db::cnv::DbTapeCopyCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
-
-const std::string castor::db::cnv::DbTapeCopyCnv::s_storeTypeBulkStatementString =
-"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
-
-/// SQL statement for type deletion
-const std::string castor::db::cnv::DbTapeCopyCnv::s_deleteTypeStatementString =
-"DELETE FROM Id2Type WHERE id = :1";
-
 /// SQL insert statement for member stream
 const std::string castor::db::cnv::DbTapeCopyCnv::s_insertStreamStatementString =
 "INSERT INTO Stream2TapeCopy (Child, Parent) VALUES (:1, :2)";
@@ -151,9 +140,6 @@ castor::db::cnv::DbTapeCopyCnv::DbTapeCopyCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_storeTypeStatement(0),
-  m_storeTypeBulkStatement(0),
-  m_deleteTypeStatement(0),
   m_insertStreamStatement(0),
   m_deleteStreamStatement(0),
   m_selectStreamStatement(0),
@@ -176,9 +162,6 @@ castor::db::cnv::DbTapeCopyCnv::~DbTapeCopyCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_storeTypeStatement) delete m_storeTypeStatement;
-    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
-    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_insertStreamStatement) delete m_insertStreamStatement;
     if(m_deleteStreamStatement) delete m_deleteStreamStatement;
     if(m_selectStreamStatement) delete m_selectStreamStatement;
@@ -572,10 +555,6 @@ void castor::db::cnv::DbTapeCopyCnv::createRep(castor::IAddress*,
       m_insertStatement = createStatement(s_insertStatementString);
       m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
     }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
-    }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->copyNb());
     m_insertStatement->setInt(2, obj->errorCode());
@@ -585,9 +564,6 @@ void castor::db::cnv::DbTapeCopyCnv::createRep(castor::IAddress*,
     m_insertStatement->setInt(6, (int)obj->status());
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(7));
-    m_storeTypeStatement->setUInt64(1, obj->id());
-    m_storeTypeStatement->setUInt64(2, obj->type());
-    m_storeTypeStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -635,10 +611,6 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
     if (0 == m_bulkInsertStatement) {
       m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
       m_bulkInsertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for copyNb
     int* copyNbBuffer = (int*) malloc(nb * sizeof(int));
@@ -773,29 +745,6 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress*,
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeBulkStatement->setDataBuffer
-      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
-    // build the buffers for type
-    int* typeBuffer = (int*) malloc(nb * sizeof(int));
-    if (typeBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBuffer);
-    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (typeBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBufLens);
-    for (int i = 0; i < nb; i++) {
-      typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(int);
-    }
-    m_storeTypeBulkStatement->setDataBuffer
-      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeBulkStatement->execute(nb);
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -879,12 +828,7 @@ void castor::db::cnv::DbTapeCopyCnv::deleteRep(castor::IAddress*,
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
     // Now Delete the object
-    m_deleteTypeStatement->setUInt64(1, obj->id());
-    m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();

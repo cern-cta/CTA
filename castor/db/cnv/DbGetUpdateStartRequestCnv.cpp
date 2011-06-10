@@ -91,17 +91,6 @@ const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_bulkSelectState
 const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_updateStatementString =
 "UPDATE GetUpdateStartRequest SET subreqId = :1, diskServer = :2, fileSystem = :3, fileId = :4, nsHost = :5, flags = :6, userName = :7, euid = :8, egid = :9, mask = :10, pid = :11, machine = :12, svcClassName = :13, userTag = :14, reqId = :15, lastModificationTime = :16 WHERE id = :17";
 
-/// SQL statement for type storage
-const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
-
-const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_storeTypeBulkStatementString =
-"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
-
-/// SQL statement for type deletion
-const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_deleteTypeStatementString =
-"DELETE FROM Id2Type WHERE id = :1";
-
 /// SQL statement for request insertion into newRequests table
 const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_insertNewReqStatementString =
 "INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
@@ -130,9 +119,6 @@ castor::db::cnv::DbGetUpdateStartRequestCnv::DbGetUpdateStartRequestCnv(castor::
   m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_insertNewReqStatement(0),
-  m_storeTypeStatement(0),
-  m_storeTypeBulkStatement(0),
-  m_deleteTypeStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
   m_updateIClientStatement(0) {}
@@ -151,9 +137,6 @@ castor::db::cnv::DbGetUpdateStartRequestCnv::~DbGetUpdateStartRequestCnv() throw
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_insertNewReqStatement) delete m_insertNewReqStatement;
-    if(m_storeTypeStatement) delete m_storeTypeStatement;
-    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
-    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_checkSvcClassExistStatement) delete m_checkSvcClassExistStatement;
     if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
     if(m_updateIClientStatement) delete m_updateIClientStatement;
@@ -384,10 +367,6 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress*,
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
     }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
-    }
     // Now Save the current object
     m_insertStatement->setUInt64(1, obj->subreqId());
     m_insertStatement->setString(2, obj->diskServer());
@@ -410,9 +389,6 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress*,
     m_insertStatement->setUInt64(19, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(20));
-    m_storeTypeStatement->setUInt64(1, obj->id());
-    m_storeTypeStatement->setUInt64(2, obj->type());
-    m_storeTypeStatement->execute();
     m_insertNewReqStatement->setUInt64(1, obj->id());
     m_insertNewReqStatement->setUInt64(2, obj->type());
     m_insertNewReqStatement->execute();
@@ -479,10 +455,6 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for subreqId
     double* subreqIdBuffer = (double*) malloc(nb * sizeof(double));
@@ -904,8 +876,8 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeBulkStatement->setDataBuffer
+    // reuse idBuffer for bulk insertion into NewRequest
+    m_insertNewReqStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
@@ -924,13 +896,6 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
     }
-    m_storeTypeBulkStatement->setDataBuffer
-      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeBulkStatement->execute(nb);
-    // reuse idBuffer for bulk insertion into NewRequest
-    m_insertNewReqStatement->setDataBuffer
-      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
-    // reuse typeBuffer for bulk insertion into NewRequest
     m_insertNewReqStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_insertNewReqStatement->execute(nb);
@@ -1028,12 +993,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::deleteRep(castor::IAddress*,
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
     // Now Delete the object
-    m_deleteTypeStatement->setUInt64(1, obj->id());
-    m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (obj->client() != 0) {

@@ -288,28 +288,6 @@ void CppHDbCnvWriter::writeMembers() {
               << "castor::db::IDbStatement *m_insertNewReqStatement;"
               << endl << endl;
   }
-  // Dealing with type identification (storage and deletion)
-  *m_stream << getIndent()
-            << "/// SQL statement for type storage "
-            << endl << getIndent()
-            << "static const std::string s_storeTypeStatementString;"
-            << endl << getIndent()
-            << "static const std::string s_storeTypeBulkStatementString;"
-            << endl << endl << getIndent()
-            << "/// SQL statement object for type storage"
-            << endl << getIndent()
-            << "castor::db::IDbStatement *m_storeTypeStatement;"
-            << endl << getIndent()
-            << "castor::db::IDbStatement *m_storeTypeBulkStatement;"
-            << endl << endl << getIndent()
-            << "/// SQL statement for type deletion "
-            << endl << getIndent()
-            << "static const std::string s_deleteTypeStatementString;"
-            << endl << endl << getIndent()
-            << "/// SQL statement object for type deletion"
-            << endl << getIndent()
-            << "castor::db::IDbStatement *m_deleteTypeStatement;"
-            << endl << endl;
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();

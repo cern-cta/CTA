@@ -259,20 +259,6 @@ namespace castor {
         /// SQL statement object for request update
         castor::db::IDbStatement *m_updateStatement;
 
-        /// SQL statement for type storage 
-        static const std::string s_storeTypeStatementString;
-        static const std::string s_storeTypeBulkStatementString;
-
-        /// SQL statement object for type storage
-        castor::db::IDbStatement *m_storeTypeStatement;
-        castor::db::IDbStatement *m_storeTypeBulkStatement;
-
-        /// SQL statement for type deletion 
-        static const std::string s_deleteTypeStatementString;
-
-        /// SQL statement object for type deletion
-        castor::db::IDbStatement *m_deleteTypeStatement;
-
         /// SQL checkExist statement for member tapeDrive
         static const std::string s_checkTapeDriveExistStatementString;
 

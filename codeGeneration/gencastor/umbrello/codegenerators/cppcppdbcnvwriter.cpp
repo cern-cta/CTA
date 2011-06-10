@@ -467,33 +467,7 @@ void CppCppDbCnvWriter::writeConstants() {
     }
   }
   *m_stream << " WHERE id = :" << n+1
-            << "\";" << endl << endl << getIndent()
-  // Id2Type related statements
-            << "/// SQL statement for type storage"
-            << endl << getIndent()
-            << "const std::string "
-            << m_classInfo->fullPackageName
-            << "Db" << m_classInfo->className
-            << "Cnv::s_storeTypeStatementString =" << endl
-            << getIndent()
-            << "\"INSERT INTO Id2Type (id, type) VALUES (:1, :2)\";"
-            << endl << endl << getIndent()
-            << "const std::string "
-            << m_classInfo->fullPackageName
-            << "Db" << m_classInfo->className
-            << "Cnv::s_storeTypeBulkStatementString =" << endl
-            << getIndent()
-            << "\"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)\";"
-            << endl << endl << getIndent()
-            << "/// SQL statement for type deletion"
-            << endl << getIndent()
-            << "const std::string "
-            << m_classInfo->fullPackageName
-            << "Db" << m_classInfo->className
-            << "Cnv::s_deleteTypeStatementString =" << endl
-            << getIndent()
-            << "\"DELETE FROM Id2Type WHERE id = :1\";"
-            << endl << endl;
+            << "\";" << endl << endl;
   // Status dedicated statements
   if (isNewRequest()) {
     *m_stream << getIndent()
@@ -823,13 +797,10 @@ void CppCppDbCnvWriter::writeConstructors() {
             << getIndent() << "  m_deleteStatement(0)," << endl
             << getIndent() << "  m_selectStatement(0)," << endl
             << getIndent() << "  m_bulkSelectStatement(0)," << endl
-            << getIndent() << "  m_updateStatement(0)," << endl;
+            << getIndent() << "  m_updateStatement(0)";
   if (isNewRequest()) {
-    *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
+    *m_stream << "," << endl << getIndent() << "  m_insertNewReqStatement(0)";
   }
-  *m_stream << getIndent() << "  m_storeTypeStatement(0)," << endl
-            << getIndent() << "  m_storeTypeBulkStatement(0)," << endl
-            << getIndent() << "  m_deleteTypeStatement(0)";
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();
@@ -916,12 +887,6 @@ void CppCppDbCnvWriter::writeConstructors() {
               << "if(m_insertNewReqStatement) delete m_insertNewReqStatement;"
               << endl;
   }
-  *m_stream << getIndent() << "if(m_storeTypeStatement) delete m_storeTypeStatement;"
-            << endl << getIndent()
-            << "if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;"
-            << endl << getIndent()
-            << "if(m_deleteTypeStatement) delete m_deleteTypeStatement;"
-            << endl;
   // Associations dedicated statements
   for (Assoc* as = assocs.first();
        0 != as;
@@ -2119,16 +2084,6 @@ void CppCppDbCnvWriter::writeCreateRepCheckStatements(QTextStream &stream,
     m_indent--;
     stream << getIndent() << "}" << endl;
   }
-  stream << getIndent()
-         << "if (0 == m_storeTypeStatement) {" << endl;
-  m_indent++;
-  stream << getIndent()
-         << "m_storeTypeStatement = createStatement(s_storeTypeStatementString);"
-         << endl << getIndent()
-         << "m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);"
-         << endl;
-  m_indent--;
-  stream << getIndent() << "}" << endl;
 }
 
 //=============================================================================
@@ -2206,13 +2161,7 @@ void CppCppDbCnvWriter::writeCreateRepContent(QTextStream &stream, bool &address
          << "m_insertStatement->execute();"
          << endl << getIndent()
          << "obj->setId(m_insertStatement->getUInt64("
-         << n << "));" << endl << getIndent()
-         << "m_storeTypeStatement->setUInt64(1, obj->id());"
-         << endl << getIndent()
-         << "m_storeTypeStatement->setUInt64(2, obj->type());"
-         << endl << getIndent()
-         << "m_storeTypeStatement->execute();"
-         << endl;
+         << n << "));" << endl;
   if (isNewRequest()) {
     stream << getIndent()
            << "m_insertNewReqStatement->setUInt64(1, obj->id());"
@@ -2508,21 +2457,6 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
          << endl;
   m_indent--;
   stream << getIndent() << "}" << endl;
-  // Prepare the buffers for bulk insertion into Id2Type
-  stream  << getIndent()
-          << "// reuse idBuffer for bulk insertion into Id2Type"
-          << endl << getIndent()
-          << "m_storeTypeBulkStatement->setDataBuffer" << endl
-          << getIndent()
-          << "  (1, idBuffer, "
-          << getDbTypeConstant("u_signed64")
-          << ", sizeof(idBuffer[0]), idBufLens);" << endl;
-  writeCreateBufferForSelect(stream, typeUsed, "type", "int",
-                             2, "m_storeTypeBulkStatement");
-  // Execute bulk insertion into Id2Type
-  stream << getIndent()
-         << "m_storeTypeBulkStatement->execute(nb);"
-         << endl;
   if (isNewRequest()) {
     // Prepare the buffers for bulk insertion into NewRequest
     stream  << getIndent()
@@ -2533,14 +2467,8 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent(QTextStream &stream, bool &add
             << "  (1, idBuffer, "
             << getDbTypeConstant("u_signed64")
             << ", sizeof(idBuffer[0]), idBufLens);" << endl;
-    stream  << getIndent()
-            << "// reuse typeBuffer for bulk insertion into NewRequest"
-            << endl << getIndent()
-            << "m_insertNewReqStatement->setDataBuffer" << endl
-            << getIndent()
-            << "  (2, typeBuffer, "
-            << getDbTypeConstant("int")
-            << ", sizeof(typeBuffer[0]), typeBufLens);" << endl;
+    writeCreateBufferForSelect(stream, typeUsed, "type", "int",
+                               2, "m_insertNewReqStatement");
     // Execute bulk insertion into NewRequest
     stream << getIndent()
            << "m_insertNewReqStatement->execute(nb);"
@@ -2717,21 +2645,9 @@ void CppCppDbCnvWriter::writeDeleteRepContent(QTextStream &stream,
          << endl;
   m_indent--;
   stream << getIndent() << "}" << endl;
-  stream << getIndent()
-         << "if (0 == m_deleteTypeStatement) {" << endl;
-  m_indent++;
-  stream << getIndent()
-         << "m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);"
-         << endl;
-  m_indent--;
-  stream << getIndent() << "}" << endl;
   // Delete the object from the database
   stream << getIndent()
          << "// Now Delete the object"
-         << endl << getIndent()
-         << "m_deleteTypeStatement->setUInt64(1, obj->id());"
-         << endl << getIndent()
-         << "m_deleteTypeStatement->execute();"
          << endl << getIndent()
          << "m_deleteStatement->setUInt64(1, obj->id());"
          << endl << getIndent()

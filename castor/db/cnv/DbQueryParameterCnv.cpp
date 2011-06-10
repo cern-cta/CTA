@@ -91,17 +91,6 @@ const std::string castor::db::cnv::DbQueryParameterCnv::s_bulkSelectStatementStr
 const std::string castor::db::cnv::DbQueryParameterCnv::s_updateStatementString =
 "UPDATE QueryParameter SET value = :1, queryType = :2 WHERE id = :3";
 
-/// SQL statement for type storage
-const std::string castor::db::cnv::DbQueryParameterCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
-
-const std::string castor::db::cnv::DbQueryParameterCnv::s_storeTypeBulkStatementString =
-"INSERT /* bulk */ INTO Id2Type (id, type) VALUES (:1, :2)";
-
-/// SQL statement for type deletion
-const std::string castor::db::cnv::DbQueryParameterCnv::s_deleteTypeStatementString =
-"DELETE FROM Id2Type WHERE id = :1";
-
 /// SQL update statement for member query
 const std::string castor::db::cnv::DbQueryParameterCnv::s_updateQryRequestStatementString =
 "UPDATE QueryParameter SET query = :1 WHERE id = :2";
@@ -117,9 +106,6 @@ castor::db::cnv::DbQueryParameterCnv::DbQueryParameterCnv(castor::ICnvSvc* cnvSv
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_storeTypeStatement(0),
-  m_storeTypeBulkStatement(0),
-  m_deleteTypeStatement(0),
   m_updateQryRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -135,9 +121,6 @@ castor::db::cnv::DbQueryParameterCnv::~DbQueryParameterCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_storeTypeStatement) delete m_storeTypeStatement;
-    if(m_storeTypeBulkStatement) delete m_storeTypeBulkStatement;
-    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
     if(m_updateQryRequestStatement) delete m_updateQryRequestStatement;
   } catch (castor::exception::Exception& ignored) {};
 }
@@ -289,19 +272,12 @@ void castor::db::cnv::DbQueryParameterCnv::createRep(castor::IAddress*,
       m_insertStatement = createStatement(s_insertStatementString);
       m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
-    }
     // Now Save the current object
     m_insertStatement->setString(1, obj->value());
     m_insertStatement->setUInt64(2, (type == OBJ_QryRequest && obj->query() != 0) ? obj->query()->id() : 0);
     m_insertStatement->setInt(3, (int)obj->queryType());
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(4));
-    m_storeTypeStatement->setUInt64(1, obj->id());
-    m_storeTypeStatement->setUInt64(2, obj->type());
-    m_storeTypeStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -346,10 +322,6 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
     if (0 == m_bulkInsertStatement) {
       m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
       m_bulkInsertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-      m_storeTypeBulkStatement = createStatement(s_storeTypeBulkStatementString);
     }
     // build the buffers for value
     unsigned int valueMaxLen = 0;
@@ -432,29 +404,6 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress*,
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // reuse idBuffer for bulk insertion into Id2Type
-    m_storeTypeBulkStatement->setDataBuffer
-      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
-    // build the buffers for type
-    int* typeBuffer = (int*) malloc(nb * sizeof(int));
-    if (typeBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBuffer);
-    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (typeBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(typeBufLens);
-    for (int i = 0; i < nb; i++) {
-      typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(int);
-    }
-    m_storeTypeBulkStatement->setDataBuffer
-      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
-    m_storeTypeBulkStatement->execute(nb);
     // release the buffers
     for (unsigned int i = 0; i < allocMem.size(); i++) {
       free(allocMem[i]);
@@ -535,12 +484,7 @@ void castor::db::cnv::DbQueryParameterCnv::deleteRep(castor::IAddress*,
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
     // Now Delete the object
-    m_deleteTypeStatement->setUInt64(1, obj->id());
-    m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (endTransaction) {
