@@ -1,7 +1,7 @@
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
 EXECUTABLES=sendrtcopyjob testrtcpd testrtcpdtape
-COMMON_OPS=-DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"/usr/include/scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
+COMMON_OPS=-DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DCNS_ROOT=\"/castor\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"/usr/include/scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
 
 all: $(EXECUTABLES)
 
@@ -64,6 +64,7 @@ testrtcpd: \
 testrtcpdtape: \
   testRtcpdTapeMain.o \
   testJid.o \
+  common_getifnam.o \
   common_Cpool.o \
   common_getacctent.o \
   common_Cglobals.o \
@@ -82,13 +83,60 @@ testrtcpdtape: \
   common_remote.o \
   common_Cpwd.o \
   common_u64subr.o \
+  common_wsacct.o \
   dlf_dlf_lib.o \
+  exception_Exception.o \
+  exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
+  exception_InvalidConfigEntry.o \
+  exception_InvalidConfiguration.o \
+  exception_TimeOut.o \
+  exception_TooBig.o \
+  exception_NoPortInRange.o \
+  exception_TapeNetAcceptInterrupted.o \
+  exception_PermissionDenied.o \
+  exception_OutOfMemory.o \
+  exception_NoEntry.o \
+  ns_Cns_selectsrvr.o \
+  ns_Cns_opendir.o \
+  ns_Cns_closedir.o \
+  ns_Cns_stat.o \
+  ns_Cns_readdir.o \
+  ns_Cns_readdirx.o \
+  ns_Cns_rename.o \
+  ns_Cns_rewinddir.o \
+  ns_Cns_rmdir.o \
+  ns_Cns_unlink.o \
+  ns_Cns_access.o \
+  ns_Cns_chdir.o \
+  ns_Cns_chmod.o \
+  ns_Cns_chown.o \
+  ns_Cns_creat.o \
+  ns_Cns_getcwd.o \
+  ns_Cns_mkdir.o \
+  ns_Cns_apiinit.o \
+  ns_Cns_aborttrans.o \
+  ns_Cns_auth.o \
+  ns_send2nsd.o \
+  ns_Cns_errmsg.o \
   rfio_xyread.o \
   rfio_error.o \
   rfio_mstat.o \
   rfio_connect.o \
+  rfio_open.o \
+  rfio_open64.o \
+  rfio_xyopen.o \
+  rfio_close.o \
   rfio_xyclose.o \
   rfio_read.o \
+  rfio_write.o \
+  rfio_xywrite.o \
+  rfio_rfio_rfilefdt.o \
+  rfio_lseek64.o \
+  rfio_setopt.o \
+  rfio_parse.o \
+  rfio_rfio_HsmIf.o \
   rtcpapi.o \
   rtcp_accounting.o \
   rtcp_marshallVdqmClientInfoMsg.o \
@@ -98,6 +146,8 @@ testrtcpdtape: \
   rtcp_Listen.o \
   rtcp_CallVMGR.o \
   rtcp_recvRtcpHdr.o \
+  rtcp_RetvalSHIFT.o \
+  rtcp_InitNW.o \
   rtcpc_BuildReq.o \
   rtcpd_Disk.o \
   rtcpd_tpdump.o \
@@ -111,6 +161,10 @@ testrtcpdtape: \
   rtcpd_ClientListen.o \
   rtcpd_GetClientInfo.o \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
+  stager_client_api_open.o \
+  stager_client_api_get.o \
+  stager_client_api_put.o \
+  stager_client_api_update.o \
   tape_cvtden.o \
   tape_tplogger.o \
   tape_Ctape_kill.o \
@@ -190,6 +244,9 @@ castor_BaseObject.o: $(ROOT_DIR)/castor/BaseObject.cpp
 castor_ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+common_getifnam.o: $(ROOT_DIR)/common/getifnam.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 common_Cpool.o: $(ROOT_DIR)/common/Cpool.c
 	gcc -pthread -g -c $(INCLUDE_OPS) -o $@ $^
 
@@ -247,8 +304,53 @@ common_Cpwd.o: $(ROOT_DIR)/common/Cpwd.c
 common_u64subr.o: $(ROOT_DIR)/common/u64subr.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
+common_wsacct.o: $(ROOT_DIR)/common/wsacct.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_NoEntry.o: $(ROOT_DIR)/castor/exception/NoEntry.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_InvalidArgument.o: $(ROOT_DIR)/castor/exception/InvalidArgument.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_Internal.o: $(ROOT_DIR)/castor/exception/Internal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_InvalidConfigEntry.o: $(ROOT_DIR)/castor/exception/InvalidConfigEntry.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_InvalidConfiguration.o: $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_TimeOut.o: $(ROOT_DIR)/castor/exception/TimeOut.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_TooBig.o: $(ROOT_DIR)/castor/exception/TooBig.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_TapeNetAcceptInterrupted.o: \
+  $(ROOT_DIR)/castor/exception/TapeNetAcceptInterrupted.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_PermissionDenied.o: \
+  $(ROOT_DIR)/castor/exception/PermissionDenied.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_OutOfMemory.o: \
+  $(ROOT_DIR)/castor/exception/OutOfMemory.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_AbstractSocket.o: $(ROOT_DIR)/castor/io/AbstractSocket.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -258,6 +360,72 @@ io_AbstractTCPSocket.o: $(ROOT_DIR)/castor/io/AbstractTCPSocket.cpp
 
 io_StreamAddress.o: $(ROOT_DIR)/castor/io/StreamAddress.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_opendir.o: $(ROOT_DIR)/ns/Cns_opendir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_closedir.o: $(ROOT_DIR)/ns/Cns_closedir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_stat.o: $(ROOT_DIR)/ns/Cns_stat.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_readdir.o: $(ROOT_DIR)/ns/Cns_readdir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_readdirx.o: $(ROOT_DIR)/ns/Cns_readdirx.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_rename.o: $(ROOT_DIR)/ns/Cns_rename.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_rewinddir.o: $(ROOT_DIR)/ns/Cns_rewinddir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_rmdir.o: $(ROOT_DIR)/ns/Cns_rmdir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_unlink.o: $(ROOT_DIR)/ns/Cns_unlink.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_access.o: $(ROOT_DIR)/ns/Cns_access.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_chdir.o: $(ROOT_DIR)/ns/Cns_chdir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_chmod.o: $(ROOT_DIR)/ns/Cns_chmod.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_chown.o: $(ROOT_DIR)/ns/Cns_chown.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_creat.o: $(ROOT_DIR)/ns/Cns_creat.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_getcwd.o: $(ROOT_DIR)/ns/Cns_getcwd.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_mkdir.o: $(ROOT_DIR)/ns/Cns_mkdir.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_apiinit.o: $(ROOT_DIR)/ns/Cns_apiinit.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_aborttrans.o: $(ROOT_DIR)/ns/Cns_aborttrans.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_auth.o: $(ROOT_DIR)/ns/Cns_auth.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_send2nsd.o: $(ROOT_DIR)/ns/send2nsd.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+ns_Cns_errmsg.o: $(ROOT_DIR)/ns/Cns_errmsg.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 testRtcpdMain.o: testRtcpdMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -274,17 +442,41 @@ testRtcpdTapeMain.cpp: RtcpdTapeTest.hpp
 testJid.o: testJid.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+rfio_parse.o: $(ROOT_DIR)/rfio/parse.c
+	gcc -g -pthread -DCNS_ROOT=\"/castor\" -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_rfio_HsmIf.o: $(ROOT_DIR)/rfio/rfio_HsmIf.c
+	gcc -g -pthread -DCNS_ROOT=\"/castor\" -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_setopt.o: $(ROOT_DIR)/rfio/setopt.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 rfio_xyread.o: $(ROOT_DIR)/rfio/xyread.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_error.o: $(ROOT_DIR)/rfio/error.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-rfio_mstat.o : $(ROOT_DIR)/rfio/mstat.c
+rfio_mstat.o: $(ROOT_DIR)/rfio/mstat.c
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_lseek64.o: $(ROOT_DIR)/rfio/lseek64.c
 	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_connect.o: $(ROOT_DIR)/rfio/connect.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_open.o: $(ROOT_DIR)/rfio/open.c
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_open64.o: $(ROOT_DIR)/rfio/open64.c
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_xyopen.o: $(ROOT_DIR)/rfio/xyopen.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_close.o: $(ROOT_DIR)/rfio/close.c
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_xyclose.o: $(ROOT_DIR)/rfio/xyclose.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -292,10 +484,25 @@ rfio_xyclose.o: $(ROOT_DIR)/rfio/xyclose.c
 rfio_read.o: $(ROOT_DIR)/rfio/read.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
+rfio_write.o: $(ROOT_DIR)/rfio/write.c
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_xywrite.o: $(ROOT_DIR)/rfio/xywrite.c
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
+rfio_rfio_rfilefdt.o: $(ROOT_DIR)/rfio/rfio_rfilefdt.c
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
 rtcpapi.o: $(ROOT_DIR)/rtcopy/rtcpapi.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcp_accounting.o: $(ROOT_DIR)/rtcopy/rtcp_accounting.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcp_RetvalSHIFT.o: $(ROOT_DIR)/rtcopy/rtcp_RetvalSHIFT.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcp_InitNW.o: $(ROOT_DIR)/rtcopy/rtcp_InitNW.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcpd_Disk.o: $(ROOT_DIR)/rtcopy/rtcpd_Disk.c
@@ -508,3 +715,15 @@ upv_Cupv_errmsg.o: $(ROOT_DIR)/upv/Cupv_errmsg.c
 
 upv_Cupv_apiinit.o: $(ROOT_DIR)/upv/Cupv_apiinit.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
+stager_client_api_open.o: $(ROOT_DIR)/client/src/stager/stager_client_api_open.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+stager_client_api_get.o: $(ROOT_DIR)/client/src/stager/stager_client_api_get.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+stager_client_api_put.o: $(ROOT_DIR)/client/src/stager/stager_client_api_put.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+stager_client_api_update.o: $(ROOT_DIR)/client/src/stager/stager_client_api_update.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
