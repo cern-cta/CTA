@@ -71,7 +71,7 @@ static castor::SvcFactory<castor::db::ora::OraCommonSvc>* s_factoryOraCommonSvc 
 //------------------------------------------------------------------------------
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraCommonSvc::s_requestToDoStatementString =
-  "BEGIN requestToDo(:1, :2); END;";
+"BEGIN requestToDo(:1, :2, :3); END;";
 
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
@@ -156,6 +156,8 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
         createStatement(s_requestToDoStatementString);
       m_requestToDoStatement->registerOutParam
         (2, oracle::occi::OCCIDOUBLE);
+      m_requestToDoStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
       m_requestToDoStatement->setAutoCommit(true);
     }
     // execute the statement
@@ -167,8 +169,9 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
       // Found no Request to handle
       return 0;
     }
+    unsigned type = m_requestToDoStatement->getInteger(3);
     // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
+    IObject* obj = cnvSvc()->getObjFromId(id, type);
     if (0 == obj) {
       castor::exception::Internal ex;
       ex.getMessage()

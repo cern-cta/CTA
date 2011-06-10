@@ -425,7 +425,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjSvcClass(castor::stager::St
     if (0 == obj->svcClass()) {
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(svcClassId)));
+         (cnvSvc()->getObjFromId(svcClassId, OBJ_SvcClass)));
     } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
@@ -463,7 +463,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::Sta
     if (0 == obj->client()) {
       obj->setClient
         (dynamic_cast<castor::IClient*>
-         (cnvSvc()->getObjFromId(clientId)));
+         (cnvSvc()->getObjFromId(clientId, OBJ_IClient)));
     } else {
       cnvSvc()->updateObj(obj->client());
     }
@@ -501,7 +501,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager:
     if (0 == obj->parent()) {
       obj->setParent
         (dynamic_cast<castor::stager::FileRequest*>
-         (cnvSvc()->getObjFromId(parentId)));
+         (cnvSvc()->getObjFromId(parentId, OBJ_FileRequest)));
     } else {
       cnvSvc()->updateObj(obj->parent());
     }

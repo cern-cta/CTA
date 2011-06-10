@@ -641,7 +641,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjVdqmTape(castor::vdqm::TapeDrive* o
     if (0 == obj->tape()) {
       obj->setTape
         (dynamic_cast<castor::vdqm::VdqmTape*>
-         (cnvSvc()->getObjFromId(tapeId)));
+         (cnvSvc()->getObjFromId(tapeId, OBJ_VdqmTape)));
     } else {
       cnvSvc()->updateObj(obj->tape());
     }
@@ -680,7 +680,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeRequest(castor::vdqm::TapeDrive
     if (0 == obj->runningTapeReq()) {
       obj->setRunningTapeReq
         (dynamic_cast<castor::vdqm::TapeRequest*>
-         (cnvSvc()->getObjFromId(runningTapeReqId)));
+         (cnvSvc()->getObjFromId(runningTapeReqId, OBJ_TapeRequest)));
     } else {
       cnvSvc()->updateObj(obj->runningTapeReq());
     }
@@ -821,7 +821,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjDeviceGroupName(castor::vdqm::TapeD
     if (0 == obj->deviceGroupName()) {
       obj->setDeviceGroupName
         (dynamic_cast<castor::vdqm::DeviceGroupName*>
-         (cnvSvc()->getObjFromId(deviceGroupNameId)));
+         (cnvSvc()->getObjFromId(deviceGroupNameId, OBJ_DeviceGroupName)));
     } else {
       cnvSvc()->updateObj(obj->deviceGroupName());
     }
@@ -860,7 +860,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeServer(castor::vdqm::TapeDrive*
     if (0 == obj->tapeServer()) {
       obj->setTapeServer
         (dynamic_cast<castor::vdqm::TapeServer*>
-         (cnvSvc()->getObjFromId(tapeServerId)));
+         (cnvSvc()->getObjFromId(tapeServerId, OBJ_TapeServer)));
     } else {
       cnvSvc()->updateObj(obj->tapeServer());
     }

@@ -587,7 +587,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjVdqmTape(castor::vdqm::TapeReques
     if (0 == obj->tape()) {
       obj->setTape
         (dynamic_cast<castor::vdqm::VdqmTape*>
-         (cnvSvc()->getObjFromId(tapeId)));
+         (cnvSvc()->getObjFromId(tapeId, OBJ_VdqmTape)));
     } else {
       cnvSvc()->updateObj(obj->tape());
     }
@@ -625,7 +625,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeAccessSpecification(castor::v
     if (0 == obj->tapeAccessSpecification()) {
       obj->setTapeAccessSpecification
         (dynamic_cast<castor::vdqm::TapeAccessSpecification*>
-         (cnvSvc()->getObjFromId(tapeAccessSpecificationId)));
+         (cnvSvc()->getObjFromId(tapeAccessSpecificationId, OBJ_TapeAccessSpecification)));
     } else {
       cnvSvc()->updateObj(obj->tapeAccessSpecification());
     }
@@ -663,7 +663,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeServer(castor::vdqm::TapeRequ
     if (0 == obj->requestedSrv()) {
       obj->setRequestedSrv
         (dynamic_cast<castor::vdqm::TapeServer*>
-         (cnvSvc()->getObjFromId(requestedSrvId)));
+         (cnvSvc()->getObjFromId(requestedSrvId, OBJ_TapeServer)));
     } else {
       cnvSvc()->updateObj(obj->requestedSrv());
     }
@@ -702,7 +702,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeDrive(castor::vdqm::TapeReque
     if (0 == obj->tapeDrive()) {
       obj->setTapeDrive
         (dynamic_cast<castor::vdqm::TapeDrive*>
-         (cnvSvc()->getObjFromId(tapeDriveId)));
+         (cnvSvc()->getObjFromId(tapeDriveId, OBJ_TapeDrive)));
     } else {
       cnvSvc()->updateObj(obj->tapeDrive());
     }
@@ -741,7 +741,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjDeviceGroupName(castor::vdqm::Tap
     if (0 == obj->deviceGroupName()) {
       obj->setDeviceGroupName
         (dynamic_cast<castor::vdqm::DeviceGroupName*>
-         (cnvSvc()->getObjFromId(deviceGroupNameId)));
+         (cnvSvc()->getObjFromId(deviceGroupNameId, OBJ_DeviceGroupName)));
     } else {
       cnvSvc()->updateObj(obj->deviceGroupName());
     }
@@ -779,7 +779,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjClientIdentification(castor::vdqm
     if (0 == obj->client()) {
       obj->setClient
         (dynamic_cast<castor::vdqm::ClientIdentification*>
-         (cnvSvc()->getObjFromId(clientId)));
+         (cnvSvc()->getObjFromId(clientId, OBJ_ClientIdentification)));
     } else {
       cnvSvc()->updateObj(obj->client());
     }

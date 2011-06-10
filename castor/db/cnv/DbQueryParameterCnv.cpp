@@ -262,7 +262,7 @@ void castor::db::cnv::DbQueryParameterCnv::fillObjQryRequest(castor::stager::Que
     if (0 == obj->query()) {
       obj->setQuery
         (dynamic_cast<castor::stager::QryRequest*>
-         (cnvSvc()->getObjFromId(queryId)));
+         (cnvSvc()->getObjFromId(queryId, OBJ_QryRequest)));
     } else {
       cnvSvc()->updateObj(obj->query());
     }

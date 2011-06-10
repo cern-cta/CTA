@@ -443,7 +443,7 @@ void castor::db::cnv::DbStagePutRequestCnv::fillObjSvcClass(castor::stager::Stag
     if (0 == obj->svcClass()) {
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(svcClassId)));
+         (cnvSvc()->getObjFromId(svcClassId, OBJ_SvcClass)));
     } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
@@ -481,7 +481,7 @@ void castor::db::cnv::DbStagePutRequestCnv::fillObjIClient(castor::stager::Stage
     if (0 == obj->client()) {
       obj->setClient
         (dynamic_cast<castor::IClient*>
-         (cnvSvc()->getObjFromId(clientId)));
+         (cnvSvc()->getObjFromId(clientId, OBJ_IClient)));
     } else {
       cnvSvc()->updateObj(obj->client());
     }

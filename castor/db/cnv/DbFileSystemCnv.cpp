@@ -417,7 +417,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskPool(castor::stager::FileSyste
     if (0 == obj->diskPool()) {
       obj->setDiskPool
         (dynamic_cast<castor::stager::DiskPool*>
-         (cnvSvc()->getObjFromId(diskPoolId)));
+         (cnvSvc()->getObjFromId(diskPoolId, OBJ_DiskPool)));
     } else {
       cnvSvc()->updateObj(obj->diskPool());
     }
@@ -509,7 +509,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskServer(castor::stager::FileSys
     if (0 == obj->diskserver()) {
       obj->setDiskserver
         (dynamic_cast<castor::stager::DiskServer*>
-         (cnvSvc()->getObjFromId(diskserverId)));
+         (cnvSvc()->getObjFromId(diskserverId, OBJ_DiskServer)));
     } else {
       cnvSvc()->updateObj(obj->diskserver());
     }

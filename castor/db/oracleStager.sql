@@ -861,7 +861,7 @@ END;
 
 
 /* PL/SQL method to get the next request to do according to the given service */
-CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER, rType OUT INTEGER) AS
 BEGIN
   DELETE FROM NewRequests
    WHERE type IN (
@@ -869,9 +869,10 @@ BEGIN
       WHERE svcHandler = service
         AND svcHandler IS NOT NULL
      )
-   AND ROWNUM < 2 RETURNING id INTO rId;
+   AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   rId := 0;   -- nothing to do
+  rType := 0;
 END;
 /
 

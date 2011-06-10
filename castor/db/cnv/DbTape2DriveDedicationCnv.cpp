@@ -283,7 +283,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::fillObjTapeDrive(castor::vdqm::
     if (0 == obj->tapeDrive()) {
       obj->setTapeDrive
         (dynamic_cast<castor::vdqm::TapeDrive*>
-         (cnvSvc()->getObjFromId(tapeDriveId)));
+         (cnvSvc()->getObjFromId(tapeDriveId, OBJ_TapeDrive)));
     } else {
       cnvSvc()->updateObj(obj->tapeDrive());
     }

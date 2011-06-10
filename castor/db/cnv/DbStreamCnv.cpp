@@ -514,7 +514,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTape(castor::stager::Stream* obj)
     if (0 == obj->tape()) {
       obj->setTape
         (dynamic_cast<castor::stager::Tape*>
-         (cnvSvc()->getObjFromId(tapeId)));
+         (cnvSvc()->getObjFromId(tapeId, OBJ_Tape)));
     } else {
       cnvSvc()->updateObj(obj->tape());
     }
@@ -554,7 +554,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
     if (0 == obj->tapePool()) {
       obj->setTapePool
         (dynamic_cast<castor::stager::TapePool*>
-         (cnvSvc()->getObjFromId(tapePoolId)));
+         (cnvSvc()->getObjFromId(tapePoolId, OBJ_TapePool)));
     } else {
       cnvSvc()->updateObj(obj->tapePool());
     }

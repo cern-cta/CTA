@@ -261,7 +261,7 @@ void castor::db::cnv::DbGCFileCnv::fillObjGCFileList(castor::stager::GCFile* obj
     if (0 == obj->request()) {
       obj->setRequest
         (dynamic_cast<castor::stager::GCFileList*>
-         (cnvSvc()->getObjFromId(requestId)));
+         (cnvSvc()->getObjFromId(requestId, OBJ_GCFileList)));
     } else {
       cnvSvc()->updateObj(obj->request());
     }

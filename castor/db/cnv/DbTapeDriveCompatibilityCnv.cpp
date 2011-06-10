@@ -283,7 +283,7 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::fillObjTapeAccessSpecificatio
     if (0 == obj->tapeAccessSpecification()) {
       obj->setTapeAccessSpecification
         (dynamic_cast<castor::vdqm::TapeAccessSpecification*>
-         (cnvSvc()->getObjFromId(tapeAccessSpecificationId)));
+         (cnvSvc()->getObjFromId(tapeAccessSpecificationId, OBJ_TapeAccessSpecification)));
     } else {
       cnvSvc()->updateObj(obj->tapeAccessSpecification());
     }

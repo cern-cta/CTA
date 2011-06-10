@@ -415,7 +415,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjDiskCopy(castor::stager::SubReques
     if (0 == obj->diskcopy()) {
       obj->setDiskcopy
         (dynamic_cast<castor::stager::DiskCopy*>
-         (cnvSvc()->getObjFromId(diskcopyId)));
+         (cnvSvc()->getObjFromId(diskcopyId, OBJ_DiskCopy)));
     } else {
       cnvSvc()->updateObj(obj->diskcopy());
     }
@@ -454,7 +454,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjCastorFile(castor::stager::SubRequ
     if (0 == obj->castorFile()) {
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
-         (cnvSvc()->getObjFromId(castorFileId)));
+         (cnvSvc()->getObjFromId(castorFileId, OBJ_CastorFile)));
     } else {
       cnvSvc()->updateObj(obj->castorFile());
     }
@@ -493,7 +493,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjSubRequest(castor::stager::SubRequ
     if (0 == obj->parent()) {
       obj->setParent
         (dynamic_cast<castor::stager::SubRequest*>
-         (cnvSvc()->getObjFromId(parentId)));
+         (cnvSvc()->getObjFromId(parentId, OBJ_SubRequest)));
     } else {
       cnvSvc()->updateObj(obj->parent());
     }
@@ -533,7 +533,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjFileRequest(castor::stager::SubReq
     if (0 == obj->request()) {
       obj->setRequest
         (dynamic_cast<castor::stager::FileRequest*>
-         (cnvSvc()->getObjFromId(requestId)));
+         (cnvSvc()->getObjFromId(requestId, OBJ_FileRequest)));
     } else {
       cnvSvc()->updateObj(obj->request());
     }

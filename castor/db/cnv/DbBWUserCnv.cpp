@@ -284,7 +284,7 @@ void castor::db::cnv::DbBWUserCnv::fillObjChangePrivilege(castor::bwlist::BWUser
     if (0 == obj->request()) {
       obj->setRequest
         (dynamic_cast<castor::bwlist::ChangePrivilege*>
-         (cnvSvc()->getObjFromId(requestId)));
+         (cnvSvc()->getObjFromId(requestId, OBJ_ChangePrivilege)));
     } else {
       cnvSvc()->updateObj(obj->request());
     }

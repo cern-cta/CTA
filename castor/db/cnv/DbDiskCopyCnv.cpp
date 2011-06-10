@@ -468,7 +468,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy*
     if (0 == obj->fileSystem()) {
       obj->setFileSystem
         (dynamic_cast<castor::stager::FileSystem*>
-         (cnvSvc()->getObjFromId(fileSystemId)));
+         (cnvSvc()->getObjFromId(fileSystemId, OBJ_FileSystem)));
     } else {
       cnvSvc()->updateObj(obj->fileSystem());
     }
@@ -508,7 +508,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy*
     if (0 == obj->castorFile()) {
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
-         (cnvSvc()->getObjFromId(castorFileId)));
+         (cnvSvc()->getObjFromId(castorFileId, OBJ_CastorFile)));
     } else {
       cnvSvc()->updateObj(obj->castorFile());
     }

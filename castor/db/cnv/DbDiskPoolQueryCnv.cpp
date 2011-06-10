@@ -318,7 +318,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::fillObjSvcClass(castor::query::DiskPoo
     if (0 == obj->svcClass()) {
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(svcClassId)));
+         (cnvSvc()->getObjFromId(svcClassId, OBJ_SvcClass)));
     } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
@@ -356,7 +356,7 @@ void castor::db::cnv::DbDiskPoolQueryCnv::fillObjIClient(castor::query::DiskPool
     if (0 == obj->client()) {
       obj->setClient
         (dynamic_cast<castor::IClient*>
-         (cnvSvc()->getObjFromId(clientId)));
+         (cnvSvc()->getObjFromId(clientId, OBJ_IClient)));
     } else {
       cnvSvc()->updateObj(obj->client());
     }

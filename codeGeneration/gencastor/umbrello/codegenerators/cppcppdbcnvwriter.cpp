@@ -1563,7 +1563,7 @@ void CppCppDbCnvWriter::writeBasicMult1FillObj(Assoc* as,
                            m_classInfo->packageName)
             << "*>" << endl << getIndent()
             << "   (cnvSvc()->getObjFromId(" << as->remotePart.name
-            << "Id)));"
+            << "Id, OBJ_" << as->remotePart.typeName << ")));"
             << endl;
   m_indent--;
   *m_stream << getIndent()

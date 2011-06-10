@@ -71,28 +71,13 @@ namespace castor {
         virtual void reset() throw();
 
         /**
-         * create C++ object from foreign representation.
-         * Reimplemented from BaseCnvSvc. This version is able to
-         * make use of OraAdresses and to deduce the object type in
-         * the address from the id by querying the database
-         * @param address the place where to find the foreign
-         * representation
-         * @return the C++ object created from its reprensentation
-         * or raises a NoEntry exception if not found.
-         * Note that the caller is responsible
-         * for the deallocation of the newly created object
-         * @exception Exception throws an Exception in case of error
-         */
-        IObject* createObj (IAddress* address)
-          throw (castor::exception::Exception);
-
-        /**
-         * Get an object from its id.
+         * Get an object from its id and type.
          * Essentially a wrapper around createObj
          * @param id the id of the object to retrieve
+         * @param objType the type of the object to retrieve
          * @exception Exception throws an Exception in case of error
          */
-        castor::IObject* getObjFromId (u_signed64 id)
+        castor::IObject* getObjFromId (u_signed64 id, unsigned objType)
           throw (castor::exception::Exception);
 
         /**
@@ -104,8 +89,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         std::vector<castor::IObject*>
-        getObjsFromIds(std::vector<u_signed64> &ids,
-                       int objType)
+        getObjsFromIds(std::vector<u_signed64> &ids, unsigned objType)
           throw (castor::exception::Exception);
 
         /**
@@ -122,22 +106,6 @@ namespace castor {
          * to which this conversion service is connected.
          */
         virtual unsigned int getPhysRepType() const = 0;
-
-      protected:
-
-        /**
-         * retrieves the type of an object given by its id
-         */
-        unsigned int getTypeFromId(const u_signed64 id)
-          throw (castor::exception::Exception);
-
-      private:
-
-        /// SQL statement for type retrieval
-        static const std::string s_getTypeStatementString;
-
-        /// SQL statement object for type retrieval
-        castor::db::IDbStatement* m_getTypeStatement;
 
       };
 

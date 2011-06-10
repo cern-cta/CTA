@@ -284,7 +284,7 @@ void castor::db::cnv::DbNsFileIdCnv::fillObjStageAbortRequest(castor::stager::Ns
     if (0 == obj->request()) {
       obj->setRequest
         (dynamic_cast<castor::stager::StageAbortRequest*>
-         (cnvSvc()->getObjFromId(requestId)));
+         (cnvSvc()->getObjFromId(requestId, OBJ_StageAbortRequest)));
     } else {
       cnvSvc()->updateObj(obj->request());
     }

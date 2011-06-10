@@ -545,7 +545,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy*
     if (0 == obj->castorFile()) {
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
-         (cnvSvc()->getObjFromId(castorFileId)));
+         (cnvSvc()->getObjFromId(castorFileId, OBJ_CastorFile)));
     } else {
       cnvSvc()->updateObj(obj->castorFile());
     }

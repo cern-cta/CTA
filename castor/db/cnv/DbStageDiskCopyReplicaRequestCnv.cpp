@@ -594,7 +594,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjSvcClass(castor::
     if (0 == obj->svcClass()) {
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(svcClassId)));
+         (cnvSvc()->getObjFromId(svcClassId, OBJ_SvcClass)));
     } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
@@ -632,7 +632,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjIClient(castor::s
     if (0 == obj->client()) {
       obj->setClient
         (dynamic_cast<castor::IClient*>
-         (cnvSvc()->getObjFromId(clientId)));
+         (cnvSvc()->getObjFromId(clientId, OBJ_IClient)));
     } else {
       cnvSvc()->updateObj(obj->client());
     }
@@ -670,7 +670,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjSvcClass(castor::
     if (0 == obj->sourceSvcClass()) {
       obj->setSourceSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(sourceSvcClassId)));
+         (cnvSvc()->getObjFromId(sourceSvcClassId, OBJ_SvcClass)));
     } else {
       cnvSvc()->updateObj(obj->sourceSvcClass());
     }
@@ -708,7 +708,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjDiskCopy(castor::
     if (0 == obj->destDiskCopy()) {
       obj->setDestDiskCopy
         (dynamic_cast<castor::stager::DiskCopy*>
-         (cnvSvc()->getObjFromId(destDiskCopyId)));
+         (cnvSvc()->getObjFromId(destDiskCopyId, OBJ_DiskCopy)));
     } else {
       cnvSvc()->updateObj(obj->destDiskCopy());
     }
@@ -746,7 +746,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjDiskCopy(castor::
     if (0 == obj->sourceDiskCopy()) {
       obj->setSourceDiskCopy
         (dynamic_cast<castor::stager::DiskCopy*>
-         (cnvSvc()->getObjFromId(sourceDiskCopyId)));
+         (cnvSvc()->getObjFromId(sourceDiskCopyId, OBJ_DiskCopy)));
     } else {
       cnvSvc()->updateObj(obj->sourceDiskCopy());
     }

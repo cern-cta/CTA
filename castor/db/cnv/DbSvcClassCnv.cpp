@@ -541,7 +541,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjFileClass(castor::stager::SvcClass* 
     if (0 == obj->forcedFileClass()) {
       obj->setForcedFileClass
         (dynamic_cast<castor::stager::FileClass*>
-         (cnvSvc()->getObjFromId(forcedFileClassId)));
+         (cnvSvc()->getObjFromId(forcedFileClassId, OBJ_FileClass)));
     } else {
       cnvSvc()->updateObj(obj->forcedFileClass());
     }

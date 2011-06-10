@@ -284,7 +284,7 @@ void castor::db::cnv::DbRepackSegmentCnv::fillObjRepackSubRequest(castor::repack
     if (0 == obj->repacksubrequest()) {
       obj->setRepacksubrequest
         (dynamic_cast<castor::repack::RepackSubRequest*>
-         (cnvSvc()->getObjFromId(repacksubrequestId)));
+         (cnvSvc()->getObjFromId(repacksubrequestId, OBJ_RepackSubRequest)));
     } else {
       cnvSvc()->updateObj(obj->repacksubrequest());
     }

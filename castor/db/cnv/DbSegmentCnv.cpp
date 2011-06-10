@@ -336,7 +336,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTapeCopy(castor::stager::Segment* obj
     if (0 == obj->copy()) {
       obj->setCopy
         (dynamic_cast<castor::stager::TapeCopy*>
-         (cnvSvc()->getObjFromId(copyId)));
+         (cnvSvc()->getObjFromId(copyId, OBJ_TapeCopy)));
     } else {
       cnvSvc()->updateObj(obj->copy());
     }
@@ -376,7 +376,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTape(castor::stager::Segment* obj)
     if (0 == obj->tape()) {
       obj->setTape
         (dynamic_cast<castor::stager::Tape*>
-         (cnvSvc()->getObjFromId(tapeId)));
+         (cnvSvc()->getObjFromId(tapeId, OBJ_Tape)));
     } else {
       cnvSvc()->updateObj(obj->tape());
     }

@@ -588,7 +588,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
     for (std::set<u_signed64>::iterator it = streamsList.begin();
          it != streamsList.end();
          it++) {
-      IObject* item = cnvSvc()->getObjFromId(*it);
+      IObject* item = cnvSvc()->getObjFromId(*it, OBJ_Stream);
       castor::stager::Stream* remoteObj =
         dynamic_cast<castor::stager::Stream*>(item);
       tapePool->addStreams(remoteObj);
@@ -685,7 +685,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
   try {
     oracle::occi::ResultSet *rset = m_tapesToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1));
+      IObject* obj = cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1), OBJ_Tape);
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {

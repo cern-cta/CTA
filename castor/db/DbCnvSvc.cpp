@@ -43,19 +43,11 @@
 #include "DbCnvSvc.hpp"
 
 
-//------------------------------------------------------------------------------
-// Static constants initialization
-//------------------------------------------------------------------------------
-/// SQL statement for type retrieval
-const std::string castor::db::DbCnvSvc::s_getTypeStatementString =
-   "SELECT type FROM Id2Type WHERE id = :1";
-
 // -----------------------------------------------------------------------
 // DbCnvSvc
 // -----------------------------------------------------------------------
 castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
-  BaseCnvSvc(name),
-  m_getTypeStatement(0) {
+  BaseCnvSvc(name) {
   // Add alias for DiskCopyForRecall on DiskCopy
   addAlias(58, 5);
   // Add alias for TapeCopyForMigration on TapeCopy
@@ -82,75 +74,17 @@ unsigned int castor::db::DbCnvSvc::RepType() {
 void castor::db::DbCnvSvc::reset() throw() {
   // call parent's reset
   BaseCnvSvc::reset();
-  // drop local statements
-  try {
-    if (m_getTypeStatement) delete m_getTypeStatement;
-    m_getTypeStatement = 0;
-  } catch (castor::exception::Exception e) {};
-}
-
-// -----------------------------------------------------------------------
-// createObj
-// -----------------------------------------------------------------------
-castor::IObject* castor::db::DbCnvSvc::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
-  // If the address has no type, find it out
-  if (OBJ_INVALID == address->objType()) {
-    castor::BaseAddress* ad =
-      dynamic_cast<castor::BaseAddress*>(address);
-    unsigned int type = getTypeFromId(ad->target());
-    if (0 == type) return 0;
-    ad->setObjType(type);
-  }
-  // call method of parent object
-  return this->BaseCnvSvc::createObj(address);
-}
-
-// -----------------------------------------------------------------------
-// getTypeFromId
-// -----------------------------------------------------------------------
-unsigned int
-castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
-  throw (castor::exception::Exception) {
-  // a null id has a null type
-  if (0 == id) return 0;
-  try {
-    // Check whether the statement is ok
-    if (0 == m_getTypeStatement) {
-      m_getTypeStatement = createStatement(s_getTypeStatementString);
-    }
-    // Execute it
-    m_getTypeStatement->setInt64(1, id);
-    castor::db::IDbResultSet* rset = m_getTypeStatement->executeQuery();
-    if (!rset->next()) {
-      delete rset;
-      castor::exception::NoEntry ex;
-      ex.getMessage() << "No type found for id : " << id;
-      throw ex;
-    }
-    const unsigned int res = rset->getInt(1);
-    delete rset;
-    return res;
-  } catch (castor::exception::SQLError& e) {
-    try {
-      rollback();
-    } catch (castor::exception::Exception& ignored) {}
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "Error in getting type from id."
-                    << std::endl << e.getMessage().str();
-    throw ex;
-  }
-  // never reached
-  return OBJ_INVALID;
+  // child classes have to really drop the connection to the db
 }
 
 // -----------------------------------------------------------------------
 // getObjFromId
 // -----------------------------------------------------------------------
-castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id)
+castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id, unsigned objType)
   throw (castor::exception::Exception) {
   castor::BaseAddress clientAd;
   clientAd.setTarget(id);
+  clientAd.setObjType(objType);
   clientAd.setCnvSvcName("DbCnvSvc");
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
@@ -160,12 +94,12 @@ castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id)
 // getObjsFromIds
 // -----------------------------------------------------------------------
 std::vector<castor::IObject*> castor::db::DbCnvSvc::getObjsFromIds
-(std::vector<u_signed64> &ids, int objType)
+(std::vector<u_signed64> &ids, unsigned objType)
   throw (castor::exception::Exception) {
   castor::VectorAddress clientAd;
   clientAd.setTarget(ids);
+  clientAd.setObjType(objType);
   clientAd.setCnvSvcName("DbCnvSvc");
   clientAd.setCnvSvcType(repType());
-  clientAd.setObjType(objType);
   return bulkCreateObj(&clientAd);
 }

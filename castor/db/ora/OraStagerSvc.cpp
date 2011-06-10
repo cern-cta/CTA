@@ -1231,7 +1231,7 @@ int castor::db::ora::OraStagerSvc::stageRm
       }
       // found something, let's validate it against the NameServer
       castor::stager::CastorFile* cf = dynamic_cast<castor::stager::CastorFile*>
-        (cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1)));
+        (cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1), OBJ_CastorFile));
       m_getCFByNameStatement->closeResultSet(rset);
       char nspath[CA_MAXPATHLEN+1];
 
