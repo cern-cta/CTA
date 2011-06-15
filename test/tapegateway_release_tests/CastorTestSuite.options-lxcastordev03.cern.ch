@@ -36,7 +36,7 @@ TapeServiceClasses = default, dev
 DiskOnlyServiceClasses = diskonly
 
 # Remote machine and directory to be used for testing transfers outside CASTOR
-remoteSpace = lxc2disk05.cern.ch:/tmp/rfiod
+remoteSpace = lxc2disk05.cern.ch:/var/tmp/rfiod
 
 
 # Environment to be used for the tests
