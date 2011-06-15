@@ -37,7 +37,7 @@
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::s_sharedServices(0);
 pthread_key_t castor::BaseObject::s_servicesKey(0);
-pthread_once_t castor::BaseObject::s_servicesOnce(PTHREAD_ONCE_INIT);
+pthread_once_t castor::BaseObject::s_servicesOnce = PTHREAD_ONCE_INIT;
 
 //------------------------------------------------------------------------------
 // constructor
