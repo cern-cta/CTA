@@ -14,6 +14,7 @@
 #include <serrno.h>
 #include <errno.h>
 #include <osdep.h>
+#include <pthread.h>
 #include <signal.h>
 #include <string.h>
 
@@ -53,7 +54,7 @@ void _Cthread_cid_once (void);
 /* (Thread-Specific Variable)           */
 /* ------------------------------------ */
 pthread_key_t cid_key;
-pthread_once_t cid_once = 0;
+pthread_once_t cid_once = PTHREAD_ONCE_INIT;
 
 /* ============================================ */
 /* Static variables                             */
@@ -73,7 +74,7 @@ struct Cid_element_t   Cid;
 struct Cmtx_element_t  Cmtx;
 struct Cthread_protect_t Cthread;
 struct Cspec_element_t Cspec;
-pthread_once_t         once = 0;
+pthread_once_t         once = PTHREAD_ONCE_INIT;
 int _Cthread_unprotect = 0;
 int _Cthread_once_status = -1;
 
