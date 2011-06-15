@@ -93,7 +93,7 @@ CREATE TABLE SubRequest
 /* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
-CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
+CREATE UNIQUE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
   PARTITION P_STATUS_3,
   PARTITION P_STATUS_4,
@@ -107,7 +107,7 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_13_14,
   PARTITION P_STATUS_OTHER);
 
-CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
+CREATE UNIQUE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
   PARTITION P_STATUS_3,
   PARTITION P_STATUS_4,
