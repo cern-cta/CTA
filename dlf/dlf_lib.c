@@ -234,7 +234,7 @@ int dlf_shutdown(void) {
   closelog();
 
   /* Delete the thread-specific data key */
-  pthread_key_delete(reg_key_once);
+  pthread_key_delete(reg_key);
 
   /* Reset the defaults */
   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
