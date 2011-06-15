@@ -1490,9 +1490,12 @@ int _Cthread_obtain_mtx(const char *file,
         usleep((Timeout * 1000)/20);
 #else
         /* This method deadlocks on IRIX or linux (poll() via select() bug)*/
-        ts.tv_sec = Timeout;
-        ts.tv_usec = 0;
-        select(0,NULL,NULL,NULL,&ts);
+        {
+          struct timeval ts;
+          ts.tv_sec = Timeout;
+          ts.tv_usec = 0;
+          select(0,NULL,NULL,NULL,&ts);
+        }
 #endif
       }
     }
