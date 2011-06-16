@@ -186,11 +186,9 @@ void castor::stager::daemon::ErrorSvcThread::process
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
   }
   // Cleanup
-  if (subReq) {
-    if(subReq->castorFile()) delete subReq->castorFile();
-    delete subReq;
-  }
-  if (client) delete client;
-  if (req) delete req;
+  if(subReq->castorFile()) delete subReq->castorFile();
+  delete client;
+  delete req;
+  delete subReq;
   return;
 }
