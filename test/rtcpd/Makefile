@@ -1,8 +1,17 @@
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+UUID_LIB=
+else
+UUID_LIB=-luuid
+endif
+
 ROOT_DIR=../..
-INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
-EXECUTABLES=sendrtcopyjob testrtcpd testrtcpdtape
+INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h -I/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/include
+LIB_DIR_OPS=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
+EXECUTABLES=sendrtcopyjob testrtcpd testrtcpdtape testtapefilewaitingforflushlist
 CSEC_MECHLIST=KRB5 GSI ID
-COMMON_OPS=-DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DCNS_ROOT=\"/castor\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"/usr/include/scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
+COMMON_OPS=-DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DCNS_ROOT=\"/castor\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
 
 all: $(EXECUTABLES)
 
@@ -33,7 +42,7 @@ sendrtcopyjob: \
   io_AbstractSocket.o \
   io_AbstractTCPSocket.o \
   io_StreamAddress.o
-	g++ $(COMMON_OPS) -lpthread -ldl -luuid -o $@ $^
+	g++ $(COMMON_OPS) -lpthread -ldl $(UUID_LIB) -o $@ $^
 
 testrtcpd: \
   testRtcpdMain.o \
@@ -60,7 +69,7 @@ testrtcpd: \
   tape_tplogger_messages.o \
   vdqm_vdqmapi.o \
   vdqm_vdqm_SendRecv.o
-	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread $(UUID_LIB) -lcppunit -o $@ $^
 
 testrtcpdtape: \
   testRtcpdTapeMain.o \
@@ -76,30 +85,30 @@ testrtcpdtape: \
   castor_IClient.o \
   castor_MessageAck.o \
   client_VectorResponseHandler.o \
-  common_Csecloader.o \
-  common_Cgrp.o \
-  common_setnetio.o \
   common_Cdlopen.o \
   common_Cdomainname.o \
-  common_getifnam.o \
-  common_Cpool.o \
-  common_getacctent.o \
-  common_Cglobals.o \
-  common_marshall.o \
-  common_Cmutex.o \
-  common_Cthread.o \
-  common_serror.o \
-  common_log.o \
-  common_Cuuid.o \
-  common_Csnprintf.o \
-  common_Cnetdb.o \
-  common_getconfent.o \
   common_Cgetopt.o \
+  common_Cglobals.o \
+  common_Cgrp.o \
+  common_Cmutex.o \
+  common_Cnetdb.o \
+  common_Cpool.o \
+  common_Cpwd.o \
+  common_Csecloader.o \
+  common_Csnprintf.o \
+  common_Cthread.o \
+  common_Cuuid.o \
+  common_getacctent.o \
+  common_getconfent.o \
+  common_getifnam.o \
+  common_log.o \
+  common_marshall.o \
+  common_serror.o \
+  common_remote.o \
+  common_setnetio.o \
   common_socket.o \
   common_socket_timeout.o \
   common_trace.o \
-  common_remote.o \
-  common_Cpwd.o \
   common_u64subr.o \
   common_wsacct.o \
   dlf_dlf_lib.o \
@@ -192,7 +201,7 @@ testrtcpdtape: \
   rtcpd_tpdump.o \
   rtcpd_GetClientInfoMsg.o \
   rtcpd_MainCntl.o \
-  rtcpd_TapeIO.o \
+  test_rtcpd_TapeIO.o \
   rtcpd_Ctape.o \
   rtcpd_SelfMonitor.o \
   rtcpd_GetClientInfoMsg.o \
@@ -200,6 +209,7 @@ testrtcpdtape: \
   rtcpd_ClientListen.o \
   rtcpd_GetClientInfo.o \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
+  rtcpd_TapeFileWaitingForFlushList.o \
   security_Csec_api_loader.o \
   security_Csec_api.o \
   security_Csec_errmsg.o \
@@ -248,15 +258,15 @@ testrtcpdtape: \
   tape_findpgrp.o \
   tape_chkdirw.o \
   tape_locate.o \
-  tape_tperror.o \
+  test_tape_tperror.o \
   tape_tplogit.o \
-  tape_skiptape.o \
+  test_tape_skiptape.o \
   tape_usrlbl.o \
-  tape_writelbl.o \
-  tape_wrttpmrk.o \
-  tape_rwndtape.o \
-  tape_readlbl.o \
-  tape_sendscsicmd.o \
+  test_tape_writelbl.o \
+  test_tape_wrttpmrk.o \
+  test_tape_rwndtape.o \
+  test_tape_readlbl.o \
+  test_tape_sendscsicmd.o \
   tape_usrmsg.o \
   tape_sendrep.o \
   tape_getcompstat.o \
@@ -275,7 +285,19 @@ testrtcpdtape: \
   vmgr_vmgr_querypool.o \
   vmgr_send2vmgr.o \
   vmgr_vmgr_querytape_byte_u64.o
-	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -lz -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread $(UUID_LIB) -lcppunit -lz -o $@ $^
+
+testtapefilewaitingforflushlist: \
+  testTapeFileWaitingForFlushListMain.o \
+  common_Cglobals.o \
+  rtcpd_TapeFileWaitingForFlushList.o
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread $(UUID_LIB) -lcppunit -lz -o $@ $^
+
+testTapeFileWaitingForFlushListMain.o: testTapeFileWaitingForFlushListMain.cpp
+	g++ $(COMMON_OPS) -c -I. $(INCLUDE_OPS) -o $@ $^
+
+testTapeFileWaitingForFlushListMain.cpp: TapeFileWaitingForFlushListTest.hpp
+	touch $@
 
 sendrtcopyjob.o: sendrtcopyjob.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -344,7 +366,7 @@ common_socket.o: $(ROOT_DIR)/common/socket.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_socket_timeout.o: $(ROOT_DIR)/common/socket_timeout.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+	gcc -pthread -g -c $(INCLUDE_OPS) -o $@ $^
 
 common_serror.o: $(ROOT_DIR)/common/serror.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -686,7 +708,7 @@ rtcpd_SignalFilePositioned.o: $(ROOT_DIR)/rtcopy/rtcpd_SignalFilePositioned.c
 rtcpd_MainCntl.o: $(ROOT_DIR)/rtcopy/rtcpd_MainCntl.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-rtcpd_TapeIO.o: $(ROOT_DIR)/rtcopy/rtcpd_TapeIO.c
+test_rtcpd_TapeIO.o: test_rtcpd_TapeIO.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
 rtcp_client_log.o: $(ROOT_DIR)/rtcopy/rtcp_log.c
@@ -707,7 +729,16 @@ rtcpd_ConvertData.o: $(ROOT_DIR)/rtcopy/rtcpd_ConvertData.c
 test_rtcpd_Tape.o: test_rtcpd_Tape.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_sendTapeBridgeAck.o: $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeAck.c
+rtcpd_TapeFileWaitingForFlushList.o: \
+  rtcpd_TapeFileWaitingForFlushList.c
+	gcc $(COMMON_OPS) -c -I. $(INCLUDE_OPS) -o $@ $^
+
+rtcpd_TapeFileWaitingForFlushList.c: \
+  h/rtcpd_TapeFileWaitingForFlushList.h
+	touch $@
+
+tapebridge_sendTapeBridgeAck.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeAck.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
@@ -716,10 +747,10 @@ tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
 tape_usrlbl.o: $(ROOT_DIR)/tape/usrlbl.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
-tape_wrttpmrk.o: $(ROOT_DIR)/tape/wrttpmrk.c
+test_tape_wrttpmrk.o: test_tape_wrttpmrk.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
-tape_writelbl.o: $(ROOT_DIR)/tape/writelbl.c
+test_tape_writelbl.o: test_tape_writelbl.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
 tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c
@@ -782,19 +813,19 @@ tape_chkdirw.o: $(ROOT_DIR)/tape/chkdirw.c
 tape_locate.o: $(ROOT_DIR)/tape/locate.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tape_tperror.o: $(ROOT_DIR)/tape/tperror.c
+test_tape_tperror.o: test_tape_tperror.c
 	gcc $(COMMON_OPS) -DNOTRACE -c $(INCLUDE_OPS) -o $@ $^
 
 tape_tplogit.o: $(ROOT_DIR)/tape/tplogit.c
 	gcc $(COMMON_OPS) -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -c $(INCLUDE_OPS) -o $@ $^
 
-tape_skiptape.o: $(ROOT_DIR)/tape/skiptape.c
+test_tape_skiptape.o: test_tape_skiptape.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_getcompstat.o: $(ROOT_DIR)/tape/getcompstat.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
-tape_rwndtape.o: $(ROOT_DIR)/tape/rwndtape.c
+test_tape_rwndtape.o: test_tape_rwndtape.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_usrmsg.o: $(ROOT_DIR)/tape/usrmsg.c
@@ -803,10 +834,10 @@ tape_usrmsg.o: $(ROOT_DIR)/tape/usrmsg.c
 tape_sendrep.o: $(ROOT_DIR)/tape/sendrep.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tape_sendscsicmd.o: $(ROOT_DIR)/tape/sendscsicmd.c
+test_tape_sendscsicmd.o: test_tape_sendscsicmd.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tape_readlbl.o: $(ROOT_DIR)/tape/readlbl.c
+test_tape_readlbl.o: test_tape_readlbl.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 vdqm_vdqmapi.o: $(ROOT_DIR)/vdqm/vdqmapi.c

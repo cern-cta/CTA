@@ -25,14 +25,11 @@
 #ifndef TEST_RTCPD_RTCPDTAPETEST_HPP
 #define TEST_RTCPD_RTCPDTAPETEST_HPP 1
 
-#include "h/osdep.h"
+#include "h/rtcpd_TapeFileWaitingForFlushList.h"
 #include "h/serrno.h"
-#include "h/rtcp_constants.h"
-#include "h/rtcp_marshallVdqmClientInfoMsg.h"
+
 #include <cppunit/extensions/HelperMacros.h>
 #include <errno.h>
-#include <stdint.h>
-#include <string.h>
 
 class RtcpdTapeTest: public CppUnit::TestFixture {
 public:

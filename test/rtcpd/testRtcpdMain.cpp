@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "test/rtcpd/RtcpdTest.hpp"
+#include "h/dlf_api.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>
@@ -31,8 +32,9 @@
 extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
 
 int main() {
-  char rtcpLogErrTxt[1024];
-  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
+//char rtcpLogErrTxt[1024];
+//rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
+  dlf_init("dlftest", LOG_UPTO(LOG_DEBUG));
 
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =
@@ -40,5 +42,9 @@ int main() {
 
   runner.addTest(registry.makeTest());
 
-  return runner.run() == 0 ? 1 : 0;
+  const int runnerRunRc = runner.run();
+
+  dlf_shutdown();
+
+  return runnerRunRc == 0 ? 1 : 0;
 }

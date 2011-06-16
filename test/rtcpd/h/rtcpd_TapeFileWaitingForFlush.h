@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/rtcpd/testRtcpdMain.cpp
+ *                h/rtcpd_TapeFileWaitingForFlush.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,23 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "h/net.h"
+#ifndef H_RTCPD_TAPEFILEWAITINGFORFLUSH
+#define H_RTCPD_TAPEFILEWAITINGFORFLUSH 1
 
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <iostream>
+typedef struct rtcpd_TapeFileWaitingForFlush {
+  int value;
+  struct rtcpd_TapeFileWaitingForFlush *next;
+} rtcpd_TapeFileWaitingForFlush_t;
 
-extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
-
-int main() {
-  char rtcpLogErrTxt[1024];
-  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
-
-  CppUnit::TextUi::TestRunner runner;
-  CppUnit::TestFactoryRegistry &registry =
-    CppUnit::TestFactoryRegistry::getRegistry();
-
-  runner.addTest(registry.makeTest());
-
-  return runner.run() == 0 ? 1 : 0;
-}
+#endif /* H_RTCPD_TAPEFILEWAITINGFORFLUSH */

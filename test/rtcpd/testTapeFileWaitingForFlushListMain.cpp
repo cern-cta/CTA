@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/rtcpd/testRtcpdMain.cpp
+ *                test/rtcpd/testTapeFileWaitingForFlushListMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,18 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "h/net.h"
+#include "test/rtcpd/TapeFileWaitingForFlushListTest.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <iostream>
 
-extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
-
 int main() {
-  char rtcpLogErrTxt[1024];
-  rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
-
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =
     CppUnit::TestFactoryRegistry::getRegistry();
