@@ -35,6 +35,7 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/ErrorFileRequest.hpp"
 #include "castor/stager/StageGetRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"
 #include "castor/stager/StageUpdateRequest.hpp"
@@ -467,6 +468,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         }
     }
     result->setRequest(req);
+    req->addSubRequests(result);
     req->setId((u_signed64)m_subRequestToDoStatement->getDouble(12));
     req->setFlags(m_subRequestToDoStatement->getInt(13));
     req->setUserName(m_subRequestToDoStatement->getString(14));
@@ -625,10 +627,9 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     result->setErrorCode(m_subRequestFailedToDoStatement->getInt(4));
     result->setErrorMessage(m_subRequestFailedToDoStatement->getString(5));
     result->setSvcHandler("ErrorSvc");
-    // XXX here we allocate a StageGetRequest, but in fact the request type is irrelevant:
-    // XXX a FileRequest should be returned instead, except that it is abstract.
-    castor::stager::StageGetRequest* req = new castor::stager::StageGetRequest();
+    castor::stager::ErrorFileRequest* req = new castor::stager::ErrorFileRequest();
     result->setRequest(req);
+    req->addSubRequests(result);
     req->setReqId(m_subRequestFailedToDoStatement->getString(6));
     castor::rh::Client* cl = new castor::rh::Client();
     req->setClient(cl);

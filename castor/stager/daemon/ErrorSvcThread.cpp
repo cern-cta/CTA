@@ -39,7 +39,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/StageGetRequest.hpp"
+#include "castor/stager/ErrorFileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -92,7 +92,7 @@ castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
 void castor::stager::daemon::ErrorSvcThread::process
 (castor::IObject *param) throw() {
   // Useful variables
-  castor::stager::StageGetRequest* req = 0;
+  castor::stager::ErrorFileRequest* req = 0;
   castor::stager::SubRequest* subReq = 0;
   Cuuid_t suuid = nullCuuid;
   Cuuid_t uuid = nullCuuid;
@@ -109,7 +109,7 @@ void castor::stager::daemon::ErrorSvcThread::process
   // never be null since select returns one for sure
   subReq = dynamic_cast<castor::stager::SubRequest*>(param);
   string2Cuuid(&suuid, (char*)subReq->subreqId().c_str());
-  req = dynamic_cast<castor::stager::StageGetRequest*>(subReq->request());
+  req = dynamic_cast<castor::stager::ErrorFileRequest*>(subReq->request());
   string2Cuuid(&uuid, (char*)req->reqId().c_str());
   client = req->client();
 
@@ -187,8 +187,6 @@ void castor::stager::daemon::ErrorSvcThread::process
   }
   // Cleanup
   if(subReq->castorFile()) delete subReq->castorFile();
-  delete client;
-  delete req;
-  delete subReq;
+  delete req;  // drops the subReq and the client as well
   return;
 }

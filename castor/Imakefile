@@ -195,6 +195,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/DLFInit.cpp \
               stager/FileClass.cpp \
               stager/FileRequest.cpp \
+              stager/ErrorFileRequest.cpp \
               stager/FileSystem.cpp \
               stager/FileSystemStatusCodes.cpp \
               stager/Files2Delete.cpp \
