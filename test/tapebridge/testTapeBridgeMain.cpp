@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/tapebridge/TapeBridgeTest.hpp"
+#include "test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>

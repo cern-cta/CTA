@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/tapebridge/TapeBridgeTest.hpp
+ *                test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_TAPEBRIDGE_TAPEBRIDGETEST_HPP
-#define TEST_TAPEBRIDGE_TAPEBRIDGETEST_HPP 1
+#ifndef TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP
+#define TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP 1
 
 #include "h/osdep.h"
 #include "h/serrno.h"
@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <string.h>
 
-class TapeBridgeTest: public CppUnit::TestFixture {
+class MarshallTapeBridgeClientInfoTest: public CppUnit::TestFixture {
 private:
   char m_buf[TAPEBRIDGE_MSGBUFSIZ];
   tapeBridgeClientInfoMsgBody_t m_msgBody;
@@ -45,7 +45,7 @@ private:
 
 public:
 
-  TapeBridgeTest():
+  MarshallTapeBridgeClientInfoTest():
     m_sizeOfMarshalledMsgHeader(3 * LONGSIZE), /* magic, reqType, bodyLen */
     m_sizeOfMarshalledMsgHeaderPlusBody(0),
     m_sizeOfMarshalledMsgBody(0) {
@@ -209,7 +209,7 @@ public:
       std::string(msgBody.clientName));
   }
 
-  CPPUNIT_TEST_SUITE(TapeBridgeTest);
+  CPPUNIT_TEST_SUITE(MarshallTapeBridgeClientInfoTest);
   CPPUNIT_TEST(testMsgBodyMarshalledSize);
   CPPUNIT_TEST(testMarshallBufNull);
   CPPUNIT_TEST(testMarshallBufLen0);
@@ -224,6 +224,6 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TapeBridgeTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(MarshallTapeBridgeClientInfoTest);
 
-#endif // TEST_TAPEBRIDGE_TAPEBRIDGETEST_HPP
+#endif // TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP
