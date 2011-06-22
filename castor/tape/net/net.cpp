@@ -585,8 +585,13 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       std::stringstream oss;
       oss << ": Failed to read " << nbBytes << " bytes from socket: ";
       writeSockDescription(oss, socketFd);
-      oss << ": " << sstrerror(savedSerrno);
-      if(savedSerrno == SETIMEDOUT) {
+      // netread_timeout can return -1 with serrno set to 0
+      if(0 == savedSerrno) {
+        oss << ": Unknown error";
+      } else {
+        oss << ": " << sstrerror(savedSerrno);
+      }
+      if(SETIMEDOUT == savedSerrno) {
         oss << ": timeout=" << timeout;
       }
 
@@ -637,7 +642,12 @@ void castor::tape::net::writeBytes(const int socketFd, const int timeout,
       std::stringstream oss;
       oss << ": Failed to write " << nbBytes << " bytes to socket: ";
       writeSockDescription(oss, socketFd);
-      oss << ": " << sstrerror(savedSerrno);
+      // netread_timeout can return -1 with serrno set to 0
+      if(0 == savedSerrno) {
+        oss << ": Unknown error";
+      } else {
+        oss << ": " << sstrerror(savedSerrno);
+      }
       if(savedSerrno == SETIMEDOUT) {
         oss << ": timeout=" << timeout;
       }
