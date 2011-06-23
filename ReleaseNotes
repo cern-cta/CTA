@@ -397,11 +397,12 @@
         
           to simulate the same behaviour as the old jobmanager daemon.
 
-      11. Connect to the STAGER database and execute the following SQL statement:
+      11. Connect to the STAGER database and execute the following SQL statements:
 
             UPDATE CastorConfig SET value = 'yes'
              WHERE class = 'RmMaster'
                AND key = 'NoLSFMode';
+            UPDATE SubRequest SET status = 7 WHERE status = 14;
             COMMIT;
 
       12. Start the transfermanager daemon on the headnodes.
