@@ -377,6 +377,16 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * TAPEBRIDGE_FLUSHEDTOTAPE tape-bridge message-body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * BridgeProtocolEngine::MsgBodyCallback.
+   */
+  void tapeBridgeFlushedToTapeCallback(const legacymsg::MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
    * GIVE_OUTP rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type

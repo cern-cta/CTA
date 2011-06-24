@@ -23,6 +23,8 @@
  *****************************************************************************/
 
 #include "test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp"
+#include "test/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
+#include "test/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>

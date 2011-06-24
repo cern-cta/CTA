@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 h/tapebridge_constants.h
+ *                test/castor/tape/tapebridge/test_exception.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,26 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIGE_CONSTANTS_H
-#define H_TAPEBRIGE_CONSTANTS_H 1
+#ifndef TEST_CASTOR_TAPE_TAPEBRIDGE_TESTEXCEPTION_HPP
+#define TEST_CASTOR_TAPE_TAPEBRIDGE_TESTEXCEPTION_HPP 1
 
-#define TAPEBRIDGE_BASE_REQTYPE  (0x5100)
-#define TAPEBRIDGE_REQ_MIN       (TAPEBRIDGE_BASE_REQTYPE)
-#define TAPEBRIDGE_CLIENTINFO    (TAPEBRIDGE_BASE_REQTYPE+0x01)
-#define TAPEBRIDGE_FLUSHEDTOTAPE (TAPEBRIDGE_BASE_REQTYPE+0x02)
-#define TAPEBRIDGE_REQ_MAX       (TAPEBRIDGE_BASE_REQTYPE+0x03)
-#define TAPEBRIDGE_VALID_REQTYPE(X) ((X)>TAPEBRIDGE_REQ_MIN && (X)<TAPEBRIDGE_REQ_MAX)
+#include <exception>
+#include <string>
 
-#define TAPEBRIDGE_MSGBUFSIZ (1024)
+class test_exception: public std::exception {
+private:
+  std::string m_msg;
 
-#endif /* H_TAPEBRIGE_CONSTANTS_H */
+public:
+  test_exception(std::string msg);
+
+  test_exception(const test_exception &tx);
+
+  ~test_exception() throw();
+
+  test_exception &operator=(const test_exception &tx);
+
+  const char* what() const throw();
+};
+
+#endif // TEST_CASTOR_TAPE_TAPEBRIDGE_TESTEXCEPTION_HPP

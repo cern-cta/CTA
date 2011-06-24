@@ -27,6 +27,7 @@
 
 #include "h/osdep.h"
 #include "h/tapeBridgeClientInfoMsgBody.h"
+#include "h/tapeBridgeFlushedToTapeMsgBody.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -40,7 +41,7 @@
  *         a negative value and sets serrno accordingly.
  */
 EXTERN_C int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
-  tapeBridgeClientInfoMsgBody_t *const msgBody);
+  const tapeBridgeClientInfoMsgBody_t *const msgBody);
 
 /**
  * Marshalls the specified TAPEBRIDGE_CLIENTINFO message-body preceded by the
@@ -56,7 +57,7 @@ EXTERN_C int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
  *                accordingly.
  */
 EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
-  const size_t bufLen, tapeBridgeClientInfoMsgBody_t *const msgBody);
+  const size_t bufLen, const tapeBridgeClientInfoMsgBody_t *const msgBody);
 
 /**
  * Un-marshalls a TAPEBRIDGE_CLIENTINFO message-body from the specified buffer.
@@ -69,7 +70,7 @@ EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
  *                serrno accordingly.
  */
 EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
-  char *const buf, const size_t bufLen,
+  const char *const buf, const size_t bufLen,
   tapeBridgeClientInfoMsgBody_t *const msgBody);
 
 
@@ -91,5 +92,21 @@ EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
  */
 EXTERN_C int32_t tapebridge_marshallTapeBridgeAck(char *const buf,
   const size_t bufLen, const uint32_t ackStatus, const char *const ackErrMsg);
+
+/**
+ * Marshalls a complete (header plus body) TAPEBRIDGE_TAPEFLUSHED message to
+ * the specified buffer.
+ * 
+ * @param buf     The buffer to which the message header and body are to be
+ *                marshalled.
+ * @param bufLen  The length of the buffer.
+ * @param msgBody The message body.
+ * @return        If successful then the length of the entire marshalled
+ *                message, header plus body, in bytes.  On failure this
+ *                function returns a negative value and sets serrno
+ *                accordingly.
+ */
+EXTERN_C int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
+  const size_t bufLen, const tapeBridgeFlushedToTapeMsgBody_t *const msgBody);
 
 #endif /* H_TAPEBRIDGE_MARSHALL_H */

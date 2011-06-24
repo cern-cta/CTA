@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 h/tapebridge_constants.h
+ *                      castor/tape/legacymsg/TapeBridgeMarshal.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,19 +19,29 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ *
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIGE_CONSTANTS_H
-#define H_TAPEBRIGE_CONSTANTS_H 1
+#include "castor/exception/Internal.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "h/rtcp_constants.h"
+#include "h/vdqm_constants.h"
 
-#define TAPEBRIDGE_BASE_REQTYPE  (0x5100)
-#define TAPEBRIDGE_REQ_MIN       (TAPEBRIDGE_BASE_REQTYPE)
-#define TAPEBRIDGE_CLIENTINFO    (TAPEBRIDGE_BASE_REQTYPE+0x01)
-#define TAPEBRIDGE_FLUSHEDTOTAPE (TAPEBRIDGE_BASE_REQTYPE+0x02)
-#define TAPEBRIDGE_REQ_MAX       (TAPEBRIDGE_BASE_REQTYPE+0x03)
-#define TAPEBRIDGE_VALID_REQTYPE(X) ((X)>TAPEBRIDGE_REQ_MIN && (X)<TAPEBRIDGE_REQ_MAX)
+#include <errno.h>
+#include <iostream>
+#include <string.h>
 
-#define TAPEBRIDGE_MSGBUFSIZ (1024)
 
-#endif /* H_TAPEBRIGE_CONSTANTS_H */
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::tape::legacymsg::unmarshal(const char * &src,
+  size_t &srcLen, tapeBridgeFlushedToTapeMsgBody_t &dst)
+  throw(castor::exception::Exception) {
+
+  unmarshalUint32(src, srcLen, dst.volReqId);
+  unmarshalUint32(src, srcLen, dst.tapeFseq);
+}

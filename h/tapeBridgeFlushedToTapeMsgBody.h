@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 h/tapebridge_constants.h
+ *                h/tapeBridgeFlushedToTapeMsgBody.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,37 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIGE_CONSTANTS_H
-#define H_TAPEBRIGE_CONSTANTS_H 1
+#ifndef H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H
+#define H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H 1
 
-#define TAPEBRIDGE_BASE_REQTYPE  (0x5100)
-#define TAPEBRIDGE_REQ_MIN       (TAPEBRIDGE_BASE_REQTYPE)
-#define TAPEBRIDGE_CLIENTINFO    (TAPEBRIDGE_BASE_REQTYPE+0x01)
-#define TAPEBRIDGE_FLUSHEDTOTAPE (TAPEBRIDGE_BASE_REQTYPE+0x02)
-#define TAPEBRIDGE_REQ_MAX       (TAPEBRIDGE_BASE_REQTYPE+0x03)
-#define TAPEBRIDGE_VALID_REQTYPE(X) ((X)>TAPEBRIDGE_REQ_MIN && (X)<TAPEBRIDGE_REQ_MAX)
+#include "h/Castor_limits.h"
+#include "h/osdep.h"
 
-#define TAPEBRIDGE_MSGBUFSIZ (1024)
+#include <stdint.h>
 
-#endif /* H_TAPEBRIGE_CONSTANTS_H */
+/**
+ * The body of a TAPEBRIDGE_FLUSHEDTOTAPE message.
+ */
+typedef struct {
+  /**
+   * The Volume request ID associated with the tape-mount.
+   */
+  uint32_t volReqId;
+
+  /**
+   * If it is known this value should be set to the file-sequence number of the
+   * last file successfully to tape.  If the file-sequence number is not known
+   * then this value must be set to 0.
+   */
+  uint32_t tapeFseq;
+} tapeBridgeFlushedToTapeMsgBody_t;
+
+#define TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_MAXSIZE ( \
+  LONGSIZE  + /* volReqID */                     \
+  LONGSIZE    /* tapeFseq */)
+
+#define TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_MINSIZE ( \
+  LONGSIZE  + /* volReqID */                     \
+  LONGSIZE    /* tapeFseq */)
+
+#endif /* H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H */

@@ -408,6 +408,23 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 
 
 //-----------------------------------------------------------------------------
+// logMsgBody
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+  const int severity, const int message_no, const uint32_t volReqId,
+  const int socketFd, const tapeBridgeFlushedToTapeMsgBody_t &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId", volReqId     ),
+    castor::dlf::Param("volReqId"          , volReqId     ),
+    castor::dlf::Param("socketFd"          , socketFd     ),
+    castor::dlf::Param("volReqId"          , body.volReqId),
+    castor::dlf::Param("tapeFseq"          , body.tapeFseq)};
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+}
+
+
+//-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
@@ -454,6 +471,7 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
+
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
@@ -478,6 +496,8 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
     castor::dlf::Param("blockId[3]"        , msg.blockId3()          )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, msg.fileid(), msg.nshost(), params);
 }   
+
+
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------

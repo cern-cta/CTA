@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 tapebridge/tapebridge_sendTapeBridgeAck.c
+ *                 tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,31 +26,31 @@
 #include "h/socket_timeout.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
-#include "h/tapebridge_sendTapeBridgeAck.h"
+#include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
 
 #include <errno.h>
 #include <string.h>
 
 /******************************************************************************
- * tapebridge_sendTapeBridgeAck
+ * tapebridge_sendTapeBridgeFlushedToTape
  *****************************************************************************/
-int32_t tapebridge_sendTapeBridgeAck(const int socketFd,
-  const int netReadWriteTimeout, const uint32_t ackStatus,
-  const char *const ackErrMsg) {
+int32_t tapebridge_sendTapeBridgeFlushedToTape(const int socketFd,
+  const int netReadWriteTimeout,
+  const tapeBridgeFlushedToTapeMsgBody_t *const msgBody) {
   int  nbBytesMarshalled = 0;
   int  nbBytesSent       = 0;
   char buf[TAPEBRIDGE_MSGBUFSIZ];
 
   /* Check function parameters */
-  if(NULL == ackErrMsg) {
+  if(NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
 
   memset(buf, '\0', sizeof(buf));
 
-  nbBytesMarshalled = tapebridge_marshallTapeBridgeAck(buf, sizeof(buf),
-    ackStatus, ackErrMsg);
+  nbBytesMarshalled = tapebridge_marshallTapeBridgeFlushedToTapeMsg(buf,
+    sizeof(buf), msgBody);
   if(-1 == nbBytesMarshalled) {
     return -1;
   }

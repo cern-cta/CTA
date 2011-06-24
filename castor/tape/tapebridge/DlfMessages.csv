@@ -113,3 +113,4 @@
 112,TAPEBRIDGE_PARSED_TPCONFIG,"Parsed TPCONFIG"
 113,TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER,"Closed rtcpd disk/tape IO control connection due to rtcpd closing its end"
 114,TAPEBRIDGE_TOO_MANY_DRIVES_IN_TPCONFIG,"There are more drives in the TPCONFIG file than there were when tapebridged was started.  Please restart tapebridged."
+115,TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE,"Received TAPEBRIDGE_FLUSHEDTOTAPE"

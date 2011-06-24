@@ -12,9 +12,10 @@ testtapebridge: \
   testTapeBridgeMain.o \
   BridgeClientInfoSender.o \
   VmgrTxRx.o \
-  VmgrMarshal.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
+  legacymsg_TapeBridgeMarshal.o \
+  legacymsg_VmgrMarshal.o \
   tape_utils.o \
   Cuuid.o \
   getconfent.o \
@@ -51,7 +52,7 @@ testtapebridge: \
   SmartFILEPtr.o \
   tape_net.o \
   ObjectSet.o \
-  bridge_LegacyTxRx.o \
+  tapebridge_LegacyTxRx.o \
   bridge_LogHelper.o \
   Dlf.o \
   dlf_lib.o \
@@ -78,7 +79,6 @@ testtapebridge: \
 
 tapebridgedaemontester: \
   tapebridgedaemontester.o \
-  bridge_LegacyTxRx.o \
   exception_Exception.o \
   exception_InvalidArgument.o \
   exception_Communication.o \
@@ -116,6 +116,7 @@ tapebridgedaemontester: \
   gateway_VolumeMode.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
+  io_StreamEndNotificationErrorReportCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
@@ -134,8 +135,12 @@ tapebridgedaemontester: \
   tapebridge_sendTapeBridgeAck.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
+  legacymsg_TapeBridgeMarshal.o \
+  legacymsg_VmgrMarshal.o \
   tape_net.o \
   tape_utils.o \
+  tapebridge_LegacyTxRx.o \
+  tapebridge_sendTapeBridgeFlushedToTape.o \
   vdqm_SendRecv.o \
   marshall.o \
   SmartFd.o \
@@ -181,10 +186,11 @@ tapebridged: \
   BridgeSocketCatalogue.o \
   bridge_ClientTxRx.o \
   bridge_DlfMessageStrings.o \
-  bridge_LegacyTxRx.o \
+  tapebridge_LegacyTxRx.o \
   bridge_LogHelper.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
+  io_StreamEndNotificationErrorReportCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
@@ -234,7 +240,8 @@ tapebridged: \
   dlf_Param.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
-  VmgrMarshal.o \
+  legacymsg_TapeBridgeMarshal.o \
+  legacymsg_VmgrMarshal.o \
   tape_utils.o \
   Cuuid.o \
   Cthread.o \
@@ -323,7 +330,17 @@ $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfoSender.cpp: \
 VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
+legacymsg_CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+legacymsg_RtcpMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/RtcpMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+legacymsg_TapeBridgeMarshal.o: \
+  $(ROOT_DIR)/castor/tape/legacymsg/TapeBridgeMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_utils.o: $(ROOT_DIR)/castor/tape/utils/utils.cpp
@@ -452,12 +469,6 @@ ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
 tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-legacymsg_CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-legacymsg_RtcpMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/RtcpMarshal.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -583,7 +594,7 @@ bridge_DlfMessageStrings.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/DlfMessageStrings.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-bridge_LegacyTxRx.o: \
+tapebridge_LegacyTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -765,6 +776,10 @@ io_StreamEndNotificationCnv.o: \
   $(ROOT_DIR)/castor/io/StreamEndNotificationCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+io_StreamEndNotificationErrorReportCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationErrorReportCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 io_StreamNotificationAcknowledgeCnv.o: \
   $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -789,3 +804,7 @@ castor_BaseSvc.o: $(ROOT_DIR)/castor/BaseSvc.cpp
 
 castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_sendTapeBridgeFlushedToTape.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

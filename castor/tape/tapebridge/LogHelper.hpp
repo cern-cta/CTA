@@ -41,6 +41,7 @@
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Cuuid.h"
+#include "h/tapeBridgeFlushedToTapeMsgBody.h"
 
 #include <time.h>
 
@@ -60,8 +61,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -78,8 +79,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -96,8 +97,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -114,8 +115,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -132,8 +133,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -150,8 +151,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -168,8 +169,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -186,8 +187,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -204,8 +205,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -222,8 +223,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
@@ -240,8 +241,8 @@ public:
    * Logs the specified RTCP message body.
    *
    * @param cuuid            The uuid of the component issuing the message.
-   * @param message_no       The message number in the facility.
    * @param severity         The severity of the message.
+   * @param message_no       The message number in the facility.
    * @param volReqId         The volume request ID.
    * @param socketFd         The file descriptor of the associated TCP/IP
    *                         socket.
@@ -262,11 +263,33 @@ public:
     const time_t                         sendRecvDuration) throw();
 
   /**
+   * Logs the specified TAPEBRIDGE message body.
+   *
+   * @param cuuid      The uuid of the component issuing the message.
+   * @param severity   The severity of the message.
+   * @param message_no The message number in the facility.
+   * @param volReqId   The volume request ID.
+   * @param socketFd   The file descriptor of the associated TCP/IP socket.
+   * @param body       The message body.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
+   */
+  static void logMsgBody(
+    const Cuuid_t                          &cuuid,
+    const int                              severity,
+    const int                              message_no,
+    const uint32_t                         volReqId,
+    const int                              socketFd,
+    const tapeBridgeFlushedToTapeMsgBody_t &body) throw();
+
+  /**
    * Logs the specified Client message.
    *
    * @param cuuid            The uuid of the component issuing the message.
-   * @param message_no       The message number in the facility.
    * @param severity         The severity of the message.
+   * @param message_no       The message number in the facility.
    * @param msg              The message.
    * @param connectDuration  The number of seconds it took to connect to the
    *                         client.
@@ -285,8 +308,8 @@ public:
    * Logs the specified Client message.
    *
    * @param cuuid            The uuid of the component issuing the message.
-   * @param message_no       The message number in the facility.
    * @param severity         The severity of the message.
+   * @param message_no       The message number in the facility.
    * @param msg              The message.
    * @param connectDuration  The number of seconds it took to connect to the
    *                         client.
@@ -305,8 +328,8 @@ public:
    * Logs the specified Client message.
    *
    * @param cuuid            The uuid of the component issuing the message.
-   * @param message_no       The message number in the facility.
    * @param severity         The severity of the message.
+   * @param message_no       The message number in the facility.
    * @param msg              The message.
    * @param connectDuration  The number of seconds it took to connect to the
    *                         client.
@@ -325,8 +348,8 @@ public:
    * Logs the specified Client message.
    *
    * @param cuuid            The uuid of the component issuing the message.
-   * @param message_no       The message number in the facility.
    * @param severity         The severity of the message.
+   * @param message_no       The message number in the facility.
    * @param msg              The message.
    * @param connectDuration  The number of seconds it took to connect to the
    *                         client.
@@ -340,7 +363,6 @@ public:
     const tapegateway::FileToMigrate &msg,
     const time_t                     connectDuration,
     const time_t                     sendRecvDuration) throw();
-
 };
 
 } // namespace tapebridge

@@ -35,10 +35,10 @@
  * tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize
  *****************************************************************************/
 int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
-  tapeBridgeClientInfoMsgBody_t *const msgBody) {
+  const tapeBridgeClientInfoMsgBody_t *const msgBody) {
 
   /* Check function arguments */
-  if(msgBody == NULL) {
+  if(NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
@@ -61,7 +61,7 @@ int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
  * tapebridge_marshallTapeBridgeClientInfoMsg
  *****************************************************************************/
 int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
-  const size_t bufLen, tapeBridgeClientInfoMsgBody_t *const msgBody) {
+  const size_t bufLen, const tapeBridgeClientInfoMsgBody_t *const msgBody) {
 
   const int32_t msgHdrLen = 3 * LONGSIZE; /* magic + reqtype + msgBodyLen */
   int32_t msgBodyLen = 0;
@@ -69,8 +69,8 @@ int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
   char *p = buf;
 
   /* Check function arguments */
-  if(buf == NULL || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MAXSIZE ||
-    msgBody == NULL) {
+  if(NULL == buf || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MAXSIZE ||
+    NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
@@ -109,15 +109,16 @@ int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
 /******************************************************************************
  * tapebridge_unmarshallTapeBridgeClientInfoMsgBody
  *****************************************************************************/
-int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(char *const buf,
+int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(const char *const buf,
   const size_t bufLen, tapeBridgeClientInfoMsgBody_t *const msgBody) {
 
-  char *p = buf;
+  /* Nasty override of const because of unmarshall_STRINGN */
+  char *p = (char *)buf;
   int32_t nbBytesUnmarshalled = 0;
 
   /* Check function arguments */
-  if(buf == NULL || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MINSIZE ||
-    msgBody == NULL) {
+  if(NULL == buf || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MINSIZE ||
+    NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
@@ -151,7 +152,8 @@ int32_t tapebridge_marshallTapeBridgeAck(char *const buf, const size_t bufLen,
   uint32_t       ackErrMsgLen = 0;
   uint32_t       nbBytesMarshalled = 0;
 
-  if(buf == NULL || ackErrMsg == NULL) {
+  /* Check function arguments */
+  if(NULL == buf || NULL == ackErrMsg) {
     serrno = EINVAL;
     return -1;
   }
@@ -171,6 +173,44 @@ int32_t tapebridge_marshallTapeBridgeAck(char *const buf, const size_t bufLen,
   marshall_LONG  (p, msgBodyLen           );
   marshall_LONG  (p, ackStatus            );
   marshall_STRING(p, ackErrMsg            );
+  nbBytesMarshalled = p - buf;
+  if(nbBytesMarshalled != msgTotalLen) {
+    serrno = SEINTERNAL;
+    return -1;
+  }
+
+  return msgTotalLen;
+}
+
+/******************************************************************************
+ * tapebridge_marshallTapeBridgeFlushedToTape
+ *****************************************************************************/
+int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
+  const size_t bufLen, const tapeBridgeFlushedToTapeMsgBody_t *const msgBody) {
+  char           *p           = NULL;
+  const uint32_t msgHdrLen    = 3 * LONGSIZE; /* magic + reqType + msgBodyLen */
+  const uint32_t msgBodyLen   = 2 * LONGSIZE; /* volReqId + tapeFseq */
+  const uint32_t msgTotalLen  = msgHdrLen + msgBodyLen;
+  uint32_t       nbBytesMarshalled = 0;
+
+  /* Check function arguments */
+  if(NULL == buf || bufLen < TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_MINSIZE ||
+    NULL == msgBody) {
+    serrno = EINVAL;
+    return -1;
+  }
+
+  if(bufLen < msgTotalLen) {
+    serrno = EINVAL;
+    return -1;
+  }
+
+  p = buf;
+  marshall_LONG(p, RTCOPY_MAGIC            ); /* Magic number */
+  marshall_LONG(p, TAPEBRIDGE_FLUSHEDTOTAPE); /* Request type */
+  marshall_LONG(p, msgBodyLen              );
+  marshall_LONG(p, msgBody->volReqId       );
+  marshall_LONG(p, msgBody->tapeFseq       );
   nbBytesMarshalled = p - buf;
   if(nbBytesMarshalled != msgTotalLen) {
     serrno = SEINTERNAL;

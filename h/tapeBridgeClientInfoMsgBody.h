@@ -58,7 +58,7 @@ typedef struct {
     CA_MAXHOSTNAMELEN + 1 + /* bridgeClientHost                      */ \
     CA_MAXDGNLEN      + 1 + /* dgn                                   */ \
     CA_MAXUNMLEN      + 1 + /* drive                                 */ \
-    CA_MAXUSRNAMELEN  + 1)  /* clientName                            */
+    CA_MAXUSRNAMELEN  + 1   /* clientName                            */)
 
 #define TAPEBRIDGECLIENTINFOMSGBODY_MINSIZE (                           \
     LONGSIZE              + /* volReqID                              */ \
@@ -71,6 +71,6 @@ typedef struct {
     1                     + /* bridgeClientHost                      */ \
     1                     + /* dgn                                   */ \
     1                     + /* drive                                 */ \
-    1)                      /* clientName                            */
+    1                       /* clientName                            */)
 
 #endif /* H_TAPEBRIDGECLIENTINFOMSGBODY_H */

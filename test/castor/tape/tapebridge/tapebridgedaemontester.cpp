@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "test_exception.hpp"
+#include "castor/Constants.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
@@ -31,6 +32,7 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
@@ -42,6 +44,7 @@
 #include "h/rtcpd_GetClientInfo.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
+#include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -476,6 +479,29 @@ void *exceptionThrowingRtcpdThread(void *arg) {
     "RTCPD: Made second connection to tapebridged"
     ": host=127.0.0.1 port=" << client.clientport << std::endl;
 
+  // Send TAPEBRIDGE_FLUSHEDTOTAPE message to tapebridged using the second
+  // connection
+  {
+    tapeBridgeFlushedToTapeMsgBody_t msgBody;
+    msgBody.volReqId = 1111;
+    msgBody.tapeFseq = 2222;
+
+    const int sendFlushedToTapeRc = tapebridge_sendTapeBridgeFlushedToTape(
+      connection2ToBridge.get(), netReadWriteTimeout, &msgBody);
+    const int saved_serrno = serrno;
+
+    if(0 > sendFlushedToTapeRc) {
+      TAPE_THROW_CODE(ECANCELED,
+        ": tapebridge_sendTapeBridgeFlushedToTape() failed"
+        ": msgBody.volReqId=" << msgBody.volReqId <<
+        " msgBody.tapeFseq=" << msgBody.tapeFseq <<
+        ": " << sstrerror(saved_serrno));
+    }
+  }
+  std::cout <<
+    "RTCPD: Sent TAPEBRIDGE_FLUSHEDTOTAPE message to tapebridged using second"
+    " connection: host=127.0.0.1 port=" << client.clientport << std::endl;
+
   // Write RTCP_ENDOF_REQ message to tapebridged using the second connection
   castor::tape::legacymsg::MessageHeader endofReqMsg;
   endofReqMsg.magic       = RTCOPY_MAGIC;
@@ -798,17 +824,53 @@ void executeProtocol(const int clientPort, const int clientListenSockFd) {
   std::cout <<
     "CLIENT: Accepted second callback connection from tapebridged" << std::endl;
 
-  // Read in EndNotification from tapebridged
+  // Read in EndNotification or EndNotificationErrorReport from tapebridged
   std::auto_ptr<castor::IObject> obj2FromBridge(
     callbackConnection2.readObject());
-  castor::tape::tapegateway::EndNotification &endNotification =
-    dynamic_cast<castor::tape::tapegateway::EndNotification&>(
-      *(obj2FromBridge.get()));
-  std::cout <<
-    "CLIENT: Read end-notification from tapebridged"
-    ": mountTransactionId=" << endNotification.mountTransactionId() <<
-    " aggregatorTransactionId=" << endNotification.aggregatorTransactionId() <<
-    std::endl;
+  switch(obj2FromBridge->type()) {
+  case castor::OBJ_EndNotification:
+    {
+      castor::tape::tapegateway::EndNotification &endNotification =
+        dynamic_cast<castor::tape::tapegateway::EndNotification&>(
+          *(obj2FromBridge.get()));
+      std::cout <<
+        "CLIENT: Read end-notification from tapebridged"
+        ": mountTransactionId=" << endNotification.mountTransactionId() <<
+        " aggregatorTransactionId=" <<
+        endNotification.aggregatorTransactionId() <<
+        std::endl;
+    }
+    break;
+  case castor::OBJ_EndNotificationErrorReport:
+    {
+      castor::tape::tapegateway::EndNotificationErrorReport
+        &endNotificationErrorReport =
+        dynamic_cast<castor::tape::tapegateway::EndNotificationErrorReport&>(
+          *(obj2FromBridge.get()));
+      std::cout <<
+        "CLIENT: Read end-notification error-report from tapebridged"
+        ": mountTransactionId=" <<
+        endNotificationErrorReport.mountTransactionId() <<
+        " aggregatorTransactionId=" << 
+        endNotificationErrorReport.aggregatorTransactionId() <<
+        " errorCode=" <<
+        endNotificationErrorReport.errorCode() <<
+        " errorMessage=" <<
+        endNotificationErrorReport.errorMessage() <<
+        std::endl;
+    }
+    break;
+  default:
+    {
+      std::stringstream oss;
+      oss <<
+        "Received object of unexpected type from tapebridged"
+        ": expected=OBJ_EndNotification or OBJ_EndNotificationErrorReport"
+        " actual=" << obj2FromBridge->type();
+      test_exception te(oss.str());
+      throw te;
+    }
+  }
 
   // Write NotificationAcknowledge to tapebridged
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;

@@ -29,6 +29,7 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/Constants.hpp"
+#include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
@@ -48,6 +49,8 @@
 #include "h/getconfent.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcpd_constants.h"
+#include "h/tapebridge_constants.h"
+#include "h/tapeBridgeFlushedToTapeMsgBody.h"
 
 #include <algorithm>
 #include <list>
@@ -92,6 +95,9 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
     &BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback;
   m_rtcpdHandlers[createRtcpdHandlerKey(RTCOPY_MAGIC, RTCP_ENDOF_REQ  )] =
     &BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback;
+  m_rtcpdHandlers[createRtcpdHandlerKey(RTCOPY_MAGIC,
+    TAPEBRIDGE_FLUSHEDTOTAPE)] =
+    &BridgeProtocolEngine::tapeBridgeFlushedToTapeCallback;
   m_rtcpdHandlers[createRtcpdHandlerKey(RTCOPY_MAGIC_SHIFT, GIVE_OUTP )] =
     &BridgeProtocolEngine::giveOutpRtcpdCallback;
 
@@ -1420,6 +1426,66 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
   ackMsg.lenOrStatus = 0;
   LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
+}
+
+
+//-----------------------------------------------------------------------------
+// tapeBridgeFlushedToTapeCallback
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  tapeBridgeFlushedToTapeCallback(
+  const legacymsg::MessageHeader &header,
+  const int                      socketFd,
+  bool                           &)
+  throw(castor::exception::Exception) {
+
+  tapeBridgeFlushedToTapeMsgBody_t body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  // Acknowledge TAPEBRIDGE_FLUSHEDTOTAPE message
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType"        ,
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("volReqId"          , body.volReqId          ),
+      castor::dlf::Param("tapeFseq"          , body.tapeFseq          )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE, params);
+  }
+
+  if(m_jobRequest.volReqId != body.volReqId) {
+    std::stringstream oss;
+
+    oss <<
+      ": TAPEBRIDGE_FLUSHEDTOTAPE message contains an unexpected volReqId"
+      ": expected=" << m_jobRequest.volReqId <<
+      ": actual=" << body.volReqId;
+
+    TAPE_THROW_CODE(EBADMSG, oss.str());
+  }
+
+  /* Buffered tape-marks over multiple files is currently not implemented */
+  {
+    TAPE_THROW_CODE(ENOTSUP,
+      ": Cannot process TAPEBRIDGE_FLUSHEDTOTAPE message"
+      ": Buffered tape-marks over multiple files is currently not implemented");
+  }
 }
 
 

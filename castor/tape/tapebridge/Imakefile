@@ -48,6 +48,7 @@ TAPEBRIDGEBIN_SRCS = \
   VmgrTxRx.cpp \
   ../legacymsg/CommonMarshal.cpp \
   ../legacymsg/RtcpMarshal.cpp \
+  ../legacymsg/TapeBridgeMarshal.cpp \
   ../legacymsg/VmgrMarshal.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
