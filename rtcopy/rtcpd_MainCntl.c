@@ -90,18 +90,6 @@ int Dumptape = FALSE;
 extern int ENOSPC_occurred;
 int ENOSPC_occurred = FALSE;
 
-/**
- * Global variable that is set to a meaningful value if the the client of rtcpd
- * is the tape-bridge daemon (see global_clientIsTapeBridge).
- */
-static tapeBridgeClientInfoMsgBody_t global_tapeBridgeClientInfoMsgBody;
-
-/**
- * Global variable stating whether or not the client of rtcpd is the
- * tape-bridge daemon.
- */
-static int global_clientIsTapeBridge = FALSE;
-
 /*
  * Set Debug flag if requested
  */
@@ -1116,7 +1104,8 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
 
 static void rtcpd_FreeResources(SOCKET **client_socket,
                                 rtcpClientInfo_t **client,
-                                tape_list_t **tape) {
+                                tape_list_t **tape,
+                                const char *const clientHostname) {
   tape_list_t *nexttape = NULL;
   file_list_t *nextfile = NULL;
   file_list_t *tmpfile = NULL;
@@ -1399,9 +1388,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       "ClientName"      , TL_MSG_PARAM_STR   , client_name,
       "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
       "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
-      "ClientHost"      , TL_MSG_PARAM_STR   ,
-        (global_clientIsTapeBridge ?
-          global_tapeBridgeClientInfoMsgBody.bridgeClientHost : client_host),
+      "ClientHost"      , TL_MSG_PARAM_STR   , clientHostname,
       "TPVID"           , TL_MSG_PARAM_TPVID , vid,
       "RequestState"    , TL_MSG_PARAM_STR   , "successful");
 
@@ -1433,9 +1420,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       "ClientName"      , TL_MSG_PARAM_STR   , client_name,
       "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
       "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
-      "ClientHost"      , TL_MSG_PARAM_STR   ,
-        (global_clientIsTapeBridge ?
-          global_tapeBridgeClientInfoMsgBody.bridgeClientHost : client_host),
+      "ClientHost"      , TL_MSG_PARAM_STR   , clientHostname,
       "TPVID"           , TL_MSG_PARAM_TPVID , vid,
       "RequestState"    , TL_MSG_PARAM_STR   , "failed");
   }
@@ -2345,6 +2330,18 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   char envacct[20];
   int save_serrno = 0;
   int save_errno = 0;
+  int clientIsTapeBridge = FALSE;
+  /* tapeBridgeClientInfoMsgBody is set to a meaningful value if the the */
+  /* client of rtcpd is the tape-bridge daemon (see clientIsTapeBridge)  */
+  tapeBridgeClientInfoMsgBody_t tapeBridgeClientInfoMsgBody;
+  char clientHostname[CA_MAXHOSTNAMELEN+1];
+  int useBufferedTapeMarksOverMultipleFiles = FALSE;
+
+  memset(&tapeBridgeClientInfoMsgBody, '\0',
+    sizeof(tapeBridgeClientInfoMsgBody));
+
+  strncpy(clientHostname, "N/A", sizeof(clientHostname));
+  clientHostname[sizeof(clientHostname) - 1] = '\0';
 
   (void)setpgrp();
   AbortFlag = 0;
@@ -2375,8 +2372,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       &tapereq,
       &filereq,
       client,
-      &global_clientIsTapeBridge,
-      &global_tapeBridgeClientInfoMsgBody,
+      &clientIsTapeBridge,
+      &tapeBridgeClientInfoMsgBody,
       errBuf,
       sizeof(errBuf));
     save_serrno = serrno;
@@ -2388,12 +2385,31 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         "Error"  , TL_MSG_PARAM_STR, errBuf);
 
       (void)rtcp_CloseConnection(accept_socket);
-      rtcpd_FreeResources(NULL,&client,NULL);
+      rtcpd_FreeResources(NULL, &client, NULL, clientHostname);
 
       serrno = save_serrno;
       return(rc);
     }
   }
+
+  /* clientHostname is currently set to "N/A".  If the client hostname is */
+  /* now known then copy it into clientHostname.                          */
+  if(clientIsTapeBridge) {
+    strncpy(clientHostname,
+      tapeBridgeClientInfoMsgBody.bridgeClientHost,
+      sizeof(clientHostname));
+    clientHostname[sizeof(clientHostname) - 1] = '\0';
+  } else {
+    if(NULL != client && NULL != client->name && '\0' != client->name[0]) {
+      strncpy(clientHostname, client->name, sizeof(clientHostname));
+      clientHostname[sizeof(clientHostname) - 1] = '\0';
+    }
+  }
+
+  /* Determine whether or not buffered tape-marks are to be used over */
+  /* multiple files                                                   */
+  useBufferedTapeMarksOverMultipleFiles = clientIsTapeBridge &&
+    tapeBridgeClientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles;
 
   /*
    * We've got the client address so we don't need the tape-bridge or VDQM
@@ -2422,7 +2438,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
   /* Log whether or not the client is tapebridged */
   {
-    char *const logMsg = global_clientIsTapeBridge ?
+    char *const logMsg = clientIsTapeBridge ?
       "Client is tapebridged" : "Client is not tapebridged";
 
     rtcp_log(LOG_INFO, "%s()"
@@ -2434,11 +2450,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   }
 
   /* Log the host name of the tapebridge client if applicable */
-  if(global_clientIsTapeBridge) {
+  if(clientIsTapeBridge) {
     char logMsg[128];
 
     snprintf(logMsg, sizeof(logMsg), "Host name of tapebridged client is %s",
-      global_tapeBridgeClientInfoMsgBody.bridgeClientHost);
+      tapeBridgeClientInfoMsgBody.bridgeClientHost);
     logMsg[sizeof(logMsg) - 1] = '\0';
     rtcp_log(LOG_INFO, "%s()"
       ": %s\n",
@@ -2450,9 +2466,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
   /* Log whether or not buffered tape-marks will be used over muliple files */
   {
-    char *const logMsg = (global_clientIsTapeBridge &&
-      global_tapeBridgeClientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles)
-      ? "Using buffered tape-marks over multiple files" :
+    char *const logMsg = useBufferedTapeMarksOverMultipleFiles ?
+      "Using buffered tape-marks over multiple files" :
       "Not using buffered tape-marks over multiple files";
 
     rtcp_log(LOG_INFO, "%s()"
@@ -2482,7 +2497,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "Client GID" , TL_MSG_PARAM_INT, client->gid,
                      "Client Host", TL_MSG_PARAM_STR, client->clienthost );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
-    rtcpd_FreeResources(NULL,&client,NULL);
+    rtcpd_FreeResources(NULL, &client, NULL, clientHostname);
     return(-1);
   }
 
@@ -2498,7 +2513,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
-    rtcpd_FreeResources(NULL,&client,NULL);
+    rtcpd_FreeResources(NULL, &client, NULL, clientHostname);
     return(-1);
   }
   *client_socket = INVALID_SOCKET;
@@ -2515,7 +2530,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "Client Port", TL_MSG_PARAM_INT, client->clientport,
                      "Error"      , TL_MSG_PARAM_STR, sstrerror(serrno) );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
-    rtcpd_FreeResources(&client_socket,&client,NULL);
+    rtcpd_FreeResources(&client_socket, &client, NULL, clientHostname);
     return(-1);
   }
   rc = rtcpd_InitProcCntl();
@@ -2532,7 +2547,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "request loop finished with error" );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   /*
@@ -2624,7 +2639,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   /*
@@ -2640,7 +2655,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDD);
@@ -2661,7 +2676,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   /*
@@ -2692,7 +2707,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     }
     (void)rtcp_WriteAccountRecord(client,tape,NULL,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(rc);
   }
 
@@ -2713,7 +2728,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   /*
@@ -2740,7 +2755,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
-    rtcpd_FreeResources(&client_socket,&client,&tape);
+    rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
   /*
@@ -2875,7 +2890,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
    * Clean up allocated resources and return
    */
   (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
-  rtcpd_FreeResources(&client_socket,&client,&tape);
+  rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
 
   return(0);
 }
