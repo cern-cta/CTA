@@ -10,7 +10,7 @@ clean:
 
 testtapebridge: \
   testTapeBridgeMain.o \
-  BridgeClientInfoSender.o \
+  BridgeClientInfo2Sender.o \
   VmgrTxRx.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
@@ -58,7 +58,7 @@ testtapebridge: \
   dlf_lib.o \
   Constants.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfoAck.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   marshall.o \
   test_exception.o \
   vdqmapi.o \
@@ -132,7 +132,7 @@ tapebridgedaemontester: \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfoAck.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
@@ -236,7 +236,7 @@ tapebridged: \
   gateway_VolumeMode.o \
   RtcpTxRx.o \
   VmgrTxRx.o \
-  BridgeClientInfoSender.o \
+  BridgeClientInfo2Sender.o \
   dlf_Param.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
@@ -287,7 +287,7 @@ tapebridged: \
   dlf_lib.o \
   Constants.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfoAck.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   marshall.o \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
   vdqmapi.o \
@@ -316,15 +316,15 @@ testTapeBridgeMain.o: \
   testTapeBridgeMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-testTapeBridgeMain.cpp: BridgeClientInfoSenderTest.hpp VmgrTxRxTest.hpp
+testTapeBridgeMain.cpp: BridgeClientInfo2SenderTest.hpp VmgrTxRxTest.hpp
 	touch $@
 
-BridgeClientInfoSender.o: \
- $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfoSender.cpp
+BridgeClientInfo2Sender.o: \
+ $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-$(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfoSender.cpp: \
-  $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfoSender.hpp
+$(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp: \
+  $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.hpp
 	touch $@
 
 VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
@@ -485,12 +485,12 @@ $(ROOT_DIR)/tapebridge/tapebridge_marshall.c: \
   $(ROOT_DIR)/h/tapebridge_marshall.h
 	touch $@
 
-tapebridge_sendTapeBridgeClientInfoAck.o: \
-  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfoAck.c
+tapebridge_sendTapeBridgeClientInfo2Ack.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfo2Ack.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-$(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfoAck.c: \
-  $(ROOT_DIR)/h/tapebridge_sendTapeBridgeClientInfoAck.h
+$(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfo2Ack.c: \
+  $(ROOT_DIR)/h/tapebridge_sendTapeBridgeClientInfo2Ack.h
 	touch $@
 
 marshall.o: $(ROOT_DIR)/common/marshall.c

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapeBridgeClientInfoMsgBody.h
+ *                h/tapeBridgeClientInfo2MsgBody.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGECLIENTINFOMSGBODY_H
-#define H_TAPEBRIDGECLIENTINFOMSGBODY_H 1
+#ifndef H_TAPEBRIDGECLIENTINFO2MSGBODY_H
+#define H_TAPEBRIDGECLIENTINFO2MSGBODY_H 1
 
 #include "h/Castor_limits.h"
 #include "h/osdep.h"
@@ -31,7 +31,20 @@
 #include <stdint.h>
 
 /**
- * The body of a TAPEBRIDGE_CLIENTINFO message.
+ * The body of a TAPEBRIDGE_CLIENTINFO2 message.
+ *
+ * The TAPEBRIDGE_CLIENTINFO2 message has two more members than the
+ * TAPEBRIDGE_CLIENTINFO_DEPRECATED message.  The two extra members are as
+ * follows:
+ *
+ * maxBytesBeforeFlush The maximum number of bytes before the rtcpd daemon
+ * should flush all data to tape.  Please note that the rtcpd daemon flushes
+ * data to tape only when it has finished writing an entire file, this means
+ * rtcpd will nearly always write a few more bytes than maxBytesBeforeFlush
+ * before flushing to tape.
+ *
+ * maxFilesBeforeFlush The maximum number of files before the rtcpd daemon
+ * should flush all data to tape.
  */
 typedef struct {
   uint32_t volReqId;
@@ -40,37 +53,43 @@ typedef struct {
   uint32_t clientUID;
   uint32_t clientGID;
   uint32_t useBufferedTapeMarksOverMultipleFiles;
-  char    bridgeHost[CA_MAXHOSTNAMELEN+1];
-  char    bridgeClientHost[CA_MAXHOSTNAMELEN+1];
-  char    dgn[CA_MAXDGNLEN+1];
-  char    drive[CA_MAXUNMLEN+1];
-  char    clientName[CA_MAXUSRNAMELEN+1];
-} tapeBridgeClientInfoMsgBody_t;
+  uint64_t maxBytesBeforeFlush;
+  uint64_t maxFilesBeforeFlush;
+  char     bridgeHost[CA_MAXHOSTNAMELEN+1];
+  char     bridgeClientHost[CA_MAXHOSTNAMELEN+1];
+  char     dgn[CA_MAXDGNLEN+1];
+  char     drive[CA_MAXUNMLEN+1];
+  char     clientName[CA_MAXUSRNAMELEN+1];
+} tapeBridgeClientInfo2MsgBody_t;
 
-#define TAPEBRIDGECLIENTINFOMSGBODY_MAXSIZE (                           \
+#define TAPEBRIDGECLIENTINFO2MSGBODY_MAXSIZE (                           \
     LONGSIZE              + /* volReqID                              */ \
     LONGSIZE              + /* bridgeCallbackPort                    */ \
     LONGSIZE              + /* bridgeClientCallbackPort              */ \
     LONGSIZE              + /* clientUID                             */ \
     LONGSIZE              + /* clientGID                             */ \
     LONGSIZE              + /* useBufferedTapeMarksOverMultipleFiles */ \
+    HYPERSIZE             + /* maxBytesBeforeFlush                   */ \
+    HYPERSIZE             + /* maxFilesBeforeFlush                   */ \
     CA_MAXHOSTNAMELEN + 1 + /* bridgeHost                            */ \
     CA_MAXHOSTNAMELEN + 1 + /* bridgeClientHost                      */ \
     CA_MAXDGNLEN      + 1 + /* dgn                                   */ \
     CA_MAXUNMLEN      + 1 + /* drive                                 */ \
     CA_MAXUSRNAMELEN  + 1   /* clientName                            */)
 
-#define TAPEBRIDGECLIENTINFOMSGBODY_MINSIZE (                           \
+#define TAPEBRIDGECLIENTINFO2MSGBODY_MINSIZE (                           \
     LONGSIZE              + /* volReqID                              */ \
     LONGSIZE              + /* bridgeCallbackPort                    */ \
     LONGSIZE              + /* bridgeClientCallbackPort              */ \
     LONGSIZE              + /* clientUID                             */ \
     LONGSIZE              + /* clientGID                             */ \
     LONGSIZE              + /* useBufferedTapeMarksOverMultipleFiles */ \
+    HYPERSIZE             + /* maxBytesBeforeFlush                   */ \
+    HYPERSIZE             + /* maxFilesBeforeFlush                   */ \
     1                     + /* bridgeHost                            */ \
     1                     + /* bridgeClientHost                      */ \
     1                     + /* dgn                                   */ \
     1                     + /* drive                                 */ \
     1                       /* clientName                            */)
 
-#endif /* H_TAPEBRIDGECLIENTINFOMSGBODY_H */
+#endif /* H_TAPEBRIDGECLIENTINFO2MSGBODY_H */

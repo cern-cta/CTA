@@ -104,9 +104,9 @@ int createListenerSock_stdException(const char *addr,
 }
 
 typedef struct {
-  int                           inListenSocketFd;
-  int                           outGetClientInfoSuccess;
-  tapeBridgeClientInfoMsgBody_t outMsgBody;
+  int                            inListenSocketFd;
+  int                            outGetClientInfo2Success;
+  tapeBridgeClientInfo2MsgBody_t outMsgBody;
 } rtcpdThread_params;
 
 void *exceptionThrowingRtcpdThread(void *arg) {
@@ -134,7 +134,7 @@ void *exceptionThrowingRtcpdThread(void *arg) {
     &(threadParams->outMsgBody),
     errBuf,
     sizeof(errBuf));
-  threadParams->outGetClientInfoSuccess = 1;
+  threadParams->outGetClientInfo2Success = 1;
 
   close(connectionFromBridge.release());
 

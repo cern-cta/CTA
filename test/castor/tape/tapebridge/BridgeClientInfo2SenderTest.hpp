@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/castor/tape/tapebridge/BridgeClientInfoSenderTest.hpp
+ *                test/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFOSUBMITTERTEST_HPP
-#define TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFOSUBMITTERTEST_HPP 1
+#ifndef TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP
+#define TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP 1
 
 #include "rtcp_recvRtcpHdr.h"
 #include "test_exception.hpp"
@@ -35,7 +35,7 @@
 #include "h/vdqm_api.h"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/tapebridge/BridgeClientInfoSender.hpp"
+#include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -65,10 +65,10 @@ int createListenerSock_stdException(const char *addr,
 }
 
 typedef struct {
-  int                           inListenSocketFd;
-  int32_t                       inMarshalledMsgBodyLen;
-  int                           outGetClientInfoSuccess;
-  tapeBridgeClientInfoMsgBody_t outMsgBody;
+  int                            inListenSocketFd;
+  int32_t                        inMarshalledMsgBodyLen;
+  int                            outGetClientInfo2Success;
+  tapeBridgeClientInfo2MsgBody_t outMsgBody;
 } rtcpd_thread_params;
 
 void *rtcpd_thread(void *arg) {
@@ -97,7 +97,7 @@ void *rtcpd_thread(void *arg) {
       &(threadParams->outMsgBody),
       errBuf,
       sizeof(errBuf));
-    threadParams->outGetClientInfoSuccess = 1;
+    threadParams->outGetClientInfo2Success = 1;
   } catch(castor::exception::Exception &ce) {
     std::cerr <<
       "ERROR"
@@ -120,14 +120,14 @@ void *rtcpd_thread(void *arg) {
   return arg;
 }
 
-class BridgeClientInfoSenderTest: public CppUnit::TestFixture {
+class BridgeClientInfo2SenderTest: public CppUnit::TestFixture {
 private:
 
-  tapeBridgeClientInfoMsgBody_t m_clientInfoMsgBody;
+  tapeBridgeClientInfo2MsgBody_t m_clientInfoMsgBody;
 
 public:
 
-  BridgeClientInfoSenderTest() {
+  BridgeClientInfo2SenderTest() {
     memset(&m_clientInfoMsgBody, '\0', sizeof(m_clientInfoMsgBody));
   }
 
@@ -139,7 +139,7 @@ public:
     const int          netReadWriteTimeout = 0;
 
     try {
-      castor::tape::tapebridge::BridgeClientInfoSender::send(
+      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         netReadWriteTimeout,
@@ -163,6 +163,8 @@ public:
     m_clientInfoMsgBody.clientUID                             = 4444;
     m_clientInfoMsgBody.clientGID                             = 5555;
     m_clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles = 6666;
+    m_clientInfoMsgBody.maxBytesBeforeFlush                   = 7777;
+    m_clientInfoMsgBody.maxFilesBeforeFlush                   = 8888;
     utils::copyString(m_clientInfoMsgBody.bridgeHost      , "bridgeHost");
     utils::copyString(m_clientInfoMsgBody.bridgeClientHost, "bridgeClientHost");
     utils::copyString(m_clientInfoMsgBody.dgn             , "dgn");
@@ -182,7 +184,7 @@ public:
     memset(&reply, '\0', sizeof(reply));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("rtcpdHost = \"\"",
-      castor::tape::tapebridge::BridgeClientInfoSender::send(
+      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         netReadWriteTimeout,
@@ -200,7 +202,7 @@ public:
     memset(&reply, '\0', sizeof(reply));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("rtcpdHost = \"UNKNOWN\"",
-      castor::tape::tapebridge::BridgeClientInfoSender::send(
+      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         netReadWriteTimeout,
@@ -214,10 +216,10 @@ public:
 
     memset(&threadParams, '\0', sizeof(threadParams));
     threadParams.inMarshalledMsgBodyLen =
-      tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
+      tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(
       &m_clientInfoMsgBody);
     CPPUNIT_ASSERT_MESSAGE(
-      "tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize",
+      "tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize",
       threadParams.inMarshalledMsgBodyLen > 0);
 
     castor::tape::utils::SmartFd listenSock;
@@ -266,8 +268,8 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Thread results are same structure",
       (void *)&threadParams, rtcpd_thread_result);
 
-    CPPUNIT_ASSERT_MESSAGE("Check rtcpd_GetClientInfo",
-      threadParams.outGetClientInfoSuccess);
+    CPPUNIT_ASSERT_MESSAGE("Check rtcpd_GetClientInfo2",
+      threadParams.outGetClientInfo2Success);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("volReqId",
       m_clientInfoMsgBody.volReqId, threadParams.outMsgBody.volReqId);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeCallbackPort",
@@ -283,6 +285,12 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles",
       m_clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles,
       threadParams.outMsgBody.useBufferedTapeMarksOverMultipleFiles);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush",
+      m_clientInfoMsgBody.maxBytesBeforeFlush,
+      threadParams.outMsgBody.maxBytesBeforeFlush);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush",
+      m_clientInfoMsgBody.maxFilesBeforeFlush,
+      threadParams.outMsgBody.maxFilesBeforeFlush);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeHost",
       std::string(m_clientInfoMsgBody.bridgeHost),
       std::string(threadParams.outMsgBody.bridgeHost));
@@ -305,13 +313,13 @@ public:
       std::string(reply.errorMessage));
   }
 
-  CPPUNIT_TEST_SUITE(BridgeClientInfoSenderTest);
+  CPPUNIT_TEST_SUITE(BridgeClientInfo2SenderTest);
   CPPUNIT_TEST(testSubmitZeroLengthRtcpdHost);
   CPPUNIT_TEST(testSubmitUnknownRtcpdHost);
   CPPUNIT_TEST(testSubmit);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(BridgeClientInfoSenderTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(BridgeClientInfo2SenderTest);
 
-#endif // TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFOSUBMITTERTEST_HPP
+#endif // TEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP

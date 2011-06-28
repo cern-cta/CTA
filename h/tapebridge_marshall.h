@@ -26,25 +26,25 @@
 #define H_TAPEBRIDGE_MARSHALL_H 1
 
 #include "h/osdep.h"
-#include "h/tapeBridgeClientInfoMsgBody.h"
+#include "h/tapeBridgeClientInfo2MsgBody.h"
 #include "h/tapeBridgeFlushedToTapeMsgBody.h"
 
 #include <stddef.h>
 #include <stdint.h>
 
 /**
- * Returns the size in bytes of the specified TAPEBRIDGE_CLIENTINFO
+ * Returns the size in bytes of the specified TAPEBRIDGE_CLIENTINFO2
  * message-body if it were marshalled.
  *
  * @return If successful then the size in bytes of the message-body if it were
  *         marshalled.  On failure (e.g. msgBody is NULL) this function returns
  *         a negative value and sets serrno accordingly.
  */
-EXTERN_C int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
-  const tapeBridgeClientInfoMsgBody_t *const msgBody);
+EXTERN_C int32_t tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(
+  const tapeBridgeClientInfo2MsgBody_t *const msgBody);
 
 /**
- * Marshalls the specified TAPEBRIDGE_CLIENTINFO message-body preceded by the
+ * Marshalls the specified TAPEBRIDGE_CLIENTINFO2 message-body preceded by the
  * appropriate message-header to the specified buffer.
  *
  * @param buf     The buffer to which the message header and body are to be
@@ -56,11 +56,12 @@ EXTERN_C int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
  *                function returns a negative value and sets serrno
  *                accordingly.
  */
-EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
-  const size_t bufLen, const tapeBridgeClientInfoMsgBody_t *const msgBody);
+EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfo2Msg(char *const buf,
+  const size_t bufLen, const tapeBridgeClientInfo2MsgBody_t *const msgBody);
 
 /**
- * Un-marshalls a TAPEBRIDGE_CLIENTINFO message-body from the specified buffer.
+ * Un-marshalls a TAPEBRIDGE_CLIENTINFO2 message-body from the specified
+ * buffer.
  *
  * @param buf     The buffer from which the message body is be un-marshalled.
  * @param bufLen  The length of the buffer.
@@ -69,13 +70,13 @@ EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
  *                failure this function returns a negative value and sets
  *                serrno accordingly.
  */
-EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
+EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(
   const char *const buf, const size_t bufLen,
-  tapeBridgeClientInfoMsgBody_t *const msgBody);
+  tapeBridgeClientInfo2MsgBody_t *const msgBody);
 
 
 /**
- * Marshalls a complete (header plus body) TAPEBRIDGE_CLIENTINFO
+ * Marshalls a complete (header plus body) TAPEBRIDGE_CLIENTINFO2
  * acknowledgement message to the specified buffer.
  *
  * @param buf       The buffer to which the message header and body are to be
@@ -90,7 +91,7 @@ EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
  *                  function returns a negative value and sets serrno
  *                  accordingly.
  */
-EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoAck(char *const buf,
+EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfo2Ack(char *const buf,
   const size_t bufLen, const uint32_t ackStatus, const char *const ackErrMsg);
 
 /**

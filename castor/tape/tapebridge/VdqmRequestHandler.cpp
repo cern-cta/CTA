@@ -27,7 +27,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
-#include "castor/tape/tapebridge/BridgeClientInfoSender.hpp"
+#include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/ClientTxRx.hpp"
@@ -46,7 +46,7 @@
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
-#include "h/tapeBridgeClientInfoMsgBody.h"
+#include "h/tapeBridgeClientInfo2MsgBody.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
 
@@ -278,7 +278,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     {
       const std::string  rtcpdHost("localhost");
       const unsigned int rtcpdPort = RTCOPY_PORT;
-      tapeBridgeClientInfoMsgBody_t clientInfoMsgBody;
+      tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
 
       memset(&clientInfoMsgBody, '\0', sizeof(clientInfoMsgBody));
       clientInfoMsgBody.volReqId = jobRequest.volReqId;
@@ -287,6 +287,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       clientInfoMsgBody.clientUID = jobRequest.clientEuid;
       clientInfoMsgBody.clientGID = jobRequest.clientEgid;
       clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles = 0;
+      clientInfoMsgBody.maxBytesBeforeFlush = (uint64_t)12345;
+      clientInfoMsgBody.maxFilesBeforeFlush = (uint64_t)67890;
       utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
       utils::copyString(clientInfoMsgBody.bridgeClientHost,
         jobRequest.clientHost);
@@ -295,7 +297,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       utils::copyString(clientInfoMsgBody.clientName,
         jobRequest.clientUserName);
 
-      castor::tape::tapebridge::BridgeClientInfoSender::send(
+      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         RTCPDNETRWTIMEOUT,

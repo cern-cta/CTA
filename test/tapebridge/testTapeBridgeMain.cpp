@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp"
+#include "test/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp"
 #include "test/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
 #include "test/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp"
 #include "test/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp"

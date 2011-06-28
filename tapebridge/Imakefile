@@ -25,7 +25,7 @@ COMM Tape-bridge C library
 
 TAPEBRIDGELIB_OBJS = \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfoAck.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o
 

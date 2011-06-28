@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/castor/tape/tapebridge/BridgeClientInfoSenderTest.hpp"
+#include "test/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
 #include "test/castor/tape/tapebridge/VmgrTxRxTest.hpp"
 
 #include "castor/tape/utils/SmartFILEPtr.hpp"

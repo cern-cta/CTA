@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapebridge_sendTapeBridgeClientInfoAck.h
+ *                h/tapebridge_sendTapeBridgeClientInfo2Ack.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFOACK_H
-#define H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFOACK_H 1
+#ifndef H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H
+#define H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H 1
 
 #include "h/osdep.h"
 
 /**
- * Sends a TAPEBRIDGE_CLIENTINFO acknowledgement message using the specified
+ * Sends a TAPEBRIDGE_CLIENTINFO2 acknowledgement message using the specified
  * socket.
  * 
  * @param socketFd            The file-descriptor of the socket to be written
@@ -47,8 +47,8 @@
  *                            the socket.  On failure this function returns a
  *                            negative value and sets serrno accordingly.
  */
-EXTERN_C int32_t tapebridge_sendTapeBridgeClientInfoAck(const int socketFd,
+EXTERN_C int32_t tapebridge_sendTapeBridgeClientInfo2Ack(const int socketFd,
   const int netReadWriteTimeout, const uint32_t ackStatus,
   const char *const ackErrMsg);
 
-#endif /* H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFOACK_H */
+#endif /* H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H */

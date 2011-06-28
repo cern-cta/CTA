@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 tapebridge/tapebridge_marshallTapeBridgeClientInfoMsg.c
+ *                 tapebridge/tapebridge_marshall.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -32,10 +32,10 @@
 #include <string.h>
 
 /******************************************************************************
- * tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize
+ * tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize
  *****************************************************************************/
-int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
-  const tapeBridgeClientInfoMsgBody_t *const msgBody) {
+int32_t tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(
+  const tapeBridgeClientInfo2MsgBody_t *const msgBody) {
 
   /* Check function arguments */
   if(NULL == msgBody) {
@@ -44,12 +44,14 @@ int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
   }
 
   return
-    LONGSIZE + /* volReqID                              */
-    LONGSIZE + /* bridgeCallbackPort                    */
-    LONGSIZE + /* bridgeClientCallbackPort              */
-    LONGSIZE + /* clientUID                             */
-    LONGSIZE + /* clientGID                             */
-    LONGSIZE + /* useBufferedTapeMarksOverMultipleFiles */
+    LONGSIZE  + /* volReqID                              */
+    LONGSIZE  + /* bridgeCallbackPort                    */
+    LONGSIZE  + /* bridgeClientCallbackPort              */
+    LONGSIZE  + /* clientUID                             */
+    LONGSIZE  + /* clientGID                             */
+    LONGSIZE  + /* useBufferedTapeMarksOverMultipleFiles */
+    HYPERSIZE + /* maxBytesBeforeFlush                   */
+    HYPERSIZE + /* maxFilesBeforeFlush                   */
     strlen(msgBody->bridgeHost)       + 1 +
     strlen(msgBody->bridgeClientHost) + 1 +
     strlen(msgBody->dgn)              + 1 +
@@ -58,10 +60,10 @@ int32_t tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(
 }
 
 /******************************************************************************
- * tapebridge_marshallTapeBridgeClientInfoMsg
+ * tapebridge_marshallTapeBridgeClientInfo2Msg
  *****************************************************************************/
-int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
-  const size_t bufLen, const tapeBridgeClientInfoMsgBody_t *const msgBody) {
+int32_t tapebridge_marshallTapeBridgeClientInfo2Msg(char *const buf,
+  const size_t bufLen, const tapeBridgeClientInfo2MsgBody_t *const msgBody) {
 
   const int32_t msgHdrLen = 3 * LONGSIZE; /* magic + reqtype + msgBodyLen */
   int32_t msgBodyLen = 0;
@@ -69,19 +71,19 @@ int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
   char *p = buf;
 
   /* Check function arguments */
-  if(NULL == buf || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MAXSIZE ||
+  if(NULL == buf || TAPEBRIDGECLIENTINFO2MSGBODY_MAXSIZE > bufLen ||
     NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
 
-  msgBodyLen = tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(msgBody);
+  msgBodyLen = tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(msgBody);
   if(msgBodyLen < 0) {
     return -1;
   }
 
   marshall_LONG  (p, RTCOPY_MAGIC_OLD0                             );
-  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO                         );
+  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO2                        );
   marshall_LONG  (p, msgBodyLen                                    );
   marshall_LONG  (p, msgBody->volReqId                             );
   marshall_LONG  (p, msgBody->bridgeCallbackPort                   );
@@ -89,6 +91,8 @@ int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
   marshall_LONG  (p, msgBody->clientUID                            );
   marshall_LONG  (p, msgBody->clientGID                            );
   marshall_LONG  (p, msgBody->useBufferedTapeMarksOverMultipleFiles);
+  marshall_HYPER (p, msgBody->maxBytesBeforeFlush                  );
+  marshall_HYPER (p, msgBody->maxFilesBeforeFlush                  );
   marshall_STRING(p, msgBody->bridgeHost                           );
   marshall_STRING(p, msgBody->bridgeClientHost                     );
   marshall_STRING(p, msgBody->dgn                                  );
@@ -107,28 +111,31 @@ int32_t tapebridge_marshallTapeBridgeClientInfoMsg(char *const buf,
 }
 
 /******************************************************************************
- * tapebridge_unmarshallTapeBridgeClientInfoMsgBody
+ * tapebridge_unmarshallTapeBridgeClientInfo2MsgBody
  *****************************************************************************/
-int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(const char *const buf,
-  const size_t bufLen, tapeBridgeClientInfoMsgBody_t *const msgBody) {
+int32_t tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(
+  const char *const buf, const size_t bufLen,
+  tapeBridgeClientInfo2MsgBody_t *const msgBody) {
 
   /* Nasty override of const because of unmarshall_STRINGN */
   char *p = (char *)buf;
   int32_t nbBytesUnmarshalled = 0;
 
   /* Check function arguments */
-  if(NULL == buf || bufLen < TAPEBRIDGECLIENTINFOMSGBODY_MINSIZE ||
+  if(NULL == buf || TAPEBRIDGECLIENTINFO2MSGBODY_MINSIZE > bufLen ||
     NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
 
-  unmarshall_LONG(p, msgBody->volReqId                             );
-  unmarshall_LONG(p, msgBody->bridgeCallbackPort                   );
-  unmarshall_LONG(p, msgBody->bridgeClientCallbackPort             );
-  unmarshall_LONG(p, msgBody->clientUID                            );
-  unmarshall_LONG(p, msgBody->clientGID                            );
-  unmarshall_LONG(p, msgBody->useBufferedTapeMarksOverMultipleFiles);
+  unmarshall_LONG   (p, msgBody->volReqId                               );
+  unmarshall_LONG   (p, msgBody->bridgeCallbackPort                     );
+  unmarshall_LONG   (p, msgBody->bridgeClientCallbackPort               );
+  unmarshall_LONG   (p, msgBody->clientUID                              );
+  unmarshall_LONG   (p, msgBody->clientGID                              );
+  unmarshall_LONG   (p, msgBody->useBufferedTapeMarksOverMultipleFiles  );
+  unmarshall_HYPER  (p, msgBody->maxBytesBeforeFlush                    );
+  unmarshall_HYPER  (p, msgBody->maxFilesBeforeFlush                    );
   unmarshall_STRINGN(p, msgBody->bridgeHost      , CA_MAXHOSTNAMELEN + 1);
   unmarshall_STRINGN(p, msgBody->bridgeClientHost, CA_MAXHOSTNAMELEN + 1);
   unmarshall_STRINGN(p, msgBody->dgn             , CA_MAXDGNLEN      + 1);
@@ -141,9 +148,9 @@ int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(const char *const buf,
 }
 
 /******************************************************************************
- * tapebridge_marshallTapeBridgeClientInfoAck
+ * tapebridge_marshallTapeBridgeClientInfo2Ack
  *****************************************************************************/
-int32_t tapebridge_marshallTapeBridgeClientInfoAck(char *const buf,
+int32_t tapebridge_marshallTapeBridgeClientInfo2Ack(char *const buf,
   const size_t bufLen, const uint32_t ackStatus, const char *const ackErrMsg) {
   char           *p           = NULL;
   const uint32_t msgHdrLen    = 3 * LONGSIZE; /* magic + reqType + msgBodyLen */
@@ -168,11 +175,11 @@ int32_t tapebridge_marshallTapeBridgeClientInfoAck(char *const buf,
   }
 
   p = buf;
-  marshall_LONG  (p, RTCOPY_MAGIC_OLD0    ); /* Magic number */
-  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO); /* Request type */
-  marshall_LONG  (p, msgBodyLen           );
-  marshall_LONG  (p, ackStatus            );
-  marshall_STRING(p, ackErrMsg            );
+  marshall_LONG  (p, RTCOPY_MAGIC_OLD0     ); /* Magic number */
+  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO2); /* Request type */
+  marshall_LONG  (p, msgBodyLen            );
+  marshall_LONG  (p, ackStatus             );
+  marshall_STRING(p, ackErrMsg             );
   nbBytesMarshalled = p - buf;
   if(nbBytesMarshalled != msgTotalLen) {
     serrno = SEINTERNAL;

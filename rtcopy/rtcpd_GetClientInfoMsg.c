@@ -37,16 +37,16 @@
 #include <stdio.h>
 
 int rtcpd_GetClientInfoMsg(
-  const SOCKET                  connSock,
-  const int                     netTimeout,
-  rtcpHdr_t                     *const msgHdr,
-  rtcpTapeRequest_t             *const tapeReq,
-  rtcpFileRequest_t             *const fileReq,
-  rtcpClientInfo_t              *const client,
-  int                           *const clientIsTapeBridge,
-  tapeBridgeClientInfoMsgBody_t *const tapeBridgeClientInfoMsgBody,
-  char                          *const errBuf,
-  const size_t                  errBufLen) {
+  const SOCKET                   connSock,
+  const int                      netTimeout,
+  rtcpHdr_t                      *const msgHdr,
+  rtcpTapeRequest_t              *const tapeReq,
+  rtcpFileRequest_t              *const fileReq,
+  rtcpClientInfo_t               *const client,
+  int                            *const clientIsTapeBridge,
+  tapeBridgeClientInfo2MsgBody_t *const tapeBridgeClientInfo2MsgBody,
+  char                           *const errBuf,
+  const size_t                   errBufLen) {
   int  rc                = 0;
   char *errmsg           = NULL;
   int  save_serrno       = 0;
@@ -98,12 +98,12 @@ int rtcpd_GetClientInfoMsg(
 
   /* Check the request-type of the message-header */
   if(msgHdr->reqtype != VDQM_CLIENTINFO &&
-    msgHdr->reqtype != TAPEBRIDGE_CLIENTINFO) {
+    msgHdr->reqtype != TAPEBRIDGE_CLIENTINFO2) {
     snprintf(errBuf, errBufLen, "%s()"
       ": Invalid client-info message-header"
       ": Invalid request type"
       ": expected=0x%x or 0x%x actual=0x%x",
-      __FUNCTION__, VDQM_CLIENTINFO, TAPEBRIDGE_CLIENTINFO, msgHdr->reqtype);
+      __FUNCTION__, VDQM_CLIENTINFO, TAPEBRIDGE_CLIENTINFO2, msgHdr->reqtype);
     errBuf[errBufLen - 1] = '\0';
     serrno = EINVAL;
     return -1;
@@ -148,11 +148,11 @@ int rtcpd_GetClientInfoMsg(
   switch(msgHdr->reqtype) {
   case VDQM_CLIENTINFO:
     {
-      vdqmClientInfoMsgBody_t vClientInfoMsgBody;
+      vdqmClientInfoMsgBody_t vdqmClientInfoMsgBody;
 
-      memset(&vClientInfoMsgBody, '\0', sizeof(vClientInfoMsgBody));
+      memset(&vdqmClientInfoMsgBody, '\0', sizeof(vdqmClientInfoMsgBody));
       rc = rtcp_unmarshallVdqmClientInfoMsgBody(msgBuf, sizeof(msgBuf),
-        &vClientInfoMsgBody);
+        &vdqmClientInfoMsgBody);
       save_serrno = serrno;
       if(0 > rc) {
         errmsg = sstrerror(save_serrno);
@@ -170,29 +170,30 @@ int rtcpd_GetClientInfoMsg(
 
       /* Copy VDQM client information data into the necessary rtcpd */
       /* data-structures                                            */
-      strncpy(client->clienthost, vClientInfoMsgBody.clientHost,
+      strncpy(client->clienthost, vdqmClientInfoMsgBody.clientHost,
         sizeof(client->clienthost));
       client->clienthost[sizeof(client->clienthost)-1] = '\0';
-      client->clientport = vClientInfoMsgBody.clientCallbackPort;
-      client->VolReqID = vClientInfoMsgBody.volReqId;
-      client->uid = vClientInfoMsgBody.clientUID;
-      client->gid = vClientInfoMsgBody.clientGID;
-      strncpy(client->name, vClientInfoMsgBody.clientName,
+      client->clientport = vdqmClientInfoMsgBody.clientCallbackPort;
+      client->VolReqID = vdqmClientInfoMsgBody.volReqId;
+      client->uid = vdqmClientInfoMsgBody.clientUID;
+      client->gid = vdqmClientInfoMsgBody.clientGID;
+      strncpy(client->name, vdqmClientInfoMsgBody.clientName,
         sizeof(client->name));
       client->name[sizeof(client->name)-1] = '\0';
-      strncpy(tapeReq->dgn, vClientInfoMsgBody.dgn, sizeof(tapeReq->dgn));
+      strncpy(tapeReq->dgn, vdqmClientInfoMsgBody.dgn, sizeof(tapeReq->dgn));
       tapeReq->dgn[sizeof(tapeReq->dgn)-1] = '\0';
-      strncpy(tapeReq->unit, vClientInfoMsgBody.drive, sizeof(tapeReq->unit));
+      strncpy(tapeReq->unit, vdqmClientInfoMsgBody.drive,
+        sizeof(tapeReq->unit));
       tapeReq->unit[sizeof(tapeReq->unit)-1] = '\0';
     }
     break;
-  case TAPEBRIDGE_CLIENTINFO:
+  case TAPEBRIDGE_CLIENTINFO2:
     {
-      tapeBridgeClientInfoMsgBody_t bClientInfoMsgBody;
+      tapeBridgeClientInfo2MsgBody_t bridgeClientInfo2MsgBody;
 
-      memset(&bClientInfoMsgBody, '\0', sizeof(bClientInfoMsgBody));
-      rc = tapebridge_unmarshallTapeBridgeClientInfoMsgBody(msgBuf,
-        sizeof(msgBuf), &bClientInfoMsgBody);
+      memset(&bridgeClientInfo2MsgBody, '\0', sizeof(bridgeClientInfo2MsgBody));
+      rc = tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(msgBuf,
+        sizeof(msgBuf), &bridgeClientInfo2MsgBody);
       save_serrno = serrno;
       if(0 > rc) {
         errmsg = sstrerror(save_serrno);
@@ -200,7 +201,7 @@ int rtcpd_GetClientInfoMsg(
           errmsg = "Unknown error";
         }
         snprintf(errBuf, errBufLen, "%s()"
-          ": tapebridge_unmarshallTapeBridgeClientInfoMsgBody()"
+          ": tapebridge_unmarshallTapeBridgeClientInfo2MsgBody()"
           ": %s",
           __FUNCTION__, errmsg);
         errBuf[errBufLen - 1] = '\0';
@@ -210,24 +211,25 @@ int rtcpd_GetClientInfoMsg(
 
       /* Copy the client information data into the necessary rtcpd */
       /* data-structures                                           */
-      strncpy(client->clienthost, bClientInfoMsgBody.bridgeHost,
+      strncpy(client->clienthost, bridgeClientInfo2MsgBody.bridgeHost,
         sizeof(client->clienthost));
       client->clienthost[sizeof(client->clienthost)-1] = '\0';
-      client->clientport = bClientInfoMsgBody.bridgeCallbackPort;
-      client->VolReqID = bClientInfoMsgBody.volReqId;
-      client->uid = bClientInfoMsgBody.clientUID;
-      client->gid = bClientInfoMsgBody.clientGID;
-      strncpy(client->name, bClientInfoMsgBody.clientName,
+      client->clientport = bridgeClientInfo2MsgBody.bridgeCallbackPort;
+      client->VolReqID = bridgeClientInfo2MsgBody.volReqId;
+      client->uid = bridgeClientInfo2MsgBody.clientUID;
+      client->gid = bridgeClientInfo2MsgBody.clientGID;
+      strncpy(client->name, bridgeClientInfo2MsgBody.clientName,
         sizeof(client->name));
       client->name[sizeof(client->name)-1] = '\0';
-      strncpy(tapeReq->dgn, bClientInfoMsgBody.dgn, sizeof(tapeReq->dgn));
+      strncpy(tapeReq->dgn, bridgeClientInfo2MsgBody.dgn, sizeof(tapeReq->dgn));
       tapeReq->dgn[sizeof(tapeReq->dgn)-1] = '\0';
-      strncpy(tapeReq->unit, bClientInfoMsgBody.drive, sizeof(tapeReq->unit));
+      strncpy(tapeReq->unit, bridgeClientInfo2MsgBody.drive,
+        sizeof(tapeReq->unit));
       tapeReq->unit[sizeof(tapeReq->unit)-1] = '\0';
 
       /* Record the fact the client is the tape-bridge daemon */
-      memcpy(tapeBridgeClientInfoMsgBody, &bClientInfoMsgBody,
-        sizeof(*tapeBridgeClientInfoMsgBody));
+      memcpy(tapeBridgeClientInfo2MsgBody, &bridgeClientInfo2MsgBody,
+        sizeof(*tapeBridgeClientInfo2MsgBody));
       *clientIsTapeBridge = TRUE;
     }
     break;
@@ -236,7 +238,7 @@ int rtcpd_GetClientInfoMsg(
       ": Invalid client-info message-header"
       ": Invalid request type"
       ": expected=0x%x or 0x%x actual=0x%x",
-      __FUNCTION__, VDQM_CLIENTINFO, TAPEBRIDGE_CLIENTINFO, msgHdr->reqtype);
+      __FUNCTION__, VDQM_CLIENTINFO, TAPEBRIDGE_CLIENTINFO2, msgHdr->reqtype);
     errBuf[errBufLen - 1] = '\0';
     serrno = EINVAL;
     return -1;

@@ -25,7 +25,7 @@
 #include "h/rtcpd_SendAckToVdqmOrTapeBridge.h"
 #include "h/serrno.h"
 #include "h/tapebridge_constants.h"
-#include "h/tapebridge_sendTapeBridgeClientInfoAck.h"
+#include "h/tapebridge_sendTapeBridgeClientInfo2Ack.h"
 #include "h/vdqm_api.h"
 #include "h/vdqm_constants.h"
 
@@ -46,7 +46,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
 
   /* Check function-parameters */
   if(connSock == INVALID_SOCKET ||
-    (reqType != VDQM_CLIENTINFO && reqType != TAPEBRIDGE_CLIENTINFO) ||
+    (reqType != VDQM_CLIENTINFO && reqType != TAPEBRIDGE_CLIENTINFO2) ||
     ackMsg == NULL || errBuf == NULL) {
     snprintf(errBuf, errBufLen, "%s()"
       ": Invalid function-parameter",
@@ -74,8 +74,8 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
       return -1;
     }
     break;
-  case TAPEBRIDGE_CLIENTINFO:
-    rc = tapebridge_sendTapeBridgeClientInfoAck(connSock, netTimeout,
+  case TAPEBRIDGE_CLIENTINFO2:
+    rc = tapebridge_sendTapeBridgeClientInfo2Ack(connSock, netTimeout,
       ackStatus, ackMsg);
     save_serrno = serrno;
     if(-1 == rc) {
@@ -84,7 +84,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
         errmsg = "Unknown error";
       }
       snprintf(errBuf, errBufLen, "%s()"
-        ": tapebridge_sendTapeBridgeClientInfoAck()"
+        ": tapebridge_sendTapeBridgeClientInfo2Ack()"
         ": %s",
         __FUNCTION__, errmsg);
       errBuf[errBufLen - 1] = '\0';

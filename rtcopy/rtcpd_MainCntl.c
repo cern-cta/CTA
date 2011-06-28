@@ -44,6 +44,7 @@
 #include "tplogger_api.h"
 
 #include "h/rtcpd_GetClientInfo.h"
+#include "h/u64subr.h"
 
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
@@ -2331,14 +2332,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   int save_serrno = 0;
   int save_errno = 0;
   int clientIsTapeBridge = FALSE;
-  /* tapeBridgeClientInfoMsgBody is set to a meaningful value if the the */
+  /* tapeBridgeClientInfo2MsgBody is set to a meaningful value if the the */
   /* client of rtcpd is the tape-bridge daemon (see clientIsTapeBridge)  */
-  tapeBridgeClientInfoMsgBody_t tapeBridgeClientInfoMsgBody;
+  tapeBridgeClientInfo2MsgBody_t tapeBridgeClientInfo2MsgBody;
   char clientHostname[CA_MAXHOSTNAMELEN+1];
   int useBufferedTapeMarksOverMultipleFiles = FALSE;
 
-  memset(&tapeBridgeClientInfoMsgBody, '\0',
-    sizeof(tapeBridgeClientInfoMsgBody));
+  memset(&tapeBridgeClientInfo2MsgBody, '\0',
+    sizeof(tapeBridgeClientInfo2MsgBody));
 
   strncpy(clientHostname, "N/A", sizeof(clientHostname));
   clientHostname[sizeof(clientHostname) - 1] = '\0';
@@ -2373,7 +2374,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       &filereq,
       client,
       &clientIsTapeBridge,
-      &tapeBridgeClientInfoMsgBody,
+      &tapeBridgeClientInfo2MsgBody,
       errBuf,
       sizeof(errBuf));
     save_serrno = serrno;
@@ -2396,7 +2397,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* now known then copy it into clientHostname.                          */
   if(clientIsTapeBridge) {
     strncpy(clientHostname,
-      tapeBridgeClientInfoMsgBody.bridgeClientHost,
+      tapeBridgeClientInfo2MsgBody.bridgeClientHost,
       sizeof(clientHostname));
     clientHostname[sizeof(clientHostname) - 1] = '\0';
   } else {
@@ -2409,7 +2410,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* Determine whether or not buffered tape-marks are to be used over */
   /* multiple files                                                   */
   useBufferedTapeMarksOverMultipleFiles = clientIsTapeBridge &&
-    tapeBridgeClientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles;
+    tapeBridgeClientInfo2MsgBody.useBufferedTapeMarksOverMultipleFiles;
 
   /*
    * We've got the client address so we don't need the tape-bridge or VDQM
@@ -2454,7 +2455,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char logMsg[128];
 
     snprintf(logMsg, sizeof(logMsg), "Host name of tapebridged client is %s",
-      tapeBridgeClientInfoMsgBody.bridgeClientHost);
+      tapeBridgeClientInfo2MsgBody.bridgeClientHost);
     logMsg[sizeof(logMsg) - 1] = '\0';
     rtcp_log(LOG_INFO, "%s()"
       ": %s\n",
@@ -2469,6 +2470,36 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char *const logMsg = useBufferedTapeMarksOverMultipleFiles ?
       "Using buffered tape-marks over multiple files" :
       "Not using buffered tape-marks over multiple files";
+
+    rtcp_log(LOG_INFO, "%s()"
+      ": %s\n",
+      __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
+  }
+
+  /* If buffered tape-marks will be used over muliple files then log */
+  /* maxBytesBeforeFlush and maxFilesBeforeFlush                     */
+  if(useBufferedTapeMarksOverMultipleFiles) {
+    char logMsg[128];
+    char maxBytesBeforeFlushStr[21];
+    char maxFilesBeforeFlushStr[21];
+
+    memset(maxBytesBeforeFlushStr, '\0', sizeof(maxBytesBeforeFlushStr));
+    u64tostr(tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
+      maxBytesBeforeFlushStr, 0 /* left adjust result */);
+    maxBytesBeforeFlushStr[sizeof(maxBytesBeforeFlushStr) - 1] = '\0';
+
+    memset(maxFilesBeforeFlushStr, '\0', sizeof(maxFilesBeforeFlushStr));
+    u64tostr(tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush,
+      maxFilesBeforeFlushStr, 0 /* left adjust result */);
+    maxFilesBeforeFlushStr[sizeof(maxFilesBeforeFlushStr) - 1] = '\0';
+
+    snprintf(logMsg, sizeof(logMsg),
+      "maxBytesBeforeFlush=%s maxFilesBeforeFlush=%s",
+      maxBytesBeforeFlushStr, maxFilesBeforeFlushStr);
+    logMsg[sizeof(logMsg) - 1] = '\0';
 
     rtcp_log(LOG_INFO, "%s()"
       ": %s\n",

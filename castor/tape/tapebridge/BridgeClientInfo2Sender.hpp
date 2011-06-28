@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapebridge/BridgeClientInfoSender.hpp
+ *                      castor/tape/tapebridge/BridgeClientInfo2Sender.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIGEINFOSENDER_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_BRIGEINFOSENDER_HPP
+#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP
 
 #include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -37,7 +37,7 @@ namespace tapebridge {
    * A helper class for sending client information from the tape-bridge to the
    * rtcpd daemon.
    */
-  class BridgeClientInfoSender {
+  class BridgeClientInfo2Sender {
 
   public:
 
@@ -57,7 +57,7 @@ namespace tapebridge {
       const std::string              &rtcpdHost,
       const unsigned int             rtcpdPort,
       const int                      netReadWriteTimeout,
-      tapeBridgeClientInfoMsgBody_t  &msgBody,
+      tapeBridgeClientInfo2MsgBody_t &msgBody,
       legacymsg::RtcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 
@@ -79,10 +79,10 @@ namespace tapebridge {
       legacymsg::RtcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 
-  }; // class BridgeClientInfoSender
+  }; // class BridgeClientInfo2Sender
 
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor      
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_BRIGEINFOSENDER_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP

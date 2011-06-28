@@ -33,7 +33,7 @@ DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(tapebridge,castortapebridge)
 
 TAPEBRIDGEBIN_SRCS = \
-  BridgeClientInfoSender.cpp \
+  BridgeClientInfo2Sender.cpp \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \

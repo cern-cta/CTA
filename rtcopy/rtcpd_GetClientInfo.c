@@ -37,15 +37,15 @@
 #include <unistd.h>
 
 int rtcpd_GetClientInfo(
-  const SOCKET                         connSock,
-  const int                            netTimeout,
-  rtcpTapeRequest_t             *const tapeReq,
-  rtcpFileRequest_t             *const fileReq,
-  rtcpClientInfo_t              *const client,
-  int                           *const clientIsTapeBridge,
-  tapeBridgeClientInfoMsgBody_t *const tapeBridgeClientInfoMsgBody,
-  char                          *const errBuf,
-  const size_t                  errBufLen) {
+  const SOCKET                          connSock,
+  const int                             netTimeout,
+  rtcpTapeRequest_t              *const tapeReq,
+  rtcpFileRequest_t              *const fileReq,
+  rtcpClientInfo_t               *const client,
+  int                            *const clientIsTapeBridge,
+  tapeBridgeClientInfo2MsgBody_t *const tapeBridgeClientInfo2MsgBody,
+  char                           *const errBuf,
+  const size_t                   errBufLen) {
 
   int rc          = 0;
   int save_serrno = 0;
@@ -54,7 +54,7 @@ int rtcpd_GetClientInfo(
   /* Check function-parameters */
   if(INVALID_SOCKET == connSock || NULL == tapeReq || NULL == fileReq ||
     NULL == client || NULL == client || NULL == clientIsTapeBridge ||
-    NULL == tapeBridgeClientInfoMsgBody) {
+    NULL == tapeBridgeClientInfo2MsgBody) {
     char *const errMsg = "Invalid function-parameter";
 
     snprintf(errBuf, errBufLen, "%s()"
@@ -73,7 +73,7 @@ int rtcpd_GetClientInfo(
     fileReq,
     client,
     clientIsTapeBridge,
-    tapeBridgeClientInfoMsgBody,
+    tapeBridgeClientInfo2MsgBody,
     errBuf,
     errBufLen);
   save_serrno = serrno;
@@ -91,7 +91,7 @@ int rtcpd_GetClientInfo(
   /* This version of rtcpd does NOT support buffered tape-marks over */
   /* multiple files                                                  */
   if(*clientIsTapeBridge &&
-    tapeBridgeClientInfoMsgBody->useBufferedTapeMarksOverMultipleFiles) {
+    tapeBridgeClientInfo2MsgBody->useBufferedTapeMarksOverMultipleFiles) {
     char dummyErrbuf[32]; /* For fire and forget */
     char *const ackMsg =
       "Buffered tape-marks over multiple files is not supported";

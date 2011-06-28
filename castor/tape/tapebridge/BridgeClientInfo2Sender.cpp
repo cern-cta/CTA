@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapebridge/BridgeClientInfoSender.cpp
+ *                      castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,14 +29,14 @@
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
-#include "castor/tape/tapebridge/BridgeClientInfoSender.hpp"
+#include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
 #include "h/rtcp_constants.h"
 #include "h/serrno.h"
-#include "h/tapeBridgeClientInfoMsgBody.h"
+#include "h/tapeBridgeClientInfo2MsgBody.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
 #include "h/vdqm_constants.h"
@@ -49,11 +49,11 @@
 //------------------------------------------------------------------------------
 // send
 //------------------------------------------------------------------------------
-void castor::tape::tapebridge::BridgeClientInfoSender::send(
+void castor::tape::tapebridge::BridgeClientInfo2Sender::send(
   const std::string              &rtcpdHost,
   const unsigned int             rtcpdPort,
   const int                      netReadWriteTimeout,
-  tapeBridgeClientInfoMsgBody_t  &msgBody,
+  tapeBridgeClientInfo2MsgBody_t &msgBody,
   legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
@@ -63,13 +63,13 @@ void castor::tape::tapebridge::BridgeClientInfoSender::send(
   }
 
   char buf[RTCPMSGBUFSIZE];
-  const int hdrPlusBodyLen = tapebridge_marshallTapeBridgeClientInfoMsg(buf,
+  const int hdrPlusBodyLen = tapebridge_marshallTapeBridgeClientInfo2Msg(buf,
     sizeof(buf), &msgBody);
   int save_serrno = serrno;
 
   if(hdrPlusBodyLen < 0) {
     TAPE_THROW_CODE(save_serrno,
-      ": Failed to marhsall tapeBridgeClientInfoMsgBody_t"
+      ": Failed to marhsall tapeBridgeClientInfo2MsgBody_t"
       ": " << sstrerror(save_serrno));
   }
 
@@ -92,7 +92,7 @@ void castor::tape::tapebridge::BridgeClientInfoSender::send(
     net::writeBytes(sock.socket(), netReadWriteTimeout, hdrPlusBodyLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
-      ": Failed to send the TAPEBRIDGE_CLIENTINFO message to rtcpd" <<
+      ": Failed to send the TAPEBRIDGE_CLIENTINFO2 message to rtcpd" <<
       ": " << ex.getMessage().str());
   }
 
@@ -104,7 +104,7 @@ void castor::tape::tapebridge::BridgeClientInfoSender::send(
 //------------------------------------------------------------------------------
 // readReply
 //------------------------------------------------------------------------------
-void castor::tape::tapebridge::BridgeClientInfoSender::readReply(
+void castor::tape::tapebridge::BridgeClientInfo2Sender::readReply(
   castor::io::AbstractTCPSocket  &sock,
   const int                      netReadWriteTimeout,
   legacymsg::RtcpJobReplyMsgBody &reply)
@@ -143,12 +143,13 @@ void castor::tape::tapebridge::BridgeClientInfoSender::readReply(
   }
 
   // If the request type is invalid
-  if(header.reqType != TAPEBRIDGE_CLIENTINFO &&
+  if(header.reqType != TAPEBRIDGE_CLIENTINFO2 &&
     header.reqType != VDQM_CLIENTINFO) {
     TAPE_THROW_CODE(EBADMSG,
       std::hex <<
       ": Invalid request type from rtpcd"
-      ": Expected: either TAPEBRIDGE_CLIENTINFO=0x" << TAPEBRIDGE_CLIENTINFO <<
+      ": Expected: either TAPEBRIDGE_CLIENTINFO2=0x" <<
+      TAPEBRIDGE_CLIENTINFO2 <<
       " or VDQM_CLIENTINFO=0x" << VDQM_CLIENTINFO <<
       ": Received: 0x" << header.reqType);
   }

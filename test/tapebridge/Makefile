@@ -62,7 +62,7 @@ testTapeBridgeMain.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 testTapeBridgeMain.cpp: \
-  MarshallTapeBridgeClientInfoTest.hpp \
+  MarshallTapeBridgeClientInfo2Test.hpp \
   MarshallTapeBridgeFlushedToTapeTest.hpp \
   RecvTapeBridgeFlushedToTapeAckTest.hpp \
   SendTapeBridgeFlushedToTapeTest.hpp

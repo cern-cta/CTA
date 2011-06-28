@@ -28,7 +28,7 @@
 #include "h/net.h"
 #include "h/osdep.h"
 #include "h/rtcp.h"
-#include "h/tapeBridgeClientInfoMsgBody.h"
+#include "h/tapeBridgeClientInfo2MsgBody.h"
 
 #include <stddef.h>
 
@@ -53,7 +53,7 @@
  *                   received client-info message.
  * @param clientIsTapeBridge Out parameter: Set to true if the client is the
  *                   tape-bridge daemon else false.
- * @param tapeBridgeClientInfoMsgBody Out parameter: If the client is the
+ * @param tapeBridgeClientInfo2MsgBody Out parameter: If the client is the
  *                   tape-bridge daemon, then this function fills this message
  *                   body structure with the unmarshalled contents of the
  *                   received client-info message.
@@ -64,15 +64,15 @@
  *                   is set accordingly.
  */
 EXTERN_C int rtcpd_GetClientInfoMsg(
-  const SOCKET                  connSock,
-  const int                     netTimeout,
-  rtcpHdr_t                     *const msgHdr,
-  rtcpTapeRequest_t             *const tapeReq,
-  rtcpFileRequest_t             *const fileReq,
-  rtcpClientInfo_t              *const client,
-  int                           *const clientIsTapeBridge,
-  tapeBridgeClientInfoMsgBody_t *const tapeBridgeClientInfoMsgBody,
-  char                          *const errBuf,
-  const size_t                  errBufLen);
+  const SOCKET                   connSock,
+  const int                      netTimeout,
+  rtcpHdr_t                      *const msgHdr,
+  rtcpTapeRequest_t              *const tapeReq,
+  rtcpFileRequest_t              *const fileReq,
+  rtcpClientInfo_t               *const client,
+  int                            *const clientIsTapeBridge,
+  tapeBridgeClientInfo2MsgBody_t *const tapeBridgeClientInfo2MsgBody,
+  char                           *const errBuf,
+  const size_t                   errBufLen);
 
 #endif /* H_RTCPD_GETCLIENTINFOMSG_H */

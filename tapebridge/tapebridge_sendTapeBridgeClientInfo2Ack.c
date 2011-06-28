@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 tapebridge/tapebridge_sendTapeBridgeClientInfoAck.c
+ *                 tapebridge/tapebridge_sendTapeBridgeClientInfo2Ack.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,15 +26,15 @@
 #include "h/socket_timeout.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
-#include "h/tapebridge_sendTapeBridgeClientInfoAck.h"
+#include "h/tapebridge_sendTapeBridgeClientInfo2Ack.h"
 
 #include <errno.h>
 #include <string.h>
 
 /******************************************************************************
- * tapebridge_sendTapeBridgeClientInfoAck
+ * tapebridge_sendTapeBridgeClientInfo2Ack
  *****************************************************************************/
-int32_t tapebridge_sendTapeBridgeClientInfoAck(const int socketFd,
+int32_t tapebridge_sendTapeBridgeClientInfo2Ack(const int socketFd,
   const int netReadWriteTimeout, const uint32_t ackStatus,
   const char *const ackErrMsg) {
   int  nbBytesMarshalled = 0;
@@ -49,7 +49,7 @@ int32_t tapebridge_sendTapeBridgeClientInfoAck(const int socketFd,
 
   memset(buf, '\0', sizeof(buf));
 
-  nbBytesMarshalled = tapebridge_marshallTapeBridgeClientInfoAck(buf,
+  nbBytesMarshalled = tapebridge_marshallTapeBridgeClientInfo2Ack(buf,
     sizeof(buf), ackStatus, ackErrMsg);
   if(-1 == nbBytesMarshalled) {
     return -1;

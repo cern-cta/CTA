@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp
+ *                test/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP
-#define TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP 1
+#ifndef TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP
+#define TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP 1
 
 #include "h/osdep.h"
 #include "h/serrno.h"
@@ -35,17 +35,17 @@
 #include <stdint.h>
 #include <string.h>
 
-class MarshallTapeBridgeClientInfoTest: public CppUnit::TestFixture {
+class MarshallTapeBridgeClientInfo2Test: public CppUnit::TestFixture {
 private:
   char m_buf[TAPEBRIDGE_MSGBUFSIZ];
-  tapeBridgeClientInfoMsgBody_t m_msgBody;
+  tapeBridgeClientInfo2MsgBody_t m_msgBody;
   const int32_t m_sizeOfMarshalledMsgHeader;
   int32_t m_sizeOfMarshalledMsgHeaderPlusBody;
   int32_t m_sizeOfMarshalledMsgBody;
 
 public:
 
-  MarshallTapeBridgeClientInfoTest():
+  MarshallTapeBridgeClientInfo2Test():
     m_sizeOfMarshalledMsgHeader(3 * LONGSIZE), /* magic, reqType, bodyLen */
     m_sizeOfMarshalledMsgHeaderPlusBody(0),
     m_sizeOfMarshalledMsgBody(0) {
@@ -63,6 +63,8 @@ public:
     m_msgBody.bridgeClientCallbackPort = 3333;
     m_msgBody.clientUID                = 4444;
     m_msgBody.clientGID                = 5555;
+    m_msgBody.maxBytesBeforeFlush      = 6666;
+    m_msgBody.maxFilesBeforeFlush      = 7777;
 
     strncpy(m_msgBody.bridgeHost, "bridgeHost", sizeof(m_msgBody.bridgeHost));
     m_msgBody.bridgeHost[sizeof(m_msgBody.bridgeHost) - 1] = '\0';
@@ -81,12 +83,14 @@ public:
     m_msgBody.clientName[sizeof(m_msgBody.clientName) - 1] = '\0';
 
     m_sizeOfMarshalledMsgBody =
-      LONGSIZE + /* volReqID                              */
-      LONGSIZE + /* bridgeCallbackPort                    */
-      LONGSIZE + /* bridgeClientCallbackPort              */
-      LONGSIZE + /* clientUID                             */
-      LONGSIZE + /* clientGID                             */
-      LONGSIZE + /* useBufferedTapeMarksOverMultipleFiles */
+      LONGSIZE  + /* volReqID                              */
+      LONGSIZE  + /* bridgeCallbackPort                    */
+      LONGSIZE  + /* bridgeClientCallbackPort              */
+      LONGSIZE  + /* clientUID                             */
+      LONGSIZE  + /* clientGID                             */
+      LONGSIZE  + /* useBufferedTapeMarksOverMultipleFiles */
+      HYPERSIZE + /* maxBytesBeforeFlush                   */
+      HYPERSIZE + /* maxFilesBeforeFlush                   */
       strlen(m_msgBody.bridgeHost)       + 1 +
       strlen(m_msgBody.bridgeClientHost) + 1 +
       strlen(m_msgBody.dgn)              + 1 +
@@ -106,31 +110,31 @@ public:
   void testMsgBodyMarshalledSize() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Message body marshalled size",
       m_sizeOfMarshalledMsgBody,
-      tapebridge_tapeBridgeClientInfoMsgBodyMarshalledSize(&m_msgBody));
+      tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(&m_msgBody));
   }
 
   void testMarshallBufNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("buf = NULL", -1,
-      tapebridge_marshallTapeBridgeClientInfoMsg(NULL, sizeof(m_buf),
+      tapebridge_marshallTapeBridgeClientInfo2Msg(NULL, sizeof(m_buf),
       &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for buf = NULL", EINVAL, serrno);
   }
 
   void testMarshallBufLen0() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 0", -1,
-      tapebridge_marshallTapeBridgeClientInfoMsg(m_buf, 0, &m_msgBody));
+      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, 0, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 0", EINVAL, serrno);
   }
 
   void testMarshallBufLen1() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 1", -1,
-      tapebridge_marshallTapeBridgeClientInfoMsg(m_buf, 1, &m_msgBody));
+      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, 1, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 1", EINVAL, serrno);
   }
 
   void testMarshallMsgBodyNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("msgBody = NULL", -1,
-      tapebridge_marshallTapeBridgeClientInfoMsg(m_buf, sizeof(m_buf),
+      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
       NULL));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for msgBody = NULL", EINVAL, serrno);
   }
@@ -138,48 +142,48 @@ public:
   void testMarshallCorrectCall() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Correct call",
       m_sizeOfMarshalledMsgHeaderPlusBody,
-      tapebridge_marshallTapeBridgeClientInfoMsg(m_buf, sizeof(m_buf),
+      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
       &m_msgBody));
   }
 
   void testUnmarshallBufNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("buf = NULL", -1,
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(NULL, sizeof(m_buf),
+      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(NULL, sizeof(m_buf),
       &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for buf = NULL", EINVAL, serrno);
   }
 
   void testUnmarshallBufLen0() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 0", -1,
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(m_buf, 0, &m_msgBody));
+      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, 0, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 0", EINVAL, serrno);
   }
 
   void testUnmarshallBufLen1() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 1", -1,
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(m_buf, 1, &m_msgBody));
+      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, 1, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 1", EINVAL, serrno);
   }
 
   void testUnmarshallMsgBodyNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("msgBody = NULL", -1,
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(m_buf, sizeof(m_buf),
+      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, sizeof(m_buf),
       NULL));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for msgBody = NULL", EINVAL, serrno);
   }
 
   void testMarshallAndUnmarshallContents() {
-    tapeBridgeClientInfoMsgBody_t msgBody;
+    tapeBridgeClientInfo2MsgBody_t msgBody;
 
     memset(&msgBody, '\0', sizeof(msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("marshall",
       m_sizeOfMarshalledMsgHeaderPlusBody,
-      tapebridge_marshallTapeBridgeClientInfoMsg(m_buf, sizeof(m_buf),
+      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
       &m_msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("unmarshall", m_sizeOfMarshalledMsgBody,
-      tapebridge_unmarshallTapeBridgeClientInfoMsgBody(m_buf +
+      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf +
       m_sizeOfMarshalledMsgHeader, sizeof(m_buf), &msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("volReqId", m_msgBody.volReqId,
@@ -192,6 +196,12 @@ public:
       msgBody.clientUID);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientGID", m_msgBody.clientGID,
       msgBody.clientGID);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush",
+      m_msgBody.maxBytesBeforeFlush,
+      msgBody.maxBytesBeforeFlush);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush",
+      m_msgBody.maxFilesBeforeFlush,
+      msgBody.maxFilesBeforeFlush);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeHost",
       std::string(m_msgBody.bridgeHost),
       std::string(msgBody.bridgeHost));
@@ -209,7 +219,7 @@ public:
       std::string(msgBody.clientName));
   }
 
-  CPPUNIT_TEST_SUITE(MarshallTapeBridgeClientInfoTest);
+  CPPUNIT_TEST_SUITE(MarshallTapeBridgeClientInfo2Test);
   CPPUNIT_TEST(testMsgBodyMarshalledSize);
   CPPUNIT_TEST(testMarshallBufNull);
   CPPUNIT_TEST(testMarshallBufLen0);
@@ -224,6 +234,6 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MarshallTapeBridgeClientInfoTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(MarshallTapeBridgeClientInfo2Test);
 
-#endif // TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFOTEST_HPP
+#endif // TEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP
