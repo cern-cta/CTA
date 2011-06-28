@@ -48,6 +48,7 @@ testtapebridge: \
   exception_TooBig.o \
   net_net.o \
   tapebridge_LegacyTxRx.o \
+  tapebridge_LogHelper.o \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   test_exception.o \
@@ -73,6 +74,10 @@ tapebridge_recvTapeBridgeFlushedToTapeAck.o: \
 
 tapebridge_LegacyTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_LogHelper.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_sendTapeBridgeFlushedToTape.o: \

@@ -30,6 +30,7 @@
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "h/marshall.h"
 #include "h/net.h"
@@ -56,8 +57,7 @@ private:
     bool outAcceptedConnection;
     bool outReadInHeader;
     bool outUnmarshalledHeader;
-    bool outReadInBody;
-    bool outUnmarshalledBody;
+    bool outReadInAndUnmarshalledBody;
   } tapebridgedThreadParams_t;
 
   static void *tapebridged_thread(void *arg) {
@@ -67,11 +67,10 @@ private:
 
     try {
       // Not successful until proven otherwise
-      threadParams->outAcceptedConnection = false;
-      threadParams->outReadInHeader       = false;
-      threadParams->outUnmarshalledHeader = false;
-      threadParams->outReadInBody         = false;
-      threadParams->outUnmarshalledBody   = false;
+      threadParams->outAcceptedConnection        = false;
+      threadParams->outReadInHeader              = false;
+      threadParams->outUnmarshalledHeader        = false;
+      threadParams->outReadInAndUnmarshalledBody = false;
 
       // Wrap the listen socket in a smart file-descriptor
       castor::tape::utils::SmartFd listenSockFd(threadParams->inListenSocketFd);
@@ -112,28 +111,13 @@ private:
       }
       threadParams->outUnmarshalledHeader = true;
 
-      // Receive message body
-      char bodyBuf[TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE];
-      memset(bodyBuf, '\0', sizeof(bodyBuf));
-      const ssize_t bodyBytesRead = netread_timeout(connectionSockFd.get(),
-        bodyBuf, TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE, netReadWriteTimeout);
-      if(TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE != bodyBytesRead) {
-        test_exception te("netread_timeout of message body failed");
-        throw te;
-      }
-      threadParams->outReadInBody = true;
-
-      // Un-marshall message body
-      const char *q = bodyBuf;
-      size_t bodyLen = sizeof(bodyBuf);
+      // Read in and unmarshall message body
+      const uint32_t dummyVolReqId = 7777;
       tapeBridgeFlushedToTapeMsgBody_t body;
-      memset(&body, '\0', sizeof(body));
-      castor::tape::legacymsg::unmarshal(q, bodyLen, body);
-      if(1111 != body.volReqId || 2222 != body.tapeFseq) {
-        test_exception te("failed to un-marshall body");
-        throw te;
-      }
-      threadParams->outUnmarshalledBody = true;
+      castor::tape::tapebridge::RtcpTxRx::receiveMsgBody(nullCuuid,
+        dummyVolReqId, connectionSockFd.get(), netReadWriteTimeout, header,
+        body);
+      threadParams->outReadInAndUnmarshalledBody = true;
 
       close(connectionSockFd.release());
       close(listenSockFd.release());
@@ -269,10 +253,8 @@ public:
       threadParams.outReadInHeader);
     CPPUNIT_ASSERT_MESSAGE("threadParams.outUnmarshalledHeader",
       threadParams.outUnmarshalledHeader);
-    CPPUNIT_ASSERT_MESSAGE("threadParams.outReadInBody",
-      threadParams.outReadInBody);
-    CPPUNIT_ASSERT_MESSAGE("threadParams.outUnmarshalledBody",
-      threadParams.outUnmarshalledBody);
+    CPPUNIT_ASSERT_MESSAGE("threadParams.outReadInAndUnmarshalledBody",
+      threadParams.outReadInAndUnmarshalledBody);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("sendTapeBridgeFlushedToTape",
       (uint32_t)(5 * LONGSIZE), // magic + reqType + len + volReqId + tapeFseq

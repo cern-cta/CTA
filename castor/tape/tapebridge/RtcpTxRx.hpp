@@ -26,8 +26,10 @@
 #define CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
+#include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
