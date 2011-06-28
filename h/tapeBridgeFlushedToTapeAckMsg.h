@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapeBridgeFlushedToTapeMsgBody.h
+ *                h/tapeBridgeFlushedToTapeAckMsg.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,33 +22,25 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H
-#define H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H 1
+#ifndef H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H
+#define H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H 1
 
 #include "h/Castor_limits.h"
-#include "h/osdep.h"
 
 #include <stdint.h>
 
 /**
- * The body of a TAPEBRIDGE_FLUSHEDTOTAPE message.
+ * The structure of a TAPEBRIDGE_FLUSHEDTOTAPE acknowlegement message.
  */
 typedef struct {
-  /**
-   * The Volume request ID associated with the tape-mount.
-   */
-  uint32_t volReqId;
+  uint32_t magic;
+  uint32_t reqType;
+  uint32_t status;
+} tapeBridgeFlushedToTapeAckMsg_t;
 
-  /**
-   * If it is known this value should be set to the file-sequence number of the
-   * last file successfully to tape.  If the file-sequence number is not known
-   * then this value must be set to 0.
-   */
-  uint32_t tapeFseq;
-} tapeBridgeFlushedToTapeMsgBody_t;
+#define TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE ( \
+    LONGSIZE + /* magic   */        \
+    LONGSIZE + /* reqType */        \
+    LONGSIZE   /* status  */        )
 
-#define TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE ( \
-  LONGSIZE + /* volReqID */                  \
-  LONGSIZE   /* tapeFseq */)
-
-#endif /* H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H */
+#endif /* H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H */

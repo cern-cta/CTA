@@ -23,7 +23,11 @@ COMM
 
 COMM Tape-bridge C library
 
-TAPEBRIDGELIB_OBJS = tapebridge_marshall.o tapebridge_sendTapeBridgeAck.o
+TAPEBRIDGELIB_OBJS = \
+  tapebridge_marshall.o \
+  tapebridge_sendTapeBridgeClientInfoAck.o \
+  tapebridge_sendTapeBridgeFlushedToTape.o \
+  tapebridge_recvTapeBridgeFlushedToTapeAck.o
 
 DependsOnLibrary(common,castorcommon)
 

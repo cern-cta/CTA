@@ -26,6 +26,7 @@ AddLdFlags(-lstdc++)
 TAPELEGACYMSGLIB_SRCS = \
   CommonMarshal.cpp \
   RtcpMarshal.cpp \
+  TapeBridgeMarshal.cpp \
   VmgrMarshal.cpp
 
 TAPELEGACYMSGLIB_OBJS = $(TAPELEGACYMSGLIB_SRCS:.cpp=.o)

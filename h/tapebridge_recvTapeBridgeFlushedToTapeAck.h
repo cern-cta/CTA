@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapebridge_sendTapeBridgeAck.h
+ *                h/tapebridge_recvTapeBridgeFlushedToTapeAck.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,33 +22,28 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_SENDTAPEBRIDGEACK_H
-#define H_TAPEBRIDGE_SENDTAPEBRIDGEACK_H 1
+#ifndef H_TAPEBRIDGE_RECVTAPEBRIDGEFLUSHEDTOTAPEACK_H
+#define H_TAPEBRIDGE_RECVTAPEBRIDGEFLUSHEDTOTAPEACK_H 1
 
 #include "h/osdep.h"
+#include "h/tapeBridgeFlushedToTapeAckMsg.h"
+
+#include <stdint.h>
 
 /**
- * Sends a TAPEBRIDGE_CLIENT-acknowledgement message using the specified
- * socket.
+ * Receives a TAPEBRIDGE_FLUSHEDTOTAPE acknowledgment message using the
+ * specified socket.
  * 
- * @param socketFd            The file-descriptor of the socket to be written
- *                            to.
+ * @param socketFd            The file-descriptor of the socket to be read
+ *                            from.
  * @param netReadWriteTimeout The timeout in seconds to be used when performing
  *                            network reads and writes.
- * @param ackStatus           The status value to marshalled into the message
- *                            body.
- * @param ackErrMsg           The error message to be marshalled into the
- *                            message body.  If the error message is to be
- *                            empty, for example in the case where ackStatus is
- *                            0, then this parameter should be passed an empty
- *                            string.  This parameter should never be passed a
- *                            NULL value.
- * @return                    If successful then the number of bytes written to
+ * @param msg                 Output: The received acknowledgement message.
+ * @return                    If successful then the number of bytes read from
  *                            the socket.  On failure this function returns a
  *                            negative value and sets serrno accordingly.
  */
-EXTERN_C int32_t tapebridge_sendTapeBridgeAck(const int socketFd,
-  const int netReadWriteTimeout, const uint32_t ackStatus,
-  const char *const ackErrMsg);
+EXTERN_C int32_t tapebridge_recvTapeBridgeFlushedToTapeAck(const int socketFd,
+  const int netReadWriteTimeout, tapeBridgeFlushedToTapeAckMsg_t *const msg);
 
-#endif /* H_TAPEBRIDGE_SENDTAPEBRIDGEACK_H */
+#endif /* H_TAPEBRIDGE_RECVTAPEBRIDGEFLUSHEDTOTAPEACK_H */

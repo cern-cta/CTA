@@ -45,7 +45,7 @@ namespace legacymsg {
     uint32_t magic;
 
     /**
-     * The requets type of the message.
+     * The request type of the message.
      */
     uint32_t reqType;
 

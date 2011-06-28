@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
+ *                 tapebridge/tapebridge_recvTapeBridgeFlushedToTapeAck.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,60 +22,65 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "h/marshall.h"
 #include "h/serrno.h"
 #include "h/socket_timeout.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
-#include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
+#include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"
 
 #include <errno.h>
 #include <string.h>
 
 /******************************************************************************
- * tapebridge_sendTapeBridgeFlushedToTape
+ * tapebridge_recvTapeBridgeFlushedToTapeAck
  *****************************************************************************/
-int32_t tapebridge_sendTapeBridgeFlushedToTape(const int socketFd,
+int32_t tapebridge_recvTapeBridgeFlushedToTapeAck(const int socketFd,
   const int netReadWriteTimeout,
-  const tapeBridgeFlushedToTapeMsgBody_t *const msgBody) {
-  int  nbBytesMarshalled = 0;
-  int  nbBytesSent       = 0;
-  char buf[TAPEBRIDGE_MSGBUFSIZ];
+  tapeBridgeFlushedToTapeAckMsg_t *const msgBody) {
+  int  nbBytesReceived = 0;
+  char buf[TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE];
 
   /* Check function parameters */
-  if(0 > socketFd || NULL == msgBody) {
+  if(NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
 
   memset(buf, '\0', sizeof(buf));
 
-  nbBytesMarshalled = tapebridge_marshallTapeBridgeFlushedToTapeMsg(buf,
-    sizeof(buf), msgBody);
-  if(-1 == nbBytesMarshalled) {
+  nbBytesReceived = netread_timeout(socketFd, buf,
+    TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE, netReadWriteTimeout);
+  switch(nbBytesReceived) {
+  case 0: /* Connection closed by remote end */
+    serrno = ECONNABORTED;
     return -1;
-  }
-
-  nbBytesSent = netwrite_timeout(socketFd, buf, nbBytesMarshalled,
-    netReadWriteTimeout);
-
-  if(-1 == nbBytesSent) {
-    /* Dirty workaround for the fact netwrite_timeout may return -1 with */
-    /* serrno set to 0                                                   */
-    if(0 == serrno) {
+  case -1: /* Operation failed */
+    /* netread_timeout can return -1 with serrno set to 0 */
+    if(serrno == 0) {
       serrno = SEINTERNAL;
     }
     return -1;
+  default: /* Some bytes were read */
+    if(nbBytesReceived != sizeof(buf)) {
+      serrno = SEINTERNAL;
+      return -1;
+    }
   }
 
-  if(0 == nbBytesSent) {
-    serrno = ECONNABORTED;
-    return -1;
+  /* Unmarshall the tape-bridge acknowledgement message */
+  {
+    char *p = buf;
+    unmarshall_LONG(p, msgBody->magic  );
+    unmarshall_LONG(p, msgBody->reqType);
+    unmarshall_LONG(p, msgBody->status );
+
+    /* Check the number of bytes unmarshalled */
+    if((p - buf) != TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE) {
+      serrno = SEINTERNAL;
+      return -1;
+    }
   }
 
-  if(nbBytesSent != nbBytesMarshalled) {
-    serrno = SEINTERNAL;
-    return -1;
-  }
-
-  return nbBytesSent;
+  return nbBytesReceived;
 }

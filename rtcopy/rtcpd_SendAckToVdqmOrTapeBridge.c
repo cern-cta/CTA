@@ -25,7 +25,7 @@
 #include "h/rtcpd_SendAckToVdqmOrTapeBridge.h"
 #include "h/serrno.h"
 #include "h/tapebridge_constants.h"
-#include "h/tapebridge_sendTapeBridgeAck.h"
+#include "h/tapebridge_sendTapeBridgeClientInfoAck.h"
 #include "h/vdqm_api.h"
 #include "h/vdqm_constants.h"
 
@@ -75,7 +75,8 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
     }
     break;
   case TAPEBRIDGE_CLIENTINFO:
-    rc = tapebridge_sendTapeBridgeAck(connSock, netTimeout, ackStatus, ackMsg);
+    rc = tapebridge_sendTapeBridgeClientInfoAck(connSock, netTimeout,
+      ackStatus, ackMsg);
     save_serrno = serrno;
     if(-1 == rc) {
       errmsg = sstrerror(save_serrno);
@@ -83,7 +84,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
         errmsg = "Unknown error";
       }
       snprintf(errBuf, errBufLen, "%s()"
-        ": tapebridge_sendTapeBridgeAck()"
+        ": tapebridge_sendTapeBridgeClientInfoAck()"
         ": %s",
         __FUNCTION__, errmsg);
       errBuf[errBufLen - 1] = '\0';

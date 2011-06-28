@@ -141,10 +141,10 @@ int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(const char *const buf,
 }
 
 /******************************************************************************
- * tapebridge_marshallTapeBridgeAck
+ * tapebridge_marshallTapeBridgeClientInfoAck
  *****************************************************************************/
-int32_t tapebridge_marshallTapeBridgeAck(char *const buf, const size_t bufLen,
-  const uint32_t ackStatus, const char *const ackErrMsg) {
+int32_t tapebridge_marshallTapeBridgeClientInfoAck(char *const buf,
+  const size_t bufLen, const uint32_t ackStatus, const char *const ackErrMsg) {
   char           *p           = NULL;
   const uint32_t msgHdrLen    = 3 * LONGSIZE; /* magic + reqType + msgBodyLen */
   uint32_t       msgBodyLen   = 0;
@@ -194,7 +194,7 @@ int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
   uint32_t       nbBytesMarshalled = 0;
 
   /* Check function arguments */
-  if(NULL == buf || bufLen < TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_MINSIZE ||
+  if(NULL == buf || TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE > bufLen ||
     NULL == msgBody) {
     serrno = EINVAL;
     return -1;

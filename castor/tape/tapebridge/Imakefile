@@ -25,6 +25,7 @@ AddLdFlags(-lstdc++)
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/legacymsg,castortapelegacymsg)
 DependsOnLibrary(castor/tape/net,castortapenet)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
@@ -46,10 +47,6 @@ TAPEBRIDGEBIN_SRCS = \
   TapeBridgeMain.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \
-  ../legacymsg/CommonMarshal.cpp \
-  ../legacymsg/RtcpMarshal.cpp \
-  ../legacymsg/TapeBridgeMarshal.cpp \
-  ../legacymsg/VmgrMarshal.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.o)

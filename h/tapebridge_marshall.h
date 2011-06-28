@@ -75,8 +75,8 @@ EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
 
 
 /**
- * Marshalls a complete (header plus body) tape-bridge acknowledgement message
- * to the specified buffer.
+ * Marshalls a complete (header plus body) TAPEBRIDGE_CLIENTINFO
+ * acknowledgement message to the specified buffer.
  *
  * @param buf       The buffer to which the message header and body are to be
  *                  marshalled.
@@ -90,7 +90,7 @@ EXTERN_C int32_t tapebridge_unmarshallTapeBridgeClientInfoMsgBody(
  *                  function returns a negative value and sets serrno
  *                  accordingly.
  */
-EXTERN_C int32_t tapebridge_marshallTapeBridgeAck(char *const buf,
+EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfoAck(char *const buf,
   const size_t bufLen, const uint32_t ackStatus, const char *const ackErrMsg);
 
 /**

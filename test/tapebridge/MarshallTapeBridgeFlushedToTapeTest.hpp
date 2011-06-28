@@ -113,7 +113,7 @@ public:
 
     unmarshall_LONG(p, unmarshalledMagic);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("magic marshalled",
-      (uint32_t)RTCOPY_MAGIC_OLD0,
+      (uint32_t)RTCOPY_MAGIC,
       unmarshalledMagic);
 
     unmarshall_LONG(p, unmarshalledReqType);
@@ -159,7 +159,7 @@ public:
       marshall_LONG(p, m_msgBody.volReqId);
       marshall_LONG(p, m_msgBody.tapeFseq);
 
-      CPPUNIT_ASSERT_EQUAL_MESSAGE("marshalled correct numebr of bytes",
+      CPPUNIT_ASSERT_EQUAL_MESSAGE("marshalled correct number of bytes",
         size_t(2 * LONGSIZE),
         size_t(p - buf));
     }

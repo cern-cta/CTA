@@ -58,7 +58,7 @@ testtapebridge: \
   dlf_lib.o \
   Constants.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeAck.o \
+  tapebridge_sendTapeBridgeClientInfoAck.o \
   marshall.o \
   test_exception.o \
   vdqmapi.o \
@@ -132,7 +132,7 @@ tapebridgedaemontester: \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeAck.o \
+  tapebridge_sendTapeBridgeClientInfoAck.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
@@ -287,7 +287,7 @@ tapebridged: \
   dlf_lib.o \
   Constants.o \
   tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeAck.o \
+  tapebridge_sendTapeBridgeClientInfoAck.o \
   marshall.o \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
   vdqmapi.o \
@@ -485,12 +485,12 @@ $(ROOT_DIR)/tapebridge/tapebridge_marshall.c: \
   $(ROOT_DIR)/h/tapebridge_marshall.h
 	touch $@
 
-tapebridge_sendTapeBridgeAck.o: \
-  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeAck.c
+tapebridge_sendTapeBridgeClientInfoAck.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfoAck.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-$(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeAck.c: \
-  $(ROOT_DIR)/h/tapebridge_sendTapeBridgeAck.h
+$(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfoAck.c: \
+  $(ROOT_DIR)/h/tapebridge_sendTapeBridgeClientInfoAck.h
 	touch $@
 
 marshall.o: $(ROOT_DIR)/common/marshall.c
