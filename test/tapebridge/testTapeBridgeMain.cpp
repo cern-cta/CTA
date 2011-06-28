@@ -24,6 +24,7 @@
 
 #include "test/tapebridge/MarshallTapeBridgeClientInfoTest.hpp"
 #include "test/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
+#include "test/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp"
 #include "test/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>

@@ -22,11 +22,15 @@ testtapebridge: \
   tapebridge_marshall.o \
   castor_Constants.o \
   common_Cglobals.o \
+  common_Csnprintf.o \
+  common_Cuuid.o \
   common_getconfent.o \
   common_marshall.o \
   common_socket_timeout.o \
   common_socket.o \
   common_serror.o \
+  dlf_Dlf.o \
+  dlf_lib.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_CommonMarshal.o \
   exception_Communication.o \
@@ -43,12 +47,14 @@ testtapebridge: \
   exception_TimeOut.o \
   exception_TooBig.o \
   net_net.o \
+  tapebridge_LegacyTxRx.o \
+  tapebridge_recvTapeBridgeFlushedToTapeAck.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   test_exception.o \
   utils_SmartFd.o \
   utils_SmartFILEPtr.o \
   utils_utils.o
-	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread -lcppunit -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread -lcppunit $(UUID_LIB) -o $@ $^
 
 testTapeBridgeMain.o: \
   testTapeBridgeMain.cpp
@@ -57,8 +63,17 @@ testTapeBridgeMain.o: \
 testTapeBridgeMain.cpp: \
   MarshallTapeBridgeClientInfoTest.hpp \
   MarshallTapeBridgeFlushedToTapeTest.hpp \
+  RecvTapeBridgeFlushedToTapeAckTest.hpp \
   SendTapeBridgeFlushedToTapeTest.hpp
 	touch $@
+
+tapebridge_recvTapeBridgeFlushedToTapeAck.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_recvTapeBridgeFlushedToTapeAck.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_LegacyTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_sendTapeBridgeFlushedToTape.o: \
   $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
@@ -80,6 +95,12 @@ common_getconfent.o: $(ROOT_DIR)/common/getconfent.c
 common_Cglobals.o: $(ROOT_DIR)/common/Cglobals.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+common_Csnprintf.o: $(ROOT_DIR)/common/Csnprintf.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_Cuuid.o: $(ROOT_DIR)/common/Cuuid.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 common_marshall.o: $(ROOT_DIR)/common/marshall.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -90,6 +111,12 @@ common_socket.o: $(ROOT_DIR)/common/socket.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_serror.o: $(ROOT_DIR)/common/serror.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+dlf_Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp

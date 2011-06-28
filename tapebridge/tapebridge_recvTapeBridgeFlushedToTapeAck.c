@@ -42,7 +42,7 @@ int32_t tapebridge_recvTapeBridgeFlushedToTapeAck(const int socketFd,
   char buf[TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE];
 
   /* Check function parameters */
-  if(NULL == msgBody) {
+  if(0 > socketFd || NULL == msgBody) {
     serrno = EINVAL;
     return -1;
   }
