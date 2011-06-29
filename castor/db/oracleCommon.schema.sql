@@ -165,6 +165,7 @@ CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
+CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (filesystem, status, gcweight, ID, castorFile);
 
 CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
 CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;

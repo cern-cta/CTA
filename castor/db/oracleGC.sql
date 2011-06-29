@@ -224,6 +224,7 @@ PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
   dontGC INTEGER;
   totalCount INTEGER;
   unused INTEGER;
+  backoff INTEGER;
   CastorFileLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (CastorFileLocked, -54);
 BEGIN
@@ -260,6 +261,12 @@ BEGIN
      WHERE DiskCopy.fileSystem = fs.id
        AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
 
+    -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
+    -- STAGED files.
+    SELECT COUNT(*) INTO backoff
+      FROM v$session s, v$sqltext t
+     WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
+
     -- Process diskcopies that are in an INVALID state.
     UPDATE DiskCopy
        SET status = 9, -- BEINGDELETED
@@ -292,8 +299,8 @@ BEGIN
     totalCount := totalCount + dcIds.COUNT();
     EXIT WHEN totalCount >= 10000;
 
-    -- Continue processing but with STAGED files
-    IF dontGC = 0 THEN
+    -- Continue processing but with STAGED files, only in case we are not already loaded
+    IF dontGC = 0 AND backoff < 4 THEN
       -- Do not delete STAGED files from non production hardware
       BEGIN
         SELECT FileSystem.id INTO unused
@@ -323,7 +330,7 @@ BEGIN
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
         -- Loop on file deletions
-        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ id, castorFile FROM DiskCopy
+        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ id, castorFile FROM DiskCopy
                     WHERE fileSystem = fs.id
                       AND status = 0 -- STAGED
                       AND NOT EXISTS (
