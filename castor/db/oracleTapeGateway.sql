@@ -1818,17 +1818,18 @@ END;
 /* update the db after a successful recall */
 CREATE OR REPLACE
 PROCEDURE tg_setFileRecalled(
-  inTransId          IN  NUMBER, 
+  inTransId          IN  NUMBER,
   inFileId           IN  NUMBER,
-  inNsHost           IN  VARCHAR2, 
-  inFseq             IN  NUMBER, 
+  inNsHost           IN  VARCHAR2,
+  inFseq             IN  NUMBER,
   inFileTransaction  IN  NUMBER) AS
   varTcId               NUMBER;         -- TapeCopy Id
   varDcId               NUMBER;         -- DiskCopy Id
   varCfId               NUMBER;         -- CastorFile Id
   srId NUMBER;
-  varSubrequestId       NUMBER; 
+  varSubrequestId       NUMBER;
   varRequestId          NUMBER;
+  varRequestType        NUMBER;
   varFileSize           NUMBER;
   varGcWeight           NUMBER;         -- Garbage collection weight
   varGcWeightProc       VARCHAR(2048);  -- Garbage collection weighting procedure name
@@ -1850,18 +1851,18 @@ BEGIN
   ELSIF (varStreamId IS NOT NULL) THEN
     SELECT S.Id INTO varUnused
       FROM Stream S WHERE S.Id = varStreamId
-       FOR UPDATE;  
+       FOR UPDATE;
   ELSE
     ROLLBACK TO SAVEPOINT TGReq_CFile_TCopy_Locking;
-    RAISE_APPLICATION_ERROR (-20119, 
-         'Could not find stream or tape read for VDQM request Id='|| 
+    RAISE_APPLICATION_ERROR (-20119,
+         'Could not find stream or tape read for VDQM request Id='||
          inTransId || ' in TG_SetFileMigrated');
   END IF;
   -- find and lock castor file for the nsHost/fileID
   SELECT CF.id, CF.fileSize INTO varCfId, varFileSize
-    FROM CastorFile CF 
-   WHERE CF.fileid = inFileId 
-     AND CF.nsHost = inNsHost 
+    FROM CastorFile CF
+   WHERE CF.fileid = inFileId
+     AND CF.nsHost = inNsHost
      FOR UPDATE;
   -- Find and lock the tape copy
   varTcId := NULL;
@@ -1909,12 +1910,17 @@ BEGIN
         DC.gcWeight = varGcWeight,
         DC.diskCopySize = varFileSize
     WHERE Dc.id = varDcId;
-  -- restart this subrequest so that the stager can follow it up
-  UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
-     SET SR.status = dconst.SUBREQUEST_RESTART, 
-         SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
-         SR.lastModificationTime = getTime(), SR.parent = 0
-   WHERE SR.id = varSubrequestId;
+  -- determine the type of the request
+  SELECT reqType INTO varRequestType FROM SubRequest WHERE id = varSubrequestId;
+  IF varRequestType = 119 THEN  -- OBJ_StageRepackRequest
+    startRepackMigration(varSubrequestId, varCfId, varDcId, varEuid, varEgid);
+  ELSE  -- restart this subrequest so that the stager can follow it up
+    UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
+       SET SR.status = dconst.SUBREQUEST_RESTART,
+           SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
+           SR.lastModificationTime = getTime(), SR.parent = 0
+     WHERE SR.id = varSubrequestId;
+  END IF;
   -- and trigger new migrations if missing tape copies were detected
   IF varMissingCopies > 0 THEN
     BEGIN
