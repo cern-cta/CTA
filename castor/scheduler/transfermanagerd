@@ -559,10 +559,15 @@ if daemonize:
   context = daemon.DaemonContext(working_directory='/var/log/castor/',
                                  detach_process=True)
   context.__enter__()
+drainOnExit = False
 try:
   try :
     # get configuration
-    configuration = castor_tools.castorConf()
+    try:
+      configuration = castor_tools.castorConf()
+    except ValueError, e:
+      print e
+      sys.exit(1)
     # setup logging
     dlf.init('transfermanagerd')
     # 'TransferManager Daemon started'
@@ -575,6 +580,8 @@ try:
     queueingTransfers = serverqueue.ServerQueue(connections)
     # initialize the queues of pending and running transfers using the knowledge of the diskservers
     initQueues()
+    # from now on, we want to drain if we exit
+    drainOnExit = True
     # defines a service listening for monitoring queries and answering them
     transfermanager = ThreadPoolServer(TransferManagerService,
                                        port = configuration.getValue('TransferManager', 'Port', 15011, int),
@@ -621,7 +628,8 @@ finally:
   # drain will stop the dispatch, abort and synchro threads
   # it will launch a Suicider thread that will end the transfer manager once
   # all calls have been handled
-  drain(True)
+  if drainOnExit:
+    drain(True)
   # if we are a daemon, call __exit__
   if daemonize:
     try:

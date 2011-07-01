@@ -388,7 +388,11 @@ if daemonize:
 try:
   try:
     # get configuration
-    configuration = castor_tools.castorConf()
+    try:
+      configuration = castor_tools.castorConf()
+    except ValueError, e:
+      print e
+      sys.exit(1)
     # setup logging
     dlf.init('diskmanagerd')
     # 'DiskManager Daemon started'

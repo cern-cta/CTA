@@ -267,23 +267,27 @@ def processDiskPoolListing():
         print '%-15s%8d %8d %8s %8d %8d %8d' % (diskpoolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
 
 # connect to server and gather numbers
-conf = castor_tools.castorConf()
 try:
-  # connect to server and gather numbers
-  rpconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
-                        conf.getValue('TransferManager', 'Port', 15011, int))
-  # display the proper listing
-  if issummary:
-    processHostListing()
-  elif ispoolsummary:
-    processDiskPoolListing()
-  else:
-    processTransfersListing()
-except Exception, unexpectedException:
-  print 'Caught exception : ' + str(unexpectedException)
-  if verbose:
-    if hasattr(unexpectedException, "_remote_tb"):
-        print 'Remote trace :'
-        print unexpectedException._remote_tb[0]
-    import traceback
-    traceback.print_exc()
+  conf = castor_tools.castorConf()
+  try:
+    # connect to server and gather numbers
+    rpconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
+                          conf.getValue('TransferManager', 'Port', 15011, int))
+    # display the proper listing
+    if issummary:
+      processHostListing()
+    elif ispoolsummary:
+      processDiskPoolListing()
+    else:
+      processTransfersListing()
+  except Exception, unexpectedException:
+    print 'Caught exception : ' + str(unexpectedException)
+    if verbose:
+      if hasattr(unexpectedException, "_remote_tb"):
+          print 'Remote trace :'
+          print unexpectedException._remote_tb[0]
+      import traceback
+      traceback.print_exc()
+except ValueError, e:
+  print e
+  sys.exit(1)

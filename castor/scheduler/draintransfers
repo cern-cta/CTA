@@ -55,6 +55,9 @@ for f, v in options:
     usage(1)
 
 tmNode = None
+if len(args) == 0:
+  print "Missing argument"
+  usage(1)
 if len(args) > 0:
   tmNode = args[0]
   if len(args) > 1:
@@ -62,15 +65,19 @@ if len(args) > 0:
     usage(1)
 
 # connect to server and gather numbers
-conf = castor_tools.castorConf()
 try:
-  rpcconn = rpyc.connect(tmNode, conf.getValue('TransferManager', 'Port', 15011, int))
-  dss = rpcconn.root.drain()
-except Exception, e:
-  print 'Caught exception : ' + str(e)
-  if verbose:
-    if hasattr(unexpectedException, "_remote_tb"):
-        print 'Remote trace :'
-        print unexpectedException._remote_tb[0]
-    import traceback
-    traceback.print_exc()
+  conf = castor_tools.castorConf()
+  try:
+    rpcconn = rpyc.connect(tmNode, conf.getValue('TransferManager', 'Port', 15011, int))
+    dss = rpcconn.root.drain()
+  except Exception, e:
+    print 'Caught exception : ' + str(e)
+    if verbose:
+      if hasattr(e, "_remote_tb"):
+          print 'Remote trace :'
+          print e._remote_tb[0]
+      import traceback
+      traceback.print_exc()
+except ValueError, e:
+  print e
+  sys.exit(1)

@@ -485,14 +485,20 @@ class CastorConf(object):
             line = line.strip()
             if len(line) == 0 or line[0] == '#':
                 continue # ignore comments
-            category, name, value = line.split(None, 2)
+            splitLine = line.split(None, 2)
+            if len(splitLine) == 3:
+                category, name, value = splitLine
+            elif len(splitLine) == 2:
+                category, name = splitLine
+                value = ''
+            else:
+                raise ValueError('Invalid Entry found in configuration file :\n' + line)
             if category not in newcache:
                 newcache[category] = {}
             if name not in newcache[category]:
                 newcache[category][name] = value
             else:
-                print "Ignoring entry %s %s %s as it's a redefinition" % (category, name, value)
-                print "Value used : " + newcache[category][name]
+                raise ValueError("Duplicated entry found in config file : %s %s\nOriginal value was %s\nNew value is %s\nPlease fix" % (category, name, newcache[category][name], value))
         f.close()
         # replace the current cache with the new one (note : the update operation is atomic)
         self.cache.update(newcache)
