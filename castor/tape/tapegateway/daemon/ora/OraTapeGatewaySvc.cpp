@@ -1341,8 +1341,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
     }
     
 
-    ub4 unused=nbRetry;
-    m_setRecRetryResultStatement->setDataBufferArray(1,bufferRetry, oracle::occi::OCCI_SQLT_NUM, nbRetry, &unused, 21, lensRetry);
+    ub4 nbRetryElements=nbRetry;
+    m_setRecRetryResultStatement->setDataBufferArray(1,bufferRetry, oracle::occi::OCCI_SQLT_NUM, nbRetry, &nbRetryElements, 21, lensRetry);
 
     // failure 
     
@@ -1383,8 +1383,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
       lensFail[0] = b.length();
     }
 
-    unused=nbFail;
-    m_setRecRetryResultStatement->setDataBufferArray(2,bufferFail, oracle::occi::OCCI_SQLT_NUM, nbFail, &unused, 21, lensFail);
+    ub4 nbFailElements=nbFail;
+    m_setRecRetryResultStatement->setDataBufferArray(2,bufferFail, oracle::occi::OCCI_SQLT_NUM, nbFail, &nbFailElements, 21, lensFail);
     m_setRecRetryResultStatement->executeUpdate();
 
   } catch (oracle::occi::SQLException e) {
