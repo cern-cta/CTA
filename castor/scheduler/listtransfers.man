@@ -33,7 +33,9 @@ Lists transfers managed in the transfer manager.
 .P
 With no option, lists all transfers managed by the transfer manager. This list can be restricted to a given user and/or a given diskpool with the -u option and the diskpool name as an argument
 .P
-With a -s/-p option, gives a summary of the number of transfers managed per host/pool. This summary can be extended to give details per transfer type via the use of the -x option. The list of detailed transfer types can be restricted via the use of the -r option. This option takes a colon separated list of transfer types as an argument.
+With a -s/-p option, gives a summary of the number of transfers managed per host/pool. This summary can be extended to give details per transfer type via the use of the -x option. The list of detailed transfer types can be restricted via the use of the -r option. This option takes a colon separated list of transfer types as an argument. For the detailed signification of the output of these options, see the
+.SM OUTPUT COLUMNS
+section
 
 .SH OPTIONS
 
@@ -59,6 +61,46 @@ Note that at the time of writing, supported transfer types included : xroot, roo
 .TP
 .BI <diskpool>
 when given, restricts the listing/summary of transfers to the ones in the given diskpool
+
+.SH OUTPUT COLUMNS
+
+.TP
+.BI NBSLOTS
+total number of slots available for the diskserver/diskpool concerned
+
+.TP
+.BI NBTPEND
+number of transfer pending for the diskserver/diskpool concerned. In case of -x, the total number of pending transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBUTPEND
+number of unique transfers pendind for the diskpool concerned. Compared to
+.BI NBTPEND
+the transfers pending on multiple hosts are not counted several times
+
+.TP
+.BI NBSPEND
+number of slots that would be taken if all pending transfers would start at once. This is correlated to
+.BI NBTPEND
+modulo the per protocol weights. In case of -x, the total number of pending slots is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBTRUN
+number of transfers running on the diskserver/diskpool concerned. In case of -x, the total number of running transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBSRUN
+number of slots taken by running transfers on the diskserver/diskpool concerned. This is correlated to
+.BI NBTRUN
+modulo the per protocol weights. In case of -x, the total number of slots taken by running transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
 
 .SH EXAMPLE
 .nf
