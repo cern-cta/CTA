@@ -29,6 +29,10 @@ stagerd \- start the CASTOR Stager daemon
 .BI <nb\ threads>
 ]
 [
+.BI -B
+.BI <nb\ threads>
+]
+[
 .BI -Q
 .BI <nb\ threads>
 ]
@@ -81,6 +85,9 @@ specifies the number of threads for prestage/repack requests. Default is 6.
 .BI \-S,\ \-\-Sthreads\ <nb\ threads>
 specifies the number of threads for stager specific requests (putDone, Rm, setGCWeight). Default is 4.
 .TP
+.BI \-B,\ \-\-Bthreads\ <nb\ threads>
+specifies the number of threads for handling bulk requests in bulk (currently only abort). Default is 3.
+.P
 .BI \-Q,\ \-\-Qthreads\ <nb\ threads>
 specifies the number of threads for user query requests. Default is 10.
 .TP
