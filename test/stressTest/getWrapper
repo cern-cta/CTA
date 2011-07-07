@@ -1,3 +1,0 @@
-#!/bin/bash
-/afs/cern.ch/project/castor/stresstest/getloop /tmp/throughput.log /castor/cern.ch/c3/itdc/tape castoritdc itdc &
-

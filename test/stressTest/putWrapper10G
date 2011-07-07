@@ -1,6 +1,0 @@
-#!/bin/bash
-#cd /afs/cern.ch/project/linux/mirror/redhat/linux/enterprise/5Server/en/os/SRPMS/
-#tar cvf /pool/testfile2G.tar `ls -lSh | head -15 | awk '{print $9}'`
-cd /pool
-sh /afs/cern.ch/project/castor/stresstest/putloop /pool/testfile10G.tar throughput.log tape &
-
