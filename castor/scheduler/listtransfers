@@ -129,8 +129,9 @@ def processTransfersListing():
   for transfer in transfers:
     if not transfer[0]:
       print 'WARNING : was unable to contact ' + transfer[1] + '. Some transfers may be missing'
+  maxDiskPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
   # Display head line
-  print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
+  print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL' + ' '*(maxDiskPoolNameLen-4) + 'SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
   n = 0
   lastExecHost = ''
   nodesWithManyTransfers = []
@@ -143,7 +144,7 @@ def processTransfersListing():
         sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
       else:
         sstartTime = ''
-      print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
+      print '%-37s%-12s%-9s%-6s%-10s%-*s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, maxDiskPoolNameLen, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
       if execHost != lastExecHost:
         if n > 100:
           nodesWithManyTransfers.append(lastExecHost)
@@ -264,10 +265,11 @@ def processDiskPoolListing():
     #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
     #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
     #  nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
-    #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))
-    # or (diskpoolName, nbUniqueQueueingTransfers, None) if some transfermanager node could not be contacted
-    # first we need to build a set of protocols to be displayed for the per protocol numbers
-    protocols = _buildProtocolList(summaryreport)
+    #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
+    #  (unreachableMachine,...))
+    # Note that we do not send the list of unreachableMachines as it would break
+    # the (very weak) parsing of _buildProtocolList
+    protocols = _buildProtocolList(summaryreport[:-1])
     # build title, subtitle and format strings
     title, subtitle, dataformat, nodataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)
     # display title and subtitle
@@ -283,7 +285,7 @@ def processDiskPoolListing():
       else:
         poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto, unreachableMachines = s
         if unreachableMachines:
-          allUnreachableMachines[poolName] = unreachableMachines
+          allUnreachableMachines[poolname] = unreachableMachines
           poolname = poolname + '(*)'
         data = [diskpoolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
         # and for each protocol
@@ -296,8 +298,8 @@ def processDiskPoolListing():
   else:
     # summaryreport is a tuple of reports of this form :
     # (diskpoolName, nbUniqueTransfers, nbslots,
-    #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
-    # or (diskpoolName, nbUniqueTransfers, None) if some transfermanager node could not be contacted
+    #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots,
+    #  (unreachableMachine,...))
     print diskpoolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
     allUnreachableMachines = {}
     for s in summaryreport:
