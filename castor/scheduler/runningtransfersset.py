@@ -396,6 +396,10 @@ class RunningTransfersSet(object):
       for transfertuple in self.transfers:
         transferid, scheduler, transfer = transfertuple[:3]
         transfertype, arrivalTime, runTime = transfertuple[5:]
+        if transfertype in ('d2dsrc', 'd2ddest'):
+          protocol = transfertype
+        else:
+          protocol = transfer[10]
         if transfertype == 'standard':
           try:
             user = pwd.getpwuid(int(transfer[20]))[0]
@@ -404,7 +408,7 @@ class RunningTransfersSet(object):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transferid, transfer[6], scheduler, user, 'RUN', transfertype, arrivalTime, runTime))
+          res.append((transferid, transfer[6], scheduler, user, 'RUN', protocol, arrivalTime, runTime))
           n = n + 1
           if n >= 100: # give up with full listing if too many transfers
             break

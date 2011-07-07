@@ -342,6 +342,10 @@ class LocalQueue(Queue.Queue):
     try:
       for transfer in self.queueingTransfers.items():
         scheduler, rawtransfer, transfertype, arrivalTime = transfer[1]
+        if transfertype in ('d2dsrc', 'd2ddest'):
+          protocol = transfertype
+        else:
+          protocol = rawtransfer[10]
         if transfertype == 'standard':
           try:
             user = pwd.getpwuid(int(rawtransfer[20]))[0]
@@ -350,7 +354,7 @@ class LocalQueue(Queue.Queue):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', transfertype, arrivalTime, None))
+          res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', protocol, rawtransfer, arrivalTime, None))
           n = n + 1
           if n >= 100: # give up with full listing if too many transfers
             break

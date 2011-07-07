@@ -108,7 +108,7 @@ hat, and the detail per protocol is then given under the other hats
 
 listtransfers
 TRANSFERID                           USER     STAT  TYPE      POOL       SCHEDULER                 DISKSERVER               SUBMIT_TIME       START_TIME
-9eab0dae-c416-6b2d-e040-8a8949a14534 sponcec3 RUN   standard  default    lxcastordev01.cern.ch    lxc2disk01.cern.ch       Mar 17 10:37:11   Mar 17 10:37:11   
+9eab0dae-c416-6b2d-e040-8a8949a14534 sponcec3 RUN   rfio3     default    lxcastordev01.cern.ch    lxc2disk01.cern.ch       Mar 17 10:37:11   Mar 17 10:37:11   
 -                                    stage    TAPE  migr      default    -                        lxc2disk01.cern.ch       Mar 17 10:39:24   Mar 17 10:39:24   
 
 listtransfers -u stage
