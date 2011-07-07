@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
                                         parsedCmdLine.defaultFileSize.value);
   } else {
     Cstager_SvcClass_setDefaultFileSize(svcClass,
-                                        2147483648);
+                                        2147483648u);
   }
   if(parsedCmdLine.maxReplicaNb.set) {
     Cstager_SvcClass_setMaxReplicaNb(svcClass,
