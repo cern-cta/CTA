@@ -255,8 +255,8 @@ def processDiskPoolListing():
   summaryreport = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
   # compute the max length of the diskpools we got and deduce the title and printf args
   maxDiskPoolNameLen = max([len(s[0]) for s in summaryreport])
-  diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-8)
-  diskpoolHeadLen = max(maxDiskPoolNameLen+1, 9)
+  diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-5)
+  diskpoolHeadLen = max(maxDiskPoolNameLen+4, 12)
   # depending on the extra flag, the output will differ
   if extra:
     # summaryreport is a tuple of reports of this form :
@@ -274,16 +274,17 @@ def processDiskPoolListing():
     print title
     print subtitle
     # go through the lines of data
+    allUnreachableMachines = {}
     for s in summaryreport:
       # start with non protocol specific data
       if len(s) == 1:
         data = [diskpoolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
         print dataformat % tuple(data)
-      elif len(s) == 3:
-        data = [diskpoolHeadLen, s[0], '-', str(s[1])] + ['-'] * (4 + len(protocols) * 4)
-        print nodataformat % tuple(data)
       else:
-        poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = s
+        poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto, unreachableMachines = s
+        if unreachableMachines:
+          allUnreachableMachines[poolName] = unreachableMachines
+          poolname = poolname + '(*)'
         data = [diskpoolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
         # and for each protocol
         for protocol in protocols:

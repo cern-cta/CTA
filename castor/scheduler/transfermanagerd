@@ -150,7 +150,7 @@ def extendedSum(t):
   and for each key, the sum of the values for this key in the different tuples'''
   if len(t) == 0:
     return 0
-  if isinstance(t[0], int):
+  if isinstance(t[0], int) or t[0] == '-':
     return sum(t)
   dt = [dict(item) for item in t]
   keys = reduce(lambda a, b : a|set(b), [set()] + dt)
@@ -236,13 +236,14 @@ class TransferManagerService(rpyc.Service):
     The exact format of the returned tuple for each non empty and existing pool if detailed is False is :
      (diskpoolName, nbUniqueQueueingTransfers, nbslots,
                     nbQueueingTransfers, nbQueueingSlots,
-                    nbRunningTransfers, nbRunningSlots)
+                    nbRunningTransfers, nbRunningSlots, (<list of unreachable machine names>))
     If detailed is True, then it is :
      (diskpoolName, nbUniqueQueueingTransfers, nbslots,
                     nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
                     nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
                     nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
-                    nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))'''
+                    nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
+                    (<list of unreachable machine names>))'''
     dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, DiskPool=diskPool, Username=user, Detailed=detailed)
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
     nbs = self.dispatch('summarizeTransfers', diskPool, user, detailed)
@@ -266,19 +267,10 @@ class TransferManagerService(rpyc.Service):
           # regular case
           nbtransfers = nbtransfersPerPool[diskPool]
         # check whether we have all data we need for the pool
-        gotalldata = True
-        for item in nbs[diskPool].values():
-          gotalldata = item != None
-          if not gotalldata:
-            break
+        unreachableMachines = [m for m in nbs[diskPool] if nbs[diskPool][m] == None]
         # append an item to the result set
-        if gotalldata:
-          # we have all data, we need to aggregate them
-          data = [extendedSum(item) for item in zip(*nbs[diskPool].values())]
-          res.append(tuple([diskPool, nbtransfers] + data))
-        else:
-          # we are missing data, we cannot give anything sensible
-          res.append((diskPool, nbtransfers, None))
+        data = [extendedSum(item) for item in zip(*[item for item in nbs[diskPool].values() if item])]
+        res.append(tuple([diskPool, nbtransfers] + data + [tuple(unreachableMachines)]))
       else:
         res.append((diskPool,))
     return tuple(res)
