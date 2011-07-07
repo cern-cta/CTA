@@ -9,6 +9,9 @@ listtransfers \- lists transfers managed by the transfer manager
 ]
 [
 .BI -s
+[
+.BI -c
+]
 ]
 [
 .BI -p
@@ -24,6 +27,9 @@ listtransfers \- lists transfers managed by the transfer manager
 <transfertype>[:...]
 ]
 ]
+[
+.BI -t
+<node>[:port] ]
 [
 <diskpool>
 ]
@@ -46,6 +52,9 @@ displays command usage help.
 .BI \-s,\ \-\-summary
 provides a summary of the managed transfers, on an host base
 .TP
+.BI \-c,\ \-\-clean
+used in conjunction with -s/--summary, provides a 'clean' summary of the managed transfers, that is a summary where idle hosts are not listed
+.TP
 .BI \-p,\ \-\-poolsummary
 provides a summary of the managed transfers, on a pool base
 .TP
@@ -58,6 +67,10 @@ when used for a summary listing (-s and -p options), enables per transfer type e
 .BI \-r,\ \-\-restrict
 when used with the -x option, restricts the list of transfer types detailed in the extra fields. The list of transfer types to be displayed must be given in a colon separated list, e.g. rfio3:xroot
 Note that at the time of writing, supported transfer types included : xroot, root, rfio, rfio3, gsiftp, d2dsrc, d2ddest, recall and migr
+.TP
+.BI \-t,\ \-\-transfermanager
+this option allows to force the connection to a given transfer manager host, on a given port.
+By default, the transfer manager host and port are taken form the castor.conf file.
 .TP
 .BI <diskpool>
 when given, restricts the listing/summary of transfers to the ones in the given diskpool
@@ -121,6 +134,10 @@ lxc2disk15.cern.ch            60       0       0       0       0
 lxc2disk01.cern.ch            60       0       0       2      13
 lxc2disk02.cern.ch            60       0       0       0       0
 lxc2disk16.cern.ch            60       0       0       0       0
+
+listtransfers -s -c
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN
+lxc2disk01.cern.ch            60       0       0       2      13
 
 listtransfers -s default
 DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN

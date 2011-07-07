@@ -38,21 +38,24 @@ import castor_tools
 # usage function
 def usage(exitCode):
   '''prints usage'''
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary] [-p|--poolsummary] [-u|--user <user>] [-x|--extra [-r|--restrict p1[:...]]] [diskpool]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] [-p|--poolsummary] [-u|--user <user>] [-x|--extra [-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
   sys.exit(exitCode)
 
 # first parse the options
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hspu:vxr:', ['help', 'summary', 'poolsummary', 'user', 'verbose', 'extra', 'restrict'])
+  options, args = getopt.getopt(sys.argv[1:], 'hscpu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
 except Exception, parseException:
   print parseException
   usage(1)
 issummary = False
+clean = False
 ispoolsummary = False
 requser = None
 verbose = False
 extra = False
 extraprotocols = None
+transfermanager = None
+transfermanagerport = None
 for f, v in options:
   if f == '-h' or f == '--help':
     usage(0)
@@ -71,10 +74,21 @@ for f, v in options:
       print "-u/--user cannot be given twice"
       usage(1)
     requser = v
+  elif f == '-t' or f == '--transfermanager':
+    transfermanager = v
+    if transfermanager.find(':') >= 0:
+      transfermanager, transfermanagerport = transfermanager.split(':', 1)
+      try:
+        transfermanagerport = int(transfermanagerport)
+      except ValueError:
+        print "Invalid port number in -t/--transfermanager option :", transfermanagerport
+        usage(1)
   elif f == '-h' or f == '--help':
     usage(0)
   elif f == '-x' or f == '--extra':
     extra = True
+  elif f == '-c' or f == '--clean':
+    clean = True
   elif f == '-r' or f == '--restrict':
     extraprotocols = v
   elif f == '-v' or f == '--verbose':
@@ -93,6 +107,9 @@ if extra and not (issummary or ispoolsummary):
     usage(1)
   else:
     print "Warning : -x|--extra is ignored for regular job listing"
+if clean and not issummary:
+  print "-c|--clean only makes sense in conjunction with -s/--summary"
+  usage(1)
 if extraprotocols and not extra:
   print "cannot use -r|--restrict without -x|--extra"
   usage(1)
@@ -115,6 +132,8 @@ def processTransfersListing():
   # Display head line
   print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL       SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
   n = 0
+  lastExecHost = ''
+  nodesWithManyTransfers = []
   # loop to display real transfers
   for transfer in transfers:
     if transfer[0]:
@@ -125,9 +144,16 @@ def processTransfersListing():
       else:
         sstartTime = ''
       print '%-37s%-12s%-9s%-6s%-10s%-11s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
-      n = n + 1
-  if n > 100:
-    print 'Note that the list may have been truncated to 100 pending and 100 running transfers per hosts'
+      if execHost != lastExecHost:
+        if n > 100:
+          nodesWithManyTransfers.append(lastExecHost)
+        lastExecHost = execHost
+        n = 1
+      else:
+        n = n + 1
+  if nodesWithManyTransfers:
+    print 'Note that the list has been truncated to 100 transfers for the following hosts :'
+    print ', '.join(nodesWithManyTransfers)
 
 def _buildProtocolList(summaryreport):
   '''helper function to list the set of protocols reported in the summary'''
@@ -194,6 +220,9 @@ def processHostListing():
         hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = summary
       # start with non protocol specific data
       data = [machineHeadLen, hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+      # do not display idle machines in clean mode
+      if clean and nbQueueingTransfers == 0 and nbRunningTransfers == 0:
+        continue
       # and for each protocol
       for protocol in protocols:
         # gather specific data
@@ -214,7 +243,10 @@ def processHostListing():
     print machineHead + 'NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN'
     for summary in summaryreport:
       if len(summary) > 2:
-        print '%-*s%4d %7d %7d %7d %7d' % ((machineHeadLen,) + summary)
+       # do not display idle machines in clean mode
+       if clean and summary[2] == 0 and summary[4] == 0:
+         continue
+       print '%-*s%4d %7d %7d %7d %7d' % ((machineHeadLen,) + summary)
       else:
         print '%-*s%4s %7s %7s %7s %7s' % (machineHeadLen, summary[0], '-', '-', '-', '-', '-')
 
@@ -266,22 +298,33 @@ def processDiskPoolListing():
     #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
     # or (diskpoolName, nbUniqueTransfers, None) if some transfermanager node could not be contacted
     print diskpoolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
+    allUnreachableMachines = {}
     for s in summaryreport:
       if len(s) == 1:
         print '%-*s%5d %8d %8d %8d %8d %8d' % (diskpoolHeadLen, s[0], 0, 0, 0, 0, 0, 0)
-      elif len(s) == 3:
-        print '%-*s%5s %8s %8s %8s %8s %8s' % (diskpoolHeadLen, s[0], '-', '-', str(s[1]), '-', '-', '-')
       else:
-        diskpoolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots = s
+        diskpoolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots, unreachableMachines = s
+        if unreachableMachines:
+          allUnreachableMachines[diskpoolName] = unreachableMachines
+          diskpoolName = diskpoolName + '(*)'
         print '%-*s%5d %8d %8s %8d %8d %8d' % (diskpoolHeadLen, diskpoolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+  # deal with unreachable machines if any
+  if allUnreachableMachines:
+    print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
+    for machine in allUnreachableMachines:
+      print '  pool ' + machine + ' : ' + ', '.join(allUnreachableMachines[machine])
 
 # connect to server and gather numbers
 try:
   conf = castor_tools.castorConf()
   try:
+    # get connection parameters
+    if not transfermanager:
+      transfermanager = conf.getValue('DiskManager', 'ServerHosts').split()[0]
+    if not transfermanagerport:
+      transfermanagerport = conf.getValue('TransferManager', 'Port', 15011, int)
     # connect to server and gather numbers
-    rpconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
-                          conf.getValue('TransferManager', 'Port', 15011, int))
+    rpconn = rpyc.connect(transfermanager, transfermanagerport)
     # display the proper listing
     if issummary:
       processHostListing()
