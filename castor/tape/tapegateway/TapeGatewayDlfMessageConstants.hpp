@@ -144,7 +144,10 @@ TAPE_GATEWAY_FAILED_TO_START=108, /* "TapeGateway failed to start" */
 INTERNAL_ERROR=109, /* "Internal error" */
 VDQMREQUESTSPRODUCER_PROCESS_FAILED=110, /* "VdqmRequestsProducerThread::process() failed" */
 LINKER_VMGRSETTOREADONLY_FAILED=111, /* "TapeStreamLinker: failed to set the tape to read only" */
-LINKER_VMGR_NS_DISCREPANCY=112 /* "TapeStreamLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly" */
+LINKER_VMGR_NS_DISCREPANCY=112, /* "TapeStreamLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly" */
+WORKER_REPACK_STALE_FILE=113, /* "Worker: file changed during repack: nothing to do" */
+WORKER_REPACK_UNCONFIRMED_STALE_FILE=114, /* "Worker: segment to repack is gone, but file change unconfirmed" */
+WORKER_REPACK_FILE_REMOVED=115 /* "Worker: file no found on segment update for repack" */
 }; // enum TapeGatewayDlfMessages
 } // namespace tapegateway
 } // namespace tape

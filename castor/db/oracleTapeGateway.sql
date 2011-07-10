@@ -2202,7 +2202,73 @@ BEGIN
 END;
 /
 
-
+CREATE OR REPLACE
+PROCEDURE TG_SetFileStaleInMigration(
+  /* When discovering in name server that a file has been changed during its migration,
+  we have to finish it and indicate to the stager that the discopy is outdated */
+  inTransId         IN  NUMBER,
+  inFileId          IN  NUMBER,
+  inNsHost          IN  VARCHAR2,
+  inFseq            IN  INTEGER,
+  inFileTransaction IN  NUMBER) AS
+  varUnused             NUMBER;
+  varTapeCopyCount      INTEGER;
+  varCfId               NUMBER;
+  varTcId               NUMBER;
+  varTapeId             NUMBER;
+  varStreamId           NUMBER;
+BEGIN
+  -- Find Stream or tape from vdqm vol req ID Lock
+  tg_findFromVDQMReqId (inTransId, varTapeId, varStreamId);
+  IF (varTapeId IS NOT NULL) THEN
+    SELECT T.Id INTO varUnused
+      FROM Tape T WHERE T.Id = varTapeId
+       FOR UPDATE;
+  ELSIF (varStreamId IS NOT NULL) THEN
+    SELECT S.Id INTO varUnused
+      FROM Stream S WHERE S.Id = varStreamId
+       FOR UPDATE;
+  ELSE
+    RAISE_APPLICATION_ERROR (-20119,
+         'Could not find stream or tape read for VDQM request Id='||
+         inTransId || ' in TG_SetFileMigrated');
+  END IF;
+  -- Lock the CastorFile
+  SELECT CF.id INTO varCfId FROM CastorFile CF
+   WHERE CF.fileid = inFileId
+     AND CF.nsHost = inNsHost
+     FOR UPDATE;
+  -- Locate the corresponding tape copy and Disk Copy, Lock
+  SELECT   TC.id
+    INTO varTcId
+    FROM TapeCopy TC
+   WHERE TC.FileTransactionId = inFileTransaction
+     AND TC.fSeq = inFseq
+     FOR UPDATE;
+  -- XXX This tapecopy is done. The other ones (if any) will have to live
+  -- an independant life without the diskcopy (and fail)
+  -- After the schema remake in 09/2011 for 2.1.12, we expect to
+  -- fully cover those cases.
+  -- As of today,we are supposed to repack a file's tapecopies
+  -- on by one. So shouod be exempt of this problem.
+  DELETE FROM tapecopy TC
+   WHERE TC.id = varTcId;
+  -- The disk copy is known stale. Let's invalidate it:
+  UPDATE DiskCopy DC
+     SET DC.status= dconst.DISKCOPY_INVALID
+   WHERE DC.castorFile = varCfId
+     AND DC.status= dconst.DISKCOPY_CANBEMIGR;
+  -- archive Repack requests should any be in the db
+  FOR i IN (
+    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
+    WHERE SR.castorfile = varCfId AND
+          SR.status= dconst.SUBREQUEST_REPACK
+    ) LOOP
+      archivesubreq(i.id, 8); -- SUBREQUEST_FINISHED
+  END LOOP;
+  COMMIT;
+END;
+/
 /* delete taperequest  for not existing tape */
 CREATE OR REPLACE
 PROCEDURE tg_deleteTapeRequest( inTGReqId IN NUMBER ) AS

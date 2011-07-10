@@ -76,60 +76,80 @@ USE (s_factoryOraTapeGatewaySvc);
 //------------------------------------------------------------------------------
 
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getStreamsWithoutTapesStatementString= "BEGIN tg_getStreamsWithoutTapes(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getStreamsWithoutTapesStatementString=
+    "BEGIN tg_getStreamsWithoutTapes(:1);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachTapesToStreamsStatementString="BEGIN tg_attachTapesToStreams(:1,:2,:3);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachTapesToStreamsStatementString=
+    "BEGIN tg_attachTapesToStreams(:1,:2,:3);END;";
 
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeWithoutDriveReqStatementString=
+    "BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3,:4);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeWithoutDriveReqStatementString="BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachDriveReqToTapeStatementString=
+    "BEGIN tg_attachDriveReqToTape(:1,:2,:3,:4,:5);END;";
 
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesWithDriveReqsStatementString=
+    "BEGIN tg_getTapesWithDriveReqs(:1,:2);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachDriveReqToTapeStatementString="BEGIN tg_attachDriveReqToTape(:1,:2,:3,:4,:5);END;";
-
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesWithDriveReqsStatementString="BEGIN tg_getTapesWithDriveReqs(:1,:2);END;";
-
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_restartLostReqsStatementString="BEGIN tg_restartLostReqs(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_restartLostReqsStatementString=
+    "BEGIN tg_restartLostReqs(:1);END;";
   
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToMigrateStatementString="BEGIN tg_getFileToMigrate(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToMigrateStatementString=
+    "BEGIN tg_getFileToMigrate(:1,:2,:3,:4);END;";
   
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString=
+    "BEGIN tg_setFileMigrated(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileStaleInMigrationStatementString=
+    "BEGIN tg_setFileStaleInMigration(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString=
+    "BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString="BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString=
+    "BEGIN tg_setFileRecalled(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;";
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedMigrationsStatementString="BEGIN tg_getFailedMigrations(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedMigrationsStatementString=
+    "BEGIN tg_getFailedMigrations(:1);END;";
  
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setMigRetryResultStatementString="BEGIN tg_setMigRetryResult(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setMigRetryResultStatementString=
+    "BEGIN tg_setMigRetryResult(:1,:2);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedRecallsStatementString="BEGIN tg_getFailedRecalls(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedRecallsStatementString=
+    "BEGIN tg_getFailedRecalls(:1);END;";
    
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setRecRetryResultStatementString="BEGIN tg_setRecRetryResult(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setRecRetryResultStatementString=
+    "BEGIN tg_setRecRetryResult(:1,:2);END;";
   
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString="BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString=
+    "BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTapeSessionStatementString="BEGIN tg_startTapeSession(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTapeSessionStatementString=
+    "BEGIN tg_startTapeSession(:1,:2,:3,:4,:5,:6);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString="BEGIN tg_endTapeSession(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString=
+    "BEGIN tg_endTapeSession(:1,:2);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInfo(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString=
+    "BEGIN tg_getSegmentInfo(:1,:2,:3,:4);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failFileTransferStatementString="BEGIN tg_failFileTransfer(:1,:2,:3,:4,:5);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failFileTransferStatementString=
+    "BEGIN tg_failFileTransfer(:1,:2,:3,:4,:5);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateFileStatementString="BEGIN tg_invalidateFile(:1,:2,:3,:4,:5);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateFileStatementString=
+    "BEGIN tg_invalidateFile(:1,:2,:3,:4,:5);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeToReleaseStatementString="BEGIN tg_getTapeToRelease(:1,:2,:3);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeToReleaseStatementString=
+    "BEGIN tg_getTapeToRelease(:1,:2,:3);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConfigurationStatementString ="BEGIN tg_checkConfiguration();END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConfigurationStatementString =
+    "BEGIN tg_checkConfiguration();END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteStreamWithBadTapePoolStatementString="BEGIN tg_deleteStream(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteStreamWithBadTapePoolStatementString=
+    "BEGIN tg_deleteStream(:1);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteTapeRequestStatementString="BEGIN tg_deleteTapeRequest(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteTapeRequestStatementString=
+    "BEGIN tg_deleteTapeRequest(:1);END;";
 
 
 //------------------------------------------------------------------------------
@@ -146,6 +166,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_restartLostReqsStatement(0),
   m_getFileToMigrateStatement(0),
   m_setFileMigratedStatement(0),
+  m_setFileStaleInMigrationStatement(0),
   m_getFileToRecallStatement(0),
   m_setFileRecalledStatement(0),
   m_getFailedMigrationsStatement(0),
@@ -203,6 +224,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_restartLostReqsStatement ) deleteStatement( m_restartLostReqsStatement);
     if ( m_getFileToMigrateStatement ) deleteStatement( m_getFileToMigrateStatement);
     if ( m_setFileMigratedStatement ) deleteStatement( m_setFileMigratedStatement);
+    if ( m_setFileStaleInMigrationStatement ) deleteStatement( m_setFileStaleInMigrationStatement);
     if ( m_getFileToRecallStatement ) deleteStatement( m_getFileToRecallStatement);
     if ( m_setFileRecalledStatement ) deleteStatement(m_setFileRecalledStatement);
     if ( m_getFailedMigrationsStatement ) deleteStatement(m_getFailedMigrationsStatement);
@@ -232,7 +254,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getTapesWithDriveReqsStatement = 0;
   m_restartLostReqsStatement = 0;
   m_getFileToMigrateStatement= 0;
-  m_setFileMigratedStatement= 0; 
+  m_setFileMigratedStatement= 0;
+  m_setFileStaleInMigrationStatement = 0;
   m_getFileToRecallStatement= 0;
   m_setFileRecalledStatement= 0;
   m_getFailedMigrationsStatement = 0;
@@ -848,6 +871,34 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in setFileMigrated"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// setFileStaleInMigration
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileStaleInMigration(const castor::tape::tapegateway::FileMigratedNotification& resp)
+  throw (castor::exception::Exception){
+  try {
+    // Check whether the statements are ok
+    if (0 == m_setFileStaleInMigrationStatement) {
+      m_setFileStaleInMigrationStatement =
+        createStatement(s_setFileStaleInMigrationStatementString);
+    }
+    m_setFileStaleInMigrationStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransId
+    m_setFileStaleInMigrationStatement->setDouble(2,(double)resp.fileid()); // inFileId
+    m_setFileStaleInMigrationStatement->setString(3,resp.nshost()); // inNsHost
+    m_setFileStaleInMigrationStatement->setInt(4,resp.fseq()); // inFseq
+    m_setFileStaleInMigrationStatement->setDouble(5,(double)resp.fileTransactionId());  // inFileTransaction
+    m_setFileStaleInMigrationStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setFileStaleInMigration"
       << std::endl << e.what();
     throw ex;
   }

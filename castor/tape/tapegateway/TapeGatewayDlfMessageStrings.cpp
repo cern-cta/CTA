@@ -141,4 +141,7 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {VDQMREQUESTSPRODUCER_PROCESS_FAILED, "VdqmRequestsProducerThread::process() failed"},
 {LINKER_VMGRSETTOREADONLY_FAILED, "TapeStreamLinker: failed to set the tape to read only"},
 {LINKER_VMGR_NS_DISCREPANCY, "TapeStreamLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly"},
+{WORKER_REPACK_STALE_FILE, "Worker: file changed during repack: nothing to do"},
+{WORKER_REPACK_UNCONFIRMED_STALE_FILE, "Worker: segment to repack is gone, but file change unconfirmed"},
+{WORKER_REPACK_FILE_REMOVED, "Worker: file no found on segment update for repack"},
 {-1, ""}};

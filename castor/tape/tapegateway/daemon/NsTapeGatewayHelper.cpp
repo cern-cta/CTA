@@ -222,10 +222,11 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
 }
 
 
-void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::tapegateway::FileMigratedNotification& file, std::string repackVid, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){
-
+void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
+    tape::tapegateway::FileMigratedNotification& file, std::string repackVid,
+    int copyNumber, std::string vid, u_signed64 lastModificationTime)
+throw (castor::exception::Exception){
   // fill in the castor file id structure
-  
   struct Cns_fileid castorFileId;
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
@@ -235,100 +236,68 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
           );
   castorFileId.fileid = file.fileid();
 
-
   // fill in the information of the tape file to update the nameserver
+  struct Cns_segattrs nsSegAttrs;
 
-  int nbSegms = 1; // NEVER more than one segment
-
-  struct Cns_segattrs * nsSegAttrs = (struct Cns_segattrs *)calloc(
-                                            nbSegms,
-                                             sizeof(struct Cns_segattrs)
-                                             );
-  if ( nsSegAttrs == NULL ) {
-    castor::exception::Exception ex(-1);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "calloc failed";
-    throw ex;
-
-  } 
-
-  nsSegAttrs->copyno = copyNumber; 
-  nsSegAttrs->fsec = 1; // always one
+  nsSegAttrs.copyno = copyNumber;
+  nsSegAttrs.fsec = 1; // always one
   u_signed64 compression = (file.fileSize() * 100 )/ file.compressedFileSize();
-  nsSegAttrs->compression =compression;
-  nsSegAttrs->segsize = file.fileSize();
-  nsSegAttrs->s_status = '-';
+  nsSegAttrs.compression =compression;
+  nsSegAttrs.segsize = file.fileSize();
+  nsSegAttrs.s_status = '-';
   
-  strncpy(nsSegAttrs->vid,vid.c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = 0; // HARDCODED side
-  
+  strncpy(nsSegAttrs.vid,vid.c_str(),CA_MAXVIDLEN);
+  nsSegAttrs.side = 0; // HARDCODED side
   //  convert the blockid
-  
-  nsSegAttrs->blockid[3]=file.blockId3(); 
-  nsSegAttrs->blockid[2]=file.blockId2(); 
-  nsSegAttrs->blockid[1]=file.blockId1(); 
-  nsSegAttrs->blockid[0]=file.blockId0(); 
-
-  nsSegAttrs->fseq = file.fseq();
-
+  nsSegAttrs.blockid[3]=file.blockId3();
+  nsSegAttrs.blockid[2]=file.blockId2();
+  nsSegAttrs.blockid[1]=file.blockId1();
+  nsSegAttrs.blockid[0]=file.blockId0();
+  nsSegAttrs.fseq = file.fseq();
   strncpy(
-            nsSegAttrs->checksum_name,
+            nsSegAttrs.checksum_name,
             file.checksumName().c_str(),
             CA_MAXCKSUMNAMELEN
             );
-  nsSegAttrs->checksum = file.checksum();
+  nsSegAttrs.checksum = file.checksum();
  
   // we are in repack case so the copy should be replaced
-  
   int oldNbSegms=0;
   struct Cns_segattrs *oldSegattrs=NULL;
-
   // get the old copy with the segments associated
-
   serrno=0;
   int rc = Cns_getsegattrs( NULL, (struct Cns_fileid *)&castorFileId, &oldNbSegms, &oldSegattrs);
-
   if ( (rc == -1) || (oldNbSegms <= 0) || (oldSegattrs == NULL) )  {
-   
-    if (nsSegAttrs) free (nsSegAttrs);
-    nsSegAttrs = NULL;
-
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
       << "impossible to get the old segment";
-    throw ex;
-
-  } 
-
-  // get the file class
-
-  char castorFileName[CA_MAXPATHLEN+1];
-  struct Cns_filestat statbuf;
-  memset(&statbuf,'\0',sizeof(statbuf));
-  *castorFileName = '\0';
-  
-  serrno=0;
-  rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
-  if ( rc == -1 ) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRepackedFile:"
-      << "impossible to stat the file";
+    if (oldSegattrs) free (oldSegattrs);
     throw ex;
   }
 
-  struct Cns_fileclass fileClass;
-  memset(&fileClass,'\0',sizeof(fileClass));
-  
+  // get the file class
+  char castorFileName[CA_MAXPATHLEN+1]; *castorFileName = '\0';
+  struct Cns_filestatcs nsFileAttrs;
+  memset(&nsFileAttrs,'\0',sizeof(nsFileAttrs));
+  serrno=0;
+  rc = Cns_statcsx(castorFileName,&castorFileId,&nsFileAttrs);
+  if ( rc == -1 ) {
+    NoSuchFileException ex;
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRepackedFile:"
+      << "impossible to stat the file: rc=-1, serrno=" << serrno;
+    throw ex;
+  }
+
+  struct Cns_fileclass nsFileClass;
+  memset(&nsFileClass,'\0',sizeof(nsFileClass));
   serrno=0;
   rc = Cns_queryclass( castorFileId.server,
-		       statbuf.fileclass,
-		       NULL,
-		       &fileClass
-		       );
-      
+      nsFileAttrs.fileclass,
+      NULL,
+      &nsFileClass
+  );
   if ( rc == -1 ) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
@@ -337,18 +306,11 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
     throw ex;
   }
       
-  if ( fileClass.nbcopies != 1 ){
-
-
-  // check if there is already a copy of this file in the new tape
-
+  if ( nsFileClass.nbcopies != 1 ){
+    // check if there is already a copy of this file in the new tape
     for ( int i=0; i< oldNbSegms ;i++) {
       if ( strcmp(oldSegattrs[i].vid , vid.c_str()) == 0 ) { 
-
-	if (nsSegAttrs) free (nsSegAttrs);
-	nsSegAttrs = NULL;
-	if (oldSegattrs != NULL ) free(oldSegattrs);
-	oldSegattrs=NULL;
+	if (oldSegattrs) free(oldSegattrs);
 	castor::exception::Exception ex(EEXIST);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
@@ -358,78 +320,94 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
     }
   }
 
-  int nbSegments=0;
-
-  // we have all the segments and copies of that file
-  
-  // first round we get the right copy number using the vid since the stager pick a random one
-
+  bool copyToOverwriteFound=false;
+  // We have all the segments and copies of that file
+  // first round we get the right copy number using the vid since the stager
+  // picks a random copy number
   for(int i = 0; i < oldNbSegms; i++) {
     // at this point we know the vid so we can get the copy number to replace
-    // the stager gave a random one	
+    // the stager gave a random one
     if(!strcmp(oldSegattrs[i].vid, repackVid.c_str())) {
-      // it is our tape copy 
-      // I update just the first time then I just continue to loop to see if it is a multisegment file
-      nsSegAttrs->copyno = oldSegattrs[i].copyno;
-      nbSegments=1;
+      // it is tape copy
+      // XXX In the absence or a rigorous tracking of the fseq and other parameters,
+      // we take the VID match as good enough
+      nsSegAttrs.copyno = oldSegattrs[i].copyno;
+      copyToOverwriteFound=true;
       break;
     }
   }
  
-  if (nbSegments == 0) {
+  if (!copyToOverwriteFound) {
+    // The copy we expected to replace can't be found. We can't proceed further
+    // with repack in any case. This situation can be a harmless update/removal
+    // of the file during repack, or an internal problem.
+    // Let's confirm the positive case and finish with this outdated request.
+    // As we don't have any other criteria, we compare the file's size and then checksum with this
+    // segment's checksum. If there is no match, this tapecopy does not match the file anymore:
+    // => warn and leave.
+    // If the checksums matches, log an error (but leave anyway as the initial goal, repacking
+    // the repackVID tape is reached.
+    // Offcial comparison method for checksum is in Cns_srv_setsegattrs, and it
+    // is a sprintf/strcmp combo. (segments store checksums as numbers, while file
+    // stores is as string).
+
+    // Confirm the file has changed in the mean time:
+    bool changeConfirmed = false;
+    if (nsFileAttrs.filesize != file.fileSize()) {
+      changeConfirmed = true;
+    } else {
+      if (((strcmp(nsSegAttrs.checksum_name, "adler32") == 0) &&
+          (strcmp(nsFileAttrs.csumtype, "AD") == 0))
+      ) {
+        char chkSumStr[CA_MAXCKSUMLEN+1];
+        snprintf(chkSumStr, CA_MAXCKSUMLEN+1, "%lx", nsSegAttrs.checksum);
+        if (!strncmp(chkSumStr, nsFileAttrs.csumvalue, CA_MAXCKSUMLEN))
+          changeConfirmed = true;
+      }
+    }
+    // We return the conclusion to the caller in the form of an exception
     if (oldSegattrs) free(oldSegattrs);
-    if (nsSegAttrs) free (nsSegAttrs);
-    oldSegattrs = NULL;
-    nsSegAttrs = NULL;
-
-    castor::exception::Exception ex(ENOENT);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "segment not found";
-    throw ex; 
-
+    if (changeConfirmed) {
+      FileMutatedException ex;
+      ex.getMessage()
+          << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
+          << "segment not found: file has changed.";
+      throw ex;
+    } else {
+      FileMutationUnconfirmedException ex;
+      ex.getMessage()
+          << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
+          << "segment not found: file change not confirmed.";
+      throw ex;
+    }
   }
 
-  nbSegments=0; // now I count the number of segments
-
+  int nbSegments=0; // now I count the number of segments
   for(int i = 0; i < oldNbSegms; i++) {
-    if ( nsSegAttrs->copyno == oldSegattrs[i].copyno ) nbSegments++;
+    if ( nsSegAttrs.copyno == oldSegattrs[i].copyno ) nbSegments++;
   }
-       
-  // just in case of a sigle segment I check the checksum
-	 
-  if (  nbSegments  == 1 && oldSegattrs->checksum != nsSegAttrs->checksum) {
-
+  // just in case of a single segment I check the checksum
+  if (  nbSegments  == 1 && oldSegattrs->checksum != nsSegAttrs.checksum) {
     if (oldSegattrs) free(oldSegattrs);
-    if (nsSegAttrs) free (nsSegAttrs);
     oldSegattrs = NULL;
-    nsSegAttrs = NULL;
     castor::exception::Exception ex(SECHECKSUM);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
       << "invalid checksum";
     throw ex; 
-
   }  
 
-  // replace the tapecopy
-
-  rc = Cns_replacetapecopy(&castorFileId, repackVid.c_str(),nsSegAttrs->vid,nbSegms,nsSegAttrs,lastModificationTime);
-       
+  // replace the tapecopy: only one at a time 
+  rc = Cns_replacetapecopy(&castorFileId, repackVid.c_str(),nsSegAttrs.vid,1,&nsSegAttrs,lastModificationTime);
   if (oldSegattrs) free(oldSegattrs);
-  if (nsSegAttrs) free (nsSegAttrs);
   oldSegattrs = NULL;
-  nsSegAttrs = NULL;
-  
   if (rc<0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
       << "impossible to replace tapecopy";
     throw ex; 
-
   }
-
 }
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::tape::tapegateway::FileToRecall& file, std::string vid ) throw (castor::exception::Exception) {

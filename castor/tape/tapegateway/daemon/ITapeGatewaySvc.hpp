@@ -137,6 +137,13 @@ namespace tapegateway {
           throw (castor::exception::Exception)=0;
 
         /*
+         * Update the db for a successful migration that turned out useless (file changed elsewhere)
+         */
+
+        virtual  void  setFileStaleInMigration(const castor::tape::tapegateway::FileMigratedNotification& resp)
+          throw (castor::exception::Exception)=0;
+
+        /*
 	 * Get the best file to recall 
          */
         virtual void getFileToRecall(const castor::tape::tapegateway::FileToRecallRequest&  req,

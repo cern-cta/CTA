@@ -114,6 +114,12 @@ namespace ora         {
 	      const castor::tape::tapegateway::FileMigratedNotification& resp)
       throw (castor::exception::Exception);
 
+    // To update the db for a file which can't be referenced in the
+    // name server anymore after a successful migration (file changed in the mean time)
+    virtual  void  setFileStaleInMigration(
+              const castor::tape::tapegateway::FileMigratedNotification& resp)
+      throw (castor::exception::Exception);
+
     //  To get the best file to recall when the function is called
     virtual void getFileToRecall(
 	      const castor::tape::tapegateway::FileToRecallRequest&  req,
@@ -250,6 +256,9 @@ namespace ora         {
     static const std::string s_setFileMigratedStatementString;
     oracle::occi::Statement *m_setFileMigratedStatement;
 	
+    static const std::string s_setFileStaleInMigrationStatementString;
+    oracle::occi::Statement *m_setFileStaleInMigrationStatement;
+
     static const std::string s_getFileToRecallStatementString;
     oracle::occi::Statement *m_getFileToRecallStatement;
 	
