@@ -238,6 +238,7 @@ throw (castor::exception::Exception){
 
   // fill in the information of the tape file to update the nameserver
   struct Cns_segattrs nsSegAttrs;
+  memset (&nsSegAttrs, '\0', sizeof (struct Cns_segattrs));
 
   nsSegAttrs.copyno = copyNumber;
   nsSegAttrs.fsec = 1; // always one
@@ -247,6 +248,7 @@ throw (castor::exception::Exception){
   nsSegAttrs.s_status = '-';
   
   strncpy(nsSegAttrs.vid,vid.c_str(),CA_MAXVIDLEN);
+  nsSegAttrs.vid[CA_MAXVIDLEN]='\0';
   nsSegAttrs.side = 0; // HARDCODED side
   //  convert the blockid
   nsSegAttrs.blockid[3]=file.blockId3();
@@ -321,6 +323,7 @@ throw (castor::exception::Exception){
   }
 
   bool copyToOverwriteFound=false;
+  int  copyToOverwriteNumber=-1;
   // We have all the segments and copies of that file
   // first round we get the right copy number using the vid since the stager
   // picks a random copy number
@@ -331,7 +334,7 @@ throw (castor::exception::Exception){
       // it is tape copy
       // XXX In the absence or a rigorous tracking of the fseq and other parameters,
       // we take the VID match as good enough
-      nsSegAttrs.copyno = oldSegattrs[i].copyno;
+      copyToOverwriteNumber = nsSegAttrs.copyno = oldSegattrs[i].copyno;
       copyToOverwriteFound=true;
       break;
     }
@@ -371,13 +374,13 @@ throw (castor::exception::Exception){
       FileMutatedException ex;
       ex.getMessage()
           << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-          << "segment not found: file has changed.";
+          << " segment not found: file has changed.";
       throw ex;
     } else {
       FileMutationUnconfirmedException ex;
       ex.getMessage()
           << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-          << "segment not found: file change not confirmed.";
+          << " segment not found: file change not confirmed.";
       throw ex;
     }
   }
@@ -393,7 +396,7 @@ throw (castor::exception::Exception){
     castor::exception::Exception ex(SECHECKSUM);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "invalid checksum";
+      << " invalid checksum";
     throw ex; 
   }  
 
@@ -405,7 +408,7 @@ throw (castor::exception::Exception){
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "impossible to replace tapecopy";
+      << " impossible to replace tapecopy for copynb=" << copyToOverwriteNumber << " rc=" << rc;
     throw ex; 
   }
 }
