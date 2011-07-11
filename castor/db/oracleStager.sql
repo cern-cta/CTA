@@ -692,7 +692,7 @@ BEGIN
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
     INSERT INTO processBulkAbortFileReqsHelper (
-      SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/
              SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
