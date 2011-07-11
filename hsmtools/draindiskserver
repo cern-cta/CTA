@@ -25,15 +25,19 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #******************************************************************************
 
+'''Tool to manage the draining of filesystems and diskservers'''
+
 # modules
 import sys
 import getopt
 import castor_tools
+import cx_Oracle
 
 #
 # Usage
 #
 def usage(status):
+    '''Prints usage'''
     if status != 0:
         print >> sys.stderr, 'Try `' + sys.argv[0] + ' --help for more information.'
     else:
@@ -92,6 +96,7 @@ def usage(status):
 # InvalidInput exception class
 #
 class InvalidInput(Exception):
+    '''Exception to be used when input is invalid'''
     pass
 
 
@@ -99,7 +104,7 @@ class InvalidInput(Exception):
 # Main
 #
 def main(argv):
-
+    '''main method'''
     # Variables
     operation   = None
     querytype   = 'overview'
@@ -238,13 +243,14 @@ def main(argv):
         connection.close()
 
     except Exception, e:
-        if len(e.args) == 1:
+        if isinstance(e, cx_Oracle.Error):
             # For error codes in the 20000 range remove the stack trace provided by
             # Oracle. Its nice but not meaningful for the end user.
             error, = e.args
-            if error.code > 20000 and error.code < 21000:
+            if hasattr(error, "code") and error.code > 20000 and error.code < 21000:
                 print >> sys.stderr, error.message.split('\n')[0].replace('ORA-', 'ERROR ')
                 sys.exit(1)
+        # all other errors are printed using standard str method
         print >> sys.stderr, str(e)
         sys.exit(1)
 
@@ -253,6 +259,7 @@ def main(argv):
 # Add
 #
 def startDraining(c, bindvars):
+    '''starts draining a given filesystem'''
     c.execute('''BEGIN
                    startDraining(InNodeName     => :InNodeName,
                                  InMountPoint   => :InMountPoint,
@@ -268,6 +275,7 @@ def startDraining(c, bindvars):
 # Delete
 #
 def stopDraining(c, bindvars):
+    '''stops draining a given filesystem'''
     c.execute('''BEGIN
                    stopDraining(InNodeName   => :InNodeName,
                                 InMountPoint => :InMountPoint,
@@ -278,8 +286,8 @@ def stopDraining(c, bindvars):
 #
 # Query
 #
-def queryDraining(c, bindvars, type, filter, style):
-
+def queryDraining(c, bindvars, querytype, queryfilter, style):
+    '''queries ongoing drainings'''
     # Metadata information
     # Format is:
     #  - Column name as returned by Oracle
@@ -311,8 +319,8 @@ def queryDraining(c, bindvars, type, filter, style):
                    [ 'Comments',       '',       20, 0 ] ] }
 
     # Process the query type
-    if type == 'overview':
-        bindvars['InFilter'] = filter
+    if querytype == 'overview':
+        bindvars['InFilter'] = queryfilter
         c.execute('''SELECT *
                        FROM DrainingOverview
                       WHERE (DiskServer = :InNodeName
@@ -322,8 +330,8 @@ def queryDraining(c, bindvars, type, filter, style):
                         AND (status = :InFilter
                          OR  :InFilter IS NULL)''', bindvars)
 
-    elif type == 'config':
-        bindvars['InFilter'] = filter
+    elif querytype == 'config':
+        bindvars['InFilter'] = queryfilter
         c.execute('''SELECT *
                        FROM DrainingOverview
                       WHERE (DiskServer = :InNodeName
@@ -333,7 +341,7 @@ def queryDraining(c, bindvars, type, filter, style):
                         AND (status = :InFilter
                          OR  :InFilter IS NULL)''', bindvars)
 
-    elif type == 'failures':
+    elif querytype == 'failures':
         c.execute('''SELECT DiskServer, Path, Comments
                        FROM DrainingFailures
                       WHERE (DiskServer = :InNodeName
@@ -341,7 +349,7 @@ def queryDraining(c, bindvars, type, filter, style):
                         AND (MountPoint = :InMountPoint
                          OR  :InMountPoint IS NULL)''', bindvars)
     else:
-        raise Exception, 'Unknown type: ' + type
+        raise Exception, 'Unknown type: ' + querytype
 
     # Check if the resultset has any rows
     rset = c.fetchall()
@@ -350,38 +358,38 @@ def queryDraining(c, bindvars, type, filter, style):
         return
 
     # Print failure information
-    if type == 'failures':
+    if querytype == 'failures':
         for row in rset:
             print row[0] + ' ' + row[1] + ' (' + row[2] + ')'
         return
 
     # Set the index field of the metadata structure
     for i in range(len(c.description)):
-        for j in range(len(metadata[type])):
-            if c.description[i][0] == metadata[type][j][0].upper():
-                metadata[type][j][3] = i
+        for j in range(len(metadata[querytype])):
+            if c.description[i][0] == metadata[querytype][j][0].upper():
+                metadata[querytype][j][3] = i
 
     # Determine the maximum length of all the columns
-    totallen = len(metadata[type])
-    for i in range(len(metadata[type])):
-        metadata[type][i].append(max([len(str(row[metadata[type][i][3]])) for row in rset]))
-        minwidth = metadata[type][i][2]
-        if minwidth > metadata[type][i][4]:
-            metadata[type][i][4] = minwidth
-        totallen += metadata[type][i][4]
+    totallen = len(metadata[querytype])
+    for i in range(len(metadata[querytype])):
+        metadata[querytype][i].append(max([len(str(row[metadata[querytype][i][3]])) for row in rset]))
+        minwidth = metadata[querytype][i][2]
+        if minwidth > metadata[querytype][i][4]:
+            metadata[querytype][i][4] = minwidth
+        totallen += metadata[querytype][i][4]
 
     # Output data
     if style == 'script':
-        genSimple(rset, totallen, metadata[type])
+        genSimple(rset, metadata[querytype])
     else:
-        genTable(rset, totallen, metadata[type])
+        genTable(rset, totallen, metadata[querytype])
 
 
 #
 # genTable
 #
 def genTable(rset, totallen, metadata):
-
+    '''Generate a table output of ongoing drainings'''
     # Print column headings
     print '-' * totallen
     for i in range(len(metadata)):
@@ -403,8 +411,8 @@ def genTable(rset, totallen, metadata):
 #
 # genSimple
 #
-def genSimple(rset, totallen, metadata):
-
+def genSimple(rset, metadata):
+    '''Generate a simple output of ongoing drainings'''
     # Print the rows
     for row in rset:
         for i in range(len(metadata)):
