@@ -1263,13 +1263,14 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
         castor::dlf::Param("HostName",requester.hostName),
         castor::dlf::Param("mountTransactionId",response->mountTransactionId()),
         castor::dlf::Param("tapebridgeTransId",response->aggregatorTransactionId()),
+        castor::dlf::Param("NSHOSTNAME",response->nshost()),
+        castor::dlf::Param("NSFILEID",response->fileid()),
         castor::dlf::Param("fseq",response->fseq()),
         castor::dlf::Param("path",response->path()),
         castor::dlf::Param("blockid", blockid ),
         castor::dlf::Param("fileTransactionId", response->fileTransactionId()),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
- 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_RETRIEVED,completeParams, &castorFileId);
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message

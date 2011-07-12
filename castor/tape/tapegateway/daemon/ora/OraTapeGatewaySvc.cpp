@@ -916,11 +916,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
   try {
 
     while (1) {
-
       std::string diskserver;
       std::string mountpoint;
       file.setMountTransactionId(0);
-
       // Check whether the statements are ok
       if (0 == m_getFileToRecallStatement) {
 	m_getFileToRecallStatement =
@@ -932,72 +930,47 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	m_getFileToRecallStatement->registerOutParam
 	  (4, oracle::occi::OCCICURSOR);
       }
-   
       m_getFileToRecallStatement->setDouble(1,(double)req.mountTransactionId());
-      
-      // execute the statement and see whether we found something
- 
-      m_getFileToRecallStatement->executeUpdate();
 
-      
+      // execute the statement and see whether we found something
+      m_getFileToRecallStatement->executeUpdate();
       int ret = m_getFileToRecallStatement->getInt(2);
       if (ret == -1 ) return;
-     
       if (ret == -2 ) {// UNKNOWN request
-
 	castor::exception::Exception e(ENOENT);
 	throw e;
-
       }
-
       if (ret == -3 ) {// no diskserver available
-
 	castor::exception::Internal ex;
 	ex.getMessage()
 	  << "no diskserver available"
 	  << std::endl; 
-	
 	throw ex;
-	
       }
 
+      // Extract the result
       std::string vid= m_getFileToRecallStatement->getString(3);
-   
       oracle::occi::ResultSet *rs =
 	m_getFileToRecallStatement->getCursor(4);
-
-      
-
-      // one at the moment
-    
-
+      // one at the moment (the cusror is expected to return one element only
+      // XXX This is a trivial place to insert bulk transactions.
       if  (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-
-
 	file.setFileid((u_signed64)rs->getDouble(1));
 	file.setNshost(rs->getString(2));
 	diskserver=rs->getString(3);
 	mountpoint=rs->getString(4);
-
 	file.setPath(diskserver.append(":").append(mountpoint).append(rs->getString(5)));
-
 	file.setFseq(rs->getInt(6));
 	file.setFileTransactionId((u_signed64)rs->getDouble(7));
-
         file.setMountTransactionId(req.mountTransactionId());
 	file.setPositionCommandCode(TPPOSIT_BLKID);
-
 	// it might be changed after the ns check to TPPOSIT_FSEQ
-
 	// let's check if it is valid in the nameserver and let's retrieve the blockid
-
 	try {
-	  
 	  NsTapeGatewayHelper nsHelper;
 	  nsHelper.getBlockIdToRecall(file,vid);
 	  break; // found a valid file
-
-	}catch (castor::exception::Exception& e) {
+	} catch (castor::exception::Exception& e) {
 	  struct Cns_fileid castorFileId;
 	  memset(&castorFileId,'\0',sizeof(castorFileId));
 	  strncpy(
@@ -1006,16 +979,12 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 		  sizeof(castorFileId.server)-1
 		  );
 	  castorFileId.fileid = file.fileid();
-
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),
 	     castor::dlf::Param("TPVID", vid)
 	    };
-
-	  
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_RECALL_NS_ERROR, 3, params,&castorFileId);
-
 	  try {
 	    FileErrorReport failure;
 	    failure.setMountTransactionId(file.mountTransactionId()); 
@@ -1024,34 +993,23 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 	    failure.setFseq(file.fseq());
 	    failure.setErrorCode(e.code());
 	    invalidateFile(failure);
-	    
 	  } catch (castor::exception::Exception& ex){
-
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("errorCode",sstrerror(ex.code())),
 	       castor::dlf::Param("errorMessage",ex.getMessage().str()),
 	       castor::dlf::Param("TPVID", vid)
 	      };
-    
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_DB_ERROR, 2, params,&castorFileId);
 	  }
-
-	  
-	  
 	  m_getFileToRecallStatement->closeResultSet(rs);
-
 	  continue; // Let's get another candidate, this one was not valid
-
 	}
 	// here we have a valid candidate
       }
-     
       m_getFileToRecallStatement->closeResultSet(rs);
       break;
     }
-    
     cnvSvc()->commit();
-
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1060,11 +1018,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
       << std::endl << e.what();
     throw ex;
   }
- 
   // hardcoded umask
   file.setUmask(077);  
- 
-
 }
  
 //----------------------------------------------------------------------------

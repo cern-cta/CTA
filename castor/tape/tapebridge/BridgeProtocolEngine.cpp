@@ -1722,10 +1722,14 @@ void
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
     castor::dlf::Param("clientType",
-      utils::volumeClientTypeToString(m_volume.clientType())),
+      utils::volumeClientTypeToString(m_volume.clientType())                 ),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
-    castor::dlf::Param("path"              , reply->path()                   )};
+    castor::dlf::Param("fseq"              , reply->fseq()                   ),
+    castor::dlf::Param("NSHOSTNAME"        , reply->nshost()                 ),
+    castor::dlf::Param("NSFILEID"          , reply->fileid()                 ),
+    castor::dlf::Param("path"              , reply->path()                   )
+  };
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_FILETORECALL, params);
 
