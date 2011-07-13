@@ -302,6 +302,62 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
 
 
 //------------------------------------------------------------------------------
+// getNbRtcpdDiskIOThreads
+//------------------------------------------------------------------------------
+castor::tape::tapebridge::ConfigParamAndSource<uint32_t>
+  castor::tape::tapebridge::BridgeProtocolEngine::getNbRtcpdDiskIOThreads()
+  throw(castor::exception::Exception) {
+
+  const std::string paramName = "RTCPD/THREAD_POOL";
+  const char        *paramCStr  = NULL;
+  uint32_t          paramUInt32 = 0;
+  std::string       paramSource = "UNKNOWN";
+
+  // Try to get the number of disk-IO threads from the environment variables
+  if(NULL != (paramCStr = getenv("RTCPD_THREAD_POOL"))) {
+    paramSource = "environment variable";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    // Safe to cast to uint32_t as utils::isValidUInt has been performed
+    paramUInt32 = (uint32_t)atoi(paramCStr);
+
+  // Else try to get the number of disk IO threads of castor.conf
+  } else if(NULL != (paramCStr = getconfent("RTCPD", "THREAD_POOL", 0))) {
+    paramSource = "castor.conf";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    // Safe to cast to uint32_t as utils::isValidUInt has been performed
+    paramUInt32 = (uint32_t)atoi(paramCStr);
+
+  // Else use the compile-time default
+  } else {
+    paramSource = "compile-time default";
+    paramUInt32 = RTCPD_THREAD_POOL;
+  }
+
+  return ConfigParamAndSource<uint32_t>(paramName, paramUInt32, paramSource);
+}
+
+
+//------------------------------------------------------------------------------
 // processAPendingSocket
 //------------------------------------------------------------------------------
 bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
@@ -326,27 +382,20 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
       // Throw an exception if connection is not from localhost
       checkPeerIsLocalhost(acceptedConnection);
 
-      // Determine the number of RTCPD disk IO threads
-      int nbRtcpdDiskIOThreads = RTCPD_THREAD_POOL; // Compile-time default
-      char *p = NULL;
-      if((p = getenv("RTCPD_THREAD_POOL")) ||
-         (p = getconfent("RTCPD", "THREAD_POOL", 0))) {
-        if(!utils::isValidUInt(p)) {
-          castor::exception::InvalidArgument ex;
+      const ConfigParamAndSource<uint32_t>
+        nbRtcpdDiskIOThreads(getNbRtcpdDiskIOThreads());
 
-          ex.getMessage() <<
-            "RTCPD THREAD_POOL value is not a valid unsigned integer"
-            ": value=" << p;
-
-          throw(ex);
-        }
-
-        nbRtcpdDiskIOThreads = atoi(p);
-      }
+      // Log the value and source of the number of rtcpd disk-IO threads
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("name"  , nbRtcpdDiskIOThreads.name),
+        castor::dlf::Param("value" , nbRtcpdDiskIOThreads.value),
+        castor::dlf::Param("source", nbRtcpdDiskIOThreads.source)};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+        params);
 
       // Determine maximum number of RTCPD disk/tape IO control connections
       // This is the number of disk IO threads plus 1 for the tape IO thread
-      const int maxNbDiskTapeIOControlConns = nbRtcpdDiskIOThreads + 1;
+      const int maxNbDiskTapeIOControlConns = nbRtcpdDiskIOThreads.value + 1;
 
       // Throw an exception if the expected maximum number of disk/tape IO
       // control connections has been exceeded

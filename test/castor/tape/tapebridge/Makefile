@@ -10,8 +10,41 @@ clean:
 
 testtapebridge: \
   testTapeBridgeMain.o \
-  BridgeClientInfo2Sender.o \
-  VmgrTxRx.o \
+  tapebridge_BoolFunctor.o \
+  tapebridge_BridgeClientInfo2Sender.o \
+  tapebridge_BridgeProtocolEngine.o \
+  tapebridge_BridgeSocketCatalogue.o \
+  tapebridge_ClientTxRx.o \
+  tapebridge_DlfMessageStrings.o \
+  tapebridge_LegacyTxRx.o \
+  tapebridge_LogHelper.o \
+  tapebridge_marshall.o \
+  tapebridge_RtcpTxRx.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
+  tapebridge_VdqmRequestHandler.o \
+  tapebridge_VmgrTxRx.o \
+  tapegateway_FileToMigrateRequest.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_FileMigratedNotification.o \
+  tapegateway_FileToRecallRequest.o \
+  tapegateway_FileToRecall.o \
+  tapegateway_FileRecalledNotification.o \
+  tapegateway_BaseFileInfo.o \
+  tapegateway_VolumeRequest.o \
+  tapegateway_Volume.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_DumpParametersRequest.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpNotification.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_NoMoreFiles.o \
+  tapegateway_EndNotification.o \
+  tapegateway_EndNotificationErrorReport.o \
+  tapegateway_NotificationAcknowledge.o \
+  tapegateway_ClientType.o \
+  tapegateway_VolumeMode.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
@@ -19,6 +52,7 @@ testtapebridge: \
   tape_utils.o \
   Cuuid.o \
   getconfent.o \
+  dlf_Param.o \
   exception_Exception.o \
   exception_InvalidArgument.o \
   exception_Communication.o \
@@ -52,13 +86,9 @@ testtapebridge: \
   SmartFILEPtr.o \
   tape_net.o \
   ObjectSet.o \
-  tapebridge_LegacyTxRx.o \
-  bridge_LogHelper.o \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
-  tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   marshall.o \
   test_exception.o \
   vdqmapi.o \
@@ -92,28 +122,28 @@ tapebridgedaemontester: \
   exception_PermissionDenied.o \
   exception_OutOfMemory.o \
   exception_NoEntry.o \
-  gateway_FileToMigrateRequest.o \
-  gateway_FileToMigrate.o \
-  gateway_FileMigratedNotification.o \
-  gateway_FileToRecallRequest.o \
-  gateway_FileToRecall.o \
-  gateway_FileRecalledNotification.o \
-  gateway_BaseFileInfo.o \
-  gateway_VolumeRequest.o \
-  gateway_Volume.o \
-  gateway_GatewayMessage.o \
-  gateway_PositionCommandCode.o \
-  gateway_PingNotification.o \
-  gateway_DumpParametersRequest.o \
-  gateway_DumpParameters.o \
-  gateway_DumpNotification.o \
-  gateway_FileToMigrate.o \
-  gateway_NoMoreFiles.o \
-  gateway_EndNotification.o \
-  gateway_EndNotificationErrorReport.o \
-  gateway_NotificationAcknowledge.o \
-  gateway_ClientType.o \
-  gateway_VolumeMode.o \
+  tapegateway_FileToMigrateRequest.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_FileMigratedNotification.o \
+  tapegateway_FileToRecallRequest.o \
+  tapegateway_FileToRecall.o \
+  tapegateway_FileRecalledNotification.o \
+  tapegateway_BaseFileInfo.o \
+  tapegateway_VolumeRequest.o \
+  tapegateway_Volume.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_DumpParametersRequest.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpNotification.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_NoMoreFiles.o \
+  tapegateway_EndNotification.o \
+  tapegateway_EndNotificationErrorReport.o \
+  tapegateway_NotificationAcknowledge.o \
+  tapegateway_ClientType.o \
+  tapegateway_VolumeMode.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
@@ -179,15 +209,19 @@ tapebridgedaemontester: \
 	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
 
 tapebridged: \
-  TapeBridgeMain.o \
-  TapeBridgeDaemon.o \
-  bridge_BoolFunctor.o \
-  BridgeProtocolEngine.o \
-  BridgeSocketCatalogue.o \
-  bridge_ClientTxRx.o \
-  bridge_DlfMessageStrings.o \
+  tapebridge_BoolFunctor.o \
+  tapebridge_BridgeClientInfo2Sender.o \
+  tapebridge_BridgeProtocolEngine.o \
+  tapebridge_BridgeSocketCatalogue.o \
+  tapebridge_ClientTxRx.o \
+  tapebridge_DlfMessageStrings.o \
   tapebridge_LegacyTxRx.o \
-  bridge_LogHelper.o \
+  tapebridge_LogHelper.o \
+  tapebridge_RtcpTxRx.o \
+  tapebridge_TapeBridgeMain.o \
+  tapebridge_TapeBridgeDaemon.o \
+  tapebridge_VdqmRequestHandler.o \
+  tapebridge_VmgrTxRx.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
@@ -199,7 +233,6 @@ tapebridged: \
   castor_Converters.o \
   castor_BaseSvc.o \
   castor_ObjectCatalog.o \
-  VdqmRequestHandler.o \
   server_TCPListenerThreadPool.o \
   server_UDPListenerThreadPool.o \
   server_ListenerThreadPool.o \
@@ -212,31 +245,28 @@ tapebridged: \
   server_Mutex.o \
   server_ThreadNotification.o \
   server_NotifierThread.o \
-  gateway_FileToMigrateRequest.o \
-  gateway_FileToMigrate.o \
-  gateway_FileMigratedNotification.o \
-  gateway_FileToRecallRequest.o \
-  gateway_FileToRecall.o \
-  gateway_FileRecalledNotification.o \
-  gateway_BaseFileInfo.o \
-  gateway_VolumeRequest.o \
-  gateway_Volume.o \
-  gateway_GatewayMessage.o \
-  gateway_PositionCommandCode.o \
-  gateway_PingNotification.o \
-  gateway_DumpParametersRequest.o \
-  gateway_DumpParameters.o \
-  gateway_DumpNotification.o \
-  gateway_FileToMigrate.o \
-  gateway_NoMoreFiles.o \
-  gateway_EndNotification.o \
-  gateway_EndNotificationErrorReport.o \
-  gateway_NotificationAcknowledge.o \
-  gateway_ClientType.o \
-  gateway_VolumeMode.o \
-  RtcpTxRx.o \
-  VmgrTxRx.o \
-  BridgeClientInfo2Sender.o \
+  tapegateway_FileToMigrateRequest.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_FileMigratedNotification.o \
+  tapegateway_FileToRecallRequest.o \
+  tapegateway_FileToRecall.o \
+  tapegateway_FileRecalledNotification.o \
+  tapegateway_BaseFileInfo.o \
+  tapegateway_VolumeRequest.o \
+  tapegateway_Volume.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_DumpParametersRequest.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpNotification.o \
+  tapegateway_FileToMigrate.o \
+  tapegateway_NoMoreFiles.o \
+  tapegateway_EndNotification.o \
+  tapegateway_EndNotificationErrorReport.o \
+  tapegateway_NotificationAcknowledge.o \
+  tapegateway_ClientType.o \
+  tapegateway_VolumeMode.o \
   dlf_Param.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
@@ -316,10 +346,13 @@ testTapeBridgeMain.o: \
   testTapeBridgeMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-testTapeBridgeMain.cpp: BridgeClientInfo2SenderTest.hpp VmgrTxRxTest.hpp
+testTapeBridgeMain.cpp: \
+  BridgeClientInfo2SenderTest.hpp \
+  BridgeProtocolEngineTest.hpp \
+  VmgrTxRxTest.hpp
 	touch $@
 
-BridgeClientInfo2Sender.o: \
+tapebridge_BridgeClientInfo2Sender.o: \
  $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -327,7 +360,7 @@ $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.hpp
 	touch $@
 
-VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
+tapebridge_VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 legacymsg_CommonMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
@@ -569,28 +602,30 @@ tapebridgedaemontester.o: tapebridgedaemontester.cpp
 RemoteCopyConnection.o: $(ROOT_DIR)/castor/vdqm/RemoteCopyConnection.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-TapeBridgeMain.o: $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeMain.cpp
+tapebridge_TapeBridgeMain.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-TapeBridgeDaemon.o: $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeDaemon.cpp
+tapebridge_TapeBridgeDaemon.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeDaemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-bridge_BoolFunctor.o: $(ROOT_DIR)/castor/tape/tapebridge/BoolFunctor.cpp
+tapebridge_BoolFunctor.o: $(ROOT_DIR)/castor/tape/tapebridge/BoolFunctor.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-BridgeProtocolEngine.o: \
+tapebridge_BridgeProtocolEngine.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeProtocolEngine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-BridgeSocketCatalogue.o: \
+tapebridge_BridgeSocketCatalogue.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeSocketCatalogue.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-bridge_ClientTxRx.o: \
+tapebridge_ClientTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/ClientTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-bridge_DlfMessageStrings.o: \
+tapebridge_DlfMessageStrings.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/DlfMessageStrings.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -598,103 +633,103 @@ tapebridge_LegacyTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-bridge_LogHelper.o: \
+tapebridge_LogHelper.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-VdqmRequestHandler.o: \
+tapebridge_VdqmRequestHandler.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_RtcpTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 dlf_Param.o: \
   $(ROOT_DIR)/castor/dlf/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-RtcpTxRx.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-gateway_FileToRecallRequest.o: \
+tapegateway_FileToRecallRequest.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_FileToRecall.o: \
+tapegateway_FileToRecall.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileToRecall.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_FileRecalledNotification.o: \
+tapegateway_FileRecalledNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_VolumeRequest.o: \
+tapegateway_VolumeRequest.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_Volume.o: \
+tapegateway_Volume.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_GatewayMessage.o: \
+tapegateway_GatewayMessage.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_FileToMigrateRequest.o: \
+tapegateway_FileToMigrateRequest.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_FileToMigrate.o: \
+tapegateway_FileToMigrate.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrate.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_FileMigratedNotification.o: \
+tapegateway_FileMigratedNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_NoMoreFiles.o: \
+tapegateway_NoMoreFiles.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_BaseFileInfo.o: \
+tapegateway_BaseFileInfo.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfo.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_ClientType.o: \
+tapegateway_ClientType.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/ClientType.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_VolumeMode.o: \
+tapegateway_VolumeMode.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_DumpParametersRequest.o: \
+tapegateway_DumpParametersRequest.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_DumpParameters.o: \
+tapegateway_DumpParameters.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/DumpParameters.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_DumpNotification.o: \
+tapegateway_DumpNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/DumpNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_PositionCommandCode.o: \
+tapegateway_PositionCommandCode.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_PingNotification.o: \
+tapegateway_PingNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_EndNotification.o: \
+tapegateway_EndNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_EndNotificationErrorReport.o: \
+tapegateway_EndNotificationErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationErrorReport.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-gateway_NotificationAcknowledge.o: \
+tapegateway_NotificationAcknowledge.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/NotificationAcknowledge.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 

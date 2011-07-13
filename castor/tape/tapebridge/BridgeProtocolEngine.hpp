@@ -28,6 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/BoolFunctor.hpp"
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
+#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
@@ -39,6 +40,7 @@
 #include "h/Cuuid.h"
 
 #include <map>
+#include <stdint.h>
 
 
 namespace castor     {
@@ -89,6 +91,18 @@ public:
    */
   void run() throw(castor::exception::Exception);
 
+  /**
+   * Determines the number of rtcpd disk-IO threads.
+   *
+   * This method deteremines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   *
+   * @return The configuration parameter including its source, either
+   *         "environment variable", "castor.conf" or "compile-time default".
+   */
+  ConfigParamAndSource<uint32_t> getNbRtcpdDiskIOThreads()
+    throw(castor::exception::Exception);
 
 private:
 

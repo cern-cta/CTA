@@ -34,6 +34,7 @@
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
+#include "h/Cuuid.h"
 
 #include <algorithm>
 #include <memory>
@@ -122,13 +123,13 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   // Pass the foreground option to the super class BaseDaemon
   m_foreground = m_parsedCommandLine.foregroundOptionSet;
 
+  // Extract the tape-drive names from the TPCONFIG file
   utils::TpconfigLines tpconfigLines;
   utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
-
   std::list<std::string> driveNames;
   utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
 
-  // Put the drive names into a string stream ready to make a log message
+  // Put the tape-drive names into a string stream ready to make a log message
   std::stringstream driveNamesStream;
   for(std::list<std::string>::const_iterator itor = driveNames.begin();
     itor != driveNames.end(); itor++) {

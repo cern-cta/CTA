@@ -28,6 +28,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/tapebridge/BoolFunctor.hpp"
+#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -81,6 +82,20 @@ public:
    */
   virtual void stop() throw();
 
+  /**
+   * Determines the whether or not the tapebridged daemon will cause
+   * tape-migrations to use buffered tape-marks over multiple files.
+   *
+   * This method deteremines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   *
+   * @return The configuration parameter including its source, either
+   *         "environment variable", "castor.conf" or "compile-time default".
+   */
+  ConfigParamAndSource<bool>
+    getUseBufferedTapeMarksOverMultipleFiles()
+    throw(castor::exception::Exception);
 
 private:
 

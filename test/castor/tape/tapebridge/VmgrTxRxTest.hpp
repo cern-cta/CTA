@@ -43,6 +43,7 @@ public:
   }
 
   void setUp() {
+    setenv("PATH_CONFIG", "/etc/castor/castor.conf", 1);
   }
 
   void tearDown() {

@@ -126,6 +126,12 @@ namespace tapebridge {
    */
   const char EMPTYVSN[CA_MAXVSNLEN+1] = "";
 
+  /**
+   * The compile-time default value of the tapebridged configuration parameter
+   * named TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
+   */
+  const bool TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES = false;
+
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor

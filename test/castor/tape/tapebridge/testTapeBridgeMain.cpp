@@ -23,6 +23,8 @@
  *****************************************************************************/
 
 #include "test/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
+#include "test/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp"
+#include "test/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp"
 #include "test/castor/tape/tapebridge/VmgrTxRxTest.hpp"
 
 #include "castor/tape/utils/SmartFILEPtr.hpp"

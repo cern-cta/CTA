@@ -52,6 +52,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------
@@ -123,6 +124,32 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     delete(tmpServerSocket);
     param = NULL; /* Will cause a segementation fault if used by accident */
   }
+
+  // Determine whether or not buffered tape-marks should be used over multiple
+  // files
+  ConfigParamAndSource<bool> useBufferedTapeMarksOverMultipleFiles("UNKNOWN",
+    false, "UNKNOWN");
+  try {
+    useBufferedTapeMarksOverMultipleFiles =
+      getUseBufferedTapeMarksOverMultipleFiles();
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      TAPEBRIDGE_TRANSFER_FAILED, params);
+
+    // Return
+    return;
+  }
+
+  // Log the whether or not buffered tape-marks will be used over multiple files
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("name"  , useBufferedTapeMarksOverMultipleFiles.name),
+    castor::dlf::Param("value" , useBufferedTapeMarksOverMultipleFiles.value),
+    castor::dlf::Param("source", useBufferedTapeMarksOverMultipleFiles.source)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+    params);
 
   // Job request to be received from VDQM
   legacymsg::RtcpJobRqstMsgBody jobRequest;
@@ -578,4 +605,68 @@ void castor::tape::tapebridge::VdqmRequestHandler::
          ": Unauthorized host"
       << ": Peer Host: " << peerHost);
   }
+}
+
+//------------------------------------------------------------------------------
+// getUseBufferedTapeMarksOverMultipleFiles
+//------------------------------------------------------------------------------
+castor::tape::tapebridge::ConfigParamAndSource<bool>
+  castor::tape::tapebridge::VdqmRequestHandler::
+  getUseBufferedTapeMarksOverMultipleFiles()
+  throw(castor::exception::Exception) {
+  const std::string paramName =
+    "TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES";
+  const char        *paramCStr  = NULL;
+  uint32_t          paramBool   = false;
+  std::string       paramSource = "UNKNOWN";
+
+  // Try to get the number of disk-IO threads from the environment variables
+  if(NULL != (paramCStr = getenv(
+    "TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"))) {
+    paramSource = "environment variable";
+
+    std::string paramUpperCaseStr = paramCStr;
+    utils::toUpper(paramUpperCaseStr);
+    if("FALSE" == paramUpperCaseStr) {
+      paramBool = false;
+    } else if("TRUE" == paramUpperCaseStr) {
+      paramBool = true;
+    } else {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+  // Else try to get the number of disk IO threads of castor.conf
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+    "USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", 0))) {
+    paramSource = "castor.conf";
+
+    std::string paramUpperCaseStr = paramCStr;
+    utils::toUpper(paramUpperCaseStr);
+    if("FALSE" == paramUpperCaseStr) {
+      paramBool = false;
+    } else if("TRUE" == paramUpperCaseStr) {
+      paramBool = true;
+    } else {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+  // Else use the compile-time default
+  } else {
+    paramSource = "compile-time default";
+    paramBool = TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES;
+  }
+
+  return ConfigParamAndSource<bool>(paramName, paramBool, paramSource);
 }
