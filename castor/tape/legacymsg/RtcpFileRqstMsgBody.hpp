@@ -73,7 +73,7 @@ namespace legacymsg {
     uint32_t procStatus; // RTCP_WAITING, RTC_POSITIONED, RTCP_FINISHED
 
     // Final return code and timing information                         
-    uint32_t cprc;               // Copy return status
+    int32_t  cprc;               // Copy return status
     uint32_t tStartPosition;     // Start time for position to this file
     uint32_t tEndPosition;       // End time for position to this file
     uint32_t tStartTransferDisk; // Start time for transfer to/from disk

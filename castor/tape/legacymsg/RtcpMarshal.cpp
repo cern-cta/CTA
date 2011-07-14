@@ -431,7 +431,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   marshalUint32(src.checkFid                         , p);
   marshalUint32(src.concat                           , p);
   marshalUint32(src.procStatus                       , p);
-  marshalUint32(src.cprc                             , p);
+  marshalInt32(src.cprc                             , p);
   marshalUint32(src.tStartPosition                   , p);
   marshalUint32(src.tEndPosition                     , p);
   marshalUint32(src.tStartTransferDisk               , p);
@@ -532,7 +532,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalInt32(src, srcLen, dst.checkFid);
   unmarshalUint32(src, srcLen, dst.concat);
   unmarshalUint32(src, srcLen, dst.procStatus);
-  unmarshalUint32(src, srcLen, dst.cprc);
+  unmarshalInt32(src, srcLen, dst.cprc);
   unmarshalUint32(src, srcLen, dst.tStartPosition);
   unmarshalUint32(src, srcLen, dst.tEndPosition);
   unmarshalUint32(src, srcLen, dst.tStartTransferDisk);
