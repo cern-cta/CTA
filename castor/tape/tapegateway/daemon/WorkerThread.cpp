@@ -45,6 +45,7 @@
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
@@ -1751,7 +1752,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 	} catch (std::bad_cast){
 
 	  // "Invalid Request" message
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_INTERNAL, WORKER_INVALID_CAST, 0, NULL);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
 	  
 	  EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
 	  errorReport->setErrorCode(EINVAL);
@@ -1818,7 +1819,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     return handleFailWorker(&sessionError, oraSvc, requester);
   } catch (std::bad_cast){
     // "Invalid Request" message
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_INTERNAL, WORKER_INVALID_CAST, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
 
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
