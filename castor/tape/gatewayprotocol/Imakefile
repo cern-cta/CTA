@@ -30,6 +30,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/DumpParametersRequest.cpp \
   ../tapegateway/EndNotification.cpp \
   ../tapegateway/EndNotificationErrorReport.cpp \
+  ../tapegateway/EndNotificationFileErrorReport.cpp \
   ../tapegateway/FileErrorReport.cpp \
   ../tapegateway/FileMigratedNotification.cpp \
   ../tapegateway/FileRecalledNotification.cpp \
@@ -53,6 +54,7 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamDumpParametersRequestCnv.cpp \
   ../../io/StreamEndNotificationCnv.cpp \
   ../../io/StreamEndNotificationErrorReportCnv.cpp \
+  ../../io/StreamEndNotificationFileErrorReportCnv.cpp \
   ../../io/StreamFileErrorReportCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
   ../../io/StreamFileRecalledNotificationCnv.cpp \

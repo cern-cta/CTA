@@ -1786,7 +1786,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     // We received a a failed file information. We will fail the file transfer first in the DB,
     // and then fail the session as usual.
     FileErrorReport fileError;
-    fileError.setAggregatorTransactionId(endRequest.m_aggregatorTransactionId());
+    fileError.setAggregatorTransactionId(endRequest.aggregatorTransactionId());
     fileError.setErrorCode(endRequest.errorCode());
     fileError.setErrorMessage(endRequest.errorMessage());
     fileError.setFileTransactionId(endRequest.fileTransactionId());
@@ -1816,7 +1816,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     sessionError.setErrorCode(endRequest.errorCode());
     sessionError.setErrorMessage(endRequest.errorMessage());
     sessionError.setMountTransactionId(endRequest.mountTransactionId());
-    return handleFailWorker(&sessionError, oraSvc, requester);
+    return handleFailWorker(sessionError, oraSvc, requester);
   } catch (std::bad_cast){
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
@@ -1824,7 +1824,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
-    if (response) delete response;
     return errorReport;
   }
   return NULL; // We should not get here.
