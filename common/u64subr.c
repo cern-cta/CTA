@@ -358,15 +358,15 @@ char *u64tostrsi(u_signed64 u64,
 	} else {
 		n = fldsize - strlen (tmpbuf);
 
-                // If the content of tmpbuf fits exactly or requires padding
+                /* If the content of tmpbuf fits exactly or requires padding */
                 if(n>=0) {
 		    memset (buf, ' ', n);
 		    strcpy (buf + n, tmpbuf);
-                // Else the contents of tmpbuf is too much
+                /* Else the contents of tmpbuf is too much */
                 } else {
                     strncpy (buf, tmpbuf, fldsize);
 
-                    // Ensure the string is termintaed
+                    /* Ensure the string is termintaed */
                     *(buf + fldsize - 1) = '\0';
                 }
 	}
