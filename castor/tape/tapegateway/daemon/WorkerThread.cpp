@@ -152,6 +152,9 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
         case OBJ_EndNotificationErrorReport:
           handler_response = handleFailWorker(*obj,*oraSvc,requester);
           break;
+        case OBJ_EndNotificationFileErrorReport:
+          handler_response = handleFileFailWorker(*obj,*oraSvc,requester);
+          break;
         default:
           //object not valid
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_REQUEST, params);
@@ -841,7 +844,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("errorCode",sstrerror(e.code())),
           castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_MIGRATION_VMGR_FAILURE, params, &castorFileId);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,WORKER_MIGRATION_VMGR_FAILURE, params, &castorFileId);
 
       try {
 
@@ -869,7 +872,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
             castor::dlf::Param("errorCode",sstrerror(e.code())),
             castor::dlf::Param("errorMessage",e.getMessage().str())
         };
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_MIGRATION_CANNOT_UPDATE_DB, params,&castorFileId);
 
       }
       // As the previous call did modify things, better committing before returning.
@@ -1724,7 +1727,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 	        castor::dlf::Param("mode",tape.tpmode()),
 	        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
 	    };
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,WORKER_FAIL_DB_UPDATE, paramsDb);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,WORKER_FAIL_DB_UPDATE, paramsDb);
 	    
 
 	    
@@ -1739,7 +1742,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 	        castor::dlf::Param("errorCode",sstrerror(e.code())),
 	        castor::dlf::Param("errorMessage",e.getMessage().str())
 	    };
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_FAIL_DB_ERROR, params);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FAIL_DB_ERROR, params);
 	    return response;
 	  }
 
@@ -1748,7 +1751,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 	} catch (std::bad_cast){
 
 	  // "Invalid Request" message
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_INVALID_CAST, 0, NULL);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_INTERNAL, WORKER_INVALID_CAST, 0, NULL);
 	  
 	  EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
 	  errorReport->setErrorCode(EINVAL);
@@ -1758,4 +1761,70 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 	  
 	}
 	return  response;
+}
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
+    castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    requesterInfo& requester ) throw(){
+  // Auto-rollback mechanism for exceptions
+  // ScopedTransaction scpTrans(&oraSvc); Not needed.
+
+  // I received an EndNotificationFileErrorReport
+  try {
+    EndNotificationFileErrorReport& endRequest = dynamic_cast<EndNotificationFileErrorReport&>(obj);
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", endRequest.aggregatorTransactionId()),
+        castor::dlf::Param("errorcode", endRequest.errorCode()),
+        castor::dlf::Param("errorMessage", endRequest.errorMessage())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, WORKER_FAIL_NOTIFICATION,params);
+    // We received a a failed file information. We will fail the file transfer first in the DB,
+    // and then fail the session as usual.
+    FileErrorReport fileError;
+    fileError.setAggregatorTransactionId(endRequest.m_aggregatorTransactionId());
+    fileError.setErrorCode(endRequest.errorCode());
+    fileError.setErrorMessage(endRequest.errorMessage());
+    fileError.setFileTransactionId(endRequest.fileTransactionId());
+    fileError.setFileid(endRequest.fileId());
+    fileError.setFseq(endRequest.fSeq());
+    fileError.setMountTransactionId(endRequest.mountTransactionId());
+    fileError.setNshost(endRequest.nsHost());
+    try {
+      oraSvc.failFileTransfer(fileError);
+    } catch (castor::exception::Exception& e){
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", endRequest.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FAIL_DB_ERROR, params);
+    }
+
+    // Convert the error report into a EndNotificationErrorReport
+    // and fail the session
+    EndNotificationErrorReport sessionError;
+    sessionError.setAggregatorTransactionId(endRequest.aggregatorTransactionId());
+    sessionError.setErrorCode(endRequest.errorCode());
+    sessionError.setErrorMessage(endRequest.errorMessage());
+    sessionError.setMountTransactionId(endRequest.mountTransactionId());
+    return handleFailWorker(&sessionError, oraSvc, requester);
+  } catch (std::bad_cast){
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_INTERNAL, WORKER_INVALID_CAST, 0, NULL);
+
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    if (response) delete response;
+    return errorReport;
+  }
+  return NULL; // We should not get here.
 }
