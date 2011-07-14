@@ -232,7 +232,9 @@ namespace castor {
     OBJ_NsFileId = 192,
     OBJ_BulkRequestResult = 193,
     OBJ_FileResult = 194,
-    OBJ_DiskPoolQuery = 195
+    OBJ_DiskPoolQuery = 195,
+
+    OBJ_EndNotificationFileErrorReport = 196
 
   };
 
