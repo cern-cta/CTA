@@ -86,15 +86,46 @@ public:
    * Determines the whether or not the tapebridged daemon will cause
    * tape-migrations to use buffered tape-marks over multiple files.
    *
-   * This method deteremines the required value by first reading the
+   * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
    *
    * @return The configuration parameter including its source, either
    *         "environment variable", "castor.conf" or "compile-time default".
    */
-  ConfigParamAndSource<bool>
-    getUseBufferedTapeMarksOverMultipleFiles()
+  ConfigParamAndSource<bool> getUseBufferedTapeMarksOverMultipleFiles()
+    throw(castor::exception::Exception);
+
+  /**
+   * With respect to using buffered tape-marks over multiple files, this
+   * method determines the maximum number of bytes to be written to tape before
+   * a flush to tape.  Please note that the flushes occur at file boaundaries
+   * so most of the time more data will be written to tape before the actual
+   * flush occurs.
+   *
+   * This method determines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   *
+   * @return The configuration parameter including its source, either
+   *         "environment variable", "castor.conf" or "compile-time default".
+   */
+  ConfigParamAndSource<uint64_t> getMaxBytesBeforeFlush()
+    throw(castor::exception::Exception);
+
+  /**
+   * With respect to using buffered tape-marks over multiple files, this
+   * method determines the maximum number of files to be written to tape before
+   * a flush to tape.
+   *
+   * This method determines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   *
+   * @return The configuration parameter including its source, either
+   *         "environment variable", "castor.conf" or "compile-time default".
+   */
+  ConfigParamAndSource<uint64_t> getMaxFilesBeforeFlush()
     throw(castor::exception::Exception);
 
 private:

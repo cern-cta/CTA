@@ -94,7 +94,7 @@ public:
   /**
    * Determines the number of rtcpd disk-IO threads.
    *
-   * This method deteremines the required value by first reading the
+   * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
    *

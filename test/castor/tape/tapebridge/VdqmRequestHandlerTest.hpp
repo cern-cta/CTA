@@ -25,6 +25,7 @@
 #ifndef TEST_CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLERTEST_HPP
 #define TEST_CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLERTEST_HPP 1
 
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 
@@ -41,11 +42,15 @@ public:
   void setUp() {
     setenv("PATH_CONFIG", "/etc/castor/castor.conf", 1);
     unsetenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
+    unsetenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH");
   }
 
   void tearDown() {
     setenv("PATH_CONFIG", "/etc/castor/castor.conf", 1);
     unsetenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
+    unsetenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH");
   }
 
   void testGetUseBufferedTapeMarksOverMultipleFilesInvalidEnv() {
@@ -263,7 +268,282 @@ public:
       useBufferedTapeMarksOverMultipleFiles.source);
   }
 
+  void testGetMaxBytesBeforeFlushInvalidEnv() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXBYTESBEFOREFLUSH",
+      0,
+      setenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
+
+    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush(),
+      castor::exception::InvalidArgument);
+
+    std::string exceptionMsg = "UNKNOWN";
+    try {
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush();
+    } catch(castor::exception::InvalidArgument &ex) {
+      exceptionMsg = ex.getMessage().str();
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
+      std::string("Configuration parameter is not a valid unsigned integer:"
+        " name=TAPEBRIDGED/MAXBYTESBEFOREFLUSH"
+        " value=INVALID_UINT_VALUE"
+        " source=environment variable"),
+      exceptionMsg);
+  }
+
+  void testGetMaxBytesBeforeFlushEnv() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXBYTESBEFOREFLUSH",
+      0,
+      setenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH", "11111", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "getMaxBytesBeforeFlush",
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getMaxBytesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      maxBytesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
+      (uint64_t)11111,
+      maxBytesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.source",
+      std::string("environment variable"),
+      maxBytesBeforeFlush.source);
+  }
+
+  void testGetMaxBytesBeforeFlushInvalidPathConfig() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "INVALID PATH CONFIG", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE("getMaxBytesBeforeFlush",
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      maxBytesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
+      castor::tape::tapebridge::
+        TAPEBRIDGED_MAXBYTESBEFOREFLUSH,
+      maxBytesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.source",
+      std::string("compile-time default"),
+      maxBytesBeforeFlush.source);
+  }
+
+  void testGetMaxBytesBeforeFlushInvalidLocalCastorConf() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "getMaxBytesBeforeFlush_invalid_castor.conf", 1));
+
+    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid local castor.conf variable",
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush(),
+      castor::exception::InvalidArgument);
+
+    std::string exceptionMsg = "UNKNOWN";
+    try {
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush();
+    } catch(castor::exception::InvalidArgument &ex) {
+      exceptionMsg = ex.getMessage().str();
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
+      std::string("Configuration parameter is not a valid unsigned integer:"
+        " name=TAPEBRIDGED/MAXBYTESBEFOREFLUSH"
+        " value=INVALID_UINT_VALUE"
+        " source=castor.conf"),
+      exceptionMsg);
+  }
+
+  void testGetMaxBytesBeforeFlushLocalCastorConf() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "getMaxBytesBeforeFlush_castor.conf", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "getMaxBytesBeforeFlush",
+      maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      maxBytesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
+      (uint64_t)33333,
+      maxBytesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.source",
+      std::string("castor.conf"),
+      maxBytesBeforeFlush.source);
+  }
+
+  void testGetMaxFilesBeforeFlushInvalidEnv() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXFILESBEFOREFLUSH",
+      0,
+      setenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
+
+    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush(),
+      castor::exception::InvalidArgument);
+
+    std::string exceptionMsg = "UNKNOWN";
+    try {
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush();
+    } catch(castor::exception::InvalidArgument &ex) {
+      exceptionMsg = ex.getMessage().str();
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
+      std::string("Configuration parameter is not a valid unsigned integer:"
+        " name=TAPEBRIDGED/MAXFILESBEFOREFLUSH"
+        " value=INVALID_UINT_VALUE"
+        " source=environment variable"),
+      exceptionMsg);
+  }
+
+  void testGetMaxFilesBeforeFlushEnv() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXFILESBEFOREFLUSH",
+      0,
+      setenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH", "11111", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "getMaxFilesBeforeFlush",
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getMaxFilesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      maxFilesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",
+      (uint64_t)11111,
+      maxFilesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.source",
+      std::string("environment variable"),
+      maxFilesBeforeFlush.source);
+  }
+
+  void testGetMaxFilesBeforeFlushInvalidPathConfig() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "INVALID PATH CONFIG", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE("getMaxFilesBeforeFlush",
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      maxFilesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",
+      castor::tape::tapebridge::
+        TAPEBRIDGED_MAXFILESBEFOREFLUSH,
+      maxFilesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.source",
+      std::string("compile-time default"),
+      maxFilesBeforeFlush.source);
+  }
+
+  void testGetMaxFilesBeforeFlushInvalidLocalCastorConf() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "getMaxFilesBeforeFlush_invalid_castor.conf", 1));
+
+    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid local castor.conf variable",
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush(),
+      castor::exception::InvalidArgument);
+
+    std::string exceptionMsg = "UNKNOWN";
+    try {
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush();
+    } catch(castor::exception::InvalidArgument &ex) {
+      exceptionMsg = ex.getMessage().str();
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
+      std::string("Configuration parameter is not a valid unsigned integer:"
+        " name=TAPEBRIDGED/MAXFILESBEFOREFLUSH"
+        " value=INVALID_UINT_VALUE"
+        " source=castor.conf"),
+      exceptionMsg);
+  }
+
+  void testGetMaxFilesBeforeFlushLocalCastorConf() {
+    const uint32_t nbDrives = 0;
+    castor::tape::tapebridge::VdqmRequestHandler handler(nbDrives);
+    castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+      maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "getMaxFilesBeforeFlush_castor.conf", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "getMaxFilesBeforeFlush",
+      maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.name",
+      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      maxFilesBeforeFlush.name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",
+      (uint64_t)44444,
+      maxFilesBeforeFlush.value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.source",
+      std::string("castor.conf"),
+      maxFilesBeforeFlush.source);
+  }
+
   CPPUNIT_TEST_SUITE(VdqmRequestHandlerTest);
+
   CPPUNIT_TEST(
     testGetUseBufferedTapeMarksOverMultipleFilesInvalidEnv);
   CPPUNIT_TEST(
@@ -278,6 +558,19 @@ public:
     testGetUseBufferedTapeMarksOverMultipleFilesLocalCastorConfTrue);
   CPPUNIT_TEST(
     testGetUseBufferedTapeMarksOverMultipleFilesLocalCastorConfFalse);
+
+  CPPUNIT_TEST(testGetMaxBytesBeforeFlushInvalidEnv);
+  CPPUNIT_TEST(testGetMaxBytesBeforeFlushEnv);
+  CPPUNIT_TEST(testGetMaxBytesBeforeFlushInvalidPathConfig);
+  CPPUNIT_TEST(testGetMaxBytesBeforeFlushInvalidLocalCastorConf);
+  CPPUNIT_TEST(testGetMaxBytesBeforeFlushLocalCastorConf);
+
+  CPPUNIT_TEST(testGetMaxFilesBeforeFlushInvalidEnv);
+  CPPUNIT_TEST(testGetMaxFilesBeforeFlushEnv);
+  CPPUNIT_TEST(testGetMaxFilesBeforeFlushInvalidPathConfig);
+  CPPUNIT_TEST(testGetMaxFilesBeforeFlushInvalidLocalCastorConf);
+  CPPUNIT_TEST(testGetMaxFilesBeforeFlushLocalCastorConf);
+
   CPPUNIT_TEST_SUITE_END();
 };
 

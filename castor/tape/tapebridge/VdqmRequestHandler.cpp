@@ -47,6 +47,7 @@
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/tapeBridgeClientInfo2MsgBody.h"
+#include "h/u64subr.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
 
@@ -144,12 +145,67 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
   }
 
   // Log the whether or not buffered tape-marks will be used over multiple files
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("name"  , useBufferedTapeMarksOverMultipleFiles.name),
-    castor::dlf::Param("value" , useBufferedTapeMarksOverMultipleFiles.value),
-    castor::dlf::Param("source", useBufferedTapeMarksOverMultipleFiles.source)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
-    params);
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("name"  , useBufferedTapeMarksOverMultipleFiles.name),
+      castor::dlf::Param("value" , useBufferedTapeMarksOverMultipleFiles.value),
+      castor::dlf::Param("source",
+        useBufferedTapeMarksOverMultipleFiles.source)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+      params);
+  }
+
+  // Determine the maximum number of bytes to be written to tape before a flush
+  // should occur
+  ConfigParamAndSource<uint64_t> maxBytesBeforeFlush("UNKNOWN", 0, "UNKNOWN");
+  try {
+    maxBytesBeforeFlush = getMaxBytesBeforeFlush();
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      TAPEBRIDGE_TRANSFER_FAILED, params);
+
+    // Return
+    return;
+  }
+
+  // Log the maximum number of bytes to be written to tape before a flush
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("name"  , maxBytesBeforeFlush.name),
+      castor::dlf::Param("value" , maxBytesBeforeFlush.value),
+      castor::dlf::Param("source", maxBytesBeforeFlush.source)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+      params);
+  }
+
+  // Determine the maximum number of files to be written to tape before a flush
+  // should occur
+  ConfigParamAndSource<uint64_t> maxFilesBeforeFlush("UNKNOWN", 0, "UNKNOWN");
+  try {
+    maxFilesBeforeFlush = getMaxFilesBeforeFlush();
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      TAPEBRIDGE_TRANSFER_FAILED, params);
+      
+    // Return
+    return;
+  }
+
+  // Log the maximum number of files to be written to tape before a flush
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("name"  , maxFilesBeforeFlush.name),
+      castor::dlf::Param("value" , maxFilesBeforeFlush.value),
+      castor::dlf::Param("source", maxFilesBeforeFlush.source)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+      params);
+  }
 
   // Job request to be received from VDQM
   legacymsg::RtcpJobRqstMsgBody jobRequest;
@@ -607,6 +663,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::
   }
 }
 
+
 //------------------------------------------------------------------------------
 // getUseBufferedTapeMarksOverMultipleFiles
 //------------------------------------------------------------------------------
@@ -669,4 +726,112 @@ castor::tape::tapebridge::ConfigParamAndSource<bool>
   }
 
   return ConfigParamAndSource<bool>(paramName, paramBool, paramSource);
+}
+
+
+//------------------------------------------------------------------------------
+// getMaxBytesBeforeFlush
+//------------------------------------------------------------------------------
+castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+  castor::tape::tapebridge::VdqmRequestHandler::getMaxBytesBeforeFlush()
+  throw(castor::exception::Exception) {
+  const std::string paramName = "TAPEBRIDGED/MAXBYTESBEFOREFLUSH";
+  const char        *paramCStr  = NULL;
+  uint64_t          paramUInt64 = 0;
+  std::string       paramSource = "UNKNOWN";
+
+  // Try to get the required value from the environment variables
+  if(NULL != (paramCStr = getenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH"))) {
+    paramSource = "environment variable";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    paramUInt64 = strtou64(paramCStr);
+
+  // Else try to get the required value from castor.conf
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+    "MAXBYTESBEFOREFLUSH", 0))) {
+    paramSource = "castor.conf";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    paramUInt64 = strtou64(paramCStr);
+
+  // Else use the compile-time default
+  } else {
+    paramSource = "compile-time default";
+    paramUInt64 = TAPEBRIDGED_MAXBYTESBEFOREFLUSH;
+  }
+
+  return ConfigParamAndSource<uint64_t>(paramName, paramUInt64, paramSource);
+}
+
+
+//------------------------------------------------------------------------------
+// getMaxFilesBeforeFlush
+//------------------------------------------------------------------------------
+castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+  castor::tape::tapebridge::VdqmRequestHandler::getMaxFilesBeforeFlush()
+  throw(castor::exception::Exception) {
+  const std::string paramName = "TAPEBRIDGED/MAXFILESBEFOREFLUSH";
+  const char        *paramCStr  = NULL;
+  uint64_t          paramUInt64 = 0;
+  std::string       paramSource = "UNKNOWN";
+
+  // Try to get the required value from the environment variables
+  if(NULL != (paramCStr = getenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH"))) {
+    paramSource = "environment variable";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    paramUInt64 = strtou64(paramCStr);
+
+  // Else try to get the required value from castor.conf
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+    "MAXFILESBEFOREFLUSH", 0))) {
+    paramSource = "castor.conf";
+
+    if(!utils::isValidUInt(paramCStr)) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "Configuration parameter is not a valid unsigned integer"
+        ": name=" << paramName <<
+        " value=" << paramCStr <<
+        " source=" << paramSource;
+      throw(ex);
+    }
+
+    paramUInt64 = strtou64(paramCStr);
+
+  // Else use the compile-time default
+  } else {
+    paramSource = "compile-time default";
+    paramUInt64 = TAPEBRIDGED_MAXFILESBEFOREFLUSH;
+  }
+
+  return ConfigParamAndSource<uint64_t>(paramName, paramUInt64, paramSource);
 }

@@ -132,6 +132,20 @@ namespace tapebridge {
    */
   const bool TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES = false;
 
+  /**
+   * The compile-time default value of the maximum number of bytes to be
+   * written to tape before a flush to tape.  Please note that a flush occurs
+   * on a file boundary therefore more bytes will normally be written to tape
+   * before the actual flush occurs.
+   */
+  const uint64_t TAPEBRIDGED_MAXBYTESBEFOREFLUSH = 8589934592; // 8 GB
+
+  /**
+   * The compile-time default value of the maximum number of files to be
+   * written to tape before a flush to tape.
+   */
+  const uint64_t TAPEBRIDGED_MAXFILESBEFOREFLUSH = 100;
+
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor

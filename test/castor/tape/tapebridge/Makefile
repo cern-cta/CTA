@@ -50,8 +50,6 @@ testtapebridge: \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
   tape_utils.o \
-  Cuuid.o \
-  getconfent.o \
   dlf_Param.o \
   exception_Exception.o \
   exception_InvalidArgument.o \
@@ -93,10 +91,13 @@ testtapebridge: \
   test_exception.o \
   vdqmapi.o \
   vdqm_SendRecv.o \
-  log.o \
-  remote.o \
-  trace.o \
-  Cpwd.o \
+  common_Cpwd.o \
+  common_Cuuid.o \
+  common_getconfent.o \
+  common_log.o \
+  common_remote.o \
+  common_trace.o \
+  common_u64subr.o \
   rtcp_recvRtcpHdr.o \
   rtcpd_GetClientInfo.o \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
@@ -175,12 +176,14 @@ tapebridgedaemontester: \
   marshall.o \
   SmartFd.o \
   SmartFILEPtr.o \
-  Cuuid.o \
-  log.o \
-  remote.o \
   vdqmapi.o \
-  trace.o \
-  Cpwd.o \
+  common_Cpwd.o \
+  common_Cuuid.o \
+  common_getconfent.o \
+  common_log.o \
+  common_remote.o \
+  common_trace.o \
+  common_u64subr.o \
   rtcp_Listen.o \
   rtcp_log.o \
   rtcp_SendRecv.o \
@@ -200,7 +203,6 @@ tapebridgedaemontester: \
   Factories.o \
   Cdlopen.o \
   Cglobals.o \
-  getconfent.o \
   Dlf.o \
   dlf_lib.o \
   Csnprintf.o \
@@ -273,11 +275,6 @@ tapebridged: \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
   tape_utils.o \
-  Cuuid.o \
-  Cthread.o \
-  Cgrp.o \
-  Cgetopt.o \
-  getconfent.o \
   exception_Exception.o \
   exception_InvalidArgument.o \
   exception_Communication.o \
@@ -322,10 +319,16 @@ tapebridged: \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
   vdqmapi.o \
   vdqm_SendRecv.o \
-  log.o \
-  remote.o \
-  trace.o \
-  Cpwd.o \
+  common_Cgetopt.o \
+  common_Cgrp.o \
+  common_Cpwd.o \
+  common_Cuuid.o \
+  common_Cthread.o \
+  common_getconfent.o \
+  common_log.o \
+  common_remote.o \
+  common_trace.o \
+  common_u64subr.o \
   rtcpd_GetClientInfoMsg.o \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
@@ -349,6 +352,7 @@ testTapeBridgeMain.o: \
 testTapeBridgeMain.cpp: \
   BridgeClientInfo2SenderTest.hpp \
   BridgeProtocolEngineTest.hpp \
+  VdqmRequestHandlerTest.hpp \
   VmgrTxRxTest.hpp
 	touch $@
 
@@ -384,21 +388,6 @@ SmartFd.o: $(ROOT_DIR)/castor/tape/utils/SmartFd.cpp
 
 SmartFILEPtr.o: $(ROOT_DIR)/castor/tape/utils/SmartFILEPtr.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-Cuuid.o: $(ROOT_DIR)/common/Cuuid.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-Cgrp.o: $(ROOT_DIR)/common/Cgrp.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-Cthread.o: $(ROOT_DIR)/common/Cthread.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-Cgetopt.o: $(ROOT_DIR)/common/Cgetopt.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-getconfent.o: $(ROOT_DIR)/common/getconfent.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -549,16 +538,34 @@ vdqmapi.o: $(ROOT_DIR)/vdqm/vdqmapi.c
 vdqm_SendRecv.o: $(ROOT_DIR)/vdqm/vdqm_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-log.o: $(ROOT_DIR)/common/log.c
+common_Cuuid.o: $(ROOT_DIR)/common/Cuuid.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-remote.o: $(ROOT_DIR)/common/remote.c
+common_Cgetopt.o: $(ROOT_DIR)/common/Cgetopt.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-trace.o: $(ROOT_DIR)/common/trace.c
+common_Cgrp.o: $(ROOT_DIR)/common/Cgrp.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-Cpwd.o: $(ROOT_DIR)/common/Cpwd.c
+common_Cpwd.o: $(ROOT_DIR)/common/Cpwd.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_Cthread.o: $(ROOT_DIR)/common/Cthread.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_getconfent.o: $(ROOT_DIR)/common/getconfent.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_log.o: $(ROOT_DIR)/common/log.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_remote.o: $(ROOT_DIR)/common/remote.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_trace.o: $(ROOT_DIR)/common/trace.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_u64subr.o: $(ROOT_DIR)/common/u64subr.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcpd_GetClientInfoMsg.o: \
