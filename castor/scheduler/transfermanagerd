@@ -160,19 +160,36 @@ class TransferManagerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
   There are mainly 2 kinds : monitoring requests and callbacks from the diskservers'''
 
+  stagerDBlock = threading.Lock()
+  stagerConnection = None
+
   def __init__(self, conn):
     '''constructor'''
     rpyc.Service.__init__(self, conn)
     # connection to the stager DB
     self.stagerConnection = None
 
-  def dbConnection(self):
+  def dbConnection(cls):
     '''returns a connection to the stager DB.
-    The connection is cached and reconnections are handled'''
-    if self.stagerConnection == None:
-      self.stagerConnection = castor_tools.connectToStager()
-      self.stagerConnection.autocommit = True
-    return self.stagerConnection
+       The connection is cached and reconnections are handled.
+       Note that the connection is shared between all instances of the
+       TransferManagerService. Thus this method should never be called
+       without calling first acquireDbConnection'''
+    if cls.stagerConnection == None:
+      cls.stagerConnection = castor_tools.connectToStager()
+      cls.stagerConnection.autocommit = True
+    return cls.stagerConnection
+  dbConnection = classmethod(dbConnection)
+
+  def acquireDbConnection(cls):
+    '''Take a lock on the Db connection access'''
+    cls.stagerDBlock.acquire()
+  acquireDbConnection = classmethod(acquireDbConnection)
+
+  def releaseDbConnection(cls):
+    '''Release the lock on the Db connection access'''
+    cls.stagerDBlock.release()
+  releaseDbConnection = classmethod(releaseDbConnection)
 
   def dispatch(self, func, diskPool, *args):
     '''gather the results of the call to func for all diskServers'''
@@ -369,19 +386,23 @@ class TransferManagerService(rpyc.Service):
       dlf.writedebug(msgs.INVOKINGTRANSFERSKILLED, subreqid=transferid, reqid=reqid, fileid=fileid, Errno=errno, ErrorMessage=errmsg)
     # only inform the stager
     try:
-      stcur = self.dbConnection().cursor()
-      stcur.arraysize = 50
-      data = [list(item) for item in zip(*transfers)]
-      transferids = data[0]
-      errnos, errmsgs = data[2:4]
-      stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
-      stcur.close()
-    except Exception, e:
-      for transferid, fileid, errno, errmsg, reqid in transfers:
-        # "Exception caught while failing transfer" message
-        dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
-      # check whether we should reconnect to DB, and do so if needed
-      self.dbConnection().checkForReconnection(e)
+      self.__class__.acquireDbConnection()
+      try:
+        stcur = self.__class__.dbConnection().cursor()
+        stcur.arraysize = 50
+        data = [list(item) for item in zip(*transfers)]
+        transferids = data[0]
+        errnos, errmsgs = data[2:4]
+        stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
+        stcur.close()
+      except Exception, e:
+        for transferid, fileid, errno, errmsg, reqid in transfers:
+          # "Exception caught while failing transfer" message
+          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection()
 
   def exposed_transfersCanceled(self, machine, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
@@ -434,24 +455,28 @@ class TransferManagerService(rpyc.Service):
     have been killed while no daemon was running are properly terminated.'''
     dlf.writedebug(msgs.INVOKINGSYNCRUN)
     try:
-      # connect to the DB and call the proper PL/SQL procedure
-      stcur = self.dbConnection().cursor()
-      stcur.arraysize = 50
-      respcur = self.dbConnection().cursor()
-      respcur.arraysize = 50
-      stcur.execute("BEGIN syncRunningTransfers(:1, :2, :3); END;", [diskserver, list(runningTransfers), respcur])
-      terminatedtransfers = respcur.fetchall()
-      stcur.close()
-      respcur.close()
-      # log the termination of the terminated transfers
-      for transferId, reqId, fileid, nsHost in terminatedtransfers:
-        # 'Transfer was marked as failed in stager DB after it disappeared from the diskserver' message
-        dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
-    except Exception, e:
-      # "Exception caught while synchronizing running transfers, giving up with synchronization" message
-      dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
-      # check whether we should reconnect to DB, and do so if needed
-      self.dbConnection().checkForReconnection(e)
+      self.__class__.acquireDbConnection()
+      try:
+        # connect to the DB and call the proper PL/SQL procedure
+        stcur = self.__class__.dbConnection().cursor()
+        stcur.arraysize = 50
+        respcur = self.__class__.dbConnection().cursor()
+        respcur.arraysize = 50
+        stcur.execute("BEGIN syncRunningTransfers(:1, :2, :3); END;", [diskserver, list(runningTransfers), respcur])
+        terminatedtransfers = respcur.fetchall()
+        stcur.close()
+        respcur.close()
+        # log the termination of the terminated transfers
+        for transferId, reqId, fileid, nsHost in terminatedtransfers:
+          # 'Transfer was marked as failed in stager DB after it disappeared from the diskserver' message
+          dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
+      except Exception, e:
+        # "Exception caught while synchronizing running transfers, giving up with synchronization" message
+        dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection()
 
 def initQueues():
   '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''

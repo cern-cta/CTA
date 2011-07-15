@@ -29,7 +29,7 @@
 '''runningtransferset module of the CASTOR disk server manager.
 Handle a set of running transfers on a given diskserver'''
 
-import os, pwd, stat, re, string, socket
+import os, pwd, socket
 import threading
 import time
 import dlf
@@ -154,7 +154,7 @@ class RunningTransfersSet(object):
     properly in the databases are ended.
     Note that this is linux specific code.'''
     # 'populating running scripts from system' message
-    dlf.writedebug(msgs.POPULATING)
+    dlf.write(msgs.POPULATING)
     # get a random scheduler host
     scheduler = self.config.getValue('DiskManager', 'ServerHosts').split()[0]
     # loop over all processes
@@ -373,9 +373,12 @@ class RunningTransfersSet(object):
     for scheduler in killedTransfers:
       try:
         self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]), timeout=timeout)
+        for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
+          # "Informed scheduler that transfer was killed by a signal" message
+          dlf.write(msgs.INFORMTRANSFERKILLED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, signal=-rc, Message=msg)
       except Exception, e:
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
-          # "Failed to inform scheduler that transfers were killed by signals" message
+          # "Failed to inform scheduler that transfer was killed by a signal" message
           dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Message=msg)
 
   def d2dend(self, transferid):

@@ -41,7 +41,8 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'RETRYTRANSFER', 'INVALIDTIMEOUTOPTION', 'ANYTRANSFERFROMSCHED',
                 'INVOKINGTRANSFERALREADYSTARTED', 'SYNCRUNTRANSFERFAILED',
                 'DISKMANAGERDSTARTED', 'DISKMANAGERDSTOPPED', 'INVOKINGRETRYD2DDEST',
-                'TRANSFERSTARTTIMEOUT', 'ACTIVITYCHECKDROPCONN', 'ACTIVITYCHECKEXCEPTION')
+                'TRANSFERSTARTTIMEOUT', 'ACTIVITYCHECKDROPCONN', 'ACTIVITYCHECKEXCEPTION',
+                'INFORMTRANSFERKILLED')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer called',
@@ -65,7 +66,7 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer call
                  msgs.FOUNDTRANSFERALREADYRUNNING : 'Found transfer already running',
                  msgs.TRANSFERENDED : 'Transfer ended',
                  msgs.INFORMTRANSFERISOVERFAILED : 'Failed to inform scheduler that a d2d transfer is over',
-                 msgs.INFORMTRANSFERKILLEDFAILED : 'Failed to inform scheduler that transfers were killed by signals',
+                 msgs.INFORMTRANSFERKILLEDFAILED : 'Failed to inform scheduler that transfer was killed by a signal',
                  msgs.RETRYTRANSFER : 'Retrying transfer',
                  msgs.INVALIDTIMEOUTOPTION : 'Invalid TransferManager/PendingTimeouts option, ignoring entry',
                  msgs.ANYTRANSFERFROMSCHED : 'Invoking anyTransfersFromScheduler called',
@@ -76,5 +77,7 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer call
                  msgs.INVOKINGRETRYD2DDEST : 'Invoking retryD2dDest called',
                  msgs.TRANSFERSTARTTIMEOUT : 'Timeout when trying to start/cancel transfer. Putting it back to the queue',
                  msgs.ACTIVITYCHECKDROPCONN : 'Detected stuck ActivityControl thread. Killed connections to transfermanagerd',
-                 msgs.ACTIVITYCHECKEXCEPTION : 'Caught exception in ActivityControlChecker thread. Giving up for this round'})
+                 msgs.ACTIVITYCHECKEXCEPTION : 'Caught exception in ActivityControlChecker thread. Giving up for this round',
+                 msgs.INFORMTRANSFERKILLED : 'Informed scheduler that transfer was killed by a signal',
+})
 
