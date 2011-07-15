@@ -138,7 +138,7 @@ namespace tapebridge {
    * on a file boundary therefore more bytes will normally be written to tape
    * before the actual flush occurs.
    */
-  const uint64_t TAPEBRIDGED_MAXBYTESBEFOREFLUSH = 8589934592; // 8 GB
+  const uint64_t TAPEBRIDGED_MAXBYTESBEFOREFLUSH = 8589934592ULL; // 8 GB
 
   /**
    * The compile-time default value of the maximum number of files to be
