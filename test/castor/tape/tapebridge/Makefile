@@ -343,7 +343,7 @@ tapebridged: \
   metrics_UpdateThread.o \
   Cmutex.o \
   castor_System.o
-	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
+	g++ $(COMMON_OPS) -lpthread -luuid -ldl -o $@ $^
 
 testTapeBridgeMain.o: \
   testTapeBridgeMain.cpp
