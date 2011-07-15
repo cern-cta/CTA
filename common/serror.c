@@ -336,6 +336,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Cartridge write protected",
    "Wrong vsn",
    "Tape has a bad MIR",
+   "castor::tape::net::acceptConnection interrupted",
    "BAD ERROR NUMBER"
   };
 
