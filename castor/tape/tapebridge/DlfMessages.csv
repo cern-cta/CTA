@@ -115,3 +115,5 @@
 114,TAPEBRIDGE_TOO_MANY_DRIVES_IN_TPCONFIG,"There are more drives in the TPCONFIG file than there were when tapebridged was started.  Please restart tapebridged."
 115,TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE,"Received TAPEBRIDGE_FLUSHEDTOTAPE"
 116,TAPEBRIDGE_CONFIG_PARAM,"Determined value of configuration parameter"
+117,TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE,"Notifying client end of failed session due to failed copy of tape file"
+118,TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE,"Notified client end of failed session due to failed copy of tape file"
