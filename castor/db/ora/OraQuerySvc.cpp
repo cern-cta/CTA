@@ -131,7 +131,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
     if (m_diskCopies4UserTagLastRecallsStatement) deleteStatement(m_diskCopies4UserTagLastRecallsStatement);
     if (m_describeDiskPoolsStatement) deleteStatement(m_describeDiskPoolsStatement);
     if (m_describeDiskPoolStatement) deleteStatement(m_describeDiskPoolStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_diskCopies4FileNameStatement = 0;
   m_diskCopies4FileStatement = 0;

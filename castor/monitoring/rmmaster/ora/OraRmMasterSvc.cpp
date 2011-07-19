@@ -129,7 +129,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::reset() throw() {
       deleteStatement(m_getFileSystemsStatement);
     if(m_checkIfFilesExistStatement)
       deleteStatement(m_checkIfFilesExistStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_storeClusterStatusStatement = 0;
   m_getDiskServersStatement     = 0;

@@ -121,15 +121,11 @@ void castor::tape::rechandler::ora::OraRecHandlerSvc::reset() throw() {
     if  (m_inputForRecallPolicyStatement)deleteStatement(m_inputForRecallPolicyStatement);
     if  (m_resurrectTapesStatement) deleteStatement(m_resurrectTapesStatement);
     if  (m_tapesAndMountsForRecallPolicyStatement) deleteStatement(m_tapesAndMountsForRecallPolicyStatement);
-
-
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
-
   m_inputForRecallPolicyStatement=0;
   m_resurrectTapesStatement=0;
   m_tapesAndMountsForRecallPolicyStatement=0;
-
 }
 
 

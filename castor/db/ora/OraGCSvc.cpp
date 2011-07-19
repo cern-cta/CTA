@@ -187,7 +187,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
     if (m_dumpCleanupLogsStatement) deleteStatement(m_dumpCleanupLogsStatement);
     if (m_truncateCleanupLogsStatement) deleteStatement(m_truncateCleanupLogsStatement);
     if (m_removeTerminatedRequestsStatement) deleteStatement(m_removeTerminatedRequestsStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;
   m_filesDeletedStatement = 0;

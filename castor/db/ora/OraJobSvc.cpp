@@ -188,7 +188,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
     if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
     if (m_putFailedStatement) deleteStatement(m_putFailedStatement);
     if (m_firstByteWrittenStatement) deleteStatement(m_firstByteWrittenStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;

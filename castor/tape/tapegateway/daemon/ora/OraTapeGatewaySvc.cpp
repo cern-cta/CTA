@@ -215,7 +215,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-
     if ( m_getStreamsWithoutTapesStatement ) deleteStatement(m_getStreamsWithoutTapesStatement);
     if ( m_attachTapesToStreamsStatement ) deleteStatement(m_attachTapesToStreamsStatement);
     if ( m_getTapeWithoutDriveReqStatement ) deleteStatement(m_getTapeWithoutDriveReqStatement); 
@@ -241,12 +240,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_checkConfigurationStatement ) deleteStatement(m_checkConfigurationStatement);
     if ( m_deleteStreamWithBadTapePoolStatement) deleteStatement(m_deleteStreamWithBadTapePoolStatement);    
     if ( m_deleteTapeRequestStatement) deleteStatement(m_deleteTapeRequestStatement);
-
-  } catch (oracle::occi::SQLException e) {};
-
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
-
-
   m_getStreamsWithoutTapesStatement= 0; 
   m_attachTapesToStreamsStatement = 0;
   m_getTapeWithoutDriveReqStatement= 0;

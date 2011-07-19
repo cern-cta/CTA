@@ -226,7 +226,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_rtcpclientdCleanUpStatement) deleteStatement(m_rtcpclientdCleanUpStatement);
     if (m_getNumFilesByStreamStatement) deleteStatement(m_getNumFilesByStreamStatement);
     if (m_lockCastorFileByIdStatement) deleteStatement(m_lockCastorFileByIdStatement);
-  } catch (oracle::occi::SQLException &e) {};
+  } catch (castor::exception::Exception& ignored) {};
 
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;

@@ -96,7 +96,7 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0) {
-  registerToCnvSvc(this);
+  registerToCnvSvc(this);  // equivalent to conversionService->registerDepSvc(this);
 }
 
 //------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
     if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
     if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
     if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_requestToDoStatement = 0;
   m_selectTapeStatement = 0;

@@ -204,7 +204,7 @@ void castor::tape::mighunter::ora::OraMigHunterSvc::reset() throw() {
     if (m_selectTapePoolNamesStatement)       deleteStatement(m_selectTapePoolNamesStatement);
     if (m_migHunterCleanUpStatement)          deleteStatement(m_migHunterCleanUpStatement);
 
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
 
   m_inputForMigrationPolicyStatement         = 0;

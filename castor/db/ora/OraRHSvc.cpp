@@ -213,7 +213,7 @@ void castor::db::ora::OraRHSvc::reset() throw() {
     if (m_addPrivilegeStatement) deleteStatement(m_addPrivilegeStatement);
     if (m_removePrivilegeStatement) deleteStatement(m_removePrivilegeStatement);
     if (m_listPrivilegesStatement) deleteStatement(m_listPrivilegesStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_storeSimpleRequestStatement = 0;
   m_storeFileRequestStatement = 0;
