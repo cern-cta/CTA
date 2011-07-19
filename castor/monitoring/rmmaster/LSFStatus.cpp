@@ -25,13 +25,11 @@
  *****************************************************************************/
 
 // Include files
-// Note that OraRmMasterSvc has to be included BEFORE LSFStatus, as it includes ORACLE
-// header files that clash with LSF ones for some macro definitions !
-#include "castor/monitoring/rmmaster/ora/OraRmMasterSvc.hpp"
 #include "castor/monitoring/rmmaster/LSFStatus.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/System.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/exception/Internal.hpp"
 #include "Cmutex.h"
 #include "Cthread_api.h"
 #include "getconfent.h"
@@ -43,39 +41,30 @@ castor::monitoring::rmmaster::LSFStatus *
 castor::monitoring::rmmaster::LSFStatus::s_instance(0);
 
 //-----------------------------------------------------------------------------
+// Static constants initialization
+//-----------------------------------------------------------------------------
+/// SQL statement for isMonitoringMasterStatementString.
+/// Note that we use lock number 369174921, which was picked up randomly
+const std::string castor::monitoring::rmmaster::LSFStatus::s_isMonitoringMasterStatementString =
+  "BEGIN :1 := isMonitoringMaster(); END;";
+
+//-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   throw(castor::exception::Exception) :
-  m_rmMasterService(0),
   m_cnvSvc(0),
   m_prevMasterName(""),
   m_prevProduction(false),
   m_lastUpdate(0),
-  m_getLSFStatusCalled(false) {
+  m_getLSFStatusCalled(false),
+  m_isMonitoringMasterStatement(0) {
 
   // Check whether we run with or without LSF
   char *noLSFValue = getconfent("RmMaster", "NoLSFMode", 0);
   m_noLSF = (noLSFValue != NULL && strcasecmp(noLSFValue, "yes") == 0);
 
   if (m_noLSF) {
-    // initialize the OraRmMasterSvc. Note that we do not use here the standard,
-    // thread specific service. We create our own instance of it so that we have
-    // a private, dedicated connection to ORACLE that will not be commited by
-    // any other activity of the thread.
-    m_cnvSvc = new castor::db::ora::OraCnvSvc("DbCnvSvc");
-    if (0 == m_cnvSvc) {
-      castor::exception::Internal e;
-      e.getMessage() << "Unable to create an OraCnvSvc";
-      throw e;
-    }
-    m_rmMasterService =
-      new castor::monitoring::rmmaster::ora::OraRmMasterSvc("LSFStatusOraSvc", m_cnvSvc);
-    if (0 == m_rmMasterService) {
-      castor::exception::Internal e;
-      e.getMessage() << "Unable to create an OraRmMasterSVC";
-      throw e;
-    }
     // Initialize checkMasterLock
     int rv = pthread_mutex_init(&m_masterCheckLock, NULL);
     if (rv != 0) {
@@ -106,7 +95,6 @@ castor::monitoring::rmmaster::LSFStatus::~LSFStatus() throw() {
   // the lock on the RmMasterLock table that we may have hold if we were the
   // master rmMaster. A new session will then be able to take this lock and
   // become the master
-  if (0 != m_rmMasterService) delete m_rmMasterService;
   if (0 != m_cnvSvc) delete m_cnvSvc;
   if (m_noLSF) pthread_mutex_destroy(&m_masterCheckLock);
 }
@@ -163,7 +151,7 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
       pthread_mutex_lock(&m_masterCheckLock);
       // ask the DB whether we are the master
       try {
-        production = m_rmMasterService->isMonitoringMaster();
+        production = isMonitoringMaster();
       } catch(castor::exception::Exception e) {
         pthread_mutex_unlock(&m_masterCheckLock);
         throw e;
@@ -291,5 +279,57 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     // Return
     m_prevMasterName = masterName;
     Cthread_mutex_unlock(&m_prevMasterName);
+  }
+}
+
+// -----------------------------------------------------------------------
+// cnvSvc
+// -----------------------------------------------------------------------
+castor::db::ora::OraCnvSvc* castor::monitoring::rmmaster::LSFStatus::cnvSvc()
+  throw (castor::exception::Exception) {
+  if (0 == m_cnvSvc) {
+    // initialize the OraCnvSvc. Note that we do not use here the standard,
+    // thread specific service. We create our own instance of it so that we have
+    // a private, dedicated connection to ORACLE that will not be commited by
+    // any other activity of the thread.
+    m_cnvSvc = new castor::db::ora::OraCnvSvc("DbCnvSvc");
+    if (0 == m_cnvSvc) {
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to create an OraCnvSvc";
+      throw e;
+    }
+  }
+  return m_cnvSvc;
+}
+
+//-----------------------------------------------------------------------------
+// isMonitoringMaster
+//-----------------------------------------------------------------------------
+bool castor::monitoring::rmmaster::LSFStatus::isMonitoringMaster()
+  throw (castor::exception::Exception) {
+  try {
+    if (m_isMonitoringMasterStatement == NULL) {
+      m_isMonitoringMasterStatement = cnvSvc()->createOraStatement(s_isMonitoringMasterStatementString);
+      m_isMonitoringMasterStatement->registerOutParam(1, oracle::occi::OCCIINT);
+    }
+    m_isMonitoringMasterStatement->execute();
+    int rc = m_isMonitoringMasterStatement->getInt(1);
+    // 1 means we got the lock, 0 means we could not get it
+    return rc == 1;
+  } catch (oracle::occi::SQLException e) {
+    // Drop our local statements
+    try {
+      cnvSvc()->terminateStatement(m_isMonitoringMasterStatement);
+    } catch (castor::exception::Exception e) {
+      // We've tried. Ignore any error. They are likely to come, e.g. if the connection was dropped.
+    }
+    m_isMonitoringMasterStatement  = 0;
+    // Drop the connection if needed
+    cnvSvc()->handleException(e);
+    // raise an error
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in isMonitoringMaster."
+                    << std::endl << e.getMessage();
+    throw ex;
   }
 }

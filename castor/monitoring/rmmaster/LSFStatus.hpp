@@ -32,6 +32,7 @@
 // Include files
 #include "castor/exception/Exception.hpp"
 #include <pthread.h>
+#include "occi.h"
 
 // LSF headers
 extern "C" {
@@ -53,11 +54,6 @@ namespace castor {
   namespace monitoring {
 
     namespace rmmaster {
-
-      namespace ora { 
-        // Forward declarations
-        class OraRmMasterSvc;
-      }
 
       /**
        * LSFStatus singleton class
@@ -118,13 +114,25 @@ namespace castor {
          */
         virtual ~LSFStatus() throw();
 
+        /**
+         * access to the underlying database conversion service
+         */
+        castor::db::ora::OraCnvSvc* cnvSvc() throw (castor::exception::Exception);
+
+        /**
+         * Check whether we are the monitoring master. This is given by the ability to
+         * take a lock in the DB. The one that has this lock is declared the master.
+         * If it dies, somebody else will be able to take the lock and will become the
+         * new master.
+         * @return true if we are the monitoring master
+         * @exception Exception in case of error
+         */
+        virtual bool isMonitoringMaster() throw(castor::exception::Exception);
+
       private:
 
         /// says whether we are running without LSF
         bool m_noLSF;
-
-        /// rmmaster service to call ORACLE, only used in case of noLSF mode
-        castor::monitoring::rmmaster::ora::OraRmMasterSvc* m_rmMasterService;
 
         /// ORACLE conversion service used by the previous rmmaster service
         /// only used in case in noLSF mode
@@ -144,6 +152,12 @@ namespace castor {
 
         /// says whether getLSFStatus was already called or not, only used in case in noLSF mode
         bool m_getLSFStatusCalled;
+
+        /// SQL statement for function isMonitoringMaster, only used in case in noLSF mode
+        static const std::string s_isMonitoringMasterStatementString;
+
+        /// SQL statement object for function isMonitoringMaster, only used in case in noLSF mode
+        oracle::occi::Statement *m_isMonitoringMasterStatement;
       };
 
     } // End of namespace rmmaster
