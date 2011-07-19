@@ -70,6 +70,8 @@ castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
     &ReadTpCommand::handleEndNotification);
   registerMsgHandler(OBJ_EndNotificationErrorReport, this,
     &ReadTpCommand::handleEndNotificationErrorReport);
+  registerMsgHandler(OBJ_EndNotificationFileErrorReport, this,
+    &ReadTpCommand::handleEndNotificationFileErrorReport);
   registerMsgHandler(OBJ_PingNotification, this,
     &ReadTpCommand::handlePingNotification);
 }
@@ -594,6 +596,17 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationFileErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationFileErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return TpcpCommand::handleEndNotificationFileErrorReport(obj,sock);
 }
 
 

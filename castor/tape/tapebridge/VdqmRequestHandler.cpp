@@ -127,6 +127,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     param = NULL; /* Will cause a segementation fault if used by accident */
   }
 
+/*
   // Determine whether or not buffered tape-marks should be used over multiple
   // files
   ConfigParamAndSource<bool> useBufferedTapeMarksOverMultipleFiles("UNKNOWN",
@@ -207,7 +208,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
       params);
   }
-
+*/
   // Job request to be received from VDQM
   legacymsg::RtcpJobRqstMsgBody jobRequest;
   utils::setBytes(jobRequest, '\0');
@@ -371,8 +372,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       clientInfoMsgBody.clientUID = jobRequest.clientEuid;
       clientInfoMsgBody.clientGID = jobRequest.clientEgid;
       clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles = 0;
-      clientInfoMsgBody.maxBytesBeforeFlush = (uint64_t)12345;
-      clientInfoMsgBody.maxFilesBeforeFlush = (uint64_t)67890;
+      clientInfoMsgBody.maxBytesBeforeFlush = (uint64_t)0;
+      clientInfoMsgBody.maxFilesBeforeFlush = (uint64_t)0;
       utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
       utils::copyString(clientInfoMsgBody.bridgeClientHost,
         jobRequest.clientHost);
@@ -447,11 +448,11 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("blockId3"          , ec.failedFile().blockId3),
           castor::dlf::Param("path"              , ec.failedFile().path    ),
           castor::dlf::Param("cprc"              , ec.failedFile().cprc    )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
 
-        ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,
-          aggregatorTransactionId, jobRequest.clientHost,
+        ClientTxRx::notifyEndOfFailedSessionDueToFile(cuuid,
+          jobRequest.volReqId, aggregatorTransactionId, jobRequest.clientHost,
           jobRequest.clientPort, ec);
       } catch(castor::exception::Exception &ex2) {
         // Don't rethrow, just log the exception

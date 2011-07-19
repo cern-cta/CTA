@@ -28,6 +28,7 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
@@ -62,6 +63,8 @@ castor::tape::tpcp::WriteTpCommand::WriteTpCommand() throw() :
     &WriteTpCommand::handleEndNotification);
   registerMsgHandler(OBJ_EndNotificationErrorReport, this,
     &WriteTpCommand::handleEndNotificationErrorReport);
+  registerMsgHandler(OBJ_EndNotificationFileErrorReport, this,
+    &WriteTpCommand::handleEndNotificationFileErrorReport);
   registerMsgHandler(OBJ_PingNotification, this,
     &WriteTpCommand::handlePingNotification);
 }
@@ -526,6 +529,17 @@ bool castor::tape::tpcp::WriteTpCommand::handleEndNotificationErrorReport(
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj, sock);
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationFileErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::WriteTpCommand::handleEndNotificationFileErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return TpcpCommand::handleEndNotificationFileErrorReport(obj, sock);
 }
 
 

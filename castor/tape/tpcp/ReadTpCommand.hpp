@@ -168,6 +168,16 @@ private:
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
+   * EndNotificationFileErrorReport message handler.
+   *
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotificationFileErrorReport(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
    * PingNotification message handler.
    *
    * @param obj  The tapebridge message to be processed.

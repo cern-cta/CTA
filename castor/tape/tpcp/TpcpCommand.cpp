@@ -28,6 +28,8 @@
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
 #include "castor/tape/tapegateway/PingNotification.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
@@ -125,7 +127,6 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
 castor::tape::tpcp::TpcpCommand::~TpcpCommand() throw () {
   // Do nothing
 }
-
 
 
 //------------------------------------------------------------------------------
@@ -1055,6 +1056,57 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
       "Error code string = \"" << sstrerror(msg->errorCode()) << "\"" <<
       std::endl <<
       "Error message     = \"" << msg->errorMessage() << "\"" << std::endl <<
+      std::endl;
+  }
+
+  // Create the NotificationAcknowledge message for the tapebridge
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
+
+  // Send the NotificationAcknowledge message to the tapebridge
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
+  return false;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationFileErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::handleEndNotificationFileErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::EndNotificationFileErrorReport *msg = NULL;
+
+  castMessage(obj, msg, sock);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  // Command-line user feedback
+  {
+    std::ostream &os = std::cout;
+    const time_t now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os <<
+      " Tapebridge encountered the following error concerning a specific file:"
+      "\n\n"
+      "Error code        = "   << msg->errorCode()            <<   "\n"
+      "Error code string = \"" << sstrerror(msg->errorCode()) << "\"\n"
+      "Error message     = \"" << msg->errorMessage()         << "\"\n"
+      "\n"
+      "File fileTransactionId = "   << msg->fileTransactionId()    <<   "\n"
+      "File nsHost            = \"" << msg->nsHost()               << "\"\n"
+      "File fileId            = "   << msg->fileId()               <<   "\n"
+      "File fSeq              = "   << msg->fSeq()                 <<   "\n"
+      "File blockId           = "   <<
+        utils::tapeBlockIdToString(msg->blockId0(), msg->blockId1(),
+          msg->blockId2(), msg->blockId3())                        <<   "\n"
+      "File path              = \"" << msg->path()                 << "\"\n"
+      "File cprc              = "   << msg->cprc()                 <<   "\n" <<
       std::endl;
   }
 
