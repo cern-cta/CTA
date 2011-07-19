@@ -33,6 +33,7 @@
 #include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
@@ -675,6 +676,87 @@ void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyEndOfFailedSessionDueToFile
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSessionDueToFile(
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  FailedToCopyTapeFile &ex)
+  throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId      ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId ),
+      castor::dlf::Param("clientHost"        , clientHost              ),
+      castor::dlf::Param("clientPort"        , clientPort              ),
+      castor::dlf::Param("errorCode"         , ex.code()               ),
+      castor::dlf::Param("errorMessage"      , ex.getMessage().str()   ),
+      castor::dlf::Param("fileTransactionId" ,
+        ex.failedFile().fileTransactionId),
+      castor::dlf::Param("nsHost"            , ex.failedFile().nsHost  ),
+      castor::dlf::Param("fileId"            , ex.failedFile().fileId  ),
+      castor::dlf::Param("fSeq"              , ex.failedFile().fSeq    ),
+      castor::dlf::Param("blockId0"          , ex.failedFile().blockId0),
+      castor::dlf::Param("blockId1"          , ex.failedFile().blockId1),
+      castor::dlf::Param("blockId2"          , ex.failedFile().blockId2),
+      castor::dlf::Param("blockId3"          , ex.failedFile().blockId3),
+      castor::dlf::Param("path"              , ex.failedFile().path    ),
+      castor::dlf::Param("cprc"              , ex.failedFile().cprc    )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
+  }
+
+  // Prepare the request
+  tapegateway::EndNotificationFileErrorReport request;
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setErrorCode(ex.code());
+  request.setErrorMessage(ex.getMessage().str());
+  request.setFileTransactionId(ex.failedFile().fileTransactionId);
+  request.setNsHost(ex.failedFile().nsHost);
+  request.setFileId(ex.failedFile().fileId);
+  request.setFSeq(ex.failedFile().fSeq);
+  request.setBlockId0(ex.failedFile().blockId0);
+  request.setBlockId1(ex.failedFile().blockId1);
+  request.setBlockId2(ex.failedFile().blockId2);
+  request.setBlockId3(ex.failedFile().blockId3);
+  request.setPath(ex.failedFile().path);
+  request.setCprc(ex.failedFile().cprc);
+
+  const char *requestTypeName = "EndNotificationFileErrorReport";
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId      ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId ),
+      castor::dlf::Param("clientHost"        , clientHost              ),
+      castor::dlf::Param("clientPort"        , clientPort              ),
+      castor::dlf::Param("errorCode"         , ex.code()               ),
+      castor::dlf::Param("errorMessage"      , ex.getMessage().str()   ),
+      castor::dlf::Param("fileTransactionId" ,
+        ex.failedFile().fileTransactionId),
+      castor::dlf::Param("nsHost"            , ex.failedFile().nsHost  ),
+      castor::dlf::Param("fileId"            , ex.failedFile().fileId  ),
+      castor::dlf::Param("fSeq"              , ex.failedFile().fSeq    ),
+      castor::dlf::Param("blockId0"          , ex.failedFile().blockId0),
+      castor::dlf::Param("blockId1"          , ex.failedFile().blockId1),
+      castor::dlf::Param("blockId2"          , ex.failedFile().blockId2),
+      castor::dlf::Param("blockId3"          , ex.failedFile().blockId3),
+      castor::dlf::Param("path"              , ex.failedFile().path    ),
+      castor::dlf::Param("cprc"              , ex.failedFile().cprc    )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
   }
 }
 

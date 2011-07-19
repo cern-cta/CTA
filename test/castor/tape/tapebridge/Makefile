@@ -42,6 +42,7 @@ testtapebridge: \
   tapegateway_NoMoreFiles.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
+  tapegateway_EndNotificationFileErrorReport.o \
   tapegateway_NotificationAcknowledge.o \
   tapegateway_ClientType.o \
   tapegateway_VolumeMode.o \
@@ -51,19 +52,19 @@ testtapebridge: \
   legacymsg_VmgrMarshal.o \
   tape_utils.o \
   dlf_Param.o \
-  exception_Exception.o \
-  exception_InvalidArgument.o \
   exception_Communication.o \
+  exception_Exception.o \
   exception_Internal.o \
+  exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_NoEntry.o \
+  exception_NoPortInRange.o \
+  exception_OutOfMemory.o \
+  exception_PermissionDenied.o \
+  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
-  exception_NoPortInRange.o \
-  exception_TapeNetAcceptInterrupted.o \
-  exception_PermissionDenied.o \
-  exception_OutOfMemory.o \
-  exception_NoEntry.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -87,6 +88,8 @@ testtapebridge: \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
+  tapebridge_FailedToCopyTapeFile.o \
+  tapebridge_marshall.o \
   marshall.o \
   test_exception.o \
   vdqmapi.o \
@@ -110,19 +113,19 @@ testtapebridge: \
 
 tapebridgedaemontester: \
   tapebridgedaemontester.o \
-  exception_Exception.o \
-  exception_InvalidArgument.o \
   exception_Communication.o \
+  exception_Exception.o \
   exception_Internal.o \
+  exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_NoEntry.o \
+  exception_NoPortInRange.o \
+  exception_OutOfMemory.o \
+  exception_PermissionDenied.o \
+  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
-  exception_NoPortInRange.o \
-  exception_TapeNetAcceptInterrupted.o \
-  exception_PermissionDenied.o \
-  exception_OutOfMemory.o \
-  exception_NoEntry.o \
   tapegateway_FileToMigrateRequest.o \
   tapegateway_FileToMigrate.o \
   tapegateway_FileMigratedNotification.o \
@@ -142,12 +145,14 @@ tapebridgedaemontester: \
   tapegateway_NoMoreFiles.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
+  tapegateway_EndNotificationFileErrorReport.o \
   tapegateway_NotificationAcknowledge.o \
   tapegateway_ClientType.o \
   tapegateway_VolumeMode.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
+  io_StreamEndNotificationFileErrorReportCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
@@ -162,6 +167,7 @@ tapebridgedaemontester: \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
+  tapebridge_FailedToCopyTapeFile.o \
   tapebridge_marshall.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   legacymsg_CommonMarshal.o \
@@ -227,7 +233,13 @@ tapebridged: \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
+  io_StreamEndNotificationFileErrorReportCnv.o \
+  io_StreamFileRecalledNotificationCnv.o \
+  io_StreamFileToRecallCnv.o \
+  io_StreamFileToRecallRequestCnv.o \
+  io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
+  io_StreamPingNotificationCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
   io_StreamBaseCnv.o \
@@ -266,6 +278,7 @@ tapebridged: \
   tapegateway_NoMoreFiles.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
+  tapegateway_EndNotificationFileErrorReport.o \
   tapegateway_NotificationAcknowledge.o \
   tapegateway_ClientType.o \
   tapegateway_VolumeMode.o \
@@ -275,19 +288,19 @@ tapebridged: \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
   tape_utils.o \
-  exception_Exception.o \
-  exception_InvalidArgument.o \
   exception_Communication.o \
+  exception_Exception.o \
   exception_Internal.o \
+  exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_NoEntry.o \
+  exception_NoPortInRange.o \
+  exception_OutOfMemory.o \
+  exception_PermissionDenied.o \
+  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
-  exception_NoPortInRange.o \
-  exception_TapeNetAcceptInterrupted.o \
-  exception_PermissionDenied.o \
-  exception_OutOfMemory.o \
-  exception_NoEntry.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -313,6 +326,7 @@ tapebridged: \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
+  tapebridge_FailedToCopyTapeFile.o \
   tapebridge_marshall.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   marshall.o \
@@ -498,6 +512,10 @@ dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 Constants.o: $(ROOT_DIR)/castor/Constants.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_FailedToCopyTapeFile.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/FailedToCopyTapeFile.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
@@ -736,6 +754,10 @@ tapegateway_EndNotificationErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationErrorReport.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapegateway_EndNotificationFileErrorReport.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationFileErrorReport.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapegateway_NotificationAcknowledge.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/NotificationAcknowledge.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -822,8 +844,32 @@ io_StreamEndNotificationErrorReportCnv.o: \
   $(ROOT_DIR)/castor/io/StreamEndNotificationErrorReportCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+io_StreamEndNotificationFileErrorReportCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationFileErrorReportCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 io_StreamNotificationAcknowledgeCnv.o: \
   $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileRecalledNotificationCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileRecalledNotificationCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToRecallCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToRecallCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToRecallRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToRecallRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamNoMoreFilesCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamNoMoreFilesCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamPingNotificationCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamPingNotificationCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamVolumeRequestCnv.o: $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.cpp

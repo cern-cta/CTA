@@ -39,6 +39,7 @@ TAPEBRIDGEBIN_SRCS = \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
   DlfMessageStrings.cpp \
+  FailedToCopyTapeFile.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   RtcpJobSubmitter.cpp \

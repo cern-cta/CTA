@@ -631,39 +631,39 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
       TAPEBRIDGE_ASK_RTCPD_TO_RQST_MORE_RECALL_WORK, params);
   }
 
-  legacymsg::RtcpFileRqstErrMsgBody request;
+  legacymsg::RtcpFileRqstErrMsgBody msgBody;
 
-  utils::setBytes(request, '\0');
+  utils::setBytes(msgBody, '\0');
 
-  utils::copyString(request.recfm, "F");
+  utils::copyString(msgBody.rqst.recfm, "F");
 
-  utils::copyString(request.tapePath, tapePath);
-  request.volReqId       =  volReqId;
-  request.jobId          = -1;
-  request.stageSubReqId  = -1;
-  request.umask          = RTCOPYCONSERVATIVEUMASK;
-  request.positionMethod = -1;
-  request.tapeFseq       = -1;
-  request.diskFseq       = -1;
-  request.blockSize      = -1;
-  request.recordLength   = -1;
-  request.retention      = -1;
-  request.defAlloc       = -1;
-  request.rtcpErrAction  = -1;
-  request.tpErrAction    = -1;
-  request.convert        = ASCCONV;
-  request.checkFid       = -1;
-  request.concat         =  1;
-  request.procStatus     =  RTCP_REQUEST_MORE_WORK;
-  request.err.severity   =  RTCP_OK;
-  request.err.maxTpRetry = -1;
-  request.err.maxCpRetry = -1;
+  utils::copyString(msgBody.rqst.tapePath, tapePath);
+  msgBody.rqst.volReqId       =  volReqId;
+  msgBody.rqst.jobId          = -1;
+  msgBody.rqst.stageSubReqId  = -1;
+  msgBody.rqst.umask          = RTCOPYCONSERVATIVEUMASK;
+  msgBody.rqst.positionMethod = -1;
+  msgBody.rqst.tapeFseq       = -1;
+  msgBody.rqst.diskFseq       = -1;
+  msgBody.rqst.blockSize      = -1;
+  msgBody.rqst.recordLength   = -1;
+  msgBody.rqst.retention      = -1;
+  msgBody.rqst.defAlloc       = -1;
+  msgBody.rqst.rtcpErrAction  = -1;
+  msgBody.rqst.tpErrAction    = -1;
+  msgBody.rqst.convert        = ASCCONV;
+  msgBody.rqst.checkFid       = -1;
+  msgBody.rqst.concat         =  1;
+  msgBody.rqst.procStatus     =  RTCP_REQUEST_MORE_WORK;
+  msgBody.err.severity   =  RTCP_OK;
+  msgBody.err.maxTpRetry = -1;
+  msgBody.err.maxCpRetry = -1;
 
   // Marshal the message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = legacymsg::marshal(buf, request);
+    totalLen = legacymsg::marshal(buf, msgBody);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to marshal ask RTCPD to request more "
@@ -726,45 +726,46 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
   unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
-  legacymsg::RtcpFileRqstErrMsgBody request;
+  legacymsg::RtcpFileRqstErrMsgBody msgBody;
 
 
   // Give file information to RTCPD
-  utils::setBytes(request, '\0');
-  utils::copyString(request.filePath, filePath    );
-  utils::copyString(request.tapePath, tapePath    );
-  utils::copyString(request.recfm   , recordFormat);
-  utils::copyString(request.fid     , tapeFileId  );
+  utils::setBytes(msgBody, '\0');
+  utils::copyString(msgBody.rqst.filePath, filePath    );
+  utils::copyString(msgBody.rqst.tapePath, tapePath    );
+  utils::copyString(msgBody.rqst.recfm   , recordFormat);
+  utils::copyString(msgBody.rqst.fid     , tapeFileId  );
 
-  request.volReqId             = volReqId;
-  request.jobId                = -1;
-  request.stageSubReqId        = -1;
-  request.umask                = umask;
-  request.positionMethod       = positionMethod;
-  request.tapeFseq             = tapeFseq;
-  request.diskFseq             = diskFseq;
-  request.blockSize            = -1;
-  request.recordLength         = -1;
-  request.retention            = -1;
-  request.defAlloc             = 0;
-  request.rtcpErrAction        = -1;
-  request.tpErrAction          = -1;
-  request.convert              = ASCCONV;
-  request.checkFid             = -1;
-  request.concat               = NOCONCAT;
-  request.procStatus           = RTCP_WAITING;
-  request.blockId[0]           = blockId[0];
-  request.blockId[1]           = blockId[1];
-  request.blockId[2]           = blockId[2];
-  request.blockId[3]           = blockId[3];
-  request.bytesIn              = fileSize;
-  utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
-  request.segAttr.castorFileId = castorFileId;
-  request.err.severity         = RTCP_OK;
-  request.err.maxTpRetry       = -1;
-  request.err.maxCpRetry       = -1;
+  msgBody.rqst.volReqId             = volReqId;
+  msgBody.rqst.jobId                = -1;
+  msgBody.rqst.stageSubReqId        = -1;
+  msgBody.rqst.umask                = umask;
+  msgBody.rqst.positionMethod       = positionMethod;
+  msgBody.rqst.tapeFseq             = tapeFseq;
+  msgBody.rqst.diskFseq             = diskFseq;
+  msgBody.rqst.blockSize            = -1;
+  msgBody.rqst.recordLength         = -1;
+  msgBody.rqst.retention            = -1;
+  msgBody.rqst.defAlloc             = 0;
+  msgBody.rqst.rtcpErrAction        = -1;
+  msgBody.rqst.tpErrAction          = -1;
+  msgBody.rqst.convert              = ASCCONV;
+  msgBody.rqst.checkFid             = -1;
+  msgBody.rqst.concat               = NOCONCAT;
+  msgBody.rqst.procStatus           = RTCP_WAITING;
+  msgBody.rqst.blockId[0]           = blockId[0];
+  msgBody.rqst.blockId[1]           = blockId[1];
+  msgBody.rqst.blockId[2]           = blockId[2];
+  msgBody.rqst.blockId[3]           = blockId[3];
+  msgBody.rqst.bytesIn              = fileSize;
+  utils::copyString(msgBody.rqst.segAttr.nameServerHostName,
+    nameServerHostName);
+  msgBody.rqst.segAttr.castorFileId = castorFileId;
+  msgBody.err.severity              = RTCP_OK;
+  msgBody.err.maxTpRetry            = -1;
+  msgBody.err.maxCpRetry            = -1;
 
-  giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, mode, request);
+  giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, mode, msgBody);
 }
 
 

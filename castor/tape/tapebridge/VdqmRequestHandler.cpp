@@ -31,6 +31,7 @@
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/ClientTxRx.hpp"
+#include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
@@ -425,6 +426,49 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     try {
       exceptionThrowingRun(cuuid, jobRequest, tapebridgeTransactionCounter,
         listenSock.get());
+    } catch(FailedToCopyTapeFile &ec) {
+
+      const uint64_t aggregatorTransactionId =
+        tapebridgeTransactionCounter.next();
+      try {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId     ),
+          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId ),
+          castor::dlf::Param("Message"           , ec.getMessage().str()   ),
+          castor::dlf::Param("Code"              , ec.code()               ),
+          castor::dlf::Param("fileTransactionId" ,
+            ec.failedFile().fileTransactionId),
+          castor::dlf::Param("nsHost"            , ec.failedFile().nsHost  ),
+          castor::dlf::Param("fileId"            , ec.failedFile().fileId  ),
+          castor::dlf::Param("fSeq"              , ec.failedFile().fSeq    ),
+          castor::dlf::Param("blockId0"          , ec.failedFile().blockId0),
+          castor::dlf::Param("blockId1"          , ec.failedFile().blockId1),
+          castor::dlf::Param("blockId2"          , ec.failedFile().blockId2),
+          castor::dlf::Param("blockId3"          , ec.failedFile().blockId3),
+          castor::dlf::Param("path"              , ec.failedFile().path    ),
+          castor::dlf::Param("cprc"              , ec.failedFile().cprc    )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+          TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
+
+        ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,
+          aggregatorTransactionId, jobRequest.clientHost,
+          jobRequest.clientPort, ec);
+      } catch(castor::exception::Exception &ex2) {
+        // Don't rethrow, just log the exception
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
+          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex2.getMessage().str() ),
+          castor::dlf::Param("Code"              , ex2.code()             )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          TAPEBRIDGE_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+      }
+
+      // Rethrow the exception thrown by exceptionThrowingRun() so that the
+      // outer try and catch block always logs TAPEBRIDGE_TRANSFER_FAILED when
+      // a failure has occured
+      throw(ec);
+
     } catch(castor::exception::Exception &ex) {
 
       const uint64_t aggregatorTransactionId =

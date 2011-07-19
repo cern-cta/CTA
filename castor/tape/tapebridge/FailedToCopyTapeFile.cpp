@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp
+ *                 castor/tape/tapebridge/FailedToCopyTapeFile.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,40 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
  * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
+#include "serrno.h"
+#include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
 
-#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
-#include "castor/tape/legacymsg/RtcpFileRqst.hpp"
-#include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
-#include "h/Castor_limits.h"
-#include "h/Cuuid.h"
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapebridge::FailedToCopyTapeFile::FailedToCopyTapeFile(
+  const int se, const FailedFile &failedFile)
+  throw():
+  castor::exception::Exception(se),
+  m_failedFile(failedFile) {
+  // Do nothing
+}
 
-#include <stdint.h>
 
-
-namespace castor    {
-namespace tape      {
-namespace legacymsg {
-
-  /**
-   * An RTCP file request without error appendix message.
-   */
-  struct RtcpFileRqstMsgBody {
-    /**
-     * The request data which is common to both an RtcpFileRqstMsgBody and an
-     * RtcpFileRqstErrMsgBody.
-     */
-    RtcpFileRqst rqst;
-  }; // struct RtcpFileRqstMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
+//------------------------------------------------------------------------------
+// file
+//------------------------------------------------------------------------------
+const castor::tape::tapebridge::FailedToCopyTapeFile::FailedFile
+  &castor::tape::tapebridge::FailedToCopyTapeFile::failedFile() {
+  return m_failedFile;
+}

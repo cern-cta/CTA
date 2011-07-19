@@ -327,19 +327,14 @@ private:
    * and rtcpFileErrReqRtcpdCallback functions.
    *
    * @param header            The header of the request.
-   * @param body              The body of the request which maybe either of type
-   *                          RtcpFileRqstMsgBody or RtcpFileRqstErrMsgBody, as
-   *                          RtcpFileRqstErrMsgBody inherits from
-   *                          RtcpFileRqstMsgBody.
+   * @param body              The body of the request.
    * @param rtcpdSock         The file descriptor of the socket from which both
    *                          the header and the body of the message have
    *                          already been read from.
-   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
-   *                          function of an RTCP_ENDOF_REQ was received.
    */
-  void processRtcpFileReq(const legacymsg::MessageHeader &header,
-    legacymsg::RtcpFileRqstMsgBody &body, const int rtcpdSock, 
-    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
+  void processRtcpFileErrReq(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
 
   /**
    * RTCP_TAPEREQ rtcpd message-body handler.

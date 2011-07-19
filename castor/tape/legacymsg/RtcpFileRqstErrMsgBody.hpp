@@ -26,7 +26,7 @@
 #define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
 
 #include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
-#include "castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpFileRqst.hpp"
 #include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -34,8 +34,8 @@
 #include <stdint.h>
 
 
-namespace castor     {
-namespace tape       {
+namespace castor    {
+namespace tape      {
 namespace legacymsg {
 
   /**
@@ -44,8 +44,18 @@ namespace legacymsg {
    * Please note that the presence of an error appendix does not necessarily
    * indicate an error.
    */
-  struct RtcpFileRqstErrMsgBody : public RtcpFileRqstMsgBody {
-    RtcpErrorAppendix err; // Error reporting
+  struct RtcpFileRqstErrMsgBody {
+    /**
+     * The request data which is common to both an RtcpFileRqstMsgBody and an
+     * RtcpFileRqstErrMsgBody.
+     */
+    RtcpFileRqst rqst;
+    
+    /**
+     * The error appendix.
+     */
+    RtcpErrorAppendix err;
+    
   }; // struct RtcpFileRqstErrMsgBody
 
 } // namespace legacymsg

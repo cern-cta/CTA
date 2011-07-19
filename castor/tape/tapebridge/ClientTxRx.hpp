@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_TAPEBRIDGE_CLIENTTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
@@ -289,7 +290,8 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Notifies the client of the end of the recall/migration session.
+   * Notifies the client of the end of the recall/migration session due to an
+   * error not caused by a specific file.
    *
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
@@ -307,6 +309,28 @@ public:
     const char           *clientHost,
     const unsigned short clientPort,
     castor::exception::Exception &e)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client of the end of the recall/migration session due to an
+   * error cause by a specific file.
+   *
+   * @param cuuid               The ccuid to be used for logging.
+   * @param mountTransactionId  The mount transaction ID to be sent to the
+   *                            client.
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
+   *                            the client.
+   * @param clientHost          The client host name.
+   * @param clientPort          The client port number.
+   * @param ex                  The exception which failed the session.
+   */
+  static void notifyEndOfFailedSessionDueToFile(
+    const Cuuid_t        &cuuid,
+    const uint32_t       mountTransactionId,
+    const uint64_t       aggregatorTransactionId,
+    const char           *clientHost,
+    const unsigned short clientPort,
+    FailedToCopyTapeFile &ex)
     throw(castor::exception::Exception);
 
   /**

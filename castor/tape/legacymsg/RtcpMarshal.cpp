@@ -364,20 +364,20 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   // Calculate the length of the message body
   const uint32_t len =
     // Fields before segAttr
-    strlen(src.filePath)  +
-    strlen(src.tapePath)  +
-    strlen(src.recfm)     +
-    strlen(src.fid)       +
-    strlen(src.ifce)      +
-    strlen(src.stageId)   +
+    strlen(src.rqst.filePath)  +
+    strlen(src.rqst.tapePath)  +
+    strlen(src.rqst.recfm)     +
+    strlen(src.rqst.fid)       +
+    strlen(src.rqst.ifce)      +
+    strlen(src.rqst.stageId)   +
     24 * sizeof(uint32_t) + // Number of 32-bit integers before segAttr
     4                     + // 4 = blockId[4]
     8 * sizeof(uint64_t)  + // Number of 64-bit integers before segAttr
     6                     + // Number of string terminators before segAttr
 
     // segAttr
-    strlen(src.segAttr.nameServerHostName) +
-    strlen(src.segAttr.segmCksumAlgorithm) +
+    strlen(src.rqst.segAttr.nameServerHostName) +
+    strlen(src.rqst.segAttr.segmCksumAlgorithm) +
     sizeof(uint32_t)          + // 1 uint32_t of RtcpSegmentAttributes
     sizeof(uint64_t)          + // 1 uint64_t of RtcpSegmentAttributes
     2                         + // Number of segAttr string terminators
@@ -405,71 +405,71 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   // Marshall the whole message (header + body)
   char *p = dst;
 
-  marshalUint32(RTCOPY_MAGIC                         , p);
-  marshalUint32(RTCP_FILEERR_REQ                     , p);
-  marshalUint32(len                                  , p);
-  marshalString(src.filePath                         , p);
-  marshalString(src.tapePath                         , p);
-  marshalString(src.recfm                            , p);
-  marshalString(src.fid                              , p);
-  marshalString(src.ifce                             , p);
-  marshalString(src.stageId                          , p);
-  marshalUint32(src.volReqId                         , p);
-  marshalUint32(src.jobId                            , p);
-  marshalUint32(src.stageSubReqId                    , p);
-  marshalUint32(src.umask                            , p);
-  marshalUint32(src.positionMethod                   , p);
-  marshalUint32(src.tapeFseq                         , p);
-  marshalUint32(src.diskFseq                         , p);
-  marshalUint32(src.blockSize                        , p);
-  marshalUint32(src.recordLength                     , p);
-  marshalUint32(src.retention                        , p);
-  marshalUint32(src.defAlloc                         , p);
-  marshalUint32(src.rtcpErrAction                    , p);
-  marshalUint32(src.tpErrAction                      , p);
-  marshalUint32(src.convert                          , p);
-  marshalUint32(src.checkFid                         , p);
-  marshalUint32(src.concat                           , p);
-  marshalUint32(src.procStatus                       , p);
-  marshalInt32(src.cprc                             , p);
-  marshalUint32(src.tStartPosition                   , p);
-  marshalUint32(src.tEndPosition                     , p);
-  marshalUint32(src.tStartTransferDisk               , p);
-  marshalUint32(src.tEndTransferDisk                 , p);
-  marshalUint32(src.tStartTransferTape               , p);
-  marshalUint32(src.tEndTransferTape                 , p);
-  marshalUint8(src.blockId[0]                        , p);
-  marshalUint8(src.blockId[1]                        , p);
-  marshalUint8(src.blockId[2]                        , p);
-  marshalUint8(src.blockId[3]                        , p);
-  marshalUint64(src.offset                           , p);
-  marshalUint64(src.bytesIn                          , p);
-  marshalUint64(src.bytesOut                         , p);
-  marshalUint64(src.hostBytes                        , p);
-  marshalUint64(src.nbRecs                           , p);
-  marshalUint64(src.maxNbRec                         , p);
-  marshalUint64(src.maxSize                          , p);
-  marshalUint64(src.startSize                        , p);
-  marshalString(src.segAttr.nameServerHostName       , p);
-  marshalString(src.segAttr.segmCksumAlgorithm       , p);
-  marshalUint32(src.segAttr.segmCksum                , p);
-  marshalUint64(src.segAttr.castorFileId             , p);
-  marshalUint32(src.stgReqId.time_low                , p);
-  marshalUint16(src.stgReqId.time_mid                , p);
-  marshalUint16(src.stgReqId.time_hi_and_version     , p);
-  marshalUint8(src.stgReqId.clock_seq_hi_and_reserved, p);
-  marshalUint8(src.stgReqId.clock_seq_low            , p);
-  marshalUint8(src.stgReqId.node[0]                  , p);
-  marshalUint8(src.stgReqId.node[1]                  , p);
-  marshalUint8(src.stgReqId.node[2]                  , p);
-  marshalUint8(src.stgReqId.node[3]                  , p);
-  marshalUint8(src.stgReqId.node[4]                  , p);
-  marshalUint8(src.stgReqId.node[5]                  , p);
-  marshalString(src.err.errorMsg                     , p);
-  marshalUint32(src.err.severity                     , p);
-  marshalUint32(src.err.errorCode                    , p);
-  marshalUint32(src.err.maxTpRetry                   , p);
-  marshalUint32(src.err.maxCpRetry                   , p);
+  marshalUint32(RTCOPY_MAGIC                              , p);
+  marshalUint32(RTCP_FILEERR_REQ                          , p);
+  marshalUint32(len                                       , p);
+  marshalString(src.rqst.filePath                         , p);
+  marshalString(src.rqst.tapePath                         , p);
+  marshalString(src.rqst.recfm                            , p);
+  marshalString(src.rqst.fid                              , p);
+  marshalString(src.rqst.ifce                             , p);
+  marshalString(src.rqst.stageId                          , p);
+  marshalUint32(src.rqst.volReqId                         , p);
+  marshalUint32(src.rqst.jobId                            , p);
+  marshalUint32(src.rqst.stageSubReqId                    , p);
+  marshalUint32(src.rqst.umask                            , p);
+  marshalUint32(src.rqst.positionMethod                   , p);
+  marshalUint32(src.rqst.tapeFseq                         , p);
+  marshalUint32(src.rqst.diskFseq                         , p);
+  marshalUint32(src.rqst.blockSize                        , p);
+  marshalUint32(src.rqst.recordLength                     , p);
+  marshalUint32(src.rqst.retention                        , p);
+  marshalUint32(src.rqst.defAlloc                         , p);
+  marshalUint32(src.rqst.rtcpErrAction                    , p);
+  marshalUint32(src.rqst.tpErrAction                      , p);
+  marshalUint32(src.rqst.convert                          , p);
+  marshalUint32(src.rqst.checkFid                         , p);
+  marshalUint32(src.rqst.concat                           , p);
+  marshalUint32(src.rqst.procStatus                       , p);
+  marshalInt32(src.rqst.cprc                              , p);
+  marshalUint32(src.rqst.tStartPosition                   , p);
+  marshalUint32(src.rqst.tEndPosition                     , p);
+  marshalUint32(src.rqst.tStartTransferDisk               , p);
+  marshalUint32(src.rqst.tEndTransferDisk                 , p);
+  marshalUint32(src.rqst.tStartTransferTape               , p);
+  marshalUint32(src.rqst.tEndTransferTape                 , p);
+  marshalUint8(src.rqst.blockId[0]                        , p);
+  marshalUint8(src.rqst.blockId[1]                        , p);
+  marshalUint8(src.rqst.blockId[2]                        , p);
+  marshalUint8(src.rqst.blockId[3]                        , p);
+  marshalUint64(src.rqst.offset                           , p);
+  marshalUint64(src.rqst.bytesIn                          , p);
+  marshalUint64(src.rqst.bytesOut                         , p);
+  marshalUint64(src.rqst.hostBytes                        , p);
+  marshalUint64(src.rqst.nbRecs                           , p);
+  marshalUint64(src.rqst.maxNbRec                         , p);
+  marshalUint64(src.rqst.maxSize                          , p);
+  marshalUint64(src.rqst.startSize                        , p);
+  marshalString(src.rqst.segAttr.nameServerHostName       , p);
+  marshalString(src.rqst.segAttr.segmCksumAlgorithm       , p);
+  marshalUint32(src.rqst.segAttr.segmCksum                , p);
+  marshalUint64(src.rqst.segAttr.castorFileId             , p);
+  marshalUint32(src.rqst.stgReqId.time_low                , p);
+  marshalUint16(src.rqst.stgReqId.time_mid                , p);
+  marshalUint16(src.rqst.stgReqId.time_hi_and_version     , p);
+  marshalUint8(src.rqst.stgReqId.clock_seq_hi_and_reserved, p);
+  marshalUint8(src.rqst.stgReqId.clock_seq_low            , p);
+  marshalUint8(src.rqst.stgReqId.node[0]                  , p);
+  marshalUint8(src.rqst.stgReqId.node[1]                  , p);
+  marshalUint8(src.rqst.stgReqId.node[2]                  , p);
+  marshalUint8(src.rqst.stgReqId.node[3]                  , p);
+  marshalUint8(src.rqst.stgReqId.node[4]                  , p);
+  marshalUint8(src.rqst.stgReqId.node[5]                  , p);
+  marshalString(src.err.errorMsg                          , p);
+  marshalUint32(src.err.severity                          , p);
+  marshalUint32(src.err.errorCode                         , p);
+  marshalUint32(src.err.maxTpRetry                        , p);
+  marshalUint32(src.err.maxCpRetry                        , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -509,63 +509,63 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpFileRqstMsgBody &dst)
   throw(castor::exception::Exception) {
 
-  unmarshalString(src, srcLen, dst.filePath);
-  unmarshalString(src, srcLen, dst.tapePath);
-  unmarshalString(src, srcLen, dst.recfm);
-  unmarshalString(src, srcLen, dst.fid);
-  unmarshalString(src, srcLen, dst.ifce);
-  unmarshalString(src, srcLen, dst.stageId);
-  unmarshalUint32(src, srcLen, dst.volReqId);
-  unmarshalInt32(src, srcLen, dst.jobId);
-  unmarshalInt32(src, srcLen, dst.stageSubReqId);
-  unmarshalUint32(src, srcLen, dst.umask);
-  unmarshalInt32(src, srcLen, dst.positionMethod);
-  unmarshalInt32(src, srcLen, dst.tapeFseq);
-  unmarshalInt32(src, srcLen, dst.diskFseq);
-  unmarshalInt32(src, srcLen, dst.blockSize);
-  unmarshalInt32(src, srcLen, dst.recordLength);
-  unmarshalInt32(src, srcLen, dst.retention);
-  unmarshalInt32(src, srcLen, dst.defAlloc);
-  unmarshalInt32(src, srcLen, dst.rtcpErrAction);
-  unmarshalInt32(src, srcLen, dst.tpErrAction);
-  unmarshalInt32(src, srcLen, dst.convert);
-  unmarshalInt32(src, srcLen, dst.checkFid);
-  unmarshalUint32(src, srcLen, dst.concat);
-  unmarshalUint32(src, srcLen, dst.procStatus);
-  unmarshalInt32(src, srcLen, dst.cprc);
-  unmarshalUint32(src, srcLen, dst.tStartPosition);
-  unmarshalUint32(src, srcLen, dst.tEndPosition);
-  unmarshalUint32(src, srcLen, dst.tStartTransferDisk);
-  unmarshalUint32(src, srcLen, dst.tEndTransferDisk);
-  unmarshalUint32(src, srcLen, dst.tStartTransferTape);
-  unmarshalUint32(src, srcLen, dst.tEndTransferTape);
-  unmarshalUint8(src, srcLen, dst.blockId[0]);
-  unmarshalUint8(src, srcLen, dst.blockId[1]);
-  unmarshalUint8(src, srcLen, dst.blockId[2]);
-  unmarshalUint8(src, srcLen, dst.blockId[3]);
-  unmarshalUint64(src, srcLen, dst.offset);
-  unmarshalUint64(src, srcLen, dst.bytesIn);
-  unmarshalUint64(src, srcLen, dst.bytesOut);
-  unmarshalUint64(src, srcLen, dst.hostBytes);
-  unmarshalUint64(src, srcLen, dst.nbRecs);
-  unmarshalUint64(src, srcLen, dst.maxNbRec);
-  unmarshalUint64(src, srcLen, dst.maxSize);
-  unmarshalUint64(src, srcLen, dst.startSize);
-  unmarshalString(src, srcLen, dst.segAttr.nameServerHostName);
-  unmarshalString(src, srcLen, dst.segAttr.segmCksumAlgorithm);
-  unmarshalUint32(src, srcLen, dst.segAttr.segmCksum);
-  unmarshalUint64(src, srcLen, dst.segAttr.castorFileId);
-  unmarshalUint32(src, srcLen, dst.stgReqId.time_low);
-  unmarshalUint16(src, srcLen, dst.stgReqId.time_mid);
-  unmarshalUint16(src, srcLen, dst.stgReqId.time_hi_and_version);
-  unmarshalUint8(src, srcLen, dst.stgReqId.clock_seq_hi_and_reserved);
-  unmarshalUint8(src, srcLen, dst.stgReqId.clock_seq_low);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[0]);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[1]);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[2]);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[3]);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[4]);
-  unmarshalUint8(src, srcLen, dst.stgReqId.node[5]);
+  unmarshalString(src, srcLen, dst.rqst.filePath);
+  unmarshalString(src, srcLen, dst.rqst.tapePath);
+  unmarshalString(src, srcLen, dst.rqst.recfm);
+  unmarshalString(src, srcLen, dst.rqst.fid);
+  unmarshalString(src, srcLen, dst.rqst.ifce);
+  unmarshalString(src, srcLen, dst.rqst.stageId);
+  unmarshalUint32(src, srcLen, dst.rqst.volReqId);
+  unmarshalInt32(src, srcLen, dst.rqst.jobId);
+  unmarshalInt32(src, srcLen, dst.rqst.stageSubReqId);
+  unmarshalUint32(src, srcLen, dst.rqst.umask);
+  unmarshalInt32(src, srcLen, dst.rqst.positionMethod);
+  unmarshalInt32(src, srcLen, dst.rqst.tapeFseq);
+  unmarshalInt32(src, srcLen, dst.rqst.diskFseq);
+  unmarshalInt32(src, srcLen, dst.rqst.blockSize);
+  unmarshalInt32(src, srcLen, dst.rqst.recordLength);
+  unmarshalInt32(src, srcLen, dst.rqst.retention);
+  unmarshalInt32(src, srcLen, dst.rqst.defAlloc);
+  unmarshalInt32(src, srcLen, dst.rqst.rtcpErrAction);
+  unmarshalInt32(src, srcLen, dst.rqst.tpErrAction);
+  unmarshalInt32(src, srcLen, dst.rqst.convert);
+  unmarshalInt32(src, srcLen, dst.rqst.checkFid);
+  unmarshalUint32(src, srcLen, dst.rqst.concat);
+  unmarshalUint32(src, srcLen, dst.rqst.procStatus);
+  unmarshalInt32(src, srcLen, dst.rqst.cprc);
+  unmarshalUint32(src, srcLen, dst.rqst.tStartPosition);
+  unmarshalUint32(src, srcLen, dst.rqst.tEndPosition);
+  unmarshalUint32(src, srcLen, dst.rqst.tStartTransferDisk);
+  unmarshalUint32(src, srcLen, dst.rqst.tEndTransferDisk);
+  unmarshalUint32(src, srcLen, dst.rqst.tStartTransferTape);
+  unmarshalUint32(src, srcLen, dst.rqst.tEndTransferTape);
+  unmarshalUint8(src, srcLen, dst.rqst.blockId[0]);
+  unmarshalUint8(src, srcLen, dst.rqst.blockId[1]);
+  unmarshalUint8(src, srcLen, dst.rqst.blockId[2]);
+  unmarshalUint8(src, srcLen, dst.rqst.blockId[3]);
+  unmarshalUint64(src, srcLen, dst.rqst.offset);
+  unmarshalUint64(src, srcLen, dst.rqst.bytesIn);
+  unmarshalUint64(src, srcLen, dst.rqst.bytesOut);
+  unmarshalUint64(src, srcLen, dst.rqst.hostBytes);
+  unmarshalUint64(src, srcLen, dst.rqst.nbRecs);
+  unmarshalUint64(src, srcLen, dst.rqst.maxNbRec);
+  unmarshalUint64(src, srcLen, dst.rqst.maxSize);
+  unmarshalUint64(src, srcLen, dst.rqst.startSize);
+  unmarshalString(src, srcLen, dst.rqst.segAttr.nameServerHostName);
+  unmarshalString(src, srcLen, dst.rqst.segAttr.segmCksumAlgorithm);
+  unmarshalUint32(src, srcLen, dst.rqst.segAttr.segmCksum);
+  unmarshalUint64(src, srcLen, dst.rqst.segAttr.castorFileId);
+  unmarshalUint32(src, srcLen, dst.rqst.stgReqId.time_low);
+  unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_mid);
+  unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_hi_and_version);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_hi_and_reserved);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_low);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[0]);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[1]);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[2]);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[3]);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[4]);
+  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[5]);
 }
 
 
