@@ -270,7 +270,7 @@ testrtcpdtape: \
   tape_usrmsg.o \
   tape_sendrep.o \
   tape_getcompstat.o \
-  tapebridge_sendTapeBridgeAck.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_marshall.o \
   test_rtcpd_Tape.o \
   upv_Cupv_check.o \
@@ -737,8 +737,8 @@ rtcpd_TapeFileWaitingForFlushList.c: \
   h/rtcpd_TapeFileWaitingForFlushList.h
 	touch $@
 
-tapebridge_sendTapeBridgeAck.o: \
-  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeAck.c
+tapebridge_sendTapeBridgeClientInfo2Ack.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeClientInfo2Ack.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c

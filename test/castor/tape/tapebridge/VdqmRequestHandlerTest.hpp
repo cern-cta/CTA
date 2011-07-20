@@ -41,16 +41,16 @@ public:
 
   void setUp() {
     setenv("PATH_CONFIG", "/etc/castor/castor.conf", 1);
-    unsetenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
-    unsetenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH");
-    unsetenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
+    unsetenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH");
   }
 
   void tearDown() {
     setenv("PATH_CONFIG", "/etc/castor/castor.conf", 1);
-    unsetenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
-    unsetenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH");
-    unsetenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES");
+    unsetenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH");
+    unsetenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH");
   }
 
   void testGetUseBufferedTapeMarksOverMultipleFilesInvalidEnv() {
@@ -61,9 +61,9 @@ public:
         "UNKNOWN SOURCE");
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "setenv TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
+      "setenv TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
       0,
-      setenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
+      setenv("TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
         "INVALID_BOOL_VALUE", 1));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
@@ -80,7 +80,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"
+        " name=TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"
         " value=INVALID_BOOL_VALUE"
         " source=environment variable"),
       exceptionMsg);
@@ -94,9 +94,9 @@ public:
         "UNKNOWN SOURCE");
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "setenv TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
+      "setenv TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
       0,
-      setenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", "true", 1));
+      setenv("TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", "true", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "getUseBufferedTapeMarksOverMultipleFiles",
@@ -104,7 +104,7 @@ public:
         handler.getUseBufferedTapeMarksOverMultipleFiles());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.name",
-      std::string("TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
+      std::string("TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
       useBufferedTapeMarksOverMultipleFiles.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.value",
@@ -124,9 +124,9 @@ public:
         "UNKNOWN SOURCE");
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "setenv TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
+      "setenv TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES",
       0,
-      setenv("TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", "false", 1));
+      setenv("TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", "false", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "getUseBufferedTapeMarksOverMultipleFiles",
@@ -134,7 +134,7 @@ public:
         handler.getUseBufferedTapeMarksOverMultipleFiles());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.name",
-      std::string("TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
+      std::string("TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
       useBufferedTapeMarksOverMultipleFiles.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.value",
@@ -163,12 +163,12 @@ public:
         handler.getUseBufferedTapeMarksOverMultipleFiles());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.name",
-      std::string("TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
+      std::string("TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
       useBufferedTapeMarksOverMultipleFiles.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.value",
       castor::tape::tapebridge::
-        TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES,
+        TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES,
       useBufferedTapeMarksOverMultipleFiles.value);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.source",
@@ -202,7 +202,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"
+        " name=TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"
         " value=INVALID_BOOL_VALUE"
         " source=castor.conf"),
       exceptionMsg);
@@ -226,7 +226,7 @@ public:
         handler.getUseBufferedTapeMarksOverMultipleFiles());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.name",
-      std::string("TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
+      std::string("TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
       useBufferedTapeMarksOverMultipleFiles.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.value",
@@ -256,7 +256,7 @@ public:
         handler.getUseBufferedTapeMarksOverMultipleFiles());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.name",
-      std::string("TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
+      std::string("TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"),
       useBufferedTapeMarksOverMultipleFiles.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles.value",
@@ -274,9 +274,9 @@ public:
     castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
       maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXBYTESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
-      setenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
+      setenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
       maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush(),
@@ -290,7 +290,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/MAXBYTESBEFOREFLUSH"
+        " name=TAPEBRIDGE/MAXBYTESBEFOREFLUSH"
         " value=INVALID_UINT_VALUE"
         " source=environment variable"),
       exceptionMsg);
@@ -302,16 +302,16 @@ public:
     castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
       maxBytesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXBYTESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
-      setenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH", "11111", 1));
+      setenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH", "11111", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "getMaxBytesBeforeFlush",
       maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("getMaxBytesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXBYTESBEFOREFLUSH"),
       maxBytesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
@@ -337,12 +337,12 @@ public:
       maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXBYTESBEFOREFLUSH"),
       maxBytesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
       castor::tape::tapebridge::
-        TAPEBRIDGED_MAXBYTESBEFOREFLUSH,
+        TAPEBRIDGE_MAXBYTESBEFOREFLUSH,
       maxBytesBeforeFlush.value);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.source",
@@ -372,7 +372,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/MAXBYTESBEFOREFLUSH"
+        " name=TAPEBRIDGE/MAXBYTESBEFOREFLUSH"
         " value=INVALID_UINT_VALUE"
         " source=castor.conf"),
       exceptionMsg);
@@ -393,7 +393,7 @@ public:
       maxBytesBeforeFlush = handler.getMaxBytesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXBYTESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXBYTESBEFOREFLUSH"),
       maxBytesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush.value",
@@ -411,9 +411,9 @@ public:
     castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
       maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXFILESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
-      setenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
+      setenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
       maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush(),
@@ -427,7 +427,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/MAXFILESBEFOREFLUSH"
+        " name=TAPEBRIDGE/MAXFILESBEFOREFLUSH"
         " value=INVALID_UINT_VALUE"
         " source=environment variable"),
       exceptionMsg);
@@ -439,16 +439,16 @@ public:
     castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
       maxFilesBeforeFlush("UNKNOWN NAME", 0, "UNKNOWN SOURCE");
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGED_MAXFILESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
-      setenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH", "11111", 1));
+      setenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH", "11111", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "getMaxFilesBeforeFlush",
       maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("getMaxFilesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXFILESBEFOREFLUSH"),
       maxFilesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",
@@ -474,12 +474,12 @@ public:
       maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXFILESBEFOREFLUSH"),
       maxFilesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",
       castor::tape::tapebridge::
-        TAPEBRIDGED_MAXFILESBEFOREFLUSH,
+        TAPEBRIDGE_MAXFILESBEFOREFLUSH,
       maxFilesBeforeFlush.value);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.source",
@@ -509,7 +509,7 @@ public:
     }
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string("Configuration parameter is not a valid unsigned integer:"
-        " name=TAPEBRIDGED/MAXFILESBEFOREFLUSH"
+        " name=TAPEBRIDGE/MAXFILESBEFOREFLUSH"
         " value=INVALID_UINT_VALUE"
         " source=castor.conf"),
       exceptionMsg);
@@ -530,7 +530,7 @@ public:
       maxFilesBeforeFlush = handler.getMaxFilesBeforeFlush());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.name",
-      std::string("TAPEBRIDGED/MAXFILESBEFOREFLUSH"),
+      std::string("TAPEBRIDGE/MAXFILESBEFOREFLUSH"),
       maxFilesBeforeFlush.name);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush.value",

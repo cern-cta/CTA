@@ -127,7 +127,6 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     param = NULL; /* Will cause a segementation fault if used by accident */
   }
 
-/*
   // Determine whether or not buffered tape-marks should be used over multiple
   // files
   ConfigParamAndSource<bool> useBufferedTapeMarksOverMultipleFiles("UNKNOWN",
@@ -208,7 +207,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
       params);
   }
-*/
+
   // Job request to be received from VDQM
   legacymsg::RtcpJobRqstMsgBody jobRequest;
   utils::setBytes(jobRequest, '\0');
@@ -371,9 +370,10 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       clientInfoMsgBody.bridgeClientCallbackPort = jobRequest.clientPort;
       clientInfoMsgBody.clientUID = jobRequest.clientEuid;
       clientInfoMsgBody.clientGID = jobRequest.clientEgid;
-      clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles = 0;
-      clientInfoMsgBody.maxBytesBeforeFlush = (uint64_t)0;
-      clientInfoMsgBody.maxFilesBeforeFlush = (uint64_t)0;
+      clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles =
+        useBufferedTapeMarksOverMultipleFiles.value ? 1 : 0;
+      clientInfoMsgBody.maxBytesBeforeFlush = maxBytesBeforeFlush.value;
+      clientInfoMsgBody.maxFilesBeforeFlush = maxFilesBeforeFlush.value;
       utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
       utils::copyString(clientInfoMsgBody.bridgeClientHost,
         jobRequest.clientHost);
@@ -717,14 +717,14 @@ castor::tape::tapebridge::ConfigParamAndSource<bool>
   getUseBufferedTapeMarksOverMultipleFiles()
   throw(castor::exception::Exception) {
   const std::string paramName =
-    "TAPEBRIDGED/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES";
+    "TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES";
   const char        *paramCStr  = NULL;
   uint32_t          paramBool   = false;
   std::string       paramSource = "UNKNOWN";
 
   // Try to get the number of disk-IO threads from the environment variables
   if(NULL != (paramCStr = getenv(
-    "TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"))) {
+    "TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES"))) {
     paramSource = "environment variable";
 
     std::string paramUpperCaseStr = paramCStr;
@@ -744,7 +744,7 @@ castor::tape::tapebridge::ConfigParamAndSource<bool>
     }
 
   // Else try to get the number of disk IO threads of castor.conf
-  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGE",
     "USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES", 0))) {
     paramSource = "castor.conf";
 
@@ -767,7 +767,7 @@ castor::tape::tapebridge::ConfigParamAndSource<bool>
   // Else use the compile-time default
   } else {
     paramSource = "compile-time default";
-    paramBool = TAPEBRIDGED_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES;
+    paramBool = TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES;
   }
 
   return ConfigParamAndSource<bool>(paramName, paramBool, paramSource);
@@ -780,13 +780,13 @@ castor::tape::tapebridge::ConfigParamAndSource<bool>
 castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
   castor::tape::tapebridge::VdqmRequestHandler::getMaxBytesBeforeFlush()
   throw(castor::exception::Exception) {
-  const std::string paramName = "TAPEBRIDGED/MAXBYTESBEFOREFLUSH";
+  const std::string paramName = "TAPEBRIDGE/MAXBYTESBEFOREFLUSH";
   const char        *paramCStr  = NULL;
   uint64_t          paramUInt64 = 0;
   std::string       paramSource = "UNKNOWN";
 
   // Try to get the required value from the environment variables
-  if(NULL != (paramCStr = getenv("TAPEBRIDGED_MAXBYTESBEFOREFLUSH"))) {
+  if(NULL != (paramCStr = getenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH"))) {
     paramSource = "environment variable";
 
     if(!utils::isValidUInt(paramCStr)) {
@@ -802,7 +802,7 @@ castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
     paramUInt64 = strtou64(paramCStr);
 
   // Else try to get the required value from castor.conf
-  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGE",
     "MAXBYTESBEFOREFLUSH", 0))) {
     paramSource = "castor.conf";
 
@@ -821,7 +821,7 @@ castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
   // Else use the compile-time default
   } else {
     paramSource = "compile-time default";
-    paramUInt64 = TAPEBRIDGED_MAXBYTESBEFOREFLUSH;
+    paramUInt64 = TAPEBRIDGE_MAXBYTESBEFOREFLUSH;
   }
 
   return ConfigParamAndSource<uint64_t>(paramName, paramUInt64, paramSource);
@@ -834,13 +834,13 @@ castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
 castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
   castor::tape::tapebridge::VdqmRequestHandler::getMaxFilesBeforeFlush()
   throw(castor::exception::Exception) {
-  const std::string paramName = "TAPEBRIDGED/MAXFILESBEFOREFLUSH";
+  const std::string paramName = "TAPEBRIDGE/MAXFILESBEFOREFLUSH";
   const char        *paramCStr  = NULL;
   uint64_t          paramUInt64 = 0;
   std::string       paramSource = "UNKNOWN";
 
   // Try to get the required value from the environment variables
-  if(NULL != (paramCStr = getenv("TAPEBRIDGED_MAXFILESBEFOREFLUSH"))) {
+  if(NULL != (paramCStr = getenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH"))) {
     paramSource = "environment variable";
 
     if(!utils::isValidUInt(paramCStr)) {
@@ -856,7 +856,7 @@ castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
     paramUInt64 = strtou64(paramCStr);
 
   // Else try to get the required value from castor.conf
-  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGED",
+  } else if(NULL != (paramCStr = getconfent("TAPEBRIDGE",
     "MAXFILESBEFOREFLUSH", 0))) {
     paramSource = "castor.conf";
 
@@ -875,7 +875,7 @@ castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
   // Else use the compile-time default
   } else {
     paramSource = "compile-time default";
-    paramUInt64 = TAPEBRIDGED_MAXFILESBEFOREFLUSH;
+    paramUInt64 = TAPEBRIDGE_MAXFILESBEFOREFLUSH;
   }
 
   return ConfigParamAndSource<uint64_t>(paramName, paramUInt64, paramSource);
