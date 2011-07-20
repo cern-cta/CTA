@@ -2,7 +2,7 @@
 # this is the core of the test suite infrastructure, based on py.test
 #
 
-import time, ConfigParser, os, sys, py, tempfile, re, types, datetime, signal
+import ConfigParser, os, sys, py, tempfile, re, types, signal
 
 #########################
 # Some useful functions #
@@ -34,18 +34,28 @@ except Exception:
 class Timeout(Exception):
     None
     
+def alarm_handler(signum, frame):
+    raise Timeout
+
 def Popen(cmd, timeout=600):
     if hasSubProcessModule:
-        start = datetime.datetime.now()
         process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        while process.poll() is None:
-            time.sleep(0.1)
-            now = datetime.datetime.now()
-            if (now - start).seconds > timeout:
-                os.kill(process.pid, signal.SIGKILL)
-                os.waitpid(-1, os.WNOHANG)
-                raise Timeout()
-        return process.stdout.read()
+        # Note that process.stdout.read() should not be used here as it can create
+        # dead locks if the output is too large. See Python documentation for the
+        # subprocess module.
+        # Also procee.poll should not be used (despite the documentation this time)
+        # as it will never come back with a not None return code. It actually
+        # suffers from the same deadlock as the others. So we use signals to implement
+        # proper timeouting.
+        signal.signal(signal.SIGALRM, alarm_handler)
+        signal.alarm(timeout)
+        try:
+            (stdoutdata, stderrdata) = process.communicate()
+            return stdoutdata
+        except Timeout:
+            os.kill(process.pid, signal.SIGKILL)
+            os.waitpid(-1, os.WNOHANG)
+            raise
     else:
         return os.popen4(cmd)[1].read()
 
