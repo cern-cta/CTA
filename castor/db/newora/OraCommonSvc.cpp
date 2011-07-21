@@ -282,6 +282,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   try {
     castor::BaseAddress ad;
     ad.setTarget(id);
+    ad.setObjType(castor::OBJ_Tape);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
