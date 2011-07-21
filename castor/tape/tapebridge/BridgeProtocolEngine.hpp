@@ -275,7 +275,7 @@ private:
   int acceptRtcpdConnection() throw(castor::exception::Exception);
 
   /**
-   * Processes a pending socket the result of calling select().
+   * Processes a pending socket from the result of calling select().
    *
    * Please note that this method will modify the catalogue of
    * socket-descriptors as necessary.  For example closed connections will be
@@ -288,6 +288,49 @@ private:
     throw (castor::exception::Exception);
 
   /**
+   * Processes the socket listening for connection from the rtcpd daemon.  The
+   * socket should be pending.
+   *
+   * Please note that this method will modify the catalogue of
+   * socket-descriptors as necessary.
+   */
+  bool processPendingListenSocket() throw (castor::exception::Exception);
+
+  /**
+   * Processes the specified socket which must be both pending and the initial
+   * connection made from the rtcpd daemon to this tapebridged daemon.
+   *
+   * @param pendingSock the file descriptior of the pending socket.
+   */
+  bool processPendingInitialRtcpdSocket(const int pendingSock)
+    throw (castor::exception::Exception);
+
+  /**
+   * Processes the specified socket which must be both pending and an rtcpd
+   * disk ot tape IO control connection.
+   *
+   * Please note that this method will modify the catalogue of
+   * socket-descriptors as necessary.
+   *
+   * @param pendingSock the file descriptior of the pending socket.
+   */
+  bool processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
+    throw (castor::exception::Exception);
+
+  /**
+   * Processes the specified socket which must be both pending and a connection
+   * made from this tapebridged daemon to a client (readtp, writetp, dumtp or
+   * a tapebridged daemon).
+   *
+   * Please note that this method will modify the catalogue of
+   * socket-descriptors as necessary.
+   *
+   * @param pendingSock the file descriptior of the pending socket.
+   */
+  bool processPendingClientSocket(const int pendingSock)
+    throw (castor::exception::Exception);
+
+  /**
    * Processes the specified rtcpd request.
    *
    * @param header The header of the rtcpd request.
@@ -295,6 +338,8 @@ private:
    * should be read from.
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
    * function of an RTCP_ENDOF_REQ was received.
+   *
+   * @param pendingSock the file descriptior of the pending socket.
    */
   void processRtcpdRequest(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)

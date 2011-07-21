@@ -374,245 +374,307 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
 
   switch(sockType) {
   case BridgeSocketCatalogue::LISTEN:
-    {
-      int acceptedConnection = 0;
-
-      // Accept the connection
-      m_sockCatalogue.addRtcpdDiskTapeIOControlConn(
-        acceptedConnection = acceptRtcpdConnection());
-
-      // Throw an exception if connection is not from localhost
-      checkPeerIsLocalhost(acceptedConnection);
-
-      const ConfigParamAndSource<uint32_t>
-        nbRtcpdDiskIOThreads(getNbRtcpdDiskIOThreads());
-
-      // Log the value and source of the number of rtcpd disk-IO threads
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("name"  , nbRtcpdDiskIOThreads.name),
-        castor::dlf::Param("value" , nbRtcpdDiskIOThreads.value),
-        castor::dlf::Param("source", nbRtcpdDiskIOThreads.source)};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
-        params);
-
-      // Determine maximum number of RTCPD disk/tape IO control connections
-      // This is the number of disk IO threads plus 1 for the tape IO thread
-      const int maxNbDiskTapeIOControlConns = nbRtcpdDiskIOThreads.value + 1;
-
-      // Throw an exception if the expected maximum number of disk/tape IO
-      // control connections has been exceeded
-      if(m_sockCatalogue.getNbDiskTapeIOControlConns() >
-        maxNbDiskTapeIOControlConns) {
-        castor::exception::Exception ex(ECANCELED);
-
-        ex.getMessage() <<
-          "Maximum number of disk/tape IO control connections exceeded"
-          ": maxNbDiskTapeIOControlConns=" << maxNbDiskTapeIOControlConns <<
-          ": actual=" << m_sockCatalogue.getNbDiskTapeIOControlConns();
-
-        throw(ex);
-      }
-    }
-    return true; // Continue the RTCOPY session
+    return processPendingListenSocket();
   case BridgeSocketCatalogue::INITIAL_RTCPD:
-    {
-      // Not expecting any data from or a close of this connection.  Determine
-      // which and throw an exception with the appropriate error message.
-      bool connClosed = false;
-      char dummyBuf[1];
-      net::readBytesFromCloseable(connClosed, pendingSock, RTCPDNETRWTIMEOUT,
-        sizeof(dummyBuf), dummyBuf);
-      exception::Exception ce(ECANCELED);
-      if(connClosed) {
-        ce.getMessage() <<
-          "Initial rtcpd connection un-expectedly closed";
-      } else {
-        ce.getMessage() <<
-          "Received un-expected data from the initial rtcpd connection";
-      }
-      throw(ce);
-    }
-    break;
+    return processPendingInitialRtcpdSocket(pendingSock);
   case BridgeSocketCatalogue::RTCPD_DISK_TAPE_IO_CONTROL:
-    {
-      legacymsg::MessageHeader header;
-      utils::setBytes(header, '\0');
-
-      // Try to receive the message header which may not be possible; The file
-      // descriptor may be ready because rtcpd has closed the connection
-      {
-        bool peerClosed = false;
-        LegacyTxRx::receiveMsgHeaderFromCloseable(m_cuuid, peerClosed,
-          m_jobRequest.volReqId, pendingSock, RTCPDNETRWTIMEOUT, header);
-
-        // If the peer closed its side of the connection, then close this side
-        // of the connection and return true in order to continue the RTCOPY
-        // session
-        if(peerClosed) {
-          close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
-
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-            castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-            castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-            castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-            castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-            castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-            castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-            castor::dlf::Param("clientType",
-              utils::volumeClientTypeToString(m_volume.clientType())),
-            castor::dlf::Param("socketFd"          , pendingSock            )};
-          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
-
-          return true; // Continue the RTCOPY session
-        }
-      }
-
-      // Process the rtcpd request
-      {
-        bool receivedENDOF_REQ = false;
-        processRtcpdRequest(header, pendingSock, receivedENDOF_REQ);
-
-        // If the message processed was not an ENDOF_REQ, then return true in
-        // order to continue the RTCOPY session
-        if(!receivedENDOF_REQ) {
-          return true; // Continue the RTCOPY session
-        }
-      }
-
-      // If this line has been reached, then the processed rtcpd message was
-      // an ENDOF_REQ
-      m_nbReceivedENDOF_REQs++;
-
-      {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
-          castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
-          castor::dlf::Param("TPVID"               , m_volume.vid()         ),
-          castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
-          castor::dlf::Param("dgn"                 , m_jobRequest.dgn       ),
-          castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
-          castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
-          castor::dlf::Param("clientType",
-            utils::volumeClientTypeToString(m_volume.clientType())),
-          castor::dlf::Param("socketFd"            , pendingSock           ),
-          castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          TAPEBRIDGE_RECEIVED_RTCP_ENDOF_REQ, params);
-      }
-
-      close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
-
-      // If only the initial callback connection is open, then send an
-      // RTCP_ENDOF_REQ message to rtcpd and close the connection
-      if(m_sockCatalogue.getNbDiskTapeIOControlConns() == 0) {
-
-        // Send an RTCP_ENDOF_REQ message to rtcpd via the initial callback
-        // connection
-        legacymsg::MessageHeader endofReqMsg;
-        endofReqMsg.magic       = RTCOPY_MAGIC;
-        endofReqMsg.reqType     = RTCP_ENDOF_REQ;
-        endofReqMsg.lenOrStatus = 0;
-        LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId,
-          m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
-          endofReqMsg);
-
-        {
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
-            castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
-            castor::dlf::Param("TPVID"               , m_volume.vid()         ),
-            castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
-            castor::dlf::Param("dgn"                 , m_jobRequest.dgn       ),
-            castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
-            castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
-            castor::dlf::Param("clientType",
-              utils::volumeClientTypeToString(m_volume.clientType())),
-            castor::dlf::Param("initialSocketFd"     ,
-              m_sockCatalogue.getInitialRtcpdConn()),
-            castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
-          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            TAPEBRIDGE_SEND_END_OF_SESSION_TO_RTCPD, params);
-        }
-
-        // Receive the acknowledge of the RTCP_ENDOF_REQ message
-        legacymsg::MessageHeader ackMsg;
-        try {
-          LegacyTxRx::receiveMsgHeader(m_cuuid, m_jobRequest.volReqId,
-            m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, ackMsg);
-        } catch(castor::exception::Exception &ex) {
-          TAPE_THROW_CODE(EPROTO,
-            ": Failed to receive acknowledge of RTCP_ENDOF_REQ from rtcpd: "
-            << ex.getMessage().str());
-        }
-
-        // The initial callback connection will be closed shortly by the
-        // VdqmRequestHandler
-
-        return false; // End the RTCOPY session
-      }
-    }
-    return true; // Continue the RTCOPY session
+    return processPendingRtcpdDiskTapeIOControlSocket(pendingSock);
   case BridgeSocketCatalogue::CLIENT:
-    {
-      // Get information about the rtcpd disk/tape IO control-connection that
-      // is waiting for the reply from the pending client-connection
-      int            rtcpdSock          = 0;
-      uint32_t       rtcpdReqMagic      = 0;
-      uint32_t       rtcpdReqType       = 0;
-      char           *rtcpdReqTapePath  = NULL;
-      uint64_t       tapebridgeTransId  = 0;
-      struct timeval clientReqTimeStamp = {0, 0};
-      m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdReqMagic,
-        rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId, clientReqTimeStamp);
-
-      // Release the client-connection from the catalogue
-      m_sockCatalogue.releaseClientConn(rtcpdSock, pendingSock);
-
-      // Get the current time
-      struct timeval now = {0, 0};
-      gettimeofday(&now, NULL);
-
-      // Calculate the number of remaining seconds before timing out the
-      // client-connection
-      int remainingClientTimeout = CLIENTNETRWTIMEOUT -
-        (now.tv_sec - clientReqTimeStamp.tv_sec);
-      if(remainingClientTimeout <= 0) {
-        remainingClientTimeout = 1;
-      }
-
-      std::auto_ptr<IObject> obj(ClientTxRx::receiveReplyAndClose(pendingSock,
-        remainingClientTimeout));
-
-      // Find the message type's corresponding handler
-      ClientCallbackMap::iterator itor = m_clientHandlers.find(obj->type());
-      if(itor == m_clientHandlers.end()) {
-        TAPE_THROW_CODE(EBADMSG,
-          ": Unknown client message object type"
-          ": object type=0x"   << std::hex << obj->type() << std::dec);
-      }
-      const ClientMsgCallback handler = itor->second;
-
-      // Invoke the handler
-      try {
-        (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdReqMagic,
-          rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId,
-          clientReqTimeStamp);
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_CODE(ECANCELED,
-          ": Client message handler failed"
-          ": message type=" << utils::objectTypeToString(obj->type()) <<
-          ": " << ex.getMessage().str());
-      }
-
-    }
-    return true; // Continue the RTCOPY session
+    return processPendingClientSocket(pendingSock);
   default:
     TAPE_THROW_EX(exception::Internal,
       "Unknown socket type"
       ": socketType = " << sockType);
   }
+}
+
+
+//------------------------------------------------------------------------------
+// processPendingListenSocket
+//------------------------------------------------------------------------------
+bool castor::tape::tapebridge::BridgeProtocolEngine::
+  processPendingListenSocket() throw(castor::exception::Exception) {
+  int acceptedConnection = 0;
+
+  // Accept the connection
+  m_sockCatalogue.addRtcpdDiskTapeIOControlConn(
+    acceptedConnection = acceptRtcpdConnection());
+
+  // Throw an exception if connection is not from localhost
+  checkPeerIsLocalhost(acceptedConnection);
+
+  const ConfigParamAndSource<uint32_t>
+    nbRtcpdDiskIOThreads(getNbRtcpdDiskIOThreads());
+
+  // Log the value and source of the number of rtcpd disk-IO threads
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("name"  , nbRtcpdDiskIOThreads.name),
+    castor::dlf::Param("value" , nbRtcpdDiskIOThreads.value),
+    castor::dlf::Param("source", nbRtcpdDiskIOThreads.source)};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
+    params);
+
+  // Determine maximum number of RTCPD disk/tape IO control connections
+  // This is the number of disk IO threads plus 1 for the tape IO thread
+  const int maxNbDiskTapeIOControlConns = nbRtcpdDiskIOThreads.value + 1;
+
+  // Throw an exception if the expected maximum number of disk/tape IO
+  // control connections has been exceeded
+  if(m_sockCatalogue.getNbDiskTapeIOControlConns() >
+    maxNbDiskTapeIOControlConns) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "Maximum number of disk/tape IO control connections exceeded"
+      ": maxNbDiskTapeIOControlConns=" << maxNbDiskTapeIOControlConns <<
+      ": actual=" << m_sockCatalogue.getNbDiskTapeIOControlConns();
+
+    throw(ex);
+  }
+
+  return true; // Continue the RTCOPY session
+}
+
+
+//------------------------------------------------------------------------------
+// processPendingInitialRtcpdSocket
+//------------------------------------------------------------------------------
+bool castor::tape::tapebridge::BridgeProtocolEngine::
+  processPendingInitialRtcpdSocket(const int pendingSock)
+  throw(castor::exception::Exception) {
+
+  // Check function arguments
+  if(pendingSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid method argument"
+      ": pendingSock is an invalid socket descriptor"
+      ": value=" << pendingSock);
+  }
+
+  // Not expecting any data from or a close of this connection.  Determine
+  // which and throw an exception with the appropriate error message.
+  bool connClosed = false;
+  char dummyBuf[1];
+  net::readBytesFromCloseable(connClosed, pendingSock, RTCPDNETRWTIMEOUT,
+    sizeof(dummyBuf), dummyBuf);
+  exception::Exception ce(ECANCELED);
+  if(connClosed) {
+    ce.getMessage() <<
+      "Initial rtcpd connection un-expectedly closed";
+  } else {
+    ce.getMessage() <<
+      "Received un-expected data from the initial rtcpd connection";
+  }
+  throw(ce);
+
+  // Impossible to reach this line
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
+// processPendingRtcpdDiskTapeIOControlSocket
+//------------------------------------------------------------------------------
+bool castor::tape::tapebridge::BridgeProtocolEngine::
+  processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
+  throw(castor::exception::Exception) {
+
+  // Check function arguments
+  if(pendingSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid method argument"
+      ": pendingSock is an invalid socket descriptor"
+      ": value=" << pendingSock);
+  }
+
+  legacymsg::MessageHeader header;
+  utils::setBytes(header, '\0');
+
+  // Try to receive the message header which may not be possible; The file
+  // descriptor may be ready because rtcpd has closed the connection
+  {
+    bool peerClosed = false;
+    LegacyTxRx::receiveMsgHeaderFromCloseable(m_cuuid, peerClosed,
+      m_jobRequest.volReqId, pendingSock, RTCPDNETRWTIMEOUT, header);
+
+    // If the peer closed its side of the connection, then close this side
+    // of the connection and return true in order to continue the RTCOPY
+    // session
+    if(peerClosed) {
+      close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("socketFd"          , pendingSock            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
+
+      return true; // Continue the RTCOPY session
+    }
+  }
+
+  // Process the rtcpd request
+  {
+    bool receivedENDOF_REQ = false;
+    processRtcpdRequest(header, pendingSock, receivedENDOF_REQ);
+
+    // If the message processed was not an ENDOF_REQ, then return true in
+    // order to continue the RTCOPY session
+    if(!receivedENDOF_REQ) {
+      return true; // Continue the RTCOPY session
+    }
+  }
+
+  // If this line has been reached, then the processed rtcpd message was
+  // an ENDOF_REQ
+  m_nbReceivedENDOF_REQs++;
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"               , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"                 , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("socketFd"            , pendingSock           ),
+      castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_RECEIVED_RTCP_ENDOF_REQ, params);
+  }
+
+  close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
+
+  // If only the initial callback connection is open, then send an
+  // RTCP_ENDOF_REQ message to rtcpd and close the connection
+  if(m_sockCatalogue.getNbDiskTapeIOControlConns() == 0) {
+
+    // Send an RTCP_ENDOF_REQ message to rtcpd via the initial callback
+    // connection
+    legacymsg::MessageHeader endofReqMsg;
+    endofReqMsg.magic       = RTCOPY_MAGIC;
+    endofReqMsg.reqType     = RTCP_ENDOF_REQ;
+    endofReqMsg.lenOrStatus = 0;
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId,
+      m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
+      endofReqMsg);
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"               , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"                 , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("initialSocketFd"     ,
+          m_sockCatalogue.getInitialRtcpdConn()),
+        castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        TAPEBRIDGE_SEND_END_OF_SESSION_TO_RTCPD, params);
+    }
+
+    // Receive the acknowledge of the RTCP_ENDOF_REQ message
+    legacymsg::MessageHeader ackMsg;
+    try {
+      LegacyTxRx::receiveMsgHeader(m_cuuid, m_jobRequest.volReqId,
+        m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, ackMsg);
+    } catch(castor::exception::Exception &ex) {
+      TAPE_THROW_CODE(EPROTO,
+        ": Failed to receive acknowledge of RTCP_ENDOF_REQ from rtcpd: "
+        << ex.getMessage().str());
+    }
+
+    // The initial callback connection will be closed shortly by the
+    // VdqmRequestHandler
+
+    return false; // End the RTCOPY session
+  }
+
+  return true; // Continue the RTCOPY session
+}
+
+
+//------------------------------------------------------------------------------
+// processPendingClientSocket
+//------------------------------------------------------------------------------
+bool castor::tape::tapebridge::BridgeProtocolEngine::
+  processPendingClientSocket(const int pendingSock)
+  throw(castor::exception::Exception) {
+
+  // Check function arguments
+  if(pendingSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid method argument"
+      ": pendingSock is an invalid socket descriptor"
+      ": value=" << pendingSock);
+  }
+
+  // Get information about the rtcpd disk/tape IO control-connection that
+  // is waiting for the reply from the pending client-connection
+  int            rtcpdSock          = 0;
+  uint32_t       rtcpdReqMagic      = 0;
+  uint32_t       rtcpdReqType       = 0;
+  char           *rtcpdReqTapePath  = NULL;
+  uint64_t       tapebridgeTransId  = 0;
+  struct timeval clientReqTimeStamp = {0, 0};
+  m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdReqMagic,
+    rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId, clientReqTimeStamp);
+
+  // Release the client-connection from the catalogue
+  m_sockCatalogue.releaseClientConn(rtcpdSock, pendingSock);
+
+  // Get the current time
+  struct timeval now = {0, 0};
+  gettimeofday(&now, NULL);
+
+  // Calculate the number of remaining seconds before timing out the
+  // client-connection
+  int remainingClientTimeout = CLIENTNETRWTIMEOUT -
+    (now.tv_sec - clientReqTimeStamp.tv_sec);
+  if(remainingClientTimeout <= 0) {
+    remainingClientTimeout = 1;
+  }
+
+  std::auto_ptr<IObject> obj(ClientTxRx::receiveReplyAndClose(pendingSock,
+    remainingClientTimeout));
+
+  // Find the message type's corresponding handler
+  ClientCallbackMap::iterator itor = m_clientHandlers.find(obj->type());
+  if(itor == m_clientHandlers.end()) {
+    TAPE_THROW_CODE(EBADMSG,
+      ": Unknown client message object type"
+      ": object type=0x"   << std::hex << obj->type() << std::dec);
+  }
+  const ClientMsgCallback handler = itor->second;
+
+  // Invoke the handler
+  try {
+    (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdReqMagic,
+      rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId,
+      clientReqTimeStamp);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ECANCELED,
+      ": Client message handler failed"
+      ": message type=" << utils::objectTypeToString(obj->type()) <<
+      ": " << ex.getMessage().str());
+  }
+
+  return true; // Continue the RTCOPY session
 }
 
 
