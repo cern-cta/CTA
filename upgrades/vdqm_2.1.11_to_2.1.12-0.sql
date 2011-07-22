@@ -1,341 +1,95 @@
-/*******************************************************************
- * This file contains SQL code that is not generated automatically
- * and is inserted at the end of the generated code
+/******************************************************************************
+ *                 vdqm_2.1.11_to_2.1.12-0.sql
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This script upgrades a CASTOR v2.1.11 VDQM database to v2.1.12-0
  *
  * @author Castor Dev team, castor-dev@cern.ch
- *******************************************************************/
+ *****************************************************************************/
 
-/* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_12_0';
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+BEGIN
+  -- If we've encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_8_3'
+     AND release = '2_1_12_0'
+     AND state != 'COMPLETE';
+  COMMIT;
+END;
+/
 
-/* Sequence used to generate unique indentifies */
-CREATE SEQUENCE ids_seq CACHE 200;
+/* Verify that the script is running against the correct schema and version */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'VDQM'
+     AND release LIKE '2_1_11%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we can't apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the VDQM before this one.');
+END;
+/
 
-/* Enumerations */
-CREATE TABLE TapeServerStatusCodes (
-  id   NUMBER,
-  name VARCHAR2(30),
-  CONSTRAINT PK_TapeServerStatusCodes_id PRIMARY KEY (id));
-INSERT INTO TapeServerStatusCodes VALUES (0, 'TAPESERVER_ACTIVE');
-INSERT INTO TapeServerStatusCodes VALUES (1, 'TAPESERVER_INACTIVE');
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_12_0', '2_1_12_0', 'NON TRANSPARENT');
 COMMIT;
 
-CREATE TABLE TapeDriveStatusCodes (
-  id   NUMBER,
-  name VARCHAR2(30),
-  CONSTRAINT PK_TapeDriveStatusCodes_id PRIMARY KEY (id));
-INSERT INTO TapeDriveStatusCodes VALUES (0, 'UNIT_UP');
-INSERT INTO TapeDriveStatusCodes VALUES (1, 'UNIT_STARTING');
-INSERT INTO TapeDriveStatusCodes VALUES (2, 'UNIT_ASSIGNED');
-INSERT INTO TapeDriveStatusCodes VALUES (3, 'VOL_MOUNTED');
-INSERT INTO TapeDriveStatusCodes VALUES (4, 'FORCED_UNMOUNT');
-INSERT INTO TapeDriveStatusCodes VALUES (5, 'UNIT_DOWN');
-INSERT INTO TapeDriveStatusCodes VALUES (6, 'WAIT_FOR_UNMOUNT');
-INSERT INTO TapeDriveStatusCodes VALUES (7, 'STATUS_UNKNOWN');
-COMMIT;
+/* Job management */
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs)
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name, force=>TRUE);
+    END IF;
+    -- Schedule the start date of the job to 15 minutes from now. This
+    -- basically pauses the job for 15 minutes so that the upgrade can
+    -- go through as quickly as possible.
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+  END LOOP;
+END;
+/
 
-CREATE TABLE TapeRequestStatusCodes (
-  id NUMBER,
-  name VARCHAR2(30),
-  CONSTRAINT PK_TapeRequestStatusCodes_id PRIMARY KEY (id));
-INSERT INTO TapeRequestStatusCodes VALUES (0, 'REQUEST_PENDING');
-INSERT INTO TapeRequestStatusCodes VALUES (1, 'REQUEST_MATCHED');
-INSERT INTO TapeRequestStatusCodes VALUES (2, 'REQUEST_BEINGSUBMITTED');
-INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
-INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
-COMMIT;
+/* Schema changes go here */
+/**************************/
+ALTER TABLE CLIENTIDENTIFICATION DROP CONSTRAINT FK_CLIENTIDENTIFICATION_ID;
+ALTER TABLE TAPESERVER DROP CONSTRAINT FK_TAPESERVER_ID;
+ALTER TABLE TAPEREQUEST DROP CONSTRAINT FK_TAPEREQUEST_ID;
+ALTER TABLE DEVICEGROUPNAME DROP CONSTRAINT FK_DEVICEGROUPNAME_ID;
+ALTER TABLE VOLUMEPRIORITY DROP CONSTRAINT FK_VOLUMEPRIORITY_ID;
+ALTER TABLE TAPEACCESSSPECIFICATION DROP CONSTRAINT FK_TAPEACCESSSPECIFICATION_ID;
+ALTER TABLE VDQMTAPE DROP CONSTRAINT FK_VDQMTAPE_ID;
+ALTER TABLE TAPE2DRIVEDEDICATION DROP CONSTRAINT FK_TP2DRVDEDIC_ID;
+ALTER TABLE TAPEDRIVEDEDICATION DROP CONSTRAINT FK_TAPEDRIVEDEDICATION_ID;
+ALTER TABLE TAPEDRIVE DROP CONSTRAINT FK_TAPEDRIVE_ID;
+ALTER TABLE TAPEDRIVECOMPATIBILITY DROP CONSTRAINT FK_TAPEDRIVECOMPATIBILITY_ID;
 
-/**
- * Lock table used to serialise the drive scheduler algorithm.
- */
-CREATE TABLE VdqmLock(
-  id INTEGER,
-  name VARCHAR2(128) CONSTRAINT NN_VdqmLock_name NOT NULL,
-  CONSTRAINT PK_VdqmLock_id PRIMARY KEY(id),
-  CONSTRAINT U_VdqmLock_name UNIQUE(name));
-
-/**
- * Insert the lock used to serialise the databse scheduler.
- */
-INSERT INTO VdqmLock(id, name) VALUES(1, 'SCHEDULER');
-COMMIT;
-
-/* Not null column constraints */
-ALTER TABLE ClientIdentification MODIFY
-  (egid CONSTRAINT NN_ClientIdentification_egid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY
-  (euid CONSTRAINT NN_ClientIdentification_euid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY
-  (magic CONSTRAINT NN_ClientIdentification_magic NOT NULL);
-ALTER TABLE ClientIdentification MODIFY
-  (port CONSTRAINT NN_ClientIdentification_port NOT NULL);
-ALTER TABLE TapeAccessSpecification MODIFY
-  (accessMode CONSTRAINT NN_TapeAccessSpec_accessMode NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (deviceGroupName CONSTRAINT NN_TapeDrive_deviceGroupName NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (errCount CONSTRAINT NN_TapeDrive_errCount NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (jobId CONSTRAINT NN_TapeDrive_jobId NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (modificationTime CONSTRAINT NN_TapeDrive_modificationTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (resetTime CONSTRAINT NN_TapeDrive_resetTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (status CONSTRAINT NN_TapeDrive_status NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (tapeServer CONSTRAINT NN_TapeDrive_tapeServer NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (totalMB CONSTRAINT NN_TapeDrive_totalMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (transferredMB CONSTRAINT NN_TapeDrive_transferredMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY
- (useCount CONSTRAINT NN_TapeDrive_useCount NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY
- (child CONSTRAINT NN_TapeDrv2TapeDrvComp_child NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY
- (parent CONSTRAINT NN_TapeDrv2TapeDrvComp_parent NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY
- (priorityLevel CONSTRAINT NN_TapeDriveComp_priorityLevel NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY
- (tapeAccessSpecification CONSTRAINT NN_TapeDriveComp_accessSpec NOT NULL);
-ALTER TABLE TapeDriveDedication MODIFY
- (tapeDrive CONSTRAINT NN_TapeDrvDedic_tapeDrive NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (client CONSTRAINT NN_TapeRequest_client NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (creationTime CONSTRAINT NN_TapeRequest_creationTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (deviceGroupName CONSTRAINT NN_TapeRequest_deviceGroupName NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (errorCode CONSTRAINT NN_TapeRequest_errorCode NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (modificationTime CONSTRAINT NN_TapeRequest_modTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (priority CONSTRAINT NN_TapeRequest_priority NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (remoteCopyType CONSTRAINT NN_TapeRequest_remoteCopyType NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (status CONSTRAINT NN_TapeRequest_status NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (tape CONSTRAINT NN_TapeRequest_tape NOT NULL);
-ALTER TABLE TapeRequest MODIFY
- (tapeAccessSpecification CONSTRAINT NN_TapeRequest_accessSpec NOT NULL);
-ALTER TABLE TapeServer MODIFY
- (actingMode CONSTRAINT NN_TapeServer_actingMode NOT NULL);
-ALTER TABLE TapeServer MODIFY
- (serverName CONSTRAINT NN_TapeServer_serverName NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (priority CONSTRAINT NN_VolumePriority_priority NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (clientUID CONSTRAINT NN_VolumePriority_clientUID NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (clientGID CONSTRAINT NN_VolumePriority_clientGID NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (clientHost CONSTRAINT NN_VolumePriority_clientHost NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (vid CONSTRAINT NN_VolumePriority_vid NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (tpMode CONSTRAINT NN_VolumePriority_tpMode NOT NULL);
-ALTER TABLE VolumePriority MODIFY
- (lifespanType CONSTRAINT NN_VolumePriority_lifespanType NOT NULL);
-ALTER TABLE Tape2DriveDedication MODIFY
-  (vid CONSTRAINT NN_Tp2DrvDedic_vid NOT NULL);
-ALTER TABLE Tape2DriveDedication MODIFY
-  (tapeDrive CONSTRAINT NN_Tp2DrvDedic_tapeDrive NOT NULL);
-
-/* Unique constraints */
--- A client host can only be dedicated to one drive
---ALTER TABLE TapeDriveDedication
---  ADD CONSTRAINT I_U_TapeDrvDedic_clientHost
---    UNIQUE (clientHost);
-
--- A vid can only be dedicated to one drive
---ALTER TABLE TapeDriveDedication
---  ADD CONSTRAINT I_U_TapeDrvDedic_vid
---    UNIQUE (vid);
-
--- Tape VIDs are unique
-ALTER TABLE VdqmTape
-  ADD CONSTRAINT I_U_VdqmTape_vid
-    UNIQUE (vid);
-
--- A volume priority is identified by vid, tapeMode and lifespanType
-ALTER TABLE VolumePriority
-  ADD CONSTRAINT I_U_VolPriority_vid_mode_life
-    UNIQUE (vid, tpMode, lifespanType);
-
--- A tape drive is identified by driveName and tapeServer
-ALTER TABLE TapeDrive
-  ADD CONSTRAINT I_U_TapeDrive_name_server 
-  UNIQUE (driveName, tapeServer);
-
--- A tape server is identified by its name
-ALTER TABLE TapeServer
-  ADD CONSTRAINT I_U_TapeServer_serverName
-  UNIQUE (serverName);
-
--- A tape dedication is made unique by its VID and tape drive
-ALTER TABLE Tape2DriveDedication
-  ADD CONSTRAINT I_U_Tp2DrvDedic_vid_tapeDrive
-    UNIQUE (vid, tapeDrive);
-
-/* Check constraints */
--- The accessMode column of the TapeAccessSpecification table has 2 possible
--- values: 0=write-disabled or 1=write-enabled
-ALTER TABLE TapeAccessSpecification
-  ADD CONSTRAINT CH_TapeAccessSpec_accessMode
-    CHECK ((accessMode=0) OR (accessMode=1));
-
--- The remoteCopyType column of the TapeRequest table has 3 possible
--- values: 'RTCPD', 'AGGREGATOR' or 'TAPEBRIDGE'
--- The value 'AGGREGATOR' is deprecated by the value 'TAPEBRIDGE'
-ALTER TABLE TapeRequest
-  ADD CONSTRAINT CH_TapeRequest_remoteCopyType
-    CHECK (
-      (remoteCopyType='RTCPD')      OR
-      (remoteCopyType='AGGREGATOR') OR
-      (remoteCopyType='TAPEBRIDGE'));
-
--- The tpMode column of the VolumePriority table has 2 possible
--- values: 0=write-disabled or 1=write-enabled
-ALTER TABLE VolumePriority
-  ADD CONSTRAINT CH_VolumePriority_tpMode
-    CHECK ((tpMode=0) OR (tpMode=1));
-
--- The lifespanType column of the VolumePriority table has 2 possible
--- values: 0=single-shot or 1=unlimited
-ALTER TABLE VolumePriority
-  ADD CONSTRAINT CH_VolumePriority_lifespanType
-    CHECK ((lifespanType=0) OR (lifespanType=1));
+DROP TABLE Id2Type;
 
 
-/* Foreign key constraints with an index for each */
-ALTER TABLE TapeDrive
-  ADD CONSTRAINT FK_TapeDrive_tape
-    FOREIGN KEY (tape)
-    REFERENCES VdqmTape (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeDrive_runningTapeReq
-    FOREIGN KEY (runningTapeReq)
-    REFERENCES TapeRequest (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeDrive_deviceGroupName
-    FOREIGN KEY (deviceGroupName)
-    REFERENCES DeviceGroupName (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeDrive_status
-    FOREIGN KEY (status)
-    REFERENCES TapeDriveStatusCodes (id)
-    DEFERRABLE
-    INITIALLY IMMEDIATE
-    ENABLE
-  ADD CONSTRAINT FK_TapeDrive_tapeServer
-    FOREIGN KEY (tapeServer)
-    REFERENCES TapeServer (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-CREATE INDEX I_FK_TapeDrive_tape            ON TapeDrive (tape);
-CREATE INDEX I_FK_TapeDrive_runningTapeReq  ON TapeDrive (runningTapeReq);
-CREATE INDEX I_FK_TapeDrive_deviceGroupName ON TapeDrive (deviceGroupName);
-CREATE INDEX I_FK_TapeDrive_status          ON TapeDrive (status);
-CREATE INDEX I_FK_TapeDrive_tapeServer      ON TapeDrive (tapeServer);
-
-ALTER TABLE TapeDriveCompatibility
-  ADD CONSTRAINT FK_TapeDriveComp_accessSpec
-    FOREIGN KEY (tapeAccessSpecification)
-    REFERENCES TapeAccessSpecification (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-CREATE INDEX I_FK_TapeDriveComp_accessSpec ON TapeDriveCompatibility (tapeAccessSpecification);
-
-ALTER TABLE TapeDriveDedication
-  ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
-    FOREIGN KEY (tapeDrive)
-    REFERENCES TapeDrive (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-CREATE INDEX I_FK_TapeDriveDedic_tapeDrive ON TapeDriveDedication (tapeDrive);
-
-ALTER TABLE TapeRequest
-  ADD CONSTRAINT FK_TapeRequest_tape
-    FOREIGN KEY (tape)
-    REFERENCES VdqmTape (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_accessSpec
-    FOREIGN KEY (tapeAccessSpecification)
-    REFERENCES TapeAccessSpecification (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_requestedSrv
-    FOREIGN KEY (requestedSrv)
-    REFERENCES TapeServer (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_tapeDrive
-    FOREIGN KEY (tapeDrive)
-    REFERENCES TapeDrive (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_dgn
-    FOREIGN KEY (deviceGroupName)
-    REFERENCES DeviceGroupName (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_status
-    FOREIGN KEY (status)
-    REFERENCES TapeRequestStatusCodes (id)
-    DEFERRABLE
-    INITIALLY IMMEDIATE
-    ENABLE
-  ADD CONSTRAINT FK_TapeRequest_client
-    FOREIGN KEY (client)
-    REFERENCES ClientIdentification (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-CREATE INDEX I_FK_TapeRequest_tape         ON TapeRequest (tape);
-CREATE INDEX I_FK_TapeRequest_accessSpec   ON TapeRequest (tapeAccessSpecification);
-CREATE INDEX I_FK_TapeRequest_requestedSrv ON TapeRequest (requestedSrv);
-CREATE INDEX I_FK_TapeRequest_tapeDrive    ON TapeRequest (tapeDrive);
-CREATE INDEX I_FK_TapeRequest_dgn          ON TapeRequest (deviceGroupName);
-CREATE INDEX I_FK_TapeRequest_status       ON TapeRequest (status);
-CREATE INDEX I_FK_TapeRequest_client       ON TapeRequest (client);
-
-ALTER TABLE TapeServer
-  ADD CONSTRAINT FK_TapeServer_actingMode
-    FOREIGN KEY (actingMode)
-    REFERENCES TapeServerStatusCodes (id)
-    DEFERRABLE
-    INITIALLY IMMEDIATE
-    ENABLE;
-CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
-
-ALTER TABLE Tape2DriveDedication
-  ADD CONSTRAINT FK_Tp2DrvDedic_tapeDrive
-    FOREIGN KEY (tapeDrive)
-    REFERENCES TapeDrive (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    ENABLE;
-CREATE INDEX I_FK_Tp2DrvDedic_tapeDrive ON Tape2DriveDedication (tapeDrive);
-
-
+/* Update and revalidation of PL-SQL code */
+/******************************************/
 /**
  * This package puts all of the exception declarations of the castorVdqm...
  * packages in one place.
@@ -2788,3 +2542,29 @@ BEGIN
   END IF;
 END;
 /
+
+
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PROCEDURE' THEN
+      EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
+    ELSIF a.object_type = 'TRIGGER' THEN
+      EXECUTE IMMEDIATE 'ALTER TRIGGER '||a.object_name||' COMPILE';
+    ELSE
+      EXECUTE IMMEDIATE 'ALTER FUNCTION '||a.object_name||' COMPILE';
+    END IF;
+  END LOOP;
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_12_0';
+COMMIT;

@@ -30,7 +30,7 @@ namespace castor { namespace vdqm {
   /**
    * The schema version with which this release of the VDQM is compatible with.
    */
-  const std::string VDQMSCHEMAVERSION = "2_1_8_3";
+  const std::string VDQMSCHEMAVERSION = "2_1_12_0";
 
   /**
    * Default number of request handler threads.
