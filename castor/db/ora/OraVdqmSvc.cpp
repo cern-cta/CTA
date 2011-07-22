@@ -497,6 +497,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_VdqmTape);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::vdqm::VdqmTape* tape =
       dynamic_cast<castor::vdqm::VdqmTape*> (obj);
@@ -621,6 +622,7 @@ castor::vdqm::TapeServer*
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_TapeServer);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     
     castor::vdqm::TapeServer* tapeServer =
@@ -1382,6 +1384,7 @@ castor::vdqm::TapeDrive*
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_TapeDrive);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     
     castor::vdqm::TapeDrive* tapeDrive =
@@ -1940,6 +1943,7 @@ castor::vdqm::VdqmTape*
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_VdqmTape);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::vdqm::VdqmTape* tape =
       dynamic_cast<castor::vdqm::VdqmTape*> (obj);
@@ -2026,6 +2030,7 @@ castor::vdqm::TapeRequest*
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_TapeRequest);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     
     castor::vdqm::TapeRequest* tapeRequest =
@@ -2119,12 +2124,13 @@ castor::vdqm::TapeAccessSpecification*
       << std::endl << oe.getMessage();
     throw ie;
   }
-  // Now get the DeviceGroupName from its id
+  // Now get the TapeAccessSpecification from its id
   try {
     castor::BaseAddress ad;
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_TapeAccessSpecification);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::vdqm::TapeAccessSpecification* tapeAccessSpec =
       dynamic_cast<castor::vdqm::TapeAccessSpecification*> (obj);
@@ -2208,6 +2214,7 @@ castor::vdqm::DeviceGroupName*
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_DeviceGroupName);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::vdqm::DeviceGroupName* deviceGroupName =
       dynamic_cast<castor::vdqm::DeviceGroupName*> (obj);
@@ -2560,12 +2567,13 @@ castor::vdqm::TapeRequest*
       << std::endl << oe.getMessage();
     throw ie;
   }
-  // Now get the tape from its id
+  // Now get the tapeRequest from its id
   try {
     castor::BaseAddress ad;
     ad.setTarget(id);
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
+    ad.setObjType(castor::OBJ_TapeRequest);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::vdqm::TapeRequest* tapeRequest =
       dynamic_cast<castor::vdqm::TapeRequest*> (obj);
@@ -2825,6 +2833,7 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
   ad.setTarget(idTapeRequest);
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
+  ad.setObjType(castor::OBJ_TapeRequest);
 
   // Create the tape request object
   castor::IObject* obj = cnvSvc()->createObj(&ad);
@@ -2932,6 +2941,7 @@ void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
     while(rs->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       driveCompatibilityId = (u_signed64)rs->getDouble(1);
       ad.setTarget(driveCompatibilityId);
+      ad.setObjType(castor::OBJ_TapeDriveCompatibility);
       castor::IObject* obj = cnvSvc()->createObj(&ad);
       driveCompatibility =
         dynamic_cast<castor::vdqm::TapeDriveCompatibility*> (obj);
