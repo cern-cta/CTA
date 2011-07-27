@@ -49,23 +49,66 @@ public:
   void testGoodDayAddMarkGetAndRemove() {
     castor::tape::tapebridge::PendingMigrationsStore store;
 
-    castor::tape::tapegateway::FileToMigrate fileToMigrate;
-    fileToMigrate.setFseq(1111);
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "store.add",
-      store.add(fileToMigrate));
+    const uint32_t maxFseq = 1024;
 
-    castor::tape::tapegateway::FileMigratedNotification notfication;
-    notfication.setFseq(1111);
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "store.markAsWrittenWithoutFlush",
-      store.markAsWrittenWithoutFlush(notfication));
+    for(uint32_t i = 1; i <= maxFseq; i++) {
+      castor::tape::tapegateway::FileToMigrate fileToMigrate;
+      fileToMigrate.setFseq(i);
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "store.add",
+        store.add(fileToMigrate));
 
-    std::list<castor::tape::tapegateway::FileMigratedNotification>
-      notfications;
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "store.getAndRemoveFilesWrittenWithoutFlush",
-      notfications = store.getAndRemoveFilesWrittenWithoutFlush(1111));
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "store.getNbPendingMigrations after add",
+        i,
+      store.getNbPendingMigrations());
+    }
+
+    for(uint32_t i = 1; i <= maxFseq; i++) {
+      castor::tape::tapegateway::FileMigratedNotification notfication;
+      notfication.setFseq(i);
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "store.markAsWrittenWithoutFlush",
+        store.markAsWrittenWithoutFlush(notfication));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "store.getNbPendingMigrations after markAsWrittenWithoutFlush",
+        maxFseq,
+        store.getNbPendingMigrations());
+    }
+
+    for(uint32_t i = 1; i <= maxFseq; i++) {
+      std::list<castor::tape::tapegateway::FileMigratedNotification>
+        notfications;
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "store.getAndRemoveFilesWrittenWithoutFlush",
+        notfications = store.getAndRemoveFilesWrittenWithoutFlush(i));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "size of result of store.getAndRemoveFilesWrittenWithoutFlush",
+        (std::list<castor::tape::tapegateway::FileMigratedNotification>::
+        size_type)1,
+        notfications.size());
+
+      int32_t k = i;
+      for(std::list<castor::tape::tapegateway::FileMigratedNotification>::
+        const_iterator itor = notfications.begin(); itor != notfications.end();
+        itor++) {
+
+        CPPUNIT_ASSERT_EQUAL_MESSAGE(
+          "fseq of result of store.getAndRemoveFilesWrittenWithoutFlush",
+          k,
+          itor->fseq());
+
+        k++;
+      }
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "store.getNbPendingMigrations after"
+        " getAndRemoveFilesWrittenWithoutFlush",
+        maxFseq - i,
+        store.getNbPendingMigrations());
+    }
   }
 
   CPPUNIT_TEST_SUITE(PendingMigrationsStoreTest);

@@ -168,51 +168,6 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Sends a FileMigratedNotification to the client and returns the
-   * socket-descriptor of the client connection from which the reply will be
-   * read later.
-   *
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   * @param connectDuration     Out parameter: The number of seconds it took to
-   *                            connect to the client.
-   * @param fileTransactionId   The file transaction ID.
-   * @param nsHost              The name server host.
-   * @param fileId              The CASTOR file ID.
-   * @param tapeFileSeq         The tape file seuence number.
-   * @param blockId             The tape block ID.
-   * @param positionCommandCode The position method uesd by the drive.
-   * @param checksumAlgorithm   The name of the checksum algorithm.
-   * @param checksum            The file checksum.
-   * @param fileSize            The size of the file without compression.
-   * @param compressedFileSize  The size of on-tape compressed file.
-   * @return                    The socket-descriptor of the tape-gateway
-   *                            connection from which the reply will be read
-   *                            later.
-   */
-  static int sendFileMigratedNotification(
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
-    const unsigned short clientPort,
-    time_t               &connectDuration,
-    const uint64_t       fileTransactionId,
-    const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    const uint64_t       fileId,
-    const int32_t        tapeFileSeq,
-    const unsigned char  (&blockId)[4],
-    const int32_t        positionCommandCode,
-    const char           (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-    const uint32_t       checksum,
-    const uint64_t       fileSize,
-    const uint64_t       compressedFileSize)
-    throw(castor::exception::Exception);
-
-  /**
    * Sends a FileRecalledNotification to the client and returns the
    * socket-descriptor of the client connection from which the reply will be
    * read later.
@@ -430,15 +385,6 @@ public:
     const uint64_t    actualTapeBridgeTransactionId)
     throw(castor::exception::Exception);
 
-
-private:
-
-  /**
-   * Private constructor to inhibit instances of this class from being
-   * instantiated.
-   */
-  ClientTxRx() {}
-
   /**
    * Sends the specified message to the client and returns the
    * socket-descriptor of the client connection from which a reply will be read
@@ -460,6 +406,15 @@ private:
     IObject              &message,
     time_t               &connectDuration)
     throw(castor::exception::Exception);
+
+
+private:
+
+  /**
+   * Private constructor to inhibit instances of this class from being
+   * instantiated.
+   */
+  ClientTxRx() {}
 
   /**
    * Sends the specified request message to the client and receives the reply.

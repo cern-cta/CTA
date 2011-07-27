@@ -350,3 +350,12 @@ void castor::tape::tapebridge::PendingMigrationsStore::clear() {
 
   m_pendingMigrations.clear();
 }
+
+
+//-----------------------------------------------------------------------------
+// getNbPendingMigrations
+//-----------------------------------------------------------------------------
+uint32_t castor::tape::tapebridge::PendingMigrationsStore::
+  getNbPendingMigrations() const {
+  return m_pendingMigrations.size();
+}

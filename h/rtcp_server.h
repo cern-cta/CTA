@@ -216,7 +216,7 @@ int rtcpd_CheckClient (int, int, char *, char *, int *);
 int rtcpd_StartMonitor (int);
 int rtcpd_InitDiskIO  (int *);
 int rtcpd_CleanUpDiskIO  (int);
-int rtcpd_StartTapeIO  (rtcpClientInfo_t *, tape_list_t *);
+int rtcpd_StartTapeIO  (rtcpClientInfo_t *, tape_list_t *, const int);
 int rtcpd_StartDiskIO  (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int);
 int rtcpd_CheckProcError  (void);
 void rtcpd_SetProcError  (int);

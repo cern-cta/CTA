@@ -31,6 +31,7 @@
 #include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
+#include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -39,6 +40,7 @@
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
+#include <list>
 #include <map>
 #include <stdint.h>
 
@@ -190,6 +192,13 @@ private:
   utils::IndexedContainer<uint64_t> m_pendingTransferIds;
 
   /**
+   * The store of pending file-migrations.  A pending file-migration is one
+   * that has either just been sent to the rtcpd daemon or has been both sent
+   * and written to tape but not yet flushed to tape.
+   */
+  PendingMigrationsStore m_pendingMigrationsStore;
+
+  /**
    * In-line helper function that returns a 64-bit rtcpd message body handler
    * key to be used in the m_rtcpdHandler map.
    *
@@ -265,7 +274,8 @@ private:
   ClientCallbackMap m_clientHandlers;
 
   /**
-   * Processes the rtcpd and client sockets.
+   * Processes the rtcpd and client sockets in a loop until the end of the
+   * rtcpd session has been reached.
    */
   void processSocks() throw(castor::exception::Exception);
 
@@ -371,13 +381,64 @@ private:
    * This function implements the common logic of the rtcpFileReqRtcpdCallback
    * and rtcpFileErrReqRtcpdCallback functions.
    *
-   * @param header            The header of the request.
-   * @param body              The body of the request.
-   * @param rtcpdSock         The file descriptor of the socket from which both
-   *                          the header and the body of the message have
-   *                          already been read from.
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
    */
   void processRtcpFileErrReq(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file request in the context of dumping a
+   * tape.
+   *
+   * @param header    The header of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpFileErrReqDump(const legacymsg::MessageHeader &header,
+    const int rtcpdSock) throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file request for more work.
+   *
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpRequestMoreWork(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file positioned request.
+   *
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpFilePositionedRequest(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file transfer finished request.
+   *
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpFileFinishedRequest(const legacymsg::MessageHeader &header,
     legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
     throw(castor::exception::Exception);
 
@@ -439,6 +500,17 @@ private:
   void tapeBridgeFlushedToTapeCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
+
+  /**
+   * Sends the specified file-migrated notification to the client (the
+   * tapegatewayd daemon or the writetp command-line tool).
+   *
+   * This method sets the aggregatorTransactionId of each notification message
+   * ccordingly before sending the message.
+   */
+  void sendFlushedMigrationsToClient(
+    std::list<tapegateway::FileMigratedNotification> &fileMigratedNotifications)
+    throw (castor::exception::Exception);
 
   /**
    * GIVE_OUTP rtcpd message-body handler.

@@ -39,6 +39,9 @@
 #include "tplogger_api.h"
 char *getconfent (char *, char *, int);
 
+#include "h/tapeBridgeClientInfo2MsgBody.h"
+#include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"
+#include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 #define TP_SIZE(X)   (proc_stat.tapeIOstatus.nbbytes += (u_signed64)(X))
@@ -48,6 +51,7 @@ typedef struct thread_arg {
     SOCKET client_socket;
     tape_list_t *tape;
     rtcpClientInfo_t *client;
+    int clientIsTapeBridge;
 } thread_arg_t;
 
 extern int Debug;
@@ -1317,6 +1321,7 @@ void *tapeIOthread(void *arg) {
     int tape_fd = -1;
     int rc,BroadcastInfo,mode,diskIOfinished,severity,save_errno,save_serrno;
     int save_rc;
+    int clientIsTapeBridge = 0;
     extern char *u64tostr (u_signed64, char *, int);
 
     if ( arg == NULL ) {
@@ -1330,6 +1335,7 @@ void *tapeIOthread(void *arg) {
     tape = ((thread_arg_t *)arg)->tape;
     client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
+    clientIsTapeBridge = ((thread_arg_t *)arg)->clientIsTapeBridge;
     free(arg);
 
     if ( tape == NULL ) {
@@ -1886,6 +1892,42 @@ void *tapeIOthread(void *arg) {
                 rc = tellClient(&client_socket,NULL,nextfile,0);
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPPRC);
+
+                /* If the client is the tapebridged daemon, then tell the   */
+                /* tapebridged daemon that all data written to tape has now */
+                /* been flushed to tape                                     */
+                if(clientIsTapeBridge) {
+                    tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
+                    tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
+
+                    memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
+                    memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
+
+                    flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
+                    flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                    rc = tapebridge_sendTapeBridgeFlushedToTape(
+                        client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
+                    if(0 > rc) {
+                        rc = -1;
+                    } else {
+                        rc = 0;
+                    }
+                    CHECK_PROC_ERR(NULL, nextfile,
+                        "tapebridge_sendTapeBridgeFlushedToTape() error");
+
+                    rc = tapebridge_recvTapeBridgeFlushedToTapeAck(
+                        client_socket, RTCP_NETTIMEOUT, &flushedAckMsg);
+                    if(0 > rc) {
+                        rc = -1;
+                    } else if (0 != flushedAckMsg.status) {
+                        serrno = flushedAckMsg.status;
+                        rc = -1;
+                    } else {
+                        rc = 0;
+                    }
+                    CHECK_PROC_ERR(NULL, nextfile,
+                       "tapebridge_recvTapeBridgeFlushedToTapeAck() error");
+                } /* If the client is the tapebridge daemon then ... */
             } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
         if ( nexttape->next != tape ) {
@@ -1918,7 +1960,8 @@ void *tapeIOthread(void *arg) {
     return((void *)&success);
 }
 
-int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
+int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape,
+  const int clientIsTapeBridge) {
     int rc;
     thread_arg_t *tharg;
 
@@ -1937,6 +1980,8 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );        
         return(-1);
     }
+
+    tharg->clientIsTapeBridge = clientIsTapeBridge;
 
     /*
      * Open a separate connection to client

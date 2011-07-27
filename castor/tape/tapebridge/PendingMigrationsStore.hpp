@@ -114,9 +114,10 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Clears all of the pending migrations from this store.
+   * Retruns the total number of pending file-grations currently inside the
+   * store.
    */
-  void clear();
+  uint32_t getNbPendingMigrations() const;
 
 private:
 
@@ -229,6 +230,11 @@ private:
   void checkForMismatches(const tapegateway::FileToMigrate &fileToMigrate,
     const tapegateway::FileMigratedNotification &fileMigratedNotification)
     const throw(castor::exception::Exception);
+
+  /**
+   * Clears all of the pending migrations from this store.
+   */
+  void clear();
 
 }; // class PendingMigrationsStore
 

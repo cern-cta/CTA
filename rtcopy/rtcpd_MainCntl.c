@@ -2812,7 +2812,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * Start tape control and I/O thread. From now on the
      * deassign will be done in the tape IO thread.
      */
-    rc = rtcpd_StartTapeIO(client,tape);
+    rc = rtcpd_StartTapeIO(client,tape,clientIsTapeBridge);
     if ( rc == -1 ) {
       (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
       rtcp_log(LOG_ERR,
