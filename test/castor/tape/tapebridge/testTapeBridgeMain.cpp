@@ -24,6 +24,7 @@
 
 #include "test/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
 #include "test/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp"
+#include "test/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp"
 #include "test/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp"
 #include "test/castor/tape/tapebridge/VmgrTxRxTest.hpp"
 

@@ -42,6 +42,7 @@ TAPEBRIDGEBIN_SRCS = \
   FailedToCopyTapeFile.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
+  PendingMigrationsStore.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   TapeBridgeDaemon.cpp \

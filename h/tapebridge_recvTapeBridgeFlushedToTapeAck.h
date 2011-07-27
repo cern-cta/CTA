@@ -33,6 +33,14 @@
 /**
  * Receives a TAPEBRIDGE_FLUSHEDTOTAPE acknowledgment message using the
  * specified socket.
+ *
+ * This function will return an error and set serrno to EBADMSG if either the
+ * magic number or request-type of the received acknowledgement are not
+ * correct.
+ *
+ * This function will return success no matter what the value of the status
+ * field of the received acknowledgement message.  The caller of this function
+ * is resposnible for interpretting the status field.
  * 
  * @param socketFd            The file-descriptor of the socket to be read
  *                            from.

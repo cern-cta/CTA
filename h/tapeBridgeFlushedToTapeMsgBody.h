@@ -40,9 +40,10 @@ typedef struct {
   uint32_t volReqId;
 
   /**
-   * If it is known this value should be set to the file-sequence number of the
-   * last file successfully to tape.  If the file-sequence number is not known
-   * then this value must be set to 0.
+   * The tape-file sequence-number of the last file successfully flushed to
+   * tape.
+   *
+   * The value of this field must be greater than 0.
    */
   uint32_t tapeFseq;
 } tapeBridgeFlushedToTapeMsgBody_t;

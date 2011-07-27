@@ -16,9 +16,11 @@ testtapebridge: \
   tapebridge_BridgeSocketCatalogue.o \
   tapebridge_ClientTxRx.o \
   tapebridge_DlfMessageStrings.o \
+  tapebridge_FailedToCopyTapeFile.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
+  tapebridge_PendingMigrationsStore.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_VdqmRequestHandler.o \
@@ -88,8 +90,6 @@ testtapebridge: \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
-  tapebridge_FailedToCopyTapeFile.o \
-  tapebridge_marshall.o \
   marshall.o \
   test_exception.o \
   vdqmapi.o \
@@ -168,16 +168,17 @@ tapebridgedaemontester: \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
   tapebridge_FailedToCopyTapeFile.o \
+  tapebridge_LegacyTxRx.o \
   tapebridge_marshall.o \
+  tapebridge_PendingMigrationsStore.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
+  tapebridge_sendTapeBridgeFlushedToTape.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
   tape_net.o \
   tape_utils.o \
-  tapebridge_LegacyTxRx.o \
-  tapebridge_sendTapeBridgeFlushedToTape.o \
   vdqm_SendRecv.o \
   marshall.o \
   SmartFd.o \
@@ -225,6 +226,7 @@ tapebridged: \
   tapebridge_DlfMessageStrings.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
+  tapebridge_PendingMigrationsStore.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_TapeBridgeMain.o \
   tapebridge_TapeBridgeDaemon.o \
@@ -366,6 +368,7 @@ testTapeBridgeMain.o: \
 testTapeBridgeMain.cpp: \
   BridgeClientInfo2SenderTest.hpp \
   BridgeProtocolEngineTest.hpp \
+  PendingMigrationsStoreTest.hpp \
   VdqmRequestHandlerTest.hpp \
   VmgrTxRxTest.hpp
 	touch $@
@@ -662,13 +665,21 @@ tapebridge_LogHelper.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LogHelper.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_VdqmRequestHandler.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
+tapebridge_PendingMigrationsStore.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/PendingMigrationsStore.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_RtcpTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_VdqmRequestHandler.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_sendTapeBridgeFlushedToTape.o: \
+  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 dlf_Param.o: \
   $(ROOT_DIR)/castor/dlf/Param.cpp
@@ -892,7 +903,3 @@ castor_BaseSvc.o: $(ROOT_DIR)/castor/BaseSvc.cpp
 
 castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_sendTapeBridgeFlushedToTape.o: \
-  $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

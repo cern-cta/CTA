@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "h/marshall.h"
+#include "h/rtcp_constants.h"
 #include "h/serrno.h"
 #include "h/socket_timeout.h"
 #include "h/tapebridge_constants.h"
@@ -37,12 +38,12 @@
  *****************************************************************************/
 int32_t tapebridge_recvTapeBridgeFlushedToTapeAck(const int socketFd,
   const int netReadWriteTimeout,
-  tapeBridgeFlushedToTapeAckMsg_t *const msgBody) {
+  tapeBridgeFlushedToTapeAckMsg_t *const msg) {
   int  nbBytesReceived = 0;
   char buf[TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE];
 
   /* Check function parameters */
-  if(0 > socketFd || NULL == msgBody) {
+  if(0 > socketFd || NULL == msg) {
     serrno = EINVAL;
     return -1;
   }
@@ -71,15 +72,21 @@ int32_t tapebridge_recvTapeBridgeFlushedToTapeAck(const int socketFd,
   /* Unmarshall the tape-bridge acknowledgement message */
   {
     char *p = buf;
-    unmarshall_LONG(p, msgBody->magic  );
-    unmarshall_LONG(p, msgBody->reqType);
-    unmarshall_LONG(p, msgBody->status );
+    unmarshall_LONG(p, msg->magic  );
+    unmarshall_LONG(p, msg->reqType);
+    unmarshall_LONG(p, msg->status );
 
     /* Check the number of bytes unmarshalled */
     if((p - buf) != TAPEBRIDGEFLUSHEDTOTAPEACKMSGBODY_SIZE) {
       serrno = SEINTERNAL;
       return -1;
     }
+  }
+
+  /* Check the magic number and request type */
+  if(RTCOPY_MAGIC != msg->magic || TAPEBRIDGE_FLUSHEDTOTAPE != msg->reqType) {
+    serrno = EBADMSG;
+    return -1;
   }
 
   return nbBytesReceived;
