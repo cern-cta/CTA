@@ -1390,7 +1390,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReq(
           castor::dlf::Param("bytesIn"           , body.rqst.bytesIn      ),
           castor::dlf::Param("bytesOut"          , body.rqst.bytesOut     )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          TAPEBRIDGE_FILE_TRANSFERED, params);
+          TAPEBRIDGE_FILE_TRANSFERED_DEPRECATED, params);
       }
 
       // Send an acknowledge to rtcpd
