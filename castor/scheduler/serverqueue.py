@@ -238,7 +238,7 @@ class ServerQueue(dict):
         # check whether the transfer has already been started somewhere else
         if transferid not in self.transfersLocations:
           # this transfer is supposed to be running. Let's check that it is not suppose to be
-          # running on the vey machine that wants to start it. That would mean that our answer
+          # running on the very machine that wants to start it. That would mean that our answer
           # to this machine never arrived and the machine is retrying
           if self.recentlyScheduled.isDoubleScheduling(transferid, diskserver):
             # we are precisely in the mentionned case. We can safely return as we already think
@@ -444,3 +444,28 @@ class ServerQueue(dict):
     # inform the stager of the transfers that were killed
     return transfersKilled
 
+  def transfersStartingFailed(self, transferid, machines):
+    '''Amend the list of locations for transfers that could finally not be started on some machines.
+    Returns a boolean saying whether the transfer is definitely failed or not'''
+    ret = False
+    self.lock.acquire()
+    try:
+      # it could happen that the transfer has already been started on another machine
+      # and is already gone. We can safely ignore
+      if transferid in self.transfersLocations:
+        # Remove the machines where the transfer could not start from the transfer's locations
+        for machine in machines:
+          self.transfersLocations[transferid].remove(machine)
+          if not self.transfersLocations[transferid]:
+            # no other candidate machine for this transfer. It has to be failed
+            ret = True
+            # clean up _transfersLocations
+            del self.transfersLocations[transferid]
+            # if we have a source transfer already running, stop it
+            if transferid in self.d2dsrcrunning:
+              self.d2dend(transferid, reqid, transferCancelation=True)
+            # drop the transfer id from the machine queue
+            del self[machine][transferid]
+    finally:
+      self.lock.release()
+    return ret

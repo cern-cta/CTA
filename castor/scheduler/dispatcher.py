@@ -257,21 +257,29 @@ class Dispatcher(threading.Thread):
     # put transfers in the queue of pending transfers
     self.queueingTransfers.put(transferid, arrivaltime, transferList, 'd2ddest')
     # send the transfers to the appropriate diskservers
-    scheduleSucceeded = False
+    scheduleFailed = []
     for diskserver, cmd in transferList:
       try:
         self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2ddest')
-        scheduleSucceeded = True
       except Exception, e:
         # 'Failed to schedule d2d destination' message
         dlf.writenotice(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+        scheduleFailed.append(diskserver)
     # we are over, check whether we could schedule the destination at all
-    if not scheduleSucceeded:
+    if len(scheduleFailed) == len(transferList):
       # we could not schedule anywhere for destination.... so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on any destination host", reqId))  # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queueingTransfers.remove(transferid)
     else:
+      # inform server queue of the failures if any
+      if scheduleFailed:
+        if self.queueingTransfers.transfersStartingFailed(transferid, scheduleFailed):
+          # we won't be able to schedule anywhere.... so fail the transfer in the DB
+          # note that this is not contradicting the fact that transferList was bigger than scheduleFailed
+          # it only means that the machines to which we've managed to schedule already had time to
+          # cancel the job (e.g because they have no space)
+          self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule  on any destination host", reqId)) # 1721 = ESTSCHEDERR
       # 'Marking transfer as scheduled' message
       dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
 
@@ -319,23 +327,36 @@ class Dispatcher(threading.Thread):
              "-R", diskserver+':'+mountpoint)
       transferList.append((diskserver, cmd))
     # put transfers in the queue of pending transfers
+    # Note that we have to do this before even attempting to schedule the
+    # transfers for real, as a job may start very fast after the scheduling
+    # on the first machine, and it expects the queue to be up to date.
+    # the consequence is that we may have to amend the list in case we
+    # could not schedule everywhere.
     self.queueingTransfers.put(transferid, arrivaltime, transferList)
     # send the transfers to the appropriate diskservers
-    scheduleSucceeded = False
+    scheduleFailed = []
     for diskserver, cmd in transferList:
       try:
         self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime)
-        scheduleSucceeded = True
       except Exception, e:
+        scheduleFailed.append(diskserver)
         # 'Failed to schedule standard transfer' message
         dlf.writenotice(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
     # we are over, check whether we could schedule at all
-    if not scheduleSucceeded:
+    if len(scheduleFailed) == len(transferList):
       # we could not schedule anywhere.... so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule transfer", reqId)) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
       self.queueingTransfers.remove(transferid)
     else:
+      # inform server queue of the failures if any
+      if scheduleFailed:
+        if self.queueingTransfers.transfersStartingFailed(transferid, scheduleFailed):
+          # we won't be able to schedule anywhere.... so fail the transfer in the DB
+          # note that this is not contradicting the fact that transferList was bigger than scheduleFailed
+          # it only means that the machines to which we've managed to schedule already had time to
+          # cancel the job (e.g because they have no space)
+          self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule transfer", reqId)) # 1721 = ESTSCHEDERR
       # 'Marking transfer as scheduled' message
       dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
 
