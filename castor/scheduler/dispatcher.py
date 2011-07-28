@@ -210,8 +210,59 @@ class Dispatcher(threading.Thread):
       self.stagerConnection.autocommit = True
     return self.stagerConnection
 
-  def scheduleD2d(self, reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
-                  reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs):
+  def _schedule(self, transferid, reqId, fileid, arrivaltime, transferlist, transfertype, errorCode, errorMessage):
+    '''schedules a given transfer on the given set of machine and handles errors.
+    Returns whether the scheduling was successful'''
+    # put transfers in the queue of pending transfers
+    # Note that we have to do this before even attempting to schedule the
+    # transfers for real, as a job may start very fast after the scheduling
+    # on the first machine, and it expects the queue to be up to date.
+    # the consequence is that we may have to amend the list in case we
+    # could not schedule everywhere.
+    self.queueingTransfers.put(transferid, arrivaltime, transferlist, transfertype)
+    # send the transfers to the appropriate diskservers
+    # not that we will retry up to 3 times if we do not manage to schedule anywhere
+    # we then give up
+    nbRetries = 0
+    scheduleHosts = []
+    while not scheduleHosts and nbRetries < 3:
+      nbRetries = nbRetries + 1
+      for diskserver, cmd in transferlist:
+        try:
+          self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, transfertype)
+          scheduleHosts.append(diskserver)
+        except Exception, e:
+          # 'Failed to schedule xxx' message
+          dlf.writenotice(errorCode, subreqid=transferid, reqid=reqId, fileid=fileid,
+                          DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+    # we are over, check whether we could schedule at all
+    if not scheduleHosts:
+      # we could not schedule anywhere.... so fail the transfer in the DB
+      self.updateDBQueue.put((transferid, fileid, 1721, errorMessage, reqId)) # 1721 = ESTSCHEDERR
+      # and remove it from the server queue
+      self.queueingTransfers.remove(transferid)
+      return False
+    else:
+      # see where we could not schedule
+      failedHosts = set([diskserver for diskserver, cmd in transferlist]) - set(scheduleHosts)
+      # We could scheduler at least on one host
+      if failedHosts:
+        # but we have failed on others : inform server queue of the failures
+        if self.queueingTransfers.transfersStartingFailed(transferid, reqId, failedHosts):
+          # It seems that finally we have not been able to schedule anywhere....
+          # This may seem in contradiction with the last but one comment but it actually
+          # only means that the machines to which we've managed to schedule have already
+          # tried to start the job in the mean time and have all failed, e.g because
+          # they have no space.
+          # So in practice, we will not start the job and we have to inform the DB
+          self.updateDBQueue.put((transferid, fileid, 1721, errorMessage, reqId)) # 1721 = ESTSCHEDERR
+          return False
+      # 'Marking transfer as scheduled' message
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid, hosts=str(scheduleHosts))
+      return True
+
+  def _scheduleD2d(self, reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
+                   reqSourceDiskCopy, reqSvcClass, reqCreationTime, sourceRfs, srRfs):
     '''Schedules a disk to disk copy on the source and destinations and handle issues '''
     # prepare command line
     basecmd = ["/usr/bin/d2dtransfer",
@@ -232,18 +283,9 @@ class Dispatcher(threading.Thread):
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
     arrivaltime =  time.time()
-    try:
-      # register the transfer in the local list of pending transfers
-      self.queueingTransfers.put(transferid, arrivaltime, [(diskserver, cmd)], 'd2dsrc')
-      # send the transfer to the appropriate diskserver
-      self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2dsrc')
-    except Exception, e:
-      # 'Failed to schedule d2d source' message
-      dlf.writenotice(msgs.SCHEDD2DSRCFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
-      # we could not schedule the source so fail the transfer in the DB
-      self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on source host", reqId))  # 1721 = ESTSCHEDERR
-      # and remove it from the server queue
-      self.queueingTransfers.remove(transferid)
+    # effectively schedule the transfer onto its source
+    if not self._schedule(transferid, reqId, fileid, arrivaltime, [(diskserver, cmd)], 'd2dsrc',
+                      msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
       return
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
@@ -254,38 +296,13 @@ class Dispatcher(threading.Thread):
     for diskserver, mountpoint in schedDestCandidates:
       cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
       transferList.append((diskserver, cmd))
-    # put transfers in the queue of pending transfers
-    self.queueingTransfers.put(transferid, arrivaltime, transferList, 'd2ddest')
-    # send the transfers to the appropriate diskservers
-    scheduleFailed = []
-    for diskserver, cmd in transferList:
-      try:
-        self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, 'd2ddest')
-      except Exception, e:
-        # 'Failed to schedule d2d destination' message
-        dlf.writenotice(msgs.SCHEDD2DDESTFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
-        scheduleFailed.append(diskserver)
-    # we are over, check whether we could schedule the destination at all
-    if len(scheduleFailed) == len(transferList):
-      # we could not schedule anywhere for destination.... so fail the transfer in the DB
-      self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule on any destination host", reqId))  # 1721 = ESTSCHEDERR
-      # and remove it from the server queue
-      self.queueingTransfers.remove(transferid)
-    else:
-      # inform server queue of the failures if any
-      if scheduleFailed:
-        if self.queueingTransfers.transfersStartingFailed(transferid, scheduleFailed):
-          # we won't be able to schedule anywhere.... so fail the transfer in the DB
-          # note that this is not contradicting the fact that transferList was bigger than scheduleFailed
-          # it only means that the machines to which we've managed to schedule already had time to
-          # cancel the job (e.g because they have no space)
-          self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule  on any destination host", reqId)) # 1721 = ESTSCHEDERR
-      # 'Marking transfer as scheduled' message
-      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
+    # effectively schedule the transfer onto its destination
+    self._schedule(transferid, reqId, fileid, arrivaltime, transferList, 'd2ddest',
+                   msgs.SCHEDD2DDESTFAILED, 'Failed to schedule d2d destination')
 
-  def scheduleTransfer(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
-                       srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
-                       reqEuid, reqEgid, clientSecure, reqSvcClass, reqCreationTime):
+  def _scheduleStandard(self, srRfs, clientIp, reqId, srSubReqId, cfFileId, cfNsHost,
+                        srProtocol, srId, reqType, srOpenFlags, clientType, clientPort,
+                        reqEuid, reqEgid, clientSecure, reqSvcClass, reqCreationTime):
     '''Schedules a disk to disk copy and handle issues '''
     # extract list of candidates where to schedule and log
     schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
@@ -326,39 +343,9 @@ class Dispatcher(threading.Thread):
              "-t", str(int(reqCreationTime)),
              "-R", diskserver+':'+mountpoint)
       transferList.append((diskserver, cmd))
-    # put transfers in the queue of pending transfers
-    # Note that we have to do this before even attempting to schedule the
-    # transfers for real, as a job may start very fast after the scheduling
-    # on the first machine, and it expects the queue to be up to date.
-    # the consequence is that we may have to amend the list in case we
-    # could not schedule everywhere.
-    self.queueingTransfers.put(transferid, arrivaltime, transferList)
-    # send the transfers to the appropriate diskservers
-    scheduleFailed = []
-    for diskserver, cmd in transferList:
-      try:
-        self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime)
-      except Exception, e:
-        scheduleFailed.append(diskserver)
-        # 'Failed to schedule standard transfer' message
-        dlf.writenotice(msgs.SCHEDTRANSFERFAILED, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
-    # we are over, check whether we could schedule at all
-    if len(scheduleFailed) == len(transferList):
-      # we could not schedule anywhere.... so fail the transfer in the DB
-      self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule transfer", reqId)) # 1721 = ESTSCHEDERR
-      # and remove it from the server queue
-      self.queueingTransfers.remove(transferid)
-    else:
-      # inform server queue of the failures if any
-      if scheduleFailed:
-        if self.queueingTransfers.transfersStartingFailed(transferid, scheduleFailed):
-          # we won't be able to schedule anywhere.... so fail the transfer in the DB
-          # note that this is not contradicting the fact that transferList was bigger than scheduleFailed
-          # it only means that the machines to which we've managed to schedule already had time to
-          # cancel the job (e.g because they have no space)
-          self.updateDBQueue.put((transferid, fileid, 1721, "Unable to schedule transfer", reqId)) # 1721 = ESTSCHEDERR
-      # 'Marking transfer as scheduled' message
-      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid)
+    # effectively schedule the transfer
+    self._schedule(transferid, reqId, fileid, arrivaltime, transferList, 'standard',
+                   msgs.SCHEDTRANSFERFAILED, 'Unable to schedule transfer')
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -413,13 +400,13 @@ class Dispatcher(threading.Thread):
               # but in both cases, errors are handled internally and no exception
               # others than the ones implying the end of the processing
               if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-                self.workToDispatch.put((self.scheduleD2d,
+                self.workToDispatch.put((self._scheduleD2d,
                                          (reqId.getvalue(), srSubReqId.getvalue(), cfFileId.getvalue(),
                                           cfNsHost.getvalue(), reqDestDiskCopy.getvalue(),
                                           reqSourceDiskCopy.getvalue(), reqSvcClass.getvalue(),
                                           reqCreationTime.getvalue(), sourceRfs.getvalue(), srRfs.getvalue())))
               else:
-                self.workToDispatch.put((self.scheduleTransfer,
+                self.workToDispatch.put((self._scheduleStandard,
                                          (srRfs.getvalue(), clientIp.getvalue(), reqId.getvalue(),
                                           srSubReqId.getvalue(), cfFileId.getvalue(), cfNsHost.getvalue(),
                                           srProtocol.getvalue(), srId.getvalue(), reqType.getvalue(),

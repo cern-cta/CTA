@@ -89,7 +89,7 @@ class ServerQueue(dict):
     # get configuration
     self.config = castor_tools.castorConf()
 
-  def put(self, transferid, arrivaltime, transferList, transfertype='standard'):
+  def put(self, transferid, arrivaltime, transferList, transfertype):
     '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
     self.lock.acquire()
     try:
@@ -444,7 +444,7 @@ class ServerQueue(dict):
     # inform the stager of the transfers that were killed
     return transfersKilled
 
-  def transfersStartingFailed(self, transferid, machines):
+  def transfersStartingFailed(self, transferid, reqid, machines):
     '''Amend the list of locations for transfers that could finally not be started on some machines.
     Returns a boolean saying whether the transfer is definitely failed or not'''
     ret = False
