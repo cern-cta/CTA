@@ -1434,10 +1434,13 @@ BEGIN
     -- to abort or at least 3 seconds.
     DBMS_ALERT.WAITONE('transfersToAbort', unusedMessage, unusedStatus, 3);
   END;
-  -- Either we found something or we timedout, in both cases
+  -- we want to delete what we will return but deleting multiple rows is a nice way
+  -- to have deadlocks. So we first take locks in NOWAIT mode
+  SELECT uuid BULK COLLECT INTO srUuids FROM transfersToAbort FOR UPDATE NOWAIT;
+  DELETE FROM transfersToAbort WHERE uuid IN (SELECT * FROM TABLE(srUuids));
+  -- Either we found something or we timed out, in both cases
   -- we go back to python so that it can handle cases like signals and exit
   -- We will probably be back soon :-)
-  DELETE FROM transfersToAbort RETURNING uuid BULK COLLECT INTO srUuids;
   OPEN srUuidCur FOR 
     SELECT * FROM TABLE(srUuids);
 END;
