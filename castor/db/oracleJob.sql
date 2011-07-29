@@ -1436,7 +1436,7 @@ BEGIN
   END;
   -- we want to delete what we will return but deleting multiple rows is a nice way
   -- to have deadlocks. So we first take locks in NOWAIT mode
-  SELECT uuid BULK COLLECT INTO srUuids FROM transfersToAbort FOR UPDATE NOWAIT;
+  SELECT uuid BULK COLLECT INTO srUuids FROM transfersToAbort FOR UPDATE SKIP LOCKED;
   DELETE FROM transfersToAbort WHERE uuid IN (SELECT * FROM TABLE(srUuids));
   -- Either we found something or we timed out, in both cases
   -- we go back to python so that it can handle cases like signals and exit
