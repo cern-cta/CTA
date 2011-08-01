@@ -38,6 +38,7 @@ TAPEBRIDGEBIN_SRCS = \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
+  TapeFlushConfigParams.cpp \
   DlfMessageStrings.cpp \
   FailedToCopyTapeFile.cpp \
   LegacyTxRx.cpp \

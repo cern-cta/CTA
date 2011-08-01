@@ -82,22 +82,22 @@ int32_t tapebridge_marshallTapeBridgeClientInfo2Msg(char *const buf,
     return -1;
   }
 
-  marshall_LONG  (p, RTCOPY_MAGIC_OLD0                             );
-  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO2                        );
-  marshall_LONG  (p, msgBodyLen                                    );
-  marshall_LONG  (p, msgBody->volReqId                             );
-  marshall_LONG  (p, msgBody->bridgeCallbackPort                   );
-  marshall_LONG  (p, msgBody->bridgeClientCallbackPort             );
-  marshall_LONG  (p, msgBody->clientUID                            );
-  marshall_LONG  (p, msgBody->clientGID                            );
-  marshall_LONG  (p, msgBody->useBufferedTapeMarksOverMultipleFiles);
-  marshall_HYPER (p, msgBody->maxBytesBeforeFlush                  );
-  marshall_HYPER (p, msgBody->maxFilesBeforeFlush                  );
-  marshall_STRING(p, msgBody->bridgeHost                           );
-  marshall_STRING(p, msgBody->bridgeClientHost                     );
-  marshall_STRING(p, msgBody->dgn                                  );
-  marshall_STRING(p, msgBody->drive                                );
-  marshall_STRING(p, msgBody->clientName                           );
+  marshall_LONG  (p, RTCOPY_MAGIC_OLD0                );
+  marshall_LONG  (p, TAPEBRIDGE_CLIENTINFO2           );
+  marshall_LONG  (p, msgBodyLen                       );
+  marshall_LONG  (p, msgBody->volReqId                );
+  marshall_LONG  (p, msgBody->bridgeCallbackPort      );
+  marshall_LONG  (p, msgBody->bridgeClientCallbackPort);
+  marshall_LONG  (p, msgBody->clientUID               );
+  marshall_LONG  (p, msgBody->clientGID               );
+  marshall_LONG  (p, msgBody->tapeFlushMode           );
+  marshall_HYPER (p, msgBody->maxBytesBeforeFlush     );
+  marshall_HYPER (p, msgBody->maxFilesBeforeFlush     );
+  marshall_STRING(p, msgBody->bridgeHost              );
+  marshall_STRING(p, msgBody->bridgeClientHost        );
+  marshall_STRING(p, msgBody->dgn                     );
+  marshall_STRING(p, msgBody->drive                   );
+  marshall_STRING(p, msgBody->clientName              );
 
   nbBytesMarshalled = p - buf;
 
@@ -133,7 +133,7 @@ int32_t tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(
   unmarshall_LONG   (p, msgBody->bridgeClientCallbackPort               );
   unmarshall_LONG   (p, msgBody->clientUID                              );
   unmarshall_LONG   (p, msgBody->clientGID                              );
-  unmarshall_LONG   (p, msgBody->useBufferedTapeMarksOverMultipleFiles  );
+  unmarshall_LONG   (p, msgBody->tapeFlushMode                          );
   unmarshall_HYPER  (p, msgBody->maxBytesBeforeFlush                    );
   unmarshall_HYPER  (p, msgBody->maxFilesBeforeFlush                    );
   unmarshall_STRINGN(p, msgBody->bridgeHost      , CA_MAXHOSTNAMELEN + 1);

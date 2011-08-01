@@ -118,14 +118,14 @@ public:
   /**
    * == operator.
    */
-  friend bool operator== (RtcpdIOConnState const& a, RtcpdIOConnState const& b) {
+  friend bool operator==(RtcpdIOConnState const& a, RtcpdIOConnState const& b) {
     return a.m_value == b.m_value;
   }
 
   /**
    * != operator.
    */
-  friend bool operator!= (RtcpdIOConnState const& a, RtcpdIOConnState const& b) {
+  friend bool operator!=(RtcpdIOConnState const& a, RtcpdIOConnState const& b) {
     return a.m_value != b.m_value;
   }
 
@@ -139,8 +139,8 @@ private:
   static const RtcpdIOConnState *s_objects[];
 
   /**
-   * The enumeration value of this RtcpdIOConnState.  This value can be used in switch
-   * statements.
+   * The enumeration value of this RtcpdIOConnState.  This value can be used in
+   * switch statements via the value() getter method.
    */
   Value m_value;
 
@@ -150,7 +150,8 @@ private:
   const char *m_str;
 
   /**
-   * Private constructor preventing RtcpdIOConnState objects from being instantiated.
+   * Private constructor preventing RtcpdIOConnState objects from being
+   * instantiated.
    */
   RtcpdIOConnState(const Value value, const char *str) throw();
 

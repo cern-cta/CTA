@@ -43,6 +43,8 @@ char *getconfent (char *, char *, int);
 #include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"
 #include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
 
+#include <stdint.h>
+
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 #define TP_SIZE(X)   (proc_stat.tapeIOstatus.nbbytes += (u_signed64)(X))
 #define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
@@ -52,6 +54,18 @@ typedef struct thread_arg {
     tape_list_t *tape;
     rtcpClientInfo_t *client;
     int clientIsTapeBridge;
+
+    /* The value of useBufferedTapeMarksOverMultipleFiles is only applicable */
+    /* if clientIsTapeBridge is true                                         */
+    int useBufferedTapeMarksOverMultipleFiles;
+
+    /* The value of maxBytesBeforeFlush is only applicable if both           */
+    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    uint64_t maxBytesBeforeFlush;
+
+    /* The value of maxFilesBeforeFlush is only applicable if both           */
+    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    uint64_t maxFilesBeforeFlush;
 } thread_arg_t;
 
 extern int Debug;
@@ -1322,6 +1336,19 @@ void *tapeIOthread(void *arg) {
     int rc,BroadcastInfo,mode,diskIOfinished,severity,save_errno,save_serrno;
     int save_rc;
     int clientIsTapeBridge = 0;
+
+    /* The value of useBufferedTapeMarksOverMultipleFiles is only applicable */
+    /* if clientIsTapeBridge is true                                         */
+    int useBufferedTapeMarksOverMultipleFiles = 0;
+
+    /* The value of maxBytesBeforeFlush is only applicable if both           */
+    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    uint64_t maxBytesBeforeFlush = 0;
+
+    /* The value of maxFilesBeforeFlush is only applicable if both           */
+    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    uint64_t maxFilesBeforeFlush = 0;
+
     extern char *u64tostr (u_signed64, char *, int);
 
     if ( arg == NULL ) {
@@ -1336,6 +1363,10 @@ void *tapeIOthread(void *arg) {
     client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     clientIsTapeBridge = ((thread_arg_t *)arg)->clientIsTapeBridge;
+    useBufferedTapeMarksOverMultipleFiles =
+      ((thread_arg_t *)arg)->useBufferedTapeMarksOverMultipleFiles;
+    maxBytesBeforeFlush = ((thread_arg_t *)arg)->maxBytesBeforeFlush;
+    maxFilesBeforeFlush = ((thread_arg_t *)arg)->maxFilesBeforeFlush;
     free(arg);
 
     if ( tape == NULL ) {

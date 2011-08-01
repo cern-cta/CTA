@@ -25,36 +25,14 @@
 #ifndef TEST_CASTOR_TAPE_UTILS_TAPEUTILSTEST_HPP
 #define TEST_CASTOR_TAPE_UTILS_TAPEUTILSTEST_HPP 1
 
-#include "castor/tape/utils/IndexedContainer.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "test/castor/tape/utils/test_exception.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <list>
 #include <stdlib.h>
 #include <string>
 #include <vector>
-
-class test_exception: public std::exception {
-private:
-  const std::string m_msg;
-
-  test_exception &operator=(const test_exception &tx) {
-  }
-
-public:
-  test_exception(std::string msg): m_msg(msg) {
-  }
-
-  test_exception(const test_exception &tx) : m_msg(tx.m_msg) {
-  }
-
-  ~test_exception() throw() {
-  }
-
-  const char* what() const throw() {
-    return m_msg.c_str();
-  }
-};
 
 void readFileIntoList_stdException(const char *const filename,
   std::list<std::string> &lines) {
@@ -85,39 +63,6 @@ public:
   }
 
   void tearDown() {
-  }
-
-  void testIndexedContainer() {
-    castor::tape::utils::IndexedContainer<const void *> c(3);
-
-    const void *ptr1 = (const void *)0x12;
-    const void *ptr2 = (const void *)0x34;
-    const void *ptr3 = (const void *)0x56;
-
-    const int ptr1Index = c.insert(ptr1);
-    const int ptr2Index = c.insert(ptr2);
-    const int ptr3Index = c.insert(ptr3);
-
-    const void *ptr4 = (const void *)0x78;
-
-    CPPUNIT_ASSERT_THROW_MESSAGE("Adding one too many pointers",
-      c.insert(ptr4), castor::exception::OutOfMemory);
-
-    CPPUNIT_ASSERT_THROW_MESSAGE(
-      "Removing an element using the invalid index of -1",
-      c.remove(-1), castor::exception::InvalidArgument);
-
-    CPPUNIT_ASSERT_THROW_MESSAGE(
-      "Removing an element using the invalid index of 3",
-      c.remove(3), castor::exception::InvalidArgument);
-
-    const void *removedPtr2 = c.remove(1);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Removing element with index 1", ptr2,
-      removedPtr2);
-
-    CPPUNIT_ASSERT_THROW_MESSAGE(
-      "Illegally removing the free element with index 1",
-      c.remove(1), castor::exception::NoEntry);
   }
 
   void testToHex() {
@@ -373,7 +318,6 @@ public:
   }
 
   CPPUNIT_TEST_SUITE(TapeUtilsTest);
-  CPPUNIT_TEST(testIndexedContainer);
   CPPUNIT_TEST(testToHex);
   CPPUNIT_TEST(testCopyStringNullDst);
   CPPUNIT_TEST(testCopyStringNullSrc);

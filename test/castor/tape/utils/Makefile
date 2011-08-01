@@ -10,6 +10,7 @@ clean:
 	rm -f $(EXECUTABLES) *.o
 
 testtapeutils: \
+  test_exception.o \
   testTapeUtilsMain.o \
   Exception.o \
   Communication.o \
@@ -28,11 +29,15 @@ testtapeutils: \
   Cglobals.o
 	g++ $(COMMON_OPS) -lpthread -lcppunit -o $@ $^
 
+test_exception.o: \
+  test_exception.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 testTapeUtilsMain.o: \
   testTapeUtilsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-testTapeUtilsMain.cpp: TapeUtilsTest.hpp
+testTapeUtilsMain.cpp: IndexedContainerTest.hpp TapeUtilsTest.hpp
 	touch $@
 
 Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp

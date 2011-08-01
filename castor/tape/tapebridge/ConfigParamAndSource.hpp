@@ -38,28 +38,45 @@ namespace tapebridge {
  * have user readable values like "environment variable", * "castor.conf" or
  * "compile-time constant".
  */
-template <typename T> struct ConfigParamAndSource {
+template <typename ValueType> struct ConfigParamAndSource {
 
   /**
    * Constructor used to initialise the members of this structure.
    *
-   * @param n The name of the configuration parameter.
+   * @param c The category name of the configuration parameter as used in the
+   *          castor.conf file.
+   * @param n The name of the configuration parameter as used in the
+   *          castor.conf file.
    * @param v The value of the configuration parameter.
    * @param s The source of the configuration parameter.
    */
-  ConfigParamAndSource(const std::string &n, T v, const std::string &s) :
-    name(n), value(v), source(s) {
+  ConfigParamAndSource(
+    const std::string &c,
+    const std::string &n,
+    const ValueType   &v,
+    const std::string &s):
+    category(c),
+    name(n),
+    value(v),
+    source(s) {
+    // Do nothing
   }
 
   /**
-   * The name of the configuration parameter.
+   * The category name of the configuration parameter as used in the
+   * castor.conf file.
+   */
+  std::string category;
+
+  /**
+   * The name of the configuration parameter as used in the castor.conf file.
    */
   std::string name;
 
   /**
    * The value of the configuration parameter.
    */
-  T value;
+  ValueType value;
 
   /**
    * The source of the configuration paremeter.

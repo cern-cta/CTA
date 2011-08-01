@@ -44,6 +44,7 @@
 #include "tplogger_api.h"
 
 #include "h/rtcpd_GetClientInfo.h"
+#include "h/tapebridge_constants.h"
 #include "h/u64subr.h"
 
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
@@ -2410,7 +2411,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* Determine whether or not buffered tape-marks are to be used over */
   /* multiple files                                                   */
   useBufferedTapeMarksOverMultipleFiles = clientIsTapeBridge &&
-    tapeBridgeClientInfo2MsgBody.useBufferedTapeMarksOverMultipleFiles;
+    TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+    tapeBridgeClientInfo2MsgBody.tapeFlushMode;
 
   /*
    * We've got the client address so we don't need the tape-bridge or VDQM

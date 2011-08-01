@@ -27,6 +27,7 @@
 #include "h/rtcpd_GetClientInfoMsg.h"
 #include "h/rtcpd_SendAckToVdqmOrTapeBridge.h"
 #include "h/serrno.h"
+#include "h/tapebridge_constants.h"
 #include "h/vdqm_api.h"
 
 #include <errno.h>
@@ -90,8 +91,8 @@ int rtcpd_GetClientInfo(
 
   /* This version of rtcpd does NOT support buffered tape-marks over */
   /* multiple files                                                  */
-  if(*clientIsTapeBridge &&
-    tapeBridgeClientInfo2MsgBody->useBufferedTapeMarksOverMultipleFiles) {
+  if(*clientIsTapeBridge && TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+    tapeBridgeClientInfo2MsgBody->tapeFlushMode) {
     char dummyErrbuf[32]; /* For fire and forget */
     char *const ackMsg =
       "Buffered tape-marks over multiple files is not supported";

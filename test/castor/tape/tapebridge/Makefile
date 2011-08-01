@@ -23,7 +23,7 @@ testtapebridge: \
   tapebridge_PendingMigrationsStore.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
-  tapebridge_VdqmRequestHandler.o \
+  tapebridge_TapeFlushConfigParams.o \
   tapebridge_VmgrTxRx.o \
   tapegateway_FileToMigrateRequest.o \
   tapegateway_FileToMigrate.o \
@@ -230,6 +230,7 @@ tapebridged: \
   tapebridge_RtcpTxRx.o \
   tapebridge_TapeBridgeMain.o \
   tapebridge_TapeBridgeDaemon.o \
+  tapebridge_TapeFlushConfigParams.o \
   tapebridge_VdqmRequestHandler.o \
   tapebridge_VmgrTxRx.o \
   io_StreamCnvSvc.o \
@@ -367,9 +368,8 @@ testTapeBridgeMain.o: \
 
 testTapeBridgeMain.cpp: \
   BridgeClientInfo2SenderTest.hpp \
-  BridgeProtocolEngineTest.hpp \
   PendingMigrationsStoreTest.hpp \
-  VdqmRequestHandlerTest.hpp \
+  TapeFlushConfigParamsTest.hpp \
   VmgrTxRxTest.hpp
 	touch $@
 
@@ -671,6 +671,10 @@ tapebridge_PendingMigrationsStore.o: \
 
 tapebridge_RtcpTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_TapeFlushConfigParams.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/TapeFlushConfigParams.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_VdqmRequestHandler.o: \

@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_TAPEBRIDGE_CONSTANTS_HPP 1
 
 #include "h/Castor_limits.h"
+#include "h/tapebridge_constants.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -128,13 +129,12 @@ namespace tapebridge {
 
   /**
    * The compile-time default value of the tapebridged configuration parameter
-   * named TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
+   * named TAPEBRIDGE/TAPEFLUSHMODE.
    *
-   * The value of this parameter defines whether or not the tapebridged and
-   * rtcpd daemons will use buffered tape-marks over multiple files when
-   * migrating data to tape.
+   * The value of this parameter defines the mode of flush behaviour used when
+   * writing data to tape.
    */
-  const bool TAPEBRIDGE_USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES = false;
+  const uint32_t TAPEBRIDGE_TAPEFLUSHMODE = TAPEBRIDGE_N_FLUSHES_PER_FILE;
 
   /**
    * The compile-time default value of the tapebridged configuration parameter
@@ -162,7 +162,7 @@ namespace tapebridge {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 1;
+  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 2;
 
 } // namespace tapebridge
 } // namespace tape

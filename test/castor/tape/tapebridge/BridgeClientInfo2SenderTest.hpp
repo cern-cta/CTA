@@ -157,14 +157,14 @@ public:
 
     memset(&m_clientInfoMsgBody, '\0', sizeof(m_clientInfoMsgBody));
 
-    m_clientInfoMsgBody.volReqId                              = 1111;
-    m_clientInfoMsgBody.bridgeCallbackPort                    = 2222;
-    m_clientInfoMsgBody.bridgeClientCallbackPort              = 3333;
-    m_clientInfoMsgBody.clientUID                             = 4444;
-    m_clientInfoMsgBody.clientGID                             = 5555;
-    m_clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles = 6666;
-    m_clientInfoMsgBody.maxBytesBeforeFlush                   = 7777;
-    m_clientInfoMsgBody.maxFilesBeforeFlush                   = 8888;
+    m_clientInfoMsgBody.volReqId                 = 1111;
+    m_clientInfoMsgBody.bridgeCallbackPort       = 2222;
+    m_clientInfoMsgBody.bridgeClientCallbackPort = 3333;
+    m_clientInfoMsgBody.clientUID                = 4444;
+    m_clientInfoMsgBody.clientGID                = 5555;
+    m_clientInfoMsgBody.tapeFlushMode            = TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
+    m_clientInfoMsgBody.maxBytesBeforeFlush      = 7777;
+    m_clientInfoMsgBody.maxFilesBeforeFlush      = 8888;
     utils::copyString(m_clientInfoMsgBody.bridgeHost      , "bridgeHost");
     utils::copyString(m_clientInfoMsgBody.bridgeClientHost, "bridgeClientHost");
     utils::copyString(m_clientInfoMsgBody.dgn             , "dgn");
@@ -282,9 +282,9 @@ public:
       m_clientInfoMsgBody.clientUID, threadParams.outMsgBody.clientUID);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientGID",
       m_clientInfoMsgBody.clientGID, threadParams.outMsgBody.clientGID);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("useBufferedTapeMarksOverMultipleFiles",
-      m_clientInfoMsgBody.useBufferedTapeMarksOverMultipleFiles,
-      threadParams.outMsgBody.useBufferedTapeMarksOverMultipleFiles);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("tapeFlushMode",
+      m_clientInfoMsgBody.tapeFlushMode,
+      threadParams.outMsgBody.tapeFlushMode);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush",
       m_clientInfoMsgBody.maxBytesBeforeFlush,
       threadParams.outMsgBody.maxBytesBeforeFlush);

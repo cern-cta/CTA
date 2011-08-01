@@ -28,8 +28,8 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/tapebridge/BoolFunctor.hpp"
-#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
+#include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -53,11 +53,16 @@ public:
   /**
    * Constructor
    *
-   * @param nbDrives The number of tape drives attached to the tape server on
-   *                 which tapebridged is running.
+   * @param tapeFlushConfigParams The values of the tape-flush
+   *                              configuration-parameters to be used by the
+   *                              tape-bridge.
+   * @param nbDrives              The number of tape drives attached to the
+   *                              tape server on which the tapebridged daemon
+   *                              is running.
    *
    */
-  VdqmRequestHandler(const uint32_t nbDrives) throw();
+  VdqmRequestHandler(const TapeFlushConfigParams &tapeFlushConfigParams,
+    const uint32_t nbDrives) throw();
 
   /**
    * Destructor
@@ -82,53 +87,13 @@ public:
    */
   virtual void stop() throw();
 
-  /**
-   * Determines the whether or not the tapebridged daemon will cause
-   * tape-migrations to use buffered tape-marks over multiple files.
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   *
-   * @return The configuration parameter including its source, either
-   *         "environment variable", "castor.conf" or "compile-time default".
-   */
-  ConfigParamAndSource<bool> getUseBufferedTapeMarksOverMultipleFiles()
-    throw(castor::exception::Exception);
-
-  /**
-   * With respect to using buffered tape-marks over multiple files, this
-   * method determines the maximum number of bytes to be written to tape before
-   * a flush to tape.  Please note that the flushes occur at file boaundaries
-   * so most of the time more data will be written to tape before the actual
-   * flush occurs.
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   *
-   * @return The configuration parameter including its source, either
-   *         "environment variable", "castor.conf" or "compile-time default".
-   */
-  ConfigParamAndSource<uint64_t> getMaxBytesBeforeFlush()
-    throw(castor::exception::Exception);
-
-  /**
-   * With respect to using buffered tape-marks over multiple files, this
-   * method determines the maximum number of files to be written to tape before
-   * a flush to tape.
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   *
-   * @return The configuration parameter including its source, either
-   *         "environment variable", "castor.conf" or "compile-time default".
-   */
-  ConfigParamAndSource<uint64_t> getMaxFilesBeforeFlush()
-    throw(castor::exception::Exception);
-
 private:
+
+  /**
+   * The values of the tape-flush configuration-parameters to be used by the
+   * tape-bridge.
+   */
+  const TapeFlushConfigParams m_tapeFlushConfigParams;
 
   /**
    * The number of tape drives that were attached to the tape server just

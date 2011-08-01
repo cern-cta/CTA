@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/castor/tape/utils/testTapeUtilsMain.cpp
+ *                test/castor/tape/utils/test_exception.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,18 +22,26 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/castor/tape/utils/IndexedContainerTest.hpp"
-#include "test/castor/tape/utils/TapeUtilsTest.hpp"
+#ifndef TEST_CASTOR_TAPE_UTILS_TESTEXCEPTION_HPP
+#define TEST_CASTOR_TAPE_UTILS_TESTEXCEPTION_HPP 1
 
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/ui/text/TestRunner.h>
+#include <exception>
+#include <string>
 
-int main() {
-  CppUnit::TextUi::TestRunner runner;
-  CppUnit::TestFactoryRegistry &registry =
-    CppUnit::TestFactoryRegistry::getRegistry();
+class test_exception: public std::exception {
+private:
+  std::string m_msg;
 
-  runner.addTest(registry.makeTest());
+public:
+  test_exception(std::string msg);
 
-  return runner.run() == 0 ? 1 : 0;
-}
+  test_exception(const test_exception &tx);
+
+  ~test_exception() throw();
+
+  test_exception &operator=(const test_exception &tx);
+
+  const char* what() const throw();
+};
+
+#endif // TEST_CASTOR_TAPE_UTILS_TESTEXCEPTION_HPP

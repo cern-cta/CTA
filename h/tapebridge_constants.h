@@ -25,6 +25,11 @@
 #ifndef H_TAPEBRIGE_CONSTANTS_H
 #define H_TAPEBRIGE_CONSTANTS_H 1
 
+#include <stdint.h>
+
+/**
+ * Tape-bridge legacy-message constants.
+ */
 #define TAPEBRIDGE_BASE_REQTYPE          (0x5100)
 #define TAPEBRIDGE_REQ_MIN               (TAPEBRIDGE_BASE_REQTYPE)
 #define TAPEBRIDGE_CLIENTINFO_DEPRECATED (TAPEBRIDGE_BASE_REQTYPE+0x01)
@@ -33,6 +38,46 @@
 #define TAPEBRIDGE_REQ_MAX               (TAPEBRIDGE_BASE_REQTYPE+0x04)
 #define TAPEBRIDGE_VALID_REQTYPE(X) ((X)>TAPEBRIDGE_REQ_MIN && (X)<TAPEBRIDGE_REQ_MAX)
 
+/**
+ * The buffer size used when marshalling a tape-bridge legacy-message.
+ */
 #define TAPEBRIDGE_MSGBUFSIZ (1024)
+
+/**
+ * Tape flush mode: TAPEBRIDGE_N_FLUSHES_PER_FILE
+ *
+ * If the AUL tape format is used then data will be flushed to tape three
+ * times per file, once after the header of the file, once again after the
+ * end of the data of the file and finally once more after the trailer of
+ * the file.
+ *
+ * If the NL format is used then data will be flushed to tape after the
+ * end of the data of each file.
+ */
+#define TAPEBRIDGE_N_FLUSHES_PER_FILE ((uint32_t)0)
+
+/**
+ * Tape flush mode: TAPEBRIDGE_ONE_FLUSH_PER_FILE
+ *
+ * If the AUL tape format is used then data will be flushed to tape after
+ * the AUL trailer of each file.
+ *
+ * If the NL format is used then data will be flushed to tape after the
+ * end of the data of each file.
+ */
+#define TAPEBRIDGE_ONE_FLUSH_PER_FILE ((uint32_t)1)
+
+/**
+ * Tape flush mode: TAPEBRIDGE_ONE_FLUSH_PER_N_FILES
+ *
+ * If the AUL tape format is used then data will be flushed to tape after
+ * the AUL trailer of the Nth file, where the Nth file is the one that
+ * reaches either the maximum number of bytes allowed before a flush or
+ * the maximum number of files before a flush.
+ *
+ * If the NL format is used then data will be flushed to tape after the
+ * end of the data of the Nth file.
+ */
+#define TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ((uint32_t)2)
 
 #endif /* H_TAPEBRIGE_CONSTANTS_H */

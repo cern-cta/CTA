@@ -33,17 +33,25 @@
 /**
  * The body of a TAPEBRIDGE_CLIENTINFO2 message.
  *
- * The TAPEBRIDGE_CLIENTINFO2 message has two more members than the
- * TAPEBRIDGE_CLIENTINFO_DEPRECATED message.  The two extra members are as
- * follows:
+ * The TAPEBRIDGE_CLIENTINFO2 message replaces the
+ * useBufferedTapeMarksOverMultipleFiles field of the
+ * TAPEBRIDGE_CLIENTINFO_DEPRECATED message with the following new field:
  *
- * maxBytesBeforeFlush The maximum number of bytes before the rtcpd daemon
+ * tapeFlushMode: The mode of flushing behaviour that will be used when writing
+ * data to tape.  The possible values for this field are determined by the
+ * following three constants defined and described in h/tapebridge_constant.h:
+ * TAPEBRIDGE_N_FLUSHES_PER_FILE, TAPEBRIDGE_ONE_FLUSH_PER_FILE and
+ * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
+ *
+ * The TAPEBRIDGE_CLIENTINFO2 message also adds the following two new fields:
+ *
+ * maxBytesBeforeFlush: The maximum number of bytes before the rtcpd daemon
  * should flush all data to tape.  Please note that the rtcpd daemon flushes
  * data to tape only when it has finished writing an entire file, this means
  * rtcpd will nearly always write a few more bytes than maxBytesBeforeFlush
  * before flushing to tape.
  *
- * maxFilesBeforeFlush The maximum number of files before the rtcpd daemon
+ * maxFilesBeforeFlush: The maximum number of files before the rtcpd daemon
  * should flush all data to tape.
  */
 typedef struct {
@@ -52,7 +60,7 @@ typedef struct {
   uint32_t bridgeClientCallbackPort;
   uint32_t clientUID;
   uint32_t clientGID;
-  uint32_t useBufferedTapeMarksOverMultipleFiles;
+  uint32_t tapeFlushMode;
   uint64_t maxBytesBeforeFlush;
   uint64_t maxFilesBeforeFlush;
   char     bridgeHost[CA_MAXHOSTNAMELEN+1];
@@ -62,34 +70,34 @@ typedef struct {
   char     clientName[CA_MAXUSRNAMELEN+1];
 } tapeBridgeClientInfo2MsgBody_t;
 
-#define TAPEBRIDGECLIENTINFO2MSGBODY_MAXSIZE (                           \
-    LONGSIZE              + /* volReqID                              */ \
-    LONGSIZE              + /* bridgeCallbackPort                    */ \
-    LONGSIZE              + /* bridgeClientCallbackPort              */ \
-    LONGSIZE              + /* clientUID                             */ \
-    LONGSIZE              + /* clientGID                             */ \
-    LONGSIZE              + /* useBufferedTapeMarksOverMultipleFiles */ \
-    HYPERSIZE             + /* maxBytesBeforeFlush                   */ \
-    HYPERSIZE             + /* maxFilesBeforeFlush                   */ \
-    CA_MAXHOSTNAMELEN + 1 + /* bridgeHost                            */ \
-    CA_MAXHOSTNAMELEN + 1 + /* bridgeClientHost                      */ \
-    CA_MAXDGNLEN      + 1 + /* dgn                                   */ \
-    CA_MAXUNMLEN      + 1 + /* drive                                 */ \
-    CA_MAXUSRNAMELEN  + 1   /* clientName                            */)
+#define TAPEBRIDGECLIENTINFO2MSGBODY_MAXSIZE (             \
+    LONGSIZE              + /* volReqID                 */ \
+    LONGSIZE              + /* bridgeCallbackPort       */ \
+    LONGSIZE              + /* bridgeClientCallbackPort */ \
+    LONGSIZE              + /* clientUID                */ \
+    LONGSIZE              + /* clientGID                */ \
+    LONGSIZE              + /* tapeFlushMode            */ \
+    HYPERSIZE             + /* maxBytesBeforeFlush      */ \
+    HYPERSIZE             + /* maxFilesBeforeFlush      */ \
+    CA_MAXHOSTNAMELEN + 1 + /* bridgeHost               */ \
+    CA_MAXHOSTNAMELEN + 1 + /* bridgeClientHost         */ \
+    CA_MAXDGNLEN      + 1 + /* dgn                      */ \
+    CA_MAXUNMLEN      + 1 + /* drive                    */ \
+    CA_MAXUSRNAMELEN  + 1   /* clientName               */)
 
-#define TAPEBRIDGECLIENTINFO2MSGBODY_MINSIZE (                           \
-    LONGSIZE              + /* volReqID                              */ \
-    LONGSIZE              + /* bridgeCallbackPort                    */ \
-    LONGSIZE              + /* bridgeClientCallbackPort              */ \
-    LONGSIZE              + /* clientUID                             */ \
-    LONGSIZE              + /* clientGID                             */ \
-    LONGSIZE              + /* useBufferedTapeMarksOverMultipleFiles */ \
-    HYPERSIZE             + /* maxBytesBeforeFlush                   */ \
-    HYPERSIZE             + /* maxFilesBeforeFlush                   */ \
-    1                     + /* bridgeHost                            */ \
-    1                     + /* bridgeClientHost                      */ \
-    1                     + /* dgn                                   */ \
-    1                     + /* drive                                 */ \
-    1                       /* clientName                            */)
+#define TAPEBRIDGECLIENTINFO2MSGBODY_MINSIZE (             \
+    LONGSIZE              + /* volReqID                 */ \
+    LONGSIZE              + /* bridgeCallbackPort       */ \
+    LONGSIZE              + /* bridgeClientCallbackPort */ \
+    LONGSIZE              + /* clientUID                */ \
+    LONGSIZE              + /* clientGID                */ \
+    LONGSIZE              + /* tapeFlushMode            */ \
+    HYPERSIZE             + /* maxBytesBeforeFlush      */ \
+    HYPERSIZE             + /* maxFilesBeforeFlush      */ \
+    1                     + /* bridgeHost               */ \
+    1                     + /* bridgeClientHost         */ \
+    1                     + /* dgn                      */ \
+    1                     + /* drive                    */ \
+    1                       /* clientName               */)
 
 #endif /* H_TAPEBRIDGECLIENTINFO2MSGBODY_H */

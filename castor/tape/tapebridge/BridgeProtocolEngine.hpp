@@ -28,10 +28,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/BoolFunctor.hpp"
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
-#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
+#include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -59,6 +59,9 @@ public:
   /**
    * Constructor.
    *
+   * @param tapeFlushConfigParams    The values of the tape-flush
+   *                                 configuration-parameters to be used by the
+   *                                 tape-bridge.
    * @param cuuid                    The ccuid to be used for logging.
    * @param listenSock               The socket-descriptor of the listen socket
    *                                 to be used to accept callback connections
@@ -79,6 +82,7 @@ public:
    *                                 IDS used in requests to the clients.
    */
   BridgeProtocolEngine(
+    const TapeFlushConfigParams         &tapeFlushConfigParams,
     const Cuuid_t                       &cuuid,
     const int                           rtcpdListenSock,
     const int                           initialRtcpdSock,
@@ -93,20 +97,13 @@ public:
    */
   void run() throw(castor::exception::Exception);
 
-  /**
-   * Determines the number of rtcpd disk-IO threads.
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   *
-   * @return The configuration parameter including its source, either
-   *         "environment variable", "castor.conf" or "compile-time default".
-   */
-  ConfigParamAndSource<uint32_t> getNbRtcpdDiskIOThreads()
-    throw(castor::exception::Exception);
-
 private:
+
+  /**
+   * The values of the tape-flush configuration-parameters to be used by the
+   * tape-bridge.
+   */
+  const TapeFlushConfigParams m_tapeFlushConfigParams;
 
   /**
    * The cuuid to be used for logging.
