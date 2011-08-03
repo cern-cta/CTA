@@ -1296,48 +1296,36 @@ int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
                            u_signed64 *avgcompression)
 {
   char func[23];
-  char count_str[21];
-  char size_str[21];
-  char maxfileid_str[21];
-  char weightedsum_str[21];
   struct sqlca sqlca;
 
   strncpy (func, "Cns_get_tapesum_by_vid", 23);
 
-  /* Extract statistics. Notes:
-     - we use TO_CHAR to control ourselves the conversion to numbers
-     - the weightedsum is used to compute a weighted average of the segment
-       sizes, using 1/compression as weights, and accounting segments
-       with missing (0) compression factors as their original sizes */
-  EXEC SQL SELECT TO_CHAR(COUNT(*)),
-                  TO_CHAR(NVL(SUM(segsize), 0)),
-                  TO_CHAR(NVL(MAX(s_fileid), 0)),
-                  TO_CHAR(NVL(SUM(decode(compression, 0, segsize/100, segsize/compression)), 0))
-             INTO :count_str, :size_str, :maxfileid_str, :weightedsum_str
+  /* Extract statistics. The weightedsum is used to compute a weighted average
+     of the segment sizes, using 1/compression as weights, and accounting segments
+     with missing (0) compression factors as their original sizes.
+     This average is then returned in the same 'compression factor' CASTOR format in
+     the range [100, infinite), where 100 = no compression, 200 = 50% compression, etc.
+     The decode() avoids that rounding effects yield infinite, where 10^6 is arbitrarily
+     returned in such a case. */
+  EXEC SQL SELECT c, totsize, maxfid, decode(weightedsum, 0, 1000000, round(totsize/weightedsum))
+             INTO :*count, :*size, :*maxfileid, :*avgcompression
+             FROM (SELECT COUNT(*) c,
+                          NVL(SUM(segsize), 0) totsize,
+                          NVL(MAX(s_fileid), 0) maxfid,
+                          NVL(SUM(decode(compression, 0, segsize/100, segsize/compression)), 0) weightedsum
              FROM Cns_seg_metadata
-            WHERE vid = :vid;
+            WHERE vid = :vid);
   if (sqlca.sqlcode == 0) {
-    *count = strtou64 (count_str);
-    *size = strtou64 (size_str);
-    *maxfileid = strtou64 (maxfileid_str);
-    *avgcompression = 0;
     if(*count == 0) {
+      /* No segments found or non existing tape => ENOENT */
       serrno = ENOENT;
       return(-1);
     }
-    /* Return avgcompression back in CASTOR format, i.e. as compression
-       'factor' and not its inverse that is the real compression ratio */
-    float ws = strtof (weightedsum_str, NULL);
-    if(ws != 0) {
-      /* sanity check: ws is 0 only in case of underflow or when the conversion
-         couldn't be done; in such cases those numbers are anyway bogus */
-      *avgcompression = *size / ws;
-    }
-    return(0);
   } else {
     Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
     return(-1);
   }
+  return(0);
 }
 
 int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
