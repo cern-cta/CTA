@@ -114,7 +114,7 @@ int main(int argc, char* argv[]){
        ("GcSvcThread",
 	new castor::stager::daemon::GcSvcThread()));
 
-    // These thrads dump the logs from the cleanup table
+    // This thread dumps the logs from the cleanup table
     stagerDaemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("CleaningThread",
@@ -124,10 +124,10 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
     stagerDaemon.getThreadPool('S')->setNbThreads(4);
     stagerDaemon.getThreadPool('B')->setNbThreads(3);
-    stagerDaemon.getThreadPool('Q')->setNbThreads(10);
-    stagerDaemon.getThreadPool('E')->setNbThreads(3);
-    stagerDaemon.getThreadPool('j')->setNbThreads(10);
-    stagerDaemon.getThreadPool('G')->setNbThreads(6);
+    stagerDaemon.getThreadPool('Q')->setNbThreads(6);
+    stagerDaemon.getThreadPool('E')->setNbThreads(2);
+    stagerDaemon.getThreadPool('j')->setNbThreads(6);
+    stagerDaemon.getThreadPool('G')->setNbThreads(4);
     stagerDaemon.getThreadPool('C')->setNbThreads(1);
 
     // Determine the notification port for the notifier thread pool. The port

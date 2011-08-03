@@ -89,18 +89,16 @@ specifies the number of threads for stager specific requests (putDone, Rm, setGC
 specifies the number of threads for handling bulk requests in bulk (currently only abort). Default is 3.
 .P
 .BI \-Q,\ \-\-Qthreads\ <nb\ threads>
-specifies the number of threads for user query requests. Default is 10.
+specifies the number of threads for user query requests. Default is 6.
 .TP
 .BI \-E,\ \-\-Ethreads\ <nb\ threads>
-specifies the number of threads for handling user errors. Default is 3.
+specifies the number of threads for handling user errors. Default is 2.
 .TP
 .BI \-j,\ \-\-jthreads\ <nb\ threads>
-specifies the number of threads for internal job oriented requests. Default is 10. It is adviced to have
-this at least equal to the number of threads for user job oriented requests, as for each user job there are
-two callbacks (for the actual open and close of the file) handled by this thread pool.
+specifies the number of threads for internal job oriented requests. Default is 6
 .TP
 .BI \-G,\ \-\-Gthreads\ <nb\ threads>
-specifies the number of threads for internal garbage collection and synchronization. Default is 6.
+specifies the number of threads for internal garbage collection and synchronization. Default is 4.
 .TP
 .BI \-C,\ \-\-Cthreads\ <nb\ threads>
 specifies the number of threads for dumping the logs of the database cleaning jobs. Default is 1. 
