@@ -52,13 +52,13 @@ castor::tape::tapebridge::TapeFlushConfigParams::TapeFlushConfigParams():
 void castor::tape::tapebridge::TapeFlushConfigParams::
   determineTapeFlushConfigParams() throw(castor::exception::Exception) {
 
-  getTapeFlushMode();
+  determineTapeFlushMode();
 
   // Only try to determine the maximum number of bytes and files before a flush
   // if the flush mode requires them
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == m_tapeFlushMode.value) {
-    getMaxBytesBeforeFlush();
-    getMaxFilesBeforeFlush();
+    determineMaxBytesBeforeFlush();
+    determineMaxFilesBeforeFlush();
   }
 }
 

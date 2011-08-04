@@ -588,6 +588,66 @@ public:
       params.getMaxFilesBeforeFlush().source);
   }
 
+  void testDetermineTapeFlushConfigParamsCastorConf() {
+    castor::tape::tapebridge::TapeFlushConfigParams params;
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", "determineTapeFlushConfigParams_castor.conf", 1));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "determineTapeFlushConfigParams",
+      params.determineTapeFlushConfigParams());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+      std::string("TAPEBRIDGE"),
+      params.getMaxBytesBeforeFlush().category);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+      std::string("MAXBYTESBEFOREFLUSH"),
+      params.getMaxBytesBeforeFlush().name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+      (uint64_t)12345,
+      params.getMaxBytesBeforeFlush().value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
+      std::string("castor.conf"),
+      params.getMaxBytesBeforeFlush().source);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+      std::string("TAPEBRIDGE"),
+      params.getMaxFilesBeforeFlush().category);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+      std::string("MAXFILESBEFOREFLUSH"),
+      params.getMaxFilesBeforeFlush().name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+      (uint64_t)67890,
+      params.getMaxFilesBeforeFlush().value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
+      std::string("castor.conf"),
+      params.getMaxFilesBeforeFlush().source);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+      std::string("TAPEBRIDGE"),
+      params.getTapeFlushMode().category);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+      std::string("TAPEFLUSHMODE"),
+      params.getTapeFlushMode().name);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      params.getTapeFlushMode().value);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
+      std::string("castor.conf"),
+      params.getTapeFlushMode().source);
+  }
+
   CPPUNIT_TEST_SUITE(TapeFlushConfigParamsTest);
 
   CPPUNIT_TEST(testDetermineTapeFlushModeInvalidEnv);
@@ -611,6 +671,8 @@ public:
   CPPUNIT_TEST(testDetermineMaxFilesBeforeFlushInvalidPathConfig);
   CPPUNIT_TEST(testDetermineMaxFilesBeforeFlushInvalidLocalCastorConf);
   CPPUNIT_TEST(testDetermineMaxFilesBeforeFlushLocalCastorConf);
+
+  CPPUNIT_TEST(testDetermineTapeFlushConfigParamsCastorConf);
 
   CPPUNIT_TEST_SUITE_END();
 };
