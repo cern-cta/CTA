@@ -406,8 +406,8 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
     net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
-         ": Failed to send file message to RTCPD: "
-      << ex.getMessage().str());
+      ": Failed to send file message to RTCPD"
+      ": " << ex.getMessage().str());
   }
 
   // Receive acknowledge from RTCPD
@@ -417,14 +417,22 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
-         ": Failed to receive acknowledge from RTCPD: "
-      << ex.getMessage().str());
+      ": Failed to receive acknowledge from RTCPD"
+      ": " << ex.getMessage().str());
   }
 
-  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __FUNCTION__);
-  {
+  try {
+    checkMagic(RTCOPY_MAGIC, ackMsg.magic, __FUNCTION__);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": " + ex.getMessage().str());
+  }
+  try {
     const uint32_t expected[] = {RTCP_NOMORE_REQ, RTCP_TAPEERR_REQ};
     checkRtcopyReqType(expected, ackMsg.reqType, __FUNCTION__);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": " + ex.getMessage().str());
   }
 
   switch(ackMsg.reqType) {

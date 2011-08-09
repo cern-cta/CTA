@@ -36,6 +36,7 @@
 #include "h/Cgetopt.h"
 #include "h/common.h"
 #include "h/Cuuid.h"
+#include "h/tapebridge_tapeFlushModeToStr.h"
 
 #include <algorithm>
 #include <memory>
@@ -129,16 +130,16 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   // the tape flush mode requires them.
   TapeFlushConfigParams tapeFlushConfigParams;
 
-/* THIS CODE IS NOT TO EXECUTED ON THE v2_1_11Version BRANCH
   tapeFlushConfigParams.determineTapeFlushConfigParams();
   {
+    const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
+      tapeFlushConfigParams.getTapeFlushMode().value);
     castor::dlf::Param params[] = {
       castor::dlf::Param("category",
         tapeFlushConfigParams.getTapeFlushMode().category),
       castor::dlf::Param("name"    ,
         tapeFlushConfigParams.getTapeFlushMode().name    ),
-      castor::dlf::Param("value"   ,
-        tapeFlushConfigParams.getTapeFlushMode().value   ),
+      castor::dlf::Param("value"   , tapeFlushModeStr    ),
       castor::dlf::Param("source"  ,
         tapeFlushConfigParams.getTapeFlushMode().source  )};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
@@ -173,7 +174,6 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
         TAPEBRIDGE_CONFIG_PARAM, params);
     }
   }
-*/
 
   // Extract the tape-drive names from the TPCONFIG file
   utils::TpconfigLines tpconfigLines;
