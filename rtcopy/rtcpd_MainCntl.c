@@ -45,6 +45,7 @@
 
 #include "h/rtcpd_GetClientInfo.h"
 #include "h/tapebridge_constants.h"
+#include "h/tapebridge_tapeFlushModeToStr.h"
 #include "h/u64subr.h"
 
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
@@ -2337,7 +2338,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* client of rtcpd is the tape-bridge daemon (see clientIsTapeBridge)  */
   tapeBridgeClientInfo2MsgBody_t tapeBridgeClientInfo2MsgBody;
   char clientHostname[CA_MAXHOSTNAMELEN+1];
-  int useBufferedTapeMarksOverMultipleFiles = FALSE;
 
   memset(&tapeBridgeClientInfo2MsgBody, '\0',
     sizeof(tapeBridgeClientInfo2MsgBody));
@@ -2408,12 +2408,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     }
   }
 
-  /* Determine whether or not buffered tape-marks are to be used over */
-  /* multiple files                                                   */
-  useBufferedTapeMarksOverMultipleFiles = clientIsTapeBridge &&
-    TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
-    tapeBridgeClientInfo2MsgBody.tapeFlushMode;
-
   /*
    * We've got the client address so we don't need the tape-bridge or VDQM
    * client-info connection any anymore
@@ -2467,12 +2461,63 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       "Message", TL_MSG_PARAM_STR, logMsg);
   }
 
-  /* Log whether or not buffered tape-marks will be used over muliple files */
-  {
-    char *const logMsg = useBufferedTapeMarksOverMultipleFiles ?
-      "Using buffered tape-marks over multiple files" :
-      "Not using buffered tape-marks over multiple files";
+  /* In order to implement backwards compatibility:                         */
+  /*                                                                        */
+  /* If the tapebridged daemon is not the client of the rtcpd daemon and    */
+  /* the value of the TAPE BUFFERTAPEMARK parameter is not YES then set the */
+  /* tape-flush mode to TAPEBRIDGE_N_FLUSHES_PER_FILE.                      */
+  /*                                                                        */
+  /* If the tapebridged daemon is not the client of the rtcpd daemon and    */
+  /* the value of the TAPE BUFFERTAPEMARK parameter is YES then set the     */
+  /* tape-flush mode to TAPEBRIDGE_ONE_FLUSH_PER_FILE.                      */
+  if(!clientIsTapeBridge) {
 
+    const char *const useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
+    if (NULL != useBuffTpm && 0 == strcasecmp(useBuffTpm,"YES")) {
+      tapeBridgeClientInfo2MsgBody.tapeFlushMode =
+        TAPEBRIDGE_ONE_FLUSH_PER_FILE;
+
+      /* Log the use of TAPE/BUFFER_TAPEMARK */
+      rtcp_log(LOG_INFO, "%s()"
+        "For backwards compatibility using TAPE/BUFFER_TAPEMARK=YES\n",
+        __FUNCTION__);
+    } else {
+      tapeBridgeClientInfo2MsgBody.tapeFlushMode =
+        TAPEBRIDGE_N_FLUSHES_PER_FILE;
+
+      /* Log the use of TAPE/BUFFER_TAPEMARK */
+      rtcp_log(LOG_INFO, "%s()"
+        "For backwards compatibility using TAPE/BUFFER_TAPEMARK=NO\n",
+        __FUNCTION__);
+    }
+
+    /* Log the backwards compatibility behaviour */
+    {
+      const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
+        tapeBridgeClientInfo2MsgBody.tapeFlushMode);
+      char logMsg[128];
+
+      snprintf(logMsg, sizeof(logMsg),
+        "For backwards compatibility setting tapeFlushMode=%s",
+        tapeFlushModeStr);
+      logMsg[sizeof(logMsg) - 1] = '\0';
+      rtcp_log(LOG_INFO, "%s()"
+        ": %s\n",
+        __FUNCTION__, logMsg);
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+        "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+        "Message", TL_MSG_PARAM_STR, logMsg);
+    }
+  }
+
+  /* Log the tape-flush mode */
+  {
+    const char *const tapeFlushModeStr =
+      tapebridge_tapeFlushModeToStr(tapeBridgeClientInfo2MsgBody.tapeFlushMode);
+    char logMsg[128];
+
+    snprintf(logMsg, sizeof(logMsg), "tapeFlushMode=%s", tapeFlushModeStr);
+    logMsg[sizeof(logMsg) - 1] = '\0';
     rtcp_log(LOG_INFO, "%s()"
       ": %s\n",
       __FUNCTION__, logMsg);
@@ -2483,32 +2528,49 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
   /* If buffered tape-marks will be used over muliple files then log */
   /* maxBytesBeforeFlush and maxFilesBeforeFlush                     */
-  if(useBufferedTapeMarksOverMultipleFiles) {
-    char logMsg[128];
-    char maxBytesBeforeFlushStr[21];
-    char maxFilesBeforeFlushStr[21];
+  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+    tapeBridgeClientInfo2MsgBody.tapeFlushMode) {
+    {
+      char logMsg[128];
+      char maxBytesBeforeFlushStr[21];
 
-    memset(maxBytesBeforeFlushStr, '\0', sizeof(maxBytesBeforeFlushStr));
-    u64tostr(tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
-      maxBytesBeforeFlushStr, 0 /* left adjust result */);
-    maxBytesBeforeFlushStr[sizeof(maxBytesBeforeFlushStr) - 1] = '\0';
+      memset(maxBytesBeforeFlushStr, '\0', sizeof(maxBytesBeforeFlushStr));
+      u64tostr(tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
+        maxBytesBeforeFlushStr, 0 /* left adjust result */);
+      maxBytesBeforeFlushStr[sizeof(maxBytesBeforeFlushStr) - 1] = '\0';
 
-    memset(maxFilesBeforeFlushStr, '\0', sizeof(maxFilesBeforeFlushStr));
-    u64tostr(tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush,
-      maxFilesBeforeFlushStr, 0 /* left adjust result */);
-    maxFilesBeforeFlushStr[sizeof(maxFilesBeforeFlushStr) - 1] = '\0';
+      snprintf(logMsg, sizeof(logMsg), "maxBytesBeforeFlush=%s",
+        maxBytesBeforeFlushStr);
+      logMsg[sizeof(logMsg) - 1] = '\0';
 
-    snprintf(logMsg, sizeof(logMsg),
-      "maxBytesBeforeFlush=%s maxFilesBeforeFlush=%s",
-      maxBytesBeforeFlushStr, maxFilesBeforeFlushStr);
-    logMsg[sizeof(logMsg) - 1] = '\0';
+      rtcp_log(LOG_INFO, "%s()"
+        ": %s\n",
+        __FUNCTION__, logMsg);
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+        "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+        "Message", TL_MSG_PARAM_STR, logMsg);
+    }
 
-    rtcp_log(LOG_INFO, "%s()"
-      ": %s\n",
-      __FUNCTION__, logMsg);
-    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
-      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
-      "Message", TL_MSG_PARAM_STR, logMsg);
+    {
+      char logMsg[128];
+      char maxFilesBeforeFlushStr[21];
+
+      memset(maxFilesBeforeFlushStr, '\0', sizeof(maxFilesBeforeFlushStr));
+      u64tostr(tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush,
+        maxFilesBeforeFlushStr, 0 /* left adjust result */);
+      maxFilesBeforeFlushStr[sizeof(maxFilesBeforeFlushStr) - 1] = '\0';
+
+      snprintf(logMsg, sizeof(logMsg), "maxFilesBeforeFlush=%s",
+        maxFilesBeforeFlushStr);
+      logMsg[sizeof(logMsg) - 1] = '\0';
+
+      rtcp_log(LOG_INFO, "%s()"
+        ": %s\n",
+        __FUNCTION__, logMsg);
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+        "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+        "Message", TL_MSG_PARAM_STR, logMsg);
+    }
   }
 
   /*
@@ -2814,7 +2876,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * Start tape control and I/O thread. From now on the
      * deassign will be done in the tape IO thread.
      */
-    rc = rtcpd_StartTapeIO(client,tape,clientIsTapeBridge);
+    rc = rtcpd_StartTapeIO(client,tape,clientIsTapeBridge,
+      tapeBridgeClientInfo2MsgBody.tapeFlushMode,
+      tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
+      tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush);
     if ( rc == -1 ) {
       (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
       rtcp_log(LOG_ERR,

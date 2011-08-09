@@ -511,7 +511,11 @@ int topen(tape_list_t *tape, file_list_t *file) {
 /*
  * Closing tape file.
  */
-int tclose(int fd, tape_list_t *tape, file_list_t *file) {
+int tclose(
+  const int          fd,
+  tape_list_t *const tape,
+  file_list_t *const file,
+  const uint32_t     tapeFlushMode) {
   int rc = 0;
   int comp_rc = 0;
   int save_serrno = 0;
@@ -554,7 +558,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                        "nb recs"  , TL_MSG_PARAM_INT, file->trec );
       errno = serrno = 0;
       if ( (rc = wrttrllbl(fd,filereq->tape_path,labelid[file->eovflag],
-                           file->trec)) < 0 ) {
+                           file->trec,tapeFlushMode)) < 0 ) {
         save_errno = errno;
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): errno=%d, serrno=%d\n",
@@ -752,8 +756,13 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
 /*
  * Writing tape block.
  */
-int twrite(int fd,char *ptr,int len, 
-           tape_list_t *tape, file_list_t *file) {
+int twrite(
+  const int          fd,
+  char *const        ptr,
+  const int          len, 
+  tape_list_t *const tape,
+  file_list_t *const file,
+  const uint32_t     tapeFlushMode) {
   int     rc, save_serrno, save_errno;
   char *errstr;
   rtcpFileRequest_t *filereq = NULL;
@@ -779,7 +788,7 @@ int twrite(int fd,char *ptr,int len,
                        "fd"       , TL_MSG_PARAM_INT, fd,
                        "Tape path", TL_MSG_PARAM_STR, filereq->tape_path );
       errno = serrno = 0;
-      if ( (rc = wrthdrlbl(fd,filereq->tape_path)) < 0 ) {
+      if ( (rc = wrthdrlbl(fd, filereq->tape_path, tapeFlushMode)) < 0 ) {
         save_errno = errno;
         save_serrno = serrno;
         if ( save_serrno == ENOSPC ) {

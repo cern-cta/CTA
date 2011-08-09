@@ -40,10 +40,15 @@
 char *getconfent (char *, char *, int);
 
 #include "h/tapeBridgeClientInfo2MsgBody.h"
+#include "h/tapebridge_constants.h"
 #include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"
 #include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
+#include "h/tapebridge_tapeFlushModeToStr.h"
 
+#include <fcntl.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 #define TP_SIZE(X)   (proc_stat.tapeIOstatus.nbbytes += (u_signed64)(X))
@@ -53,18 +58,47 @@ typedef struct thread_arg {
     SOCKET client_socket;
     tape_list_t *tape;
     rtcpClientInfo_t *client;
+
+    /**
+     * Boolean value specifying whether or not the client of the rtcpd daemon is
+     * tapebridged.
+     */
     int clientIsTapeBridge;
 
-    /* The value of useBufferedTapeMarksOverMultipleFiles is only applicable */
-    /* if clientIsTapeBridge is true                                         */
-    int useBufferedTapeMarksOverMultipleFiles;
+    /**
+     * The mode of tape-flush behaviour to be used when writing to tape.
+     *
+     * When the tapebridged daemon is the client of the rtcpd daemon, this
+     * field can have one of the following three values:
+     *
+     * TAPEBRIDGE_N_FLUSHES_PER_FILE
+     * TAPEBRIDGE_ONE_FLUSH_PER_FILE
+     * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES
+     *
+     * However, when the tapebridged daemon is not the client of the rtcpd
+     * daemon, this field can only have one of the following two values:
+     *
+     * TAPEBRIDGE_N_FLUSHES_PER_FILE
+     * TAPEBRIDGE_ONE_FLUSH_PER_FILE
+     */
+    uint32_t tapeFlushMode;
 
-    /* The value of maxBytesBeforeFlush is only applicable if both           */
-    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    /**
+     * The maximum number of bytes to be written to tape before a flush to
+     * tape.
+     *
+     * The value of maxBytesBeforeFlush is only applicable if tapeFlushMode is
+     * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
+     */
     uint64_t maxBytesBeforeFlush;
 
-    /* The value of maxFilesBeforeFlush is only applicable if both           */
-    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    /**
+     * The maximum number of files to be written to tape before a flush to
+     * tape.
+     *
+     * The value of maxFilesBeforeFlush is only applicable if tapeFlushMode is
+     * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
+     */
     uint64_t maxFilesBeforeFlush;
 } thread_arg_t;
 
@@ -199,10 +233,19 @@ int rtcpd_nbFullBufs(int increment) {
 /*
  * Read from tape to memory
  */
-static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
-                        int *diskIOfinished,
-                        tape_list_t *tape, 
-                        file_list_t *file) {
+static int MemoryToTape(
+    const int          tape_fd,
+    int *const         indxp,
+    int *const         firstblk,
+    int *const         diskIOfinished,
+    tape_list_t *const tape, 
+    file_list_t *const file,
+    const uint32_t     tapeFlushMode,
+    uint64_t *const    nbBytesWrittenWithoutFlush,
+    uint64_t *const    nbFilesWrittenWithoutFlush,
+    const uint64_t     maxBytesBeforeFlush,
+    const uint64_t     maxFilesBeforeFlush,
+    int                *flushedToTapeAfterNFiles) {
     int nb_bytes, rc, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
     int pileupWaitTime = 0, nbFullBufs;
@@ -515,7 +558,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         convert_buffer,
                         nb_bytes,
                         tape,
-                        file);
+                        file,
+                        tapeFlushMode);
             TP_STATUS(RTCP_PS_NOBLOCKING);
             
 	    if ( rc == -1 ) {
@@ -754,7 +798,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         convert_buffer,
                         spill,
                         tape,
-                        file);
+                        file,
+                        tapeFlushMode);
             TP_SIZE(rc);
         }
         if ( nb_truncated > 0 ) {
@@ -765,8 +810,44 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         if ( convert_context != NULL ) free(convert_context);
     }
 
+    /* If data should be flushed to tape every N files */
+    if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode) {
+
+        /* Update the number of bytes and files written without a flush to */
+        /* tape */
+        (*nbFilesWrittenWithoutFlush)++;
+        *nbBytesWrittenWithoutFlush += filereq->bytes_in;
+
+        /* If the maximum number of bytes or the maximum number of files */
+        /* before a flush to tape has been reached */
+        if(maxBytesBeforeFlush <= *nbBytesWrittenWithoutFlush ||
+            maxFilesBeforeFlush <= *nbFilesWrittenWithoutFlush) {
+
+            /* Flush data to tape */
+            rc = wrttpmrk(tape_fd, filereq->tape_path, 0, 0);
+            if(-1 == rc) {
+                rtcp_log(LOG_ERR,"wrttpmrk() error: %s\n", sstrerror(serrno));
+                tl_rtcpd.tl_log(&tl_rtcpd, 3, 3,
+                    "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                    "Message" , TL_MSG_PARAM_STR, "wrttpmrk",
+                    "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
+                return(-1);
+            }
+            rtcp_log(LOG_INFO,
+                "Flushed to tape after maximum number of bytes or files"
+                " before a flush reached");
+
+            /* Indicate a flush to tape has been done */
+            *flushedToTapeAfterNFiles = 1;
+
+            /* Reset the number of bytes and files written without a flush */
+            *nbBytesWrittenWithoutFlush = 0;
+            *nbFilesWrittenWithoutFlush = 0;
+        }
+    }
+
     TP_STATUS(RTCP_PS_CLOSE);
-    if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file);
+    if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file,tapeFlushMode);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     return(rc);
 }
@@ -1051,7 +1132,12 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  * thread send the info. to the client
                  */
                 TP_STATUS(RTCP_PS_CLOSE);
-                rc = tclose(tape_fd,tape,file);
+                {
+                    /* tapeFlushMode is ignored for reads */
+                    const uint32_t tapeFlushMode =
+                        TAPEBRIDGE_N_FLUSHES_PER_FILE;
+                    rc = tclose(tape_fd,tape,file,tapeFlushMode);
+                }
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"TapeToMemory() tclose(): %s\n",
@@ -1227,7 +1313,11 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     } /* for (;;) */
     if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
-        rc = tclose(tape_fd,tape,file);
+        {
+            /* tapeFlushMode is ignored for reads */
+            const uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+            rc = tclose(tape_fd,tape,file,tapeFlushMode);
+        }
         TP_STATUS(RTCP_PS_NOBLOCKING);
     }
     return(rc);
@@ -1337,16 +1427,14 @@ void *tapeIOthread(void *arg) {
     int save_rc;
     int clientIsTapeBridge = 0;
 
-    /* The value of useBufferedTapeMarksOverMultipleFiles is only applicable */
-    /* if clientIsTapeBridge is true                                         */
-    int useBufferedTapeMarksOverMultipleFiles = 0;
+    uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
 
-    /* The value of maxBytesBeforeFlush is only applicable if both           */
-    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    /* The value of maxBytesBeforeFlush is only applicable if tapeFlushMode is */
+    /* TAPEBRIDGE_N_FLUSHES_PER_FILE                                           */
     uint64_t maxBytesBeforeFlush = 0;
 
-    /* The value of maxFilesBeforeFlush is only applicable if both           */
-    /* clientIsTapeBridge and useBufferedTapeMarksOverMultipleFiles are true */
+    /* The value of maxFilesBeforeFlush is only applicable if tapeFlushMode is */
+    /* TAPEBRIDGE_N_FLUSHES_PER_FILE                                           */
     uint64_t maxFilesBeforeFlush = 0;
 
     extern char *u64tostr (u_signed64, char *, int);
@@ -1363,8 +1451,7 @@ void *tapeIOthread(void *arg) {
     client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     clientIsTapeBridge = ((thread_arg_t *)arg)->clientIsTapeBridge;
-    useBufferedTapeMarksOverMultipleFiles =
-      ((thread_arg_t *)arg)->useBufferedTapeMarksOverMultipleFiles;
+    tapeFlushMode = ((thread_arg_t *)arg)->tapeFlushMode;
     maxBytesBeforeFlush = ((thread_arg_t *)arg)->maxBytesBeforeFlush;
     maxFilesBeforeFlush = ((thread_arg_t *)arg)->maxFilesBeforeFlush;
     free(arg);
@@ -1457,6 +1544,14 @@ void *tapeIOthread(void *arg) {
     totsz = 0;
     prevfile = tape->file;
     CLIST_ITERATE_BEGIN(tape,nexttape) {
+
+        /* nbBytesWrittenWithoutFlush and nbFilesWrittenWithoutFlush are     */
+        /* only updated when tapeFlushMode is TABRIDGE_ONE_FLUSH_PER_N_FILES */
+        uint64_t nbBytesWrittenWithoutFlush = 0;
+
+        /* Only updated when tapeFlushMode is TABRIDGE_ONE_FLUSH_PER_N_FILES */
+        uint64_t nbFilesWrittenWithoutFlush = 0;
+
         /*
          * Mount the volume
          */
@@ -1490,6 +1585,10 @@ void *tapeIOthread(void *arg) {
         }
 	
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
+
+            /* flushedToTapeAfterNFiles is only updated when tapeFlushMode */
+            /* is TABRIDGE_ONE_FLUSH_PER_N_FILES                           */
+            int flushedToTapeAfterNFiles = 0;
  
             mode = nexttape->tapereq.mode;
             /*
@@ -1515,7 +1614,116 @@ void *tapeIOthread(void *arg) {
                                  "Message", TL_MSG_PARAM_STR, "End of filereqs. Wait for diskIO to check for more work" );
                 rc = rtcpd_waitMoreWork(nextfile);
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_waitMoreWork() error");
-                if ( rc == 1 ) break;
+
+                /* If no more files */
+                if(1 == rc) {
+
+                    rtcp_log(LOG_INFO,
+                        "tapeIOthread() no more files to write\n");
+
+                    /* If flushing to tape every N files and there is a */
+                    /* pending flush, then flush to tape and tell the   */
+                    /* tapebridged daemon                               */
+                    if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode &&
+                        (nbBytesWrittenWithoutFlush > 0 ||
+                         nbFilesWrittenWithoutFlush > 0)) {
+                        char tapePathForFlush[CA_MAXPATHLEN+1];
+                        tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
+                        tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
+
+                        memset(tapePathForFlush, '\0',
+                            sizeof(tapePathForFlush));
+                        strncpy(tapePathForFlush,
+                            nextfile->prev->filereq.tape_path,
+                            sizeof(tapePathForFlush));
+                        tapePathForFlush[sizeof(tapePathForFlush)-1] = '\0';
+
+                        /* Open the tape device */
+                        tape_fd = open(tapePathForFlush, O_RDWR);
+                        rc = tape_fd;
+                        if(-1 == rc) {
+                            char errMsg[128];
+                            const int saved_errno = errno;
+
+                            serrno = errno;
+
+                            snprintf(errMsg, sizeof(errMsg),
+                                "Error opening tape path %s"
+                                " for no-more-work flush",
+                                tapePathForFlush);
+                            errMsg[sizeof(errMsg) - 1] = '\0';
+
+                            /* Ignore any errors caused by snprintf */
+                            errno = saved_errno;
+
+                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+                        }
+
+                        /* Flush data to tape */
+                        rc = wrttpmrk(tape_fd, tapePathForFlush, 0, 0);
+                        CHECK_PROC_ERR(NULL,nextfile,
+                            "No-more-work tape-flush failed"
+                            ": wrttpmrk() error");
+                        {
+                            char logMsg[128];
+
+                            snprintf(logMsg, sizeof(logMsg),
+                                "Executed no-more-work tape-flush using"
+                                " tape path %s\n",
+                                tapePathForFlush);
+                            logMsg[sizeof(logMsg) - 1] = '\0';
+
+                            rtcp_log(LOG_INFO, logMsg);
+                        }
+
+                        /* Close the tape device */
+                        rc = close(tape_fd);
+                        tape_fd = -1;
+                        CHECK_PROC_ERR(NULL,nextfile,
+                            "Failed to close tape-device file"
+                            " after no-more-work flush");
+
+                        /* Tell the tapebridged daemon that all data written */
+                        /* to tape has now been flushed to tape              */
+                        memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
+                        memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
+                        flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
+                        flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        rc = tapebridge_sendTapeBridgeFlushedToTape(
+                            client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                            "tapebridge_sendTapeBridgeFlushedToTape() error");
+
+                        rc = tapebridge_recvTapeBridgeFlushedToTapeAck(
+                            client_socket, RTCP_NETTIMEOUT, &flushedAckMsg);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else if (0 != flushedAckMsg.status) {
+                            serrno = flushedAckMsg.status;
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                            "tapebridge_recvTapeBridgeFlushedToTapeAck()"
+                            " error");
+                        rtcp_log(LOG_INFO,
+                            "Sent TAPEBRIDGE_FLUSHEDTOTAPE message"
+                            ": tapeFlushMode=%s,"
+                            " event=noMoreFiles,"
+                            " volReqId=%u,"
+                            " fseq=%u\n",
+                            tapebridge_tapeFlushModeToStr(tapeFlushMode),
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
+                    } /* If flushing to tape every N files and ... */
+
+                    break;
+                } /* If no more files */
             }
 
             if ( mode == WRITE_DISABLE ) nextfile->filereq.err.severity =
@@ -1724,7 +1932,10 @@ void *tapeIOthread(void *arg) {
 
                 if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
                     rc = MemoryToTape(tape_fd,&indxp,&firstblk,&diskIOfinished,
-                                      nexttape,nextfile);
+                        nexttape,nextfile,tapeFlushMode,
+                        &nbBytesWrittenWithoutFlush,&nbFilesWrittenWithoutFlush,
+                        maxBytesBeforeFlush,maxFilesBeforeFlush,
+                        &flushedToTapeAfterNFiles);
                     CHECK_PROC_ERR(NULL,nextfile,"MemoryToTape() error");
                 } else {
                     rc = TapeToMemory(tape_fd,&indxp,&firstblk,
@@ -1924,43 +2135,108 @@ void *tapeIOthread(void *arg) {
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPPRC);
 
-                /* If the client is the tapebridged daemon, then tell the   */
-                /* tapebridged daemon that all data written to tape has now */
-                /* been flushed to tape                                     */
-                if(clientIsTapeBridge) {
-                    tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
-                    tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
+rtcp_log(LOG_INFO, "nbBytesWrittenWithoutFlush=%ld\n", nbBytesWrittenWithoutFlush);
+rtcp_log(LOG_INFO, "nbFilesWrittenWithoutFlush=%ld\n", nbFilesWrittenWithoutFlush);
 
-                    memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
-                    memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
+                switch(tapeFlushMode) {
+                case TAPEBRIDGE_N_FLUSHES_PER_FILE:
+                case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
+                    if(clientIsTapeBridge) {
+                        /* Tell the tapebridged daemon that all data written */
+                        /* to tape has now been flushed to tape              */
+                        tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
+                        tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
+                        memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
+                        memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
 
-                    flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
-                    flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
-                    rc = tapebridge_sendTapeBridgeFlushedToTape(
-                        client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
-                    if(0 > rc) {
-                        rc = -1;
-                    } else {
-                        rc = 0;
+                        flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
+                        flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        rc = tapebridge_sendTapeBridgeFlushedToTape(
+                            client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                            "tapebridge_sendTapeBridgeFlushedToTape() error");
+
+                        rc = tapebridge_recvTapeBridgeFlushedToTapeAck(
+                            client_socket, RTCP_NETTIMEOUT, &flushedAckMsg);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else if (0 != flushedAckMsg.status) {
+                            serrno = flushedAckMsg.status;
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                           "tapebridge_recvTapeBridgeFlushedToTapeAck() error");
+                        rtcp_log(LOG_INFO,
+                            "Sent TAPEBRIDGE_FLUSHEDTOTAPE message"
+                            ": tapeFlushMode=%s,"
+                            " event=fileWritten,"
+                            " volReqId=%u,"
+                            " fseq=%u\n",
+                            tapebridge_tapeFlushModeToStr(tapeFlushMode),
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
                     }
-                    CHECK_PROC_ERR(NULL, nextfile,
-                        "tapebridge_sendTapeBridgeFlushedToTape() error");
+                    break;
+                case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
+                    if(flushedToTapeAfterNFiles) {
+                        /* Client is guaranteed to be tapebridged when   */
+                        /* flushing to tape every N files, so no need to */
+                        /* check                                         */
 
-                    rc = tapebridge_recvTapeBridgeFlushedToTapeAck(
-                        client_socket, RTCP_NETTIMEOUT, &flushedAckMsg);
-                    if(0 > rc) {
-                        rc = -1;
-                    } else if (0 != flushedAckMsg.status) {
-                        serrno = flushedAckMsg.status;
-                        rc = -1;
-                    } else {
-                        rc = 0;
+                        /* Tell the tapebridged daemon that all data    */
+                        /* written to tape has now been flushed to tape */
+                        tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
+                        tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
+                        memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
+                        memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
+                        flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
+                        flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        rc = tapebridge_sendTapeBridgeFlushedToTape(
+                            client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                            "tapebridge_sendTapeBridgeFlushedToTape() error");
+
+                        rc = tapebridge_recvTapeBridgeFlushedToTapeAck(
+                            client_socket, RTCP_NETTIMEOUT, &flushedAckMsg);
+                        if(0 > rc) {
+                            rc = -1;
+                        } else if (0 != flushedAckMsg.status) {
+                            serrno = flushedAckMsg.status;
+                            rc = -1;
+                        } else {
+                            rc = 0;
+                        }
+                        CHECK_PROC_ERR(NULL, nextfile,
+                           "tapebridge_recvTapeBridgeFlushedToTapeAck() error");
+                        rtcp_log(LOG_INFO,
+                            "Sent TAPEBRIDGE_FLUSHEDTOTAPE message"
+                            ": tapeFlushMode=%s,"
+                            " event=flushedToTapeAfterNFiles,"
+                            " volReqId=%u,"
+                            " fseq=%u\n",
+                            tapebridge_tapeFlushModeToStr(tapeFlushMode),
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
                     }
-                    CHECK_PROC_ERR(NULL, nextfile,
-                       "tapebridge_recvTapeBridgeFlushedToTapeAck() error");
-                } /* If the client is the tapebridge daemon then ... */
+                    break;
+                default:
+                    /* Should never reach here */
+                    rc = -1;
+                    CHECK_PROC_ERR(NULL,nextfile,"Unknown tape-flush mode");
+                } /* switch(tapeFlushMode) */
             } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
+
         if ( nexttape->next != tape ) {
             TP_STATUS(RTCP_PS_RELEASE);
             rc = rtcpd_Release(nexttape,nexttape->file);
@@ -1991,8 +2267,13 @@ void *tapeIOthread(void *arg) {
     return((void *)&success);
 }
 
-int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape,
-  const int clientIsTapeBridge) {
+int rtcpd_StartTapeIO(
+  rtcpClientInfo_t *const client,
+  tape_list_t *const      tape,
+  const int               clientIsTapeBridge,
+  const uint32_t          tapeFlushMode,
+  const uint64_t          maxBytesBeforeFlush,
+  const uint64_t          maxFilesBeforeFlush) {
     int rc;
     thread_arg_t *tharg;
 
@@ -2001,7 +2282,7 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape,
         return(-1);
     }
 
-    tharg = (thread_arg_t *)malloc(sizeof(thread_arg_t));
+    tharg = (thread_arg_t *)calloc(1, sizeof(thread_arg_t));
     if ( tharg == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_StartTapeIO() malloc(): %s\n",
             sstrerror(errno));
@@ -2012,7 +2293,10 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape,
         return(-1);
     }
 
-    tharg->clientIsTapeBridge = clientIsTapeBridge;
+    tharg->clientIsTapeBridge  = clientIsTapeBridge;
+    tharg->tapeFlushMode       = tapeFlushMode;
+    tharg->maxBytesBeforeFlush = maxBytesBeforeFlush;
+    tharg->maxFilesBeforeFlush = maxFilesBeforeFlush;
 
     /*
      * Open a separate connection to client

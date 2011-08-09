@@ -18,6 +18,8 @@
 #include "rtcp_lbl.h"
 #include "getconfent.h"
 
+#include "h/tapebridge_constants.h"
+
 /*	checkeofeov - check for EOF or EOV */
 /*	return	-1 and serrno set in case of error
  *		-1 and serrno set to ETLBL for bad label structure
@@ -64,16 +66,16 @@ int checkeofeov (int	tapefd,
 }
 
 /*	wrthdrlbl - write header labels */
-int wrthdrlbl (int	tapefd,
-               char	*path)
+int wrthdrlbl(
+	const int      tapefd,
+	char *const    path,
+	const uint32_t tapeFlushMode)
 {
 	int c;
 	struct devlblinfo  *dlip;
 	int fsec;
 	char hdr1[80], hdr2[80];
 	char uhl1[80], vol1[80];
-	const char *useBuffTpm;
-	int  immed;
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
@@ -99,18 +101,41 @@ int wrthdrlbl (int	tapefd,
 		memcpy (uhl1, dlip->uhl1, 80);
 		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
 	}
-	immed=0;
-	useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
-	if (0 != useBuffTpm) {
-		if (0 == strcasecmp(useBuffTpm,"YES")) {
-			immed=1;
+
+	/* Write buffered tape-mark */
+	if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
+
+	/* Flush to tape if necessary */
+        {
+		int flushToTape = 0;
+
+		switch(tapeFlushMode) {
+		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
+			flushToTape = 1;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
+			flushToTape = 0;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
+			flushToTape = 0;
+			break;
+		default:
+			/* Should never reach here */
+			serrno = EINVAL;
+			return(-1);
+		}
+		if(flushToTape) {
+			if((c = wrttpmrk (tapefd, path, 0, 0)) < 0) return (c);
 		}
 	}
-	return (wrttpmrk (tapefd, path, 1, immed));
+
+	return(0);
 }
 
-int wrteotmrk(int tapefd,
-              char *path)
+int wrteotmrk(
+	const int      tapefd,
+	char *const    path,
+	const uint32_t tapeFlushMode)
 {
 	int c;
 	struct devlblinfo  *dlip;
@@ -118,26 +143,50 @@ int wrteotmrk(int tapefd,
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
 	if (! dlip->dev1tm) {
-		/* write 2 tape marks */
-		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
-		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
+		/* write 2 buffered tape-marks */
+		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
 		/* for Exabytes in 8200 mode, position in front of the 2 tapemarks,
 		   otherwise position between the 2 tapemarks */
 		if ((c = skiptpfb (tapefd, path, dlip->rewritetm+1)) < 0) return (c);
 	} else {
-		/* write 1 tape mark */
-		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
-		/* flush the buffer */
-		if ((c = wrttpmrk (tapefd, path, 0, 0)) < 0) return (c); 
+		/* write 1 buffered tape-mark */
+		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
 	}
+
+	/* Flush to tape if necessary */
+        {
+		int flushToTape = 0;
+		switch(tapeFlushMode) {
+		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
+			flushToTape = 1;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
+			flushToTape = 1;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
+			flushToTape = 0;
+			break;
+		default:
+			/* Should never reach here */
+			serrno = EINVAL;
+			return(-1);
+		}
+		if(flushToTape) {
+			if((c = wrttpmrk (tapefd, path, 0, 0)) < 0) return (c);
+		}
+	}
+
 	return (0);
 }
 
 /*	wrttrllbl - write trailer labels */
-int wrttrllbl (int	tapefd,
-               char	*path,
-               char	*labelid,
-               int	nblocks)
+int wrttrllbl (
+	const int      tapefd,
+	char *const    path,
+	char *const    labelid,
+	const int      nblocks,
+	const uint32_t tapeFlushMode)
 {
 	char buf[7];
 	int c;
@@ -147,20 +196,36 @@ int wrttrllbl (int	tapefd,
 	struct mtget mt_info;
 #endif
 	char uhl1[80];
-	const char *useBuffTpm;
-	int immed;
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
-	if (dlip->lblcode == NL) return (wrteotmrk (tapefd, path));	/* tape is unlabelled */
-	immed=0;
-	useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
-	if (0 != useBuffTpm) {
-		if (0 == strcasecmp(useBuffTpm,"YES")) {
-			immed=1;
+	if (dlip->lblcode == NL) return (wrteotmrk (tapefd, path, tapeFlushMode));	/* tape is unlabelled */
+
+	/* Write a buffered tape-mark */
+	if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
+
+	/* Flush to tape if necessary */
+        {
+		int flushToTape = 0;
+		switch(tapeFlushMode) {
+		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
+			flushToTape = 1;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
+			flushToTape = 0;
+			break;
+		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
+			flushToTape = 0;
+			break;
+		default:
+			/* Should never reach here */
+			serrno = EINVAL;
+			return(-1);
+		}
+		if(flushToTape) {
+			if((c = wrttpmrk (tapefd, path, 0, 0)) < 0) return (c);
 		}
 	}
-	if ((c = wrttpmrk (tapefd, path, 1, immed)) < 0) return (c);
 
 	memcpy (hdr1, dlip->hdr1, 80);
 	memcpy (hdr1, labelid, 3);
@@ -193,7 +258,7 @@ int wrttrllbl (int	tapefd,
 #endif
 		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
 	}
-	return (wrteotmrk (tapefd, path));
+	return (wrteotmrk (tapefd, path, tapeFlushMode));
 }
 
 /*	deltpfil - delete current tape file */
@@ -228,6 +293,10 @@ int deltpfil (int	tapefd,
 	} else {
 		if ((c = skiptpfb (tapefd, path, dlip->lblcode == NL ? 1:2)) < 0) return (c);
 	}
-	return (wrteotmrk (tapefd, path));
+	{
+		/* Force synchronised tape-marks */
+		const uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+		return (wrteotmrk (tapefd, path, tapeFlushMode));
+	}
 }
 

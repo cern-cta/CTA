@@ -89,26 +89,6 @@ int rtcpd_GetClientInfo(
     return(-1);
   }
 
-  /* This version of rtcpd does NOT support buffered tape-marks over */
-  /* multiple files                                                  */
-  if(*clientIsTapeBridge && TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
-    tapeBridgeClientInfo2MsgBody->tapeFlushMode) {
-    char dummyErrbuf[32]; /* For fire and forget */
-    char *const ackMsg =
-      "Buffered tape-marks over multiple files is not supported";
-
-    /* Fire and forget negative acknowledgement to VDQM or tape-bridge */
-    rtcpd_SendAckToVdqmOrTapeBridge(connSock, netTimeout, msgHdr.reqtype, -1,
-      ackMsg, dummyErrbuf, sizeof(dummyErrbuf));
-
-    snprintf(errBuf, errBufLen, "%s()"
-      ": %s",
-      __FUNCTION__, ackMsg);
-    errBuf[errBufLen - 1] = '\0';
-    serrno = ENOTSUP;
-    return(-1);
-  }
-
   /* We only allow connections from the VDQM, tape-bridge or authorised hosts */
   if(1 != rtcp_CheckConnect(connSock,NULL)) {
     char *const errMsg = "Connection from unauthorised host";

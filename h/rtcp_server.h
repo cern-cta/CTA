@@ -17,6 +17,8 @@
 #include "h/Castor_limits.h"
 #include "h/rtcp.h"
 
+#include <stdint.h>
+
 /*
  * Data buffers
  */
@@ -216,7 +218,7 @@ int rtcpd_CheckClient (int, int, char *, char *, int *);
 int rtcpd_StartMonitor (int);
 int rtcpd_InitDiskIO  (int *);
 int rtcpd_CleanUpDiskIO  (int);
-int rtcpd_StartTapeIO  (rtcpClientInfo_t *, tape_list_t *, const int);
+int rtcpd_StartTapeIO  (rtcpClientInfo_t *const, tape_list_t *const, const int, const uint32_t, const uint64_t, const uint64_t);
 int rtcpd_StartDiskIO  (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int);
 int rtcpd_CheckProcError  (void);
 void rtcpd_SetProcError  (int);
@@ -252,9 +254,9 @@ int rtcp_CheckReqStructures (SOCKET *, rtcpClientInfo_t *, tape_list_t *);
 int rtcp_CallTMS  (tape_list_t *, char *);
 int tellClient  (SOCKET *, tape_list_t *, file_list_t *, int);
 int topen  (tape_list_t *, file_list_t *);
-int tclose  (int, tape_list_t *, file_list_t *);
+int tclose  (const int, tape_list_t *const, file_list_t *const, const uint32_t);
 int tcloserr  (int, tape_list_t *, file_list_t *);
-int twrite  (int, char *, int, tape_list_t *, file_list_t *);
+int twrite  (const int, char *const, const int, tape_list_t *const, file_list_t *const, const uint32_t);
 int tread  (int, char *, int, tape_list_t *, file_list_t *);
 int rtcpd_WaitForPosition (tape_list_t *, file_list_t *);
 int rtcpd_SignalFilePositioned (tape_list_t *, file_list_t *);

@@ -209,6 +209,22 @@ int rtcpd_GetClientInfoMsg(
         return(-1);
       }
 
+      /* Check the flushTapeMode field has a valid value */
+      if(bridgeClientInfo2MsgBody.tapeFlushMode !=
+           TAPEBRIDGE_N_FLUSHES_PER_FILE &&
+        bridgeClientInfo2MsgBody.tapeFlushMode !=
+           TAPEBRIDGE_ONE_FLUSH_PER_FILE &&
+        bridgeClientInfo2MsgBody.tapeFlushMode !=
+           TAPEBRIDGE_ONE_FLUSH_PER_N_FILES) {
+        snprintf(errBuf, errBufLen, "%s()"
+          ": Invalid tapeFlushMode"
+          ": value=%d",
+          __FUNCTION__, bridgeClientInfo2MsgBody.tapeFlushMode);
+        errBuf[errBufLen - 1] = '\0';
+        serrno = EBADMSG;
+        return(-1);
+      }
+
       /* Copy the client information data into the necessary rtcpd */
       /* data-structures                                           */
       strncpy(client->clienthost, bridgeClientInfo2MsgBody.bridgeHost,

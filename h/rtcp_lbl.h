@@ -27,14 +27,26 @@
 #ifndef H_RTCP_LBL_H 
 #define H_RTCP_LBL_H 1
 
+#include <stdint.h>
 
 int checkeofeov (int	tapefd, char	*path);
 
-int wrthdrlbl (int	tapefd, char	*path);
+int wrthdrlbl(
+	const int      tapefd,
+	char *const    path,
+	const uint32_t tapeFlushMode);
 
-int wrteotmrk(int tapefd, char *path);
+int wrteotmrk(
+	const int      tapefd,
+	char *const    path,
+	const uint32_t tapeFlushMode);
 
-int wrttrllbl (int	tapefd, char	*path, char	*labelid, int	nblocks);;
+int wrttrllbl(
+	const int   tapefd,
+	char *const path,
+	char *const labelid,
+	const int  nblocks,
+	const uint32_t tapeFlushMode);
 
 int deltpfil (int	tapefd, char	*path);
 
