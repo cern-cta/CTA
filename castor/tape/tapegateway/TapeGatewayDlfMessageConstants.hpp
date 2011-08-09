@@ -147,7 +147,8 @@ LINKER_VMGRSETTOREADONLY_FAILED=111, /* "TapeStreamLinker: failed to set the tap
 LINKER_VMGR_NS_DISCREPANCY=112, /* "TapeStreamLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly" */
 WORKER_REPACK_STALE_FILE=113, /* "Worker: file changed during repack: nothing to do" */
 WORKER_REPACK_UNCONFIRMED_STALE_FILE=114, /* "Worker: segment to repack is gone, but file change unconfirmed" */
-WORKER_REPACK_FILE_REMOVED=115 /* "Worker: file no found on segment update for repack" */
+WORKER_REPACK_FILE_REMOVED=115, /* "Worker: file no found on segment update for repack" */
+WORKER_FAIL_NOTIFICATION_FOR_FILE=116 /* "Worker: received end notification error report for file" */
 }; // enum TapeGatewayDlfMessages
 } // namespace tapegateway
 } // namespace tape
