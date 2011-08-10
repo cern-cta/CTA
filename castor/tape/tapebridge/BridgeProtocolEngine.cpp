@@ -73,7 +73,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
   const tapegateway::Volume           &volume,
   const uint32_t                      nbFilesOnDestinationTape,
-  BoolFunctor                         &stoppingGracefully,
+  utils::BoolFunctor                  &stoppingGracefully,
   Counter<uint64_t>                   &tapebridgeTransactionCounter) throw() :
   m_tapeFlushConfigParams(tapeFlushConfigParams),
   m_cuuid(cuuid),

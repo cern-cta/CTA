@@ -26,7 +26,6 @@
 #define CASTOR_TAPE_TAPEBRIDGE_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/BoolFunctor.hpp"
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
@@ -35,6 +34,7 @@
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/IndexedContainer.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Castor_limits.h"
@@ -89,7 +89,7 @@ public:
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     const tapegateway::Volume           &volume,
     const uint32_t                      nbFilesOnDestinationTape,
-    BoolFunctor                         &stoppingGracefully,
+    utils::BoolFunctor                  &stoppingGracefully,
     Counter<uint64_t>                   &tapebridgeTransactionCounter) throw();
 
   /**
@@ -145,7 +145,7 @@ private:
   /**
    * Functor that returns true if the daemon is stopping gracefully.
    */
-  BoolFunctor &m_stoppingGracefully;
+  utils::BoolFunctor &m_stoppingGracefully;
 
   /**
    * The counter used to generate the next tapebridge transaction ID to be used

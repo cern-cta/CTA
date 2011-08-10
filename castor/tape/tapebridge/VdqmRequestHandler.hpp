@@ -27,11 +27,11 @@
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/tapebridge/BoolFunctor.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Cuuid.h"
 
@@ -39,8 +39,8 @@
 #include <stdint.h>
 
 
-namespace castor {
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace tapebridge {
 
 /**
@@ -115,7 +115,7 @@ private:
   /**
    * Functor that returns true if the daemon is stopping gracefully.
    */
-  class StoppingGracefullyFunctor : public BoolFunctor {
+  class StoppingGracefullyFunctor : public utils::BoolFunctor {
   public:
 
     /**
@@ -189,7 +189,7 @@ private:
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
-    BoolFunctor                         &stoppingGracefully,
+    utils::BoolFunctor                  &stoppingGracefully,
     Counter<uint64_t>                   &tapebridgeTransactionCounter)
   throw(castor::exception::Exception);
 

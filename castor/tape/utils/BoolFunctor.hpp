@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      BoolFunctor.cpp
+ *                      castor/tape/utils/BoolFunctor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,34 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
+#ifndef _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
+#define _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
 
-#include "castor/tape/tapebridge/BoolFunctor.hpp"
+namespace castor {
+namespace tape   {
+namespace utils  {
+    
+  /**
+   * Abstract class specifiying the interface to be followed by functors that
+   * take no parameters and return a boolean.
+   */
+  class BoolFunctor {
+  public:
 
+    /**
+     * operator() which takes no parameters and returns a boolean.
+     */
+    virtual bool operator()() = 0;
 
-//-----------------------------------------------------------------------------
-// destructor
-//-----------------------------------------------------------------------------
-castor::tape::tapebridge::BoolFunctor::~BoolFunctor() throw() {
-  // Do nothing
-}
+    /**
+     * Virtual destructor.
+     */
+    virtual ~BoolFunctor() throw();
+
+  }; // class BoolFunctor
+
+} // namespace utils
+} // namespace tape
+} // namespace castor      
+
+#endif // _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_

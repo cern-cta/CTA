@@ -36,7 +36,6 @@ TAPEBRIDGEBIN_SRCS = \
   BridgeClientInfo2Sender.cpp \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
-  BoolFunctor.cpp \
   ClientTxRx.cpp \
   TapeFlushConfigParams.cpp \
   DlfMessageStrings.cpp \
