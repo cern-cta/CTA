@@ -262,7 +262,6 @@ runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
-  castor/tape/tapebridge/VmgrTxRxTest.hpp \
   castor/tape/utils/IndexedContainerTest.hpp \
   castor/tape/utils/UtilsTest.hpp \
   rtcopy/RtcopyTest.hpp \
