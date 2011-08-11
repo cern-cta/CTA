@@ -328,20 +328,20 @@ castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfoAssertAvailable::TapeI
 throw (castor::exception::Exception): TapeInfo(tape, shuttingDown)
 {
   // Interpret the status and throw an exception for non-available tapes.
-  int serrno;
+  int err_number;
   std::string statName;
   if (vmgrTapeInfo.status & (DISABLED|EXPORTED|ARCHIVED)){
     if (vmgrTapeInfo.status & DISABLED ) {
-      serrno = ETHELD;
+      err_number = ETHELD;
       statName = "DISABLED";
     } else if ( vmgrTapeInfo.status & EXPORTED ) {
-      serrno = ETABSENT;
+      err_number = ETABSENT;
       statName = "EXPORTED";
     } else if ( vmgrTapeInfo.status & ARCHIVED) {
-      serrno = ETARCH;
+      err_number = ETARCH;
       statName = "ARCHIVED";
     }
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(err_number);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr"
       << " tape is not available: " << statName;
