@@ -49,7 +49,7 @@ castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
 //-----------------------------------------------------------------------------
 // Assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore
+castor::tape::tapebridge::PendingMigrationsStore
   &castor::tape::tapebridge::PendingMigrationsStore::operator=(
   const PendingMigrationsStore&) {
   // Should never be called, therefore do nothing

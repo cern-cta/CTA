@@ -31,6 +31,7 @@
 
 #include <list>
 #include <map>
+#include <stdint.h>
 
 namespace castor     {
 namespace tape       {
