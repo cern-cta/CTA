@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Giulia Taurelli gtaur@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_TAPEGATEWAY_TAPEGATEWAYDLFMESSAGECONSTANTS_HPP

@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <errno.h>
@@ -163,7 +163,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
   try {
 
-    vmgrHelper.getDataFromVmgr(tape);
+    vmgrHelper.getDataFromVmgr(tape, m_shuttingDown);
   } catch (castor::exception::Exception& e) {
 
     try {

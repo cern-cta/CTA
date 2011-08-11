@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <stdlib.h>
@@ -125,26 +125,20 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
   for (std::list<castor::tape::tapegateway::TapeGatewayRequest>::iterator tapeRequest = tapeRequests.begin();
        tapeRequest != tapeRequests.end();
        tapeRequest++,vid++){
-
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
-       castor::dlf::Param("TPVID", *vid)
-      };
-
-    castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
-
+    castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
+        castor::dlf::Param("TPVID", *vid) };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_QUERYING_VDQM, params);
 
     try {
+      castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
-
     } catch (castor::exception::Exception& e) {
-
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
-       castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str()),
-      };
+      castor::dlf::Param params[] = {
+          castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str()),
+          castor::dlf::Param("TPVID", *vid) };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, params);
       if ( e.code() == EPERM ) {
 	tapesToRetry.push_back(*tapeRequest);
@@ -157,26 +151,23 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
       }
     }
   }
-
-
-
   try {
-
-    //  I update vmgr releasing the busy tapes
-
+    //  Update VMGR, releasing the busy tapes
     for ( tapeToReset = tapesToReset.begin();
 	  tapeToReset != tapesToReset.end();
 	  tapeToReset++){
       castor::tape::tapegateway::VmgrTapeGatewayHelper vmgrHelper;
       try {
-	vmgrHelper.resetBusyTape(*tapeToReset);
+	vmgrHelper.resetBusyTape(*tapeToReset, m_shuttingDown);
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
 	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, params);
       } catch (castor::exception::Exception& e){
- 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, params);
+        castor::dlf::Param params[] = {
+            castor::dlf::Param("TPVID",(*tapeToReset).vid()),
+            castor::dlf::Param("errorCode",sstrerror(e.code())),
+            castor::dlf::Param("errorMessage",e.getMessage().str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_RELEASE_TAPE, params);
       }
     }
     // update the db to eventually send again some requests

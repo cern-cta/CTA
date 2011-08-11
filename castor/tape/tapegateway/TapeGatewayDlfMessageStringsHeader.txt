@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Giulia Taurelli gtaur@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"

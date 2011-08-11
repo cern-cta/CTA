@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
@@ -31,8 +31,8 @@
 
 
 #include "castor/server/SelectProcessThread.hpp"
-
 #include "castor/stager/Tape.hpp"
+#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -52,6 +52,12 @@ namespace tapegateway{
     virtual ~VdqmRequestsProducerThread() throw() {};
     virtual castor::IObject* select() throw();
     virtual void process(castor::IObject* par)throw();
+    /**
+     * Stop of the thread
+     */
+    virtual void stop() {m_shuttingDown.set();}
+  private:
+    utils::ShutdownBoolFunctor m_shuttingDown;
 
   };
 

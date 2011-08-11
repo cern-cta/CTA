@@ -21,7 +21,7 @@
  *
  * This class provides methods related to tape handling
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef STAGER_ITAPEGATEWAYSVC_HPP

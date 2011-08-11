@@ -23,7 +23,7 @@
  *
  * 
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_TAPEGATEWAY_RETRYPOLICYELEMENT_HPP

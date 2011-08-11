@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef RECALLERERRORHANDLER_THREAD_HPP

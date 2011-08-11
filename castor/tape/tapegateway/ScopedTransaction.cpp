@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Eric Cano
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "ScopedTransaction.hpp"

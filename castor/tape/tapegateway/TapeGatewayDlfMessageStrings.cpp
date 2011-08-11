@@ -145,4 +145,6 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {WORKER_REPACK_UNCONFIRMED_STALE_FILE, "Worker: segment to repack is gone, but file change unconfirmed"},
 {WORKER_REPACK_FILE_REMOVED, "Worker: file no found on segment update for repack"},
 {WORKER_FAIL_NOTIFICATION_FOR_FILE, "Worker: received end notification error report for file"},
+{CHECKER_CANNOT_RELEASE_TAPE, "VdqmRequestsChecker: cannot release BUSY tape after end transaction"},
+{VMGR_GATEWAY_HELPER_RETRYING, "VmgrTapeGatewayHelper::TapeInfo: will retry VMGR query"},
 {-1, ""}};

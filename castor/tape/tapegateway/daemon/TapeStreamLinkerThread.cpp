@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 
@@ -142,7 +142,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
 
     try {
       // last Fseq is the value which should be used for the first file
-      vmgrHelper.getTapeForStream(*strItem,*tapepool,lastFseq,tapeToUse);
+      vmgrHelper.getTapeForStream(*strItem,*tapepool,lastFseq,tapeToUse, m_shuttingDown);
 
       // Validate the value received from the vmgr with the nameserver: for this given tape
       // fseq should be strictly greater than the highest referenced segment on the tape
@@ -182,7 +182,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
         }
       } else if (e.code() == ERTWRONGFSEQ) {
         try {
-          vmgrHelper.setTapeAsReadonlyAndUnbusy(tapeToUse);
+          vmgrHelper.setTapeAsReadonlyAndUnbusy(tapeToUse, m_shuttingDown);
         } catch (castor::exception::Exception e) {
           castor::dlf::Param params[] = {
               castor::dlf::Param("VID",tapeToUse.vid()),
@@ -243,15 +243,13 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       castor::dlf::Param params[] = {castor::dlf::Param("TPVID",(*tapeItem).vid())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_RELEASED_BUSY_TAPE, params);
       try {
-        vmgrHelper.resetBusyTape(*tapeItem);
+        vmgrHelper.resetBusyTape(*tapeItem, m_shuttingDown);
       } catch (castor::exception::Exception& e){
-
         castor::dlf::Param params[] = {
             castor::dlf::Param("TPVID",(*tapeItem).vid()),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
-            castor::dlf::Param("errorMessage",e.getMessage().str())
-        };
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
+            castor::dlf::Param("errorMessage",e.getMessage().str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, params);
       }
     }
   }

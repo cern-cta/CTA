@@ -21,7 +21,7 @@
 *
 *
 *
-* @author Giulia Taurelli
+* @author Castor Dev team, castor-dev@cern.ch
 *****************************************************************************/
 
 

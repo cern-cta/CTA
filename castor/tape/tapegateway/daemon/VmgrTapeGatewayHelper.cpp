@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *                      VmgrTapeGatewayHelper.cpp
  *
@@ -23,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <errno.h>
@@ -35,28 +34,27 @@
 #include <climits>
 
 #include "vmgr_api.h"
-
 #include "castor/Services.hpp"
-
 #include "castor/stager/TapePool.hpp"
-
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const castor::stager::Stream& streamToResolve, const castor::stager::TapePool& tapepool,int& startFseq,castor:: stager::Tape& tapeToUse ) throw (castor::exception::Exception){
-
-  
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
+    const castor::stager::Stream& streamToResolve,
+    const castor::stager::TapePool& tapepool,
+    int& startFseq,castor:: stager::Tape& tapeToUse,
+    const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception){
+  // Sanity checks
   if ( tapepool.name().empty() || streamToResolve.initialSizeToTransfer()==0) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
     << " invalid input";
     throw ex;
-
   }
-
- 
   // call to vmgr
   const char* tpName = tapepool.name().c_str();
   u_signed64 estimatedFreeSpace;
@@ -88,8 +86,6 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
 		    &startFseq,
 		    &estimatedFreeSpace
 		    );
-
-
   if (rc<0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() <<
@@ -99,41 +95,22 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
       " size=" << streamToResolve.initialSizeToTransfer();
     throw ex;
   }
-
- 
   tapeToUse.setVid(vid);
   tapeToUse.setSide(side);
   tapeToUse.setTpmode(castor::stager::TPMODE_WRITE);
   
   //Check that the returned start fseq is OK.
-    
   if (label == NULL) {
-    resetBusyTape(tapeToUse);
+    resetBusyTape(tapeToUse, shuttingDown);
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
       << " invalid label";
     throw ex;
-    
   }
-
-
-  int maxPossible=0;
-
-  if ((strcmp(label,"al") == 0) ||  /* Ansi Label */
-       (strcmp(label,"sl") == 0))    /* Standard Label */
-   maxPossible = 9999;
-   if (strcmp(label,"aul") == 0)     /* Ansi (extended) User Label */
-   maxPossible = INT_MAX / 3;
-   if ((strcmp(label,"nl") == 0) ||  /* No Label */
-       (strcmp(label,"blp") == 0))   /* Bypass Label Type */
-     maxPossible = INT_MAX;
- 
-  
+  int maxPossible=maxFseqFromLabel(label);
   if ( maxPossible > 0 && startFseq >  maxPossible ) {
-
     // too big fseq 
-
     serrno=0;
     rc = vmgr_updatetape(
 			 vid,
@@ -143,180 +120,44 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
 			 0,
 			 TAPE_RDONLY
 			 );
-
     if (rc<0) {
-      
-      resetBusyTape(tapeToUse);
-      
+      resetBusyTape(tapeToUse, shuttingDown);
       castor::exception::Exception ex(serrno);
       ex.getMessage()
 	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-	<< " vmgr_updatetape failed";
+	<< " vmgr_updatetape failed when updating due to too big fseq: " << startFseq
+        << ". For label type \"" << label << "\" maximum is "
+        << maxPossible;
       throw ex;
-
     }
-      
     castor::exception::Exception ex(ERTMAXERR);
-    ex.getMessage()
-      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-      << " too big fseq";
+    ex.getMessage() << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      << " too big fseq: " << startFseq
+      << ". For label type \"" << label << "\" maximum is "
+      << maxPossible;
     throw ex;
   }
-
-  
 }
 
-
-
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape) 
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape,
+    const utils::BoolFunctor &shuttingDown)
   throw (castor::exception::Exception){
-
-  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
-  memset( &vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
-  
-  int save_serrno=0;
-
-  if ( tape.vid().empty()) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr"
-    << " empty vid";
-    throw ex;
-  }
-
-  // check tape
-
-
-  char dgnBuffer[8];
-
-  while(1){
-    serrno=0;
-    const int rc = vmgr_querytape_byte_u64((char*)tape.vid().c_str(),
-      tape.side(), &vmgrTapeInfo, dgnBuffer); 
-    save_serrno = serrno;
-
-    // check the status
-        
-    if (rc == 0) {
-      // ok call vmgr but the status might be invalid
-      save_serrno=EINVAL;
-      if ( (vmgrTapeInfo.status & DISABLED) ||
-           (vmgrTapeInfo.status & EXPORTED) ||
-           (vmgrTapeInfo.status & ARCHIVED)) {
-        if ( vmgrTapeInfo.status & DISABLED ) {
-          save_serrno = ETHELD;
-        } else if ( vmgrTapeInfo.status & EXPORTED ) {
-          save_serrno = ETABSENT;
-        } else if ( vmgrTapeInfo.status & ARCHIVED ) {
-          save_serrno = ETARCH;
-        }
-	castor::exception::Exception ex(save_serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr"
-	  << " invalid status";
-	throw ex;
-        
-      }
-      break;
-    }
-
-    // error in querying vmgr
- 
-    if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
-      sleep(5);
-    } else {
-      serrno = save_serrno;
-      castor::exception::Exception ex(save_serrno);
-      ex.getMessage()
-	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	<< " vmgr_querytape failed";
-	throw ex;
-    }
-  }
-  
-  tape.setDgn(dgnBuffer);
-  tape.setLabel(vmgrTapeInfo.lbltype);
-  tape.setDensity(vmgrTapeInfo.density);
-
+  TapeInfoAssertAvailable tinfo(tape, shuttingDown); /* Retrieve from vmgr through helper class, with assertion */
+  tape.setDgn(tinfo.dgnBuffer);
+  tape.setLabel(tinfo.vmgrTapeInfo.lbltype);
+  tape.setDensity(tinfo.vmgrTapeInfo.density);
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(const castor::stager::Tape& tape, int& tapeStatus) throw (castor::exception::Exception) {
-
-  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
-  memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
-  int save_serrno = 0;
-
-  if ( tape.vid().empty()) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr"
-    << " empty vid";
-    throw ex;
-  }
-
-
-  const char* vid=tape.vid().c_str();
-  int side=tape.side();
-  char dgnBuffer[8];
-
-  while(1) {
-    serrno = 0;
-    const int rc = vmgr_querytape_byte_u64(vid, side, &vmgrTapeInfo, dgnBuffer);
-    save_serrno = serrno;
-  
-    if ( rc == 0 ) {
-      if ( (vmgrTapeInfo.status & DISABLED ) ||
-           (vmgrTapeInfo.status & EXPORTED ) ||
-           (vmgrTapeInfo.status & ARCHIVED ) ) {
-        if (vmgrTapeInfo.status & DISABLED ) {
-          serrno = ETHELD;
-        } else if ( vmgrTapeInfo.status & EXPORTED ) {
-          serrno = ETABSENT;
-        } else if ( vmgrTapeInfo.status & ARCHIVED) {
-          serrno = ETARCH;
-        }
-	
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	  << " vmgr_querytape failed";
-	throw ex;
-
-      }
-      tapeStatus=vmgrTapeInfo.status;
-      return; // break and return the status
-      
-      
-    } else {
-      // go on looping
-      if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
-	sleep(5);
-      } else {
-	castor::exception::Exception ex(save_serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	  << " vmgr_querytape failed";
-	throw ex;
-      }
-   
-    }
-  }
-
-}
-
-
-void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(const castor::stager::Tape& tape) throw (castor::exception::Exception){
-  
+void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(const castor::stager::Tape& tape,
+    const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception)
+{
   // in case of error we free the busy tape to be picked by someone else
-
   if ( tape.tpmode() == castor::stager::TPMODE_READ ) return; // read: don't reset it
-
   // Make sure we don't override some important status already set
-
   int status=0;
-  getTapeStatusInVmgr(tape,status);
-
-  if ( (status & TAPE_BUSY) == 0 ) return;
+  TapeInfo tinfo(tape, shuttingDown); /* Retrieve from vmgr through helper class */
+  status = tinfo.vmgrTapeInfo.status;
+  if (!(status & TAPE_BUSY)) return;
   status = status & ~TAPE_BUSY;
   serrno=0;
   int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status); 
@@ -326,128 +167,63 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(const cast
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape"
       << " vmgr_modifytape failed";
     throw ex;
-
   }
-
 }
 
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(
+    const castor::tape::tapegateway::FileMigratedNotification& file,
+    const std::string& vid, const utils::BoolFunctor &shuttingDown)
+throw (castor::exception::Exception){
+  castor::stager::Tape tape;
+  tape.setVid(vid);
+  tape.setSide(0); // HARDCODED
+  TapeInfoAssertAvailable tinfo(tape, shuttingDown); /* Retrieve from vmgr through helper class, with assertion */
+  int flags = tinfo.vmgrTapeInfo.status;
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file, const std::string& vid ) throw (castor::exception::Exception){
-
-  int save_serrno=0;
-
-  // check input 
-
-  int side=0; // HARDCODED
-
-  // get information from vmgr
-
-  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
-  memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
-
-  char dgnBuffer[8];
-
-  while(1){
-    serrno=0;
-    const int rc = vmgr_querytape_byte_u64((char*)vid.c_str(), side,
-      &vmgrTapeInfo, dgnBuffer);
-    save_serrno = serrno;
-
-    if ( rc == 0 ) {
-      if ( (vmgrTapeInfo.status & DISABLED)  ||
-           (vmgrTapeInfo.status & EXPORTED) ||
-           (vmgrTapeInfo.status & ARCHIVED) ) {
-        if ( vmgrTapeInfo.status & DISABLED) {
-          serrno = ETHELD;
-        } else if ( vmgrTapeInfo.status & EXPORTED) {
-          serrno = ETABSENT;
-        } else if ( vmgrTapeInfo.status & ARCHIVED ) {
-          serrno = ETARCH;
-        }
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-	  <<" vmgr_querytape failed";
-	throw ex;
-
-      }
-      break; // break and return the status 
-      
-    } else {
-      // go on looping
-      if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
-	sleep(5);
-      } else {
-	castor::exception::Exception ex(save_serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-	  <<" vmgr_querytape failed";
-	throw ex;
-      }
-   
+  // check if the fseq is not too big, in this case we mark it as error.
+  int fseq= file.fseq();
+  int maxFseq = maxFseqFromLabel(tinfo.vmgrTapeInfo.lbltype);
+  //TODO new type
+  if (maxFseq <= 0 || fseq >= maxFseq) {
+    // reset status to RDONLY
+    flags = TAPE_RDONLY;
+    int rc = vmgr_updatetape(tape.vid().c_str(), tape.side(), file.fileSize(), 100, 0, flags );
+    if (rc<0) {
+      castor::exception::Exception ex(serrno);
+      ex.getMessage()
+           << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
+           << " vmgr_updatetape failed after invalid fseq: " << fseq
+           << ". For label type \"" << tinfo.vmgrTapeInfo.lbltype << "\" maximum is "
+           << maxFseq;
+      throw ex;
     }
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+         << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
+         <<" invalid fseq";
+    throw ex;
   }
- 
- int flags = vmgrTapeInfo.status;
-
-  // check if the fseq is not too big, in this case we mark it as error. 
-
- int fseq= file.fseq();
- int maxFseq =0;
-
-   
- if ((strcmp(vmgrTapeInfo.lbltype,"al") == 0) ||  /* Ansi Label */
-     (strcmp(vmgrTapeInfo.lbltype,"sl") == 0))    /* Standard Label */
-   maxFseq=9999;
- else if (strcmp(vmgrTapeInfo.lbltype,"aul") == 0)     /* Ansi (extended) User Label */
-   maxFseq=INT_MAX / 3;
- else if ((strcmp(vmgrTapeInfo.lbltype,"nl") == 0) ||  /* No Label */
-	  (strcmp(vmgrTapeInfo.lbltype,"blp") == 0))   /* Bypass Label Type */
-   maxFseq=INT_MAX;
- //TODO new type
- 
- if (maxFseq <= 0 || fseq >= maxFseq ) { 
-   // set as RDONLY
-   flags = TAPE_RDONLY;
-   int rc = vmgr_updatetape(vid.c_str(), side, file.fileSize(), 100, 0, flags ); 
-   if (rc<0) {
-     castor::exception::Exception ex(serrno);
-     ex.getMessage()
-       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-       <<" vmgr_updatetape failed after invalid fseq";
-     throw ex;
-    
-   }
-   castor::exception::Exception ex(EINVAL);
-   ex.getMessage()
-     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-     <<" invalid fseq";
-   throw ex;
-   
- }
-
-
- // File migrated correctly, update vmgr and continue to migrate from the tape
- 
- serrno=0;
- u_signed64 compression = (file.fileSize() * 100 )/file.compressedFileSize()  ; 
- int rc = vmgr_updatetape(vid.c_str(), side, file.fileSize(),compression, 1, flags ); // number files always one
- if (rc <0) {
-   castor::exception::Exception ex(serrno);
-   ex.getMessage()
-       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-       <<" vmgr_updatetape failed";
-   throw ex;
- }
-
+  // File migrated correctly, update vmgr and continue to migrate from the tape
+  serrno=0;
+  u_signed64 compression = (file.fileSize() * 100 )/file.compressedFileSize()  ;
+  int rc = vmgr_updatetape(tape.vid().c_str(), tape.side(), file.fileSize(),
+      compression, 1, flags ); // number files always one
+  if (rc <0) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+           << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
+           <<" vmgr_updatetape failed";
+    throw ex;
+  }
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const castor::stager::Tape& tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const castor::stager::Tape& tape,
+    const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception){
   // called if FileErrorReport ENOSPC
 
   int status=0;
-  getTapeStatusInVmgr(tape, status);
-
+  TapeInfo tinfo(tape, shuttingDown); /* Retrieve from vmgr through helper class */
+  status = tinfo.vmgrTapeInfo.status;
   if ( (status & (DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
     status = TAPE_FULL;
     serrno=0;
@@ -462,9 +238,12 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const casto
   }
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape,
+    const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception)
+{
   int status=0;
-  getTapeStatusInVmgr(tape, status);
+  TapeInfo tinfo(tape, shuttingDown); /* Retrieve from vmgr through helper class */
+  status = tinfo.vmgrTapeInfo.status;
   // Set the readonly bit in status
   status |= TAPE_RDONLY;
   status &= ~TAPE_BUSY;
@@ -475,6 +254,97 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbus
     ex.getMessage()
             << "castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonly"
             <<" vmgr_modifytape failed with rc=" << rc << " serrno=" << serrno;
+    throw ex;
+  }
+}
+
+int castor::tape::tapegateway::VmgrTapeGatewayHelper::maxFseqFromLabel(const char* label)
+{
+  int maxPossible = 0;
+  if ((strcmp(label,"al") == 0) ||   /* Ansi Label */
+       (strcmp(label,"sl") == 0))    /* Standard Label */
+    maxPossible = 9999;
+   if (strcmp(label,"aul") == 0)     /* Ansi (extended) User Label */
+     maxPossible = INT_MAX / 3;      /* TODO XXX This is an architecture-dependent maximum... Suspect... */
+   if ((strcmp(label,"nl") == 0) ||  /* No Label */
+       (strcmp(label,"blp") == 0))   /* Bypass Label Type */
+     maxPossible = INT_MAX;
+   return maxPossible;
+}
+
+castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfo::TapeInfo(const castor::stager::Tape& tape,
+    const utils::BoolFunctor &shuttingDown)
+throw (castor::exception::Exception)
+{
+  /* Initialise members to 0 */
+  memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
+  memset(dgnBuffer, 0, sizeof(dgnBuffer));
+  /* Keep track of VID, side */
+  m_vid = tape.vid();
+  m_side = tape.side();
+  /* Sanity check */
+  if ( m_vid.empty()) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfo: empty vid";
+    throw ex;
+  }
+  // Loop on some types of vmgr errors, fail for the rest of them.
+  while(1) {
+    int save_serrno = 0;
+    int rc;
+    serrno = 0;
+    rc = vmgr_querytape_byte_u64(m_vid.c_str(), m_side, &vmgrTapeInfo, dgnBuffer);
+    save_serrno = serrno;
+    if (!rc) return; // If rc == 0, we're done, else we have to do more checks
+    // go on looping if adequate, of fail.
+    if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
+      if (shuttingDown()) {
+        castor::exception::Exception ex(ESHUTDOWN);
+        ex.getMessage()
+                << "castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfo"
+                << " Cannot retry: shutting down.";
+        throw ex;
+      }
+      castor::dlf::Param params[] = {
+          castor::dlf::Param("VID",  m_vid),
+          castor::dlf::Param("serrno",save_serrno)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, VMGR_GATEWAY_HELPER_RETRYING, params);
+      sleep(5);
+      /* Clean up structures for next call to vmgr */
+      memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
+      memset(dgnBuffer, 0, sizeof(dgnBuffer));
+    } else {
+      castor::exception::Exception ex(save_serrno);
+      ex.getMessage()
+              << "castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfo"
+              << " vmgr_querytape failed";
+      throw ex;
+    }
+  }
+}
+
+castor::tape::tapegateway::VmgrTapeGatewayHelper::TapeInfoAssertAvailable::TapeInfoAssertAvailable(
+    const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
+throw (castor::exception::Exception): TapeInfo(tape, shuttingDown)
+{
+  // Interpret the status and throw an exception for non-available tapes.
+  int serrno;
+  std::string statName;
+  if (vmgrTapeInfo.status & (DISABLED|EXPORTED|ARCHIVED)){
+    if (vmgrTapeInfo.status & DISABLED ) {
+      serrno = ETHELD;
+      statName = "DISABLED";
+    } else if ( vmgrTapeInfo.status & EXPORTED ) {
+      serrno = ETABSENT;
+      statName = "EXPORTED";
+    } else if ( vmgrTapeInfo.status & ARCHIVED) {
+      serrno = ETARCH;
+      statName = "ARCHIVED";
+    }
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr"
+      << " tape is not available: " << statName;
     throw ex;
   }
 }

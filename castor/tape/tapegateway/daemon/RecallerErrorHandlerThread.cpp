@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Python.h before any standard headers because Python.h may define

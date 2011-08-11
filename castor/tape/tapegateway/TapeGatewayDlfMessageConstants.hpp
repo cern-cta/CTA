@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli gtaur@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_TAPEGATEWAY_TAPEGATEWAYDLFMESSAGECONSTANTS_HPP
@@ -148,7 +148,9 @@ LINKER_VMGR_NS_DISCREPANCY=112, /* "TapeStreamLinker: NS/VMGR mismatch for highe
 WORKER_REPACK_STALE_FILE=113, /* "Worker: file changed during repack: nothing to do" */
 WORKER_REPACK_UNCONFIRMED_STALE_FILE=114, /* "Worker: segment to repack is gone, but file change unconfirmed" */
 WORKER_REPACK_FILE_REMOVED=115, /* "Worker: file no found on segment update for repack" */
-WORKER_FAIL_NOTIFICATION_FOR_FILE=116 /* "Worker: received end notification error report for file" */
+WORKER_FAIL_NOTIFICATION_FOR_FILE=116, /* "Worker: received end notification error report for file" */
+CHECKER_CANNOT_RELEASE_TAPE=117, /* "VdqmRequestsChecker: cannot release BUSY tape after end transaction" */
+VMGR_GATEWAY_HELPER_RETRYING=118 /* "VmgrTapeGatewayHelper::TapeInfo: will retry VMGR query" */
 }; // enum TapeGatewayDlfMessages
 } // namespace tapegateway
 } // namespace tape

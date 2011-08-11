@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <errno.h>
@@ -792,7 +792,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   // UPDATE VMGR
   try {
     gettimeofday(&tvStart, NULL);
-    vmgrHelper.updateTapeInVmgr(fileMigrated, vid);
+    vmgrHelper.updateTapeInVmgr(fileMigrated, vid, m_shuttingDown);
     gettimeofday(&tvEnd, NULL);
     procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
     castor::dlf::Param paramsVmgr[] ={
@@ -1446,7 +1446,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
 		gettimeofday(&tvStart, NULL);
      
 		VmgrTapeGatewayHelper vmgrHelper;
-		vmgrHelper.resetBusyTape(tape);
+		vmgrHelper.resetBusyTape(tape, m_shuttingDown);
 
 		gettimeofday(&tvEnd, NULL);
 		procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
@@ -1610,7 +1610,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 		  
 		  gettimeofday(&tvStart, NULL);
 
-		  vmgrHelper.setTapeAsFull(tape);
+		  vmgrHelper.setTapeAsFull(tape, m_shuttingDown);
 
 		  gettimeofday(&tvEnd, NULL);
 		  procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
@@ -1653,7 +1653,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 		  
 		  gettimeofday(&tvStart, NULL);
 
-		  vmgrHelper.resetBusyTape(tape);
+		  vmgrHelper.resetBusyTape(tape, m_shuttingDown);
 
 		  gettimeofday(&tvEnd, NULL);
 		  procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);

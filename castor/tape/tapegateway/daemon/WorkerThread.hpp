@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli, Eric Cano
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef WORKER_THREAD_HPP
@@ -34,6 +34,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/net/Constants.hpp"
+#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 
 
 namespace castor     {
@@ -65,7 +66,7 @@ namespace tapegateway{
     /**
      * Stop of the thread
      */
-    virtual void stop() {}
+    virtual void stop() {m_shuttingDown.set();}
 
   private:
     // Package of a requester's information
@@ -88,6 +89,8 @@ namespace tapegateway{
     castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFileFailWorker   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+
+    utils::ShutdownBoolFunctor m_shuttingDown;
   };
   
 } // end of tapegateway  

@@ -21,7 +21,7 @@
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef ORA_ORATAPEGATEWAYSVC_HPP

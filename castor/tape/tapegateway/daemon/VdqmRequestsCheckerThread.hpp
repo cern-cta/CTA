@@ -22,7 +22,7 @@
  *
  *
  *
- * @author Giulia Taurelli
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef VDQMREQUESTSCHECKER_THREAD_HPP
@@ -32,6 +32,7 @@
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
+#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -62,8 +63,9 @@ namespace tapegateway{
     /**
      * Stop of the thread
      */
-    virtual void stop() {}
-
+    virtual void stop() {m_shuttingDown.set();}
+  private:
+    utils::ShutdownBoolFunctor m_shuttingDown;
   };
 
 } // end of tapegateway
