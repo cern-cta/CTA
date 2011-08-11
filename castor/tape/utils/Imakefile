@@ -25,6 +25,7 @@ AddLdFlags(-lstdc++)
 
 TAPEUTILSLIB_SRCS = \
   BoolFunctor.cpp \
+  ShutdownBoolFunctor.cpp \
   ScopedLock.cpp \
   SmartFILEPtr.cpp \
   SmartFd.cpp \

@@ -121,7 +121,7 @@ private:
     /**
      * Returns true if the daemon is stopping gracefully.
      */
-    bool operator()() {
+    bool operator()() const {
       return s_stoppingGracefully;
     }
   };

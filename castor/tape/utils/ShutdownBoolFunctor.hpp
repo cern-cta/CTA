@@ -20,36 +20,34 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
-#define _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
+#ifndef _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_
+#define _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_
+
+#include "castor/tape/utils/BoolFunctor.hpp"
 
 namespace castor {
 namespace tape   {
 namespace utils  {
-    
-  /**
-   * Abstract class specifiying the interface to be followed by functors that
-   * take no parameters and return a boolean.
-   */
-  class BoolFunctor {
-  public:
 
-    /**
-     * operator() which takes no parameters and returns a boolean.
-     */
-    virtual bool operator()() const = 0;
-
-    /**
-     * Virtual destructor.
-     */
-    virtual ~BoolFunctor() throw();
-
-  }; // class BoolFunctor
+/**
+ * Class tracking a shutdown state the interface to be followed by functors that
+ * take no parameters and return a boolean.
+ */
+class ShutdownBoolFunctor: public utils::BoolFunctor {
+public:
+  ShutdownBoolFunctor():m_val(false){};
+  virtual ~ShutdownBoolFunctor() throw();
+  virtual bool operator()() const {return m_val;}
+  void set(void) {m_val=true;}
+  void reset(void) {m_val=false;}
+private:
+  bool m_val;
+}; // class ShutdownBoolFunctor
 
 } // namespace utils
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
+#endif // _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_
