@@ -344,14 +344,13 @@ int _net_isclosed(int fd)
 {
 	fd_set         rset;
 	struct timeval tv;
-	
+	char           buf[1];
+
 	FD_ZERO(&rset);
 	FD_SET(fd,&rset);
 	
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
-
-	char buf[1];
 	
 	/* Will return > 0 if the descriptor is closed */
 	if (select(fd + 1, NULL, &rset, NULL, &tv) > 0) {
