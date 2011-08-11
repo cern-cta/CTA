@@ -1,5 +1,14 @@
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+UUID_LIB=
+else
+UUID_LIB=-luuid
+endif
+
 ROOT_DIR=../../../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
+LIB_DIR_OPS=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
 EXECUTABLES=tapebridgedaemontester tapebridged
 COMMON_OPS=-Werror -Wall -pedantic -Wno-long-long -g -pthread
 
@@ -113,25 +122,37 @@ tapebridgedaemontester: \
   Csnprintf.o \
   Constants.o \
   test_exception.o
-	g++ $(COMMON_OPS) -lpthread -luuid -lcppunit -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread $(UUID_LIB) -lcppunit -o $@ $^
 
 tapebridged: \
-  tapebridge_BoolFunctor.o \
-  tapebridge_BridgeClientInfo2Sender.o \
-  tapebridge_BridgeProtocolEngine.o \
-  tapebridge_BridgeSocketCatalogue.o \
-  tapebridge_ClientTxRx.o \
-  tapebridge_DlfMessageStrings.o \
-  tapebridge_LegacyTxRx.o \
-  tapebridge_LogHelper.o \
-  tapebridge_PendingMigrationsStore.o \
-  tapebridge_RtcpTxRx.o \
-  tapebridge_TapeBridgeMain.o \
-  tapebridge_TapeBridgeDaemon.o \
-  tapebridge_TapeFlushConfigParams.o \
-  tapebridge_tapeFlushModeToStr.o \
-  tapebridge_VdqmRequestHandler.o \
-  tapebridge_VmgrTxRx.o \
+  castor_BaseCnvSvc.o \
+  castor_Converters.o \
+  castor_BaseSvc.o \
+  castor_ObjectCatalog.o \
+  common_Cgetopt.o \
+  common_Cgrp.o \
+  common_Cpwd.o \
+  common_Cuuid.o \
+  common_Cthread.o \
+  common_getconfent.o \
+  common_log.o \
+  common_remote.o \
+  common_trace.o \
+  common_u64subr.o \
+  dlf_Param.o \
+  exception_Communication.o \
+  exception_Exception.o \
+  exception_Internal.o \
+  exception_InvalidArgument.o \
+  exception_InvalidConfigEntry.o \
+  exception_InvalidConfiguration.o \
+  exception_NoEntry.o \
+  exception_NoPortInRange.o \
+  exception_OutOfMemory.o \
+  exception_PermissionDenied.o \
+  exception_TapeNetAcceptInterrupted.o \
+  exception_TimeOut.o \
+  exception_TooBig.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
@@ -145,10 +166,23 @@ tapebridged: \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
   io_StreamBaseCnv.o \
-  castor_BaseCnvSvc.o \
-  castor_Converters.o \
-  castor_BaseSvc.o \
-  castor_ObjectCatalog.o \
+  legacymsg_CommonMarshal.o \
+  legacymsg_RtcpMarshal.o \
+  legacymsg_TapeBridgeMarshal.o \
+  legacymsg_VmgrMarshal.o \
+  metrics_MetricsCollector.o \
+  metrics_Histogram.o \
+  metrics_Counter.o \
+  metrics_InternalCounter.o \
+  metrics_UpdateThread.o \
+  rtcp_marshallVdqmClientInfoMsg.o \
+  rtcp_recvRtcpHdr.o \
+  rtcp_Listen.o \
+  rtcp_log.o \
+  rtcp_SendRecv.o \
+  rtcpd_GetClientInfo.o \
+  rtcpd_GetClientInfoMsg.o \
+  rtcpd_SendAckToVdqmOrTapeBridge.o \
   server_TCPListenerThreadPool.o \
   server_UDPListenerThreadPool.o \
   server_ListenerThreadPool.o \
@@ -161,6 +195,25 @@ tapebridged: \
   server_Mutex.o \
   server_ThreadNotification.o \
   server_NotifierThread.o \
+  tape_utils.o \
+  tapebridge_sendTapeBridgeClientInfo2Ack.o \
+  tapebridge_BridgeClientInfo2Sender.o \
+  tapebridge_BridgeProtocolEngine.o \
+  tapebridge_BridgeSocketCatalogue.o \
+  tapebridge_ClientTxRx.o \
+  tapebridge_DlfMessageStrings.o \
+  tapebridge_FailedToCopyTapeFile.o \
+  tapebridge_LegacyTxRx.o \
+  tapebridge_LogHelper.o \
+  tapebridge_marshall.o \
+  tapebridge_PendingMigrationsStore.o \
+  tapebridge_RtcpTxRx.o \
+  tapebridge_TapeBridgeMain.o \
+  tapebridge_TapeBridgeDaemon.o \
+  tapebridge_TapeFlushConfigParams.o \
+  tapebridge_tapeFlushModeToStr.o \
+  tapebridge_VdqmRequestHandler.o \
+  tapebridge_VmgrTxRx.o \
   tapegateway_FileToMigrateRequest.o \
   tapegateway_FileToMigrate.o \
   tapegateway_FileMigratedNotification.o \
@@ -184,25 +237,10 @@ tapebridged: \
   tapegateway_NotificationAcknowledge.o \
   tapegateway_ClientType.o \
   tapegateway_VolumeMode.o \
-  dlf_Param.o \
-  legacymsg_CommonMarshal.o \
-  legacymsg_RtcpMarshal.o \
-  legacymsg_TapeBridgeMarshal.o \
-  legacymsg_VmgrMarshal.o \
-  tape_utils.o \
-  exception_Communication.o \
-  exception_Exception.o \
-  exception_Internal.o \
-  exception_InvalidArgument.o \
-  exception_InvalidConfigEntry.o \
-  exception_InvalidConfiguration.o \
-  exception_NoEntry.o \
-  exception_NoPortInRange.o \
-  exception_OutOfMemory.o \
-  exception_PermissionDenied.o \
-  exception_TapeNetAcceptInterrupted.o \
-  exception_TimeOut.o \
-  exception_TooBig.o \
+  utils_BoolFunctor.o \
+  utils_SmartFd.o \
+  utils_SmartFILEPtr.o \
+  vdqm_SendRecv.o \
   AbstractSocket.o \
   AbstractTCPSocket.o \
   ClientSocket.o \
@@ -221,45 +259,16 @@ tapebridged: \
   Csnprintf.o \
   Cnetdb.o \
   StreamAddress.o \
-  utils_SmartFd.o \
-  utils_SmartFILEPtr.o \
   ObjectSet.o \
   tape_net.o \
   Dlf.o \
   dlf_lib.o \
   Constants.o \
-  tapebridge_FailedToCopyTapeFile.o \
-  tapebridge_marshall.o \
-  tapebridge_sendTapeBridgeClientInfo2Ack.o \
   marshall.o \
-  rtcpd_SendAckToVdqmOrTapeBridge.o \
   vdqmapi.o \
-  vdqm_SendRecv.o \
-  common_Cgetopt.o \
-  common_Cgrp.o \
-  common_Cpwd.o \
-  common_Cuuid.o \
-  common_Cthread.o \
-  common_getconfent.o \
-  common_log.o \
-  common_remote.o \
-  common_trace.o \
-  common_u64subr.o \
-  rtcpd_GetClientInfoMsg.o \
-  rtcp_marshallVdqmClientInfoMsg.o \
-  rtcp_recvRtcpHdr.o \
-  rtcpd_GetClientInfo.o \
-  rtcp_Listen.o \
-  rtcp_log.o \
-  rtcp_SendRecv.o \
-  metrics_MetricsCollector.o \
-  metrics_Histogram.o \
-  metrics_Counter.o \
-  metrics_InternalCounter.o \
-  metrics_UpdateThread.o \
   Cmutex.o \
   castor_System.o
-	g++ $(COMMON_OPS) -lpthread -luuid -ldl -o $@ $^
+	g++ $(COMMON_OPS) -lpthread $(UUID_LIB) -ldl -o $@ $^
 
 tapebridge_BridgeClientInfo2Sender.o: \
  $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
@@ -530,7 +539,7 @@ tapebridge_TapeBridgeDaemon.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeDaemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_BoolFunctor.o: $(ROOT_DIR)/castor/tape/tapebridge/BoolFunctor.cpp
+utils_BoolFunctor.o: $(ROOT_DIR)/castor/tape/utils/BoolFunctor.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_BridgeProtocolEngine.o: \

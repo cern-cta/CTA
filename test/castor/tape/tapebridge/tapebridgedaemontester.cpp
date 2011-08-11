@@ -669,7 +669,7 @@ bool pathExists(const char *const path) {
  * Forks and execs a tapebridged process and returns its process id.
  */
 pid_t forkAndExecTapebridged() throw(std::exception) {
-   char *const executable  = "tapebridged";
+   char *const executable  = (char *)"tapebridged";
    pid_t       forkRc      = 0;
    int         saved_errno = 0;
 
@@ -708,7 +708,10 @@ pid_t forkAndExecTapebridged() throw(std::exception) {
      break;
    case 0: // Child
      {
-       char *const argv[3] = {executable, "-f", NULL};
+       char *argv[3];
+       argv[0] = executable;
+       argv[1] = (char *)"-f";
+       argv[2] = NULL;
        execv(argv[0], argv);
      }
      exit(1); // Should never get here so exit with an error
