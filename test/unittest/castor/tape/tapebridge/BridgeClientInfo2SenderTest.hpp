@@ -97,6 +97,7 @@ void *rtcpd_thread(void *arg) {
       &(threadParams->outMsgBody),
       errBuf,
       sizeof(errBuf));
+
     threadParams->outGetClientInfo2Success = 1;
   } catch(castor::exception::Exception &ce) {
     std::cerr <<
@@ -154,6 +155,7 @@ public:
 
   void setUp() {
     using namespace castor::tape;
+    setenv("PATH_CONFIG", "localhostIsAdminHost_castor.conf", 1);
 
     memset(&m_clientInfoMsgBody, '\0', sizeof(m_clientInfoMsgBody));
 
