@@ -197,7 +197,6 @@ rununittests: \
   tape_send2tpd.o \
   tape_usrmsg.o \
   tape_utils.o \
-  tapebridge_BoolFunctor.o \
   tapebridge_BridgeClientInfo2Sender.o \
   tapebridge_BridgeProtocolEngine.o \
   tapebridge_BridgeSocketCatalogue.o \
@@ -243,6 +242,7 @@ rununittests: \
   upv_send2Cupv.o \
   upv_Cupv_errmsg.o \
   upv_Cupv_apiinit.o \
+  utils_BoolFunctor.o \
   utils_SmartFd.o \
   utils_SmartFILEPtr.o \
   vdqm_vdqmapi.o \
@@ -917,9 +917,6 @@ tape_writelbl.o: $(ROOT_DIR)/tape/writelbl.c
 tape_wrttpmrk.o: $(ROOT_DIR)/tape/wrttpmrk.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_BoolFunctor.o: $(ROOT_DIR)/castor/tape/tapebridge/BoolFunctor.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tapebridge_BridgeClientInfo2Sender.o: \
  $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -1099,6 +1096,9 @@ upv_Cupv_errmsg.o: $(ROOT_DIR)/upv/Cupv_errmsg.c
 
 upv_Cupv_apiinit.o: $(ROOT_DIR)/upv/Cupv_apiinit.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+
+utils_BoolFunctor.o: $(ROOT_DIR)/castor/tape/utils/BoolFunctor.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 utils_SmartFd.o: $(ROOT_DIR)/castor/tape/utils/SmartFd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
