@@ -3041,6 +3041,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     do {
       id = (u_signed64)rset->getDouble(1);
       ad.setTarget(id);
+      ad.setObjType(castor::OBJ_TapeAccessSpecification);
       castor::IObject* obj = cnvSvc()->createObj(&ad);
       tapeAccessSpec = 
         dynamic_cast<castor::vdqm::TapeAccessSpecification*> (obj);
