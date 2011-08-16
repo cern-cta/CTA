@@ -76,8 +76,7 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string(
         "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE, ONE_FLUSH_PER_FILE or"
-        " ONE_FLUSH_PER_N_FILES"
+        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
         ": category=TAPEBRIDGE"
         " name=TAPEFLUSHMODE"
         " value=INVALID_ENUM_VALUE"
@@ -107,35 +106,6 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
       TAPEBRIDGE_N_FLUSHES_PER_FILE,
-      params.getTapeFlushMode().value);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getTapeFlushMode().source);
-  }
-
-  void testDetermineTapeFlushModeEnvONE_FLUSH_PER_FILE() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "setenv TAPEBRIDGE_TAPEFLUSHMODE",
-      0,
-      setenv("TAPEBRIDGE_TAPEFLUSHMODE", "ONE_FLUSH_PER_FILE", 1));
-
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "determineTapeFlushMode",
-      params.determineTapeFlushMode());
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
-      std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
-      std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
-      TAPEBRIDGE_ONE_FLUSH_PER_FILE,
       params.getTapeFlushMode().value);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
@@ -220,8 +190,7 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
       std::string(
         "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE, ONE_FLUSH_PER_FILE or"
-        " ONE_FLUSH_PER_N_FILES"
+        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
         ": category=TAPEBRIDGE"
         " name=TAPEFLUSHMODE"
         " value=INVALID_ENUM_VALUE"
@@ -251,35 +220,6 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
       TAPEBRIDGE_N_FLUSHES_PER_FILE,
-      params.getTapeFlushMode().value);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getTapeFlushMode().source);
-  }
-
-  void testDetermineTapeFlushModeLocalCastorConfONE_FLUSH_PER_FILE() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
-      0,
-      setenv("PATH_CONFIG",
-        "determineTapeFlushModeONE_FLUSH_PER_FILE_castor.conf", 1));
-
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "determineTapeFlushMode",
-      params.determineTapeFlushMode());
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
-      std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
-      std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
-      TAPEBRIDGE_ONE_FLUSH_PER_FILE,
       params.getTapeFlushMode().value);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
@@ -652,12 +592,10 @@ public:
 
   CPPUNIT_TEST(testDetermineTapeFlushModeInvalidEnv);
   CPPUNIT_TEST(testDetermineTapeFlushModeEnvN_FLUSHES_PER_FILE);
-  CPPUNIT_TEST(testDetermineTapeFlushModeEnvONE_FLUSH_PER_FILE);
   CPPUNIT_TEST(testDetermineTapeFlushModeEnvONE_FLUSH_PER_N_FILES);
   CPPUNIT_TEST(testDetermineTapeFlushModeInvalidPathConfig);
   CPPUNIT_TEST(testDetermineTapeFlushModeInvalidLocalCastorConf);
   CPPUNIT_TEST(testDetermineTapeFlushModeLocalCastorConfN_FLUSHES_PER_FILE);
-  CPPUNIT_TEST(testDetermineTapeFlushModeLocalCastorConfONE_FLUSH_PER_FILE);
   CPPUNIT_TEST(testDetermineTapeFlushModeLocalCastorConfONE_FLUSH_PER_N_FILES);
 
   CPPUNIT_TEST(testDetermineMaxBytesBeforeFlushInvalidEnv);
