@@ -40,8 +40,7 @@
  * tapeFlushMode: The mode of flushing behaviour that will be used when writing
  * data to tape.  The possible values for this field are determined by the
  * following three constants defined and described in h/tapebridge_constant.h:
- * TAPEBRIDGE_N_FLUSHES_PER_FILE, TAPEBRIDGE_ONE_FLUSH_PER_FILE and
- * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
+ * TAPEBRIDGE_N_FLUSHES_PER_FILE, and TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
  *
  * The TAPEBRIDGE_CLIENTINFO2 message also adds the following two new fields:
  *

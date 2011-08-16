@@ -2424,8 +2424,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * There was an error closing the connection to the tape-bridge or VDQM.
      * Probably not serious, so we just log it and continue.
      */
-    rtcp_log(LOG_ERR, "%s()"
-      ": rtcp_CloseConnection(): %s\n",
+    rtcp_log(LOG_ERR, "%s(): rtcp_CloseConnection(): %s\n",
       __FUNCTION__, errmsg);
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
       "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
@@ -2438,9 +2437,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char *const logMsg = clientIsTapeBridge ?
       "Client is tapebridged" : "Client is not tapebridged";
 
-    rtcp_log(LOG_INFO, "%s()"
-      ": %s\n",
-      __FUNCTION__, logMsg);
+    rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
     tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
       "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
       "Message", TL_MSG_PARAM_STR, logMsg);
@@ -2453,57 +2450,92 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     snprintf(logMsg, sizeof(logMsg), "Host name of tapebridged client is %s",
       tapeBridgeClientInfo2MsgBody.bridgeClientHost);
     logMsg[sizeof(logMsg) - 1] = '\0';
-    rtcp_log(LOG_INFO, "%s()"
-      ": %s\n",
-      __FUNCTION__, logMsg);
+    rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
     tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
       "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
       "Message", TL_MSG_PARAM_STR, logMsg);
   }
 
-  /* In order to implement backwards compatibility:                         */
-  /*                                                                        */
-  /* If the tapebridged daemon is not the client of the rtcpd daemon and    */
-  /* the value of the TAPE BUFFERTAPEMARK parameter is not YES then set the */
-  /* tape-flush mode to TAPEBRIDGE_N_FLUSHES_PER_FILE.                      */
-  /*                                                                        */
-  /* If the tapebridged daemon is not the client of the rtcpd daemon and    */
-  /* the value of the TAPE BUFFERTAPEMARK parameter is YES then set the     */
-  /* tape-flush mode to TAPEBRIDGE_ONE_FLUSH_PER_FILE.                      */
+  /* If the client is tapebridged then log the fact that the                  */
+  /* TAPE/BUFFER_TAPEMARK configuration parameter is explicitly being ignored */
+  if(clientIsTapeBridge) {
+    const char *const logMsg = "Explicilty ignoring TAPE/BUFFER_TAPEMARK";
+    rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
+  }
+
+  /* If the client is not tapebridged then implement backwards compatibility */
+  /* by doing the following:                                                 */
+  /*                                                                         */
+  /* Set both the maximum number of bytes and files before a flush-to-tape   */
+  /* to 1.                                                                   */
+  /*                                                                         */
+  /* If the value of the TAPE/BUFFER_TAPEMARK configuration parameter is YES */
+  /* then set the tape-flush mode to TAPEBRIDGE_ONE_FLUSH_PER_N_FILES, else  */
+  /* set the tape-flush mode to TAPEBRIDGE_N_FLUSHES_PER_FILE.               */
   if(!clientIsTapeBridge) {
 
+    tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush = 1;
+    tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush = 1;
+
     const char *const useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
+    const char *useOfTapeBufferTapeMark = "UNKNOWN";
     if (NULL != useBuffTpm && 0 == strcasecmp(useBuffTpm,"YES")) {
       tapeBridgeClientInfo2MsgBody.tapeFlushMode =
-        TAPEBRIDGE_ONE_FLUSH_PER_FILE;
-
-      /* Log the use of TAPE/BUFFER_TAPEMARK */
-      rtcp_log(LOG_INFO, "%s()"
-        "For backwards compatibility using TAPE/BUFFER_TAPEMARK=YES\n",
-        __FUNCTION__);
+        TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
+      useOfTapeBufferTapeMark =
+          "For backwards compatibility using TAPE/BUFFER_TAPEMARK=YES";
     } else {
       tapeBridgeClientInfo2MsgBody.tapeFlushMode =
         TAPEBRIDGE_N_FLUSHES_PER_FILE;
-
-      /* Log the use of TAPE/BUFFER_TAPEMARK */
-      rtcp_log(LOG_INFO, "%s()"
-        "For backwards compatibility using TAPE/BUFFER_TAPEMARK=NO\n",
-        __FUNCTION__);
+      useOfTapeBufferTapeMark =
+          "For backwards compatibility using TAPE/BUFFER_TAPEMARK=NO";
     }
 
-    /* Log the backwards compatibility behaviour */
+    /* Log the backwards compatibility use of TAPE/BUFFER_TAPEMARK */
+    {
+      rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, useOfTapeBufferTapeMark);
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+        "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+        "Message", TL_MSG_PARAM_STR, useOfTapeBufferTapeMark);
+    }
+
+    /* Log the resulting backwards compatibility behaviour */
     {
       const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
         tapeBridgeClientInfo2MsgBody.tapeFlushMode);
-      char logMsg[128];
+      char logMsg[256];
 
-      snprintf(logMsg, sizeof(logMsg),
-        "For backwards compatibility setting tapeFlushMode=%s",
-        tapeFlushModeStr);
+      if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+        tapeBridgeClientInfo2MsgBody.tapeFlushMode) {
+        char maxBytesBeforeFlushStr[21];
+        char maxFilesBeforeFlushStr[21];
+
+        memset(maxBytesBeforeFlushStr, '\0', sizeof(maxBytesBeforeFlushStr));
+        u64tostr(tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
+          maxBytesBeforeFlushStr, 0 /* left adjust result */);
+        maxBytesBeforeFlushStr[sizeof(maxBytesBeforeFlushStr) - 1] = '\0';
+
+        memset(maxFilesBeforeFlushStr, '\0', sizeof(maxFilesBeforeFlushStr));
+        u64tostr(tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
+          maxFilesBeforeFlushStr, 0 /* left adjust result */);
+        maxFilesBeforeFlushStr[sizeof(maxFilesBeforeFlushStr) - 1] = '\0';
+
+        snprintf(logMsg, sizeof(logMsg),
+          "For backwards compatibility setting"
+          " tapeFlushMode=%s maxBytesBeforeFlush=%s, maxFilesBeforeFlush=%s",
+          tapeFlushModeStr, maxBytesBeforeFlushStr, maxFilesBeforeFlushStr);
+      } else {
+        snprintf(logMsg, sizeof(logMsg),
+          "For backwards compatibility setting"
+          " tapeFlushMode=%s",
+          tapeFlushModeStr);
+      }
+
       logMsg[sizeof(logMsg) - 1] = '\0';
-      rtcp_log(LOG_INFO, "%s()"
-        ": %s\n",
-        __FUNCTION__, logMsg);
+      rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
       tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
         "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
         "Message", TL_MSG_PARAM_STR, logMsg);
@@ -2550,7 +2582,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
         "Message", TL_MSG_PARAM_STR, logMsg);
     }
-
     {
       char logMsg[128];
       char maxFilesBeforeFlushStr[21];

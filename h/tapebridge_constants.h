@@ -57,17 +57,6 @@
 #define TAPEBRIDGE_N_FLUSHES_PER_FILE ((uint32_t)0)
 
 /**
- * Tape flush mode: TAPEBRIDGE_ONE_FLUSH_PER_FILE
- *
- * If the AUL tape format is used then data will be flushed to tape after
- * the AUL trailer of each file.
- *
- * If the NL format is used then data will be flushed to tape after the
- * end of the data of each file.
- */
-#define TAPEBRIDGE_ONE_FLUSH_PER_FILE ((uint32_t)1)
-
-/**
  * Tape flush mode: TAPEBRIDGE_ONE_FLUSH_PER_N_FILES
  *
  * If the AUL tape format is used then data will be flushed to tape after
@@ -78,6 +67,6 @@
  * If the NL format is used then data will be flushed to tape after the
  * end of the data of the Nth file.
  */
-#define TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ((uint32_t)2)
+#define TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ((uint32_t)1)
 
 #endif /* H_TAPEBRIGE_CONSTANTS_H */

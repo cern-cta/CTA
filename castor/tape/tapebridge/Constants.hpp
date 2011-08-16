@@ -162,7 +162,7 @@ namespace tapebridge {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 2;
+  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 1;
 
 } // namespace tapebridge
 } // namespace tape

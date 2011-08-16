@@ -32,7 +32,10 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore() {
+castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
+  const uint64_t maxBytesBeforeFlush, const uint64_t maxFilesBeforeFlush):
+  m_maxBytesBeforeFlush(maxBytesBeforeFlush),
+  m_maxFilesBeforeFlush(maxFilesBeforeFlush) {
   clear();
 }
 
@@ -41,7 +44,9 @@ castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore() {
 // Copy constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
-  PendingMigrationsStore &) {
+  PendingMigrationsStore &other):
+  m_maxBytesBeforeFlush(other.m_maxBytesBeforeFlush),
+  m_maxFilesBeforeFlush(other.m_maxFilesBeforeFlush) {
   // Should never be called, therefore do nothing
 }
 
@@ -95,6 +100,14 @@ void castor::tape::tapebridge::PendingMigrationsStore::add(
     ": value=" << fileToMigrate.fseq());
   }
 
+  // Throw an exception if the file size of the file to migrate message is
+  // invalid
+  if(0 == fileToMigrate.fileSize()) {
+    TAPE_THROW_CODE(EBADMSG,
+    ": Failed to add pending file-migration to pending file-migration store"
+    ": File to migrate message contains the invalid file-size of 0");
+  }
+
   // Throw an exception if the store already contains the pending
   // file-migration that should be added
   PendingMigrationMap::iterator itor = m_pendingMigrations.find(
@@ -121,12 +134,32 @@ void castor::tape::tapebridge::PendingMigrationsStore::add(
 
   // Add the pending file-migration
   {
-    PendingMigration pendingMigration(
+    const PendingMigration pendingMigration(
       PendingMigration::PENDINGMIGRATION_SENT_TO_RTCPD,
       fileToMigrate);
     m_pendingMigrations[fileToMigrate.fseq()] = pendingMigration;
   }
+
+  // Update internal tracking variables
   m_tapeFseqOfLastFileAdded = fileToMigrate.fseq();
+}
+
+
+//-----------------------------------------------------------------------------
+// noMoreFilesToMigrate
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::PendingMigrationsStore::noMoreFilesToMigrate()
+  throw(castor::exception::Exception) {
+  const bool endOfSessionFileIsKnown = 0 != m_tapeFseqOfEndOfSessionFile;
+
+  if(endOfSessionFileIsKnown) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Failed to register no more files to migrate"
+      ": Already received no-more-files notification"
+      ": tapeFseqOfLastFileAdded=" << m_tapeFseqOfLastFileAdded);
+  }
+
+  m_tapeFseqOfEndOfSessionFile = m_tapeFseqOfLastFileAdded;
 }
 
 
@@ -145,6 +178,14 @@ void
     ": Failed to mark pending file-migration as written without flush"
     ": File migrated message contains an invalid fseq"
     ": value=" << fileMigratedNotification.fseq());
+  }
+
+  // Throw an exception if the file size of the file migrated message is
+  // invalid
+  if(0 == fileMigratedNotification.fileSize()) {
+    TAPE_THROW_CODE(EBADMSG,
+    ": Failed to mark pending file-migration as written without flush"
+    ": File migrated message contains the invalid file-size of 0");
   }
 
   // Try to find the pending file-migration whose state is to be updated
@@ -180,8 +221,8 @@ void
     checkForMismatches(itor->second.fileToMigrate, fileMigratedNotification);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Failed to mark pending file-migration as written without flush" <<
-      ex.getMessage().str());
+      ": Failed to mark pending file-migration as written without flush"
+      ": " << ex.getMessage().str());
   }
 
   // Copy into the pending file-migration the file-migrated notification
@@ -196,6 +237,43 @@ void
   // Update the tape-file sequence-number of the last file marked as written
   // without a flush
   m_tapeFseqOfLastFileWrittenWithoutFlush = fileMigratedNotification.fseq();
+
+  // Update the number of bytes and files written to tape without a flush
+  m_nbBytesWrittenWithoutFlush += fileMigratedNotification.fileSize();
+  m_nbFilesWrittenWithoutFlush++;
+
+  // Determine whether or not the current file is the one that matches or
+  // immediately exceeds the maximum number of bytes to be written to tape
+  // before a flush
+  if(m_maxBytesBeforeFlush <= m_nbBytesWrittenWithoutFlush) {
+    if(0 != m_tapeFseqOfMaxBytesFile) {
+      TAPE_THROW_EX(castor::exception::InvalidArgument,
+        ": Failed to mark pending file-migration as written without flush"
+        ": Already matched or exceed maximum number of bytes before flush"
+        ": maxBytesBeforeFlush=" << m_maxBytesBeforeFlush <<
+        " nbBytesWrittenWithoutFlush=" << m_nbBytesWrittenWithoutFlush <<
+        " tapeFseqOfMaxBytesFile=" << m_tapeFseqOfMaxBytesFile <<
+        " illegalTapeFseqOfMaxBytesFile=" << fileMigratedNotification.fseq());
+    }
+
+    m_tapeFseqOfMaxBytesFile = fileMigratedNotification.fseq();
+  }
+
+  // Determine whether or not the current file is the one that matches the
+  // the maximum number of files to be written to tape before a flush
+  if(m_maxFilesBeforeFlush <= m_nbFilesWrittenWithoutFlush) {
+    if(0 != m_tapeFseqOfMaxFilesFile) {
+      TAPE_THROW_EX(castor::exception::InvalidArgument,
+        ": Failed to mark pending file-migration as written without flush"
+        ": Already matched maximum number of files before flush"
+        ": maxFilesBeforeFlush=" << m_maxFilesBeforeFlush <<
+        " nbFilesWrittenWithoutFlush=" << m_nbFilesWrittenWithoutFlush <<
+        " tapeFseqOfMaxFilesFile=" << m_tapeFseqOfMaxFilesFile <<
+        " illegalTapeFseqOfMaxFilesFile=" << fileMigratedNotification.fseq());
+    }
+
+    m_tapeFseqOfMaxFilesFile = fileMigratedNotification.fseq();
+  }
 }
 
 
@@ -288,21 +366,53 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
 
 
 //-----------------------------------------------------------------------------
-// getAndRemoveFilesWrittenWithoutFlush
+// dataFlushedToTape
 //-----------------------------------------------------------------------------
 std::list<castor::tape::tapegateway::FileMigratedNotification>
   castor::tape::tapebridge::PendingMigrationsStore::
-  getAndRemoveFilesWrittenWithoutFlush(const uint32_t maxFseq)
+  dataFlushedToTape(const uint32_t tapeFseqOfFlush)
   throw(castor::exception::Exception) {
+  const char *const methodTask = "accept flush to tape";
   std::list<castor::tape::tapegateway::FileMigratedNotification> outputList;
 
   // Check method arguments
-  if(0 == maxFseq) {
+  if(0 == tapeFseqOfFlush) {
     TAPE_THROW_CODE(EINVAL,
-      ": Failed to get and remove pending file-migrations written without"
-      " flush"
-      ": maxFseq contains the invalid value of 0");
+      ": Failed to " << methodTask <<
+      ": tapeFseqOfFlush contains the invalid value of 0");
   }
+
+  // Determine whether or not the tape-file sequence-number of the flush to
+  // tape is valid taking into account the fact that
+  // m_tapeFseqOfEndOfSessionFile can only be used when neither
+  // m_tapeFseqOfMaxBytesFile and m_tapeFseqOfMaxFilesFile are known
+  bool tapeFseqOfFlushIsValid = false;
+  if(0 == m_tapeFseqOfMaxBytesFile && 0 == m_tapeFseqOfMaxFilesFile &&
+    tapeFseqOfFlush == m_tapeFseqOfEndOfSessionFile) {
+    tapeFseqOfFlushIsValid = true;
+  } else if(tapeFseqOfFlush == m_tapeFseqOfMaxBytesFile ||
+    tapeFseqOfFlush == m_tapeFseqOfMaxFilesFile) {
+    tapeFseqOfFlushIsValid = true;
+  }
+
+  // Throw an exception if the flush has occured on an invalid tape-file
+  // sequence-number
+  if(!tapeFseqOfFlushIsValid) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Failed to " << methodTask <<
+      ": Invalid tapeFseqOfFlush"
+      ": tapeFseqOfMaxFilesFile=" << m_tapeFseqOfMaxFilesFile <<
+      " tapeFseqOfMaxBytesFile=" << m_tapeFseqOfMaxBytesFile <<
+      " tapeFseqOfEndOfSessionFile=" << m_tapeFseqOfEndOfSessionFile <<
+      " tapeFseqOfFlush=" << tapeFseqOfFlush);
+  }
+
+  // Reset the appropriate member-variables used to determine the tape-file
+  // sequence-number of the next flush to tape
+  m_nbBytesWrittenWithoutFlush = 0;
+  m_nbFilesWrittenWithoutFlush = 0;
+  m_tapeFseqOfMaxBytesFile     = 0;
+  m_tapeFseqOfMaxFilesFile     = 0;
 
   // For each pending file-migration in the store in ascending order of
   // tape-file sequence-number
@@ -310,9 +420,8 @@ std::list<castor::tape::tapegateway::FileMigratedNotification>
     itor != m_pendingMigrations.end();) {
 
     // Break out of the loop if we have reached a pending file-migration with
-    // a tape-file sequence-number greater than the maximum to be got and
-    // removed
-    if(maxFseq < (uint32_t)(itor->second.fileToMigrate.fseq())) {
+    // a tape-file sequence-number greater than that of the flush to tape
+    if(tapeFseqOfFlush < (uint32_t)(itor->second.fileToMigrate.fseq())) {
       break;
     }
 
@@ -321,9 +430,8 @@ std::list<castor::tape::tapegateway::FileMigratedNotification>
     if(itor->second.status !=
       PendingMigration::PENDINGMIGRATION_WRITTEN_WITHOUT_FLUSH) {
       TAPE_THROW_CODE(ECANCELED,
-        ": Failed to get and remove pending file-migrations written without"
-        " flush"
-        ": maxFseq=" << maxFseq <<
+        ": Failed to " << methodTask <<
+        ": tapeFseqOfFlush=" << tapeFseqOfFlush <<
         ": Found pending file-migration not marked as being written without"
         " flush"
         ": badFseq=" << itor->second.fileToMigrate.fseq());
@@ -345,8 +453,13 @@ std::list<castor::tape::tapegateway::FileMigratedNotification>
 // clear
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::clear() {
+  m_nbBytesWrittenWithoutFlush            = 0;
+  m_nbFilesWrittenWithoutFlush            = 0;
+  m_tapeFseqOfEndOfSessionFile            = 0;
   m_tapeFseqOfLastFileAdded               = 0;
   m_tapeFseqOfLastFileWrittenWithoutFlush = 0;
+  m_tapeFseqOfMaxBytesFile                = 0;
+  m_tapeFseqOfMaxFilesFile                = 0;
 
   m_pendingMigrations.clear();
 }

@@ -213,8 +213,6 @@ int rtcpd_GetClientInfoMsg(
       if(bridgeClientInfo2MsgBody.tapeFlushMode !=
            TAPEBRIDGE_N_FLUSHES_PER_FILE &&
         bridgeClientInfo2MsgBody.tapeFlushMode !=
-           TAPEBRIDGE_ONE_FLUSH_PER_FILE &&
-        bridgeClientInfo2MsgBody.tapeFlushMode !=
            TAPEBRIDGE_ONE_FLUSH_PER_N_FILES) {
         snprintf(errBuf, errBufLen, "%s()"
           ": Invalid tapeFlushMode"

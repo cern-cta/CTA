@@ -83,7 +83,10 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   m_stoppingGracefully(stoppingGracefully),
   m_tapebridgeTransactionCounter(tapebridgeTransactionCounter),
   m_nbReceivedENDOF_REQs(0),
-  m_pendingTransferIds(MAXPENDINGTRANSFERS) {
+  m_pendingTransferIds(MAXPENDINGTRANSFERS),
+  m_pendingMigrationsStore(
+    tapeFlushConfigParams.getMaxBytesBeforeFlush().value,
+    tapeFlushConfigParams.getMaxFilesBeforeFlush().value) {
 
   // Store the listen socket and initial rtcpd connection in the socket
   // catalogue
@@ -1650,8 +1653,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     fileMigratedNotifications;
   try {
     fileMigratedNotifications =
-      m_pendingMigrationsStore.getAndRemoveFilesWrittenWithoutFlush(
-        body.tapeFseq);
+      m_pendingMigrationsStore.dataFlushedToTape(body.tapeFseq);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECANCELED,
       ": Failed to process TAPEBRIDGE_FLUSHEDTOTAPE message"
@@ -2139,6 +2141,8 @@ void
   ClientTxRx::checkTransactionIds("NoMoreFiles",
     m_jobRequest.volReqId, reply->mountTransactionId(),
     tapebridgeTransId    , reply->aggregatorTransactionId());
+
+  m_pendingMigrationsStore.noMoreFilesToMigrate();
 
   // Tell RTCPD there is no file by sending an empty file list
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId, rtcpdSock,

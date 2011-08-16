@@ -44,10 +44,22 @@ namespace tapebridge {
  */
 class PendingMigrationsStore {
 public:
+
   /**
    * Constructor.
+   *
+   * @param maxBytesBeforeFlush The maximum number of bytes that can be written
+   *                            to tape before a flush to tape should be
+   *                            executed.  Please note that flushes to tape
+   *                            occur on file boundaries, therefore more bytes
+   *                            will most probably be written to tape before
+   *                            the actual flush takes place.
+   * @param maxFilesBeforeFlush The maximum number of files that can be written
+   *                            to tape before a flush to tape should be
+   *                            executed.
    */
-  PendingMigrationsStore();
+  PendingMigrationsStore(const uint64_t maxBytesBeforeFlush,
+    const uint64_t maxFilesBeforeFlush);
 
   /**
    * Adds the specified pending file-migration to the store.
@@ -97,8 +109,19 @@ public:
     throw(castor::exception::Exception);
 
   /**
+   * To be called when there are no more files to be migrated.
+   *
+   * The pending-migrations store uses this notification to determine the
+   * tape-file sequence-number of the very last file that is going to be
+   * written to tape.  The pending-migrations store uses this knowledge to
+   * check the validity of the tape-file sequence-number of flushes to tape.
+   */
+  void noMoreFilesToMigrate() throw(castor::exception::Exception);
+
+  /**
    * Gets and removes the pending file-migrations that have a tape-file
-   * sequence-number less than or equal to the specified maximum.
+   * sequence-number less than or equal to the specified tape-file
+   * sequence-number of the flush to tape.
    *
    * The pending file-migrations are returned as a list of file-migrated
    * notification messages that require their aggregatorTransactionId members
@@ -111,16 +134,75 @@ public:
    * flush.
    */
   std::list<tapegateway::FileMigratedNotification>
-    getAndRemoveFilesWrittenWithoutFlush(const uint32_t maxFseq)
+    dataFlushedToTape(const uint32_t tapeFseqOfFlush)
     throw(castor::exception::Exception);
 
   /**
-   * Retruns the total number of pending file-grations currently inside the
+   * Returns the total number of pending file-grations currently inside the
    * store.
    */
   uint32_t getNbPendingMigrations() const;
 
 private:
+
+  /**
+   * The maximum number of bytes that can be written to tape before a flush to
+   * tape should be executed.  Please note that flushes to tape occur on file
+   * boundaries, therefore more bytes will most probably be written to tape
+   * before the actual flush takes place.
+   */
+  const uint64_t m_maxBytesBeforeFlush;
+
+  /**
+   * The maximum number of files that can be written to tape before a flush to
+   * tape should be executed.
+   */
+  const uint64_t m_maxFilesBeforeFlush;
+
+  /**
+   * The current number of bytes written to tape without a flush to tape.
+   */
+  uint64_t m_nbBytesWrittenWithoutFlush;
+
+  /**
+   * The current number of files written to tape without a flush to tape.
+   */
+  uint64_t m_nbFilesWrittenWithoutFlush;
+
+  /**
+   * The tape-file sequence-number of the very last file that will be written
+   * to tape at the end of the current tape session.  If the file is not yet
+   * known then the value of this member-variable will be 0.
+   */
+  uint32_t m_tapeFseqOfEndOfSessionFile;
+
+  /**
+   * The tape-file sequence-number of the last pending file-migration to be
+   * marked as written without a flush, or 0 if no pending file-migration
+   * has yet been marked as such.
+   */
+  uint32_t m_tapeFseqOfLastFileWrittenWithoutFlush;
+
+  /**
+   * The tape-file sequence-number of the last pending file-migration added to
+   * the store, or 0 if the store is currently empty.
+   */
+  uint32_t m_tapeFseqOfLastFileAdded;
+
+  /**
+   * The sequence-number of the file written to tape that matched or
+   * immediately exceeded the maximum number of bytes to be written to tape
+   * before a flush.  If the file is not known then the value of this
+   * member-variable is 0.
+   */
+  uint32_t m_tapeFseqOfMaxBytesFile;
+
+  /**
+   * The sequence-number of the file written to tape that matched the maximum
+   * number of files to be written to tape before a flush.  If the file is not
+   * known then the value of this member-variable is 0.
+   */
+  uint32_t m_tapeFseqOfMaxFilesFile;
 
   /**
    * Data structure used to store a pending migration and its status.
@@ -195,19 +277,6 @@ private:
    * sequence-number.
    */
   PendingMigrationMap m_pendingMigrations;
-
-  /**
-   * The tape-file sequence-number of the last pending file-migration added to
-   * the store, or 0 if the store is currently empty.
-   */
-  uint32_t m_tapeFseqOfLastFileAdded;
-
-  /**
-   * The tape-file sequence-number of the last pending file-migration to be
-   * marked as written without a flush, or 0 if no pending file-migration
-   * has yet been marked as such.
-   */
-  uint32_t m_tapeFseqOfLastFileWrittenWithoutFlush;
 
   /**
    * Private copy-constructor to prevent copies being made.

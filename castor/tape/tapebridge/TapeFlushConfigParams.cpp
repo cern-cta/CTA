@@ -86,16 +86,13 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
   if(NULL != paramCStr) {
     if(0 == strcmp("N_FLUSHES_PER_FILE", paramCStr)) {
       m_tapeFlushMode.value = TAPEBRIDGE_N_FLUSHES_PER_FILE;
-    } else if(0 == strcmp("ONE_FLUSH_PER_FILE", paramCStr)) {
-      m_tapeFlushMode.value = TAPEBRIDGE_ONE_FLUSH_PER_FILE;
     } else if(0 == strcmp("ONE_FLUSH_PER_N_FILES", paramCStr)) {
       m_tapeFlushMode.value = TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
     } else {
       castor::exception::InvalidArgument ex;
       ex.getMessage() <<
         "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE, ONE_FLUSH_PER_FILE or"
-        " ONE_FLUSH_PER_N_FILES"
+        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
         ": category=" << m_tapeFlushMode.category <<
         " name=" << m_tapeFlushMode.name <<
         " value=" << paramCStr <<

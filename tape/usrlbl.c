@@ -113,9 +113,6 @@ int wrthdrlbl(
 		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
 			flushToTape = 1;
 			break;
-		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
-			flushToTape = 0;
-			break;
 		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
 			flushToTape = 0;
 			break;
@@ -159,9 +156,6 @@ int wrteotmrk(
 		int flushToTape = 0;
 		switch(tapeFlushMode) {
 		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
-			flushToTape = 1;
-			break;
-		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
 			flushToTape = 1;
 			break;
 		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
@@ -210,9 +204,6 @@ int wrttrllbl (
 		switch(tapeFlushMode) {
 		case TAPEBRIDGE_N_FLUSHES_PER_FILE:
 			flushToTape = 1;
-			break;
-		case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
-			flushToTape = 0;
 			break;
 		case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
 			flushToTape = 0;

@@ -33,7 +33,7 @@ private:
   std::string m_msg;
 
 public:
-  test_exception(std::string msg);
+  test_exception(const std::string msg);
 
   test_exception(const test_exception &tx);
 

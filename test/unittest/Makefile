@@ -2,13 +2,17 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
 UUID_LIB=
+MACPORTS_CPPUNIT_INCLUDE_OP=-I/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/include
+MACPORTS_CPPUNIT_LIB_OP=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
 else
 UUID_LIB=-luuid
+MACPORTS_CPPUNIT_INCLUDE_OP=
+MACPORTS_CPPUNIT_LIB_OP=
 endif
 
 ROOT_DIR=../..
-INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h -I/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/include
-LIB_DIR_OPS=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
+INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP)
+LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
 EXECUTABLES=rununittests
 CSEC_MECHLIST=KRB5 GSI ID
 COMMON_OPS=-DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DCNS_ROOT=\"/castor\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread

@@ -33,8 +33,6 @@ const char *tapebridge_tapeFlushModeToStr(const uint32_t tapeFlushMode) {
   switch(tapeFlushMode) {
   case TAPEBRIDGE_N_FLUSHES_PER_FILE:
     return "TAPEBRIDGE_N_FLUSHES_PER_FILE";
-  case TAPEBRIDGE_ONE_FLUSH_PER_FILE:
-    return "TAPEBRIDGE_ONE_FLUSH_PER_FILE";
   case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
     return "TAPEBRIDGE_ONE_FLUSH_PER_N_FILES";
   default:
