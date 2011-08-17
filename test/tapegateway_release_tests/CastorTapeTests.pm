@@ -295,23 +295,6 @@ sub clean_fileservers ()
     print "Done\n";
 }
 
-# Check that lsf has accessed the shared memory
-sub poll_lsf_is_mmaped  ( $$ )
-{
-    my ( $interval, $timeout ) = ( shift, shift );
-    my $start_time = time();
-    while ( ($start_time + $timeout) >= time()) {
-        my $query=`ps ax | grep mbschd | cut -c 1-5 | xargs pmap`;
-        if ( $query =~ /shmid/ ) {
-	    print "Lsf accessing the shared memory ready after ".(time() - $start_time)."s.\n";
-            return;
-        }
-	sleep ( $interval );
-    }
-    die "Timeout in poll_lsf_is_mmaped";
-}
-
-
 # create a local seed file, returning the index to the file.
 # Take 1 parameter: the size in 
 sub make_seed ( $ )
@@ -2014,52 +1997,6 @@ sub reinstall_stager_db()
     killDaemonWithTimeout('stagerd'     , 2);
     killDaemonWithTimeout('tapegatewayd', 2);
 
-    # Stop lsf
-    print "Stopping lsf\n";
-    `service lsf stop`;
-
-    # Destroy the shared memory segment
-    print "Removing shared memory segment\n";
-    `ipcrm -M 0x00000946`;
-
-    # Print shared memory usage
-    print "Current shared memory usage:\n";
-    {
-	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
-	my  $current_proc;
-	foreach ( split /^/, $pm) { 
-	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
-	    elsif ( /\[\s+shmid=/ ) { 
-		print $current_proc; 
-		print $_; 
-	    } 
-	}
-    }
-
-    # Restart lsf to allow the restart of rmmasterd to recreate the shared memory, then re-stop all
-    # Not really. lsf will catch the shared memory when it appears. Not worries...
-    `service lsf start`;
-    #`service rmmasterd start`;
-    #`service lsf restart`;
-    
-    #poll_lsf_is_mmaped( 1, 60 );
-
-    #`service rmmasterd stop`;
-
-    # Re-print memory mapping. lsf should use the shmem segment
-    #print "Current shared memory usage (we now expect /usr/lsf/etc/mbschd):\n";
-    #{
-    #	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
-    #	my  $current_proc;
-    #	foreach ( split /^/, $pm) { 
-    #	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
-    #	    elsif ( /\[\s+shmid=/ ) { 
-    #		print $current_proc; 
-    #		print $_; 
-    #	    } 
-    #	}
-    #}
-    
 
     # Re-create mighunterd daemon scripts
     print("Re-creating mighunterd daemon scripts\n");
@@ -2118,10 +2055,6 @@ sub reinstall_stager_db()
     #startSingleDaemon ( 'rtcpclientd' );
     startSingleDaemon ( 'stagerd' );
     #startSingleDaemon ( 'tapegatewayd' );
-    
-    # Restart lsf
-    print "Restarting lsf\n";
-    `service lsf restart`;
 
     poll_rm_readyness ( 1, 15 );
     print "Sleeping extra 15 seconds\n";
