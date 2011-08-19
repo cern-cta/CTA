@@ -216,7 +216,8 @@ BEGIN
     RETURN;
   END IF;
   -- Look for recalls concerning files that are STAGED or CANBEMIGR
-  -- on all filesystems scheduled to be checked.
+  -- on all filesystems scheduled to be checked, and restart their
+  -- subrequests (reconsidering the recall source).
   FOR cf IN (SELECT /*+ USE_NL(E D)
                      INDEX_RS_ASC(E I_DiskCopy_Status)
                      INDEX_RS_ASC(D I_DiskCopy_CastorFile) */

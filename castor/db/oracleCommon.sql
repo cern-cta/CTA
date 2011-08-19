@@ -211,6 +211,56 @@ BEGIN
 END;
 /
 
+/* PL/SQL method deleting a tapecopy (and related structures) */
+CREATE OR REPLACE PROCEDURE deleteSingleTapeCopy(tcId NUMBER) AS
+BEGIN
+  FOR s IN (SELECT id FROM Segment WHERE copy = tcId) LOOP
+  -- Delete the segment(s)
+    DELETE FROM Id2Type WHERE id = s.id;
+    DELETE FROM Segment WHERE id = s.id;
+  END LOOP;
+  -- Delete from Stream2TapeCopy
+  DELETE FROM Stream2TapeCopy WHERE child = tcId;
+  -- Delete the TapeCopy
+  DELETE FROM Id2Type WHERE id = tcId;
+  DELETE FROM TapeCopy WHERE id = tcId;
+END;
+/
+
+/* PL/SQL method deleting recall tapecopies (and related structures)
+   for a castorfile. Tapecopies do not go to failed in recalls (they get deleted) */
+CREATE OR REPLACE PROCEDURE deleteRecallTapeCopies(cfId NUMBER) AS
+BEGIN
+  -- Loop over the tapecopies
+  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId 
+               AND status IN (tconst.TAPECOPY_TOBERECALLED, 
+                              tconst.TAPECOPY_REC_RETRY)
+           ) LOOP
+    deleteSingleTapeCopy(t.id);
+  END LOOP;
+END;
+/
+
+/* PL/SQL method deleting active migration tapecopies (and related structures)
+   for a castorfile. */
+CREATE OR REPLACE PROCEDURE deleteMigrationTapeCopies(cfId NUMBER) AS
+BEGIN
+  -- Loop over the tapecopies
+  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId 
+               AND status IN ( tconst.TAPECOPY_CREATED,
+                               tconst.TAPECOPY_TOBEMIGRATED, 
+                               tconst.TAPECOPY_WAITINSTREAMS,
+                               tconst.TAPECOPY_SELECTED,
+                               tconst.TAPECOPY_STAGED,
+                               tconst.TAPECOPY_FAILED,
+                               tconst.TAPECOPY_WAITPOLICY,
+                               tconst.TAPECOPY_MIG_RETRY)
+           ) LOOP
+    deleteSingleTapeCopy(t.id);
+  END LOOP;
+END;
+/
+
 /* PL/SQL method canceling a given recall */
 CREATE OR REPLACE PROCEDURE cancelRecall
 (cfId NUMBER, dcId NUMBER, newSubReqStatus NUMBER) AS
@@ -221,7 +271,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = cfId FOR UPDATE;
   -- Cancel the recall
-  deleteTapeCopies(cfId);
+  deleteRecallTapeCopies(cfId);
   -- Invalidate the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
   -- Look for request associated to the recall and fail
@@ -243,17 +293,29 @@ END;
    the recall with be FAILED */
 CREATE OR REPLACE PROCEDURE cancelRecallForTape (inVid IN VARCHAR2) AS
 BEGIN
+  -- Fail all the recalls for the tape
   FOR a IN (SELECT DISTINCT(DiskCopy.id), DiskCopy.castorfile
               FROM Segment, Tape, TapeCopy, DiskCopy
              WHERE Segment.tape = Tape.id
                AND Segment.copy = TapeCopy.id
                AND DiskCopy.castorfile = TapeCopy.castorfile
-               AND DiskCopy.status = 2  -- WAITTAPERECALL
+               AND DiskCopy.status = dconst.DISKCOPY_WAITTAPERECALL
                AND Tape.vid = inVid
              ORDER BY DiskCopy.id ASC)
   LOOP
-    cancelRecall(a.castorfile, a.id, 7);
+    cancelRecall(a.castorfile, a.id, dconst.SUBREQUEST_FAILED);
   END LOOP;
+  -- Change the tape's status to UNUSED (if we succeeded to
+  -- kill all the recalls
+  UPDATE Tape t
+     SET t.status = tconst.TAPE_UNUSED
+   WHERE t.vid = inVid
+     AND t.tpMode = tconst.TPMODE_READ
+     AND NOT EXISTS (
+           SELECT id
+             FROM Segment
+            WHERE tape = t.id
+              AND status != tconst.SEGMENT_FAILED);
 END;
 /
 
