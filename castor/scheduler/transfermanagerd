@@ -286,7 +286,10 @@ class TransferManagerService(rpyc.Service):
         # check whether we have all data we need for the pool
         unreachableMachines = [m for m in nbs[diskPool] if nbs[diskPool][m] == None]
         # append an item to the result set
-        data = [extendedSum(item) for item in zip(*[item for item in nbs[diskPool].values() if item])]
+        if len(unreachableMachines) < len(nbs[diskPool]):
+          data = [extendedSum(item) for item in zip(*[item for item in nbs[diskPool].values() if item])]
+        else:
+          data = [0, 0, 0, 0, 0]
         res.append(tuple([diskPool, nbtransfers] + data + [tuple(unreachableMachines)]))
       else:
         res.append((diskPool,))
