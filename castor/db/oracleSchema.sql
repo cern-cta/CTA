@@ -448,5 +448,18 @@ INSERT INTO Type2Obj (type, object) VALUES (192, 'NsFileId');
 INSERT INTO Type2Obj (type, object) VALUES (193, 'BulkRequestResult');
 INSERT INTO Type2Obj (type, object) VALUES (194, 'FileResult');
 INSERT INTO Type2Obj (type, object) VALUES (195, 'DiskPoolQuery');
+INSERT INTO Type2Obj (type, object) VALUES (196, 'EndNotificationFileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (197, 'FileMigrationReportList');
+INSERT INTO Type2Obj (type, object) VALUES (198, 'FileRecallReportList');
+INSERT INTO Type2Obj (type, object) VALUES (199, 'FilesToMigrateList');
+INSERT INTO Type2Obj (type, object) VALUES (200, 'FilesToMigrateListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (201, 'FilesToRecallListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (202, 'FileErrorReportStruct');
+INSERT INTO Type2Obj (type, object) VALUES (203, 'FileMigratedNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (204, 'FileRecalledNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (205, 'FilesToRecallList');
+INSERT INTO Type2Obj (type, object) VALUES (206, 'FileToMigrateStruct');
+INSERT INTO Type2Obj (type, object) VALUES (207, 'FileToRecallStruct');
+INSERT INTO Type2Obj (type, object) VALUES (208, 'FilesListRequest');
 COMMIT;
 

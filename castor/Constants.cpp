@@ -238,7 +238,21 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "NsFileId",
   "BulkRequestResult",
   "FileResult",
-  "DiskPoolQuery"
+  "DiskPoolQuery",
+
+  "EndNotificationFileErrorReport",
+  "FileMigrationReportList",
+  "FileRecallReportList",
+  "FilesToMigrateList",
+  "FilesToMigrateListRequest",
+  "FilesToRecallListRequest",
+  "FileErrorReportStruct",
+  "FileMigratedNotificationStruct",
+  "FileRecalledNotificationStruct",
+  "FilesToRecallList",
+  "FileToMigrateStruct",
+  "FileToRecallStruct",
+  "FilesListRequest"
 };
 
 

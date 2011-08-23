@@ -1425,6 +1425,80 @@ Concerning the user list, an empty list means all users and all groups are conce
               <UML:Attribute isSpecification="false" visibility="public" xmi.id="4RKRiQykPNru" type="133771" name="cprc" />
              </UML:Classifier.feature>
             </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesListRequest" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FilesListRequest_maxFiles_xmiid" type="131665" name="maxFiles" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FilesListRequest_maxBytes_xmiid" type="131665" name="maxBytes" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToMigrateListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesToMigrateListRequest" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToRecallListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesToRecallListRequest" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="BaseFileInfoStruct_xmiid" isRoot="false" isAbstract="true" name="BaseFileInfoStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_fileTransactionId_xmiid" type="131665" name="fileTransactionId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_nshost_xmiid" type="137289" name="nshost" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_fileid_xmiid" type="131665" name="fileid" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStructfseq_xmiid" type="133771" name="fseq" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileToMigrateStruct_xmiid" isRoot="false" isAbstract="false" name="FileToMigrateStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_fileSize_xmiid" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_lastKnownFilename_xmiid" type="137289" name="lastKnownFilename" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_lastModificationTime_xmiid" type="131665" name="lastModificationTime" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_umask_xmiid" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileToRecallStruct_xmiid" isRoot="false" isAbstract="false" name="FileToRecallStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId0_xmiid" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId1_xmiid" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId2_xmiid" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId3_xmiid" type="153395" name="blockId3" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_umask_xmiid" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileMigratedNotificationStruct_xmiid" isRoot="false" isAbstract="false" name="FileMigratedNotificationStruct" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="1lAbp4N5pCx6" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_fileSize_xmiid" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_checksumName_xmiid" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_checksum_xmiid" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_compressedFileSize_xmiid" type="131665" name="compressedFileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId0_xmiid" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId1_xmiid" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId2_xmiid" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId3_xmiid" type="153395" name="blockId3" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileRecalledNotificationStruct_xmiid" isRoot="false" isAbstract="false" name="FileRecalledNotificationStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_checksumName_xmiid" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_checksum_xmiid" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_fileSize_xmiid" type="131665" name="fileSize" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileErrorReportStruct_xmiid" isRoot="false" isAbstract="false" name="FileErrorReportStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileErrorReportStruct_errorCode_xmiid" type="133771" name="errorCode" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileErrorReportStruct_errorMessage_xmiid" type="137289" name="errorMessage" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToMigrateList_xmiid" isRoot="false" isAbstract="false" name="FilesToMigrateList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToRecallList_xmiid" isRoot="false" isAbstract="false" name="FilesToRecallList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileMigrationReportList_xmiid" isRoot="false" isAbstract="false" name="FileMigrationReportList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileRecallReportList_xmiid" isRoot="false" isAbstract="false" name="FileRecallReportList" >
+            </UML:Class>
            </UML:Namespace.ownedElement>
           </UML:Package>
          </UML:Namespace.ownedElement>
@@ -2218,7 +2292,60 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd comment="SqlOnly" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ClnPzmObCtjk" aggregation="none" type="1196" name="lastButOneFileSystemUsed" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
+
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FilesToMigrateList_FileToMigrateStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToMigrateList_FileToMigrateStruct_composite_xmiid" aggregation="composite" type="FilesToMigrateList_xmiid" name="filesToMigrateList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToMigrateList_FileToMigrateStruct_none_xmiid" aggregation="none" type="FileToMigrateStruct_xmiid" name="filesToMigrate" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FilesToRecallList_FileToRecallStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToRecallList_FileToRecallStruct_composite_xmiid" aggregation="composite" type="FilesToRecallList_xmiid" name="filesToRecallList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToRecallList_FileToRecallStruct_none_xmiid" aggregation="none" type="FileToRecallStruct_xmiid" name="filesToRecall" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+
+
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_composite_xmiid" aggregation="composite" type="FileMigrationReportList_xmiid" name="fileMigrationReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_none_xmiid" aggregation="none" type="FileMigratedNotificationStruct_xmiid" name="successfulMigrations" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileMigrationReportList_FileErrorReportStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileErrorReportStruct_composite_xmiid" aggregation="composite" type="FileMigrationReportList_xmiid" name="fileMigrationReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileErrorReportStruct_none_xmiid" aggregation="none" type="FileErrorReportStruct_xmiid" name="failedMigrations" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_composite_xmiid" aggregation="composite" type="FileRecallReportList_xmiid" name="fileRecallReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_none_xmiid" aggregation="none" type="FileRecalledNotificationStruct_xmiid" name="successfulRecalls" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileRecallReportList_FileErrorReportStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileErrorReportStruct_composite_xmiid" aggregation="composite" type="FileRecallReportList_xmiid" name="fileRecallReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileErrorReportStruct_none_xmiid" aggregation="none" type="FileErrorReportStruct_xmiid" name="failedRecalls" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
       <UML:Generalization isSpecification="false" child="ovE3rckVNBOl" visibility="public" namespace="1" xmi.id="Ukl3yXyDZonJ" parent="pETWaWEGDWxw" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesListRequest_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesListRequest_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToMigrateListRequest_xmiid" visibility="public" namespace="1" xmi.id="FilesListRequest_FilesToMigrateListRequest_xmiid" parent="FilesListRequest_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToRecallListRequest_xmiid" visibility="public" namespace="1" xmi.id="FilesListRequest_FilesToRecallListRequest_xmiid" parent="FilesListRequest_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="BaseFileInfoStruct_xmiid" visibility="public" namespace="1" xmi.id="IObject_BaseFileInfoStruct_xmiid" parent="960" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="BaseFileInfoStruct_xmiid" visibility="public" namespace="1" xmi.id="IStreamable_BaseFileInfoStruct_xmiid" parent="1216" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileToMigrateStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileToMigrateStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileToRecallStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileToRecallStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileMigratedNotificationStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileMigratedNotificationStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileRecalledNotificationStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileRecalledNotificationStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileErrorReportStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileErrorReportStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToMigrateList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesToMigrateList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToRecallList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesToRecallList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileMigrationReportList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FileMigrationReportList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileRecallReportList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FileRecallReportList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
       <diagrams>

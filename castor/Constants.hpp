@@ -234,7 +234,19 @@ namespace castor {
     OBJ_FileResult = 194,
     OBJ_DiskPoolQuery = 195,
 
-    OBJ_EndNotificationFileErrorReport = 196
+    OBJ_EndNotificationFileErrorReport = 196,
+    OBJ_FileMigrationReportList = 197,
+    OBJ_FileRecallReportList = 198,
+    OBJ_FilesToMigrateList = 199,
+    OBJ_FilesToMigrateListRequest = 200,
+    OBJ_FilesToRecallListRequest = 201,
+    OBJ_FileErrorReportStruct = 202,
+    OBJ_FileMigratedNotificationStruct = 203,
+    OBJ_FileRecalledNotificationStruct = 204,
+    OBJ_FilesToRecallList = 205,
+    OBJ_FileToMigrateStruct = 206,
+    OBJ_FileToRecallStruct = 207,
+    OBJ_FilesListRequest = 208
 
   };
 
@@ -309,7 +321,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 196
+#define OBJECT_IDS_NB 209
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
