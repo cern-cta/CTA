@@ -2235,6 +2235,12 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="gWMsv3j8aRzm" aggregation="none" type="qxGN7s2xrw8M" name="" />
        </UML:Association.connection>
       </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="positionCommandCode_BaseFileInfoStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="positionCommandCode_BaseFileInfoStruct_none1_xmiid" aggregation="none" type="BKtpKIU9pYtL" name="positionCommandCode" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="positionCommandCode_BaseFileInfoStruct_none2_xmiid" aggregation="none" type="BaseFileInfoStruct_xmiid" name="" />
+       </UML:Association.connection>
+      </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="GWXJgZfsqnFF" client="2MEJAPRljyXW" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="QozEbDT9CgBf" client="2MEJAPRljyXW" name="" supplier="960" />
       <UML:Generalization isSpecification="false" child="qxGN7s2xrw8M" visibility="public" namespace="1" xmi.id="LKpVz0BLTwxE" parent="2MEJAPRljyXW" discriminator="" name="" />

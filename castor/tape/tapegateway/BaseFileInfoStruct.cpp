@@ -25,6 +25,7 @@
 // Include Files
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/BaseFileInfoStruct.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -36,7 +37,8 @@ castor::tape::tapegateway::BaseFileInfoStruct::BaseFileInfoStruct() throw() :
   m_fileTransactionId(0),
   m_nshost(""),
   m_fileid(0),
-  m_fseq(0) {
+  m_fseq(0),
+  m_positionCommandCode(PositionCommandCode(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -63,6 +65,7 @@ void castor::tape::tapegateway::BaseFileInfoStruct::print(std::ostream& stream,
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
 }
 
 //------------------------------------------------------------------------------

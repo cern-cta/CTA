@@ -37,6 +37,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -94,6 +95,7 @@ void castor::io::StreamFileRecalledNotificationStructCnv::createRep(castor::IAdd
   ad->stream() << obj->checksum();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->id();
+  ad->stream() << obj->positionCommandCode();
 }
 
 //------------------------------------------------------------------------------
@@ -133,6 +135,9 @@ castor::IObject* castor::io::StreamFileRecalledNotificationStructCnv::createObj(
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int positionCommandCode;
+  ad->stream() >> positionCommandCode;
+  object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);
   return object;
 }
 

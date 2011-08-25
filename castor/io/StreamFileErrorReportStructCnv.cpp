@@ -38,6 +38,7 @@
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -93,6 +94,7 @@ void castor::io::StreamFileErrorReportStructCnv::createRep(castor::IAddress* add
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
+  ad->stream() << obj->positionCommandCode();
 }
 
 //------------------------------------------------------------------------------
@@ -126,6 +128,9 @@ castor::IObject* castor::io::StreamFileErrorReportStructCnv::createObj(castor::I
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int positionCommandCode;
+  ad->stream() >> positionCommandCode;
+  object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);
   return object;
 }
 

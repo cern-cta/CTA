@@ -27,6 +27,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -137,6 +138,22 @@ namespace castor {
           m_fseq = new_var;
         }
 
+        /**
+         * Get the value of m_positionCommandCode
+         * @return the value of m_positionCommandCode
+         */
+        PositionCommandCode positionCommandCode() const {
+          return m_positionCommandCode;
+        }
+
+        /**
+         * Set the value of m_positionCommandCode
+         * @param new_var the new value of m_positionCommandCode
+         */
+        void setPositionCommandCode(PositionCommandCode new_var) {
+          m_positionCommandCode = new_var;
+        }
+
       private:
 
         u_signed64 m_fileTransactionId;
@@ -146,6 +163,8 @@ namespace castor {
         u_signed64 m_fileid;
 
         int m_fseq;
+
+        PositionCommandCode m_positionCommandCode;
 
       }; /* end of class BaseFileInfoStruct */
 
