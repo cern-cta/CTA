@@ -2119,7 +2119,7 @@ int  sropen(int     s,
   return fd;
 }
 
-// useful function to answer the client
+/* useful function to answer the client */
 int rfio_calls_answer_client_internal
 (char* rqstbuf, int code, int status, int s) {
   char* p;

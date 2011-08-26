@@ -517,7 +517,7 @@ int rfio_HsmIf_read(int fd, void *buffer, int size) {
   (void)fd;
   (void)buffer;
   int rc = -1;
-  // For CASTOR HSM this is a no-op.
+  /* For CASTOR HSM this is a no-op. */
   rc = size;
   return(rc);
 }
@@ -599,7 +599,7 @@ int rfio_HsmIf_write(int fd, void *buffer, int size) {
   (void)fd;
   (void)buffer;
   int rc = -1;
-  // For CASTOR HSM this is a no-op.
+  /* For CASTOR HSM this is a no-op. */
   rc = size;
   return(rc);
 }
@@ -618,7 +618,7 @@ int rfio_HsmIf_IOError(int fd, int errorcode) {
   (void)fd;
   (void)errorcode;
   int rc = -1;
-  // Should handle ENOSPC on write here
+  /* Should handle ENOSPC on write here */
   rc = 0;
   return(rc);
 }

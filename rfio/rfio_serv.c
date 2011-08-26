@@ -673,20 +673,22 @@ int doit(int      s,
 
     /* Connection could be done from another castor service */
 
-    //   if ((Csec_service_type = Csec_isIdAService(Csec_mech, Csec_auth_id)) >= 0) {
-    //If one we consider working with trusted hosts the code should be added here
-    //IsTrustedHost then Csec_server_getAuthorizationId & mapToLocalUser
-    //   log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
-    //  }
-    //  else {
+    /*    if ((Csec_service_type = Csec_isIdAService(Csec_mech, Csec_auth_id)) >= 0) {
+     * If one we consider working with trusted hosts the code should be added here
+     * IsTrustedHost then Csec_server_getAuthorizationId & mapToLocalUser
+     *    log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
+     *   }
+     *   else {
+     */
     if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
                             username, CA_MAXUSRNAMELEN,
                             &peer_uid, &peer_gid) < 0) {
       log(LOG_ERR, "CSEC: Could not map user %s/%s from %s [%d]\n", Csec_mech, Csec_auth_id,from_host,from_port);
     }
-    //  closesocket(s);
-    //  exit(1);
-    // }
+    /*  closesocket(s);
+     *  exit(1);
+     * }
+     */
     /*Checking if the user just mapped match with the same that started the request */
     if(peer_uid != uid) {
       log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);

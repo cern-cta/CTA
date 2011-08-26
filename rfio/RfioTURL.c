@@ -111,7 +111,7 @@ int rfioTURLFromString(
   RfioTURL_t _tURL;
   int ret;
   char *path1, *path2, *mySvcClass;
-  //void ** auxPointer=0;
+  /* void ** auxPointer=0; */
   char endMark;
 
   char ** globalHost,  **globalSvc;
@@ -214,13 +214,13 @@ int rfioTURLFromString(
 
   q=strstr(p,"?");
   if (!q){
-    // no parameters specified
+    /* no parameters specified */
     path1=p;
   }
-  else{  // parameters to parse
+  else{  /* parameters to parse */
 
     if(p==q){
-      // no path after the port number
+      /* no path after the port number */
       path1=NULL;
       *p='\0';
       p++;
@@ -233,13 +233,13 @@ int rfioTURLFromString(
 
     mySvcClass=strstr(p,"svcClass=");
     if (mySvcClass){
-      mySvcClass+=9; // to remove "svcClass="
+      mySvcClass+=9; /* to remove "svcClass=" */
 
     }
 
     path2=strstr(p,"path=");
     if (path2){
-      path2+=5; // to remove "path="
+      path2+=5; /* to remove "path=" */
 
     }
 
@@ -255,11 +255,11 @@ int rfioTURLFromString(
   }
 
   if (path2)
-    path1=NULL;  // if I have the path given as option is ignored the other one.
+    path1=NULL;  /* if I have the path given as option is ignored the other one. */
 
 
   if (!path1 && !path2 ){
-    // at least the path should be specified
+    /* at least the path should be specified */
     serrno = EINVAL;
     free(orig);
     return(-1);

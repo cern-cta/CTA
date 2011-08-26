@@ -158,7 +158,7 @@ int rfio_smstat(int s,
   struct passwd *pw_tmp;
   struct passwd *pw = NULL;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(buf, 0, BUFSIZ);
 
   INIT_TRACE("RFIO_TRACE");
@@ -276,7 +276,7 @@ int rfio_end()
   char *p=buf ;
   int rc = 0;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(buf, 0, RQSTSIZE);
 
   INIT_TRACE("RFIO_TRACE");
@@ -334,7 +334,7 @@ static int rfio_end_this(int s,
   char *p=buf ;
   int rc = 0;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(buf, 0, RQSTSIZE);
 
   Cglobals_getTid(&Tid);
@@ -645,7 +645,7 @@ int rfio_smstat64(int s,
   struct      passwd *pw_tmp;
   struct      passwd *pw = NULL;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(buf, 0, BUFSIZ);
 
   INIT_TRACE("RFIO_TRACE");

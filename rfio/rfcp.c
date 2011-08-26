@@ -653,7 +653,7 @@ void usage()
 void copyfile_stglog(int type,
                      char *msg)
 {
-  if (type == 1) {   // MSG_ERR
+  if (type == 1) {   /* MSG_ERR */
     fprintf(stderr, "%s", msg);
   } else {
     /* Cosmetics: stager logs usually contains already a new line */
