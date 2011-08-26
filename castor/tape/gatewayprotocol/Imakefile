@@ -25,6 +25,8 @@ AddLdFlags(-lstdc++)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
+  ../tapegateway/BaseFileInfoStruct.cpp \
+  ../tapegateway/ClientType.cpp \
   ../tapegateway/DumpNotification.cpp \
   ../tapegateway/DumpParameters.cpp \
   ../tapegateway/DumpParametersRequest.cpp \
@@ -32,11 +34,23 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/EndNotificationErrorReport.cpp \
   ../tapegateway/EndNotificationFileErrorReport.cpp \
   ../tapegateway/FileErrorReport.cpp \
+  ../tapegateway/FileErrorReportStruct.cpp \
+  ../tapegateway/FilesListRequest.cpp \
   ../tapegateway/FileMigratedNotification.cpp \
+  ../tapegateway/FileMigratedNotificationStruct.cpp \
+  ../tapegateway/FileMigrationReportList.cpp \
   ../tapegateway/FileRecalledNotification.cpp \
+  ../tapegateway/FileRecalledNotificationStruct.cpp \
+  ../tapegateway/FileRecallReportList.cpp \
+  ../tapegateway/FilesToMigrateList.cpp \
+  ../tapegateway/FilesToMigrateListRequest.cpp \
+  ../tapegateway/FilesToRecallList.cpp \
+  ../tapegateway/FilesToRecallListRequest.cpp \
   ../tapegateway/FileToMigrate.cpp \
+  ../tapegateway/FileToMigrateStruct.cpp \
   ../tapegateway/FileToMigrateRequest.cpp \
   ../tapegateway/FileToRecall.cpp \
+  ../tapegateway/FileToRecallStruct.cpp \
   ../tapegateway/FileToRecallRequest.cpp \
   ../tapegateway/GatewayMessage.cpp \
   ../tapegateway/NoMoreFiles.cpp \
@@ -45,21 +59,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/PositionCommandCode.cpp \
   ../tapegateway/Volume.cpp \
   ../tapegateway/VolumeMode.cpp \
-  ../tapegateway/ClientType.cpp \
-  ../tapegateway/VolumeRequest.cpp \
-  ../tapegateway/BaseFileInfoStruct.cpp \
-  ../tapegateway/FileErrorReportStruct.cpp \
-  ../tapegateway/FileMigratedNotificationStruct.cpp \
-  ../tapegateway/FileMigrationReportList.cpp \
-  ../tapegateway/FileRecalledNotificationStruct.cpp \
-  ../tapegateway/FileRecallReportList.cpp \
-  ../tapegateway/FilesToMigrateList.cpp \
-  ../tapegateway/FilesToMigrateListRequest.cpp \
-  ../tapegateway/FilesToRecallList.cpp \
-  ../tapegateway/FilesToRecallListRequest.cpp \
-  ../tapegateway/FileToMigrateStruct.cpp \
-  ../tapegateway/FileToRecallStruct.cpp \
-  ../tapegateway/FilesListRequest.cpp
+  ../tapegateway/VolumeRequest.cpp
 
 TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamDumpNotificationCnv.cpp \
@@ -69,28 +69,28 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamEndNotificationErrorReportCnv.cpp \
   ../../io/StreamEndNotificationFileErrorReportCnv.cpp \
   ../../io/StreamFileErrorReportCnv.cpp \
+  ../../io/StreamFileErrorReportStructCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
+  ../../io/StreamFileMigrationReportListCnv.cpp \
   ../../io/StreamFileRecalledNotificationCnv.cpp \
+  ../../io/StreamFileRecalledNotificationStructCnv.cpp \
+  ../../io/StreamFileRecallReportListCnv.cpp \
   ../../io/StreamFileToMigrateCnv.cpp \
+  ../../io/StreamFileToMigrateStructCnv.cpp \
   ../../io/StreamFileToMigrateRequestCnv.cpp \
   ../../io/StreamFileToRecallCnv.cpp \
   ../../io/StreamFileToRecallRequestCnv.cpp \
-  ../../io/StreamNoMoreFilesCnv.cpp \
-  ../../io/StreamNotificationAcknowledgeCnv.cpp \
-  ../../io/StreamPingNotificationCnv.cpp \
-  ../../io/StreamVolumeCnv.cpp \
-  ../../io/StreamVolumeRequestCnv.cpp \
-  ../../io/StreamFileMigrationReportListCnv.cpp \
-  ../../io/StreamFileRecallReportListCnv.cpp \
+  ../../io/StreamFileToRecallStructCnv.cpp \
+  ../../io/StreamFilesListRequestCnv.cpp \
   ../../io/StreamFilesToMigrateListCnv.cpp \
   ../../io/StreamFilesToMigrateListRequestCnv.cpp \
   ../../io/StreamFilesToRecallListCnv.cpp \
   ../../io/StreamFilesToRecallListRequestCnv.cpp \
-  ../../io/StreamFileErrorReportStructCnv.cpp \
-  ../../io/StreamFileRecalledNotificationStructCnv.cpp \
-  ../../io/StreamFileToRecallStructCnv.cpp \
-  ../../io/StreamFileToMigrateStructCnv.cpp \
-  ../../io/StreamFilesListRequestCnv.cpp
+  ../../io/StreamNoMoreFilesCnv.cpp \
+  ../../io/StreamNotificationAcknowledgeCnv.cpp \
+  ../../io/StreamPingNotificationCnv.cpp \
+  ../../io/StreamVolumeCnv.cpp \
+  ../../io/StreamVolumeRequestCnv.cpp
 
 TAPEGATEWAYPROTOCOLLIB_SRCS = \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
