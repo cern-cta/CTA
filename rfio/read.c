@@ -429,7 +429,7 @@ int rfio_filbuf(int     s,
   char     rfio_buf[BUFSIZ];
   int s_index;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(rfio_buf, 0, BUFSIZ);
 
   INIT_TRACE("RFIO_TRACE");
