@@ -27,8 +27,8 @@ int switch_open(int     *access,
                 LONG *trunc,
                 int  mod)
 {
-  (void)filen;
   int status;
+  (void)filen;
   switch ((int)*access) {
   case FFFACC_S:
     if (mod == LLTM)
