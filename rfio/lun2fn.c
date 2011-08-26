@@ -29,10 +29,8 @@
 
 extern char     *getenv();
 
-char *
-lun2fn(lun)                     /* find file name corresponding to lun  */
-     int     lun;
-{
+/* find file name corresponding to lun  */
+char *lun2fn(int lun) {
   char    *afile;         /* assign file name                     */
   FILE    *fp;            /* a file pointer                       */
   char    *p, *p1;        /* character pointers                   */
