@@ -57,7 +57,7 @@ static int tURLPrefixLenKey = -1;
 int tStageHostKey = -1;
 int tStagePortKey = -1;
 int tSvcClassKey = -1;
-// functions used only in this file.
+/* functions used only in this file. */
 
 static int checkAlphaNum(char *p)
 {
