@@ -17,7 +17,7 @@
 #include <stdlib.h>            /* malloc prototype */
 
 
-// Forward declarations
+/* Forward declarations */
 int rfio_close_v2(int s);
 
 /*
@@ -52,7 +52,7 @@ int rfio_close_v2(int     s)
   int temp= 0 ;  /* A temporary buffer has been allocated */
   int s_index;
 
-  // Avoiding Valgrind error messages about uninitialized data
+  /* Avoiding Valgrind error messages about uninitialized data */
   memset(rfio_buf, 0, BUFSIZ);
 
   INIT_TRACE("RFIO_TRACE");
