@@ -230,7 +230,9 @@ static int rfio_parseln_old(char    *name,
       return(0);
     }
     {
+#ifdef NFSROOT
       int sav_serrno = serrno;
+#endif
       cp2 = getconfent("RFIO","NFS_ROOT", 0);
 #ifdef NFSROOT
       if (cp2 == NULL) {
