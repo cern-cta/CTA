@@ -73,7 +73,7 @@ if not curdir.endswith('upgrades'):
         sys.exit(1)
 
 # version handling
-class Version():
+class Version:
     '''A Castor version object able to parse versions and build a tag out of it'''
     def __init__(self, value):
         '''constructor, able to parse string versions'''
