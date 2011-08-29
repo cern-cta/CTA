@@ -1437,12 +1437,12 @@ void *tapeIOthread(void *arg) {
 
     uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
 
-    /* The value of maxBytesBeforeFlush is only applicable if tapeFlushMode is */
-    /* TAPEBRIDGE_N_FLUSHES_PER_FILE                                           */
+    /* The value of maxBytesBeforeFlush is only applicable if tapeFlushMode */
+    /* is TAPEBRIDGE_N_FLUSHES_PER_FILE                                     */
     uint64_t maxBytesBeforeFlush = 0;
 
-    /* The value of maxFilesBeforeFlush is only applicable if tapeFlushMode is */
-    /* TAPEBRIDGE_N_FLUSHES_PER_FILE                                           */
+    /* The value of maxFilesBeforeFlush is only applicable if tapeFlushMode */
+    /* is TAPEBRIDGE_N_FLUSHES_PER_FILE                                     */
     uint64_t maxFilesBeforeFlush = 0;
 
     extern char *u64tostr (u_signed64, char *, int);
@@ -1695,8 +1695,10 @@ void *tapeIOthread(void *arg) {
                         /* to tape has now been flushed to tape              */
                         memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
                         memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
-                        flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
-                        flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        flushedMsgBody.volReqId =
+                          nextfile->prev->filereq.VolReqID;
+                        flushedMsgBody.tapeFseq =
+                          nextfile->prev->filereq.tape_fseq;
                         rc = tapebridge_sendTapeBridgeFlushedToTape(
                             client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
                         if(0 > rc) {
