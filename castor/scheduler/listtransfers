@@ -193,7 +193,7 @@ def processHostListing():
   '''retrieves and display summary of the running transfers per host for the given diskpool and user'''
   summaryreport = rpconn.root.summarizeTransfersPerHost(reqdiskpool, requser, extra)
   # compute the max length of the machine names we got and deduce the title and printf args
-  maxMachineNameLen = max([len(s[0]) for s in summaryreport])
+  maxMachineNameLen = max([0] + [len(s[0]) for s in summaryreport])
   machineHead = 'DISKSERVER ' + ' '*(maxMachineNameLen-10)
   machineHeadLen = max(maxMachineNameLen+1, 11)
   if extra:
@@ -255,7 +255,7 @@ def processDiskPoolListing():
   '''retrieves and display summary of the running transfers per diskpool for the given diskpool and user'''
   summaryreport = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
   # compute the max length of the diskpools we got and deduce the title and printf args
-  maxDiskPoolNameLen = max([len(s[0]) for s in summaryreport])
+  maxDiskPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
   diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-5)
   diskpoolHeadLen = max(maxDiskPoolNameLen+4, 12)
   # depending on the extra flag, the output will differ
