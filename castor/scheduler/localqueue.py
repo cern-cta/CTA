@@ -354,7 +354,7 @@ class LocalQueue(Queue.Queue):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', protocol, rawtransfer, arrivalTime, None))
+          res.append((transfer[0], rawtransfer[6], scheduler, user, 'PEND', protocol, arrivalTime, None))
           n = n + 1
           if n >= 100: # give up with full listing if too many transfers
             break
