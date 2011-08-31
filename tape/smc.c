@@ -13,6 +13,7 @@
 #include "rmc_api.h"
 #include "serrno.h"
 #include "smc.h"
+#include "getconfent.h"
 			/* exit codes */
 
 #define	USERR	1
@@ -48,6 +49,8 @@ int smc_qdrive (char *rmchost,
 	int nbelem;
 	char *pstatus;
 	struct smc_status smc_status;
+        char *smcLibraryType;
+        char useSpectraLib;
  
 	if (drvord < 0) {
 		drvord = 0;
@@ -76,12 +79,20 @@ int smc_qdrive (char *rmchost,
 	}
 	if (verbose)
 		printf ("Drive Ordinal\tElement Addr.\tStatus\t\tVid\n");
+
+        useSpectraLib=0;
+        smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
+        if (NULL != smcLibraryType && 
+            0 == strcasecmp(smcLibraryType,"SPECTRA")) {
+          useSpectraLib = 1;
+        }
+ 
 	for (i = 0; i < c; i++) {
 		if (((element_info+i)->state & 0x1) == 0)
 			pstatus = "free";
 		else if ((element_info+i)->state & 0x4)
 			pstatus = "error";
-		else if ((element_info+i)->state & 0x8)
+		else if ((element_info+i)->state & 0x8 && !useSpectraLib)
 			pstatus = "unloaded";
 		else
 			pstatus = "loaded";

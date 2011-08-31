@@ -75,7 +75,7 @@ get_element_size(int fd,
                             char *rbtdev,
                             int type)
 {
-	unsigned char buf[16];
+	unsigned char buf[128];
 	unsigned char cdb[12];
 	char *msgaddr;
 	int nb_sense_ret;
@@ -84,16 +84,16 @@ get_element_size(int fd,
 	int voltag = 0x10;
         int pause_mode = 1;
         int nretries = 0;
- 
+
  	memset (cdb, 0, sizeof(cdb));
  	cdb[0] = 0xB8;		/* read element status */
- 	cdb[1] = voltag + type;
- 	cdb[5] = 0;
- 	cdb[9] = 16;
+ 	cdb[1] = voltag + type; /* we request volume tag info and this type */
+ 	cdb[5] = 1;             /* we only need one element */
+ 	cdb[9] = 128;           /* limit for the report */
 
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
- 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 16,
+ 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 128,
  		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
                if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -278,6 +278,7 @@ int smc_get_geometry(int fd,
 	robot_info->inquiry[28] = '\0';
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x1A;		/* mode sense */
+        cdb[1] = 0x08;          /* DBD bit - Disable block descriptors */
 	cdb[2] = 0x1D;		/* element address assignment page */
 	cdb[4] = 24;
         pause_mode = 1;
@@ -445,13 +446,13 @@ int smc_find_cartridge(int fd,
         }
 
 	if (rc < 0) {
+                save_error (rc, nb_sense_ret, sense, msgaddr);
 		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
 			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
 			    start, nbelem, element_info);
 			if (rc >= 0)
 				RETURN (rc);
 		}
-		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
 	}
 	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
