@@ -146,6 +146,8 @@ class ConnectionPool(object):
             if gotException:
               if isinstance(e, exceptions.ReferenceError):
                 raise Timeout()
+              else:
+                raise
             else:
               gotException = True
       except Exception, e:
