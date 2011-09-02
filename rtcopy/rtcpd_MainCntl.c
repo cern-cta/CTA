@@ -2432,6 +2432,20 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       "Error"  , TL_MSG_PARAM_STR, errmsg);
   }
 
+  /* Log the "mount transaction id" / "volume request id" */
+  /* (they are synonyms)                                  */
+  {
+    char logMsg[128];
+
+    snprintf(logMsg, sizeof(logMsg), "mountTransactionId=%u volReqId=%u",
+      client->VolReqID, client->VolReqID);
+    logMsg[sizeof(logMsg) - 1] = '\0';
+    rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+      "Message", TL_MSG_PARAM_STR, logMsg);
+  }
+
   /* Log whether or not the client is tapebridged */
   {
     char *const logMsg = clientIsTapeBridge ?
