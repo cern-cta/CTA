@@ -52,21 +52,13 @@ const castor::tape::tpcp::Action castor::tape::tpcp::Action::dump(
 
 
 //------------------------------------------------------------------------------
-// verify
-//------------------------------------------------------------------------------
-const castor::tape::tpcp::Action castor::tape::tpcp::Action::verify(
-  castor::tape::tpcp::Action::VERIFY, "VERIFY");
-
-
-//------------------------------------------------------------------------------
 // s_objects
 //------------------------------------------------------------------------------
 const castor::tape::tpcp::Action *castor::tape::tpcp::Action::s_objects[]
   = {
   &castor::tape::tpcp::Action::read,
   &castor::tape::tpcp::Action::write,
-  &castor::tape::tpcp::Action::dump,
-  &castor::tape::tpcp::Action::verify
+  &castor::tape::tpcp::Action::dump
 };
 
 

@@ -61,7 +61,7 @@ namespace tpcp   {
  * <li>Sends the request for a drive to the VDQM.
  * <li>Waits for the callback from the tape-bridge on the chosen tape server.
  * <li>Receives and replies to the volume request from the tape-bridge.
- * <li>Delegates the tape transfer action (DUMP, READ, WRITE or VERIFY) to a
+ * <li>Delegates the tape transfer action (DUMP, READ or WRITE) to a
  *     sub-class.
  * </ul>
  *
@@ -133,7 +133,7 @@ protected:
   /**
    * To be implemented by sub-classes.
    *
-   * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
+   * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
   virtual void performTransfer() throw(castor::exception::Exception) = 0;
 

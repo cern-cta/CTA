@@ -341,8 +341,8 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
       throw ex;
     }
 
-    // RFIO stat the directory to which the first file to be recalled file
-    // will be written to in order to check the RFIO daemon is running
+    // RFIO stat the directory to which the first file to be recalled will be
+    // written, in order to check the RFIO daemon is running
     {
       FilenameList::const_iterator itor = m_filenames.begin();
 
@@ -493,21 +493,92 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
       m_groupId, m_hostname);
   }
 
-  // Check the tape is available
-  if(m_vmgrTapeInfo.status & DISABLED ||
-     m_vmgrTapeInfo.status & EXPORTED ||
-     m_vmgrTapeInfo.status & ARCHIVED) {
+  // Check the tape is available taking into account the type of action
+  switch(m_cmdLine.action.value()) {
+  case Action::READ:
+    {
+      const bool userIsTapeOperator =
+        Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
+          P_TAPE_OPERATOR) == 0 ||
+        Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
+          P_TAPE_OPERATOR) == 0;
 
-     castor::exception::Exception ex(ECANCELED);
-     std::ostream &os = ex.getMessage();
+      // Only tape-operators can read disabled tapes
+      if(m_vmgrTapeInfo.status & DISABLED) {
+        if(!userIsTapeOperator) {
+          castor::exception::Exception ex(ECANCELED);
+          std::ostream &os = ex.getMessage();
+          os << "Tape is not available for reading"
+            ": Tape is DISABLED and user is not a tape-operator";
+          throw ex;
+        }
+      }
 
-     os << "Tape is not available: Tape is: ";
+      if(m_vmgrTapeInfo.status & EXPORTED ||
+        m_vmgrTapeInfo.status & ARCHIVED) {
+        castor::exception::Exception ex(ECANCELED);
+        std::ostream &os = ex.getMessage();
+        os << "Tape is not available for reading"
+          ": Tape is";
+        if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+        if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+        throw ex;
+      }
+    }
+    break;
+  case Action::WRITE:
+    if(m_vmgrTapeInfo.status & DISABLED ||
+       m_vmgrTapeInfo.status & EXPORTED ||
+       m_vmgrTapeInfo.status & ARCHIVED) {
+       castor::exception::Exception ex(ECANCELED);
+       std::ostream &os = ex.getMessage();
+       os << "Tape is not available for writing"
+         ": Tape is";
+       if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
+       if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+       if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
 
-     if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
-     if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
-     if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+       throw ex;
+    }
+    break;
+  case Action::DUMP:
+    {
+      const bool userIsTapeOperator =
+        Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
+          P_TAPE_OPERATOR) == 0 ||
+        Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
+          P_TAPE_OPERATOR) == 0;
 
-     throw ex;
+      // Only tape-operators can dump disabled tapes
+      if(m_vmgrTapeInfo.status & DISABLED) {
+        if(!userIsTapeOperator) {
+          castor::exception::Exception ex(ECANCELED);
+          std::ostream &os = ex.getMessage();
+          os << "Tape is not available for dumping"
+            ": Tape is DISABLED and user is not a tape-operator";
+          throw ex;
+        }
+      }
+
+      if(m_vmgrTapeInfo.status & EXPORTED ||
+         m_vmgrTapeInfo.status & ARCHIVED) {
+         castor::exception::Exception ex(ECANCELED);
+         std::ostream &os = ex.getMessage();
+         os << "Tape is not available for dumping"
+           ": Tape is";
+         if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+         if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+         throw ex;
+      }
+    }
+    break;
+  default:
+    {
+      // Should never get here
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Unknown action for comand-line tool"
+        ": action.value()=" << m_cmdLine.action.value());
+    }
   }
 
   // Check if the access mode of the tape is compatible with the action to be

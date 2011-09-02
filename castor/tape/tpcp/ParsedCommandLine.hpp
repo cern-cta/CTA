@@ -45,7 +45,7 @@ namespace tpcp   {
  */
 struct ParsedCommandLine {
   /**
-   * The action to be performed: READ, WRITE, DUMP or VERIFY.
+   * The action to be performed: DUMP, READ or WRITE.
    */
   Action action;
 

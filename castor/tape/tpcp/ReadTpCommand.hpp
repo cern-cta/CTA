@@ -70,7 +70,7 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
+   * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
   void performTransfer() throw(castor::exception::Exception);
 

@@ -62,13 +62,12 @@ public:
     READ,
     WRITE,
     DUMP,
-    VERIFY,
 
     // MIN and MAX are used to check whether or not an integer N
     // is within the valid range of Action enumeration values:
     // MIN <= N <= MAX
     MIN = READ,
-    MAX = VERIFY};
+    MAX = DUMP};
 
   /**
    * The value read.
@@ -84,11 +83,6 @@ public:
    * The value dump.
    */
   const static Action dump;
-
-  /**
-   * The value verify.
-   */
-  const static Action verify;
 
   /**
    * Returns the calss enumeration object for the specified string.
