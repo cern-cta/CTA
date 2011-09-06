@@ -15,6 +15,8 @@
 #include "serrno.h"
 #include "smc.h"
 #include "sendscsicmd.h"
+#include "getconfent.h"
+
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
 static char *smc_msgaddr;
@@ -416,8 +418,22 @@ int smc_find_cartridge(int fd,
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
+        char *smcLibraryType;
 
 	ENTRY (find_cartridge);
+        
+        /* for Spectra like library we will skip 0xB6 cdb command as soon as
+           is does not supported to speed up the function */
+        smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
+        if (NULL != smcLibraryType &&
+            0 == strcasecmp(smcLibraryType,"SPECTRA")) {
+          rc = smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem,
+                                    element_info);
+          if (rc >= 0)
+            RETURN (rc);
+          RETURN (-1);  
+        }
+
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xB6;		/* send volume tag */
 	cdb[1] = type;
