@@ -2861,14 +2861,10 @@ BEGIN
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(i);
-    IF dcStatus = 1 THEN
-      NULL;  -- Do nothing
-    ELSE
-      UPDATE DiskCopy
-         -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-         SET status = decode(status, 2,4, 5,4, 11,4, 7)
-       WHERE id = dcsToRm(i);
-    END IF;
+    UPDATE DiskCopy
+       -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+       SET status = decode(status, 2,4, 5,4, 11,4, 7)
+     WHERE id = dcsToRm(i);
   END LOOP;
   ret := 1;  -- ok
 END;

@@ -431,8 +431,8 @@ BEGIN
   -- occurred and the new copy should not be kept
   --
   -- In all cases we invalidate the new copy!
-  IF (srcFsId IS NULL) OR
-     (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
+  IF (srcFsId = -1) OR
+     (srcFsId != -1 AND fileSize != replicaFileSize) THEN
     -- Begin the process of invalidating the file replica
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile INTO cfId;
