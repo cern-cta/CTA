@@ -453,9 +453,11 @@ class ServerQueue(dict):
       # it could happen that the transfer has already been started on another machine
       # and is already gone. We can safely ignore
       if transferid in self.transfersLocations:
-        # Remove the machines where the transfer could not start from the transfer's locations
+        # Remove the machines where the transfer could not start from
+        # the transfer's locations and machine's queues
         for machine in machines:
           self.transfersLocations[transferid].remove(machine)
+          del self[machine][transferid]
           if not self.transfersLocations[transferid]:
             # no other candidate machine for this transfer. It has to be failed
             ret = True
@@ -464,8 +466,6 @@ class ServerQueue(dict):
             # if we have a source transfer already running, stop it
             if transferid in self.d2dsrcrunning:
               self.d2dend(transferid, reqid, transferCancelation=True)
-            # drop the transfer id from the machine queue
-            del self[machine][transferid]
     finally:
       self.lock.release()
     return ret
