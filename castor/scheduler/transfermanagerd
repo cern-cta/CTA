@@ -618,7 +618,7 @@ try:
     # global cache on the list of diskservers
     diskServerList = DiskServerListCache()
     # create a connection pool for connections to the DiskServers
-    connections = connectionpool.ConnectionPool()
+    connections = connectionpool.ConnectionPool(msgs)
     # a dictionnary holding the list of transfers submitted by us and still queueing for each diskserver
     queueingTransfers = serverqueue.ServerQueue(connections)
     # initialize the queues of pending and running transfers using the knowledge of the diskservers

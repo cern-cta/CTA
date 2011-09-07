@@ -48,7 +48,7 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
                 'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS',
                 'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED',
-                'D2DENDEXCEPTION')
+                'D2DENDEXCEPTION', 'CONNLOST')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -107,5 +107,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.SYNCDBWITHD2DSRC : 'Synchronizing stager DB with running d2d sources',
                  msgs.COULDNOTCONTACTTM : 'Could not contact transfer manager',
                  msgs.TRANSFERSTARTCONFIRMED : 'Transfer starting reconfirmed',
-                 msgs.D2DENDEXCEPTION : 'Unable to end d2d as it\'s not in the server list. Probable race condition'})
+                 msgs.D2DENDEXCEPTION : 'Unable to end d2d as it\'s not in the server list. Probable race condition',
+                 msgs.CONNLOST : 'Connection lost'})
 

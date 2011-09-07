@@ -399,7 +399,7 @@ try:
     # 'DiskManager Daemon started'
     dlf.write(msgs.DISKMANAGERDSTARTED)
     # create a connection pool for connections to the stagers
-    connections = connectionpool.ConnectionPool()
+    connections = connectionpool.ConnectionPool(msgs)
     # create a queue of transfers to be run
     transferQueue = localqueue.LocalQueue(connections)
     # create a list of running Transfers

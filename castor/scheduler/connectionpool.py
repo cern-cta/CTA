@@ -30,6 +30,7 @@ Handles a pool of cached rpyc connections to different nodes'''
 import rpyc, rpyc.core.netref
 import castor_tools
 import exceptions
+import dlf
 
 class Timeout(rpyc.core.async.AsyncResultTimeout):
   '''Our name for the timeout exception on asynchronous calls'''
@@ -48,8 +49,10 @@ def asyncreq(proxy, handler, *args):
 class ConnectionPool(object):
   '''Object handling a pool of connections to identical remote services'''
 
-  def __init__(self):
+  def __init__(self, msgs):
     '''constructor'''
+    # list of error msgs to be used. Needs to contain a CONNLOST message
+    self.msgs = msgs
     # the configuration of CASTOR
     self.config = castor_tools.castorConf()
     # cached connections
@@ -140,7 +143,9 @@ class ConnectionPool(object):
             result.set_expiry(timeout)
             return result.value
           except (exceptions.ReferenceError, EOFError), e:
-            # if connection was lost, drop it
+            # log the connection loss
+            dlf.writenotice(self.msgs.CONNLOST, machine=machine, errortype=str(e.__class__), message=str(e))
+            # as connection was lost, drop it
             self.close(machine)
             # and try again with a brand new connection, if it was our first attempt
             if gotException:
