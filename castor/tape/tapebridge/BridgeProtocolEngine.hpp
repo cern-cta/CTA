@@ -401,6 +401,18 @@ private:
     const int rtcpdSock) throw(castor::exception::Exception);
 
   /**
+   * Processes the specified RTCP waiting request.
+   *
+   * @param header    The header of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpWaiting(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
    * Processes the specified RTCP file request for more work.
    *
    * @param header    The header of the request.

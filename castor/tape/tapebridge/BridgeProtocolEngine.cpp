@@ -1131,6 +1131,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReq(
     processRtcpFileErrReqDump(header, rtcpdSock);
   } else {
     switch(body.rqst.procStatus) {
+    case RTCP_WAITING:
+      processRtcpWaiting(header, body, rtcpdSock);
+      break;
     case RTCP_REQUEST_MORE_WORK:
       processRtcpRequestMoreWork(header, body, rtcpdSock);
       break;
@@ -1159,6 +1162,74 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReqDump(
   const legacymsg::MessageHeader &header, const int rtcpdSock)
   throw(castor::exception::Exception) {
   // Simply reply with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = header.magic;
+  ackMsg.reqType     = header.reqType;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+    RTCPDNETRWTIMEOUT, ackMsg);
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpWaiting
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
+  const legacymsg::MessageHeader &header,
+  legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+  throw(castor::exception::Exception) {
+
+  // Log the reception of the message which may or may not contain an error.
+  // In the case there is an error do stop or throw an exception as rtcpd may
+  // retry internally and therefor ethe error is not fatal.
+
+  // If message does not contain an error
+  if(0 == body.rqst.cprc) {
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType()))};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        TAPEBRIDGE_RECEIVED_RTCP_WAITING, params);
+    }
+
+  // Else the message contains an error
+  } else {
+    // Determine the error code and message using the error appendix if there
+    // is one
+    int32_t     errorCode    = SEINTERNAL;
+    std::string errorMessage = "UNKNOWN";
+    if(body.err.errorCode != 0) {
+      errorCode    = body.err.errorCode;
+      errorMessage = body.err.errorMsg;
+    }
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("errorCode"         , errorCode              ),
+        castor::dlf::Param("errorMessage"      , errorMessage           )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        TAPEBRIDGE_RECEIVED_RTCP_WAITING_ERROR, params);
+    }
+  }
+
+  // Send an acknowledge to rtcpd
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
