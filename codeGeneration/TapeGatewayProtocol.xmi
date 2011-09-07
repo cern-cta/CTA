@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="" xmi.version="1.2" >
+ <XMI.header>
+  <XMI.documentation>
+   <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
+   <XMI.exporterVersion>1.5.8</XMI.exporterVersion>
+   <XMI.exporterEncoding>UnicodeUTF8</XMI.exporterEncoding>
+  </XMI.documentation>
+  <XMI.metamodel xmi.name="UML" href="UML.xml" xmi.version="1.3" />
+ </XMI.header>
+ 
+ <XMI.content>
+  <UML:Model isSpecification="false" isLeaf="false" isRoot="false" xmi.id="m1" isAbstract="false" name="UML Model" >
+   <UML:Namespace.ownedElement>
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="2" isRoot="false" isAbstract="false" name="2" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="131663" isRoot="false" isAbstract="false" name="131663" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="53499" isRoot="false" isAbstract="false" name="53499" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="53500" isRoot="false" isAbstract="false" name="class" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="53501" isRoot="false" isAbstract="false" name="enumeration" />
+    
+    <UML:Model stereotype="2" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="1" isRoot="false" isAbstract="false" name="Logical View" >
+     <UML:Namespace.ownedElement>
+
+      <!-- Maybe we will need to populate this section (or can drop it)-->
+      <UML:Package stereotype="2" isSpecification="false" isLeaf="false" visibility="public" namespace="1" xmi.id="130844" isRoot="false" isAbstract="false" name="Datatypes" >
+       <UML:Namespace.ownedElement>
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="137289" isRoot="false" isAbstract="false" name="string" />
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="153395" isRoot="false" isAbstract="false" name="unsigned char" />
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="133771" isRoot="false" isAbstract="false" name="int" />
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="131665" isRoot="false" isAbstract="false" name="u_signed64" />
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="153391" isRoot="false" isAbstract="false" name="IObject*" />
+       </UML:Namespace.ownedElement>
+      </UML:Package>
+
+      <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="1" xmi.id="2103" isRoot="false" isAbstract="false" name="castor" >
+       <UML:Namespace.ownedElement>
+        <UML:Interface stereotype="53499" comment="Base class for all objects Implements the id methods" isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="960" isRoot="false" isAbstract="true" name="IObject" >
+         <UML:Classifier.feature>
+          <UML:Operation comment="Sets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="961" isRoot="false" isAbstract="true" isQuery="false" name="setId" >
+           <UML:BehavioralFeature.parameter>
+            <UML:Parameter comment="The new id" isSpecification="false" visibility="private" xmi.id="1" value="" type="131665" name="id" />
+           </UML:BehavioralFeature.parameter>
+          </UML:Operation>
+          <UML:Operation comment="gets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="962" isRoot="false" isAbstract="true" isQuery="false" name="id const" >
+           <UML:BehavioralFeature.parameter>
+            <UML:Parameter kind="return" xmi.id="g4IlJGknYEne" type="131665" />
+           </UML:BehavioralFeature.parameter>
+          </UML:Operation>
+          <UML:Operation comment="Gets the type of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="968" isRoot="false" isAbstract="true" isQuery="false" name="type const" >
+           <UML:BehavioralFeature.parameter>
+            <UML:Parameter kind="return" xmi.id="qhFEzjNF6Obf" type="133771" />
+           </UML:BehavioralFeature.parameter>
+          </UML:Operation>
+          <UML:Operation comment="virtual method to clone any object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="56097" isRoot="false" isAbstract="true" isQuery="false" name="clone" >
+           <UML:BehavioralFeature.parameter>
+            <UML:Parameter kind="return" xmi.id="1noLgJRMLj7e" type="153391" />
+           </UML:BehavioralFeature.parameter>
+          </UML:Operation>
+         </UML:Classifier.feature>
+        </UML:Interface>
+        
+        <UML:Interface stereotype="53499" isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="1216" isRoot="false" isAbstract="true" name="IStreamable" />
+        
+        <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="vMrQYxT6LHjA" isRoot="false" isAbstract="false" name="tape" >
+         <UML:Namespace.ownedElement>
+          <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="vMrQYxT6LHjA" xmi.id="DTC53p2pEoO4" isRoot="false" isAbstract="false" name="tapegateway" >
+           <UML:Namespace.ownedElement>
+            <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="i9YaSaJQImNZ" isRoot="false" isAbstract="false" name="FileToRecall" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="h7DpgEfOkWYp" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="mbfsXEDu9UMR" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="AcPro1eX1Lwz" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="ZJu3wTeQgnXF" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="CBGZPNsZyGOm" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="F2HEMBDvS8zO" type="153395" name="blockId3" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="f4KlKF70BgwS" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="NpGbvphHKpS1" isRoot="false" isAbstract="false" name="FileToMigrate" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="tfvwnICtJM6V" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="2ltfiF8r5ANG" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="73CDBACpApKx" type="137289" name="lastKnownFilename" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="k29DremuNfX6" type="131665" name="lastModificationTime" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FEYzEuGVtPPl" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Ax4zAIAg6Uwz" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="tfaBPxinmzMf" isRoot="false" isAbstract="false" name="FileToRecallRequest" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="euII6cGTBvgq" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="B8NzFjMF0W0p" isRoot="false" isAbstract="false" name="VolumeRequest" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="rJumLTBheCMz" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="zAgrsvfO4qAy" type="137289" name="unit" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="h9uvz0EKYQWQ" isRoot="false" isAbstract="false" name="Volume" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="KKKllbDLZFrg" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="KCsHsro5EgId" type="137289" name="vid" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="TrM8j6jzvcS0" type="137289" name="density" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="xjJasaBHSb8g" type="137289" name="label" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="fnDdZMm401L3" isRoot="false" isAbstract="false" name="FileMigratedNotification" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="YODHOfdCyMdq" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="dIQDzK2MooCo" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="VNCerW57kc4w" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="WKSNkp9s8RNi" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="TexD9D1Nu25f" type="131665" name="compressedFileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Gr6ix55Xhqn3" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="8GcZzkN3hn8t" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="auHR0vcEkivi" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="m0DRo0UwE7TB" type="153395" name="blockId3" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="LP1rIvMfJkut" isRoot="false" isAbstract="false" name="FileToMigrateRequest" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="16OA140IiCPS" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="BKtpKIU9pYtL" isRoot="false" isAbstract="false" name="PositionCommandCode" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="DP6vSp4GPffX" initialValue="0" type="133771" name="TPPOSIT_FSEQ" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="tCxvDWYMoP97" initialValue="1" type="133771" name="TPPOSIT_FID" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="idGV97rKVvGx" initialValue="2" type="133771" name="TPPOSIT_EOI" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="4HZrgiyMKCsR" initialValue="3" type="133771" name="TPPOSIT_BLKID" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="EO42k2tEKIZB" isRoot="false" isAbstract="false" name="FileRecalledNotification" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="I5zGRa4YYOPj" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="YHYTTf9y1sFj" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="0wQEv4eRLCvm" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="s4ktuycVPx8n" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="kc8EkXdXt5W1" type="131665" name="fileSize" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="3EKjfICVy3zB" isRoot="false" isAbstract="false" name="TapeRequestStateCode" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="uQdy6qIQBDQ2" initialValue="0" type="133771" name="TO_BE_RESOLVED" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="H7btFagIm0zR" initialValue="1" type="133771" name="TO_BE_SENT_TO_VDQM" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="IBuGCsQ4I32M" initialValue="2" type="133771" name="WAITING_TAPESERVER" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="sLm3WC5oJgfW" initialValue="3" type="133771" name="ONGOING" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="jTd0BzkpDzFU" isRoot="false" isAbstract="false" name="EndNotification" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="fFyESnt6v2bQ" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="aH67aMNVAA3D" isRoot="false" isAbstract="false" name="NotificationAcknowledge" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="IfU8Rmy5LR3H" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="qmmnKfLk2dBy" isRoot="false" isAbstract="false" name="NoMoreFiles" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="4axN0yedRTHU" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="qxGN7s2xrw8M" isRoot="false" isAbstract="true" name="BaseFileInfo" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="LKpVz0BLTwxE" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="6vrxTbnF8S9e" type="131665" name="fileTransactionId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="nFyti8X1SZLB" type="137289" name="nshost" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="fpbvkv3yXJqy" type="131665" name="fileid" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="dDUvOwd9Ab0s" type="133771" name="fseq" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="pETWaWEGDWxw" isRoot="false" isAbstract="false" name="EndNotificationErrorReport" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="D0cewZqIrmKq" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="ktJYjeqgxNTC" type="133771" name="errorCode" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="j99xf7rNyAvi" type="137289" name="errorMessage" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="M99fL4RD7A4z" isRoot="false" isAbstract="false" name="FileErrorReport" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="tW2yg7ymjRJJ" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="8eVXadK5MLuc" type="133771" name="errorCode" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Dosz5MhRVr5r" type="137289" name="errorMessage" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="2MEJAPRljyXW" isRoot="false" isAbstract="true" name="GatewayMessage" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="gb2YUhXcJQa7" type="131665" name="mountTransactionId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="w8RSFDg6qQRJ" type="131665" name="aggregatorTransactionId" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="PQUPdN6bVi1B" isRoot="false" isAbstract="false" name="VolumeMode" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="ox5qvGd6VquT" initialValue="0" type="133771" name="READ" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="lx6JhQf6o7US" initialValue="1" type="133771" name="WRITE" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Ua10I094xFsq" initialValue="2" type="133771" name="DUMP" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="lOug3GirQgFy" isRoot="false" isAbstract="false" name="DumpNotification" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="BrWXy6djhjvR" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="tmLHP2qllMbl" type="137289" name="message" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="EQC1aje9Gvu7" isRoot="false" isAbstract="false" name="ClientType" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="po9vGm2s3FIX" initialValue="0" type="133771" name="TAPE_GATEWAY" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="XvP2ZrErQe2s" initialValue="1" type="133771" name="READ_TP" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="ChwGt9aiyjdE" initialValue="2" type="133771" name="WRITE_TP" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Ud4XsN4OIRQp" initialValue="3" type="133771" name="DUMP_TP" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="SELd2IcDH2ei" isRoot="false" isAbstract="false" name="PingNotification" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="osODikrCev21" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="T4O2lo5euSmc" isRoot="false" isAbstract="false" name="DumpParametersRequest" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="qaws0qdUszUc" />
+             </UML:GeneralizableElement.generalization>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="lQvBwvKCVtKO" isRoot="false" isAbstract="false" name="DumpParameters" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="jPrbPLDAsSqr" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="PPUrGJIPsBkM" type="133771" name="maxBytes" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="PA1CEloEPr8r" type="133771" name="blockSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="Jmha0uCQKeFY" type="133771" name="converter" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="wWvohd86n9Gz" type="133771" name="errAction" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="s5BFwJ7E6mo4" type="133771" name="startFile" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="hzSzbgVXCOJr" type="133771" name="maxFile" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="zSxmZEjSJuhD" type="133771" name="fromBlock" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="EmRIXEMCBn9m" type="133771" name="toBlock" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="IHLv7w8xTAwB" isRoot="false" isAbstract="false" name="VdqmTapeGatewayRequest" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="bDLK6HCDp9x6" type="131665" name="taperequest" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="bAbypHF4cACW" type="133771" name="accessMode" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="G7yQ47PdKkvP" type="137289" name="vid" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="1LMVpYBnLmo7" type="131665" name="mountTransactionId" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="V7Ig25TvbPeh" isRoot="false" isAbstract="false" name="EndNotificationFileErrorReport" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="tlMeqCgpGxrX" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="KVaXxZhe2Hwr" type="131665" name="fileTransactionId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="LMx3m9C8tn6L" type="137289" name="nsHost" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="gtBeLSPewz9t" type="131665" name="fileId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="YqVa5PPRmNSW" type="133771" name="fSeq" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="WfeNQig4csgv" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="I5ZC2i3aWW8c" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="wY1gvTCP6rmU" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="ZTZ9JF3ZJckL" type="153395" name="blockId3" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="JnwpK2RGYSwR" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FfsYIcubQoOi" type="133771" name="cprc" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesListRequest" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FilesListRequest_maxFiles_xmiid" type="131665" name="maxFiles" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FilesListRequest_maxBytes_xmiid" type="131665" name="maxBytes" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToMigrateListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesToMigrateListRequest" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToRecallListRequest_xmiid" isRoot="false" isAbstract="false" name="FilesToRecallListRequest" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="BaseFileInfoStruct_xmiid" isRoot="false" isAbstract="true" name="BaseFileInfoStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_fileTransactionId_xmiid" type="131665" name="fileTransactionId" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_nshost_xmiid" type="137289" name="nshost" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStruct_fileid_xmiid" type="131665" name="fileid" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="BaseFileInfoStructfseq_xmiid" type="133771" name="fseq" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileToMigrateStruct_xmiid" isRoot="false" isAbstract="false" name="FileToMigrateStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_fileSize_xmiid" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_lastKnownFilename_xmiid" type="137289" name="lastKnownFilename" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_lastModificationTime_xmiid" type="131665" name="lastModificationTime" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToMigrateStruct_umask_xmiid" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileToRecallStruct_xmiid" isRoot="false" isAbstract="false" name="FileToRecallStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId0_xmiid" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId1_xmiid" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId2_xmiid" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_blockId3_xmiid" type="153395" name="blockId3" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileToRecallStruct_umask_xmiid" type="133771" name="umask" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileMigratedNotificationStruct_xmiid" isRoot="false" isAbstract="false" name="FileMigratedNotificationStruct" >
+             <UML:GeneralizableElement.generalization>
+              <UML:Generalization xmi.idref="BaseFileInfoStruct_FileMigratedNotificationStruct_xmiid" />
+             </UML:GeneralizableElement.generalization>
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_fileSize_xmiid" type="131665" name="fileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_checksumName_xmiid" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_checksum_xmiid" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_compressedFileSize_xmiid" type="131665" name="compressedFileSize" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId0_xmiid" type="153395" name="blockId0" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId1_xmiid" type="153395" name="blockId1" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId2_xmiid" type="153395" name="blockId2" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileMigratedNotificationStruct_blockId3_xmiid" type="153395" name="blockId3" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileRecalledNotificationStruct_xmiid" isRoot="false" isAbstract="false" name="FileRecalledNotificationStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_path_xmiid" type="137289" name="path" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_checksumName_xmiid" type="137289" name="checksumName" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_checksum_xmiid" type="131665" name="checksum" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileRecalledNotificationStruct_fileSize_xmiid" type="131665" name="fileSize" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileErrorReportStruct_xmiid" isRoot="false" isAbstract="false" name="FileErrorReportStruct" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileErrorReportStruct_errorCode_xmiid" type="133771" name="errorCode" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="FileErrorReportStruct_errorMessage_xmiid" type="137289" name="errorMessage" />
+             </UML:Classifier.feature>
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToMigrateList_xmiid" isRoot="false" isAbstract="false" name="FilesToMigrateList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToRecallList_xmiid" isRoot="false" isAbstract="false" name="FilesToRecallList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileMigrationReportList_xmiid" isRoot="false" isAbstract="false" name="FileMigrationReportList" >
+            </UML:Class>
+            <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileRecallReportList_xmiid" isRoot="false" isAbstract="false" name="FileRecallReportList" >
+            </UML:Class>
+           </UML:Namespace.ownedElement>
+          </UML:Package>
+         </UML:Namespace.ownedElement>
+        </UML:Package>
+       </UML:Namespace.ownedElement>
+      </UML:Package>
+
+      <!-- Association / Generalisations section -->
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FilesToMigrateList_FileToMigrateStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToMigrateList_FileToMigrateStruct_composite_xmiid" aggregation="composite" type="FilesToMigrateList_xmiid" name="filesToMigrateList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToMigrateList_FileToMigrateStruct_none_xmiid" aggregation="none" type="FileToMigrateStruct_xmiid" name="filesToMigrate" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FilesToRecallList_FileToRecallStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToRecallList_FileToRecallStruct_composite_xmiid" aggregation="composite" type="FilesToRecallList_xmiid" name="filesToRecallList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FilesToRecallList_FileToRecallStruct_none_xmiid" aggregation="none" type="FileToRecallStruct_xmiid" name="filesToRecall" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_composite_xmiid" aggregation="composite" type="FileMigrationReportList_xmiid" name="fileMigrationReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileMigratedNotificationStruct_none_xmiid" aggregation="none" type="FileMigratedNotificationStruct_xmiid" name="successfulMigrations" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileMigrationReportList_FileErrorReportStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileErrorReportStruct_composite_xmiid" aggregation="composite" type="FileMigrationReportList_xmiid" name="fileMigrationReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileMigrationReportList_FileErrorReportStruct_none_xmiid" aggregation="none" type="FileErrorReportStruct_xmiid" name="failedMigrations" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_composite_xmiid" aggregation="composite" type="FileRecallReportList_xmiid" name="fileRecallReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileRecalledNotificationStruct_none_xmiid" aggregation="none" type="FileRecalledNotificationStruct_xmiid" name="successfulRecalls" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="FileRecallReportList_FileErrorReportStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileErrorReportStruct_composite_xmiid" aggregation="composite" type="FileRecallReportList_xmiid" name="fileRecallReportList" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FileRecallReportList_FileErrorReportStruct_none_xmiid" aggregation="none" type="FileErrorReportStruct_xmiid" name="failedRecalls" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Generalization isSpecification="false" child="FilesListRequest_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesListRequest_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToMigrateListRequest_xmiid" visibility="public" namespace="1" xmi.id="FilesListRequest_FilesToMigrateListRequest_xmiid" parent="FilesListRequest_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToRecallListRequest_xmiid" visibility="public" namespace="1" xmi.id="FilesListRequest_FilesToRecallListRequest_xmiid" parent="FilesListRequest_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="BaseFileInfoStruct_xmiid" visibility="public" namespace="1" xmi.id="IObject_BaseFileInfoStruct_xmiid" parent="960" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="BaseFileInfoStruct_xmiid" visibility="public" namespace="1" xmi.id="IStreamable_BaseFileInfoStruct_xmiid" parent="1216" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileToMigrateStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileToMigrateStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileToRecallStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileToRecallStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileMigratedNotificationStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileMigratedNotificationStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileRecalledNotificationStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileRecalledNotificationStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileErrorReportStruct_xmiid" visibility="public" namespace="1" xmi.id="BaseFileInfoStruct_FileErrorReportStruct_xmiid" parent="BaseFileInfoStruct_xmiid" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToMigrateList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesToMigrateList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FilesToRecallList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FilesToRecallList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileMigrationReportList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FileMigrationReportList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="FileRecallReportList_xmiid" visibility="public" namespace="1" xmi.id="GatewayMessage_FileRecallReportList_xmiid" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="i9YaSaJQImNZ" visibility="public" namespace="1" xmi.id="h7DpgEfOkWYp" parent="qxGN7s2xrw8M" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="NpGbvphHKpS1" visibility="public" namespace="1" xmi.id="tfvwnICtJM6V" parent="qxGN7s2xrw8M" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="fnDdZMm401L3" visibility="public" namespace="1" xmi.id="YODHOfdCyMdq" parent="qxGN7s2xrw8M" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="EO42k2tEKIZB" visibility="public" namespace="1" xmi.id="I5zGRa4YYOPj" parent="qxGN7s2xrw8M" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="M99fL4RD7A4z" visibility="public" namespace="1" xmi.id="tW2yg7ymjRJJ" parent="qxGN7s2xrw8M" discriminator="" name="" />
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="laYeEUM62XM0" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="pFDJFUMILIqU" aggregation="none" type="BKtpKIU9pYtL" name="positionCommandCode" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="CUagnIDMKVOM" aggregation="none" type="qxGN7s2xrw8M" name="" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="positionCommandCode_BaseFileInfoStruct_xmiid" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="positionCommandCode_BaseFileInfoStruct_none1_xmiid" aggregation="none" type="BKtpKIU9pYtL" name="positionCommandCode" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="positionCommandCode_BaseFileInfoStruct_none2_xmiid" aggregation="none" type="BaseFileInfoStruct_xmiid" name="" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="GWXJgZfsqnFF" client="2MEJAPRljyXW" name="" supplier="1216" />
+      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="QozEbDT9CgBf" client="2MEJAPRljyXW" name="" supplier="960" />
+      <UML:Generalization isSpecification="false" child="qxGN7s2xrw8M" visibility="public" namespace="1" xmi.id="LKpVz0BLTwxE" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="pETWaWEGDWxw" visibility="public" namespace="1" xmi.id="D0cewZqIrmKq" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="aH67aMNVAA3D" visibility="public" namespace="1" xmi.id="IfU8Rmy5LR3H" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="qmmnKfLk2dBy" visibility="public" namespace="1" xmi.id="4axN0yedRTHU" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="h9uvz0EKYQWQ" visibility="public" namespace="1" xmi.id="KKKllbDLZFrg" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="jTd0BzkpDzFU" visibility="public" namespace="1" xmi.id="fFyESnt6v2bQ" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="B8NzFjMF0W0p" visibility="public" namespace="1" xmi.id="rJumLTBheCMz" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="tfaBPxinmzMf" visibility="public" namespace="1" xmi.id="euII6cGTBvgq" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="LP1rIvMfJkut" visibility="public" namespace="1" xmi.id="16OA140IiCPS" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="VVvyJpQ5mUOT" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="iDdFfXsSk6lx" aggregation="none" type="PQUPdN6bVi1B" name="mode" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Y7GuN4OYYwEJ" aggregation="none" type="h9uvz0EKYQWQ" name="" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Generalization isSpecification="false" child="lOug3GirQgFy" visibility="public" namespace="1" xmi.id="BrWXy6djhjvR" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="WbZWAHdbq6Sd" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="FSgXv2rdFUrs" aggregation="none" type="EQC1aje9Gvu7" name="clientType" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="0jLin4gKAuEX" aggregation="none" type="h9uvz0EKYQWQ" name="" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Generalization isSpecification="false" child="SELd2IcDH2ei" visibility="public" namespace="1" xmi.id="osODikrCev21" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="T4O2lo5euSmc" visibility="public" namespace="1" xmi.id="qaws0qdUszUc" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="lQvBwvKCVtKO" visibility="public" namespace="1" xmi.id="jPrbPLDAsSqr" parent="2MEJAPRljyXW" discriminator="" name="" />
+      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="z5coEZtojUmW" client="IHLv7w8xTAwB" name="" supplier="960" />
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="LpR6gQpqEpCT" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="WUUd16HcIRzL" aggregation="none" type="V7Ig25TvbPeh" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ruNBhVFYG51m" aggregation="none" type="pETWaWEGDWxw" name="" />
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Generalization isSpecification="false" child="V7Ig25TvbPeh" visibility="public" namespace="1" xmi.id="tlMeqCgpGxrX" parent="pETWaWEGDWxw" discriminator="" name="" />
+
+      </UML:Namespace.ownedElement>
+    </UML:Model>
+   </UML:Namespace.ownedElement>
+  </UML:Model>
+ </XMI.content>
+</XMI>
