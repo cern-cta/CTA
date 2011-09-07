@@ -764,9 +764,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_ENABLE;
   rtcpVolume.tStartRequest  = time(NULL);
-  rtcpVolume.err.severity   =  1;
-  rtcpVolume.err.maxTpRetry = -1;
-  rtcpVolume.err.maxCpRetry = -1;
+  rtcpVolume.err.severity   = 1;
+  rtcpVolume.err.maxTpRetry = 1; // Only try once - no retries
+  rtcpVolume.err.maxCpRetry = 1; // Only try once - no retries
   RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
     m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, rtcpVolume);
 
@@ -872,9 +872,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runRecallSession()
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_DISABLE;
   rtcpVolume.tStartRequest  = time(NULL);
-  rtcpVolume.err.severity   =  1;
-  rtcpVolume.err.maxTpRetry = -1;
-  rtcpVolume.err.maxCpRetry = -1;
+  rtcpVolume.err.severity   = 1;
+  rtcpVolume.err.maxTpRetry = 1; // Only try once - no retries
+  rtcpVolume.err.maxCpRetry = 1; // Only try once - no retries
   RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
     m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, rtcpVolume);
 
@@ -937,9 +937,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runDumpSession()
     rtcpVolume.volReqId       = m_jobRequest.volReqId;
     rtcpVolume.mode           = WRITE_DISABLE;
     rtcpVolume.tStartRequest  = time(NULL);
-    rtcpVolume.err.severity   =  1;
-    rtcpVolume.err.maxTpRetry = -1;
-    rtcpVolume.err.maxCpRetry = -1;
+    rtcpVolume.err.severity   = 1;
+    rtcpVolume.err.maxTpRetry = 1; // Only try once - no retries
+    rtcpVolume.err.maxCpRetry = 1; // Only try once - no retries
     RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
       m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, rtcpVolume);
 
@@ -1082,8 +1082,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpFileReqRtcpdCallback(
   memset(bodyErr.err.errorMsg, '\0', sizeof(bodyErr.err.errorMsg));
   bodyErr.err.severity    = RTCP_OK;
   bodyErr.err.errorCode   = 0;
-  bodyErr.err.maxTpRetry  = -1;
-  bodyErr.err.maxCpRetry  = -1;
+  bodyErr.err.maxTpRetry  = 1; // Only try once - no retries
+  bodyErr.err.maxCpRetry  = 1; // Only try once - no retries
 
   processRtcpFileErrReq(header, bodyErr, socketFd);
 }
@@ -1179,11 +1179,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
   throw(castor::exception::Exception) {
 
-  // Log the reception of the message which may or may not contain an error.
-  // In the case there is an error do stop or throw an exception as rtcpd may
-  // retry internally and therefor ethe error is not fatal.
-
-  // If message does not contain an error
+  // If message does not contain an error, then log it and send an
+  // acknowledgement
   if(0 == body.rqst.cprc) {
     {
       castor::dlf::Param params[] = {
@@ -1195,12 +1192,25 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
         castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
         castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
         castor::dlf::Param("clientType",
-          utils::volumeClientTypeToString(m_volume.clientType()))};
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("nsHost"            ,
+          body.rqst.segAttr.nameServerHostName),
+        castor::dlf::Param("nsFileId"          ,
+          body.rqst.segAttr.castorFileId),
+        castor::dlf::Param("tapeFSeq"          , body.rqst.tapeFseq     )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_RECEIVED_RTCP_WAITING, params);
     }
 
-  // Else the message contains an error
+    // Send an acknowledge to rtcpd
+    legacymsg::MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+      RTCPDNETRWTIMEOUT, ackMsg);
+
+  // Else if the message contains an error, then log it and throw an exception
   } else {
     // Determine the error code and message using the error appendix if there
     // is one
@@ -1222,20 +1232,49 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
         castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
         castor::dlf::Param("clientType",
           utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("nsHost"            ,
+          body.rqst.segAttr.nameServerHostName),
+        castor::dlf::Param("nsFileId"          ,
+          body.rqst.segAttr.castorFileId),
+        castor::dlf::Param("tapeFSeq"          , body.rqst.tapeFseq     ),
         castor::dlf::Param("errorCode"         , errorCode              ),
         castor::dlf::Param("errorMessage"      , errorMessage           )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_RECEIVED_RTCP_WAITING_ERROR, params);
     }
-  }
 
-  // Send an acknowledge to rtcpd
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = header.magic;
-  ackMsg.reqType     = header.reqType;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
+    // If this is a file-specific error
+    if(0 < body.rqst.tapeFseq) {
+      // Collect the information about the failed file
+      FailedToCopyTapeFile::FailedFile failedFile;
+      failedFile.fileTransactionId =
+        m_pendingTransferIds.get(body.rqst.diskFseq);
+      failedFile.nsHost            = body.rqst.segAttr.nameServerHostName;
+      failedFile.fileId            = body.rqst.segAttr.castorFileId;
+      failedFile.fSeq              = body.rqst.tapeFseq;
+      failedFile.blockId0          = body.rqst.blockId[0];
+      failedFile.blockId1          = body.rqst.blockId[1];
+      failedFile.blockId2          = body.rqst.blockId[2];
+      failedFile.blockId3          = body.rqst.blockId[3];
+      failedFile.path              = body.rqst.filePath;
+      failedFile.cprc              = body.rqst.cprc;
+
+      // Throw the exception
+      FailedToCopyTapeFile ex(body.err.errorCode, failedFile);
+      ex.getMessage() <<
+        ": Received an RTCP_WAITING error message from rtcpd"
+        ": errorCode=" << errorCode <<
+        ": errorMessage=" << errorMessage;
+      throw ex;
+
+    // Else this is not a file-specific error
+    } else {
+      TAPE_THROW_CODE(ECANCELED,
+        ": Received RTCP_WAITING error message"
+        ": errorCode=" << errorCode <<
+        ": errorMessage=" << errorMessage);
+    }
+  }
 }
 
 

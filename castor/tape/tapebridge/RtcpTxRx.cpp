@@ -664,8 +664,8 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   msgBody.rqst.concat         =  1;
   msgBody.rqst.procStatus     =  RTCP_REQUEST_MORE_WORK;
   msgBody.err.severity   =  RTCP_OK;
-  msgBody.err.maxTpRetry = -1;
-  msgBody.err.maxCpRetry = -1;
+  msgBody.err.maxTpRetry = 1; // Only try once - no retries
+  msgBody.err.maxCpRetry = 1; // Only try once - no retries
 
   // Marshal the message
   char buf[RTCPMSGBUFSIZE];
@@ -770,8 +770,8 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
     nameServerHostName);
   msgBody.rqst.segAttr.castorFileId = castorFileId;
   msgBody.err.severity              = RTCP_OK;
-  msgBody.err.maxTpRetry            = -1;
-  msgBody.err.maxCpRetry            = -1;
+  msgBody.err.maxTpRetry            = 1; // Only try once - no retries
+  msgBody.err.maxCpRetry            = 1; // Only try once - no retries
 
   giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, mode, msgBody);
 }
