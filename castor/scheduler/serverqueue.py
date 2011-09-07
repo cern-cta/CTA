@@ -30,7 +30,7 @@
 '''serverqueue module of the CASTOR transfer manager.
 Manages the transfers pending on the different diskservers'''
 
-import threading
+import threading, socket
 import dlf, pwd, time
 import castor_tools
 from transfermanagerdlf import msgs
@@ -339,6 +339,52 @@ class ServerQueue(dict):
     finally:
       self.lock.release()
 
+  def _isTransferMatchingAndGetPool(self, transferid, diskServerList, reqdiskpool=None, reqUser=None):
+    '''checks whether a given transfer matches the given filter on diskpool and user'''
+    # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
+    for diskserver in self.transfersLocations[transferid]:
+      # get diskpool
+      diskpool = diskServerList.getDiskServerPool(diskserver)
+      # are we interested in this diskpool ?
+      if reqdiskpool and reqdiskpool != diskpool:
+        return False
+      # are we interested in this user ?
+      if reqUser:
+        rawtransfer = self[diskserver][transferid][0]
+        transfertype = self[diskserver][transferid][2]
+        if reqUser != self._transfer2user(transfertype, rawtransfer):
+          return False
+      break
+    # transfer matches the filter
+    return diskpool
+
+  def listTransfers(self, diskServerList, reqdiskpool=None, reqUser=None):
+    '''lists pending transfers'''
+    res = []
+    self.lock.acquire()
+    try:
+      # for each transfer
+      for transferid in self.transfersLocations:
+        # check that we are interested in it
+        if self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, reqUser):
+          # go through the different instances of this transfer
+          for diskserver in self.transfersLocations[transferid]:
+            # get information about the transfer
+            transfer, arrivaltime, transfertype  = self[diskserver][transferid][0:3]
+            if transfertype in ('d2dsrc', 'd2ddest'):
+              protocol = transfertype
+            else:
+              protocol = transfer[10]
+            # add the transfer to list of results
+            res.append((transferid, transfer[6], socket.getfqdn(),
+                        self._transfer2user(transfertype, transfer),
+                        'PEND', diskServerList.getDiskServerPool(diskserver),
+                        diskserver, protocol, arrivaltime, None))
+    finally:
+      self.lock.release()
+    return res
+
+
   def nbTransfersPerPool(self, diskServerList, reqdiskpool=None, requser=None):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users)'''
@@ -347,25 +393,13 @@ class ServerQueue(dict):
     try:
       # for each transfer
       for transferid in self.transfersLocations:
-        # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
-        for diskserver in self.transfersLocations[transferid]:
-          # get diskpool
-          diskpool = diskServerList.getDiskServerPool(diskserver)
-          # are we interested in this diskpool ?
-          if reqdiskpool and reqdiskpool != diskpool:
-            break
-          # are we interested in this user ?
-          if requser:
-            rawtransfer = self[diskserver][transferid][0]
-            transfertype = self[diskserver][transferid][2]
-            if requser != self._transfer2user(transfertype, rawtransfer):
-              break
+        # check that we are interested in it
+        diskpool = self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, requser)
+        if diskpool:
           # increase counter for corresponding diskpool
           if diskpool not in res:
             res[diskpool] = 0
           res[diskpool] = res[diskpool] + 1
-          # no need to really loop, we already counted this guy
-          break
     finally:
       self.lock.release()
     return res

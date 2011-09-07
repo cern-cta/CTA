@@ -38,18 +38,21 @@ import castor_tools
 # usage function
 def usage(exitCode):
   '''prints usage'''
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] [-p|--poolsummary] [-u|--user <user>] [-x|--extra [-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] ' + \
+        '[-p|--poolsummary] [-q|--queues] [-u|--user <user>] [-x|--extra ' + \
+        '[-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
   sys.exit(exitCode)
 
 # first parse the options
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hscpu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
+  options, args = getopt.getopt(sys.argv[1:], 'hscpqu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'queues', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
 except Exception, parseException:
   print parseException
   usage(1)
 issummary = False
 clean = False
 ispoolsummary = False
+isqueuelist = False
 requser = None
 verbose = False
 extra = False
@@ -69,6 +72,11 @@ for f, v in options:
       print "-p/--poolsummary cannot be given twice"
       usage(1)
     ispoolsummary = True
+  elif f == '-q' or f == '--queues':
+    if isqueuelist:
+      print "-q/--queues cannot be given twice"
+      usage(1)
+    isqueuelist = True
   elif f == '-u' or f == '--user':
     if requser != None:
       print "-u/--user cannot be given twice"
@@ -101,9 +109,15 @@ for f, v in options:
 if issummary and ispoolsummary:
   print "cannot use -s|--summary and -p|--poolsummary' at the same time"
   usage(1)
+if issummary and isqueuelist:
+  print "cannot use -s|--summary and -q|--queues' at the same time"
+  usage(1)
+if isqueuelist and ispoolsummary:
+  print "cannot use -q|--queues and -p|--poolsummary' at the same time"
+  usage(1)
 if extra and not (issummary or ispoolsummary):
   if extraprotocols:
-    print "-x|--extra and -r|--restrict cannot be used for regular job listing"
+    print "-x|--extra and -r|--restrict cannot be used for job listing"
     usage(1)
   else:
     print "Warning : -x|--extra is ignored for regular job listing"
@@ -122,9 +136,14 @@ if len(args) > 0:
     print "Too many arguments, only one diskpool can be given"
     usage(1)
 
-def processTransfersListing():
-  '''retrieves and display full listing of the running transfers for the given diskpool and user'''
-  transfers = rpconn.root.listTransfers(reqdiskpool, requser)
+def processTransfersListing(useOnlyCentralLists):
+  '''retrieves and display the list of queuing and running transfers for the given diskpool and user.
+  In case useOnlyCentralLists is True, only queuing transfers will be listed and the diskservers
+  will not be contacted at all'''
+  if useOnlyCentralLists:
+    transfers = rpconn.root.listPendingTransfersCentrally(reqdiskpool, requser)
+  else:
+    transfers = rpconn.root.listTransfers(reqdiskpool, requser)
   # loop to display errors
   for transfer in transfers:
     if not transfer[0]:
@@ -216,9 +235,13 @@ def processHostListing():
       gotsummary = len(summary) > 2
       if not gotsummary:
         hostname, nbslots = summary[0:2]
-        nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = '-', '-', '-', '-', '-', '-', '-', '-'
+        nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, \
+        nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, \
+        nbRunningSlots, nbRunningSlotsPerProto = '-', '-', '-', '-', '-', '-', '-', '-'
       else:
-        hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = summary
+        hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, \
+        nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, \
+        nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = summary
       # start with non protocol specific data
       data = [machineHeadLen, hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
       # do not display idle machines in clean mode
@@ -271,7 +294,7 @@ def processDiskPoolListing():
     # the (very weak) parsing of _buildProtocolList
     protocols = _buildProtocolList(summaryreport[:-1])
     # build title, subtitle and format strings
-    title, subtitle, dataformat, nodataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)
+    title, subtitle, dataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
     # display title and subtitle
     print title
     print subtitle
@@ -283,7 +306,10 @@ def processDiskPoolListing():
         data = [diskpoolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
         print dataformat % tuple(data)
       else:
-        poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto, unreachableMachines = s
+        poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, \
+        nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, \
+        nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, \
+        nbRunningSlotsPerProto, unreachableMachines = s
         if unreachableMachines:
           allUnreachableMachines[poolname] = unreachableMachines
           poolname = poolname + '(*)'
@@ -333,8 +359,10 @@ try:
       processHostListing()
     elif ispoolsummary:
       processDiskPoolListing()
+    elif isqueuelist:
+      processTransfersListing(True)
     else:
-      processTransfersListing()
+      processTransfersListing(False)
   except Exception, unexpectedException:
     print 'Caught exception : ' + str(unexpectedException)
     if verbose:

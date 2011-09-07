@@ -222,6 +222,10 @@ class TransferManagerService(rpyc.Service):
     are reported'''
     return tuple(queueingTransfers.nbTransfersPerPool(diskServerList, diskPool, user).items())
 
+  def exposed_listLocalPendingTransfersCentrally(self, diskPool=None, user=None):
+    '''lists the pending transfers known by this headnode per diskpool for a given diskpool and user'''
+    return tuple(queueingTransfers.listTransfers(diskServerList, diskPool, user))
+
   def _computeNbTransfersPerPool(self, diskPool=None, user=None):
     '''internal method to compute the number of unique transfers pending per pool
     accross all transfer managers. For this purpose, it contacts all running transfer
@@ -243,6 +247,23 @@ class TransferManagerService(rpyc.Service):
                         Type=str(e.__class__), Message=str(e))
         raise IOError
     return nbTransfersPerPool
+
+  def exposed_listPendingTransfersCentrally(self, diskPool=None, user=None):
+    '''lists the pending transfers per diskpool for a given diskpool and user, as seen by the
+    transfer managers, without connecting to the diskservers'''
+    transfers = []
+    # get the timeout to be used
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # go through all schedulers
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+      try:
+        transfers += connections.listLocalPendingTransfersCentrally(scheduler, diskPool, user, timeout=timeout)
+      except Exception, e:
+        # 'Could not contact transfer manager' message
+        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
+                        TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
+        raise IOError
+    return tuple(transfers)
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per diskpool for a given diskpool and user.
@@ -587,8 +608,8 @@ try:
     # get configuration
     try:
       configuration = castor_tools.castorConf()
-    except ValueError, e:
-      print e
+    except ValueError, ex:
+      print ex
       sys.exit(1)
     # setup logging
     dlf.init('transfermanagerd')

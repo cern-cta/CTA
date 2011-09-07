@@ -276,7 +276,8 @@ class ActivityControlChecker(threading.Thread):
     while self.alive:
       # do not loop too fast, but be able to exit in < 1s
       for i in range(5):
-        if not self.alive: return
+        if not self.alive:
+          return
         time.sleep(1)
       # go for the checks
       try:
@@ -390,8 +391,8 @@ try:
     # get configuration
     try:
       configuration = castor_tools.castorConf()
-    except ValueError, e:
-      print e
+    except ValueError, ex:
+      print ex
       sys.exit(1)
     # setup logging
     dlf.init('diskmanagerd')

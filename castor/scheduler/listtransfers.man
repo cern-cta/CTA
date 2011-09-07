@@ -17,6 +17,9 @@ listtransfers \- lists transfers managed by the transfer manager
 .BI -p
 ]
 [
+.BI -q
+]
+[
 .BI -u
 <user>
 ]
@@ -38,6 +41,8 @@ listtransfers \- lists transfers managed by the transfer manager
 Lists transfers managed in the transfer manager.
 .P
 With no option, lists all transfers managed by the transfer manager. This list can be restricted to a given user and/or a given diskpool with the -u option and the diskpool name as an argument
+.P
+With a -q option, the list is restricted to pending transfers and can thus be obtained without connecting to the diskservers. Response times should thus be faster.
 .P
 With a -s/-p option, gives a summary of the number of transfers managed per host/pool. This summary can be extended to give details per transfer type via the use of the -x option. The list of detailed transfer types can be restricted via the use of the -r option. This option takes a colon separated list of transfer types as an argument. For the detailed signification of the output of these options, see the
 .SM OUTPUT COLUMNS
