@@ -240,7 +240,7 @@ class Dispatcher(threading.Thread):
       # we could not schedule anywhere.... so fail the transfer in the DB
       self.updateDBQueue.put((transferid, fileid, 1721, errorMessage, reqId)) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
-      self.queueingTransfers.remove(transferid)
+      self.queueingTransfers.remove([transferid])
       return False
     else:
       # see where we could not schedule
