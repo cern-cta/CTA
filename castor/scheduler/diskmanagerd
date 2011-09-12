@@ -263,7 +263,7 @@ class ActivityControlChecker(threading.Thread):
   This thread regularly checks whether there are jobs waiting in the queue with slots
   available for too long. In such a case, it drops the rpyc connections.
   This is actually a work around some rpyc instabilities where we can get stuck in
-  receiving an rpyc message forever. This happens is only half of the message arrives,
+  receiving an rpyc message forever. This happens if only half of the message arrives,
   as the reading of the rest of it has no timeout'''
 
   def __init__(self):
@@ -343,29 +343,23 @@ class ManagementThread(threading.Thread):
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
-  # get the admin timeout
-  timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+  # we will timeout after 5mn per machine. Note that in this case, we refuse to start
+  # and thus raise a SystemExit exception.
+  timeout = 300
   # loop on all transfermanagers
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
-      while True:
-        try:
-          for transferid, transfer, arrivaltime in connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-            runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
-          break
-        except connectionpool.Timeout:
-          # as long as we get a timeout, we retry. This will not last.
-          time.sleep(0.1)
+      for transferid, transfer, arrivaltime in \
+              connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+        runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
       # rebuild transfer's queue
-      while True:
-        try:
-          for transferid, transfer, arrivaltime, transfertype in connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-            transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
-          break
-        except connectionpool.Timeout:
-          # as long as we get a timeout, we retry. This will not last.
-          time.sleep(0.1)
+      for transferid, transfer, arrivaltime, transfertype in \
+              connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+        transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
+    except connectionpool.Timeout:
+      dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
+      raise SystemExit
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
       # 'No queue could be retrieved' message
