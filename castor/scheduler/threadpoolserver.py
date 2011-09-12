@@ -129,7 +129,8 @@ class ThreadPoolServer(rpyc.utils.server.Server):
 
     def _add_inactive_connection(self, fd):
         '''adds a connection to the set of inactive ones'''
-        self.poll_object.register(fd, select.POLLIN|select.POLLPRI|select.POLLNVAL|select.POLLHUP|select.POLLERR)
+        POLLRDHUP = 0x2000
+        self.poll_object.register(fd, select.POLLIN|select.POLLPRI|select.POLLNVAL|select.POLLHUP|select.POLLERR|POLLRDHUP)
         
     def _handle_poll_result(self, connlist):
         '''adds a connection to the set of inactive ones'''
