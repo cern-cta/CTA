@@ -221,7 +221,7 @@ class LocalQueue(Queue.Queue):
               timeout = timeouts['all']
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything
-              timeout = None
+              timeout = -1
         else:
           timeout = d2dtimeout
         # if we found a timeout, check and cancel if needed
@@ -255,11 +255,11 @@ class LocalQueue(Queue.Queue):
         try:
           # find out whether the transfer should be canceled
           cancelTransfer = not ((state['DiskServerStatus'] == 'DISKSERVER_PRODUCTION' and
-                          state[filesystem] == 'FILESYSTEM_PRODUCTION') or
-                         (transfertype == 'd2dsrc' and
-                          state['DiskServerStatus'] in ('DISKSERVER_PRODUCTION', 'DISKSERVER_DRAINING') and
-                          state[filesystem] in ('FILESYSTEM_PRODUCTION', 'FILESYSTEM_DRAINING')))
-        except ValueError:
+                                 state[filesystem] == 'FILESYSTEM_PRODUCTION') or
+                                (transfertype == 'd2dsrc' and
+                                 state['DiskServerStatus'] in ('DISKSERVER_PRODUCTION', 'DISKSERVER_DRAINING') and
+                                 state[filesystem] in ('FILESYSTEM_PRODUCTION', 'FILESYSTEM_DRAINING')))
+        except KeyError:
           # no state means disable
           cancelTransfer = True
         if cancelTransfer:
