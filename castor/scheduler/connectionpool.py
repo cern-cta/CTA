@@ -100,12 +100,13 @@ class ConnectionPool(object):
 
   def closeall(self):
     '''Close all connections'''
-    for machine in self.connections:
+    conns = self.connections.values()
+    self.connections = {}    
+    for conn in conns:
       try:
-        self.connections[machine].close()
+        conn.close()
       except Exception:
         pass
-    self.connections = {}
 
   def __getattr__(self, name):
     '''we implement a proxying facility here, where any method will be forwarded
