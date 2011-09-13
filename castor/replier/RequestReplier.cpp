@@ -486,7 +486,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
         || (cc->getStatus() == CONNECTED
             && cc->hasMessagesToSend()) ) {
       pl[i].fd = (*iter).first;
-      pl[i].events = POLLIN|POLLOUT|POLLHUP|POLLERR;
+      pl[i].events = POLLIN|POLLOUT|POLLHUP|POLLRDHUP|POLLERR;
       pl[i].revents = 0;
       i++;
     }
@@ -540,7 +540,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                               DLF_BASE_STAGERLIB + 26, 4, params);
 
-      if (pl[i].revents & POLLHUP) {
+      if (pl[i].revents & POLLHUP || pl[i].revents & POLLRDHUP) {
 
         // "RR: Connection dropped"
         castor::dlf::Param params[] =
