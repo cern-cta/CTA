@@ -53,8 +53,11 @@ castor::stager::daemon::BulkStageReqSvcThread::BulkStageReqSvcThread() throw () 
 castor::IObject* castor::stager::daemon::BulkStageReqSvcThread::select() throw() {
   try {
     castor::IService* svc =
-      castor::BaseObject::services()->service("DbStageSvc", castor::SVC_DBSTAGERSVC);
-    // we have already initialized the services in the main, so we know the pointer is valid
+      castor::BaseObject::services()->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+    // we have already initialized the services in the main, but due to race conditions
+    // at startup it may happen the pointer is not yet valid. In such a case we simply
+    // give up for this round.
+    if(0 == svc) return 0;
     castor::IObject* req = 0;
     castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
     req = stgSvc->processBulkRequest("BulkStageReqSvc");
