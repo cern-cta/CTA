@@ -122,7 +122,7 @@ class Synchronizer(threading.Thread):
         # we could not list all pending running transfers in the system
         # Thus we have to give up with synchronization for this round
         # 'Error caught while trying to synchronize DB transfers with scheduler transfers. Giving up for this round.'
-        dlf.writeerr(msgs.SYNCHROFAILED, Type=str(e.__class__), Message=str(e))
+        dlf.writenotice(msgs.SYNCHROFAILED, Type=str(e.__class__), Message=str(e))
     finally:
       stcur.close()
 
@@ -139,7 +139,7 @@ class Synchronizer(threading.Thread):
       # we could not list all pending running transfers in the system
       # Thus we have to give up with synchronization for this round
       # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
-      dlf.writeerr(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e))
+      dlf.writenotice(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e))
       return
     # prepare a cursor for database polling
     stcur = self.dbConnection().cursor()

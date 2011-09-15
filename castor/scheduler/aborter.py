@@ -26,7 +26,7 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-'''aborter thread of the CASTOR's transfer manager.
+'''aborter thread of the CASTOR transfer manager.
 Deals with abort requests by polling the stager DB for new ones'''
 
 import time
@@ -94,7 +94,7 @@ class Aborter(threading.Thread):
             stcur.close()
         except Exception, e:
           # "Caught exception in Aborter thread" message
-          dlf.writeerr(msgs.ABORTEREXCEPTION, Type=str(e.__class__), Message=str(e))
+          dlf.writenotice(msgs.ABORTEREXCEPTION, Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
           self.dbConnection().checkForReconnection(e)
           # then sleep a bit to not loop to fast on the error

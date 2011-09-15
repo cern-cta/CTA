@@ -315,7 +315,7 @@ class ServerQueue(dict):
       self.connections.d2dend(diskserver, transferid, reqid)
     except Exception, e:
       # "Failed to inform diskserver that a d2d copy is over"
-      dlf.writeerr(msgs.D2DOVERINFORMFAILED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
+      dlf.writenotice(msgs.D2DOVERINFORMFAILED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
       # add back the transfer to the local lists
       if not transferCancelation:
         self.lock.acquire()

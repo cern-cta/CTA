@@ -137,7 +137,7 @@ class DBUpdater(threading.Thread):
             stcur.execute("BEGIN transferFailedLockedFile(:1, :2, :3); END;", [list(transferids), list(errcodes), list(errmsgs)])
             for transferid, fileid, errcode, errmsg, reqid in failures:
               # 'Failed transfer' message
-              dlf.writeerr(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=errcode, ErrorMessage=errmsg)
+              dlf.writenotice(msgs.FAILEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=errcode, ErrorMessage=errmsg)
           finally:
             stcur.close()
         except Exception, e:
