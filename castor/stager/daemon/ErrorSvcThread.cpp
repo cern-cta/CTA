@@ -64,11 +64,11 @@ castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
     // would not be thread safe
     castor::Services *svcs = castor::BaseObject::services();
     castor::IService *svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-    // we have already initialized the services in the main, but due to race conditions
-    // at startup it may happen the pointer is not yet valid. In such a case we simply
-    // give up for this round.
-    if(0 == svc) return 0;
     castor::stager::IStagerSvc *stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+    // as dlopen is not reentrant (i.e., symbols might be still loading now due to the dlopen
+    // of another thread), it may happen that the service is not yet valid or dynamic_cast fails.
+    // In such a case we simply give up for this round.
+    if(0 == stgSvc) return 0;
     castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
     return subReq;
   } catch (castor::exception::Exception& e) {

@@ -48,20 +48,23 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
   try {
     castor::IService* svc =
       castor::BaseObject::services()->service(m_dbSvcName, m_dbSvcType);
-    // we have already initialized the services in the main, but due to race conditions
-    // at startup it may happen the pointer is not yet valid. In such a case we simply
-    // give up for this round.
-    if(0 == svc) return 0;
     castor::IObject* req = 0;
     if(m_dbSvcType == castor::SVC_DBSTAGERSVC) {
       castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      // as dlopen is not reentrant (i.e., symbols might be still loading now due to the dlopen
+      // of another thread), it may happen that the service is not yet valid or dynamic_cast fails.
+      // In such a case we simply give up for this round.
+      if(0 == stgSvc) return 0;
       req = stgSvc->subRequestToDo(m_name);
     }
     else {
       castor::stager::ICommonSvc* cSvc = dynamic_cast<castor::stager::ICommonSvc*>(svc);
+      // same as above
+      if(0 == cSvc) return 0;
       req = cSvc->requestToDo(m_name);
     }
     return req;
+    
   } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
