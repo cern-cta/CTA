@@ -258,7 +258,7 @@ class Dispatcher(threading.Thread):
           self.updateDBQueue.put((transferid, fileid, 1721, errorMessage, reqId)) # 1721 = ESTSCHEDERR
           return False
       # 'Marking transfer as scheduled' message
-      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid, hosts=str(scheduleHosts))
+      dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferid, reqid=reqId, fileid=fileid, type=transfertype, hosts=str(scheduleHosts))
       return True
 
   def _scheduleD2d(self, reqId, srSubReqId, cfFileId, cfNsHost, reqDestDiskCopy,
