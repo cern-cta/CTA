@@ -243,7 +243,9 @@ class ActivityControl(threading.Thread):
             transferQueue.d2dDestReady(scheduler, transferid, transfer, arrivalTime, transfertype)
           except Exception, e:
             # startup of the transfer failed with unexpected error
-            # 'Failed to start transfer' message
+            # We need to try again thus we put the transfer into the priority queue
+            transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
+            # 'Failed to start transfer. Putting it back to the queue' message
             dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid, Type=str(e.__class__), Message=str(e))
             time.sleep(1)
         else:
