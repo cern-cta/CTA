@@ -577,16 +577,18 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
 
   connClosed = false;
   const int rc = netread_timeout(socketFd, buf, nbBytes, timeout);
-  const int savedSerrno = serrno;
+  int savedSerrno = serrno;
 
   switch(rc) {
   case -1:
     {
       std::stringstream oss;
-      oss << ": Failed to read " << nbBytes << " bytes from socket: ";
+      oss << ": Failed to read " << nbBytes << " bytes from socket: " <<
+        " socketFd=" << socketFd << ": ";
       writeSockDescription(oss, socketFd);
       // netread_timeout can return -1 with serrno set to 0
       if(0 == savedSerrno) {
+        savedSerrno = SEINTERNAL;
         oss << ": Unknown error";
       } else {
         oss << ": " << sstrerror(savedSerrno);
@@ -634,16 +636,18 @@ void castor::tape::net::writeBytes(const int socketFd, const int timeout,
   }
 
   const int rc = netwrite_timeout(socketFd, buf, nbBytes, timeout);
-  const int savedSerrno = serrno;
+  int savedSerrno = serrno;
 
   switch(rc) {
   case -1:
     {
       std::stringstream oss;
-      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      oss << ": Failed to write " << nbBytes << " bytes to socket: " <<
+        " socketFd=" << socketFd << ": ";
       writeSockDescription(oss, socketFd);
-      // netread_timeout can return -1 with serrno set to 0
+      // netwrite_timeout can return -1 with serrno set to 0
       if(0 == savedSerrno) {
+        savedSerrno = SEINTERNAL;
         oss << ": Unknown error";
       } else {
         oss << ": " << sstrerror(savedSerrno);

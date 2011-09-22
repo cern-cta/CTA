@@ -79,11 +79,9 @@ UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
 COMMIT;
 EOF
 
-  # remove CVS keywords
-  sed 's/\$//g' $1_oracle_create.sql > tmp.sql
-  mv tmp.sql $1_oracle_create.sql
-
   echo Creation script for $1 generated with tag $2
+  # remove CVS keywords (Drop the '$' character in the line containing "@(#)$RCSfile")
+  perl -p -i -e 'if (/@\(\#\)\$RCSfile/) { $_ =~ s/\$//g; }'  $1_oracle_create.sql
 
 else
   # install

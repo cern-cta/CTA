@@ -35,23 +35,23 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/EndNotificationFileErrorReport.cpp \
   ../tapegateway/FileErrorReport.cpp \
   ../tapegateway/FileErrorReportStruct.cpp \
-  ../tapegateway/FilesListRequest.cpp \
   ../tapegateway/FileMigratedNotification.cpp \
   ../tapegateway/FileMigratedNotificationStruct.cpp \
   ../tapegateway/FileMigrationReportList.cpp \
   ../tapegateway/FileRecalledNotification.cpp \
   ../tapegateway/FileRecalledNotificationStruct.cpp \
   ../tapegateway/FileRecallReportList.cpp \
+  ../tapegateway/FilesListRequest.cpp \
   ../tapegateway/FilesToMigrateList.cpp \
   ../tapegateway/FilesToMigrateListRequest.cpp \
   ../tapegateway/FilesToRecallList.cpp \
   ../tapegateway/FilesToRecallListRequest.cpp \
   ../tapegateway/FileToMigrate.cpp \
-  ../tapegateway/FileToMigrateStruct.cpp \
   ../tapegateway/FileToMigrateRequest.cpp \
+  ../tapegateway/FileToMigrateStruct.cpp \
   ../tapegateway/FileToRecall.cpp \
-  ../tapegateway/FileToRecallStruct.cpp \
   ../tapegateway/FileToRecallRequest.cpp \
+  ../tapegateway/FileToRecallStruct.cpp \
   ../tapegateway/GatewayMessage.cpp \
   ../tapegateway/NoMoreFiles.cpp \
   ../tapegateway/NotificationAcknowledge.cpp \
@@ -60,6 +60,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/Volume.cpp \
   ../tapegateway/VolumeMode.cpp \
   ../tapegateway/VolumeRequest.cpp
+
 
 TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamDumpNotificationCnv.cpp \
@@ -71,21 +72,22 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamFileErrorReportCnv.cpp \
   ../../io/StreamFileErrorReportStructCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
+  ../../io/StreamFileMigratedNotificationStructCnv.cpp \
   ../../io/StreamFileMigrationReportListCnv.cpp \
   ../../io/StreamFileRecalledNotificationCnv.cpp \
   ../../io/StreamFileRecalledNotificationStructCnv.cpp \
   ../../io/StreamFileRecallReportListCnv.cpp \
-  ../../io/StreamFileToMigrateCnv.cpp \
-  ../../io/StreamFileToMigrateStructCnv.cpp \
-  ../../io/StreamFileToMigrateRequestCnv.cpp \
-  ../../io/StreamFileToRecallCnv.cpp \
-  ../../io/StreamFileToRecallRequestCnv.cpp \
-  ../../io/StreamFileToRecallStructCnv.cpp \
   ../../io/StreamFilesListRequestCnv.cpp \
   ../../io/StreamFilesToMigrateListCnv.cpp \
   ../../io/StreamFilesToMigrateListRequestCnv.cpp \
   ../../io/StreamFilesToRecallListCnv.cpp \
   ../../io/StreamFilesToRecallListRequestCnv.cpp \
+  ../../io/StreamFileToMigrateCnv.cpp \
+  ../../io/StreamFileToMigrateRequestCnv.cpp \
+  ../../io/StreamFileToMigrateStructCnv.cpp \
+  ../../io/StreamFileToRecallCnv.cpp \
+  ../../io/StreamFileToRecallRequestCnv.cpp \
+  ../../io/StreamFileToRecallStructCnv.cpp \
   ../../io/StreamNoMoreFilesCnv.cpp \
   ../../io/StreamNotificationAcknowledgeCnv.cpp \
   ../../io/StreamPingNotificationCnv.cpp \
