@@ -105,9 +105,39 @@ sub main ()
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Schema set to tapegatewayd mode ============================\n";
+
+    my $seed_index = CastorTapeTests::make_seed ($file_size);  
     
+    # On first run, clean house
+    print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
+    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
+
+    # Re-create the directories:
+    print `su $username -c "nsmkdir $castor_directory$single_subdir"`;
+    print `su $username -c "nschclass largeuser $castor_directory$single_subdir"`;
+    CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
+    print `su $username -c "nsmkdir $castor_directory$dual_subdir"`;
+    print `su $username -c "nschclass test2 $castor_directory$dual_subdir"`;
+    CastorTapeTests::register_remote ( $castor_directory.$dual_subdir, "directory" );
+
+    # Let the dust settle
+    print "t=".CastorTapeTests::elapsed_time."s\n";
+    CastorTapeTests::poll_fileserver_readyness (5,120);
+    
+    # Clean the disk servers
+    CastorTapeTests::clean_fileservers ();
+        
+    # Ru the tests
+    $dbh=CastorTapeTests::open_db();
+    checkTapes();
+    CastorTapeTests::startDaemons();
+    print "t=".CastorTapeTests::elapsed_time."s. ";
+    print "Started all deamons =============\n";
+    
+    # Start testsuite in the background
+    my ( $testsuite_pid, $testsuite_rd );
     if ($run_testsuite) {
-        ( $testsuite_pid, $testsuite_rd ) = CastorTapeTests::spawn_testsuite ();
+        ($testsuite_pid, $testsuite_rd ) = CastorTapeTests::spawn_testsuite ();
         print "t=".CastorTapeTests::elapsed_time."s. ";
         print "Started testsuite -------------\n";
    }

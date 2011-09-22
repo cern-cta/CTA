@@ -98,11 +98,6 @@ BEGIN
          SET TC.errorCode = varErrorCode,
              TC.nbRetry   = varNbRetry
        WHERE TC.Id = varTc.Id;
-       -- Drop the Id2Type entries and the segments.
-       DELETE FROM Id2Type I2T
-        WHERE I2T.Id IN (SELECT Seg.id FROM Segment Seg
-                          WHERE Seg.copy = varTc.Id
-                            AND Seg.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED));
        DELETE FROM Segment Seg
         WHERE Seg.copy = varTc.Id
           AND Seg.status IN (TConst.SEGMENT_RETRIED, TConst.SEGMENT_FAILED);

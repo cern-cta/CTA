@@ -216,13 +216,11 @@ CREATE OR REPLACE PROCEDURE deleteSingleTapeCopy(tcId NUMBER) AS
 BEGIN
   FOR s IN (SELECT id FROM Segment WHERE copy = tcId) LOOP
   -- Delete the segment(s)
-    DELETE FROM Id2Type WHERE id = s.id;
     DELETE FROM Segment WHERE id = s.id;
   END LOOP;
   -- Delete from Stream2TapeCopy
   DELETE FROM Stream2TapeCopy WHERE child = tcId;
   -- Delete the TapeCopy
-  DELETE FROM Id2Type WHERE id = tcId;
   DELETE FROM TapeCopy WHERE id = tcId;
 END;
 /
