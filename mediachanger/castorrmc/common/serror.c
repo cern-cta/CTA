@@ -256,7 +256,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
  */
 char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
   {"Error 0",
-   "Aborted by stageclr",
+   "Aborted",
    "Enough free space",
    "Symbolic link not created",
    "Symbolic link not supported",

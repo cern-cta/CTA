@@ -262,7 +262,7 @@
  * STAGE errors
  *------------------------------------------------------------------------
  */
-#define ESTCLEARED      ESTBASEOFF+1	/* aborted by stageclr */
+#define ESTCLEARED      ESTBASEOFF+1	/* aborted */
 #define ESTENOUGHF      ESTBASEOFF+2	/* enough free space */
 #define ESTLNKNCR       ESTBASEOFF+3	/* symbolic link not created */
 #define ESTLNKNSUP      ESTBASEOFF+4	/* symbolic link not supported */
