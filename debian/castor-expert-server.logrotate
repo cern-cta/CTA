@@ -1,7 +1,0 @@
-/var/log/castor/expertd*.log {
-    compress
-    daily
-    missingok
-    rotate 200
-    delaycompress
-}

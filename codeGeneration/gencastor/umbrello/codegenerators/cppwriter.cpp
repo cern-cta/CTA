@@ -16,8 +16,6 @@
 // Local includes
 #include "cppwriter.h"
 #include "codegenerationpolicy.h"
-#include "chclasswriter.h"
-#include "ccclasswriter.h"
 #include "cpphclasswriter.h"
 #include "cppcppclasswriter.h"
 //#include "cpphoracnvwriter.h"
@@ -39,8 +37,6 @@ CppWriter::CppWriter( ) :
   CppCastorWriter(UMLApp::app()->getDocument(), "Cpp"), firstGeneration(true) {
   // Create all needed generators
   hppw = new CppHClassWriter(m_doc, ".hpp file generator");
-  hw = new CHClassWriter(m_doc, ".h file generator for C interfaces");
-  cw = new CCClassWriter(m_doc, ".cpp file generator for C interfaces");
   cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
   dbhw = new CppHDbCnvWriter(m_doc, "Database converter generator");
   dbcppw = new CppCppDbCnvWriter(m_doc, "Database converter generator");
@@ -53,8 +49,6 @@ CppWriter::CppWriter( ) :
 CppWriter::~CppWriter() {
   // delete Generators
   delete hppw;
-  delete hw;
-  delete cw;
   delete cppw;
   delete dbhw;
   delete dbcppw;
@@ -90,8 +84,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
     
   if (firstGeneration) {
     configGenerator(hppw);
-    configGenerator(hw);
-    configGenerator(cw);
     configGenerator(cppw);
     configGenerator(dbhw);
     configGenerator(dbcppw);
@@ -196,17 +188,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
 
   // write Header file
   runGenerator(hppw, fileName + ".hpp", c);
-  if (m_castorTypes.find(c->getName()) == m_castorTypes.end() &&
-      m_cWrappedTypes.find(c->getName()) != m_cWrappedTypes.end()) {
-    // Write C implementation only when needed
-    // These C implementatiosn are supposed to disappear as soon as possible
-    // so we hardcoded the list of objects still needing it
-    runGenerator(hw, fileName + ".h", c);
-    if (!CppBaseWriter::isEnum(c)) {
-      QString fileNameC = fileName;
-      runGenerator(cw, fileNameC + "CInt.cpp", c);
-    }
-  }
 
   // Determine whether the implementation file is required.
   // (It is not required if the class is an interface

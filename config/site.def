@@ -74,7 +74,6 @@ COMM tpread/tpwrite request to/from HSM files
 
 #define RepackConfigFile CONFIGPATH(ORAREPACKCONFIG)
 
-#define	RtcpclientdHost	\"castorrtcpcld\"
 COMM Define the working directory of
 COMM the remote tape copy jobs.
 #define RtcpWorkDir     \"/var/lib/castor/rtcpd\"

@@ -31,11 +31,7 @@
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <rtcp.h>
-#if defined(RTCP_SERVER)
 #include <rtcp_server.h>
-#else  /* RTCP_SERVER */
-#include <rtcp_api.h>
-#endif /* RTCP_SERVER */
 #include <serrno.h>
 #ifdef RTCOPYCSEC
 #include "Csec_api.h"
@@ -840,7 +836,6 @@ int rtcp_GetMsg(
   return(rc);
 }
 
-#if defined(RTCP_SERVER)
 /** tellClient() - send updated request information to client (server only)
  *
  * @param SOCKET *client_socket - pointer to the client socket
@@ -1234,6 +1229,4 @@ int rtcp_SendOldCinfo(
   }
   return(0);
 }
-
-#endif /* RTCP_SERVER */
 

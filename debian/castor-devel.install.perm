@@ -42,10 +42,6 @@
 %attr(0644,root,root) usr/include/shift/common.h
 %attr(0644,root,root) usr/include/shift/dlf_api.h
 %attr(0644,root,root) usr/include/shift/dmc.h
-%attr(0644,root,root) usr/include/shift/expert.h
-%attr(0644,root,root) usr/include/shift/expert_api.h
-%attr(0644,root,root) usr/include/shift/expert_constants.h
-%attr(0644,root,root) usr/include/shift/expert_daemon.h
 %attr(0644,root,root) usr/include/shift/getacct.h
 %attr(0644,root,root) usr/include/shift/getacctent.h
 %attr(0644,root,root) usr/include/shift/getconfent.h
@@ -69,10 +65,6 @@
 %attr(0644,root,root) usr/include/shift/rtcp_api.h
 %attr(0644,root,root) usr/include/shift/rtcp_constants.h
 %attr(0644,root,root) usr/include/shift/rtcp_server.h
-%attr(0644,root,root) usr/include/shift/rtcpcld.h
-%attr(0644,root,root) usr/include/shift/rtcpcld_constants.h
-%attr(0644,root,root) usr/include/shift/rtcpcld_messages.h
-%attr(0644,root,root) usr/include/shift/rtcpcldapi.h
 %attr(0644,root,root) usr/include/shift/sacct.h
 %attr(0644,root,root) usr/include/shift/scsictl.h
 %attr(0644,root,root) usr/include/shift/serrno.h
@@ -82,7 +74,6 @@
 %attr(0644,root,root) usr/include/shift/stage_constants.h
 %attr(0644,root,root) usr/include/shift/stage_limits.h
 %attr(0644,root,root) usr/include/shift/stager_api.h
-%attr(0644,root,root) usr/include/shift/stager_catalogInterface.h
 %attr(0644,root,root) usr/include/shift/stager_client_api.h
 %attr(0644,root,root) usr/include/shift/stager_constants.h
 %attr(0644,root,root) usr/include/shift/stager_errmsg.h

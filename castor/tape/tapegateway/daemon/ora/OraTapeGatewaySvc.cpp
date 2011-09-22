@@ -142,9 +142,6 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidat
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeToReleaseStatementString=
     "BEGIN tg_getTapeToRelease(:1,:2,:3);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConfigurationStatementString =
-    "BEGIN tg_checkConfiguration();END;";
-
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteStreamWithBadTapePoolStatementString=
     "BEGIN tg_deleteStream(:1);END;";
 
@@ -180,7 +177,6 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_failFileTransferStatement(0),
   m_invalidateFileStatement(0),
   m_getTapeToReleaseStatement(0),
-  m_checkConfigurationStatement(0),
   m_deleteStreamWithBadTapePoolStatement(0),
   m_deleteTapeRequestStatement(0)
 {
@@ -237,7 +233,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_failFileTransferStatement ) deleteStatement(m_failFileTransferStatement);
     if ( m_invalidateFileStatement ) deleteStatement(m_invalidateFileStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
-    if ( m_checkConfigurationStatement ) deleteStatement(m_checkConfigurationStatement);
     if ( m_deleteStreamWithBadTapePoolStatement) deleteStatement(m_deleteStreamWithBadTapePoolStatement);    
     if ( m_deleteTapeRequestStatement) deleteStatement(m_deleteTapeRequestStatement);
   } catch (castor::exception::Exception& ignored) {};
@@ -264,7 +259,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_failFileTransferStatement= 0;
   m_invalidateFileStatement = 0;
   m_getTapeToReleaseStatement=0;
-  m_checkConfigurationStatement=0;
   m_deleteStreamWithBadTapePoolStatement=0;
   m_deleteTapeRequestStatement=0; 
 }
@@ -1779,40 +1773,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTransaction() throw (
   cnvSvc()->commit();
 }
 
-//----------------------------------------------------------------------------
-// checkConfiguration
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::checkConfiguration() throw (castor::exception::Exception){
-
-  try {
-    // Check whether the statements are ok
-    if (0 == m_checkConfigurationStatement) {
-      m_checkConfigurationStatement =
-        createStatement(s_checkConfigurationStatementString);
-      m_checkConfigurationStatement->setAutoCommit(true);
-    }
-    // Execute the statement
-    (void)m_checkConfigurationStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    if (1403 == e.getErrorCode()) {
-      // no data found, I should run the tapegateway instead of rtcpclientd
-      castor::exception::Internal e;
-      e.getMessage()
-	<< "Current configuration forbids running the tapegateway daemon, use rtcpclientd instead"
-	<< std::endl;
-      throw e;
-    }
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in checkConfiguration."
-      << std::endl << e.what();
-    throw ex;
-  }
-
-  
-}
 
 //----------------------------------------------------------------------------
 // deleteStreamWithBadTapePool

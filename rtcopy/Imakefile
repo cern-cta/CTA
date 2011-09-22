@@ -7,7 +7,7 @@ COMM Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
 
-COMM         Make RTCOPY API library and server
+COMM         Make RTCOPY server
 
 #if BuildSecureRtcopy
 CFLAGS += -DRTCOPYCSEC
@@ -15,60 +15,14 @@ AddLdFlags(-ldl)
 #endif
 
 CPPFLAGS += -DRTCOPY_LOGFILE=RtcpdLogFile -DNOMORETAPES=RtcpNoMoreTapes \
-	    -DAUTH_HOSTS=AuthorizedHosts -DWORKDIR=RtcpWorkDir \
-	    -DNS_ROOT=NsRoot -DRTCP_SERVER \
-	    -DRTCPCLD_NOTIFY_HOST=RtcpclientdHost -DRTCPCLD_USER=StagerSuperUser \
-	    -DRTCPCLD_GROUP=StagerSuperGroup
+            -DWORKDIR=RtcpWorkDir -DNS_ROOT=NsRoot
 
 CommonDependsOnLibrary(common,castorcommon)
-CommonDependsOnLibrary(dlf,castordlf)
-CommonDependsOnLibrary(castor,castorclient)
-CommonDependsOnLibrary(ns,castorns)
 CommonDependsOnLibrary(vmgr,castorvmgr)
 CommonDependsOnLibrary(vdqm,castorvdqm)
 CommonDependsOnLibrary(tape,castortape)
-CommonDependsOnLibrary(expert,castorexpert)
 CommonDependsOnLibrary(tapebridge,castortapebridge)
 CommonDependsOnLibrary(rfio,castorrfio)
-
-LOCAL_PATH/rtcpc_SendRecv.c: LOCAL_PATH/rtcp_SendRecv.c
-	RemoveFiles($@)
-	cp $< $@
-LOCAL_PATH/rtcpc_log.c: LOCAL_PATH/rtcp_log.c
-	RemoveFiles($@)
-	cp $< $@
-LOCAL_PATH/rtcpc_CallVMGR.c: LOCAL_PATH/rtcp_CallVMGR.c
-	RemoveFiles($@)
-	cp $< $@
-LOCAL_PATH/rtcpc_CheckReq.c: LOCAL_PATH/rtcp_CheckReq.c
-	RemoveFiles($@)
-	cp $< $@
-PREFIX(FilesToClean) += LOCAL_PATH/rtcpc_log.c LOCAL_PATH/rtcpc_SendRecv.c LOCAL_PATH/rtcpc_CallVMGR.c LOCAL_PATH/rtcpc_CheckReq.c
-COMPILEC(rtcpc_SendRecv.c,-URTCP_SERVER)
-COMPILEC(rtcpc_log.c,-URTCP_SERVER)
-COMPILEC(rtcpc_CallVMGR.c,-URTCP_SERVER)
-COMPILEC(rtcpc_CheckReq.c,-URTCP_SERVER)
-
-RTCPLIB_OBJS =	rtcpc_SendRecv.o rtcp_InitNW.o rtcpc_log.o rtcpc_CallVMGR.o rtcp_Listen.o rtcpapi.o rtcpc_BuildReq.o rtcp_RetvalSHIFT.o rtcpc_CheckReq.o
-SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),,)
-RTCPLIBS = DepSharedLibraryTargetName(rtcopy,castorrtcopy)
-
-TapeProgramTarget(tpread,tpread.o,$(RTCPLIBS),$(RTCPLIBS),0755)
-LinkFile(tpwrite,tpread,755,tape)
-EXEMANPAGE(tpread)
-EXEMANPAGE(tpwrite)
-
-RTCPCLD_MT_OBJS = rtcpcldcommon_mt.o
-RTCPCLD_OBJS =	rtcpcldcommon.o rtcpcldCatalogueInterface.o rtcpcldVmgrInterface.o rtcpcldNsInterface.o
-NormalProgramTarget(rtcpclientd,rtcpclientd.o $(RTCPCLD_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
-NormalProgramTarget(recaller,recaller.o $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
-NormalProgramTarget(migrator,migrator.o $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
-NormalProgramTarget(tperrhandler,TapeErrorHandler.o $(RTCPCLD_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
-EXEMANPAGE(rtcpclientd)
-TapeMakeDir(LogPath,0755)
-LOGROTATE(castor-rtcopy-clientserver,install)
-SYSCONFIG(rtcpclientd,install)
-INITSCRIPT(rtcpclientd,install)
 
 MakeDir(RtcpBareWorkDir,777)
 RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
@@ -84,9 +38,7 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_GetClientInfoMsg.o \
 		rtcpd_GetClientInfo.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
-TapeProgramTarget(killjid,killjid.o,$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpd)
-EXEMANPAGE(killjid)
 LOGROTATE(castor-rtcopy-server,installtape)
 SYSCONFIG(rtcpd,installtape)
 INITSCRIPT(rtcpd,installtape)

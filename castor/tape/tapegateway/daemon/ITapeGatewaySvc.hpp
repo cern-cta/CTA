@@ -259,11 +259,6 @@ namespace tapegateway {
 	virtual void endTransaction() 
 	  throw (castor::exception::Exception)=0;
 
-	/* check configuration */
-
-	virtual void checkConfiguration() 
-	  throw (castor::exception::Exception)=0;
-
 	/* delete stream with wrong tapepool */
 
 	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 

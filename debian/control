@@ -22,12 +22,6 @@ XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
-Package: castor-expert-server
-Architecture: any
-Depends: logrotate
-Description: castor (Cern Advanced STORage system)
- Expert server, used to trigger policies
-
 Package: castor-gc-server
 Architecture: any
 Depends: logrotate
@@ -107,12 +101,6 @@ Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
-Package: castor-policies
-Architecture: any
-Depends: perl
-Description: castor (Cern Advanced STORage system)
- Policies used by the expert system
-
 Package: castor-rfio-client
 Architecture: any
 XBS-Group: Client
@@ -162,14 +150,6 @@ Architecture: any
 Depends: logrotate, zlib-devel
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
-
-Package: castor-rtcopy-clientserver
-Architecture: any
-Depends: logrotate, castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- Remote Tape Copy Client Server running on top of a database.
- This will generate raw RTCOPY commands understood by the rtcopy-server
- running on tape server.
 
 Package: castor-stager-client
 Architecture: any

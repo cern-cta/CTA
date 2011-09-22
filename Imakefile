@@ -32,9 +32,7 @@ include LOCAL_PATH/hsmtools/Makefile
 include LOCAL_PATH/h/Makefile
 include LOCAL_PATH/client/src/stager/Makefile
 include LOCAL_PATH/rfio/Makefile
-include LOCAL_PATH/expert/Makefile
 include LOCAL_PATH/tape/Makefile
-include LOCAL_PATH/clips/Makefile
 include LOCAL_PATH/logprocessor/Makefile
 include LOCAL_PATH/vdqm/Makefile
 include LOCAL_PATH/castor/Makefile

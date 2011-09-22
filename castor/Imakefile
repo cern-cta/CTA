@@ -221,6 +221,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \
               stager/RemoteJobSvc.cpp \
+              stager/IJobSvcCInt.cpp \
               stager/StartRequest.cpp \
               stager/SvcClass.cpp \
               stager/QueryParameter.cpp \
@@ -303,30 +304,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               sharedMemory/LocalBlock.cpp \
               sharedMemory/BlockKey.cpp \
               sharedMemory/BlockDict.cpp \
-              sharedMemory/DLFInit.cpp \
-              \
-              IAddressCInt.cpp \
-              BaseAddressCInt.cpp \
-              ServicesCInt.cpp \
-              stager/CastorFileCInt.cpp \
-              stager/DiskCopyCInt.cpp \
-              stager/DiskCopyForRecallCInt.cpp \
-              stager/DiskPoolCInt.cpp \
-              stager/DiskServerCInt.cpp \
-              stager/FileClassCInt.cpp \
-              stager/FileSystemCInt.cpp \
-              stager/IJobSvcCInt.cpp \
-              stager/IStagerSvcCInt.cpp \
-              stager/ITapeSvcCInt.cpp \
-              stager/SvcClassCInt.cpp \
-              stager/SegmentCInt.cpp \
-              stager/StreamCInt.cpp \
-              stager/SubRequestCInt.cpp \
-              stager/TapeCInt.cpp \
-              stager/TapeCopyCInt.cpp \
-              stager/TapeCopyForMigrationCInt.cpp \
-              stager/TapePoolCInt.cpp
-
+              sharedMemory/DLFInit.cpp
 
 STAGERLIB_OBJS = \
 		../client/src/stager/stager_client_api_common.o \

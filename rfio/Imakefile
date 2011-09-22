@@ -125,8 +125,7 @@ MakeDir(LogPath,0755)
 MakeDir(/var/lib/rfiod,0755)
 SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \
-		checkkey.o fio.o rfstatfs.o alrm.o \
-		rfioacct.o RemoteJobSvc.o stager_catalogInterface.o \
+		checkkey.o fio.o rfstatfs.o alrm.o rfioacct.o \
 		stager_util.o stager_messages.o stager_extern_globals.o \
 		stager_uuid.o rfio_alignedbuf.o rfio_xfsprealloc.o
 CPPFLAGS += -I $(XFS_LOCATION)/include

@@ -1,7 +1,0 @@
-/var/log/castor/migrator*.log /var/log/castor/recaller*.log /var/log/castor/rtcpclientd*.log /var/log/castor/tperrhandler*.log {
-    compress
-    daily
-    missingok
-    rotate 200
-    delaycompress
-}

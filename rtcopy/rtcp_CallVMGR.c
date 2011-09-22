@@ -22,9 +22,7 @@
 #include <Cuuid.h>
 #include "rtcp_constants.h"
 #include "rtcp.h"
-#if defined(RTCP_SERVER)
 #include "rtcp_server.h"
-#endif /* RTCP_SERVER */
 #include "vmgr_api.h"
 #include "serrno.h"
 
@@ -84,19 +82,11 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
 								egid)) != 0) {
 	      
 				if (vmgr_error_buffer[0] != '\0') {
-#if defined(RTCP_SERVER)
 					rtcpd_AppendClientMsg(tl, NULL, "%s\n",vmgr_error_buffer);
-#else /* RTCP_SERVER */
-					strcpy(tapereq->err.errmsgtxt,vmgr_error_buffer);
-#endif /* RTCP_SERVER */
 				}
 				tapereq->err.severity = RTCP_USERR | RTCP_FAILED;
 				if (vmgr_error_buffer[0] != '\0') {
-#if defined(RTCP_SERVER)
 					rtcp_log(LOG_ERR,"%s\n",vmgr_error_buffer);
-#else /* RTCP_SERVER */
-					rtcp_log(LOG_INFO,"! volume ID %s %s\n", tapereq->vid, vmgr_error_buffer);
-#endif /* RTCP_SERVER */
 				}
 				serrno = tapereq->err.errorcode = rc;
 				return(-1);

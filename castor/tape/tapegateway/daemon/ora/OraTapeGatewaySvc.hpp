@@ -203,11 +203,6 @@ namespace ora         {
     virtual void  endTransaction() 
       throw (castor::exception::Exception);
 
-    // To check the db configuration 
-    // To be dropped when rtcpclientd won't be supported anymore
-    virtual void checkConfiguration() 
-      throw (castor::exception::Exception);
-
     // To delete stream with wrong tapepool 
     virtual void deleteStreamWithBadTapePool(
 				    const castor::stager::Stream& stream) 
@@ -298,9 +293,6 @@ namespace ora         {
     static const std::string s_getTapeToReleaseStatementString;
     oracle::occi::Statement *m_getTapeToReleaseStatement;
     
-    static const std::string s_checkConfigurationStatementString;
-    oracle::occi::Statement *m_checkConfigurationStatement;
-
     static const std::string s_deleteStreamWithBadTapePoolStatementString;
     oracle::occi::Statement *m_deleteStreamWithBadTapePoolStatement;
 

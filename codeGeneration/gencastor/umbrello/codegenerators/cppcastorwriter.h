@@ -72,12 +72,6 @@ class CppCastorWriter : public SimpleCodeGenerator {
   std::map<QString, QString> m_castorTypes;
 
   /**
-   * list of castor object that still need a C wrapper
-   * This list should be emptied and dropped as soon as possible
-   */
-  std::set<QString> m_cWrappedTypes;
-
-  /**
    * Says whether a castor type is complex or not
    * Complex means basically that it is a struct
    */

@@ -32,10 +32,8 @@
 #include <Cglobals.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
-#if defined(RTCP_SERVER)
 #include <rtcp_server.h>
 char *rtcpd_logfile = RTCOPY_LOGFILE;
-#endif /* RTCP_SERVER */
 
 #define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
 #define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}
@@ -119,7 +117,6 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     if ( (p = getenv("RTCOPY_LOGLEVEL")) != NULL ) {
         loglevel = atoi(p);
     }
-#if defined(RTCP_SERVER)
     if ( out == NULL && err == NULL ) {
         if ( ((p = getenv("RTCOPY_LOGFILE")) != NULL) ||
              ((p = getconfent("RTCOPY","LOGFILE",0)) != NULL) ) {
@@ -132,7 +129,6 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
             return(0);
         }
     }
-#endif /* RTCP_SERVER */
     if ( p == NULL ) {
         if ( out == NULL ) loglevel = LOG_ERR;
         else loglevel = LOG_INFO;
@@ -225,7 +221,6 @@ int rtcp_stringToVoid(char *str, void *out, int len)
   return(0);
 }
 
-#if defined(RTCP_SERVER)
 /*
  * Append a message to the client error message structure for
  * current tape/file request
@@ -265,4 +260,3 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
     RESTORE_ERRNO;
     return;
 }
-#endif /* RTCP_SERVER */

@@ -140,23 +140,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   }
 
-  // check if the db configuration is such that the tapegateway can be used 
-  // to be dropped as soon as rtcpclientd is not supported any longer 
-
-  try {
-    // Safe SQL, wrapper is direct and it only throws exceptions.
-    oraSvc->checkConfiguration();
-  } catch (castor::exception::Exception& e){
-
-    castor::exception::Internal ex;
-    ex.getMessage() << "Caught castor exception: "
-                    << sstrerror(e.code()) << " - "
-                    << e.getMessage().str() << std::endl;
-    throw(ex);
-    
-  }
-
- 
   //Retrive the retry policies
 
   std::string migrationPolicyName;

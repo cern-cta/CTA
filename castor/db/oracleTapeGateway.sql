@@ -2163,16 +2163,6 @@ BEGIN
 END;
 /
 
-/* Check configuration */
-CREATE OR REPLACE PROCEDURE tg_checkConfiguration AS
-  unused VARCHAR2(2048);
-BEGIN
-  -- This fires an exception if the db is configured not to run the tapegateway
-  SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='interfaceDaemon' AND value='tapegatewayd';
-END;
-/
-
-
 /* delete streams for not existing tapepools */
 CREATE OR REPLACE
 PROCEDURE tg_deleteStream(inStrId IN NUMBER) AS

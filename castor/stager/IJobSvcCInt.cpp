@@ -26,127 +26,53 @@
 
 // Include Files
 #include "castor/stager/IJobSvc.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
-#include <errno.h>
+#include "castor/exception/Internal.hpp"
 #include <string>
 
 extern "C" {
 
-  // C include files
-#include "castor/ServicesCInt.hpp"
-#include "castor/stager/IJobSvcCInt.hpp"
-
   //----------------------------------------------------------------------------
-  // checkIJobSvc
+  // getIJobSvc
   //----------------------------------------------------------------------------
-  bool checkIJobSvc(Cstager_IJobSvc_t* jobSvc) {
-    if (0 == jobSvc || 0 == jobSvc->jobSvc) {
-      errno = EINVAL;
-      return false;
+  castor::stager::IJobSvc* getIJobSvc() {
+    castor::IService *remsvc = castor::BaseObject::services()->service
+      ("RemoteJobSvc", castor::SVC_REMOTEJOBSVC);
+    if (remsvc == 0) {
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to get RemoteJobSvc";
+      throw e;
     }
-    return true;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_IJobSvc_fromIService
-  //----------------------------------------------------------------------------
-  Cstager_IJobSvc_t*
-  Cstager_IJobSvc_fromIService(castor::IService* obj) {
-    Cstager_IJobSvc_t* jobSvc = new Cstager_IJobSvc_t();
-    jobSvc->errorMsg = "";
-    jobSvc->jobSvc = dynamic_cast<castor::stager::IJobSvc*>(obj);
+    castor::stager::IJobSvc *jobSvc = dynamic_cast<castor::stager::IJobSvc *>(remsvc);
+    if (jobSvc == 0) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not convert newly retrieved service into IJobSvc";
+      throw e;
+    }
     return jobSvc;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_IJobSvc_delete
-  //----------------------------------------------------------------------------
-  int Cstager_IJobSvc_delete(Cstager_IJobSvc_t* jobSvc) {
-    try {
-      if (0 == jobSvc) return 0;
-    } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    delete jobSvc;
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_getUpdateStart
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_getUpdateStart
-  (struct Cstager_IJobSvc_t* jobSvc,
-   castor::stager::SubRequest* subreq,
-   castor::stager::FileSystem* fileSystem,
-   int *emptyFile,
-   castor::stager::DiskCopy** diskCopy,
-   u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      bool ef;
-      std::list<castor::stager::DiskCopyForRecall*> sourceslist;
-      *diskCopy = jobSvc->jobSvc->getUpdateStart
-        (subreq, fileSystem, &ef, fileId, nsHost);
-      *emptyFile = ef ? 1 : 0;
-    } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_putStart
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_putStart
-  (struct Cstager_IJobSvc_t* jobSvc,
-   castor::stager::SubRequest* subreq,
-   castor::stager::FileSystem* fileSystem,
-   castor::stager::DiskCopy** diskCopy,
-   u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      *diskCopy =
-        jobSvc->jobSvc->putStart(subreq, fileSystem, fileId, nsHost);
-    } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_errorMsg
-  //-------------------------------------------------------------------------
-  const char* Cstager_IJobSvc_errorMsg(Cstager_IJobSvc_t* jobSvc) {
-    return jobSvc->errorMsg.c_str();
   }
 
   //-------------------------------------------------------------------------
   // Cstager_IJobSvc_prepareForMigration
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_prepareForMigration
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subReqId,
+  (u_signed64 subReqId,
    u_signed64 fileSize,
    u_signed64 timeStamp,
    u_signed64 fileId,
    const char* nsHost,
    const char* csumtype,
-   const char* csumvalue) {
-    if (!checkIJobSvc(jobSvc)) return -1;
+   const char* csumvalue,
+   int* errorCode,
+   char** errorMsg) {
     try {
-      jobSvc->jobSvc->prepareForMigration
+      castor::stager::IJobSvc* jobSvc = getIJobSvc();
+      jobSvc->prepareForMigration
 	(subReqId, fileSize, timeStamp, fileId, nsHost, csumtype, csumvalue);
     } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
+      *errorCode = e.code();
+      *errorMsg = strdup(e.getMessage().str().c_str());
       return -1;
     }
     return 0;
@@ -156,16 +82,17 @@ extern "C" {
   // Cstager_IJobSvc_getUpdateDone
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_getUpdateDone
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subReqId,
+  (u_signed64 subReqId,
    u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
+   const char* nsHost,
+   int* errorCode,
+   char** errorMsg) {
     try {
-      jobSvc->jobSvc->getUpdateDone(subReqId,fileId,nsHost);
+      castor::stager::IJobSvc* jobSvc = getIJobSvc();
+      jobSvc->getUpdateDone(subReqId,fileId,nsHost);
     } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
+      *errorCode = e.code();
+      *errorMsg = strdup(e.getMessage().str().c_str());
       return -1;
     }
     return 0;
@@ -175,16 +102,17 @@ extern "C" {
   // Cstager_IJobSvc_getUpdateFailed
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_getUpdateFailed
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subReqId,
+  (u_signed64 subReqId,
    u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
+   const char* nsHost,
+   int* errorCode,
+   char** errorMsg) {
     try {
-      jobSvc->jobSvc->getUpdateFailed(subReqId, fileId, nsHost);
+      castor::stager::IJobSvc* jobSvc = getIJobSvc();
+      jobSvc->getUpdateFailed(subReqId, fileId, nsHost);
     } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
+      *errorCode = e.code();
+      *errorMsg = strdup(e.getMessage().str().c_str());
       return -1;
     }
     return 0;
@@ -194,16 +122,17 @@ extern "C" {
   // Cstager_IJobSvc_putFailed
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_putFailed
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subReqId,
+  (u_signed64 subReqId,
    u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
+   const char* nsHost,
+   int* errorCode,
+   char** errorMsg) {
     try {
-      jobSvc->jobSvc->putFailed(subReqId, fileId, nsHost);
+      castor::stager::IJobSvc* jobSvc = getIJobSvc();
+      jobSvc->putFailed(subReqId, fileId, nsHost);
     } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
+      *errorCode = e.code();
+      *errorMsg = strdup(e.getMessage().str().c_str());
       return -1;
     }
     return 0;
@@ -213,16 +142,17 @@ extern "C" {
   // Cstager_IJobSvc_firstByteWritten
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_firstByteWritten
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subRequestId,
+  (u_signed64 subRequestId,
    u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
+   const char* nsHost,
+   int* errorCode,
+   char** errorMsg) {
     try {
-      jobSvc->jobSvc->firstByteWritten(subRequestId, fileId, nsHost);
+      castor::stager::IJobSvc* jobSvc = getIJobSvc();
+      jobSvc->firstByteWritten(subRequestId, fileId, nsHost);
     } catch (castor::exception::Exception& e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
+      *errorCode = e.code();
+      *errorMsg = strdup(e.getMessage().str().c_str());
       return -1;
     }
     return 0;

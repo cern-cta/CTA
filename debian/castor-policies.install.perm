@@ -1,5 +1,0 @@
-%attr(0644,root,root) etc/castor/expert/migrator.pl
-%attr(0644,root,root) etc/castor/expert/migratorRetryPolicy.pl
-%attr(0644,root,root) etc/castor/expert/recaller.pl
-%attr(0644,root,root) etc/castor/expert/recallerRetryPolicy.pl
-%attr(0644,root,root) etc/castor/expert/replica.pl
