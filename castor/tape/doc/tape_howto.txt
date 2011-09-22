@@ -4075,3 +4075,21 @@ Add the following lines:
 <cdbop@cdbserv.cern.ch: ~> up profiles/profile_tpsrv001.tpl
 [INFO] '/profiles/profile_tpsrv001': scheduled to be updated
 <cdbop@cdbserv.cern.ch: ~> commit
+
+How to populate a new cupv database
+===================================
+
+The following command-line will extract the permissions from an existing cupv
+database:
+
+Cupvlist | tail -n +2 | awk "{print \"Cupvadd --user \" \$1 \" --group \" \$2 \" --src '\" \$3 \"'  --tgt '\" \$4 \"' --priv '\" \$5 \"'\";}"
+
+The following commands will populate a new cupv database.  They should be ran
+as root on the cupv server:
+
+Cupvadd --user root --group root --src '^tpsrv016.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_SYSTEM'
+Cupvadd --user root --group root --src '^tpsrv029.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_SYSTEM'
+Cupvadd --user root --group root --src '^tpsrv971.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_SYSTEM'
+Cupvadd --user root --group root --src '^tpsrv982.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_SYSTEM'
+Cupvadd --user stage --group st --src '^lxcastordev04.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_OPER'
+Cupvadd --user murrayc3 --group c3 --src '^lxcastordev04.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_OPER|UPV_ADMIN|ADMIN'
